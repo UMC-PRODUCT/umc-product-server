@@ -1,0 +1,131 @@
+# 서버 기본 설정들
+
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  # tomcat tuning options (나중에 test 하면서 추가)
+#  tomcat:
+#    threads:
+#      max: 200
+#      min-spare: 30
+#    max-connections: 700
+#    accept-count: 300
+
+spring:
+  application:
+    name: x-umc-product
+  profiles:
+    # 기본적으로 local 프로필을 활성화, 실수로 prod에 접근하는 것을 방지함
+    active: local
+  config:
+    # application-secret 받도록 설정, 우리는 활용하지 않음.
+    import:
+      - optional:classpath:application-secret.yml
+      - optional:file:/app/config/application-secret.yml
+
+  jackson:
+    generator:
+      write-numbers-as-strings: true
+
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+    hikari:
+      auto-commit: true
+
+      maximum-pool-size: 10       # Core * 2 + 여유분
+      minimum-idle: 10            # max와 동일하게 설정 (고정 풀 크기 권장)
+
+      # 3. 수명 및 타임아웃
+      max-lifetime: 1800000       # 30분
+      connection-timeout: 30000   # 30초
+      validation-timeout: 5000    # 5초
+
+      keepalive-time: 60000       # DB에 1분마다 생존 신고 (유휴 커넥션 방지)
+
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        # dialect는 명시가 불필요해서 생략
+
+
+# swagger 설정
+springdoc:
+  swagger-ui:
+    path: /docs # 원하는 경로로 변경
+    enabled: false
+    operations-sorter: method # API 정렬 (method, alpha)
+    tags-sorter: alpha # 태그 정렬
+
+  api-docs:
+    path: /docs-json # API 문서 경로
+    enabled: false
+
+logging:
+  level:
+    root: INFO
+
+    # 내 애플리케이션 - 개발 시 DEBUG
+    com.umc.product.api: DEBUG
+
+    # Spring Web - 요청/응답 확인
+    org.springframework.web: INFO
+
+    # JPA/Hibernate - SQL 쿼리 확인
+    org.hibernate.SQL: INFO # 실행되는 SQL
+    org.hibernate.orm.jdbc.bind: INFO # 바인딩 파라미터 (Hibernate 6+)
+
+    # 트랜잭션 확인
+    org.springframework.transaction: DEBUG
+    org.springframework.orm.jpa: DEBUG
+
+    # 시끄러운 로그 끄기
+    org.springframework.web.client.DefaultRestClient: OFF
+    org.apache.http: WARN
+    com.zaxxer.hikari: WARN
+
+management:
+  server:
+    port: ${MANAGEMENT_PORT:9090}
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics,prometheus,tracing"
+  tracing:
+    enabled: true
+    sampling:
+      probability: ${TRACE_SAMPLING_PROBABILITY:0.1}
+    # 지금은 내보내지 않음, Grafana Tempo로 연동하도록 추후 추가
+  #  otlp:
+  #    tracing:
+  #      endpoint: ${TEMPO_URL}
+
+  metrics:
+    enable:
+      jvm: true
+      process: true
+      http: true
+      jdbc: true # DB 쿼리 메트릭
+      #      rabbitmq: true # messaging, 사용 시 추가
+      system: true # CPU, 메모리 등 시스템 메트릭
+      tomcat: true # 톰캣 스레드풀, 세션 메트릭
+      hikaricp: true # HikariCP 커넥션 풀 메트릭
+      logback: true # 로그 레벨별 카운트
+      cache: true # 캐시 사용 시
+      spring.security: true # Spring Security 인증 메트릭
+
+  prometheus:
+    metrics:
+      export:
+        enabled: true

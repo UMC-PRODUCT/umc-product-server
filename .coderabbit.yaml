@@ -1,0 +1,57 @@
+language: ko-KR
+
+reviews:
+  profile: assertive
+  high_level_summary: true
+  review_status: true
+  request_changes_workflow: false
+  auto_review:
+    enabled: true
+    drafts: true
+  path_instructions:
+    - path: "src/**"
+      instructions: |
+        다음 항목들을 꼼꼼하게 검토해줘.
+
+        1. **예외 처리**
+        - 예외가 적절히 처리되었는지 확인해줘. (try-catch, throws, ExceptionAdvice)
+        - 공통 예외 처리 모듈(예: GlobalHandler, ApiResponse 등)을 잘 활용했는지 확인.
+        - RuntimeException을 남발하지 않고, 의미 있는 커스텀 예외를 사용하는지 검토.
+        - 예외 메시지에 민감 정보(DB 정보, 사용자 정보 등)가 노출되지 않게 했는지 점검.
+
+        2. **코드 품질 & 가독성**
+        - 메소드/클래스가 단일 책임 원칙(SRP)에 맞게 구성되어 있는지.
+        - 중복 코드가 있는 경우, 유틸/공통 컴포넌트로 추출 가능한지.
+        - 의미 있는 변수명과 메소드명을 사용했는지.
+        - 매직 넘버, 하드코딩된 값이 존재하는지 점검.
+
+        3. **성능 및 효율성**
+        - 불필요한 DB 쿼리 호출, N+1 문제 가능성이 있는지 확인.
+        - Stream, loop, recursion 사용 시 시간복잡도/메모리 효율성을 고려했는지.
+        - 캐시 적용 가능성이 있거나, 과도한 연산이 반복되는 구간이 있는지.
+
+        4. **트랜잭션 관리**
+        - @Transactional이 필요한 메소드에 누락되지 않았는지.
+        - 읽기 전용 트랜잭션(readOnly = true)을 적절히 사용했는지.
+        - DB 일관성, 롤백 정책이 올바른지 검토.
+
+        5. **입력 검증 및 보안**
+        - @Valid, Bean Validation 등을 통한 입력값 검증이 되어 있는지.
+        - 비밀번호, 토큰 등 민감한 정보가 로깅되지 않는지.
+
+        6. **테스트**
+        - 단위 테스트가 충분히 작성되었는지, 핵심 로직의 검증이 누락되지 않았는지.
+        - Mocking을 통한 독립 테스트 구조를 유지했는지.
+        - 경계값 테스트, 예외 케이스 테스트가 포함되어 있는지.
+
+        8. **구조 및 설계**
+        - Controller, Service, Repository 등 계층 구조가 올바르게 나뉘어 있는지.
+        - DTO, Entity, Domain 객체 간 변환 로직이 명확하고 중복되지 않는지.
+        - Config 클래스에서 Bean 등록이 과도하거나 순환 참조 위험이 없는지.
+  path_filters:
+    - "!infra/**"
+    - "!build/**"
+    - "!.gradle/**"
+    - "!**/*.min.js"
+    - "!**/node_modules/**"
+    - "!config/**"

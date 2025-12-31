@@ -1,0 +1,7 @@
+# 개발용 Dockerfile
+# gradle build가 이미 되어 있다는 전제하에 동작합니다
+
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+COPY build/libs/*.jar app.jar
+ENTRYPOINT ["java", "-jar", "app.jar"]

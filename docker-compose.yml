@@ -1,0 +1,36 @@
+# 팀원간 local 개발환경 통일을 위한 docker compose file
+# 2025/12/20 v0.1.0 - initial; SpringBoot와 PostgreSQL, by @kyeoungwoon
+#            v0.1.1 - SpringBoot Application은 우선 제외하고 PostgreSQL만 띄우도록 함
+
+services:
+  # API Server
+  #  umc-product-api-server:
+  #    build:
+  #      context: .
+  #      dockerfile: docker/dev/dockerfile
+  #    container_name: umc-product-api-local
+  #    ports:
+  #      # host:container, local port 충돌 시 앞에거 변경하세요
+  #      - "8080:8080"
+  #    environment:
+  #      - SPRING_DATASOURCE_URL=jdbc:postgresql://umc-product-postgresql-local:5432/umc_product_db_local
+  #      - SPRING_DATASOURCE_USERNAME=umc_product
+  #      - SPRING_DATASOURCE_PASSWORD=umc_product_password
+  #    depends_on:
+  #      - umc-product-postgres
+  #    restart: always
+
+  # PostgreSQL Database
+  umc-product-postgres:
+    image: postgres:18.1 # 2025/12/20 기준 가장 최신 버전 사용
+    container_name: umc-product-postgresql-local
+    ports:
+      - "54321:5432"
+    environment:
+      - POSTGRES_DB=umc_product_db_local
+      - POSTGRES_USER=umc_product
+      - POSTGRES_PASSWORD=umc_product_password
+    volumes:
+      # DB Data volume mapping
+      - ./docker/db/postgres:/var/lib/postgresql
+    restart: always
