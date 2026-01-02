@@ -22,7 +22,7 @@ import org.hibernate.dialect.function.TruncFunction.DatetimeTrunc;
 public class Gisu {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private boolean isActive;
