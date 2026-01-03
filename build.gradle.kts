@@ -109,21 +109,7 @@ val snippetsDir = file("build/generated-snippets")
 
 tasks.test {
     outputs.dir(snippetsDir)
-
-    addTestListener(object : TestListener {
-        override fun beforeSuite(suite: TestDescriptor) {}
-        override fun afterSuite(suite: TestDescriptor, result: TestResult) {}
-        override fun beforeTest(testDescriptor: TestDescriptor) {}
-
-        override fun afterTest(testDescriptor: TestDescriptor, result: TestResult) {
-            if (result.resultType == TestResult.ResultType.FAILURE) {
-                println("🔴 FAILED TEST: ${testDescriptor.displayName}")
-                println("======================================")
-                result.exception?.printStackTrace()
-                println("======================================")
-            }
-        }
-    })
+    
 }
 
 tasks.asciidoctor {
