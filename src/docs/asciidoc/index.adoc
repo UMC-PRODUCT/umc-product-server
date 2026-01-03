@@ -9,7 +9,3 @@ endif::[]
 :toclevels: 2
 :sectlinks:
 
-[[Community-API]]
-== Community API
-
-include::api/community/community.adoc[]

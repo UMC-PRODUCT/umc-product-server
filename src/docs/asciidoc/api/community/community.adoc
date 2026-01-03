@@ -1,4 +1,0 @@
-[[community-post-create]]
-=== 커뮤니티 게시글 생성
-
-operation::subscription-controller-test/신규_구독을_등록한다[snippets='http-request,request-fields,http-response,response-fields']
