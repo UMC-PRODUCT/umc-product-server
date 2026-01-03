@@ -54,6 +54,9 @@ dependencies {
     annotationProcessor("com.querydsl:querydsl-apt:${queryDslVersion}:jakarta")
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
 
+    // APT가 jakarta 클래스를 로딩할 수 있게 명시
+    annotationProcessor("jakarta.persistence:jakarta.persistence-api")
+
     // --- Database ---
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
