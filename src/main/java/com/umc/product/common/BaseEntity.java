@@ -32,6 +32,6 @@ public abstract class BaseEntity {
     @LastModifiedDate
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
-    
-    // 공통 비즈니스 로직이 있다면 하단에 추가 =
+
+    // 공통 비즈니스 로직이 있다면 하단에 추가
 }
