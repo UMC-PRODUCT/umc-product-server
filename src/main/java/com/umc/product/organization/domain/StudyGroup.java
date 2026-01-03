@@ -3,6 +3,7 @@ package com.umc.product.organization.domain;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -10,6 +11,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,6 +37,9 @@ public class StudyGroup {
 //    @ManyToOne(fetch = FetchType.LAZY)
 //    @JoinColumn(name = "group_leader_id")
 //    private Challenger challenger;
+
+    @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL)
+    List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
 
 
     // TODO: Challenger 추가시 생성자에 추가

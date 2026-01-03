@@ -32,9 +32,11 @@ bin/
 *.iws
 *.iml
 *.ipr
-out/
+
 !**/src/main/**/out/
 !**/src/test/**/out/
+# 빌드 결과물인 out은 무시해야 하나, 소스코드 내에 있는건 지켜야 함
+/out/
 
 ### NetBeans ###
 /nbproject/private/
