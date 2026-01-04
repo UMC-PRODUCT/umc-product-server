@@ -4,5 +4,9 @@ import com.umc.product.form.domain.SingleAnswer;
 import java.util.List;
 
 public interface SaveSingleAnswerPort {
+
     void saveAll(List<SingleAnswer> answers);
+
+    void upsertAll(Long formResponseId, List<SingleAnswer> answers);
+
 }
