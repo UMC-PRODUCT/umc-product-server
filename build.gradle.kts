@@ -2,7 +2,6 @@ plugins {
     java
     id("org.springframework.boot") version "3.5.9"
     id("io.spring.dependency-management") version "1.1.7"
-    id("org.asciidoctor.jvm.convert") version "4.0.5"
 }
 
 group = "com.umc"
@@ -20,7 +19,6 @@ configurations {
     compileOnly {
         extendsFrom(configurations.annotationProcessor.get())
     }
-    create("asciidoctorExt")
 }
 
 repositories {
@@ -31,6 +29,27 @@ val springDocVersion = "2.8.14"
 val queryDslVersion = "5.0.0"
 val jwtVersion = "0.12.5"
 val awsVersion = "2.40.12"
+
+// QueryDSL Q클래스 생성 경로 설정
+val querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
+
+sourceSets {
+    main {
+        java {
+            srcDirs(querydslDir)
+        }
+    }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.generatedSourceOutputDirectory.set(querydslDir)
+}
+
+tasks.named("clean") {
+    doLast {
+        querydslDir.deleteRecursively()
+    }
+}
 
 dependencies {
     // --- Spring Boot Starters (버전 생략: Boot가 관리) ---
@@ -55,6 +74,9 @@ dependencies {
     implementation("com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta")
     annotationProcessor("com.querydsl:querydsl-apt:${queryDslVersion}:jakarta")
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
+
+    // APT가 jakarta 클래스를 로딩할 수 있게 명시
+    annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 
     // --- Database ---
     implementation("org.flywaydb:flyway-core")
@@ -94,39 +116,8 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
-
-    // --- Spring REST Docs ---
-    "asciidoctorExt"("org.springframework.restdocs:spring-restdocs-asciidoctor")
-    testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
-}
-
-
-val snippetsDir = file("build/generated-snippets")
-
-tasks.test {
-    outputs.dir(snippetsDir)
-    
-}
-
-tasks.asciidoctor {
-    inputs.dir(snippetsDir)
-    configurations("asciidoctorExt")
-
-    sources {
-        include("**/index.adoc")
-    }
-
-    baseDirFollowsSourceDir()
-    dependsOn(tasks.test)
-}
-
-tasks.bootJar {
-    dependsOn(tasks.asciidoctor)
-    from(tasks.asciidoctor.get().outputDir) {
-        into("static/docs")
-    }
 }
