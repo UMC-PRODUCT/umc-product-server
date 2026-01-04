@@ -1,16 +1,17 @@
 package com.umc.product.form.application.port.in.command;
 
 import java.util.List;
+import java.util.Map;
 
 public record SubmitFormResponseCommand(
         Long userId,
-        Long formId,
+        Long recruitmentId,
         List<AnswerCommand> answers
 ) {
 
     public record AnswerCommand(
             Long questionId,
-            Object value
+            Map<String, Object> value
     ) {
     }
 
