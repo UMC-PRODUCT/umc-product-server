@@ -7,5 +7,6 @@ public enum RecruitmentScheduleType {
     INTERVIEW_WINDOW,
     FINAL_REVIEW_WINDOW,
     FINAL_RESULT_AT,
-    OT_AT
+    OT_AT,
+    ACTIVITY_WINDOW
 }
