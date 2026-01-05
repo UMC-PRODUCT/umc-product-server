@@ -3,6 +3,7 @@ package com.umc.product.organization.domain;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -28,20 +29,23 @@ public class StudyGroupMember {
     @JoinColumn(name = "group_id")
     private StudyGroup studyGroup;
 
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    @JoinColumn(name = "member_id")
-//    private Challenger challenger;
+    // DDD 원칙: 다른 도메인(challenger)의 Entity를 직접 참조하지 않고 ID만 저장
+    @Column(nullable = false)
+    private Long challengerId;
 
-
-    // TODO: Challenger 추가시 생성자에 추가
     @Builder
-    private StudyGroupMember(StudyGroup group) {
-        validate(group /*, challenger*/);
-        this.studyGroup = group;
+    private StudyGroupMember(StudyGroup studyGroup, Long challengerId) {
+        validate(studyGroup, challengerId);
+        this.studyGroup = studyGroup;
+        this.challengerId = challengerId;
     }
 
-    private static void validate(StudyGroup group /*, Challenger challenger*/) {
-        if (group == null) throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_REQUIRED);
-        // if (challenger == null) throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED);
+    private static void validate(StudyGroup studyGroup, Long challengerId) {
+        if (studyGroup == null) {
+            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_REQUIRED);
+        }
+        if (challengerId == null) {
+            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.CHALLENGER_ID_REQUIRED);
+        }
     }
 }

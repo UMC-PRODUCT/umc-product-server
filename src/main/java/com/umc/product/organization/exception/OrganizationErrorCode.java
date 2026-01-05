@@ -3,7 +3,6 @@ package com.umc.product.organization.exception;
 import com.umc.product.global.response.code.BaseCode;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-
 import org.springframework.http.HttpStatus;
 
 @Getter
@@ -27,9 +26,10 @@ public enum OrganizationErrorCode implements BaseCode {
     STUDY_GROUP_LEADER_REQUIRED(HttpStatus.BAD_REQUEST, "ORGAN-411", "스터디 그룹 리더는 필수입니다."),
 
     STUDY_GROUP_REQUIRED(HttpStatus.BAD_REQUEST, "ORGAN-412", "스터디 그룹은 필수입니다."),
-    STUDY_GROUP_MEMBER_REQUIRED(HttpStatus.BAD_REQUEST, "ORGAN-413", "스터디 그룹 멤버는 필수입니다.");
-
-    ;
+    STUDY_GROUP_MEMBER_REQUIRED(HttpStatus.BAD_REQUEST, "ORGAN-413", "스터디 그룹 멤버는 필수입니다."),
+    CHALLENGER_ID_REQUIRED(HttpStatus.BAD_REQUEST, "ORGAN-414", "챌린저 ID는 필수입니다."),
+    STUDY_GROUP_MEMBER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "ORGAN-415", "이미 존재하는 스터디 그룹 멤버입니다."),
+    STUDY_GROUP_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGAN-416", "스터디 그룹 멤버를 찾을 수 없습니다.");;
 
     private final HttpStatus httpStatus;
     private final String code;
