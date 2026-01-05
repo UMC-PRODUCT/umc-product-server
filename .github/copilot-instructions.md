@@ -78,7 +78,7 @@ public class Challenger extends BaseEntity {
 @NoArgsConstructor  // access level 누락
 public class Challenger {
     @ManyToOne
-    private User user;  // 다른 도메인 직접 참조 금지
+    private Member member;  // 다른 도메인 직접 참조 금지
 
     // 도메인 로직 없이 getter/setter만
 }
@@ -230,10 +230,10 @@ public class ChallengerController {
 
     @PostMapping
     public ApiResponse<Long> register(
-            @AuthenticationPrincipal SecurityUser user,
+            @AuthenticationPrincipal SecurityUser member,
             @Valid @RequestBody RegisterChallengerRequest request) {
 
-        Long id = registerUseCase.register(request.toCommand(user.getUserId()));
+        Long id = registerUseCase.register(request.toCommand(member.getUserId()));
         return ApiResponse.success(id);
     }
 }
@@ -407,7 +407,7 @@ public class ChallengerCommandService {
     private final UserRepository userRepository;  // 다른 도메인
 
     public void register(...) {
-        User user = userRepository.findById(userId);  // 직접 접근
+        User member = userRepository.findById(userId);  // 직접 접근
     }
 }
 ```
@@ -418,7 +418,7 @@ public class ChallengerCommandService {
 private final GetUserInfoUseCase getUserInfoUseCase;
 
 public void register(...) {
-    UserInfo user = getUserInfoUseCase.getById(userId);
+    UserInfo member = getUserInfoUseCase.getById(userId);
 }
 ```
 
@@ -446,9 +446,9 @@ public class ChallengerCommandService {
 // ✅ 인증된 사용자 정보는 @AuthenticationPrincipal로
 @PostMapping
 public ApiResponse<Long> register(
-        @AuthenticationPrincipal SecurityUser user,
+        @AuthenticationPrincipal SecurityUser member,
         @RequestBody RegisterRequest request) {
-    // user.getUserId() 사용
+    // member.getUserId() 사용
 }
 
 // ❌ Request Body에서 userId 받지 않음
@@ -482,7 +482,7 @@ public void updateNotice(Long noticeId, UpdateCommand command, Long requesterId)
 // ❌ N+1 발생 가능
 List<Challenger> challengers = repository.findAll();
 for (Challenger c : challengers) {
-    User user = userRepository.findById(c.getUserId());  // N번 쿼리
+    User member = userRepository.findById(c.getUserId());  // N번 쿼리
 }
 
 // ✅ Fetch Join 또는 별도 쿼리

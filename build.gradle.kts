@@ -30,6 +30,27 @@ val queryDslVersion = "5.0.0"
 val jwtVersion = "0.12.5"
 val awsVersion = "2.40.12"
 
+// QueryDSL Q클래스 생성 경로 설정
+val querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
+
+sourceSets {
+    main {
+        java {
+            srcDirs(querydslDir)
+        }
+    }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.generatedSourceOutputDirectory.set(querydslDir)
+}
+
+tasks.named("clean") {
+    doLast {
+        querydslDir.deleteRecursively()
+    }
+}
+
 dependencies {
     // --- Spring Boot Starters (버전 생략: Boot가 관리) ---
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -53,6 +74,9 @@ dependencies {
     implementation("com.querydsl:querydsl-jpa:${queryDslVersion}:jakarta")
     annotationProcessor("com.querydsl:querydsl-apt:${queryDslVersion}:jakarta")
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
+
+    // APT가 jakarta 클래스를 로딩할 수 있게 명시
+    annotationProcessor("jakarta.persistence:jakarta.persistence-api")
 
     // --- Database ---
     implementation("org.flywaydb:flyway-core")
