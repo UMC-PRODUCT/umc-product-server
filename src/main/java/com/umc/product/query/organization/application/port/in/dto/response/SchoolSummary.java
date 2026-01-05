@@ -1,4 +1,4 @@
-package com.umc.product.command.organization.application.port.in.dto.response;
+package com.umc.product.query.organization.application.port.in.dto.response;
 
 public record SchoolSummary(
         Long schoolId,

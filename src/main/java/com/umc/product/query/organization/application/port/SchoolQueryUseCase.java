@@ -1,4 +1,4 @@
-package com.umc.product.query.application.port.in;
+package com.umc.product.query.organization.application.port;
 
 import com.umc.product.command.organization.application.port.in.dto.response.DeletableSchoolSummary;
 import com.umc.product.command.organization.application.port.in.dto.response.SchoolDeleteSearchCondition;
@@ -6,11 +6,10 @@ import com.umc.product.command.organization.application.port.in.dto.response.Sch
 import com.umc.product.command.organization.application.port.in.dto.response.SchoolSummary;
 import com.umc.product.common.dto.request.PageRequest;
 import com.umc.product.common.dto.request.PageResult;
-
 import java.util.List;
 
 
-public interface SchoolQueryUseCase  {
+public interface SchoolQueryUseCase {
 
     List<SchoolSummary> getAll(Long gisuId);
 

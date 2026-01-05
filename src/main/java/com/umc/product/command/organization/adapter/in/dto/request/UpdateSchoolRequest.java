@@ -1,4 +1,4 @@
-package com.umc.product.command.organization.adapter.in.dto;
+package com.umc.product.command.organization.adapter.in.dto.request;
 
 import com.umc.product.command.organization.application.port.in.dto.request.UpdateSchoolUseCaseRequest;
 import jakarta.validation.constraints.NotBlank;

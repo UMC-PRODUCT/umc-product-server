@@ -1,9 +1,9 @@
-package com.umc.product.query.application.port.out;
+package com.umc.product.query.organization.application.port.out;
 
 import com.umc.product.command.organization.domain.StudyGroup;
 import java.util.Optional;
 
-public interface LoadStudyGroupPort {
+public interface StudyGroupQueryPort {
 
     Optional<StudyGroup> findById(Long id);
 
