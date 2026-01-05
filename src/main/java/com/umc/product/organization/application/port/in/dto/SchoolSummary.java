@@ -1,6 +1,6 @@
 package com.umc.product.organization.application.port.in.dto;
 
-public record SchoolOptionQuery(
+public record SchoolSummary(
         Long schoolId,
         String schoolName
 ) {
