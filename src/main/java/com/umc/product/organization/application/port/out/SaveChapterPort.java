@@ -6,5 +6,6 @@ public interface SaveChapterPort {
 
 
     Chapter save(Chapter chapter);
+
     void delete(Chapter chapter);
 }

@@ -9,6 +9,8 @@ import java.util.Optional;
 public interface LoadChapterSchoolPort {
 
     Optional<ChapterSchool> findById(Long id);
+
     Optional<ChapterSchool> findByChapterAndSchool(Chapter chapter, School school);
+
     List<ChapterSchool> findAllByChapter(Chapter chapter);
 }

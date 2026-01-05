@@ -5,6 +5,7 @@ import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 import com.umc.product.global.security.CustomAuthorizationManager;
 import com.umc.product.global.security.JwtAuthenticationFilter;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -30,18 +31,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity // @PreAuthorize, @PostAuthorize 활성화
 @RequiredArgsConstructor
 public class SecurityConfig {
-
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CustomAuthorizationManager customAuthorizationManager;
-    private final ApiAuthenticationEntryPoint authenticationEntryPoint;
-    private final ApiAccessDeniedHandler accessDeniedHandler;
 
     private static final String[] SWAGGER_PATHS = {
             "/swagger-ui/**",
@@ -51,11 +45,13 @@ public class SecurityConfig {
             "/swagger-resources/**",
             "/webjars/**"
     };
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAuthorizationManager customAuthorizationManager;
+    private final ApiAuthenticationEntryPoint authenticationEntryPoint;
+    private final ApiAccessDeniedHandler accessDeniedHandler;
 
     /**
-     * Swagger용 SecurityFilterChain (dev 프로필에서만 활성화)
-     * - HTTP Basic 인증 적용
-     * - 순서가 먼저라서 Swagger 경로는 이 체인이 처리
+     * Swagger용 SecurityFilterChain (dev 프로필에서만 활성화) - HTTP Basic 인증 적용 - 순서가 먼저라서 Swagger 경로는 이 체인이 처리
      */
     @Bean
     @Order(1)

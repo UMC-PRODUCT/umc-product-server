@@ -40,7 +40,11 @@ public class ChapterSchool {
     }
 
     private static void validate(Chapter chapter, School school) {
-        if (chapter == null) throw new BusinessException(Domain.COMMON, OrganizationErrorCode.CHAPTER_REQUIRED);
-        if (school == null) throw new BusinessException(Domain.COMMON, OrganizationErrorCode.SCHOOL_REQUIRED);
+        if (chapter == null) {
+            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.CHAPTER_REQUIRED);
+        }
+        if (school == null) {
+            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.SCHOOL_REQUIRED);
+        }
     }
 }

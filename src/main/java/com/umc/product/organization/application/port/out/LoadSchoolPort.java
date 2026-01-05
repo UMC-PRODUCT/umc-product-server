@@ -8,6 +8,8 @@ import java.util.Optional;
 public interface LoadSchoolPort {
 
     Optional<School> findById(Long id);
+
     List<School> findAll();
+
     List<School> findByChapter(Chapter chapter);
 }

@@ -8,6 +8,8 @@ import java.util.Optional;
 public interface LoadChapterPort {
 
     Optional<Chapter> findById(Long id);
+
     List<Chapter> findAll();
+
     List<Chapter> findAllByGisu(Gisu gisu);
 }

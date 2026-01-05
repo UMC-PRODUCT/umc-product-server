@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface GetSchoolUserCase {
     List<SchoolSummary> getAll(Long gisuId);
+
     SchoolInfo getById(Long schoolId);
 
 }

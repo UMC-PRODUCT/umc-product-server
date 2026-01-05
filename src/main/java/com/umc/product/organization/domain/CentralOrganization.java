@@ -38,8 +38,12 @@ public class CentralOrganization {
     }
 
     private static void validate(Gisu gisu, String name) {
-        if (gisu == null) throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_REQUIRED);
-        if (name == null || name.isBlank()) throw new BusinessException(Domain.COMMON, OrganizationErrorCode.ORGAN_NAME_REQUIRED);
+        if (gisu == null) {
+            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_REQUIRED);
+        }
+        if (name == null || name.isBlank()) {
+            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.ORGAN_NAME_REQUIRED);
+        }
     }
 
 }

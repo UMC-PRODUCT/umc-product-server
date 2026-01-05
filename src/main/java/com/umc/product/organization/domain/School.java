@@ -36,8 +36,12 @@ public class School {
     }
 
     private static void validate(String name, String domain) {
-        if (name == null || name.isBlank()) throw new BusinessException(Domain.COMMON, OrganizationErrorCode.SCHOOL_NAME_REQUIRED);
-        if (domain == null || domain.isBlank()) throw new BusinessException(Domain.COMMON, OrganizationErrorCode.SCHOOL_DOMAIN_REQUIRED);
+        if (name == null || name.isBlank()) {
+            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.SCHOOL_NAME_REQUIRED);
+        }
+        if (domain == null || domain.isBlank()) {
+            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.SCHOOL_DOMAIN_REQUIRED);
+        }
     }
 
 }

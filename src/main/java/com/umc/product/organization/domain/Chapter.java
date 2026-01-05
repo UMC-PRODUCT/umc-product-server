@@ -11,7 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,7 +38,11 @@ public class Chapter {
     }
 
     private static void validate(Gisu gisu, String name) {
-        if (gisu == null) throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_REQUIRED);
-        if (name == null || name.isBlank()) throw new BusinessException(Domain.COMMON, OrganizationErrorCode.ORGAN_NAME_REQUIRED);
+        if (gisu == null) {
+            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_REQUIRED);
+        }
+        if (name == null || name.isBlank()) {
+            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.ORGAN_NAME_REQUIRED);
+        }
     }
 }

@@ -4,5 +4,6 @@ import java.util.List;
 
 public interface DeleteSchoolUseCase {
     void deleteById(Long schoolId);
+
     void deleteAll(List<Long> schoolIds);
 }

@@ -8,5 +8,6 @@ import java.util.Optional;
 public interface LoadStudyGroupMemberPort {
 
     Optional<StudyGroupMember> findById(Long id);
+
     List<StudyGroupMember> findByStudyGroup(StudyGroup studyGroup);
 }

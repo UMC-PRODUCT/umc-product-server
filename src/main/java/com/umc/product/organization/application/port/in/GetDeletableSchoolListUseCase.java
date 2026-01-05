@@ -4,7 +4,6 @@ import com.umc.product.organization.application.port.in.dto.DeletableSchoolSumma
 import com.umc.product.organization.application.port.in.dto.SchoolDeleteSearchCondition;
 import com.umc.product.organization.application.port.in.dto.paging.PageRequest;
 import com.umc.product.organization.application.port.in.dto.paging.PageResult;
-import java.util.List;
 
 public interface GetDeletableSchoolListUseCase {
     PageResult<DeletableSchoolSummary> getList(SchoolDeleteSearchCondition condition, PageRequest pageRequest);
