@@ -4,6 +4,7 @@ import com.umc.product.challenger.domain.enums.ChallengerPart;
 import com.umc.product.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -25,7 +26,7 @@ public class Challenger extends BaseEntity {
     @Column(nullable = false, name = "member_id")
     private Long memberId;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "part")
     private ChallengerPart part;
 
