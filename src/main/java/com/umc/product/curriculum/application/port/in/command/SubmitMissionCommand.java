@@ -6,7 +6,7 @@ import java.util.Objects;
 public record SubmitMissionCommand(
         @NotNull(message = "미션 ID는 필수입니다")
         Long missionId,
-        @NotNull(message = "미션 ID는 필수입니다")
+        @NotNull(message = "챌린저 워크북 ID는 필수입니다")
         Long challengerWorkbookId,
         String submission
 ) {
