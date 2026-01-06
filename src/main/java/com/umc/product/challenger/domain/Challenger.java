@@ -43,9 +43,9 @@ public class Challenger extends BaseEntity {
 
     @OneToMany(
             mappedBy = "challenger",
-            fetch = FetchType.LAZY,           // 명시
-            cascade = CascadeType.ALL,        // 명시
-            orphanRemoval = true              // 명시
+            fetch = FetchType.LAZY,
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
     )
     private List<ChallengerPoint> challengerPoint = new ArrayList<>();
 
@@ -58,7 +58,7 @@ public class Challenger extends BaseEntity {
 
     public void validateChallengerStatus() {
         if (this.status != ChallengerStatus.ACTIVE) {
-            throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_ACTIVE)
+            throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_ACTIVE);
         }
     }
 }
