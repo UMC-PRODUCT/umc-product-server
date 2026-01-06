@@ -1,7 +1,7 @@
 package com.umc.product.member.application.port.in.query;
 
 import com.umc.product.member.domain.Member;
-import com.umc.product.member.domain.MemberStatus;
+import com.umc.product.member.domain.enums.MemberStatus;
 
 public record MemberInfo(
         Long id,
