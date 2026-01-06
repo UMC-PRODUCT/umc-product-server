@@ -36,7 +36,7 @@ public class Curriculum extends BaseEntity {
     @Column(nullable = false)
     private ChallengerPart part;
 
-    @OneToMany(mappedBy = "originalWorkbook", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "curriculum", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OriginalWorkbook> originalWorkbooks = new ArrayList<>();
 
     @Builder
