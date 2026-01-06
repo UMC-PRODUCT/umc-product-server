@@ -13,4 +13,8 @@ public interface LoadChallengerWorkbookPort {
     List<ChallengerWorkbook> findByChallengerId(Long challengerId);
 
     List<ChallengerWorkbook> findByChallengerIdAndCurriculumId(Long challengerId, Long curriculumId);
+
+    List<ChallengerWorkbook> findByOriginalWorkbookId(Long originalWorkbookId);
+
+    List<ChallengerWorkbook> findByOriginalWorkbookIdAndStudyGroupId(Long originalWorkbookId, Long studyGroupId);
 }

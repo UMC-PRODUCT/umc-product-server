@@ -11,4 +11,9 @@ public interface LoadOriginalWorkbookPort {
     List<OriginalWorkbook> findByCurriculumId(Long curriculumId);
 
     List<OriginalWorkbook> findByCurriculumIdOrderByOrderNo(Long curriculumId);
+
+    /**
+     * 기수의 모든 주차 번호 조회 (드롭다운용)
+     */
+    List<Integer> findDistinctOrderNoByGisuId(Long gisuId);
 }
