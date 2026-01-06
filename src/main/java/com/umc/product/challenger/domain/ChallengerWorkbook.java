@@ -1,7 +1,7 @@
 package com.umc.product.challenger.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.curriculum.domain.WorkbookStatus;
+import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

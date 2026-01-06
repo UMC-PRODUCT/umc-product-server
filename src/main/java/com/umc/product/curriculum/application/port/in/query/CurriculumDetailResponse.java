@@ -1,7 +1,7 @@
-package com.umc.product.curriculum.application.port.in.dto;
+package com.umc.product.curriculum.application.port.in.query;
 
-import com.umc.product.curriculum.domain.MissionType;
-import com.umc.product.curriculum.domain.WorkbookStatus;
+import com.umc.product.curriculum.domain.enums.MissionType;
+import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import java.util.List;
 
 public record CurriculumDetailResponse(

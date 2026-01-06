@@ -1,6 +1,6 @@
-package com.umc.product.curriculum.application.port.in.dto;
+package com.umc.product.curriculum.application.port.in.command;
 
-import com.umc.product.curriculum.domain.WorkbookStatus;
+import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 
 public record ReviewWorkbookCommand(
         Long challengerWorkbookId,

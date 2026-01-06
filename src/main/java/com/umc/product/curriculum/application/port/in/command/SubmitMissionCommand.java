@@ -1,4 +1,4 @@
-package com.umc.product.curriculum.application.port.in.dto;
+package com.umc.product.curriculum.application.port.in.command;
 
 import java.util.Objects;
 

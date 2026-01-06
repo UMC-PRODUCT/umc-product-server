@@ -1,4 +1,4 @@
-package com.umc.product.challenger.domain;
+package com.umc.product.challenger.domain.enums;
 
 public enum ChallengerPart {
     PLAN,

@@ -1,7 +1,5 @@
 package com.umc.product.curriculum.application.port.in.query;
 
-import com.umc.product.curriculum.application.port.in.dto.CurriculumDetailResponse;
-
 public interface GetCurriculumProgressUseCase {
 
     /**

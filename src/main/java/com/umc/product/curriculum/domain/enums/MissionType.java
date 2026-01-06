@@ -1,4 +1,4 @@
-package com.umc.product.curriculum.domain;
+package com.umc.product.curriculum.domain.enums;
 
 public enum MissionType {
     LINK,   // 링크 형식
