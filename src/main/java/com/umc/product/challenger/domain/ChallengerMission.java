@@ -25,8 +25,8 @@ public class ChallengerMission extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false) // WorkbookMissionId
-    private Long missionId;
+    @Column(nullable = false)
+    private Long workbookMissionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "challenger_workbook_id", nullable = false)
@@ -36,8 +36,8 @@ public class ChallengerMission extends BaseEntity {
     private String submission;
 
     @Builder
-    private ChallengerMission(Long missionId, ChallengerWorkbook challengerWorkbook, String submission) {
-        this.missionId = missionId;
+    private ChallengerMission(Long workbookMissionId, ChallengerWorkbook challengerWorkbook, String submission) {
+        this.workbookMissionId = workbookMissionId;
         this.challengerWorkbook = challengerWorkbook;
         this.submission = submission;
     }
