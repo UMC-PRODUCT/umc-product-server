@@ -43,10 +43,4 @@ public class WorkbookMission extends BaseEntity {
         this.missionType = missionType;
         this.content = content;
     }
-
-//    public void update(String title, MissionType missionType, String content) {
-//        this.title = title;
-//        this.missionType = missionType;
-//        this.content = content;
-//    }
 }

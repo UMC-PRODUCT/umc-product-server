@@ -3,9 +3,12 @@ package com.umc.product.curriculum.domain;
 import com.umc.product.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -22,8 +25,9 @@ public class OriginalWorkbook extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long curriculumId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "curriculum_id", nullable = false)
+    private Curriculum curriculum;
 
     @Column(nullable = false)
     private String title;
@@ -38,19 +42,12 @@ public class OriginalWorkbook extends BaseEntity {
     private Integer orderNo;
 
     @Builder
-    private OriginalWorkbook(Long curriculumId, String title, String description,
+    private OriginalWorkbook(Curriculum curriculum, String title, String description,
                              String workbookUrl, Integer orderNo) {
-        this.curriculumId = curriculumId;
+        this.curriculum = curriculum;
         this.title = title;
         this.description = description;
         this.workbookUrl = workbookUrl;
         this.orderNo = orderNo;
     }
-
-//    public void update(String title, String description, String workbookUrl, Integer orderNo) {
-//        this.title = title;
-//        this.description = description;
-//        this.workbookUrl = workbookUrl;
-//        this.orderNo = orderNo;
-//    }
 }

@@ -1,7 +1,11 @@
 package com.umc.product.challenger.domain;
 
+import com.umc.product.challenger.exception.ChallengerErrorCode;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,7 +13,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -41,6 +48,9 @@ public class ChallengerWorkbook extends BaseEntity {
     @Column(nullable = false)
     private Boolean isBest;
 
+    @OneToMany(mappedBy = "challengerWorkbook", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ChallengerMission> missions = new ArrayList<>();
+
     @Builder
     private ChallengerWorkbook(Long challengerId, Long originalWorkbookId, Long scheduleId) {
         this.challengerId = challengerId;
@@ -50,26 +60,26 @@ public class ChallengerWorkbook extends BaseEntity {
         this.isBest = false;
     }
 
-//    public void markAsPass() {
-//        this.status = WorkbookStatus.PASS;
-//    }
-//
-//    public void markAsFail() {
-//        this.status = WorkbookStatus.FAIL;
-//    }
-//
-//    public void selectAsBest() {
-//        validatePassStatus();
-//        this.isBest = true;
-//    }
-//
-//    public void unselectAsBest() {
-//        this.isBest = false;
-//    }
-//
-//    private void validatePassStatus() {
-//        if (this.status != WorkbookStatus.PASS) {
-//            throw new BusinessException(ErrorCode.INVALID_WORKBOOK_STATUS);
-//        }
-//    }
+    public void markAsPass() {
+        this.status = WorkbookStatus.PASS;
+    }
+
+    public void markAsFail() {
+        this.status = WorkbookStatus.FAIL;
+    }
+
+    public void selectAsBest() {
+        validatePassStatus();
+        this.isBest = true;
+    }
+
+    public void unselectAsBest() {
+        this.isBest = false;
+    }
+
+    private void validatePassStatus() {
+        if (this.status != WorkbookStatus.PASS) {
+            throw new BusinessException(Domain.COMMON, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
+        }
+    }
 }
