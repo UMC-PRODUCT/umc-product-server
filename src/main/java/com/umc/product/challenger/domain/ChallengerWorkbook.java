@@ -61,10 +61,12 @@ public class ChallengerWorkbook extends BaseEntity {
     }
 
     public void markAsPass() {
+        validatePendingStatus();
         this.status = WorkbookStatus.PASS;
     }
 
     public void markAsFail() {
+        validatePendingStatus();
         this.status = WorkbookStatus.FAIL;
     }
 
@@ -79,7 +81,13 @@ public class ChallengerWorkbook extends BaseEntity {
 
     private void validatePassStatus() {
         if (this.status != WorkbookStatus.PASS) {
-            throw new BusinessException(Domain.COMMON, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
+            throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
+        }
+    }
+
+    private void validatePendingStatus() {
+        if (this.status != WorkbookStatus.PENDING) {
+            throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
         }
     }
 }
