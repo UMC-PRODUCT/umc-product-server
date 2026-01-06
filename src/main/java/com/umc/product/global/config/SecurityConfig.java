@@ -5,6 +5,10 @@ import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 import com.umc.product.global.security.CustomAuthorizationManager;
 import com.umc.product.global.security.JwtAuthenticationFilter;
+import com.umc.product.global.security.oauth.OAuth2AuthenticationFailureHandler;
+import com.umc.product.global.security.oauth.OAuth2AuthenticationSuccessHandler;
+import com.umc.product.member.adapter.in.web.oauth.CustomOAuth2UserService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -30,18 +34,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity // @PreAuthorize, @PostAuthorize 활성화
 @RequiredArgsConstructor
 public class SecurityConfig {
-
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CustomAuthorizationManager customAuthorizationManager;
-    private final ApiAuthenticationEntryPoint authenticationEntryPoint;
-    private final ApiAccessDeniedHandler accessDeniedHandler;
 
     private static final String[] SWAGGER_PATHS = {
             "/swagger-ui/**",
@@ -52,10 +49,16 @@ public class SecurityConfig {
             "/webjars/**"
     };
 
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final CustomAuthorizationManager customAuthorizationManager;
+    private final ApiAuthenticationEntryPoint authenticationEntryPoint;
+    private final ApiAccessDeniedHandler accessDeniedHandler;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2FailureHandler;
+
     /**
-     * Swagger용 SecurityFilterChain (dev 프로필에서만 활성화)
-     * - HTTP Basic 인증 적용
-     * - 순서가 먼저라서 Swagger 경로는 이 체인이 처리
+     * Swagger용 SecurityFilterChain (dev 프로필에서만 활성화) - HTTP Basic 인증 적용 - 순서가 먼저라서 Swagger 경로는 이 체인이 처리
      */
     @Bean
     @Order(1)
@@ -85,9 +88,18 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)   // HTTP Basic 비활성
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // OAuth2 로그인 설정
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo ->
+                                userInfo.userService(customOAuth2UserService))
+                        .successHandler(oAuth2SuccessHandler)
+                        .failureHandler(oAuth2FailureHandler)
+                )
                 .authorizeHttpRequests(auth -> auth
                         // Health Check
                         .requestMatchers("/actuator/**").permitAll()
+                        // OAuth2
+                        .requestMatchers("/login/**", "/oauth2/**").permitAll()
                         // Swagger API
                         .requestMatchers(SWAGGER_PATHS).permitAll()
                         .anyRequest().access(customAuthorizationManager)  // 커스텀 매니저 사용

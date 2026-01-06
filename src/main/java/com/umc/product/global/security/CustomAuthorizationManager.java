@@ -2,6 +2,7 @@ package com.umc.product.global.security;
 
 import com.umc.product.global.security.annotation.Public;
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.function.Supplier;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.authorization.AuthorizationManager;
@@ -12,13 +13,10 @@ import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerExecutionChain;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import java.util.function.Supplier;
-
 /**
  * API별 접근 권한을 커스텀하게 설정하기 위한 AuthorizationManager 구현체
  * <p>
- * - @Public 어노테이션이 붙은 API는 인증 없이 접근 허용
- * - 그 외의 API는 인증된 사용자만 접근 허용
+ * - @Public 어노테이션이 붙은 API는 인증 없이 접근 허용 - 그 외의 API는 인증된 사용자만 접근 허용
  */
 @Component
 public class CustomAuthorizationManager implements

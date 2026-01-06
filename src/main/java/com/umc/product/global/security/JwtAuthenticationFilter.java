@@ -5,6 +5,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -12,9 +14,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import java.io.IOException;
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -32,10 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Long userId = jwtTokenProvider.getUserId(token);
             List<String> roles = jwtTokenProvider.getRoles(token);
 
-            UserPrincipal userPrincipal = UserPrincipal.builder()
-                    .userId(userId)
-                    .roles(roles)
-                    .build();
+            MemberPrincipal memberPrincipal = new MemberPrincipal(userId, "");  // email은 빈 문자열
 
             List<SimpleGrantedAuthority> authorities = roles.stream()
                     .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
@@ -46,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // credentials: 인증에 사용된 자격 증명 (여기서는 null로 설정)
             // authorities: 사용자의 권한 정보 (여기서는 null로 설정)
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userPrincipal,
+                    memberPrincipal,
                     null,
                     authorities
             );

@@ -1,7 +1,7 @@
 package com.umc.product.global.security.resolver;
 
-import com.umc.product.global.security.UserPrincipal;
-import com.umc.product.global.security.annotation.CurrentUser;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,9 +17,9 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
         // 1. 파라미터에 @CurrentUser 어노테이션이 붙어 있는지 확인
-        boolean hasAnnotation = parameter.hasParameterAnnotation(CurrentUser.class);
+        boolean hasAnnotation = parameter.hasParameterAnnotation(CurrentMember.class);
         // 2. 파라미터 타입이 UserPrincipal인지 확인
-        boolean hasUserType = UserPrincipal.class.isAssignableFrom(parameter.getParameterType());
+        boolean hasUserType = MemberPrincipal.class.isAssignableFrom(parameter.getParameterType());
 
         return hasAnnotation && hasUserType;
     }
@@ -38,7 +38,7 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
 
         // 실제 UserPrincipal 객체 반환
         Object principal = authentication.getPrincipal();
-        if (principal instanceof UserPrincipal) {
+        if (principal instanceof MemberPrincipal) {
             return principal;
         }
 

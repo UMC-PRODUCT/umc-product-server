@@ -21,12 +21,10 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class OpenApiConfig {
 
-    @Value("${server.port:8080}")
-    private String serverPort;
-
     private final String accessToken = "Access Token";
     private final String refreshToken = "Refresh Token";
-
+    @Value("${server.port:8080}")
+    private String serverPort;
 
     @Bean
     public OpenAPI umcProductApi() {
