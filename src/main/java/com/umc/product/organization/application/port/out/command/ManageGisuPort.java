@@ -3,7 +3,7 @@ package com.umc.product.organization.application.port.out.command;
 
 import com.umc.product.organization.domain.Gisu;
 
-public interface GisuManagePort {
+public interface ManageGisuPort {
 
     Gisu save(Gisu gisu);
 

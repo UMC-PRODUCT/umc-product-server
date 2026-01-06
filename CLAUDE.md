@@ -177,7 +177,7 @@ CUD(Create, Update, Delete)를 하나의 인터페이스로 통합하고 싶다�
 | 대상 | 개별형 | 통합형 |
 |------|--------|--------|
 | **UseCase** | `CreateSchoolUseCase`, `UpdateSchoolUseCase`, `DeleteSchoolUseCase` | `ManageSchoolUseCase` |
-| **Port** | `SaveSchoolPort` | `SchoolManagePort` |
+| **Port** | `SaveSchoolPort` | `ManageSchoolPort` |
 
 ---
 

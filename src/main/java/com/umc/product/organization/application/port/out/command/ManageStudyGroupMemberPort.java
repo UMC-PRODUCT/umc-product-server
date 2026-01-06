@@ -3,7 +3,7 @@ package com.umc.product.organization.application.port.out.command;
 
 import com.umc.product.organization.domain.StudyGroupMember;
 
-public interface StudyGroupMemberManagePort {
+public interface ManageStudyGroupMemberPort {
 
     StudyGroupMember save(StudyGroupMember studyGroupMember);
 
