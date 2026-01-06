@@ -41,4 +41,8 @@ public class ChallengerMission extends BaseEntity {
         this.challengerWorkbook = challengerWorkbook;
         this.submission = submission;
     }
+
+    public void updateSubmission(String submission) {
+        this.submission = submission;
+    }
 }
