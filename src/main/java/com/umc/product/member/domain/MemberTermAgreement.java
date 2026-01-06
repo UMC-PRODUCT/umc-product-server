@@ -1,6 +1,7 @@
 package com.umc.product.member.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.member.domain.enums.TermType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

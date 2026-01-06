@@ -1,4 +1,4 @@
-package com.umc.product.member.domain;
+package com.umc.product.member.domain.enums;
 
 public enum TermType {
     SERVICE,    // 서비스이용약관

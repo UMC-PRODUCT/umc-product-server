@@ -39,9 +39,9 @@ public class MemberOAuth extends BaseEntity {
     private String providerId;
 
     @Builder
-    private MemberOAuth(Long memberId, OAuthProvider provider, String providerUserId) {
+    private MemberOAuth(Long memberId, OAuthProvider provider, String providerId) {
         this.memberId = memberId;
         this.provider = provider;
-        this.providerId = providerUserId;
+        this.providerId = providerId;
     }
 }

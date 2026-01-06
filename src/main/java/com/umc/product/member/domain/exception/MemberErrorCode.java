@@ -15,6 +15,7 @@ public enum MemberErrorCode implements BaseCode {
     MEMBER_ALREADY_WITHDRAWN(HttpStatus.BAD_REQUEST, "MEMBER-0004", "이미 탈퇴한 사용자입니다."),
     INVALID_MEMBER_STATUS(HttpStatus.BAD_REQUEST, "MEMBER-0005", "올바르지 않은 사용자 상태입니다."),
     MEMBER_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "MEMBER-0006", "올바르지 않은 사용자 상태입니다."),
+    MEMBER_ALREADY_REGISTERED(HttpStatus.BAD_REQUEST, "MEMBER-0007", "이미 회원가입을 완료한 사용자입니다."),
     ;
 
     private final HttpStatus httpStatus;
