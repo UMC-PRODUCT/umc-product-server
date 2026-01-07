@@ -22,7 +22,7 @@ services:
 
   # PostgreSQL Database
   umc-product-postgres:
-
+    image: postgis/postgis:16-3.4
     container_name: umc-product-postgresql-local
     ports:
       - "54321:5432"
