@@ -17,13 +17,11 @@ public class SchoolControllerTest extends DocumentationTest {
 
     @Test
     void 총괄_신규학교를_추가합니다() throws Exception {
-        // given
+        // given when
         CreateSchoolRequest request = CreateSchoolRequest.builder().schoolName("중앙대학교").chapterId("3")
                 .remark("중앙대는 멋집니다.").build();
 
-
-        System.out.println(objectMapper.writeValueAsString(request));
-
+        // then
         ResultActions result = mockMvc.perform(
                 post("/api/v1/admin/schools").content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));

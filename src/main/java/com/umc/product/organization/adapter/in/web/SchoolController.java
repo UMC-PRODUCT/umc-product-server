@@ -2,6 +2,7 @@ package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.organization.adapter.in.web.dto.request.CreateSchoolRequest;
 import com.umc.product.organization.application.port.in.command.ManageSchoolUseCase;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,7 +18,7 @@ public class SchoolController {
 
     @PostMapping()
     public void createSchool(
-            @RequestBody CreateSchoolRequest createSchoolRequest
+            @RequestBody @Valid CreateSchoolRequest createSchoolRequest
     ) {
 
         manageSchoolUseCase.register(createSchoolRequest.toCommand());
