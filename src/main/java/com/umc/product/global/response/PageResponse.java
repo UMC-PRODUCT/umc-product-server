@@ -14,7 +14,7 @@ public record PageResponse<T>(
         boolean hasNext,
         boolean hasPrevious
 ) {
-    public static <T> PageResponse<T> from(Page<T> page) {
+    public static <T> PageResponse<T> of(Page<T> page) {
         return new PageResponse<>(
                 page.getContent(),
                 page.getNumber(),
@@ -26,7 +26,7 @@ public record PageResponse<T>(
         );
     }
 
-    public static <T, R> PageResponse<R> from(Page<T> page, Function<T, R> mapper) {
+    public static <T, R> PageResponse<R> of(Page<T> page, Function<T, R> mapper) {
         List<R> mappedContent = page.getContent().stream()
                 .map(mapper)
                 .toList();
