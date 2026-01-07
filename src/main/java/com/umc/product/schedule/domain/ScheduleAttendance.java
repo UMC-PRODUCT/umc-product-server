@@ -75,8 +75,6 @@ public class ScheduleAttendance extends BaseEntity {
     }
 
     public boolean isPending() {
-        return this.status == AttendanceStatus.PRESENT_PENDING
-                || this.status == AttendanceStatus.LATE_PENDING
-                || this.status == AttendanceStatus.EXCUSED_PENDING;
+        return this.status.isPending();
     }
 }
