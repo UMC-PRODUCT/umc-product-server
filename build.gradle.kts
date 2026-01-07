@@ -2,6 +2,7 @@ plugins {
     java
     id("org.springframework.boot") version "3.5.9"
     id("io.spring.dependency-management") version "1.1.7"
+    id("org.asciidoctor.jvm.convert") version "4.0.5"
 }
 
 group = "com.umc"
@@ -19,6 +20,7 @@ configurations {
     compileOnly {
         extendsFrom(configurations.annotationProcessor.get())
     }
+    create("asciidoctorExt")
 }
 
 repositories {
@@ -116,8 +118,38 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
+
+    // --- Spring REST Docs ---
+    "asciidoctorExt"("org.springframework.restdocs:spring-restdocs-asciidoctor")
+    testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+val snippetsDir = file("build/generated-snippets")
+
+tasks.test {
+    outputs.dir(snippetsDir)
+
+}
+
+tasks.asciidoctor {
+    inputs.dir(snippetsDir)
+    configurations("asciidoctorExt")
+
+    sources {
+        include("**/index.adoc")
+    }
+
+    baseDirFollowsSourceDir()
+    dependsOn(tasks.test)
+}
+
+tasks.bootJar {
+    dependsOn(tasks.asciidoctor)
+    from(tasks.asciidoctor.get().outputDir) {
+        into("static/docs")
+    }
 }
