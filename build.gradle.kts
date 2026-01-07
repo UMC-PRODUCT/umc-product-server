@@ -139,6 +139,8 @@ tasks.asciidoctor {
     inputs.dir(snippetsDir)
     configurations("asciidoctorExt")
 
+    attributes(mapOf("snippets" to snippetsDir)) // @kyeoungwoon 추가!
+
     sources {
         include("**/index.adoc")
     }
