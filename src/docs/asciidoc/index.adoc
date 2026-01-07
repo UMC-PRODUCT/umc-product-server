@@ -9,3 +9,7 @@ endif::[]
 :toclevels: 2
 :sectlinks:
 
+[[School-API]]
+== School API
+
+include::api/school/school.adoc[]
