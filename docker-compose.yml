@@ -22,7 +22,7 @@ services:
 
   # PostgreSQL Database
   umc-product-postgres:
-    image: postgres:18.1 # 2025/12/20 기준 가장 최신 버전 사용
+
     container_name: umc-product-postgresql-local
     ports:
       - "54321:5432"
