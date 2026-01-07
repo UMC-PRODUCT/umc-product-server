@@ -60,9 +60,8 @@ public class ScheduleAttendance extends BaseEntity {
         this.status = resolveApprovedStatus();
     }
 
-    public void reject(Long confirmerId, String reason) {
+    public void reject(Long confirmerId) {
         this.confirmedChallengerId = confirmerId;
-        this.reason = reason;
         this.status = AttendanceStatus.ABSENT;
     }
 
