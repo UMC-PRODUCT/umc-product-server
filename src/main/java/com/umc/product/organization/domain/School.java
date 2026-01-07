@@ -11,6 +11,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.util.StringUtils;
 
 @Entity
 @Getter
@@ -25,14 +26,14 @@ public class School {
 
     private String emailDomain;
 
-    private Long logoImageId;
+    private String logoImageUrl;
 
     @Builder
-    private School(String name, String domain, Long logoImageId) {
+    private School(String name, String domain, String logoImageUrl) {
         validate(name, domain);
         this.name = name;
         this.emailDomain = domain;
-        this.logoImageId = logoImageId;
+        this.logoImageUrl = logoImageUrl;
     }
 
     private static void validate(String name, String domain) {
@@ -41,6 +42,24 @@ public class School {
         }
         if (domain == null || domain.isBlank()) {
             throw new BusinessException(Domain.COMMON, OrganizationErrorCode.SCHOOL_DOMAIN_REQUIRED);
+        }
+    }
+
+    public void updateLogoImageId(Long logoImageId) {
+        if(StringUtils.isEmpty(logoImageUrl)){
+            this.logoImageUrl = logoImageUrl;
+        }
+    }
+
+    public void updateName(String name) {
+        if (StringUtils.isEmpty(name)) {
+            this.name = name;
+        }
+    }
+
+    public void updateEmailDomain(String emailDomain) {
+        if (StringUtils.isEmpty(emailDomain)) {
+            this.emailDomain = emailDomain;
         }
     }
 

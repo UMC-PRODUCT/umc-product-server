@@ -1,15 +1,16 @@
 package com.umc.product.organization.application.port.in.command;
 
 import com.umc.product.organization.application.port.in.command.dto.CreateSchoolCommand;
+import com.umc.product.organization.application.port.in.command.dto.UpdateSchoolCommand;
 
 public interface ManageSchoolUseCase {
 
     void register(CreateSchoolCommand command);
 
-//
-//    void update(UpdateSchoolCommand command);
-//
-//    void delete(Long schoolId);
+
+    void updateSchool(UpdateSchoolCommand command);
+
+    void deleteSchool(Long schoolId);
 //
 //    void deleteAll(List<Long> schoolIds);
 }

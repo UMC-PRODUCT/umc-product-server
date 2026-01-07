@@ -1,9 +1,13 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.organization.adapter.in.web.dto.request.CreateSchoolRequest;
+import com.umc.product.organization.adapter.in.web.dto.request.UpdateSchoolRequest;
 import com.umc.product.organization.application.port.in.command.ManageSchoolUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,13 +21,20 @@ public class SchoolController {
     private final ManageSchoolUseCase manageSchoolUseCase;
 
     @PostMapping()
-    public void createSchool(
-            @RequestBody @Valid CreateSchoolRequest createSchoolRequest
-    ) {
+    public void createSchool(@RequestBody @Valid CreateSchoolRequest createSchoolRequest) {
 
         manageSchoolUseCase.register(createSchoolRequest.toCommand());
 
+    }
 
+    @PatchMapping("/{schoolId}")
+    public void updateSchool(@PathVariable Long schoolId, @RequestBody @Valid UpdateSchoolRequest updateSchoolRequest) {
+        manageSchoolUseCase.updateSchool(updateSchoolRequest.toCommand());
+    }
+
+    @DeleteMapping("/{schoolId}")
+    public void deleteSchool(@PathVariable Long schoolId) {
+        manageSchoolUseCase.deleteSchool(schoolId);
     }
 }
 
