@@ -87,12 +87,11 @@ public class Schedule extends BaseEntity {
         return location != null ? location.getX() : null;
     }
 
-    public boolean isInProgress() {
-        LocalDateTime now = LocalDateTime.now();
-        return now.isAfter(startsAt) && now.isBefore(endsAt);
+    public boolean isInProgress(LocalDateTime referenceTime) {
+        return referenceTime.isAfter(startsAt) && referenceTime.isBefore(endsAt);
     }
 
-    public boolean isEnded() {
-        return LocalDateTime.now().isAfter(endsAt);
+    public boolean isEnded(LocalDateTime referenceTime) {
+        return referenceTime.isAfter(endsAt);
     }
 }

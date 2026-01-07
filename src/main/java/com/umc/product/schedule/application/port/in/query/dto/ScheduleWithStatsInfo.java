@@ -73,10 +73,10 @@ public record ScheduleWithStatsInfo(
 
     private static String resolveStatus(Schedule schedule) {
         LocalDateTime now = LocalDateTime.now();
-        
-        if (schedule.isEnded()) {
+
+        if (schedule.isEnded(now)) {
             return "종료됨";
-        } else if (schedule.isInProgress()) {
+        } else if (schedule.isInProgress(now)) {
             return "진행 중";
         } else {
             return "예정";
