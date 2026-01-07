@@ -12,7 +12,7 @@ import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
 @Component
-public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolver {
+public class CurrentMemberArgumentResolver implements HandlerMethodArgumentResolver {
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -36,7 +36,7 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
             return null;
         }
 
-        // 실제 UserPrincipal 객체 반환
+        // 실제 MemberPrincipal 객체 반환
         Object principal = authentication.getPrincipal();
         if (principal instanceof MemberPrincipal) {
             return principal;
