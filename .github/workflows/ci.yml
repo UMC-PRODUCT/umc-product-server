@@ -151,36 +151,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Job 3: Multi-arch manifest 생성
-  create-manifest:
-    needs: [ build-and-test ]
-    runs-on: self-hosted
-    steps:
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Create and push manifest
-        run: |
-          IMAGE_TAG="${{ needs.build-and-test.outputs.image_tag }}"
-          ENVIRONMENT="${{ needs.build-and-test.outputs.environment }}"
-          
-          # 특정 커밋용 manifest 생성
-          docker buildx imagetools create -t ${{ secrets.DOCKER_IMAGE_NAME }}:${IMAGE_TAG} \
-            ${{ secrets.DOCKER_IMAGE_NAME }}:${IMAGE_TAG}-amd64 \
-            ${{ secrets.DOCKER_IMAGE_NAME }}:${IMAGE_TAG}-arm64
-          
-          # 환경별 latest manifest 생성
-          docker buildx imagetools create -t ${{ secrets.DOCKER_IMAGE_NAME }}:${ENVIRONMENT}-latest \
-            ${{ secrets.DOCKER_IMAGE_NAME }}:${IMAGE_TAG}-amd64 \
-            ${{ secrets.DOCKER_IMAGE_NAME }}:${IMAGE_TAG}-arm64
-          
-          echo "✅ Created manifests:"
-          echo "  - ${{ secrets.DOCKER_IMAGE_NAME }}:${IMAGE_TAG}"
-          echo "  - ${{ secrets.DOCKER_IMAGE_NAME }}:${ENVIRONMENT}-latest"
-
       - name: Build Summary
         if: always()
         run: |
