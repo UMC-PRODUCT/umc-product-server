@@ -8,6 +8,8 @@ import com.umc.product.common.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -32,12 +34,14 @@ public class Challenger extends BaseEntity {
     @Column(nullable = false, name = "member_id")
     private Long memberId;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "part")
     private ChallengerPart part;
 
     @Column(nullable = false, name = "gisu_id")
     private Long gisuId;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "status")
     private ChallengerStatus status;
 
@@ -47,7 +51,7 @@ public class Challenger extends BaseEntity {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private List<ChallengerPoint> challengerPoint = new ArrayList<>();
+    private List<ChallengerPoint> challengerPoints = new ArrayList<>();
 
     public Challenger(Long memberId, ChallengerPart part, Long gisuId) {
         this.memberId = memberId;
