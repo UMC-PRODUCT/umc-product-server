@@ -1,4 +1,4 @@
-name: CD on Dev
+name: CD [Development]
 
 on:
   push:
@@ -58,7 +58,7 @@ jobs:
           port: ${{ secrets.SERVER_SSH_PORT }}
           envs: APPLICATION_PROD,APPLICATION_DEV,APPLICATION_SECRET,ENVIRONMENT,IMAGE_TAG,REPO_OWNER,DOCKER_IMAGE_NAME,DOCKERHUB_TOKEN,DOCKERHUB_USERNAME
           script_path: scripts/cd-dev.sh
-          
+
       - name: Deployment Summary
         if: always()
         run: |
