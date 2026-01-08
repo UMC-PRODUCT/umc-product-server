@@ -142,7 +142,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: docker/kyeoungwoon/dockerfile
+          file: docker/app/dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-env.outputs.image_tag }}

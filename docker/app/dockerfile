@@ -1,10 +1,8 @@
-FROM amazoncorretto:21-alpine-jre
-
-LABEL maintainer="UMC Product Team"
-LABEL description="UMC Product Team Official SpringBoot Backend"
-
-# 작업 디렉토리 설정
+FROM amazoncorretto:21-alpine
 WORKDIR /app
+
+LABEL maintainer="UMC PRODUCT SERVER TEAM"
+LABEL description="UMC PRODUCT Official SpringBoot Backend Server"
 
 # curl 설치 (헬스체크용) + non-root 유저 생성
 RUN apk add --no-cache curl && \
@@ -13,33 +11,31 @@ RUN apk add --no-cache curl && \
     mkdir -p /app/logs && \
     chown -R spring:spring /app
 
-# JAR 파일 복사 (GitHub Actions에서 빌드된 JAR)
-# docker build 시 context에서 복사됨
+# 이미 build된 jar 파일을 docker 안으로 복사
 COPY --chown=spring:spring build/libs/*.jar app.jar
+RUN chmod 444 app.jar
 
-# spring 유저로 전환
+# 로그 디렉토리 생성 및 권한 설정
+RUN mkdir -p /app/logs && chown -R spring:spring /app/logs
+
+# Switch to non-root user
 USER spring:spring
 
-# 애플리케이션 포트
+# Expose application port
 EXPOSE 8080
 
-# Health check 설정
-# curl은 Alpine Linux에 기본 포함됨
-HEALTHCHECK --interval=30s \
-    --timeout=3s \
-    --start-period=40s \
-    --retries=3 \
-    CMD curl -f http://localhost:8080/actuator/health || exit 1
+# JVM options
+ENV JAVA_OPTS="-XX:+UseContainerSupport \
+               -XX:MaxRAMPercentage=75.0 \
+               -XX:+UseG1GC \
+               -XX:+ExitOnOutOfMemoryError \
+               -XX:+HeapDumpOnOutOfMemoryError \
+               -XX:HeapDumpPath=/tmp/heapdump.hprof \
+               -Duser.timezone=Asia/Seoul \
+               -Djava.security.egd=file:/dev/./urandom"
 
-# JVM 옵션 및 애플리케이션 실행
-# 환경변수로 힙 메모리 설정 가능 (기본값: dev 환경)
-ENV JAVA_OPTS="-Xms1400m -Xmx1400m"
+# Use exec form with sh -c so JAVA_OPTS is expanded and signals forwarded
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar app.jar"]
 
-ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS} \
-    -XX:+UseG1GC \
-    -XX:MaxMetaspaceSize=256m \
-    -XX:+HeapDumpOnOutOfMemoryError \
-    -XX:HeapDumpPath=/app/logs/heapdump.hprof \
-    -Duser.timezone=Asia/Seoul \
-    -Djava.security.egd=file:/dev/./urandom \
-    -jar app.jar"]
+# Optional healthcheck (uncomment if actuator/health endpoint exists)
+# HEALTHCHECK --interval=30s --timeout=5s CMD curl -f http://localhost:8080/actuator/health || exit 1
