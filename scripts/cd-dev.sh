@@ -43,8 +43,11 @@ fi
 # YAML의 ${{ secrets... }} 대신 환경변수 $APP_DIR_PRODUCTION 등을 사용
 if [[ "$ENVIRONMENT" == "prod" ]]; then
   APP_DIR=$APP_DIR_PRODUCTION
-else
+elif [[ "$ENVIRONMENT" == "dev" ]]; then
   APP_DIR=$APP_DIR_DEVELOPMENT
+else
+  echo "❌ 알 수 없는 환경입니다: $ENVIRONMENT"
+  exit 1
 fi
 
 echo "📂 배포 경로: $APP_DIR"

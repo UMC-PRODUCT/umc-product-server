@@ -26,6 +26,7 @@ jobs:
     uses: ./.github/workflows/ci.yml
     with:
       environment: ${{ inputs.environment }}
+    secrets: inherit
 
   # 2. Deploy Job
   deploy:
