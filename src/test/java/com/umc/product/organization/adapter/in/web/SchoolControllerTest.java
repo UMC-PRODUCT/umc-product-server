@@ -54,9 +54,9 @@ public class SchoolControllerTest extends DocumentationTest {
         // then
         result.andExpect(status().isOk())
                 .andDo(restDocsHandler.document(pathParameters(parameterWithName("schoolId").description("학교 ID")),
-                        requestFields(fieldWithPath("schoolName").type(JsonFieldType.STRING).description("학교 이름"),
-                                fieldWithPath("chapterId").type(JsonFieldType.STRING).description("소속 지부 ID"),
-                                fieldWithPath("remark").type(JsonFieldType.STRING).description("비고"))));
+                        requestFields(fieldWithPath("schoolName").optional().type(JsonFieldType.STRING).description("학교 이름"),
+                                fieldWithPath("chapterId").optional().type(JsonFieldType.STRING).description("소속 지부 ID"),
+                                fieldWithPath("remark").optional().type(JsonFieldType.STRING).description("비고"))));
 
     }
 
@@ -82,17 +82,12 @@ public class SchoolControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                delete("/api/v1/admin/schools")
-                        .content(objectMapper.writeValueAsString(request))
+                delete("/api/v1/admin/schools").content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
         // then
-        result.andExpect(status().isOk())
-                .andDo(restDocsHandler.document(
-                        requestFields(
-                                fieldWithPath("schoolIds").type(JsonFieldType.ARRAY).description("삭제할 학교 ID 목록")
-                        )
-                ));
+        result.andExpect(status().isOk()).andDo(restDocsHandler.document(
+                requestFields(fieldWithPath("schoolIds").type(JsonFieldType.ARRAY).description("삭제할 학교 ID 목록"))));
     }
 
 }
