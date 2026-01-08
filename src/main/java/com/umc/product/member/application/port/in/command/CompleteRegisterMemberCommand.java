@@ -29,7 +29,7 @@ public record CompleteRegisterMemberCommand(
         requireNonNull(agreedTerms, "약관 동의 여부는 null일 수 없습니다.");
     }
 
-    public List<MemberTermAgreement> toTermAgreementEntities(Long memberId) {
+    public List<MemberTermAgreement> toTermAgreementEntities() {
         return agreedTerms.stream()
                 .map(termType -> MemberTermAgreement.builder()
                         .memberId(memberId)

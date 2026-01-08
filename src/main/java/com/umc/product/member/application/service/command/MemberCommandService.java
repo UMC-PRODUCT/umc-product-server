@@ -76,7 +76,7 @@ public class MemberCommandService implements ManageMemberUseCase {
         Member savedMember = saveUserPort.save(member);
 
         // 4. 약관 동의 정보 저장
-        List<MemberTermAgreement> agreements = command.toTermAgreementEntities(savedMember.getId());
+        List<MemberTermAgreement> agreements = command.toTermAgreementEntities();
         saveUserPort.saveTermAgreements(agreements);
 
         return savedMember.getId();
