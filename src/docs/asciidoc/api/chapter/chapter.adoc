@@ -1,0 +1,4 @@
+[[chapter-get-list]]
+=== 지부 목록 조회
+
+operation::chapter-query-controller-test/지부_목록을_조회합니다[snippets='http-request,http-response']
