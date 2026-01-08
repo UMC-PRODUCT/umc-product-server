@@ -4,7 +4,7 @@ import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 
 import java.time.LocalDate;
 
-public record SchoolResponse(
+public record SchoolDetailResponse(
         Long chapterId,
         String chapterName,
         String schoolName,
@@ -13,8 +13,8 @@ public record SchoolResponse(
         LocalDate createdAt,
         LocalDate updatedAt
 ) {
-    public static SchoolResponse from(SchoolInfo info) {
-        return new SchoolResponse(
+    public static SchoolDetailResponse from(SchoolInfo info) {
+        return new SchoolDetailResponse(
                 info.chapterId(),
                 info.chapterName(),
                 info.schoolName(),

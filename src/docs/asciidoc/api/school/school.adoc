@@ -1,3 +1,9 @@
+
+[[school-detail]]
+=== 총괄 학교 상세 조회
+
+operation::school-query-controller-test/학교_상세정보를_조회합니다[snippets='http-request,path-parameters,http-response']
+
 [[school-create]]
 === 총괄 학교 등록
 

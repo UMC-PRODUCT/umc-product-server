@@ -1,4 +1,4 @@
-package com.umc.product.organization.application.in;
+package com.umc.product.organization.adapter.in.web;
 
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.patch;

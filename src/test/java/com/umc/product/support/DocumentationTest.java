@@ -4,7 +4,9 @@ package com.umc.product.support;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.organization.adapter.in.web.SchoolController;
+import com.umc.product.organization.adapter.in.web.SchoolQueryController;
 import com.umc.product.organization.application.port.in.command.ManageSchoolUseCase;
+import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -16,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = {
         SchoolController.class,
+        SchoolQueryController.class,
 })
 @Import({
         RestDocsConfig.class,
@@ -40,4 +43,6 @@ public class DocumentationTest {
     @MockitoBean
     protected ManageSchoolUseCase manageSchoolUseCase;
 
+    @MockitoBean
+    protected GetSchoolUseCase getSchoolUseCase;
 }
