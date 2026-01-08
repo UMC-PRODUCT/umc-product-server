@@ -147,6 +147,7 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-env.outputs.image_tag }}
             ${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-env.outputs.environment }}-latest
+          platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
