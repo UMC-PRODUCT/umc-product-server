@@ -121,6 +121,11 @@ jobs:
       - name: Build JAR
         run: ./gradlew bootJar
 
+      - name: Check build artifacts
+        run: |
+          ls -la build/libs/
+          echo "Current directory: $(pwd)"
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
