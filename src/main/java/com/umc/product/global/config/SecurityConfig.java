@@ -56,7 +56,9 @@ public class SecurityConfig {
     private final OAuth2AuthenticationFailureHandler oAuth2FailureHandler;
 
     /**
-     * Swagger용 SecurityFilterChain (dev 프로필에서만 활성화) - HTTP Basic 인증 적용 - 순서가 먼저라서 Swagger 경로는 이 체인이 처리
+     * Swagger용 SecurityFilterChain (dev에서만 활성화, local은 따로 제약을 걸지 않음)
+     * <p>
+     * HTTP Basic 인증 적용 - 순서가 먼저라서 Swagger 경로는 이 체인이 처리
      */
     @Bean
     @Order(1)
@@ -76,6 +78,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * 메인 Security 체인
+     *
+     * @param http
+     * @return
+     * @throws Exception
+     */
     @Bean
     @Order(2)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {

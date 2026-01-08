@@ -11,6 +11,7 @@ import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.MemberOAuth;
 import com.umc.product.member.domain.MemberTermAgreement;
+import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberCommandService implements ManageMemberUseCase {
 
     private final LoadMemberPort loadMemberPort;
-    private final SaveMemberPort saveUserPort;
+    private final SaveMemberPort saveMemberPort;
     private final LoadMemberOAuthPort loadMemberOAuthPort;
 
     @Override
@@ -43,17 +44,17 @@ public class MemberCommandService implements ManageMemberUseCase {
 
         // 4. Member 생성 및 저장
         Member member = command.toMemberEntity();
-        Member savedMember = saveUserPort.save(member);
+        Member savedMember = saveMemberPort.save(member);
 
-        // 5. UserOAuth 저장
+        // 5. OAuth 저장
         MemberOAuth memberOAuth = command.toMemberOAuthEntity(savedMember.getId());
-        saveUserPort.saveOAuth(memberOAuth);
+        saveMemberPort.saveOAuth(memberOAuth);
 
         // 6. 약관 동의 정보 저장
         List<MemberTermAgreement> agreements = command.toTermAgreementEntities(savedMember.getId());
-        saveUserPort.saveTermAgreements(agreements);
+        saveMemberPort.saveTermAgreements(agreements);
 
-        // 7. User 상태를 ACTIVE로 변경
+        // 7. member 상태를 ACTIVE로 변경
         savedMember.activate();
 
         return savedMember.getId();
@@ -63,8 +64,7 @@ public class MemberCommandService implements ManageMemberUseCase {
     public Long completeRegister(CompleteRegisterMemberCommand command) {
         // 1. Command에 담긴 회원이 존재하고, 상태가 PENDING인지 확인
         Member member = loadMemberPort.findById(command.memberId())
-                .orElseThrow(() -> new BusinessException(Domain.MEMBER,
-                        MemberErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
         member.validateIfRegisterAvailable();
 
         // 2. 이메일 중복 확인 및 이메일 인증이 완료되었는지 확인
@@ -73,11 +73,11 @@ public class MemberCommandService implements ManageMemberUseCase {
         // 3. Member 업데이트 (Status ACTIVE 전환 포함)
         member.activate();
         member.updateProfile(command.nickname(), command.schoolId(), command.profileImageId());
-        Member savedMember = saveUserPort.save(member);
+        Member savedMember = saveMemberPort.save(member);
 
         // 4. 약관 동의 정보 저장
         List<MemberTermAgreement> agreements = command.toTermAgreementEntities();
-        saveUserPort.saveTermAgreements(agreements);
+        saveMemberPort.saveTermAgreements(agreements);
 
         return savedMember.getId();
     }

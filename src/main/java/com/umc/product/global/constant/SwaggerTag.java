@@ -13,10 +13,10 @@ public enum SwaggerTag {
     MEMBER("사용자", "사용자 API", 1),
     CHALLENGER("챌린저", "챌린저 API", 2),
     ORGANIZATION("조직 (학교/지부/중앙운영사무국)", "조직 관련 API", 2),
-    curriculum("커리큘럼", "커리큘럼 관련 API", 2),
-    schedule("행사 및 스터디 일정", "행사 및 스터디 관련 API", 2),
-    community("커뮤니티", "커뮤니티 API", 2),
-    notice("공지사항", "공지사항 API", 2),
+    CURRICULUM("커리큘럼", "커리큘럼 관련 API", 2),
+    SCHEDULE("행사 및 스터디 일정", "행사 및 스터디 관련 API", 2),
+    COMMUNITY("커뮤니티", "커뮤니티 API", 2),
+    NOTICE("공지사항", "공지사항 API", 2),
 
     ADMIN("관리자/운영진", "관리자 전용 별도 API", 99),
 
