@@ -4,10 +4,14 @@ package com.umc.product.support;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.organization.adapter.in.web.ChapterQueryController;
+import com.umc.product.organization.adapter.in.web.GisuController;
+import com.umc.product.organization.adapter.in.web.GisuQueryController;
 import com.umc.product.organization.adapter.in.web.SchoolController;
 import com.umc.product.organization.adapter.in.web.SchoolQueryController;
+import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
 import com.umc.product.organization.application.port.in.command.ManageSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
@@ -22,6 +26,8 @@ import org.springframework.test.web.servlet.MockMvc;
         SchoolController.class,
         SchoolQueryController.class,
         ChapterQueryController.class,
+        GisuController.class,
+        GisuQueryController.class,
 })
 @Import({
         RestDocsConfig.class,
@@ -51,4 +57,10 @@ public class DocumentationTest {
 
     @MockitoBean
     protected GetChapterUseCase getChapterUseCase;
+
+    @MockitoBean
+    protected ManageGisuUseCase manageGisuUseCase;
+
+    @MockitoBean
+    protected GetGisuUseCase getGisuUseCase;
 }

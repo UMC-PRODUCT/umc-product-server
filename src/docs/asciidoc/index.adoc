@@ -10,6 +10,15 @@ endif::[]
 :sectlinks:
 
 [[School-API]]
-== School API
+== 학교 API
 
 include::api/school/school.adoc[]
+
+[[Gisu-API]]
+== 기수 API
+
+include::api/gisu/gisu.adoc[]
+
+[[Chapter-API]]
+
+== 지부 API
