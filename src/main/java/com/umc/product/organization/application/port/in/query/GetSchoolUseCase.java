@@ -1,19 +1,15 @@
 package com.umc.product.organization.application.port.in.query;
 
-import com.umc.product.common.dto.request.PageRequest;
-import com.umc.product.common.dto.request.PageResult;
-import com.umc.product.organization.application.port.in.query.dto.DeletableSchoolSummary;
-import com.umc.product.organization.application.port.in.query.dto.SchoolDeleteSearchCondition;
+import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolSummary;
-import java.util.List;
+import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 
 public interface GetSchoolUseCase {
 
-    List<SchoolSummary> getAll(Long gisuId);
-
-    PageResult<DeletableSchoolSummary> getList(SchoolDeleteSearchCondition condition, PageRequest pageRequest);
+    Page<SchoolListItemInfo> getList(SchoolSearchCondition condition, Pageable pageable);
 
     SchoolInfo getSchoolDetail(Long schoolId);
 }

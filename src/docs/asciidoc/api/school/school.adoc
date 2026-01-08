@@ -1,4 +1,9 @@
 
+[[school-list]]
+=== 총괄 학교 목록 조회
+
+operation::school-query-controller-test/학교_목록을_조회합니다[snippets='http-request,http-response']
+
 [[school-detail]]
 === 총괄 학교 상세 조회
 

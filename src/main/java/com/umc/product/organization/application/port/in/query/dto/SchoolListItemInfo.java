@@ -2,7 +2,7 @@ package com.umc.product.organization.application.port.in.query.dto;
 
 import java.time.LocalDate;
 
-public record DeletableSchoolSummary(
+public record SchoolListItemInfo(
         Long schoolId,
         String schoolName,
         Long chapterId,
