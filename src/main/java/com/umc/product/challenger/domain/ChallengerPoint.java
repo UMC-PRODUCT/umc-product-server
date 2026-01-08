@@ -3,6 +3,8 @@ package com.umc.product.challenger.domain;
 import com.umc.product.challenger.domain.enums.PointType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -30,6 +32,7 @@ public class ChallengerPoint {
     private Challenger challenger;
 
     @Column(nullable = false, name = "point")
+    @Enumerated(EnumType.STRING)
     private PointType type;
 
     @Column(length = 200)

@@ -35,7 +35,7 @@ public class MemberOAuth extends BaseEntity {
     @Column(name = "oauth_provider", nullable = false, length = 20)
     private OAuthProvider provider;
 
-    @Column(name = "provider_id", nullable = false)
+    @Column(name = "provider_id", nullable = false, length = 512)
     private String providerId;
 
     @Builder

@@ -5,6 +5,8 @@ import com.umc.product.challenger.domain.enums.OrganizationType;
 import com.umc.product.challenger.domain.enums.RoleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -28,9 +30,11 @@ public class ChallengerRole {
     @JoinColumn(name = "challenger_id", nullable = false)
     private Challenger challenger;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "role_type")
     private RoleType roleType;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "organization_type")
     private OrganizationType organizationType;
 
@@ -39,7 +43,8 @@ public class ChallengerRole {
 
     // 파트장인 경우 어떤 파트의 파트장인지
     // 본인이 활동 중인 파트와 다른 파트의 파트장인 경우가 있어서 명시하도록 함
-    @Column(nullable = false, name = "leading_part")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "leading_part")
     private ChallengerPart leadingPart;
 
     @Column(nullable = false, name = "gisu_id")

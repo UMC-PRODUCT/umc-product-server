@@ -27,13 +27,13 @@ public class Member extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30) // 한글 10자까지 고려
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20) // 한글 1~5자
     private String nickname;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String email;
 
     @Column(name = "school_id")
