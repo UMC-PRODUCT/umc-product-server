@@ -1,0 +1,72 @@
+name: CD on Dev
+
+on:
+  push:
+    branches:
+      - develop
+    paths:
+      - 'src/**'
+      - 'build.gradle.kts'
+      - 'docker/**'
+      - 'cd.yml'
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+
+jobs:
+  # 1. 공통 빌드/테스트 워크플로우 호출 (ci.yml 재사용)
+  ci-and-build:
+    uses: ./.github/workflows/ci.yml
+    with:
+      environment: ${{ inputs.environment }}
+
+  # 2. Deploy Job
+  deploy:
+    needs: ci-and-build
+    runs-on: ubuntu-latest
+    # 빌드 단계에서 결정된 환경 사용
+    environment: ${{ needs.ci-and-build.outputs.environment }}
+
+    env:
+      ENVIRONMENT: ${{ needs.ci-and-build.outputs.environment }}
+      REPO_OWNER: ${{ needs.ci-and-build.outputs.repo_owner }}
+      IMAGE_TAG: ${{ needs.ci-and-build.outputs.image_tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: SSH 접속 및 스크립트 실행
+        uses: appleboy/ssh-action@v1
+        env:
+          APPLICATION_PROD: ${{ secrets.APPLICATION_PROD }}
+          APPLICATION_DEV: ${{ secrets.APPLICATION_DEV }}
+          APPLICATION_SECRET: ${{ secrets.APPLICATION_SECRET }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        with:
+          host: ${{ secrets.SERVER_SSH_HOST }}
+          username: ${{ secrets.SERVER_SSH_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          envs: APPLICATION_PROD,APPLICATION_DEV,APPLICATION_SECRET,ENVIRONMENT,IMAGE_TAG,REPO_OWNER,DOCKER_IMAGE_NAME,DOCKERHUB_TOKEN,DOCKERHUB_USERNAME
+          script_path: scripts/cd-dev.sh
+          
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "### Deployment Summary :rocket:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image:** ${{ secrets.DOCKER_IMAGE_NAME }}:${{ env.ENVIRONMENT }}-latest" >> $GITHUB_STEP_SUMMARY
+          echo "- **Server:** ${{ secrets.SERVER_SSH_HOST }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY

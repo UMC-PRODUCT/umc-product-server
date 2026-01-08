@@ -1,0 +1,175 @@
+name: Backend CI & Build
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - main
+
+  workflow_call:
+    inputs:
+      environment:
+        description: 'Deploy environment (optional)'
+        required: false
+        type: string
+    outputs:
+      environment:
+        description: "Determined environment"
+        value: ${{ jobs.build-and-test.outputs.environment }}
+      repo_owner:
+        description: "Repository owner"
+        value: ${{ jobs.build-and-test.outputs.repo_owner }}
+      image_tag:
+        description: "Docker image tag"
+        value: ${{ jobs.build-and-test.outputs.image_tag }}
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true  # 이전 실행 취소
+
+jobs:
+  # Job 1: 빌드 및 테스트 (한 번만 실행)
+  build-and-test:
+    runs-on: self-hosted
+
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      repo_owner: ${{ steps.set-env.outputs.repo_owner }}
+      image_tag: ${{ steps.set-env.outputs.image_tag }}
+
+    strategy:
+      matrix:
+        platform: [ linux/amd64, linux/arm64 ]
+        include:
+          - platform: linux/amd64
+            tag-suffix: amd64
+          - platform: linux/arm64
+            tag-suffix: arm64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set deployment environment
+        id: set-env
+        run: |
+          INPUT_ENV="${{ inputs.environment }}"
+
+          # PR일 때는 'test' 환경으로 설정
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "Running in PR mode - Setting test environment for build"
+            ENVIRONMENT="test"
+          elif [[ -n "$INPUT_ENV" ]]; then
+            ENVIRONMENT="$INPUT_ENV"
+          
+          # CD에서 호출한 경우 branch에 따라서 환경 결정
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            ENVIRONMENT="prod"
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            ENVIRONMENT="dev"
+          else
+            ENVIRONMENT="test"
+          fi
+
+          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
+
+          REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_owner=${REPO_OWNER}" >> $GITHUB_OUTPUT
+
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          IMAGE_TAG="${ENVIRONMENT}-${SHORT_SHA}"
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'corretto'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Compile Check
+        run: ./gradlew compileJava compileTestJava
+
+      - name: Run Tests
+        run: ./gradlew test
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: build/test-results/test/*.xml
+          check_name: "Backend Test Results"
+
+      - name: Build JAR
+        run: ./gradlew bootJar
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/kyeoungwoon/dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-env.outputs.image_tag }}-${{ matrix.tag-suffix }}
+          platforms: ${{ matrix.platform }}
+          cache-from: type=gha,scope=${{ matrix.platform }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+
+  # Job 3: Multi-arch manifest 생성
+  create-manifest:
+    needs: [ build-and-test ]
+    runs-on: self-hosted
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Create and push manifest
+        run: |
+          IMAGE_TAG="${{ needs.build-and-test.outputs.image_tag }}"
+          ENVIRONMENT="${{ needs.build-and-test.outputs.environment }}"
+          
+          # 특정 커밋용 manifest 생성
+          docker buildx imagetools create -t ${{ secrets.DOCKER_IMAGE_NAME }}:${IMAGE_TAG} \
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${IMAGE_TAG}-amd64 \
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${IMAGE_TAG}-arm64
+          
+          # 환경별 latest manifest 생성
+          docker buildx imagetools create -t ${{ secrets.DOCKER_IMAGE_NAME }}:${ENVIRONMENT}-latest \
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${IMAGE_TAG}-amd64 \
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${IMAGE_TAG}-arm64
+          
+          echo "✅ Created manifests:"
+          echo "  - ${{ secrets.DOCKER_IMAGE_NAME }}:${IMAGE_TAG}"
+          echo "  - ${{ secrets.DOCKER_IMAGE_NAME }}:${ENVIRONMENT}-latest"
+
+      - name: Build Summary
+        if: always()
+        run: |
+          echo "### Build Summary :package:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ steps.set-env.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag:** ${{ steps.set-env.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platforms:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY
