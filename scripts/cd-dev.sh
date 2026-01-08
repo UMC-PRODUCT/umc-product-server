@@ -7,6 +7,19 @@ set -e
 # 주의: YAML에서 envs로 넘겨준 변수 이름과 정확히 일치해야 합니다.
 # ------------------------------------------------------------------
 
+# 필수 환경 변수 체크
+: "${ENVIRONMENT:?ENVIRONMENT 변수가 설정되지 않았습니다.}"
+: "${DOCKERHUB_USERNAME:?DOCKERHUB_USERNAME 변수가 설정되지 않았습니다.}"
+: "${DOCKERHUB_TOKEN:?DOCKERHUB_TOKEN 변수가 설정되지 않았습니다.}"
+: "${DOCKER_IMAGE_NAME:?DOCKER_IMAGE_NAME 변수가 설정되지 않았습니다.}"
+: "${IMAGE_TAG:?IMAGE_TAG 변수가 설정되지 않았습니다.}"
+: "${APP_DIR_PRODUCTION:?APP_DIR_PRODUCTION 변수가 설정되지 않았습니다.}"
+: "${APP_DIR_DEVELOPMENT:?APP_DIR_DEVELOPMENT 변수가 설정되지 않았습니다.}"
+: "${APPLICATION_PROD:?APPLICATION_PROD 변수가 설정되지 않았습니다.}"
+: "${APPLICATION_DEV:?APPLICATION_DEV 변수가 설정되지 않았습니다.}"
+: "${APPLICATION_SECRET:?APPLICATION_SECRET 변수가 설정되지 않았습니다.}"
+
+
 echo "=============================="
 echo "🚀 배포 시작: $ENVIRONMENT 환경"
 echo "=============================="
