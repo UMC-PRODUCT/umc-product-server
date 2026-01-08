@@ -52,14 +52,14 @@ jobs:
       repo_owner: ${{ steps.set-env.outputs.repo_owner }}
       image_tag: ${{ steps.set-env.outputs.image_tag }}
 
-    strategy:
-      matrix:
-        platform: [ linux/amd64, linux/arm64 ]
-        include:
-          - platform: linux/amd64
-            tag-suffix: amd64
-          - platform: linux/arm64
-            tag-suffix: arm64
+    #    strategy:
+    #      matrix:
+    #        platform: [ linux/amd64, linux/arm64 ]
+    #        include:
+    #          - platform: linux/amd64
+    #            tag-suffix: amd64
+    #          - platform: linux/arm64
+    #            tag-suffix: arm64
 
     steps:
       - name: Checkout code
@@ -140,10 +140,10 @@ jobs:
           file: docker/kyeoungwoon/dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-env.outputs.image_tag }}-${{ matrix.tag-suffix }}
-          platforms: ${{ matrix.platform }}
-          cache-from: type=gha,scope=${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.platform }}
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-env.outputs.image_tag }}
+            ${{ secrets.DOCKER_IMAGE_NAME }}:${{ steps.set-env.outputs.environment }}-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   # Job 3: Multi-arch manifest 생성
   create-manifest:
