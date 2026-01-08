@@ -3,11 +3,13 @@ package com.umc.product.support;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.organization.adapter.in.web.ChapterController;
 import com.umc.product.organization.adapter.in.web.ChapterQueryController;
 import com.umc.product.organization.adapter.in.web.GisuController;
 import com.umc.product.organization.adapter.in.web.GisuQueryController;
 import com.umc.product.organization.adapter.in.web.SchoolController;
 import com.umc.product.organization.adapter.in.web.SchoolQueryController;
+import com.umc.product.organization.application.port.in.command.ManageChapterUseCase;
 import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
 import com.umc.product.organization.application.port.in.command.ManageSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
@@ -25,6 +27,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(controllers = {
         SchoolController.class,
         SchoolQueryController.class,
+        ChapterController.class,
         ChapterQueryController.class,
         GisuController.class,
         GisuQueryController.class,
@@ -54,6 +57,9 @@ public class DocumentationTest {
 
     @MockitoBean
     protected GetSchoolUseCase getSchoolUseCase;
+
+    @MockitoBean
+    protected ManageChapterUseCase manageChapterUseCase;
 
     @MockitoBean
     protected GetChapterUseCase getChapterUseCase;
