@@ -10,7 +10,9 @@ import static org.springframework.restdocs.request.RequestDocumentation.pathPara
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.umc.product.organization.adapter.in.web.dto.request.CreateSchoolRequest;
+import com.umc.product.organization.adapter.in.web.dto.request.DeleteSchoolsRequest;
 import com.umc.product.support.DocumentationTest;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -71,6 +73,26 @@ public class SchoolControllerTest extends DocumentationTest {
 
                 )));
 
+    }
+
+    @Test
+    void 총괄_학교를_일괄_삭제한다() throws Exception {
+        // given
+        DeleteSchoolsRequest request = new DeleteSchoolsRequest(List.of(1L, 2L, 3L));
+
+        // when
+        ResultActions result = mockMvc.perform(
+                delete("/api/v1/admin/schools")
+                        .content(objectMapper.writeValueAsString(request))
+                        .contentType(MediaType.APPLICATION_JSON));
+
+        // then
+        result.andExpect(status().isOk())
+                .andDo(restDocsHandler.document(
+                        requestFields(
+                                fieldWithPath("schoolIds").type(JsonFieldType.ARRAY).description("삭제할 학교 ID 목록")
+                        )
+                ));
     }
 
 }

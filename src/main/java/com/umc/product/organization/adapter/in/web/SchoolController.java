@@ -1,6 +1,7 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.organization.adapter.in.web.dto.request.CreateSchoolRequest;
+import com.umc.product.organization.adapter.in.web.dto.request.DeleteSchoolsRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateSchoolRequest;
 import com.umc.product.organization.application.port.in.command.ManageSchoolUseCase;
 import jakarta.validation.Valid;
@@ -20,11 +21,9 @@ public class SchoolController {
 
     private final ManageSchoolUseCase manageSchoolUseCase;
 
-    @PostMapping()
+    @PostMapping
     public void createSchool(@RequestBody @Valid CreateSchoolRequest createSchoolRequest) {
-
         manageSchoolUseCase.register(createSchoolRequest.toCommand());
-
     }
 
     @PatchMapping("/{schoolId}")
@@ -35,6 +34,11 @@ public class SchoolController {
     @DeleteMapping("/{schoolId}")
     public void deleteSchool(@PathVariable Long schoolId) {
         manageSchoolUseCase.deleteSchool(schoolId);
+    }
+
+    @DeleteMapping
+    public void deleteSchools(@RequestBody @Valid DeleteSchoolsRequest request) {
+        manageSchoolUseCase.deleteSchools(request.schoolIds());
     }
 }
 

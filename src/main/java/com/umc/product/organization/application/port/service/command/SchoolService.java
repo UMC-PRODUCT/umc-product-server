@@ -19,4 +19,8 @@ public class SchoolService implements ManageSchoolUseCase {
     public void deleteSchool(Long schoolId) {
 
     }
+
+    public void deleteSchools(java.util.List<Long> schoolIds) {
+
+    }
 }
