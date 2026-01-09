@@ -1,37 +1,21 @@
-# =================================
-# Build stage
-# =================================
-FROM gradle:8.5-jdk21 AS build
+FROM amazoncorretto:21-alpine
 WORKDIR /app
 
-# Copy Gradle wrapper and build files first to leverage cache
-# gradle.properties는 나중에 다시 설정하면 추가하기
-COPY build.gradle settings.gradle gradlew ./
-COPY gradle ./gradle
-RUN chmod +x gradlew && ./gradlew dependencies --no-daemon
+LABEL maintainer="UMC PRODUCT SERVER TEAM"
+LABEL description="UMC PRODUCT Official SpringBoot Backend Server"
 
-# Copy source and build artifact
-COPY src ./src
-# Skip tests in build to speed up image build (optional)
-RUN ./gradlew bootJar --no-daemon -x test && mv build/libs/*.jar app.jar
+# curl 설치 (헬스체크용) + non-root 유저 생성
+RUN apk add --no-cache curl && \
+    addgroup -S spring && \
+    adduser -S spring -G spring && \
+    mkdir -p /app/logs && \
+    chown -R spring:spring /app
 
-# =================================
-# Run stage
-# =================================
-FROM eclipse-temurin:21-jre-jammy
-WORKDIR /app
-
-LABEL maintainer="kyeoungwoon" \
-    version="1.0"
-
-# Create non-root user before copying files so --chown works
-RUN groupadd -r spring && useradd -r -g spring spring
-
-# Copy jar from build stage and set ownership to non-root user
-COPY --from=build --chown=spring:spring /app/app.jar ./app.jar
+# 이미 build된 jar 파일을 docker 안으로 복사
+COPY --chown=spring:spring build/libs/*.jar app.jar
 RUN chmod 444 app.jar
 
-# 로그 디렉토리 생성 및 권한 설정 추가
+# 로그 디렉토리 생성 및 권한 설정
 RUN mkdir -p /app/logs && chown -R spring:spring /app/logs
 
 # Switch to non-root user
@@ -40,7 +24,7 @@ USER spring:spring
 # Expose application port
 EXPOSE 8080
 
-# JVM options (single line to avoid parsing issues)
+# JVM options
 ENV JAVA_OPTS="-XX:+UseContainerSupport \
                -XX:MaxRAMPercentage=75.0 \
                -XX:+UseG1GC \
