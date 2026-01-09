@@ -17,13 +17,13 @@
     </appender>
     <appender class="ch.qos.logback.core.ConsoleAppender" name="APP_CONSOLE">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{traceId}] [%thread] %logger{40} : %msg%n
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %highlight(%-5level) [%-4.4X{traceId}] [%thread] %logger{40} : %msg%n
             </pattern>
         </encoder>
     </appender>
 
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
-    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <!--    <include resource="org/springframework/boot/logging/logback/base.xml"/>-->
 
     <property name="LOG_DIR" value="./logs"/>
 
