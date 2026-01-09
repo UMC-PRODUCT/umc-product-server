@@ -1,0 +1,23 @@
+# 반드시 docker-compose.yml과 동일한 디렉토리에 .env가 존재해야 합니다.
+# SpringBoot 설정들은 ./config 에!
+
+services:
+  app:
+    container_name: ${CONTAINER_NAME}
+    image: ${IMAGE_NAME}:${IMAGE_TAG}
+    restart: unless-stopped
+    ports:
+      - "${SERVICE_PORT:-8080}:8080"
+      - "${MANAGEMENT_PORT:-9090}:9090"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+    volumes:
+      - ./config/application-secret.yml:/app/config/application-secret.yml:ro
+      - ./config/application-${SPRING_PROFILES_ACTIVE}.yml:/app/config/application-${SPRING_PROFILES_ACTIVE}.yml:ro
+      - ./logs:/app/logs
+    healthcheck:
+      test: [ "CMD", "curl", "-sf", "http://localhost:${MANAGEMENT_PORT:-9090}/actuator/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

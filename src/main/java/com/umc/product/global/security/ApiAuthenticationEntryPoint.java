@@ -22,7 +22,7 @@ public class ApiAuthenticationEntryPoint implements AuthenticationEntryPoint {
     @Override
     public void commence(HttpServletRequest req, HttpServletResponse res, AuthenticationException ex)
             throws IOException {
-        CommonErrorCode status = CommonErrorCode.UNAUTHORIZED;
+        CommonErrorCode status = CommonErrorCode.SECURITY_NOT_GIVEN;
 
         ApiResponse<Object> body = ApiResponse.onFailure(status.getCode(), status.getMessage(), null);
 

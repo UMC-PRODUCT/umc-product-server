@@ -1,6 +1,6 @@
 package com.umc.product.global.config;
 
-import com.umc.product.global.security.resolver.CurrentUserArgumentResolver;
+import com.umc.product.global.security.resolver.CurrentMemberArgumentResolver;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
@@ -11,10 +11,10 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @RequiredArgsConstructor
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    private final CurrentUserArgumentResolver currentUserArgumentResolver;
+    private final CurrentMemberArgumentResolver currentMemberArgumentResolver;
 
     @Override
     public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
-        resolvers.add(currentUserArgumentResolver);
+        resolvers.add(currentMemberArgumentResolver);
     }
 }

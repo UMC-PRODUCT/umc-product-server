@@ -10,4 +10,10 @@ public enum Domain {
     AUTH,
     MEMBER,
     CHALLENGER,
+    ORGANIZATION,
+    CURRICULUM,
+    SCHEDULE,
+    COMMUNITY,
+    NOTICE,
+    FORM,
 }

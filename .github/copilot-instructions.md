@@ -315,7 +315,7 @@ public class ChallengerRequest {
 ### File Names
 
 | Type       | Pattern                                | Example                             |
-| ---------- | -------------------------------------- | ----------------------------------- |
+|------------|----------------------------------------|-------------------------------------|
 | Entity     | `{Domain}.java`                        | `Challenger.java`                   |
 | Enum       | `{Domain}{Type}.java`                  | `ChallengerStatus.java`             |
 | UseCase    | `{Action}{Domain}UseCase.java`         | `RegisterChallengerUseCase.java`    |
