@@ -1,7 +1,5 @@
 package com.umc.product.organization.adapter.in.web;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
@@ -20,8 +18,6 @@ class ChapterControllerTest extends DocumentationTest {
     void 신규_지부를_생성한다() throws Exception {
         // given
         CreateChapterRequest request = new CreateChapterRequest(1L, "Scorpio");
-
-        given(manageChapterUseCase.create(any())).willReturn(1L);
 
         // when
         ResultActions result = mockMvc.perform(
