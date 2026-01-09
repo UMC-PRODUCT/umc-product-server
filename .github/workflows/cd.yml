@@ -25,6 +25,10 @@ jobs:
   # 1. 공통 빌드/테스트 워크플로우 호출 (ci.yml 재사용)
   ci-and-build:
     uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
     with:
       environment: ${{ inputs.environment }}
 
