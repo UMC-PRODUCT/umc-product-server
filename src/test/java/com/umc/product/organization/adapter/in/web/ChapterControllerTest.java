@@ -25,7 +25,7 @@ class ChapterControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                post("/api/v1/admin/chapters").content(objectMapper.writeValueAsString(request))
+                post("/v1/admin/chapters").content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
         // then

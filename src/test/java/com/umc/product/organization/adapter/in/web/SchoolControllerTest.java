@@ -29,7 +29,7 @@ public class SchoolControllerTest extends DocumentationTest {
 
         // then
         ResultActions result = mockMvc.perform(
-                post("/api/v1/admin/schools").content(objectMapper.writeValueAsString(request))
+                post("/v1/admin/schools").content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(
@@ -48,7 +48,7 @@ public class SchoolControllerTest extends DocumentationTest {
                 .remark("신승호 라면이 맛있습니다.").build();
 
         ResultActions result = mockMvc.perform(
-                patch("/api/v1/admin/schools/{schoolId}", schoolId).content(objectMapper.writeValueAsString(request))
+                patch("/v1/admin/schools/{schoolId}", schoolId).content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
         // then
@@ -67,7 +67,7 @@ public class SchoolControllerTest extends DocumentationTest {
         // given // when
         Long schoolId = 1L;
 
-        ResultActions result = mockMvc.perform(delete("/api/v1/admin/schools/{schoolId}", schoolId));
+        ResultActions result = mockMvc.perform(delete("/v1/admin/schools/{schoolId}", schoolId));
 
         // then
         result.andExpect(status().isOk())
@@ -84,7 +84,7 @@ public class SchoolControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                delete("/api/v1/admin/schools").content(objectMapper.writeValueAsString(request))
+                delete("/v1/admin/schools").content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
         // then

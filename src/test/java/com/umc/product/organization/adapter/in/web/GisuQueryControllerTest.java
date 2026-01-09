@@ -27,7 +27,7 @@ class GisuQueryControllerTest extends DocumentationTest {
         given(getGisuUseCase.getList()).willReturn(gisuList);
 
         // when
-        ResultActions result = mockMvc.perform(get("/api/v1/admin/gisu"));
+        ResultActions result = mockMvc.perform(get("/v1/admin/gisu"));
 
         // then
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(

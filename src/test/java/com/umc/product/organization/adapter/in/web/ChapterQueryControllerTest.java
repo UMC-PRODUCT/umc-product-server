@@ -27,7 +27,7 @@ class ChapterQueryControllerTest extends DocumentationTest {
         given(getChapterUseCase.getAllChapter()).willReturn(chapters);
 
         // when
-        ResultActions result = mockMvc.perform(get("/api/v1/admin/chapters"));
+        ResultActions result = mockMvc.perform(get("/v1/admin/chapters"));
 
         // then
         result.andExpect(status().isOk())

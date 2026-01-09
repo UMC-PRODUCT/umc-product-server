@@ -1,6 +1,6 @@
 package com.umc.product.challenger.domain;
 
-import com.umc.product.challenger.exception.ChallengerErrorCode;
+import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import com.umc.product.global.exception.BusinessException;
