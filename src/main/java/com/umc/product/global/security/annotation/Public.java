@@ -9,8 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 /**
  * 공개 API를 나타내는 어노테이션
  * <p>
- * Spring Security의 {@link PreAuthorize @PreAuthorize("permitAll()")}와 동일하게 동작합니다.
- * 인증 없이 접근 가능한 API에 사용합니다.
+ * Spring Security의 {@link PreAuthorize @PreAuthorize("permitAll()")}와 동일하게 동작합니다. 인증 없이 접근 가능한 API에 사용합니다.
  * </p>
  *
  * <h3>사용 예시:</h3>
