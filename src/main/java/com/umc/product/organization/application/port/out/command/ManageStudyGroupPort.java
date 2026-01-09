@@ -6,5 +6,6 @@ import com.umc.product.organization.domain.StudyGroup;
 public interface ManageStudyGroupPort {
 
     StudyGroup save(StudyGroup studyGroup);
+
     void delete(StudyGroup studyGroup);
 }

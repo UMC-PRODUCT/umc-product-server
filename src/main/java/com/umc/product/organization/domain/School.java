@@ -46,7 +46,7 @@ public class School {
     }
 
     public void updateLogoImageId(Long logoImageId) {
-        if(StringUtils.isEmpty(logoImageUrl)){
+        if (StringUtils.isEmpty(logoImageUrl)) {
             this.logoImageUrl = logoImageUrl;
         }
     }

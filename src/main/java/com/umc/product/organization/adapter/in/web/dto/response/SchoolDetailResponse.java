@@ -1,7 +1,6 @@
 package com.umc.product.organization.adapter.in.web.dto.response;
 
 import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
-
 import java.time.LocalDate;
 
 public record SchoolDetailResponse(Long chapterId, String chapterName, String schoolName, Long schoolId, String remark,

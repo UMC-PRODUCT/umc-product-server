@@ -10,8 +10,8 @@ import static org.springframework.restdocs.request.RequestDocumentation.queryPar
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.support.DocumentationTest;
 import java.time.LocalDate;
 import java.util.List;
@@ -67,18 +67,26 @@ class SchoolQueryControllerTest extends DocumentationTest {
                                 fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
                                 fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
                                 fieldWithPath("result.content").type(JsonFieldType.ARRAY).description("학교 목록"),
-                                fieldWithPath("result.content[].schoolId").type(JsonFieldType.STRING).description("학교 ID"),
-                                fieldWithPath("result.content[].schoolName").type(JsonFieldType.STRING).description("학교 이름"),
-                                fieldWithPath("result.content[].chapterId").type(JsonFieldType.STRING).description("지부 ID"),
-                                fieldWithPath("result.content[].chapterName").type(JsonFieldType.STRING).description("지부 이름"),
-                                fieldWithPath("result.content[].createdAt").type(JsonFieldType.STRING).description("등록일"),
-                                fieldWithPath("result.content[].isActive").type(JsonFieldType.BOOLEAN).description("활성 상태"),
-                                fieldWithPath("result.page").type(JsonFieldType.STRING).description("현재 페이지 번호 (0부터 시작)"),
+                                fieldWithPath("result.content[].schoolId").type(JsonFieldType.STRING)
+                                        .description("학교 ID"),
+                                fieldWithPath("result.content[].schoolName").type(JsonFieldType.STRING)
+                                        .description("학교 이름"),
+                                fieldWithPath("result.content[].chapterId").type(JsonFieldType.STRING)
+                                        .description("지부 ID"),
+                                fieldWithPath("result.content[].chapterName").type(JsonFieldType.STRING)
+                                        .description("지부 이름"),
+                                fieldWithPath("result.content[].createdAt").type(JsonFieldType.STRING)
+                                        .description("등록일"),
+                                fieldWithPath("result.content[].isActive").type(JsonFieldType.BOOLEAN)
+                                        .description("활성 상태"),
+                                fieldWithPath("result.page").type(JsonFieldType.STRING)
+                                        .description("현재 페이지 번호 (0부터 시작)"),
                                 fieldWithPath("result.size").type(JsonFieldType.STRING).description("페이지 당 조회 수"),
                                 fieldWithPath("result.totalElements").type(JsonFieldType.STRING).description("총 학교 수"),
                                 fieldWithPath("result.totalPages").type(JsonFieldType.STRING).description("총 페이지 수"),
                                 fieldWithPath("result.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부"),
-                                fieldWithPath("result.hasPrevious").type(JsonFieldType.BOOLEAN).description("이전 페이지 존재 여부")
+                                fieldWithPath("result.hasPrevious").type(JsonFieldType.BOOLEAN)
+                                        .description("이전 페이지 존재 여부")
                         )
                 ));
     }

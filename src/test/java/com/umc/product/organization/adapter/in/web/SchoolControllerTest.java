@@ -54,8 +54,10 @@ public class SchoolControllerTest extends DocumentationTest {
         // then
         result.andExpect(status().isOk())
                 .andDo(restDocsHandler.document(pathParameters(parameterWithName("schoolId").description("학교 ID")),
-                        requestFields(fieldWithPath("schoolName").optional().type(JsonFieldType.STRING).description("학교 이름"),
-                                fieldWithPath("chapterId").optional().type(JsonFieldType.STRING).description("소속 지부 ID"),
+                        requestFields(
+                                fieldWithPath("schoolName").optional().type(JsonFieldType.STRING).description("학교 이름"),
+                                fieldWithPath("chapterId").optional().type(JsonFieldType.STRING)
+                                        .description("소속 지부 ID"),
                                 fieldWithPath("remark").optional().type(JsonFieldType.STRING).description("비고"))));
 
     }
