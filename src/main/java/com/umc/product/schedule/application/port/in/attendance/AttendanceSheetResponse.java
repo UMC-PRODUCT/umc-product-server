@@ -6,9 +6,7 @@ import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import com.umc.product.schedule.domain.vo.Location;
 import com.umc.product.schedule.domain.vo.LocationRange;
 
-/**
- * 출석부 응답 DTO
- */
+//출석부 응답 DTO
 public record AttendanceSheetResponse(
         AttendanceSheetId id,
         Long scheduleId,

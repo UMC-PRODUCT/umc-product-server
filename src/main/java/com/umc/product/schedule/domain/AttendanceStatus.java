@@ -1,5 +1,6 @@
 package com.umc.product.schedule.domain;
 
+//상태 출석
 public enum AttendanceStatus {
     PENDING, // 대기
     PRESENT, // 출석

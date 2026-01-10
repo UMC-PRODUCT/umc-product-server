@@ -4,7 +4,7 @@ import com.umc.product.schedule.domain.vo.Location;
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-//출석 체크용
+//출석 체크
 public record CheckAttendanceCommand(
         Long attendanceSheetId,
         Long challengerId,

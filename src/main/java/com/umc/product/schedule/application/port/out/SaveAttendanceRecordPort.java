@@ -2,7 +2,7 @@ package com.umc.product.schedule.application.port.out;
 
 import com.umc.product.schedule.domain.AttendanceRecord;
 
-//출석 저장
+//출석 저장용
 public interface SaveAttendanceRecordPort {
 
     /**

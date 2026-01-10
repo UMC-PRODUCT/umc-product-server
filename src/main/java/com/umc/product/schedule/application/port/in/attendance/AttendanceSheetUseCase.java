@@ -6,7 +6,7 @@ import java.util.List;
 //출석 부에 맞춘 기능 구현
 public interface AttendanceSheetUseCase {
 
-    //출석부 생성
+    //출석부
     AttendanceSheetId createAttendanceSheet(CreateAttendanceSheetCommand command);
 
     //출석부 수정

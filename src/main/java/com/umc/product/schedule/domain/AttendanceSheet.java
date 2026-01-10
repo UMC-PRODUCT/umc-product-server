@@ -16,7 +16,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-//관리자가 출석을 만듬
+//관리자가 출석부를 만드는 것
 @Entity
 @Table(name = "attendance_sheet")
 @Getter

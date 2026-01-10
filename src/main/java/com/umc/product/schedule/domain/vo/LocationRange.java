@@ -6,9 +6,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 인정 위치 범위 설정
- */
+//인정 위치 범위
 @Embeddable
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

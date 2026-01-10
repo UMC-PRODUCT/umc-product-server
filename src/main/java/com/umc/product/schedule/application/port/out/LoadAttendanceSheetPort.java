@@ -5,7 +5,7 @@ import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
 import java.util.List;
 import java.util.Optional;
 
-//출석부 조회파트
+//출석부 조회
 public interface LoadAttendanceSheetPort {
 
     /**

@@ -5,7 +5,7 @@ import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
 import java.util.List;
 import java.util.Optional;
 
-//출석 기록 조회 파트
+//출석 기록 조회
 public interface LoadAttendanceRecordPort {
 
     /**

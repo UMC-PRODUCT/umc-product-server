@@ -3,14 +3,12 @@ package com.umc.product.schedule.domain.vo;
 import com.umc.product.schedule.domain.AttendanceStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
 
-/**
- * 출석 시간대 상세
- */
+//출석 시간대 얘
 @Embeddable
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -57,8 +55,7 @@ public class AttendanceWindow {
     }
 
     /**
-     * 체크 시간에 따른 출석 상태 결정
-     * 위치 검증은 이미 완료된 상태에서 호출됨
+     * 체크 시간에 따른 출석 상태 결정 위치 검증은 이미 완료된 상태에서 호출됨
      *
      * @param checkTime        체크한 시간
      * @param requiresApproval 승인 필요 여부

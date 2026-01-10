@@ -16,7 +16,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-//여기가 챌린적가 요청하는 파트 기혹
+//여기가 챌린적가 요청하는 파트
 @Entity
 @Table(name = "attendance_record")
 @Getter

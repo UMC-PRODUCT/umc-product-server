@@ -6,9 +6,7 @@ import com.umc.product.schedule.domain.AttendanceStatus;
 import com.umc.product.schedule.domain.vo.Location;
 import java.time.LocalDateTime;
 
-/**
- * 출석 기록 응답 DTO
- */
+//출석 기록 응답 DTO
 public record AttendanceRecordResponse(
         AttendanceRecordId id,
         Long attendanceSheetId,

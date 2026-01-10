@@ -6,7 +6,7 @@ import java.util.List;
 //출석 자체에 대한 기능 구현.
 public interface AttendanceRecordUseCase {
 
-    // 출석체크
+    // 출석
     AttendanceRecordId checkAttendance(CheckAttendanceCommand command);
 
     //출석 승인

@@ -6,9 +6,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/**
- * 위치 (위도, 경도)
- */
+//위치인데 이거말고 다른 나타ㄴ내는 방법이 없을까
 @Embeddable
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

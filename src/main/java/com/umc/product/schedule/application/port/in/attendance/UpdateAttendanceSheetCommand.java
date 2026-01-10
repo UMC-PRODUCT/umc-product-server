@@ -6,7 +6,7 @@ import com.umc.product.schedule.domain.vo.Location;
 import com.umc.product.schedule.domain.vo.LocationRange;
 import java.util.Objects;
 
-//출석부 수정용
+//출석부 수정
 public record UpdateAttendanceSheetCommand(
         AttendanceSheetId sheetId,
         Location location,

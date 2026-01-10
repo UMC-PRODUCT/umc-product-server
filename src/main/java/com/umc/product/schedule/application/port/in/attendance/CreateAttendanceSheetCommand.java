@@ -6,7 +6,7 @@ import com.umc.product.schedule.domain.vo.Location;
 import com.umc.product.schedule.domain.vo.LocationRange;
 import java.util.Objects;
 
-//출석부 만드는거
+//출석부 만드는dyd
 public record CreateAttendanceSheetCommand(
         Long scheduleId,
         Location location,

@@ -3,9 +3,7 @@ package com.umc.product.schedule.application.port.out;
 import com.umc.product.schedule.domain.vo.Location;
 import com.umc.product.schedule.domain.vo.LocationRange;
 
-/**
- * 위치 계산 Port 두 지점 간의 거리 계산 및 범위 확인을 담당
- */
+//위치 계산파트 근데 불확실
 public interface CheckLocationPort {
 
     /**
