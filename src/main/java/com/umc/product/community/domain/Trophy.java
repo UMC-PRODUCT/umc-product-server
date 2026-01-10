@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Trophy {
-    //챌린저 학교 파트 가져와야함 기둘
+    //챌린저
     @Getter
     private TrophyId thophyid;
 
