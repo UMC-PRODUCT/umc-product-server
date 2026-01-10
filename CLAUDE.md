@@ -99,7 +99,7 @@ Level 0              Level 1              Level 2              Level 3
 ────────────────────────────────────────────────────────────────────────
 common ◄──────────── 모든 도메인이 의존
 
-user ◄───────────── organization
+member ◄───────────── organization
                           │
                           ▼
               ┌───────────┴───────────┐
@@ -110,22 +110,22 @@ user ◄───────────── organization
        ▼                  ▼                  ▼
   curriculum          schedule            notice
                                             
-community ◄────────── user, challenger
+community ◄────────── member, challenger
 
-form ◄─────────────── user (독립적)
+form ◄─────────────── member (독립적)
 ```
 
 | Domain       | Description                     | Dependencies             |
 |--------------|---------------------------------|--------------------------|
 | common       | 공통 (BaseEntity, Exception, DTO) | 없음                       |
-| user         | 사용자, OAuth, 약관                  | common                   |
-| organization | 기수, 지부, 학교, 스터디                 | common, user             |
-| challenger   | 챌린저, 역할, 상벌점                    | user, organization       |
+| member       | 사용자, OAuth, 약관                  | common                   |
+| organization | 기수, 지부, 학교, 스터디                 | common, member           |
+| challenger   | 챌린저, 역할, 상벌점                    | member, organization     |
 | curriculum   | 커리큘럼, 워크북, 미션                   | challenger               |
 | schedule     | 일정, 출석                          | challenger, organization |
 | notice       | 공지사항, 읽음, 알림                    | challenger, organization |
-| community    | 게시글, 댓글, 번개모임                   | user, challenger         |
-| form         | 지원서 폼, 질문, 응답                   | user                     |
+| community    | 게시글, 댓글, 번개모임                   | member, challenger       |
+| form         | 지원서 폼, 질문, 응답                   | member                   |
 
 ---
 
@@ -169,6 +169,15 @@ form ◄─────────────── user (독립적)
 | `Approve`  | 승인        | `ApproveAttendanceUseCase` |
 | `Get`      | 조회        | `GetChallengerUseCase`     |
 | `Search`   | 검색        | `SearchPostUseCase`        |
+
+### Manage 통합 옵션
+
+CUD(Create, Update, Delete)를 하나의 인터페이스로 통합하고 싶다면 `Manage` 접두사를 사용할 수 있습니다.
+
+| 대상          | 개별형                                                                 | 통합형                   |
+|-------------|---------------------------------------------------------------------|-----------------------|
+| **UseCase** | `CreateSchoolUseCase`, `UpdateSchoolUseCase`, `DeleteSchoolUseCase` | `ManageSchoolUseCase` |
+| **Port**    | `SaveSchoolPort`                                                    | `ManageSchoolPort`    |
 
 ---
 
@@ -348,8 +357,8 @@ public class ChallengerQueryService implements GetChallengerUseCase {
         Challenger challenger = loadChallengerPort.findById(challengerId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CHALLENGER_NOT_FOUND));
 
-        UserInfo user = getUserInfoUseCase.getById(challenger.getUserId());
-        return ChallengerInfo.of(challenger, user);
+        UserInfo member = getUserInfoUseCase.getById(challenger.getUserId());
+        return ChallengerInfo.of(challenger, member);
     }
 }
 ```
@@ -390,9 +399,9 @@ public class ChallengerController {
     @PostMapping
     @Operation(summary = "챌린저 등록")
     public ApiResponse<Long> register(
-            @AuthenticationPrincipal SecurityUser user,
+            @AuthenticationPrincipal SecurityUser member,
             @Valid @RequestBody RegisterChallengerRequest request) {
-        Long id = registerUseCase.register(request.toCommand(user.getUserId()));
+        Long id = registerUseCase.register(request.toCommand(member.getUserId()));
         return ApiResponse.success(id);
     }
 
@@ -454,14 +463,14 @@ public record ChallengerResponse(
 ```java
 // ❌ Bad: 다른 도메인 Entity 직접 참조
 @ManyToOne
-private User user;
+private User member;
 
 // ✅ Good: ID만 저장
 @Column(nullable = false)
 private Long userId;
 
 // ✅ Good: 필요시 UseCase로 조회
-UserInfo userInfo = getUserInfoUseCase.getById(challenger.getUserId());
+UserInfo memberInfo = getUserInfoUseCase.getById(challenger.getUserId());
 ```
 
 ### Event-Based Communication
@@ -511,11 +520,11 @@ public class AttendanceEventListener {
 
 ```json
 {
-  "success": true,
-  "data": {
-    ...
-  },
-  "error": null
+    "success": true,
+    "data": {
+        ...
+    },
+    "error": null
 }
 ```
 
@@ -523,12 +532,12 @@ public class AttendanceEventListener {
 
 ```json
 {
-  "success": false,
-  "data": null,
-  "error": {
-    "code": "CHALLENGER_NOT_FOUND",
-    "message": "챌린저를 찾을 수 없습니다."
-  }
+    "success": false,
+    "data": null,
+    "error": {
+        "code": "CHALLENGER_NOT_FOUND",
+        "message": "챌린저를 찾을 수 없습니다."
+    }
 }
 ```
 
@@ -536,18 +545,18 @@ public class AttendanceEventListener {
 
 ```json
 {
-  "success": true,
-  "data": {
-    "content": [
-      ...
-    ],
-    "page": 0,
-    "size": 20,
-    "totalElements": 100,
-    "totalPages": 5,
-    "hasNext": true
-  },
-  "error": null
+    "success": true,
+    "data": {
+        "content": [
+            ...
+        ],
+        "page": 0,
+        "size": 20,
+        "totalElements": 100,
+        "totalPages": 5,
+        "hasNext": true
+    },
+    "error": null
 }
 ```
 
@@ -720,7 +729,7 @@ fix: resolve null pointer in attendance check
 
 - Entity에 `@Setter` 사용
 - Controller에서 비즈니스 로직 처리
-- 다른 도메인 Entity 직접 참조 (`@ManyToOne private User user`)
+- 다른 도메인 Entity 직접 참조 (`@ManyToOne private User member`)
 - 순환 의존성 (도메인 간 양방향 의존)
 - Adapter에서 트랜잭션 관리
 

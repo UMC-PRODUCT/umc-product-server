@@ -7,6 +7,9 @@ import com.umc.product.global.response.code.BaseCode;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,10 +28,6 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Optional;
-
 @Slf4j
 @RestControllerAdvice(annotations = {RestController.class})
 @RequiredArgsConstructor
@@ -38,8 +37,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     private String activeProfile;
 
     /**
-     * Spring Security 권한 거부 예외 처리 - AuthorizationDeniedException: @PreAuthorize 등 메서드 레벨 보안 -
-     * AccessDeniedException: URL 패턴 기반 보안
+     * Spring Security 권한 거부 예외 처리 - AuthorizationDeniedException: @PreAuthorize 등 메서드 레벨 보안 - AccessDeniedException:
+     * URL 패턴 기반 보안
      */
     @ExceptionHandler({AuthorizationDeniedException.class, AccessDeniedException.class})
     public ResponseEntity<Object> handleAccessDenied(Exception e, WebRequest request) {
@@ -75,7 +74,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @Override
     public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException e,
-                                                               HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+                                                               HttpHeaders headers, HttpStatusCode status,
+                                                               WebRequest request) {
 
         Map<String, String> errors = new LinkedHashMap<>();
 
@@ -192,7 +192,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private ResponseEntity<Object> handleExceptionInternalFalse(Exception e,
                                                                 CommonErrorCode errorCommonStatus,
-                                                                HttpHeaders headers, HttpStatus status, WebRequest request, String errorPoint) {
+                                                                HttpHeaders headers, HttpStatus status,
+                                                                WebRequest request, String errorPoint) {
         ApiResponse<Object> body = ApiResponse.onFailure(errorCommonStatus.getCode(),
                 errorCommonStatus.getMessage(), errorPoint);
         return super.handleExceptionInternal(

@@ -22,6 +22,9 @@ spring:
     import:
       - optional:classpath:application-secret.yml
       - optional:file:/app/config/application-secret.yml
+  docker:
+    compose:
+      enabled: false # Local DB를 위한 Compose는 기본적으로 비활성화
 
   jackson:
     generator:

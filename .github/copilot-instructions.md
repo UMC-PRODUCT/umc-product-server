@@ -56,13 +56,15 @@ adapter/in → adapter/out (수평 의존)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Challenger extends BaseEntity {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private Long userId;  // ID 참조만
 
     @Builder
-    private Challenger(...) { }
+    private Challenger(...) {
+    }
 
     // 도메인 로직
     public void graduate() {
@@ -78,7 +80,7 @@ public class Challenger extends BaseEntity {
 @NoArgsConstructor  // access level 누락
 public class Challenger {
     @ManyToOne
-    private User user;  // 다른 도메인 직접 참조 금지
+    private Member member;  // 다른 도메인 직접 참조 금지
 
     // 도메인 로직 없이 getter/setter만
 }
@@ -102,9 +104,9 @@ public interface RegisterChallengerUseCase {
 }
 
 public record RegisterChallengerCommand(
-    Long userId,
-    Long gisuId,
-    ChallengerPart part
+        Long userId,
+        Long gisuId,
+        ChallengerPart part
 ) {
     // Validation in constructor if needed
     public RegisterChallengerCommand {
@@ -115,6 +117,7 @@ public record RegisterChallengerCommand(
 // ❌ BAD
 public interface ChallengerUseCase {  // 너무 포괄적인 이름
     void register(Long userId, Long gisuId, String part);  // primitive 타입 나열
+
     Challenger getById(Long id);  // Entity 직접 반환
 }
 ```
@@ -133,6 +136,7 @@ public interface ChallengerUseCase {  // 너무 포괄적인 이름
 // ✅ GOOD
 public interface LoadChallengerPort {
     Optional<Challenger> findById(Long id);
+
     boolean existsByUserIdAndGisuId(Long userId, Long gisuId);
 }
 
@@ -143,7 +147,9 @@ public interface SaveChallengerPort {
 // ❌ BAD
 public interface ChallengerPort {  // Load/Save 분리 안됨
     Challenger findById(Long id);  // Optional 미사용
+
     void save(Challenger challenger);  // 반환값 없음
+
     List<ChallengerResponse> findAllWithUserInfo();  // Response DTO 반환
 }
 ```
@@ -169,7 +175,7 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     @Override
     public ChallengerInfo getById(Long challengerId) {
         Challenger challenger = loadChallengerPort.findById(challengerId)
-            .orElseThrow(() -> new BusinessException(ErrorCode.CHALLENGER_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHALLENGER_NOT_FOUND));
         return ChallengerInfo.from(challenger);
     }
 }
@@ -230,10 +236,10 @@ public class ChallengerController {
 
     @PostMapping
     public ApiResponse<Long> register(
-            @AuthenticationPrincipal SecurityUser user,
+            @AuthenticationPrincipal SecurityUser member,
             @Valid @RequestBody RegisterChallengerRequest request) {
 
-        Long id = registerUseCase.register(request.toCommand(user.getUserId()));
+        Long id = registerUseCase.register(request.toCommand(member.getUserId()));
         return ApiResponse.success(id);
     }
 }
@@ -267,9 +273,9 @@ public class ChallengerController {
 ```java
 // ✅ GOOD - Request
 public record RegisterChallengerRequest(
-    @NotNull Long gisuId,
-    @NotNull ChallengerPart part
-) {
+                @NotNull Long gisuId,
+                @NotNull ChallengerPart part
+        ) {
     public RegisterChallengerCommand toCommand(Long userId) {
         return new RegisterChallengerCommand(userId, gisuId, part);
     }
@@ -277,17 +283,17 @@ public record RegisterChallengerRequest(
 
 // ✅ GOOD - Response
 public record ChallengerResponse(
-    Long id,
-    String userName,
-    String part,
-    String status
+        Long id,
+        String userName,
+        String part,
+        String status
 ) {
     public static ChallengerResponse from(ChallengerInfo info) {
         return new ChallengerResponse(
-            info.id(),
-            info.userName(),
-            info.part().name(),
-            info.status().name()
+                info.id(),
+                info.userName(),
+                info.part().name(),
+                info.status().name()
         );
     }
 }
@@ -315,7 +321,7 @@ public class ChallengerRequest {
 ### File Names
 
 | Type       | Pattern                                | Example                             |
-| ---------- | -------------------------------------- | ----------------------------------- |
+|------------|----------------------------------------|-------------------------------------|
 | Entity     | `{Domain}.java`                        | `Challenger.java`                   |
 | Enum       | `{Domain}{Type}.java`                  | `ChallengerStatus.java`             |
 | UseCase    | `{Action}{Domain}UseCase.java`         | `RegisterChallengerUseCase.java`    |
@@ -330,12 +336,18 @@ public class ChallengerRequest {
 
 ```java
 // UseCase methods
-register(), create(), update(), delete()  // Command
-getById(), getAll(), search(), find()     // Query
+register(),create(),
+
+update(),delete()  // Command
+
+getById(),getAll(),
+
+search(),find()     // Query
 
 // Port methods
-save(), delete()                          // Save Port
-findById(), findAll(), existsBy...()      // Load Port
+save(),delete()                          // Save Port
+
+findById(),findAll(),existsBy...()      // Load Port
 
 // Controller endpoints
 POST   /api/v1/{domains}           // 생성
@@ -355,12 +367,23 @@ DELETE /api/v1/{domains}/{id}      // 삭제
 // ❌ 하나의 서비스가 너무 많은 책임
 @Service
 public class ChallengerService {
-    public void register() { }
-    public void assignRole() { }
-    public void addRewardPenalty() { }
-    public void graduate() { }
-    public List<ChallengerResponse> search() { }
-    public void sendNotification() { }  // 다른 도메인 책임
+    public void register() {
+    }
+
+    public void assignRole() {
+    }
+
+    public void addRewardPenalty() {
+    }
+
+    public void graduate() {
+    }
+
+    public List<ChallengerResponse> search() {
+    }
+
+    public void sendNotification() {
+    }  // 다른 도메인 책임
 }
 ```
 
@@ -377,7 +400,9 @@ public class Challenger {
 }
 
 // Service에서 직접 상태 변경
-challenger.setStatus(ChallengerStatus.GRADUATED);
+challenger.
+
+setStatus(ChallengerStatus.GRADUATED);
 ```
 
 **권장:** Entity에 도메인 로직 포함
@@ -407,7 +432,7 @@ public class ChallengerCommandService {
     private final UserRepository userRepository;  // 다른 도메인
 
     public void register(...) {
-        User user = userRepository.findById(userId);  // 직접 접근
+        User member = userRepository.findById(userId);  // 직접 접근
     }
 }
 ```
@@ -418,7 +443,7 @@ public class ChallengerCommandService {
 private final GetUserInfoUseCase getUserInfoUseCase;
 
 public void register(...) {
-    UserInfo user = getUserInfoUseCase.getById(userId);
+    UserInfo member = getUserInfoUseCase.getById(userId);
 }
 ```
 
@@ -446,14 +471,14 @@ public class ChallengerCommandService {
 // ✅ 인증된 사용자 정보는 @AuthenticationPrincipal로
 @PostMapping
 public ApiResponse<Long> register(
-        @AuthenticationPrincipal SecurityUser user,
+        @AuthenticationPrincipal SecurityUser member,
         @RequestBody RegisterRequest request) {
-    // user.getUserId() 사용
+    // member.getUserId() 사용
 }
 
 // ❌ Request Body에서 userId 받지 않음
 public record RegisterRequest(
-    Long userId,  // 보안 취약점
+        Long userId,  // 보안 취약점
     ...
 )
 ```
@@ -481,8 +506,9 @@ public void updateNotice(Long noticeId, UpdateCommand command, Long requesterId)
 ```java
 // ❌ N+1 발생 가능
 List<Challenger> challengers = repository.findAll();
-for (Challenger c : challengers) {
-    User user = userRepository.findById(c.getUserId());  // N번 쿼리
+for(
+Challenger c :challengers){
+User member = userRepository.findById(c.getUserId());  // N번 쿼리
 }
 
 // ✅ Fetch Join 또는 별도 쿼리
@@ -513,25 +539,31 @@ List<Challenger> findByGisuId(Long gisuId);
 ```java
 // ✅ 한글 메서드명으로 명확하게
 @Test
-void 챌린저_등록_성공() { }
+void 챌린저_등록_성공() {
+}
 
 @Test
-void 존재하지_않는_사용자면_USER_NOT_FOUND_예외() { }
+void 존재하지_않는_사용자면_USER_NOT_FOUND_예외() {
+}
 
 @Test
-void 이미_등록된_챌린저면_중복_예외() { }
+void 이미_등록된_챌린저면_중복_예외() {
+}
 
 // ❌ 불명확한 테스트명
 @Test
-void test1() { }
+void test1() {
+}
 
 @Test
-void registerTest() { }
+void registerTest() {
+}
 ```
 
 ### Test Structure
 
 ```java
+
 @Test
 void 챌린저_등록_성공() {
     // given - 테스트 데이터 준비
