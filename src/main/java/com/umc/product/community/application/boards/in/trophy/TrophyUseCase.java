@@ -1,4 +1,4 @@
-package com.umc.product.community.application.port.in.trophy;
+package com.umc.product.community.application.boards.in.trophy;
 
 import java.util.List;
 

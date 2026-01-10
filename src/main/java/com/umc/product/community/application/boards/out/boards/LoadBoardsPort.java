@@ -1,0 +1,17 @@
+package com.umc.product.community.application.boards.out.boards;
+
+import com.umc.product.community.application.boards.in.boards.BoardsSearchQuery;
+import com.umc.product.community.domain.Boards;
+import com.umc.product.community.domain.Category;
+import java.util.List;
+import java.util.Optional;
+
+public interface LoadBoardsPort {
+    List<Boards> findAllByQuery(BoardsSearchQuery query);
+
+    Optional<Boards> findById(Long id);
+
+    List<Boards> findByCategory(Category category);
+
+    List<Boards> findByRegion(String region);
+}

@@ -1,8 +1,8 @@
-package com.umc.product.community.application.port.in.post;
+package com.umc.product.community.application.boards.in.boards;
 
 import com.umc.product.community.domain.Category;
 
-public record CreatePostCommand(
+public record CreateBoardsCommand(
         String title,
         String content,
         Category category,

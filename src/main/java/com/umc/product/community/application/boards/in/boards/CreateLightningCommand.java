@@ -1,4 +1,4 @@
-package com.umc.product.community.application.port.in.post;
+package com.umc.product.community.application.boards.in.boards;
 
 import java.time.LocalDateTime;
 
