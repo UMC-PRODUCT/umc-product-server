@@ -1,6 +1,6 @@
 package com.umc.product.community.application.port.in.trophy;
 
-public record TrophyResponse(
+public record TrophyInfo(
         Long trophyId,
         Integer week,
         String challengerName,
