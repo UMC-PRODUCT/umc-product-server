@@ -1,7 +1,7 @@
 package com.umc.product.recruitment.application.port.in.query;
 
+import com.umc.product.recruitment.domain.ApplicationStatus;
 import com.umc.product.recruitment.domain.RecruitmentPartStatus;
-import com.umc.product.survey.domain.FormResponseStatus;
 import java.time.Instant;
 import java.util.List;
 
@@ -29,7 +29,9 @@ public record RecruitmentPartListInfo(
     }
 
     public record MyApplicationInfo(
-            FormResponseStatus status
+            Long applicationId,
+            Long formResponseId,
+            ApplicationStatus status
     ) {
     }
 
