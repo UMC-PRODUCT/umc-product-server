@@ -4,7 +4,7 @@ import com.umc.product.community.domain.Boards;
 import com.umc.product.community.domain.Category;
 import java.time.LocalDateTime;
 
-public record BoardsResponse(
+public record BoardsInfo(
         Long boardsId,
         String title,
         String content,
@@ -15,13 +15,13 @@ public record BoardsResponse(
         String location,
         Integer maxParticipants
 ) {
-    public static BoardsResponse from(Boards boards) {
+    public static BoardsInfo from(Boards boards) {
         Long boardsId = boards.getBoardsId() != null ? boards.getBoardsId().id() : null;
 
         // 번개글인 경우
         if (boards.isLightning()) {
             Boards.LightningInfo info = boards.getLightningInfoOrThrow();
-            return new BoardsResponse(
+            return new BoardsInfo(
                     boardsId,
                     boards.getTitle(),
                     boards.getContent(),
@@ -35,7 +35,7 @@ public record BoardsResponse(
         }
 
         // 일반 게시글
-        return new BoardsResponse(
+        return new BoardsInfo(
                 boardsId,
                 boards.getTitle(),
                 boards.getContent(),
