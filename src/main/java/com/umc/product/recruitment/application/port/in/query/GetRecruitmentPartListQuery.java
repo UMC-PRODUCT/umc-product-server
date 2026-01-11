@@ -1,4 +1,4 @@
-package com.umc.product.survey.application.port.in.query;
+package com.umc.product.recruitment.application.port.in.query;
 
 public record GetRecruitmentPartListQuery(
         Long recruitmentId,

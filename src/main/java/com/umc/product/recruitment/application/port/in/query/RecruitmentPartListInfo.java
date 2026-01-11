@@ -1,4 +1,4 @@
-package com.umc.product.survey.application.port.in.query;
+package com.umc.product.recruitment.application.port.in.query;
 
 import com.umc.product.recruitment.domain.RecruitmentPartStatus;
 import com.umc.product.survey.domain.FormResponseStatus;
