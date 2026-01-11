@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +21,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "question_option")
 public class QuestionOption extends BaseEntity {
 
     @Id
@@ -33,7 +35,7 @@ public class QuestionOption extends BaseEntity {
     @Column(nullable = false)
     private String content; // 보기 내용 (예: '남자', '여자')
 
-    @Column(nullable = false)
+    @Column(name = "order_no", nullable = false)
     private Integer orderNo; // 보기 순서
 
 }
