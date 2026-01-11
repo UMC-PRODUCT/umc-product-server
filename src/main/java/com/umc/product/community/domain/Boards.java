@@ -1,5 +1,6 @@
 package com.umc.product.community.domain;
 
+import com.umc.product.community.domain.Enum.Category;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -33,7 +34,8 @@ public class Boards {
     @Getter
     private final LightningInfo lightningInfo;
 
-    public static Boards createBoards(String title, String content, Category category, String region, boolean anonymous) {
+    public static Boards createBoards(String title, String content, Category category, String region,
+                                      boolean anonymous) {
         if (category == Category.LIGHTNING) {
             throw new IllegalArgumentException("번개 게시글은 createLightning()을 사용하세요");
         }
@@ -41,7 +43,8 @@ public class Boards {
         return new Boards(null, title, content, category, region, anonymous, null);
     }
 
-    public static Boards createLightning(String title, String content, String region, boolean anonymous, LightningInfo info) {
+    public static Boards createLightning(String title, String content, String region, boolean anonymous,
+                                         LightningInfo info) {
         if (info == null) {
             throw new IllegalArgumentException("번개 게시글은 추가 정보가 필수입니다.");
         }
@@ -50,7 +53,7 @@ public class Boards {
     }
 
     public static Boards reconstruct(BoardsId boardsId, String title, String content, Category category, String region,
-                                   boolean anonymous, LightningInfo lightningInfo) {
+                                     boolean anonymous, LightningInfo lightningInfo) {
         return new Boards(boardsId, title, content, category, region, anonymous, lightningInfo);
     }
 

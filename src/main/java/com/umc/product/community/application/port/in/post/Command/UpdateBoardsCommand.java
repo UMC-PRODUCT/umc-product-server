@@ -1,4 +1,4 @@
-package com.umc.product.community.application.port.in;
+package com.umc.product.community.application.port.in.post.Command;
 
 public record UpdateBoardsCommand(
         Long boardsId,

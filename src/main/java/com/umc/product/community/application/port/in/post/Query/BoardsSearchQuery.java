@@ -1,6 +1,6 @@
-package com.umc.product.community.application.port.in;
+package com.umc.product.community.application.port.in.post.Query;
 
-import com.umc.product.community.domain.BoardsSortType;
+import com.umc.product.community.domain.Enum.BoardsSortType;
 
 public record BoardsSearchQuery(
         boolean ing,        // 모집중
