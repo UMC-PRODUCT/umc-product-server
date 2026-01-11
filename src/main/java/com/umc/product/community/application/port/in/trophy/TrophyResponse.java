@@ -2,7 +2,7 @@ package com.umc.product.community.application.port.in.trophy;
 
 public record TrophyResponse(
         Long trophyId,
-        int week,
+        Integer week,
         String challengerName,
         String school,
         String part,

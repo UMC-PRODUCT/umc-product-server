@@ -9,6 +9,6 @@ public record CreateLightningCommand(
         boolean anonymous,
         LocalDateTime meetAt,
         String location,
-        int maxParticipants
+        Integer maxParticipants
 ) {
 }

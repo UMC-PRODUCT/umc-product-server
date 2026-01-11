@@ -91,7 +91,7 @@ public class Boards {
 
     }
 
-    public record BoardsId(long id) {
+    public record BoardsId(Long id) {
         public BoardsId {
             if (id <= 0) {
                 throw new IllegalArgumentException("ID는 양수여야 합니다.");
@@ -102,7 +102,7 @@ public class Boards {
     public record LightningInfo(
             LocalDateTime meetAt,
             String location,
-            int maxParticipants
+            Integer maxParticipants
     ) {
         public LightningInfo {
             if (meetAt == null || meetAt.isBefore(LocalDateTime.now())) {
