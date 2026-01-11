@@ -1,7 +1,7 @@
 package com.umc.product.survey.application.port.in.query;
 
+import com.umc.product.recruitment.domain.RecruitmentPartStatus;
 import com.umc.product.survey.domain.FormResponseStatus;
-import com.umc.product.survey.domain.RecruitmentPartStatus;
 import java.time.Instant;
 import java.util.List;
 
