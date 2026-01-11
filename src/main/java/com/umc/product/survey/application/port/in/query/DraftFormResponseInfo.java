@@ -7,7 +7,6 @@ import java.util.Map;
 
 public record DraftFormResponseInfo(
         Long formResponseId,
-        Long recruitmentId,
         Long formId,
         FormResponseStatus status, // 항상 DRAFT
         Instant lastSavedAt,

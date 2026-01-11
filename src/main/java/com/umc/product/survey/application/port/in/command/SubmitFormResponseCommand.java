@@ -5,7 +5,7 @@ import java.util.Map;
 
 public record SubmitFormResponseCommand(
         Long userId,
-        Long recruitmentId,
+        Long formId,
         List<AnswerCommand> answers
 ) {
 
