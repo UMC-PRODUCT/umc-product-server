@@ -1,9 +1,9 @@
 package com.umc.product.notice.domain;
 
 import com.umc.product.challenger.domain.enums.ChallengerPart;
+import com.umc.product.challenger.domain.enums.OrganizationType;
 import com.umc.product.challenger.domain.enums.RoleType;
 import com.umc.product.common.BaseEntity;
-import com.umc.product.notice.domain.enums.OrganizationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -43,17 +43,17 @@ public class Notice extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrganizationType scope;
+    private OrganizationType scope; // 어떤 scope에서 작성된 공지인가?
 
     @Column(name = "organization_id")
-    private Long organizationId;
+    private Long organizationId; // scope에 따른 조직(중앙, 학교 등) ID
 
     @Column(name = "target_gisu_id")
     private Long targetGisuId;
 
     private Boolean shouldNotify; // 알림발송 여부
 
-    private Instant notifiedAt;
+    private Instant notifiedAt; // 알림발송 시각
 
     private List<RoleType> targetRoles;
 
