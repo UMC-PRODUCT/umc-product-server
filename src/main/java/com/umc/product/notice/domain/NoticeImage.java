@@ -26,7 +26,7 @@ public class NoticeImage extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "notice", nullable = false)
+    @JoinColumn(name = "notice_id", nullable = false)
     private Notice notice;
 
     @Column(name = "image_id", nullable = false)

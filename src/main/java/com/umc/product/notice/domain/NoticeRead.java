@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "notice_link")
+@Table(name = "notice_read")
 public class NoticeRead extends BaseEntity {
 
     @Id
@@ -26,7 +26,7 @@ public class NoticeRead extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "notice", nullable = false)
+    @JoinColumn(name = "notice_id", nullable = false)
     private Notice notice;
 
     @Column(name = "challenger_id", nullable = false)

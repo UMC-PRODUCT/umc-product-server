@@ -5,6 +5,7 @@ import com.umc.product.challenger.domain.enums.OrganizationType;
 import com.umc.product.challenger.domain.enums.RoleType;
 import com.umc.product.common.BaseEntity;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -38,9 +39,6 @@ public class Notice extends BaseEntity {
     @Column(name = "author_challenger_id", nullable = false)
     private Long authorChallengerId;
 
-    @Column(name = "vote_id")
-    private Long voteId;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrganizationType scope; // 어떤 scope에서 작성된 공지인가?
@@ -55,19 +53,20 @@ public class Notice extends BaseEntity {
 
     private Instant notifiedAt; // 알림발송 시각
 
+    @ElementCollection
     private List<RoleType> targetRoles;
 
+    @ElementCollection
     private List<ChallengerPart> targetParts;
 
     @Builder
-    private Notice(String title, String content, Long authorChallengerId, Long voteId,
+    private Notice(String title, String content, Long authorChallengerId,
                    OrganizationType scope, Long organizationId, Long targetGisuId,
                    Boolean shouldNotify, Instant notifiedAt,
                    List<RoleType> targetRoles, List<ChallengerPart> targetParts) {
         this.title = title;
         this.content = content;
         this.authorChallengerId = authorChallengerId;
-        this.voteId = voteId;
         this.scope = scope;
         this.organizationId = organizationId;
         this.targetGisuId = targetGisuId;

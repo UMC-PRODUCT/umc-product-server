@@ -11,7 +11,7 @@ public interface ManageNoticeUseCase {
      * 공지 작성 확정
      * 따로 반환값 X
      * */
-    void publishNotice(Long noticeId, Long requesterId);
+    void publishNotice(PublishNoticeCommand command);
 
 
     /*

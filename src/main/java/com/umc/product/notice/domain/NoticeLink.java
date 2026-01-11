@@ -26,7 +26,7 @@ public class NoticeLink extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "notice", nullable = false)
+    @JoinColumn(name = "notice_id", nullable = false)
     private Notice notice;
 
     @Column(nullable = false)
