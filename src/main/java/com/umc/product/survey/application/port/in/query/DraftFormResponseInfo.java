@@ -1,6 +1,6 @@
 package com.umc.product.survey.application.port.in.query;
 
-import com.umc.product.survey.domain.FormResponseStatus;
+import com.umc.product.survey.domain.enums.FormResponseStatus;
 import java.time.Instant;
 import java.util.List;
 

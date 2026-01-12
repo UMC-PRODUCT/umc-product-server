@@ -1,7 +1,7 @@
 package com.umc.product.survey.application.port.in.query;
 
-import com.umc.product.survey.domain.FormSectionType;
-import com.umc.product.survey.domain.QuestionType;
+import com.umc.product.survey.domain.enums.FormSectionType;
+import com.umc.product.survey.domain.enums.QuestionType;
 import java.util.List;
 
 public record FormDefinitionInfo(

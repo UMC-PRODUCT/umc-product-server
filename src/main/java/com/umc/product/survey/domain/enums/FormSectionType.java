@@ -1,4 +1,4 @@
-package com.umc.product.survey.domain;
+package com.umc.product.survey.domain.enums;
 
 public enum FormSectionType {
     DEFAULT, // 기본(공통) 섹션
