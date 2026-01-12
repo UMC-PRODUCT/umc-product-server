@@ -1,6 +1,7 @@
-package com.umc.product.member.domain;
+package com.umc.product.authentication.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.common.domain.enums.OAuthProvider;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

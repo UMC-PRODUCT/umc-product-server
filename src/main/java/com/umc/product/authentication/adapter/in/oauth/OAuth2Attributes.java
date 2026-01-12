@@ -1,7 +1,6 @@
-package com.umc.product.global.security.oauth;
+package com.umc.product.authentication.adapter.in.oauth;
 
-import com.umc.product.member.application.port.in.command.ProcessOAuthLoginCommand;
-import com.umc.product.member.domain.OAuthProvider;
+import com.umc.product.common.domain.enums.OAuthProvider;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,7 +22,6 @@ public class OAuth2Attributes {
         return switch (registrationId.toLowerCase()) {
             case "google" -> ofGoogle(userNameAttributeName, attributes);
             case "kakao" -> ofKakao(userNameAttributeName, attributes);
-            case "naver" -> ofNaver(userNameAttributeName, attributes);
             default -> throw new IllegalArgumentException("Unsupported provider: " + registrationId);
         };
     }
@@ -57,28 +55,4 @@ public class OAuth2Attributes {
                 .build();
     }
 
-    private static OAuth2Attributes ofNaver(String userNameAttributeName,
-                                            Map<String, Object> attributes) {
-        Map<String, Object> response = (Map<String, Object>) attributes.get(userNameAttributeName);
-
-        return OAuth2Attributes.builder()
-                .provider(OAuthProvider.NAVER)
-                .providerId((String) response.get("id"))
-                .name((String) response.get("name"))
-                .email((String) response.get("email"))
-                .nickname((String) response.get("nickname"))
-                .attributes(attributes)
-                .nameAttributeKey(userNameAttributeName)
-                .build();
-    }
-
-    public ProcessOAuthLoginCommand toCommand() {
-        return new ProcessOAuthLoginCommand(
-                provider,
-                providerId,
-                email,
-                name,
-                nickname
-        );
-    }
 }

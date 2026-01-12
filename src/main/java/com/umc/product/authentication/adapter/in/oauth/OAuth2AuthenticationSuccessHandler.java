@@ -1,4 +1,4 @@
-package com.umc.product.global.security.oauth;
+package com.umc.product.authentication.adapter.in.oauth;
 
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
@@ -20,6 +20,8 @@ import org.springframework.web.util.UriComponentsBuilder;
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final JwtTokenProvider jwtTokenProvider;
+
+    // TODO: 전체 다시
 
     @Value("${oauth2.redirect-url:http://localhost:3000/oauth/callback}")
     private String redirectUrl;

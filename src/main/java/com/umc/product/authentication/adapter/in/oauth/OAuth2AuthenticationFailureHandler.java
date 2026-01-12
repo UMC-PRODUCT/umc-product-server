@@ -1,4 +1,4 @@
-package com.umc.product.global.security.oauth;
+package com.umc.product.authentication.adapter.in.oauth;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +19,8 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
     @Value("${oauth2.redirect-url:http://localhost:3000/oauth/callback}")
     private String redirectUrl;
+
+    // TODO: 전체 다시
 
     @Override
     public void onAuthenticationFailure(
