@@ -46,7 +46,7 @@ public class FormSection extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 500)
     private String description;
 
     @Column(name = "order_no", nullable = false)

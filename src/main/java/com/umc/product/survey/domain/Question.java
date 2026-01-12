@@ -39,7 +39,7 @@ public class Question extends BaseEntity {
     @JoinColumn(name = "form_section_id", nullable = false)
     private FormSection formSection;
 
-    @Column(name = "question_text", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "question_text", nullable = false, length = 500)
     private String questionText;
 
     @Enumerated(EnumType.STRING)
