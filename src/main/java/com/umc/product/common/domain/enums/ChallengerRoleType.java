@@ -1,6 +1,6 @@
-package com.umc.product.challenger.domain.enums;
+package com.umc.product.common.domain.enums;
 
-public enum RoleType {
+public enum ChallengerRoleType {
     // 중앙
     CENTRAL_PRESIDENT, // 총괄
     CENTRAL_VICE_PRESIDENT, // 부총괄

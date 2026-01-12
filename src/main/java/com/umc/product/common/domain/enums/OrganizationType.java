@@ -1,4 +1,4 @@
-package com.umc.product.challenger.domain.enums;
+package com.umc.product.common.domain.enums;
 
 public enum OrganizationType {
     CENTRAL,

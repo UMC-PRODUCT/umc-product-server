@@ -1,4 +1,4 @@
-package com.umc.product.member.domain;
+package com.umc.product.common.domain.enums;
 
 public enum OAuthProvider {
     GOOGLE,
