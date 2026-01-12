@@ -17,6 +17,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,7 +26,9 @@ import org.hibernate.type.SqlTypes;
 
 @Entity
 @Getter
+@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Table(name = "notice")
 public class Notice extends BaseEntity {
 
@@ -67,22 +70,5 @@ public class Notice extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private List<ChallengerPart> targetParts = new ArrayList<>();
-
-    @Builder
-    private Notice(String title, String content, Long authorChallengerId,
-                   OrganizationType scope, Long organizationId, Long targetGisuId,
-                   Boolean shouldNotify, Instant notifiedAt,
-                   List<RoleType> targetRoles, List<ChallengerPart> targetParts) {
-        this.title = title;
-        this.content = content;
-        this.authorChallengerId = authorChallengerId;
-        this.scope = scope;
-        this.organizationId = organizationId;
-        this.targetGisuId = targetGisuId;
-        this.shouldNotify = shouldNotify != null ? shouldNotify : false;
-        this.notifiedAt = notifiedAt;
-        this.targetRoles = targetRoles;
-        this.targetParts = targetParts;
-    }
 
 }
