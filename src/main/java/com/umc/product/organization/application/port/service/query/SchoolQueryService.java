@@ -6,7 +6,9 @@ import com.umc.product.organization.application.port.in.query.dto.SchoolListItem
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
+@Service
 public class SchoolQueryService implements GetSchoolUseCase {
 
 
