@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 public record UpdateDraftFormResponseCommand(
-        Long userId,
+        Long memberId,
         Long formId,
         List<AnswerCommand> answers
 ) {

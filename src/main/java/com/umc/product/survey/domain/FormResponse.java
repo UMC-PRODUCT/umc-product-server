@@ -40,7 +40,7 @@ public class FormResponse extends BaseEntity {
     private Form form;
 
     @Column(name = "respondent_member_id", nullable = false)
-    private Long respondentUserId;
+    private Long respondentMemberId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

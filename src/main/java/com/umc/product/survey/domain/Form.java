@@ -30,8 +30,8 @@ public class Form extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private Long createdUserId;
+    @Column(name = "created_member_id", nullable = false)
+    private Long createdMemberId;
 
     @Column(nullable = false)
     private String title;
