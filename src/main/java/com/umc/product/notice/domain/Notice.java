@@ -14,11 +14,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Getter
@@ -49,15 +52,21 @@ public class Notice extends BaseEntity {
     @Column(name = "target_gisu_id")
     private Long targetGisuId;
 
-    private Boolean shouldNotify; /* 알림발송 여부 */
+    private boolean shouldNotify; /* 알림발송 여부 */
 
     private Instant notifiedAt; /* 알림발송 시각 */
 
-    @ElementCollection
-    private List<RoleType> targetRoles;
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "target_roles", columnDefinition = "varchar[]")
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private List<RoleType> targetRoles = new ArrayList<>();
 
-    @ElementCollection
-    private List<ChallengerPart> targetParts;
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "target_parts", columnDefinition = "varchar[]")
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private List<ChallengerPart> targetParts = new ArrayList<>();
 
     @Builder
     private Notice(String title, String content, Long authorChallengerId,
