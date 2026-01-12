@@ -46,7 +46,7 @@ class SchoolQueryControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                get("/v1/admin/schools")
+                get("/api/v1/admin/schools")
                         .param("keyword", "중앙대학교")
                         .param("chapterId", "1")
                         .param("page", "0")
@@ -102,7 +102,7 @@ class SchoolQueryControllerTest extends DocumentationTest {
 
         given(getSchoolUseCase.getSchoolDetail(schoolId)).willReturn(schoolInfo);
         // when
-        ResultActions result = mockMvc.perform(get("/v1/admin/schools/{schoolId}", schoolId));
+        ResultActions result = mockMvc.perform(get("/api/v1/admin/schools/{schoolId}", schoolId));
         // then
         result.andExpect((status().isOk()))
                 .andDo(restDocsHandler.document(pathParameters(parameterWithName("schoolId").description("학교 ID")),
