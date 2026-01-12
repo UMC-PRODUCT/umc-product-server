@@ -1,11 +1,11 @@
 package com.umc.product.global.config;
 
 
+import com.umc.product.authentication.adapter.in.oauth.OAuth2AuthenticationFailureHandler;
+import com.umc.product.authentication.adapter.in.oauth.OAuth2AuthenticationSuccessHandler;
 import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 import com.umc.product.global.security.JwtAuthenticationFilter;
-import com.umc.product.global.security.oauth.OAuth2AuthenticationFailureHandler;
-import com.umc.product.global.security.oauth.OAuth2AuthenticationSuccessHandler;
 import com.umc.product.member.adapter.in.web.oauth.CustomOAuth2UserService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -97,9 +97,13 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // OAuth2 로그인 설정
                 .oauth2Login(oauth2 -> oauth2
+                        // 우리 DB랑 비교해서 사용자 정보를 저장함
+                        // 여기서 실패한 요청도 failure로 들어감
                         .userInfoEndpoint(userInfo ->
                                 userInfo.userService(customOAuth2UserService))
+                        // OAuth 로그인이 성공했을 떄 핸들링하는 곳
                         .successHandler(oAuth2SuccessHandler)
+                        // OAuth 로그인이 실패했을 때 핸들링하는 곳 (그냥 실패한거)
                         .failureHandler(oAuth2FailureHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
