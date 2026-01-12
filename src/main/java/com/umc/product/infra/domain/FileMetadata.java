@@ -64,9 +64,9 @@ public class FileMetadata extends BaseEntity {
 
 
     /**
-     * 스토리지 키 (S3 key, GCS object name 등)
+     * 스토리지 제공자 (S3, GCS 등)
      */
-    @Column(nullable = false, unique = true, length = 500)
+    @Column(nullable = false, length = 50)
     @Enumerated(EnumType.STRING)
     private StorageProvider storageProvider;
 
@@ -80,19 +80,19 @@ public class FileMetadata extends BaseEntity {
      * 업로드한 사용자 ID (선택)
      */
     @Column
-    private Long uploadedBy;
+    private Long uploadedMemberId;
 
     /**
      * 업로드 완료 여부
      */
     @Column(nullable = false)
-    private boolean uploaded;
+    private boolean isUploaded = false;
 
     /**
      * 업로드 완료 처리
      */
     public void markAsUploaded() {
-        this.uploaded = true;
+        this.isUploaded = true;
     }
 
     /**
