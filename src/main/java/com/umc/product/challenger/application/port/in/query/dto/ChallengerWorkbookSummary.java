@@ -1,4 +1,4 @@
-package com.umc.product.challenger.application.port.in.query;
+package com.umc.product.challenger.application.port.in.query.dto;
 
 
 import com.umc.product.challenger.domain.Challenger;
