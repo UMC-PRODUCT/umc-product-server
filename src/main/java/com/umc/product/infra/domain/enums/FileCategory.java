@@ -5,8 +5,10 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * 파일 카테고리
- *
- * <p>파일의 용도에 따라 저장 경로, 허용 확장자, 최대 크기 등을 다르게 관리할 수 있습니다.
+ * <p>
+ * 파일의 용도에 따라 저장 경로, 허용 확장자, 최대 크기 등을 다르게 관리할 수 있습니다.
+ * <p>
+ * 카테고리에 따라서 정책을 지속적으로 업데이트 하면 됩니다.
  */
 @Getter
 @RequiredArgsConstructor
