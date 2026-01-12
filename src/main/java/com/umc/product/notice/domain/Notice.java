@@ -41,17 +41,17 @@ public class Notice extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrganizationType scope; // 어떤 scope에서 작성된 공지인가?
+    private OrganizationType scope; /* 어떤 scope에서 작성된 공지인가? */
 
     @Column(name = "organization_id")
-    private Long organizationId; // scope에 따른 조직(중앙, 학교 등) ID
+    private Long organizationId; /* scope에 따른 조직(중앙, 학교 등) ID */
 
     @Column(name = "target_gisu_id")
     private Long targetGisuId;
 
-    private Boolean shouldNotify; // 알림발송 여부
+    private Boolean shouldNotify; /* 알림발송 여부 */
 
-    private Instant notifiedAt; // 알림발송 시각
+    private Instant notifiedAt; /* 알림발송 시각 */
 
     @ElementCollection
     private List<RoleType> targetRoles;

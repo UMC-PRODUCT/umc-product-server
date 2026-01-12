@@ -1,4 +1,4 @@
-package com.umc.product.notice.application.port.in.query;
+package com.umc.product.notice.application.port.in.query.dto;
 
 public record NoticeImageInfo(
         Long id,

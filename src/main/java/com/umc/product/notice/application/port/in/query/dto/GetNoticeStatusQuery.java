@@ -1,9 +1,9 @@
-package com.umc.product.notice.application.port.in.query;
+package com.umc.product.notice.application.port.in.query.dto;
 
 import com.umc.product.notice.domain.enums.NoticeReadStatus;
 import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
 
-public record GetNoticeStatusCommand(
+public record GetNoticeStatusQuery(
         Long noticeId,
         Long requesterId,
         NoticeReadStatusFilterType filterType,
