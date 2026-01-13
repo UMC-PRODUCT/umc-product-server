@@ -7,6 +7,7 @@ public interface SaveSingleAnswerPort {
 
     void saveAll(List<SingleAnswer> answers);
 
-    void upsertAll(Long formResponseId, List<SingleAnswer> answers);
+    void upsert(Long formResponseId, SingleAnswer answer);
 
+    void upsertAll(Long formResponseId, List<SingleAnswer> answers);
 }

@@ -1,11 +1,11 @@
-package com.umc.product.survey.application.port.in.command;
+package com.umc.product.survey.application.port.in.command.dto;
 
 import java.util.List;
 import java.util.Map;
 
-public record SubmitFormResponseCommand(
-        Long userId,
-        Long recruitmentId,
+public record UpdateDraftFormResponseCommand(
+        Long memberId,
+        Long formId,
         List<AnswerCommand> answers
 ) {
 

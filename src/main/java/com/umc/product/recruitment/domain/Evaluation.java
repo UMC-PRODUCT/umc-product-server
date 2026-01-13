@@ -1,4 +1,4 @@
-package com.umc.product.survey.domain;
+package com.umc.product.recruitment.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,34 +18,30 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Recruitment {
+public class Evaluation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "school_id", nullable = false)
-    private Long schoolId;
+    @Column(name = "response_id", nullable = false)
+    private Long responseId;
 
-    @Column(name = "gisu_id", nullable = false)
-    private Long gisuId;
-
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String title;
+    private EvaluationStage stage;
+
+    @Column(name = "evaluator_user_id", nullable = false)
+    private Long evaluatorUserId;
 
     @Column
-    private String description;
-
-    @Column(name = "form_id", nullable = false)
-    private Long formId;
-
-    @Builder.Default
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
+    private Integer score;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private RecruitmentPhase phase = RecruitmentPhase.BEFORE_APPLY;
+    private EvaluationDecision decision = EvaluationDecision.HOLD;
 
+    @Column
+    private String memo;
 }

@@ -1,4 +1,4 @@
-package com.umc.product.survey.domain;
+package com.umc.product.recruitment.domain;
 
 public enum RecruitmentScheduleType {
     APPLY_WINDOW,
