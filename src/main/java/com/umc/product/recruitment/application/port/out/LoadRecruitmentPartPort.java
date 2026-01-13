@@ -1,6 +1,6 @@
-package com.umc.product.survey.application.port.out;
+package com.umc.product.recruitment.application.port.out;
 
-import com.umc.product.survey.domain.RecruitmentPart;
+import com.umc.product.recruitment.domain.RecruitmentPart;
 import java.util.List;
 
 public interface LoadRecruitmentPartPort {

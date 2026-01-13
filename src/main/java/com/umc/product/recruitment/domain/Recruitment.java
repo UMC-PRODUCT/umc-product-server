@@ -1,4 +1,4 @@
-package com.umc.product.survey.domain;
+package com.umc.product.recruitment.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,21 +18,34 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class RecruitmentPart {
+public class Recruitment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "recruitment_id", nullable = false)
-    private Long recruitmentId;
+    @Column(name = "school_id", nullable = false)
+    private Long schoolId;
 
-//    @Enumerated(EnumType.STRING)
-//    @Column(nullable = false)
-//    private ChallengerPart part;
+    @Column(name = "gisu_id", nullable = false)
+    private Long gisuId;
+
+    @Column(nullable = false)
+    private String title;
+
+    @Column
+    private String description;
+
+    @Column(name = "form_id", nullable = false)
+    private Long formId;
+
+    @Builder.Default
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private RecruitmentPartStatus status = RecruitmentPartStatus.OPEN;
+    private RecruitmentPhase phase = RecruitmentPhase.BEFORE_APPLY;
+
 }
