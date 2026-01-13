@@ -5,7 +5,6 @@ import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
 
 public record GetNoticeStatusQuery(
         Long noticeId,
-        Long requesterId,
         NoticeReadStatusFilterType filterType,
         Long organizationId,
         NoticeReadStatus status

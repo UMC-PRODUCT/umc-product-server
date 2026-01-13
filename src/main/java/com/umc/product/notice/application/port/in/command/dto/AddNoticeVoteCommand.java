@@ -5,7 +5,6 @@ import java.util.List;
 
 public record AddNoticeVoteCommand(
         Long noticeId,
-        Long requesterId,
         List<Long> voteIds
 ) {
 }

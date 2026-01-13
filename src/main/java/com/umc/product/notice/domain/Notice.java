@@ -4,6 +4,7 @@ import com.umc.product.challenger.domain.enums.ChallengerPart;
 import com.umc.product.challenger.domain.enums.OrganizationType;
 import com.umc.product.challenger.domain.enums.RoleType;
 import com.umc.product.common.BaseEntity;
+import com.umc.product.notice.domain.enums.NoticeClassification;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
@@ -53,9 +54,14 @@ public class Notice extends BaseEntity {
     * target 관련
     */
 
+
+    /*
+    * 어떤 scope에서 작성된 공지인가?
+    * 원래 OrganizationType이었으나, PART가 OrganizationType에는 필요 없어서 별도의 enum 사용
+    */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrganizationType scope; /* 어떤 scope에서 작성된 공지인가? */
+    private NoticeClassification scope;
 
     @Column(name = "organization_id")
     private Long organizationId; /* scope에 따른 조직(중앙, 학교 등) ID */

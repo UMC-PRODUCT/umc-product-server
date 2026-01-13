@@ -4,7 +4,6 @@ import java.util.List;
 
 public record SendNoticeReminderCommand(
         Long noticeId,
-        Long requesterId,
         List<Long> targetIds /* 리마인드 대상ID */
 ) {
 }

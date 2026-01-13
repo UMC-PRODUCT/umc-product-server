@@ -5,7 +5,6 @@ import java.util.List;
 
 public record AddNoticeImagesCommand(
         Long noticeId,
-        Long requesterId,
         List<Long> imageIds
 ) {
 }

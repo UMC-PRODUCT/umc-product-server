@@ -4,6 +4,7 @@ import com.umc.product.challenger.domain.enums.ChallengerPart;
 import com.umc.product.challenger.domain.enums.OrganizationType;
 import com.umc.product.challenger.domain.enums.RoleType;
 import com.umc.product.notice.domain.Notice;
+import com.umc.product.notice.domain.enums.NoticeClassification;
 import com.umc.product.notice.domain.enums.NoticeContentType;
 import java.time.Instant;
 import java.util.List;
@@ -13,7 +14,7 @@ public record NoticeSummary(
         String title,
         String content,
         RoleType authorRole, // 작성자 role
-        OrganizationType scope,  // 조직 타입 (전체, 중앙운영사무국 등)
+        NoticeClassification scope,  // 조직 타입 (전체, 중앙운영사무국 등)
         Boolean read, // 읽음 여부 (빨간 점 표시용)
         List<NoticeContentType> includeContentTypes,
         Integer viewCount,

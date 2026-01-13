@@ -4,6 +4,7 @@ import com.umc.product.challenger.domain.enums.ChallengerPart;
 import com.umc.product.challenger.domain.enums.OrganizationType;
 import com.umc.product.challenger.domain.enums.RoleType;
 import com.umc.product.notice.domain.Notice;
+import com.umc.product.notice.domain.enums.NoticeClassification;
 import java.time.Instant;
 import java.util.List;
 
@@ -13,7 +14,7 @@ public record NoticeInfo(
         String content,
         RoleType authorRole,
         Long authorChallengerId,
-        OrganizationType scope,
+        NoticeClassification scope,
         String scopeDisplayName,
         Long organizationId,
         Long targetGisuId,
