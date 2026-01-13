@@ -1,3 +1,12 @@
-/gradlew text eol=lf
+# 모든 텍스트 파일은 LF로 정규화
+* text=auto eol=lf
+
+# Windows 배치 파일만 CRLF
 *.bat text eol=crlf
+
+# 바이너리 파일
 *.jar binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.zip binary
