@@ -1,4 +1,4 @@
-package com.umc.product.survey.application.port.in.query;
+package com.umc.product.survey.application.port.in.query.dto;
 
 import com.umc.product.survey.domain.enums.FormSectionType;
 import com.umc.product.survey.domain.enums.QuestionType;

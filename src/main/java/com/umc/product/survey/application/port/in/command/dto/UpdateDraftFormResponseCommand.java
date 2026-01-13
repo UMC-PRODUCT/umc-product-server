@@ -1,4 +1,4 @@
-package com.umc.product.survey.application.port.in.command;
+package com.umc.product.survey.application.port.in.command.dto;
 
 import java.util.List;
 import java.util.Map;
