@@ -20,4 +20,3 @@ public enum AttendanceStatus {
         return this.isPending;
     }
 }
-

@@ -1,5 +1,6 @@
 package com.umc.product.schedule.domain;
 
+import com.umc.product.common.BaseEntity;
 import com.umc.product.schedule.domain.enums.ScheduleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "schedule")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Schedule {
+public class Schedule extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
