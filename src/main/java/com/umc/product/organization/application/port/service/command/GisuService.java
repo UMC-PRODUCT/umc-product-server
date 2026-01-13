@@ -6,7 +6,7 @@ import com.umc.product.organization.application.port.in.command.dto.UpdateGisuCo
 import org.springframework.stereotype.Service;
 
 @Service
-public class GisuController implements ManageGisuUseCase {
+public class GisuService implements ManageGisuUseCase {
     @Override
     public Long register(CreateGisuCommand command) {
         return 0L;

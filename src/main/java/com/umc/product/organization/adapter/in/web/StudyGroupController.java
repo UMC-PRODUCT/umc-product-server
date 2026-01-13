@@ -1,4 +1,4 @@
-package com.umc.product.organization.adapter.in.web.dto;
+package com.umc.product.organization.adapter.in.web;
 
 
 import org.springframework.web.bind.annotation.RequestMapping;
