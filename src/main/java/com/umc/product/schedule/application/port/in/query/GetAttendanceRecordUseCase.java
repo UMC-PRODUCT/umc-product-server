@@ -1,6 +1,6 @@
 package com.umc.product.schedule.application.port.in.query;
 
-import com.umc.product.schedule.application.port.in.dto.AttendanceRecordInfo;
+import com.umc.product.schedule.application.port.in.query.dto.AttendanceRecordInfo;
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
 import java.util.List;
 

@@ -1,6 +1,6 @@
 package com.umc.product.schedule.adapter.in.web.dto.response;
 
-import com.umc.product.schedule.application.port.in.dto.AttendanceSheetInfo;
+import com.umc.product.schedule.application.port.in.query.dto.AttendanceSheetInfo;
 import java.time.LocalDateTime;
 
 public record AttendanceSheetResponse(

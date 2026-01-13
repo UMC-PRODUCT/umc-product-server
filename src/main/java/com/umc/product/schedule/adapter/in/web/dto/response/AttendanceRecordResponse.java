@@ -1,6 +1,6 @@
 package com.umc.product.schedule.adapter.in.web.dto.response;
 
-import com.umc.product.schedule.application.port.in.dto.AttendanceRecordInfo;
+import com.umc.product.schedule.application.port.in.query.dto.AttendanceRecordInfo;
 
 public record AttendanceRecordResponse(
         Long id,
