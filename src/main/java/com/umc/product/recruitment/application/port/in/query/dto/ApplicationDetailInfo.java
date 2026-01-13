@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.application.port.in.query.dto;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.domain.ApplicationStatus;
 import java.util.List;
 
@@ -12,8 +13,8 @@ public record ApplicationDetailInfo(
     public record ApplicantInfo(
             Long memberId,
             String name,
-            String email
-            //ChallengerPart part
+            String email,
+            ChallengerPart part
     ) {
     }
 

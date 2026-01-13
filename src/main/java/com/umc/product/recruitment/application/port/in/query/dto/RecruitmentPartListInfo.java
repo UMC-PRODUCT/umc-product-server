@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.application.port.in.query.dto;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.domain.ApplicationStatus;
 import com.umc.product.recruitment.domain.RecruitmentPartStatus;
 import java.time.Instant;
@@ -23,7 +24,7 @@ public record RecruitmentPartListInfo(
 
     public record RecruitmentPartSummary(
             Long recruitmentPartId,
-            //ChallengerPart part,
+            ChallengerPart part,
             RecruitmentPartStatus status
     ) {
     }
