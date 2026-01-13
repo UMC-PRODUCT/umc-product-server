@@ -1,7 +1,7 @@
 package com.umc.product.curriculum.domain;
 
-import com.umc.product.challenger.domain.enums.ChallengerPart;
 import com.umc.product.common.BaseEntity;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
