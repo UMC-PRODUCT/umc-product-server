@@ -7,5 +7,5 @@ public interface LoadFormResponsePort {
 
     Optional<FormResponse> findById(Long formResponseId);
 
-    Optional<FormResponse> findDraftByFormIdAndUserId(Long formId, Long userId);
+    Optional<FormResponse> findDraftByFormIdAndMemberId(Long formId, Long memberId);
 }

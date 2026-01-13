@@ -29,6 +29,7 @@ jobs:
       contents: read
       checks: write
       pull-requests: write
+    secrets: inherit
     with:
       environment: ${{ inputs.environment }}
 

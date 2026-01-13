@@ -1,6 +1,7 @@
 package com.umc.product.survey.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.survey.domain.enums.QuestionType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -39,7 +40,7 @@ public class Question extends BaseEntity {
     @JoinColumn(name = "form_section_id", nullable = false)
     private FormSection formSection;
 
-    @Column(name = "question_text", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "question_text", nullable = false, length = 500)
     private String questionText;
 
     @Enumerated(EnumType.STRING)

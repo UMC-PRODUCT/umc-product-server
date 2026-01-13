@@ -1,0 +1,14 @@
+package com.umc.product.survey.application.port.in.query.dto;
+
+import com.umc.product.survey.domain.enums.FormResponseStatus;
+import java.time.Instant;
+import java.util.List;
+
+public record DraftFormResponseInfo(
+        Long formResponseId,
+        Long formId,
+        FormResponseStatus status, // 항상 DRAFT
+        Instant lastSavedAt,
+        List<AnswerInfo> answers
+) {
+}

@@ -1,7 +1,7 @@
 package com.umc.product.member.application.port.out;
 
+import com.umc.product.authentication.domain.MemberOAuth;
 import com.umc.product.member.domain.Member;
-import com.umc.product.member.domain.MemberOAuth;
 import com.umc.product.member.domain.MemberTermAgreement;
 import java.util.List;
 

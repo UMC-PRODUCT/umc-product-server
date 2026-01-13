@@ -2,6 +2,7 @@ package com.umc.product.recruitment.application.port.in.query;
 
 import com.umc.product.recruitment.domain.ApplicationStatus;
 import com.umc.product.recruitment.domain.RecruitmentPartStatus;
+
 import java.time.Instant;
 import java.util.List;
 

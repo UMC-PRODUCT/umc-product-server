@@ -1,6 +1,7 @@
 package com.umc.product.survey.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.survey.domain.enums.FormResponseStatus;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -40,7 +41,7 @@ public class FormResponse extends BaseEntity {
     private Form form;
 
     @Column(name = "respondent_member_id", nullable = false)
-    private Long respondentUserId;
+    private Long respondentMemberId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

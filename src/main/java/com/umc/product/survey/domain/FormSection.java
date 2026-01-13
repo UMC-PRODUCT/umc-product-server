@@ -1,6 +1,7 @@
 package com.umc.product.survey.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.survey.domain.enums.FormSectionType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -46,7 +47,7 @@ public class FormSection extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 500)
     private String description;
 
     @Column(name = "order_no", nullable = false)

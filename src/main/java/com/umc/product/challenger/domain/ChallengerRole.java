@@ -1,8 +1,8 @@
 package com.umc.product.challenger.domain;
 
-import com.umc.product.challenger.domain.enums.ChallengerPart;
-import com.umc.product.challenger.domain.enums.OrganizationType;
-import com.umc.product.challenger.domain.enums.RoleType;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.OrganizationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -32,7 +32,7 @@ public class ChallengerRole {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "role_type")
-    private RoleType roleType;
+    private ChallengerRoleType challengerRoleType;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "organization_type")
