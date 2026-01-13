@@ -12,8 +12,6 @@ import com.umc.product.schedule.application.port.in.query.GetAttendanceSheetUseC
 import com.umc.product.schedule.application.port.in.query.GetPendingAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleListUseCase;
 import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -29,8 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/schedules")
 @RequiredArgsConstructor
-@Tag(name = "Schedule", description = "일정 및 출석부 관리 API (관리자)")
-public class ScheduleController {
+public class ScheduleController implements ScheduleControllerApi {
 
     private final GetScheduleListUseCase getScheduleListUseCase;
     private final GetAttendanceSheetUseCase getAttendanceSheetUseCase;
@@ -38,8 +35,8 @@ public class ScheduleController {
     private final CreateAttendanceSheetUseCase createAttendanceSheetUseCase;
     private final UpdateAttendanceSheetUseCase updateAttendanceSheetUseCase;
 
+    @Override
     @GetMapping
-    @Operation(summary = "일정 목록 조회", description = "출석 통계와 함께 일정 목록을 조회합니다")
     public ApiResponse<List<ScheduleListResponse>> getScheduleList() {
         List<ScheduleListResponse> response = getScheduleListUseCase.getAll()
                 .stream()
@@ -48,18 +45,18 @@ public class ScheduleController {
         return ApiResponse.onSuccess(response);
     }
 
+    @Override
     @PostMapping("/{scheduleId}/attendance-sheets")
-    @Operation(summary = "출석부 생성", description = "일정에 대한 출석부를 생성합니다")
     public ApiResponse<Long> createAttendanceSheet(
             @PathVariable Long scheduleId,
             @Valid @RequestBody CreateAttendanceSheetRequest request
     ) {
-        AttendanceSheetId sheetId = createAttendanceSheetUseCase.create(request.toCommand());
+        AttendanceSheetId sheetId = createAttendanceSheetUseCase.create(request.toCommand(scheduleId));
         return ApiResponse.onSuccess(sheetId.id());
     }
 
+    @Override
     @GetMapping("/{scheduleId}/attendance-sheets")
-    @Operation(summary = "일정별 출석부 조회", description = "일정에 대한 출석부를 조회합니다")
     public ApiResponse<AttendanceSheetResponse> getAttendanceSheetBySchedule(
             @PathVariable Long scheduleId
     ) {
@@ -69,8 +66,8 @@ public class ScheduleController {
         return ApiResponse.onSuccess(response);
     }
 
+    @Override
     @PutMapping("/attendance-sheets/{sheetId}")
-    @Operation(summary = "출석부 수정", description = "출석부 설정을 수정합니다")
     public ApiResponse<Void> updateAttendanceSheet(
             @PathVariable Long sheetId,
             @Valid @RequestBody UpdateAttendanceSheetRequest request
@@ -79,22 +76,22 @@ public class ScheduleController {
         return ApiResponse.onSuccess(null);
     }
 
+    @Override
     @DeleteMapping("/attendance-sheets/{sheetId}")
-    @Operation(summary = "출석부 비활성화", description = "출석부를 비활성화합니다")
     public ApiResponse<Void> deactivateAttendanceSheet(@PathVariable Long sheetId) {
         updateAttendanceSheetUseCase.deactivate(new AttendanceSheetId(sheetId));
         return ApiResponse.onSuccess(null);
     }
 
+    @Override
     @PostMapping("/attendance-sheets/{sheetId}/activate")
-    @Operation(summary = "출석부 활성화", description = "비활성화된 출석부를 다시 활성화합니다")
     public ApiResponse<Void> activateAttendanceSheet(@PathVariable Long sheetId) {
         updateAttendanceSheetUseCase.activate(new AttendanceSheetId(sheetId));
         return ApiResponse.onSuccess(null);
     }
 
+    @Override
     @GetMapping("/{scheduleId}/pending-attendances")
-    @Operation(summary = "승인 대기 출석 조회", description = "승인 대기 중인 출석 요청 목록을 조회합니다")
     public ApiResponse<List<PendingAttendanceResponse>> getPendingAttendances(
             @PathVariable Long scheduleId
     ) {

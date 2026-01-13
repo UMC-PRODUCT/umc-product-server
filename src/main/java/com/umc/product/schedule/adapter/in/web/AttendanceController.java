@@ -12,8 +12,6 @@ import com.umc.product.schedule.application.port.in.query.GetAttendanceRecordUse
 import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,8 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/attendances")
 @RequiredArgsConstructor
-@Tag(name = "Attendance", description = "출석 체크 API (챌린저)")
-public class AttendanceController {
+public class AttendanceController implements AttendanceControllerApi {
 
     private final CheckAttendanceUseCase checkAttendanceUseCase;
     private final ApproveAttendanceUseCase approveAttendanceUseCase;
@@ -36,8 +33,8 @@ public class AttendanceController {
     private final GetAvailableAttendancesUseCase getAvailableAttendancesUseCase;
     private final GetMyAttendanceHistoryUseCase getMyAttendanceHistoryUseCase;
 
+    @Override
     @PostMapping("/check")
-    @Operation(summary = "출석 체크", description = "현재 시간 기준으로 출석 체크를 수행합니다")
     public ApiResponse<Long> checkAttendance(
             @CurrentUser Long challengerId,
             @Valid @RequestBody CheckAttendanceRequest request
@@ -46,8 +43,8 @@ public class AttendanceController {
         return ApiResponse.onSuccess(recordId.id());
     }
 
+    @Override
     @GetMapping("/available")
-    @Operation(summary = "출석 가능한 일정 조회", description = "현재 출석 가능한 일정 목록을 조회합니다")
     public ApiResponse<List<AvailableAttendanceResponse>> getAvailableAttendances(
             @CurrentUser Long challengerId
     ) {
@@ -58,8 +55,8 @@ public class AttendanceController {
         return ApiResponse.onSuccess(response);
     }
 
+    @Override
     @GetMapping("/history")
-    @Operation(summary = "내 출석 이력 조회", description = "나의 출석 이력을 조회합니다")
     public ApiResponse<List<MyAttendanceHistoryResponse>> getMyAttendanceHistory(
             @CurrentUser Long challengerId
     ) {
@@ -70,8 +67,8 @@ public class AttendanceController {
         return ApiResponse.onSuccess(response);
     }
 
+    @Override
     @GetMapping("/{recordId}")
-    @Operation(summary = "출석 기록 상세 조회", description = "출석 기록을 상세 조회합니다")
     public ApiResponse<AttendanceRecordResponse> getAttendanceRecord(
             @PathVariable Long recordId
     ) {
@@ -81,8 +78,8 @@ public class AttendanceController {
         return ApiResponse.onSuccess(response);
     }
 
+    @Override
     @PostMapping("/{recordId}/approve")
-    @Operation(summary = "출석 승인", description = "승인 대기 중인 출석을 승인합니다 (관리자)")
     public ApiResponse<Void> approveAttendance(
             @CurrentUser Long confirmerId,
             @PathVariable Long recordId
@@ -91,8 +88,8 @@ public class AttendanceController {
         return ApiResponse.onSuccess(null);
     }
 
+    @Override
     @PostMapping("/{recordId}/reject")
-    @Operation(summary = "출석 반려", description = "승인 대기 중인 출석을 반려합니다 (관리자)")
     public ApiResponse<Void> rejectAttendance(
             @CurrentUser Long confirmerId,
             @PathVariable Long recordId

@@ -6,9 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 public record CreateAttendanceSheetRequest(
-        @NotNull(message = "일정 ID는 필수입니다")
-        Long scheduleId,
-
         @NotNull(message = "출석 시작 시간은 필수입니다")
         LocalDateTime startTime,
 
@@ -20,7 +17,7 @@ public record CreateAttendanceSheetRequest(
 
         boolean requiresApproval
 ) {
-    public CreateAttendanceSheetCommand toCommand() {
+    public CreateAttendanceSheetCommand toCommand(Long scheduleId) {
         AttendanceWindow window = AttendanceWindow.of(
                 startTime,
                 0,

@@ -79,7 +79,9 @@ public class AttendanceWindow {
 
         // 정시 출석
         if (!checkTime.isAfter(lateThreshold)) {
-            return AttendanceStatus.PRESENT;
+            return requiresApproval
+                    ? AttendanceStatus.PRESENT_PENDING
+                    : AttendanceStatus.PRESENT;
         }
 
         // 지각

@@ -161,4 +161,14 @@ public class AttendanceRecord {
         }
         return new AttendanceRecordId(this.id);
     }
+
+    public String getStatusDisplay() {
+        return switch (status) {
+            case PRESENT -> "출석";
+            case LATE -> "지각";
+            case ABSENT -> "결석";
+            case EXCUSED -> "인정";
+            case PENDING, PRESENT_PENDING, LATE_PENDING, EXCUSED_PENDING -> "대기";
+        };
+    }
 }

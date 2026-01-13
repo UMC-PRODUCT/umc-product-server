@@ -2,6 +2,7 @@ package com.umc.product.schedule.application.port.in.query.dto;
 
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.ScheduleType;
+import com.umc.product.schedule.domain.vo.AttendanceStats;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -29,36 +30,12 @@ public record ScheduleWithStatsInfo(
     /**
      * Schedule 엔티티와 통계 수치를 받아 응답 DTO 생성
      */
-    public static ScheduleWithStatsInfo of(Schedule schedule, Integer totalCount, Integer presentCount,
-                                           Integer pendingCount) {
-        // 출석률 계산 (0으로 나누기 방지)
-        double rate = (totalCount != null && totalCount > 0)
-                ? (presentCount * 100.0) / totalCount
-                : 0.0;
-
+    public static ScheduleWithStatsInfo of(Schedule schedule, AttendanceStats stats, LocalDateTime now) {
         return new ScheduleWithStatsInfo(
                 schedule.getId(),
                 schedule.getName(),
                 schedule.getType(),
-                resolveStatus(schedule),
-                schedule.getStartsAt().format(DATE_FORMATTER),
-                schedule.getStartsAt().toLocalTime(),
-                schedule.getEndsAt().toLocalTime(),
-                schedule.getLocationName(),
-                totalCount,
-                presentCount,
-                pendingCount,
-                Math.round(rate * 10) / 10.0 // 소수점 첫째 자리 반올림
-        );
-    }
-
-    // 통계 객체가 이미 있다면 이를 활용하는 오버로딩 메서드
-    public static ScheduleWithStatsInfo of(Schedule schedule, AttendanceStatsInfo stats) {
-        return new ScheduleWithStatsInfo(
-                schedule.getId(),
-                schedule.getName(),
-                schedule.getType(),
-                resolveStatus(schedule),
+                schedule.resolveStatus(now),         // 1번 해결: 도메인에 위임
                 schedule.getStartsAt().format(DATE_FORMATTER),
                 schedule.getStartsAt().toLocalTime(),
                 schedule.getEndsAt().toLocalTime(),
@@ -66,19 +43,8 @@ public record ScheduleWithStatsInfo(
                 stats.totalCount(),
                 stats.presentCount(),
                 stats.pendingCount(),
-                stats.attendanceRate()
+                stats.calculateAttendanceRate()     // 2번 해결: VO에 위임
         );
     }
-
-    private static String resolveStatus(Schedule schedule) {
-        LocalDateTime now = LocalDateTime.now();
-
-        if (schedule.isEnded(now)) {
-            return "종료됨";
-        } else if (schedule.isInProgress(now)) {
-            return "진행 중";
-        } else {
-            return "예정";
-        }
-    }
 }
+

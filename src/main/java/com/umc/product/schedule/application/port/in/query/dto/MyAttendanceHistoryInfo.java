@@ -24,17 +24,7 @@ public record MyAttendanceHistoryInfo(
                 weekNo + "주차",
                 schedule.getStartsAt().format(DATE_FORMATTER),
                 record.getStatus(),
-                resolveStatusDisplay(record.getStatus())
+                record.getStatusDisplay()
         );
-    }
-
-    private static String resolveStatusDisplay(AttendanceStatus status) {
-        return switch (status) {
-            case PRESENT -> "출석";
-            case LATE -> "지각";
-            case ABSENT -> "결석";
-            case EXCUSED -> "인정";
-            case PENDING, PRESENT_PENDING, LATE_PENDING, EXCUSED_PENDING -> "대기";
-        };
     }
 }

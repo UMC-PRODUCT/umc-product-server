@@ -1,6 +1,5 @@
 package com.umc.product.schedule.domain;
 
-import com.umc.product.common.BaseEntity;
 import com.umc.product.schedule.domain.enums.ScheduleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -20,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "schedule")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Schedule extends BaseEntity {
+public class Schedule {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,6 +61,16 @@ public class Schedule extends BaseEntity {
 
     public boolean isInProgress(LocalDateTime referenceTime) {
         return referenceTime.isAfter(startsAt) && referenceTime.isBefore(endsAt);
+    }
+
+    public String resolveStatus(LocalDateTime now) {
+        if (this.isEnded(now)) {
+            return "종료됨";
+        }
+        if (this.isInProgress(now)) {
+            return "진행 중";
+        }
+        return "예정";
     }
 
     public boolean isEnded(LocalDateTime referenceTime) {
