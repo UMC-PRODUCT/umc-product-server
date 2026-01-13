@@ -1,6 +1,7 @@
 package com.umc.product.notice.application.port.in.query.dto;
 
-import com.umc.product.challenger.domain.enums.ChallengerPart;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
 
 public record NoticeReadStatusInfo(
         Long challengerId,
