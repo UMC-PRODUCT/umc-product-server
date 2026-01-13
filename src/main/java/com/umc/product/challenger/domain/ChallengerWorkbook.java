@@ -46,7 +46,7 @@ public class ChallengerWorkbook extends BaseEntity {
     private Long scheduleId;
 
     @Column(nullable = false)
-    private Boolean isBest;
+    private boolean isBest;
 
     @OneToMany(mappedBy = "challengerWorkbook", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChallengerMission> missions = new ArrayList<>();
