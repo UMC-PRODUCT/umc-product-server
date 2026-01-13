@@ -1,4 +1,4 @@
-package com.umc.product.recruitment.application.port.in.command;
+package com.umc.product.recruitment.application.port.in.command.dto;
 
 import com.umc.product.recruitment.domain.RecruitmentPhase;
 

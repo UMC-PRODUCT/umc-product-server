@@ -1,4 +1,4 @@
-package com.umc.product.recruitment.application.port.in.query;
+package com.umc.product.recruitment.application.port.in.query.dto;
 
 import com.umc.product.recruitment.domain.RecruitmentPhase;
 import java.util.List;
