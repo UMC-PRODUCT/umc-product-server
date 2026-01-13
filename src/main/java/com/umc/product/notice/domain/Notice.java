@@ -1,12 +1,10 @@
 package com.umc.product.notice.domain;
 
-import com.umc.product.challenger.domain.enums.ChallengerPart;
-import com.umc.product.challenger.domain.enums.OrganizationType;
-import com.umc.product.challenger.domain.enums.RoleType;
 import com.umc.product.common.BaseEntity;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.notice.domain.enums.NoticeClassification;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -51,14 +49,14 @@ public class Notice extends BaseEntity {
     private Instant notifiedAt; /* 알림발송 시각 */
 
     /*
-    * target 관련
-    */
+     * target 관련
+     */
 
 
     /*
-    * 어떤 scope에서 작성된 공지인가?
-    * 원래 OrganizationType이었으나, PART가 OrganizationType에는 필요 없어서 별도의 enum 사용
-    */
+     * 어떤 scope에서 작성된 공지인가?
+     * 원래 OrganizationType이었으나, PART가 OrganizationType에는 필요 없어서 별도의 enum 사용
+     */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NoticeClassification scope;
@@ -73,7 +71,7 @@ public class Notice extends BaseEntity {
     @Column(name = "target_roles", columnDefinition = "varchar[]")
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    private List<RoleType> targetRoles = new ArrayList<>();
+    private List<ChallengerRoleType> targetRoles = new ArrayList<>();
 
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "target_parts", columnDefinition = "varchar[]")
