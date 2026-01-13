@@ -37,7 +37,4 @@ public class ChallengerPoint {
 
     @Column(length = 200)
     private String description;
-
-    @Column(name = "related_workbook_id")
-    private Long relatedWorkbookId;
 }
