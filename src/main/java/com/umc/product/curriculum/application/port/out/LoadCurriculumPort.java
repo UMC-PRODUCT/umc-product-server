@@ -1,6 +1,6 @@
 package com.umc.product.curriculum.application.port.out;
 
-import com.umc.product.challenger.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.domain.Curriculum;
 import java.util.List;
 import java.util.Optional;

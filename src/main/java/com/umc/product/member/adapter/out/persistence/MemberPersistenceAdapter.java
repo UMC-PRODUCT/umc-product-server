@@ -1,12 +1,12 @@
 package com.umc.product.member.adapter.out.persistence;
 
+import com.umc.product.authentication.domain.MemberOAuth;
+import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.member.application.port.out.LoadMemberOAuthPort;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
-import com.umc.product.member.domain.MemberOAuth;
 import com.umc.product.member.domain.MemberTermAgreement;
-import com.umc.product.member.domain.OAuthProvider;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;

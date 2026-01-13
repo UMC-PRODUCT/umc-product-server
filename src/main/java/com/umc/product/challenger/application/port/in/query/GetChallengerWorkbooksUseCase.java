@@ -1,6 +1,7 @@
 package com.umc.product.challenger.application.port.in.query;
 
 
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerWorkbookSummary;
 import java.util.List;
 
 public interface GetChallengerWorkbooksUseCase {

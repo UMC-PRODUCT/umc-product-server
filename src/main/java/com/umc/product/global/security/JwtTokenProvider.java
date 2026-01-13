@@ -47,6 +47,8 @@ public class JwtTokenProvider {
         return createToken(memberId, Collections.emptyList(), refreshTokenValidityInMilliseconds);
     }
 
+    // TODO: Register Token 생성 로직 필요
+
     /**
      * AT, RT에서 공용으로 사용하는 JWT 토큰 생성 로직
      */
