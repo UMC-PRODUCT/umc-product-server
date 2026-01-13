@@ -8,7 +8,7 @@ public interface ManageMemberUseCase {
      * <p>
      * register complete라고 보시면 됩니다.
      */
-    void registerMember(RegisterMemberCommand command);
+    Long registerMember(RegisterMemberCommand command);
 
     /**
      * 회원의 정보를 수정하거나, 상태를 변경하는 등의 업데이트 작업을 수행합니다.
