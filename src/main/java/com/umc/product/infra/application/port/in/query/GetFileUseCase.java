@@ -24,5 +24,5 @@ public interface GetFileUseCase {
      * @param fileId 파일 ID
      * @return 존재 여부
      */
-    Boolean existsById(String fileId);
+    boolean existsById(String fileId);
 }

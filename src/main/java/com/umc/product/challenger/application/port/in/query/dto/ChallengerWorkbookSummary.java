@@ -16,7 +16,7 @@ public record ChallengerWorkbookSummary(
         String workbookTitle,
         String submission,
         WorkbookStatus status,
-        Boolean isBest
+        boolean isBest
 ) {
     public static ChallengerWorkbookSummary from(
             ChallengerWorkbook workbook,
