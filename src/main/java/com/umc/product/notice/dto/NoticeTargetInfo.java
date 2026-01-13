@@ -1,8 +1,8 @@
 package com.umc.product.notice.dto;
 
-import com.umc.product.challenger.domain.enums.ChallengerPart;
-import com.umc.product.challenger.domain.enums.OrganizationType;
-import com.umc.product.challenger.domain.enums.RoleType;
+import com.umc.product.challenger.domain.ChallengerRole;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.OrganizationType;
 import java.util.List;
 
 /*
@@ -13,13 +13,13 @@ public record NoticeTargetInfo(
         OrganizationType scope,
         Long organizationId,
         Long targetGisuId,
-        List<RoleType> targetRoles,
+        List<ChallengerRole> targetRoles,
         List<ChallengerPart> targetParts
 ) {
 
     /*
-    * 리스트 미생성 상태인 경우 초기화
-    * */
+     * 리스트 미생성 상태인 경우 초기화
+     * */
     public NoticeTargetInfo {
         targetRoles = targetRoles != null ? targetRoles : List.of();
         targetParts = targetParts != null ? targetParts : List.of();
