@@ -45,6 +45,14 @@ public class Notice extends BaseEntity {
     @Column(name = "author_challenger_id", nullable = false)
     private Long authorChallengerId;
 
+    private boolean shouldNotify; /* 알림발송 여부 */
+
+    private Instant notifiedAt; /* 알림발송 시각 */
+
+    /*
+    * target 관련
+    */
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private OrganizationType scope; /* 어떤 scope에서 작성된 공지인가? */
@@ -54,10 +62,6 @@ public class Notice extends BaseEntity {
 
     @Column(name = "target_gisu_id")
     private Long targetGisuId;
-
-    private boolean shouldNotify; /* 알림발송 여부 */
-
-    private Instant notifiedAt; /* 알림발송 시각 */
 
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "target_roles", columnDefinition = "varchar[]")
