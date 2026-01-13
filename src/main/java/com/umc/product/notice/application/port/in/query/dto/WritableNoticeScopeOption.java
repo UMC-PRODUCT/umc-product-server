@@ -1,13 +1,13 @@
 package com.umc.product.notice.application.port.in.query.dto;
 
-import com.umc.product.challenger.domain.enums.ChallengerPart;
-import com.umc.product.challenger.domain.enums.OrganizationType;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.notice.domain.enums.NoticeClassification;
 import java.util.List;
 
 /*
-* 공지 작성시 공지 카테고리 설정 관련된 부분 먼저 동적 조회
-*/
+ * 공지 작성시 공지 카테고리 설정 관련된 부분 먼저 동적 조회
+ */
 public record WritableNoticeScopeOption(
         OrganizationType category, /* 공지 카테고리 */
         String displayName, /* UI 표시명 */

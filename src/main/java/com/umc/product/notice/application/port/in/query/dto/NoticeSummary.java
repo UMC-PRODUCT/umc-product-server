@@ -1,8 +1,7 @@
 package com.umc.product.notice.application.port.in.query.dto;
 
-import com.umc.product.challenger.domain.enums.ChallengerPart;
-import com.umc.product.challenger.domain.enums.OrganizationType;
-import com.umc.product.challenger.domain.enums.RoleType;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.enums.NoticeClassification;
 import com.umc.product.notice.domain.enums.NoticeContentType;
@@ -13,7 +12,7 @@ public record NoticeSummary(
         Long id,
         String title,
         String content,
-        RoleType authorRole, // 작성자 role
+        ChallengerRoleType authorRole, // 작성자 role
         NoticeClassification scope,  // 조직 타입 (전체, 중앙운영사무국 등)
         Boolean read, // 읽음 여부 (빨간 점 표시용)
         List<NoticeContentType> includeContentTypes,
@@ -24,7 +23,7 @@ public record NoticeSummary(
 
     public static NoticeSummary of(
             Notice notice,
-            RoleType authorRole,
+            ChallengerRoleType authorRole,
             Integer viewCount,
             Boolean isRead,
             List<NoticeContentType> includeContentTypes

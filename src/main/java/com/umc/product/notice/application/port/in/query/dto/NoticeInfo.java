@@ -1,8 +1,8 @@
 package com.umc.product.notice.application.port.in.query.dto;
 
-import com.umc.product.challenger.domain.enums.ChallengerPart;
-import com.umc.product.challenger.domain.enums.OrganizationType;
-import com.umc.product.challenger.domain.enums.RoleType;
+
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.enums.NoticeClassification;
 import java.time.Instant;
@@ -12,13 +12,13 @@ public record NoticeInfo(
         Long id,
         String title,
         String content,
-        RoleType authorRole,
+        ChallengerRoleType authorRole,
         Long authorChallengerId,
         NoticeClassification scope,
         String scopeDisplayName,
         Long organizationId,
         Long targetGisuId,
-        List<RoleType> targetRoles,
+        List<ChallengerRoleType> targetRoleTypes,
         List<ChallengerPart> targetParts,
         List<NoticeVoteInfo> votes,
         List<NoticeImageInfo> images,
@@ -29,7 +29,7 @@ public record NoticeInfo(
 ) {
     public static NoticeInfo of(
             Notice notice,
-            RoleType authorRole,
+            ChallengerRoleType authorRoleType,
             String scopeDisplayName,
             Integer viewCount,
             List<NoticeVoteInfo> votes,
@@ -40,7 +40,7 @@ public record NoticeInfo(
                 notice.getId(),
                 notice.getTitle(),
                 notice.getContent(),
-                authorRole,
+                authorRoleType,
                 notice.getAuthorChallengerId(),
                 notice.getScope(),
                 scopeDisplayName,
