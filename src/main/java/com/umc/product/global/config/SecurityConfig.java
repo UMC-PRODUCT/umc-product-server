@@ -1,10 +1,13 @@
 package com.umc.product.global.config;
 
 
+import com.umc.product.authentication.adapter.in.oauth.OAuth2AuthenticationFailureHandler;
+import com.umc.product.authentication.adapter.in.oauth.OAuth2AuthenticationSuccessHandler;
 import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
-import com.umc.product.global.security.CustomAuthorizationManager;
 import com.umc.product.global.security.JwtAuthenticationFilter;
+import com.umc.product.member.adapter.in.web.oauth.CustomOAuth2UserService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -30,18 +33,11 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.List;
-
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity // @PreAuthorize, @PostAuthorize 활성화
 @RequiredArgsConstructor
 public class SecurityConfig {
-
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final CustomAuthorizationManager customAuthorizationManager;
-    private final ApiAuthenticationEntryPoint authenticationEntryPoint;
-    private final ApiAccessDeniedHandler accessDeniedHandler;
 
     private static final String[] SWAGGER_PATHS = {
             "/swagger-ui/**",
@@ -52,10 +48,17 @@ public class SecurityConfig {
             "/webjars/**"
     };
 
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ApiAuthenticationEntryPoint authenticationEntryPoint;
+    private final ApiAccessDeniedHandler accessDeniedHandler;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
+    private final OAuth2AuthenticationFailureHandler oAuth2FailureHandler;
+
     /**
-     * Swagger용 SecurityFilterChain (dev 프로필에서만 활성화)
-     * - HTTP Basic 인증 적용
-     * - 순서가 먼저라서 Swagger 경로는 이 체인이 처리
+     * Swagger용 SecurityFilterChain (dev에서만 활성화, local은 따로 제약을 걸지 않음)
+     * <p>
+     * HTTP Basic 인증 적용 - 순서가 먼저라서 Swagger 경로는 이 체인이 처리
      */
     @Bean
     @Order(1)
@@ -75,6 +78,13 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * 메인 Security 체인
+     *
+     * @param http
+     * @return
+     * @throws Exception
+     */
     @Bean
     @Order(2)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -85,12 +95,26 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)   // HTTP Basic 비활성
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // OAuth2 로그인 설정
+                .oauth2Login(oauth2 -> oauth2
+                        // 우리 DB랑 비교해서 사용자 정보를 저장함
+                        // 여기서 실패한 요청도 failure로 들어감
+                        .userInfoEndpoint(userInfo ->
+                                userInfo.userService(customOAuth2UserService))
+                        // OAuth 로그인이 성공했을 때 핸들링하는 곳
+                        .successHandler(oAuth2SuccessHandler)
+                        // OAuth 로그인이 실패했을 때 핸들링하는 곳 (그냥 실패한거)
+                        .failureHandler(oAuth2FailureHandler)
+                )
                 .authorizeHttpRequests(auth -> auth
                         // Health Check
                         .requestMatchers("/actuator/**").permitAll()
+                        // OAuth2
+                        .requestMatchers("/oauth2/authorization/**", "/login/oauth2/code/**").permitAll()
                         // Swagger API
                         .requestMatchers(SWAGGER_PATHS).permitAll()
-                        .anyRequest().access(customAuthorizationManager)  // 커스텀 매니저 사용
+                        // 나머지는 Method Security (@PreAuthorize, @Public)로 제어
+                        .anyRequest().authenticated()
                 )
                 // Spring 기본 로그인 필터 동작 전에 JWT 동작
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

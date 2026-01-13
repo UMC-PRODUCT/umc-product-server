@@ -1,0 +1,25 @@
+ifndef::snippets[]
+:snippets: ../../build/generated-snippets
+endif::[]
+= UMC Product REST API 문서
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 2
+:sectlinks:
+
+[[School-API]]
+== 학교 API
+
+include::api/school/school.adoc[]
+
+[[Gisu-API]]
+== 기수 API
+
+include::api/gisu/gisu.adoc[]
+
+[[Chapter-API]]
+== 지부 API
+
+include::api/chapter/chapter.adoc[]

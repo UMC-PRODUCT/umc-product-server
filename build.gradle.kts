@@ -2,6 +2,7 @@ plugins {
     java
     id("org.springframework.boot") version "3.5.9"
     id("io.spring.dependency-management") version "1.1.7"
+    id("org.asciidoctor.jvm.convert") version "4.0.5"
 }
 
 group = "com.umc"
@@ -19,6 +20,7 @@ configurations {
     compileOnly {
         extendsFrom(configurations.annotationProcessor.get())
     }
+    create("asciidoctorExt")
 }
 
 repositories {
@@ -30,6 +32,27 @@ val queryDslVersion = "5.0.0"
 val jwtVersion = "0.12.5"
 val awsVersion = "2.40.12"
 
+// QueryDSL Q클래스 생성 경로 설정
+val querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
+
+sourceSets {
+    main {
+        java {
+            srcDirs(querydslDir)
+        }
+    }
+}
+
+tasks.withType<JavaCompile>().configureEach {
+    options.generatedSourceOutputDirectory.set(querydslDir)
+}
+
+tasks.named("clean") {
+    doLast {
+        querydslDir.deleteRecursively()
+    }
+}
+
 dependencies {
     // --- Spring Boot Starters (버전 생략: Boot가 관리) ---
     implementation("org.springframework.boot:spring-boot-starter-web")
@@ -38,6 +61,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")  // OAuth2 Client
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     // JWT
@@ -54,10 +78,19 @@ dependencies {
     annotationProcessor("com.querydsl:querydsl-apt:${queryDslVersion}:jakarta")
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
 
+    // APT가 jakarta 클래스를 로딩할 수 있게 명시
+    annotationProcessor("jakarta.persistence:jakarta.persistence-api")
+
     // --- Database ---
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql") // 버전은 Boot가 관리
+
+    // --- Spatial / Location ---
+    // JTS (위치 데이터용)
+    implementation("org.locationtech.jts:jts-core:1.19.0")
+    // Hibernate Spatial (JPA에서 Point 타입 사용)
+    implementation("org.hibernate.orm:hibernate-spatial")
 
     // --- OpenAPI / Swagger ---
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${springDocVersion}")
@@ -92,8 +125,40 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
+
+    // --- Spring REST Docs ---
+    "asciidoctorExt"("org.springframework.restdocs:spring-restdocs-asciidoctor")
+    testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
 }
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+val snippetsDir = file("build/generated-snippets")
+
+tasks.test {
+    outputs.dir(snippetsDir)
+
+}
+
+tasks.asciidoctor {
+    inputs.dir(snippetsDir)
+    configurations("asciidoctorExt")
+
+    attributes(mapOf("snippets" to snippetsDir)) // @kyeoungwoon 추가!
+
+    sources {
+        include("**/index.adoc")
+    }
+
+    baseDirFollowsSourceDir()
+    dependsOn(tasks.test)
+}
+
+tasks.bootJar {
+    dependsOn(tasks.asciidoctor)
+    from(tasks.asciidoctor.get().outputDir) {
+        into("static/docs")
+    }
 }

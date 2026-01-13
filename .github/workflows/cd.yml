@@ -1,0 +1,285 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+    paths:
+      - 'src/**'
+      - 'build.gradle.kts'
+      - 'docker/**'
+      - 'cd.yml'
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy environment'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+
+jobs:
+  # 1. 공통 빌드/테스트 워크플로우 호출 (ci.yml 재사용)
+  ci-and-build:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    with:
+      environment: ${{ inputs.environment }}
+
+  # 2. Deploy Job
+  deploy:
+    needs: ci-and-build
+    if: needs.ci-and-build.outputs.environment != 'test'
+    runs-on: self-hosted
+    # 빌드 단계에서 결정된 환경 사용
+    environment: ${{ needs.ci-and-build.outputs.environment }}
+
+    env:
+      ENVIRONMENT: ${{ needs.ci-and-build.outputs.environment }}
+      REPO_OWNER: ${{ needs.ci-and-build.outputs.repo_owner }}
+      IMAGE_TAG: ${{ needs.ci-and-build.outputs.image_tag }}
+
+    steps:
+      - name: 🔍 환경변수 검증
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🔍 필수 환경 변수 검증 시작..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          
+          MISSING_VARS=()
+          
+          # Docker Hub 관련
+          echo "📦 Docker Hub 자격증명 확인..."
+          [[ -z "${{ secrets.DOCKERHUB_USERNAME }}" ]] && MISSING_VARS+=("DOCKERHUB_USERNAME")
+          [[ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]] && MISSING_VARS+=("DOCKERHUB_TOKEN")
+          [[ -z "${{ secrets.DOCKERHUB_REPOSITORY_NAME }}" ]] && MISSING_VARS+=("DOCKERHUB_REPOSITORY_NAME")
+          
+          # 서버 SSH 관련
+          echo "🔐 SSH 접속 정보 확인..."
+          [[ -z "${{ secrets.SERVER_APP_DIRECTORY }}" ]] && MISSING_VARS+=("SERVER_APP_DIRECTORY")
+          [[ -z "${{ secrets.SERVER_SSH_HOST }}" ]] && MISSING_VARS+=("SERVER_SSH_HOST")
+          [[ -z "${{ secrets.SERVER_SSH_USERNAME }}" ]] && MISSING_VARS+=("SERVER_SSH_USERNAME")
+          [[ -z "${{ secrets.SERVER_SSH_PRIVATE_KEY }}" ]] && MISSING_VARS+=("SERVER_SSH_PRIVATE_KEY")
+          [[ -z "${{ secrets.SERVER_SSH_PORT }}" ]] && MISSING_VARS+=("SERVER_SSH_PORT")
+          
+          # 애플리케이션 설정 관련
+          echo "⚙️  애플리케이션 설정 확인..."
+          [[ -z "${{ secrets.DOCKER_COMPOSE_ENV }}" ]] && MISSING_VARS+=("DOCKER_COMPOSE_ENV")
+          [[ -z "${{ secrets.APPLICATION_SECRET }}" ]] && MISSING_VARS+=("APPLICATION_SECRET")
+          [[ -z "${{ secrets.APPLICATION_PROFILE_SECRET }}" ]] && MISSING_VARS+=("APPLICATION_PROFILE_SECRET")
+          
+          # Environment 변수
+          echo "🌍 환경 변수 확인..."
+          [[ -z "${{ env.ENVIRONMENT }}" ]] && MISSING_VARS+=("ENVIRONMENT")
+          [[ -z "${{ env.IMAGE_TAG }}" ]] && MISSING_VARS+=("IMAGE_TAG")
+          
+          # 검증 결과 확인
+          if [ ${#MISSING_VARS[@]} -gt 0 ]; then
+            echo ""
+            echo "❌ 다음 환경 변수들이 설정되지 않았습니다:"
+            printf '   • %s\n' "${MISSING_VARS[@]}"
+            echo ""
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ 모든 필수 환경 변수가 설정되었습니다."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: 📥 코드베이스 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 📋 배포 정보 출력
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📋 배포 정보"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🌍 Environment: ${{ env.ENVIRONMENT }}"
+          echo "📦 Image Tag: ${{ env.IMAGE_TAG }}"
+          echo "📁 App Directory: ${{ secrets.SERVER_APP_DIRECTORY }}"
+          echo "🖥️  Server: ${{ secrets.SERVER_SSH_HOST }}"
+          echo "👤 User: ${{ secrets.SERVER_SSH_USERNAME }}"
+          echo "🔌 Port: ${{ secrets.SERVER_SSH_PORT }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+
+      - name: 📤 Docker Compose 파일 전송
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SERVER_SSH_HOST }}
+          username: ${{ secrets.SERVER_SSH_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          source: "docker/app/docker-compose.yml"
+          target: "${{ secrets.SERVER_APP_DIRECTORY }}/"
+          strip_components: 2
+          overwrite: true
+
+      - name: 🚀 SSH 접속 및 배포 실행
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_SSH_HOST }}
+          username: ${{ secrets.SERVER_SSH_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          script: |
+            echo "=============================="
+            echo "🚀 배포 시작: ${{ env.ENVIRONMENT }} 환경"
+            echo "=============================="
+            
+            # Docker 경로 확인
+            echo "[1] Docker 설치 확인"
+            if which docker > /dev/null 2>&1; then
+              echo "✅ Docker 인식됨: $(which docker)"
+            else
+              echo "⚠️  PATH에 /usr/local/bin 추가"
+              export PATH="$PATH:/usr/local/bin"
+              if which docker > /dev/null 2>&1; then
+                echo "✅ Docker 인식됨: $(which docker)"
+              else
+                echo "❌ Docker를 찾을 수 없습니다"
+                exit 1
+              fi
+            fi
+            
+            # Docker Hub 로그인
+            echo ""
+            echo "[2] Docker Hub 로그인"
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            if [ $? -eq 0 ]; then
+              echo "✅ Docker Hub 로그인 성공"
+            else
+              echo "❌ Docker Hub 로그인 실패"
+              exit 1
+            fi
+            
+            # App Directory가 존재하는지 확인
+            echo ""
+            echo "[3] 애플리케이션 디렉토리 확인: ${{ secrets.SERVER_APP_DIRECTORY }}"
+            if [ ! -d "${{ secrets.SERVER_APP_DIRECTORY }}" ]; then
+              echo "❌ 애플리케이션 디렉토리가 존재하지 않습니다. 환경변수를 확인해주세요."
+              exit 1
+            else
+              echo "✅ 애플리케이션 디렉토리가 존재합니다. 다음 단계로 진행합니다."
+            fi
+            
+            # Docker Compose 파일용 env 로딩
+            echo ""
+            echo "📝 Docker Compose 용 .env 파일 생성 중..."
+            echo "${{ secrets.DOCKER_COMPOSE_ENV }}" > ${{ secrets.SERVER_APP_DIRECTORY }}/.env
+            echo "✅ Docker Compose 용 .env 파일 생성 완료"
+            
+            # SpringBoot Config 파일들 로딩
+            echo ""
+            echo "📝 Spring Boot 설정 파일 생성 중..."
+            mkdir -p ${{ secrets.SERVER_APP_DIRECTORY }}/config
+            echo "${{ secrets.APPLICATION_SECRET }}" > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-secret.yml
+            echo "${{ secrets.APPLICATION_PROFILE_SECRET }}" > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-${ENVIRONMENT}.yml
+            
+            # 기존 컨테이너 중지 및 제거
+            echo ""
+            echo "서비스 디렉토리로 이동합니다, 이전 위치: $(pwd)"
+            cd ${{ secrets.SERVER_APP_DIRECTORY }}
+            echo "서비스 디렉토리로 이동을 완료했습니다. 현재 위치: $(pwd)"
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "📥 Docker 이미지 Pull"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            docker compose pull
+            
+            echo "🛑 기존 컨테이너 중지 중..."
+            docker compose down
+            
+            echo "🚀 새 컨테이너 시작 중..."
+            docker compose up -d --remove-orphans
+            
+            if [ $? -ne 0 ]; then
+              echo "❌ 컨테이너 시작 실패"
+              echo ""
+              echo "📋 컨테이너 로그:"
+              docker compose logs --tail=50
+              exit 1
+            fi
+            
+            echo "✅ 컨테이너가 성공적으로 시작되었습니다"
+            echo ""
+            
+            # 컨테이너 상태 확인
+            echo "📊 컨테이너 상태:"
+            docker compose ps
+            echo ""
+            
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "🎉 배포 완료!"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: 📊 Deployment Summary
+        if: always()
+        run: |
+          echo "### 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 항목 | 값 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🌍 Environment | \`${{ env.ENVIRONMENT }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🌿 Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📝 Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 Image | \`${{ secrets.DOCKERHUB_REPOSITORY_NAME }}:${{ env.IMAGE_TAG }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🖥️ Server | \`${{ secrets.SERVER_SSH_HOST }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📁 Directory | \`${{ secrets.SERVER_APP_DIRECTORY }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| ✅ Status | \`${{ job.status }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "${{ job.status }}" == "success" ]]; then
+          echo "### ✅ 배포가 성공적으로 완료되었습니다!" >> $GITHUB_STEP_SUMMARY
+          else
+          echo "### ❌ 배포 중 오류가 발생했습니다." >> $GITHUB_STEP_SUMMARY
+          echo "로그를 확인해주세요." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: ❌ 배포 실패 알림
+        if: failure()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "❌ 배포 실패"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "환경: ${{ env.ENVIRONMENT }}"
+          echo "이미지: ${{ secrets.DOCKERHUB_REPOSITORY_NAME }}:${{ env.IMAGE_TAG }}"
+          echo "서버: ${{ secrets.SERVER_SSH_HOST }}"
+          echo ""
+          echo "::error::Deployment to ${{ env.ENVIRONMENT }} failed!"
+          echo "::error::Please check the deployment logs for details."
+
+  # 3. Test 환경 스킵 알림
+  skip-test-deployment:
+    needs: ci-and-build
+    if: needs.ci-and-build.outputs.environment == 'test'
+    runs-on: ubuntu-latest
+    steps:
+      - name: ℹ️ Test 환경 배포 스킵
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "ℹ️  Test 환경 배포 스킵"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Test 환경은 CI에서만 빌드하고 배포하지 않습니다."
+          echo ""
+          echo "✅ CI 빌드 완료"
+          echo "📦 이미지: ${{ secrets.DOCKERHUB_REPOSITORY_NAME }}:${{ needs.ci-and-build.outputs.image_tag }}"
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+      - name: 📊 Summary
+        run: |
+          echo "### ℹ️ Test Environment - Deployment Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Test 환경은 CI에서만 빌드하고 실제 배포는 수행하지 않습니다." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **CI Build**: Completed" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 **Image**: \`${{ secrets.DOCKERHUB_REPOSITORY_NAME }}:${{ needs.ci-and-build.outputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- 🚫 **Deployment**: Skipped" >> $GITHUB_STEP_SUMMARY
