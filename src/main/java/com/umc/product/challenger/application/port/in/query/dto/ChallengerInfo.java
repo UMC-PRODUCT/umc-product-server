@@ -7,7 +7,9 @@ import lombok.Builder;
 
 
 /**
- * 챌린저 공개 정보 조회용 DTO 입니다. 사용자에 대한 정보는 member 도메인의 API를 이용해서 조회해야 합니댜.
+ * 챌린저 공개 정보 조회용 DTO 입니다.
+ * <p>
+ * 사용자에 대한 정보는 member 도메인의 API를 이용해서 조회해야 합니다.
  *
  * @param challengerId     챌린저 ID
  * @param memberId         회원 ID

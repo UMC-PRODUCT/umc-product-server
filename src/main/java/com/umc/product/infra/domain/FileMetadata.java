@@ -105,4 +105,6 @@ public class FileMetadata extends BaseEntity {
         }
         return "";
     }
+
+    // TODO: 팩토리 메서드 추가해야함
 }

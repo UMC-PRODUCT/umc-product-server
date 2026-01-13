@@ -101,7 +101,7 @@ public class SecurityConfig {
                         // 여기서 실패한 요청도 failure로 들어감
                         .userInfoEndpoint(userInfo ->
                                 userInfo.userService(customOAuth2UserService))
-                        // OAuth 로그인이 성공했을 떄 핸들링하는 곳
+                        // OAuth 로그인이 성공했을 때 핸들링하는 곳
                         .successHandler(oAuth2SuccessHandler)
                         // OAuth 로그인이 실패했을 때 핸들링하는 곳 (그냥 실패한거)
                         .failureHandler(oAuth2FailureHandler)
