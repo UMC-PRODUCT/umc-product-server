@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.domain;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -27,9 +28,9 @@ public class RecruitmentPart {
     @Column(name = "recruitment_id", nullable = false)
     private Long recruitmentId;
 
-//    @Enumerated(EnumType.STRING)
-//    @Column(nullable = false)
-//    private ChallengerPart part;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ChallengerPart part;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)

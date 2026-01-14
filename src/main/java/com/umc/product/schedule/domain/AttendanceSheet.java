@@ -106,18 +106,18 @@ public class AttendanceSheet {
         }
     }
 
+    public AttendanceSheetId getAttendanceSheetId() {
+        if (this.id == null) {
+            return null;
+        }
+        return new AttendanceSheetId(this.id);
+    }
+
     public record AttendanceSheetId(long id) {
         public AttendanceSheetId {
             if (id <= 0) {
                 throw new IllegalArgumentException("ID는 양수여야 합니다.");
             }
         }
-    }
-
-    public AttendanceSheetId getAttendanceSheetId() {
-        if (this.id == null) {
-            return null;
-        }
-        return new AttendanceSheetId(this.id);
     }
 }

@@ -10,14 +10,14 @@ import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVoteCo
 import java.util.List;
 
 /*
-* 공지의 본체 외 이미지, 투표, 링크 관리
-*/
+ * 공지의 본체 외 이미지, 투표, 링크 관리
+ */
 public interface ManageNoticeContentUseCase {
 
     /*
-    * 공지에 투표 추가
-    * @return 생성된 NoticeVote의 id 리스트
-    */
+     * 공지에 투표 추가
+     * @return 생성된 NoticeVote의 id 리스트
+     */
     List<Long> addVote(AddNoticeVoteCommand command, ChallengerContext context);
 
     /*
