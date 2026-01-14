@@ -3,10 +3,10 @@ package com.umc.product.schedule.domain.vo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import java.time.LocalDateTime;
 
 /**
  * 출석 시간대 상세
@@ -47,50 +47,6 @@ public class AttendanceWindow {
     }
 
     /**
-     * 주어진 시간이 출석 시간대 내에 있는지 확인
-     */
-    public boolean contains(LocalDateTime checkTime) {
-        if (checkTime == null) {
-            return false;
-        }
-        return !checkTime.isBefore(startTime) && !checkTime.isAfter(endTime);
-    }
-
-    /**
-     * 체크 시간에 따른 출석 상태 결정
-     * 위치 검증은 이미 완료된 상태에서 호출됨
-     *
-     * @param checkTime        체크한 시간
-     * @param requiresApproval 승인 필요 여부
-     * @return 결정된 출석 상태
-     */
-    public AttendanceStatus determineStatus(LocalDateTime checkTime, boolean requiresApproval) {
-        if (checkTime == null) {
-            throw new IllegalArgumentException("체크 시간은 필수입니다");
-        }
-
-        // 시간대 밖
-        if (!contains(checkTime)) {
-            return AttendanceStatus.ABSENT;
-        }
-
-        // 출석 인정 시간 계산
-        LocalDateTime lateThreshold = startTime.plusMinutes(lateThresholdMinutes);
-
-        // 정시 출석
-        if (!checkTime.isAfter(lateThreshold)) {
-            return requiresApproval
-                    ? AttendanceStatus.PRESENT_PENDING
-                    : AttendanceStatus.PRESENT;
-        }
-
-        // 지각
-        return requiresApproval
-                ? AttendanceStatus.LATE_PENDING
-                : AttendanceStatus.LATE;
-    }
-
-    /**
      * 출석 시간대 생성 팩토리 메서드
      *
      * @param baseTime             기준 시간 (ex: 일정 시작 시간)
@@ -125,5 +81,48 @@ public class AttendanceWindow {
      */
     public static AttendanceWindow ofDefault(LocalDateTime baseTime) {
         return of(baseTime, 30, 30, 10);
+    }
+
+    /**
+     * 주어진 시간이 출석 시간대 내에 있는지 확인
+     */
+    public boolean contains(LocalDateTime checkTime) {
+        if (checkTime == null) {
+            return false;
+        }
+        return !checkTime.isBefore(startTime) && !checkTime.isAfter(endTime);
+    }
+
+    /**
+     * 체크 시간에 따른 출석 상태 결정 위치 검증은 이미 완료된 상태에서 호출됨
+     *
+     * @param checkTime        체크한 시간
+     * @param requiresApproval 승인 필요 여부
+     * @return 결정된 출석 상태
+     */
+    public AttendanceStatus determineStatus(LocalDateTime checkTime, boolean requiresApproval) {
+        if (checkTime == null) {
+            throw new IllegalArgumentException("체크 시간은 필수입니다");
+        }
+
+        // 시간대 밖
+        if (!contains(checkTime)) {
+            return AttendanceStatus.ABSENT;
+        }
+
+        // 출석 인정 시간 계산
+        LocalDateTime lateThreshold = startTime.plusMinutes(lateThresholdMinutes);
+
+        // 정시 출석
+        if (!checkTime.isAfter(lateThreshold)) {
+            return requiresApproval
+                    ? AttendanceStatus.PRESENT_PENDING
+                    : AttendanceStatus.PRESENT;
+        }
+
+        // 지각
+        return requiresApproval
+                ? AttendanceStatus.LATE_PENDING
+                : AttendanceStatus.LATE;
     }
 }

@@ -142,17 +142,6 @@ public class AttendanceRecord {
     }
 
     /**
-     * 출석 기록 ID (타입 안전성을 위한 래퍼)
-     */
-    public record AttendanceRecordId(long id) {
-        public AttendanceRecordId {
-            if (id <= 0) {
-                throw new IllegalArgumentException("ID는 양수여야 합니다.");
-            }
-        }
-    }
-
-    /**
      * 타입 안전한 ID 반환
      */
     public AttendanceRecordId getAttendanceRecordId() {
@@ -170,5 +159,16 @@ public class AttendanceRecord {
             case EXCUSED -> "인정";
             case PENDING, PRESENT_PENDING, LATE_PENDING, EXCUSED_PENDING -> "대기";
         };
+    }
+
+    /**
+     * 출석 기록 ID (타입 안전성을 위한 래퍼)
+     */
+    public record AttendanceRecordId(long id) {
+        public AttendanceRecordId {
+            if (id <= 0) {
+                throw new IllegalArgumentException("ID는 양수여야 합니다.");
+            }
+        }
     }
 }
