@@ -6,6 +6,9 @@ on:
       - main
       - develop
     paths:
+      - 'src/**'
+      - 'build.gradle.kts'
+      - 'docker/**'
       - '.github/workflows/ci.yml'
 
   workflow_dispatch:
@@ -15,8 +18,9 @@ on:
         required: true
         type: choice
         options:
-          - dev
-          - prod
+          - Development
+          - Production
+          - Test
 
   workflow_call:
     inputs:
@@ -75,17 +79,17 @@ jobs:
           # PR일 때는 'test' 환경으로 설정
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
             echo "Running in PR mode - Setting test environment for build"
-            ENVIRONMENT="test"
+            ENVIRONMENT="Test"
           elif [[ -n "$INPUT_ENV" ]]; then
             ENVIRONMENT="$INPUT_ENV"
           
           # CD에서 호출한 경우 branch에 따라서 환경 결정
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            ENVIRONMENT="prod"
+            ENVIRONMENT="Production"
           elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
-            ENVIRONMENT="dev"
+            ENVIRONMENT="Development"
           else
-            ENVIRONMENT="test"
+            ENVIRONMENT="Test"
           fi
 
           echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
@@ -145,13 +149,14 @@ jobs:
         with:
           context: .
           file: docker/app/dockerfile
-          push: true
+          push: ${{ github.event_name != 'pull_request' }} # PR의 경우 빌드까지만 하고 DockerHub에 푸시하지 않음
           tags: |
             ${{ secrets.DOCKERHUB_REPOSITORY_NAME }}:${{ steps.set-env.outputs.image_tag }}
             ${{ secrets.DOCKERHUB_REPOSITORY_NAME }}:${{ steps.set-env.outputs.environment }}-latest
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          #          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=min
 
       - name: 📝 Build Summary
         if: always()

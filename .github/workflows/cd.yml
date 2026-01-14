@@ -18,8 +18,8 @@ on:
         required: true
         type: choice
         options:
-          - dev
-          - prod
+          - Development
+          - Production
 
 jobs:
   # 1. 공통 빌드/테스트 워크플로우 호출 (ci.yml 재사용)
