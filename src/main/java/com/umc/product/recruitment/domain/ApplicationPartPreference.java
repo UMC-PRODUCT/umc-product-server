@@ -2,12 +2,12 @@ package com.umc.product.recruitment.domain;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import java.time.Instant;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,25 +19,21 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class RecruitmentSchedule {
+public class ApplicationPartPreference {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "recruitment_id", nullable = false)
-    private Long recruitmentId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "application_id", nullable = false)
+    private Application application;
 
-    @Enumerated(EnumType.STRING)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "recruitment_part_id", nullable = false)
+    private RecruitmentPart recruitmentPart;
+
     @Column(nullable = false)
-    private RecruitmentScheduleType type;
+    private Integer priority;
 
-    @Column(name = "starts_at", nullable = false)
-    private Instant startsAt;
-
-    @Column(name = "ends_at")
-    private Instant endsAt;
-
-    @Column
-    private String note;
 }

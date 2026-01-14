@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.domain;
 
+import com.umc.product.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -21,31 +22,34 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Evaluation {
+public class Application extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "application_id", nullable = false)
-    private Application application;
+    @JoinColumn(name = "recruitment_id", nullable = false)
+    private Recruitment recruitment;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private EvaluationStage stage;
+    @Column(name = "applicant_member_id", nullable = false)
+    private Long applicantMemberId;
 
-    @Column(name = "evaluator_user_id", nullable = false)
-    private Long evaluatorUserId;
-
-    @Column
-    private Integer score;
+    @Column(name = "form_response_id", nullable = false)
+    private Long formResponseId;
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private EvaluationDecision decision = EvaluationDecision.HOLD;
+    private ApplicationStatus status = ApplicationStatus.APPLIED;
 
-    @Column
-    private String memo;
+    @Column(name = "doc_score")
+    private Integer docScore;
+
+    @Column(name = "interview_score")
+    private Integer interviewScore;
+
+    @Column(name = "final_score")
+    private Integer finalScore;
+
 }
