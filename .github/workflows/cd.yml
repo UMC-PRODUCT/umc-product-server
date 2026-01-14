@@ -3,13 +3,13 @@ name: CD
 on:
   push:
     branches:
-      - develop
       - main
+      - develop
     paths:
       - 'src/**'
       - 'build.gradle.kts'
       - 'docker/**'
-      - 'cd.yml'
+      - '.github/workflows/cd.yml'
 
   workflow_dispatch:
     inputs:
