@@ -134,20 +134,24 @@ jobs:
             echo "🚀 배포 시작: ${{ env.ENVIRONMENT }} 환경"
             echo "=============================="
             
-            # Docker 경로 확인
-            echo "[1] Docker 설치 확인"
-            if which docker > /dev/null 2>&1; then
-              echo "✅ Docker 인식됨: $(which docker)"
-            else
-              echo "⚠️  PATH에 /usr/local/bin 추가"
-              export PATH="$PATH:/usr/local/bin"
-              if which docker > /dev/null 2>&1; then
-                echo "✅ Docker 인식됨: $(which docker)"
-              else
-                echo "❌ Docker를 찾을 수 없습니다"
-                exit 1
-              fi
+            # 환경 변수 설정
+            export XDG_RUNTIME_DIR=/run/user/$(id -u)
+            export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock
+            export PATH="$PATH:/usr/local/bin"
+            
+            # Docker 환경 검증
+            echo "[1] Docker 환경 확인"
+            echo "  - DOCKER_HOST: $DOCKER_HOST"
+            echo "  - User ID: $(id -u)"
+            echo "  - Docker Path: $(which docker)"
+            
+            if ! docker info &>/dev/null; then
+              echo "❌ Docker daemon에 연결할 수 없습니다"
+              echo "Docker 서비스 상태:"
+              systemctl --user status docker
+            exit 1
             fi
+            echo "✅ Docker 환경 정상"
             
             # Docker Hub 로그인
             echo ""
