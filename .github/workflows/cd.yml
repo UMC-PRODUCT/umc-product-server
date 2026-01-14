@@ -149,7 +149,7 @@ jobs:
               echo "❌ Docker daemon에 연결할 수 없습니다"
               echo "Docker 서비스 상태:"
               systemctl --user status docker
-            exit 1
+              exit 1
             fi
             echo "✅ Docker 환경 정상"
             
