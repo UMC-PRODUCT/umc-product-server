@@ -10,6 +10,7 @@ on:
       - 'build.gradle.kts'
       - 'docker/**'
       - '.github/workflows/ci.yml'
+      - '.github/workflows/cd.yml'
 
   workflow_dispatch:
     inputs:
@@ -101,7 +102,7 @@ jobs:
           IMAGE_TAG="${ENVIRONMENT}-${SHORT_SHA}"
           echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
-      - name: 🧑‍💻JDK 21 Coretto 설정
+      - name: 🧑‍💻 JDK 21 Corretto 설정
         uses: actions/setup-java@v4
         with:
           java-version: '21'

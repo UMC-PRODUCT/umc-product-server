@@ -9,6 +9,7 @@ on:
       - 'src/**'
       - 'build.gradle.kts'
       - 'docker/**'
+      - '.github/workflows/ci.yml'
       - '.github/workflows/cd.yml'
 
   workflow_dispatch:
