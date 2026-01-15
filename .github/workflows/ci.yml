@@ -99,7 +99,7 @@ jobs:
           echo "repo_owner=${REPO_OWNER}" >> $GITHUB_OUTPUT
 
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          IMAGE_TAG="${ENVIRONMENT}-${SHORT_SHA}"
+          IMAGE_TAG=$(echo "${ENVIRONMENT}-${SHORT_SHA}" | tr '[:upper:]' '[:lower:]')
           echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
       - name: 🧑‍💻 JDK 21 Corretto 설정
@@ -145,7 +145,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: 🐳 Build and Push Docker Image
+      - name: 🐳 Build and Push Docker Image (GHCR)
         uses: docker/build-push-action@v6
         # tags에서 사용하는 부분, DockerHub가 아닌 GitHub Container Registry로 변경
         #            ${{ secrets.DOCKERHUB_REPOSITORY_NAME }}:${{ steps.set-env.outputs.image_tag }}
@@ -155,8 +155,8 @@ jobs:
           file: docker/app/dockerfile
           push: ${{ github.event_name != 'pull_request' }} # PR의 경우 빌드까지만 하고 DockerHub에 푸시하지 않음
           tags: |
-            ghcr.io/${{ github.repository_owner }}/server:${{ steps.set-env.outputs.image_tag }}
-            ghcr.io/${{ github.repository_owner }}/server:${{ steps.set-env.outputs.environment }}-latest
+            ghcr.io/${{ steps.set-env.outputs.repo_owner }}/server:${{ steps.set-env.outputs.image_tag }}
+            ghcr.io/${{ steps.set-env.outputs.repo_owner }}/server:${{ steps.set-env.outputs.environment }}-latest
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           #          cache-to: type=gha,mode=max
