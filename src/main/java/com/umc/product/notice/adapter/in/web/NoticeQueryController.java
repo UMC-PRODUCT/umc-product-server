@@ -15,4 +15,5 @@ public class NoticeQueryController {
 
     private final ManageNoticeUseCase manageNoticeUseCase;
 
+
 }

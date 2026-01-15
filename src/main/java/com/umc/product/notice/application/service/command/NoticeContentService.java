@@ -4,7 +4,7 @@ import com.umc.product.common.dto.ChallengerContext;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeLinksCommand;
-import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteCommand;
+import com.umc.product.notice.application.port.in.command.dto.AddNoticeVotesCommand;
 import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeImageCommand;
 import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeLinkCommand;
 import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVoteCommand;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class NoticeContentService implements ManageNoticeContentUseCase {
     @Override
-    public List<Long> addVote(AddNoticeVoteCommand command, ChallengerContext context) {
+    public List<Long> addVotes(AddNoticeVotesCommand command, ChallengerContext context) {
         return null;
     }
 

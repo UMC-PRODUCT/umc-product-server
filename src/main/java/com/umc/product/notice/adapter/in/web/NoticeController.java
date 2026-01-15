@@ -3,9 +3,11 @@ package com.umc.product.notice.adapter.in.web;
 import com.umc.product.common.dto.ChallengerContext;
 import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.constant.SwaggerTag.Constants;
+import com.umc.product.global.response.ApiResponse;
 import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.SendNoticeReminderRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
+import com.umc.product.notice.adapter.in.web.dto.response.CreateNoticeResponse;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,8 +32,9 @@ public class NoticeController {
     private final ManageNoticeUseCase manageNoticeUseCase;
 
     @PostMapping
-    public void createNotice(@RequestBody @Valid CreateNoticeRequest request, ChallengerContext context) {
-        manageNoticeUseCase.createDraftNotice(request.toCommand(), context);
+    public ApiResponse<CreateNoticeResponse> createNotice(@RequestBody @Valid CreateNoticeRequest request, ChallengerContext context) {
+        Long noticeId = manageNoticeUseCase.createDraftNotice(request.toCommand(), context);
+        return ApiResponse.onSuccess(new CreateNoticeResponse(noticeId));
     }
 
     @DeleteMapping("/{noticeId}")
@@ -45,7 +48,7 @@ public class NoticeController {
     }
 
     @PostMapping("/{noticeId}/reminders")
-    public void sendRemindNotice(@PathVariable Long noticeId, @RequestBody @Valid SendNoticeReminderRequest request, ChallengerContext context) {
+    public void sendNoticeReminder(@PathVariable Long noticeId, @RequestBody @Valid SendNoticeReminderRequest request, ChallengerContext context) {
         manageNoticeUseCase.remindNotice(request.toCommand(noticeId), context);
     }
 
