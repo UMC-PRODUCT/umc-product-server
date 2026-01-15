@@ -1,8 +1,8 @@
-package com.umc.product.infra.domain;
+package com.umc.product.storage.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.infra.domain.enums.FileCategory;
-import com.umc.product.infra.domain.enums.StorageProvider;
+import com.umc.product.storage.domain.enums.FileCategory;
+import com.umc.product.storage.domain.enums.StorageProvider;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

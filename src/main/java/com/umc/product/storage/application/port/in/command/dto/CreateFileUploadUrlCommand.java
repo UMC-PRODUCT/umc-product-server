@@ -1,4 +1,4 @@
-package com.umc.product.infra.application.port.in.command.dto;
+package com.umc.product.storage.application.port.in.command.dto;
 
 public record CreateFileUploadUrlCommand(
         String fileName,

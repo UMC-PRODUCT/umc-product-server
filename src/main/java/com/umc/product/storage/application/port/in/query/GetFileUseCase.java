@@ -1,6 +1,6 @@
-package com.umc.product.infra.application.port.in.query;
+package com.umc.product.storage.application.port.in.query;
 
-import com.umc.product.infra.application.port.in.query.dto.FileInfo;
+import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 
 /**
  * 파일 조회 UseCase

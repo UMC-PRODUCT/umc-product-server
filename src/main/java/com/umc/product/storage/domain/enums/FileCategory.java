@@ -1,4 +1,4 @@
-package com.umc.product.infra.domain.enums;
+package com.umc.product.storage.domain.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
