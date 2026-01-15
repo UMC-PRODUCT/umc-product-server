@@ -34,7 +34,7 @@ public class FcmService implements ManageFcmUseCase {
 
     @Override
     @Transactional
-    public void registerFCMToken(Long userId, FcmRegistrationRequest request) {
+    public void registerFcmToken(Long userId, FcmRegistrationRequest request) {
         Member member = loadMemberPort.findById(userId)
                 .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
 
@@ -61,7 +61,7 @@ public class FcmService implements ManageFcmUseCase {
 
         String fcmToken = fcm.getFcmToken();
 
-        if (!fcmToken.isEmpty()) {
+        if (!fcmToken.isBlank()) {
             Message message = getMessage(command, fcmToken);
 
             try {

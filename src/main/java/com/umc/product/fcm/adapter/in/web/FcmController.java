@@ -25,7 +25,7 @@ public class FcmController implements FcmControllerApi {
             // TODO : 인증 적용 시 @PathVariable -> @AuthenticationPrincipal 변경 필요
             @PathVariable("memberId") Long userId,
             @RequestBody FcmRegistrationRequest request) {
-        manageFcmUseCase.registerFCMToken(userId, request);
+        manageFcmUseCase.registerFcmToken(userId, request);
     }
 
     @Override

@@ -13,10 +13,12 @@ public class FcmPersistenceAdapter implements LoadFcmPort, SaveFcmPort {
 
     private final FcmJpaRepository fcmJpaRepository;
 
+    @Override
     public Optional<FCMToken> findByMemberId(Long memberId) {
         return fcmJpaRepository.findByMemberId(memberId);
     }
 
+    @Override
     public void save(FCMToken fcmToken) {
         fcmJpaRepository.save(fcmToken);
     }
