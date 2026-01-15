@@ -25,6 +25,7 @@ public enum CommonErrorCode implements BaseCode {
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "COMMON-400", "잘못된 요청입니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON-401", "인증이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON-403", "허용되지 않는 요청입니다."),
+    NOT_IMPLEMENTED(HttpStatus.NOT_IMPLEMENTED, "COMMON-501", "아직 구현되지 않은 기능입니다. 서버팀에게 문의해주세요."),
     SECURITY_NOT_GIVEN(HttpStatus.UNAUTHORIZED, "SECURITY-0001", "인증 정보가 전달되지 않았습니다."),
     SECURITY_FORBIDDEN(HttpStatus.FORBIDDEN, "SECURITY-0002", "권한이 부족합니다."),
     ;
