@@ -61,6 +61,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-oauth2-client")  // OAuth2 Client
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
     // JWT
@@ -84,6 +85,12 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql") // 버전은 Boot가 관리
+
+    // --- Spatial / Location ---
+    // JTS (위치 데이터용)
+    implementation("org.locationtech.jts:jts-core:1.19.0")
+    // Hibernate Spatial (JPA에서 Point 타입 사용)
+    implementation("org.hibernate.orm:hibernate-spatial")
 
     // --- OpenAPI / Swagger ---
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${springDocVersion}")

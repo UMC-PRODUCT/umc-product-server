@@ -170,6 +170,15 @@ form ◄─────────────── member (독립적)
 | `Get`      | 조회        | `GetChallengerUseCase`     |
 | `Search`   | 검색        | `SearchPostUseCase`        |
 
+### Manage 통합 옵션
+
+CUD(Create, Update, Delete)를 하나의 인터페이스로 통합하고 싶다면 `Manage` 접두사를 사용할 수 있습니다.
+
+| 대상          | 개별형                                                                 | 통합형                   |
+|-------------|---------------------------------------------------------------------|-----------------------|
+| **UseCase** | `CreateSchoolUseCase`, `UpdateSchoolUseCase`, `DeleteSchoolUseCase` | `ManageSchoolUseCase` |
+| **Port**    | `SaveSchoolPort`                                                    | `ManageSchoolPort`    |
+
 ---
 
 ## Code Examples
@@ -511,11 +520,11 @@ public class AttendanceEventListener {
 
 ```json
 {
-  "success": true,
-  "data": {
-    ...
-  },
-  "error": null
+    "success": true,
+    "data": {
+        ...
+    },
+    "error": null
 }
 ```
 
@@ -523,12 +532,12 @@ public class AttendanceEventListener {
 
 ```json
 {
-  "success": false,
-  "data": null,
-  "error": {
-    "code": "CHALLENGER_NOT_FOUND",
-    "message": "챌린저를 찾을 수 없습니다."
-  }
+    "success": false,
+    "data": null,
+    "error": {
+        "code": "CHALLENGER_NOT_FOUND",
+        "message": "챌린저를 찾을 수 없습니다."
+    }
 }
 ```
 
@@ -536,18 +545,18 @@ public class AttendanceEventListener {
 
 ```json
 {
-  "success": true,
-  "data": {
-    "content": [
-      ...
-    ],
-    "page": 0,
-    "size": 20,
-    "totalElements": 100,
-    "totalPages": 5,
-    "hasNext": true
-  },
-  "error": null
+    "success": true,
+    "data": {
+        "content": [
+            ...
+        ],
+        "page": 0,
+        "size": 20,
+        "totalElements": 100,
+        "totalPages": 5,
+        "hasNext": true
+    },
+    "error": null
 }
 ```
 

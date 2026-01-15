@@ -1,16 +1,19 @@
 package com.umc.product.global.security;
 
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import javax.crypto.SecretKey;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -43,6 +46,8 @@ public class JwtTokenProvider {
         // 필요하다면 roles를 null 대신 넣어도 됩니다.
         return createToken(memberId, Collections.emptyList(), refreshTokenValidityInMilliseconds);
     }
+
+    // TODO: Register Token 생성 로직 필요
 
     /**
      * AT, RT에서 공용으로 사용하는 JWT 토큰 생성 로직
