@@ -17,24 +17,21 @@ public class AttendanceSheetCommandService implements CreateAttendanceSheetUseCa
     @Override
     public AttendanceSheetId create(CreateAttendanceSheetCommand command) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
+        return new AttendanceSheetId(1L);
     }
 
     @Override
     public void update(UpdateAttendanceSheetCommand command) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public void deactivate(AttendanceSheetId sheetId) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public void activate(AttendanceSheetId sheetId) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
     }
 }

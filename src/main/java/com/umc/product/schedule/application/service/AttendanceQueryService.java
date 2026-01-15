@@ -32,25 +32,25 @@ public class AttendanceQueryService implements
     @Override
     public AttendanceRecordInfo getById(AttendanceRecordId recordId) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
+        return null;
     }
 
     @Override
     public List<AttendanceRecordInfo> getBySheetId(Long sheetId) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
+        return java.util.Collections.emptyList();
     }
 
     @Override
     public List<AttendanceRecordInfo> getByChallengerId(Long challengerId) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
+        return java.util.Collections.emptyList();
     }
 
     @Override
     public List<AttendanceRecordInfo> getPendingBySheetId(Long sheetId) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
+        return java.util.Collections.emptyList();
     }
 
     // === GetAttendanceSheetUseCase ===
@@ -58,19 +58,19 @@ public class AttendanceQueryService implements
     @Override
     public AttendanceSheetInfo getById(AttendanceSheetId sheetId) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
+        return null;
     }
 
     @Override
     public AttendanceSheetInfo getByScheduleId(Long scheduleId) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
+        return null;
     }
 
     @Override
     public List<AttendanceSheetInfo> getByScheduleIds(List<Long> scheduleIds) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
+        return java.util.Collections.emptyList();
     }
 
     // === GetAvailableAttendancesUseCase ===
@@ -78,7 +78,7 @@ public class AttendanceQueryService implements
     @Override
     public List<AvailableAttendanceInfo> getAvailableList(Long memberId) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
+        return java.util.Collections.emptyList();
     }
 
     // === GetMyAttendanceHistoryUseCase ===
@@ -86,7 +86,7 @@ public class AttendanceQueryService implements
     @Override
     public List<MyAttendanceHistoryInfo> getHistory(Long memberId) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
+        return java.util.Collections.emptyList();
     }
 
     // === GetPendingAttendancesUseCase ===
@@ -94,6 +94,6 @@ public class AttendanceQueryService implements
     @Override
     public List<PendingAttendanceInfo> getPendingList(Long scheduleId) {
         // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
+        return java.util.Collections.emptyList();
     }
 }
