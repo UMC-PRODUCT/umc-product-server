@@ -146,6 +146,9 @@ tasks.test {
 }
 
 tasks.asciidoctor {
+
+    setSourceDir(file("docs/asciidoc"))
+
     inputs.dir(snippetsDir)
     configurations("asciidoctorExt")
 
@@ -157,11 +160,20 @@ tasks.asciidoctor {
 
     baseDirFollowsSourceDir()
     dependsOn(tasks.test)
+
+    doFirst {
+        delete(file("docs/static"))
+    }
+}
+
+
+tasks.register<Copy>("copyDocument") {
+    dependsOn(tasks.asciidoctor)
+
+    from(file("build/docs/asciidoc"))
+    into(file("docs/static"))
 }
 
 tasks.bootJar {
     dependsOn(tasks.asciidoctor)
-    from(tasks.asciidoctor.get().outputDir) {
-        into("static/docs")
-    }
 }
