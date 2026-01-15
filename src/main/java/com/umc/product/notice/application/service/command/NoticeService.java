@@ -7,9 +7,15 @@ import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeComman
 import com.umc.product.notice.application.port.in.command.dto.PublishNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class NoticeService implements ManageNoticeUseCase {
     @Override
     public Long createDraftNotice(CreateNoticeCommand command, ChallengerContext context) {

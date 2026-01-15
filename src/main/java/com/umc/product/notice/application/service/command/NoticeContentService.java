@@ -9,9 +9,15 @@ import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeImageC
 import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeLinkCommand;
 import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVoteCommand;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class NoticeContentService implements ManageNoticeContentUseCase {
     @Override
     public List<Long> addVotes(AddNoticeVotesCommand command, ChallengerContext context) {
