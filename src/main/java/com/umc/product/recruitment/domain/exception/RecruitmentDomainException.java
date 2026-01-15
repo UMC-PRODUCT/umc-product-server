@@ -1,11 +1,11 @@
-package com.umc.product.member.domain.exception;
+package com.umc.product.recruitment.domain.exception;
 
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 
-public class MemberDomainException extends BusinessException {
-    public MemberDomainException(MemberErrorCode memberErrorCode) {
-        super(Domain.MEMBER, memberErrorCode);
+public class RecruitmentDomainException extends BusinessException {
+    public RecruitmentDomainException(RecruitmentErrorCode recruitmentErrorCode) {
+        super(Domain.RECRUITMENT, recruitmentErrorCode);
     }
 
 
