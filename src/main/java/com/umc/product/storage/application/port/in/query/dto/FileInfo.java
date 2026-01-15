@@ -1,6 +1,6 @@
-package com.umc.product.infra.application.port.in.query.dto;
+package com.umc.product.storage.application.port.in.query.dto;
 
-import com.umc.product.infra.domain.enums.FileCategory;
+import com.umc.product.storage.domain.enums.FileCategory;
 import java.time.Instant;
 
 /**

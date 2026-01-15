@@ -1,6 +1,6 @@
-package com.umc.product.infra.application.port.in.command;
+package com.umc.product.storage.application.port.in.command;
 
-import com.umc.product.infra.application.port.in.command.dto.CreateFileUploadUrlCommand;
+import com.umc.product.storage.application.port.in.command.dto.CreateFileUploadUrlCommand;
 
 /**
  * 이미 업로드된 파일을 관리하는 경우를 담당합니다.
