@@ -156,8 +156,11 @@ jobs:
             
             # Docker Hub 로그인
             echo ""
-            echo "[2] Docker Hub 로그인"
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+             echo "[2] Docker Hub 로그인 (GHCR)"
+            # echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            
+            # GHCR 로그인
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             if [ $? -eq 0 ]; then
               echo "✅ Docker Hub 로그인 성공"
             else

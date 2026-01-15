@@ -147,13 +147,16 @@ jobs:
 
       - name: 🐳 Build and Push Docker Image
         uses: docker/build-push-action@v6
+        # tags에서 사용하는 부분, DockerHub가 아닌 GitHub Container Registry로 변경
+        #            ${{ secrets.DOCKERHUB_REPOSITORY_NAME }}:${{ steps.set-env.outputs.image_tag }}
+        #            ${{ secrets.DOCKERHUB_REPOSITORY_NAME }}:${{ steps.set-env.outputs.environment }}-latest
         with:
           context: .
           file: docker/app/dockerfile
           push: ${{ github.event_name != 'pull_request' }} # PR의 경우 빌드까지만 하고 DockerHub에 푸시하지 않음
           tags: |
-            ${{ secrets.DOCKERHUB_REPOSITORY_NAME }}:${{ steps.set-env.outputs.image_tag }}
-            ${{ secrets.DOCKERHUB_REPOSITORY_NAME }}:${{ steps.set-env.outputs.environment }}-latest
+            ghcr.io/${{ github.repository_owner }}/server:${{ steps.set-env.outputs.image_tag }}
+            ghcr.io/${{ github.repository_owner }}/server:${{ steps.set-env.outputs.environment }}-latest
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           #          cache-to: type=gha,mode=max
