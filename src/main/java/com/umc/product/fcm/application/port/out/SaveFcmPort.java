@@ -1,7 +1,7 @@
 package com.umc.product.fcm.application.port.out;
 
-import com.umc.product.fcm.entity.FCMToken;
+import com.umc.product.fcm.entity.FcmToken;
 
 public interface SaveFcmPort {
-    void save(FCMToken newToken);
+    void save(FcmToken newToken);
 }

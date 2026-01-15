@@ -22,7 +22,7 @@ public class FcmController implements FcmControllerApi {
     @Override
     @PostMapping("/{memberId}")
     public void registerFcmToken(
-            // TODO : 인증 적용 시 @PathVariable -> @AuthenticationPrincipal 변경 필요
+            // TODO: 인증 적용 시 @PathVariable -> @AuthenticationPrincipal 변경 필요
             @PathVariable("memberId") Long userId,
             @RequestBody FcmRegistrationRequest request) {
         manageFcmUseCase.registerFcmToken(userId, request);

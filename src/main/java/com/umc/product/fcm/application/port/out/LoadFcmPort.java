@@ -1,10 +1,9 @@
 package com.umc.product.fcm.application.port.out;
 
-import com.umc.product.fcm.entity.FCMToken;
-import java.util.Optional;
+import com.umc.product.fcm.entity.FcmToken;
 
 public interface LoadFcmPort {
 
-    Optional<FCMToken> findByMemberId(Long memberId);
+    FcmToken findByMemberId(Long memberId);
 
 }
