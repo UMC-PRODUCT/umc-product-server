@@ -15,5 +15,6 @@ public enum Domain {
     SCHEDULE,
     COMMUNITY,
     NOTICE,
-    FORM,
+    SURVEY,
+    RECRUITMENT
 }
