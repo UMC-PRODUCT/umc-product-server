@@ -8,7 +8,7 @@ import lombok.Getter;
 public class Trophy {
     //챌린저 학교 파트 가져와야함
     @Getter
-    private TrophyId thophyid;
+    private TrophyId trophyId;
 
     @Getter
     private final ChallengerId challengerId;
@@ -27,7 +27,7 @@ public class Trophy {
     private final String content;
 
     public static Trophy create(Integer week, ChallengerId challengerId, String title, String content, String url) {
-        validate(week, challengerId, title, url);
+        validate(week, challengerId, title, content, url);
         return new Trophy(null, challengerId, week, title, url, content);
     }
 
@@ -36,12 +36,18 @@ public class Trophy {
         return new Trophy(trophyId, challengerId, week, title, url, content);
     }
 
-    private static void validate(Integer week, ChallengerId challengerId, String title, String url) {
+    private static void validate(Integer week, ChallengerId challengerId, String title, String content, String url) {
+        if (week == null || week <= 0) {
+            throw new IllegalArgumentException("주차는 1 이상이어야 합니다.");
+        }
         if (challengerId == null) {
             throw new IllegalArgumentException("챌린저 정보는 필수입니다.");
         }
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("제목은 필수입니다.");
+        }
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("내용은 필수입니다.");
         }
         if (url == null || url.isBlank()) {
             throw new IllegalArgumentException("링크는 필수입니다.");
