@@ -68,8 +68,8 @@ public class FcmService implements ManageFcmUseCase {
                 firebaseMessaging.send(message);
                 log.info("푸시 알림 전송 완료 userId = {}", member.getId());
             } catch (FirebaseMessagingException e) {
-                log.error("푸시 알림 전송 실패 userId = {}", member.getId());
-                throw new RuntimeException(e);
+                log.error("푸시 알림 전송 실패 userId = {}", member.getId(), e);
+                throw new BusinessException(Domain.FCM, FcmErrorCode.USER_FCM_NOT_FOUND);
             }
         }
     }
