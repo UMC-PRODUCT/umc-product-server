@@ -118,6 +118,9 @@ dependencies {
     implementation("io.micrometer:context-propagation") // 비동기 작업에서 context를 잃어버리지 않도록 함
 
 
+    // Firebase Admin SDK
+    implementation("com.google.firebase:firebase-admin:9.2.0")
+
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
