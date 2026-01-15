@@ -43,6 +43,12 @@ public class Recruitment {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
+    @Column(nullable = false)
+    private String noticeTitle;
+
+    @Column(nullable = false)
+    private String noticeContent;
+
     @Builder.Default
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
