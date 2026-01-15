@@ -1,2 +1,6 @@
-package com.umc.product.notice.adapter.in.web.dto.request;public class CreateNoticeRequest {
+package com.umc.product.notice.adapter.in.web.dto.request;
+
+public record CreateNoticeRequest(
+
+) {
 }
