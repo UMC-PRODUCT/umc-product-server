@@ -17,6 +17,7 @@ public enum SwaggerTag {
     SCHEDULE("행사 및 스터디 일정", "행사 및 스터디 관련 API", 2),
     COMMUNITY("커뮤니티", "커뮤니티 API", 2),
     NOTICE("공지사항", "공지사항 API", 2),
+    SURVEY("설문", "설문(Form/Response) API", 2),
 
     ADMIN("관리자/운영진", "관리자 전용 별도 API", 99),
 
@@ -63,6 +64,7 @@ public enum SwaggerTag {
         public static final String SCHEDULE = "행사 및 스터디 일정";
         public static final String COMMUNITY = "커뮤니티";
         public static final String NOTICE = "공지사항";
+        public static final String RECRUITMENT = "지원";
         public static final String ADMIN = "관리자/운영진";
     }
 }
