@@ -2,6 +2,7 @@ package com.umc.product.community.adapter.out.persistence;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.community.domain.Post;
+import com.umc.product.community.domain.Post.PostId;
 import com.umc.product.community.domain.enums.Category;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -92,7 +93,7 @@ public class PostJpaEntity extends BaseEntity {
         }
 
         return Post.reconstruct(
-                new Post.BoardsId(id),
+                new PostId(id),
                 title,
                 content,
                 category,

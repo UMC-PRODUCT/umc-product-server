@@ -19,8 +19,8 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     @Override
     public Post save(Post post) {
         // ID가 있으면 UPDATE, 없으면 INSERT
-        if (post.getBoardsId() != null) {
-            PostJpaEntity entity = postRepository.findById(post.getBoardsId().id())
+        if (post.getPostId() != null) {
+            PostJpaEntity entity = postRepository.findById(post.getPostId().id())
                     .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
             entity.update(post.getTitle(), post.getContent());
             return entity.toDomain();
@@ -33,8 +33,8 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
 
     @Override
     public void delete(Post post) {
-        if (post.getBoardsId() != null) {
-            postRepository.deleteById(post.getBoardsId().id());
+        if (post.getPostId() != null) {
+            postRepository.deleteById(post.getPostId().id());
         }
     }
 

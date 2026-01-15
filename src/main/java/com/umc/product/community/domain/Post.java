@@ -11,7 +11,7 @@ import lombok.Getter;
 @Builder(access = AccessLevel.PRIVATE)
 public class Post {
     @Getter
-    private final BoardsId boardsId;
+    private final PostId postId;
 
     //작가는 challenge id가져와서 쓰자 잠시기둘
 
@@ -34,7 +34,8 @@ public class Post {
     @Getter
     private final LightningInfo lightningInfo;
 
-    public static Post createBoards(String title, String content, Category category, String region, boolean anonymous) {
+    public static Post createpostIds(String title, String content, Category category, String region,
+                                     boolean anonymous) {
         if (category == Category.LIGHTNING) {
             throw new IllegalArgumentException("번개 게시글은 createLightning()을 사용하세요");
         }
@@ -51,9 +52,9 @@ public class Post {
         return new Post(null, title, content, Category.LIGHTNING, region, anonymous, info);
     }
 
-    public static Post reconstruct(BoardsId boardsId, String title, String content, Category category, String region,
+    public static Post reconstruct(PostId postId, String title, String content, Category category, String region,
                                    boolean anonymous, LightningInfo lightningInfo) {
-        return new Post(boardsId, title, content, category, region, anonymous, lightningInfo);
+        return new Post(postId, title, content, category, region, anonymous, lightningInfo);
     }
 
     public boolean isLightning() {
@@ -93,8 +94,8 @@ public class Post {
 
     }
 
-    public record BoardsId(Long id) {
-        public BoardsId {
+    public record PostId(Long id) {
+        public PostId {
             if (id <= 0) {
                 throw new IllegalArgumentException("ID는 양수여야 합니다.");
             }

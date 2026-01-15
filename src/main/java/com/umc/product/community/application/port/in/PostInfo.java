@@ -5,7 +5,7 @@ import com.umc.product.community.domain.enums.Category;
 import java.time.LocalDateTime;
 
 public record PostInfo(
-        Long boardsId,
+        Long postId,
         String title,
         String content,
         Category category,
@@ -16,13 +16,13 @@ public record PostInfo(
         Integer maxParticipants
 ) {
     public static PostInfo from(Post post) {
-        Long boardsId = post.getBoardsId() != null ? post.getBoardsId().id() : null;
+        Long postId = post.getPostId() != null ? post.getPostId().id() : null;
 
         // 번개글인 경우
         if (post.isLightning()) {
             Post.LightningInfo info = post.getLightningInfoOrThrow();
             return new PostInfo(
-                    boardsId,
+                    postId,
                     post.getTitle(),
                     post.getContent(),
                     post.getCategory(),
@@ -36,7 +36,7 @@ public record PostInfo(
 
         // 일반 게시글
         return new PostInfo(
-                boardsId,
+                postId,
                 post.getTitle(),
                 post.getContent(),
                 post.getCategory(),
