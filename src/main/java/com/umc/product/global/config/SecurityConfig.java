@@ -3,10 +3,10 @@ package com.umc.product.global.config;
 
 import com.umc.product.authentication.adapter.in.oauth.OAuth2AuthenticationFailureHandler;
 import com.umc.product.authentication.adapter.in.oauth.OAuth2AuthenticationSuccessHandler;
+import com.umc.product.authentication.application.service.CustomOAuth2UserService;
 import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 import com.umc.product.global.security.JwtAuthenticationFilter;
-import com.umc.product.member.adapter.in.web.oauth.CustomOAuth2UserService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -114,7 +114,7 @@ public class SecurityConfig {
                         // Swagger API
                         .requestMatchers(SWAGGER_PATHS).permitAll()
                         // 나머지는 Method Security (@PreAuthorize, @Public)로 제어
-                        .anyRequest().authenticated()
+                        .anyRequest().permitAll()
                 )
                 // Spring 기본 로그인 필터 동작 전에 JWT 동작
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

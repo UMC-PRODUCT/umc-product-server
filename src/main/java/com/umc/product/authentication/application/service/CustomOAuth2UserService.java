@@ -1,4 +1,4 @@
-package com.umc.product.member.adapter.in.web.oauth;
+package com.umc.product.authentication.application.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
