@@ -1,19 +1,9 @@
 package com.umc.product.notice.application.port.in.query.dto;
 
-import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeStaticsResponse;
-
 public record NoticeReadStatusSummary(
         Integer totalCount,
         Integer readCount,
         Integer unreadCount,
         Float readRate
 ) {
-    public static GetNoticeStaticsResponse from(NoticeReadStatusSummary summary) {
-        return new GetNoticeStaticsResponse(
-                summary.totalCount(),
-                summary.readCount(),
-                summary.unreadCount(),
-                summary.readRate()
-        );
-    }
 }

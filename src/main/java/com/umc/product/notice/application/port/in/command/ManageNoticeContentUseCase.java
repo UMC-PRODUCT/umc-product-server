@@ -17,19 +17,19 @@ public interface ManageNoticeContentUseCase {
      * 공지에 투표 추가
      * @return 생성된 NoticeVote의 id 리스트
      */
-    List<Long> addVotes(AddNoticeVotesCommand command);
+    List<Long> addVotes(AddNoticeVotesCommand command, Long noticeId);
 
     /*
      * 공지에 이미지 추가
      * @return 생성된 NoticeImage의 id 리스트
      */
-    List<Long> addImages(AddNoticeImagesCommand command);
+    List<Long> addImages(AddNoticeImagesCommand command, Long noticeId);
 
     /*
      * 공지에 링크 추가
      * @return 생성된 NoticeLink의 id 리스트
      */
-    List<Long> addLinks(AddNoticeLinksCommand command);
+    List<Long> addLinks(AddNoticeLinksCommand command, Long noticeId);
 
     /*
      * 공지에서 투표 삭제

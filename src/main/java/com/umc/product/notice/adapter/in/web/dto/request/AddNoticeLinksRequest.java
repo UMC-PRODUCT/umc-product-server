@@ -7,14 +7,11 @@ import java.util.List;
 
 public record AddNoticeLinksRequest(
 
-        @NotNull
-        Long noticeId,
-
         @NotEmpty(message = "링크 리스트는 비어 있을 수 없습니다.")
         List<String> links
 ) {
 
     public AddNoticeLinksCommand toCommand() {
-        return new AddNoticeLinksCommand(noticeId, links);
+        return new AddNoticeLinksCommand(links);
     }
 }

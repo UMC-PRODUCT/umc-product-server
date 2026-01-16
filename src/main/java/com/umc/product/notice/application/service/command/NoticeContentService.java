@@ -19,18 +19,19 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NoticeContentService implements ManageNoticeContentUseCase {
 
+
     @Override
-    public List<Long> addVotes(AddNoticeVotesCommand command) {
+    public List<Long> addVotes(AddNoticeVotesCommand command, Long noticeId) {
         return null;
     }
 
     @Override
-    public List<Long> addImages(AddNoticeImagesCommand command) {
+    public List<Long> addImages(AddNoticeImagesCommand command, Long noticeId) {
         return null;
     }
 
     @Override
-    public List<Long> addLinks(AddNoticeLinksCommand command) {
+    public List<Long> addLinks(AddNoticeLinksCommand command, Long noticeId) {
         return null;
     }
 

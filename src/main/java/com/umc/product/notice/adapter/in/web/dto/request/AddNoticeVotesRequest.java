@@ -6,14 +6,11 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 public record AddNoticeVotesRequest(
-        @NotNull
-        Long noticeId,
-
         @NotEmpty(message = "투표 ID 리스트는 비어 있을 수 없습니다.")
         List<Long> voteIds
 ) {
 
     public AddNoticeVotesCommand toCommand() {
-        return new AddNoticeVotesCommand(noticeId, voteIds);
+        return new AddNoticeVotesCommand(voteIds);
     }
 }
