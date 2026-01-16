@@ -1,14 +1,12 @@
 package com.umc.product.notice.application.service.query;
 
-import com.umc.product.global.response.CursorResponse;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.dto.GetNoticeStatusQuery;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
-import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusInfo;
+import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
-import com.umc.product.notice.application.port.in.query.dto.NoticeSearchConditionInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
-import java.util.List;
+import com.umc.product.notice.domain.enums.NoticeClassification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -24,7 +22,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
 
     @Override
-    public Page<NoticeSummary> getAllNoticeSummaries(NoticeSearchConditionInfo info, Pageable pageable) {
+    public Page<NoticeSummary> getAllNoticeSummaries(NoticeClassification info, Pageable pageable) {
         return null;
     }
 
@@ -39,7 +37,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
     }
 
     @Override
-    public List<NoticeReadStatusInfo> getReadStatus(GetNoticeStatusQuery command) {
+    public NoticeReadStatusResult getReadStatus(GetNoticeStatusQuery command) {
         return null;
     }
 
