@@ -1,7 +1,7 @@
 package com.umc.product.member.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.member.domain.enums.MemberStatus;
+import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import jakarta.persistence.Column;

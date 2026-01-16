@@ -1,6 +1,6 @@
 package com.umc.product.member.adapter.in.web.dto.response;
 
-import com.umc.product.member.domain.enums.MemberStatus;
+import com.umc.product.common.domain.enums.MemberStatus;
 
 /**
  * 사용자 정보를 응답하는 DTO 입니다.

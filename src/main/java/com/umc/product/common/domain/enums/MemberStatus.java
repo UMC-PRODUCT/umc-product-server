@@ -1,4 +1,4 @@
-package com.umc.product.member.domain.enums;
+package com.umc.product.common.domain.enums;
 
 public enum MemberStatus {
     PENDING,    // OAuth 로그인 시도 했던 사람
