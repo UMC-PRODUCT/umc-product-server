@@ -32,11 +32,17 @@ public class ChapterSchool {
     @JoinColumn(name = "school_id")
     private School school;
 
-    @Builder
+    @Builder(access = AccessLevel.PRIVATE)
     private ChapterSchool(Chapter chapter, School school) {
-        validate(chapter, school);
         this.chapter = chapter;
         this.school = school;
+    }
+
+    public static ChapterSchool create(Chapter chapter, School school) {
+        return ChapterSchool.builder()
+                .chapter(chapter)
+                .school(school)
+                .build();
     }
 
     private static void validate(Chapter chapter, School school) {

@@ -1,8 +1,8 @@
 package com.umc.product.organization.application.port.in.command.dto;
 
 public record CreateSchoolCommand(
-        String schoolName,
-        String chapterId,
+        String name,
+        Long chapterId,
         String remark
 ) {
 }
