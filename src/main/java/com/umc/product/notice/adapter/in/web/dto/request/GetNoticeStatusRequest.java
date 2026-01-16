@@ -3,7 +3,6 @@ package com.umc.product.notice.adapter.in.web.dto.request;
 import com.umc.product.notice.application.port.in.query.dto.GetNoticeStatusQuery;
 import com.umc.product.notice.domain.enums.NoticeReadStatus;
 import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 public record GetNoticeStatusRequest(

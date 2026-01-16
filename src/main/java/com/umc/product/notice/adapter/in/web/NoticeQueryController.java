@@ -4,7 +4,6 @@ import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.response.PageResponse;
-import com.umc.product.notice.adapter.in.web.dto.request.GetNoticeFilterRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.GetNoticeStatusRequest;
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeDetailResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeReadStatusResponse;
@@ -16,12 +15,15 @@ import com.umc.product.notice.application.port.in.query.GetNoticeFilterUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusInfo;
+import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeScopeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.application.port.in.query.dto.WritableNoticeScopeOption;
+import com.umc.product.notice.domain.enums.NoticeClassification;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,6 +32,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -50,9 +53,9 @@ public class NoticeQueryController {
      * 공지 전체 조회
      */
     @GetMapping
-    public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(@RequestBody @Valid GetNoticeFilterRequest request,
+    public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(@RequestParam NoticeClassification classification,
                                                    @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(request.toInfo(),
+        Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(classification,
                 pageable);
 
         return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
@@ -91,13 +94,14 @@ public class NoticeQueryController {
      * 공지사항 수신 현황 조회
      */
     @GetMapping("/{noticeId}/read-status")
-    public ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus(@PathVariable Long noticeId, @RequestBody @Valid GetNoticeStatusRequest request) {
-        CursorResponse<NoticeReadStatusInfo> readStatus = getNoticeUseCase.getReadStatus(request.toQuery(noticeId));
+    public ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus(@PathVariable Long noticeId, @ModelAttribute @Valid GetNoticeStatusRequest request) {
+        NoticeReadStatusResult result = getNoticeUseCase.getReadStatus(request.toQuery(noticeId));
         CursorResponse<GetNoticeReadStatusResponse> response = CursorResponse.of(
-                readStatus.content(),
-                readStatus.content().size(),
-                info -> info.cursorId(),
-                GetNoticeReadStatusResponse::from
+                result.content().stream()
+                        .map(GetNoticeReadStatusResponse::from)
+                        .toList(),
+                result.cursorId(),
+                result.hasNext()
         );
 
         return ApiResponse.onSuccess(response);

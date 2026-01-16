@@ -23,5 +23,6 @@ public record GetNoticeReadStatusResponse(
                 info.region(),
                 info.isRead()
         );
+
     }
 }

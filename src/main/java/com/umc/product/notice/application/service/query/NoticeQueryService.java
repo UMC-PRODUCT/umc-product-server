@@ -8,6 +8,7 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusInfo
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSearchConditionInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -38,9 +39,10 @@ public class NoticeQueryService implements GetNoticeUseCase {
     }
 
     @Override
-    public CursorResponse<NoticeReadStatusInfo> getReadStatus(GetNoticeStatusQuery command) {
+    public List<NoticeReadStatusInfo> getReadStatus(GetNoticeStatusQuery command) {
         return null;
     }
+
 
     @Override
     public NoticeReadStatusSummary getReadStatistics(Long noticeId) {
