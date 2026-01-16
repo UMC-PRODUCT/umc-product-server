@@ -16,4 +16,5 @@ public enum Domain {
     COMMUNITY,
     NOTICE,
     FORM,
+    FCM
 }
