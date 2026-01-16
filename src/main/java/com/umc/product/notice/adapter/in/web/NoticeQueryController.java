@@ -1,6 +1,5 @@
 package com.umc.product.notice.adapter.in.web;
 
-import com.umc.product.common.dto.ChallengerContext;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.CursorResponse;
@@ -15,7 +14,6 @@ import com.umc.product.notice.adapter.in.web.dto.response.GetNoticesCategoryResp
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticesScopeResponse;
 import com.umc.product.notice.application.port.in.query.GetNoticeFilterUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
-import com.umc.product.notice.application.port.in.query.dto.GetNoticeStatusQuery;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
@@ -24,7 +22,6 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.application.port.in.query.dto.WritableNoticeScopeOption;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.awt.Cursor;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -51,9 +48,9 @@ public class NoticeQueryController {
      * 공지 전체 조회
      */
     @GetMapping
-    public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(ChallengerContext context, @RequestBody @Valid GetNoticeFilterRequest request,
+    public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(@RequestBody @Valid GetNoticeFilterRequest request,
                                                    @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(context, request.toInfo(),
+        Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(request.toInfo(),
                 pageable);
 
         return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
@@ -63,9 +60,9 @@ public class NoticeQueryController {
      * 검색어 기반 공지 전체 조회
      */
     @GetMapping("/search")
-    public ApiResponse<PageResponse<GetNoticeSummaryResponse>>  searchNotices(ChallengerContext context, @RequestParam String keyword,
+    public ApiResponse<PageResponse<GetNoticeSummaryResponse>>  searchNotices(@RequestParam String keyword,
                                                    @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(context, keyword, pageable);
+        Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(keyword, pageable);
 
         return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
     }
@@ -74,9 +71,18 @@ public class NoticeQueryController {
      * 공지사항 상세 조회
      */
     @GetMapping("/{noticeId}")
-    public ApiResponse<GetNoticeDetailResponse> getNotice(ChallengerContext context, @PathVariable Long noticeId) {
-        NoticeInfo noticeDetail = getNoticeUseCase.getNoticeDetail(context, noticeId);
+    public ApiResponse<GetNoticeDetailResponse> getNotice(@PathVariable Long noticeId) {
+        NoticeInfo noticeDetail = getNoticeUseCase.getNoticeDetail(noticeId);
         return ApiResponse.onSuccess(GetNoticeDetailResponse.from(noticeDetail));
+    }
+
+    /*
+     * 공지사항 수신 현황 통계 조회
+     */
+    @GetMapping("/{noticeId}/read-statics")
+    public ApiResponse<GetNoticeStaticsResponse> getNoticeReadStatics(@PathVariable Long noticeId) {
+        NoticeReadStatusSummary statistics = getNoticeUseCase.getReadStatistics(noticeId);
+        return ApiResponse.onSuccess(GetNoticeStaticsResponse.from(statistics));
     }
 
     /*
@@ -96,30 +102,20 @@ public class NoticeQueryController {
     }
 
     /*
-     * 공지사항 수신 현황 통계 조회
+     * 공지사항 작성 시 카테고리 조회
      */
-    @GetMapping("/{noticeId}/read-statics")
-    public ApiResponse<GetNoticeStaticsResponse> getNoticeReadStatics(@PathVariable Long noticeId) {
-        NoticeReadStatusSummary statistics = getNoticeUseCase.getReadStatistics(noticeId);
-        return ApiResponse.onSuccess(GetNoticeStaticsResponse.from(statistics));
+    @GetMapping("/categories")
+    public ApiResponse<GetNoticesCategoryResponse> getNoticesCategory() {
+        WritableNoticeScopeOption category = getNoticeFilterUseCase.getWritableNoticeScope();
+        return ApiResponse.onSuccess(GetNoticesCategoryResponse.from(category));
     }
-
 
     /*
      * 공지사항 전체 조회시 회원별 필터 조회
      */
     @GetMapping("/filters")
-    public ApiResponse<GetNoticesScopeResponse> getNoticesScope(ChallengerContext context) {
-        List<NoticeScopeInfo> filters = getNoticeFilterUseCase.getAvailableFilters(context);
+    public ApiResponse<GetNoticesScopeResponse> getNoticesScope() {
+        List<NoticeScopeInfo> filters = getNoticeFilterUseCase.getAvailableFilters();
         return ApiResponse.onSuccess(new GetNoticesScopeResponse(filters));
-    }
-
-    /*
-     * 공지사항 작성 시 카테고리 조회
-     */
-    @GetMapping("/categories")
-    public ApiResponse<GetNoticesCategoryResponse> getNoticesCategory(ChallengerContext context) {
-        WritableNoticeScopeOption category = getNoticeFilterUseCase.getWritableNoticeScope(context);
-        return ApiResponse.onSuccess(GetNoticesCategoryResponse.from(category));
     }
 }

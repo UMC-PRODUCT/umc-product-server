@@ -1,6 +1,5 @@
 package com.umc.product.notice.application.port.in.command;
 
-import com.umc.product.common.dto.ChallengerContext;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeLinksCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeVotesCommand;
@@ -18,35 +17,35 @@ public interface ManageNoticeContentUseCase {
      * 공지에 투표 추가
      * @return 생성된 NoticeVote의 id 리스트
      */
-    List<Long> addVotes(AddNoticeVotesCommand command, ChallengerContext context);
+    List<Long> addVotes(AddNoticeVotesCommand command);
 
     /*
      * 공지에 이미지 추가
      * @return 생성된 NoticeImage의 id 리스트
      */
-    List<Long> addImages(AddNoticeImagesCommand command, ChallengerContext context);
+    List<Long> addImages(AddNoticeImagesCommand command);
 
     /*
      * 공지에 링크 추가
      * @return 생성된 NoticeLink의 id 리스트
      */
-    List<Long> addLinks(AddNoticeLinksCommand command, ChallengerContext context);
+    List<Long> addLinks(AddNoticeLinksCommand command);
 
     /*
      * 공지에서 투표 삭제
      * @return
      */
-    void removeVote(RemoveNoticeVoteCommand command, ChallengerContext context);
+    void removeVote(RemoveNoticeVoteCommand command);
 
     /*
      * 공지에서 이미지 삭제
      * @return
      */
-    void removeImage(RemoveNoticeImageCommand command, ChallengerContext context);
+    void removeImage(RemoveNoticeImageCommand command);
 
     /*
      * 공지에서 링크 삭제
      * @return
      */
-    void removeLink(RemoveNoticeLinkCommand command, ChallengerContext context);
+    void removeLink(RemoveNoticeLinkCommand command);
 }

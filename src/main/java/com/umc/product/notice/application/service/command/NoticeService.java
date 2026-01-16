@@ -1,6 +1,5 @@
 package com.umc.product.notice.application.service.command;
 
-import com.umc.product.common.dto.ChallengerContext;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
@@ -17,28 +16,29 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @RequiredArgsConstructor
 public class NoticeService implements ManageNoticeUseCase {
+
     @Override
-    public Long createDraftNotice(CreateNoticeCommand command, ChallengerContext context) {
+    public Long createDraftNotice(CreateNoticeCommand command) {
         return null;
     }
 
     @Override
-    public void publishNotice(PublishNoticeCommand command, ChallengerContext context) {
+    public void publishNotice(PublishNoticeCommand command) {
 
     }
 
     @Override
-    public void updateNotice(UpdateNoticeCommand command, ChallengerContext context) {
+    public void updateNotice(UpdateNoticeCommand command) {
 
     }
 
     @Override
-    public void deleteNotice(DeleteNoticeCommand command, ChallengerContext context) {
+    public void deleteNotice(DeleteNoticeCommand command) {
 
     }
 
     @Override
-    public void remindNotice(SendNoticeReminderCommand command, ChallengerContext context) {
+    public void remindNotice(SendNoticeReminderCommand command) {
 
     }
 }

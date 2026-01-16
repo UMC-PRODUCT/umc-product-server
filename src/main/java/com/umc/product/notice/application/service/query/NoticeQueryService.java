@@ -1,6 +1,5 @@
 package com.umc.product.notice.application.service.query;
 
-import com.umc.product.common.dto.ChallengerContext;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.dto.GetNoticeStatusQuery;
@@ -22,19 +21,19 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NoticeQueryService implements GetNoticeUseCase {
 
+
     @Override
-    public Page<NoticeSummary> getAllNoticeSummaries(ChallengerContext context, NoticeSearchConditionInfo info,
-                                                     Pageable pageable) {
+    public Page<NoticeSummary> getAllNoticeSummaries(NoticeSearchConditionInfo info, Pageable pageable) {
         return null;
     }
 
     @Override
-    public Page<NoticeSummary> searchNoticesByKeyword(ChallengerContext context, String keyword, Pageable pageable) {
+    public Page<NoticeSummary> searchNoticesByKeyword(String keyword, Pageable pageable) {
         return null;
     }
 
     @Override
-    public NoticeInfo getNoticeDetail(ChallengerContext context, Long noticeId) {
+    public NoticeInfo getNoticeDetail(Long noticeId) {
         return null;
     }
 
@@ -47,5 +46,4 @@ public class NoticeQueryService implements GetNoticeUseCase {
     public NoticeReadStatusSummary getReadStatistics(Long noticeId) {
         return null;
     }
-
 }

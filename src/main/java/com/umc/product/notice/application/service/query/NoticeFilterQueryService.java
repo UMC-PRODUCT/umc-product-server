@@ -1,6 +1,5 @@
 package com.umc.product.notice.application.service.query;
 
-import com.umc.product.common.dto.ChallengerContext;
 import com.umc.product.notice.application.port.in.query.GetNoticeFilterUseCase;
 import com.umc.product.notice.application.port.in.query.dto.NoticeScopeInfo;
 import com.umc.product.notice.application.port.in.query.dto.WritableNoticeScopeOption;
@@ -15,13 +14,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class NoticeFilterQueryService implements GetNoticeFilterUseCase {
+
     @Override
-    public List<NoticeScopeInfo> getAvailableFilters(ChallengerContext context) {
+    public List<NoticeScopeInfo> getAvailableFilters() {
         return null;
     }
 
     @Override
-    public WritableNoticeScopeOption getWritableNoticeScope(ChallengerContext context) {
+    public WritableNoticeScopeOption getWritableNoticeScope() {
         return null;
     }
 }

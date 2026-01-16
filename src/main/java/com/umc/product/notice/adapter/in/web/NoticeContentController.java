@@ -1,6 +1,5 @@
 package com.umc.product.notice.adapter.in.web;
 
-import com.umc.product.common.dto.ChallengerContext;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeImagesRequest;
@@ -30,20 +29,20 @@ public class NoticeContentController {
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
 
     @PostMapping("/images")
-    public ApiResponse<AddNoticeImagesResponse> addNoticeImages(@RequestBody @Valid AddNoticeImagesRequest request, ChallengerContext context) {
-        List<Long> imageIds = manageNoticeContentUseCase.addImages(request.toCommand(), context);
+    public ApiResponse<AddNoticeImagesResponse> addNoticeImages(@RequestBody @Valid AddNoticeImagesRequest request) {
+        List<Long> imageIds = manageNoticeContentUseCase.addImages(request.toCommand());
         return ApiResponse.onSuccess(new AddNoticeImagesResponse(imageIds));
     }
 
     @PostMapping("/links")
-    public ApiResponse<AddNoticeLinksResponse> addNoticeLinks(@RequestBody @Valid AddNoticeLinksRequest request, ChallengerContext context) {
-        List<Long> linkIds = manageNoticeContentUseCase.addLinks(request.toCommand(), context);
+    public ApiResponse<AddNoticeLinksResponse> addNoticeLinks(@RequestBody @Valid AddNoticeLinksRequest request) {
+        List<Long> linkIds = manageNoticeContentUseCase.addLinks(request.toCommand());
         return ApiResponse.onSuccess(new AddNoticeLinksResponse(linkIds));
     }
 
     @PostMapping("/votes")
-    public ApiResponse<AddNoticeVotesResponse> addNoticeVotes(@RequestBody @Valid AddNoticeVotesRequest request, ChallengerContext context) {
-        List<Long> voteIds = manageNoticeContentUseCase.addVotes(request.toCommand(), context);
+    public ApiResponse<AddNoticeVotesResponse> addNoticeVotes(@RequestBody @Valid AddNoticeVotesRequest request) {
+        List<Long> voteIds = manageNoticeContentUseCase.addVotes(request.toCommand());
         return ApiResponse.onSuccess(new AddNoticeVotesResponse(voteIds));
     }
 

@@ -1,7 +1,5 @@
 package com.umc.product.notice.adapter.in.web;
 
-import com.umc.product.common.dto.ChallengerContext;
-import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
@@ -32,24 +30,24 @@ public class NoticeController {
     private final ManageNoticeUseCase manageNoticeUseCase;
 
     @PostMapping
-    public ApiResponse<CreateNoticeResponse> createNotice(@RequestBody @Valid CreateNoticeRequest request, ChallengerContext context) {
-        Long noticeId = manageNoticeUseCase.createDraftNotice(request.toCommand(), context);
+    public ApiResponse<CreateNoticeResponse> createNotice(@RequestBody @Valid CreateNoticeRequest request) {
+        Long noticeId = manageNoticeUseCase.createDraftNotice(request.toCommand());
         return ApiResponse.onSuccess(new CreateNoticeResponse(noticeId));
     }
 
     @DeleteMapping("/{noticeId}")
-    public void deleteNotice(@PathVariable Long noticeId, ChallengerContext context) {
-        manageNoticeUseCase.deleteNotice(new DeleteNoticeCommand(noticeId), context);
+    public void deleteNotice(@PathVariable Long noticeId) {
+        manageNoticeUseCase.deleteNotice(new DeleteNoticeCommand(noticeId));
     }
 
     @PatchMapping("/{noticeId}")
-    public void updateNotice(@PathVariable Long noticeId, @RequestBody @Valid UpdateNoticeRequest request, ChallengerContext context) {
-        manageNoticeUseCase.updateNotice(request.toCommand(noticeId), context);
+    public void updateNotice(@PathVariable Long noticeId, @RequestBody @Valid UpdateNoticeRequest request) {
+        manageNoticeUseCase.updateNotice(request.toCommand(noticeId));
     }
 
     @PostMapping("/{noticeId}/reminders")
-    public void sendNoticeReminder(@PathVariable Long noticeId, @RequestBody @Valid SendNoticeReminderRequest request, ChallengerContext context) {
-        manageNoticeUseCase.remindNotice(request.toCommand(noticeId), context);
+    public void sendNoticeReminder(@PathVariable Long noticeId, @RequestBody @Valid SendNoticeReminderRequest request) {
+        manageNoticeUseCase.remindNotice(request.toCommand(noticeId));
     }
 
 
