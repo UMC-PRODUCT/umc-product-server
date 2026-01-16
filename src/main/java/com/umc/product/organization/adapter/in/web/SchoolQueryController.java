@@ -22,9 +22,10 @@ public class SchoolQueryController {
     private final GetSchoolUseCase getSchoolUseCase;
 
     @GetMapping
-    public PageResponse<SchoolListItemResponse> getSchoolList(@ModelAttribute SchoolListRequest request,
-                                                              Pageable pageable) {
-        return PageResponse.of(getSchoolUseCase.getList(request.toCondition(), pageable), SchoolListItemResponse::of);
+    public PageResponse<SchoolListItemResponse> getSchools(@ModelAttribute SchoolListRequest request,
+                                                           Pageable pageable) {
+        //TODO: 관리자 권한 체크
+        return PageResponse.of(getSchoolUseCase.getSchools(request.toCondition(), pageable), SchoolListItemResponse::of);
     }
 
     @GetMapping("/{schoolId}")

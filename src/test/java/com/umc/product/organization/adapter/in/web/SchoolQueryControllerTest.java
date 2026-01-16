@@ -13,7 +13,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.support.DocumentationTest;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -31,9 +33,9 @@ class SchoolQueryControllerTest extends DocumentationTest {
         int size = 10;
 
         List<SchoolListItemInfo> items = List.of(
-                new SchoolListItemInfo(1L, "서울대학교", 1L, "Ain 지부", LocalDate.of(2025, 12, 31), true),
-                new SchoolListItemInfo(2L, "연세대학교", 1L, "Ain 지부", LocalDate.of(2025, 12, 29), true),
-                new SchoolListItemInfo(3L, "고려대학교", 1L, "Ain 지부", LocalDate.of(2025, 12, 30), false)
+                new SchoolListItemInfo(1L, "서울대학교", 1L, "Ain 지부", toInstant(2025, 12, 31), true),
+                new SchoolListItemInfo(2L, "연세대학교", 1L, "Ain 지부", toInstant(2025, 12, 29), true),
+                new SchoolListItemInfo(3L, "고려대학교", 1L, "Ain 지부", toInstant(2025, 12, 30), false)
         );
 
         Page<SchoolListItemInfo> pageResult = new PageImpl<>(
@@ -42,7 +44,7 @@ class SchoolQueryControllerTest extends DocumentationTest {
                 3L
         );
 
-        given(getSchoolUseCase.getList(any(), any())).willReturn(pageResult);
+        given(getSchoolUseCase.getSchools(any(), any())).willReturn(pageResult);
 
         // when
         ResultActions result = mockMvc.perform(
@@ -116,6 +118,12 @@ class SchoolQueryControllerTest extends DocumentationTest {
                                 fieldWithPath("result.remark").type(JsonFieldType.STRING).description("비고"),
                                 fieldWithPath("result.createdAt").type(JsonFieldType.STRING).description("생성일자"),
                                 fieldWithPath("result.updatedAt").type(JsonFieldType.STRING).description("수정일자"))));
+    }
+
+    private Instant toInstant(int year, int month, int day) {
+        return LocalDate.of(year, month, day)
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant();
     }
 
 }

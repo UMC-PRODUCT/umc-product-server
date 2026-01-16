@@ -1,0 +1,74 @@
+package com.umc.product.organization.adapter.out.persistence;
+
+import static com.umc.product.organization.domain.QChapter.chapter;
+import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
+import static com.umc.product.organization.domain.QGisu.gisu;
+import static com.umc.product.organization.domain.QSchool.school;
+
+import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.support.PageableExecutionUtils;
+import org.springframework.stereotype.Repository;
+import org.springframework.util.StringUtils;
+
+@Repository
+@RequiredArgsConstructor
+public class SchoolQueryRepository {
+
+    private final JPAQueryFactory queryFactory;
+
+    public Page<SchoolListItemInfo> getSchools(SchoolSearchCondition condition, Pageable pageable) {
+        List<SchoolListItemInfo> content = queryFactory
+                .select(Projections.constructor(SchoolListItemInfo.class,
+                        school.id,
+                        school.name,
+                        chapter.id,
+                        chapter.name,
+                        school.createdAt,
+                        gisu.isActive
+                ))
+                .from(school)
+                .join(chapterSchool).on(chapterSchool.school.eq(school))
+                .join(chapterSchool.chapter, chapter)
+                .join(chapter.gisu, gisu)
+                .where(
+                        gisu.isActive.isTrue(),
+                        keywordContains(condition.keyword()),
+                        chapterIdEq(condition.chapterId())
+                )
+                .orderBy(school.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory
+                .select(school.count())
+                .from(school)
+                .join(chapterSchool).on(chapterSchool.school.eq(school))
+                .join(chapterSchool.chapter, chapter)
+                .join(chapter.gisu, gisu)
+                .where(
+                        gisu.isActive.isTrue(),
+                        keywordContains(condition.keyword()),
+                        chapterIdEq(condition.chapterId())
+                );
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    private BooleanExpression keywordContains(String keyword) {
+        return StringUtils.hasText(keyword) ? school.name.containsIgnoreCase(keyword) : null;
+    }
+
+    private BooleanExpression chapterIdEq(Long chapterId) {
+        return chapterId != null ? chapter.id.eq(chapterId) : null;
+    }
+}
