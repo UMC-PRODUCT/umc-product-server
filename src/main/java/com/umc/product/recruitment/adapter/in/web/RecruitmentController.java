@@ -2,13 +2,17 @@ package com.umc.product.recruitment.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentApplicationFormResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentNoticeResponse;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentNoticeUseCase;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentNoticeQuery;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +29,7 @@ public class RecruitmentController {
 
     private final GetActiveRecruitmentUseCase getActiveRecruitmentUseCase;
     private final GetRecruitmentNoticeUseCase getRecruitmentNoticeUseCase;
+    private final GetRecruitmentApplicationFormUseCase getRecruitmentApplicationFormUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
@@ -40,10 +45,19 @@ public class RecruitmentController {
     @GetMapping("/{recruitmentId}/notice")
     @Operation(summary = "모집 공지 조회", description = "모집 안내 화면 상단에 표시할 모집 공지(모집 상세) 정보를 조회합니다.")
     public RecruitmentNoticeResponse getRecruitmentNotice(
-            @PathVariable Long recruitmentId
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
     ) {
         GetRecruitmentNoticeQuery query = new GetRecruitmentNoticeQuery(recruitmentId);
         return RecruitmentNoticeResponse.from(getRecruitmentNoticeUseCase.get(query));
+    }
+
+    @GetMapping("/{recruitmentId}/application-form")
+    @Operation(summary = "지원서 폼 정보 불러오기", description = "지원서 작성 페이지에서 사용할 폼 (질문 목록)을 조회합니다.")
+    public RecruitmentApplicationFormResponse getApplicationForm(
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
+    ) {
+        GetRecruitmentApplicationFormQuery query = new GetRecruitmentApplicationFormQuery(recruitmentId);
+        return RecruitmentApplicationFormResponse.from(getRecruitmentApplicationFormUseCase.get(query));
     }
 
 }
