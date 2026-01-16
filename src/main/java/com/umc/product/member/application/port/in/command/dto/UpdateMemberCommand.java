@@ -1,4 +1,4 @@
-package com.umc.product.member.application.port.in.command;
+package com.umc.product.member.application.port.in.command.dto;
 
 import com.umc.product.member.domain.enums.MemberStatus;
 

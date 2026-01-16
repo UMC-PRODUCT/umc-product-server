@@ -1,6 +1,8 @@
 package com.umc.product.member.application.port.in.command;
 
+import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
 
 public interface ManageMemberUseCase {
     /**
