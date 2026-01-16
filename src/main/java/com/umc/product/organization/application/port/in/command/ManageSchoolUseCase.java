@@ -10,7 +10,5 @@ public interface ManageSchoolUseCase {
 
     void updateSchool(UpdateSchoolCommand command);
 
-    void deleteSchool(Long schoolId);
-
     void deleteSchools(List<Long> schoolIds);
 }

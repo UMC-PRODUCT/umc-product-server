@@ -10,6 +10,7 @@ import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.School;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -40,11 +41,9 @@ public class SchoolService implements ManageSchoolUseCase {
 
     }
 
-    public void deleteSchool(Long schoolId) {
-
-    }
-
-    public void deleteSchools(java.util.List<Long> schoolIds) {
-
+    @Override
+    public void deleteSchools(List<Long> schoolIds) {
+        manageChapterSchoolPort.deleteAllBySchoolIds(schoolIds);
+        manageSchoolPort.deleteAllByIds(schoolIds);
     }
 }

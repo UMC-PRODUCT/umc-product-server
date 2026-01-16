@@ -6,6 +6,7 @@ import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCo
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.School;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,8 +19,14 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
     private final SchoolJpaRepository schoolJpaRepository;
     private final SchoolQueryRepository schoolQueryRepository;
 
+    @Override
     public School save(School school) {
         return schoolJpaRepository.save(school);
+    }
+
+    @Override
+    public void deleteAllByIds(List<Long> schoolIds) {
+        schoolJpaRepository.deleteAllByIdIn(schoolIds);
     }
 
     @Override

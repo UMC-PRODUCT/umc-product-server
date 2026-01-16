@@ -32,11 +32,6 @@ public class SchoolController {
         manageSchoolUseCase.updateSchool(updateSchoolRequest.toCommand());
     }
 
-    @DeleteMapping("/{schoolId}")
-    public void deleteSchool(@PathVariable Long schoolId) {
-        manageSchoolUseCase.deleteSchool(schoolId);
-    }
-
     @DeleteMapping
     public void deleteSchools(@RequestBody @Valid DeleteSchoolsRequest request) {
         manageSchoolUseCase.deleteSchools(request.schoolIds());
