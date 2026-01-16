@@ -1,6 +1,7 @@
 package com.umc.product.notice.application.service.query;
 
 import com.umc.product.common.dto.ChallengerContext;
+import com.umc.product.global.response.CursorResponse;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.dto.GetNoticeStatusQuery;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
@@ -8,9 +9,6 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusInfo
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSearchConditionInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
-import com.umc.product.notice.domain.enums.NoticeClassification;
-import java.awt.print.Pageable;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -35,12 +33,13 @@ public class NoticeQueryService implements GetNoticeUseCase {
     }
 
     @Override
-    public List<NoticeReadStatusInfo> getReadStatus(GetNoticeStatusQuery command) {
+    public CursorResponse<NoticeReadStatusInfo> getReadStatus(GetNoticeStatusQuery command) {
         return null;
     }
 
     @Override
-    public NoticeReadStatusSummary getReadStatistics(ChallengerContext context, Long noticeId) {
+    public NoticeReadStatusSummary getReadStatistics(Long noticeId) {
         return null;
     }
+
 }

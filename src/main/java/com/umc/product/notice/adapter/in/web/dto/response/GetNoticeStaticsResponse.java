@@ -1,8 +1,8 @@
-package com.umc.product.notice.application.port.in.query.dto;
+package com.umc.product.notice.adapter.in.web.dto.response;
 
-import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeStaticsResponse;
+import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 
-public record NoticeReadStatusSummary(
+public record GetNoticeStaticsResponse(
         Integer totalCount,
         Integer readCount,
         Integer unreadCount,

@@ -6,8 +6,10 @@ import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.notice.adapter.in.web.dto.request.GetNoticeFilterRequest;
+import com.umc.product.notice.adapter.in.web.dto.request.GetNoticeStatusRequest;
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeDetailResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeReadStatusResponse;
+import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeStaticsResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeSummaryResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticesCategoryResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticesScopeResponse;
@@ -15,10 +17,14 @@ import com.umc.product.notice.application.port.in.query.GetNoticeFilterUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.dto.GetNoticeStatusQuery;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
+import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusInfo;
+import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeScopeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.application.port.in.query.dto.WritableNoticeScopeOption;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import java.awt.Cursor;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,6 +33,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,7 +50,7 @@ public class NoticeQueryController {
      * 공지 전체 조회
      */
     @GetMapping
-    public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(ChallengerContext context, GetNoticeFilterRequest request,
+    public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(ChallengerContext context, @RequestBody @Valid GetNoticeFilterRequest request,
                                                    @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(context, request.toInfo(),
                 pageable);
@@ -63,10 +70,28 @@ public class NoticeQueryController {
     /*
      * 공지사항 수신 현황 조회
      */
-    @GetMapping("/read-status")
-    public ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus() {
+    @GetMapping("/{noticeId}/read-status")
+    public ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus(@PathVariable Long noticeId, @RequestBody @Valid GetNoticeStatusRequest request) {
+        CursorResponse<NoticeReadStatusInfo> readStatus = getNoticeUseCase.getReadStatus(request.toQuery(noticeId));
+        CursorResponse<GetNoticeReadStatusResponse> response = CursorResponse.of(
+                readStatus.content(),
+                readStatus.content().size(),
+                info -> info.cursorId(),
+                GetNoticeReadStatusResponse::from
+        );
 
+        return ApiResponse.onSuccess(response);
     }
+
+    /*
+     * 공지사항 수신 현황 통계 조회
+     */
+    @GetMapping("/{noticeId}/read-statics")
+    public ApiResponse<GetNoticeStaticsResponse> getNoticeReadStatics(@PathVariable Long noticeId) {
+        NoticeReadStatusSummary statistics = getNoticeUseCase.getReadStatistics(noticeId);
+        return ApiResponse.onSuccess(GetNoticeStaticsResponse.from(statistics));
+    }
+
 
     /*
      * 공지사항 전체 조회시 회원별 필터 조회

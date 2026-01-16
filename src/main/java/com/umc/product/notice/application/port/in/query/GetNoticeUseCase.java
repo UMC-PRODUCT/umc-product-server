@@ -1,6 +1,7 @@
 package com.umc.product.notice.application.port.in.query;
 
 import com.umc.product.common.dto.ChallengerContext;
+import com.umc.product.global.response.CursorResponse;
 import com.umc.product.notice.application.port.in.query.dto.GetNoticeStatusQuery;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusInfo;
@@ -30,11 +31,11 @@ public interface GetNoticeUseCase {
      * 공지 열람 현황 상세 조회
      * @return 해당 공지의 열람 현황
      */
-    List<NoticeReadStatusInfo> getReadStatus(GetNoticeStatusQuery command);
+    CursorResponse<NoticeReadStatusInfo> getReadStatus(GetNoticeStatusQuery command);
 
     /*
      * 공지 열람 현황 단순 조회
      * @return 통계 현황
      */
-    NoticeReadStatusSummary getReadStatistics(ChallengerContext context, Long noticeId);
+    NoticeReadStatusSummary getReadStatistics(Long noticeId);
 }
