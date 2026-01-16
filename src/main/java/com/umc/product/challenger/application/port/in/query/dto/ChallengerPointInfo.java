@@ -11,5 +11,10 @@ import com.umc.product.challenger.domain.enums.PointType;
  * @param pointType   상벌점 유형
  * @param description 상벌점에 대한 설명
  */
-public record ChallengerPointInfo(Long id, PointType pointType, Double point, String description) {
+public record ChallengerPointInfo(
+        Long id,
+        PointType pointType,
+        Double point,
+        String description
+) {
 }
