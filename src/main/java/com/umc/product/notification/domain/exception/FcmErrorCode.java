@@ -1,4 +1,4 @@
-package com.umc.product.fcm.entity.exception;
+package com.umc.product.notification.domain.exception;
 
 import com.umc.product.global.response.code.BaseCode;
 import lombok.AllArgsConstructor;

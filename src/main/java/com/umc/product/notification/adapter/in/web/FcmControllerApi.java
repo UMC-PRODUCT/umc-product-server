@@ -1,7 +1,7 @@
-package com.umc.product.fcm.adapter.in.web;
+package com.umc.product.notification.adapter.in.web;
 
-import com.umc.product.fcm.adapter.in.web.dto.request.FcmRegistrationRequest;
-import com.umc.product.fcm.adapter.in.web.dto.request.FcmTestSendRequest;
+import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
+import com.umc.product.notification.adapter.in.web.dto.request.FcmTestSendRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

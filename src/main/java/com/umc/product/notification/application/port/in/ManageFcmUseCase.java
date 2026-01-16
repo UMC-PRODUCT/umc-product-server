@@ -1,6 +1,6 @@
-package com.umc.product.fcm.application.port.in;
+package com.umc.product.notification.application.port.in;
 
-import com.umc.product.fcm.adapter.in.web.dto.request.FcmRegistrationRequest;
+import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
 
 public interface ManageFcmUseCase {
 

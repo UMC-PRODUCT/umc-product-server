@@ -1,4 +1,4 @@
-package com.umc.product.fcm.entity;
+package com.umc.product.notification.domain;
 
 import com.umc.product.member.domain.Member;
 import jakarta.persistence.Column;

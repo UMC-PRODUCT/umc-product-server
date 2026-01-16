@@ -1,4 +1,4 @@
-package com.umc.product.fcm.adapter.in.web.dto.request;
+package com.umc.product.notification.adapter.in.web.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
 

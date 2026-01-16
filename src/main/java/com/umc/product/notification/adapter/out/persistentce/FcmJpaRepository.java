@@ -1,6 +1,6 @@
-package com.umc.product.fcm.adapter.out.persistentce;
+package com.umc.product.notification.adapter.out.persistentce;
 
-import com.umc.product.fcm.entity.FcmToken;
+import com.umc.product.notification.domain.FcmToken;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,8 +1,8 @@
-package com.umc.product.fcm.adapter.in.web;
+package com.umc.product.notification.adapter.in.web;
 
-import com.umc.product.fcm.adapter.in.web.dto.request.FcmRegistrationRequest;
-import com.umc.product.fcm.adapter.in.web.dto.request.FcmTestSendRequest;
-import com.umc.product.fcm.application.port.in.ManageFcmUseCase;
+import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
+import com.umc.product.notification.adapter.in.web.dto.request.FcmTestSendRequest;
+import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PathVariable;

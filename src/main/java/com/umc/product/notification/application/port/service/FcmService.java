@@ -1,21 +1,21 @@
-package com.umc.product.fcm.application.port.service;
+package com.umc.product.notification.application.port.service;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
-import com.umc.product.fcm.adapter.in.web.dto.request.FcmRegistrationRequest;
-import com.umc.product.fcm.application.port.in.ManageFcmUseCase;
-import com.umc.product.fcm.application.port.in.NotificationCommand;
-import com.umc.product.fcm.application.port.out.LoadFcmPort;
-import com.umc.product.fcm.application.port.out.SaveFcmPort;
-import com.umc.product.fcm.entity.FcmToken;
-import com.umc.product.fcm.entity.exception.FcmErrorCode;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberErrorCode;
+import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
+import com.umc.product.notification.application.port.in.ManageFcmUseCase;
+import com.umc.product.notification.application.port.in.NotificationCommand;
+import com.umc.product.notification.application.port.out.LoadFcmPort;
+import com.umc.product.notification.application.port.out.SaveFcmPort;
+import com.umc.product.notification.domain.FcmToken;
+import com.umc.product.notification.domain.exception.FcmErrorCode;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +30,13 @@ public class FcmService implements ManageFcmUseCase {
     private final LoadMemberPort loadMemberPort;
     private final LoadFcmPort loadFcmPort;
     private final SaveFcmPort saveFcmPort;
+
+    private static Message getMessage(NotificationCommand command, String fcmToken) {
+        Notification notification = Notification.builder().setTitle(command.title()).setBody(command.body()).build();
+
+        Message message = Message.builder().setToken(fcmToken).setNotification(notification).build();
+        return message;
+    }
 
     @Override
     @Transactional
@@ -70,12 +77,5 @@ public class FcmService implements ManageFcmUseCase {
                 throw new BusinessException(Domain.FCM, FcmErrorCode.USER_FCM_NOT_FOUND);
             }
         }
-    }
-
-    private static Message getMessage(NotificationCommand command, String fcmToken) {
-        Notification notification = Notification.builder().setTitle(command.title()).setBody(command.body()).build();
-
-        Message message = Message.builder().setToken(fcmToken).setNotification(notification).build();
-        return message;
     }
 }

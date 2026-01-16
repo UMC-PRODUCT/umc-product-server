@@ -1,4 +1,4 @@
-package com.umc.product.fcm.entity.exception;
+package com.umc.product.notification.domain.exception;
 
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;

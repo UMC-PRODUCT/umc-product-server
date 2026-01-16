@@ -1,11 +1,11 @@
-package com.umc.product.fcm.adapter.out.persistentce;
+package com.umc.product.notification.adapter.out.persistentce;
 
-import com.umc.product.fcm.application.port.out.LoadFcmPort;
-import com.umc.product.fcm.application.port.out.SaveFcmPort;
-import com.umc.product.fcm.entity.FcmToken;
-import com.umc.product.fcm.entity.exception.FcmErrorCode;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.notification.application.port.out.LoadFcmPort;
+import com.umc.product.notification.application.port.out.SaveFcmPort;
+import com.umc.product.notification.domain.FcmToken;
+import com.umc.product.notification.domain.exception.FcmErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
