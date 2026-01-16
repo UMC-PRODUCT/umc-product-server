@@ -4,12 +4,11 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeSearchConditio
 import com.umc.product.notice.domain.enums.NoticeClassification;
 
 public record GetNoticeFilterRequest(
-        NoticeClassification category,
-        String keyword
+        NoticeClassification category
 ) {
 
     public NoticeSearchConditionInfo toInfo() {
-        return new NoticeSearchConditionInfo(category, keyword);
+        return new NoticeSearchConditionInfo(category);
     }
 
 }

@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -54,6 +55,17 @@ public class NoticeQueryController {
                                                    @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(context, request.toInfo(),
                 pageable);
+
+        return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
+    }
+
+    /*
+     * 검색어 기반 공지 전체 조회
+     */
+    @GetMapping("/search")
+    public ApiResponse<PageResponse<GetNoticeSummaryResponse>>  searchNotices(ChallengerContext context, @RequestParam String keyword,
+                                                   @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(context, keyword, pageable);
 
         return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
     }

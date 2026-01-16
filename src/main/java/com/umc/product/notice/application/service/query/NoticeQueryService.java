@@ -12,6 +12,7 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +24,12 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
     @Override
     public Page<NoticeSummary> getAllNoticeSummaries(ChallengerContext context, NoticeSearchConditionInfo info,
-                                                     org.springframework.data.domain.Pageable pageable) {
+                                                     Pageable pageable) {
+        return null;
+    }
+
+    @Override
+    public Page<NoticeSummary> searchNoticesByKeyword(ChallengerContext context, String keyword, Pageable pageable) {
         return null;
     }
 
