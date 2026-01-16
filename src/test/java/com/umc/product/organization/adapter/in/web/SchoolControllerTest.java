@@ -24,7 +24,7 @@ public class SchoolControllerTest extends DocumentationTest {
     @Test
     void 총괄_신규학교를_추가한다() throws Exception {
         // given when
-        CreateSchoolRequest request = CreateSchoolRequest.builder().schoolName("중앙대학교").chapterId("3")
+        CreateSchoolRequest request = CreateSchoolRequest.builder().name("중앙대학교").chapterId(3L)
                 .remark("중앙대는 멋집니다.").build();
 
         // then
@@ -33,7 +33,7 @@ public class SchoolControllerTest extends DocumentationTest {
                         .contentType(MediaType.APPLICATION_JSON));
 
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(
-                requestFields(fieldWithPath("schoolName").type(JsonFieldType.STRING).description("학교 이름"),
+                requestFields(fieldWithPath("name").type(JsonFieldType.STRING).description("학교 이름"),
                         fieldWithPath("chapterId").type(JsonFieldType.STRING).description("소속 지부 ID"),
                         fieldWithPath("remark").type(JsonFieldType.STRING).description("비고"))));
 
@@ -44,7 +44,7 @@ public class SchoolControllerTest extends DocumentationTest {
         // given // when
         Long schoolId = 1L;
 
-        CreateSchoolRequest request = CreateSchoolRequest.builder().schoolName("동국대학교").chapterId("3")
+        CreateSchoolRequest request = CreateSchoolRequest.builder().name("동국대학교").chapterId(3L)
                 .remark("신승호 라면이 맛있습니다.").build();
 
         ResultActions result = mockMvc.perform(
@@ -55,7 +55,7 @@ public class SchoolControllerTest extends DocumentationTest {
         result.andExpect(status().isOk())
                 .andDo(restDocsHandler.document(pathParameters(parameterWithName("schoolId").description("학교 ID")),
                         requestFields(
-                                fieldWithPath("schoolName").optional().type(JsonFieldType.STRING).description("학교 이름"),
+                                fieldWithPath("name").optional().type(JsonFieldType.STRING).description("학교 이름"),
                                 fieldWithPath("chapterId").optional().type(JsonFieldType.STRING)
                                         .description("소속 지부 ID"),
                                 fieldWithPath("remark").optional().type(JsonFieldType.STRING).description("비고"))));
