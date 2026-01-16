@@ -6,7 +6,7 @@ import com.umc.product.organization.domain.Chapter;
 public interface ManageChapterPort {
 
 
-    Chapter save(Chapter chapter);
+    void save(Chapter chapter);
 
-    void delete(Chapter chapter);
+//    void delete(Chapter chapter);
 }

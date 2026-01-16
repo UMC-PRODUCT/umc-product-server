@@ -7,5 +7,5 @@ public interface ManageSchoolPort {
 
     School save(School school);
 
-    void delete(School school);
+//    void delete(School school);
 }

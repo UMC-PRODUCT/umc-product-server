@@ -1,15 +1,11 @@
 package com.umc.product.organization.application.port.out.query;
 
 import com.umc.product.organization.domain.Chapter;
-import com.umc.product.organization.domain.Gisu;
-import java.util.List;
-import java.util.Optional;
 
 public interface LoadChapterPort {
 
-    Optional<Chapter> findById(Long id);
+    void existsById(Long chapterId);
 
-    List<Chapter> findAll();
+    Chapter findById(Long chapterId);
 
-    List<Chapter> findAllByGisu(Gisu gisu);
 }

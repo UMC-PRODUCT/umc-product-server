@@ -1,7 +1,9 @@
 package com.umc.product.organization.adapter.out.persistence;
 
 import com.umc.product.organization.domain.School;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.Repository;
 
-public interface SchoolJpaRepository extends JpaRepository<School, Long> {
+public interface SchoolJpaRepository extends Repository<School, Long> {
+
+    School save(School school);
 }

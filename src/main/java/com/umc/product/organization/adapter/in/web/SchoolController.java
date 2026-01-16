@@ -23,6 +23,7 @@ public class SchoolController {
 
     @PostMapping
     public void createSchool(@RequestBody @Valid CreateSchoolRequest createSchoolRequest) {
+        //TODO : 관리자 권한 체크
         manageSchoolUseCase.register(createSchoolRequest.toCommand());
     }
 
