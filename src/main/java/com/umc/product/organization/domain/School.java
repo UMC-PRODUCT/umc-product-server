@@ -51,4 +51,10 @@ public class School extends BaseEntity {
         }
     }
 
+    public void updateRemark(String remark) {
+        if (StringUtils.isEmpty(remark)) {
+            this.remark = remark;
+        }
+    }
+
 }

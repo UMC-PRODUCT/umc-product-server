@@ -5,7 +5,6 @@ import com.umc.product.organization.adapter.in.web.dto.request.SchoolListRequest
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolListItemResponse;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
-import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,8 +30,6 @@ public class SchoolQueryController {
     @GetMapping("/{schoolId}")
     public SchoolDetailResponse getSchoolDetail(@PathVariable Long schoolId) {
 
-        SchoolInfo schoolInfo = getSchoolUseCase.getSchoolDetail(schoolId);
-
-        return SchoolDetailResponse.of(schoolInfo);
+        return SchoolDetailResponse.of(getSchoolUseCase.getSchoolDetail(schoolId));
     }
 }

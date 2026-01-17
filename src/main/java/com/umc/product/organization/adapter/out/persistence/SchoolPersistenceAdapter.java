@@ -1,11 +1,14 @@
 package com.umc.product.organization.adapter.out.persistence;
 
 
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.School;
+import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -32,5 +35,11 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
     @Override
     public Page<SchoolListItemInfo> getSchools(SchoolSearchCondition condition, Pageable pageable) {
         return schoolQueryRepository.getSchools(condition, pageable);
+    }
+
+    @Override
+    public School findById(Long schoolId) {
+        return schoolJpaRepository.findById(schoolId)
+                .orElseThrow(() -> new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.SCHOOL_NOT_FOUND));
     }
 }

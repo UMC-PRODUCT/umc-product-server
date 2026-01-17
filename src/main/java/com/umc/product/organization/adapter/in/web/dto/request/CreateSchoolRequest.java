@@ -9,10 +9,10 @@ import lombok.Builder;
 
 @Builder
 public record CreateSchoolRequest(
-        @NotBlank @Size(min = 2, max = 50, message = "학교명은 2~50자") String name,
+        @NotBlank @Size(min = 2, max = 50, message = "학교명은 2~50자") String schoolName,
         @Positive(message = "chapterId는 양수여야 합니다") Long chapterId,
         @NotNull @Size(max = 200, message = "비고는 200자 이내") String remark) {
     public CreateSchoolCommand toCommand() {
-        return new CreateSchoolCommand(name, chapterId, remark);
+        return new CreateSchoolCommand(schoolName, chapterId, remark);
     }
 }

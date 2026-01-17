@@ -6,6 +6,7 @@ import com.umc.product.organization.application.port.in.command.dto.UpdateSchool
 import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterPort;
+import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.School;
@@ -20,12 +21,13 @@ import org.springframework.stereotype.Service;
 public class SchoolService implements ManageSchoolUseCase {
 
     private final LoadChapterPort loadChapterPort;
+    private final LoadSchoolPort loadSchoolPort;
     private final ManageSchoolPort manageSchoolPort;
     private final ManageChapterSchoolPort manageChapterSchoolPort;
 
     public void register(CreateSchoolCommand command) {
 
-        School school = School.create(command.name(), command.remark());
+        School school = School.create(command.schoolName(), command.remark());
         School savedSchool = manageSchoolPort.save(school);
 
         if (command.chapterId() != null) {
@@ -37,7 +39,14 @@ public class SchoolService implements ManageSchoolUseCase {
 
     }
 
-    public void updateSchool(UpdateSchoolCommand command) {
+    public void updateSchool(Long schoolId, UpdateSchoolCommand command) {
+
+        loadChapterPort.validateExists(command.chapterId());
+
+        School school = loadSchoolPort.findById(schoolId);
+
+        school.updateName(command.schoolName());
+        school.updateRemark(command.remark());
 
     }
 

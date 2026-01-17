@@ -2,7 +2,7 @@ package com.umc.product.organization.application.port.in.command.dto;
 
 public record UpdateSchoolCommand(
         String schoolName,
-        String chapterId,
+        Long chapterId,
         String remark
 ) {
 

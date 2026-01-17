@@ -4,7 +4,7 @@ import com.umc.product.organization.application.port.in.command.dto.UpdateSchool
 
 public record UpdateSchoolRequest(
         String schoolName,
-        String chapterId,
+        Long chapterId,
         String remark
 ) {
     public UpdateSchoolCommand toCommand() {

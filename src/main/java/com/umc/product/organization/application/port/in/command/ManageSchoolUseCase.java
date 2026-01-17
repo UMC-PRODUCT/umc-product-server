@@ -8,7 +8,7 @@ public interface ManageSchoolUseCase {
 
     void register(CreateSchoolCommand command);
 
-    void updateSchool(UpdateSchoolCommand command);
+    void updateSchool(Long schoolId, UpdateSchoolCommand command);
 
     void deleteSchools(List<Long> schoolIds);
 }

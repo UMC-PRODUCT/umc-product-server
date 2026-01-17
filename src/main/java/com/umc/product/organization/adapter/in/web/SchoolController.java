@@ -29,7 +29,7 @@ public class SchoolController {
 
     @PatchMapping("/{schoolId}")
     public void updateSchool(@PathVariable Long schoolId, @RequestBody @Valid UpdateSchoolRequest updateSchoolRequest) {
-        manageSchoolUseCase.updateSchool(updateSchoolRequest.toCommand());
+        manageSchoolUseCase.updateSchool(schoolId, updateSchoolRequest.toCommand());
     }
 
     @DeleteMapping

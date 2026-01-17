@@ -31,7 +31,8 @@ public enum OrganizationErrorCode implements BaseCode {
     STUDY_GROUP_MEMBER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "ORGANIZAITON-0015", "이미 존재하는 스터디 그룹 멤버입니다."),
     STUDY_GROUP_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZAITON-0016", "스터디 그룹 멤버를 찾을 수 없습니다."),
 
-    CHAPTER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZAITON-0017", "지부를 찾을 수 없습니다.")
+    CHAPTER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZAITON-0017", "지부를 찾을 수 없습니다."),
+    SCHOOL_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZAITON-0018", "학교를 찾을 수 없습니다.")
     ;
 
     private final HttpStatus httpStatus;
