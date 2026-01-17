@@ -10,10 +10,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/gisu")
 @RequiredArgsConstructor
-public class GisuQueryController {
+public class GisuQueryController implements GisuQueryControllerApi {
 
     private final GetGisuUseCase getGisuUseCase;
 
+    @Override
     @GetMapping
     public GisuListResponse getGisuList() {
         return GisuListResponse.from(getGisuUseCase.getList());
