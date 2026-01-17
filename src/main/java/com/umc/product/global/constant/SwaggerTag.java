@@ -57,7 +57,7 @@ public enum SwaggerTag {
     /**
      * Annotation에서 사용할 수 있도록 상수로 정의
      *
-     * @Tag(name = SwaggerTag.Constants.MEMBER)
+     * @Tag(name = SwaggerTag.Constants.USER)
      */
     public static class Constants {
         public static final String TEST = SwaggerTag.TEST.getName();
