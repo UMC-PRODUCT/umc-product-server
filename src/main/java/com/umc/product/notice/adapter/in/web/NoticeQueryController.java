@@ -11,10 +11,10 @@ import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeStaticsRespon
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeSummaryResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticesCategoryResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticesScopeResponse;
+import com.umc.product.notice.adapter.in.web.swagger.NoticeQueryApi;
 import com.umc.product.notice.application.port.in.query.GetNoticeFilterUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
-import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeScopeInfo;
@@ -23,7 +23,6 @@ import com.umc.product.notice.application.port.in.query.dto.WritableNoticeScopeO
 import com.umc.product.notice.domain.enums.NoticeClassification;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,7 +33,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,7 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/notices")
 @RequiredArgsConstructor
 @Tag(name = Constants.NOTICE)
-public class NoticeQueryController {
+public class NoticeQueryController implements NoticeQueryApi {
 
     private final GetNoticeUseCase getNoticeUseCase;
     private final GetNoticeFilterUseCase getNoticeFilterUseCase;

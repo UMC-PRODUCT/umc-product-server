@@ -6,6 +6,7 @@ import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.SendNoticeReminderRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.response.CreateNoticeResponse;
+import com.umc.product.notice.adapter.in.web.swagger.NoticeApi;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/notices")
 @RequiredArgsConstructor
 @Tag(name = Constants.NOTICE)
-public class NoticeController {
+public class NoticeController implements NoticeApi {
 
     private final ManageNoticeUseCase manageNoticeUseCase;
 
