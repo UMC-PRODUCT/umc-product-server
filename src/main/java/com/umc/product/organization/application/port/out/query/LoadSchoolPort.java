@@ -8,9 +8,11 @@ import org.springframework.data.domain.Pageable;
 
 public interface LoadSchoolPort {
 
-    Page<SchoolListItemInfo> getSchools(SchoolSearchCondition condition, Pageable pageable);
+    Page<SchoolListItemInfo> findSchools(SchoolSearchCondition condition, Pageable pageable);
 
 //    void validateExistsById(Long schoolId);
+
+    School findSchoolDetailById(Long schoolId);
 
     School findById(Long schoolId);
 }

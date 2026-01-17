@@ -33,8 +33,14 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
     }
 
     @Override
-    public Page<SchoolListItemInfo> getSchools(SchoolSearchCondition condition, Pageable pageable) {
+    public Page<SchoolListItemInfo> findSchools(SchoolSearchCondition condition, Pageable pageable) {
         return schoolQueryRepository.getSchools(condition, pageable);
+    }
+
+    @Override
+    public School findSchoolDetailById(Long schoolId) {
+        return schoolJpaRepository.findByIdWithDetails(schoolId)
+                .orElseThrow(() -> new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.SCHOOL_NOT_FOUND));
     }
 
     @Override
@@ -42,4 +48,6 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
         return schoolJpaRepository.findById(schoolId)
                 .orElseThrow(() -> new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.SCHOOL_NOT_FOUND));
     }
+
+
 }

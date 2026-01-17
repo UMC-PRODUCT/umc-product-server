@@ -17,4 +17,11 @@ public interface SchoolJpaRepository extends Repository<School, Long> {
     void deleteAllByIdIn(@Param("ids") List<Long> ids);
 
     Optional<School> findById(Long schoolId);
+
+    @Query("SELECT DISTINCT s FROM School s " +
+            "LEFT JOIN FETCH s.chapterSchools cs " +
+            "LEFT JOIN FETCH cs.chapter c " +
+            "LEFT JOIN FETCH c.gisu " +
+            "WHERE s.id = :schoolId")
+    Optional<School> findByIdWithDetails(@Param("schoolId") Long schoolId);
 }

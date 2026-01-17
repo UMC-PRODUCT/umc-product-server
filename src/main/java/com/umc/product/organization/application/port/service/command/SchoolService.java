@@ -27,10 +27,11 @@ public class SchoolService implements ManageSchoolUseCase {
     private final ManageChapterSchoolPort manageChapterSchoolPort;
     private final LoadChapterSchoolPort loadChapterSchoolPort;
 
-    public void register(CreateSchoolCommand command) {
+    @Override
+    public Long register(CreateSchoolCommand command) {
 
-        School school = School.create(command.schoolName(), command.remark());
-        School savedSchool = manageSchoolPort.save(school);
+        School newSchool = School.create(command.schoolName(), command.remark());
+        School savedSchool = manageSchoolPort.save(newSchool);
 
         if (command.chapterId() != null) {
             Chapter chapter = loadChapterPort.findById(command.chapterId());
@@ -39,6 +40,7 @@ public class SchoolService implements ManageSchoolUseCase {
             manageChapterSchoolPort.save(chapterSchool);
         }
 
+        return savedSchool.getId();
     }
 
     public void updateSchool(Long schoolId, UpdateSchoolCommand command) {

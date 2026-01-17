@@ -20,7 +20,7 @@ public class SchoolQueryService implements GetSchoolUseCase {
 
     @Override
     public Page<SchoolListItemInfo> getSchools(SchoolSearchCondition condition, Pageable pageable) {
-        return loadSchoolPort.getSchools(condition, pageable);
+        return loadSchoolPort.findSchools(condition, pageable);
     }
 
     @Override
