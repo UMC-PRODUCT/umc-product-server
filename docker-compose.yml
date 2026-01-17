@@ -22,10 +22,10 @@ services:
 
   # PostgreSQL Database
   umc-product-postgres:
-    image: postgis/postgis:16-3.4
+    image: postgres:18
     container_name: umc-product-postgresql-local
     ports:
-      - "5433:5432"
+      - "54321:5432"
     environment:
       - POSTGRES_DB=umc_product
       - POSTGRES_USER=umc_product
