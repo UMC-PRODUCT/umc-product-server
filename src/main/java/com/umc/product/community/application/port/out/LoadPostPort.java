@@ -14,9 +14,4 @@ public interface LoadPostPort {
     List<Post> findByCategory(Category category);
 
     List<Post> findByRegion(String region);
-
-    // Like 관련
-    //int countLikesByPostId(Long postId);
-
-    //boolean existsLikeByPostIdAndChallengerId(Long postId, Long challengerId);
 }

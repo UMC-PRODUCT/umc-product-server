@@ -1,5 +1,6 @@
 package com.umc.product.community.application.port.out;
 
+import com.umc.product.community.application.port.in.post.TogglePostLikeUseCase.LikeResult;
 import com.umc.product.community.domain.Post;
 
 public interface SavePostPort {
@@ -9,8 +10,5 @@ public interface SavePostPort {
 
     void deleteById(Long postId);
 
-    // Like 관련
-    //void saveLike(Long postId, Long challengerId);
-
-    //void deleteLike(Long postId, Long challengerId);
+    LikeResult toggleLike(Long postId, Long challengerId);
 }

@@ -1,6 +1,7 @@
 package com.umc.product.community.adapter.out.persistence;
 
 import com.umc.product.community.application.port.in.post.Query.PostSearchQuery;
+import com.umc.product.community.application.port.in.post.TogglePostLikeUseCase.LikeResult;
 import com.umc.product.community.application.port.out.LoadPostPort;
 import com.umc.product.community.application.port.out.SavePostPort;
 import com.umc.product.community.domain.Post;
@@ -71,5 +72,12 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
                 .map(PostJpaEntity::toDomain)
                 .toList();
     }
-    
+
+    @Override
+    public LikeResult toggleLike(Long postId, Long challengerId) {
+        PostJpaEntity entity = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+        boolean liked = entity.toggleLike(challengerId);
+        return new LikeResult(liked, entity.getLikeCount());
+    }
 }

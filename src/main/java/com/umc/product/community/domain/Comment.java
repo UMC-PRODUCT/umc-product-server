@@ -11,16 +11,18 @@ public class Comment {
     private final CommentId commentId;
     private final Long postId;
     private final Long challengerId;
-    private String content;// 대댓글용, null이면 원댓글
+    private String content;
+    private final int likeCount;
+    private final boolean liked;
 
     public static Comment create(Long postId, Long challengerId, String content, Long parentId) {
         validateRequired(postId, challengerId, content);
-        return new Comment(null, postId, challengerId, content);
+        return new Comment(null, postId, challengerId, content, 0, false);
     }
 
     public static Comment reconstruct(CommentId commentId, Long postId, Long challengerId,
-                                      String content, Long parentId) {
-        return new Comment(commentId, postId, challengerId, content);
+                                      String content, Long parentId, int likeCount, boolean liked) {
+        return new Comment(commentId, postId, challengerId, content, likeCount, liked);
     }
 
     public void updateContent(String content) {

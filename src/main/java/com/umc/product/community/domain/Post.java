@@ -33,14 +33,11 @@ public class Post {
     @Getter
     private final LightningInfo lightningInfo;
 
-    // 좋아요 관련 필드 (조회 시 주입)
-    //@Getter
-    //private int likeCount;
+    @Getter
+    private final int likeCount;
 
-    //@Getter
-    //private boolean liked;
-
-    //private final LikeId likeId;
+    @Getter
+    private final boolean liked;
 
     public static Post createpostIds(String title, String content, Category category, String region,
                                      boolean anonymous) {
@@ -48,7 +45,7 @@ public class Post {
             throw new IllegalArgumentException("번개 게시글은 createLightning()을 사용하세요");
         }
         validateCommonFields(title, content, region);
-        return new Post(null, title, content, category, region, anonymous, null);
+        return new Post(null, title, content, category, region, anonymous, null, 0, false);
     }
 
     public static Post createLightning(String title, String content, String region, boolean anonymous,
@@ -57,12 +54,12 @@ public class Post {
             throw new IllegalArgumentException("번개 게시글은 추가 정보가 필수입니다.");
         }
         validateCommonFields(title, content, region);
-        return new Post(null, title, content, Category.LIGHTNING, region, anonymous, info);
+        return new Post(null, title, content, Category.LIGHTNING, region, anonymous, info, 0, false);
     }
 
     public static Post reconstruct(PostId postId, String title, String content, Category category, String region,
                                    boolean anonymous, LightningInfo lightningInfo, int likeCount, boolean liked) {
-        return new Post(postId, title, content, category, region, anonymous, lightningInfo);
+        return new Post(postId, title, content, category, region, anonymous, lightningInfo, likeCount, liked);
     }
 
     public boolean isLightning() {
@@ -141,12 +138,4 @@ public class Post {
             }
         }
     }
-
-    // public record LikeId(Long id) {
-    //     public LikeId {
-    //         if (id <= 0) {
-    //             throw new IllegalArgumentException("ID는 양수여야 합니다.");
-    //         }
-    //     }
-    // }
 }
