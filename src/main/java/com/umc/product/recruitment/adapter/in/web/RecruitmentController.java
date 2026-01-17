@@ -9,14 +9,18 @@ import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentApplic
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentDraftFormResponseResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentFormResponseDetailResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentNoticeResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.SubmitRecruitmentApplicationResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateRecruitmentInterviewPreferenceResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpsertRecruitmentFormResponseAnswersResponse;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
+import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormResponseAnswersUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetRecruitmentDraftCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormResponseCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
@@ -57,6 +61,7 @@ public class RecruitmentController {
     private final GetRecruitmentFormResponseDetailUseCase getRecruitmentFormResponseDetailUseCase;
     private final UpsertRecruitmentFormResponseAnswersUseCase upsertRecruitmentFormResponseAnswersUseCase;
     private final DeleteRecruitmentFormResponseUseCase deleteRecruitmentFormResponseUseCase;
+    private final SubmitRecruitmentApplicationUseCase submitRecruitmentApplicationUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
@@ -180,5 +185,23 @@ public class RecruitmentController {
         return DeleteRecruitmentFormResponseResponse.of(formResponseId);
     }
 
+    @PostMapping("/{recruitmentId}/applications/{formResponseId}/submit")
+    @Operation(
+            summary = "지원서 최종 제출",
+            description = """
+                        지원 폼 응답을 SUBMITTED로 변경하고, recruitment 내부 application을 생성합니다.
+                    """
+    )
+    public SubmitRecruitmentApplicationResponse submitApplication(
+            Long memberId, // auth 적용 후 제거
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId,
+            @Parameter(description = "폼 응답 ID") @PathVariable Long formResponseId
+    ) {
+        SubmitRecruitmentApplicationInfo info = submitRecruitmentApplicationUseCase.submit(
+                new SubmitRecruitmentApplicationCommand(recruitmentId, memberId, formResponseId)
+        );
+
+        return SubmitRecruitmentApplicationResponse.from(info);
+    }
 
 }
