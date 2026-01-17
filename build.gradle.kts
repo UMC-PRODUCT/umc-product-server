@@ -108,6 +108,9 @@ dependencies {
     implementation(platform("software.amazon.awssdk:bom:${awsVersion}"))
     implementation("software.amazon.awssdk:s3")
 
+    // --- Email ---
+    implementation("org.springframework.boot:spring-boot-starter-mail")
+
     // --- Metrics ---
     implementation("io.micrometer:micrometer-registry-prometheus")
 
