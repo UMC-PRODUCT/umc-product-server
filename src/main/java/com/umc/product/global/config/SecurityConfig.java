@@ -7,7 +7,9 @@ import com.umc.product.authentication.application.service.CustomOAuth2UserServic
 import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 import com.umc.product.global.security.JwtAuthenticationFilter;
+import com.umc.product.global.security.util.PublicEndpointCollector;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -32,6 +34,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 @Configuration
 @EnableWebSecurity
@@ -54,6 +57,7 @@ public class SecurityConfig {
     private final CustomOAuth2UserService customOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2FailureHandler;
+    private final RequestMappingHandlerMapping requestMappingHandlerMapping;
 
     /**
      * Swagger용 SecurityFilterChain (dev에서만 활성화, local은 따로 제약을 걸지 않음)
@@ -88,6 +92,9 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        Set<String> publicEndpoints = PublicEndpointCollector
+                .collectPublicEndpoints(requestMappingHandlerMapping);
+
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
@@ -107,14 +114,21 @@ public class SecurityConfig {
                         .failureHandler(oAuth2FailureHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Health Check
-                        .requestMatchers("/actuator/**").permitAll()
-                        // OAuth2
-                        .requestMatchers("/oauth2/authorization/**", "/login/oauth2/code/**").permitAll()
-                        // Swagger API
+                        // 공개 엔드포인트
+                        .requestMatchers(
+                                // Health Check & Error
+                                "/actuator/**",
+                                "/error",
+                                // OAuth2
+                                "/api/v1/auth/oauth2/authorization/**",
+                                "/api/v1/auth/oauth2/callback/**"
+                        ).permitAll()
+                        // Swagger
                         .requestMatchers(SWAGGER_PATHS).permitAll()
-                        // 나머지는 Method Security (@PreAuthorize, @Public)로 제어
-                        .anyRequest().permitAll()
+                        // @Public 어노테이션 (빈 배열도 안전하게 처리됨)
+                        .requestMatchers(publicEndpoints.toArray(new String[0])).permitAll()
+                        // 나머지는 인증 필요
+                        .anyRequest().authenticated()
                 )
                 // Spring 기본 로그인 필터 동작 전에 JWT 동작
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
