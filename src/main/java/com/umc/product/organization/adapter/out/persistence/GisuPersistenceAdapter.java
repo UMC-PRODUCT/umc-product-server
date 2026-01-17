@@ -32,4 +32,9 @@ public class GisuPersistenceAdapter implements ManageGisuPort, LoadGisuPort {
     public List<Gisu> findAll() {
         return gisuJpaRepository.findAllByOrderByGenerationDesc();
     }
+
+    @Override
+    public void save(Gisu gisu) {
+        gisuJpaRepository.save(gisu);
+    }
 }
