@@ -105,6 +105,7 @@ public class ChallengerController {
         throw new NotImplementedException();
     }
 
+    @Operation(summary = "챌린저 Bulk 생성")
     @PostMapping("bulk")
     List<ChallengerInfoResponse> bulkCreateChallenger(@RequestBody List<CreateChallengerInfoRequest> requests) {
         throw new NotImplementedException();
