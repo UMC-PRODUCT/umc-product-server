@@ -12,7 +12,7 @@ public enum SwaggerTag {
     AUTH("인증/인가", "authentication | 인증/인가 API", 1),
     MEMBER("회원", "member | 회원 API", 2),
     CHALLENGER("챌린저", "challenger | 챌린저 API", 3),
-    ORGANIZATION("조직 (학교/지부/중앙운영사무국)", "organizaton | 조직 관련 API", 4),
+    ORGANIZATION("조직 (학교/지부/중앙운영사무국)", "organization | 조직 관련 API", 4),
     CURRICULUM("커리큘럼", "curriculum | 커리큘럼 관련 API", 5),
     SCHEDULE("행사 및 스터디 일정", "schedule | 행사 및 스터디 관련 API", 6),
     COMMUNITY("커뮤니티", "community | 커뮤니티 API", 7),
@@ -57,7 +57,7 @@ public enum SwaggerTag {
     /**
      * Annotation에서 사용할 수 있도록 상수로 정의
      *
-     * @Tag(name = SwaggerTag.Constants.USER)
+     * @Tag(name = SwaggerTag.Constants.MEMBER)
      */
     public static class Constants {
         public static final String TEST = SwaggerTag.TEST.getName();
