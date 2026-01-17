@@ -18,10 +18,8 @@ class DatabaseManager {
     }
 
     public void truncateTables() {
-        entityManager.createNativeQuery("SET foreign_key_checks = 0").executeUpdate();
-        for (String tableName : tableNames) {
-            entityManager.createNativeQuery("TRUNCATE TABLE " + tableName).executeUpdate();
-        }
-        entityManager.createNativeQuery("SET foreign_key_checks = 1").executeUpdate();
+        String tables = String.join(", ", tableNames);
+        entityManager.createNativeQuery("TRUNCATE TABLE " + tables + " RESTART IDENTITY CASCADE")
+                .executeUpdate();
     }
 }
