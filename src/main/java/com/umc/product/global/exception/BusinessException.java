@@ -14,4 +14,5 @@ import lombok.Getter;
 public class BusinessException extends RuntimeException {
     private Domain domain;
     private BaseCode code;
+    // TODO: baseCode로 변경 .. getCode().getCode() 처럼 써야 하는 경우가 발생함
 }

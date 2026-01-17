@@ -3,11 +3,13 @@ package com.umc.product.global.config;
 
 import com.umc.product.authentication.adapter.in.oauth.OAuth2AuthenticationFailureHandler;
 import com.umc.product.authentication.adapter.in.oauth.OAuth2AuthenticationSuccessHandler;
+import com.umc.product.authentication.application.service.UmcProductOAuth2UserService;
 import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 import com.umc.product.global.security.JwtAuthenticationFilter;
-import com.umc.product.member.adapter.in.web.oauth.CustomOAuth2UserService;
+import com.umc.product.global.security.util.PublicEndpointCollector;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -32,6 +34,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
 @Configuration
 @EnableWebSecurity
@@ -51,9 +54,10 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ApiAuthenticationEntryPoint authenticationEntryPoint;
     private final ApiAccessDeniedHandler accessDeniedHandler;
-    private final CustomOAuth2UserService customOAuth2UserService;
+    private final UmcProductOAuth2UserService umcProductOAuth2UserService;
     private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2FailureHandler;
+    private final RequestMappingHandlerMapping requestMappingHandlerMapping;
 
     /**
      * Swagger용 SecurityFilterChain (dev에서만 활성화, local은 따로 제약을 걸지 않음)
@@ -88,6 +92,9 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        Set<String> publicEndpoints = PublicEndpointCollector
+                .collectPublicEndpoints(requestMappingHandlerMapping);
+
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
@@ -97,23 +104,36 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // OAuth2 로그인 설정
                 .oauth2Login(oauth2 -> oauth2
+                        .authorizationEndpoint(authorization -> authorization
+                                .baseUri("/api/v1/auth/oauth2/authorization") // 기본: /oauth2/authorization
+                        )
+                        .redirectionEndpoint(redirection -> redirection
+                                .baseUri("/api/v1/auth/oauth2/callback/*")  // 기본: /login/oauth2/code/*
+                        )
                         // 우리 DB랑 비교해서 사용자 정보를 저장함
                         // 여기서 실패한 요청도 failure로 들어감
                         .userInfoEndpoint(userInfo ->
-                                userInfo.userService(customOAuth2UserService))
+                                userInfo.userService(umcProductOAuth2UserService))
                         // OAuth 로그인이 성공했을 때 핸들링하는 곳
                         .successHandler(oAuth2SuccessHandler)
                         // OAuth 로그인이 실패했을 때 핸들링하는 곳 (그냥 실패한거)
                         .failureHandler(oAuth2FailureHandler)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        // Health Check
-                        .requestMatchers("/actuator/**").permitAll()
-                        // OAuth2
-                        .requestMatchers("/oauth2/authorization/**", "/login/oauth2/code/**").permitAll()
-                        // Swagger API
+                        // 공개 엔드포인트
+                        .requestMatchers(
+                                // Health Check & Error
+                                "/actuator/**",
+                                "/error",
+                                // OAuth2
+                                "/api/v1/auth/oauth2/authorization/**",
+                                "/api/v1/auth/oauth2/callback/**"
+                        ).permitAll()
+                        // Swagger
                         .requestMatchers(SWAGGER_PATHS).permitAll()
-                        // 나머지는 Method Security (@PreAuthorize, @Public)로 제어
+                        // @Public 어노테이션 (빈 배열도 안전하게 처리됨)
+                        .requestMatchers(publicEndpoints.toArray(new String[0])).permitAll()
+                        // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 )
                 // Spring 기본 로그인 필터 동작 전에 JWT 동작

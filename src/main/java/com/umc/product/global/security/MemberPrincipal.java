@@ -3,48 +3,40 @@ package com.umc.product.global.security;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 @Getter
+@Slf4j
 public class MemberPrincipal implements OAuth2User {
 
     private final Long memberId;
-    private final String email;
-    private final Map<String, Object> attributes;
-    private final String nameAttributeKey;
 
-    public MemberPrincipal(Long memberId, String email,
-                           Map<String, Object> attributes,
-                           String nameAttributeKey) {
+    @Builder
+    public MemberPrincipal(Long memberId) {
         this.memberId = memberId;
-        this.email = email;
-        this.attributes = attributes;
-        this.nameAttributeKey = nameAttributeKey;
-    }
-
-    // JWT 인증용 생성자 (OAuth 없이 사용)
-    public MemberPrincipal(Long memberId, String email) {
-        this(memberId, email, Collections.emptyMap(), "id");
     }
 
     // OAuth2User 메서드 구현
+
     @Override
     public Map<String, Object> getAttributes() {
-        return attributes;
+        log.warn("OAuth2User의 getAttributes()가 호출되었습니다.");
+        return Collections.emptyMap();
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
+        log.warn("OAuth2User의 getAuthorities()가 호출되었습니다.");
         return Collections.emptyList();
     }
 
     @Override
     public String getName() {
-        if (attributes.isEmpty()) {
-            return String.valueOf(memberId);
-        }
-        return String.valueOf(attributes.get(nameAttributeKey));
+        log.warn("OAuth2User의 getName()가 호출되었습니다.");
+        return String.valueOf(memberId);
     }
 }

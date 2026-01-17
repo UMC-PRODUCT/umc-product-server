@@ -1,14 +1,20 @@
 package com.umc.product.challenger.application.port.in.command;
 
-import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerPointCommand;
+import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerPointCommand;
+import com.umc.product.challenger.application.port.in.command.dto.GrantChallengerPointCommand;
 import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerPointCommand;
 
 public interface ManageChallengerUseCase {
 
     // TODO: ChallengerRole과 관련된 부분은 추후 RBAC/ABAC 설계 후 적용 w/ 와나
+
+    /**
+     * 새로운 챌린저 정보를 생성합니다.
+     */
+    Long createChallenger(CreateChallengerCommand command);
 
     /**
      * 챌린저의 정보를 수정합니다.
@@ -29,7 +35,7 @@ public interface ManageChallengerUseCase {
      * <p>
      * 상벌점에 대한 사유도 함께 기록이 가능합니다.
      */
-    void createChallengerPoint(CreateChallengerPointCommand command);
+    void grantChallengerPoint(GrantChallengerPointCommand command);
 
     /**
      * 챌린저에게 부여한 상벌점에 대한 사유를 수정할 수 있습니다. 삭제의 경우 별도 기능을 이용하세요.

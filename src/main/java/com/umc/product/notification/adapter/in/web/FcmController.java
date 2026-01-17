@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/fcm")
+@RequestMapping("/api/v1/notification/fcm")
 @RequiredArgsConstructor
 public class FcmController implements FcmControllerApi {
 
