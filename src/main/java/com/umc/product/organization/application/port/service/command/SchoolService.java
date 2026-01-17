@@ -6,14 +6,15 @@ import com.umc.product.organization.application.port.in.command.dto.UpdateSchool
 import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterPort;
+import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.School;
-import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +25,7 @@ public class SchoolService implements ManageSchoolUseCase {
     private final LoadSchoolPort loadSchoolPort;
     private final ManageSchoolPort manageSchoolPort;
     private final ManageChapterSchoolPort manageChapterSchoolPort;
+    private final LoadChapterSchoolPort loadChapterSchoolPort;
 
     public void register(CreateSchoolCommand command) {
 
@@ -41,13 +43,16 @@ public class SchoolService implements ManageSchoolUseCase {
 
     public void updateSchool(Long schoolId, UpdateSchoolCommand command) {
 
-        loadChapterPort.validateExists(command.chapterId());
-
         School school = loadSchoolPort.findById(schoolId);
 
         school.updateName(command.schoolName());
         school.updateRemark(command.remark());
 
+        if (command.chapterId() != null) {
+            Chapter chapter = loadChapterPort.findById(command.chapterId());
+
+            school.updateChapterSchool(chapter);
+        }
     }
 
     @Override
