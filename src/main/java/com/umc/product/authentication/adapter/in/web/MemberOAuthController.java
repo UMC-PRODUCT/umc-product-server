@@ -31,7 +31,7 @@ public class MemberOAuthController {
             description = """
                     현재는 memberOAuthId로 식별해서 제거 처리를 진행하나, 추후 OAuth측에 다시 로그인해서 제거하는 방식으로 변경될 수 있습니다.
                     """)
-    List<MemberOAuthInfo> addMemberOAuth(
+    List<MemberOAuthInfo> deleteMemberOAuth(
             @CurrentMember MemberPrincipal memberPrincipal,
             @PathVariable String memberOAuthId
     ) {
