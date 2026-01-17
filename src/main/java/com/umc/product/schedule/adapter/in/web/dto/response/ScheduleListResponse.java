@@ -1,7 +1,6 @@
 package com.umc.product.schedule.adapter.in.web.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.umc.product.schedule.application.port.in.query.dto.ScheduleWithStatsInfo;
 import java.time.LocalDateTime;
 
 public record ScheduleListResponse(
@@ -21,20 +20,4 @@ public record ScheduleListResponse(
         Integer pendingCount,
         Double attendanceRate
 ) {
-    public static ScheduleListResponse from(ScheduleWithStatsInfo info) {
-        return new ScheduleListResponse(
-                info.scheduleId(),
-                info.name(),
-                info.type().name(),
-                info.status(),
-                info.startsAt(),
-                info.startsAt(),
-                info.endsAt(),
-                info.locationName(),
-                info.totalCount(),
-                info.presentCount(),
-                info.pendingCount(),
-                info.attendanceRate()
-        );
-    }
 }
