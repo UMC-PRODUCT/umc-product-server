@@ -12,10 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/chapters")
 @RequiredArgsConstructor
-public class ChapterQueryController {
+public class ChapterQueryController implements ChapterQueryControllerApi {
 
     private final GetChapterUseCase getChapterUseCase;
 
+    @Override
     @GetMapping
     public ChapterListResponse getAllChapters() {
         List<ChapterInfo> chapters = getChapterUseCase.getAllChapters();
