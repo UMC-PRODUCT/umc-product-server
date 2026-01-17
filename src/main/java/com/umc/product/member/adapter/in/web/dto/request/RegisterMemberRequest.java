@@ -4,7 +4,7 @@ public record RegisterMemberRequest(
         String oAuthVerificationToken,
         String name,
         String nickname,
-        String email,
+        String emailVerificationToken,
         String schoolId,
         String profileImageId
 ) {
