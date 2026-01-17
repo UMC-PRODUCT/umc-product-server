@@ -5,9 +5,9 @@ import com.umc.product.organization.application.port.in.command.dto.CreateGisuCo
 import com.umc.product.organization.application.port.in.command.dto.UpdateGisuCommand;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

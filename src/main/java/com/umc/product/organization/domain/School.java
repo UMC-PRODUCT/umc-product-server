@@ -47,7 +47,7 @@ public class School extends BaseEntity {
                 .build();
     }
 
-    public void updateLogoImageId(Long logoImageId) {
+    public void updateLogoImageUrl(String logoImageUrl) {
         if (StringUtils.hasText(logoImageUrl)) {
             this.logoImageUrl = logoImageUrl;
         }
