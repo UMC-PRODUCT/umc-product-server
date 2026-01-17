@@ -7,11 +7,8 @@ import com.umc.product.community.application.port.in.post.DeleteCommentUseCase;
 import com.umc.product.community.application.port.in.post.Query.GetCommentListUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,7 +33,7 @@ public class CommentController {
     public CommentResponse createComment(
             @PathVariable Long postId,
             @RequestParam Long challengerId,  // TODO: @CurrentUser로 변경 필요
-            @Valid @RequestBody CreateCommentRequest request
+            @RequestBody CreateCommentRequest request
     ) {
         return CommentResponse.from(
                 createCommentUseCase.create(request.toCommand(postId, challengerId))
@@ -45,12 +42,10 @@ public class CommentController {
 
     @GetMapping
     @Operation(summary = "댓글 목록 조회", description = "게시글의 댓글 목록을 조회합니다.")
-    public Page<CommentResponse> getComments(
-            @PathVariable Long postId,
-            @PageableDefault(size = 20) Pageable pageable
-    ) {
-        return getCommentListUseCase.getComments(postId, pageable)
-                .map(CommentResponse::from);
+    public List<CommentResponse> getComments(@PathVariable Long postId) {
+        return getCommentListUseCase.getComments(postId).stream()
+                .map(CommentResponse::from)
+                .toList();
     }
 
     @DeleteMapping("/{commentId}")
