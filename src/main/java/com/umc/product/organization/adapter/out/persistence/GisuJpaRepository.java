@@ -13,5 +13,5 @@ public interface GisuJpaRepository extends Repository<Gisu, Long> {
 
     List<Gisu> findAllByOrderByGenerationDesc();
 
-    void save(Gisu gisu);
+    Gisu save(Gisu gisu);
 }

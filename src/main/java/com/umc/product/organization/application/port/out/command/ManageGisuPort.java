@@ -4,5 +4,5 @@ import com.umc.product.organization.domain.Gisu;
 
 public interface ManageGisuPort {
 
-    void save(Gisu gisu);
+    Gisu save(Gisu gisu);
 }

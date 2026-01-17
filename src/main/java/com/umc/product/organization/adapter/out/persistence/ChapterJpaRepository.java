@@ -11,7 +11,7 @@ public interface ChapterJpaRepository extends Repository<Chapter, Long> {
 
     Optional<Chapter> findById(Long chapterId);
 
-    void save(Chapter chapter);
+    Chapter save(Chapter chapter);
 
     List<Chapter> findAll();
 }

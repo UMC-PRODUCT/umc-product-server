@@ -15,8 +15,8 @@ public class ChapterSchoolPersistenceAdapter implements LoadChapterSchoolPort, M
     private final ChapterSchoolJpaRepository chapterSchoolJpaRepository;
 
     @Override
-    public void save(ChapterSchool chapterSchool) {
-        chapterSchoolJpaRepository.save(chapterSchool);
+    public ChapterSchool save(ChapterSchool chapterSchool) {
+        return chapterSchoolJpaRepository.save(chapterSchool);
     }
 
     @Override

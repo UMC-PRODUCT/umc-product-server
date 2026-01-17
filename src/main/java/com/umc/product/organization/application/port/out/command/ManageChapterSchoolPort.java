@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface ManageChapterSchoolPort {
 
-    void save(ChapterSchool chapterSchool);
+    ChapterSchool save(ChapterSchool chapterSchool);
 
     void deleteAllBySchoolIds(List<Long> schoolIds);
 }
