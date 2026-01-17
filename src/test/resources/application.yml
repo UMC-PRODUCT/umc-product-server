@@ -44,3 +44,11 @@ logging:
   level:
     root: WARN
     org.testcontainers: INFO
+
+app:
+  firebase-configuration: |
+    {
+        "type": "service_account",
+        "project_id": "test-project",
+        "private_key_id": "test-private
+    }
