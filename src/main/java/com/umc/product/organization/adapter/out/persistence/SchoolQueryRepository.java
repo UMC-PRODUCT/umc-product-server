@@ -7,6 +7,7 @@ import static com.umc.product.organization.domain.QSchool.school;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
@@ -26,21 +27,29 @@ public class SchoolQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     public Page<SchoolListItemInfo> getSchools(SchoolSearchCondition condition, Pageable pageable) {
+        // 활성 기수의 chapter id 서브쿼리
+        var activeChapterIds = JPAExpressions
+                .select(chapter.id)
+                .from(chapter)
+                .join(chapter.gisu, gisu)
+                .where(gisu.isActive.isTrue());
+
         List<SchoolListItemInfo> content = queryFactory
                 .select(Projections.constructor(SchoolListItemInfo.class,
                         school.id,
                         school.name,
-                        chapter.id,
-                        chapter.name,
+                        chapter.id,      // 활성 기수에 속하지 않으면 null
+                        chapter.name,    // 활성 기수에 속하지 않으면 null
                         school.createdAt,
-                        gisu.isActive
+                        chapter.id.isNotNull()  // 활성 기수의 ChapterSchool 존재 여부
                 ))
                 .from(school)
-                .join(chapterSchool).on(chapterSchool.school.eq(school))
-                .join(chapterSchool.chapter, chapter)
-                .join(chapter.gisu, gisu)
+                .leftJoin(chapterSchool).on(
+                        chapterSchool.school.eq(school)
+                                .and(chapterSchool.chapter.id.in(activeChapterIds))
+                )
+                .leftJoin(chapterSchool.chapter, chapter)
                 .where(
-                        gisu.isActive.isTrue(),
                         keywordContains(condition.keyword()),
                         chapterIdEq(condition.chapterId())
                 )
@@ -52,11 +61,12 @@ public class SchoolQueryRepository {
         JPAQuery<Long> countQuery = queryFactory
                 .select(school.count())
                 .from(school)
-                .join(chapterSchool).on(chapterSchool.school.eq(school))
-                .join(chapterSchool.chapter, chapter)
-                .join(chapter.gisu, gisu)
+                .leftJoin(chapterSchool).on(
+                        chapterSchool.school.eq(school)
+                                .and(chapterSchool.chapter.id.in(activeChapterIds))
+                )
+                .leftJoin(chapterSchool.chapter, chapter)
                 .where(
-                        gisu.isActive.isTrue(),
                         keywordContains(condition.keyword()),
                         chapterIdEq(condition.chapterId())
                 );

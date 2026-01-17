@@ -35,7 +35,7 @@ class SchoolQueryControllerTest extends DocumentationTest {
         List<SchoolListItemInfo> items = List.of(
                 new SchoolListItemInfo(1L, "서울대학교", 1L, "Ain 지부", toInstant(2025, 12, 31), true),
                 new SchoolListItemInfo(2L, "연세대학교", 1L, "Ain 지부", toInstant(2025, 12, 29), true),
-                new SchoolListItemInfo(3L, "고려대학교", 1L, "Ain 지부", toInstant(2025, 12, 30), false)
+                new SchoolListItemInfo(3L, "고려대학교", null, null, toInstant(2025, 12, 30), false)
         );
 
         Page<SchoolListItemInfo> pageResult = new PageImpl<>(
@@ -74,9 +74,9 @@ class SchoolQueryControllerTest extends DocumentationTest {
                                 fieldWithPath("result.content[].schoolName").type(JsonFieldType.STRING)
                                         .description("학교 이름"),
                                 fieldWithPath("result.content[].chapterId").type(JsonFieldType.STRING)
-                                        .description("지부 ID"),
+                                        .description("지부 ID (활성 기수에 속하지 않으면 null)").optional(),
                                 fieldWithPath("result.content[].chapterName").type(JsonFieldType.STRING)
-                                        .description("지부 이름"),
+                                        .description("지부 이름 (활성 기수에 속하지 않으면 null)").optional(),
                                 fieldWithPath("result.content[].createdAt").type(JsonFieldType.STRING)
                                         .description("등록일"),
                                 fieldWithPath("result.content[].isActive").type(JsonFieldType.BOOLEAN)
