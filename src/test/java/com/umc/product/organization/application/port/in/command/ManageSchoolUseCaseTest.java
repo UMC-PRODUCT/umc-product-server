@@ -55,7 +55,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 지부와_함께_학교를_등록한다() {
         // given
         Gisu gisu = manageGisuPort.save(createGisu(8L));
-        Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("동국").build());
+        Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Leo").build());
 
         CreateSchoolCommand command = new CreateSchoolCommand("동국대학교", chapter.getId(), "비고");
 
@@ -66,7 +66,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         School savedSchool = loadSchoolPort.findSchoolDetailById(schoolId);
         assertThat(savedSchool.getName()).isEqualTo("동국대학교");
         assertThat(savedSchool.getChapterSchools()).hasSize(1);
-        assertThat(savedSchool.getChapterSchools().get(0).getChapter().getName()).isEqualTo("동국");
+        assertThat(savedSchool.getChapterSchools().get(0).getChapter().getName()).isEqualTo("Leo");
     }
 
     @Test
@@ -89,12 +89,12 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 학교의_지부를_수정한다() {
         // given
         Gisu gisu = manageGisuPort.save(createGisu(8L));
-        Chapter Scorpio = manageChapterPort.save(Chapter.builder().gisu(gisu).name("동국").build());
-        Chapter Leo = manageChapterPort.save(Chapter.builder().gisu(gisu).name("경기").build());
+        Chapter scorpioChapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
+        Chapter leoChapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Leo").build());
 
         School school = manageSchoolPort.save(School.create("동국대학교", "비고"));
 
-        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대학교", Leo.getId(), "비고");
+        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대학교", leoChapter.getId(), "비고");
 
         // when
         manageSchoolUseCase.updateSchool(school.getId(), command);
@@ -102,7 +102,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         // then
         School updatedSchool = loadSchoolPort.findSchoolDetailById(school.getId());
         assertThat(updatedSchool.getChapterSchools()).hasSize(1);
-        assertThat(updatedSchool.getChapterSchools().get(0).getChapter().getName()).isEqualTo("경기");
+        assertThat(updatedSchool.getChapterSchools().get(0).getChapter().getName()).isEqualTo("Leo");
     }
 
     @Test
