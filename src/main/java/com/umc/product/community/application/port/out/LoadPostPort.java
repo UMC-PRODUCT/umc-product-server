@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface LoadPostPort {
     List<Post> findAllByQuery(PostSearchQuery query);
 
-    Optional<Post> findById(Long id);
+    Optional<Post> findById(Long postId);
 
     List<Post> findByCategory(Category category);
 

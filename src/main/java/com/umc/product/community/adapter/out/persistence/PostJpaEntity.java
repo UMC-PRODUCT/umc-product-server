@@ -4,15 +4,20 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.Post.PostId;
 import com.umc.product.community.domain.enums.Category;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,6 +54,11 @@ public class PostJpaEntity extends BaseEntity {
     private String location;
 
     private Integer maxParticipants;
+
+    @ElementCollection
+    @CollectionTable(name = "post_like", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "challenger_id")
+    private Set<Long> likedChallengerIds = new HashSet<>();
 
     private PostJpaEntity(String title, String content, Category category, String region,
                           boolean anonymous, LocalDateTime meetAt, String location, Integer maxParticipants) {
@@ -87,10 +97,16 @@ public class PostJpaEntity extends BaseEntity {
     }
 
     public Post toDomain() {
+        return toDomain(null);
+    }
+
+    public Post toDomain(Long viewerChallengerId) {
         Post.LightningInfo lightningInfo = null;
         if (category == Category.LIGHTNING && meetAt != null) {
             lightningInfo = new Post.LightningInfo(meetAt, location, maxParticipants);
         }
+
+        boolean liked = viewerChallengerId != null && isLikedBy(viewerChallengerId);
 
         return Post.reconstruct(
                 new PostId(id),
@@ -99,12 +115,32 @@ public class PostJpaEntity extends BaseEntity {
                 category,
                 region,
                 anonymous,
-                lightningInfo
+                lightningInfo,
+                getLikeCount(),
+                liked
         );
     }
 
-    public void update(String title, String content) {
+    public void update(String title, String content, Category category, String region) {
         this.title = title;
         this.content = content;
+        this.category = category;
+        this.region = region;
+    }
+
+    public boolean toggleLike(Long challengerId) {
+        if (!likedChallengerIds.remove(challengerId)) {
+            likedChallengerIds.add(challengerId);
+            return true;
+        }
+        return false;
+    }
+
+    public int getLikeCount() {
+        return likedChallengerIds.size();
+    }
+
+    public boolean isLikedBy(Long challengerId) {
+        return likedChallengerIds.contains(challengerId);
     }
 }

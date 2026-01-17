@@ -22,11 +22,10 @@ public class Post {
     private String content;
 
     @Getter
-    private final Category category;
-
+    private Category category;
 
     @Getter
-    private final String region;
+    private String region;
 
     @Getter
     private final boolean anonymous;
@@ -34,13 +33,19 @@ public class Post {
     @Getter
     private final LightningInfo lightningInfo;
 
+    @Getter
+    private final int likeCount;
+
+    @Getter
+    private final boolean liked;
+
     public static Post createpostIds(String title, String content, Category category, String region,
                                      boolean anonymous) {
         if (category == Category.LIGHTNING) {
             throw new IllegalArgumentException("번개 게시글은 createLightning()을 사용하세요");
         }
         validateCommonFields(title, content, region);
-        return new Post(null, title, content, category, region, anonymous, null);
+        return new Post(null, title, content, category, region, anonymous, null, 0, false);
     }
 
     public static Post createLightning(String title, String content, String region, boolean anonymous,
@@ -49,12 +54,12 @@ public class Post {
             throw new IllegalArgumentException("번개 게시글은 추가 정보가 필수입니다.");
         }
         validateCommonFields(title, content, region);
-        return new Post(null, title, content, Category.LIGHTNING, region, anonymous, info);
+        return new Post(null, title, content, Category.LIGHTNING, region, anonymous, info, 0, false);
     }
 
     public static Post reconstruct(PostId postId, String title, String content, Category category, String region,
-                                   boolean anonymous, LightningInfo lightningInfo) {
-        return new Post(postId, title, content, category, region, anonymous, lightningInfo);
+                                   boolean anonymous, LightningInfo lightningInfo, int likeCount, boolean liked) {
+        return new Post(postId, title, content, category, region, anonymous, lightningInfo, likeCount, liked);
     }
 
     public boolean isLightning() {
@@ -80,18 +85,32 @@ public class Post {
         }
     }
 
-    public void update(String title, String content) {
+    public void update(String title, String content, Category category, String region) {
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("제목은 필수입니다.");
         }
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("내용은 필수입니다.");
         }
-        new IllegalArgumentException("제목은 비어있을 수 없습니다.");
+        if (category == null) {
+            throw new IllegalArgumentException("카테고리는 필수입니다.");
+        }
+        if (region == null || region.isBlank()) {
+            throw new IllegalArgumentException("지역은 필수입니다.");
+        }
+        // 번개 게시글로 카테고리 변경 불가
+        if (category == Category.LIGHTNING && this.category != Category.LIGHTNING) {
+            throw new IllegalArgumentException("일반 게시글을 번개 게시글로 변경할 수 없습니다.");
+        }
+        // 번개 게시글에서 일반 게시글로 변경 불가
+        if (this.category == Category.LIGHTNING && category != Category.LIGHTNING) {
+            throw new IllegalArgumentException("번개 게시글을 일반 게시글로 변경할 수 없습니다.");
+        }
 
         this.title = title;
         this.content = content;
-
+        this.category = category;
+        this.region = region;
     }
 
     public record PostId(Long id) {
@@ -119,5 +138,4 @@ public class Post {
             }
         }
     }
-
 }
