@@ -5,7 +5,7 @@ import com.umc.product.organization.domain.StudyGroupMember;
 
 public interface ManageStudyGroupMemberPort {
 
-    StudyGroupMember save(StudyGroupMember studyGroupMember);
-
-    void delete(StudyGroupMember studyGroupMember);
+//    StudyGroupMember save(StudyGroupMember studyGroupMember);
+//
+//    void delete(StudyGroupMember studyGroupMember);
 }

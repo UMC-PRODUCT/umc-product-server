@@ -1,12 +1,14 @@
 package com.umc.product.organization.domain;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
-import com.umc.product.organization.exception.OrganizationErrorCode;
+import com.umc.product.common.BaseEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,51 +18,57 @@ import org.springframework.util.StringUtils;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class School {
+public class School extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String name;
+    @OneToMany(mappedBy = "school", orphanRemoval = true, cascade = CascadeType.ALL)
+    List<ChapterSchool> chapterSchools;
 
-    private String emailDomain;
+    private String name;
 
     private String logoImageUrl;
 
+    private String remark;
+
     @Builder
-    private School(String name, String domain, String logoImageUrl) {
-        validate(name, domain);
+    private School(String name, String remark, ArrayList<ChapterSchool> chapterSchools) {
         this.name = name;
-        this.emailDomain = domain;
-        this.logoImageUrl = logoImageUrl;
+        this.remark = remark;
+        this.chapterSchools = chapterSchools;
     }
 
-    private static void validate(String name, String domain) {
-        if (name == null || name.isBlank()) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.SCHOOL_NAME_REQUIRED);
-        }
-        if (domain == null || domain.isBlank()) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.SCHOOL_DOMAIN_REQUIRED);
-        }
+    public static School create(String name, String remark) {
+        return School.builder()
+                .name(name)
+                .remark(remark)
+                .chapterSchools(new ArrayList<>())
+                .build();
     }
 
-    public void updateLogoImageId(Long logoImageId) {
-        if (StringUtils.isEmpty(logoImageUrl)) {
+    public void updateLogoImageUrl(String logoImageUrl) {
+        if (StringUtils.hasText(logoImageUrl)) {
             this.logoImageUrl = logoImageUrl;
         }
     }
 
     public void updateName(String name) {
-        if (StringUtils.isEmpty(name)) {
+        if (StringUtils.hasText(name)) {
             this.name = name;
         }
     }
 
-    public void updateEmailDomain(String emailDomain) {
-        if (StringUtils.isEmpty(emailDomain)) {
-            this.emailDomain = emailDomain;
+    public void updateRemark(String remark) {
+        if (StringUtils.hasText(remark)) {
+            this.remark = remark;
         }
     }
 
+    public void updateChapterSchool(Chapter newChapter) {
+        this.chapterSchools.removeIf(cs -> cs.getChapter().getGisu().isActive());
+        ChapterSchool chapterSchool = ChapterSchool.create(newChapter, this);
+        this.chapterSchools.add(chapterSchool);
+    }
 }

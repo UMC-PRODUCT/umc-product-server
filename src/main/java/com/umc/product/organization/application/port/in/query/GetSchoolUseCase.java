@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface GetSchoolUseCase {
 
-    Page<SchoolListItemInfo> getList(SchoolSearchCondition condition, Pageable pageable);
+    Page<SchoolListItemInfo> getSchools(SchoolSearchCondition condition, Pageable pageable);
 
     SchoolInfo getSchoolDetail(Long schoolId);
 }

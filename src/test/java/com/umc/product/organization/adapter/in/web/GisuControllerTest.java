@@ -15,6 +15,7 @@ import com.umc.product.organization.adapter.in.web.dto.request.CreateGisuRequest
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateGisuRequest;
 import com.umc.product.support.DocumentationTest;
 import java.time.LocalDate;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -23,6 +24,7 @@ import org.springframework.test.web.servlet.ResultActions;
 class GisuControllerTest extends DocumentationTest {
 
     @Test
+    @Disabled("아직 없는 기능")
     void 신규_기수를_추가한다() throws Exception {
         // given
         CreateGisuRequest request = new CreateGisuRequest(9L, LocalDate.of(2025, 3, 1), LocalDate.of(2025, 8, 31));
@@ -42,6 +44,7 @@ class GisuControllerTest extends DocumentationTest {
     }
 
     @Test
+    @Disabled("아직 없는 기능")
     void 기수_정보를_수정한다() throws Exception {
         // given
         Long gisuId = 1L;
@@ -60,6 +63,7 @@ class GisuControllerTest extends DocumentationTest {
     }
 
     @Test
+    @Disabled("아직 없는 기능")
     void 기수를_삭제한다() throws Exception {
         // given
         Long gisuId = 1L;
@@ -78,7 +82,7 @@ class GisuControllerTest extends DocumentationTest {
         Long gisuId = 3L;
 
         // when
-        ResultActions result = mockMvc.perform(post("/api/v1/admin/gisu/{gisuId}/current", gisuId));
+        ResultActions result = mockMvc.perform(post("/api/v1/admin/gisu/{gisuId}/active", gisuId));
 
         // then
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(

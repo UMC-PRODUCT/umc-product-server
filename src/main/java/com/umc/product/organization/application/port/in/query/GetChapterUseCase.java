@@ -5,5 +5,5 @@ import java.util.List;
 
 public interface GetChapterUseCase {
 
-    List<ChapterInfo> getAllChapter();
+    List<ChapterInfo> getAllChapters();
 }

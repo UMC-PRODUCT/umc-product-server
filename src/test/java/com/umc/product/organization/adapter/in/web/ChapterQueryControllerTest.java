@@ -24,7 +24,7 @@ class ChapterQueryControllerTest extends DocumentationTest {
                 new ChapterInfo(3L, "Leo 지부")
         );
 
-        given(getChapterUseCase.getAllChapter()).willReturn(chapters);
+        given(getChapterUseCase.getAllChapters()).willReturn(chapters);
 
         // when
         ResultActions result = mockMvc.perform(get("/api/v1/admin/chapters"));

@@ -2,11 +2,12 @@ package com.umc.product.organization.application.port.out.query;
 
 import com.umc.product.organization.domain.Gisu;
 import java.util.List;
-import java.util.Optional;
 
 public interface LoadGisuPort {
 
-    Optional<Gisu> findById(Long id);
+    Gisu findActiveGisu();
+
+    Gisu findById(Long gisuId);
 
     List<Gisu> findAll();
 }
