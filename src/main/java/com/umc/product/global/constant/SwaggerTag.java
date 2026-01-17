@@ -60,20 +60,20 @@ public enum SwaggerTag {
      * @Tag(name = SwaggerTag.Constants.USER)
      */
     public static class Constants {
-        public static final String TEST = SwaggerTag.TEST.getName();
-        public static final String AUTH = SwaggerTag.AUTH.getName();
-        public static final String MEMBER = SwaggerTag.MEMBER.getName();
-        public static final String CHALLENGER = SwaggerTag.CHALLENGER.getName();
-        public static final String ORGANIZATION = SwaggerTag.ORGANIZATION.getName();
-        public static final String CURRICULUM = SwaggerTag.CURRICULUM.getName();
-        public static final String SCHEDULE = SwaggerTag.SCHEDULE.getName();
-        public static final String COMMUNITY = SwaggerTag.COMMUNITY.getName();
-        public static final String NOTICE = SwaggerTag.NOTICE.getName();
-        public static final String SURVEY = SwaggerTag.SURVEY.getName();
-        public static final String RECRUITMENT = SwaggerTag.RECRUITMENT.getName();
-        public static final String NOTIFICATION = SwaggerTag.NOTIFICATION.getName();
-        public static final String STORAGE = SwaggerTag.STORAGE.getName();
-        public static final String PROJECT = SwaggerTag.PROJECT.getName();
-        public static final String ADMIN = SwaggerTag.ADMIN.getName();
+        public static final String TEST = "개발자용";
+        public static final String AUTH = "인증/인가";
+        public static final String MEMBER = "회원";
+        public static final String CHALLENGER = "챌린저";
+        public static final String ORGANIZATION = "조직 (학교/지부/중앙운영사무국)";
+        public static final String CURRICULUM = "커리큘럼";
+        public static final String SCHEDULE = "행사 및 스터디 일정";
+        public static final String COMMUNITY = "커뮤니티";
+        public static final String NOTICE = "공지사항";
+        public static final String SURVEY = "설문";
+        public static final String RECRUITMENT = "모집";
+        public static final String NOTIFICATION = "알람";
+        public static final String STORAGE = "파일 저장소";
+        public static final String PROJECT = "UPMS";
+        public static final String ADMIN = "관리자/운영진";
     }
 }
