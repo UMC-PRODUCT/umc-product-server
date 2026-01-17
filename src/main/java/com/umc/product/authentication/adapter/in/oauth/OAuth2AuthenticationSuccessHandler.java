@@ -1,5 +1,6 @@
 package com.umc.product.authentication.adapter.in.oauth;
 
+import com.umc.product.authentication.domain.enums.OAuth2ResultCode;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,8 +41,12 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         String accessToken = jwtTokenProvider.createAccessToken(memberId, Collections.emptyList());
         String refreshToken = jwtTokenProvider.createRefreshToken(memberId);
 
+        OAuth2ResultCode oAuth2ResultCode = OAuth2ResultCode.SUCCESS;
+
         // 프론트엔드로 리다이렉트 (토큰 전달)
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl)
+                .queryParam("success", oAuth2ResultCode.isSuccess())
+                .queryParam("code", oAuth2ResultCode.getCode())
                 .queryParam("accessToken", accessToken)
                 .queryParam("refreshToken", refreshToken)
                 .build().toUriString();

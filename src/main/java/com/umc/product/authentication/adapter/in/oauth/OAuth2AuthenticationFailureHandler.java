@@ -1,5 +1,6 @@
 package com.umc.product.authentication.adapter.in.oauth;
 
+import com.umc.product.authentication.domain.enums.OAuth2ResultCode;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -78,11 +79,13 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
         if (email == null || provider == null) {
             log.error("OAuth 정보가 존재하지 않습니다.");
+
+            OAuth2ResultCode oAuth2ResultCode = OAuth2ResultCode.INFO_MISSING;
+
             // 무언가 잘못된 것에 대한 에러 응답 처리
             String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl)
-                    .queryParam("success", "false")
-                    .queryParam("code", "ERR_OAUTH_INFO_MISSING")
-                    .queryParam("message", memberException.getMessage())
+                    .queryParam("success", oAuth2ResultCode.isSuccess())
+                    .queryParam("code", oAuth2ResultCode.getCode())
                     .build()
                     .toUriString();
             getRedirectStrategy().sendRedirect(request, response, targetUrl);
@@ -93,10 +96,12 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         // 회원가입용 임시 토큰 생성
         String oAuthVerificationToken = jwtTokenProvider.createOAuthVerificationToken(email, provider, providerId);
 
+        OAuth2ResultCode oAuth2ResultCode = OAuth2ResultCode.REGISTER_REQUIRED;
+
         // 프론트엔드로 리다이렉트 (회원가입 필요 상태)
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl)
-                .queryParam("success", "true")
-                .queryParam("code", "OAUTH_REGISTER_REQUIRED")
+                .queryParam("success", oAuth2ResultCode.isSuccess())
+                .queryParam("code", oAuth2ResultCode.getCode())
                 .queryParam("email", email)
                 .queryParam("oAuthVerificationToken", oAuthVerificationToken)
                 .build()
