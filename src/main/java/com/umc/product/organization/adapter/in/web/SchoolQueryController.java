@@ -4,6 +4,7 @@ import com.umc.product.global.response.PageResponse;
 import com.umc.product.organization.adapter.in.web.dto.request.SchoolListRequest;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolListItemResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.SchoolPageResponse;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -16,20 +17,25 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/schools")
 @RequiredArgsConstructor
-public class SchoolQueryController {
+public class SchoolQueryController implements SchoolQueryControllerApi {
 
     private final GetSchoolUseCase getSchoolUseCase;
 
+    @Override
     @GetMapping
-    public PageResponse<SchoolListItemResponse> getSchools(@ModelAttribute SchoolListRequest request,
-                                                           Pageable pageable) {
-        //TODO: 관리자 권한 체크
-        return PageResponse.of(getSchoolUseCase.getSchools(request.toCondition(), pageable), SchoolListItemResponse::of);
+    public SchoolPageResponse getSchools(@ModelAttribute SchoolListRequest request,
+                                         Pageable pageable) {
+        // Swagger를 위한 SchoolPageResponse 매핑
+        PageResponse<SchoolListItemResponse> pageResponse = PageResponse.of(
+                getSchoolUseCase.getSchools(request.toCondition(), pageable),
+                SchoolListItemResponse::of
+        );
+        return SchoolPageResponse.from(pageResponse);
     }
 
+    @Override
     @GetMapping("/{schoolId}")
     public SchoolDetailResponse getSchoolDetail(@PathVariable Long schoolId) {
-
         return SchoolDetailResponse.of(getSchoolUseCase.getSchoolDetail(schoolId));
     }
 }

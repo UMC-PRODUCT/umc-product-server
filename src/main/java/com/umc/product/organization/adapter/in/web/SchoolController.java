@@ -17,21 +17,23 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/schools")
 @RequiredArgsConstructor
-public class SchoolController {
+public class SchoolController implements SchoolControllerApi {
 
     private final ManageSchoolUseCase manageSchoolUseCase;
 
+    @Override
     @PostMapping
-    public void createSchool(@RequestBody @Valid CreateSchoolRequest createSchoolRequest) {
-        //TODO : 관리자 권한 체크
-        manageSchoolUseCase.register(createSchoolRequest.toCommand());
+    public void createSchool(@RequestBody @Valid CreateSchoolRequest request) {
+        manageSchoolUseCase.register(request.toCommand());
     }
 
+    @Override
     @PatchMapping("/{schoolId}")
-    public void updateSchool(@PathVariable Long schoolId, @RequestBody @Valid UpdateSchoolRequest updateSchoolRequest) {
-        manageSchoolUseCase.updateSchool(schoolId, updateSchoolRequest.toCommand());
+    public void updateSchool(@PathVariable Long schoolId, @RequestBody @Valid UpdateSchoolRequest request) {
+        manageSchoolUseCase.updateSchool(schoolId, request.toCommand());
     }
 
+    @Override
     @DeleteMapping
     public void deleteSchools(@RequestBody @Valid DeleteSchoolsRequest request) {
         manageSchoolUseCase.deleteSchools(request.schoolIds());
