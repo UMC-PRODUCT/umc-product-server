@@ -7,6 +7,7 @@ import com.umc.product.organization.application.port.out.command.ManageChapterPo
 import com.umc.product.organization.application.port.out.query.LoadChapterPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,7 +17,7 @@ public class ChapterPersistenceAdapter implements LoadChapterPort, ManageChapter
 
     private final ChapterJpaRepository chapterJpaRepository;
 
-    public void existsById(Long chapterId) {
+    public void validateExists(Long chapterId) {
         if(!chapterJpaRepository.existsById(chapterId)) {
             throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.CHAPTER_NOT_FOUND);
         }
@@ -25,6 +26,13 @@ public class ChapterPersistenceAdapter implements LoadChapterPort, ManageChapter
     public Chapter findById(Long chapterId) {
         return chapterJpaRepository.findById(chapterId).orElseThrow(() ->
                 new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.CHAPTER_NOT_FOUND));
+    }
+
+    @Override
+    public List<Chapter> findAll() {
+
+        return chapterJpaRepository.findAll();
+
     }
 
     public void save(Chapter chapter) {

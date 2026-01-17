@@ -17,8 +17,8 @@ public class ChapterQueryController {
     private final GetChapterUseCase getChapterUseCase;
 
     @GetMapping
-    public ChapterListResponse getAllChapter() {
-        List<ChapterInfo> chapters = getChapterUseCase.getAllChapter();
+    public ChapterListResponse getAllChapters() {
+        List<ChapterInfo> chapters = getChapterUseCase.getAllChapters();
         return ChapterListResponse.from(chapters);
     }
 }
