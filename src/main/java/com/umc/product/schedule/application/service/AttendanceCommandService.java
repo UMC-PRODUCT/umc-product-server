@@ -16,16 +16,18 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
     @Override
     public AttendanceRecordId check(CheckAttendanceCommand command) {
         // TODO: 구현 필요
-        return new AttendanceRecordId(1L);
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public void approve(AttendanceRecordId recordId, Long confirmerId) {
         // TODO: 구현 필요
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public void reject(AttendanceRecordId recordId, Long confirmerId) {
         // TODO: 구현 필요
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 }

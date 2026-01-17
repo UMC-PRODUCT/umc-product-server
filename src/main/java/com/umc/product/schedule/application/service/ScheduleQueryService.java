@@ -15,6 +15,6 @@ public class ScheduleQueryService implements GetScheduleListUseCase {
     @Override
     public List<ScheduleWithStatsInfo> getAll() {
         // TODO: 구현 필요
-        return java.util.Collections.emptyList();
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 }

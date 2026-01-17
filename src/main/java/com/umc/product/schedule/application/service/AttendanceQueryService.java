@@ -1,12 +1,12 @@
 package com.umc.product.schedule.application.service;
 
-import com.umc.product.schedule.application.port.in.query.dto.AttendanceRecordInfo;
-import com.umc.product.schedule.application.port.in.query.dto.AttendanceSheetInfo;
 import com.umc.product.schedule.application.port.in.query.GetAttendanceRecordUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAttendanceSheetUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetPendingAttendancesUseCase;
+import com.umc.product.schedule.application.port.in.query.dto.AttendanceRecordInfo;
+import com.umc.product.schedule.application.port.in.query.dto.AttendanceSheetInfo;
 import com.umc.product.schedule.application.port.in.query.dto.AvailableAttendanceInfo;
 import com.umc.product.schedule.application.port.in.query.dto.MyAttendanceHistoryInfo;
 import com.umc.product.schedule.application.port.in.query.dto.PendingAttendanceInfo;
@@ -32,25 +32,25 @@ public class AttendanceQueryService implements
     @Override
     public AttendanceRecordInfo getById(AttendanceRecordId recordId) {
         // TODO: 구현 필요
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public List<AttendanceRecordInfo> getBySheetId(Long sheetId) {
         // TODO: 구현 필요
-        return java.util.Collections.emptyList();
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public List<AttendanceRecordInfo> getByChallengerId(Long challengerId) {
         // TODO: 구현 필요
-        return java.util.Collections.emptyList();
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
     public List<AttendanceRecordInfo> getPendingBySheetId(Long sheetId) {
         // TODO: 구현 필요
-        return java.util.Collections.emptyList();
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     // === GetAttendanceSheetUseCase ===
@@ -58,7 +58,7 @@ public class AttendanceQueryService implements
     @Override
     public AttendanceSheetInfo getById(AttendanceSheetId sheetId) {
         // TODO: 구현 필요
-        return null;
+        throw new UnsupportedOperationException("Not implemented yet");
     }
 
     @Override
