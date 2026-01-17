@@ -22,7 +22,7 @@ public class Gisu {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long number;
+    private Long generation;
 
     private boolean isActive;
 
@@ -31,9 +31,9 @@ public class Gisu {
     private LocalDateTime endAt;
 
     @Builder
-    private Gisu(Long number, boolean isActive, LocalDateTime startAt, LocalDateTime endAt) {
+    private Gisu(Long generation, boolean isActive, LocalDateTime startAt, LocalDateTime endAt) {
         validate(startAt, endAt);
-        this.number = number;
+        this.generation = generation;
         this.isActive = isActive;
         this.startAt = startAt;
         this.endAt = endAt;
@@ -61,5 +61,9 @@ public class Gisu {
 
     public boolean isInPeriod(LocalDateTime now) {
         return (now.isEqual(startAt) || now.isAfter(startAt)) && now.isBefore(endAt);
+    }
+
+    public void updateIsActive(boolean isActive) {
+        this.isActive = isActive;
     }
 }

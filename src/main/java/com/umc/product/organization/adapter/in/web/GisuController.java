@@ -35,8 +35,8 @@ public class GisuController {
         manageGisuUseCase.deleteGisu(gisuId);
     }
 
-    @PostMapping("/{gisuId}/current")
-    public void setCurrentGisu(@PathVariable Long gisuId) {
-        manageGisuUseCase.setCurrentGisu(gisuId);
+    @PostMapping("/{gisuId}/active")
+    public void updateActiveGisu(@PathVariable Long gisuId) {
+        manageGisuUseCase.updateActiveGisu(gisuId);
     }
 }

@@ -11,5 +11,5 @@ public interface ManageGisuUseCase {
 
     void deleteGisu(Long gisuId);
 
-    void setCurrentGisu(Long gisuId);
+    void updateActiveGisu(Long gisuId);
 }
