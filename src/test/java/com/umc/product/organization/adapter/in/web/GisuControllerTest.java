@@ -78,7 +78,7 @@ class GisuControllerTest extends DocumentationTest {
         Long gisuId = 3L;
 
         // when
-        ResultActions result = mockMvc.perform(post("/api/v1/admin/gisu/{gisuId}/current", gisuId));
+        ResultActions result = mockMvc.perform(post("/api/v1/admin/gisu/{gisuId}/active", gisuId));
 
         // then
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(

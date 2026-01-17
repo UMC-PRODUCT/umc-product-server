@@ -36,7 +36,7 @@ class GisuQueryControllerTest extends DocumentationTest {
                         fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
                         fieldWithPath("result.gisuList").type(JsonFieldType.ARRAY).description("기수 목록"),
                         fieldWithPath("result.gisuList[].gisuId").type(JsonFieldType.STRING).description("기수 ID"),
-                        fieldWithPath("result.gisuList[].number").type(JsonFieldType.STRING).description("기수 번호"),
+                        fieldWithPath("result.gisuList[].generation").type(JsonFieldType.STRING).description("기수 번호"),
                         fieldWithPath("result.gisuList[].startAt").type(JsonFieldType.STRING).description("기수 시작일시"),
                         fieldWithPath("result.gisuList[].endAt").type(JsonFieldType.STRING).description("기수 종료일시"),
                         fieldWithPath("result.gisuList[].isActive").type(JsonFieldType.BOOLEAN)
