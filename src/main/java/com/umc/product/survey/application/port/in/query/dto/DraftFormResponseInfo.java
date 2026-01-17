@@ -9,6 +9,7 @@ public record DraftFormResponseInfo(
         Long formId,
         FormResponseStatus status, // 항상 DRAFT
         Instant lastSavedAt,
-        List<AnswerInfo> answers
+        List<AnswerInfo> answers,
+        Instant createdAt
 ) {
 }
