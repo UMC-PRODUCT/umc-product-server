@@ -22,17 +22,25 @@ public class Post {
     private String content;
 
     @Getter
-    private final Category category;
-
+    private Category category;
 
     @Getter
-    private final String region;
+    private String region;
 
     @Getter
     private final boolean anonymous;
 
     @Getter
     private final LightningInfo lightningInfo;
+
+    // 좋아요 관련 필드 (조회 시 주입)
+    //@Getter
+    //private int likeCount;
+
+    //@Getter
+    //private boolean liked;
+
+    //private final LikeId likeId;
 
     public static Post createpostIds(String title, String content, Category category, String region,
                                      boolean anonymous) {
@@ -53,7 +61,7 @@ public class Post {
     }
 
     public static Post reconstruct(PostId postId, String title, String content, Category category, String region,
-                                   boolean anonymous, LightningInfo lightningInfo) {
+                                   boolean anonymous, LightningInfo lightningInfo, int likeCount, boolean liked) {
         return new Post(postId, title, content, category, region, anonymous, lightningInfo);
     }
 
@@ -80,18 +88,32 @@ public class Post {
         }
     }
 
-    public void update(String title, String content) {
+    public void update(String title, String content, Category category, String region) {
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("제목은 필수입니다.");
         }
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("내용은 필수입니다.");
         }
-        new IllegalArgumentException("제목은 비어있을 수 없습니다.");
+        if (category == null) {
+            throw new IllegalArgumentException("카테고리는 필수입니다.");
+        }
+        if (region == null || region.isBlank()) {
+            throw new IllegalArgumentException("지역은 필수입니다.");
+        }
+        // 번개 게시글로 카테고리 변경 불가
+        if (category == Category.LIGHTNING && this.category != Category.LIGHTNING) {
+            throw new IllegalArgumentException("일반 게시글을 번개 게시글로 변경할 수 없습니다.");
+        }
+        // 번개 게시글에서 일반 게시글로 변경 불가
+        if (this.category == Category.LIGHTNING && category != Category.LIGHTNING) {
+            throw new IllegalArgumentException("번개 게시글을 일반 게시글로 변경할 수 없습니다.");
+        }
 
         this.title = title;
         this.content = content;
-
+        this.category = category;
+        this.region = region;
     }
 
     public record PostId(Long id) {
@@ -120,4 +142,11 @@ public class Post {
         }
     }
 
+    // public record LikeId(Long id) {
+    //     public LikeId {
+    //         if (id <= 0) {
+    //             throw new IllegalArgumentException("ID는 양수여야 합니다.");
+    //         }
+    //     }
+    // }
 }

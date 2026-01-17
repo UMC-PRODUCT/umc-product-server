@@ -7,5 +7,10 @@ public interface SavePostPort {
 
     void delete(Post post);
 
-    void deleteById(Long id);
+    void deleteById(Long postId);
+
+    // Like 관련
+    //void saveLike(Long postId, Long challengerId);
+
+    //void deleteLike(Long postId, Long challengerId);
 }

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
 
     private final PostRepository postRepository;
+    // private final PostLikeRepository postLikeRepository;
 
     @Override
     public Post save(Post post) {
@@ -22,7 +23,7 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
         if (post.getPostId() != null) {
             PostJpaEntity entity = postRepository.findById(post.getPostId().id())
                     .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-            entity.update(post.getTitle(), post.getContent());
+            entity.update(post.getTitle(), post.getContent(), post.getCategory(), post.getRegion());
             return entity.toDomain();
         }
 
@@ -39,8 +40,8 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     }
 
     @Override
-    public void deleteById(Long id) {
-        postRepository.deleteById(id);
+    public void deleteById(Long postId) {
+        postRepository.deleteById(postId);
     }
 
     @Override
@@ -52,8 +53,8 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     }
 
     @Override
-    public Optional<Post> findById(Long id) {
-        return postRepository.findById(id)
+    public Optional<Post> findById(Long postId) {
+        return postRepository.findById(postId)
                 .map(PostJpaEntity::toDomain);
     }
 
@@ -70,4 +71,5 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
                 .map(PostJpaEntity::toDomain)
                 .toList();
     }
+    
 }

@@ -99,12 +99,35 @@ public class PostJpaEntity extends BaseEntity {
                 category,
                 region,
                 anonymous,
-                lightningInfo
+                lightningInfo,
+                0,
+                false
         );
     }
 
-    public void update(String title, String content) {
+    // public Post toDomain(int likeCount, boolean liked) {
+    //     Post.LightningInfo lightningInfo = null;
+    //     if (category == Category.LIGHTNING && meetAt != null) {
+    //         lightningInfo = new Post.LightningInfo(meetAt, location, maxParticipants);
+    //     }
+    //
+    //     return Post.reconstruct(
+    //             new PostId(id),
+    //             title,
+    //             content,
+    //             category,
+    //             region,
+    //             anonymous,
+    //             lightningInfo,
+    //             likeCount,
+    //             liked
+    //     );
+    // }
+
+    public void update(String title, String content, Category category, String region) {
         this.title = title;
         this.content = content;
+        this.category = category;
+        this.region = region;
     }
 }

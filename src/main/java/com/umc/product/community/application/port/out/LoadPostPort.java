@@ -9,9 +9,14 @@ import java.util.Optional;
 public interface LoadPostPort {
     List<Post> findAllByQuery(PostSearchQuery query);
 
-    Optional<Post> findById(Long id);
+    Optional<Post> findById(Long postId);
 
     List<Post> findByCategory(Category category);
 
     List<Post> findByRegion(String region);
+
+    // Like 관련
+    //int countLikesByPostId(Long postId);
+
+    //boolean existsLikeByPostIdAndChallengerId(Long postId, Long challengerId);
 }
