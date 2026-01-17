@@ -1,14 +1,23 @@
 package com.umc.product.recruitment.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag;
+import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentInterviewPreferenceRequest;
+import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormResponseAnswersRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.DeleteRecruitmentFormResponseResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentApplicationFormResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentDraftFormResponseResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentFormResponseDetailResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentNoticeResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateRecruitmentInterviewPreferenceResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.UpsertRecruitmentFormResponseAnswersResponse;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentDraftFormResponseUseCase;
+import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
+import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormResponseAnswersUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetRecruitmentDraftCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormResponseCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentFormResponseDetailUseCase;
@@ -22,10 +31,15 @@ import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentForm
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -41,7 +55,8 @@ public class RecruitmentController {
     private final GetRecruitmentApplicationFormUseCase getRecruitmentApplicationFormUseCase;
     private final CreateRecruitmentDraftFormResponseUseCase createRecruitmentDraftFormResponseUseCase;
     private final GetRecruitmentFormResponseDetailUseCase getRecruitmentFormResponseDetailUseCase;
-
+    private final UpsertRecruitmentFormResponseAnswersUseCase upsertRecruitmentFormResponseAnswersUseCase;
+    private final DeleteRecruitmentFormResponseUseCase deleteRecruitmentFormResponseUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
@@ -110,4 +125,60 @@ public class RecruitmentController {
         RecruitmentFormResponseDetailInfo info = getRecruitmentFormResponseDetailUseCase.get(query);
         return RecruitmentFormResponseDetailResponse.from(recruitmentId, info);
     }
+
+    @PatchMapping("/{recruitmentId}/applications/{formResponseId}/answers")
+    @Operation(
+            summary = "지원 폼 응답 임시저장 (singleAnswer upsert)",
+            description = "formResponseId 기준으로 questionId 단위 답변을 upsert합니다. (단건/다건 모두 가능)"
+    )
+    public UpsertRecruitmentFormResponseAnswersResponse upsertAnswers(
+            @PathVariable Long recruitmentId,
+            @PathVariable Long formResponseId,
+            @Valid @RequestBody UpsertRecruitmentFormResponseAnswersRequest request
+    ) {
+        UpsertRecruitmentFormResponseAnswersInfo result = upsertRecruitmentFormResponseAnswersUseCase.upsert(
+                request.toCommand(recruitmentId, formResponseId)
+        );
+
+        return UpsertRecruitmentFormResponseAnswersResponse.from(result);
+    }
+
+    // todo: 추후 "평가하기" 설계하면서 엔티티 등 추가 예정이라, 관련 작업 시에 usecase 넣기
+    @PatchMapping("/{recruitmentId}/applications/{formResponseId}/interview-preference")
+    @Operation(
+            summary = "면접 시간 선호 임시저장",
+            description = """
+                    지원서 작성 중 면접 가능 시간(스케줄) 선호 정보를 임시저장합니다.
+                    """
+    )
+    public UpdateRecruitmentInterviewPreferenceResponse updateInterviewPreference(
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId,
+            @Parameter(description = "폼 응답 ID") @PathVariable Long formResponseId,
+            @Valid @RequestBody UpdateRecruitmentInterviewPreferenceRequest request
+    ) {
+        Map<String, Object> saved = request.value();
+
+        return UpdateRecruitmentInterviewPreferenceResponse.of(formResponseId, saved);
+    }
+
+    @DeleteMapping("/{recruitmentId}/applications/{formResponseId}")
+    @Operation(
+            summary = "지원 폼 응답 삭제",
+            description = """
+                    formResponseId에 해당하는 지원 폼 응답을 삭제합니다.
+                    "지원하기" UI에서, 기존에 작성하던 응답이 있는 경우 사용자가 "새로작성하기"를 눌렀을 때 호출됩니다.
+                    """
+    )
+    public DeleteRecruitmentFormResponseResponse deleteFormResponse(
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId,
+            @Parameter(description = "폼 응답 ID") @PathVariable Long formResponseId
+    ) {
+        deleteRecruitmentFormResponseUseCase.delete(
+                new DeleteRecruitmentFormResponseCommand(recruitmentId, formResponseId)
+        );
+
+        return DeleteRecruitmentFormResponseResponse.of(formResponseId);
+    }
+
+
 }
