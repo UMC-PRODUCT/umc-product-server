@@ -26,6 +26,22 @@ spring:
     compose:
       enabled: false # Local DB를 위한 Compose는 기본적으로 비활성화
 
+  mail:
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true # 연결 후 TLS 암호화 시작 (보안 연결)
+            required: true # TLS 암호화 필수 (실패시 연결 차단)
+          connectiontimeout: 5000 # SMTP 서버 연결 대기 시간 5초
+          timeout: 5000 # 읽기(Read) 타임아웃 5초
+          writetimeout: 5000 # 메일 쓰기 전송 타임아웃 5초
+
   jackson:
     generator:
       write-numbers-as-strings: true

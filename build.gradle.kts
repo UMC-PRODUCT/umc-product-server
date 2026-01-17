@@ -110,6 +110,7 @@ dependencies {
 
     // --- Email ---
     implementation("org.springframework.boot:spring-boot-starter-mail")
+    implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
     // --- Metrics ---
     implementation("io.micrometer:micrometer-registry-prometheus")
