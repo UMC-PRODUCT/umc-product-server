@@ -57,7 +57,7 @@ public class ChallengerController {
     @Operation(summary = "챌린저 정보 수정 (파트 변경)")
     @PatchMapping("{challengerId}")
     ChallengerInfoResponse editChallengerInfo(
-            @PathVariable String challengerId,
+            @PathVariable Long challengerId,
             @RequestBody EditChallengerRequest request
     ) {
         throw new NotImplementedException();

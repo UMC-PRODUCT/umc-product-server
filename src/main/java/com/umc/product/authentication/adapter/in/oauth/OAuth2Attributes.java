@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OAuth2Attributes {
     private Map<String, Object> attributes;
-    private String nameAttributeKey;
     private String name;
     private String email;
     private String nickname;

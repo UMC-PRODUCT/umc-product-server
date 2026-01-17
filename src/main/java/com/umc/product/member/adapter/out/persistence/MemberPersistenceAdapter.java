@@ -1,9 +1,5 @@
 package com.umc.product.member.adapter.out.persistence;
 
-import com.umc.product.authentication.adapter.out.persistence.MemberOAuthRepository;
-import com.umc.product.authentication.domain.MemberOAuth;
-import com.umc.product.common.domain.enums.OAuthProvider;
-import com.umc.product.member.application.port.out.LoadMemberOAuthPort;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
@@ -15,10 +11,9 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort, LoadMemberOAuthPort {
+public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort {
 
     private final MemberJpaRepository memberJpaRepository;
-    private final MemberOAuthRepository memberOAuthRepository;
     private final MemberTermAgreementRepository memberTermAgreementRepository;
     private final MemberQueryRepository memberQueryRepository;
 
@@ -59,11 +54,6 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     }
 
     @Override
-    public MemberOAuth saveOAuth(MemberOAuth memberOAuth) {
-        return memberOAuthRepository.save(memberOAuth);
-    }
-
-    @Override
     public List<MemberTermAgreement> saveTermAgreements(List<MemberTermAgreement> agreements) {
         return memberTermAgreementRepository.saveAll(agreements);
     }
@@ -71,15 +61,5 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     @Override
     public void delete(Member member) {
         memberJpaRepository.delete(member);
-    }
-
-    @Override
-    public Optional<MemberOAuth> findByProviderAndProviderUserId(OAuthProvider provider, String providerUserId) {
-        return memberOAuthRepository.findByProviderAndProviderId(provider, providerUserId);
-    }
-
-    @Override
-    public Optional<MemberOAuth> findByMemberId(Long memberId) {
-        return memberOAuthRepository.findByMemberId(memberId);
     }
 }

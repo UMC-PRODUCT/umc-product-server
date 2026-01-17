@@ -33,7 +33,7 @@ public class MemberOAuthController {
                     """)
     List<MemberOAuthInfo> deleteMemberOAuth(
             @CurrentMember MemberPrincipal memberPrincipal,
-            @PathVariable String memberOAuthId
+            @PathVariable Long memberOAuthId
     ) {
         throw new NotImplementedException();
     }

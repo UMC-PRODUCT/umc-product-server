@@ -77,7 +77,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         OAuthProvider provider = (OAuthProvider) request.getAttribute("oauth_provider");
         String providerId = (String) request.getAttribute("oauth_provider_id");
 
-        if (email == null || provider == null) {
+        if (email == null || provider == null || providerId == null) {
             log.error("OAuth 정보가 존재하지 않습니다.");
 
             OAuth2ResultCode oAuth2ResultCode = OAuth2ResultCode.INFO_MISSING;
