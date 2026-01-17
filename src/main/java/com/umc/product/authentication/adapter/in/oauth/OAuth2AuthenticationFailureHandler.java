@@ -71,18 +71,17 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
             HttpServletResponse response,
             AuthenticationDomainException memberException
     ) throws IOException {
-        log.info("OAuth authenticated but member not found. Creating registration token.");
-
         // OAuth 인증 정보 추출 (request attribute에서)
         String email = (String) request.getAttribute("oauth_email");
-        OAuthProvider provider = OAuthProvider.from((String) request.getAttribute("oauth_provider"));
+        OAuthProvider provider = (OAuthProvider) request.getAttribute("oauth_provider");
         String providerId = (String) request.getAttribute("oauth_provider_id");
 
         if (email == null || provider == null) {
-            log.error("OAuth info not found in request attributes");
-            // fallback: 일반 에러 처리
+            log.error("OAuth 정보가 존재하지 않습니다.");
+            // 무언가 잘못된 것에 대한 에러 응답 처리
             String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl)
-                    .queryParam("error", "member_not_found")
+                    .queryParam("success", "false")
+                    .queryParam("code", "ERR_OAUTH_INFO_MISSING")
                     .queryParam("message", memberException.getMessage())
                     .build()
                     .toUriString();
@@ -90,12 +89,15 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
             return;
         }
 
+        log.info("OAuth 인증을 완료하였으나 기존 회원이 아니여서 oAuthVerificationToken을 발급합니다.");
         // 회원가입용 임시 토큰 생성
         String oAuthVerificationToken = jwtTokenProvider.createOAuthVerificationToken(email, provider, providerId);
 
         // 프론트엔드로 리다이렉트 (회원가입 필요 상태)
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl)
-                .queryParam("status", "registration_required")
+                .queryParam("success", "true")
+                .queryParam("code", "OAUTH_REGISTER_REQUIRED")
+                .queryParam("email", email)
                 .queryParam("oAuthVerificationToken", oAuthVerificationToken)
                 .build()
                 .toUriString();

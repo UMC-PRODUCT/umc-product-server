@@ -31,8 +31,8 @@ public class OAuth2Attributes {
             Map<String, Object> attributes
     ) {
 
-        log.info("OAuth2Attributes regId [{}] attr [{}] ", registrationId,
-                attributes);
+        log.info("OAuth2Attributes - RegistrationID: {}", registrationId);
+        log.info("OAuth2Attributes - attributes: {}", attributes);
 
         return switch (registrationId.toLowerCase()) {
             case "google" -> ofGoogle(attributes);
@@ -65,7 +65,7 @@ public class OAuth2Attributes {
 
         return OAuth2Attributes.builder()
                 .provider(OAuthProvider.KAKAO)
-                .providerId(String.valueOf(attributes.get("user_id")))
+                .providerId(String.valueOf(attributes.get("id")))
                 .name((String) profile.get("nickname"))
                 .email((String) kakaoAccount.get("email"))
                 .nickname((String) profile.get("nickname"))
