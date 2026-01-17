@@ -130,8 +130,12 @@ public class JwtTokenProvider {
         return Collections.emptyList();
     }
 
+    public boolean validateAccessToken(String token) {
+        return validateToken(token, accessTokenSecret);
+    }
+
     // 4. 토큰 검증
-    public boolean validateToken(String token, SecretKey secretKey) {
+    private boolean validateToken(String token, SecretKey secretKey) {
         try {
             parseClaims(token, secretKey);
             return true;
@@ -166,5 +170,32 @@ public class JwtTokenProvider {
      */
     public Long getMemberIdFromAccessToken(String token) {
         return Long.parseLong(parseClaims(token, accessTokenSecret).getSubject());
+    }
+
+    /**
+     * oAuthVerificationToken 파싱 및 검증
+     */
+    public OAuthVerificationClaims parseOAuthVerificationToken(String token) {
+        validateToken(token, oAuthVerificationTokenSecret);
+
+        Claims claims = parseClaims(token, oAuthVerificationTokenSecret);
+
+        String email = claims.get("email", String.class);
+        String providerStr = claims.get("provider", String.class);
+        String providerId = claims.get("providerId", String.class);
+
+        OAuthProvider provider = OAuthProvider.valueOf(providerStr);
+
+        return new OAuthVerificationClaims(email, provider, providerId);
+    }
+
+    /**
+     * emailVerificationToken 파싱 및 검증
+     */
+    public String parseEmailVerificationToken(String token) {
+        validateToken(token, emailVerificationTokenSecret);
+
+        Claims claims = parseClaims(token, emailVerificationTokenSecret);
+        return claims.get("email", String.class);
     }
 }

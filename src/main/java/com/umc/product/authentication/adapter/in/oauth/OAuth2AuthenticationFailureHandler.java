@@ -1,6 +1,7 @@
 package com.umc.product.authentication.adapter.in.oauth;
 
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.security.JwtTokenProvider;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -74,7 +75,8 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
         // OAuth 인증 정보 추출 (request attribute에서)
         String email = (String) request.getAttribute("oauth_email");
-        String provider = (String) request.getAttribute("oauth_provider");
+        OAuthProvider provider = OAuthProvider.from((String) request.getAttribute("oauth_provider"));
+        String providerId = (String) request.getAttribute("oauth_provider_id");
 
         if (email == null || provider == null) {
             log.error("OAuth info not found in request attributes");
@@ -89,12 +91,12 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
         }
 
         // 회원가입용 임시 토큰 생성
-        String registrationToken = jwtTokenProvider.createOAuthVerificationToken(email, provider);
+        String oAuthVerificationToken = jwtTokenProvider.createOAuthVerificationToken(email, provider, providerId);
 
         // 프론트엔드로 리다이렉트 (회원가입 필요 상태)
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl)
                 .queryParam("status", "registration_required")
-                .queryParam("registrationToken", registrationToken)
+                .queryParam("oAuthVerificationToken", oAuthVerificationToken)
                 .build()
                 .toUriString();
 
