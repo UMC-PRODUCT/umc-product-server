@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>오류 발생</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .error-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .error-code {
+            color: #667eea;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .btn-home {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .error-details {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #666;
+            text-align: left;
+        }
+
+        .error-details-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .error-details-content {
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+<div class="error-container">
+    <div class="error-icon">⚠️</div>
+    <h1>오류가 발생했습니다</h1>
+    <div class="error-code" id="errorCode">ERROR</div>
+    <div class="error-message" id="errorMessage">
+        요청을 처리하는 중 문제가 발생했습니다.<br>
+        잠시 후 다시 시도해주세요.
+    </div>
+    <a class="btn-home" href="/">홈으로 돌아가기</a>
+
+    <div class="error-details" id="errorDetails" style="display: none;">
+        <div class="error-details-title">상세 정보</div>
+        <div class="error-details-content" id="errorDetailsContent"></div>
+    </div>
+</div>
+
+<script>
+    // URL 파라미터에서 에러 정보 추출
+    const urlParams = new URLSearchParams(window.location.search);
+    const error = urlParams.get('error');
+    const message = urlParams.get('message');
+    const code = urlParams.get('code');
+
+    // 에러 코드 표시
+    if (code) {
+        document.getElementById('errorCode').textContent = code;
+    }
+
+    // 에러 메시지 표시
+    if (message) {
+        document.getElementById('errorMessage').innerHTML = decodeURIComponent(message);
+    } else if (error) {
+        document.getElementById('errorMessage').innerHTML = decodeURIComponent(error);
+    }
+
+    // 상세 정보 표시
+    if (error || message || code) {
+        const details = {
+            code: code || 'UNKNOWN',
+            error: error || 'Unknown error',
+            message: message || 'No details available',
+            timestamp: new Date().toISOString()
+        };
+        document.getElementById('errorDetailsContent').textContent = JSON.stringify(details, null, 2);
+        document.getElementById('errorDetails').style.display = 'block';
+    }
+</script>
+</body>
+</html>
