@@ -1,4 +1,4 @@
-package com.umc.product.notification.application.port.service;
+package com.umc.product.notification.application.service;
 
 import com.umc.product.notification.application.port.in.SendEmailUseCase;
 import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;

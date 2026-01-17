@@ -1,4 +1,4 @@
-package com.umc.product.notification.application.port.service;
+package com.umc.product.notification.application.service;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;

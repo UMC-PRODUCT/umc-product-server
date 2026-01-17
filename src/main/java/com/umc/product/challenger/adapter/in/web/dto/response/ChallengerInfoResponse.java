@@ -17,8 +17,8 @@ public record ChallengerInfoResponse(
         String nickname,
         String email,
         Long schoolId,
-        Long schoolName,
-        Long profileImageLink,
+        String schoolName,
+        String profileImageLink,
         MemberStatus status
 ) {
 }
