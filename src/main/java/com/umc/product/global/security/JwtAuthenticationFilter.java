@@ -28,17 +28,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
 
         if (token != null && jwtTokenProvider.validateToken(token)) {
-            Long userId = jwtTokenProvider.getUserId(token);
-            List<String> roles = jwtTokenProvider.getRoles(token);
+            Long memberId = jwtTokenProvider.getMemberIdFromAccessToken(token);
+            List<String> roles = jwtTokenProvider.getRolesFromAccessToken(token);
 
-            MemberPrincipal memberPrincipal = new MemberPrincipal(userId, "");  // email은 빈 문자열
+            MemberPrincipal memberPrincipal = new MemberPrincipal(memberId);  // email은 빈 문자열
 
             List<SimpleGrantedAuthority> authorities = roles.stream()
                     .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                     .toList();
 
             // UsernamePasswordAuthenticationToken은 Authentication 인터페이스의 구현체.
-            // principal: 인증된 사용자 정보 (여기서는 userId)
+            // principal: 인증된 사용자 정보 (여기서는 memberId)
             // credentials: 인증에 사용된 자격 증명 (여기서는 null로 설정)
             // authorities: 사용자의 권한 정보 (여기서는 null로 설정)
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(

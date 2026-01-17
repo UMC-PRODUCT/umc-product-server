@@ -1,5 +1,6 @@
 package com.umc.product.member.adapter.out.persistence;
 
+import com.umc.product.authentication.adapter.out.persistence.MemberOAuthRepository;
 import com.umc.product.authentication.domain.MemberOAuth;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.member.application.port.out.LoadMemberOAuthPort;
@@ -78,7 +79,7 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     }
 
     @Override
-    public Optional<MemberOAuth> findByUserId(Long userId) {
-        return memberOAuthRepository.findByMemberId(userId);
+    public Optional<MemberOAuth> findByMemberId(Long memberId) {
+        return memberOAuthRepository.findByMemberId(memberId);
     }
 }

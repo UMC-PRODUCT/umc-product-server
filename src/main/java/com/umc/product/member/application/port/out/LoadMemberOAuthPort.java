@@ -7,5 +7,5 @@ import java.util.Optional;
 public interface LoadMemberOAuthPort {
     Optional<MemberOAuth> findByProviderAndProviderUserId(OAuthProvider provider, String providerUserId);
 
-    Optional<MemberOAuth> findByUserId(Long userId);
+    Optional<MemberOAuth> findByMemberId(Long userId);
 }
