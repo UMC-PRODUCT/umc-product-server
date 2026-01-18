@@ -3,12 +3,14 @@ package com.umc.product.recruitment.adapter.in.web;
 import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateRecruitmentRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.RecruitmentListStatusQuery;
+import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentDraftRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentInterviewPreferenceRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormResponseAnswersRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.DeleteRecruitmentFormResponseResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentApplicationFormResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentDraftFormResponseResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentDraftResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentFormResponseDetailResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentListResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentNoticeResponse;
@@ -20,14 +22,17 @@ import com.umc.product.recruitment.application.port.in.command.CreateRecruitment
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
+import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentDraftUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormResponseAnswersUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetRecruitmentDraftCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormResponseCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationInfo;
+import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentDraftCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
@@ -76,6 +81,7 @@ public class RecruitmentController {
     private final CreateRecruitmentUseCase createRecruitmentUseCase;
     private final GetRecruitmentListUseCase getRecruitmentListUseCase;
     private final DeleteRecruitmentUseCase deleteRecruitmentUseCase;
+    private final UpdateRecruitmentDraftUseCase updateRecruitmentDraftUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
@@ -272,5 +278,29 @@ public class RecruitmentController {
     ) {
         DeleteRecruitmentCommand command = new DeleteRecruitmentCommand(memberId, recruitmentId);
         deleteRecruitmentUseCase.delete(command);
+    }
+
+    @PatchMapping("/{recruitmentId}")
+    @Operation(
+            summary = "모집 임시저장(부분 업데이트)",
+            description = """
+                    모집 생성 플로우의 각 단계에서 임시저장 용도로 호출합니다.
+                    - request body 필드는 모두 optional이며, 전달된 필드만 갱신됩니다.
+                    - interviewTimeTable은 enabledByDate만 전달합니다.
+                      disabledByDate는 서버가 dateRange/timeRange/slotMinutes 기준으로 계산하여 응답에 포함합니다.
+                    - maxPreferredPartCount는 '희망 파트' 질문 설정 변경 시 recruitment에 저장합니다.
+                    """
+    )
+    public RecruitmentDraftResponse updateDraftRecruitment(
+            Long memberId,
+            @PathVariable Long recruitmentId,
+            @RequestBody(required = false) UpdateRecruitmentDraftRequest request
+    ) {
+        UpdateRecruitmentDraftRequest req = (request == null) ? UpdateRecruitmentDraftRequest.empty() : request;
+
+        UpdateRecruitmentDraftCommand command = req.toCommand(recruitmentId, memberId);
+        RecruitmentDraftInfo info = updateRecruitmentDraftUseCase.update(command);
+
+        return RecruitmentDraftResponse.from(info);
     }
 }
