@@ -18,11 +18,13 @@ import com.umc.product.recruitment.adapter.in.web.dto.response.UpsertRecruitment
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
+import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormResponseAnswersUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetRecruitmentDraftCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormResponseCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationInfo;
@@ -73,6 +75,7 @@ public class RecruitmentController {
     private final SubmitRecruitmentApplicationUseCase submitRecruitmentApplicationUseCase;
     private final CreateRecruitmentUseCase createRecruitmentUseCase;
     private final GetRecruitmentListUseCase getRecruitmentListUseCase;
+    private final DeleteRecruitmentUseCase deleteRecruitmentUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
@@ -245,13 +248,29 @@ public class RecruitmentController {
                     """
     )
     public RecruitmentListResponse getRecruitments(
+            Long memberId,
             @RequestParam(name = "status") RecruitmentListStatusQuery status
     ) {
         RecruitmentListStatus appStatus = RecruitmentListStatus.valueOf(status.name());
 
-        GetRecruitmentListQuery query = new GetRecruitmentListQuery(appStatus);
+        GetRecruitmentListQuery query = new GetRecruitmentListQuery(memberId, appStatus);
 
         RecruitmentListInfo info = getRecruitmentListUseCase.getList(query);
         return RecruitmentListResponse.from(info);
+    }
+
+    @DeleteMapping("{recruitmentId}")
+    @Operation(
+            summary = "모집 삭제",
+            description = """
+                    recruitmentId에 해당하는 모집을 삭제합니다.
+                    """
+    )
+    public void deleteRecruitment(
+            Long memberId,
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
+    ) {
+        DeleteRecruitmentCommand command = new DeleteRecruitmentCommand(memberId, recruitmentId);
+        deleteRecruitmentUseCase.delete(command);
     }
 }
