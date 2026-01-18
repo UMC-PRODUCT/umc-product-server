@@ -3,13 +3,14 @@ name: CD
 on:
   push:
     branches:
-      - develop
       - main
+      - develop
     paths:
       - 'src/**'
       - 'build.gradle.kts'
       - 'docker/**'
-      - 'cd.yml'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/cd.yml'
 
   workflow_dispatch:
     inputs:
@@ -18,8 +19,8 @@ on:
         required: true
         type: choice
         options:
-          - dev
-          - prod
+          - Development
+          - Production
 
 jobs:
   # 1. 공통 빌드/테스트 워크플로우 호출 (ci.yml 재사용)
@@ -29,6 +30,9 @@ jobs:
       contents: read
       checks: write
       pull-requests: write
+      packages: write
+      statuses: write
+      deployments: write
     secrets: inherit
     with:
       environment: ${{ inputs.environment }}
@@ -37,7 +41,7 @@ jobs:
   deploy:
     needs: ci-and-build
     if: needs.ci-and-build.outputs.environment != 'test'
-    runs-on: self-hosted
+    runs-on: [ self-hosted, cd-runner ]
     # 빌드 단계에서 결정된 환경 사용
     environment: ${{ needs.ci-and-build.outputs.environment }}
 
@@ -48,6 +52,20 @@ jobs:
 
     steps:
       - name: 🔍 환경변수 검증
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKERHUB_REPOSITORY_NAME: ${{ secrets.DOCKERHUB_REPOSITORY_NAME }}
+          SERVER_APP_DIRECTORY: ${{ secrets.SERVER_APP_DIRECTORY }}
+          SERVER_SSH_HOST: ${{ secrets.SERVER_SSH_HOST }}
+          SERVER_SSH_USERNAME: ${{ secrets.SERVER_SSH_USERNAME }}
+          SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
+          DOCKER_COMPOSE_ENV: ${{ secrets.DOCKER_COMPOSE_ENV }}
+          APPLICATION_SECRET: ${{ secrets.APPLICATION_SECRET }}
+          APPLICATION_PROFILE_SECRET: ${{ secrets.APPLICATION_PROFILE_SECRET }}
+          APP_ENVIRONMENT: ${{ env.ENVIRONMENT }}
+          APP_IMAGE_TAG: ${{ env.IMAGE_TAG }}
         run: |
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🔍 필수 환경 변수 검증 시작..."
@@ -55,32 +73,27 @@ jobs:
           
           MISSING_VARS=()
           
-          # Docker Hub 관련
           echo "📦 Docker Hub 자격증명 확인..."
-          [[ -z "${{ secrets.DOCKERHUB_USERNAME }}" ]] && MISSING_VARS+=("DOCKERHUB_USERNAME")
-          [[ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]] && MISSING_VARS+=("DOCKERHUB_TOKEN")
-          [[ -z "${{ secrets.DOCKERHUB_REPOSITORY_NAME }}" ]] && MISSING_VARS+=("DOCKERHUB_REPOSITORY_NAME")
+          [[ -z "$DOCKERHUB_USERNAME" ]] && MISSING_VARS+=("DOCKERHUB_USERNAME")
+          [[ -z "$DOCKERHUB_TOKEN" ]] && MISSING_VARS+=("DOCKERHUB_TOKEN")
+          [[ -z "$DOCKERHUB_REPOSITORY_NAME" ]] && MISSING_VARS+=("DOCKERHUB_REPOSITORY_NAME")
           
-          # 서버 SSH 관련
           echo "🔐 SSH 접속 정보 확인..."
-          [[ -z "${{ secrets.SERVER_APP_DIRECTORY }}" ]] && MISSING_VARS+=("SERVER_APP_DIRECTORY")
-          [[ -z "${{ secrets.SERVER_SSH_HOST }}" ]] && MISSING_VARS+=("SERVER_SSH_HOST")
-          [[ -z "${{ secrets.SERVER_SSH_USERNAME }}" ]] && MISSING_VARS+=("SERVER_SSH_USERNAME")
-          [[ -z "${{ secrets.SERVER_SSH_PRIVATE_KEY }}" ]] && MISSING_VARS+=("SERVER_SSH_PRIVATE_KEY")
-          [[ -z "${{ secrets.SERVER_SSH_PORT }}" ]] && MISSING_VARS+=("SERVER_SSH_PORT")
+          [[ -z "$SERVER_APP_DIRECTORY" ]] && MISSING_VARS+=("SERVER_APP_DIRECTORY")
+          [[ -z "$SERVER_SSH_HOST" ]] && MISSING_VARS+=("SERVER_SSH_HOST")
+          [[ -z "$SERVER_SSH_USERNAME" ]] && MISSING_VARS+=("SERVER_SSH_USERNAME")
+          [[ -z "$SERVER_SSH_PRIVATE_KEY" ]] && MISSING_VARS+=("SERVER_SSH_PRIVATE_KEY")
+          [[ -z "$SERVER_SSH_PORT" ]] && MISSING_VARS+=("SERVER_SSH_PORT")
           
-          # 애플리케이션 설정 관련
           echo "⚙️  애플리케이션 설정 확인..."
-          [[ -z "${{ secrets.DOCKER_COMPOSE_ENV }}" ]] && MISSING_VARS+=("DOCKER_COMPOSE_ENV")
-          [[ -z "${{ secrets.APPLICATION_SECRET }}" ]] && MISSING_VARS+=("APPLICATION_SECRET")
-          [[ -z "${{ secrets.APPLICATION_PROFILE_SECRET }}" ]] && MISSING_VARS+=("APPLICATION_PROFILE_SECRET")
+          [[ -z "$DOCKER_COMPOSE_ENV" ]] && MISSING_VARS+=("DOCKER_COMPOSE_ENV")
+          [[ -z "$APPLICATION_SECRET" ]] && MISSING_VARS+=("APPLICATION_SECRET")
+          [[ -z "$APPLICATION_PROFILE_SECRET" ]] && MISSING_VARS+=("APPLICATION_PROFILE_SECRET")
           
-          # Environment 변수
           echo "🌍 환경 변수 확인..."
-          [[ -z "${{ env.ENVIRONMENT }}" ]] && MISSING_VARS+=("ENVIRONMENT")
-          [[ -z "${{ env.IMAGE_TAG }}" ]] && MISSING_VARS+=("IMAGE_TAG")
+          [[ -z "$APP_ENVIRONMENT" ]] && MISSING_VARS+=("ENVIRONMENT")
+          [[ -z "$APP_IMAGE_TAG" ]] && MISSING_VARS+=("IMAGE_TAG")
           
-          # 검증 결과 확인
           if [ ${#MISSING_VARS[@]} -gt 0 ]; then
             echo ""
             echo "❌ 다음 환경 변수들이 설정되지 않았습니다:"
@@ -91,7 +104,6 @@ jobs:
           
           echo ""
           echo "✅ 모든 필수 환경 변수가 설정되었습니다."
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: 📥 코드베이스 체크아웃
         uses: actions/checkout@v4
@@ -134,25 +146,32 @@ jobs:
             echo "🚀 배포 시작: ${{ env.ENVIRONMENT }} 환경"
             echo "=============================="
             
-            # Docker 경로 확인
-            echo "[1] Docker 설치 확인"
-            if which docker > /dev/null 2>&1; then
-              echo "✅ Docker 인식됨: $(which docker)"
-            else
-              echo "⚠️  PATH에 /usr/local/bin 추가"
-              export PATH="$PATH:/usr/local/bin"
-              if which docker > /dev/null 2>&1; then
-                echo "✅ Docker 인식됨: $(which docker)"
-              else
-                echo "❌ Docker를 찾을 수 없습니다"
-                exit 1
-              fi
+            # 환경 변수 설정
+            export XDG_RUNTIME_DIR=/run/user/$(id -u)
+            export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock
+            export PATH="$PATH:/usr/local/bin"
+            
+            # Docker 환경 검증
+            echo "[1] Docker 환경 확인"
+            echo "  - DOCKER_HOST: $DOCKER_HOST"
+            echo "  - User ID: $(id -u)"
+            echo "  - Docker Path: $(which docker)"
+            
+            if ! docker info &>/dev/null; then
+              echo "❌ Docker daemon에 연결할 수 없습니다"
+              echo "Docker 서비스 상태:"
+              systemctl --user status docker
+              exit 1
             fi
+            echo "✅ Docker 환경 정상"
             
             # Docker Hub 로그인
             echo ""
-            echo "[2] Docker Hub 로그인"
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+             echo "[2] Docker Hub 로그인 (GHCR)"
+            # echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+            
+            # GHCR 로그인
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             if [ $? -eq 0 ]; then
               echo "✅ Docker Hub 로그인 성공"
             else
@@ -179,9 +198,23 @@ jobs:
             # SpringBoot Config 파일들 로딩
             echo ""
             echo "📝 Spring Boot 설정 파일 생성 중..."
+            
+            case "$ENVIRONMENT" in
+              "Production") PROFILE="prod" ;;
+              "Development") PROFILE="dev" ;;
+              "Test") PROFILE="test" ;;
+              *) PROFILE="dev" ;;
+            esac
+            
             mkdir -p ${{ secrets.SERVER_APP_DIRECTORY }}/config
-            echo "${{ secrets.APPLICATION_SECRET }}" > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-secret.yml
-            echo "${{ secrets.APPLICATION_PROFILE_SECRET }}" > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-${ENVIRONMENT}.yml
+            
+            cat > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-secret.yml << 'EOF'
+            ${{ secrets.APPLICATION_SECRET }}
+            EOF
+            
+            cat > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-${PROFILE}.yml << 'EOF'
+            ${{ secrets.APPLICATION_PROFILE_SECRET }}
+            EOF
             
             # 기존 컨테이너 중지 및 제거
             echo ""

@@ -3,6 +3,7 @@
 server:
   port: ${SERVER_PORT:8080}
   shutdown: graceful
+  forward-headers-strategy: framework
   # tomcat tuning options (나중에 test 하면서 추가)
 #  tomcat:
 #    threads:
