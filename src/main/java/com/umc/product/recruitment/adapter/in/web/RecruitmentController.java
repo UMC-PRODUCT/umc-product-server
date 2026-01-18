@@ -5,6 +5,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.request.CreateRecruitmentR
 import com.umc.product.recruitment.adapter.in.web.dto.request.RecruitmentListStatusQuery;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentDraftRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentInterviewPreferenceRequest;
+import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormQuestionsRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormResponseAnswersRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.CreateRecruitmentResponse;
@@ -24,6 +25,7 @@ import com.umc.product.recruitment.application.port.in.command.DeleteRecruitment
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentDraftUseCase;
+import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormQuestionsUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormResponseAnswersUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetRecruitmentDraftCommand;
@@ -48,12 +50,14 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentA
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentFormResponseDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentNoticeQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormResponseDetailInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentListInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -84,6 +88,7 @@ public class RecruitmentController {
     private final GetRecruitmentListUseCase getRecruitmentListUseCase;
     private final DeleteRecruitmentUseCase deleteRecruitmentUseCase;
     private final UpdateRecruitmentDraftUseCase updateRecruitmentDraftUseCase;
+    private final UpsertRecruitmentFormQuestionsUseCase upsertRecruitmentFormQuestionsUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
@@ -307,5 +312,25 @@ public class RecruitmentController {
         RecruitmentDraftInfo info = updateRecruitmentDraftUseCase.update(command);
 
         return RecruitmentDraftResponse.from(info);
+    }
+
+    @PatchMapping("/{recruitmentId}/application-form")
+    @Operation(
+            summary = "운영진 지원서 폼 문항 임시저장",
+            description = """
+                    해당 모집의 지원서 폼(FormDefinition)에 질문을 단건/다건 upsert 합니다.
+                    - questionId 없으면 생성, 있으면 수정
+                    - target.kind=COMMON_PAGE → pageNo 필수
+                    - target.kind=PART → part 필수
+                    """
+    )
+    public RecruitmentApplicationFormResponse upsertRecruitmentFormQuestions(
+            @Parameter(description = "모집 ID", required = true)
+            @PathVariable @NotNull Long recruitmentId,
+            @Valid @RequestBody UpsertRecruitmentFormQuestionsRequest request
+    ) {
+        RecruitmentApplicationFormInfo info = upsertRecruitmentFormQuestionsUseCase.upsert(
+                request.toCommand(recruitmentId));
+        return RecruitmentApplicationFormResponse.from(info);
     }
 }

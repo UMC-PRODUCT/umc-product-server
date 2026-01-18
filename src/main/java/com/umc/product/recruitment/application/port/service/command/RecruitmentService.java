@@ -6,18 +6,22 @@ import com.umc.product.recruitment.application.port.in.command.DeleteRecruitment
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentDraftUseCase;
+import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormQuestionsUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormResponseAnswersUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetRecruitmentDraftCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormResponseCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentDraftCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormQuestionsCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,7 +31,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         SubmitRecruitmentApplicationUseCase,
         CreateRecruitmentUseCase,
         DeleteRecruitmentUseCase,
-        UpdateRecruitmentDraftUseCase {
+        UpdateRecruitmentDraftUseCase,
+        UpsertRecruitmentFormQuestionsUseCase {
 
     @Override
     public CreateOrGetDraftFormResponseInfo createOrGet(CreateOrGetRecruitmentDraftCommand command) {
@@ -50,7 +55,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     @Override
-    public Long create(CreateRecruitmentCommand command) {
+    public CreateRecruitmentInfo create(CreateRecruitmentCommand command) {
         return null;
     }
 
@@ -61,6 +66,11 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public RecruitmentDraftInfo update(UpdateRecruitmentDraftCommand command) {
+        return null;
+    }
+
+    @Override
+    public RecruitmentApplicationFormInfo upsert(UpsertRecruitmentFormQuestionsCommand command) {
         return null;
     }
 }
