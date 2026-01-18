@@ -1,6 +1,5 @@
 package com.umc.product.organization.adapter.in.web.dto.response;
 
-import com.umc.product.organization.application.port.in.query.dto.PartInfo;
 import com.umc.product.organization.application.port.in.query.dto.PartSummaryInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
@@ -23,13 +22,13 @@ public record StudyGroupPartsResponse(
             @Schema(description = "파트 표시명", example = "웹") String partDisplayName,
             @Schema(description = "스터디 그룹 수", example = "3") int studyGroupCount,
             @Schema(description = "멤버 수", example = "12") int memberCount) {
-        public static Part from(PartInfo p) {
+        public static Part from(PartSummaryInfo.PartInfo p) {
             return new Part(
                     p.part().name(), p.part().getDisplayName(),
                     p.studyGroupCount(), p.memberCount());
         }
 
-        public static List<Part> fromList(List<PartInfo> list) {
+        public static List<Part> fromList(List<PartSummaryInfo.PartInfo> list) {
             return list.stream().map(Part::from).toList();
         }
     }

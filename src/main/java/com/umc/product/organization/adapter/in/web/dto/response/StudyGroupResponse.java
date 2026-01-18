@@ -1,6 +1,5 @@
 package com.umc.product.organization.adapter.in.web.dto.response;
 
-import com.umc.product.organization.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
@@ -38,7 +37,7 @@ public record StudyGroupResponse(
                         @Schema(description = "멤버 ID", example = "1") Long memberId,
                         @Schema(description = "이름", example = "홍길동") String name,
                         @Schema(description = "프로필 이미지 URL") String profileImageUrl) {
-                public static Leader from(MemberInfo leader) {
+                public static Leader from(StudyGroupDetailInfo.MemberInfo leader) {
                         if (leader == null)
                                 return null;
                         return new Leader(
@@ -53,11 +52,11 @@ public record StudyGroupResponse(
                         @Schema(description = "멤버 ID", example = "2") Long memberId,
                         @Schema(description = "이름", example = "김철수") String name,
                         @Schema(description = "프로필 이미지 URL") String profileImageUrl) {
-                public static Member from(MemberInfo m) {
+                public static Member from(StudyGroupDetailInfo.MemberInfo m) {
                         return new Member(m.challengerId(), m.memberId(), m.name(), m.profileImageUrl());
                 }
 
-                public static List<Member> fromList(List<MemberInfo> list) {
+                public static List<Member> fromList(List<StudyGroupDetailInfo.MemberInfo> list) {
                         return list.stream().map(Member::from).toList();
                 }
         }

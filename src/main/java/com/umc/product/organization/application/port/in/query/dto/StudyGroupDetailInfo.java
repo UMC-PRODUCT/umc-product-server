@@ -15,4 +15,11 @@ public record StudyGroupDetailInfo(
         MemberInfo leader,
         List<MemberInfo> members
 ) {
+    public record MemberInfo(
+            Long challengerId,
+            Long memberId,
+            String name,
+            String profileImageUrl
+    ) {
+    }
 }
