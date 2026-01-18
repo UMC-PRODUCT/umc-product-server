@@ -16,4 +16,11 @@ public record StudyGroupListQuery(
             size = 100;
         }
     }
+
+    /**
+     * Repository 조회 시 사용할 size (hasNext 판단을 위해 +1)
+     */
+    public int fetchSize() {
+        return size + 1;
+    }
 }

@@ -1,7 +1,7 @@
 package com.umc.product.organization.application.port.in.query.dto;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 public record StudyGroupDetailInfo(
@@ -10,7 +10,7 @@ public record StudyGroupDetailInfo(
         ChallengerPart part,
         Long schoolId,
         String schoolName,
-        LocalDateTime createdAt,
+        Instant createdAt,
         int memberCount,
         MemberInfo leader,
         List<MemberInfo> members

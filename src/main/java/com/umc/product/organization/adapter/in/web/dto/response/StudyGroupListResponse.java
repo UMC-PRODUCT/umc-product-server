@@ -10,9 +10,6 @@ import java.util.List;
  */
 public final class StudyGroupListResponse {
 
-        private StudyGroupListResponse() {
-        }
-
         @Schema(description = "스터디 그룹 요약 정보")
         public record Summary(
                         @Schema(description = "스터디 그룹 ID", example = "1") Long groupId,

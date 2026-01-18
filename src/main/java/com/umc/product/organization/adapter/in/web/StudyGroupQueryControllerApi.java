@@ -17,21 +17,23 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 /**
  * 스터디 그룹 조회 API (단계별 drill-down)
  *
+ * <p>모든 조회는 현재 활성화된 기수(isActive=true) 기준으로 동작합니다.</p>
+ *
  * <h2>권한별 API 접근 흐름</h2>
  *
  * <h3>1. 중앙 운영진</h3>
- * 
+ *
  * <pre>
- * GET /schools?gisuId=9
+ * GET /schools
  *   → 학교 목록 (서울대, 연세대, 고려대, ...)
  *   → 학교 선택
  *
- * GET /schools/{schoolId}/parts?gisuId=9
+ * GET /schools/{schoolId}/parts
  *   → 파트 목록 (WEB, SERVER, iOS, ...)
  *   → 파트 선택
  *
  * GET /?schoolId=1&part=WEB&cursor=&size=20
- *   → 스터디 그룹 목록 (무한스크롤, 현재 활성화된 기수 기반)
+ *   → 스터디 그룹 목록 (무한스크롤)
  *   → 그룹 선택
  *
  * GET /{groupId}
@@ -39,67 +41,65 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  * </pre>
  *
  * <h3>2. 중앙 파트장</h3>
- * 
+ *
  * <pre>
- * GET /schools?gisuId=9
+ * GET /schools
  *   → 학교 목록
  *   → 학교 선택
  *
- * GET /schools/{schoolId}/parts?gisuId=9
+ * GET /schools/{schoolId}/parts
  *   → 본인 파트만 반환 (ABAC 필터링)
  *   → 파트 선택 (자동)
  *
  * GET /?schoolId=1&part={본인파트}&cursor=&size=20
- *   → 스터디 그룹 목록 (무한스크롤, 현재 활성화된 기수 기반)
+ *   → 스터디 그룹 목록 (무한스크롤)
  *
  * GET /{groupId}
  *   → 스터디 그룹 상세
  * </pre>
  *
  * <h3>3. 회장</h3>
- * 
+ *
  * <pre>
- * GET /schools/{본인학교ID}/parts?gisuId=9
+ * GET /schools/{본인학교ID}/parts
  *   → 파트 목록 (모든 파트)
  *   → 파트 선택
  *
  * GET /?schoolId={본인학교}&part=WEB&cursor=&size=20
- *   → 스터디 그룹 목록 (무한스크롤, 현재 활성화된 기수 기반)
+ *   → 스터디 그룹 목록 (무한스크롤)
  *
  * GET /{groupId}
  *   → 스터디 그룹 상세
  * </pre>
  *
  * <h3>4. 파트장</h3>
- * 
+ *
  * <pre>
  * GET /?schoolId={본인학교}&part={본인파트}&cursor=&size=20
- *   → 스터디 그룹 목록 (무한스크롤, 현재 활성화된 기수 기반)
+ *   → 스터디 그룹 목록 (무한스크롤)
  *
  * GET /{groupId}
  *   → 스터디 그룹 상세
  * </pre>
  */
-@Tag(name = "StudyGroup Query", description = "스터디 그룹 조회 API (단계별 drill-down)")
+@Tag(name = "StudyGroup Query", description = "스터디 그룹 조회 API")
 public interface StudyGroupQueryControllerApi {
 
-        @Operation(summary = "1단계: 학교 목록 조회", description = "스터디 그룹이 있는 학교 목록을 조회합니다. 중앙 운영진, 중앙 파트장용.")
+        @Operation(summary = "학교 목록 조회", description = "스터디 그룹이 있는 학교 목록을 조회합니다. 활성 기수 기준. By 박박지현")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupSchoolsResponse.class)))
         })
-        StudyGroupSchoolsResponse getSchools(
-                        @Parameter(description = "기수 ID", required = true) Long gisuId);
+        StudyGroupSchoolsResponse getSchools();
 
-        @Operation(summary = "2단계: 파트 목록 조회", description = "특정 학교의 파트별 스터디 그룹 요약을 조회합니다.")
+        @Operation(summary = "파트 목록 조회", description = "특정 학교의 파트별 스터디 그룹 요약을 조회합니다. 활성 기수 기준. By 박박지현")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupPartsResponse.class))),
                         @ApiResponse(responseCode = "404", description = "학교를 찾을 수 없음")
         })
         StudyGroupPartsResponse getParts(
-                        @Parameter(description = "학교 ID", required = true) Long schoolId,
-                        @Parameter(description = "기수 ID", required = true) Long gisuId);
+                        @Parameter(description = "학교 ID", required = true) Long schoolId);
 
-        @Operation(summary = "3단계: 스터디 그룹 목록 조회", description = "특정 학교, 파트의 스터디 그룹 목록을 조회합니다. cursor 기반 무한스크롤. 현재 활성화된 기수 기반으로 조회합니다.")
+        @Operation(summary = "스터디 그룹 목록 조회", description = "특정 학교, 파트의 스터디 그룹 목록을 조회합니다. cursor 기반 무한스크롤. 활성 기수 기준. By 박박지현")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공")
         })
@@ -109,7 +109,7 @@ public interface StudyGroupQueryControllerApi {
                         @Parameter(description = "페이지 커서 (첫 페이지는 null)") Long cursor,
                         @Parameter(description = "페이지 크기 (기본 20, 최대 100)") int size);
 
-        @Operation(summary = "4단계: 스터디 그룹 상세 조회", description = "스터디 그룹의 상세 정보와 멤버 목록을 조회합니다.")
+        @Operation(summary = "스터디 그룹 상세 조회", description = "스터디 그룹의 상세 정보와 멤버 목록을 조회합니다. By 박박지현")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupResponse.class))),
                         @ApiResponse(responseCode = "404", description = "스터디 그룹을 찾을 수 없음")
