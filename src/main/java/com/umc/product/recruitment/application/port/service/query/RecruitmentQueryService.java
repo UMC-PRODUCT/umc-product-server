@@ -1,6 +1,7 @@
 package com.umc.product.recruitment.application.port.service.query;
 
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetMyApplicationListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDashboardUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentFormResponseDetailUseCase;
@@ -9,11 +10,13 @@ import com.umc.product.recruitment.application.port.in.query.GetRecruitmentNotic
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentScheduleUseCase;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentFormResponseDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentNoticeQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentScheduleQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.MyApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentDashboardInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormResponseDetailInfo;
@@ -32,7 +35,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         GetRecruitmentFormResponseDetailUseCase,
         GetRecruitmentListUseCase,
         GetRecruitmentScheduleUseCase,
-        GetRecruitmentDashboardUseCase {
+        GetRecruitmentDashboardUseCase,
+        GetMyApplicationListUseCase {
 
     @Override
     public ActiveRecruitmentInfo get(GetActiveRecruitmentQuery query) {
@@ -68,6 +72,11 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     @Override
     public RecruitmentDashboardInfo get(Long recruitmentId) {
+        return null;
+    }
+
+    @Override
+    public MyApplicationListInfo get(GetMyApplicationListQuery query) {
         return null;
     }
 }
