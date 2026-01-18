@@ -1,8 +1,10 @@
 package com.umc.product.notification.adapter.in.web;
 
+import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.notification.application.port.in.SendEmailUseCase;
 import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.mail.MessagingException;
 import java.io.UnsupportedEncodingException;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/notification/email")
 @Profile("local | dev")
 @RequiredArgsConstructor
+@Tag(name = Constants.NOTIFICATION)
 public class EmailController {
 
     private final SendEmailUseCase sendEmailUseCase;

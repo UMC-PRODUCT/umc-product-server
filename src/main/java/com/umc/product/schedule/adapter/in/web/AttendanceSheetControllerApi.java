@@ -1,5 +1,6 @@
 package com.umc.product.schedule.adapter.in.web;
 
+import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.schedule.adapter.in.web.dto.request.CreateAttendanceSheetRequest;
 import com.umc.product.schedule.adapter.in.web.dto.request.UpdateAttendanceSheetRequest;
 import com.umc.product.schedule.adapter.in.web.dto.response.AttendanceSheetResponse;
@@ -7,7 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "Attendance Sheet", description = "출석부 관리 API (관리자)")
+@Tag(name = Constants.SCHEDULE)
 public interface AttendanceSheetControllerApi {
 
     @Operation(summary = "출석부 조회", description = "일정에 대한 출석부를 조회합니다")

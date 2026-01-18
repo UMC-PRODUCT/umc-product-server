@@ -4,6 +4,7 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.notice.domain.enums.NoticeClassification;
+import com.umc.product.notice.domain.enums.NoticeStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -43,6 +44,10 @@ public class Notice extends BaseEntity {
 
     @Column(name = "author_challenger_id", nullable = false)
     private Long authorChallengerId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private NoticeStatus status; /* DRAFT, PUBLISHED */
 
     private boolean shouldNotify; /* 알림발송 여부 */
 
