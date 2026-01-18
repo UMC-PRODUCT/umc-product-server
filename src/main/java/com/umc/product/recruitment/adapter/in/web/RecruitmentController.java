@@ -2,6 +2,7 @@ package com.umc.product.recruitment.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateRecruitmentRequest;
+import com.umc.product.recruitment.adapter.in.web.dto.request.RecruitmentListStatusQuery;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentInterviewPreferenceRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormResponseAnswersRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
@@ -9,6 +10,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.response.DeleteRecruitment
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentApplicationFormResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentDraftFormResponseResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentFormResponseDetailResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentListResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentNoticeResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.SubmitRecruitmentApplicationResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateRecruitmentInterviewPreferenceResponse;
@@ -28,13 +30,17 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruit
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentFormResponseDetailUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetRecruitmentListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentNoticeUseCase;
+import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentFormResponseDetailQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentNoticeQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormResponseDetailInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentListInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -66,6 +72,7 @@ public class RecruitmentController {
     private final DeleteRecruitmentFormResponseUseCase deleteRecruitmentFormResponseUseCase;
     private final SubmitRecruitmentApplicationUseCase submitRecruitmentApplicationUseCase;
     private final CreateRecruitmentUseCase createRecruitmentUseCase;
+    private final GetRecruitmentListUseCase getRecruitmentListUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
@@ -228,5 +235,23 @@ public class RecruitmentController {
         );
 
         return createRecruitmentUseCase.create(command);
+    }
+
+    @GetMapping("")
+    @Operation(
+            summary = "모집 목록 조회",
+            description = """
+                    운영진 view에서 모집 목록을 상태에 따라 조회하는 API입니다.
+                    """
+    )
+    public RecruitmentListResponse getRecruitments(
+            @RequestParam(name = "status") RecruitmentListStatusQuery status
+    ) {
+        RecruitmentListStatus appStatus = RecruitmentListStatus.valueOf(status.name());
+
+        GetRecruitmentListQuery query = new GetRecruitmentListQuery(appStatus);
+
+        RecruitmentListInfo info = getRecruitmentListUseCase.getList(query);
+        return RecruitmentListResponse.from(info);
     }
 }
