@@ -2,6 +2,7 @@ package com.umc.product.recruitment.application.port.service.query;
 
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDashboardUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentFormResponseDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentNoticeUseCase;
@@ -14,6 +15,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentL
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentNoticeQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentScheduleQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentDashboardInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormResponseDetailInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentNoticeInfo;
@@ -29,7 +31,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         GetRecruitmentApplicationFormUseCase,
         GetRecruitmentFormResponseDetailUseCase,
         GetRecruitmentListUseCase,
-        GetRecruitmentScheduleUseCase {
+        GetRecruitmentScheduleUseCase,
+        GetRecruitmentDashboardUseCase {
 
     @Override
     public ActiveRecruitmentInfo get(GetActiveRecruitmentQuery query) {
@@ -60,6 +63,11 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     @Override
     public RecruitmentScheduleInfo get(GetRecruitmentScheduleQuery query) {
+        return null;
+    }
+
+    @Override
+    public RecruitmentDashboardInfo get(Long recruitmentId) {
         return null;
     }
 }
