@@ -30,6 +30,9 @@ jobs:
       contents: read
       checks: write
       pull-requests: write
+      packages: write
+      statuses: write
+      deployments: write
     secrets: inherit
     with:
       environment: ${{ inputs.environment }}

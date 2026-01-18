@@ -54,6 +54,9 @@ jobs:
       contents: read
       checks: write
       pull-requests: write
+      packages: write
+      statuses: write
+      deployments: write
 
     outputs:
       environment: ${{ steps.set-env.outputs.environment }}
@@ -128,18 +131,6 @@ jobs:
           files: build/test-results/test/*.xml
           check_name: "Backend Test Results"
 
-      - name: ⚠️ 테스트 실패 시 Comment 작성 (PR인 경우)
-        if: steps.test.outcome == 'failure' && github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '⚠️ 테스트가 실패했습니다. 테스트 결과를 확인해주세요.'
-            })
-
       - name: 🏗️ Build JAR
         run: ./gradlew bootJar
 
@@ -184,6 +175,35 @@ jobs:
       #          cache-from: type=gha
       #          #          cache-to: type=gha,mode=max
       #          cache-to: type=gha,mode=min
+      - name: 📝 PR Comment & Commit Status
+        if: always()  # 성공/실패 모두 실행
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const testFailed = '${{ steps.test.outcome }}' === 'failure';
+            const isPR = context.eventName === 'pull_request';
+            
+            // 테스트 실패 + PR이면 코멘트 작성
+            if (testFailed && isPR) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '⚠️ 테스트가 실패했습니다. 테스트 결과를 확인해주세요.'
+              });
+            }
+            
+            // 커밋 상태 생성
+            // status는 다음 중 하나: 'error', 'failure', 'pending', 'success'
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: testFailed ? 'failure' : 'success',
+              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              description: testFailed ? '테스트가 실패했습니다' : '빌드가 성공했습니다!',
+              context: 'Product Team CI'
+            });
 
       - name: 📝 Build Summary
         if: always()
