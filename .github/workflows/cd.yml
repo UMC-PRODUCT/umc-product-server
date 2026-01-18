@@ -198,9 +198,17 @@ jobs:
             # SpringBoot Config 파일들 로딩
             echo ""
             echo "📝 Spring Boot 설정 파일 생성 중..."
+            
+            case "$ENVIRONMENT" in
+              "Production") PROFILE="prod" ;;
+              "Development") PROFILE="dev" ;;
+              "Test") PROFILE="test" ;;
+              *) PROFILE="dev" ;;
+            esac
+            
             mkdir -p ${{ secrets.SERVER_APP_DIRECTORY }}/config
             echo "${{ secrets.APPLICATION_SECRET }}" > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-secret.yml
-            echo "${{ secrets.APPLICATION_PROFILE_SECRET }}" > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-${ENVIRONMENT}.yml
+            echo "${{ secrets.APPLICATION_PROFILE_SECRET }}" > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-${PROFILE}.yml
             
             # 기존 컨테이너 중지 및 제거
             echo ""
