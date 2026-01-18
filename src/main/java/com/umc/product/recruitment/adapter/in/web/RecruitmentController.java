@@ -2,6 +2,7 @@ package com.umc.product.recruitment.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateRecruitmentRequest;
+import com.umc.product.recruitment.adapter.in.web.dto.request.PublishRecruitmentRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.RecruitmentListStatusQuery;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentDraftRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentInterviewPreferenceRequest;
@@ -10,6 +11,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentF
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.CreateRecruitmentResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.DeleteRecruitmentFormResponseResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.PublishRecruitmentResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentApplicationFormResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentDraftFormResponseResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentDraftResponse;
@@ -23,6 +25,7 @@ import com.umc.product.recruitment.application.port.in.command.CreateRecruitment
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentUseCase;
+import com.umc.product.recruitment.application.port.in.command.PublishRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentDraftUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormQuestionsUseCase;
@@ -89,6 +92,7 @@ public class RecruitmentController {
     private final DeleteRecruitmentUseCase deleteRecruitmentUseCase;
     private final UpdateRecruitmentDraftUseCase updateRecruitmentDraftUseCase;
     private final UpsertRecruitmentFormQuestionsUseCase upsertRecruitmentFormQuestionsUseCase;
+    private final PublishRecruitmentUseCase publishRecruitmentUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
@@ -333,4 +337,27 @@ public class RecruitmentController {
                 request.toCommand(recruitmentId));
         return RecruitmentApplicationFormResponse.from(info);
     }
+
+    @PostMapping("/{recruitmentId}/publish")
+    @Operation(
+            summary = "모집(지원서 폼) 최종 저장/발행",
+            description = """
+                    모집 draft + 지원서 폼 질문 draft를 최종 반영한 뒤, 발행(PUBLISHED) 처리합니다.
+                    - recruitmentDraft, applicationFormQuestions 둘 중 하나만 보내도 됩니다(부분 반영 가능).
+                    - 서버는 최종 반영 후 발행 가능 조건을 검증합니다. 검증 실패 시 발행되지 않습니다.
+                    """
+    )
+    public PublishRecruitmentResponse publishRecruitment(
+            Long memberId,
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId,
+            @RequestBody(required = false) PublishRecruitmentRequest request
+    ) {
+        PublishRecruitmentRequest req = (request == null) ? PublishRecruitmentRequest.empty() : request;
+
+        var command = req.toCommand(recruitmentId, memberId);
+        var info = publishRecruitmentUseCase.publish(command);
+
+        return PublishRecruitmentResponse.from(info);
+    }
+
 }

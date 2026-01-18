@@ -4,6 +4,7 @@ import com.umc.product.recruitment.application.port.in.command.CreateRecruitment
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentUseCase;
+import com.umc.product.recruitment.application.port.in.command.PublishRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentDraftUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormQuestionsUseCase;
@@ -14,6 +15,8 @@ import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruit
 import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormResponseCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.PublishRecruitmentCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.PublishRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationInfo;
@@ -32,7 +35,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         CreateRecruitmentUseCase,
         DeleteRecruitmentUseCase,
         UpdateRecruitmentDraftUseCase,
-        UpsertRecruitmentFormQuestionsUseCase {
+        UpsertRecruitmentFormQuestionsUseCase,
+        PublishRecruitmentUseCase {
 
     @Override
     public CreateOrGetDraftFormResponseInfo createOrGet(CreateOrGetRecruitmentDraftCommand command) {
@@ -71,6 +75,11 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public RecruitmentApplicationFormInfo upsert(UpsertRecruitmentFormQuestionsCommand command) {
+        return null;
+    }
+
+    @Override
+    public PublishRecruitmentInfo publish(PublishRecruitmentCommand command) {
         return null;
     }
 }
