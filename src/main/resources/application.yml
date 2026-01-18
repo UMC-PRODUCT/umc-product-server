@@ -65,8 +65,12 @@ spring:
 
       keepalive-time: 60000       # DB에 1분마다 생존 신고 (유휴 커넥션 방지)
 
+  flyway:
+    enabled: true
 
   jpa:
+    # JPA/Hibernate가 PostGIS의 공간 타입을 지원할 수 있도록 추가함
+    database-platform: org.hibernate.spatial.dialect.postgis.PostgisPG95Dialect
     hibernate:
       ddl-auto: validate
     open-in-view: false
@@ -74,13 +78,14 @@ spring:
       hibernate:
         format_sql: true
         # dialect는 명시가 불필요해서 생략
+        show_sql: false # p6spy가 있어서 꺼둠
 
 
 # swagger 설정
 springdoc:
   swagger-ui:
-    path: /docs # 원하는 경로로 변경
-    enabled: false
+    path: /docs # Swagger 경로
+    enabled: false # 기본적으로 비활성화 (prod에 노출되는 경우 방지용)
     operations-sorter: method # API 정렬 (method, alpha)
     tags-sorter: alpha # 태그 정렬
 
@@ -92,22 +97,23 @@ logging:
   level:
     root: INFO
 
-    # 내 애플리케이션 - 개발 시 DEBUG
-    com.umc.product.api: DEBUG
+    # 애플리케이션 기본값
+    com.umc.product: INFO
 
-    # Spring Web - 요청/응답 확인
+    # Spring Framework
     org.springframework.web: INFO
+    org.springframework.security: INFO
 
-    # JPA/Hibernate - SQL 쿼리 확인
-    org.hibernate.SQL: INFO # 실행되는 SQL
-    org.hibernate.orm.jdbc.bind: INFO # 바인딩 파라미터 (Hibernate 6+)
+    # JPA/Hibernate
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN  # 파라미터 숨김
 
-    # 트랜잭션 확인
-    org.springframework.transaction: DEBUG
-    org.springframework.orm.jpa: DEBUG
+    # 트랜잭션
+    org.springframework.transaction: INFO
+    org.springframework.orm.jpa: INFO
 
-    # 시끄러운 로그 끄기
-    org.springframework.web.client.DefaultRestClient: OFF
+    # 시끄러운 로그 제거
+    org.springframework.web.client.DefaultRestClient: WARN
     org.apache.http: WARN
     com.zaxxer.hikari: WARN
 
