@@ -47,7 +47,7 @@ concurrency:
 jobs:
   # Job 1: 빌드 및 테스트 (한 번만 실행)
   build-and-test:
-    runs-on: [ self-hosted, miniserver ]
+    runs-on: [ self-hosted, ci-runner ]
     # self-hosted 러너가 .. Dockerhub에서 IP 밴을 당한 것 같아서 ARM 환경의 GH hosted runner로 변경합니다.
     #    runs-on: ubuntu-latest
     permissions:
