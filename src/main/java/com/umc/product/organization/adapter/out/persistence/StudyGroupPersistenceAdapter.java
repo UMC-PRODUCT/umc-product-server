@@ -32,7 +32,7 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
     @Override
     public StudyGroup findByName(String name) {
         return studyGroupJpaRepository.findByName(name).orElseThrow(
-                () -> new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.STUDY_GROUP_NAME_INVALID));
+                () -> new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.STUDY_GROUP_NOT_FOUND));
     }
 
     @Override
