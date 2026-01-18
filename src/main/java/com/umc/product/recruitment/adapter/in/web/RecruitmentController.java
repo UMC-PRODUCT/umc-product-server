@@ -1,7 +1,7 @@
 package com.umc.product.recruitment.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag;
-import com.umc.product.recruitment.adapter.in.web.dto.request.CreateDraftRecruitmentRequest;
+import com.umc.product.recruitment.adapter.in.web.dto.request.CreateRecruitmentRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentInterviewPreferenceRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormResponseAnswersRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
@@ -218,9 +218,9 @@ public class RecruitmentController {
                     """
     )
     public Long createRecruitment(
-            @RequestBody(required = false) CreateDraftRecruitmentRequest request
+            @RequestBody(required = false) CreateRecruitmentRequest request
     ) {
-        CreateDraftRecruitmentRequest req = (request == null) ? CreateDraftRecruitmentRequest.empty() : request;
+        CreateRecruitmentRequest req = (request == null) ? CreateRecruitmentRequest.empty() : request;
 
         CreateRecruitmentCommand command = new CreateRecruitmentCommand(
                 req.recruitmentName(),
