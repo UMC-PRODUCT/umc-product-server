@@ -18,6 +18,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentDraftR
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentFormResponseDetailResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentListResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentNoticeResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentSchedulesResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.SubmitRecruitmentApplicationResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateRecruitmentInterviewPreferenceResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpsertRecruitmentFormResponseAnswersResponse;
@@ -46,6 +47,7 @@ import com.umc.product.recruitment.application.port.in.query.GetRecruitmentAppli
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentFormResponseDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentNoticeUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetRecruitmentScheduleUseCase;
 import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
@@ -53,9 +55,11 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentA
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentFormResponseDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentNoticeQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentScheduleQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormResponseDetailInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentScheduleInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -93,6 +97,7 @@ public class RecruitmentController {
     private final UpdateRecruitmentDraftUseCase updateRecruitmentDraftUseCase;
     private final UpsertRecruitmentFormQuestionsUseCase upsertRecruitmentFormQuestionsUseCase;
     private final PublishRecruitmentUseCase publishRecruitmentUseCase;
+    private final GetRecruitmentScheduleUseCase getRecruitmentScheduleUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
@@ -360,4 +365,18 @@ public class RecruitmentController {
         return PublishRecruitmentResponse.from(info);
     }
 
+    @GetMapping("/{recruitmentId}/schedules")
+    @Operation(
+            summary = "지원 일정 조회(달력/단계)",
+            description = "모집 단계별 기간(서류/면접/평가/결과발표 등)을 달력/단계 UI에서 사용할 수 있도록 조회합니다."
+    )
+    public RecruitmentSchedulesResponse getRecruitmentSchedules(
+            Long memberId,
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
+    ) {
+        RecruitmentScheduleInfo info = getRecruitmentScheduleUseCase.get(
+                new GetRecruitmentScheduleQuery(recruitmentId, memberId)
+        );
+        return RecruitmentSchedulesResponse.from(info);
+    }
 }
