@@ -10,7 +10,7 @@ import com.umc.product.schedule.domain.enums.AttendanceStatus;
 public record AttendanceRecordInfo(
         AttendanceRecordId id,
         Long attendanceSheetId,
-        Long challengerId,
+        Long memberId,
         AttendanceStatus status,
         String memo
 ) {
@@ -18,7 +18,7 @@ public record AttendanceRecordInfo(
         return new AttendanceRecordInfo(
                 record.getAttendanceRecordId(),
                 record.getAttendanceSheetId(),
-                record.getChallengerId(),
+                record.getMemberId(),
                 record.getStatus(),
                 record.getMemo()
         );

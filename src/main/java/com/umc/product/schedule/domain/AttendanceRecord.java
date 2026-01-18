@@ -29,7 +29,7 @@ public class AttendanceRecord {
     private Long attendanceSheetId;
 
     @Column(nullable = false)
-    private Long challengerId;
+    private Long memberId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -43,17 +43,17 @@ public class AttendanceRecord {
     @Builder
     private AttendanceRecord(
             Long attendanceSheetId,
-            Long challengerId,
+            Long memberId,
             AttendanceStatus status,
             LocalDateTime checkedAt,
             String memo
     ) {
         validateAttendanceSheetId(attendanceSheetId);
-        validateChallengerId(challengerId);
+        validateMemberId(memberId);
         validateStatus(status);
 
         this.attendanceSheetId = attendanceSheetId;
-        this.challengerId = challengerId;
+        this.memberId = memberId;
         this.status = status;
         this.checkedAt = checkedAt;
         this.memo = memo;
@@ -129,8 +129,8 @@ public class AttendanceRecord {
         }
     }
 
-    private void validateChallengerId(Long challengerId) {
-        if (challengerId == null || challengerId <= 0) {
+    private void validateMemberId(Long memberId) {
+        if (memberId == null || memberId <= 0) {
             throw new IllegalArgumentException("유효하지 않은 챌린저 ID입니다");
         }
     }
