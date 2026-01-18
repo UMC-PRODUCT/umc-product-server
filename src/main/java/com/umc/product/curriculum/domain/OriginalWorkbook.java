@@ -10,6 +10,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -41,6 +42,8 @@ public class OriginalWorkbook extends BaseEntity {
     @Column(nullable = false)
     private Integer orderNo;
 
+    private LocalDateTime releasedAt;
+
     @Builder
     private OriginalWorkbook(Curriculum curriculum, String title, String description,
                              String workbookUrl, Integer orderNo) {
@@ -49,5 +52,27 @@ public class OriginalWorkbook extends BaseEntity {
         this.description = description;
         this.workbookUrl = workbookUrl;
         this.orderNo = orderNo;
+        this.releasedAt = null;
+    }
+
+    /**
+     * 워크북 배포
+     */
+    public void release() {
+        this.releasedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 워크북 배포 여부 확인
+     */
+    public boolean isReleased() {
+        return this.releasedAt != null;
+    }
+
+    /**
+     * 워크북 URL 업데이트
+     */
+    public void updateWorkbookUrl(String workbookUrl) {
+        this.workbookUrl = workbookUrl;
     }
 }
