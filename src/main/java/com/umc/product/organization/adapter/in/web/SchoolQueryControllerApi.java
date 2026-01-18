@@ -1,5 +1,6 @@
 package com.umc.product.organization.adapter.in.web;
 
+import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.organization.adapter.in.web.dto.request.SchoolListRequest;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolPageResponse;
@@ -13,7 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 
-@Tag(name = "School", description = "학교 관리 API (관리자)")
+@Tag(name = Constants.ORGANIZATION)
 public interface SchoolQueryControllerApi {
 
     @Operation(summary = "학교 목록 조회 By 박박지현", description = "학교 목록을 페이징하여 조회합니다. 키워드 검색 및 지부 필터링이 가능합니다.")

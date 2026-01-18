@@ -18,7 +18,6 @@ spring:
     # 기본적으로 local 프로필을 활성화, 실수로 prod에 접근하는 것을 방지함
     active: local
   config:
-    # application-secret 받도록 설정, 우리는 활용하지 않음.
     import:
       - optional:classpath:application-secret.yml
       - optional:file:/app/config/application-secret.yml
@@ -55,8 +54,8 @@ spring:
     hikari:
       auto-commit: true
 
-      maximum-pool-size: 10       # Core * 2 + 여유분
-      minimum-idle: 10            # max와 동일하게 설정 (고정 풀 크기 권장)
+      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:10}
+      minimum-idle: ${HIKARI_MIN_IDLE:10}
 
       # 3. 수명 및 타임아웃
       max-lifetime: 1800000       # 30분
@@ -65,8 +64,12 @@ spring:
 
       keepalive-time: 60000       # DB에 1분마다 생존 신고 (유휴 커넥션 방지)
 
+  flyway:
+    enabled: true
 
   jpa:
+    # database-platform은 SpringBoot가 hibernate-spatial 의존성을 기반으로 자동으로 선택함
+    # 따라서 포함하지 않도록 함.
     hibernate:
       ddl-auto: validate
     open-in-view: false
@@ -74,13 +77,14 @@ spring:
       hibernate:
         format_sql: true
         # dialect는 명시가 불필요해서 생략
+        show_sql: false # p6spy가 있어서 꺼둠
 
 
 # swagger 설정
 springdoc:
   swagger-ui:
-    path: /docs # 원하는 경로로 변경
-    enabled: false
+    path: /docs # Swagger 경로
+    enabled: false # 기본적으로 비활성화 (prod에 노출되는 경우 방지용)
     operations-sorter: method # API 정렬 (method, alpha)
     tags-sorter: alpha # 태그 정렬
 
@@ -92,22 +96,23 @@ logging:
   level:
     root: INFO
 
-    # 내 애플리케이션 - 개발 시 DEBUG
-    com.umc.product.api: DEBUG
+    # 애플리케이션 기본값
+    com.umc.product: INFO
 
-    # Spring Web - 요청/응답 확인
+    # Spring Framework
     org.springframework.web: INFO
+    org.springframework.security: INFO
 
-    # JPA/Hibernate - SQL 쿼리 확인
-    org.hibernate.SQL: INFO # 실행되는 SQL
-    org.hibernate.orm.jdbc.bind: INFO # 바인딩 파라미터 (Hibernate 6+)
+    # JPA/Hibernate
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN  # 파라미터 숨김
 
-    # 트랜잭션 확인
-    org.springframework.transaction: DEBUG
-    org.springframework.orm.jpa: DEBUG
+    # 트랜잭션
+    org.springframework.transaction: INFO
+    org.springframework.orm.jpa: INFO
 
-    # 시끄러운 로그 끄기
-    org.springframework.web.client.DefaultRestClient: OFF
+    # 시끄러운 로그 제거
+    org.springframework.web.client.DefaultRestClient: WARN
     org.apache.http: WARN
     com.zaxxer.hikari: WARN
 
