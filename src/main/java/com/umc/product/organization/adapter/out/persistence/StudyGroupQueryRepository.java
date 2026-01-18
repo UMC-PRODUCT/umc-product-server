@@ -15,6 +15,7 @@ import com.umc.product.organization.application.port.in.query.dto.PartSummaryInf
 import com.umc.product.organization.application.port.in.query.dto.SchoolStudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -250,7 +251,7 @@ public class StudyGroupQueryRepository {
                 groupInfo.get(studyGroup.part),
                 groupInfo.get(school.id),
                 groupInfo.get(school.name),
-                groupInfo.get(studyGroup.createdAt),
+                groupInfo.get(studyGroup.createdAt).atZone(ZoneId.of("Asia/Seoul")).toInstant(),
                 members.size(),
                 leaderResult,
                 nonLeaderMembers
