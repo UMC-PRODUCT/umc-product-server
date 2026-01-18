@@ -2,10 +2,12 @@ package com.umc.product.authentication.adapter.in.web;
 
 import com.umc.product.authentication.adapter.in.web.dto.request.AddOAuthRequest;
 import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
+import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/member-oauth")
+@Tag(name = Constants.AUTH)
 public class MemberOAuthController {
     @PostMapping
     @Operation(summary = "로그인용 OAuth 수단 추가")
