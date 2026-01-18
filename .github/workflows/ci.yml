@@ -126,11 +126,14 @@ jobs:
         continue-on-error: true
 
       - name: 📊 테스트 결과 배포
-        uses: EnricoMi/publish-unit-test-result-action@v2
+        uses: dorny/test-reporter@v2
         if: always()
         with:
-          files: build/test-results/test/*.xml
-          check_name: "Backend Test Results"
+          name: 'Backend Test Results'
+          path: 'build/test-results/test/*.xml'
+          reporter: 'java-junit'
+          use-actions-summary: 'true'
+          fail-on-error: 'false'
 
       - name: 🏗️ Build JAR
         run: ./gradlew bootJar
