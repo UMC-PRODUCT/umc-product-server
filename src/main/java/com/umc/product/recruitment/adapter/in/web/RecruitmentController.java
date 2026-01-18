@@ -1,6 +1,7 @@
 package com.umc.product.recruitment.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag;
+import com.umc.product.recruitment.adapter.in.web.dto.request.CreateDraftRecruitmentRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentInterviewPreferenceRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormResponseAnswersRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
@@ -13,11 +14,13 @@ import com.umc.product.recruitment.adapter.in.web.dto.response.SubmitRecruitment
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateRecruitmentInterviewPreferenceResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpsertRecruitmentFormResponseAnswersResponse;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentDraftFormResponseUseCase;
+import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormResponseAnswersUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetRecruitmentDraftCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormResponseCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationInfo;
@@ -62,6 +65,7 @@ public class RecruitmentController {
     private final UpsertRecruitmentFormResponseAnswersUseCase upsertRecruitmentFormResponseAnswersUseCase;
     private final DeleteRecruitmentFormResponseUseCase deleteRecruitmentFormResponseUseCase;
     private final SubmitRecruitmentApplicationUseCase submitRecruitmentApplicationUseCase;
+    private final CreateRecruitmentUseCase createRecruitmentUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
@@ -204,4 +208,25 @@ public class RecruitmentController {
         return SubmitRecruitmentApplicationResponse.from(info);
     }
 
+    @PostMapping("")
+    @Operation(
+            summary = "모집 최초 생성",
+            description = """
+                    모집 생성 플로우의 첫 화면에서 최초 1회만 호출되는 API입니다. 
+                    임시저장 또는 다음 단계 버튼 클릭 시, recruitmentId가 없는 경우에만 이 API를 호출합니다.
+                    본 API의 응답으로 반환되는 recruitmentId는 이후 모든 임시저장 및 단계이동 API 호출 시 식별자로 사용됩니다.
+                    """
+    )
+    public Long createRecruitment(
+            @RequestBody(required = false) CreateDraftRecruitmentRequest request
+    ) {
+        CreateDraftRecruitmentRequest req = (request == null) ? CreateDraftRecruitmentRequest.empty() : request;
+
+        CreateRecruitmentCommand command = new CreateRecruitmentCommand(
+                req.recruitmentName(),
+                req.parts()
+        );
+
+        return createRecruitmentUseCase.create(command);
+    }
 }
