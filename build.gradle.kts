@@ -127,7 +127,6 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
-    implementation("org.hibernate.orm:hibernate-spatial")
 
     // --- Spring REST Docs ---
     "asciidoctorExt"("org.springframework.restdocs:spring-restdocs-asciidoctor")
