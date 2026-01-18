@@ -7,6 +7,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentD
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentInterviewPreferenceRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormResponseAnswersRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.CreateRecruitmentResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.DeleteRecruitmentFormResponseResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentApplicationFormResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentDraftFormResponseResponse;
@@ -27,6 +28,7 @@ import com.umc.product.recruitment.application.port.in.command.UpsertRecruitment
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetRecruitmentDraftCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormResponseCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
@@ -230,10 +232,11 @@ public class RecruitmentController {
             description = """
                     모집 생성 플로우의 첫 화면에서 최초 1회만 호출되는 API입니다. 
                     임시저장 또는 다음 단계 버튼 클릭 시, recruitmentId가 없는 경우에만 이 API를 호출합니다.
+                    내부적으로 recruitment와 그 recruitment에 매핑되는 form을 생성하고, 응답으로 recruitmentId와 formId를 돌려줍니다.
                     본 API의 응답으로 반환되는 recruitmentId는 이후 모든 임시저장 및 단계이동 API 호출 시 식별자로 사용됩니다.
                     """
     )
-    public Long createRecruitment(
+    public CreateRecruitmentResponse createRecruitment(
             @RequestBody(required = false) CreateRecruitmentRequest request
     ) {
         CreateRecruitmentRequest req = (request == null) ? CreateRecruitmentRequest.empty() : request;
@@ -243,7 +246,9 @@ public class RecruitmentController {
                 req.parts()
         );
 
-        return createRecruitmentUseCase.create(command);
+        CreateRecruitmentInfo info = createRecruitmentUseCase.create(command);
+
+        return CreateRecruitmentResponse.from(info);
     }
 
     @GetMapping("")
