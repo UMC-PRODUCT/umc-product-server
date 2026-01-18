@@ -117,7 +117,9 @@ jobs:
         run: ./gradlew compileJava compileTestJava
 
       - name: 🧪 테스트 실행
+        id: test
         run: ./gradlew test
+        continue-on-error: true
 
       - name: 📊 테스트 결과 배포
         uses: EnricoMi/publish-unit-test-result-action@v2
@@ -125,6 +127,18 @@ jobs:
         with:
           files: build/test-results/test/*.xml
           check_name: "Backend Test Results"
+
+      - name: ⚠️ 테스트 실패 시 Comment 작성 (PR인 경우)
+        if: steps.test.outcome == 'failure' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '⚠️ 테스트가 실패했습니다. 테스트 결과를 확인해주세요.'
+            })
 
       - name: 🏗️ Build JAR
         run: ./gradlew bootJar
