@@ -7,6 +7,7 @@ import com.umc.product.community.application.port.in.post.CreateCommentUseCase;
 import com.umc.product.community.application.port.in.post.DeleteCommentUseCase;
 import com.umc.product.community.application.port.in.post.Query.GetCommentListUseCase;
 import com.umc.product.community.application.port.in.post.ToggleCommentLikeUseCase;
+import com.umc.product.global.constant.SwaggerTag.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -23,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/posts/{postId}/comments")
 @RequiredArgsConstructor
-@Tag(name = "Comment", description = "댓글 API")
+@Tag(name = Constants.COMMUNITY)
 public class CommentController {
 
     private final CreateCommentUseCase createCommentUseCase;

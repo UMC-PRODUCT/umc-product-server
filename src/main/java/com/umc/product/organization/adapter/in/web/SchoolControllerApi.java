@@ -1,5 +1,6 @@
 package com.umc.product.organization.adapter.in.web;
 
+import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateSchoolRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.DeleteSchoolsRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateSchoolRequest;
@@ -9,7 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "School", description = "학교 관리 API (관리자)")
+@Tag(name = Constants.ORGANIZATION)
 public interface SchoolControllerApi {
 
     @Operation(summary = "학교 생성 By 박박지현", description = "새로운 학교를 등록합니다")

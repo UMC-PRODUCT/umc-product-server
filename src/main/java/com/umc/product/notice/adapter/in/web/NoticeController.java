@@ -2,13 +2,14 @@ package com.umc.product.notice.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
-import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
+import com.umc.product.notice.adapter.in.web.dto.request.CreateDraftNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.SendNoticeReminderRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
-import com.umc.product.notice.adapter.in.web.dto.response.CreateNoticeResponse;
+import com.umc.product.notice.adapter.in.web.dto.response.CreateDraftNoticeResponse;
 import com.umc.product.notice.adapter.in.web.swagger.NoticeApi;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
+import com.umc.product.notice.application.port.in.command.dto.PublishNoticeCommand;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,28 +31,45 @@ public class NoticeController implements NoticeApi {
 
     private final ManageNoticeUseCase manageNoticeUseCase;
 
-    @PostMapping
-    public ApiResponse<CreateNoticeResponse> createNotice(@RequestBody @Valid CreateNoticeRequest request) {
+    /*
+     * 공지사항 생성 (임시저장)
+     */
+    @PostMapping("/draft")
+    public ApiResponse<CreateDraftNoticeResponse> createDraftNotice(@RequestBody @Valid CreateDraftNoticeRequest request) {
         Long noticeId = manageNoticeUseCase.createDraftNotice(request.toCommand());
-        return ApiResponse.onSuccess(new CreateNoticeResponse(noticeId));
+        return ApiResponse.onSuccess(new CreateDraftNoticeResponse(noticeId));
     }
 
+    /*
+     * 공지사항 최종 게시
+     */
+    @PatchMapping("/{noticeId}/publish")
+    public void publishNotice(@PathVariable Long noticeId) {
+        manageNoticeUseCase.publishNotice(new PublishNoticeCommand(noticeId));
+    }
+
+    /*
+     * 공지사항 삭제
+     */
     @DeleteMapping("/{noticeId}")
     public void deleteNotice(@PathVariable Long noticeId) {
         manageNoticeUseCase.deleteNotice(new DeleteNoticeCommand(noticeId));
     }
 
+    /*
+     * 공지사항 수정
+     */
     @PatchMapping("/{noticeId}")
     public void updateNotice(@PathVariable Long noticeId, @RequestBody @Valid UpdateNoticeRequest request) {
         manageNoticeUseCase.updateNotice(request.toCommand(noticeId));
     }
 
+    /*
+     * 공지사항 리마인드 알림 보내기
+     */
     @PostMapping("/{noticeId}/reminders")
     public void sendNoticeReminder(@PathVariable Long noticeId, @RequestBody @Valid SendNoticeReminderRequest request) {
         manageNoticeUseCase.remindNotice(request.toCommand(noticeId));
     }
-
-
-
 
 }

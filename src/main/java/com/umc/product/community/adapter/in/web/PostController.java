@@ -9,6 +9,7 @@ import com.umc.product.community.application.port.in.post.CreatePostUseCase;
 import com.umc.product.community.application.port.in.post.DeletePostUseCase;
 import com.umc.product.community.application.port.in.post.TogglePostLikeUseCase;
 import com.umc.product.community.application.port.in.post.UpdatePostUseCase;
+import com.umc.product.global.constant.SwaggerTag.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
-@Tag(name = "Post", description = "게시글 Command API")
+@Tag(name = Constants.COMMUNITY)
 public class PostController {
 
     private final CreatePostUseCase createPostUseCase;
