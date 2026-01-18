@@ -5,6 +5,7 @@ import com.umc.product.community.application.port.in.post.Query.GetPostDetailUse
 import com.umc.product.community.application.port.in.post.Query.GetPostListUseCase;
 import com.umc.product.community.application.port.in.post.Query.PostSearchQuery;
 import com.umc.product.community.domain.enums.PostSortType;
+import com.umc.product.global.constant.SwaggerTag.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
-@Tag(name = "Post Query", description = "게시글 조회 API")
+@Tag(name = Constants.COMMUNITY)
 public class PostQueryController {
 
     private final GetPostDetailUseCase getPostDetailUseCase;

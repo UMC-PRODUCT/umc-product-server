@@ -1,12 +1,13 @@
 package com.umc.product.organization.adapter.in.web;
 
+import com.umc.product.global.constant.SwaggerTag.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "Gisu", description = "기수 관리 API (관리자)")
+@Tag(name = Constants.ORGANIZATION)
 public interface GisuControllerApi {
 
     @Operation(summary = "활성 기수 변경 By 박박지현", description = "해당 기수를 활성 상태로 변경합니다. 기존 활성 기수는 비활성화됩니다.")

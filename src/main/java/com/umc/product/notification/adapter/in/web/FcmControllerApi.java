@@ -1,5 +1,6 @@
 package com.umc.product.notification.adapter.in.web;
 
+import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmTestSendRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -7,7 +8,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "FCM", description = "FCM 푸시 알림 관리 API")
+@Tag(name = Constants.NOTIFICATION)
 public interface FcmControllerApi {
 
     @Operation(
