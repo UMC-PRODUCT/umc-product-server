@@ -180,9 +180,10 @@ jobs:
             ghcr.io/${{ steps.set-env.outputs.repo_owner }}/server:${{ steps.set-env.outputs.image_tag }}
             ghcr.io/${{ steps.set-env.outputs.repo_owner }}/server:${{ steps.set-env.outputs.environment }}-latest
           platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          #          cache-to: type=gha,mode=max
-          cache-to: type=gha,mode=min
+          # 캐시는 추후 빌드 성능 최적화를 통해 개선, 현재는 네트워크 비용이 더 많이 들어서 비활성화 합니다.
+      #          cache-from: type=gha
+      #          #          cache-to: type=gha,mode=max
+      #          cache-to: type=gha,mode=min
 
       - name: 📝 Build Summary
         if: always()
