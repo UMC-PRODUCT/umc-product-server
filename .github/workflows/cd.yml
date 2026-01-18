@@ -207,8 +207,14 @@ jobs:
             esac
             
             mkdir -p ${{ secrets.SERVER_APP_DIRECTORY }}/config
-            echo "${{ secrets.APPLICATION_SECRET }}" > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-secret.yml
-            echo "${{ secrets.APPLICATION_PROFILE_SECRET }}" > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-${PROFILE}.yml
+            
+            cat > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-secret.yml << 'EOF'
+            ${{ secrets.APPLICATION_SECRET }}
+            EOF
+            
+            cat > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-${PROFILE}.yml << 'EOF'
+            ${{ secrets.APPLICATION_PROFILE_SECRET }}
+            EOF
             
             # 기존 컨테이너 중지 및 제거
             echo ""
