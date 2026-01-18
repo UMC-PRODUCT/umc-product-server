@@ -52,6 +52,20 @@ jobs:
 
     steps:
       - name: 🔍 환경변수 검증
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKERHUB_REPOSITORY_NAME: ${{ secrets.DOCKERHUB_REPOSITORY_NAME }}
+          SERVER_APP_DIRECTORY: ${{ secrets.SERVER_APP_DIRECTORY }}
+          SERVER_SSH_HOST: ${{ secrets.SERVER_SSH_HOST }}
+          SERVER_SSH_USERNAME: ${{ secrets.SERVER_SSH_USERNAME }}
+          SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
+          DOCKER_COMPOSE_ENV: ${{ secrets.DOCKER_COMPOSE_ENV }}
+          APPLICATION_SECRET: ${{ secrets.APPLICATION_SECRET }}
+          APPLICATION_PROFILE_SECRET: ${{ secrets.APPLICATION_PROFILE_SECRET }}
+          APP_ENVIRONMENT: ${{ env.ENVIRONMENT }}
+          APP_IMAGE_TAG: ${{ env.IMAGE_TAG }}
         run: |
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🔍 필수 환경 변수 검증 시작..."
@@ -59,32 +73,27 @@ jobs:
           
           MISSING_VARS=()
           
-          # Docker Hub 관련
           echo "📦 Docker Hub 자격증명 확인..."
-          [[ -z "${{ secrets.DOCKERHUB_USERNAME }}" ]] && MISSING_VARS+=("DOCKERHUB_USERNAME")
-          [[ -z "${{ secrets.DOCKERHUB_TOKEN }}" ]] && MISSING_VARS+=("DOCKERHUB_TOKEN")
-          [[ -z "${{ secrets.DOCKERHUB_REPOSITORY_NAME }}" ]] && MISSING_VARS+=("DOCKERHUB_REPOSITORY_NAME")
+          [[ -z "$DOCKERHUB_USERNAME" ]] && MISSING_VARS+=("DOCKERHUB_USERNAME")
+          [[ -z "$DOCKERHUB_TOKEN" ]] && MISSING_VARS+=("DOCKERHUB_TOKEN")
+          [[ -z "$DOCKERHUB_REPOSITORY_NAME" ]] && MISSING_VARS+=("DOCKERHUB_REPOSITORY_NAME")
           
-          # 서버 SSH 관련
           echo "🔐 SSH 접속 정보 확인..."
-          [[ -z "${{ secrets.SERVER_APP_DIRECTORY }}" ]] && MISSING_VARS+=("SERVER_APP_DIRECTORY")
-          [[ -z "${{ secrets.SERVER_SSH_HOST }}" ]] && MISSING_VARS+=("SERVER_SSH_HOST")
-          [[ -z "${{ secrets.SERVER_SSH_USERNAME }}" ]] && MISSING_VARS+=("SERVER_SSH_USERNAME")
-          [[ -z "${{ secrets.SERVER_SSH_PRIVATE_KEY }}" ]] && MISSING_VARS+=("SERVER_SSH_PRIVATE_KEY")
-          [[ -z "${{ secrets.SERVER_SSH_PORT }}" ]] && MISSING_VARS+=("SERVER_SSH_PORT")
+          [[ -z "$SERVER_APP_DIRECTORY" ]] && MISSING_VARS+=("SERVER_APP_DIRECTORY")
+          [[ -z "$SERVER_SSH_HOST" ]] && MISSING_VARS+=("SERVER_SSH_HOST")
+          [[ -z "$SERVER_SSH_USERNAME" ]] && MISSING_VARS+=("SERVER_SSH_USERNAME")
+          [[ -z "$SERVER_SSH_PRIVATE_KEY" ]] && MISSING_VARS+=("SERVER_SSH_PRIVATE_KEY")
+          [[ -z "$SERVER_SSH_PORT" ]] && MISSING_VARS+=("SERVER_SSH_PORT")
           
-          # 애플리케이션 설정 관련
           echo "⚙️  애플리케이션 설정 확인..."
-          [[ -z "${{ secrets.DOCKER_COMPOSE_ENV }}" ]] && MISSING_VARS+=("DOCKER_COMPOSE_ENV")
-          [[ -z "${{ secrets.APPLICATION_SECRET }}" ]] && MISSING_VARS+=("APPLICATION_SECRET")
-          [[ -z "${{ secrets.APPLICATION_PROFILE_SECRET }}" ]] && MISSING_VARS+=("APPLICATION_PROFILE_SECRET")
+          [[ -z "$DOCKER_COMPOSE_ENV" ]] && MISSING_VARS+=("DOCKER_COMPOSE_ENV")
+          [[ -z "$APPLICATION_SECRET" ]] && MISSING_VARS+=("APPLICATION_SECRET")
+          [[ -z "$APPLICATION_PROFILE_SECRET" ]] && MISSING_VARS+=("APPLICATION_PROFILE_SECRET")
           
-          # Environment 변수
           echo "🌍 환경 변수 확인..."
-          [[ -z "${{ env.ENVIRONMENT }}" ]] && MISSING_VARS+=("ENVIRONMENT")
-          [[ -z "${{ env.IMAGE_TAG }}" ]] && MISSING_VARS+=("IMAGE_TAG")
+          [[ -z "$APP_ENVIRONMENT" ]] && MISSING_VARS+=("ENVIRONMENT")
+          [[ -z "$APP_IMAGE_TAG" ]] && MISSING_VARS+=("IMAGE_TAG")
           
-          # 검증 결과 확인
           if [ ${#MISSING_VARS[@]} -gt 0 ]; then
             echo ""
             echo "❌ 다음 환경 변수들이 설정되지 않았습니다:"
@@ -95,7 +104,6 @@ jobs:
           
           echo ""
           echo "✅ 모든 필수 환경 변수가 설정되었습니다."
-          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
       - name: 📥 코드베이스 체크아웃
         uses: actions/checkout@v4
