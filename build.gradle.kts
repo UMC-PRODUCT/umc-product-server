@@ -27,10 +27,15 @@ repositories {
     mavenCentral()
 }
 
+// 의존성 버전 관리
 val springDocVersion = "2.8.14"
 val queryDslVersion = "5.0.0"
 val jwtVersion = "0.12.5"
 val awsVersion = "2.40.12"
+
+// REST DOCS
+val snippetsDir = file("build/generated-snippets")
+val docsDir = "docs/asciidoc"
 
 // QueryDSL Q클래스 생성 경로 설정
 val querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
@@ -40,16 +45,6 @@ sourceSets {
         java {
             srcDirs(querydslDir)
         }
-    }
-}
-
-tasks.withType<JavaCompile>().configureEach {
-    options.generatedSourceOutputDirectory.set(querydslDir)
-}
-
-tasks.named("clean") {
-    doLast {
-        querydslDir.deleteRecursively()
     }
 }
 
@@ -138,46 +133,75 @@ dependencies {
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    options.generatedSourceOutputDirectory.set(querydslDir)
+}
+
+tasks.clean {
+    doFirst {
+        println("=".repeat(50))
+        println("[clean] gradle clean을 시작합니다.")
+        println("=".repeat(50))
+    }
+
+    doLast {
+        querydslDir.deleteRecursively()
+        println("[clean] QueryDSL 생성 디렉토리를 삭제하였습니다.")
+
+        println("[clean] gradle clean이 완료되었습니다.")
+    }
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-val snippetsDir = file("build/generated-snippets")
-
 tasks.test {
     outputs.dir(snippetsDir)
-
 }
 
-tasks.asciidoctor {
+tasks.asciidoctor { // asciidoctor task 설정
+    doFirst { // 기존에 존재하는 파일들을 지우고 시작함
+        println("=".repeat(50))
+        println("[asciidoctor] docs/static 디렉토리를 삭제합니다.")
+        println("=".repeat(50))
+        delete(file(docsDir))
+    }
 
-    setSourceDir(file("docs/asciidoc"))
+    configurations("asciidoctorExt") // asciidoctorExt 설정 추가
+    baseDirFollowsSourceDir() // .adoc 파일에서 다른 .adoc을 include하여 사용하는 경우에 대한 경로 문제 해결
+    setSourceDir(file(docsDir)) // AsciiDoc 소스 경로 지정 (repo custom)
+    inputs.dir(snippetsDir) // 테스트를 통해서 생성된 snippets를 입력으로 사용
+    dependsOn(tasks.test) // test task에 의존하도록 설정
 
-    inputs.dir(snippetsDir)
-    configurations("asciidoctorExt")
+    attributes(mapOf("snippets" to snippetsDir)) // .adoc 파일 안에서 {snippets} 변수 사용 가능
 
-    attributes(mapOf("snippets" to snippetsDir)) // @kyeoungwoon 추가!
-
+    // index.adoc 파일만 변환 대상으로 설정
     sources {
         include("**/index.adoc")
     }
+}
 
-    baseDirFollowsSourceDir()
-    dependsOn(tasks.test)
+val copyDocument = tasks.register<Copy>("copyDocument") { // REST DOCS 복사하는 task
+    dependsOn(tasks.asciidoctor) // asciidoctor task에 의존하도록 설정
 
-    doFirst {
-        delete(file("docs/static"))
+    from(file("build/docs/asciidoc")) // 기본 생성된 경로
+    into(file("docs/static")) // 파일을 복사할 경로
+
+    doLast {
+        println("[copyDocument] AsciiDoc 문서를 docs/static에 복사하였습니니다.")
     }
 }
 
+tasks.build {
+    dependsOn(tasks.clean) // 빌드 전 clean 수행
+    dependsOn(copyDocument) // clean 수행 후에, AsciiDoc 문서 제작
 
-tasks.register<Copy>("copyDocument") {
-    dependsOn(tasks.asciidoctor)
-
-    from(file("build/docs/asciidoc"))
-    into(file("docs/static"))
+    doLast {
+        println("[build] gradle build가 완료되었습니다.")
+    }
 }
 
 tasks.bootJar {
-    dependsOn(tasks.asciidoctor)
+    dependsOn(copyDocument) // bootJar 실행 시 AsciiDoc이 생성하도록 함
 }
