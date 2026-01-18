@@ -6,45 +6,51 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 
-public record UpdateRecruitmentDraftCommand(
+public record RecruitmentDraftInfo(
         Long recruitmentId,
-        Long requesterMemberId,
+        String status,
+        Long formId,
+
         String title,
         List<ChallengerPart> recruitmentParts,
         Integer maxPreferredPartCount,
-        ScheduleCommand schedule,
-        String noticeContent
-) {
 
-    public record ScheduleCommand(
+        ScheduleInfo schedule,
+
+        String noticeContent,
+
+        Instant createdAt,
+        Instant updatedAt
+) {
+    public record ScheduleInfo(
             Instant applyStartAt,
             Instant applyEndAt,
             Instant docResultAt,
             Instant interviewStartAt,
             Instant interviewEndAt,
             Instant finalResultAt,
-            InterviewTimeTableCommand interviewTimeTable
+            InterviewTimeTableInfo interviewTimeTable
     ) {
     }
 
-    public record InterviewTimeTableCommand(
-            DateRangeCommand dateRange,
-            TimeRangeCommand timeRange,
+    public record InterviewTimeTableInfo(
+            DateRangeInfo dateRange,
+            TimeRangeInfo timeRange,
             Integer slotMinutes,
-            List<EnabledTimesByDateCommand> enabledByDate
+            List<TimesByDateInfo> enabledByDate,
+            List<TimesByDateInfo> disabledByDate
     ) {
     }
 
-    public record DateRangeCommand(LocalDate start, LocalDate end) {
+    public record DateRangeInfo(LocalDate start, LocalDate end) {
     }
 
-    public record TimeRangeCommand(LocalTime start, LocalTime end) {
+    public record TimeRangeInfo(LocalTime start, LocalTime end) {
     }
 
-    public record EnabledTimesByDateCommand(
+    public record TimesByDateInfo(
             LocalDate date,
             List<LocalTime> times
     ) {
     }
-
 }
