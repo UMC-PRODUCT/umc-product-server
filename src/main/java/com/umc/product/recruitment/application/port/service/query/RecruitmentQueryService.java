@@ -1,5 +1,7 @@
 package com.umc.product.recruitment.application.port.service.query;
 
+import com.umc.product.recruitment.adapter.in.web.dto.response.GetRecruitmentDetailUseCase;
+import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyApplicationListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
@@ -12,6 +14,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitme
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentFormResponseDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentNoticeQuery;
@@ -36,7 +39,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         GetRecruitmentListUseCase,
         GetRecruitmentScheduleUseCase,
         GetRecruitmentDashboardUseCase,
-        GetMyApplicationListUseCase {
+        GetMyApplicationListUseCase,
+        GetRecruitmentDetailUseCase {
 
     @Override
     public ActiveRecruitmentInfo get(GetActiveRecruitmentQuery query) {
@@ -77,6 +81,11 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     @Override
     public MyApplicationListInfo get(GetMyApplicationListQuery query) {
+        return null;
+    }
+
+    @Override
+    public RecruitmentDraftInfo get(GetRecruitmentDetailQuery query) {
         return null;
     }
 }

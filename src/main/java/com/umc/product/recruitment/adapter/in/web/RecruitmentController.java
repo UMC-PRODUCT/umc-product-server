@@ -11,6 +11,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentF
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.CreateRecruitmentResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.DeleteRecruitmentFormResponseResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.GetRecruitmentDetailUseCase;
 import com.umc.product.recruitment.adapter.in.web.dto.response.MyRecruitmentApplicationsResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.PublishRecruitmentResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentApplicationFormResponse;
@@ -57,6 +58,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitme
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentFormResponseDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentNoticeQuery;
@@ -107,6 +109,7 @@ public class RecruitmentController {
     private final GetRecruitmentScheduleUseCase getRecruitmentScheduleUseCase;
     private final GetRecruitmentDashboardUseCase getRecruitmentDashboardUseCase;
     private final GetMyApplicationListUseCase getMyApplicationListUseCase;
+    private final GetRecruitmentDetailUseCase getRecruitmentDetailUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
@@ -406,4 +409,22 @@ public class RecruitmentController {
         return MyRecruitmentApplicationsResponse.from(info);
     }
 
+    @GetMapping("/{recruitmentId}")
+    @Operation(
+            summary = "임시저장한 모집 불러오기(작성 중 모집 상세 조회)",
+            description = """
+                    운영진 모집 생성/편집 화면에서 '작성 이어하기'로 사용할 draft 상세 조회 API입니다.
+                    모집 정보(제목/파트/일정/공지/타임테이블 등)와 formId를 포함해 반환합니다.
+                    """
+    )
+    public RecruitmentDraftResponse getRecruitmentDraftDetail(
+            Long memberId, // auth 적용 후 제거
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
+    ) {
+        GetRecruitmentDetailQuery query = new GetRecruitmentDetailQuery(memberId, recruitmentId);
+
+        RecruitmentDraftInfo info = getRecruitmentDetailUseCase.get(query);
+
+        return RecruitmentDraftResponse.from(info);
+    }
 }
