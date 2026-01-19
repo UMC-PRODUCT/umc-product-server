@@ -78,21 +78,8 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
     @Test
     void 참여자_없이_일정을_생성한다() {
         // given
-        Long activeGisuId = loadGisuPort.findActiveGisu().getId();
-        System.out.println("=== getActiveGisuId() 반환값: " + activeGisuId);
-
         // Mock 객체가 올바른 DTO를 반환하도록 설정 (Stubbing)
-        ChallengerInfo mockInfo = ChallengerInfo.builder()
-                .challengerId(authorChallenger.getId())
-                .memberId(authorMember.getId())
-                .gisu(activeGisuId)
-                .part(ChallengerPart.SPRINGBOOT)
-                .challengerPoints(List.of())
-                .build();
-
-        // 2. Stubbing (가짜 행동 정의)
-        given(getChallengerUseCase.getMemberGisuChallengerInfo(authorMember.getId(), activeGisuId))
-                .willReturn(mockInfo);
+        mockChallengerInfo(authorMember.getId(), activeGisu.getId(), authorChallenger.getId());
 
         CreateScheduleCommand command = CreateScheduleCommand.of(
                 "9기 OT",
@@ -119,6 +106,9 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
     @Test
     void 참여자와_함께_일정을_생성하면_출석부와_출석기록이_생성된다() {
         // given
+        // Mock 객체가 올바른 DTO를 반환하도록 설정 (Stubbing)
+        mockChallengerInfo(authorMember.getId(), activeGisu.getId(), authorChallenger.getId());
+
         Member participant1 = saveMemberPort.save(createMember("참여자1", "참여1", "test1@dd.com", 1L, 2L));
         Member participant2 = saveMemberPort.save(createMember("참여자2", "참여2", "test2@dd.com", 1L, 3L));
 
@@ -154,6 +144,8 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
     @Test
     void 종일_일정을_생성하면_시간이_00시부터_23시59분으로_조정된다() {
         // given
+        mockChallengerInfo(authorMember.getId(), activeGisu.getId(), authorChallenger.getId());
+
         CreateScheduleCommand command = CreateScheduleCommand.of(
                 "종일 행사",
                 LocalDateTime.of(2024, 3, 16, 10, 0),
@@ -179,10 +171,21 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
     @Test
     void 활성_기수의_챌린저가_아닌_회원이_일정을_생성하면_예외가_발생한다() {
         // given
-        Member nonChallengerMember = saveMemberPort.save(createMember("노활성", "노노", "notest@dd.com", 1L, 4L));
+        Gisu pastGisu = manageGisuPort.save(createInactiveGisu(8L));
+
+        // OB 멤버 생성
+        Member pastMember = saveMemberPort.save(createMember("졸업생", "선배", "past@dd.com", 1L, 5L));
+
+        // OB 멤버에 대한 8기 Challenger 저장
+        saveChallengerPort.save(
+                createChallenger(pastMember.getId(), pastGisu.getId())
+        );
+
+        given(getChallengerUseCase.getMemberGisuChallengerInfo(pastMember.getId(), activeGisu.getId()))
+                .willReturn(null);
 
         CreateScheduleCommand command = CreateScheduleCommand.of(
-                "테스트 일정",
+                "OB의 침입",
                 LocalDateTime.of(2024, 3, 16, 10, 0),
                 LocalDateTime.of(2024, 3, 16, 12, 0),
                 false,
@@ -190,7 +193,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 "설명",
                 List.of(),
                 ScheduleType.TEAM_ACTIVITY,
-                nonChallengerMember.getId()
+                pastMember.getId() // 과거 멤버 ID로 요청
         );
 
         // when & then
@@ -206,6 +209,15 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 .isActive(true)
                 .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
                 .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
+                .build();
+    }
+
+    private Gisu createInactiveGisu(Long generation) {
+        return Gisu.builder()
+                .generation(generation)
+                .isActive(false)
+                .startAt(LocalDateTime.of(2023, 3, 1, 0, 0))
+                .endAt(LocalDateTime.of(2023, 8, 31, 23, 59))
                 .build();
     }
 
@@ -225,5 +237,18 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 .gisuId(gisuId)
                 .part(ChallengerPart.SPRINGBOOT)
                 .build();
+    }
+
+    private void mockChallengerInfo(Long memberId, Long gisuId, Long challengerId) {
+        ChallengerInfo mockInfo = ChallengerInfo.builder()
+                .challengerId(challengerId)
+                .memberId(memberId)
+                .gisu(gisuId)
+                .part(ChallengerPart.SPRINGBOOT)
+                .challengerPoints(List.of())
+                .build();
+
+        given(getChallengerUseCase.getMemberGisuChallengerInfo(memberId, gisuId))
+                .willReturn(mockInfo);
     }
 }
