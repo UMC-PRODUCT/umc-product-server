@@ -4,9 +4,12 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleRequest;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
+import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ScheduleController implements ScheduleControllerApi {
 
     private final CreateScheduleUseCase createScheduleUseCase;
+    private final DeleteScheduleUseCase deleteScheduleUseCase;
 
 //    private final GetScheduleListUseCase getScheduleListUseCase;
 //    private final GetAttendanceSheetUseCase getAttendanceSheetUseCase;
@@ -92,6 +96,7 @@ public class ScheduleController implements ScheduleControllerApi {
 //        return ApiResponse.onSuccess(response);
 //    }
 
+    @Override
     @PostMapping
     public void createSchedule(
             @CurrentMember MemberPrincipal memberPrincipal,
@@ -99,5 +104,11 @@ public class ScheduleController implements ScheduleControllerApi {
     ) {
         CreateScheduleCommand command = request.toCommand(memberPrincipal.getMemberId());
         createScheduleUseCase.create(command);
+    }
+
+    @Override
+    @DeleteMapping("/{scheduleId}")
+    public void deleteSchedule(@PathVariable Long scheduleId) {
+        deleteScheduleUseCase.delete(scheduleId);
     }
 }

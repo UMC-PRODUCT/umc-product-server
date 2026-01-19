@@ -5,6 +5,7 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleRequest;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -51,6 +52,11 @@ public interface ScheduleControllerApi {
     void createSchedule(
             @CurrentMember MemberPrincipal memberPrincipal,
             @Valid @RequestBody CreateScheduleRequest request
+    );
+
+    @Operation(summary = "일정 삭제", description = "일정을 삭제합니다")
+    void deleteSchedule(
+            @Parameter(description = "일정 ID") Long scheduleId
     );
 
 }
