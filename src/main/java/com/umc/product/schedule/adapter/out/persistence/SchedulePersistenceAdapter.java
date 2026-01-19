@@ -14,7 +14,7 @@ public class SchedulePersistenceAdapter implements
         LoadSchedulePort,
         SaveSchedulePort {
 
-    private ScheduleJpaRepository scheduleJpaRepository;
+    private final ScheduleJpaRepository scheduleJpaRepository;
 
     // ========== LoadSchedulePort ==========
 
