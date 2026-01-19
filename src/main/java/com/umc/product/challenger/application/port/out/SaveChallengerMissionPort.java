@@ -1,7 +1,7 @@
 package com.umc.product.challenger.application.port.out;
 
 
-import com.umc.product.challenger.domain.ChallengerMission;
+import com.umc.product.curriculum.domain.ChallengerMission;
 
 public interface SaveChallengerMissionPort {
 

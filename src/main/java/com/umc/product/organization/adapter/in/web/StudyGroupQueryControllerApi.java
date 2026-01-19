@@ -1,6 +1,7 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupListResponse.Summary;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupPartsResponse;
@@ -82,7 +83,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  *   → 스터디 그룹 상세
  * </pre>
  */
-@Tag(name = "StudyGroup Query", description = "스터디 그룹 조회 API")
+@Tag(name = Constants.ORGANIZATION)
 public interface StudyGroupQueryControllerApi {
 
         @Operation(summary = "학교 목록 조회", description = "스터디 그룹이 있는 학교 목록을 조회합니다. 활성 기수 기준. By 박박지현")
