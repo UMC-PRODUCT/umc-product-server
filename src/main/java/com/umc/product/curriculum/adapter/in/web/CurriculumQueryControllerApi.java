@@ -13,6 +13,5 @@ public interface CurriculumQueryControllerApi {
             description = "챌린저의 커리큘럼 진행 상황을 조회합니다. " +
                     "각 주차별 워크북의 상태(기본/진행중/제출완료/통과/실패)를 반환합니다."
     )
-    CurriculumProgressResponse getMyProgress(
-    );
+    CurriculumProgressResponse getMyProgress();
 }
