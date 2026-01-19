@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface AttendanceRecordJpaRepository extends JpaRepository<AttendanceRecord, Long> {
 
     List<AttendanceRecord> findByAttendanceSheetId(Long sheetId);
+
+    void deleteAllByAttendanceSheetId(Long attendanceSheetId);
 }

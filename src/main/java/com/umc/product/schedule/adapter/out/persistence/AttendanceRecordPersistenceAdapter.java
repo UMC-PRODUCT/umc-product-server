@@ -1,5 +1,6 @@
 package com.umc.product.schedule.adapter.out.persistence;
 
+import com.umc.product.schedule.application.port.out.DeleteAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.SaveAttendanceRecordPort;
 import com.umc.product.schedule.domain.AttendanceRecord;
@@ -11,7 +12,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordPort, LoadAttendanceRecordPort {
+public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordPort, LoadAttendanceRecordPort,
+        DeleteAttendanceRecordPort {
 
     private final AttendanceRecordJpaRepository recordJpaRepository;
 
@@ -62,5 +64,12 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
     @Override
     public boolean existsBySheetIdAndChallengerId(Long sheetId, Long challengerId) {
         return false;
+    }
+
+    // ========== DeleteAttendanceRecordPort ==========
+    
+    @Override
+    public void deleteAllBySheetId(Long sheetId) {
+        recordJpaRepository.deleteAllByAttendanceSheetId(sheetId);
     }
 }
