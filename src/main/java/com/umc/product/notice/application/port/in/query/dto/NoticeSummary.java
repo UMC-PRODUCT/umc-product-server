@@ -13,7 +13,7 @@ public record NoticeSummary(
         String title,
         String content,
         ChallengerRoleType authorRole, // 작성자 role
-        NoticeClassification scope,  // 조직 타입 (전체, 중앙운영사무국 등)
+        NoticeClassification scope,  // 알림 카테고리
         Boolean read, // 읽음 여부 (빨간 점 표시용)
         List<NoticeContentType> includeContentTypes,
         Integer viewCount,
@@ -37,6 +37,21 @@ public record NoticeSummary(
                 isRead,
                 includeContentTypes,
                 viewCount,
+                notice.getCreatedAt(),
+                notice.getTargetParts()
+        );
+    }
+
+    public static NoticeSummary from(Notice notice, ChallengerRoleType authorRole) {
+        return new NoticeSummary(
+                notice.getId(),
+                notice.getTitle(),
+                notice.getContent(),
+                authorRole,
+                notice.getScope(),
+                false, // read - 기본값
+                List.of(), // includeContentTypes - 빈 리스트
+                0,     // viewCount - 기본값
                 notice.getCreatedAt(),
                 notice.getTargetParts()
         );

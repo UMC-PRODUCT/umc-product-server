@@ -1,8 +1,8 @@
 package com.umc.product.notice.dto;
 
-import com.umc.product.challenger.domain.ChallengerRole;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.notice.domain.enums.NoticeClassification;
 import java.util.List;
 
 /*
@@ -10,10 +10,10 @@ import java.util.List;
  * command에서 분리해서 공지사항 대상자 정보를 따로 관리합니다
  */
 public record NoticeTargetInfo(
-        OrganizationType scope,
-        Long organizationId,
+        NoticeClassification scope,
+        List<Long> organizationId,
         Long targetGisuId,
-        List<ChallengerRole> targetRoles,
+        List<ChallengerRoleType> targetRoles, // 선택적 사용
         List<ChallengerPart> targetParts
 ) {
 
@@ -21,6 +21,7 @@ public record NoticeTargetInfo(
      * 리스트 미생성 상태인 경우 초기화
      * */
     public NoticeTargetInfo {
+        organizationId = organizationId != null ? organizationId : List.of();
         targetRoles = targetRoles != null ? targetRoles : List.of();
         targetParts = targetParts != null ? targetParts : List.of();
     }
