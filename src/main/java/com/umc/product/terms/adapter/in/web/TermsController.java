@@ -3,7 +3,7 @@ package com.umc.product.terms.adapter.in.web;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.annotation.Public;
-import com.umc.product.terms.adapter.in.web.dto.request.CreateTermsRequest;
+import com.umc.product.terms.adapter.in.web.dto.request.CreateTermRequest;
 import com.umc.product.terms.adapter.in.web.dto.response.TermsResponse;
 import com.umc.product.terms.application.port.in.command.ManageTermsUseCase;
 import com.umc.product.terms.application.port.in.command.dto.CreateTermCommand;
@@ -45,7 +45,7 @@ public class TermsController {
 
     @PostMapping
     @Operation(summary = "약관 생성")
-    Long createTerms(@RequestBody CreateTermsRequest request) {
+    Long createTerms(@RequestBody CreateTermRequest request) {
         return manageTermsUseCase.createTerms(
                 CreateTermCommand.builder()
                         .title(request.title())
