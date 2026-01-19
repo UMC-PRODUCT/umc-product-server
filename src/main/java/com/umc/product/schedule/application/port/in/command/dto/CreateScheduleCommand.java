@@ -15,7 +15,7 @@ public record CreateScheduleCommand(
         String name,
         LocalDateTime startsAt,
         LocalDateTime endsAt,
-        Boolean isAllDay,
+        boolean isAllDay,
         String locationName,
         String description,
         List<Long> participantMemberIds,
@@ -69,6 +69,7 @@ public record CreateScheduleCommand(
                 .name(name)
                 .startsAt(startsAt)
                 .endsAt(endsAt)
+                .isAllDay(isAllDay)
                 .locationName(locationName)
                 .description(description)
                 .type(scheduleType)
