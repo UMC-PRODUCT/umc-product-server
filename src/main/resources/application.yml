@@ -129,6 +129,8 @@ springdoc:
     path: /docs # Swagger 경로
     enabled: false # Swagger는 기본적으로 비활성화
     operations-sorter: method # API 정렬 (method, alpha)
+    doc-expansion: none  # 모든 API를 접힌 상태로 표시
+    #    default-models-expand-depth: -1  # 스키마 모델도 접힌 상태로
     # tag 정렬은 SwaggerTag에 명시된 대로 정렬할 것
 
   api-docs:

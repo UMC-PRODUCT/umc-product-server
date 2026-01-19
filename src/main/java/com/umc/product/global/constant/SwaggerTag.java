@@ -29,6 +29,7 @@ public enum SwaggerTag {
     NOTIFICATION("알람", "notification | 알림 API", 110),
     STORAGE("파일 저장소", "storage | 파일 저장 API", 120),
     PROJECT("UPMS", "project | 프로젝트 매칭 API", 130),
+    TERMS("약관", "terms | 약관 API", 140),
 
     // 관리자 전용 API는 최하단에 배치하도록 함
     ADMIN("관리자/운영진", "관리자 전용 별도 API", 999),
@@ -82,5 +83,6 @@ public enum SwaggerTag {
         public static final String STORAGE = "파일 저장소";
         public static final String PROJECT = "UPMS";
         public static final String ADMIN = "관리자/운영진";
+        public static final String TERMS = "약관";
     }
 }

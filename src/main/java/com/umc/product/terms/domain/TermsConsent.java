@@ -1,7 +1,7 @@
-package com.umc.product.member.domain;
+package com.umc.product.terms.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.member.domain.enums.TermType;
+import com.umc.product.terms.domain.enums.TermsType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,10 +17,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "member_term_agreement")
+@Table(name = "terms_consent")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class MemberTermAgreement extends BaseEntity {
+public class TermsConsent extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,13 +31,13 @@ public class MemberTermAgreement extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "term_type", nullable = false, length = 20)
-    private TermType termType;
+    private TermsType termType;
 
     @Column(name = "agreed_at", nullable = false)
     private Instant agreedAt;
 
     @Builder
-    private MemberTermAgreement(Long memberId, TermType termType, Instant agreedAt) {
+    private TermsConsent(Long memberId, TermsType termType, Instant agreedAt) {
         this.memberId = memberId;
         this.termType = termType;
         this.agreedAt = agreedAt != null ? agreedAt : Instant.now();
