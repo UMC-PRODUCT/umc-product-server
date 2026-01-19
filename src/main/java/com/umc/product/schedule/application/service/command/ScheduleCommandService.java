@@ -1,4 +1,4 @@
-package com.umc.product.schedule.application.service;
+package com.umc.product.schedule.application.service.command;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;

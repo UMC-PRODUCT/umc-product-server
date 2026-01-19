@@ -1,4 +1,4 @@
-package com.umc.product.schedule.application.service;
+package com.umc.product.schedule.application.service.command;
 
 import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
