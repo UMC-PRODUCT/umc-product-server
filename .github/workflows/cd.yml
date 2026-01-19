@@ -86,7 +86,6 @@ jobs:
           
           echo "⚙️  애플리케이션 설정 확인..."
           [[ -z "$DOCKER_COMPOSE_ENV" ]] && MISSING_VARS+=("DOCKER_COMPOSE_ENV")
-          [[ -z "$APPLICATION_SECRET" ]] && MISSING_VARS+=("APPLICATION_SECRET")
           [[ -z "$APPLICATION_PROFILE_SECRET" ]] && MISSING_VARS+=("APPLICATION_PROFILE_SECRET")
           
           echo "🌍 환경 변수 확인..."
