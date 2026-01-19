@@ -29,8 +29,19 @@ public class ChallengerWorkbookPersistenceAdapter implements LoadChallengerWorkb
     }
 
     @Override
+    public List<ChallengerWorkbook> findByChallengerIdAndCurriculumId(Long challengerId, Long curriculumId) {
+        // TODO: QueryRepository 구현 필요
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
+
+    @Override
     public List<ChallengerWorkbook> findByOriginalWorkbookId(Long originalWorkbookId) {
         return challengerWorkbookJpaRepository.findByOriginalWorkbookId(originalWorkbookId);
     }
 
+    @Override
+    public List<ChallengerWorkbook> findByOriginalWorkbookIdAndStudyGroupId(Long originalWorkbookId, Long studyGroupId) {
+        // TODO: QueryRepository 구현 필요
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
 }
