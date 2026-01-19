@@ -1,6 +1,8 @@
 package com.umc.product.notice.adapter.in.web.swagger;
 
 import com.umc.product.global.response.ApiResponse;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notice.adapter.in.web.dto.request.CreateDraftNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.SendNoticeReminderRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
@@ -30,7 +32,10 @@ public interface NoticeApi {
     })
     ApiResponse<CreateDraftNoticeResponse> createDraftNotice(
             @Parameter(description = "공지사항 생성 정보", required = true)
-            @RequestBody @Valid CreateDraftNoticeRequest request
+            @RequestBody @Valid CreateDraftNoticeRequest request,
+
+            @Parameter(hidden = true)
+            @CurrentMember MemberPrincipal memberPrincipal
     );
 
     @Operation(
@@ -53,7 +58,10 @@ public interface NoticeApi {
     })
     void publishNotice(
             @Parameter(description = "공지사항 ID", required = true)
-            @PathVariable Long noticeId
+            @PathVariable Long noticeId,
+
+            @Parameter(hidden = true)
+            @CurrentMember MemberPrincipal memberPrincipal
     );
 
     @Operation(
@@ -72,7 +80,10 @@ public interface NoticeApi {
     })
     void deleteNotice(
             @Parameter(description = "공지사항 ID", required = true)
-            @PathVariable Long noticeId
+            @PathVariable Long noticeId,
+
+            @Parameter(hidden = true)
+            @CurrentMember MemberPrincipal memberPrincipal
     );
 
     @Operation(
@@ -98,7 +109,10 @@ public interface NoticeApi {
             @PathVariable Long noticeId,
 
             @Parameter(description = "수정할 공지사항 정보", required = true)
-            @RequestBody @Valid UpdateNoticeRequest request
+            @RequestBody @Valid UpdateNoticeRequest request,
+
+            @Parameter(hidden = true)
+            @CurrentMember MemberPrincipal memberPrincipal
     );
 
     @Operation(
@@ -124,6 +138,9 @@ public interface NoticeApi {
             @PathVariable Long noticeId,
 
             @Parameter(description = "리마인더 발송 정보", required = true)
-            @RequestBody @Valid SendNoticeReminderRequest request
+            @RequestBody @Valid SendNoticeReminderRequest request,
+
+            @Parameter(hidden = true)
+            @CurrentMember MemberPrincipal memberPrincipal
     );
 }

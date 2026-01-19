@@ -6,6 +6,10 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
+import com.umc.product.notice.application.port.out.LoadNoticePort;
+import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
+import com.umc.product.notice.application.port.out.SaveNoticePort;
+import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.domain.enums.NoticeClassification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NoticeQueryService implements GetNoticeUseCase {
 
+    private final LoadNoticePort loadNoticePort;
+    private final SaveNoticePort saveNoticePort;
+    private final LoadNoticeReadPort loadNoticeReadPort;
+    private final SaveNoticeReadPort saveNoticeReadPort;
 
     @Override
     public Page<NoticeSummary> getAllNoticeSummaries(NoticeClassification info, Pageable pageable) {

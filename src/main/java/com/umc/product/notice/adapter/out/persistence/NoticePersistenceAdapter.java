@@ -6,10 +6,11 @@ import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeRead;
-import java.awt.print.Pageable;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -30,7 +31,7 @@ public class NoticePersistenceAdapter implements
     }
 
     @Override
-    public List<Notice> findAllNotices(Pageable pageable) {
+    public Page<Notice> findAllNotices(Pageable pageable) {
         return noticeJpaRepository.findAll(pageable);
     }
 
