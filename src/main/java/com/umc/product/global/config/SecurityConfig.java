@@ -95,6 +95,17 @@ public class SecurityConfig {
         Set<String> publicEndpoints = PublicEndpointCollector
                 .collectPublicEndpoints(requestMappingHandlerMapping);
 
+        // ✅ 디버깅 로그
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        System.out.println("🔓 Public Endpoints 수집 결과:");
+        if (publicEndpoints.isEmpty()) {
+            System.out.println("  ⚠️  수집된 엔드포인트가 없습니다!");
+        } else {
+            publicEndpoints.forEach(endpoint ->
+                    System.out.println("  ✅ " + endpoint));
+        }
+        System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
         http
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
@@ -152,8 +163,8 @@ public class SecurityConfig {
     @Bean
     @Profile("dev")
     public UserDetailsService swaggerUserDetailsService(
-            @Value("${swagger.auth.username:admin}") String username,
-            @Value("${swagger.auth.password:admin123}") String password,
+            @Value("${app.swagger-auth.username:username}") String username,
+            @Value("${app.swagger-auth.password:password}") String password,
             PasswordEncoder passwordEncoder) {
         UserDetails user = User.builder()
                 .username(username)
@@ -188,7 +199,13 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         // Swagger CORS 설정
         configuration.setAllowedOriginPatterns(
-                List.of("http://localhost:8080", "http://localhost:3000"));
+                List.of(
+                        "http://localhost:8080",
+                        "http://localhost:3000",
+                        // Swagger
+                        "https://dev.umc-product.kyeoungwoon.kr",
+                        "https://umc-product.kyeoungwoon.kr"
+                ));
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

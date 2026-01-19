@@ -1,24 +1,25 @@
 spring:
+  mail:
+    host: dwqfwq
+    port: 587
+    username: fqwfwq
+    password: fwqfwq
+
   jackson:
     generator:
       write-numbers-as-strings: true
 
-  datasource:
-    driver-class-name: org.testcontainers.jdbc.ContainerDatabaseDriver
-    url: jdbc:tc:postgresql:16:///test?TC_DAEMON=true
-    username: test
-    password: test
 
   jpa:
     hibernate:
       ddl-auto: create-drop
     open-in-view: false
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+#    database-platform: org.hibernate.spatial.dialect.postgis.PostgisDialect
     properties:
       hibernate:
         format_sql: false
         show_sql: false
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+#        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   flyway:
     enabled: false
@@ -32,11 +33,19 @@ spring:
             client-secret: test
 
 jwt:
-  secret: dGVzdC1zZWNyZXQta2V5LWZvci11bml0LXRlc3RpbmctcHVycG9zZXMtb25seS1kb25vdC11c2UtaW4tcHJvZHVjdGlvbi12YWx1ZQ==
+  access-token-secret: ioconw
+  refresh-token-secret: fewqgfqww
+  oauth-verification-token-secret: 1241412fwqqw
+  email-verification-token-secret: WQFEQ
   access-token-validity-in-seconds: 3600
   refresh-token-validity-in-seconds: 604800
+  verification-token-validity-in-seconds: 600
+
 
 management:
+  health:
+    mail:
+      enabled: false
   server:
     port: 9090
 
@@ -44,6 +53,9 @@ logging:
   level:
     root: WARN
     org.testcontainers: INFO
+  org:
+    testcontainers:
+      level: DEBUG
 
 app:
   firebase-configuration: |

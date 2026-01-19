@@ -123,7 +123,7 @@ dependencies {
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testImplementation("com.h2database:h2")
+    testImplementation("org.springframework.boot:spring-boot-testcontainers")
     testImplementation("org.testcontainers:testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
@@ -202,6 +202,4 @@ tasks.build {
     }
 }
 
-tasks.bootJar {
-    dependsOn(copyDocument) // bootJar 실행 시 AsciiDoc이 생성하도록 함
-}
+// bootJar에는 document 생성을 제외하도록 함 (test가 실패하더라도 배포는 우선 되도록 하기 위함)

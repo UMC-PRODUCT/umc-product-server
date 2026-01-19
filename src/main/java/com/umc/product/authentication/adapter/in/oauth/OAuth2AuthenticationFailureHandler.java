@@ -23,7 +23,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
     private final JwtTokenProvider jwtTokenProvider;
 
-    @Value("${oauth2.redirect-url:http://localhost:3000/oauth/callback}")
+    @Value("${app.oauth2.frontend-redirect-url:about:blank}")
     private String redirectUrl;
 
     @Override

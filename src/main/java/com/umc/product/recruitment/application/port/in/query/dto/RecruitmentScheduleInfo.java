@@ -8,11 +8,16 @@ public record RecruitmentScheduleInfo(
         Long recruitmentId,
         List<ScheduleItem> schedules
 ) {
+    public enum ScheduleKind {
+        WINDOW,
+        AT
+    }
+
     public record ScheduleItem(
             RecruitmentScheduleType type,
+            ScheduleKind kind,
             Instant startsAt,
-            Instant endsAt,
-            String note
+            Instant endsAt
     ) {
     }
 }

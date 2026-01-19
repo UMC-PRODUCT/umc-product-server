@@ -33,11 +33,15 @@ public class StudyGroupMember {
     @Column(nullable = false)
     private Long challengerId;
 
+    @Column(nullable = false)
+    private boolean isLeader;
+
     @Builder
-    private StudyGroupMember(StudyGroup studyGroup, Long challengerId) {
+    private StudyGroupMember(StudyGroup studyGroup, Long challengerId, boolean isLeader) {
         validate(studyGroup, challengerId);
         this.studyGroup = studyGroup;
         this.challengerId = challengerId;
+        this.isLeader = isLeader;
     }
 
     private static void validate(StudyGroup studyGroup, Long challengerId) {
@@ -47,5 +51,13 @@ public class StudyGroupMember {
         if (challengerId == null) {
             throw new BusinessException(Domain.COMMON, OrganizationErrorCode.CHALLENGER_ID_REQUIRED);
         }
+    }
+
+    public void assignAsLeader() {
+        this.isLeader = true;
+    }
+
+    public void removeAsLeader() {
+        this.isLeader = false;
     }
 }
