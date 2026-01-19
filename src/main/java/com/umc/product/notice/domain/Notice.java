@@ -165,11 +165,11 @@ public class Notice extends BaseEntity {
                                               Long authorChallengerId,
                                               NoticeClassification scopes) {
         // 필수값 null 체크
-        if (title == null) {
+        if (title == null || title.isBlank()) {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_TITLE);
         }
 
-        if (content == null) {
+        if (content == null || content.isBlank()) {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_CONTENT);
         }
 
@@ -184,11 +184,11 @@ public class Notice extends BaseEntity {
 
     private void validateCanUpdate(String title, String content,
                                           NoticeClassification scope) {
-        if (title == null) {
+        if (title == null || title.isBlank()) {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_TITLE);
         }
 
-        if (content == null) {
+        if (content == null || content.isBlank()) {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_CONTENT);
         }
 

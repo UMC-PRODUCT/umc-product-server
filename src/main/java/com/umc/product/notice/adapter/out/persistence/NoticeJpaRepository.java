@@ -10,8 +10,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface NoticeJpaRepository extends JpaRepository<Notice, Long> {
 
     List<Notice> findAllByAuthorChallengerId(Long challengerId);
-
-    Page<Notice> findAll(Pageable pageable);
-
-
 }
