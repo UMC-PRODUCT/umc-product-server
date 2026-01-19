@@ -9,6 +9,7 @@ import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDashb
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentFormResponseDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentNoticeUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetRecruitmentPartListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentScheduleUseCase;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
@@ -18,6 +19,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentD
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentFormResponseDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentNoticeQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentPartListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentScheduleQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.MyApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
@@ -25,6 +27,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentDash
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormResponseDetailInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentNoticeInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentPartListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentScheduleInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,7 +43,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         GetRecruitmentScheduleUseCase,
         GetRecruitmentDashboardUseCase,
         GetMyApplicationListUseCase,
-        GetRecruitmentDetailUseCase {
+        GetRecruitmentDetailUseCase,
+        GetRecruitmentPartListUseCase {
 
     @Override
     public ActiveRecruitmentInfo get(GetActiveRecruitmentQuery query) {
@@ -86,6 +90,11 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     @Override
     public RecruitmentDraftInfo get(GetRecruitmentDetailQuery query) {
+        return null;
+    }
+
+    @Override
+    public RecruitmentPartListInfo get(GetRecruitmentPartListQuery query) {
         return null;
     }
 }

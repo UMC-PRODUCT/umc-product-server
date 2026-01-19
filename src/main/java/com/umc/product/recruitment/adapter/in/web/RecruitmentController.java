@@ -21,6 +21,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentDraftR
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentFormResponseDetailResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentListResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentNoticeResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentPartListResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentSchedulesResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.SubmitRecruitmentApplicationResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateRecruitmentInterviewPreferenceResponse;
@@ -52,6 +53,7 @@ import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDashb
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentFormResponseDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentNoticeUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetRecruitmentPartListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentScheduleUseCase;
 import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
@@ -62,12 +64,14 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentD
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentFormResponseDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentNoticeQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentPartListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentScheduleQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.MyApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentDashboardInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormResponseDetailInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentPartListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentScheduleInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -110,6 +114,7 @@ public class RecruitmentController {
     private final GetRecruitmentDashboardUseCase getRecruitmentDashboardUseCase;
     private final GetMyApplicationListUseCase getMyApplicationListUseCase;
     private final GetRecruitmentDetailUseCase getRecruitmentDetailUseCase;
+    private final GetRecruitmentPartListUseCase getRecruitmentPartListUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
@@ -426,5 +431,22 @@ public class RecruitmentController {
         RecruitmentDraftInfo info = getRecruitmentDetailUseCase.get(query);
 
         return RecruitmentDraftResponse.from(info);
+    }
+
+    @GetMapping("/{recruitmentId}/parts")
+    @Operation(
+            summary = "특정 모집에 대해, 각 파트별 모집 여부 조회 API",
+            description = """
+                    특정 모집(recruitmentId)에 대해 파트별로 모집중/모집마감 상태를 조회합니다.
+                    지원자 홈에서 파트 리스트(모집중/모집마감 뱃지) 렌더링에 사용합니다.
+                    """
+    )
+    public RecruitmentPartListResponse getRecruitmentPartsStatus(
+            Long memberId, // auth 추가 후 제거
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
+    ) {
+        GetRecruitmentPartListQuery query = new GetRecruitmentPartListQuery(recruitmentId, memberId);
+        RecruitmentPartListInfo info = getRecruitmentPartListUseCase.get(query);
+        return RecruitmentPartListResponse.from(info);
     }
 }
