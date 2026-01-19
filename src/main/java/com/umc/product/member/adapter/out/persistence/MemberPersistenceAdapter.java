@@ -3,8 +3,6 @@ package com.umc.product.member.adapter.out.persistence;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
-import com.umc.product.member.domain.MemberTermAgreement;
-import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -14,7 +12,6 @@ import org.springframework.stereotype.Component;
 public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort {
 
     private final MemberJpaRepository memberJpaRepository;
-    private final MemberTermAgreementRepository memberTermAgreementRepository;
     private final MemberQueryRepository memberQueryRepository;
 
     @Override
@@ -51,11 +48,6 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort 
     @Override
     public Member save(Member member) {
         return memberJpaRepository.save(member);
-    }
-
-    @Override
-    public List<MemberTermAgreement> saveTermAgreements(List<MemberTermAgreement> agreements) {
-        return memberTermAgreementRepository.saveAll(agreements);
     }
 
     @Override
