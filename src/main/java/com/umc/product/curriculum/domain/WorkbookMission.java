@@ -26,6 +26,9 @@ public class WorkbookMission extends BaseEntity {
     private Long id;
 
     @Column(nullable = false)
+    private Long originalWorkbookId;
+
+    @Column(nullable = false)
     private String title;
 
     @Enumerated(EnumType.STRING)
@@ -36,9 +39,11 @@ public class WorkbookMission extends BaseEntity {
     private String content;
 
     @Builder
-    private WorkbookMission(String title,
+    private WorkbookMission(Long originalWorkbookId,
+                            String title,
                             MissionType missionType,
                             String content) {
+        this.originalWorkbookId = originalWorkbookId;
         this.title = title;
         this.missionType = missionType;
         this.content = content;

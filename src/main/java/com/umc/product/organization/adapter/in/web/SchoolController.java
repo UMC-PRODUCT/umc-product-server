@@ -1,5 +1,6 @@
 package com.umc.product.organization.adapter.in.web;
 
+import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateSchoolRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.DeleteSchoolsRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateSchoolRequest;
@@ -21,18 +22,21 @@ public class SchoolController implements SchoolControllerApi {
 
     private final ManageSchoolUseCase manageSchoolUseCase;
 
+    @Public
     @Override
     @PostMapping
     public void createSchool(@RequestBody @Valid CreateSchoolRequest request) {
         manageSchoolUseCase.register(request.toCommand());
     }
 
+    @Public
     @Override
     @PatchMapping("/{schoolId}")
     public void updateSchool(@PathVariable Long schoolId, @RequestBody @Valid UpdateSchoolRequest request) {
         manageSchoolUseCase.updateSchool(schoolId, request.toCommand());
     }
 
+    @Public
     @Override
     @DeleteMapping
     public void deleteSchools(@RequestBody @Valid DeleteSchoolsRequest request) {
