@@ -1,4 +1,4 @@
-package com.umc.product.terms.adapter.in.web.dto.request;
+package com.umc.product.terms.adapter.in.web.dto.response;
 
 import com.umc.product.terms.application.port.in.query.dto.TermsInfo;
 import lombok.Builder;
