@@ -130,9 +130,6 @@ springdoc:
     enabled: false # Swagger는 기본적으로 비활성화
     operations-sorter: method # API 정렬 (method, alpha)
     # tag 정렬은 SwaggerTag에 명시된 대로 정렬할 것
-    auth:
-      username: ${SWAGGER_AUTH_USERNAME:umcproduct}
-      password: ${SWAGGER_AUTH_PASSWORD:hello_world_product!}
 
   api-docs:
     path: /docs-json # API 문서 경로
