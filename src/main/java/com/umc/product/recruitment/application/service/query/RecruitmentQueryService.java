@@ -1,4 +1,4 @@
-package com.umc.product.recruitment.application.port.service.query;
+package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.recruitment.adapter.in.web.dto.response.GetRecruitmentDetailUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
