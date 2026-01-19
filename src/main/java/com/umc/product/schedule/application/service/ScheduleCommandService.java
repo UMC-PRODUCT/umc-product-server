@@ -51,7 +51,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase {
             createAttendanceForParticipants(savedSchedule, command.participantMemberIds());
         }
 
-        return null;
+        return savedSchedule.getId();
     }
 
     private void createAttendanceForParticipants(
