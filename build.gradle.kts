@@ -37,44 +37,15 @@ val awsVersion = "2.40.12"
 val snippetsDir = file("build/generated-snippets")
 val docsDir = "docs/asciidoc"
 
-//// QueryDSL Q클래스 생성 경로 설정
-//val querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
-//
-//sourceSets {
-//    main {
-//        java {
-//            srcDirs(querydslDir)
-//        }
-//    }
-//}
-
-val querydslGenDir = layout.buildDirectory.dir("generated/querydsl")
+// QueryDSL Q클래스 생성 경로 설정
+val querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
 
 sourceSets {
-    named("main") {
-        java.srcDir(querydslGenDir)
+    main {
+        java {
+            srcDirs(querydslDir)
+        }
     }
-}
-
-val generateQuerydsl by tasks.registering(JavaCompile::class) {
-    group = "build"
-    description = "Generate QueryDSL Q-classes"
-
-    // main 소스 기준으로 APT만 돌려서 Q를 생성
-    source = sourceSets["main"].java
-    classpath = configurations["compileClasspath"]
-
-    destinationDirectory.set(querydslGenDir)
-    options.annotationProcessorPath = configurations["annotationProcessor"]
-    options.compilerArgs.addAll(
-        listOf(
-            "-proc:only"
-        )
-    )
-}
-
-tasks.named("compileJava") {
-    dependsOn(generateQuerydsl)
 }
 
 dependencies {
@@ -162,9 +133,9 @@ dependencies {
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
 }
 
-//tasks.withType<JavaCompile>().configureEach {
-//    options.generatedSourceOutputDirectory.set(querydslDir)
-//}
+tasks.withType<JavaCompile>().configureEach {
+    options.generatedSourceOutputDirectory.set(querydslDir)
+}
 
 tasks.clean {
     doFirst {
@@ -174,7 +145,7 @@ tasks.clean {
     }
 
     doLast {
-//        querydslDir.deleteRecursively()
+        querydslDir.deleteRecursively()
         println("[clean] QueryDSL 생성 디렉토리를 삭제하였습니다.")
 
         println("[clean] gradle clean이 완료되었습니다.")
