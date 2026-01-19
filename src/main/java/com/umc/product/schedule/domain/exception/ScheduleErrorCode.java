@@ -12,6 +12,7 @@ public enum ScheduleErrorCode implements BaseCode {
     // 조회 실패
     ATTENDANCE_SHEET_NOT_FOUND(HttpStatus.NOT_FOUND, "SCHEDULE-0001", "출석부를 찾을 수 없습니다"),
     ATTENDANCE_RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "SCHEDULE-0002", "출석 기록을 찾을 수 없습니다"),
+    SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "SCHEDULE-0009", "일정을 찾을 수 없습니다"),
 
     // 상태 오류
     INVALID_ATTENDANCE_STATUS(HttpStatus.BAD_REQUEST, "SCHEDULE-0003", "유효하지 않은 출석 상태입니다"),
