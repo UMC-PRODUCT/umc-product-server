@@ -26,6 +26,11 @@ public class SchedulePersistenceAdapter implements
     }
 
     @Override
+    public boolean existsById(Long id) {
+        return scheduleJpaRepository.existsById(id);
+    }
+
+    @Override
     public List<Schedule> findAllOrderByStatusAndDate() {
         return null;
     }
