@@ -2,7 +2,7 @@ package com.umc.product.schedule.adapter.in.web.dto.request;
 
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
-import com.umc.product.schedule.application.port.in.command.CheckAttendanceCommand;
+import com.umc.product.schedule.application.port.in.command.dto.CheckAttendanceCommand;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.time.LocalDateTime;
 

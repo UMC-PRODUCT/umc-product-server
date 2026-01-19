@@ -1,4 +1,4 @@
-package com.umc.product.schedule.application.port.in.command;
+package com.umc.product.schedule.application.port.in.command.dto;
 
 import java.time.LocalDateTime;
 import java.util.Objects;

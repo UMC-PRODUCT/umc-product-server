@@ -1,5 +1,6 @@
 package com.umc.product.schedule.application.port.in.command;
 
+import com.umc.product.schedule.application.port.in.command.dto.CheckAttendanceCommand;
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
 
 /**
