@@ -62,7 +62,6 @@ jobs:
           SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
           DOCKER_COMPOSE_ENV: ${{ secrets.DOCKER_COMPOSE_ENV }}
-          APPLICATION_SECRET: ${{ secrets.APPLICATION_SECRET }}
           APPLICATION_PROFILE_SECRET: ${{ secrets.APPLICATION_PROFILE_SECRET }}
           APP_ENVIRONMENT: ${{ env.ENVIRONMENT }}
           APP_IMAGE_TAG: ${{ env.IMAGE_TAG }}
@@ -87,7 +86,6 @@ jobs:
           
           echo "⚙️  애플리케이션 설정 확인..."
           [[ -z "$DOCKER_COMPOSE_ENV" ]] && MISSING_VARS+=("DOCKER_COMPOSE_ENV")
-          [[ -z "$APPLICATION_SECRET" ]] && MISSING_VARS+=("APPLICATION_SECRET")
           [[ -z "$APPLICATION_PROFILE_SECRET" ]] && MISSING_VARS+=("APPLICATION_PROFILE_SECRET")
           
           echo "🌍 환경 변수 확인..."
@@ -208,9 +206,7 @@ jobs:
             
             mkdir -p ${{ secrets.SERVER_APP_DIRECTORY }}/config
             
-            cat > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-secret.yml << 'EOF'
-            ${{ secrets.APPLICATION_SECRET }}
-            EOF
+            # application-secret.yml을 사용하지 않도록 변경함에 따라 제거
             
             cat > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-${PROFILE}.yml << 'EOF'
             ${{ secrets.APPLICATION_PROFILE_SECRET }}
