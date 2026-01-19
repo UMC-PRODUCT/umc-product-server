@@ -45,18 +45,22 @@ public class Schedule extends BaseEntity {
     @Column(nullable = false)
     private LocalDateTime endsAt;
 
+    @Column(nullable = false)
+    private boolean isAllDay;
+
     private String locationName;
 
     @Builder
     private Schedule(String name, String description, ScheduleType type,
                      Long authorChallengerId, LocalDateTime startsAt, LocalDateTime endsAt,
-                     String locationName) {
+                     boolean isAllDay, String locationName) {
         this.name = name;
         this.description = description;
         this.type = type;
         this.authorChallengerId = authorChallengerId;
         this.startsAt = startsAt;
         this.endsAt = endsAt;
+        this.isAllDay = isAllDay;
         this.locationName = locationName;
     }
 
