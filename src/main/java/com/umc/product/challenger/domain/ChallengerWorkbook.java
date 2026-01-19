@@ -57,16 +57,8 @@ public class ChallengerWorkbook extends BaseEntity {
         this.challengerId = challengerId;
         this.originalWorkbookId = originalWorkbookId;
         this.scheduleId = scheduleId;
-        this.status = status != null ? status : WorkbookStatus.NOT_RELEASED;
+        this.status = status != null ? status : WorkbookStatus.PENDING;
         this.isBest = false;
-    }
-
-    /**
-     * 워크북 배포 시 상태 변경 (NOT_RELEASED → PENDING)
-     */
-    public void release() {
-        validateNotReleasedStatus();
-        this.status = WorkbookStatus.PENDING;
     }
 
     /**
@@ -100,12 +92,6 @@ public class ChallengerWorkbook extends BaseEntity {
 
     public void unselectAsBest() {
         this.isBest = false;
-    }
-
-    private void validateNotReleasedStatus() {
-        if (this.status != WorkbookStatus.NOT_RELEASED) {
-            throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
-        }
     }
 
     private void validatePendingStatus() {
