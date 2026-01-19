@@ -1,34 +1,24 @@
-//package com.umc.product.schedule.adapter.in.web;
-//
-//import com.umc.product.global.response.ApiResponse;
-//import com.umc.product.schedule.adapter.in.web.dto.request.CreateAttendanceSheetRequest;
-//import com.umc.product.schedule.adapter.in.web.dto.request.UpdateAttendanceSheetRequest;
-//import com.umc.product.schedule.adapter.in.web.dto.response.AttendanceSheetResponse;
-//import com.umc.product.schedule.adapter.in.web.dto.response.PendingAttendanceResponse;
-//import com.umc.product.schedule.adapter.in.web.dto.response.ScheduleListResponse;
-//import com.umc.product.schedule.application.port.in.CreateAttendanceSheetUseCase;
-//import com.umc.product.schedule.application.port.in.UpdateAttendanceSheetUseCase;
-//import com.umc.product.schedule.application.port.in.query.GetAttendanceSheetUseCase;
-//import com.umc.product.schedule.application.port.in.query.GetPendingAttendancesUseCase;
-//import com.umc.product.schedule.application.port.in.query.GetScheduleListUseCase;
-//import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
-//import jakarta.validation.Valid;
-//import java.util.List;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.web.bind.annotation.DeleteMapping;
-//import org.springframework.web.bind.annotation.GetMapping;
-//import org.springframework.web.bind.annotation.PathVariable;
-//import org.springframework.web.bind.annotation.PostMapping;
-//import org.springframework.web.bind.annotation.PutMapping;
-//import org.springframework.web.bind.annotation.RequestBody;
-//import org.springframework.web.bind.annotation.RequestMapping;
-//import org.springframework.web.bind.annotation.RestController;
-//
-//@RestController
-//@RequestMapping("/api/v1/schedules")
-//@RequiredArgsConstructor
-//public class ScheduleController implements ScheduleControllerApi {
-//
+package com.umc.product.schedule.adapter.in.web;
+
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleRequest;
+import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
+import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/v1/schedules")
+@RequiredArgsConstructor
+public class ScheduleController implements ScheduleControllerApi {
+
+    private final CreateScheduleUseCase createScheduleUseCase;
+
 //    private final GetScheduleListUseCase getScheduleListUseCase;
 //    private final GetAttendanceSheetUseCase getAttendanceSheetUseCase;
 //    private final GetPendingAttendancesUseCase getPendingAttendancesUseCase;
@@ -101,4 +91,13 @@
 //                .toList();
 //        return ApiResponse.onSuccess(response);
 //    }
-//}
+
+    @PostMapping
+    public void createSchedule(
+            @CurrentMember MemberPrincipal memberPrincipal,
+            @Valid @RequestBody CreateScheduleRequest request
+    ) {
+        CreateScheduleCommand command = request.toCommand(memberPrincipal.getMemberId());
+        createScheduleUseCase.create(command);
+    }
+}
