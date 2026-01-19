@@ -208,9 +208,7 @@ jobs:
             
             mkdir -p ${{ secrets.SERVER_APP_DIRECTORY }}/config
             
-            cat > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-secret.yml << 'EOF'
-            ${{ secrets.APPLICATION_SECRET }}
-            EOF
+            # application-secret.yml을 사용하지 않도록 변경함에 따라 제거
             
             cat > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-${PROFILE}.yml << 'EOF'
             ${{ secrets.APPLICATION_PROFILE_SECRET }}

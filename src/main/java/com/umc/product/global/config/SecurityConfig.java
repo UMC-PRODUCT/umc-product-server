@@ -163,8 +163,8 @@ public class SecurityConfig {
     @Bean
     @Profile("dev")
     public UserDetailsService swaggerUserDetailsService(
-            @Value("${swagger.auth.username:admin}") String username,
-            @Value("${swagger.auth.password:admin123}") String password,
+            @Value("${app.swagger-auth.username:username}") String username,
+            @Value("${app.swagger-auth.password:password}") String password,
             PasswordEncoder passwordEncoder) {
         UserDetails user = User.builder()
                 .username(username)
