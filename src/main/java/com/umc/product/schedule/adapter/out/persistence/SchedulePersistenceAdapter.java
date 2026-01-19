@@ -1,5 +1,6 @@
 package com.umc.product.schedule.adapter.out.persistence;
 
+import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
 import com.umc.product.schedule.domain.Schedule;
@@ -12,7 +13,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SchedulePersistenceAdapter implements
         LoadSchedulePort,
-        SaveSchedulePort {
+        SaveSchedulePort,
+        DeleteSchedulePort {
 
     private final ScheduleJpaRepository scheduleJpaRepository;
 
@@ -33,5 +35,11 @@ public class SchedulePersistenceAdapter implements
     @Override
     public Schedule save(Schedule schedule) {
         return scheduleJpaRepository.save(schedule);
+    }
+
+    // ========== DeleteSchedulePort ==========
+    @Override
+    public void delete(Long scheduleId) {
+        scheduleJpaRepository.deleteById(scheduleId);
     }
 }
