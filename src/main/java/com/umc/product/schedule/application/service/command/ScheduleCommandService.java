@@ -6,7 +6,13 @@ import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
+import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
+import com.umc.product.schedule.application.port.out.DeleteAttendanceRecordPort;
+import com.umc.product.schedule.application.port.out.DeleteAttendanceSheetPort;
+import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
+import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
+import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.out.SaveAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.SaveAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
@@ -24,17 +30,25 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ScheduleCommandService implements CreateScheduleUseCase {
+public class ScheduleCommandService implements CreateScheduleUseCase, DeleteScheduleUseCase {
 
     private final SaveSchedulePort saveSchedulePort;
+    private final LoadSchedulePort loadSchedulePort;
+    private final DeleteSchedulePort deleteSchedulePort;
+
     private final SaveAttendanceSheetPort saveAttendanceSheetPort;
+    private final LoadAttendanceSheetPort loadAttendanceSheetPort;
+    private final DeleteAttendanceSheetPort deleteAttendanceSheetPort;
+
     private final SaveAttendanceRecordPort saveAttendanceRecordPort;
+    private final DeleteAttendanceRecordPort deleteAttendanceRecordPort;
 
     // 외부 도메인 UseCase
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
 
 
+    // 일정 생성
     @Override
     public Long create(CreateScheduleCommand command) {
         // 1. 현재 활성 기수 조회
@@ -89,5 +103,26 @@ public class ScheduleCommandService implements CreateScheduleUseCase {
                 .toList();
 
         saveAttendanceRecordPort.saveAllRecords(records);
+    }
+
+    // 일정 삭제
+    @Override
+    public void delete(Long scheduleId) {
+        if (!loadSchedulePort.existsById(scheduleId)) {
+            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.SCHEDULE_NOT_FOUND);
+        }
+
+        // 1. 해당 Schedule의 AttendanceSheet 조회
+        loadAttendanceSheetPort.findByScheduleId(scheduleId)
+                .ifPresent(sheet -> {
+                    // 2. Sheet에 연결된 모든 Record 삭제
+                    deleteAttendanceRecordPort.deleteAllBySheetId(sheet.getId());
+                });
+
+        // 3. Sheet 삭제
+        deleteAttendanceSheetPort.deleteByScheduleId(scheduleId);
+
+        // 4. Schedule 삭제
+        deleteSchedulePort.delete(scheduleId);
     }
 }
