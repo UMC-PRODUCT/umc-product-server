@@ -60,6 +60,9 @@ public record CurriculumProgressResponse(
             @Schema(description = "워크북 상태", example = "PENDING")
             WorkbookStatus status,
 
+            @Schema(description = "워크북 배포 여부", example = "true")
+            boolean isReleased,
+
             @Schema(description = "현재 진행 중인 주차 여부", example = "true")
             boolean isInProgress
     ) {
@@ -72,6 +75,7 @@ public record CurriculumProgressResponse(
                     info.description(),
                     info.missionType(),
                     info.status(),
+                    info.isReleased(),
                     info.isInProgress()
             );
         }

@@ -20,6 +20,7 @@ public record CurriculumProgressInfo(
             String description,
             MissionType missionType,
             WorkbookStatus status,
+            boolean isReleased,
             boolean isInProgress
     ) {
     }

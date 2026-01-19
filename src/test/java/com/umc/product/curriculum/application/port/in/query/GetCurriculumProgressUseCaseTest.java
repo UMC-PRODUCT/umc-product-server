@@ -6,7 +6,7 @@
 //
 //import com.umc.product.challenger.adapter.out.persistence.ChallengerWorkbookJpaRepository;
 //import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-//import com.umc.product.curriculum.domain.ChallengerWorkbook;
+//import com.umc.product.challenger.domain.ChallengerWorkbook;
 //import com.umc.product.common.domain.enums.ChallengerPart;
 //import com.umc.product.curriculum.adapter.out.persistence.CurriculumJpaRepository;
 //import com.umc.product.curriculum.adapter.out.persistence.OriginalWorkbookJpaRepository;
@@ -84,12 +84,14 @@
 //        CurriculumProgressInfo.WorkbookProgressInfo week1 = result.workbooks().get(0);
 //        assertThat(week1.weekNo()).isEqualTo(1);
 //        assertThat(week1.title()).isEqualTo("1주차 - Spring 시작하기");
-//        assertThat(week1.status()).isEqualTo(null);
+//        assertThat(week1.status()).isEqualTo(WorkbookStatus.PENDING);
+//        assertThat(week1.isReleased()).isTrue();
 //
 //        // 3주차: 미배포
 //        CurriculumProgressInfo.WorkbookProgressInfo week3 = result.workbooks().get(2);
 //        assertThat(week3.weekNo()).isEqualTo(3);
 //        assertThat(week3.status()).isNull();
+//        assertThat(week3.isReleased()).isFalse();
 //    }
 //
 //    @Test

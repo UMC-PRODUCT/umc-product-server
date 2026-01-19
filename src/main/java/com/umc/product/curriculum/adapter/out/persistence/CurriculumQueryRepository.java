@@ -92,6 +92,7 @@ public class CurriculumQueryRepository {
                             tuple.get(originalWorkbook.description),
                             tuple.get(originalWorkbook.missionType),
                             finalStatus,
+                            isReleased,
                             isInProgress
                     );
                 })
