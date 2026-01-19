@@ -9,4 +9,6 @@ public interface LoadChallengerPort {
     Optional<Challenger> findById(Long id);
 
     List<Challenger> findByGisuId(Long gisuId);
+
+    Challenger findByMemberIdAndGisuId(Long memberId, Long GisuId);
 }
