@@ -20,7 +20,11 @@ public enum ScheduleErrorCode implements BaseCode {
 
     // 시간 범위
     INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "SCHEDULE-0006", "시작 시간은 종료 시간보다 이전이어야 합니다"),
-    INVALID_LATE_THRESHOLD(HttpStatus.BAD_REQUEST, "SCHEDULE-0007", "지각 인정 시간이 유효하지 않습니다");
+    INVALID_LATE_THRESHOLD(HttpStatus.BAD_REQUEST, "SCHEDULE-0007", "지각 인정 시간이 유효하지 않습니다"),
+
+    // 일정 생성 관련
+    NOT_ACTIVE_CHALLENGER(HttpStatus.FORBIDDEN, "SCHEDULE-0008", "현재 활성 기수의 챌린저만 일정을 생성할 수 있습니다."),
+    ;
     //별도 추가 예정
     private final HttpStatus httpStatus;
     private final String code;
