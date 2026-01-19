@@ -1,6 +1,9 @@
 package com.umc.product.schedule.application.service;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
@@ -11,6 +14,7 @@ import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +41,16 @@ public class ScheduleCommandService implements CreateScheduleUseCase {
         Long currentGisuId = getGisuUseCase.getActiveGisuId();
 
         // 2. 작성자의 Challenger 조회 (Member + 현재 기수 기반)
-        Long authorChallengerId = getChallengerUseCase.getMemberGisuChallengerInfo(command.authorMemberId(),
-                currentGisuId).challengerId();
+        ChallengerInfo challengerInfo = getChallengerUseCase.getMemberGisuChallengerInfo(
+                command.authorMemberId(),
+                currentGisuId
+        );
+
+        if (challengerInfo == null) {
+            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.NOT_ACTIVE_CHALLENGER);
+        }
+
+        Long authorChallengerId = challengerInfo.challengerId();
 
         // TODO: 3. 참여자 Member 검증 (필요하다고 판단 시 추후 추가, 검색해서 들어가는 거라서 필요 없을 수도)
 
