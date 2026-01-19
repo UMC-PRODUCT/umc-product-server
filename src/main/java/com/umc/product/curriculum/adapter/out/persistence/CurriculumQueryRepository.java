@@ -1,6 +1,6 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
-import static com.umc.product.challenger.dom.QChallengerWorkbook.challengerWorkbook;
+import static com.umc.product.curriculum.domain.QChallengerWorkbook.challengerWorkbook;
 import static com.umc.product.curriculum.domain.QCurriculum.curriculum;
 import static com.umc.product.curriculum.domain.QOriginalWorkbook.originalWorkbook;
 import static com.umc.product.organization.domain.QGisu.gisu;
