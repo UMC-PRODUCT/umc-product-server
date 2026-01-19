@@ -36,12 +36,16 @@ public class Curriculum extends BaseEntity {
     @Column(nullable = false)
     private ChallengerPart part;
 
+    @Column(nullable = false)
+    private String title;
+
     @OneToMany(mappedBy = "curriculum", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OriginalWorkbook> originalWorkbooks = new ArrayList<>();
 
     @Builder
-    private Curriculum(Long gisuId, ChallengerPart part) {
+    private Curriculum(Long gisuId, ChallengerPart part, String title) {
         this.gisuId = gisuId;
         this.part = part;
+        this.title = title;
     }
 }

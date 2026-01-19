@@ -1,4 +1,4 @@
-package com.umc.product.challenger.domain;
+package com.umc.product.curriculum.domain;
 
 import com.umc.product.common.BaseEntity;
 import jakarta.persistence.Column;

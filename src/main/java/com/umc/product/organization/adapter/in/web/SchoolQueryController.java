@@ -1,6 +1,7 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.global.response.PageResponse;
+import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.request.SchoolListRequest;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolListItemResponse;
@@ -21,6 +22,7 @@ public class SchoolQueryController implements SchoolQueryControllerApi {
 
     private final GetSchoolUseCase getSchoolUseCase;
 
+    @Public
     @Override
     @GetMapping
     public SchoolPageResponse getSchools(@ModelAttribute SchoolListRequest request,
@@ -33,6 +35,7 @@ public class SchoolQueryController implements SchoolQueryControllerApi {
         return SchoolPageResponse.from(pageResponse);
     }
 
+    @Public
     @Override
     @GetMapping("/{schoolId}")
     public SchoolDetailResponse getSchoolDetail(@PathVariable Long schoolId) {
