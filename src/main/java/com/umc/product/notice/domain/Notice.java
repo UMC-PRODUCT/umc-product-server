@@ -115,6 +115,28 @@ public class Notice extends BaseEntity {
                 .build();
     }
 
+    public void update(String title, String content,
+                                     List<NoticeClassification> scopes,
+                                     List<Long> organizationIds,
+                                     Long targetGisuId,
+                                     List<ChallengerRoleType> targetRoles,
+                                     List<ChallengerPart> targetParts,
+                                     boolean shouldNotify,
+                                     NoticeStatus status) {
+
+        validateCanUpdate(title, content, scopes);
+
+        this.title = title;
+        this.content = content;
+        if (scopes != null) this.scopes = new ArrayList<>(scopes);
+        if (organizationIds != null) this.organizationIds = new ArrayList<>(organizationIds);
+        this.targetGisuId = targetGisuId;
+        if (targetRoles != null) this.targetRoles = new ArrayList<>(targetRoles);
+        if (targetRoles != null) this.targetParts = new ArrayList<>(targetParts);
+        this.shouldNotify = shouldNotify;
+        this.status = status;
+    }
+
     public boolean isDraft() {
         return this.status == NoticeStatus.DRAFT;
     }
@@ -155,6 +177,21 @@ public class Notice extends BaseEntity {
 
         if (authorChallengerId == null) {
             throw new NoticeDomainException(NoticeErrorCode.AUTHOR_REQUIRED);
+        }
+
+        if (scopes == null || scopes.isEmpty()) {
+            throw new NoticeDomainException(NoticeErrorCode.NOTICE_SCOPE_REQUIRED);
+        }
+    }
+
+    private void validateCanUpdate(String title, String content,
+                                          List<NoticeClassification> scopes) {
+        if (title == null) {
+            throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_TITLE);
+        }
+
+        if (content == null) {
+            throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_CONTENT);
         }
 
         if (scopes == null || scopes.isEmpty()) {

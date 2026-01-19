@@ -1,6 +1,5 @@
 package com.umc.product.notice.application.service.command;
 
-import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
@@ -14,11 +13,12 @@ import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.domain.Notice;
-import com.umc.product.notice.domain.enums.NoticeClassification;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
+import com.umc.product.organization.exception.OrganizationDomainException;
+import com.umc.product.organization.exception.OrganizationErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,6 +34,7 @@ public class NoticeService implements ManageNoticeUseCase {
     private final SaveNoticePort saveNoticePort;
     private final LoadNoticeReadPort loadNoticeReadPort;
     private final SaveNoticeReadPort saveNoticeReadPort;
+
     private final LoadGisuPort gisuPort;
 
 //    private final LoadChallengerPort loadChallengerPort;
@@ -54,7 +55,6 @@ public class NoticeService implements ManageNoticeUseCase {
             validateGisuExists(command.targetInfo().targetGisuId());
         }
 
-
         Notice notice = Notice.draft(
                 command.title(), command.content(), challenger.getId(), command.targetInfo().scope(),
                 command.targetInfo().organizationId(), command.targetInfo().targetGisuId(),
@@ -71,7 +71,6 @@ public class NoticeService implements ManageNoticeUseCase {
         /*
          * TODO: 챌린저 조회 관련 로직 추가 필요, 권한 검증 추가 예정
          */
-
         Notice notice = findNoticeById(command.noticeId());
         notice.publish();
     }
@@ -79,17 +78,32 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void updateNotice(UpdateNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-
+        notice.update(
+                command.title(),
+                command.content(),
+                command.targetInfo().scope(),
+                command.targetInfo().organizationId(),
+                command.targetInfo().targetGisuId(),
+                command.targetInfo().targetRoles(),
+                command.targetInfo().targetParts(),
+                command.shouldNotify(),
+                notice.getStatus()
+        );
+        if (notice.isPublished()) {
+            // TODO: 공지 수정 시 알림 전송 로직 추가 예정
+        }
     }
 
     @Override
     public void deleteNotice(DeleteNoticeCommand command) {
-
+        Notice notice = findNoticeById(command.noticeId());
+        saveNoticePort.delete(notice);
     }
 
     @Override
     public void remindNotice(SendNoticeReminderCommand command) {
-
+        Notice notice = findNoticeById(command.noticeId());
+        // TODO: 알림 전송 로직 추가 예정
     }
 
     private Notice findNoticeById(Long noticeId) {
@@ -100,6 +114,7 @@ public class NoticeService implements ManageNoticeUseCase {
     private void validateGisuExists(Long gisuId) {
         Gisu gisu = gisuPort.findById(gisuId);
         if (gisu == null) {
-
+            throw new OrganizationDomainException(OrganizationErrorCode.GISU_NOT_FOUND);
+        }
     }
 }
