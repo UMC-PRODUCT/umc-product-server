@@ -24,7 +24,7 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
 
     @Override
     public void saveAllRecords(List<AttendanceRecord> records) {
-        records.stream().map(record -> recordJpaRepository.save(record));
+        recordJpaRepository.saveAll(records);
     }
 
     @Override
