@@ -4,7 +4,7 @@ import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.terms.adapter.in.web.dto.request.CreateTermsRequest;
-import com.umc.product.terms.adapter.in.web.dto.request.TermsResponse;
+import com.umc.product.terms.adapter.in.web.dto.response.TermsResponse;
 import com.umc.product.terms.application.port.in.command.ManageTermsUseCase;
 import com.umc.product.terms.application.port.in.command.dto.CreateTermCommand;
 import com.umc.product.terms.application.port.in.query.GetTermsUseCase;
