@@ -1,6 +1,7 @@
 package com.umc.product.support;
 
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.support.isolation.DatabaseIsolation;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,6 +22,9 @@ public abstract class UseCaseTestSupport {
 
     @MockitoBean
     protected JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    protected GetChallengerUseCase getChallengerUseCase;
 
     @MockitoBean
     private FirebaseMessaging firebaseMessaging;
