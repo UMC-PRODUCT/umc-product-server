@@ -1,7 +1,7 @@
 package com.umc.product.recruitment.adapter.in.web.dto.response;
 
 import com.umc.product.recruitment.application.port.in.query.dto.MyApplicationListInfo;
-import com.umc.product.recruitment.domain.ApplicationStatus;
+import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;

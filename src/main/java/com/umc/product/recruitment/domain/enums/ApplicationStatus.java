@@ -1,4 +1,4 @@
-package com.umc.product.recruitment.domain;
+package com.umc.product.recruitment.domain.enums;
 
 public enum ApplicationStatus {
     APPLIED,              // 제출 완료(지원 완료)

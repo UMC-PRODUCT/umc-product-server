@@ -2,8 +2,8 @@ package com.umc.product.recruitment.adapter.in.web.dto.response;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentPartListInfo;
-import com.umc.product.recruitment.domain.ApplicationStatus;
-import com.umc.product.recruitment.domain.RecruitmentPartStatus;
+import com.umc.product.recruitment.domain.enums.ApplicationStatus;
+import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import java.time.Instant;
 import java.util.List;
 

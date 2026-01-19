@@ -1,6 +1,7 @@
 package com.umc.product.recruitment.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
