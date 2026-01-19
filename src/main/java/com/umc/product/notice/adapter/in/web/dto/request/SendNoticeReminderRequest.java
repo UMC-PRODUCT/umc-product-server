@@ -9,7 +9,7 @@ public record SendNoticeReminderRequest(
         List<Long> targetIds /* 리마인드 대상ID */
 ) {
 
-    public SendNoticeReminderCommand toCommand(Long noticeId) {
-        return new SendNoticeReminderCommand(noticeId, targetIds);
+    public SendNoticeReminderCommand toCommand(Long authorChallengerId, Long noticeId) {
+        return new SendNoticeReminderCommand(authorChallengerId, noticeId, targetIds);
     }
 }
