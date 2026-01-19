@@ -1,16 +1,21 @@
-# 서버 기본 설정들
+# ==================================================================
+# 공통 설정 파일, 환경변수화 되어 있는 부분은 프로필별 설정에서 반드시 오버라이드할 것!
+# 환경변수 변경 시에는 반드시 GitHub Actions에 업데이트 할 것
+# ==================================================================
+
 
 server:
   port: ${SERVER_PORT:8080}
   shutdown: graceful
   forward-headers-strategy: framework
-  # tomcat tuning options (나중에 test 하면서 추가)
-#  tomcat:
-#    threads:
-#      max: 200
-#      min-spare: 30
-#    max-connections: 700
-#    accept-count: 300
+
+  # 톰캣 튜닝 옵션 - 부하테스트 하면서 수정할 것
+  tomcat:
+    threads:
+      max: ${TOMCAT_MAX_THREADS:200}
+      min-spare: ${TOMCAT_MIN_SPARE_THREADS:10}
+    max-connections: ${TOMCAT_MAX_CONNECTIONS:8192}
+    accept-count: ${TOMCAT_ACCEPT_COUNT:100}
 
 spring:
   application:
@@ -18,14 +23,14 @@ spring:
   profiles:
     # 기본적으로 local 프로필을 활성화, 실수로 prod에 접근하는 것을 방지함
     active: local
-  config:
-    import:
-      - optional:classpath:application-secret.yml
-      - optional:file:/app/config/application-secret.yml
+
   docker:
     compose:
-      enabled: false # Local DB를 위한 Compose는 기본적으로 비활성화
+      # Local DB를 위한 Compose: 기본적으로 비활성화
+      enabled: false
+      lifecycle-management: start_and_stop
 
+  # 메일 서버 설정
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
@@ -42,6 +47,8 @@ spring:
           timeout: 5000 # 읽기(Read) 타임아웃 5초
           writetimeout: 5000 # 메일 쓰기 전송 타임아웃 5초
 
+  # JS 환경에서 bigint 관련 문제 때문에 숫자를 모두 문자열로 변환하여 발송
+  # Depracated 기능이라서 향후 변경 필요
   jackson:
     generator:
       write-numbers-as-strings: true
@@ -66,7 +73,7 @@ spring:
       keepalive-time: 60000       # DB에 1분마다 생존 신고 (유휴 커넥션 방지)
 
   flyway:
-    enabled: true
+    enabled: false # 필요 시 각 환경에 대한 설정에서 활성화하도록 함
 
   jpa:
     # database-platform은 SpringBoot가 hibernate-spatial 의존성을 기반으로 자동으로 선택함
@@ -76,22 +83,62 @@ spring:
     open-in-view: false
     properties:
       hibernate:
+        default_schema: public
         format_sql: true
         # dialect는 명시가 불필요해서 생략
         show_sql: false # p6spy가 있어서 꺼둠
 
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: profile, email
+            redirect-uri: "{baseUrl}/api/v1/auth/oauth2/callback/{registrationId}"
+
+          kakao:
+            client-id: ${KAKAO_CLIENT_ID}
+            client-secret: ${KAKAO_CLIENT_SECRET}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/api/v1/auth/oauth2/callback/{registrationId}"
+            scope: profile_nickname, account_email
+            client-name: Kakao
+
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
+
+jwt:
+  access-token-secret: ${JWT_ACCESS_TOKEN_SECRET}
+  refresh-token-secret: ${JWT_REFRESH_TOKEN_SECRET}
+  oauth-verification-token-secret: ${JWT_OAUTH_VERIFICATION_TOKEN_SECRET}
+  email-verification-token-secret: ${JWT_EMAIL_VERIFICATION_TOKEN_SECRET}
+  access-token-validity-in-seconds: ${JWT_ACCESS_TOKEN_VALIDITY_IN_SECONDS:3600}
+  refresh-token-validity-in-seconds: ${JWT_REFRESH_TOKEN_VALIDITY_IN_SECONDS:604800}
+  verification-token-validity-in-seconds: ${JWT_VERIFICATION_TOKEN_VALIDITY_IN_SECONDS:600}
 
 # swagger 설정
 springdoc:
   swagger-ui:
     path: /docs # Swagger 경로
-    enabled: false # 기본적으로 비활성화 (prod에 노출되는 경우 방지용)
+    enabled: false # Swagger는 기본적으로 비활성화
     operations-sorter: method # API 정렬 (method, alpha)
-    tags-sorter: alpha # 태그 정렬
+    # tag 정렬은 SwaggerTag에 명시된 대로 정렬할 것
+    auth:
+      username: ${SWAGGER_AUTH_USERNAME:umcproduct}
+      password: ${SWAGGER_AUTH_PASSWORD:hello_world_product!}
 
   api-docs:
     path: /docs-json # API 문서 경로
     enabled: false
+
+  show-actuator: false
 
 logging:
   level:
@@ -154,3 +201,11 @@ management:
     metrics:
       export:
         enabled: true
+
+app:
+  firebase-configuration: ${FIREBASE_CONFIGURATION}
+  swagger-auth:
+    username: ${SWAGGER_AUTH_USERNAME:username}
+    password: ${SWAGGER_AUTH_PASSWORD:password}
+  oauth2:
+    frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT_URL}
