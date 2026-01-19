@@ -62,7 +62,6 @@ jobs:
           SERVER_SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
           SERVER_SSH_PORT: ${{ secrets.SERVER_SSH_PORT }}
           DOCKER_COMPOSE_ENV: ${{ secrets.DOCKER_COMPOSE_ENV }}
-          APPLICATION_SECRET: ${{ secrets.APPLICATION_SECRET }}
           APPLICATION_PROFILE_SECRET: ${{ secrets.APPLICATION_PROFILE_SECRET }}
           APP_ENVIRONMENT: ${{ env.ENVIRONMENT }}
           APP_IMAGE_TAG: ${{ env.IMAGE_TAG }}
