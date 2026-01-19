@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AttendanceSheetJpaRepository extends JpaRepository<AttendanceSheet, Long> {
     Optional<AttendanceSheet> findByScheduleId(Long scheduleId);
+
+    void deleteByScheduleId(Long scheduleId);
 }
