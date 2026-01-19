@@ -41,6 +41,7 @@ public class Form extends BaseEntity {
 
     @Column(nullable = false)
     private Boolean isActive;
+    // 여기 수정 active말고 published 이것도
 
     @OneToMany(mappedBy = "form", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderNo ASC")

@@ -52,21 +52,44 @@ public class ChallengerWorkbook extends BaseEntity {
     private List<ChallengerMission> missions = new ArrayList<>();
 
     @Builder
-    private ChallengerWorkbook(Long challengerId, Long originalWorkbookId, Long scheduleId) {
+    private ChallengerWorkbook(Long challengerId, Long originalWorkbookId, Long scheduleId,
+                               WorkbookStatus status) {
         this.challengerId = challengerId;
         this.originalWorkbookId = originalWorkbookId;
         this.scheduleId = scheduleId;
-        this.status = WorkbookStatus.PENDING;
+        this.status = status != null ? status : WorkbookStatus.NOT_RELEASED;
         this.isBest = false;
     }
 
-    public void markAsPass() {
+    /**
+     * 워크북 배포 시 상태 변경 (NOT_RELEASED → PENDING)
+     */
+    public void release() {
+        validateNotReleasedStatus();
+        this.status = WorkbookStatus.PENDING;
+    }
+
+    /**
+     * 워크북 제출 (PENDING → SUBMITTED)
+     */
+    public void submit() {
         validatePendingStatus();
+        this.status = WorkbookStatus.SUBMITTED;
+    }
+
+    /**
+     * 심사 통과 (SUBMITTED → PASS)
+     */
+    public void markAsPass() {
+        validateSubmittedStatus();
         this.status = WorkbookStatus.PASS;
     }
 
+    /**
+     * 심사 불합격 (SUBMITTED → FAIL)
+     */
     public void markAsFail() {
-        validatePendingStatus();
+        validateSubmittedStatus();
         this.status = WorkbookStatus.FAIL;
     }
 
@@ -79,14 +102,26 @@ public class ChallengerWorkbook extends BaseEntity {
         this.isBest = false;
     }
 
-    private void validatePassStatus() {
-        if (this.status != WorkbookStatus.PASS) {
+    private void validateNotReleasedStatus() {
+        if (this.status != WorkbookStatus.NOT_RELEASED) {
             throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
         }
     }
 
     private void validatePendingStatus() {
         if (this.status != WorkbookStatus.PENDING) {
+            throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
+        }
+    }
+
+    private void validateSubmittedStatus() {
+        if (this.status != WorkbookStatus.SUBMITTED) {
+            throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
+        }
+    }
+
+    private void validatePassStatus() {
+        if (this.status != WorkbookStatus.PASS) {
             throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
         }
     }

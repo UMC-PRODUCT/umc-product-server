@@ -4,27 +4,34 @@ import io.swagger.v3.oas.models.tags.Tag;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * SwaggerTag.Constants를 Tag 어노테이션의 name 부분에 집어넣어주시면 됩니다.
+ * <p>
+ * Order는 Swagger UI 상에 표시되는 순서로, 도메인 간에 10 간격을 주고 넣었으므로 도메인 내부에서 분할하고자 하는 경우 Order를 알맞게 추가해주세요.
+ * <p>
+ * 추후 RestDocs로 변경하면서 Swagger는 천천히 deprecate 시킬 예정입니다.
+ */
 @Getter
 @RequiredArgsConstructor
 public enum SwaggerTag {
 
     TEST("개발자용", "temp | 개발자용 Test API", 0),
-    AUTH("인증/인가", "authentication | 인증/인가 API", 1),
-    MEMBER("회원", "member | 회원 API", 2),
-    CHALLENGER("챌린저", "challenger | 챌린저 API", 3),
-    ORGANIZATION("조직 (학교/지부/중앙운영사무국)", "organization | 조직 관련 API", 4),
-    CURRICULUM("커리큘럼", "curriculum | 커리큘럼 관련 API", 5),
-    SCHEDULE("행사 및 스터디 일정", "schedule | 행사 및 스터디 관련 API", 6),
-    COMMUNITY("커뮤니티", "community | 커뮤니티 API", 7),
-    NOTICE("공지사항", "notice | 공지사항 API", 8),
-    SURVEY("설문", "survey | 설문 API", 9),
-    RECRUITMENT("모집", "recruitment | 모집 API", 10),
-    NOTIFICATION("알람", "notification | 알림 API", 11),
-    STORAGE("파일 저장소", "storage | 파일 저장 API", 12),
-    PROJECT("UPMS", "project | 프로젝트 매칭 API", 13),
+    AUTH("인증/인가", "authentication | 인증/인가 API", 10),
+    MEMBER("회원", "member | 회원 API", 20),
+    CHALLENGER("챌린저", "challenger | 챌린저 API", 30),
+    ORGANIZATION("조직 (학교/지부/중앙운영사무국)", "organization | 조직 관련 API", 40),
+    CURRICULUM("커리큘럼", "curriculum | 커리큘럼 관련 API", 50),
+    SCHEDULE("행사 및 스터디 일정", "schedule | 행사 및 스터디 관련 API", 60),
+    COMMUNITY("커뮤니티", "community | 커뮤니티 API", 70),
+    NOTICE("공지사항", "notice | 공지사항 API", 80),
+    SURVEY("설문", "survey | 설문 API", 90),
+    RECRUITMENT("모집", "recruitment | 모집 API", 100),
+    NOTIFICATION("알람", "notification | 알림 API", 110),
+    STORAGE("파일 저장소", "storage | 파일 저장 API", 120),
+    PROJECT("UPMS", "project | 프로젝트 매칭 API", 130),
 
-
-    ADMIN("관리자/운영진", "관리자 전용 별도 API", 99),
+    // 관리자 전용 API는 최하단에 배치하도록 함
+    ADMIN("관리자/운영진", "관리자 전용 별도 API", 999),
 
     // 추가하는 경우, 하단의 Constatns에도 반드시 동일하게 추가할 것
     ;

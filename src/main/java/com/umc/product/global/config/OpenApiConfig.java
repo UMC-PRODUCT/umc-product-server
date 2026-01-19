@@ -48,7 +48,13 @@ public class OpenApiConfig {
         return List.of(
                 new Server()
                         .url("http://localhost:" + serverPort)
-                        .description("Local")
+                        .description("Local"),
+                new Server()
+                        .url("https://dev.umc-product.kyeoungwoon.kr")
+                        .description("Development"),
+                new Server()
+                        .url("https://umc-product.kyeoungwoon.kr")
+                        .description("Production")
         );
     }
 

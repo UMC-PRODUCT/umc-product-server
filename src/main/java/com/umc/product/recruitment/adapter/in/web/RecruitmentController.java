@@ -1,41 +1,79 @@
 package com.umc.product.recruitment.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag;
+import com.umc.product.recruitment.adapter.in.web.dto.request.CreateRecruitmentRequest;
+import com.umc.product.recruitment.adapter.in.web.dto.request.PublishRecruitmentRequest;
+import com.umc.product.recruitment.adapter.in.web.dto.request.RecruitmentListStatusQuery;
+import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentDraftRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentInterviewPreferenceRequest;
+import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormQuestionsRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormResponseAnswersRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.CreateRecruitmentResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.DeleteRecruitmentFormResponseResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.GetRecruitmentDetailUseCase;
+import com.umc.product.recruitment.adapter.in.web.dto.response.MyRecruitmentApplicationsResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.PublishRecruitmentResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentApplicationFormResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentDashboardResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentDraftFormResponseResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentDraftResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentFormResponseDetailResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentListResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentNoticeResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentSchedulesResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.SubmitRecruitmentApplicationResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateRecruitmentInterviewPreferenceResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpsertRecruitmentFormResponseAnswersResponse;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentDraftFormResponseUseCase;
+import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
+import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentUseCase;
+import com.umc.product.recruitment.application.port.in.command.PublishRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
+import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentDraftUseCase;
+import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormQuestionsUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormResponseAnswersUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetRecruitmentDraftCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentInfo;
+import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormResponseCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationInfo;
+import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentDraftCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetMyApplicationListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDashboardUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentFormResponseDetailUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetRecruitmentListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentNoticeUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetRecruitmentScheduleUseCase;
+import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentFormResponseDetailQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentNoticeQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentScheduleQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.MyApplicationListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentDashboardInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormResponseDetailInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentScheduleInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -62,6 +100,16 @@ public class RecruitmentController {
     private final UpsertRecruitmentFormResponseAnswersUseCase upsertRecruitmentFormResponseAnswersUseCase;
     private final DeleteRecruitmentFormResponseUseCase deleteRecruitmentFormResponseUseCase;
     private final SubmitRecruitmentApplicationUseCase submitRecruitmentApplicationUseCase;
+    private final CreateRecruitmentUseCase createRecruitmentUseCase;
+    private final GetRecruitmentListUseCase getRecruitmentListUseCase;
+    private final DeleteRecruitmentUseCase deleteRecruitmentUseCase;
+    private final UpdateRecruitmentDraftUseCase updateRecruitmentDraftUseCase;
+    private final UpsertRecruitmentFormQuestionsUseCase upsertRecruitmentFormQuestionsUseCase;
+    private final PublishRecruitmentUseCase publishRecruitmentUseCase;
+    private final GetRecruitmentScheduleUseCase getRecruitmentScheduleUseCase;
+    private final GetRecruitmentDashboardUseCase getRecruitmentDashboardUseCase;
+    private final GetMyApplicationListUseCase getMyApplicationListUseCase;
+    private final GetRecruitmentDetailUseCase getRecruitmentDetailUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
@@ -204,4 +252,179 @@ public class RecruitmentController {
         return SubmitRecruitmentApplicationResponse.from(info);
     }
 
+    @PostMapping("")
+    @Operation(
+            summary = "모집 최초 생성",
+            description = """
+                    모집 생성 플로우의 첫 화면에서 최초 1회만 호출되는 API입니다. 
+                    임시저장 또는 다음 단계 버튼 클릭 시, recruitmentId가 없는 경우에만 이 API를 호출합니다.
+                    내부적으로 recruitment와 그 recruitment에 매핑되는 form을 생성하고, 응답으로 recruitmentId와 formId를 돌려줍니다.
+                    본 API의 응답으로 반환되는 recruitmentId는 이후 모든 임시저장 및 단계이동 API 호출 시 식별자로 사용됩니다.
+                    """
+    )
+    public CreateRecruitmentResponse createRecruitment(
+            @RequestBody(required = false) CreateRecruitmentRequest request
+    ) {
+        CreateRecruitmentRequest req = (request == null) ? CreateRecruitmentRequest.empty() : request;
+
+        CreateRecruitmentCommand command = new CreateRecruitmentCommand(
+                req.recruitmentName(),
+                req.parts()
+        );
+
+        CreateRecruitmentInfo info = createRecruitmentUseCase.create(command);
+
+        return CreateRecruitmentResponse.from(info);
+    }
+
+    @GetMapping("")
+    @Operation(
+            summary = "모집 목록 조회",
+            description = """
+                    운영진 view에서 모집 목록을 상태에 따라 조회하는 API입니다.
+                    """
+    )
+    public RecruitmentListResponse getRecruitments(
+            Long memberId,
+            @RequestParam(name = "status") RecruitmentListStatusQuery status
+    ) {
+        RecruitmentListStatus appStatus = RecruitmentListStatus.valueOf(status.name());
+
+        GetRecruitmentListQuery query = new GetRecruitmentListQuery(memberId, appStatus);
+
+        RecruitmentListInfo info = getRecruitmentListUseCase.getList(query);
+        return RecruitmentListResponse.from(info);
+    }
+
+    @DeleteMapping("{recruitmentId}")
+    @Operation(
+            summary = "모집 삭제",
+            description = """
+                    recruitmentId에 해당하는 모집을 삭제합니다.
+                    """
+    )
+    public void deleteRecruitment(
+            Long memberId,
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
+    ) {
+        DeleteRecruitmentCommand command = new DeleteRecruitmentCommand(memberId, recruitmentId);
+        deleteRecruitmentUseCase.delete(command);
+    }
+
+    @PatchMapping("/{recruitmentId}")
+    @Operation(
+            summary = "모집 임시저장(부분 업데이트)",
+            description = """
+                    모집 생성 플로우의 각 단계에서 임시저장 용도로 호출합니다.
+                    - request body 필드는 모두 optional이며, 전달된 필드만 갱신됩니다.
+                    - interviewTimeTable은 enabledByDate만 전달합니다.
+                      disabledByDate는 서버가 dateRange/timeRange/slotMinutes 기준으로 계산하여 응답에 포함합니다.
+                    - maxPreferredPartCount는 '희망 파트' 질문 설정 변경 시 recruitment에 저장합니다.
+                    """
+    )
+    public RecruitmentDraftResponse updateDraftRecruitment(
+            Long memberId,
+            @PathVariable Long recruitmentId,
+            @RequestBody(required = false) UpdateRecruitmentDraftRequest request
+    ) {
+        UpdateRecruitmentDraftRequest req = (request == null) ? UpdateRecruitmentDraftRequest.empty() : request;
+
+        UpdateRecruitmentDraftCommand command = req.toCommand(recruitmentId, memberId);
+        RecruitmentDraftInfo info = updateRecruitmentDraftUseCase.update(command);
+
+        return RecruitmentDraftResponse.from(info);
+    }
+
+    @PatchMapping("/{recruitmentId}/application-form")
+    @Operation(
+            summary = "운영진 지원서 폼 문항 임시저장",
+            description = """
+                    해당 모집의 지원서 폼(FormDefinition)에 질문을 단건/다건 upsert 합니다.
+                    - questionId 없으면 생성, 있으면 수정
+                    - target.kind=COMMON_PAGE → pageNo 필수
+                    - target.kind=PART → part 필수
+                    """
+    )
+    public RecruitmentApplicationFormResponse upsertRecruitmentFormQuestions(
+            @Parameter(description = "모집 ID", required = true)
+            @PathVariable @NotNull Long recruitmentId,
+            @Valid @RequestBody UpsertRecruitmentFormQuestionsRequest request
+    ) {
+        RecruitmentApplicationFormInfo info = upsertRecruitmentFormQuestionsUseCase.upsert(
+                request.toCommand(recruitmentId));
+        return RecruitmentApplicationFormResponse.from(info);
+    }
+
+    @PostMapping("/{recruitmentId}/publish")
+    @Operation(
+            summary = "모집(지원서 폼) 최종 저장/발행",
+            description = """
+                    모집 draft + 지원서 폼 질문 draft를 최종 반영한 뒤, 발행(PUBLISHED) 처리합니다.
+                    - recruitmentDraft, applicationFormQuestions 둘 중 하나만 보내도 됩니다(부분 반영 가능).
+                    - 서버는 최종 반영 후 발행 가능 조건을 검증합니다. 검증 실패 시 발행되지 않습니다.
+                    """
+    )
+    public PublishRecruitmentResponse publishRecruitment(
+            Long memberId,
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId,
+            @RequestBody(required = false) PublishRecruitmentRequest request
+    ) {
+        PublishRecruitmentRequest req = (request == null) ? PublishRecruitmentRequest.empty() : request;
+
+        var command = req.toCommand(recruitmentId, memberId);
+        var info = publishRecruitmentUseCase.publish(command);
+
+        return PublishRecruitmentResponse.from(info);
+    }
+
+    @GetMapping("/{recruitmentId}/schedules")
+    @Operation(
+            summary = "지원 일정 조회(달력/단계)",
+            description = "모집 단계별 기간(서류/면접/평가/결과발표 등)을 달력/단계 UI에서 사용할 수 있도록 조회합니다."
+    )
+    public RecruitmentSchedulesResponse getRecruitmentSchedules(
+            Long memberId,
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
+    ) {
+        RecruitmentScheduleInfo info = getRecruitmentScheduleUseCase.get(
+                new GetRecruitmentScheduleQuery(recruitmentId, memberId)
+        );
+        return RecruitmentSchedulesResponse.from(info);
+    }
+
+    @GetMapping("/{recruitmentId}/dashboard")
+    @Operation(summary = "대시보드 지원현황 조회(운영진 홈)", description = "일정 요약/진행 단계/지원 현황/평가 현황을 한 번에 조회합니다.")
+    public RecruitmentDashboardResponse getDashboard(@PathVariable Long recruitmentId) {
+        RecruitmentDashboardInfo info = getRecruitmentDashboardUseCase.get(recruitmentId);
+        return RecruitmentDashboardResponse.from(info);
+    }
+
+    @GetMapping("/me/applications")
+    @Operation(summary = "내 지원 현황 조회(지원자 대시보드)")
+    public MyRecruitmentApplicationsResponse getMyApplications(
+            Long memberId
+    ) {
+        GetMyApplicationListQuery query = new GetMyApplicationListQuery(memberId);
+        MyApplicationListInfo info = getMyApplicationListUseCase.get(query);
+        return MyRecruitmentApplicationsResponse.from(info);
+    }
+
+    @GetMapping("/{recruitmentId}")
+    @Operation(
+            summary = "임시저장한 모집 불러오기(작성 중 모집 상세 조회)",
+            description = """
+                    운영진 모집 생성/편집 화면에서 '작성 이어하기'로 사용할 draft 상세 조회 API입니다.
+                    모집 정보(제목/파트/일정/공지/타임테이블 등)와 formId를 포함해 반환합니다.
+                    """
+    )
+    public RecruitmentDraftResponse getRecruitmentDraftDetail(
+            Long memberId, // auth 적용 후 제거
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
+    ) {
+        GetRecruitmentDetailQuery query = new GetRecruitmentDetailQuery(memberId, recruitmentId);
+
+        RecruitmentDraftInfo info = getRecruitmentDetailUseCase.get(query);
+
+        return RecruitmentDraftResponse.from(info);
+    }
 }
