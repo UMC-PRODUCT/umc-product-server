@@ -6,7 +6,7 @@
 //
 //import com.umc.product.challenger.adapter.out.persistence.ChallengerWorkbookJpaRepository;
 //import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-//import com.umc.product.challenger.domain.ChallengerWorkbook;
+//import com.umc.product.curriculum.domain.ChallengerWorkbook;
 //import com.umc.product.common.domain.enums.ChallengerPart;
 //import com.umc.product.curriculum.adapter.out.persistence.CurriculumJpaRepository;
 //import com.umc.product.curriculum.adapter.out.persistence.OriginalWorkbookJpaRepository;

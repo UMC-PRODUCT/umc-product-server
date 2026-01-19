@@ -1,7 +1,7 @@
 package com.umc.product.challenger.adapter.out.persistence;
 
 import com.umc.product.challenger.application.port.out.LoadChallengerWorkbookPort;
-import com.umc.product.challenger.domain.ChallengerWorkbook;
+import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
