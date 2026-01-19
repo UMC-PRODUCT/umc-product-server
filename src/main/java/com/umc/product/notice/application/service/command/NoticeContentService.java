@@ -50,7 +50,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
             throw new NoticeDomainException(NoticeErrorCode.VOTE_IDS_REQUIRED);
         }
 
-        AtomicInteger order = new AtomicInteger(0);
+        AtomicInteger order = new AtomicInteger(loadNoticeVotePort.findNextVoteDisplayOrder(noticeId));
         List<NoticeVote> votes = command.voteIds().stream()
                 .map(voteId -> NoticeVote.create(voteId, notice, order.getAndIncrement()))
                 .toList()
@@ -71,7 +71,17 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
             throw new NoticeDomainException(NoticeErrorCode.IMAGE_URLS_REQUIRED);
         }
 
-        AtomicInteger order = new AtomicInteger(0);
+        /*
+         * 공지 이미지 최대 개수는 10장으로 제한
+         */
+        int existing = loadNoticeImagePort.countImageByNoticeId(noticeId);
+        int adding = command.imageIds().size();
+
+        if (existing + adding > 10) {
+            throw new NoticeDomainException(NoticeErrorCode.IMAGE_LIMIT_EXCEEDED);
+        }
+
+        AtomicInteger order = new AtomicInteger(loadNoticeImagePort.findNextImageDisplayOrder(noticeId));
         List<NoticeImage> images = command.imageIds().stream()
                 .map(imgId -> NoticeImage.create(imgId, notice, order.getAndIncrement()))
                 .toList()
@@ -91,7 +101,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
             throw new NoticeDomainException(NoticeErrorCode.LINK_URLS_REQUIRED);
         }
 
-        AtomicInteger order = new AtomicInteger(0);
+        AtomicInteger order = new AtomicInteger(loadNoticeLinkPort.findNextLinkDisplayOrder(noticeId));
         List<NoticeLink> links = command.links().stream()
                 .map(link -> NoticeLink.create(link, notice, order.getAndIncrement()))
                 .toList()

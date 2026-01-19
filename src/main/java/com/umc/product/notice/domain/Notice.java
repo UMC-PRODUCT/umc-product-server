@@ -63,11 +63,9 @@ public class Notice extends BaseEntity {
      * 어떤 scope에서 작성된 공지인가?
      * 원래 OrganizationType이었으나, PART가 OrganizationType에는 필요 없어서 별도의 enum 사용
      */
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "scopes", columnDefinition = "varchar[]")
+    @Column(name = "scope")
     @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private List<NoticeClassification> scopes = new ArrayList<>();
+    private NoticeClassification scope;
 
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "organization_ids", columnDefinition = "bigint[]")
@@ -91,21 +89,21 @@ public class Notice extends BaseEntity {
 
 
     public static Notice draft(String title, String content, Long authorChallengerId,
-                               List<NoticeClassification> scopes,
+                               NoticeClassification scope,
                                List<Long> organizationIds,
                                Long targetGisuId,
                                List<ChallengerRoleType> targetRoles,
                                List<ChallengerPart> targetParts,
                                boolean shouldNotify) {
 
-        validateDraftCreation(title, content, authorChallengerId, scopes);
+        validateDraftCreation(title, content, authorChallengerId, scope);
 
         return Notice.builder()
                 .title(title)
                 .content(content)
                 .authorChallengerId(authorChallengerId)
                 .status(NoticeStatus.DRAFT)
-                .scopes(scopes != null ? scopes : new ArrayList<>())
+                .scope(scope)
                 .organizationIds(organizationIds != null ? organizationIds : new ArrayList<>())
                 .targetGisuId(targetGisuId)
                 .targetRoles(targetRoles != null ? targetRoles : new ArrayList<>())
@@ -116,7 +114,7 @@ public class Notice extends BaseEntity {
     }
 
     public void update(String title, String content,
-                                     List<NoticeClassification> scopes,
+                                     NoticeClassification scope,
                                      List<Long> organizationIds,
                                      Long targetGisuId,
                                      List<ChallengerRoleType> targetRoles,
@@ -124,15 +122,15 @@ public class Notice extends BaseEntity {
                                      boolean shouldNotify,
                                      NoticeStatus status) {
 
-        validateCanUpdate(title, content, scopes);
+        validateCanUpdate(title, content, scope);
 
         this.title = title;
         this.content = content;
-        if (scopes != null) this.scopes = new ArrayList<>(scopes);
+        this.scope = scope;
         if (organizationIds != null) this.organizationIds = new ArrayList<>(organizationIds);
         this.targetGisuId = targetGisuId;
         if (targetRoles != null) this.targetRoles = new ArrayList<>(targetRoles);
-        if (targetRoles != null) this.targetParts = new ArrayList<>(targetParts);
+        if (targetParts != null) this.targetParts = new ArrayList<>(targetParts);
         this.shouldNotify = shouldNotify;
         this.status = status;
     }
@@ -165,7 +163,7 @@ public class Notice extends BaseEntity {
 
     private static void validateDraftCreation(String title, String content,
                                               Long authorChallengerId,
-                                              List<NoticeClassification> scopes) {
+                                              NoticeClassification scopes) {
         // 필수값 null 체크
         if (title == null) {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_TITLE);
@@ -179,13 +177,13 @@ public class Notice extends BaseEntity {
             throw new NoticeDomainException(NoticeErrorCode.AUTHOR_REQUIRED);
         }
 
-        if (scopes == null || scopes.isEmpty()) {
+        if (scopes == null) {
             throw new NoticeDomainException(NoticeErrorCode.NOTICE_SCOPE_REQUIRED);
         }
     }
 
     private void validateCanUpdate(String title, String content,
-                                          List<NoticeClassification> scopes) {
+                                          NoticeClassification scope) {
         if (title == null) {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_TITLE);
         }
@@ -194,7 +192,7 @@ public class Notice extends BaseEntity {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_CONTENT);
         }
 
-        if (scopes == null || scopes.isEmpty()) {
+        if (scope == null) {
             throw new NoticeDomainException(NoticeErrorCode.NOTICE_SCOPE_REQUIRED);
         }
     }
@@ -212,13 +210,13 @@ public class Notice extends BaseEntity {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_CONTENT);
         }
 
-        if (this.scopes == null || this.scopes.isEmpty()) {
+        if (this.scope == null) {
             throw new NoticeDomainException(NoticeErrorCode.NOTICE_SCOPE_REQUIRED);
         }
     }
 
     public boolean hasScope(NoticeClassification scope) {
-        return this.scopes != null && this.scopes.contains(scope);
+        return this.scope != null;
     }
 
     public boolean hasTargetRoles() {

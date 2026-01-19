@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface NoticeImageJpaRepository extends JpaRepository<NoticeImage, Long> {
 
-    Optional<List<NoticeImage>> findByNoticeId(Long noticeId);
+    List<NoticeImage> findByNoticeId(Long noticeId);
     boolean existsByNoticeId(Long noticeId);
-
+    int countByNotice_Id(Long noticeId);
 
 }

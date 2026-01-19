@@ -1,6 +1,7 @@
 package com.umc.product.notice.adapter.out.persistence;
 
 import com.umc.product.notice.domain.Notice;
+import com.umc.product.notice.domain.enums.NoticeClassification;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

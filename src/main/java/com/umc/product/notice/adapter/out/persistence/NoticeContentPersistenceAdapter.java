@@ -27,7 +27,7 @@ public class NoticeContentPersistenceAdapter implements
     private final NoticeVoteJpaRepository voteJpaRepository;
     private final NoticeLinkJpaRepository linkJpaRepository;
     private final NoticeImageJpaRepository imageJpaRepository;
-
+    private final NoticeContentsQueryRepository contentsQueryRepository;
 
     @Override
     public Optional<NoticeImage> findImageById(Long id) {
@@ -35,7 +35,7 @@ public class NoticeContentPersistenceAdapter implements
     }
 
     @Override
-    public Optional<List<NoticeImage>> findImagesByNoticeId(Long noticeId) {
+    public List<NoticeImage> findImagesByNoticeId(Long noticeId) {
         return imageJpaRepository.findByNoticeId(noticeId);
     }
 
@@ -45,12 +45,22 @@ public class NoticeContentPersistenceAdapter implements
     }
 
     @Override
+    public int findNextImageDisplayOrder(Long noticeId) {
+        return contentsQueryRepository.findNextImageDisplayOrder(noticeId);
+    }
+
+    @Override
+    public int countImageByNoticeId(Long noticeId) {
+        return imageJpaRepository.countByNotice_Id(noticeId);
+    }
+
+    @Override
     public Optional<NoticeLink> findLinkById(Long id) {
         return linkJpaRepository.findById(id);
     }
 
     @Override
-    public Optional<List<NoticeLink>> findLinksByNoticeId(Long noticeId) {
+    public List<NoticeLink> findLinksByNoticeId(Long noticeId) {
         return linkJpaRepository.findByNoticeId(noticeId);
     }
 
@@ -60,18 +70,38 @@ public class NoticeContentPersistenceAdapter implements
     }
 
     @Override
+    public int findNextLinkDisplayOrder(Long noticeId) {
+        return contentsQueryRepository.findNextLinkDisplayOrder(noticeId);
+    }
+
+    @Override
+    public int countLinkByNoticeId(Long noticeId) {
+        return linkJpaRepository.countByNotice_Id(noticeId);
+    }
+
+    @Override
     public Optional<NoticeVote> findVoteById(Long id) {
         return voteJpaRepository.findById(id);
     }
 
     @Override
-    public Optional<List<NoticeVote>> findVotesByNoticeId(Long noticeId) {
+    public List<NoticeVote> findVotesByNoticeId(Long noticeId) {
         return voteJpaRepository.findByNoticeId(noticeId);
     }
 
     @Override
     public boolean existsVoteByNoticeId(Long noticeId) {
         return voteJpaRepository.existsByNoticeId(noticeId);
+    }
+
+    @Override
+    public int findNextVoteDisplayOrder(Long noticeId) {
+        return contentsQueryRepository.findNextVoteDisplayOrder(noticeId);
+    }
+
+    @Override
+    public int countVoteByNoticeId(Long noticeId) {
+        return voteJpaRepository.countByNotice_Id(noticeId);
     }
 
     @Override

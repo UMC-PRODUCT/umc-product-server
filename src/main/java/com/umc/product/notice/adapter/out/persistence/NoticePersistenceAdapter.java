@@ -6,6 +6,7 @@ import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeRead;
+import com.umc.product.notice.domain.enums.NoticeClassification;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,16 @@ public class NoticePersistenceAdapter implements
     @Override
     public Optional<Notice> findNoticeById(Long id) {
         return noticeJpaRepository.findById(id);
+    }
+
+    @Override
+    public Page<Notice> findNoticesByClassification(NoticeClassification classification, Pageable pageable) {
+        return noticeQueryRepository.findByClassification(classification, pageable);
+    }
+
+    @Override
+    public Page<Notice> findNoticesByKeyword(String keyword, Pageable pageable) {
+        return noticeQueryRepository.findByKeyword(keyword, pageable);
     }
 
     @Override

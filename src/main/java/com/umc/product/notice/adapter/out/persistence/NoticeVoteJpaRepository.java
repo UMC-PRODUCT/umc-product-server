@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface NoticeVoteJpaRepository extends JpaRepository<NoticeVote, Long> {
 
-    Optional<List<NoticeVote>> findByNoticeId(Long noticeId);
+    List<NoticeVote> findByNoticeId(Long noticeId);
     boolean existsByNoticeId(Long noticeId);
+    int countByNotice_Id(Long noticeId);
 }

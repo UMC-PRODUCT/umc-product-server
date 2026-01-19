@@ -6,6 +6,12 @@ import java.util.Optional;
 
 public interface LoadNoticeVotePort {
     Optional<NoticeVote> findVoteById(Long id);
-    Optional<List<NoticeVote>> findVotesByNoticeId(Long noticeId);
+
+    List<NoticeVote> findVotesByNoticeId(Long noticeId);
+
     boolean existsVoteByNoticeId(Long noticeId);
+
+    int findNextVoteDisplayOrder(Long noticeId);
+
+    int countVoteByNoticeId(Long noticeId);
 }

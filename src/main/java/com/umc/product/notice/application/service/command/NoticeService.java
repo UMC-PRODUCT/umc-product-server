@@ -44,9 +44,7 @@ public class NoticeService implements ManageNoticeUseCase {
         /*
          * TODO: 챌린저 조회 관련 로직 추가 필요, 권한 검증 추가 예정
          */
-        Challenger challenger
-                = new Challenger(command.authorChallengerId(), ChallengerPart.DESIGN,
-                command.targetInfo().targetGisuId());
+        Long challengerId = command.authorChallengerId();
 
         /*
          * 기수 검증 (null이면 전체니까 필요 X)
@@ -56,7 +54,7 @@ public class NoticeService implements ManageNoticeUseCase {
         }
 
         Notice notice = Notice.draft(
-                command.title(), command.content(), challenger.getId(), command.targetInfo().scope(),
+                command.title(), command.content(), challengerId, command.targetInfo().scope(),
                 command.targetInfo().organizationId(), command.targetInfo().targetGisuId(),
                 command.targetInfo().targetRoles(),
                 command.targetInfo().targetParts(), command.shouldNotify()
@@ -78,6 +76,14 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void updateNotice(UpdateNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
+
+        /*
+         * 기수 검증 (null이면 전체니까 필요 X)
+         */
+        if (command.targetInfo().targetGisuId() != null) {
+            validateGisuExists(command.targetInfo().targetGisuId());
+        }
+
         notice.update(
                 command.title(),
                 command.content(),
