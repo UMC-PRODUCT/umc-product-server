@@ -1,6 +1,7 @@
 package com.umc.product.challenger.adapter.out.persistence;
 
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
+import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.global.exception.BusinessException;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ChallengerPersistenceAdapter implements LoadChallengerPort {
+public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveChallengerPort {
 
     private final ChallengerJpaRepository challengerJpaRepository;
 
@@ -30,5 +31,10 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort {
     public Challenger findByMemberIdAndGisuId(Long memberId, Long gisuId) {
         return challengerJpaRepository.findByMemberIdAndGisuId(memberId, gisuId)
                 .orElseThrow(() -> new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.CHALLENGER_NOT_FOUND));
+    }
+
+    @Override
+    public Challenger save(Challenger challenger) {
+        return challengerJpaRepository.save(challenger);
     }
 }
