@@ -11,6 +11,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 @RestControllerAdvice
 public class GlobalResponseWrapper implements ResponseBodyAdvice<Object> {
 
+    /**
+     * beforeBodyWrite를 적용할지 여부를 결정
+     */
     @Override
     public boolean supports(MethodParameter returnType,
                             Class<? extends HttpMessageConverter<?>> converterType) {
@@ -36,6 +39,11 @@ public class GlobalResponseWrapper implements ResponseBodyAdvice<Object> {
                                   Class<? extends HttpMessageConverter<?>> selectedConverterType,
                                   ServerHttpRequest request,
                                   ServerHttpResponse response) {
+
+        // 이미 ApiResponse로 래핑된 경우 그대로 반환 (에러 응답 포함)
+        if (body instanceof ApiResponse) {
+            return body;
+        }
 
         // String 타입은 별도 처리 필요 (MessageConverter 이슈)
         //
