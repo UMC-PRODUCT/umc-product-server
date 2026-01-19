@@ -17,5 +17,6 @@ public enum Domain {
     NOTICE,
     FCM,
     SURVEY,
-    RECRUITMENT
+    RECRUITMENT,
+    TERMS
 }
