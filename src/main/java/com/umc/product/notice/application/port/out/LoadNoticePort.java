@@ -9,12 +9,6 @@ import java.util.Optional;
 public interface LoadNoticePort {
     Optional<Notice> findNoticeById(Long id);
 
-    List<Notice> loadAllNotices(Pageable pageable);
-
-    List<NoticeRead> findNoticeReadsByNoticeId(Long noticeId);
-
-    boolean existsNoticeRead(Long noticeId, Long challengerId);
-
-    long countNoticeReadsByNoticeId(Long noticeId);
+    List<Notice> findAllNotices(Pageable pageable);
 
 }
