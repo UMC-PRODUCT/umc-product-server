@@ -1,6 +1,8 @@
 package com.umc.product.recruitment.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateRecruitmentRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.PublishRecruitmentRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.RecruitmentListStatusQuery;
@@ -117,12 +119,11 @@ public class RecruitmentController {
     private final GetRecruitmentPartListUseCase getRecruitmentPartListUseCase;
 
     @GetMapping("/active-id")
-    @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "memberId 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반). 현재 임시로 memberId를 파라미터로 받으며, 실 동작은 토큰 기반으로 동작 예정.")
+    @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "사용자 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반)")
     public ActiveRecruitmentIdResponse getActiveRecruitmentId(
-            // TODO: @CurrentMember(Long memberId) ArgumentResolver 적용 후 교체 예정
-            @RequestParam Long memberId
+            @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        GetActiveRecruitmentQuery query = new GetActiveRecruitmentQuery(memberId);
+        GetActiveRecruitmentQuery query = new GetActiveRecruitmentQuery(memberPrincipal.getMemberId());
         ActiveRecruitmentInfo info = getActiveRecruitmentUseCase.get(query);
         return ActiveRecruitmentIdResponse.of(info.recruitmentId());
     }
@@ -151,10 +152,13 @@ public class RecruitmentController {
             description = "지원서 작성 시작 시 호출합니다. 해당 모집에 대한 DRAFT formResponse가 없으면 생성하고, 이미 있으면 기존 formResponse를 반환합니다."
     )
     public RecruitmentDraftFormResponseResponse createOrGetApplicationDraft(
-            Long memberId, // auth 적용 후 제거
+            @CurrentMember MemberPrincipal memberPrincipal,
             @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
     ) {
-        CreateOrGetRecruitmentDraftCommand command = new CreateOrGetRecruitmentDraftCommand(recruitmentId, memberId);
+        CreateOrGetRecruitmentDraftCommand command = new CreateOrGetRecruitmentDraftCommand(
+                recruitmentId,
+                memberPrincipal.getMemberId()
+        );
         CreateOrGetDraftFormResponseInfo info = createRecruitmentDraftFormResponseUseCase.createOrGet(command);
 
         return RecruitmentDraftFormResponseResponse.from(
@@ -170,12 +174,12 @@ public class RecruitmentController {
             description = "formResponseId 기반으로 지원 폼 응답을 단건 조회합니다. 상태(DRAFT/SUBMITTED) 모두 조회 가능합니다."
     )
     public RecruitmentFormResponseDetailResponse getFormResponse(
-            Long memberId, // auth 추가 시 제거
+            @CurrentMember MemberPrincipal memberPrincipal,
             @Parameter(description = "모집 ID") @PathVariable Long recruitmentId,
             @Parameter(description = "폼 응답 ID") @PathVariable Long formResponseId
     ) {
         GetRecruitmentFormResponseDetailQuery query = new GetRecruitmentFormResponseDetailQuery(
-                memberId,
+                memberPrincipal.getMemberId(),
                 recruitmentId,
                 formResponseId
         );
@@ -246,12 +250,12 @@ public class RecruitmentController {
                     """
     )
     public SubmitRecruitmentApplicationResponse submitApplication(
-            Long memberId, // auth 적용 후 제거
+            @CurrentMember MemberPrincipal memberPrincipal,
             @Parameter(description = "모집 ID") @PathVariable Long recruitmentId,
             @Parameter(description = "폼 응답 ID") @PathVariable Long formResponseId
     ) {
         SubmitRecruitmentApplicationInfo info = submitRecruitmentApplicationUseCase.submit(
-                new SubmitRecruitmentApplicationCommand(recruitmentId, memberId, formResponseId)
+                new SubmitRecruitmentApplicationCommand(recruitmentId, memberPrincipal.getMemberId(), formResponseId)
         );
 
         return SubmitRecruitmentApplicationResponse.from(info);
@@ -268,13 +272,13 @@ public class RecruitmentController {
                     """
     )
     public CreateRecruitmentResponse createRecruitment(
-            Long memberId, // auth 추가 시 삭제
+            @CurrentMember MemberPrincipal memberPrincipal,
             @RequestBody(required = false) CreateRecruitmentRequest request
     ) {
         CreateRecruitmentRequest req = (request == null) ? CreateRecruitmentRequest.empty() : request;
 
         CreateRecruitmentCommand command = new CreateRecruitmentCommand(
-                memberId,
+                memberPrincipal.getMemberId(),
                 req.recruitmentName(),
                 req.parts()
         );
@@ -292,12 +296,12 @@ public class RecruitmentController {
                     """
     )
     public RecruitmentListResponse getRecruitments(
-            Long memberId,
+            @CurrentMember MemberPrincipal memberPrincipal,
             @RequestParam(name = "status") RecruitmentListStatusQuery status
     ) {
         RecruitmentListStatus appStatus = RecruitmentListStatus.valueOf(status.name());
 
-        GetRecruitmentListQuery query = new GetRecruitmentListQuery(memberId, appStatus);
+        GetRecruitmentListQuery query = new GetRecruitmentListQuery(memberPrincipal.getMemberId(), appStatus);
 
         RecruitmentListInfo info = getRecruitmentListUseCase.getList(query);
         return RecruitmentListResponse.from(info);
@@ -311,10 +315,10 @@ public class RecruitmentController {
                     """
     )
     public void deleteRecruitment(
-            Long memberId,
+            @CurrentMember MemberPrincipal memberPrincipal,
             @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
     ) {
-        DeleteRecruitmentCommand command = new DeleteRecruitmentCommand(memberId, recruitmentId);
+        DeleteRecruitmentCommand command = new DeleteRecruitmentCommand(memberPrincipal.getMemberId(), recruitmentId);
         deleteRecruitmentUseCase.delete(command);
     }
 
@@ -330,13 +334,13 @@ public class RecruitmentController {
                     """
     )
     public RecruitmentDraftResponse updateDraftRecruitment(
-            Long memberId,
+            @CurrentMember MemberPrincipal memberPrincipal,
             @PathVariable Long recruitmentId,
             @RequestBody(required = false) UpdateRecruitmentDraftRequest request
     ) {
         UpdateRecruitmentDraftRequest req = (request == null) ? UpdateRecruitmentDraftRequest.empty() : request;
 
-        UpdateRecruitmentDraftCommand command = req.toCommand(recruitmentId, memberId);
+        UpdateRecruitmentDraftCommand command = req.toCommand(recruitmentId, memberPrincipal.getMemberId());
         RecruitmentDraftInfo info = updateRecruitmentDraftUseCase.update(command);
 
         return RecruitmentDraftResponse.from(info);
@@ -372,13 +376,13 @@ public class RecruitmentController {
                     """
     )
     public PublishRecruitmentResponse publishRecruitment(
-            Long memberId,
+            @CurrentMember MemberPrincipal memberPrincipal,
             @Parameter(description = "모집 ID") @PathVariable Long recruitmentId,
             @RequestBody(required = false) PublishRecruitmentRequest request
     ) {
         PublishRecruitmentRequest req = (request == null) ? PublishRecruitmentRequest.empty() : request;
 
-        var command = req.toCommand(recruitmentId, memberId);
+        var command = req.toCommand(recruitmentId, memberPrincipal.getMemberId());
         var info = publishRecruitmentUseCase.publish(command);
 
         return PublishRecruitmentResponse.from(info);
@@ -390,11 +394,11 @@ public class RecruitmentController {
             description = "모집 단계별 기간(서류/면접/평가/결과발표 등)을 달력/단계 UI에서 사용할 수 있도록 조회합니다."
     )
     public RecruitmentSchedulesResponse getRecruitmentSchedules(
-            Long memberId,
+            @CurrentMember MemberPrincipal memberPrincipal,
             @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
     ) {
         RecruitmentScheduleInfo info = getRecruitmentScheduleUseCase.get(
-                new GetRecruitmentScheduleQuery(recruitmentId, memberId)
+                new GetRecruitmentScheduleQuery(recruitmentId, memberPrincipal.getMemberId())
         );
         return RecruitmentSchedulesResponse.from(info);
     }
@@ -409,9 +413,9 @@ public class RecruitmentController {
     @GetMapping("/me/applications")
     @Operation(summary = "내 지원 현황 조회(지원자 대시보드)")
     public MyRecruitmentApplicationsResponse getMyApplications(
-            Long memberId
+            @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        GetMyApplicationListQuery query = new GetMyApplicationListQuery(memberId);
+        GetMyApplicationListQuery query = new GetMyApplicationListQuery(memberPrincipal.getMemberId());
         MyApplicationListInfo info = getMyApplicationListUseCase.get(query);
         return MyRecruitmentApplicationsResponse.from(info);
     }
@@ -425,10 +429,10 @@ public class RecruitmentController {
                     """
     )
     public RecruitmentDraftResponse getRecruitmentDraftDetail(
-            Long memberId, // auth 적용 후 제거
+            @CurrentMember MemberPrincipal memberPrincipal,
             @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
     ) {
-        GetRecruitmentDetailQuery query = new GetRecruitmentDetailQuery(memberId, recruitmentId);
+        GetRecruitmentDetailQuery query = new GetRecruitmentDetailQuery(memberPrincipal.getMemberId(), recruitmentId);
 
         RecruitmentDraftInfo info = getRecruitmentDetailUseCase.get(query);
 
@@ -444,10 +448,11 @@ public class RecruitmentController {
                     """
     )
     public RecruitmentPartListResponse getRecruitmentPartsStatus(
-            Long memberId, // auth 추가 후 제거
+            @CurrentMember MemberPrincipal memberPrincipal,
             @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
     ) {
-        GetRecruitmentPartListQuery query = new GetRecruitmentPartListQuery(recruitmentId, memberId);
+        GetRecruitmentPartListQuery query = new GetRecruitmentPartListQuery(recruitmentId,
+                memberPrincipal.getMemberId());
         RecruitmentPartListInfo info = getRecruitmentPartListUseCase.get(query);
         return RecruitmentPartListResponse.from(info);
     }
