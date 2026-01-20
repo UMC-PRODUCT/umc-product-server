@@ -33,7 +33,7 @@ class GisuControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                post("/api/v1/admin/gisu").content(objectMapper.writeValueAsString(request))
+                post("/api/v1/admin/gisuId").content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
         // then
@@ -52,7 +52,7 @@ class GisuControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                patch("/api/v1/admin/gisu/{gisuId}", gisuId).content(objectMapper.writeValueAsString(request))
+                patch("/api/v1/admin/gisuId/{gisuId}", gisuId).content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
         // then
@@ -69,7 +69,7 @@ class GisuControllerTest extends DocumentationTest {
         Long gisuId = 1L;
 
         // when
-        ResultActions result = mockMvc.perform(delete("/api/v1/admin/gisu/{gisuId}", gisuId));
+        ResultActions result = mockMvc.perform(delete("/api/v1/admin/gisuId/{gisuId}", gisuId));
 
         // then
         result.andExpect(status().isOk())
@@ -82,7 +82,7 @@ class GisuControllerTest extends DocumentationTest {
         Long gisuId = 3L;
 
         // when
-        ResultActions result = mockMvc.perform(post("/api/v1/admin/gisu/{gisuId}/active", gisuId));
+        ResultActions result = mockMvc.perform(post("/api/v1/admin/gisuId/{gisuId}/active", gisuId));
 
         // then
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(

@@ -13,7 +13,7 @@ import lombok.Builder;
  *
  * @param challengerId     챌린저 ID
  * @param memberId         회원 ID
- * @param gisu             기수 정보
+ * @param gisuId           기수 정보
  * @param part             챌린저 파트
  * @param challengerPoints 챌린저 상벌점 현황
  */
@@ -21,7 +21,7 @@ import lombok.Builder;
 public record ChallengerInfo(
         Long challengerId,
         Long memberId,
-        Long gisu,
+        Long gisuId,
         ChallengerPart part,
         List<ChallengerPointInfo> challengerPoints
 ) {
@@ -30,7 +30,7 @@ public record ChallengerInfo(
         return ChallengerInfo.builder()
                 .challengerId(challenger.getId())
                 .memberId(challenger.getMemberId())
-                .gisu(challenger.getGisuId())
+                .gisuId(challenger.getGisuId())
                 .part(challenger.getPart())
                 .build();
 
