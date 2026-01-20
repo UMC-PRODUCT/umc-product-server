@@ -40,9 +40,6 @@ public class StudyGroup extends BaseEntity {
     @JoinColumn(name = "gisu_id")
     private Gisu gisu;
 
-    @Column(nullable = false, name = "school_id")
-    private Long schoolId;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ChallengerPart part;
@@ -51,23 +48,19 @@ public class StudyGroup extends BaseEntity {
     private List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
 
     @Builder
-    private StudyGroup(String name, Gisu gisu, Long schoolId, ChallengerPart part) {
-        validate(name, gisu, schoolId, part);
+    private StudyGroup(String name, Gisu gisu, ChallengerPart part) {
+        validate(name, gisu, part);
         this.name = name;
         this.gisu = gisu;
-        this.schoolId = schoolId;
         this.part = part;
     }
 
-    private static void validate(String name, Gisu gisu, Long schoolId, ChallengerPart part) {
+    private static void validate(String name, Gisu gisu,ChallengerPart part) {
         if (name == null || name.isBlank()) {
             throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
         }
         if (gisu == null) {
             throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_REQUIRED);
-        }
-        if (schoolId == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.SCHOOL_REQUIRED);
         }
         if (part == null) {
             throw new BusinessException(Domain.COMMON, OrganizationErrorCode.PART_REQUIRED);

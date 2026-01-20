@@ -30,6 +30,7 @@ public class StudyGroupQueryRepository {
 
     /**
      * 1단계: 스터디 그룹이 있는 학교 목록 조회
+     * - 멤버의 학교를 기준으로 조회 (한 스터디 그룹에 여러 학교 멤버 가능)
      */
     public List<SchoolStudyGroupInfo> findSchoolsWithStudyGroups() {
         return queryFactory
@@ -40,9 +41,11 @@ public class StudyGroupQueryRepository {
                         studyGroup.id.countDistinct().intValue(),
                         studyGroupMember.id.count().intValue()
                 ))
-                .from(studyGroup)
-                .join(school).on(school.id.eq(studyGroup.schoolId))
-                .leftJoin(studyGroupMember).on(studyGroupMember.studyGroup.eq(studyGroup))
+                .from(studyGroupMember)
+                .join(studyGroupMember.studyGroup, studyGroup)
+                .join(challenger).on(challenger.id.eq(studyGroupMember.challengerId))
+                .join(member).on(member.id.eq(challenger.memberId))
+                .join(school).on(school.id.eq(member.schoolId))
                 .where(studyGroup.gisu.isActive.eq(true))
                 .groupBy(school.id, school.name, school.logoImageUrl)
                 .orderBy(school.name.asc())
@@ -51,62 +54,89 @@ public class StudyGroupQueryRepository {
 
     /**
      * 2단계: 특정 학교의 파트별 스터디 그룹 요약 조회 (활성 기수 기준)
+     * - 해당 학교 멤버가 포함된 스터디 그룹을 파트별로 집계
      */
     public PartSummaryInfo findPartSummary(Long schoolId) {
-        // Tuple 사용하여 쿼리
+        // 학교 정보 먼저 조회
+        Tuple schoolInfo = queryFactory
+                .select(school.id, school.name)
+                .from(school)
+                .where(school.id.eq(schoolId))
+                .fetchOne();
+
+        if (schoolInfo == null) {
+            return new PartSummaryInfo(schoolId, null, List.of());
+        }
+
+        String schoolName = schoolInfo.get(school.name);
+
+        // 해당 학교 멤버가 포함된 스터디 그룹의 파트별 집계
         List<Tuple> results = queryFactory
                 .select(
-                        school.id,
-                        school.name,
                         studyGroup.part,
                         studyGroup.id.countDistinct().intValue(),
                         studyGroupMember.id.count().intValue()
                 )
-                .from(studyGroup)
-                .join(school).on(school.id.eq(studyGroup.schoolId))
-                .leftJoin(studyGroupMember).on(studyGroupMember.studyGroup.eq(studyGroup))
+                .from(studyGroupMember)
+                .join(studyGroupMember.studyGroup, studyGroup)
+                .join(challenger).on(challenger.id.eq(studyGroupMember.challengerId))
+                .join(member).on(member.id.eq(challenger.memberId))
                 .where(
                         studyGroup.gisu.isActive.eq(true),
-                        studyGroup.schoolId.eq(schoolId)
+                        member.schoolId.eq(schoolId)
                 )
-                .groupBy(school.id, school.name, studyGroup.part)
+                .groupBy(studyGroup.part)
                 .orderBy(studyGroup.part.asc())
                 .fetch();
 
         if (results.isEmpty()) {
-            return new PartSummaryInfo(schoolId, null, List.of());
+            return new PartSummaryInfo(schoolId, schoolName, List.of());
         }
-
-        // 첫 번째 결과에서 학교 정보 추출
-        Long resultSchoolId = results.get(0).get(school.id);
-        String schoolName = results.get(0).get(school.name);
 
         // 파트 정보 변환
         List<PartSummaryInfo.PartInfo> parts = results.stream()
                 .map(r -> new PartSummaryInfo.PartInfo(
                         r.get(studyGroup.part),
-                        r.get(3, Integer.class),
-                        r.get(4, Integer.class)
+                        r.get(1, Integer.class),
+                        r.get(2, Integer.class)
                 ))
                 .toList();
 
-        return new PartSummaryInfo(resultSchoolId, schoolName, parts);
+        return new PartSummaryInfo(schoolId, schoolName, parts);
     }
 
     /**
      * 3단계: 스터디 그룹 목록 조회 (활성 기수 기준)
-     * 페이지네이션은 Controller에서 CursorResponse.of()로 처리
+     * - 해당 학교 멤버가 포함된 스터디 그룹만 조회
+     * - 페이지네이션은 Controller에서 CursorResponse.of()로 처리
+     *
      */
     public List<StudyGroupListInfo.StudyGroupInfo> findStudyGroups(Long schoolId, ChallengerPart part,
             Long cursor, int size) {
+        // 해당 학교 멤버가 포함된 스터디 그룹 ID 조회
+        List<Long> studyGroupIdsWithSchool = queryFactory
+                .selectDistinct(studyGroup.id)
+                .from(studyGroupMember)
+                .join(studyGroupMember.studyGroup, studyGroup)
+                .join(challenger).on(challenger.id.eq(studyGroupMember.challengerId))
+                .join(member).on(member.id.eq(challenger.memberId))
+                .where(
+                        studyGroup.gisu.isActive.eq(true),
+                        studyGroup.part.eq(part),
+                        member.schoolId.eq(schoolId)
+                )
+                .fetch();
+
+        if (studyGroupIdsWithSchool.isEmpty()) {
+            return List.of();
+        }
+
         // 스터디 그룹 기본 정보 조회 (Tuple 사용)
         List<Tuple> groups = queryFactory
                 .select(studyGroup.id, studyGroup.name)
                 .from(studyGroup)
                 .where(
-                        studyGroup.gisu.isActive.eq(true),
-                        studyGroup.schoolId.eq(schoolId),
-                        studyGroup.part.eq(part),
+                        studyGroup.id.in(studyGroupIdsWithSchool),
                         cursorCondition(cursor)
                 )
                 .orderBy(studyGroup.id.asc())
@@ -120,7 +150,7 @@ public class StudyGroupQueryRepository {
             return List.of();
         }
 
-        // 멤버 정보 조회 (리더 + 일반 멤버)
+        // 멤버 정보 조회 (리더 + 일반 멤버 )
         List<Tuple> memberResults = queryFactory
                 .select(
                         studyGroupMember.studyGroup.id,
@@ -176,20 +206,18 @@ public class StudyGroupQueryRepository {
 
     /**
      * 4단계: 스터디 그룹 상세 조회
+     * - 멤버들의 학교 목록을 조회 (여러 학교 가능)
      */
     public StudyGroupDetailInfo findStudyGroupDetail(Long groupId) {
-        // 스터디 그룹 기본 정보 + 학교 정보 조회
+        // 스터디 그룹 기본 정보 조회
         Tuple groupInfo = queryFactory
                 .select(
                         studyGroup.id,
                         studyGroup.name,
                         studyGroup.part,
-                        school.id,
-                        school.name,
                         studyGroup.createdAt
                 )
                 .from(studyGroup)
-                .join(school).on(school.id.eq(studyGroup.schoolId))
                 .where(studyGroup.id.eq(groupId))
                 .fetchOne();
 
@@ -197,13 +225,26 @@ public class StudyGroupQueryRepository {
             return null;
         }
 
+        // 멤버들의 학교 목록 조회 (중복 제거)
+        List<StudyGroupDetailInfo.SchoolInfo> schools = queryFactory
+                .selectDistinct(Projections.constructor(StudyGroupDetailInfo.SchoolInfo.class,
+                        school.id,
+                        school.name
+                ))
+                .from(studyGroupMember)
+                .join(challenger).on(challenger.id.eq(studyGroupMember.challengerId))
+                .join(member).on(member.id.eq(challenger.memberId))
+                .join(school).on(school.id.eq(member.schoolId))
+                .where(studyGroupMember.studyGroup.id.eq(groupId))
+                .fetch();
+
         // 멤버 정보 조회
         List<StudyGroupDetailInfo.MemberInfo> members = queryFactory
                 .select(Projections.constructor(StudyGroupDetailInfo.MemberInfo.class,
                         challenger.id,
                         member.id,
                         member.name,
-                        member.profileImageId.stringValue() // TODO: 실제 URL 변환 필요
+                        member.profileImageId.stringValue()
                 ))
                 .from(studyGroupMember)
                 .join(challenger).on(challenger.id.eq(studyGroupMember.challengerId))
@@ -249,8 +290,7 @@ public class StudyGroupQueryRepository {
                 groupInfo.get(studyGroup.id),
                 groupInfo.get(studyGroup.name),
                 groupInfo.get(studyGroup.part),
-                groupInfo.get(school.id),
-                groupInfo.get(school.name),
+                schools,
                 groupInfo.get(studyGroup.createdAt).atZone(ZoneId.of("Asia/Seoul")).toInstant(),
                 members.size(),
                 leaderResult,
