@@ -17,7 +17,7 @@ public record UpdateNoticeRequest(
         Boolean shouldNotify /* 알림 발송 여부 */
 ) {
 
-    public UpdateNoticeCommand toCommand(Long noticeId) {
-        return new UpdateNoticeCommand(noticeId, title, content, targetInfo, shouldNotify);
+    public UpdateNoticeCommand toCommand(Long authorChallengerId, Long noticeId) {
+        return new UpdateNoticeCommand(authorChallengerId, noticeId, title, content, targetInfo, shouldNotify);
     }
 }

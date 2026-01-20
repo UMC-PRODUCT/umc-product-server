@@ -2,6 +2,8 @@ package com.umc.product.notice.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notice.adapter.in.web.dto.request.CreateDraftNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.SendNoticeReminderRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
@@ -35,8 +37,13 @@ public class NoticeController implements NoticeApi {
      * 공지사항 생성 (임시저장)
      */
     @PostMapping("/draft")
-    public ApiResponse<CreateDraftNoticeResponse> createDraftNotice(@RequestBody @Valid CreateDraftNoticeRequest request) {
-        Long noticeId = manageNoticeUseCase.createDraftNotice(request.toCommand());
+    public ApiResponse<CreateDraftNoticeResponse> createDraftNotice(@RequestBody @Valid CreateDraftNoticeRequest request,
+                                                                    @CurrentMember MemberPrincipal memberPrincipal) {
+        /*
+         * TODO: challengerId 받아오는 방식 수정 필요
+         */
+        Long memberId = memberPrincipal.getMemberId();
+        Long noticeId = manageNoticeUseCase.createDraftNotice(request.toCommand(memberId));
         return ApiResponse.onSuccess(new CreateDraftNoticeResponse(noticeId));
     }
 
@@ -44,32 +51,50 @@ public class NoticeController implements NoticeApi {
      * 공지사항 최종 게시
      */
     @PatchMapping("/{noticeId}/publish")
-    public void publishNotice(@PathVariable Long noticeId) {
-        manageNoticeUseCase.publishNotice(new PublishNoticeCommand(noticeId));
+    public void publishNotice(@PathVariable Long noticeId, @CurrentMember MemberPrincipal memberPrincipal) {
+        /*
+         * TODO: challengerId 받아오는 방식 수정 필요
+         */
+        Long memberId = memberPrincipal.getMemberId();
+        manageNoticeUseCase.publishNotice(new PublishNoticeCommand(memberId, noticeId));
     }
 
     /*
      * 공지사항 삭제
      */
     @DeleteMapping("/{noticeId}")
-    public void deleteNotice(@PathVariable Long noticeId) {
-        manageNoticeUseCase.deleteNotice(new DeleteNoticeCommand(noticeId));
+    public void deleteNotice(@PathVariable Long noticeId, @CurrentMember MemberPrincipal memberPrincipal) {
+        /*
+         * TODO: challengerId 받아오는 방식 수정 필요
+         */
+        Long memberId = memberPrincipal.getMemberId();
+        manageNoticeUseCase.deleteNotice(new DeleteNoticeCommand(memberId, noticeId));
     }
 
     /*
      * 공지사항 수정
      */
     @PatchMapping("/{noticeId}")
-    public void updateNotice(@PathVariable Long noticeId, @RequestBody @Valid UpdateNoticeRequest request) {
-        manageNoticeUseCase.updateNotice(request.toCommand(noticeId));
+    public void updateNotice(@PathVariable Long noticeId, @RequestBody @Valid UpdateNoticeRequest request,
+                             @CurrentMember MemberPrincipal memberPrincipal) {
+        /*
+         * TODO: challengerId 받아오는 방식 수정 필요
+         */
+        Long memberId = memberPrincipal.getMemberId();
+        manageNoticeUseCase.updateNotice(request.toCommand(memberId, noticeId));
     }
 
     /*
      * 공지사항 리마인드 알림 보내기
      */
     @PostMapping("/{noticeId}/reminders")
-    public void sendNoticeReminder(@PathVariable Long noticeId, @RequestBody @Valid SendNoticeReminderRequest request) {
-        manageNoticeUseCase.remindNotice(request.toCommand(noticeId));
+    public void sendNoticeReminder(@PathVariable Long noticeId, @RequestBody @Valid SendNoticeReminderRequest request,
+                                   @CurrentMember MemberPrincipal memberPrincipal) {
+        /*
+         * TODO: challengerId 받아오는 방식 수정 필요
+         */
+        Long memberId = memberPrincipal.getMemberId();
+        manageNoticeUseCase.remindNotice(request.toCommand(memberId, noticeId));
     }
 
 }
