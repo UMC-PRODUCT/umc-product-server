@@ -22,6 +22,8 @@ public enum AuthenticationErrorCode implements BaseCode {
             "잘못된 이메일 요청 인증입니다."),
     INVALID_EMAIL_VERIFICATION(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0004",
             "이메일 인증 정보가 일치하지 않습니다."),
+    UNSUPPORTED_EMAIL_VERIFICATION_METHOD(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0005",
+            "지원하지 않는 이메일 인증 방식입니다."),
     ;
 
     private final HttpStatus httpStatus;

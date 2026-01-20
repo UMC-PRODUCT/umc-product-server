@@ -85,13 +85,7 @@ public class EmailVerificationService implements ManageAuthenticationUseCase {
         }
 
         if (command.token() != null) {
-            EmailVerification emailVerification = loadEmailVerificationPort.getByToken(
-                    command.token()
-            );
-
-            emailVerification.verifyToken();
-
-            return jwtTokenProvider.createEmailVerificationToken(emailVerification.getEmail());
+            throw new AuthenticationDomainException(AuthenticationErrorCode.UNSUPPORTED_EMAIL_VERIFICATION_METHOD);
         }
 
         throw new AuthenticationDomainException(AuthenticationErrorCode.NO_EMAIL_VERIFICATION_METHOD_GIVEN);
@@ -99,7 +93,7 @@ public class EmailVerificationService implements ManageAuthenticationUseCase {
 
     private String generateRandomCode() {
         SecureRandom random = new SecureRandom();
-        
+
         return String.valueOf(random.nextInt(900000) + 100000);
     }
 }
