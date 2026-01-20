@@ -34,7 +34,7 @@ public class EmailVerificationService implements ManageAuthenticationUseCase {
         // TODO: refresh token을 검증하는 로직을 추가할 필요성이 있음
         Long memberId = jwtTokenProvider.parseRefreshToken(command.refreshToken());
 
-        return jwtTokenProvider.createRefreshToken(memberId);
+        return jwtTokenProvider.createAccessToken(memberId, null);
     }
 
     @Override
