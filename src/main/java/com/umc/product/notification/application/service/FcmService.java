@@ -11,7 +11,7 @@ import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
-import com.umc.product.notification.application.port.in.NotificationCommand;
+import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.application.port.out.SaveFcmPort;
 import com.umc.product.notification.domain.FcmToken;

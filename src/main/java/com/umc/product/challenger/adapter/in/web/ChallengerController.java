@@ -7,6 +7,10 @@ import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerReque
 import com.umc.product.challenger.adapter.in.web.dto.request.GrantChallengerPointRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
+import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
+import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerCommand;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.response.PageResponse;
@@ -34,23 +38,29 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = Constants.CHALLENGER)
 public class ChallengerController {
 
+    private final GetChallengerUseCase getChallengerUseCase;
+    private final ManageChallengerUseCase manageChallengerUseCase;
+
     @Operation(summary = "챌린저 정보 조회")
     @GetMapping("{challengerId}")
     ChallengerInfoResponse getChallengerInfo(
             @PathVariable Long challengerId
     ) {
-        throw new NotImplementedException();
+        ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        return ChallengerInfoResponse.from(info);
     }
 
     @Operation(summary = "[주의] 챌린저 삭제 (Hard Delete)")
     @DeleteMapping("{challengerId}")
     void deleteChallenger(@PathVariable Long challengerId) {
-        throw new NotImplementedException();
+        DeleteChallengerCommand command = new DeleteChallengerCommand(challengerId, "관리자에 의한 삭제");
+        manageChallengerUseCase.deleteChallenger(command);
     }
 
     @Operation(summary = "챌린저 비활성화 (제명/탈부 처리)")
     @PostMapping("{challengerId}/deactivate")
     void deactivateChallenger(@PathVariable Long challengerId) {
+        // TODO: DeactivateChallengerUseCase 구현 필요
         throw new NotImplementedException();
     }
 
@@ -60,7 +70,9 @@ public class ChallengerController {
             @PathVariable Long challengerId,
             @RequestBody EditChallengerRequest request
     ) {
-        throw new NotImplementedException();
+        manageChallengerUseCase.updateChallenger(request.toCommand(challengerId));
+        ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        return ChallengerInfoResponse.from(info);
     }
 
     @Operation(summary = "챌린저 상벌점 부여")
@@ -69,45 +81,57 @@ public class ChallengerController {
             @PathVariable Long challengerId,
             @RequestBody GrantChallengerPointRequest request
     ) {
-        throw new NotImplementedException();
+        manageChallengerUseCase.grantChallengerPoint(request.toCommand(challengerId));
+        ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        return ChallengerInfoResponse.from(info);
     }
 
     @Operation(summary = "챌린저 상벌점 사유 수정")
     @PatchMapping("points/{challengerPointId}")
-    ChallengerInfoResponse editChallengerPoints(
+    void editChallengerPoints(
             @PathVariable Long challengerPointId,
             @RequestBody EditChallengerPointRequest request
     ) {
-        throw new NotImplementedException();
+        manageChallengerUseCase.updateChallengerPoint(request.toCommand(challengerPointId));
     }
 
     @Operation(summary = "챌린저 상벌점 삭제")
     @DeleteMapping("points/{challengerPointId}")
-    ChallengerInfoResponse deleteChallengerPoint(
-            @PathVariable Long challengerPointId,
-            @RequestBody DeleteChallengerPointRequest request
-    ) {
-        throw new NotImplementedException();
+    void deleteChallengerPoint(@PathVariable Long challengerPointId) {
+        manageChallengerUseCase.deleteChallengerPoint(
+                new DeleteChallengerPointRequest().toCommand(challengerPointId)
+        );
     }
 
     @Operation(summary = "챌린저 검색 (챌린저 ID, 닉네임, 기수별)")
     @GetMapping("search")
     PageResponse<ChallengerInfoResponse> searchChallenger(
-            @ParameterObject Pageable pagable,
+            @ParameterObject Pageable pageable,
             @ParameterObject SearchChallengerRequest searchRequest
     ) {
+        // TODO: SearchChallengerUseCase 구현 필요
         throw new NotImplementedException();
     }
 
     @Operation(summary = "챌린저 생성 (합격 처리와 통합 필요)")
     @PostMapping
     ChallengerInfoResponse createChallenger(@RequestBody CreateChallengerInfoRequest request) {
-        throw new NotImplementedException();
+        Long challengerId = manageChallengerUseCase.createChallenger(request.toCommand());
+        ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        return ChallengerInfoResponse.from(info);
     }
 
     @Operation(summary = "챌린저 Bulk 생성")
     @PostMapping("bulk")
-    List<ChallengerInfoResponse> bulkCreateChallenger(@RequestBody List<CreateChallengerInfoRequest> requests) {
-        throw new NotImplementedException();
+    List<ChallengerInfoResponse> bulkCreateChallenger(
+            @RequestBody List<CreateChallengerInfoRequest> requests
+    ) {
+        return requests.stream()
+                .map(request -> {
+                    Long challengerId = manageChallengerUseCase.createChallenger(request.toCommand());
+                    ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+                    return ChallengerInfoResponse.from(info);
+                })
+                .toList();
     }
 }

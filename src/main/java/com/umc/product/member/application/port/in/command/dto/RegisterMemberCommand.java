@@ -1,6 +1,8 @@
 package com.umc.product.member.application.port.in.command.dto;
 
 import com.umc.product.common.domain.enums.OAuthProvider;
+import com.umc.product.member.domain.Member;
+import lombok.Builder;
 
 /**
  * OAuth 회원가입용 Command입니다. 일반 회원가입은 지원하지 않습니다.
@@ -15,13 +17,24 @@ import com.umc.product.common.domain.enums.OAuthProvider;
  * @param schoolId
  * @param profileImageId
  */
+@Builder
 public record RegisterMemberCommand(
         OAuthProvider provider,
         String providerId,
         String name,
         String nickname,
         String email,
-        String schoolId,
-        String profileImageId
+        Long schoolId,
+        Long profileImageId
 ) {
+
+    public Member toEntity() {
+        return Member.builder()
+                .name(this.name)
+                .nickname(this.nickname)
+                .email(this.email)
+                .schoolId(this.schoolId)
+                .profileImageId(this.profileImageId)
+                .build();
+    }
 }

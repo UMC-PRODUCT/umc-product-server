@@ -47,6 +47,14 @@ spring:
           timeout: 5000 # 읽기(Read) 타임아웃 5초
           writetimeout: 5000 # 메일 쓰기 전송 타임아웃 5초
 
+  # Thymeleaf 템플릿 엔진 설정
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+    mode: HTML
+    encoding: UTF-8
+    cache: false  # 개발 환경에서는 캐시 비활성화, 운영에서는 true로 변경 필요
+
   # JS 환경에서 bigint 관련 문제 때문에 숫자를 모두 문자열로 변환하여 발송
   # Depracated 기능이라서 향후 변경 필요
   jackson:
@@ -202,6 +210,7 @@ management:
         enabled: true
 
 app:
+  base-url: ${APP_BASE_URL:http://localhost:${SERVER_PORT:8080}}
   firebase-configuration: ${FIREBASE_CONFIGURATION}
   swagger-auth:
     username: ${SWAGGER_AUTH_USERNAME:username}
