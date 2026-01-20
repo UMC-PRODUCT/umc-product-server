@@ -1,8 +1,8 @@
 package com.umc.product.community.adapter.in.web;
 
 import com.umc.product.community.adapter.in.web.dto.response.TrophyResponse;
-import com.umc.product.community.application.port.in.trophy.Query.GetTrophyListUseCase;
-import com.umc.product.community.application.port.in.trophy.Query.TrophySearchQuery;
+import com.umc.product.community.application.port.in.trophy.query.GetTrophyListUseCase;
+import com.umc.product.community.application.port.in.trophy.query.TrophySearchQuery;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

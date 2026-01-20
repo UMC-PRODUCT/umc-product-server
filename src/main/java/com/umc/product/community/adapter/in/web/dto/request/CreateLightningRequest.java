@@ -1,6 +1,6 @@
 package com.umc.product.community.adapter.in.web.dto.request;
 
-import com.umc.product.community.application.port.in.post.Command.CreateLightningCommand;
+import com.umc.product.community.application.port.in.post.command.CreateLightningCommand;
 import java.time.LocalDateTime;
 import java.util.Objects;
 

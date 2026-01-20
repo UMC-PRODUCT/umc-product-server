@@ -1,4 +1,4 @@
-package com.umc.product.community.application.port.in.post.Command;
+package com.umc.product.community.application.port.in.post.command;
 
 import java.util.Objects;
 

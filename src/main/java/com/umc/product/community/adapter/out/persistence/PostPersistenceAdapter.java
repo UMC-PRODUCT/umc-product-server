@@ -1,7 +1,7 @@
 package com.umc.product.community.adapter.out.persistence;
 
-import com.umc.product.community.application.port.in.post.Query.PostSearchQuery;
 import com.umc.product.community.application.port.in.post.TogglePostLikeUseCase.LikeResult;
+import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
 import com.umc.product.community.application.port.out.LoadPostPort;
 import com.umc.product.community.application.port.out.SavePostPort;
 import com.umc.product.community.domain.Post;
