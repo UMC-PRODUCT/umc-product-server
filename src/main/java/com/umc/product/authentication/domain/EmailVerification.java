@@ -58,7 +58,7 @@ public class EmailVerification extends BaseEntity {
         this.email = email;
         this.token = token;
         this.code = code;
-        this.expiresAt = Instant.now().plusSeconds(10 * 60); // 15분 후 만료
+        this.expiresAt = Instant.now().plusSeconds(10 * 60); // 10분 후 만료
         this.isVerified = false;
     }
 
