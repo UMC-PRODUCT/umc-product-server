@@ -24,6 +24,11 @@ public enum AuthenticationErrorCode implements BaseCode {
             "이메일 인증 정보가 일치하지 않습니다."),
     UNSUPPORTED_EMAIL_VERIFICATION_METHOD(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0005",
             "지원하지 않는 이메일 인증 방식입니다."),
+    // OAuth Token Verification
+    INVALID_OAUTH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0006",
+            "유효하지 않은 OAuth 토큰입니다."),
+    OAUTH_TOKEN_VERIFICATION_FAILED(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0007",
+            "OAuth 토큰 검증에 실패했습니다."),
     ;
 
     private final HttpStatus httpStatus;
