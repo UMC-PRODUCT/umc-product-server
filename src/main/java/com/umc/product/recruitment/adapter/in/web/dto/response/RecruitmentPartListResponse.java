@@ -57,7 +57,7 @@ public record RecruitmentPartListResponse(
             ApplicationStatus status
     ) {
         public static MyApplicationResponse from(RecruitmentPartListInfo.MyApplicationInfo a) {
-            return new MyApplicationResponse(a.applicationId(), a.formResponseId(), a.status());
+            return a == null ? null : new MyApplicationResponse(a.applicationId(), a.formResponseId(), a.status());
         }
     }
 }
