@@ -2,9 +2,9 @@ package com.umc.product.curriculum.application.port.in.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.umc.product.challenger.adapter.out.persistence.ChallengerWorkbookJpaRepository;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.curriculum.adapter.out.persistence.ChallengerWorkbookJpaRepository;
 import com.umc.product.curriculum.adapter.out.persistence.CurriculumJpaRepository;
 import com.umc.product.curriculum.adapter.out.persistence.OriginalWorkbookJpaRepository;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
