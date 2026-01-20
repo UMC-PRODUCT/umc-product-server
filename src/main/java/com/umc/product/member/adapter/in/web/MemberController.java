@@ -2,13 +2,17 @@ package com.umc.product.member.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.exception.NotImplementedException;
+import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.OAuthVerificationClaims;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberInfoRequest;
 import com.umc.product.member.adapter.in.web.dto.request.RegisterMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
+import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
+import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +30,9 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = SwaggerTag.Constants.MEMBER)
 public class MemberController {
 
+    private final JwtTokenProvider jwtTokenProvider;
+    private final ManageMemberUseCase manageMemberUseCase;
+
     // 로그인은 OAuth를 통해서만 진행됨!!
     @Public
     @Operation(summary = "회원가입",
@@ -39,7 +46,27 @@ public class MemberController {
     RegisterResponse registerMember(@RequestBody RegisterMemberRequest request) {
         // TODO: oAuthVerificationToken은 authentication domain에서 port 가져와서 처리함
 
-        throw new NotImplementedException();
+        OAuthVerificationClaims claims = jwtTokenProvider.parseOAuthVerificationToken(request.oAuthVerificationToken());
+        String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
+
+        RegisterMemberCommand command = RegisterMemberCommand
+                .builder()
+                .provider(claims.provider())
+                .providerId(claims.providerId())
+                .name(request.name())
+                .nickname(request.nickname())
+                .email(email)
+                .schoolId(request.schoolId())
+                .profileImageId(request.profileImageId())
+                .build();
+
+        // TODO: 약관 동의 처리 해야함
+
+        Long createdMemberId = manageMemberUseCase.registerMember(command);
+
+        return RegisterResponse.builder()
+                .memberId(createdMemberId)
+                .build();
     }
 
     @Operation(summary = "내 프로필 조회")

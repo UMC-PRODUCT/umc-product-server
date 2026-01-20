@@ -5,8 +5,6 @@ import com.umc.product.global.security.annotation.Public;
 import com.umc.product.notification.application.port.in.SendEmailUseCase;
 import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.mail.MessagingException;
-import java.io.UnsupportedEncodingException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -27,7 +25,7 @@ public class EmailController {
     @Public
     void sendTestEmail(
             @RequestBody SendVerificationEmailCommand command
-    ) throws MessagingException, UnsupportedEncodingException {
+    ) {
         sendEmailUseCase.sendVerificationEmail(command);
     }
 }

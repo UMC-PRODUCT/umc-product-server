@@ -18,5 +18,6 @@ public enum Domain {
     FCM,
     SURVEY,
     RECRUITMENT,
-    TERMS
+    TERMS,
+    EMAIL
 }

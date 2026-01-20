@@ -53,14 +53,6 @@ public class Member extends BaseEntity {
         this.email = email;
         this.schoolId = schoolId;
         this.profileImageId = profileImageId;
-        this.status = MemberStatus.PENDING;
-    }
-
-    // Domain Logic: 회원가입 완료 처리
-    public void activate() {
-        if (this.status != MemberStatus.PENDING) {
-            throw new MemberDomainException(MemberErrorCode.INVALID_MEMBER_STATUS);
-        }
         this.status = MemberStatus.ACTIVE;
     }
 
@@ -75,12 +67,6 @@ public class Member extends BaseEntity {
         }
         if (profileImageId != null) {
             this.profileImageId = profileImageId;
-        }
-    }
-
-    public void validateIfRegisterAvailable() {
-        if (this.status != MemberStatus.PENDING) {
-            throw new MemberDomainException(MemberErrorCode.MEMBER_ALREADY_REGISTERED);
         }
     }
 

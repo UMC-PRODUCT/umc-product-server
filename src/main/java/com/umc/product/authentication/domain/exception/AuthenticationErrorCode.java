@@ -18,6 +18,12 @@ public enum AuthenticationErrorCode implements BaseCode {
     OAUTH_PROVIDER_NOT_FOUND(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0001", "지원하지 않은 OAuth 제공자입니다."),
     NO_MATCHING_MEMBER(HttpStatus.NOT_FOUND, "AUTHENTICATION-0002",
             "제공된 OAuth Provider와 ProviderId와 일치하는 회원이 존재하지 않습니다."),
+    NO_EMAIL_VERIFICATION_METHOD_GIVEN(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0003",
+            "잘못된 이메일 요청 인증입니다."),
+    INVALID_EMAIL_VERIFICATION(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0004",
+            "이메일 인증 정보가 일치하지 않습니다."),
+    UNSUPPORTED_EMAIL_VERIFICATION_METHOD(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0005",
+            "지원하지 않는 이메일 인증 방식입니다."),
     ;
 
     private final HttpStatus httpStatus;

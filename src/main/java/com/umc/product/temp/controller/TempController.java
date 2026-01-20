@@ -22,11 +22,25 @@ public class TempController {
 
     private final JwtTokenProvider jwtTokenProvider;
 
-    @Operation(summary = "테스트용 토큰 발급", description = "userId로 JWT 토큰을 발급합니다.")
+    @Operation(summary = "AccessToken 발급")
     @Public
-    @GetMapping("/token/at/{userId}")
-    public ApiResponse<String> getTestToken(@PathVariable Long userId) {
-        return ApiResponse.onSuccess(jwtTokenProvider.createAccessToken(userId, null));
+    @GetMapping("/token/access/{memberId}")
+    public ApiResponse<String> getAccessToken(@PathVariable Long memberId) {
+        return ApiResponse.onSuccess(jwtTokenProvider.createAccessToken(memberId, null));
+    }
+
+    @Operation(summary = "RefreshToken 발급")
+    @Public
+    @GetMapping("/token/refresh/{memberId}")
+    public ApiResponse<String> getRefreshToken(@PathVariable Long memberId) {
+        return ApiResponse.onSuccess(jwtTokenProvider.createRefreshToken(memberId));
+    }
+
+    @Operation(summary = "EmailVerification Token 발급")
+    @Public
+    @GetMapping("/token/email/{email}")
+    public ApiResponse<String> getEmailVerification(@PathVariable String email) {
+        return ApiResponse.onSuccess(jwtTokenProvider.createEmailVerificationToken(email));
     }
 
     @Operation(summary = "헬스 체크 API")
