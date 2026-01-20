@@ -1,4 +1,4 @@
-package com.umc.product.community.application.port.in.trophy.Query;
+package com.umc.product.community.application.port.in.trophy.query;
 
 public record TrophySearchQuery(
         Integer week,   // 주차

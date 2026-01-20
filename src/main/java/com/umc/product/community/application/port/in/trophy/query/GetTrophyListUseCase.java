@@ -1,4 +1,4 @@
-package com.umc.product.community.application.port.in.trophy.Query;
+package com.umc.product.community.application.port.in.trophy.query;
 
 import com.umc.product.community.application.port.in.trophy.TrophyInfo;
 import java.util.List;
