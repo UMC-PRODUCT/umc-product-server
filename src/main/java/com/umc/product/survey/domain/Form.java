@@ -33,7 +33,7 @@ public class Form extends BaseEntity {
     @Column(name = "created_member_id", nullable = false)
     private Long createdMemberId;
 
-    @Column(nullable = false)
+    @Column()
     private String title;
 
     @Column(length = 500)
@@ -47,4 +47,10 @@ public class Form extends BaseEntity {
     @OrderBy("orderNo ASC")
     private List<FormSection> sections = new ArrayList<>();
 
+    public static Form createDraft(Long createdMemberId) {
+        Form form = new Form();
+        form.createdMemberId = createdMemberId;
+        form.isActive = false;
+        return form;
+    }
 }
