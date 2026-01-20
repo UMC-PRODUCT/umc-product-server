@@ -7,8 +7,8 @@ public record RegisterMemberRequest(
         String name,
         String nickname,
         String emailVerificationToken,
-        String schoolId,
-        String profileImageId,
+        Long schoolId,
+        Long profileImageId,
         List<TermsAgreement> termsAgreements
 ) {
     public record TermsAgreement(
