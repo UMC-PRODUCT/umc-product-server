@@ -9,8 +9,8 @@ import com.umc.product.authentication.domain.EmailVerification;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.notification.application.port.in.SendEmailUseCase;
 import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
-import com.umc.product.notification.application.service.SendEmailService;
 import java.security.SecureRandom;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 public class EmailVerificationService implements ManageAuthenticationUseCase {
 
-    private final SendEmailService sendEmailService;
+    private final SendEmailUseCase sendEmailUseCase;
     private final LoadEmailVerificationPort loadEmailVerificationPort;
     private final SaveEmailVerificationPort saveEmailVerificationPort;
     private final JwtTokenProvider jwtTokenProvider;
@@ -60,7 +60,7 @@ public class EmailVerificationService implements ManageAuthenticationUseCase {
                 .queryParam("token", token)
                 .toUriString();
 
-        sendEmailService.sendVerificationEmail(
+        sendEmailUseCase.sendVerificationEmail(
                 SendVerificationEmailCommand.builder()
                         .to(email)
                         .verificationCode(code)
