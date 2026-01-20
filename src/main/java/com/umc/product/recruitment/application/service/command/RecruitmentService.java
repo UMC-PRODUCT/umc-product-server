@@ -25,9 +25,20 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruit
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
+import com.umc.product.recruitment.application.port.out.SaveRecruitmentPartPort;
+import com.umc.product.recruitment.application.port.out.SaveRecruitmentPort;
+import com.umc.product.recruitment.domain.Recruitment;
+import com.umc.product.recruitment.domain.RecruitmentPart;
+import com.umc.product.survey.application.port.out.SaveFormPort;
+import com.umc.product.survey.domain.Form;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class RecruitmentService implements CreateRecruitmentDraftFormResponseUseCase,
         UpsertRecruitmentFormResponseAnswersUseCase,
         DeleteRecruitmentFormResponseUseCase,
@@ -37,6 +48,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         UpdateRecruitmentDraftUseCase,
         UpsertRecruitmentFormQuestionsUseCase,
         PublishRecruitmentUseCase {
+
+    private final SaveFormPort saveFormPort;
+    private final SaveRecruitmentPort saveRecruitmentPort;
+    private final SaveRecruitmentPartPort saveRecruitmentPartPort;
+
+    private Long resolveSchoolId() {
+        return 1L;
+    }
+
+    private Long resolveActiveGisuId(Long schoolId) {
+        return 1L;
+    }
 
     @Override
     public CreateOrGetDraftFormResponseInfo createOrGet(CreateOrGetRecruitmentDraftCommand command) {
@@ -60,7 +83,31 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public CreateRecruitmentInfo create(CreateRecruitmentCommand command) {
-        return null;
+
+        Long schoolId = resolveSchoolId();
+        Long gisuId = resolveActiveGisuId(schoolId);
+
+        Form savedForm = saveFormPort.save(Form.createDraft(command.memberId()));
+
+        Recruitment savedRecruitment = saveRecruitmentPort.save(
+                Recruitment.createDraft(
+                        schoolId,
+                        gisuId,
+                        savedForm.getId(),
+                        command.recruitmentName()
+                )
+        );
+
+        if (command.parts() != null && !command.parts().isEmpty()) {
+            List<RecruitmentPart> recruitmentParts = command.parts().stream()
+                    .distinct()
+                    .map(part -> RecruitmentPart.createOpen(savedRecruitment.getId(), part))
+                    .toList();
+
+            saveRecruitmentPartPort.saveAll(recruitmentParts);
+        }
+
+        return CreateRecruitmentInfo.of(savedRecruitment.getId(), savedForm.getId());
     }
 
     @Override

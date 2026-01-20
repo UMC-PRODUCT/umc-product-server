@@ -37,4 +37,22 @@ public class RecruitmentPart {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private RecruitmentPartStatus status = RecruitmentPartStatus.OPEN;
+
+    public static RecruitmentPart createOpen(Long recruitmentId, ChallengerPart part) {
+
+        validate(recruitmentId, part);
+        
+        RecruitmentPart recruitmentPart = new RecruitmentPart();
+        recruitmentPart.recruitmentId = recruitmentId;
+        recruitmentPart.part = part;
+        recruitmentPart.status = RecruitmentPartStatus.OPEN;
+
+        return recruitmentPart;
+    }
+
+    private static void validate(Long recruitmentId, ChallengerPart part) {
+        if (recruitmentId == null || part == null) {
+            throw new IllegalStateException("recruitmentId/part must not be null");
+        }
+    }
 }

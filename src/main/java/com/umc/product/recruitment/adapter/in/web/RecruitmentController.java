@@ -268,11 +268,13 @@ public class RecruitmentController {
                     """
     )
     public CreateRecruitmentResponse createRecruitment(
+            Long memberId, // auth 추가 시 삭제
             @RequestBody(required = false) CreateRecruitmentRequest request
     ) {
         CreateRecruitmentRequest req = (request == null) ? CreateRecruitmentRequest.empty() : request;
 
         CreateRecruitmentCommand command = new CreateRecruitmentCommand(
+                memberId,
                 req.recruitmentName(),
                 req.parts()
         );

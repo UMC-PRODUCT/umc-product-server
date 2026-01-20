@@ -1,6 +1,7 @@
 package com.umc.product.recruitment.domain;
 
 import com.umc.product.recruitment.domain.enums.RecruitmentPhase;
+import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -25,17 +26,17 @@ public class Recruitment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "school_id", nullable = false)
+    @Column(name = "school_id")
     private Long schoolId;
 
-    @Column(name = "gisu_id", nullable = false)
+    @Column(name = "gisu_id")
     private Long gisuId;
 
-    @Column(nullable = false)
-    private String title;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private RecruitmentStatus status;
 
-    @Column
-    private String description;
+    private String title;
 
     @Column(name = "form_id", nullable = false)
     private Long formId;
@@ -44,10 +45,10 @@ public class Recruitment {
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    @Column(nullable = false)
+    @Column(name = "notice_title")
     private String noticeTitle;
 
-    @Column(nullable = false)
+    @Column(name = "notice_content")
     private String noticeContent;
 
     @Builder.Default
@@ -55,4 +56,35 @@ public class Recruitment {
     @Column(nullable = false)
     private RecruitmentPhase phase = RecruitmentPhase.BEFORE_APPLY;
 
+    public static Recruitment createDraft(
+            Long schoolId,
+            Long gisuId,
+            Long formId,
+            String title
+    ) {
+        validateDraftContext(schoolId, gisuId, formId);
+
+        Recruitment recruitment = new Recruitment();
+        recruitment.schoolId = schoolId;
+        recruitment.gisuId = gisuId;
+        recruitment.formId = formId;
+        recruitment.status = RecruitmentStatus.DRAFT;
+        recruitment.title = normalizeTitle(title);
+
+        return recruitment;
+    }
+
+    private static void validateDraftContext(Long schoolId, Long gisuId, Long formId) {
+        if (schoolId == null || gisuId == null || formId == null) {
+            throw new IllegalStateException("Recruitment draft context invalid");
+        }
+    }
+
+    private static String normalizeTitle(String title) {
+        if (title == null) {
+            return null;
+        }
+        String t = title.trim();
+        return t.isBlank() ? null : t;
+    }
 }
