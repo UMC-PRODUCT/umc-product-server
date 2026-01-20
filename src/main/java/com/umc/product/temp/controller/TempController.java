@@ -1,5 +1,7 @@
 package com.umc.product.temp.controller;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -21,6 +23,17 @@ import org.springframework.web.bind.annotation.RestController;
 public class TempController {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final GetChallengerUseCase getChallengerUseCase;
+
+    @GetMapping("challenger")
+    @Operation(summary = "memberId와 gisuId로 챌린저 정보 조회")
+    public ChallengerInfo getChallengerByMemberAndGisuId(
+            Long memberId, Long gisuId
+    ) {
+        return getChallengerUseCase.getByMemberIdAndGisuId(
+                memberId, gisuId
+        );
+    }
 
     @Operation(summary = "AccessToken 발급")
     @Public

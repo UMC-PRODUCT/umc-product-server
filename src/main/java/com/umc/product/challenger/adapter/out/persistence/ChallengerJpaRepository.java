@@ -1,20 +1,11 @@
-package com.umc.product.challenger.application.port.out;
+package com.umc.product.challenger.adapter.out.persistence;
 
 import com.umc.product.challenger.domain.Challenger;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface LoadChallengerPort {
-
-    /**
-     * ID로 챌린저 조회
-     */
-    Optional<Challenger> findById(Long id);
-
-    /**
-     * ID로 챌린저 조회 - 없으면 예외
-     */
-    Challenger getById(Long id);
+public interface ChallengerJpaRepository extends JpaRepository<Challenger, Long> {
 
     /**
      * memberId와 gisuId로 챌린저 조회
