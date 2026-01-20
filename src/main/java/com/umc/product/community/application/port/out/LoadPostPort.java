@@ -1,6 +1,6 @@
 package com.umc.product.community.application.port.out;
 
-import com.umc.product.community.application.port.in.post.Query.PostSearchQuery;
+import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
 import java.util.List;

@@ -1,4 +1,4 @@
-package com.umc.product.community.application.port.in.post.Query;
+package com.umc.product.community.application.port.in.post.query;
 
 import com.umc.product.community.application.port.in.PostInfo;
 import com.umc.product.community.domain.enums.Category;

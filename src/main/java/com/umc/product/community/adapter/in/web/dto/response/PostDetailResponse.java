@@ -1,6 +1,6 @@
 package com.umc.product.community.adapter.in.web.dto.response;
 
-import com.umc.product.community.application.port.in.post.Query.PostDetailInfo;
+import com.umc.product.community.application.port.in.post.query.PostDetailInfo;
 import com.umc.product.community.domain.enums.Category;
 import java.time.LocalDateTime;
 
