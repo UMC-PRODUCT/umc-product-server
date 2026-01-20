@@ -27,7 +27,7 @@ public record GetNoticeDetailResponse(
         List<NoticeLinkInfo> links,
         Integer viewCount,
         Instant createdAt,
-        Instant updatedAt
+        boolean isUpdated
 ) {
     public static GetNoticeDetailResponse from(NoticeInfo noticeInfo) {
         return new GetNoticeDetailResponse(
@@ -47,7 +47,7 @@ public record GetNoticeDetailResponse(
                 noticeInfo.links(),
                 noticeInfo.viewCount(),
                 noticeInfo.createdAt(),
-                noticeInfo.updatedAt()
+                noticeInfo.isUpdated()
         );
     }
 }

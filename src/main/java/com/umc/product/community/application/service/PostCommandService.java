@@ -1,13 +1,13 @@
 package com.umc.product.community.application.service;
 
 import com.umc.product.community.application.port.in.PostInfo;
-import com.umc.product.community.application.port.in.post.Command.CreateLightningCommand;
-import com.umc.product.community.application.port.in.post.Command.CreatePostCommand;
-import com.umc.product.community.application.port.in.post.Command.UpdatePostCommand;
 import com.umc.product.community.application.port.in.post.CreatePostUseCase;
 import com.umc.product.community.application.port.in.post.DeletePostUseCase;
 import com.umc.product.community.application.port.in.post.TogglePostLikeUseCase;
 import com.umc.product.community.application.port.in.post.UpdatePostUseCase;
+import com.umc.product.community.application.port.in.post.command.CreateLightningCommand;
+import com.umc.product.community.application.port.in.post.command.CreatePostCommand;
+import com.umc.product.community.application.port.in.post.command.UpdatePostCommand;
 import com.umc.product.community.application.port.out.LoadPostPort;
 import com.umc.product.community.application.port.out.SavePostPort;
 import lombok.RequiredArgsConstructor;

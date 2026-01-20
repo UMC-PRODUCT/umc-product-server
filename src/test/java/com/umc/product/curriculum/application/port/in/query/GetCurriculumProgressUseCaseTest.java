@@ -53,7 +53,7 @@
 //                .willReturn(ChallengerInfo.builder()
 //                        .challengerId(CHALLENGER_ID)
 //                        .memberId(MEMBER_ID)
-//                        .gisu(1L)
+//                        .gisuId(1L)
 //                        .part(ChallengerPart.SPRINGBOOT)
 //                        .build());
 //    }

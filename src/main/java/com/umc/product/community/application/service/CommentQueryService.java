@@ -1,7 +1,7 @@
 package com.umc.product.community.application.service;
 
 import com.umc.product.community.application.port.in.post.CommentInfo;
-import com.umc.product.community.application.port.in.post.Query.GetCommentListUseCase;
+import com.umc.product.community.application.port.in.post.query.GetCommentListUseCase;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

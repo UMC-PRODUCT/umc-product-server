@@ -1,6 +1,6 @@
 package com.umc.product.community.adapter.in.web.dto.request;
 
-import com.umc.product.community.application.port.in.post.Command.CreateCommentCommand;
+import com.umc.product.community.application.port.in.post.command.CreateCommentCommand;
 import jakarta.validation.constraints.NotBlank;
 
 public record CreateCommentRequest(
