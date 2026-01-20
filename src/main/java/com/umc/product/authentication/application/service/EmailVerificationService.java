@@ -11,6 +11,7 @@ import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
 import com.umc.product.notification.application.service.SendEmailService;
+import java.security.SecureRandom;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -97,6 +98,8 @@ public class EmailVerificationService implements ManageAuthenticationUseCase {
     }
 
     private String generateRandomCode() {
-        return String.valueOf((int) ((Math.random() * 9 + 1) * 100000));
+        SecureRandom random = new SecureRandom();
+        
+        return String.valueOf(random.nextInt(900000) + 100000);
     }
 }
