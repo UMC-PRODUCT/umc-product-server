@@ -37,4 +37,24 @@ public class ChallengerPoint {
 
     @Column(length = 200)
     private String description;
+
+    private ChallengerPoint(Challenger challenger, PointType type, String description) {
+        this.challenger = challenger;
+        this.type = type;
+        this.description = description;
+    }
+
+    /**
+     * 새로운 상벌점을 생성합니다.
+     */
+    public static ChallengerPoint create(Challenger challenger, PointType type, String description) {
+        return new ChallengerPoint(challenger, type, description);
+    }
+
+    /**
+     * 상벌점의 설명을 수정합니다.
+     */
+    public void updateDescription(String newDescription) {
+        this.description = newDescription;
+    }
 }

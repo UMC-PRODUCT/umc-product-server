@@ -1,7 +1,11 @@
 package com.umc.product.challenger.adapter.in.web.dto.request;
 
+import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerPointCommand;
+
 public record EditChallengerPointRequest(
-        Long challengerPointId,
-        String newDescription // 설명 수정
+        String newDescription
 ) {
+    public UpdateChallengerPointCommand toCommand(Long challengerPointId) {
+        return new UpdateChallengerPointCommand(challengerPointId, newDescription);
+    }
 }
