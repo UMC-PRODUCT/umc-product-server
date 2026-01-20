@@ -1,7 +1,7 @@
 package com.umc.product.recruitment.application.port.in.query.dto;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.recruitment.domain.ApplicationStatus;
+import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import java.util.List;
 
 public record ApplicationDetailInfo(

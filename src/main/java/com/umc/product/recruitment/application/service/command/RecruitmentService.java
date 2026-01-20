@@ -1,4 +1,4 @@
-package com.umc.product.recruitment.application.port.service.command;
+package com.umc.product.recruitment.application.service.command;
 
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;

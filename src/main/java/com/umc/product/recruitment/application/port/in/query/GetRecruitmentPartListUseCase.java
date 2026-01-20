@@ -4,5 +4,5 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentP
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentPartListInfo;
 
 public interface GetRecruitmentPartListUseCase {
-    RecruitmentPartListInfo getByRecruitmentId(GetRecruitmentPartListQuery query);
+    RecruitmentPartListInfo get(GetRecruitmentPartListQuery query);
 }

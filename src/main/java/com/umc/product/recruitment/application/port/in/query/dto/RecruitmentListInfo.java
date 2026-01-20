@@ -1,6 +1,6 @@
 package com.umc.product.recruitment.application.port.in.query.dto;
 
-import com.umc.product.recruitment.domain.RecruitmentPhase;
+import com.umc.product.recruitment.domain.enums.RecruitmentPhase;
 import java.time.LocalDate;
 import java.util.List;
 

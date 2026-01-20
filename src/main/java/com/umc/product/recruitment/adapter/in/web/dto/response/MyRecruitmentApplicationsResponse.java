@@ -1,9 +1,9 @@
 package com.umc.product.recruitment.adapter.in.web.dto.response;
 
 import com.umc.product.recruitment.application.port.in.query.dto.MyApplicationListInfo;
-import com.umc.product.recruitment.domain.ApplicationStatus;
+import com.umc.product.recruitment.domain.enums.ApplicationStatus;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public record MyRecruitmentApplicationsResponse(
@@ -23,26 +23,28 @@ public record MyRecruitmentApplicationsResponse(
 
     public record CurrentApplicationStatusResponse(
             List<String> appliedParts,
-            EvaluationStatusResponse documentEvaluation,
-            EvaluationStatusResponse finalEvaluation,
+            EvaluationStatusForApplicantResponse documentEvaluation,
+            EvaluationStatusForApplicantResponse finalEvaluation,
             ProgressResponse progress
     ) {
         public static CurrentApplicationStatusResponse from(MyApplicationListInfo.CurrentApplicationStatusInfo info) {
             return new CurrentApplicationStatusResponse(
                     info.appliedParts(),
-                    info.documentEvaluation() == null ? null : EvaluationStatusResponse.from(info.documentEvaluation()),
-                    info.finalEvaluation() == null ? null : EvaluationStatusResponse.from(info.finalEvaluation()),
+                    info.documentEvaluation() == null ? null
+                            : EvaluationStatusForApplicantResponse.from(info.documentEvaluation()),
+                    info.finalEvaluation() == null ? null
+                            : EvaluationStatusForApplicantResponse.from(info.finalEvaluation()),
                     info.progress() == null ? null : ProgressResponse.from(info.progress())
             );
         }
     }
 
-    public record EvaluationStatusResponse(
+    public record EvaluationStatusForApplicantResponse(
             String status,
             String label
     ) {
-        public static EvaluationStatusResponse from(MyApplicationListInfo.EvaluationStatusInfo info) {
-            return new EvaluationStatusResponse(info.status(), info.label());
+        public static EvaluationStatusForApplicantResponse from(MyApplicationListInfo.EvaluationStatusInfo info) {
+            return new EvaluationStatusForApplicantResponse(info.status(), info.label());
         }
     }
 
@@ -78,7 +80,7 @@ public record MyRecruitmentApplicationsResponse(
             String recruitmentTitle,
             String badge,
             ApplicationStatus status,
-            LocalDateTime submittedAt
+            Instant submittedAt
     ) {
         public static MyApplicationCardResponse from(MyApplicationListInfo.MyApplicationCardInfo info) {
             return new MyApplicationCardResponse(

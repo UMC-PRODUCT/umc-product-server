@@ -1,4 +1,4 @@
-package com.umc.product.recruitment.domain;
+package com.umc.product.recruitment.domain.enums;
 
 public enum RecruitmentScheduleType {
     APPLY_WINDOW(1, "서류 모집", Kind.WINDOW),
