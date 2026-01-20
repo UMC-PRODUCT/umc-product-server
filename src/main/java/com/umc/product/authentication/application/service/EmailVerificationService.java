@@ -31,7 +31,10 @@ public class EmailVerificationService implements ManageAuthenticationUseCase {
 
     @Override
     public String renewAccessToken(RenewAccessTokenCommand command) {
-        return "";
+        // TODO: refresh token을 검증하는 로직을 추가할 필요성이 있음
+        Long memberId = jwtTokenProvider.parseRefreshToken(command.refreshToken());
+
+        return jwtTokenProvider.createRefreshToken(memberId);
     }
 
     @Override
@@ -49,7 +52,7 @@ public class EmailVerificationService implements ManageAuthenticationUseCase {
                 .build();
 
         String emailVerificationPath = "/api/v1/auth/email-verification/token";
-        
+
         String verificationLink = UriComponentsBuilder
                 .fromUriString(serverUrl)
                 .path(emailVerificationPath)

@@ -138,6 +138,13 @@ public class AuthenticationController {
     RenewAccessTokenResponse renewAccessToken(
             @RequestBody RenewAccessTokenRequest request
     ) {
-        throw new NotImplementedException();
+        String newAccessToken = manageAuthenticationUseCase.renewAccessToken(
+                request.toCommand()
+        );
+
+        return RenewAccessTokenResponse
+                .builder()
+                .accessToken(newAccessToken)
+                .build();
     }
 }
