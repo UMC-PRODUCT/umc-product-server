@@ -10,6 +10,8 @@ import com.umc.product.authentication.adapter.in.web.dto.response.CompleteEmailV
 import com.umc.product.authentication.adapter.in.web.dto.response.OAuthLoginResponse;
 import com.umc.product.authentication.adapter.in.web.dto.response.RenewAccessTokenResponse;
 import com.umc.product.authentication.adapter.in.web.dto.response.SendEmailVerificationResponse;
+import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
+import com.umc.product.authentication.application.port.in.command.dto.ValidateEmailVerificationSessionCommand;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.annotation.Public;
@@ -26,6 +28,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/auth")
 @Tag(name = Constants.AUTH)
 public class AuthenticationController {
+
+    private final ManageAuthenticationUseCase manageAuthenticationUseCase;
+
     @PostMapping("login/google")
     @Public
     @Operation(summary = "Google 로그인",
@@ -80,17 +85,30 @@ public class AuthenticationController {
         throw new NotImplementedException();
     }
 
-    @Operation(summary = "이메일 인증 완료",
+    @Operation(summary = "6자리 인증코드로 이메일 인증",
             description = """
                     이메일로 발송된 인증코드를 통해서 이메일 인증을 완료합니다.
                     
                     emailVerificationToken을 발급하며, 해당 토큰을 회원가입 시에 제공해야 합니다.
                     """)
-    @PostMapping("email-verification/complete")
-    CompleteEmailVerificationResponse completeEmailVerification(
+    @PostMapping("email-verification/code")
+    @Public
+    CompleteEmailVerificationResponse verifyEmailByCode(
             @RequestBody CompleteEmailVerificationRequest request
     ) {
-        throw new NotImplementedException();
+        String emailVerificationToken = manageAuthenticationUseCase
+                .validateEmailVerificationSession(
+                        ValidateEmailVerificationSessionCommand
+                                .builder()
+                                .sessionId(request.emailVerificationId().toString())
+                                .code(request.verificationCode())
+                                .build()
+                );
+
+        return CompleteEmailVerificationResponse
+                .builder()
+                .emailVerificationToken(emailVerificationToken)
+                .build();
     }
 
     @Operation(summary = "이메일 인증 코드 발송",
@@ -100,10 +118,16 @@ public class AuthenticationController {
                     이메일 인증코드는 6자리의 숫자로만 구성되어 있습니다.
                     """)
     @PostMapping("email-verification")
+    @Public
     SendEmailVerificationResponse sendEmailVerification(
             @RequestBody SendEmailVerificationRequest request
     ) {
-        throw new NotImplementedException();
+        Long sessionId = manageAuthenticationUseCase.createEmailVerificationSession(request.email());
+
+        return SendEmailVerificationResponse
+                .builder()
+                .emailVerificationId(sessionId.toString())
+                .build();
     }
 
     @Operation(summary = "AccessToken 재발급",
