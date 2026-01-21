@@ -36,12 +36,20 @@ public class StudyGroupMember {
     @Column(nullable = false)
     private boolean isLeader;
 
-    @Builder
+    @Builder(access = AccessLevel.PRIVATE)
     private StudyGroupMember(StudyGroup studyGroup, Long challengerId, boolean isLeader) {
         validate(studyGroup, challengerId);
         this.studyGroup = studyGroup;
         this.challengerId = challengerId;
         this.isLeader = isLeader;
+    }
+
+    public static StudyGroupMember create(StudyGroup studyGroup, Long challengerId, boolean isLeader) {
+        return StudyGroupMember.builder()
+                .studyGroup(studyGroup)
+                .challengerId(challengerId)
+                .isLeader(isLeader)
+                .build();
     }
 
     private static void validate(StudyGroup studyGroup, Long challengerId) {

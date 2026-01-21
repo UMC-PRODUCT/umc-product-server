@@ -47,7 +47,7 @@ public class StudyGroup extends BaseEntity {
     @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
 
-    @Builder
+    @Builder(access = AccessLevel.PRIVATE)
     private StudyGroup(String name, Gisu gisu, ChallengerPart part) {
         validate(name, gisu, part);
         this.name = name;
@@ -55,7 +55,15 @@ public class StudyGroup extends BaseEntity {
         this.part = part;
     }
 
-    private static void validate(String name, Gisu gisu,ChallengerPart part) {
+    public static StudyGroup create(String name, Gisu gisu, ChallengerPart part) {
+        return StudyGroup.builder()
+                .name(name)
+                .gisu(gisu)
+                .part(part)
+                .build();
+    }
+
+    private static void validate(String name, Gisu gisu, ChallengerPart part) {
         if (name == null || name.isBlank()) {
             throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
         }
@@ -78,11 +86,7 @@ public class StudyGroup extends BaseEntity {
      */
     public void addMember(Long challengerId, boolean isLeader) {
         validateMemberNotExists(challengerId);
-        StudyGroupMember member = StudyGroupMember.builder()
-                .studyGroup(this)
-                .challengerId(challengerId)
-                .isLeader(isLeader)
-                .build();
+        StudyGroupMember member = StudyGroupMember.create(this, challengerId, isLeader);
         studyGroupMembers.add(member);
     }
 

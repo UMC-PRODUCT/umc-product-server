@@ -299,10 +299,6 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     }
 
     private StudyGroup createStudyGroup(String name, Gisu gisu, ChallengerPart part) {
-        return StudyGroup.builder()
-                .name(name)
-                .gisu(gisu)
-                .part(part)
-                .build();
+        return StudyGroup.create(name, gisu, part);
     }
 }
