@@ -53,7 +53,7 @@ public class FormSection extends BaseEntity {
     @Column(length = 500)
     private String description;
 
-    @Column(name = "order_no", nullable = false)
+    @Column(name = "order_no")
     private Integer orderNo;
 
     @OneToMany(mappedBy = "formSection", cascade = CascadeType.ALL, orphanRemoval = true)

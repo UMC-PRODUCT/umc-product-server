@@ -246,7 +246,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                             .type(FormSectionType.CUSTOM)
                             .title(target.part().name())
                             .description(null)
-                            .orderNo(0)
+                            .orderNo(null)
                             .targetKey(targetKey)
                             .build();
 

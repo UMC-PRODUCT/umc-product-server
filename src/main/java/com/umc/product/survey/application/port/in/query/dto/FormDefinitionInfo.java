@@ -3,7 +3,6 @@ package com.umc.product.survey.application.port.in.query.dto;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.FormSection;
 import com.umc.product.survey.domain.Question;
-import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.enums.FormSectionType;
 import com.umc.product.survey.domain.enums.QuestionType;
 import java.util.Comparator;
@@ -21,7 +20,7 @@ public record FormDefinitionInfo(
             String targetKey,
             String title,
             String description,
-            int orderNo,
+            Integer orderNo,
             List<QuestionInfo> questions
     ) {
     }
@@ -31,7 +30,7 @@ public record FormDefinitionInfo(
             String questionText,
             QuestionType type,
             boolean isRequired,
-            int orderNo,
+            Integer orderNo,
             List<QuestionOptionInfo> options // 객관식 아닌 경우 empty
     ) {
     }
@@ -39,7 +38,7 @@ public record FormDefinitionInfo(
     public record QuestionOptionInfo(
             Long optionId,
             String content,
-            int orderNo
+            Integer orderNo
     ) {
     }
 
@@ -49,7 +48,8 @@ public record FormDefinitionInfo(
                 form.getTitle(),
                 form.getDescription(),
                 form.getSections().stream()
-                        .sorted(Comparator.comparingInt(FormSection::getOrderNo))
+                        .sorted(Comparator.comparingInt(
+                                s -> s.getOrderNo() == null ? Integer.MAX_VALUE : s.getOrderNo()))
                         .map(FormDefinitionInfo::toSection)
                         .toList()
         );
@@ -64,7 +64,8 @@ public record FormDefinitionInfo(
                 s.getDescription(),
                 s.getOrderNo(),
                 s.getQuestions().stream()
-                        .sorted(Comparator.comparingInt(Question::getOrderNo))
+                        .sorted(Comparator.comparingInt(
+                                q -> q.getOrderNo() == null ? Integer.MAX_VALUE : q.getOrderNo()))
                         .map(FormDefinitionInfo::toQuestion)
                         .toList()
         );
@@ -79,7 +80,8 @@ public record FormDefinitionInfo(
                 q.getOrderNo(),
                 q.getOptions() == null ? List.of()
                         : q.getOptions().stream()
-                                .sorted(Comparator.comparingInt(QuestionOption::getOrderNo))
+                                .sorted(Comparator.comparingInt(
+                                        o -> o.getOrderNo() == null ? Integer.MAX_VALUE : o.getOrderNo()))
                                 .map(o -> new FormDefinitionInfo.QuestionOptionInfo(
                                         o.getId(),
                                         o.getContent(),
