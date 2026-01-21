@@ -9,6 +9,7 @@ import static com.umc.product.organization.domain.QStudyGroupMember.studyGroupMe
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
@@ -26,7 +27,7 @@ public class WorkbookSubmissionQueryRepository {
      * 워크북 제출 현황 조회 (동적 필터링 + 커서 페이지네이션)
      */
     public List<WorkbookSubmissionInfo> findSubmissions(GetWorkbookSubmissionsQuery query) {
-        var baseQuery = queryFactory
+        JPAQuery<WorkbookSubmissionInfo> baseQuery = queryFactory
                 .select(Projections.constructor(WorkbookSubmissionInfo.class,
                         challengerWorkbook.id,
                         challenger.id,

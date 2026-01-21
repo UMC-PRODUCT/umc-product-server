@@ -20,6 +20,7 @@ import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -40,9 +41,6 @@ public class StudyGroup extends BaseEntity {
     @JoinColumn(name = "gisu_id")
     private Gisu gisu;
 
-    @Column(nullable = false, name = "school_id")
-    private Long schoolId;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ChallengerPart part;
@@ -50,24 +48,28 @@ public class StudyGroup extends BaseEntity {
     @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
 
-    @Builder
-    private StudyGroup(String name, Gisu gisu, Long schoolId, ChallengerPart part) {
-        validate(name, gisu, schoolId, part);
+    @Builder(access = AccessLevel.PRIVATE)
+    private StudyGroup(String name, Gisu gisu, ChallengerPart part) {
+        validate(name, gisu, part);
         this.name = name;
         this.gisu = gisu;
-        this.schoolId = schoolId;
         this.part = part;
     }
 
-    private static void validate(String name, Gisu gisu, Long schoolId, ChallengerPart part) {
+    public static StudyGroup create(String name, Gisu gisu, ChallengerPart part) {
+        return StudyGroup.builder()
+                .name(name)
+                .gisu(gisu)
+                .part(part)
+                .build();
+    }
+
+    private static void validate(String name, Gisu gisu, ChallengerPart part) {
         if (name == null || name.isBlank()) {
             throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
         }
         if (gisu == null) {
             throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_REQUIRED);
-        }
-        if (schoolId == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.SCHOOL_REQUIRED);
         }
         if (part == null) {
             throw new BusinessException(Domain.COMMON, OrganizationErrorCode.PART_REQUIRED);
@@ -85,11 +87,7 @@ public class StudyGroup extends BaseEntity {
      */
     public void addMember(Long challengerId, boolean isLeader) {
         validateMemberNotExists(challengerId);
-        StudyGroupMember member = StudyGroupMember.builder()
-                .studyGroup(this)
-                .challengerId(challengerId)
-                .isLeader(isLeader)
-                .build();
+        StudyGroupMember member = StudyGroupMember.create(this, challengerId, isLeader);
         studyGroupMembers.add(member);
     }
 
@@ -119,7 +117,7 @@ public class StudyGroup extends BaseEntity {
      *
      * @param challengerIds 새로운 멤버 ID 목록
      */
-    public void updateMembers(List<Long> challengerIds) {
+    public void updateMembers(Set<Long> challengerIds) {
         studyGroupMembers.clear();
         if (challengerIds != null) {
             challengerIds.forEach(this::addMember);

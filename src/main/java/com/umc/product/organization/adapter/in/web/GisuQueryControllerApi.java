@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = Constants.ORGANIZATION)
 public interface GisuQueryControllerApi {
 
-    @Operation(summary = "기수 목록 조회 By 박박지현", description = "전체 기수 목록을 최신순(generation 내림차순)으로 조회합니다")
+    @Operation(summary = "기수 목록 조회 ", description = "전체 기수 목록을 최신순(generation 내림차순)으로 조회합니다")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
