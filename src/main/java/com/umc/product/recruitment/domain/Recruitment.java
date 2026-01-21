@@ -1,7 +1,11 @@
 package com.umc.product.recruitment.domain;
 
+import com.umc.product.common.BaseEntity;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.domain.enums.RecruitmentPhase;
 import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
+import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,18 +13,21 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Builder
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Recruitment {
+public class Recruitment extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,6 +63,13 @@ public class Recruitment {
     @Column(nullable = false)
     private RecruitmentPhase phase = RecruitmentPhase.BEFORE_APPLY;
 
+    @Column(name = "max_preferred_part_count")
+    private Integer maxPreferredPartCount;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "interview_time_table", columnDefinition = "jsonb")
+    private Map<String, Object> interviewTimeTable;
+
     public static Recruitment createDraft(
             Long schoolId,
             Long gisuId,
@@ -71,12 +85,48 @@ public class Recruitment {
         recruitment.status = RecruitmentStatus.DRAFT;
         recruitment.title = normalizeTitle(title);
 
+        recruitment.interviewTimeTable = null;
+
         return recruitment;
     }
 
     private static void validateDraftContext(Long schoolId, Long gisuId, Long formId) {
         if (schoolId == null || gisuId == null || formId == null) {
             throw new IllegalStateException("Recruitment draft context invalid");
+        }
+    }
+
+    public void changeTitle(String title) {
+        requireDraftEditable();
+
+        String normalizedTitle = normalizeTitle(title);
+        this.title = normalizedTitle;
+        this.noticeTitle = normalizeTitle(title);
+    }
+
+    public void changeNoticeContent(String noticeContent) {
+        requireDraftEditable();
+        this.noticeContent = normalizeNoticeContent(noticeContent);
+    }
+
+    public void changeMaxPreferredPartCount(Integer maxPreferredPartCount) {
+        requireDraftEditable();
+        this.maxPreferredPartCount = maxPreferredPartCount;
+    }
+
+    public void changeInterviewTimeTable(Map<String, Object> interviewTimeTable) {
+        requireDraftEditable();
+        if (interviewTimeTable != null) {
+            this.interviewTimeTable = interviewTimeTable;
+        }
+    }
+
+    private void requireDraftEditable() {
+        if (this.status != RecruitmentStatus.DRAFT) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_DRAFT);
+        }
+        if (Boolean.FALSE.equals(this.isActive)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_INACTIVE);
         }
     }
 
@@ -87,4 +137,13 @@ public class Recruitment {
         String t = title.trim();
         return t.isBlank() ? null : t;
     }
+
+    private static String normalizeNoticeContent(String content) {
+        if (content == null) {
+            return null;
+        }
+        String c = content.trim();
+        return c.isBlank() ? null : c;
+    }
+
 }

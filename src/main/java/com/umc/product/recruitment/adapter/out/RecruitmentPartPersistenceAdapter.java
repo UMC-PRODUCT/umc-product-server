@@ -19,4 +19,9 @@ public class RecruitmentPartPersistenceAdapter implements SaveRecruitmentPartPor
         }
         return recruitmentPartRepository.saveAll(parts);
     }
+
+    @Override
+    public void deleteAllByRecruitmentId(Long recruitmentId) {
+        recruitmentPartRepository.deleteAllByRecruitmentId(recruitmentId);
+    }
 }
