@@ -3,6 +3,7 @@ package com.umc.product.challenger.application.port.out;
 import com.umc.product.challenger.domain.Challenger;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface LoadChallengerPort {
 
@@ -31,5 +32,5 @@ public interface LoadChallengerPort {
      */
     List<Challenger> findByGisuId(Long gisuId);
 
-    Long countByIdIn(List<Long> ids);
+    Long countByIdIn(Set<Long> ids);
 }

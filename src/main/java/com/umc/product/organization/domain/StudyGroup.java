@@ -20,6 +20,7 @@ import jakarta.persistence.OneToMany;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -116,7 +117,7 @@ public class StudyGroup extends BaseEntity {
      *
      * @param challengerIds 새로운 멤버 ID 목록
      */
-    public void updateMembers(List<Long> challengerIds) {
+    public void updateMembers(Set<Long> challengerIds) {
         studyGroupMembers.clear();
         if (challengerIds != null) {
             challengerIds.forEach(this::addMember);
