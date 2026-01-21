@@ -32,7 +32,7 @@ public class SchedulePersistenceAdapter implements
 
     @Override
     public List<Schedule> findAllOrderByStatusAndDate() {
-        return null;
+        return scheduleJpaRepository.findAllOrderByStatusAndDate();
     }
 
     // ========== SaveSchedulePort ==========
