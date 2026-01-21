@@ -4,7 +4,6 @@ import com.umc.product.schedule.application.port.out.DeleteAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.SaveAttendanceSheetPort;
 import com.umc.product.schedule.domain.AttendanceSheet;
-import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -26,14 +25,14 @@ public class AttendanceSheetPersistenceAdapter implements SaveAttendanceSheetPor
 
     @Override
     public void delete(AttendanceSheet sheet) {
-
+        sheetJpaRepository.delete(sheet);
     }
 
     // ========== LoadAttendanceSheetPort ==========
 
     @Override
-    public Optional<AttendanceSheet> findById(AttendanceSheetId id) {
-        return Optional.empty();
+    public Optional<AttendanceSheet> findById(Long id) {
+        return sheetJpaRepository.findById(id);
     }
 
     @Override
@@ -43,12 +42,12 @@ public class AttendanceSheetPersistenceAdapter implements SaveAttendanceSheetPor
 
     @Override
     public List<AttendanceSheet> findByScheduleIds(List<Long> scheduleIds) {
-        return null;
+        return sheetJpaRepository.findByScheduleIds(scheduleIds);
     }
 
     @Override
     public boolean existsByScheduleId(Long scheduleId) {
-        return false;
+        return sheetJpaRepository.existsByScheduleId(scheduleId);
     }
 
     // ========== DeleteAttendanceSheetPort ==========
