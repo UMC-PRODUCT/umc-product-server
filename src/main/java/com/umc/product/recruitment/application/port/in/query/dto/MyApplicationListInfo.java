@@ -1,8 +1,8 @@
 package com.umc.product.recruitment.application.port.in.query.dto;
 
-import com.umc.product.recruitment.domain.ApplicationStatus;
+import com.umc.product.recruitment.domain.enums.ApplicationStatus;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public record MyApplicationListInfo(
@@ -47,7 +47,7 @@ public record MyApplicationListInfo(
             String recruitmentTitle,
             String badge, // "SUBMITTED" | "PAST"
             ApplicationStatus status,
-            LocalDateTime submittedAt
+            Instant submittedAt
     ) {
     }
 

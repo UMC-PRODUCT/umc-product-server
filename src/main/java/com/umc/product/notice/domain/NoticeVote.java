@@ -41,4 +41,12 @@ public class NoticeVote extends BaseEntity {
         this.voteId = voteId;
         this.displayOrder = displayOrder;
     }
+
+    public static NoticeVote create(Long voteId, Notice notice, int displayOrder) {
+        return NoticeVote.builder()
+                .voteId(voteId)
+                .notice(notice)
+                .displayOrder(displayOrder)
+                .build();
+    }
 }

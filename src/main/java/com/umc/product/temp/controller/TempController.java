@@ -1,5 +1,7 @@
 package com.umc.product.temp.controller;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -21,12 +23,37 @@ import org.springframework.web.bind.annotation.RestController;
 public class TempController {
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final GetChallengerUseCase getChallengerUseCase;
 
-    @Operation(summary = "테스트용 토큰 발급", description = "userId로 JWT 토큰을 발급합니다.")
+    @GetMapping("challenger")
+    @Operation(summary = "memberId와 gisuId로 챌린저 정보 조회")
+    public ChallengerInfo getChallengerByMemberAndGisuId(
+            Long memberId, Long gisuId
+    ) {
+        return getChallengerUseCase.getByMemberIdAndGisuId(
+                memberId, gisuId
+        );
+    }
+
+    @Operation(summary = "AccessToken 발급")
     @Public
-    @GetMapping("/token/at/{userId}")
-    public ApiResponse<String> getTestToken(@PathVariable Long userId) {
-        return ApiResponse.onSuccess(jwtTokenProvider.createAccessToken(userId, null));
+    @GetMapping("/token/access/{memberId}")
+    public ApiResponse<String> getAccessToken(@PathVariable Long memberId) {
+        return ApiResponse.onSuccess(jwtTokenProvider.createAccessToken(memberId, null));
+    }
+
+    @Operation(summary = "RefreshToken 발급")
+    @Public
+    @GetMapping("/token/refresh/{memberId}")
+    public ApiResponse<String> getRefreshToken(@PathVariable Long memberId) {
+        return ApiResponse.onSuccess(jwtTokenProvider.createRefreshToken(memberId));
+    }
+
+    @Operation(summary = "EmailVerification Token 발급")
+    @Public
+    @GetMapping("/token/email/{email}")
+    public ApiResponse<String> getEmailVerification(@PathVariable String email) {
+        return ApiResponse.onSuccess(jwtTokenProvider.createEmailVerificationToken(email));
     }
 
     @Operation(summary = "헬스 체크 API")

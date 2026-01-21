@@ -14,6 +14,11 @@ public interface GetChallengerUseCase {
     ChallengerInfo getChallengerPublicInfo(Long challengerId);
 
     /**
+     * memberId와 gisuId로 챌린저 정보 조회
+     */
+    ChallengerInfo getByMemberIdAndGisuId(Long memberId, Long gisuId);
+
+    /**
      * memberId로 해당 사용자가 가지고 있는 모든 챌린저 정보 조회
      */
     List<ChallengerInfo> getMemberChallengerList(Long memberId);

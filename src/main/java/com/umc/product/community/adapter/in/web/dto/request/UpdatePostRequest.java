@@ -1,6 +1,6 @@
 package com.umc.product.community.adapter.in.web.dto.request;
 
-import com.umc.product.community.application.port.in.post.Command.UpdatePostCommand;
+import com.umc.product.community.application.port.in.post.command.UpdatePostCommand;
 import com.umc.product.community.domain.enums.Category;
 import java.util.Objects;
 

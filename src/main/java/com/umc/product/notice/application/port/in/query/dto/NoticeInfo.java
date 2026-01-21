@@ -16,7 +16,7 @@ public record NoticeInfo(
         Long authorChallengerId,
         NoticeClassification scope,
         String scopeDisplayName,
-        Long organizationId,
+        List<Long> organizationIds,
         Long targetGisuId,
         List<ChallengerRoleType> targetRoleTypes,
         List<ChallengerPart> targetParts,
@@ -25,7 +25,7 @@ public record NoticeInfo(
         List<NoticeLinkInfo> links,
         Integer viewCount,
         Instant createdAt,
-        Instant updatedAt
+        boolean isUpdated
 ) {
     public static NoticeInfo of(
             Notice notice,
@@ -34,7 +34,8 @@ public record NoticeInfo(
             Integer viewCount,
             List<NoticeVoteInfo> votes,
             List<NoticeImageInfo> images,
-            List<NoticeLinkInfo> links
+            List<NoticeLinkInfo> links,
+            boolean isUpdated
     ) {
         return new NoticeInfo(
                 notice.getId(),
@@ -44,7 +45,7 @@ public record NoticeInfo(
                 notice.getAuthorChallengerId(),
                 notice.getScope(),
                 scopeDisplayName,
-                notice.getOrganizationId(),
+                notice.getOrganizationIds(),
                 notice.getTargetGisuId(),
                 notice.getTargetRoles(),
                 notice.getTargetParts(),
@@ -53,7 +54,7 @@ public record NoticeInfo(
                 links,
                 viewCount,
                 notice.getCreatedAt(),
-                notice.getUpdatedAt()
+                isUpdated
         );
     }
 }

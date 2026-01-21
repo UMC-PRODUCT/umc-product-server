@@ -1,10 +1,10 @@
 package com.umc.product.community.application.service;
 
 import com.umc.product.community.application.port.in.PostInfo;
-import com.umc.product.community.application.port.in.post.Query.GetPostDetailUseCase;
-import com.umc.product.community.application.port.in.post.Query.GetPostListUseCase;
-import com.umc.product.community.application.port.in.post.Query.PostDetailInfo;
-import com.umc.product.community.application.port.in.post.Query.PostSearchQuery;
+import com.umc.product.community.application.port.in.post.query.GetPostDetailUseCase;
+import com.umc.product.community.application.port.in.post.query.GetPostListUseCase;
+import com.umc.product.community.application.port.in.post.query.PostDetailInfo;
+import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
 import com.umc.product.community.application.port.out.LoadPostPort;
 import java.util.Collections;
 import java.util.List;

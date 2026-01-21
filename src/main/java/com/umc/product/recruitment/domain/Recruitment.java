@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.domain;
 
+import com.umc.product.recruitment.domain.enums.RecruitmentPhase;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

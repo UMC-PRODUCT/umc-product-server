@@ -42,5 +42,12 @@ public class NoticeImage extends BaseEntity {
         this.displayOrder = displayOrder;
     }
 
+    public static NoticeImage create(Long imageId, Notice notice, int displayOrder) {
+        return NoticeImage.builder()
+                .imageId(imageId)
+                .notice(notice)
+                .displayOrder(displayOrder)
+                .build();
+    }
 
 }

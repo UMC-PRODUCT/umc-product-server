@@ -13,7 +13,7 @@ public record GetNoticeSummaryResponse(
         String title,
         String content,
         ChallengerRoleType authorRole, // 작성자 role
-        NoticeClassification scope,  // 조직 타입 (전체, 중앙운영사무국 등)
+        NoticeClassification scope, // 공지 범위
         Boolean read, // 읽음 여부 (빨간 점 표시용)
         List<NoticeContentType> includeContentTypes,
         Integer viewCount,

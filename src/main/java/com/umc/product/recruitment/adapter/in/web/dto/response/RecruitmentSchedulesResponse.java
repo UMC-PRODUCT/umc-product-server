@@ -1,7 +1,7 @@
 package com.umc.product.recruitment.adapter.in.web.dto.response;
 
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentScheduleInfo;
-import com.umc.product.recruitment.domain.RecruitmentScheduleType;
+import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Comparator;

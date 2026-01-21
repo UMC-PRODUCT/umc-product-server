@@ -82,13 +82,6 @@ public class OpenApiConfig {
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
                                 .description("발급받은 Access Token을 입력해주세요.")
-                )
-                .addSecuritySchemes(refreshToken,
-                        new SecurityScheme()
-                                .type(SecurityScheme.Type.HTTP)
-                                .scheme("bearer")
-                                .bearerFormat("JWT")
-                                .description("Refresh Token을 입력해주세요.")
                 );
     }
 

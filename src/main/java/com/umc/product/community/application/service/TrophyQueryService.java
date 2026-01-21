@@ -1,8 +1,8 @@
 package com.umc.product.community.application.service;
 
-import com.umc.product.community.application.port.in.trophy.Query.GetTrophyListUseCase;
-import com.umc.product.community.application.port.in.trophy.Query.TrophySearchQuery;
 import com.umc.product.community.application.port.in.trophy.TrophyInfo;
+import com.umc.product.community.application.port.in.trophy.query.GetTrophyListUseCase;
+import com.umc.product.community.application.port.in.trophy.query.TrophySearchQuery;
 import java.util.Collections;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

@@ -67,4 +67,26 @@ public class Challenger extends BaseEntity {
             throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_ACTIVE);
         }
     }
+
+    /**
+     * 챌린저의 파트를 변경합니다.
+     */
+    public void changePart(ChallengerPart newPart) {
+        validateChallengerStatus();
+        this.part = newPart;
+    }
+
+    /**
+     * 챌린저의 상태를 변경합니다.
+     */
+    public void changeStatus(ChallengerStatus newStatus) {
+        this.status = newStatus;
+    }
+
+    /**
+     * 챌린저에게 상벌점을 추가합니다.
+     */
+    public void addPoint(ChallengerPoint point) {
+        this.challengerPoints.add(point);
+    }
 }

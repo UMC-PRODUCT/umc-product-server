@@ -18,7 +18,7 @@ public record GetNoticeDetailResponse(
         Long authorChallengerId,
         NoticeClassification scope,
         String scopeDisplayName,
-        Long organizationId,
+        List<Long> organizationIds,
         Long targetGisuId,
         List<ChallengerRoleType> targetRoleTypes,
         List<ChallengerPart> targetParts,
@@ -27,7 +27,7 @@ public record GetNoticeDetailResponse(
         List<NoticeLinkInfo> links,
         Integer viewCount,
         Instant createdAt,
-        Instant updatedAt
+        boolean isUpdated
 ) {
     public static GetNoticeDetailResponse from(NoticeInfo noticeInfo) {
         return new GetNoticeDetailResponse(
@@ -38,7 +38,7 @@ public record GetNoticeDetailResponse(
                 noticeInfo.authorChallengerId(),
                 noticeInfo.scope(),
                 noticeInfo.scopeDisplayName(),
-                noticeInfo.organizationId(),
+                noticeInfo.organizationIds(),
                 noticeInfo.targetGisuId(),
                 noticeInfo.targetRoleTypes(),
                 noticeInfo.targetParts(),
@@ -47,7 +47,7 @@ public record GetNoticeDetailResponse(
                 noticeInfo.links(),
                 noticeInfo.viewCount(),
                 noticeInfo.createdAt(),
-                noticeInfo.updatedAt()
+                noticeInfo.isUpdated()
         );
     }
 }

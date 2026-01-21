@@ -21,8 +21,8 @@ public record CreateDraftNoticeRequest(
         NoticeTargetInfo targetInfo
 ) {
 
-    public CreateNoticeCommand toCommand() {
-        return new CreateNoticeCommand(title, content, shouldNotify, targetInfo);
+    public CreateNoticeCommand toCommand(Long challengerId) {
+        return new CreateNoticeCommand(challengerId, title, content, shouldNotify, targetInfo);
     }
 
 }

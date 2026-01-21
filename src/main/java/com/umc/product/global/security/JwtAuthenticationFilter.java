@@ -28,7 +28,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String token = resolveToken(request);
 
         if (token != null && jwtTokenProvider.validateAccessToken(token)) {
-            Long memberId = jwtTokenProvider.getMemberIdFromAccessToken(token);
+            Long memberId = jwtTokenProvider.parseAccessToken(token);
             List<String> roles = jwtTokenProvider.getRolesFromAccessToken(token);
 
             MemberPrincipal memberPrincipal = new MemberPrincipal(memberId);  // email은 빈 문자열

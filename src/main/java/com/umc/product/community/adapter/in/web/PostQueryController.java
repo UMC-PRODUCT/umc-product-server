@@ -1,9 +1,9 @@
 package com.umc.product.community.adapter.in.web;
 
 import com.umc.product.community.adapter.in.web.dto.response.PostResponse;
-import com.umc.product.community.application.port.in.post.Query.GetPostDetailUseCase;
-import com.umc.product.community.application.port.in.post.Query.GetPostListUseCase;
-import com.umc.product.community.application.port.in.post.Query.PostSearchQuery;
+import com.umc.product.community.application.port.in.post.query.GetPostDetailUseCase;
+import com.umc.product.community.application.port.in.post.query.GetPostListUseCase;
+import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
 import com.umc.product.community.domain.enums.PostSortType;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import io.swagger.v3.oas.annotations.Operation;

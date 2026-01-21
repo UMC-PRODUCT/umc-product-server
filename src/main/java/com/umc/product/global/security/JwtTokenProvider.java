@@ -168,8 +168,18 @@ public class JwtTokenProvider {
     /**
      * AccessToken에서 memberId를 추출하는데 사용됩니다.
      */
-    public Long getMemberIdFromAccessToken(String token) {
+    public Long parseAccessToken(String token) {
         return Long.parseLong(parseClaims(token, accessTokenSecret).getSubject());
+    }
+
+    /**
+     * RefreshToken의 정보를 파싱해서 memberId를 반환합니다.
+     */
+    public Long parseRefreshToken(String token) {
+        validateToken(token, refreshTokenSecret);
+
+        Claims claims = parseClaims(token, refreshTokenSecret);
+        return Long.parseLong(claims.getSubject());
     }
 
     /**
