@@ -7,7 +7,9 @@ import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
+import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
+import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCommand;
 import com.umc.product.schedule.application.port.out.DeleteAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.DeleteAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
@@ -30,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ScheduleCommandService implements CreateScheduleUseCase, DeleteScheduleUseCase {
+public class ScheduleCommandService implements CreateScheduleUseCase, UpdateScheduleUseCase, DeleteScheduleUseCase {
 
     private final SaveSchedulePort saveSchedulePort;
     private final LoadSchedulePort loadSchedulePort;
@@ -103,6 +105,25 @@ public class ScheduleCommandService implements CreateScheduleUseCase, DeleteSche
                 .toList();
 
         saveAttendanceRecordPort.saveAllRecords(records);
+    }
+
+    // 일정 수정
+    @Override
+    public void update(UpdateScheduleCommand command) {
+        Schedule schedule = loadSchedulePort.findById(command.scheduleId())
+                .orElseThrow(() -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+
+        schedule.update(
+                command.name(),
+                command.description(),
+                command.scheduleType(),
+                command.startsAt(),
+                command.endsAt(),
+                command.isAllDay(),
+                command.locationName()
+        );
+
+        saveSchedulePort.save(schedule);
     }
 
     // 일정 삭제
