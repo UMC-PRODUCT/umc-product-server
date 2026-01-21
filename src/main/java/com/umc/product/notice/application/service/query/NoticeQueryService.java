@@ -2,6 +2,8 @@ package com.umc.product.notice.application.service.query;
 
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
+import com.umc.product.challenger.domain.exception.ChallengerDomainException;
+import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
@@ -38,10 +40,20 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private final LoadNoticePort loadNoticePort;
     private final LoadNoticeReadPort loadNoticeReadPort;
 
+    private final LoadChallengerPort loadChallengerPort;
+
     @Override
     public Page<NoticeSummary> getAllNoticeSummaries(NoticeClassification info, Pageable pageable) {
         Page<Notice> notices = loadNoticePort.findNoticesByClassification(info, pageable);
         // TODO: ChallengerPort 구현된 후 뒷 부분 구현 진행 (ChallengerRole 꺼내와야해서 port 구현 필요)
+//        notices.map(
+//                notice -> {
+//                    Challenger challenger = loadChallengerPort.findById(notice.getAuthorChallengerId())
+//                            .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_FOUND));
+//
+//                    NoticeSummary.from(notice, );
+//                }
+//        )
 
         throw new NoticeDomainException(NoticeErrorCode.NOT_IMPLEMENTED_YET);
     }

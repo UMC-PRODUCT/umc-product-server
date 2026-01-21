@@ -86,13 +86,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = Constants.ORGANIZATION)
 public interface StudyGroupQueryControllerApi {
 
-        @Operation(summary = "학교 목록 조회", description = "스터디 그룹이 있는 학교 목록을 조회합니다. 활성 기수 기준. By 박박지현")
+        @Operation(summary = "학교 목록 조회", description = "스터디 그룹이 있는 학교 목록을 조회합니다. 활성 기수 기준. ")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupSchoolsResponse.class)))
         })
         StudyGroupSchoolsResponse getSchools();
 
-        @Operation(summary = "파트 목록 조회", description = "특정 학교의 파트별 스터디 그룹 요약을 조회합니다. 활성 기수 기준. By 박박지현")
+        @Operation(summary = "파트 목록 조회", description = "특정 학교의 파트별 스터디 그룹 요약을 조회합니다. 활성 기수 기준. ")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupPartsResponse.class))),
                         @ApiResponse(responseCode = "404", description = "학교를 찾을 수 없음")
@@ -100,7 +100,7 @@ public interface StudyGroupQueryControllerApi {
         StudyGroupPartsResponse getParts(
                         @Parameter(description = "학교 ID", required = true) Long schoolId);
 
-        @Operation(summary = "스터디 그룹 목록 조회", description = "특정 학교, 파트의 스터디 그룹 목록을 조회합니다. cursor 기반 무한스크롤. 활성 기수 기준. By 박박지현")
+        @Operation(summary = "스터디 그룹 목록 조회", description = "특정 학교, 파트의 스터디 그룹 목록을 조회합니다. cursor 기반 무한스크롤. 활성 기수 기준. ")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공")
         })
@@ -110,7 +110,7 @@ public interface StudyGroupQueryControllerApi {
                         @Parameter(description = "페이지 커서 (첫 페이지는 null)") Long cursor,
                         @Parameter(description = "페이지 크기 (기본 20, 최대 100)") int size);
 
-        @Operation(summary = "스터디 그룹 상세 조회", description = "스터디 그룹의 상세 정보와 멤버 목록을 조회합니다. By 박박지현")
+        @Operation(summary = "스터디 그룹 상세 조회", description = "스터디 그룹의 상세 정보와 멤버 목록을 조회합니다. ")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupResponse.class))),
                         @ApiResponse(responseCode = "404", description = "스터디 그룹을 찾을 수 없음")
