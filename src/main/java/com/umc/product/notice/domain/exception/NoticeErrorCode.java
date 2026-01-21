@@ -16,6 +16,7 @@ public enum NoticeErrorCode implements BaseCode {
     INVALID_NOTICE_STATUS_FOR_REMINDER(HttpStatus.BAD_REQUEST, "NOTICE-0005", "공지사항 알림을 보낼 수 없는 상태입니다."),
     AUTHOR_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-0006", "공지사항 작성자는 필수입니다."),
     NOTICE_SCOPE_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-0007", "공지사항 대상 범위는 필수입니다."),
+    NOTICE_AUTHOR_MISMATCH(HttpStatus.FORBIDDEN, "NOTICE-0008", "공지사항 작성자가 아닙니다."),
 
 
     VOTE_IDS_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0001", "투표 ID 목록은 필수입니다."),

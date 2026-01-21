@@ -39,9 +39,7 @@ public class NoticeController implements NoticeApi {
     @PostMapping("/draft")
     public ApiResponse<CreateDraftNoticeResponse> createDraftNotice(@RequestBody @Valid CreateDraftNoticeRequest request,
                                                                     @CurrentMember MemberPrincipal memberPrincipal) {
-        /*
-         * TODO: challengerId 받아오는 방식 수정 필요
-         */
+
         Long memberId = memberPrincipal.getMemberId();
         Long noticeId = manageNoticeUseCase.createDraftNotice(request.toCommand(memberId));
         return ApiResponse.onSuccess(new CreateDraftNoticeResponse(noticeId));
