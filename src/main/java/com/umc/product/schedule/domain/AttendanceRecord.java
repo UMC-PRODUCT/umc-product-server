@@ -131,7 +131,7 @@ public class AttendanceRecord {
 
     private void validateMemberId(Long memberId) {
         if (memberId == null || memberId <= 0) {
-            throw new IllegalArgumentException("유효하지 않은 챌린저 ID입니다");
+            throw new IllegalArgumentException("유효하지 않은 멤버 ID입니다");
         }
     }
 
