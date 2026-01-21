@@ -16,8 +16,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -44,6 +44,9 @@ public class FormSection extends BaseEntity {
     @Column(nullable = false)
     private FormSectionType type;
 
+    @Column(name = "target_key", length = 50)
+    private String targetKey;
+
     @Column(nullable = false)
     private String title;
 
@@ -55,5 +58,11 @@ public class FormSection extends BaseEntity {
 
     @OneToMany(mappedBy = "formSection", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderNo ASC")
-    private List<Question> questions = new ArrayList<>();
+    @Builder.Default
+    private Set<Question> questions = new LinkedHashSet<>();
+
+    public void addQuestion(Question question) {
+        this.questions.add(question);
+        question.assignTo(this);
+    }
 }

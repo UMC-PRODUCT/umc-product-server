@@ -268,7 +268,14 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public RecruitmentApplicationFormInfo upsert(UpsertRecruitmentFormQuestionsCommand command) {
-        return null;
+        Long formId = loadRecruitmentPort.findById(command.recruitmentId()).getFormId();
+
+        List<UpsertRecruitmentFormQuestionsCommand.Item> items =
+                command.items() == null ? List.of() : command.items();
+
+        saveRecruitmentPort.upsertQuestions(formId, items);
+
+        return loadRecruitmentPort.findApplicationFormInfoById(command.recruitmentId());
     }
 
     @Override

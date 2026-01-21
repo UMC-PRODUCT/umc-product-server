@@ -10,8 +10,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -45,7 +45,8 @@ public class Form extends BaseEntity {
 
     @OneToMany(mappedBy = "form", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderNo ASC")
-    private List<FormSection> sections = new ArrayList<>();
+    @Builder.Default
+    private Set<FormSection> sections = new LinkedHashSet<>();
 
     public static Form createDraft(Long createdMemberId) {
         Form form = new Form();
