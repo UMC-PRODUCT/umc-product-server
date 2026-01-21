@@ -16,6 +16,8 @@ import com.umc.product.organization.application.port.in.query.dto.SchoolStudyGro
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -225,12 +227,17 @@ public class StudyGroupQueryRepository {
             return null;
         }
 
-        // 멤버들의 학교 목록 조회 (중복 제거)
-        List<StudyGroupDetailInfo.SchoolInfo> schools = queryFactory
-                .selectDistinct(Projections.constructor(StudyGroupDetailInfo.SchoolInfo.class,
+        // 멤버/리더/학교 정보를 한 번에 조회한 뒤 분리
+        List<Tuple> memberRows = queryFactory
+                .select(
+                        challenger.id,
+                        member.id,
+                        member.name,
+                        member.profileImageId.stringValue(),
+                        studyGroupMember.isLeader,
                         school.id,
                         school.name
-                ))
+                )
                 .from(studyGroupMember)
                 .join(challenger).on(challenger.id.eq(studyGroupMember.challengerId))
                 .join(member).on(member.id.eq(challenger.memberId))
@@ -238,53 +245,37 @@ public class StudyGroupQueryRepository {
                 .where(studyGroupMember.studyGroup.id.eq(groupId))
                 .fetch();
 
-        // 멤버 정보 조회
-        List<StudyGroupDetailInfo.MemberInfo> members = queryFactory
-                .select(Projections.constructor(StudyGroupDetailInfo.MemberInfo.class,
-                        challenger.id,
-                        member.id,
-                        member.name,
-                        member.profileImageId.stringValue()
-                ))
-                .from(studyGroupMember)
-                .join(challenger).on(challenger.id.eq(studyGroupMember.challengerId))
-                .join(member).on(member.id.eq(challenger.memberId))
-                .where(studyGroupMember.studyGroup.id.eq(groupId))
-                .fetch();
+        StudyGroupDetailInfo.MemberInfo leaderResult = null;
+        List<StudyGroupDetailInfo.MemberInfo> allMembers = new ArrayList<>(memberRows.size());
+        List<StudyGroupDetailInfo.MemberInfo> nonLeaderMembers = new ArrayList<>();
+        Map<Long, StudyGroupDetailInfo.SchoolInfo> schoolMap = new LinkedHashMap<>();
 
-        // 리더 찾기
-        StudyGroupDetailInfo.MemberInfo leaderResult = queryFactory
-                .select(Projections.constructor(StudyGroupDetailInfo.MemberInfo.class,
-                        challenger.id,
-                        member.id,
-                        member.name,
-                        member.profileImageId.stringValue()
-                ))
-                .from(studyGroupMember)
-                .join(challenger).on(challenger.id.eq(studyGroupMember.challengerId))
-                .join(member).on(member.id.eq(challenger.memberId))
-                .where(
-                        studyGroupMember.studyGroup.id.eq(groupId),
-                        studyGroupMember.isLeader.isTrue()
-                )
-                .fetchOne();
+        for (Tuple row : memberRows) {
+            StudyGroupDetailInfo.MemberInfo memberInfo = new StudyGroupDetailInfo.MemberInfo(
+                    row.get(challenger.id),
+                    row.get(member.id),
+                    row.get(member.name),
+                    row.get(member.profileImageId.stringValue())
+            );
+            allMembers.add(memberInfo);
 
-        // 일반 멤버 (리더 제외)
-        List<StudyGroupDetailInfo.MemberInfo> nonLeaderMembers = queryFactory
-                .select(Projections.constructor(StudyGroupDetailInfo.MemberInfo.class,
-                        challenger.id,
-                        member.id,
-                        member.name,
-                        member.profileImageId.stringValue()
-                ))
-                .from(studyGroupMember)
-                .join(challenger).on(challenger.id.eq(studyGroupMember.challengerId))
-                .join(member).on(member.id.eq(challenger.memberId))
-                .where(
-                        studyGroupMember.studyGroup.id.eq(groupId),
-                        studyGroupMember.isLeader.isFalse()
-                )
-                .fetch();
+            Boolean isLeader = row.get(studyGroupMember.isLeader);
+            if (Boolean.TRUE.equals(isLeader)) {
+                leaderResult = memberInfo;
+            } else {
+                nonLeaderMembers.add(memberInfo);
+            }
+
+            Long schoolId = row.get(school.id);
+            if (schoolId != null) {
+                schoolMap.putIfAbsent(schoolId, new StudyGroupDetailInfo.SchoolInfo(
+                        schoolId,
+                        row.get(school.name)
+                ));
+            }
+        }
+
+        List<StudyGroupDetailInfo.SchoolInfo> schools = new ArrayList<>(schoolMap.values());
 
         return new StudyGroupDetailInfo(
                 groupInfo.get(studyGroup.id),
@@ -292,7 +283,7 @@ public class StudyGroupQueryRepository {
                 groupInfo.get(studyGroup.part),
                 schools,
                 groupInfo.get(studyGroup.createdAt).atZone(ZoneId.of("Asia/Seoul")).toInstant(),
-                members.size(),
+                allMembers.size(),
                 leaderResult,
                 nonLeaderMembers
         );
