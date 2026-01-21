@@ -4,7 +4,6 @@ import com.umc.product.schedule.application.port.out.DeleteAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.SaveAttendanceRecordPort;
 import com.umc.product.schedule.domain.AttendanceRecord;
-import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +20,7 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
 
     @Override
     public AttendanceRecord save(AttendanceRecord record) {
-        return null;
+        return recordJpaRepository.save(record);
     }
 
     @Override
@@ -31,14 +30,14 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
 
     @Override
     public void delete(AttendanceRecord record) {
-
+        recordJpaRepository.delete(record);
     }
 
     // ========== LoadAttendanceRecordPort ==========
 
     @Override
-    public Optional<AttendanceRecord> findById(AttendanceRecordId id) {
-        return Optional.empty();
+    public Optional<AttendanceRecord> findById(Long id) {
+        return recordJpaRepository.findById(id);
     }
 
     @Override
@@ -48,26 +47,26 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
 
     @Override
     public List<AttendanceRecord> findByChallengerId(Long challengerId) {
-        return null;
+        return recordJpaRepository.findByChallengerId(challengerId);
     }
 
     @Override
     public Optional<AttendanceRecord> findBySheetIdAndChallengerId(Long sheetId, Long challengerId) {
-        return Optional.empty();
+        return recordJpaRepository.findBySheetIdAndChallengerId(sheetId, challengerId);
     }
 
     @Override
     public List<AttendanceRecord> findPendingRecordsBySheetId(Long sheetId) {
-        return null;
+        return recordJpaRepository.findPendingRecordsBySheetId(sheetId);
     }
 
     @Override
     public boolean existsBySheetIdAndChallengerId(Long sheetId, Long challengerId) {
-        return false;
+        return recordJpaRepository.existsBySheetIdAndChallengerId(sheetId, challengerId);
     }
 
     // ========== DeleteAttendanceRecordPort ==========
-    
+
     @Override
     public void deleteAllBySheetId(Long sheetId) {
         recordJpaRepository.deleteAllByAttendanceSheetId(sheetId);

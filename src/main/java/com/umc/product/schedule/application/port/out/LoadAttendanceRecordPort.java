@@ -1,7 +1,6 @@
 package com.umc.product.schedule.application.port.out;
 
 import com.umc.product.schedule.domain.AttendanceRecord;
-import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,7 +13,7 @@ public interface LoadAttendanceRecordPort {
      * @param id 출석 기록 ID
      * @return 출석 기록
      */
-    Optional<AttendanceRecord> findById(AttendanceRecordId id);
+    Optional<AttendanceRecord> findById(Long id);
 
     /**
      * 출석부 ID로 출석 기록 목록 조회
