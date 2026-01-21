@@ -17,7 +17,7 @@ import org.springframework.data.domain.Pageable;
 @Tag(name = Constants.ORGANIZATION)
 public interface SchoolQueryControllerApi {
 
-    @Operation(summary = "학교 목록 조회 By 박박지현", description = "학교 목록을 페이징하여 조회합니다. 키워드 검색 및 지부 필터링이 가능합니다.")
+    @Operation(summary = "학교 목록 조회 ", description = "학교 목록을 페이징하여 조회합니다. 키워드 검색 및 지부 필터링이 가능합니다.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
@@ -30,7 +30,7 @@ public interface SchoolQueryControllerApi {
             @ParameterObject Pageable pageable
     );
 
-    @Operation(summary = "학교 상세 조회 By 박박지현", description = "학교 상세 정보를 조회합니다")
+    @Operation(summary = "학교 상세 조회 ", description = "학교 상세 정보를 조회합니다")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",
