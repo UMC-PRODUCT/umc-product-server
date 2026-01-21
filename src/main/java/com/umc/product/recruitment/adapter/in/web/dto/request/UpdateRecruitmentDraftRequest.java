@@ -2,6 +2,7 @@ package com.umc.product.recruitment.adapter.in.web.dto.request;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentDraftCommand;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -28,6 +29,7 @@ public record UpdateRecruitmentDraftRequest(
 
     public record InterviewTimeTableRequest(
             DateRangeRequest dateRange,
+            @Schema(example = "{\"start\":\"09:00\",\"end\":\"23:00\"}")
             TimeRangeRequest timeRange,
             Integer slotMinutes,
             List<EnabledTimesByDateRequest> enabledByDate
