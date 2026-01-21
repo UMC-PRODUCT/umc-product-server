@@ -43,6 +43,11 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     }
 
     @Override
+    public Long countByIdIn(List<Long> ids) {
+        return repository.countByIdIn(ids);
+    }
+
+    @Override
     public Challenger save(Challenger challenger) {
         return repository.save(challenger);
     }
