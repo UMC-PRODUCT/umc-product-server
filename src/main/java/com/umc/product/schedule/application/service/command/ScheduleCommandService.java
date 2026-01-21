@@ -55,7 +55,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, DeleteSche
         Long currentGisuId = getGisuUseCase.getActiveGisuId();
 
         // 2. 작성자의 Challenger 조회 (Member + 현재 기수 기반)
-        ChallengerInfo challengerInfo = getChallengerUseCase.getMemberGisuChallengerInfo(
+        ChallengerInfo challengerInfo = getChallengerUseCase.getByMemberIdAndGisuId(
                 command.authorMemberId(),
                 currentGisuId
         );

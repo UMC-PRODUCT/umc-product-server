@@ -181,7 +181,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 createChallenger(pastMember.getId(), pastGisu.getId())
         );
 
-        given(getChallengerUseCase.getMemberGisuChallengerInfo(pastMember.getId(), activeGisu.getId()))
+        given(getChallengerUseCase.getByMemberIdAndGisuId(pastMember.getId(), activeGisu.getId()))
                 .willReturn(null);
 
         CreateScheduleCommand command = CreateScheduleCommand.of(
@@ -243,12 +243,12 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
         ChallengerInfo mockInfo = ChallengerInfo.builder()
                 .challengerId(challengerId)
                 .memberId(memberId)
-                .gisu(gisuId)
+                .gisuId(gisuId)
                 .part(ChallengerPart.SPRINGBOOT)
                 .challengerPoints(List.of())
                 .build();
 
-        given(getChallengerUseCase.getMemberGisuChallengerInfo(memberId, gisuId))
+        given(getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId))
                 .willReturn(mockInfo);
     }
 }
