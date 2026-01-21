@@ -4,10 +4,12 @@ import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleRequest;
+import com.umc.product.schedule.adapter.in.web.dto.request.UpdateScheduleRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = SwaggerTag.Constants.SCHEDULE)
@@ -52,6 +54,12 @@ public interface ScheduleControllerApi {
     void createSchedule(
             @CurrentMember MemberPrincipal memberPrincipal,
             @Valid @RequestBody CreateScheduleRequest request
+    );
+
+    @Operation(summary = "일정 수정", description = "일정 정보를 부분 수정합니다 (변경할 필드만 전송)")
+    void updateSchedule(
+            @Parameter(description = "일정 ID") @PathVariable Long scheduleId,
+            @RequestBody UpdateScheduleRequest request
     );
 
     @Operation(summary = "일정 삭제", description = "일정을 삭제합니다")
