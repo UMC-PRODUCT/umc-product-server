@@ -41,23 +41,23 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
     }
 
     @Override
-    public List<AttendanceRecord> findByChallengerId(Long challengerId) {
-        return recordJpaRepository.findByChallengerId(challengerId);
+    public List<AttendanceRecord> findByMemberId(Long memberId) {
+        return recordJpaRepository.findByMemberId(memberId);
     }
 
     @Override
-    public Optional<AttendanceRecord> findBySheetIdAndChallengerId(Long sheetId, Long challengerId) {
-        return recordJpaRepository.findBySheetIdAndChallengerId(sheetId, challengerId);
+    public Optional<AttendanceRecord> findBySheetIdAndMemberId(Long sheetId, Long memberId) {
+        return recordJpaRepository.findByAttendanceSheetIdAndMemberId(sheetId, memberId);
     }
 
     @Override
     public List<AttendanceRecord> findPendingRecordsBySheetId(Long sheetId) {
-        return recordJpaRepository.findPendingRecordsBySheetId(sheetId);
+        return null;
     }
 
     @Override
-    public boolean existsBySheetIdAndChallengerId(Long sheetId, Long challengerId) {
-        return recordJpaRepository.existsBySheetIdAndChallengerId(sheetId, challengerId);
+    public boolean existsBySheetIdAndMemberId(Long sheetId, Long memberId) {
+        return recordJpaRepository.existsByAttendanceSheetIdAndMemberId(sheetId, memberId);
     }
 
     // ========== DeleteAttendanceRecordPort ==========
