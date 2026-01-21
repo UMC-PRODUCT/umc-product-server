@@ -13,7 +13,6 @@ public interface StudyGroupCommandControllerApi {
 
     @Operation(summary = "스터디 그룹 생성", description = "새로운 스터디 그룹을 생성합니다.")
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "생성 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "기수를 찾을 수 없음")
     })
@@ -21,7 +20,6 @@ public interface StudyGroupCommandControllerApi {
 
     @Operation(summary = "스터디 그룹 수정", description = "스터디 그룹의 이름, 파트장, 멤버를 수정합니다.")
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "204", description = "수정 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "스터디 그룹을 찾을 수 없음")
     })
