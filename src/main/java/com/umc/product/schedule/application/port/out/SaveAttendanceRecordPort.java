@@ -15,13 +15,6 @@ public interface SaveAttendanceRecordPort {
     AttendanceRecord save(AttendanceRecord record);
 
     /**
-     * 출석 기록 삭제
-     *
-     * @param record 출석 기록
-     */
-    void delete(AttendanceRecord record);
-
-    /**
      * 여러명 출석 기록 한 번에 저장
      *
      * @param records 출석 기록

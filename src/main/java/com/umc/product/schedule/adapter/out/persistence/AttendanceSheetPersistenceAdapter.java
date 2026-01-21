@@ -23,11 +23,6 @@ public class AttendanceSheetPersistenceAdapter implements SaveAttendanceSheetPor
         return sheetJpaRepository.save(sheet);
     }
 
-    @Override
-    public void delete(AttendanceSheet sheet) {
-        sheetJpaRepository.delete(sheet);
-    }
-
     // ========== LoadAttendanceSheetPort ==========
 
     @Override
@@ -55,6 +50,10 @@ public class AttendanceSheetPersistenceAdapter implements SaveAttendanceSheetPor
     @Override
     public void deleteByScheduleId(Long scheduleId) {
         sheetJpaRepository.deleteByScheduleId(scheduleId);
+    }
 
+    @Override
+    public void delete(AttendanceSheet sheet) {
+        sheetJpaRepository.delete(sheet);
     }
 }

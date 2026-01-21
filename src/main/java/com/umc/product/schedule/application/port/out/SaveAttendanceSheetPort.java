@@ -12,11 +12,4 @@ public interface SaveAttendanceSheetPort {
      * @return 저장된 출석부
      */
     AttendanceSheet save(AttendanceSheet sheet);
-
-    /**
-     * 출석부 삭제
-     *
-     * @param sheet 출석부
-     */
-    void delete(AttendanceSheet sheet);
 }

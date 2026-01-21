@@ -28,11 +28,6 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
         recordJpaRepository.saveAll(records);
     }
 
-    @Override
-    public void delete(AttendanceRecord record) {
-        recordJpaRepository.delete(record);
-    }
-
     // ========== LoadAttendanceRecordPort ==========
 
     @Override
@@ -70,5 +65,10 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
     @Override
     public void deleteAllBySheetId(Long sheetId) {
         recordJpaRepository.deleteAllByAttendanceSheetId(sheetId);
+    }
+
+    @Override
+    public void delete(AttendanceRecord record) {
+        recordJpaRepository.delete(record);
     }
 }
