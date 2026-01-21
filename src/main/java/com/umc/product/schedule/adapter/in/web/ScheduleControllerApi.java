@@ -64,7 +64,7 @@ public interface ScheduleControllerApi {
 
     @Operation(summary = "일정 삭제", description = "일정을 삭제합니다")
     void deleteSchedule(
-            @Parameter(description = "일정 ID") Long scheduleId
+            @Parameter(description = "일정 ID") @PathVariable Long scheduleId
     );
 
 }
