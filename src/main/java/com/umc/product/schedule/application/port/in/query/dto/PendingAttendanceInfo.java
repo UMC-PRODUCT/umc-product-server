@@ -25,7 +25,7 @@ public record PendingAttendanceInfo(
     ) {
         return new PendingAttendanceInfo(
                 record.getId(),
-                record.getChallengerId(),
+                record.getMemberId(),
                 memberName,
                 nickname,
                 schoolName,

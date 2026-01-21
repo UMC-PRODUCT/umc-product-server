@@ -8,6 +8,8 @@ public interface LoadSchedulePort {
 
     Optional<Schedule> findById(Long id);
 
+    boolean existsById(Long id);
+
     /**
      * 전체 스케줄 조회 (진행중 우선, 종료된 것 최신순)
      */

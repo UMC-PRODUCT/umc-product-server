@@ -19,6 +19,7 @@ import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -53,6 +54,7 @@ public class Challenger extends BaseEntity {
     )
     private List<ChallengerPoint> challengerPoints = new ArrayList<>();
 
+    @Builder
     public Challenger(Long memberId, ChallengerPart part, Long gisuId) {
         this.memberId = memberId;
         this.part = part;

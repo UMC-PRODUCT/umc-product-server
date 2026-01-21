@@ -1,4 +1,4 @@
-package com.umc.product.schedule.application.port.in;
+package com.umc.product.schedule.application.port.in.command;
 
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
 
