@@ -35,7 +35,7 @@ public interface WorkbookSubmissionQueryControllerApi {
 
     @Operation(
             summary = "워크북 제출 현황 조회",
-            description = "학교, 주차, 스터디 그룹별로 파트원의 워크북 제출 현황을 조회합니다. 커서 기반 무한스크롤. By 박박지현"
+            description = "학교, 주차, 스터디 그룹별로 파트원의 워크북 제출 현황을 조회합니다. 커서 기반 무한스크롤."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공")
@@ -50,7 +50,7 @@ public interface WorkbookSubmissionQueryControllerApi {
 
     @Operation(
             summary = "필터용 스터디 그룹 목록 조회",
-            description = "워크북 제출 현황 필터에 사용할 스터디 그룹 목록을 조회합니다. By 박박지현"
+            description = "워크북 제출 현황 필터에 사용할 스터디 그룹 목록을 조회합니다. "
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "조회 성공")

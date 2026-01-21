@@ -7,6 +7,7 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -40,6 +41,11 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     @Override
     public List<Challenger> findByGisuId(Long gisuId) {
         return repository.findByGisuId(gisuId);
+    }
+
+    @Override
+    public Long countByIdIn(Set<Long> ids) {
+        return repository.countByIdIn(ids);
     }
 
     @Override

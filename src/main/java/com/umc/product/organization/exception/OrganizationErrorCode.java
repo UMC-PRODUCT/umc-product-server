@@ -37,7 +37,10 @@ public enum OrganizationErrorCode implements BaseCode {
     GISU_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZAITON-0020", "기수를 찾을 수 없습니다."),
     PART_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZAITON-0021", "파트는 필수입니다."),
     STUDY_GROUP_NAME_INVALID(HttpStatus.BAD_REQUEST, "ORGANIZAITON-0022", "유효하지 않은 스터디 그룹 이름입니다."),
-    STUDY_GROUP_NOT_FOUND(HttpStatus.BAD_REQUEST, "ORGANIZAITON-0023", "스터디 그룹을 찾을 수 없습니다.");
+    STUDY_GROUP_NOT_FOUND(HttpStatus.BAD_REQUEST, "ORGANIZAITON-0023", "스터디 그룹을 찾을 수 없습니다."),
+    STUDY_GROUP_CHALLENGER_INVALID(HttpStatus.BAD_REQUEST, "ORGANIZATION-0024", "스터디 그룹의 리더 또는 멤버로 존재하지 않는 챌린저가 포함되어 있습니다."),
+    LEADER_CANNOT_BE_MEMBER(HttpStatus.BAD_REQUEST, "ORGANIZATION-0025", "스터디 그룹의 리더는 멤버가 될 수 없습니다."),
+    STUDY_GROUP_MEMBER_DUPLICATED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0026", "스터디 그룹 멤버 ID에 중복이 있습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

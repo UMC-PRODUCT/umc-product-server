@@ -12,8 +12,7 @@ public record StudyGroupResponse(
                 @Schema(description = "스터디 그룹명", example = "React A팀") String name,
                 @Schema(description = "파트", example = "WEB") String part,
                 @Schema(description = "파트 표시명", example = "웹") String partDisplayName,
-                @Schema(description = "학교 ID", example = "1") Long schoolId,
-                @Schema(description = "학교명", example = "서울대학교") String schoolName,
+                @Schema(description = "소속 학교 목록") List<School> schools,
                 @Schema(description = "생성일시") LocalDateTime createdAt,
                 @Schema(description = "멤버 수", example = "4") int memberCount,
                 @Schema(description = "리더 정보") Leader leader,
@@ -24,12 +23,24 @@ public record StudyGroupResponse(
                                 detail.name(),
                                 detail.part().name(),
                                 detail.part().getDisplayName(),
-                                detail.schoolId(),
-                                detail.schoolName(),
+                                School.fromList(detail.schools()),
                                 LocalDateTime.ofInstant(detail.createdAt(), ZoneId.of("Asia/Seoul")),
                                 detail.memberCount(),
                                 Leader.from(detail.leader()),
                                 Member.fromList(detail.members()));
+        }
+
+        @Schema(description = "학교 정보")
+        public record School(
+                        @Schema(description = "학교 ID", example = "1") Long schoolId,
+                        @Schema(description = "학교명", example = "서울대학교") String schoolName) {
+                public static School from(StudyGroupDetailInfo.SchoolInfo s) {
+                        return new School(s.schoolId(), s.schoolName());
+                }
+
+                public static List<School> fromList(List<StudyGroupDetailInfo.SchoolInfo> list) {
+                        return list.stream().map(School::from).toList();
+                }
         }
 
         @Schema(description = "리더 정보")

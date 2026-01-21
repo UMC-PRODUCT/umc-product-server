@@ -8,13 +8,18 @@ public record StudyGroupDetailInfo(
         Long groupId,
         String name,
         ChallengerPart part,
-        Long schoolId,
-        String schoolName,
+        List<SchoolInfo> schools,
         Instant createdAt,
         int memberCount,
         MemberInfo leader,
         List<MemberInfo> members
 ) {
+    public record SchoolInfo(
+            Long schoolId,
+            String schoolName
+    ) {
+    }
+
     public record MemberInfo(
             Long challengerId,
             Long memberId,
