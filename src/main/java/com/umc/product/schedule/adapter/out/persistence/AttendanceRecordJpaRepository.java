@@ -5,17 +5,17 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+
 public interface AttendanceRecordJpaRepository extends JpaRepository<AttendanceRecord, Long> {
 
     List<AttendanceRecord> findByAttendanceSheetId(Long sheetId);
 
     void deleteAllByAttendanceSheetId(Long attendanceSheetId);
 
-    List<AttendanceRecord> findByChallengerId(Long challengerId);
+    List<AttendanceRecord> findByMemberId(Long memberId);
 
-    Optional<AttendanceRecord> findBySheetIdAndChallengerId(Long sheetId, Long challengerId);
+    Optional<AttendanceRecord> findByAttendanceSheetIdAndMemberId(Long sheetId, Long memberId);
 
-    List<AttendanceRecord> findPendingRecordsBySheetId(Long sheetId);
 
-    boolean existsBySheetIdAndChallengerId(Long sheetId, Long challengerId)
+    boolean existsByAttendanceSheetIdAndMemberId(Long sheetId, Long memberId);
 }

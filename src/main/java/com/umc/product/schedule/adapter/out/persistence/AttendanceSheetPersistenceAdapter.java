@@ -37,7 +37,7 @@ public class AttendanceSheetPersistenceAdapter implements SaveAttendanceSheetPor
 
     @Override
     public List<AttendanceSheet> findByScheduleIds(List<Long> scheduleIds) {
-        return sheetJpaRepository.findByScheduleIds(scheduleIds);
+        return null;
     }
 
     @Override
