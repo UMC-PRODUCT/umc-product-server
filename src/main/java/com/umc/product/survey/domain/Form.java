@@ -1,9 +1,15 @@
 package com.umc.product.survey.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.survey.domain.enums.FormStatus;
+import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -39,9 +45,9 @@ public class Form extends BaseEntity {
     @Column(length = 500)
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Boolean isActive;
-    // 여기 수정 active말고 published 이것도
+    private FormStatus status;
 
     @OneToMany(mappedBy = "form", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderNo ASC")
@@ -51,7 +57,18 @@ public class Form extends BaseEntity {
     public static Form createDraft(Long createdMemberId) {
         Form form = new Form();
         form.createdMemberId = createdMemberId;
-        form.isActive = false;
+        form.status = FormStatus.DRAFT;
         return form;
+    }
+
+    public boolean isPublished() {
+        return this.status == FormStatus.PUBLISHED;
+    }
+
+    public void publish() {
+        if (isPublished()) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_ALREADY_PUBLISHED);
+        }
+        this.status = FormStatus.PUBLISHED;
     }
 }

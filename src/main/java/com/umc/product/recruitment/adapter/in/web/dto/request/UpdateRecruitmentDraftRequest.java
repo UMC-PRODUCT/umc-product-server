@@ -1,7 +1,9 @@
 package com.umc.product.recruitment.adapter.in.web.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentDraftCommand;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -50,6 +52,11 @@ public record UpdateRecruitmentDraftRequest(
 
     public record EnabledTimesByDateRequest(
             LocalDate date,
+            @ArraySchema(
+                    schema = @Schema(type = "string", format = "time", example = "09:00"),
+                    arraySchema = @Schema(example = "[\"09:00\",\"09:30\",\"10:00\"]")
+            )
+            @JsonFormat(pattern = "HH:mm")
             List<LocalTime> times
     ) {
     }

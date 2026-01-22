@@ -1,6 +1,8 @@
 package com.umc.product.recruitment.application.service.command;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
@@ -35,8 +37,12 @@ import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
+import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
+import com.umc.product.survey.application.port.out.LoadFormPort;
 import com.umc.product.survey.application.port.out.SaveFormPort;
 import com.umc.product.survey.domain.Form;
+import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,6 +71,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final SaveRecruitmentSchedulePort saveRecruitmentSchedulePort;
     private final LoadRecruitmentSchedulePort loadRecruitmentSchedulePort;
     private final ObjectMapper objectMapper;
+    private final LoadFormPort loadFormPort;
 
     private Long resolveSchoolId() {
         return 1L;
@@ -280,6 +287,106 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public PublishRecruitmentInfo publish(PublishRecruitmentCommand command) {
-        return null;
+
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId());
+
+        if (command.updateRecruitmentDraftCommand() != null) {
+            update(command.updateRecruitmentDraftCommand());
+        }
+
+        if (command.upsertRecruitmentFormQuestionsCommand() != null) {
+            upsert(command.upsertRecruitmentFormQuestionsCommand());
+        }
+
+        RecruitmentDraftInfo finalDraft = loadRecruitmentPort.findDraftInfoById(command.recruitmentId());
+        RecruitmentApplicationFormInfo finalFormInfo = loadRecruitmentPort.findApplicationFormInfoById(
+                command.recruitmentId());
+
+        validatePublishable(finalDraft, finalFormInfo);
+
+        boolean hasOtherOngoing = loadRecruitmentPort.existsOtherOngoingPublishedRecruitment(
+                recruitment.getSchoolId(),
+                recruitment.getId(),
+                Instant.now()
+        );
+
+        if (hasOtherOngoing) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_CONFLICT);
+        }
+
+        Recruitment latest = loadRecruitmentPort.findById(command.recruitmentId());
+        latest.publish();
+        saveRecruitmentPort.save(latest);
+
+        Form form = loadFormPort.findById(latest.getFormId())
+                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+        form.publish();
+        saveFormPort.save(form);
+
+        Recruitment published = loadRecruitmentPort.findById(latest.getId());
+
+        return new PublishRecruitmentInfo(
+                published.getId(),
+                published.getFormId(),
+                published.getStatus().name(),
+                published.getUpdatedAt()
+        );
+    }
+
+    private void validatePublishable(
+            RecruitmentDraftInfo draft,
+            RecruitmentApplicationFormInfo formInfo
+    ) {
+        if (draft == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+        }
+
+        if (draft.title() == null || draft.title().isBlank()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+        }
+
+        if (draft.recruitmentParts() == null || draft.recruitmentParts().isEmpty()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+        }
+
+        RecruitmentDraftInfo.ScheduleInfo s = draft.schedule();
+        if (s == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+        }
+
+        requireNonNull(s.applyStartAt());
+        requireNonNull(s.applyEndAt());
+        if (!s.applyStartAt().isBefore(s.applyEndAt())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+        }
+
+        requireNonNull(s.docResultAt());
+
+        requireNonNull(s.interviewStartAt());
+        requireNonNull(s.interviewEndAt());
+        if (!s.interviewStartAt().isBefore(s.interviewEndAt())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+        }
+
+        requireNonNull(s.finalResultAt());
+
+        if (formInfo == null || formInfo.formDefinition() == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+        }
+
+        FormDefinitionInfo def = formInfo.formDefinition();
+
+        boolean hasAnyQuestion = def.sections().stream()
+                .anyMatch(sec -> sec.questions() != null && !sec.questions().isEmpty());
+
+        if (!hasAnyQuestion) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+        }
+    }
+
+    private void requireNonNull(Object v) {
+        if (v == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+        }
     }
 }

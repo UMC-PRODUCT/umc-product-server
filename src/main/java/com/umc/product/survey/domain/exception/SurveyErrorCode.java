@@ -12,6 +12,7 @@ public enum SurveyErrorCode implements BaseCode {
     SURVEY_NOT_FOUND(HttpStatus.NOT_FOUND, "SURVEY-0001", "폼을 찾을 수 없습니다."),
     SURVEY_NOT_DRAFT(HttpStatus.CONFLICT, "SURVEY-0002", "임시저장 상태의 폼만 편집할 수 있습니다."),
     QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "SURVEY-0003", "질문을 찾을 수 없습니다."),
+    SURVEY_ALREADY_PUBLISHED(HttpStatus.BAD_REQUEST, "SURVEY-005", "이미 발행된 폼입니다."),
     ;
 
     private final HttpStatus httpStatus;

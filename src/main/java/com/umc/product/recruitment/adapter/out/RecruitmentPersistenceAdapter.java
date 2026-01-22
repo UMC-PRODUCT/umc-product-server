@@ -67,7 +67,8 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     @Override
     public RecruitmentDraftInfo findDraftInfoById(Long recruitmentId) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
-                .orElseThrow();
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         List<ChallengerPart> parts =
                 recruitmentPartRepository.findByRecruitmentId(recruitmentId)
@@ -333,4 +334,15 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         return question;
     }
 
+    public boolean existsOtherOngoingPublishedRecruitment(
+            Long schoolId,
+            Long excludeRecruitmentId,
+            Instant now
+    ) {
+        return recruitmentRepository.existsOtherOngoingPublishedRecruitment(
+                schoolId,
+                excludeRecruitmentId,
+                now
+        );
+    }
 }

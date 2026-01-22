@@ -3,7 +3,6 @@ package com.umc.product.recruitment.domain;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
-import com.umc.product.recruitment.domain.enums.RecruitmentPhase;
 import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import jakarta.persistence.Column;
@@ -48,9 +47,9 @@ public class Recruitment extends BaseEntity {
     @Column(name = "form_id", nullable = false)
     private Long formId;
 
-    @Builder.Default
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
+//    @Builder.Default
+//    @Column(name = "is_active", nullable = false)
+//    private Boolean isActive = true;
 
     @Column(name = "notice_title")
     private String noticeTitle;
@@ -58,10 +57,10 @@ public class Recruitment extends BaseEntity {
     @Column(name = "notice_content")
     private String noticeContent;
 
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private RecruitmentPhase phase = RecruitmentPhase.BEFORE_APPLY;
+//    @Builder.Default
+//    @Enumerated(EnumType.STRING)
+//    @Column(nullable = false)
+//    private RecruitmentPhase phase = RecruitmentPhase.BEFORE_APPLY;
 
     @Column(name = "max_preferred_part_count")
     private Integer maxPreferredPartCount;
@@ -125,9 +124,9 @@ public class Recruitment extends BaseEntity {
         if (this.status != RecruitmentStatus.DRAFT) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_DRAFT);
         }
-        if (Boolean.FALSE.equals(this.isActive)) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_INACTIVE);
-        }
+//        if (Boolean.FALSE.equals(this.isActive)) {
+//            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_INACTIVE);
+//        }
     }
 
     private static String normalizeTitle(String title) {
@@ -146,4 +145,16 @@ public class Recruitment extends BaseEntity {
         return c.isBlank() ? null : c;
     }
 
+    public boolean isPublished() {
+        return this.status == RecruitmentStatus.PUBLISHED;
+    }
+
+    public void publish() {
+
+        if (isPublished()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_PUBLISHED);
+        }
+
+        this.status = RecruitmentStatus.PUBLISHED;
+    }
 }
