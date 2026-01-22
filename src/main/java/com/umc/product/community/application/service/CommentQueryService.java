@@ -30,9 +30,9 @@ public class CommentQueryService implements GetCommentListUseCase {
 
         Page<Comment> comments = loadCommentPort.findByPostId(postId, Pageable.unpaged());
 
-        // TODO: challengerName과 createdAt은 Comment 도메인 또는 별도 조회 로직 필요
+        // TODO: challengerName은 Challenger/Member 도메인에서 조회 필요
         return comments.stream()
-                .map(comment -> CommentInfo.from(comment, null, null))
+                .map(comment -> CommentInfo.from(comment, null))
                 .toList();
     }
 }

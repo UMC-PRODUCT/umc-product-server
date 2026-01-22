@@ -21,18 +21,8 @@ public class TrophyQueryService implements GetTrophyListUseCase {
     public List<TrophyInfo> getTrophies(TrophySearchQuery query) {
         List<Trophy> trophies = loadTrophyPort.findAllByQuery(query);
 
-        // TODO: challengerName, school, part는 Challenger/Organization 도메인에서 조회 필요
         return trophies.stream()
-                .map(trophy -> new TrophyInfo(
-                        trophy.getTrophyId() != null ? trophy.getTrophyId().id() : null,
-                        trophy.getWeek(),
-                        null,
-                        null,
-                        null,
-                        trophy.getTitle(),
-                        trophy.getContent(),
-                        trophy.getUrl()
-                ))
+                .map(TrophyInfo::from)
                 .toList();
     }
 }

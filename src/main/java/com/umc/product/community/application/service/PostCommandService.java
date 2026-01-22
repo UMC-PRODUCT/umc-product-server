@@ -30,7 +30,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
 
     @Override
     public PostInfo createPost(CreatePostCommand command) {
-        Post post = Post.createpostIds(
+        Post post = Post.createPost(
                 command.title(),
                 command.content(),
                 command.category(),

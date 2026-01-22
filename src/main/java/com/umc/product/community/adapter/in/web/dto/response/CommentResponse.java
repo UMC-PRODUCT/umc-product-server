@@ -1,7 +1,7 @@
 package com.umc.product.community.adapter.in.web.dto.response;
 
 import com.umc.product.community.application.port.in.post.CommentInfo;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record CommentResponse(
         Long commentId,
@@ -9,7 +9,7 @@ public record CommentResponse(
         Long challengerId,
         String challengerName,
         String content,
-        LocalDateTime createdAt
+        Instant createdAt
 ) {
     public static CommentResponse from(CommentInfo info) {
         return new CommentResponse(

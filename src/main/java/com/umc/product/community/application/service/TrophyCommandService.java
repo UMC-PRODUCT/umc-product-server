@@ -29,16 +29,6 @@ public class TrophyCommandService implements CreateTrophyUseCase {
 
         Trophy savedTrophy = saveTrophyPort.save(trophy);
 
-        // TODO: challengerName, school, part는 Challenger/Organization 도메인에서 조회 필요
-        return new TrophyInfo(
-                savedTrophy.getTrophyId() != null ? savedTrophy.getTrophyId().id() : null,
-                savedTrophy.getWeek(),
-                null,
-                null,
-                null,
-                savedTrophy.getTitle(),
-                savedTrophy.getContent(),
-                savedTrophy.getUrl()
-        );
+        return TrophyInfo.from(savedTrophy);
     }
 }

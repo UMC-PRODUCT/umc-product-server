@@ -12,7 +12,6 @@ import com.umc.product.community.domain.Comment;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
-import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +40,7 @@ public class CommentCommandService implements CreateCommentUseCase, DeleteCommen
         Comment savedComment = saveCommentPort.save(comment);
 
         // TODO: challengerName은 Challenger/Member 도메인에서 조회 필요
-        return CommentInfo.from(savedComment, null, LocalDateTime.now());
+        return CommentInfo.from(savedComment, null);
     }
 
     @Override
