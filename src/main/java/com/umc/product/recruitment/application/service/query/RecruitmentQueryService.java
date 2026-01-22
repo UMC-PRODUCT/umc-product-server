@@ -32,6 +32,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentNoti
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentPartListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentScheduleInfo;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
+import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -81,7 +82,24 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     @Override
     public RecruitmentScheduleInfo get(GetRecruitmentScheduleQuery query) {
-        return null;
+        loadRecruitmentPort.findById(query.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        var schedules = loadRecruitmentPort.findSchedulesByRecruitmentId(query.recruitmentId());
+
+        var scheduleItems = schedules.stream()
+                .map(schedule -> new RecruitmentScheduleInfo.ScheduleItem(
+                        schedule.getType(),
+                        schedule.getType().kind() == RecruitmentScheduleType.Kind.WINDOW
+                                ? RecruitmentScheduleInfo.ScheduleKind.WINDOW
+                                : RecruitmentScheduleInfo.ScheduleKind.AT,
+                        schedule.getStartsAt(),
+                        schedule.getEndsAt()
+                ))
+                .toList();
+
+        return new RecruitmentScheduleInfo(query.recruitmentId(), scheduleItems);
     }
 
     @Override

@@ -19,6 +19,7 @@ public record RecruitmentSchedulesResponse(
                 info.schedules() == null ? List.of() : info.schedules();
 
         List<ScheduleItemResponse> items = source.stream()
+                .filter(schedule -> schedule.startsAt() != null)
                 .sorted(Comparator.comparing(RecruitmentScheduleInfo.ScheduleItem::startsAt))
                 .map(ScheduleItemResponse::from)
                 .toList();
