@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
+import org.locationtech.jts.geom.Point;
 
 /**
  * 일정 생성 Command
@@ -17,6 +18,7 @@ public record CreateScheduleCommand(
         LocalDateTime endsAt,
         boolean isAllDay,
         String locationName,
+        Point location,
         String description,
         List<Long> participantMemberIds,
         ScheduleType scheduleType,
@@ -36,6 +38,7 @@ public record CreateScheduleCommand(
             LocalDateTime endsAt,
             boolean isAllDay,
             String locationName,
+            Point location,
             String description,
             List<Long> participantMemberIds,
             ScheduleType scheduleType,
@@ -57,6 +60,7 @@ public record CreateScheduleCommand(
                 adjustedEndsAt,
                 isAllDay,
                 locationName,
+                location,
                 description,
                 participantMemberIds,
                 scheduleType,
@@ -71,6 +75,7 @@ public record CreateScheduleCommand(
                 .endsAt(endsAt)
                 .isAllDay(isAllDay)
                 .locationName(locationName)
+                .location(location)
                 .description(description)
                 .type(scheduleType)
                 .authorChallengerId(authorChallengerId)
