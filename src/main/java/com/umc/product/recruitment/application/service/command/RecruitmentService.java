@@ -151,7 +151,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public RecruitmentDraftInfo update(UpdateRecruitmentDraftCommand command) {
-        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId());
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (command.title() != null) {
             recruitment.changeTitle(command.title());
@@ -275,7 +277,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public RecruitmentApplicationFormInfo upsert(UpsertRecruitmentFormQuestionsCommand command) {
-        Long formId = loadRecruitmentPort.findById(command.recruitmentId()).getFormId();
+        Long formId = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND))
+                .getFormId();
 
         List<UpsertRecruitmentFormQuestionsCommand.Item> items =
                 command.items() == null ? List.of() : command.items();
@@ -288,7 +293,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     @Override
     public PublishRecruitmentInfo publish(PublishRecruitmentCommand command) {
 
-        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId());
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (command.updateRecruitmentDraftCommand() != null) {
             update(command.updateRecruitmentDraftCommand());
@@ -314,7 +321,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_CONFLICT);
         }
 
-        Recruitment latest = loadRecruitmentPort.findById(command.recruitmentId());
+        Recruitment latest = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         latest.publish();
         saveRecruitmentPort.save(latest);
 
@@ -323,7 +332,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         form.publish();
         saveFormPort.save(form);
 
-        Recruitment published = loadRecruitmentPort.findById(latest.getId());
+        Recruitment published = loadRecruitmentPort.findById(latest.getId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         return new PublishRecruitmentInfo(
                 published.getId(),
