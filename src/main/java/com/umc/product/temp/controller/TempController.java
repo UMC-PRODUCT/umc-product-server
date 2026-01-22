@@ -65,7 +65,7 @@ public class TempController {
 
     @Operation(summary = "인증된 사용자인지 여부를 확인합니다.", description = "인증되지 않은 사용자인 경우 401을 반환합니다.")
     @GetMapping("/check-authenticated")
-    public String checkAuthenticated(@CurrentMember MemberPrincipal currentUser) {
-        return currentUser.toString();
+    public ApiResponse<String> checkAuthenticated(@CurrentMember MemberPrincipal currentUser) {
+        return ApiResponse.onSuccess(currentUser.toString());
     }
 }
