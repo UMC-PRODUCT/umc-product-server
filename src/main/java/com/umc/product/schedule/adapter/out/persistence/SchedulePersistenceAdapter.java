@@ -4,6 +4,8 @@ import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
 import com.umc.product.schedule.domain.Schedule;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,6 +18,7 @@ public class SchedulePersistenceAdapter implements
         DeleteSchedulePort {
 
     private final ScheduleJpaRepository scheduleJpaRepository;
+    private final ScheduleQueryRepository scheduleQueryRepository;
 
     // ========== LoadSchedulePort ==========
 
@@ -27,6 +30,13 @@ public class SchedulePersistenceAdapter implements
     @Override
     public boolean existsById(Long id) {
         return scheduleJpaRepository.existsById(id);
+    }
+
+    @Override
+    public List<Schedule> findMySchedulesByMonth(Long memberId, LocalDateTime monthStart,
+                                                 LocalDateTime nextMonthStart) {
+        return scheduleQueryRepository.findMySchedulesByMonth(
+                memberId, monthStart, nextMonthStart);
     }
 
     // ========== SaveSchedulePort ==========
