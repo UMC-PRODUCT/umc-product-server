@@ -12,7 +12,6 @@ import com.umc.product.global.exception.BusinessException;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
-import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
@@ -28,6 +27,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
@@ -45,9 +48,6 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
     private ManageGisuPort manageGisuPort;
-
-    @Autowired
-    private LoadGisuPort loadGisuPort;
 
     @Autowired
     private SaveMemberPort saveMemberPort;
@@ -87,6 +87,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 LocalDateTime.of(2024, 3, 16, 12, 0),
                 false,
                 "강남역 스터디룸",
+                createPoint(37.4979, 127.0276),
                 "OT입니다",
                 List.of(),
                 ScheduleType.TEAM_ACTIVITY,
@@ -101,6 +102,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
         assertThat(savedSchedule.getName()).isEqualTo("9기 OT");
         assertThat(savedSchedule.getType()).isEqualTo(ScheduleType.TEAM_ACTIVITY);
         assertThat(savedSchedule.getAuthorChallengerId()).isEqualTo(authorChallenger.getId());
+        assertThat(savedSchedule.getLocation().getY()).isEqualTo(37.4979); // 위도 확인
     }
 
     @Test
@@ -118,6 +120,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 LocalDateTime.of(2024, 3, 20, 16, 0),
                 false,
                 "홍대 카페",
+                null,
                 "스프링 스터디",
                 List.of(participant1.getId(), participant2.getId()),
                 ScheduleType.PERSONAL_STUDY,
@@ -152,6 +155,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 LocalDateTime.of(2024, 3, 16, 12, 0),
                 true,
                 "컨퍼런스홀",
+                createPoint(37.1234, 127.1234),
                 "종일 진행",
                 List.of(),
                 ScheduleType.EVENT,
@@ -190,6 +194,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 LocalDateTime.of(2024, 3, 16, 12, 0),
                 false,
                 "장소",
+                null,
                 "설명",
                 List.of(),
                 ScheduleType.TEAM_ACTIVITY,
@@ -250,5 +255,10 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
 
         given(getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId))
                 .willReturn(mockInfo);
+    }
+
+    private Point createPoint(double latitude, double longitude) {
+        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+        return geometryFactory.createPoint(new Coordinate(longitude, latitude));
     }
 }
