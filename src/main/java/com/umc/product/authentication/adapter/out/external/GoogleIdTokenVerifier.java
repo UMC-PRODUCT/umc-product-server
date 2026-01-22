@@ -36,8 +36,9 @@ public class GoogleIdTokenVerifier {
      * @return OAuth2Attributes
      * @throws AuthenticationDomainException 토큰 검증 실패 시
      */
-    public OAuth2Attributes verify(String idToken) {
-        log.debug("Google ID 토큰 검증 시작");
+    @Deprecated
+    public OAuth2Attributes verifyIdToken(String idToken) {
+        log.debug("Google ID Token 검증 시작");
 
         try {
             // Google tokeninfo endpoint 호출
@@ -79,6 +80,41 @@ public class GoogleIdTokenVerifier {
         }
     }
 
+    public OAuth2Attributes verifyAccessToken(String accessToken) {
+        log.debug("Google Access Token 검증 시작");
+
+        try {
+            // Google tokeninfo endpoint 호출
+            GoogleAccessTokenInfoResponse response = restClient.get()
+                    .uri(GOOGLE_TOKEN_INFO_URL + "?access_token=" + accessToken)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::isError, (req, res) -> {
+                        log.error("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
+                        throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
+                    })
+                    .body(GoogleAccessTokenInfoResponse.class);
+
+            if (response == null) {
+                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+            }
+
+            log.info("Google Access Token 검증 성공: sub={}, email={}", response.sub(), response.email());
+
+            // OAuth2Attributes 형식에 맞게 Map 생성
+            Map<String, Object> attributes = new HashMap<>();
+            attributes.put("sub", response.sub());
+            attributes.put("email", response.email());
+
+            return OAuth2Attributes.of("google", attributes);
+
+        } catch (AuthenticationDomainException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Google Access Token 검증 중 오류 발생", e);
+            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+        }
+    }
+
     /**
      * Google tokeninfo endpoint 응답 DTO
      */
@@ -95,6 +131,12 @@ public class GoogleIdTokenVerifier {
             String family_name,
             String iat,         // issued at
             String exp          // expiration
+    ) {
+    }
+
+    private record GoogleAccessTokenInfoResponse(
+            String sub,
+            String email
     ) {
     }
 }

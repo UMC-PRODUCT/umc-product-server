@@ -1,5 +1,6 @@
 package com.umc.product.member.adapter.in.web;
 
+import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -32,6 +33,7 @@ public class MemberController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final ManageMemberUseCase manageMemberUseCase;
+    private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
 
     // 로그인은 OAuth를 통해서만 진행됨!!
     @Public

@@ -9,11 +9,13 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum AuthenticationErrorCode implements BaseCode {
 
+
     // JWT: JWT 관련 에러
     WRONG_JWT_SIGNATURE(HttpStatus.FORBIDDEN, "AUTHENTICATION-JWT-0001", "JWT 토큰의 서명이 잘못되었습니다."),
     EXPIRED_JWT_TOKEN(HttpStatus.FORBIDDEN, "AUTHENTICATION-JWT-0002", "만료된 JWT 토큰입니다."),
     UNSUPPORTED_JWT(HttpStatus.FORBIDDEN, "AUTHENTICATION-JWT-0003", "지원하지 않는 JWT 토큰입니다."),
     INVALID_JWT(HttpStatus.FORBIDDEN, "AUTHENTICATION-JWT-0004", "잘못된 JWT 토큰입니다."),
+
     // AUTHENTICATION: 인증 관련 에러
     OAUTH_PROVIDER_NOT_FOUND(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0001", "지원하지 않은 OAuth 제공자입니다."),
     NO_MATCHING_MEMBER(HttpStatus.NOT_FOUND, "AUTHENTICATION-0002",
@@ -24,12 +26,17 @@ public enum AuthenticationErrorCode implements BaseCode {
             "이메일 인증 정보가 일치하지 않습니다."),
     UNSUPPORTED_EMAIL_VERIFICATION_METHOD(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0005",
             "지원하지 않는 이메일 인증 방식입니다."),
-    // OAuth Token Verification
-    INVALID_OAUTH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0006",
-            "유효하지 않은 OAuth 토큰입니다."),
-    OAUTH_TOKEN_VERIFICATION_FAILED(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0007",
-            "OAuth 토큰 검증에 실패했습니다."),
-    ;
+
+    // OAUTH 관련 에러
+    OAUTH_SUCCESS_BUT_NO_MEMBER(HttpStatus.NOT_FOUND, "AUTHENTICATION-0006",
+            "OAuth 인증은 성공하였으나, 가입된 회원이 없습니다. oAuthVerificationToken을 확인하세요."),
+    OAUTH_SUCCESS_BUT_NO_INFO(HttpStatus.SERVICE_UNAVAILABLE, "AUTHENTICATION-0007",
+            "OAuth 인증은 성공하였으나, 필요한 사용자 정보를 제공받지 못했습니다. 관리자에게 문의하세요."),
+    OAUTH_FAILURE(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0008", "OAuth 인증에 실패하였습니다."),
+    OAUTH_INVALID_ACCESS_TOKEN(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0009", "유효하지 않은 OAuth측 AccessToken 입니다."),
+    OAUTH_TOKEN_VERIFICATION_FAILED(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0010",
+            "OAuth 토큰 검증에 실패하였습니다. 관리자에게 문의하세요."),
+    INVALID_OAUTH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0011", "유효하지 않은 OAuth 토큰입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

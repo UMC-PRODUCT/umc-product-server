@@ -11,11 +11,11 @@ import java.util.Objects;
  * @param provider OAuth Provider
  * @param token    검증할 토큰 (Google: ID Token, Kakao: Access Token)
  */
-public record IdTokenLoginCommand(
+public record AccessTokenLoginCommand(
         OAuthProvider provider,
         String token
 ) {
-    public IdTokenLoginCommand {
+    public AccessTokenLoginCommand {
         Objects.requireNonNull(provider, "provider must not be null");
         Objects.requireNonNull(token, "token must not be null");
     }

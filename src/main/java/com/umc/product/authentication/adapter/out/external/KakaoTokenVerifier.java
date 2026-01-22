@@ -1,5 +1,6 @@
 package com.umc.product.authentication.adapter.out.external;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
@@ -34,7 +35,7 @@ public class KakaoTokenVerifier {
      * @return OAuth2Attributes
      * @throws AuthenticationDomainException 토큰 검증 실패 시
      */
-    public OAuth2Attributes verify(String accessToken) {
+    public OAuth2Attributes verifyAccessToken(String accessToken) {
         log.debug("Kakao Access Token 검증 시작");
 
         try {
@@ -49,6 +50,7 @@ public class KakaoTokenVerifier {
                     })
                     .body(KakaoUserResponse.class);
 
+            // 응답을 검증합니다.
             if (response == null || response.id() == null) {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
             }
@@ -71,6 +73,11 @@ public class KakaoTokenVerifier {
         }
     }
 
+    /**
+     * 카카오에서 온 사용자 정보를 기반으로 정보를 매핑합니다.
+     * <p>
+     * 카카오에서 응답 온 형식을 그대로 사용합니다.
+     */
     private Map<String, Object> buildAttributesMap(KakaoUserResponse response) {
         Map<String, Object> attributes = new HashMap<>();
         attributes.put("id", response.id());
@@ -82,7 +89,6 @@ public class KakaoTokenVerifier {
             if (response.kakaoAccount().profile() != null) {
                 Map<String, Object> profile = new HashMap<>();
                 profile.put("nickname", response.kakaoAccount().profile().nickname());
-                profile.put("profile_image_url", response.kakaoAccount().profile().profileImageUrl());
                 kakaoAccount.put("profile", profile);
             }
 
@@ -96,6 +102,7 @@ public class KakaoTokenVerifier {
 
     private record KakaoUserResponse(
             Long id,
+            @JsonProperty("kakao_account")
             KakaoAccount kakaoAccount
     ) {
     }
@@ -107,8 +114,7 @@ public class KakaoTokenVerifier {
     }
 
     private record Profile(
-            String nickname,
-            String profileImageUrl
+            String nickname
     ) {
     }
 }

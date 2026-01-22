@@ -13,37 +13,33 @@ import com.umc.product.common.domain.enums.OAuthProvider;
  * @param name             이름
  * @param nickname         닉네임
  */
-public record IdTokenLoginResult(
+public record OAuthTokenLoginResult(
         boolean isExistingMember,
         Long memberId,
         OAuthProvider provider,
         String providerId,
-        String email,
-        String name,
-        String nickname
+        String email
 ) {
     /**
      * 기존 회원 로그인 성공
      */
-    public static IdTokenLoginResult existingMember(
+    public static OAuthTokenLoginResult existingMember(
             Long memberId,
             OAuthProvider provider,
             String providerId,
             String email
     ) {
-        return new IdTokenLoginResult(true, memberId, provider, providerId, email, null, null);
+        return new OAuthTokenLoginResult(true, memberId, provider, providerId, email);
     }
 
     /**
      * 신규 회원 - 회원가입 필요
      */
-    public static IdTokenLoginResult newMember(
+    public static OAuthTokenLoginResult newMember(
             OAuthProvider provider,
             String providerId,
-            String email,
-            String name,
-            String nickname
+            String email
     ) {
-        return new IdTokenLoginResult(false, null, provider, providerId, email, name, nickname);
+        return new OAuthTokenLoginResult(false, null, provider, providerId, email);
     }
 }

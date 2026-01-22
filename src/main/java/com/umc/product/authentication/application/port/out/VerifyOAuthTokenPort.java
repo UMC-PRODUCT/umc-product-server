@@ -8,7 +8,7 @@ import com.umc.product.common.domain.enums.OAuthProvider;
  * <p>
  * Service가 외부 OAuth Provider에 토큰 검증을 요청하기 위한 Outbound Port입니다.
  */
-public interface VerifyIdTokenPort {
+public interface VerifyOAuthTokenPort {
     /**
      * ID 토큰(또는 Access Token)을 검증하고 사용자 정보를 추출합니다.
      *
