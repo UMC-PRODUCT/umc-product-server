@@ -1,12 +1,13 @@
 package com.umc.product.schedule.application.port.in.command.dto;
 
 import com.umc.product.schedule.domain.Schedule;
-import com.umc.product.schedule.domain.enums.ScheduleType;
+import com.umc.product.schedule.domain.enums.ScheduleTag;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import org.locationtech.jts.geom.Point;
 
 /**
@@ -21,7 +22,7 @@ public record CreateScheduleCommand(
         Point location,
         String description,
         List<Long> participantMemberIds,
-        ScheduleType scheduleType,
+        Set<ScheduleTag> tags,
         Long authorMemberId
 ) {
     public CreateScheduleCommand {
@@ -41,7 +42,7 @@ public record CreateScheduleCommand(
             Point location,
             String description,
             List<Long> participantMemberIds,
-            ScheduleType scheduleType,
+            Set<ScheduleTag> tags,
             Long authorMemberId
     ) {
         LocalDateTime adjustedStartsAt = startsAt;
@@ -63,7 +64,7 @@ public record CreateScheduleCommand(
                 location,
                 description,
                 participantMemberIds,
-                scheduleType,
+                tags,
                 authorMemberId
         );
     }
@@ -77,7 +78,7 @@ public record CreateScheduleCommand(
                 .locationName(locationName)
                 .location(location)
                 .description(description)
-                .type(scheduleType)
+                .tags(tags)
                 .authorChallengerId(authorChallengerId)
                 .build();
     }

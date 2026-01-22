@@ -1,7 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.dto.request;
 
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
-import com.umc.product.schedule.domain.enums.ScheduleType;
+import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -9,6 +9,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -49,9 +50,9 @@ public record CreateScheduleRequest(
         @Schema(description = "참여자 Member ID 목록")
         List<Long> participantMemberIds,
 
-        @Schema(description = "카테고리", example = "TEAM_ACTIVITY")
-        @NotNull(message = "카테고리는 필수입니다")
-        ScheduleType scheduleType
+        @Schema(description = "태그 목록", example = "[\"STUDY\", \"PROJECT\"]")
+        @NotNull(message = "태그는 필수입니다")
+        Set<ScheduleTag> tags
 ) {
     public CreateScheduleCommand toCommand(Long authorMemberId) {
         Point point = createPoint(latitude, longitude);
@@ -65,7 +66,7 @@ public record CreateScheduleRequest(
                 point,
                 description,
                 participantMemberIds,
-                scheduleType,
+                tags,
                 authorMemberId
         );
     }
