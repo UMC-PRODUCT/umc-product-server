@@ -20,6 +20,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.locationtech.jts.geom.Point;
 
 @Entity
 @Table(name = "schedule")
@@ -55,10 +56,13 @@ public class Schedule extends BaseEntity {
 
     private String locationName;
 
+    @Column(columnDefinition = "geometry(Point, 4326)")
+    private Point location;
+
     @Builder
     private Schedule(String name, String description, ScheduleType type,
                      Long authorChallengerId, LocalDateTime startsAt, LocalDateTime endsAt,
-                     boolean isAllDay, String locationName) {
+                     boolean isAllDay, String locationName, Point location) {
         this.name = name;
         this.description = description;
         this.type = type;
@@ -67,6 +71,7 @@ public class Schedule extends BaseEntity {
         this.endsAt = endsAt;
         this.isAllDay = isAllDay;
         this.locationName = locationName;
+        this.location = location;
     }
 
     public boolean isInProgress(LocalDateTime referenceTime) {
@@ -94,7 +99,8 @@ public class Schedule extends BaseEntity {
             LocalDateTime startsAt,
             LocalDateTime endsAt,
             Boolean isAllDay,
-            String locationName
+            String locationName,
+            Point location
     ) {
         if (name != null) {
             this.name = name;
@@ -107,6 +113,9 @@ public class Schedule extends BaseEntity {
         }
         if (locationName != null) {
             this.locationName = locationName;
+        }
+        if (location != null) {
+            this.location = location;
         }
 
         updateTime(startsAt, endsAt, isAllDay);
