@@ -103,7 +103,7 @@ spring:
           google:
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
-            scope: profile, emaili
+            scope: profile, email
             redirect-uri: "{baseUrl}/api/v1/auth/oauth2/callback/{registrationId}"
 
           kakao:

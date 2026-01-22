@@ -23,4 +23,6 @@ public interface LoadMemberOAuthPort {
      * memberId에 연동된 모든 MemberOAuth를 가져옵니다.
      */
     List<MemberOAuth> findAllByMemberId(Long memberId);
+
+    Optional<MemberOAuth> findByMemberIdAndProvider(Long memberId, OAuthProvider provider);
 }

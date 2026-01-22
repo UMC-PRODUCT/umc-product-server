@@ -10,6 +10,8 @@ import com.umc.product.authentication.application.port.out.LoadMemberOAuthPort;
 import com.umc.product.authentication.application.port.out.SaveMemberOAuthPort;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
 import com.umc.product.authentication.domain.MemberOAuth;
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.exception.NotImplementedException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,14 +87,21 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
 
     @Override
     public Long linkOAuth(LinkOAuthCommand command) {
-        // TODO: OAuth 계정 연동 구현
-        MemberOAuth memberOAuth = MemberOAuth.builder()
-                .memberId(command.memberId())
-                .provider(command.provider())
-                .providerId(command.providerId())
-                .build();
+        // 1. 동일한 OAuth 계정이 이미 연동되어 있는지 확인
+        loadMemberOAuthPort.findByProviderAndProviderId(command.provider(), command.providerId())
+                .ifPresent(existing -> {
+                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_ALREADY_LINKED);
+                });
 
-        return saveMemberOAuthPort.save(memberOAuth).getId();
+        // 2. 해당 회원이 이미 같은 provider로 연동했는지 확인 (선택적)
+        loadMemberOAuthPort.findByMemberIdAndProvider(command.memberId(), command.provider())
+                .ifPresent(existing -> {
+                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_PROVIDER_ALREADY_LINKED);
+                });
+
+        MemberOAuth created = saveMemberOAuthPort.save(LinkOAuthCommand.toEntity(command));
+
+        return created.getId();
     }
 
     @Override

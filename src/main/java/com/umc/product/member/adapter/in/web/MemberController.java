@@ -14,6 +14,7 @@ import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -60,6 +61,7 @@ public class MemberController {
                 .email(email)
                 .schoolId(request.schoolId())
                 .profileImageId(request.profileImageId())
+                .termConsents(request.termsAgreements().stream().map(TermConsents::fromRequest).toList())
                 .build();
 
         // TODO: 약관 동의 처리 해야함

@@ -9,11 +9,6 @@ public record RegisterMemberRequest(
         String emailVerificationToken,
         Long schoolId,
         Long profileImageId,
-        List<TermsAgreement> termsAgreements
+        List<TermConsentStatus> termsAgreements
 ) {
-    public record TermsAgreement(
-            Long termsId,
-            boolean isAgreed
-    ) {
-    }
 }
