@@ -1,7 +1,6 @@
 package com.umc.product.schedule.application.port.out;
 
 import com.umc.product.schedule.domain.AttendanceSheet;
-import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,7 +13,7 @@ public interface LoadAttendanceSheetPort {
      * @param id 출석부 ID
      * @return 출석부
      */
-    Optional<AttendanceSheet> findById(AttendanceSheetId id);
+    Optional<AttendanceSheet> findById(Long id);
 
     /**
      * 일정 ID로 출석부 조회

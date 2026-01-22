@@ -1,6 +1,7 @@
 package com.umc.product.schedule.application.port.out;
 
 import com.umc.product.schedule.domain.AttendanceRecord;
+import java.util.List;
 
 //출석 저장
 public interface SaveAttendanceRecordPort {
@@ -14,9 +15,9 @@ public interface SaveAttendanceRecordPort {
     AttendanceRecord save(AttendanceRecord record);
 
     /**
-     * 출석 기록 삭제
+     * 여러명 출석 기록 한 번에 저장
      *
-     * @param record 출석 기록
+     * @param records 출석 기록
      */
-    void delete(AttendanceRecord record);
+    void saveAllRecords(List<AttendanceRecord> records);
 }

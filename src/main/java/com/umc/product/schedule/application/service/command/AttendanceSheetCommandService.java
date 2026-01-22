@@ -1,9 +1,9 @@
-package com.umc.product.schedule.application.service;
+package com.umc.product.schedule.application.service.command;
 
-import com.umc.product.schedule.application.port.in.CreateAttendanceSheetUseCase;
-import com.umc.product.schedule.application.port.in.UpdateAttendanceSheetUseCase;
-import com.umc.product.schedule.application.port.in.command.CreateAttendanceSheetCommand;
-import com.umc.product.schedule.application.port.in.command.UpdateAttendanceSheetCommand;
+import com.umc.product.schedule.application.port.in.command.CreateAttendanceSheetUseCase;
+import com.umc.product.schedule.application.port.in.command.UpdateAttendanceSheetUseCase;
+import com.umc.product.schedule.application.port.in.command.dto.CreateAttendanceSheetCommand;
+import com.umc.product.schedule.application.port.in.command.dto.UpdateAttendanceSheetCommand;
 import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

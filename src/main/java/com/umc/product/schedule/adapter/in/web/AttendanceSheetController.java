@@ -4,8 +4,8 @@ import com.umc.product.schedule.adapter.in.web.dto.request.CreateAttendanceSheet
 import com.umc.product.schedule.adapter.in.web.dto.request.UpdateAttendanceSheetRequest;
 import com.umc.product.schedule.adapter.in.web.dto.response.AttendanceSheetResponse;
 import com.umc.product.schedule.adapter.in.web.mapper.AttendanceSheetWebMapper;
-import com.umc.product.schedule.application.port.in.CreateAttendanceSheetUseCase;
-import com.umc.product.schedule.application.port.in.UpdateAttendanceSheetUseCase;
+import com.umc.product.schedule.application.port.in.command.CreateAttendanceSheetUseCase;
+import com.umc.product.schedule.application.port.in.command.UpdateAttendanceSheetUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAttendanceSheetUseCase;
 import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
 import lombok.RequiredArgsConstructor;

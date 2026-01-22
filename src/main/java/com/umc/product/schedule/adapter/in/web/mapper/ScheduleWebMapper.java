@@ -58,7 +58,7 @@ public class ScheduleWebMapper {
         return new AttendanceRecordResponse(
                 info.id() != null ? info.id().id() : null,
                 info.attendanceSheetId(),
-                info.challengerId(),
+                info.memberId(),
                 info.status().name(),
                 info.memo()
         );

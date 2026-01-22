@@ -7,8 +7,8 @@ import com.umc.product.schedule.adapter.in.web.dto.response.AvailableAttendanceR
 import com.umc.product.schedule.adapter.in.web.dto.response.MyAttendanceHistoryResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.PendingAttendanceResponse;
 import com.umc.product.schedule.adapter.in.web.mapper.AttendanceWebMapper;
-import com.umc.product.schedule.application.port.in.ApproveAttendanceUseCase;
-import com.umc.product.schedule.application.port.in.CheckAttendanceUseCase;
+import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUseCase;
+import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAttendanceRecordUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;

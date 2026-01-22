@@ -1,7 +1,6 @@
 package com.umc.product.schedule.application.port.out;
 
 import com.umc.product.schedule.domain.AttendanceRecord;
-import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,7 +13,7 @@ public interface LoadAttendanceRecordPort {
      * @param id 출석 기록 ID
      * @return 출석 기록
      */
-    Optional<AttendanceRecord> findById(AttendanceRecordId id);
+    Optional<AttendanceRecord> findById(Long id);
 
     /**
      * 출석부 ID로 출석 기록 목록 조회
@@ -27,19 +26,19 @@ public interface LoadAttendanceRecordPort {
     /**
      * 챌린저 ID로 출석 기록 목록 조회
      *
-     * @param challengerId 챌린저 ID
+     * @param memberId 챌린저 ID
      * @return 출석 기록 목록
      */
-    List<AttendanceRecord> findByChallengerId(Long challengerId);
+    List<AttendanceRecord> findByMemberId(Long memberId);
 
     /**
      * 출석부 ID + 챌린저 ID로 출석 기록 조회
      *
-     * @param sheetId      출석부 ID
-     * @param challengerId 챌린저 ID
+     * @param sheetId  출석부 ID
+     * @param memberId 챌린저 ID
      * @return 출석 기록
      */
-    Optional<AttendanceRecord> findBySheetIdAndChallengerId(Long sheetId, Long challengerId);
+    Optional<AttendanceRecord> findBySheetIdAndMemberId(Long sheetId, Long memberId);
 
     /**
      * 승인 대기 출석 기록 목록 조회
@@ -52,9 +51,9 @@ public interface LoadAttendanceRecordPort {
     /**
      * 출석 기록 존재 여부 확인
      *
-     * @param sheetId      출석부 ID
-     * @param challengerId 챌린저 ID
+     * @param sheetId  출석부 ID
+     * @param memberId 챌린저 ID
      * @return 존재 여부
      */
-    boolean existsBySheetIdAndChallengerId(Long sheetId, Long challengerId);
+    boolean existsBySheetIdAndMemberId(Long sheetId, Long memberId);
 }

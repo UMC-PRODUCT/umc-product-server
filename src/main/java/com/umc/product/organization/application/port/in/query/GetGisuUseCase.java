@@ -8,4 +8,6 @@ public interface GetGisuUseCase {
     List<GisuInfo> getList();
 
     GisuInfo getById(Long gisuId);
+
+    Long getActiveGisuId();
 }

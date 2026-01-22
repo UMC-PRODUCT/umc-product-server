@@ -1,4 +1,4 @@
-package com.umc.product.schedule.application.port.in.command;
+package com.umc.product.schedule.application.port.in.command.dto;
 
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
