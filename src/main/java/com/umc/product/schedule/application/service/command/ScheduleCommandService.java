@@ -116,7 +116,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         schedule.update(
                 command.name(),
                 command.description(),
-                command.scheduleType(),
+                command.tags(),
                 command.startsAt(),
                 command.endsAt(),
                 command.isAllDay(),
