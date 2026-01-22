@@ -19,9 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class OAuth2Attributes {
     private Map<String, Object> attributes;
-    private String name;
     private String email;
-    private String nickname;
     private OAuthProvider provider;
     private String providerId;
 
@@ -40,19 +38,19 @@ public class OAuth2Attributes {
         };
     }
 
+    // 구글에서 제공하는 형식에 맞게 Attributes 파싱
     private static OAuth2Attributes ofGoogle(
             Map<String, Object> attributes
     ) {
         return OAuth2Attributes.builder()
                 .provider(OAuthProvider.GOOGLE)
                 .providerId((String) attributes.get("sub"))
-                .name((String) attributes.get("name"))
                 .email((String) attributes.get("email"))
-                .nickname((String) attributes.get("name"))
                 .attributes(attributes)
                 .build();
     }
 
+    // 카카오에서 제공하는 형식에 맞게 Attributes 파싱
     private static OAuth2Attributes ofKakao(
             Map<String, Object> attributes
     ) {
@@ -65,14 +63,13 @@ public class OAuth2Attributes {
         return OAuth2Attributes.builder()
                 .provider(OAuthProvider.KAKAO)
                 .providerId(String.valueOf(attributes.get("id")))
-                .name((String) profile.get("nickname"))
                 .email((String) kakaoAccount.get("email"))
-                .nickname((String) profile.get("nickname"))
                 .attributes(attributes)
                 .build();
     }
 
 
+    // 애플에서 제공하는 방식에 맞게 파싱
     private static OAuth2Attributes ofApple(
             String userNameAttributeName,
             Map<String, Object> attributes

@@ -1,22 +1,29 @@
 package com.umc.product.authentication.application.port.in.command;
 
+import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
+import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthCommand;
-import com.umc.product.authentication.application.port.in.command.dto.OAuthLoginCommand;
+import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
 
 public interface OAuthAuthenticationUseCase {
     /**
-     * OAuth 로그인 처리 (회원 조회 또는 신규 가입)
-     *
-     * @param command OAuth 로그인 정보
-     * @return 회원 ID
+     * OAuth2Attributes 기반 로그인 처리 (공통 비즈니스 로직)
+     * <p>
+     * 웹 플로우와 모바일 플로우 모두 이 메서드를 사용합니다.
+     * <p>
+     * - 웹: Spring Security OAuth2 → UmcProductOAuth2UserService → 이 메서드
+     * <p>
+     * - 모바일: Controller → Service → 이 메서드
      */
-    Long oAuthLogin(OAuthLoginCommand command);
+    OAuthTokenLoginResult loginWithOAuth2Attributes(OAuth2Attributes oAuth2Attributes);
+
+    OAuthTokenLoginResult accessTokenLogin(AccessTokenLoginCommand command);
 
     /**
      * member에 새로운 OAuth 계정을 연동합니다.
      */
-    void linkOAuth(LinkOAuthCommand command);
+    Long linkOAuth(LinkOAuthCommand command);
 
     /**
      * member에 연동된 OAuth 계정을 해제합니다.

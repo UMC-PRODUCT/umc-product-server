@@ -1,6 +1,9 @@
 package com.umc.product.terms.application.port.in.command.dto;
 
-public record ChangeTermAgreementCommand(
+import lombok.Builder;
+
+@Builder
+public record CreateTermConsentCommand(
         Long memberId,
         Long termId,
         boolean isAgreed

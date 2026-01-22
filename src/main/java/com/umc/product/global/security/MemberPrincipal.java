@@ -39,4 +39,13 @@ public class MemberPrincipal implements OAuth2User {
         log.warn("OAuth2User의 getName()가 호출되었습니다.");
         return String.valueOf(memberId);
     }
+
+    // toString 메서드 오버라이드
+
+    @Override
+    public String toString() {
+        return "MemberPrincipal{" +
+                "memberId=" + memberId +
+                '}';
+    }
 }

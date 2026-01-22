@@ -61,6 +61,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                 .queryParam("error", "oauth_failed")
                 .queryParam("message", exception.getMessage())
                 .build()
+                .encode()
                 .toUriString();
 
         log.error("Redirecting to: {}", targetUrl);
@@ -87,6 +88,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                     .queryParam("success", oAuth2ResultCode.isSuccess())
                     .queryParam("code", oAuth2ResultCode.getCode())
                     .build()
+                    .encode()
                     .toUriString();
             getRedirectStrategy().sendRedirect(request, response, targetUrl);
             return;
@@ -105,6 +107,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                 .queryParam("email", email)
                 .queryParam("oAuthVerificationToken", oAuthVerificationToken)
                 .build()
+                .encode()
                 .toUriString();
 
         log.info("Redirecting to registration flow: {}", targetUrl);
