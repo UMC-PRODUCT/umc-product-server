@@ -1,11 +1,13 @@
 package com.umc.product.schedule.adapter.in.web.dto.request;
 
 import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCommand;
-import com.umc.product.schedule.domain.enums.ScheduleType;
+import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.util.Set;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
@@ -42,8 +44,9 @@ public record UpdateScheduleRequest(
         @Schema(description = "메모/설명")
         String description,
 
-        @Schema(description = "카테고리", example = "TEAM_ACTIVITY")
-        ScheduleType scheduleType
+        @Schema(description = "태그 목록", example = "[\"STUDY\", \"PROJECT\"]")
+        @NotNull(message = "태그는 필수입니다")
+        Set<ScheduleTag> tags
 ) {
     public UpdateScheduleCommand toCommand(Long scheduleId) {
         Point point = createPoint(latitude, longitude);
@@ -56,7 +59,7 @@ public record UpdateScheduleRequest(
                 locationName,
                 point,
                 description,
-                scheduleType
+                tags
         );
     }
 
