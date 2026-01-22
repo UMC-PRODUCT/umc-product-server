@@ -13,6 +13,7 @@ import com.umc.product.recruitment.application.port.in.query.GetRecruitmentListU
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentNoticeUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentPartListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentScheduleUseCase;
+import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
@@ -106,7 +107,20 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     @Override
     public RecruitmentListInfo getList(GetRecruitmentListQuery query) {
-        return null;
+
+        if (query.status() == RecruitmentListStatus.DRAFT) {
+            return new RecruitmentListInfo(
+                    loadRecruitmentPort.findDraftRecruitmentSummaries(query.requesterMemberId())
+            );
+        }
+
+        List<RecruitmentListInfo.RecruitmentSummary> summaries =
+                loadRecruitmentPort.findRecruitmentSummaries(
+                        query.requesterMemberId(),
+                        query.status()
+                );
+
+        return new RecruitmentListInfo(summaries);
     }
 
     @Override
@@ -116,7 +130,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         requirePublished(recruitment);
-        
+
         var schedules = loadRecruitmentPort.findSchedulesByRecruitmentId(query.recruitmentId());
 
         var scheduleItems = schedules.stream()
@@ -150,9 +164,6 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         // TODO: 권한 검증 필요 (memberId 기반)
-        // if (!isAdminOrAuthor(query.memberId())) {
-        //     throw new BusinessException(Domain.RECRUITMENT, ErrorCode.FORBIDDEN);
-        // }
 
         return loadRecruitmentPort.findDraftInfoById(query.recruitmentId());
     }

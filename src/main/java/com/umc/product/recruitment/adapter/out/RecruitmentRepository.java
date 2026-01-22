@@ -1,7 +1,9 @@
 package com.umc.product.recruitment.adapter.out;
 
 import com.umc.product.recruitment.domain.Recruitment;
+import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
 import java.time.Instant;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,4 +27,6 @@ public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> 
             @Param("excludeRecruitmentId") Long excludeRecruitmentId,
             @Param("now") Instant now
     );
+
+    List<Recruitment> findByStatus(RecruitmentStatus status);
 }

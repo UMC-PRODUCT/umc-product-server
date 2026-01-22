@@ -299,7 +299,7 @@ public class RecruitmentController {
             @CurrentMember MemberPrincipal memberPrincipal,
             @RequestParam(name = "status") RecruitmentListStatusQuery status
     ) {
-        RecruitmentListStatus appStatus = RecruitmentListStatus.valueOf(status.name());
+        RecruitmentListStatus appStatus = RecruitmentListStatus.fromRequest(status.name());
 
         GetRecruitmentListQuery query = new GetRecruitmentListQuery(memberPrincipal.getMemberId(), appStatus);
 

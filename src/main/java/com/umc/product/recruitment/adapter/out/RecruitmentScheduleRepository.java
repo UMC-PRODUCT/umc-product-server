@@ -12,4 +12,8 @@ public interface RecruitmentScheduleRepository extends JpaRepository<Recruitment
 
     Optional<RecruitmentSchedule> findByRecruitmentIdAndType(Long recruitmentId, RecruitmentScheduleType type);
 
+    List<RecruitmentSchedule> findByRecruitmentIdInAndType(
+            List<Long> recruitmentIds,
+            RecruitmentScheduleType type
+    );
 }

@@ -8,13 +8,18 @@ import com.umc.product.recruitment.adapter.out.util.InterviewTimeTableDisabledCa
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo.ScheduleInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormQuestionsCommand;
+import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentListInfo;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPort;
 import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
+import com.umc.product.recruitment.domain.enums.RecruitmentPhase;
+import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
+import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.survey.adapter.out.persistence.FormJpaRepository;
 import com.umc.product.survey.adapter.out.persistence.FormSectionJpaRepository;
@@ -30,9 +35,12 @@ import com.umc.product.survey.domain.enums.FormSectionType;
 import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -48,6 +56,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     private final FormSectionJpaRepository formSectionJpaRepository;
     private final QuestionJpaRepository questionJpaRepository;
     private final QuestionOptionJpaRepository questionOptionJpaRepository;
+    private final ApplicationRepository applicationRepository;
 
     @Override
     public Recruitment save(Recruitment recruitment) {
@@ -359,4 +368,223 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     public List<RecruitmentSchedule> findSchedulesByRecruitmentId(Long recruitmentId) {
         return recruitmentScheduleRepository.findByRecruitmentId(recruitmentId);
     }
+
+    @Override
+    public List<RecruitmentListInfo.RecruitmentSummary> findRecruitmentSummaries(
+            Long requesterMemberId,
+            RecruitmentListStatus status
+    ) {
+        // TODO: 권한 추가
+
+        List<Recruitment> recruitments = recruitmentRepository.findByStatus(RecruitmentStatus.PUBLISHED);
+
+        if (recruitments.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> ids = recruitments.stream().map(Recruitment::getId).toList();
+
+        Map<Long, RecruitmentSchedule> applyByRid = toScheduleMap(ids, RecruitmentScheduleType.APPLY_WINDOW);
+        Map<Long, RecruitmentSchedule> docReviewByRid = toScheduleMap(ids, RecruitmentScheduleType.DOC_REVIEW_WINDOW);
+        Map<Long, RecruitmentSchedule> docResultByRid = toScheduleMap(ids, RecruitmentScheduleType.DOC_RESULT_AT);
+        Map<Long, RecruitmentSchedule> interviewByRid = toScheduleMap(ids, RecruitmentScheduleType.INTERVIEW_WINDOW);
+        Map<Long, RecruitmentSchedule> finalReviewByRid = toScheduleMap(ids,
+                RecruitmentScheduleType.FINAL_REVIEW_WINDOW);
+        Map<Long, RecruitmentSchedule> finalResultByRid = toScheduleMap(ids, RecruitmentScheduleType.FINAL_RESULT_AT);
+
+        Instant now = Instant.now();
+        var zone = ZoneId.of("Asia/Seoul");
+
+        return recruitments.stream()
+                .map(r -> {
+                    Long rid = r.getId();
+
+                    RecruitmentSchedule apply = applyByRid.get(rid);
+                    RecruitmentSchedule docReview = docReviewByRid.get(rid);
+                    RecruitmentSchedule docResult = docResultByRid.get(rid);
+                    RecruitmentSchedule interview = interviewByRid.get(rid);
+                    RecruitmentSchedule finalReview = finalReviewByRid.get(rid);
+                    RecruitmentSchedule finalResult = finalResultByRid.get(rid);
+
+                    RecruitmentPhase phase = resolvePhase(now, apply, docReview, docResult, interview, finalReview,
+                            finalResult);
+
+                    if (!matchesListStatus(status, phase)) {
+                        return null;
+                    }
+
+                    LocalDate startDate = (docReview == null || docReview.getStartsAt() == null)
+                            ? null
+                            : docReview.getStartsAt().atZone(zone).toLocalDate();
+
+                    LocalDate endDate = (finalResult == null || finalResult.getStartsAt() == null)
+                            ? null
+                            : finalResult.getStartsAt().atZone(zone).toLocalDate();
+
+                    int applicantCount = (int) applicationRepository.countByRecruitmentId(rid);
+
+                    return new RecruitmentListInfo.RecruitmentSummary(
+                            null,
+                            null, // todo: schoolName, gisu 추후 조인 필요
+                            rid,
+                            r.getTitle(),
+                            startDate,
+                            endDate,
+                            applicantCount,
+                            phase,
+                            false
+                    );
+                })
+                .filter(x -> x != null)
+                .toList();
+    }
+
+    @Override
+    public List<RecruitmentListInfo.RecruitmentSummary> findDraftRecruitmentSummaries(
+            Long requesterMemberId
+    ) {
+
+        // TODO: 권한 추가
+        List<Recruitment> drafts = recruitmentRepository.findByStatus(RecruitmentStatus.DRAFT);
+        if (drafts.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> ids = drafts.stream().map(Recruitment::getId).toList();
+
+        Map<Long, RecruitmentSchedule> applyByRid = toScheduleMap(ids, RecruitmentScheduleType.APPLY_WINDOW);
+        Map<Long, RecruitmentSchedule> docReviewByRid = toScheduleMap(ids, RecruitmentScheduleType.DOC_REVIEW_WINDOW);
+        Map<Long, RecruitmentSchedule> docResultByRid = toScheduleMap(ids, RecruitmentScheduleType.DOC_RESULT_AT);
+        Map<Long, RecruitmentSchedule> interviewByRid = toScheduleMap(ids, RecruitmentScheduleType.INTERVIEW_WINDOW);
+        Map<Long, RecruitmentSchedule> finalReviewByRid = toScheduleMap(ids,
+                RecruitmentScheduleType.FINAL_REVIEW_WINDOW);
+        Map<Long, RecruitmentSchedule> finalResultByRid = toScheduleMap(ids, RecruitmentScheduleType.FINAL_RESULT_AT);
+
+        Instant now = Instant.now();
+        ZoneId zone = ZoneId.of("Asia/Seoul");
+
+        return drafts.stream()
+                .map(r -> {
+                    Long rid = r.getId();
+
+                    RecruitmentSchedule apply = applyByRid.get(rid);
+                    RecruitmentSchedule docReview = docReviewByRid.get(rid);
+                    RecruitmentSchedule docResult = docResultByRid.get(rid);
+                    RecruitmentSchedule interview = interviewByRid.get(rid);
+                    RecruitmentSchedule finalReview = finalReviewByRid.get(rid);
+                    RecruitmentSchedule finalResult = finalResultByRid.get(rid);
+
+                    RecruitmentPhase phase = resolvePhase(now, apply, docReview, docResult, interview, finalReview,
+                            finalResult);
+
+                    LocalDate startDate = (docReview == null || docReview.getStartsAt() == null)
+                            ? null
+                            : docReview.getStartsAt().atZone(zone).toLocalDate();
+
+                    LocalDate endDate = (finalResult == null || finalResult.getStartsAt() == null)
+                            ? null
+                            : finalResult.getStartsAt().atZone(zone).toLocalDate();
+
+                    int applicantCount = 0;
+
+                    return new RecruitmentListInfo.RecruitmentSummary(
+                            null,
+                            null,
+                            rid,
+                            r.getTitle(),
+                            startDate,
+                            endDate,
+                            applicantCount,
+                            phase,
+                            true
+                    );
+                })
+                .toList();
+    }
+
+    private boolean matchesListStatus(RecruitmentListStatus status, RecruitmentPhase phase) {
+        return switch (status) {
+            case UPCOMING -> phase == RecruitmentPhase.BEFORE_APPLY;
+            case ONGOING -> phase != RecruitmentPhase.BEFORE_APPLY
+                    && phase != RecruitmentPhase.FINAL_RESULT_PUBLISHED
+                    && phase != RecruitmentPhase.CLOSED;
+            case CLOSED -> phase == RecruitmentPhase.FINAL_RESULT_PUBLISHED || phase == RecruitmentPhase.CLOSED;
+            case DRAFT -> false;
+        };
+    }
+
+    private RecruitmentPhase resolvePhase(
+            Instant now,
+            RecruitmentSchedule apply,
+            RecruitmentSchedule docReview,
+            RecruitmentSchedule docResult,
+            RecruitmentSchedule interview,
+            RecruitmentSchedule finalReview,
+            RecruitmentSchedule finalResult
+    ) {
+        Instant applyStart = apply == null ? null : apply.getStartsAt();
+        Instant applyEnd = apply == null ? null : apply.getEndsAt();
+
+        Instant docReviewStart = docReview == null ? null : docReview.getStartsAt();
+        Instant docReviewEnd = docReview == null ? null : docReview.getEndsAt();
+
+        Instant docResultAt = docResult == null ? null : docResult.getStartsAt();
+
+        Instant interviewStart = interview == null ? null : interview.getStartsAt();
+        Instant interviewEnd = interview == null ? null : interview.getEndsAt();
+
+        Instant finalReviewStart = finalReview == null ? null : finalReview.getStartsAt();
+        Instant finalReviewEnd = finalReview == null ? null : finalReview.getEndsAt();
+
+        Instant finalResultAt = finalResult == null ? null : finalResult.getStartsAt();
+
+        if (applyStart == null || applyEnd == null || now.isBefore(applyStart)) {
+            return RecruitmentPhase.BEFORE_APPLY;
+        }
+
+        if (!now.isAfter(applyEnd)) {
+            return RecruitmentPhase.APPLY_OPEN;
+        }
+
+        if (isInWindow(now, docReviewStart, docReviewEnd)) {
+            return RecruitmentPhase.DOC_REVIEWING;
+        }
+
+        if (docResultAt != null && !now.isBefore(docResultAt)) {
+            if (interviewStart != null && now.isBefore(interviewStart)) {
+                return RecruitmentPhase.DOC_RESULT_PUBLISHED;
+            }
+            if (isInWindow(now, interviewStart, interviewEnd)) {
+                return RecruitmentPhase.INTERVIEW_WAITING;
+            }
+        }
+
+        if (isInWindow(now, finalReviewStart, finalReviewEnd)) {
+            return RecruitmentPhase.FINAL_REVIEWING;
+        }
+
+        if (finalResultAt != null && !now.isBefore(finalResultAt)) {
+            return RecruitmentPhase.CLOSED;
+        }
+
+        return RecruitmentPhase.DOC_REVIEWING;
+    }
+
+    private boolean isInWindow(Instant now, Instant start, Instant end) {
+        if (start == null || end == null) {
+            return false;
+        }
+        return (now.equals(start) || now.isAfter(start)) && (now.equals(end) || now.isBefore(end));
+    }
+
+    private Map<Long, RecruitmentSchedule> toScheduleMap(List<Long> ids, RecruitmentScheduleType type) {
+        return recruitmentScheduleRepository.findByRecruitmentIdInAndType(ids, type)
+                .stream()
+                .collect(Collectors.toMap(
+                        RecruitmentSchedule::getRecruitmentId,
+                        s -> s,
+                        (a, b) -> a
+                ));
+    }
+
 }
