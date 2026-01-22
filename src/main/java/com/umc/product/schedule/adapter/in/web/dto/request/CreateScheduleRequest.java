@@ -76,7 +76,6 @@ public record CreateScheduleRequest(
             return null;
         }
         GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
-        // 주의: Point(x, y) 순서이므로 (경도, 위도) 순서로 넣어야 합니다!
         return geometryFactory.createPoint(new Coordinate(lon, lat));
     }
 }

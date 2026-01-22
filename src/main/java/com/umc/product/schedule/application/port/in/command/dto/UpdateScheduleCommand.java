@@ -3,6 +3,7 @@ package com.umc.product.schedule.application.port.in.command.dto;
 import com.umc.product.schedule.domain.enums.ScheduleType;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import org.locationtech.jts.geom.Point;
 
 /**
  * 일정 수정 Command
@@ -14,6 +15,7 @@ public record UpdateScheduleCommand(
         LocalDateTime endsAt,
         Boolean isAllDay,
         String locationName,
+        Point location,
         String description,
         ScheduleType scheduleType
 ) {
@@ -32,6 +34,7 @@ public record UpdateScheduleCommand(
             LocalDateTime endsAt,
             Boolean isAllDay,
             String locationName,
+            Point location,
             String description,
             ScheduleType scheduleType
     ) {
@@ -42,6 +45,7 @@ public record UpdateScheduleCommand(
                 endsAt,
                 isAllDay,
                 locationName,
+                location,
                 description,
                 scheduleType
         );
