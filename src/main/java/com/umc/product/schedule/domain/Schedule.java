@@ -3,23 +3,30 @@ package com.umc.product.schedule.domain;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
-import com.umc.product.schedule.domain.enums.ScheduleType;
+import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.HashSet;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.locationtech.jts.geom.Point;
 
 @Entity
@@ -38,9 +45,15 @@ public class Schedule extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @ElementCollection(fetch = FetchType.LAZY)
+    @CollectionTable(
+            name = "schedule_tags",
+            joinColumns = @JoinColumn(name = "schedule_id")
+    )
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ScheduleType type;
+    @Column(name = "tag")
+    @BatchSize(size = 100)
+    private Set<ScheduleTag> tags = new HashSet<>();
 
     @Column(nullable = false)
     private Long authorChallengerId;
@@ -60,12 +73,12 @@ public class Schedule extends BaseEntity {
     private Point location;
 
     @Builder
-    private Schedule(String name, String description, ScheduleType type,
+    private Schedule(String name, String description, Set<ScheduleTag> tags,
                      Long authorChallengerId, LocalDateTime startsAt, LocalDateTime endsAt,
                      boolean isAllDay, String locationName, Point location) {
         this.name = name;
         this.description = description;
-        this.type = type;
+        this.tags = tags != null ? tags : new HashSet<>();
         this.authorChallengerId = authorChallengerId;
         this.startsAt = startsAt;
         this.endsAt = endsAt;
@@ -95,7 +108,7 @@ public class Schedule extends BaseEntity {
     public void update(
             String name,
             String description,
-            ScheduleType type,
+            Set<ScheduleTag> tags,
             LocalDateTime startsAt,
             LocalDateTime endsAt,
             Boolean isAllDay,
@@ -108,8 +121,9 @@ public class Schedule extends BaseEntity {
         if (description != null) {
             this.description = description;
         }
-        if (type != null) {
-            this.type = type;
+        if (tags != null) {
+            this.tags.clear();
+            this.tags.addAll(tags);
         }
         if (locationName != null) {
             this.locationName = locationName;
@@ -142,5 +156,9 @@ public class Schedule extends BaseEntity {
         this.isAllDay = effectiveIsAllDay;
         this.startsAt = effectiveStartsAt;
         this.endsAt = effectiveEndsAt;
+    }
+
+    public boolean hasTag(ScheduleTag tag) {
+        return this.tags.contains(tag);
     }
 }
