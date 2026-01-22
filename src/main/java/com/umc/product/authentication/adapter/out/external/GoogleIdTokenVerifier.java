@@ -98,6 +98,12 @@ public class GoogleIdTokenVerifier {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
             }
 
+            // audience(aud) 검증 - 우리 앱의 client ID와 일치해야 함
+            if (!googleClientId.equals(response.aud())) {
+                log.error("Google ID 토큰 audience 불일치: expected={}, actual={}", googleClientId, response.aud());
+                throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
+            }
+
             log.info("Google Access Token 검증 성공: sub={}, email={}", response.sub(), response.email());
 
             // OAuth2Attributes 형식에 맞게 Map 생성
@@ -136,7 +142,8 @@ public class GoogleIdTokenVerifier {
 
     private record GoogleAccessTokenInfoResponse(
             String sub,
-            String email
+            String email,
+            String aud         // audience (client ID)
     ) {
     }
 }
