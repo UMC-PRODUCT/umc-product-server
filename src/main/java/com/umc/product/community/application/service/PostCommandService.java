@@ -10,6 +10,11 @@ import com.umc.product.community.application.port.in.post.command.CreatePostComm
 import com.umc.product.community.application.port.in.post.command.UpdatePostCommand;
 import com.umc.product.community.application.port.out.LoadPostPort;
 import com.umc.product.community.application.port.out.SavePostPort;
+import com.umc.product.community.domain.Post;
+import com.umc.product.community.domain.Post.LightningInfo;
+import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,29 +30,67 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
 
     @Override
     public PostInfo createPost(CreatePostCommand command) {
-        return null;
-        // TODO: 구현 필요
+        Post post = Post.createpostIds(
+                command.title(),
+                command.content(),
+                command.category(),
+                command.region(),
+                command.anonymous()
+        );
+
+        Post savedPost = savePostPort.save(post);
+        return PostInfo.from(savedPost);
     }
 
     @Override
     public PostInfo createLightningPost(CreateLightningCommand command) {
-        return null;
-        // TODO: 구현 필요
+        LightningInfo lightningInfo = new LightningInfo(
+                command.meetAt(),
+                command.location(),
+                command.maxParticipants()
+        );
+
+        Post post = Post.createLightning(
+                command.title(),
+                command.content(),
+                command.region(),
+                command.anonymous(),
+                lightningInfo
+        );
+
+        Post savedPost = savePostPort.save(post);
+        return PostInfo.from(savedPost);
     }
 
     @Override
     public PostInfo updatePost(UpdatePostCommand command) {
-        return null;
-        // TODO: 구현 필요
+        Post post = loadPostPort.findById(command.postId())
+                .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+
+        post.update(
+                command.title(),
+                command.content(),
+                command.category(),
+                command.region()
+        );
+
+        Post savedPost = savePostPort.save(post);
+        return PostInfo.from(savedPost);
     }
 
     @Override
     public void deletePost(Long postId) {
-        // TODO: 구현 필요
+        loadPostPort.findById(postId)
+                .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+
+        savePostPort.deleteById(postId);
     }
 
     @Override
     public LikeResult toggle(Long postId, Long challengerId) {
-        return null;
+        loadPostPort.findById(postId)
+                .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+
+        return savePostPort.toggleLike(postId, challengerId);
     }
 }
