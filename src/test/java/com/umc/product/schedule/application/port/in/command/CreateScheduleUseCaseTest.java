@@ -21,10 +21,11 @@ import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import com.umc.product.schedule.domain.enums.ScheduleType;
+import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -32,7 +33,9 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
     @Autowired
     private CreateScheduleUseCase createScheduleUseCase;
@@ -90,7 +93,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 createPoint(37.4979, 127.0276),
                 "OT입니다",
                 List.of(),
-                ScheduleType.TEAM_ACTIVITY,
+                Set.of(ScheduleTag.ORIENTATION),
                 authorMember.getId()
         );
 
@@ -100,7 +103,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
         // then
         Schedule savedSchedule = loadSchedulePort.findById(scheduleId).orElseThrow();
         assertThat(savedSchedule.getName()).isEqualTo("9기 OT");
-        assertThat(savedSchedule.getType()).isEqualTo(ScheduleType.TEAM_ACTIVITY);
+        assertThat(savedSchedule.getTags()).contains(ScheduleTag.ORIENTATION);
         assertThat(savedSchedule.getAuthorChallengerId()).isEqualTo(authorChallenger.getId());
         assertThat(savedSchedule.getLocation().getY()).isEqualTo(37.4979); // 위도 확인
     }
@@ -123,7 +126,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 null,
                 "스프링 스터디",
                 List.of(participant1.getId(), participant2.getId()),
-                ScheduleType.PERSONAL_STUDY,
+                Set.of(ScheduleTag.STUDY),
                 authorMember.getId()
         );
 
@@ -158,7 +161,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 createPoint(37.1234, 127.1234),
                 "종일 진행",
                 List.of(),
-                ScheduleType.EVENT,
+                Set.of(ScheduleTag.WORKSHOP),
                 authorMember.getId()
         );
 
@@ -197,7 +200,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 null,
                 "설명",
                 List.of(),
-                ScheduleType.TEAM_ACTIVITY,
+                Set.of(ScheduleTag.GENERAL),
                 pastMember.getId() // 과거 멤버 ID로 요청
         );
 

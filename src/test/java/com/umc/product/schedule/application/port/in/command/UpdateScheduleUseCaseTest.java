@@ -15,10 +15,11 @@ import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCo
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
 import com.umc.product.schedule.domain.Schedule;
-import com.umc.product.schedule.domain.enums.ScheduleType;
+import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.LocalDateTime;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -26,7 +27,9 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
@@ -76,7 +79,7 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
                 "수정된 장소",
                 newLocation,
                 "수정된 설명",
-                ScheduleType.EVENT
+                Set.of(ScheduleTag.NETWORKING, ScheduleTag.AFTER_PARTY)
         );
 
         // when
@@ -87,7 +90,8 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         assertThat(updatedSchedule.getName()).isEqualTo("수정된 일정 제목");
         assertThat(updatedSchedule.getLocationName()).isEqualTo("수정된 장소");
         assertThat(updatedSchedule.getDescription()).isEqualTo("수정된 설명");
-        assertThat(updatedSchedule.getType()).isEqualTo(ScheduleType.EVENT);
+        assertThat(updatedSchedule.getTags()).containsExactlyInAnyOrder(ScheduleTag.NETWORKING,
+                ScheduleTag.AFTER_PARTY);
         assertThat(updatedSchedule.getStartsAt()).isEqualTo(newStartsAt);
         assertThat(updatedSchedule.getEndsAt()).isEqualTo(newEndsAt);
         assertThat(updatedSchedule.getLocation().getY()).isEqualTo(30.15474500622856); // 위도 확인
@@ -114,7 +118,7 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
                 null,             // 변경 안 함 (기존 장소 유지)
                 null,             // 변경 안 함 (기존 위도, 경도 유지)
                 "부분 수정된 설명", // 변경할 값
-                null              // 변경 안 함 (기존 타입 유지)
+                null              // 변경 안 함 (기존 태그 유지)
         );
 
         // when
@@ -131,7 +135,7 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         assertThat(updatedSchedule.getStartsAt()).isEqualTo(originalStart);
         assertThat(updatedSchedule.getEndsAt()).isEqualTo(originalEnd);
         assertThat(updatedSchedule.getLocationName()).isEqualTo(originalLocationName);
-        assertThat(updatedSchedule.getType()).isEqualTo(ScheduleType.TEAM_ACTIVITY); // 기존 타입
+        assertThat(updatedSchedule.getTags()).contains(ScheduleTag.PROJECT); // 기존 타입
         assertThat(updatedSchedule.getLocation().getY()).isEqualTo(originalLatitude);
     }
 
@@ -208,7 +212,7 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
                 null,
                 null,
                 null,
-                ScheduleType.TEAM_ACTIVITY
+                Set.of(ScheduleTag.HACKATHON)
         );
 
         // when
@@ -219,6 +223,7 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         assertThat(updatedSchedule.isAllDay()).isTrue();
         assertThat(updatedSchedule.getStartsAt()).isEqualTo(LocalDateTime.of(2026, 5, 10, 0, 0));
         assertThat(updatedSchedule.getEndsAt()).isEqualTo(LocalDateTime.of(2026, 5, 11, 23, 59, 59));
+        assertThat(updatedSchedule.getTags()).contains(ScheduleTag.HACKATHON);
     }
 
     @Test
@@ -235,7 +240,7 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
                 "장소",
                 null,
                 "설명",
-                ScheduleType.TEAM_ACTIVITY
+                Set.of(ScheduleTag.GENERAL)
         );
 
         // when & then
@@ -260,7 +265,7 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
                 .locationName("테스트 장소")
                 .location(point)
                 .description("테스트 내용")
-                .type(ScheduleType.TEAM_ACTIVITY)
+                .tags(Set.of(ScheduleTag.PROJECT))
                 .authorChallengerId(authorChallengerId)
                 .build();
     }
