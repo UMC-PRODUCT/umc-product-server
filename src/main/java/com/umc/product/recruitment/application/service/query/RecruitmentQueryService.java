@@ -31,9 +31,14 @@ import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentList
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentNoticeInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentPartListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentScheduleInfo;
+import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
+import com.umc.product.recruitment.domain.Recruitment;
+import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,6 +57,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         GetRecruitmentPartListUseCase {
 
     private final LoadRecruitmentPort loadRecruitmentPort;
+    private final LoadRecruitmentPartPort loadRecruitmentPartPort;
+    private final LoadApplicationPort loadApplicationPort;
 
     @Override
     public ActiveRecruitmentInfo get(GetActiveRecruitmentQuery query) {
@@ -128,6 +135,55 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     @Override
     public RecruitmentPartListInfo get(GetRecruitmentPartListQuery query) {
-        return null;
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
+
+        var partSummaries = recruitmentParts.stream()
+                .map(part -> new RecruitmentPartListInfo.RecruitmentPartSummary(
+                        part.getId(),
+                        part.getPart(),
+                        part.getStatus()
+                ))
+                .toList();
+
+        // 지원자의 해당 모집 지원 현황 조회 (없으면 null)
+        RecruitmentPartListInfo.MyApplicationInfo myApplicationInfo = loadApplicationPort
+                .findByRecruitmentIdAndApplicantId(query.recruitmentId(), query.memberId())
+                .map(app -> new RecruitmentPartListInfo.MyApplicationInfo(
+                        app.getId(),
+                        app.getFormResponseId(),
+                        app.getStatus()
+                ))
+                .orElse(null);
+
+        var schedules = loadRecruitmentPort.findSchedulesByRecruitmentId(query.recruitmentId());
+        var recruitmentPeriod = extractDatePeriod(schedules, "APPLY_WINDOW");
+        var activityPeriod = extractDatePeriod(schedules, "ACTIVITY_WINDOW");
+
+        return new RecruitmentPartListInfo(
+                recruitment.getId(),
+                recruitment.getTitle(),
+                recruitmentPeriod,
+                activityPeriod,
+                recruitment.getNoticeContent(),
+                partSummaries,
+                myApplicationInfo
+        );
+    }
+
+    private RecruitmentPartListInfo.DatePeriod extractDatePeriod(
+            java.util.List<com.umc.product.recruitment.domain.RecruitmentSchedule> schedules,
+            String scheduleType) {
+        return schedules.stream()
+                .filter(schedule -> schedule.getType().name().equals(scheduleType))
+                .findFirst()
+                .map(schedule -> new RecruitmentPartListInfo.DatePeriod(
+                        schedule.getStartsAt(),
+                        schedule.getEndsAt()
+                ))
+                .orElse(null);
     }
 }

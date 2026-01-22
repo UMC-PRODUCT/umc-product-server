@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.adapter.out;
 
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPartPort;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import java.util.List;
@@ -8,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class RecruitmentPartPersistenceAdapter implements SaveRecruitmentPartPort {
+public class RecruitmentPartPersistenceAdapter implements SaveRecruitmentPartPort, LoadRecruitmentPartPort {
 
     private final RecruitmentPartRepository recruitmentPartRepository;
 
@@ -23,5 +24,10 @@ public class RecruitmentPartPersistenceAdapter implements SaveRecruitmentPartPor
     @Override
     public void deleteAllByRecruitmentId(Long recruitmentId) {
         recruitmentPartRepository.deleteAllByRecruitmentId(recruitmentId);
+    }
+
+    @Override
+    public List<RecruitmentPart> findByRecruitmentId(Long recruitmentId) {
+        return recruitmentPartRepository.findByRecruitmentId(recruitmentId);
     }
 }

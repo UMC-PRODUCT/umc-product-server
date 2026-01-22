@@ -41,11 +41,23 @@ public class RecruitmentPart {
     public static RecruitmentPart createOpen(Long recruitmentId, ChallengerPart part) {
 
         validate(recruitmentId, part);
-        
+
         RecruitmentPart recruitmentPart = new RecruitmentPart();
         recruitmentPart.recruitmentId = recruitmentId;
         recruitmentPart.part = part;
         recruitmentPart.status = RecruitmentPartStatus.OPEN;
+
+        return recruitmentPart;
+    }
+
+    public static RecruitmentPart createClosed(Long recruitmentId, ChallengerPart part) {
+
+        validate(recruitmentId, part);
+
+        RecruitmentPart recruitmentPart = new RecruitmentPart();
+        recruitmentPart.recruitmentId = recruitmentId;
+        recruitmentPart.part = part;
+        recruitmentPart.status = RecruitmentPartStatus.CLOSED;
 
         return recruitmentPart;
     }

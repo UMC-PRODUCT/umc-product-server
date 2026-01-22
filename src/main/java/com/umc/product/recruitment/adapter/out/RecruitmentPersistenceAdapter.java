@@ -14,6 +14,7 @@ import com.umc.product.recruitment.application.port.out.SaveRecruitmentPort;
 import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
+import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.survey.adapter.out.persistence.FormJpaRepository;
 import com.umc.product.survey.adapter.out.persistence.FormSectionJpaRepository;
@@ -70,7 +71,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         List<ChallengerPart> parts =
-                recruitmentPartRepository.findByRecruitmentId(recruitmentId)
+                recruitmentPartRepository.findByRecruitmentIdAndStatus(recruitmentId, RecruitmentPartStatus.OPEN)
                         .stream()
                         .map(RecruitmentPart::getPart)
                         .toList();

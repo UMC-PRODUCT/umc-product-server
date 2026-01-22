@@ -119,12 +119,27 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         );
 
         if (command.parts() != null && !command.parts().isEmpty()) {
-            List<RecruitmentPart> recruitmentParts = command.parts().stream()
+            List<RecruitmentPart> openParts = command.parts().stream()
                     .distinct()
                     .map(part -> RecruitmentPart.createOpen(savedRecruitment.getId(), part))
                     .toList();
 
-            saveRecruitmentPartPort.saveAll(recruitmentParts);
+            List<RecruitmentPart> closedParts = java.util.Arrays.stream(
+                            com.umc.product.common.domain.enums.ChallengerPart.values())
+                    .filter(part -> !command.parts().contains(part))
+                    .map(part -> RecruitmentPart.createClosed(savedRecruitment.getId(), part))
+                    .toList();
+
+            List<RecruitmentPart> allParts = new java.util.ArrayList<>(openParts);
+            allParts.addAll(closedParts);
+            saveRecruitmentPartPort.saveAll(allParts);
+        } else {
+            List<RecruitmentPart> closedParts = java.util.Arrays.stream(
+                            com.umc.product.common.domain.enums.ChallengerPart.values())
+                    .map(part -> RecruitmentPart.createClosed(savedRecruitment.getId(), part))
+                    .toList();
+
+            saveRecruitmentPartPort.saveAll(closedParts);
         }
 
         List<RecruitmentSchedule> schedules = new ArrayList<>();
@@ -174,11 +189,20 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         if (command.recruitmentParts() != null) {
             saveRecruitmentPartPort.deleteAllByRecruitmentId(command.recruitmentId());
 
-            List<RecruitmentPart> recruitmentParts = command.recruitmentParts().stream()
+            List<RecruitmentPart> openParts = command.recruitmentParts().stream()
                     .distinct()
                     .map(part -> RecruitmentPart.createOpen(command.recruitmentId(), part))
                     .toList();
-            saveRecruitmentPartPort.saveAll(recruitmentParts);
+
+            List<RecruitmentPart> closedParts = java.util.Arrays.stream(
+                            com.umc.product.common.domain.enums.ChallengerPart.values())
+                    .filter(part -> !command.recruitmentParts().contains(part))
+                    .map(part -> RecruitmentPart.createClosed(command.recruitmentId(), part))
+                    .toList();
+
+            List<RecruitmentPart> allParts = new java.util.ArrayList<>(openParts);
+            allParts.addAll(closedParts);
+            saveRecruitmentPartPort.saveAll(allParts);
         }
 
         saveRecruitmentPort.save(recruitment);
