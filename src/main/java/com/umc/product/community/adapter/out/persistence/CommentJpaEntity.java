@@ -75,7 +75,8 @@ public class CommentJpaEntity extends BaseEntity {
                 content,
                 parentId,
                 getLikeCount(),
-                liked
+                liked,
+                getCreatedAt()
         );
     }
 

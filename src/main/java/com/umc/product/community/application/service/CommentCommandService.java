@@ -5,7 +5,13 @@ import com.umc.product.community.application.port.in.post.CreateCommentUseCase;
 import com.umc.product.community.application.port.in.post.DeleteCommentUseCase;
 import com.umc.product.community.application.port.in.post.ToggleCommentLikeUseCase;
 import com.umc.product.community.application.port.in.post.command.CreateCommentCommand;
+import com.umc.product.community.application.port.out.LoadCommentPort;
+import com.umc.product.community.application.port.out.LoadPostPort;
 import com.umc.product.community.application.port.out.SaveCommentPort;
+import com.umc.product.community.domain.Comment;
+import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,19 +21,45 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class CommentCommandService implements CreateCommentUseCase, DeleteCommentUseCase, ToggleCommentLikeUseCase {
 
+    private final LoadPostPort loadPostPort;
+    private final LoadCommentPort loadCommentPort;
     private final SaveCommentPort saveCommentPort;
 
     @Override
     public CommentInfo create(CreateCommentCommand command) {
-        return null;
+        loadPostPort.findById(command.postId())
+                .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+
+        Comment comment = Comment.create(
+                command.postId(),
+                command.challengerId(),
+                command.content(),
+                command.parentId()
+        );
+
+        Comment savedComment = saveCommentPort.save(comment);
+
+        // TODO: challengerName은 Challenger/Member 도메인에서 조회 필요
+        return CommentInfo.from(savedComment, null);
     }
 
     @Override
     public void delete(Long commentId, Long challengerId) {
+        Comment comment = loadCommentPort.findById(commentId)
+                .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.COMMENT_NOT_FOUND));
+
+        if (!comment.getChallengerId().equals(challengerId)) {
+            throw new BusinessException(Domain.COMMUNITY, CommunityErrorCode.COMMENT_NOT_OWNED);
+        }
+
+        saveCommentPort.delete(comment);
     }
 
     @Override
     public LikeResult toggle(Long commentId, Long challengerId) {
-        return null;
+        loadCommentPort.findById(commentId)
+                .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.COMMENT_NOT_FOUND));
+
+        return saveCommentPort.toggleLike(commentId, challengerId);
     }
 }

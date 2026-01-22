@@ -5,8 +5,12 @@ import com.umc.product.community.application.port.in.post.query.GetPostDetailUse
 import com.umc.product.community.application.port.in.post.query.GetPostListUseCase;
 import com.umc.product.community.application.port.in.post.query.PostDetailInfo;
 import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
+import com.umc.product.community.application.port.out.LoadCommentPort;
 import com.umc.product.community.application.port.out.LoadPostPort;
-import java.util.Collections;
+import com.umc.product.community.domain.Post;
+import com.umc.product.community.domain.exception.CommunityErrorCode;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,22 +22,33 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCase {
 
     private final LoadPostPort loadPostPort;
+    private final LoadCommentPort loadCommentPort;
 
     @Override
     public PostInfo getPostDetail(Long postId) {
-        // TODO: 구현 필요
-        return null;
+        Post post = loadPostPort.findById(postId)
+                .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+
+        return PostInfo.from(post);
     }
 
     @Override
     public PostDetailInfo getPostDetail(Long postId, Long challengerId) {
-        // TODO: 구현 필요
-        return null;
+        Post post = loadPostPort.findById(postId)
+                .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+
+        PostInfo postInfo = PostInfo.from(post);
+        int commentCount = loadCommentPort.countByPostId(postId);
+
+        return PostDetailInfo.of(postInfo, commentCount);
     }
 
     @Override
     public List<PostInfo> getPostList(PostSearchQuery query) {
-        // TODO: 구현 필요
-        return Collections.emptyList();
+        List<Post> posts = loadPostPort.findAllByQuery(query);
+
+        return posts.stream()
+                .map(PostInfo::from)
+                .toList();
     }
 }
