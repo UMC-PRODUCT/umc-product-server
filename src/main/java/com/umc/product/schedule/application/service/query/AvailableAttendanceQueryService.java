@@ -1,0 +1,81 @@
+package com.umc.product.schedule.application.service.query;
+
+import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
+import com.umc.product.schedule.application.port.in.query.dto.AvailableAttendanceInfo;
+import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
+import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
+import com.umc.product.schedule.application.port.out.LoadSchedulePort;
+import com.umc.product.schedule.domain.AttendanceRecord;
+import com.umc.product.schedule.domain.AttendanceSheet;
+import com.umc.product.schedule.domain.Schedule;
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class AvailableAttendanceQueryService implements GetAvailableAttendancesUseCase {
+
+    private final LoadSchedulePort loadSchedulePort;
+    private final LoadAttendanceSheetPort loadAttendanceSheetPort;
+    private final LoadAttendanceRecordPort loadAttendanceRecordPort;
+
+    @Override
+    public List<AvailableAttendanceInfo> getAvailableList(Long memberId) {
+        // 활성 출석부 조회
+        List<AttendanceSheet> activeSheets = loadAttendanceSheetPort.findActiveSheets();
+
+        if (activeSheets.isEmpty()) {
+            return List.of();
+        }
+
+        // 해당 출석부들의 일정 조회
+        List<Long> scheduleIds = activeSheets.stream()
+                .map(AttendanceSheet::getScheduleId)
+                .toList();
+
+        Map<Long, Schedule> scheduleMap = scheduleIds.stream()
+                .map(id -> loadSchedulePort.findById(id).orElse(null))
+                .filter(s -> s != null)
+                .collect(Collectors.toMap(Schedule::getId, Function.identity()));
+
+        // 해당 멤버의 출석 기록 조회
+        List<Long> sheetIds = activeSheets.stream()
+                .map(AttendanceSheet::getId)
+                .toList();
+
+        List<AttendanceRecord> memberRecords = loadAttendanceRecordPort.findByMemberId(memberId);
+        Map<Long, AttendanceRecord> recordBySheetId = memberRecords.stream()
+                .filter(r -> sheetIds.contains(r.getAttendanceSheetId()))
+                .collect(Collectors.toMap(
+                        AttendanceRecord::getAttendanceSheetId,
+                        Function.identity(),
+                        (a, b) -> a));
+
+        // 결과 생성
+        LocalDateTime now = LocalDateTime.now();
+        return activeSheets.stream()
+                .filter(sheet -> {
+                    Schedule schedule = scheduleMap.get(sheet.getScheduleId());
+                    return schedule != null && !schedule.isEnded(now);
+                })
+                .map(sheet -> {
+                    Schedule schedule = scheduleMap.get(sheet.getScheduleId());
+                    AttendanceRecord record = recordBySheetId.get(sheet.getId());
+
+                    if (record != null) {
+                        return AvailableAttendanceInfo.of(schedule, sheet, record);
+                    }
+                    return AvailableAttendanceInfo.of(schedule, sheet);
+                })
+                .sorted(Comparator.comparing(AvailableAttendanceInfo::startTime))
+                .toList();
+    }
+}
