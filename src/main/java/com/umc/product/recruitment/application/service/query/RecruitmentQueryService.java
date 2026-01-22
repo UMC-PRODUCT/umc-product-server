@@ -67,8 +67,30 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     @Override
     public RecruitmentNoticeInfo get(GetRecruitmentNoticeQuery query) {
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
-        return null;
+        requirePublished(recruitment);
+
+        List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
+
+        List<com.umc.product.common.domain.enums.ChallengerPart> openParts = recruitmentParts.stream()
+                .filter(p -> p.getStatus() != null && p.getStatus().name().equals("OPEN"))
+                .map(RecruitmentPart::getPart)
+                .sorted(java.util.Comparator.comparingInt(Enum::ordinal))
+                .toList();
+
+        String title = (recruitment.getNoticeTitle() != null && !recruitment.getNoticeTitle().isBlank())
+                ? recruitment.getNoticeTitle()
+                : recruitment.getTitle();
+
+        return new RecruitmentNoticeInfo(
+                recruitment.getId(),
+                title,
+                recruitment.getNoticeContent(),
+                openParts
+        );
     }
 
     @Override
@@ -89,10 +111,12 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     @Override
     public RecruitmentScheduleInfo get(GetRecruitmentScheduleQuery query) {
-        loadRecruitmentPort.findById(query.recruitmentId())
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
                 .orElseThrow(
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
+        requirePublished(recruitment);
+        
         var schedules = loadRecruitmentPort.findSchedulesByRecruitmentId(query.recruitmentId());
 
         var scheduleItems = schedules.stream()
@@ -185,5 +209,11 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
                         schedule.getEndsAt()
                 ))
                 .orElse(null);
+    }
+
+    private void requirePublished(Recruitment recruitment) {
+        if (recruitment.getStatus() != com.umc.product.recruitment.domain.enums.RecruitmentStatus.PUBLISHED) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
+        }
     }
 }
