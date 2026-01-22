@@ -1,11 +1,13 @@
 package com.umc.product.recruitment.application.service.query;
 
-import com.umc.product.recruitment.adapter.in.web.dto.response.GetRecruitmentDetailUseCase;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyApplicationListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDashboardUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentFormResponseDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentNoticeUseCase;
@@ -29,6 +31,8 @@ import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentList
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentNoticeInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentPartListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentScheduleInfo;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
+import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,6 +49,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         GetMyApplicationListUseCase,
         GetRecruitmentDetailUseCase,
         GetRecruitmentPartListUseCase {
+
+    private final LoadRecruitmentPort loadRecruitmentPort;
 
     @Override
     public ActiveRecruitmentInfo get(GetActiveRecruitmentQuery query) {
@@ -90,7 +96,16 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     @Override
     public RecruitmentDraftInfo get(GetRecruitmentDetailQuery query) {
-        return null;
+        loadRecruitmentPort.findById(query.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        // TODO: 권한 검증 필요 (memberId 기반)
+        // if (!isAdminOrAuthor(query.memberId())) {
+        //     throw new BusinessException(Domain.RECRUITMENT, ErrorCode.FORBIDDEN);
+        // }
+
+        return loadRecruitmentPort.findDraftInfoById(query.recruitmentId());
     }
 
     @Override

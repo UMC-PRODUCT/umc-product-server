@@ -13,7 +13,6 @@ import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentF
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.CreateRecruitmentResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.DeleteRecruitmentFormResponseResponse;
-import com.umc.product.recruitment.adapter.in.web.dto.response.GetRecruitmentDetailUseCase;
 import com.umc.product.recruitment.adapter.in.web.dto.response.MyRecruitmentApplicationsResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.PublishRecruitmentResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentApplicationFormResponse;
@@ -52,6 +51,7 @@ import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmen
 import com.umc.product.recruitment.application.port.in.query.GetMyApplicationListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDashboardUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentFormResponseDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentNoticeUseCase;

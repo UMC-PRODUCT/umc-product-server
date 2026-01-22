@@ -31,6 +31,7 @@ import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -58,10 +59,8 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     }
 
     @Override
-    public Recruitment findById(Long recruitmentId) {
-        return recruitmentRepository.findById(recruitmentId)
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+    public Optional<Recruitment> findById(Long recruitmentId) {
+        return recruitmentRepository.findById(recruitmentId);
     }
 
     @Override
@@ -334,6 +333,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         return question;
     }
 
+    @Override
     public boolean existsOtherOngoingPublishedRecruitment(
             Long schoolId,
             Long excludeRecruitmentId,
@@ -344,5 +344,18 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                 excludeRecruitmentId,
                 now
         );
+    }
+
+    @Override
+    public List<ChallengerPart> findPartsByRecruitmentId(Long recruitmentId) {
+        return recruitmentPartRepository.findByRecruitmentId(recruitmentId)
+                .stream()
+                .map(RecruitmentPart::getPart)
+                .toList();
+    }
+
+    @Override
+    public List<RecruitmentSchedule> findSchedulesByRecruitmentId(Long recruitmentId) {
+        return recruitmentScheduleRepository.findByRecruitmentId(recruitmentId);
     }
 }
