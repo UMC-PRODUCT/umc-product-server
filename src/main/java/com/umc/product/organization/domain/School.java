@@ -2,6 +2,7 @@ package com.umc.product.organization.domain;
 
 import com.umc.product.common.BaseEntity;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,13 +28,25 @@ public class School extends BaseEntity {
     @OneToMany(mappedBy = "school", orphanRemoval = true, cascade = CascadeType.ALL)
     List<ChapterSchool> chapterSchools;
 
+    @Column(nullable = false)
     private String name;
 
+    @Column(nullable = true)
     private String logoImageUrl;
 
+    @Column(nullable = true)
     private String remark;
 
-    @Builder
+    @Column(nullable = true)
+    private String kakaoLink;
+
+    @Column(nullable = true)
+    private String instagramLink;
+
+    @Column(nullable = true)
+    private String youtubeLink;
+
+    @Builder(access = AccessLevel.PRIVATE)
     private School(String name, String remark, ArrayList<ChapterSchool> chapterSchools) {
         this.name = name;
         this.remark = remark;

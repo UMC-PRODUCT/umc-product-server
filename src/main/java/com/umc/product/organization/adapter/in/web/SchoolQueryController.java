@@ -4,6 +4,7 @@ import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.request.SchoolListRequest;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.SchoolLinkResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolListItemResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolPageResponse;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
@@ -40,5 +41,12 @@ public class SchoolQueryController implements SchoolQueryControllerApi {
     @GetMapping("/{schoolId}")
     public SchoolDetailResponse getSchoolDetail(@PathVariable Long schoolId) {
         return SchoolDetailResponse.of(getSchoolUseCase.getSchoolDetail(schoolId));
+    }
+
+    @Public
+    @Override
+    @GetMapping("/link/{schoolId}")
+    public SchoolLinkResponse getSchoolLink(@PathVariable Long schoolId) {
+        return SchoolLinkResponse.of(getSchoolUseCase.getSchoolLink(schoolId));
     }
 }
