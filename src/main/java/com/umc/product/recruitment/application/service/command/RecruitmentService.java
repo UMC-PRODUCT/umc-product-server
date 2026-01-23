@@ -41,13 +41,17 @@ import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import com.umc.product.survey.application.port.in.query.dto.DraftFormResponseInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
 import com.umc.product.survey.application.port.out.LoadFormPort;
+import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.application.port.out.LoadQuestionPort;
 import com.umc.product.survey.application.port.out.SaveFormPort;
+import com.umc.product.survey.application.port.out.SaveFormResponsePort;
 import com.umc.product.survey.application.port.out.SaveQuestionOptionPort;
 import com.umc.product.survey.application.port.out.SaveQuestionPort;
 import com.umc.product.survey.domain.Form;
+import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -83,6 +87,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final SaveQuestionPort saveQuestionPort;
     private final LoadQuestionPort loadQuestionPort;
     private final SaveQuestionOptionPort saveQuestionOptionPort;
+    private final LoadFormResponsePort loadFormResponsePort;
+    private final SaveFormResponsePort saveFormResponsePort;
 
     private Long resolveSchoolId() {
         return 1L;
@@ -94,7 +100,38 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public CreateOrGetDraftFormResponseInfo createOrGet(CreateOrGetRecruitmentDraftCommand command) {
-        return null;
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        if (recruitment.getStatus() != com.umc.product.recruitment.domain.enums.RecruitmentStatus.PUBLISHED) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
+        }
+
+        Long formId = recruitment.getFormId();
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
+
+        var existingDraftOpt = loadFormResponsePort.findDraftByFormIdAndRespondentMemberId(formId, command.memberId());
+        if (existingDraftOpt.isPresent()) {
+            return new CreateOrGetDraftFormResponseInfo(
+                    DraftFormResponseInfo.from(existingDraftOpt.get()),
+                    false
+            );
+        }
+
+        Form form = loadFormPort.findById(formId)
+                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+
+        FormResponse created = saveFormResponsePort.save(
+                FormResponse.createDraft(form, command.memberId())
+        );
+
+        return new CreateOrGetDraftFormResponseInfo(
+                DraftFormResponseInfo.from(created),
+                true
+        );
     }
 
     @Override

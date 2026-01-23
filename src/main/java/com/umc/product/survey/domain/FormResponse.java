@@ -57,4 +57,11 @@ public class FormResponse extends BaseEntity {
     @OneToMany(mappedBy = "formResponse", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SingleAnswer> answers = new ArrayList<>();
 
+    public static FormResponse createDraft(Form form, Long respondentMemberId) {
+        FormResponse fr = new FormResponse();
+        fr.form = form;
+        fr.respondentMemberId = respondentMemberId;
+        fr.status = com.umc.product.survey.domain.enums.FormResponseStatus.DRAFT;
+        return fr;
+    }
 }
