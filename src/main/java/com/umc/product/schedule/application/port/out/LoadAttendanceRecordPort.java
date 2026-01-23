@@ -56,4 +56,12 @@ public interface LoadAttendanceRecordPort {
      * @return 존재 여부
      */
     boolean existsBySheetIdAndMemberId(Long sheetId, Long memberId);
+
+    /**
+     * 여러 출석부 ID로 출석 기록 목록 조회
+     *
+     * @param sheetIds 출석부 ID 목록
+     * @return 출석 기록 목록
+     */
+    List<AttendanceRecord> findByAttendanceSheetIds(List<Long> sheetIds);
 }

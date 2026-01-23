@@ -59,6 +59,22 @@ public class AttendanceRecord {
         this.memo = memo;
     }
 
+    // Domain Logic: 출석 체크
+    public void checkIn(AttendanceStatus newStatus, LocalDateTime checkedAt) {
+        if (this.checkedAt != null) {
+            throw new IllegalStateException("이미 출석 체크가 완료되었습니다");
+        }
+        if (newStatus == null) {
+            throw new IllegalArgumentException("출석 상태는 필수입니다");
+        }
+        if (checkedAt == null) {
+            throw new IllegalArgumentException("체크 시간은 필수입니다");
+        }
+
+        this.status = newStatus;
+        this.checkedAt = checkedAt;
+    }
+
     // Domain Logic: 승인
     public void approve() {
         validatePendingStatus();

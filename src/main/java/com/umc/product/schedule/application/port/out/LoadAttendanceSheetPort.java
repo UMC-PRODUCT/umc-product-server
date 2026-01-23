@@ -38,4 +38,11 @@ public interface LoadAttendanceSheetPort {
      * @return 존재 여부
      */
     boolean existsByScheduleId(Long scheduleId);
+
+    /**
+     * 활성 출석부 목록 조회
+     *
+     * @return 활성 출석부 목록
+     */
+    List<AttendanceSheet> findActiveSheets();
 }

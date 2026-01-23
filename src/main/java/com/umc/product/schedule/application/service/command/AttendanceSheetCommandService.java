@@ -54,35 +54,35 @@ public class AttendanceSheetCommandService implements CreateAttendanceSheetUseCa
         // 승인 모드 업데이트
         sheet.updateApprovalMode(command.requiresApproval());
 
-        // 저장
+        // 저장 - 변경 감지 의존 탈피 떄매 별도 저장
         saveAttendanceSheetPort.save(sheet);
     }
 
     @Override
     public void deactivate(AttendanceSheetId sheetId) {
-        // 1. 출석부 조회
+        // 출석부 조회
         AttendanceSheet sheet = loadAttendanceSheetPort.findById(sheetId.id())
                 .orElseThrow(
                         () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
-        // 2. 비활성화 (도메인 로직)
+        // 비활성화 (도메인 로직)
         sheet.deactivate();
 
-        // 3. 저장
+        // 저장
         saveAttendanceSheetPort.save(sheet);
     }
 
     @Override
     public void activate(AttendanceSheetId sheetId) {
-        // 1. 출석부 조회
+        // 출석부 조회
         AttendanceSheet sheet = loadAttendanceSheetPort.findById(sheetId.id())
                 .orElseThrow(
                         () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
-        // 2. 활성화 (도메인 로직)
+        // 활성화 (도메인 로직)
         sheet.activate();
 
-        // 3. 저장
+        // 저장
         saveAttendanceSheetPort.save(sheet);
     }
 }
