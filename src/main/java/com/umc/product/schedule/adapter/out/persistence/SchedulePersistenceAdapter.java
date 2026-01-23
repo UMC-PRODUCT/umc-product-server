@@ -39,6 +39,13 @@ public class SchedulePersistenceAdapter implements
                 memberId, monthStart, nextMonthStart);
     }
 
+    @Override
+    public List<Schedule> findMySchedulesByMonthWithCursor(Long memberId, LocalDateTime monthStart,
+                                                           LocalDateTime nextMonthStart, Long cursor, int fetchSize) {
+        return scheduleQueryRepository.findMySchedulesByMonthWithCursor(
+                memberId, monthStart, nextMonthStart, cursor, fetchSize);
+    }
+
     // ========== SaveSchedulePort ==========
 
     @Override
