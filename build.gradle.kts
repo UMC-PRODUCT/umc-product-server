@@ -111,6 +111,10 @@ dependencies {
     // --- Metrics ---
     implementation("io.micrometer:micrometer-registry-prometheus")
 
+    // --- Sentry ---
+    implementation("io.sentry:sentry-spring-boot-starter-jakarta:7.22.0")
+    implementation("io.sentry:sentry-logback:7.22.0")
+
     // --- Tracing ---
     implementation("io.micrometer:micrometer-observation") // 관측 기능: metrics + tracing
     implementation("io.micrometer:micrometer-tracing-bridge-otel") // OpenTelemetry 연동
