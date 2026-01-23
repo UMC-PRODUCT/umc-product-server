@@ -10,14 +10,14 @@ UMC Product Team이 제작하는 웹사이트 및 iOS, Android 애플리케이�
 
 ## 👥 프로덕트팀 구성원
 
-| 기수  |                                  프로필                                  |     학교      | 이름<br/>닉네임 |   소속   |   직책   |                     GitHub                     |
-|-----|:---------------------------------------------------------------------:|:-----------:|:----------:|:------:|:------:|:----------------------------------------------:|
-| 1st | <img src="https://github.com/kyeoungwoon.png" width="80" height="80"> |    중앙대학교    |   하늘/박경운   | 앱프로덕트팀 |  Lead  | [@kyeoungwoon](https://github.com/kyeoungwoon) |
-| 1st |  <img src="https://github.com/wlgusqkr.png" width="80" height="80">   |    동국대학교    |  박박지현/박지현  | 앱프로덕트팀 | Member |    [@wlgusqkr](https://github.com/wlgusqkr)    |
-| 1st |  <img src="https://github.com/kanghana1.png" width="80" height="80">  | 한양대학교 ERICA |   와나/강하나   | 앱프로덕트팀 | Member |   [@kanghana1](https://github.com/kanghana1)   |
-| 1st |  <img src="https://github.com/ParkSenn.png" width="80" height="80">   |   동덕여자대학교   |   세니/박세은   | 앱프로덕트팀 | Member |    [@ParkSenn](https://github.com/ParkSenn)    |
-| 1st |  <img src="https://github.com/sopp1313.png" width="80" height="80">   |    중앙대학교    |   스읍/이예은   | 앱프로덕트팀 | Member |    [@sopp1313](https://github.com/sopp1313)    |
-| 1st |   <img src="https://github.com/galllee.png" width="80" height="80">   |    동국대학교    |   갈래/김민서   | 웹프로덕트팀 | Member |     [@galllee](https://github.com/galllee)     |
+| 기수  |                                  프로필                                  |     학교      | 닉네임  | 이름  |   소속   |   직책   |                     GitHub                     |
+|-----|:---------------------------------------------------------------------:|:-----------:|:----:|-----|:------:|:------:|:----------------------------------------------:|
+| 1st | <img src="https://github.com/kyeoungwoon.png" width="80" height="80"> |    중앙대학교    |  하늘  | 박경운 | 앱프로덕트팀 |  Lead  | [@kyeoungwoon](https://github.com/kyeoungwoon) |
+| 1st |  <img src="https://github.com/wlgusqkr.png" width="80" height="80">   |    동국대학교    | 박박지현 | 박지현 | 앱프로덕트팀 | Member |    [@wlgusqkr](https://github.com/wlgusqkr)    |
+| 1st |  <img src="https://github.com/kanghana1.png" width="80" height="80">  | 한양대학교 ERICA |  와나  | 강하나 | 앱프로덕트팀 | Member |   [@kanghana1](https://github.com/kanghana1)   |
+| 1st |  <img src="https://github.com/ParkSenn.png" width="80" height="80">   |   동덕여자대학교   |  세니  | 박세은 | 앱프로덕트팀 | Member |    [@ParkSenn](https://github.com/ParkSenn)    |
+| 1st |  <img src="https://github.com/sopp1313.png" width="80" height="80">   |    중앙대학교    |  스읍  | 이예은 | 앱프로덕트팀 | Member |    [@sopp1313](https://github.com/sopp1313)    |
+| 1st |   <img src="https://github.com/galllee.png" width="80" height="80">   |    동국대학교    |  갈래  | 김민서 | 웹프로덕트팀 | Member |     [@galllee](https://github.com/galllee)     |
 
 ## 🛠️ Tech Stack
 
