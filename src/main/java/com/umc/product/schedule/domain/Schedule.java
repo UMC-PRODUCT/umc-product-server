@@ -78,7 +78,12 @@ public class Schedule extends BaseEntity {
                      boolean isAllDay, String locationName, Point location) {
         this.name = name;
         this.description = description;
-        this.tags = tags != null ? new HashSet<>(tags) : new HashSet<>();
+
+        if (tags == null || tags.isEmpty()) {
+            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.TAG_REQUIRED);
+        }
+        this.tags = new HashSet<>(tags);
+        
         this.authorChallengerId = authorChallengerId;
         this.startsAt = startsAt;
         this.endsAt = endsAt;
