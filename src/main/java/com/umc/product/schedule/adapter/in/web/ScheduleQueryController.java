@@ -1,5 +1,6 @@
 package com.umc.product.schedule.adapter.in.web;
 
+import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.response.MyScheduleCalendarResponse;
@@ -48,6 +49,26 @@ public class ScheduleQueryController implements ScheduleQueryControllerApi {
         return infos.stream()
                 .map(MyScheduleCalendarResponse::from)
                 .toList();
+    }
+
+    @Override
+    @GetMapping("/my-list")
+    public CursorResponse<MyScheduleCalendarResponse> getMyScheduleList(
+            @CurrentMember MemberPrincipal memberPrincipal,
+            @RequestParam int year,
+            @RequestParam int month,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        List<MyScheduleCalendarInfo> infos = getMyScheduleCalendarUseCase.getMyMonthlyScheduleList(
+                memberPrincipal.getMemberId(), year, month, cursor, size);
+
+        return CursorResponse.of(
+                infos,
+                size,
+                MyScheduleCalendarInfo::scheduleId,
+                MyScheduleCalendarResponse::from
+        );
     }
 
     @Override
