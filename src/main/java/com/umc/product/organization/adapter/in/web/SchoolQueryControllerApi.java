@@ -3,6 +3,7 @@ package com.umc.product.organization.adapter.in.web;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.organization.adapter.in.web.dto.request.SchoolListRequest;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.SchoolLinkResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,6 +41,19 @@ public interface SchoolQueryControllerApi {
             @ApiResponse(responseCode = "404", description = "학교를 찾을 수 없음")
     })
     SchoolDetailResponse getSchoolDetail(
+            @Parameter(description = "학교 ID", required = true) Long schoolId
+    );
+
+    @Operation(summary = "학교 링크 조회 ", description = "학교의 공식 링크 정보를 조회합니다")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = SchoolLinkResponse.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "학교를 찾을 수 없음")
+    })
+    SchoolLinkResponse getSchoolLink(
             @Parameter(description = "학교 ID", required = true) Long schoolId
     );
 }
