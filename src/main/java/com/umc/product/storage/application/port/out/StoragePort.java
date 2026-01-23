@@ -55,10 +55,13 @@ public interface StoragePort {
      *
      * @param category  파일 카테고리
      * @param fileId    파일 고유 ID
-     * @param extension 파일 확장자
+     * @param extension 파일 확장자 (빈 문자열이면 확장자 없이 생성)
      * @return 스토리지 키
      */
     default String generateStorageKey(FileCategory category, String fileId, String extension) {
+        if (extension == null || extension.isBlank()) {
+            return String.format("%s/%s", category.getPathPrefix(), fileId);
+        }
         return String.format("%s/%s.%s", category.getPathPrefix(), fileId, extension);
     }
 }

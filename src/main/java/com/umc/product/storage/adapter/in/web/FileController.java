@@ -60,6 +60,7 @@ public class FileController {
      * 파일 업로드 완료를 확인합니다.
      */
     @PostMapping("/{fileId}/confirm")
+    @Operation(summary = "파일 업로드 완료 처리")
     public ApiResponse<Void> confirmUpload(@PathVariable String fileId) {
         manageFileUseCase.confirmUpload(fileId);
         return ApiResponse.onSuccess(null);
@@ -85,6 +86,7 @@ public class FileController {
      * 파일을 삭제합니다.
      */
     @DeleteMapping("/{fileId}")
+    @Operation(summary = "파일 삭제")
     public ApiResponse<Void> deleteFile(@PathVariable String fileId) {
         manageFileUseCase.deleteFile(fileId);
         return ApiResponse.onSuccess(null);

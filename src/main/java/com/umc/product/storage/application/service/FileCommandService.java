@@ -7,6 +7,7 @@ import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
 import com.umc.product.storage.application.port.out.SaveFileMetadataPort;
 import com.umc.product.storage.application.port.out.StoragePort;
 import com.umc.product.storage.domain.FileMetadata;
+import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
@@ -115,6 +116,11 @@ public class FileCommandService implements ManageFileUseCase {
     private void validateFile(PrepareFileUploadCommand command) {
         String extension = extractExtension(command.fileName());
 
+        // 확장자가 명시적으로 필요한 카테고리는 빈 확장자 거부
+        if (extension.isBlank() && requiresExtension(command.category())) {
+            throw new StorageException(StorageErrorCode.INVALID_FILE_EXTENSION);
+        }
+
         if (!command.category().isAllowedExtension(extension)) {
             throw new StorageException(StorageErrorCode.INVALID_FILE_EXTENSION);
         }
@@ -124,11 +130,26 @@ public class FileCommandService implements ManageFileUseCase {
         }
     }
 
+    /**
+     * 확장자가 필수인 카테고리인지 확인
+     */
+    private boolean requiresExtension(FileCategory category) {
+        // ETC만 확장자 선택 사항, 나머지는 필수
+        return category != FileCategory.ETC;
+    }
+
     private String extractExtension(String fileName) {
-        int lastDotIndex = fileName.lastIndexOf('.');
-        if (lastDotIndex > 0 && lastDotIndex < fileName.length() - 1) {
-            return fileName.substring(lastDotIndex + 1).toLowerCase();
+        if (fileName == null || fileName.isBlank()) {
+            return "";
         }
-        return "";
+
+        int lastDotIndex = fileName.lastIndexOf('.');
+
+        // 파일명이 .으로 시작하거나(숨김 파일), .으로 끝나는 경우 확장자 없음
+        if (lastDotIndex <= 0 || lastDotIndex >= fileName.length() - 1) {
+            return "";
+        }
+
+        return fileName.substring(lastDotIndex + 1).toLowerCase();
     }
 }
