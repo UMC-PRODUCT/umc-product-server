@@ -276,9 +276,36 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 null
         );
 
+        upsertReviewWindows(recruitmentId, schedule);
+
         if (schedule.interviewTimeTable() != null) {
             var enabledOnlyMap = toEnabledOnlyMap(schedule.interviewTimeTable());
             recruitment.changeInterviewTimeTable(enabledOnlyMap);
+        }
+    }
+
+    private void upsertReviewWindows(Long recruitmentId, UpdateRecruitmentDraftCommand.ScheduleCommand schedule) {
+
+        Instant docReviewStart = schedule.applyEndAt();
+        Instant docReviewEnd = schedule.docResultAt();
+        if (docReviewStart != null && docReviewEnd != null && docReviewStart.isBefore(docReviewEnd)) {
+            upsertSchedulePeriod(
+                    recruitmentId,
+                    RecruitmentScheduleType.DOC_REVIEW_WINDOW,
+                    docReviewStart,
+                    docReviewEnd
+            );
+        }
+
+        Instant finalReviewStart = schedule.interviewEndAt();
+        Instant finalReviewEnd = schedule.finalResultAt();
+        if (finalReviewStart != null && finalReviewEnd != null && finalReviewStart.isBefore(finalReviewEnd)) {
+            upsertSchedulePeriod(
+                    recruitmentId,
+                    RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
+                    finalReviewStart,
+                    finalReviewEnd
+            );
         }
     }
 
