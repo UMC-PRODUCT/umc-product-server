@@ -12,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -88,6 +89,28 @@ public class FileMetadata extends BaseEntity {
     @Column(nullable = false)
     private boolean isUploaded = false;
 
+    @Builder
+    private FileMetadata(
+            String fileId,
+            String originalFileName,
+            FileCategory category,
+            String contentType,
+            Long fileSize,
+            StorageProvider storageProvider,
+            String storageKey,
+            Long uploadedMemberId
+    ) {
+        this.fileId = fileId;
+        this.originalFileName = originalFileName;
+        this.category = category;
+        this.contentType = contentType;
+        this.fileSize = fileSize;
+        this.storageProvider = storageProvider;
+        this.storageKey = storageKey;
+        this.uploadedMemberId = uploadedMemberId;
+        this.isUploaded = false;
+    }
+
     /**
      * 업로드 완료 처리
      */
@@ -105,6 +128,4 @@ public class FileMetadata extends BaseEntity {
         }
         return "";
     }
-
-    // TODO: 팩토리 메서드 추가해야함
 }

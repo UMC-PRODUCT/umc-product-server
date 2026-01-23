@@ -19,5 +19,6 @@ public enum Domain {
     SURVEY,
     RECRUITMENT,
     TERMS,
-    EMAIL
+    EMAIL,
+    STORAGE
 }

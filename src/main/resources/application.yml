@@ -217,3 +217,14 @@ app:
     password: ${SWAGGER_AUTH_PASSWORD:password}
   oauth2:
     frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT_URL}
+
+storage:
+  gcs:
+    project-id: ${GCS_PROJECT_ID}
+    bucket-name: ${GCS_BUCKET_NAME}
+    credentials-json: ${GCS_CREDENTIALS_JSON:}
+    cdn:
+      enabled: false
+      base-url: https://cdn.example.com
+      key-name: ${CDN_KEY_NAME}
+      private-key: ${CDN_PRIVATE_KEY}
