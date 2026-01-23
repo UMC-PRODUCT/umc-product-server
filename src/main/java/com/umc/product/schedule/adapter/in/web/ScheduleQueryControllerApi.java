@@ -4,7 +4,7 @@ import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
-import com.umc.product.schedule.adapter.in.web.dto.response.MyScheduleCalendarResponse;
+import com.umc.product.schedule.adapter.in.web.dto.response.MyScheduleResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.ScheduleDetailResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.ScheduleListResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,7 +22,7 @@ public interface ScheduleQueryControllerApi {
 
     @Operation(summary = "월별 내 일정 캘린더 조회",
             description = "본인이 참여하는 일정을 월 단위로 조회합니다. AttendanceRecord에 등록된 일정만 포함됩니다.")
-    List<MyScheduleCalendarResponse> getMyCalendar(
+    List<MyScheduleResponse> getMyCalendar(
             @CurrentMember MemberPrincipal memberPrincipal,
             @Parameter(description = "연도 (예: 2026)") @RequestParam int year,
             @Parameter(description = "월 (1~12)") @RequestParam int month
@@ -30,7 +30,7 @@ public interface ScheduleQueryControllerApi {
 
     @Operation(summary = "월별 내 일정 리스트 조회",
             description = "본인이 참여하는 이번 달 일정을 리스트 형식으로 조회합니다. 커서 기반 페이징을 지원합니다.")
-    CursorResponse<MyScheduleCalendarResponse> getMyScheduleList(
+    CursorResponse<MyScheduleResponse> getMyScheduleList(
             @CurrentMember MemberPrincipal memberPrincipal,
             @Parameter(description = "연도 (예: 2026)") @RequestParam int year,
             @Parameter(description = "월 (1~12)") @RequestParam int month,

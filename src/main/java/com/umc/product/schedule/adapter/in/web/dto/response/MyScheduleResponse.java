@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.umc.product.schedule.application.port.in.query.dto.MyScheduleCalendarInfo;
 import java.time.LocalDateTime;
 
-public record MyScheduleCalendarResponse(
+public record MyScheduleResponse(
         Long scheduleId,
         String name,
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
@@ -15,8 +15,8 @@ public record MyScheduleCalendarResponse(
         long dDay
 ) {
 
-    public static MyScheduleCalendarResponse from(MyScheduleCalendarInfo info) {
-        return new MyScheduleCalendarResponse(
+    public static MyScheduleResponse from(MyScheduleCalendarInfo info) {
+        return new MyScheduleResponse(
                 info.scheduleId(),
                 info.name(),
                 info.startsAt(),

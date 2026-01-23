@@ -2,7 +2,7 @@ package com.umc.product.schedule.application.service.query;
 
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
-import com.umc.product.schedule.application.port.in.query.GetMyScheduleCalendarUseCase;
+import com.umc.product.schedule.application.port.in.query.GetMyScheduleUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleDetailUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleListUseCase;
 import com.umc.product.schedule.application.port.in.query.dto.MyScheduleCalendarInfo;
@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ScheduleQueryService implements
         GetScheduleListUseCase,
-        GetMyScheduleCalendarUseCase,
+        GetMyScheduleUseCase,
         GetScheduleDetailUseCase {
 
     private final LoadSchedulePort loadSchedulePort;
@@ -59,7 +59,8 @@ public class ScheduleQueryService implements
 
     // 리스트 형식 나의 일정 조회하기 (커서 페이징)
     @Override
-    public List<MyScheduleCalendarInfo> getMyMonthlyScheduleList(Long memberId, int year, int month, Long cursor, int size) {
+    public List<MyScheduleCalendarInfo> getMyMonthlyScheduleList(Long memberId, int year, int month, Long cursor,
+                                                                 int size) {
         LocalDateTime now = LocalDateTime.now();
 
         YearMonth yearMonth = YearMonth.of(year, month);
