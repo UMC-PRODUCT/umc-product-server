@@ -12,4 +12,6 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
 
     @Query("select count(a) from Application a where a.recruitment.id = :recruitmentId")
     long countByRecruitmentId(@Param("recruitmentId") Long recruitmentId);
+
+    boolean existsByRecruitmentId(Long recruitmentId);
 }

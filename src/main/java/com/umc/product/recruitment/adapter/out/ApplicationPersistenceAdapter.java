@@ -21,4 +21,10 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort {
     public Optional<Application> findById(Long applicationId) {
         return applicationRepository.findById(applicationId);
     }
+
+    @Override
+    public boolean existsByRecruitmentId(Long recruitmentId) {
+        return applicationRepository.existsByRecruitmentId(recruitmentId);
+    }
+
 }

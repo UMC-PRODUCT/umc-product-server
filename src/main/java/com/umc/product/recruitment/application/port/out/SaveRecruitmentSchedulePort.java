@@ -6,4 +6,6 @@ public interface SaveRecruitmentSchedulePort {
     RecruitmentSchedule save(RecruitmentSchedule schedule);
 
     void saveAll(Iterable<RecruitmentSchedule> schedules);
+
+    void deleteAllByRecruitmentId(Long recruitmentId);
 }

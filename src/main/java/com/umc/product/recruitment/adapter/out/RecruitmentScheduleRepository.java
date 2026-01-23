@@ -16,4 +16,6 @@ public interface RecruitmentScheduleRepository extends JpaRepository<Recruitment
             List<Long> recruitmentIds,
             RecruitmentScheduleType type
     );
+
+    void deleteAllByRecruitmentId(Long recruitmentId);
 }

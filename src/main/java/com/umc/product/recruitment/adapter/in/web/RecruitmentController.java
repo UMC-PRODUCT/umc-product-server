@@ -318,7 +318,7 @@ public class RecruitmentController {
             @CurrentMember MemberPrincipal memberPrincipal,
             @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
     ) {
-        DeleteRecruitmentCommand command = new DeleteRecruitmentCommand(memberPrincipal.getMemberId(), recruitmentId);
+        DeleteRecruitmentCommand command = new DeleteRecruitmentCommand(recruitmentId, memberPrincipal.getMemberId());
         deleteRecruitmentUseCase.delete(command);
     }
 

@@ -28,6 +28,7 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruit
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
+import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPartPort;
@@ -72,6 +73,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final LoadRecruitmentSchedulePort loadRecruitmentSchedulePort;
     private final ObjectMapper objectMapper;
     private final LoadFormPort loadFormPort;
+    private final LoadApplicationPort loadApplicationPort;
 
     private Long resolveSchoolId() {
         return 1L;
@@ -161,7 +163,29 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public void delete(DeleteRecruitmentCommand command) {
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
+        // TODO: 권한 검증
+
+        // 우선 application 기준으로 삭제 조건 (기획에 문의)
+        if (loadApplicationPort.existsByRecruitmentId(recruitment.getId())) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_DELETE_FORBIDDEN_HAS_APPLICANTS);
+        }
+
+        Long formId = recruitment.getFormId();
+        Long recruitmentId = recruitment.getId();
+
+        saveRecruitmentPartPort.deleteAllByRecruitmentId(recruitmentId);
+        saveRecruitmentSchedulePort.deleteAllByRecruitmentId(recruitmentId);
+
+        saveRecruitmentPort.deleteById(recruitmentId);
+
+        if (formId != null) {
+            saveFormPort.deleteById(formId);
+        }
     }
 
     @Override

@@ -34,4 +34,9 @@ public class FormPersistenceAdapter implements SaveFormPort, LoadFormPort {
 
         return FormDefinitionInfo.from(form);
     }
+
+    @Override
+    public void deleteById(Long formId) {
+        formJpaRepository.deleteById(formId);
+    }
 }

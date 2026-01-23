@@ -4,4 +4,6 @@ import com.umc.product.survey.domain.Form;
 
 public interface SaveFormPort {
     Form save(Form form);
+
+    void deleteById(Long formId);
 }

@@ -39,5 +39,8 @@ public class RecruitmentSchedulePersistenceAdapter implements SaveRecruitmentSch
                         RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_FOUND));
     }
 
-
+    @Override
+    public void deleteAllByRecruitmentId(Long recruitmentId) {
+        recruitmentScheduleRepository.deleteAllByRecruitmentId(recruitmentId);
+    }
 }
