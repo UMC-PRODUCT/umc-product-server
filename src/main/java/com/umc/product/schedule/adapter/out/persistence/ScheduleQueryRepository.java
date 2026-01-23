@@ -4,6 +4,7 @@ import static com.umc.product.schedule.domain.QAttendanceRecord.attendanceRecord
 import static com.umc.product.schedule.domain.QAttendanceSheet.attendanceSheet;
 import static com.umc.product.schedule.domain.QSchedule.schedule;
 
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.schedule.domain.Schedule;
 import java.time.LocalDateTime;
@@ -30,5 +31,29 @@ public class ScheduleQueryRepository {
                 )
                 .orderBy(schedule.startsAt.asc())
                 .fetch();
+    }
+
+    public List<Schedule> findMySchedulesByMonthWithCursor(
+            Long memberId, LocalDateTime monthStart, LocalDateTime nextMonthStart,
+            Long cursor, int fetchSize
+    ) {
+        return queryFactory
+                .selectDistinct(schedule)
+                .from(attendanceRecord)
+                .join(attendanceSheet).on(attendanceSheet.id.eq(attendanceRecord.attendanceSheetId))
+                .join(schedule).on(schedule.id.eq(attendanceSheet.scheduleId))
+                .where(
+                        attendanceRecord.memberId.eq(memberId),
+                        schedule.startsAt.goe(monthStart),
+                        schedule.startsAt.lt(nextMonthStart),
+                        cursorCondition(cursor)
+                )
+                .orderBy(schedule.startsAt.asc(), schedule.id.asc())
+                .limit(fetchSize)
+                .fetch();
+    }
+
+    private BooleanExpression cursorCondition(Long cursor) {
+        return cursor != null ? schedule.id.gt(cursor) : null;
     }
 }
