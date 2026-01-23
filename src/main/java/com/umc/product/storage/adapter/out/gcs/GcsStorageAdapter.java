@@ -16,9 +16,12 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriComponentsBuilder;
 
 /**
  * GCS + Cloud CDN 기반 스토리지 어댑터
@@ -129,9 +132,6 @@ public class GcsStorageAdapter implements StoragePort {
     /**
      * Cloud CDN Signed URL 생성
      *
-     * <p>Cloud CDN은 URL prefix 또는 개별 URL에 대해 서명을 지원합니다.
-     * 여기서는 개별 URL 서명 방식을 사용합니다.
-     *
      * @see <a href="https://cloud.google.com/cdn/docs/signed-urls">Cloud CDN Signed URLs</a>
      */
     private String generateCdnSignedUrl(String storageKey, long durationMinutes) {
@@ -141,19 +141,41 @@ public class GcsStorageAdapter implements StoragePort {
             // 만료 시간 (Unix timestamp)
             long expirationTime = Instant.now().plusSeconds(durationMinutes * 60).getEpochSecond();
 
+            log.info("durationMinutes: {}", durationMinutes);
+            log.info("calculated expiration: {}", Instant.ofEpochSecond(expirationTime));
+            log.info("current time: {}", Instant.now());
+
             // URL 구성: {CDN_BASE_URL}/{storageKey}
-            String urlToSign = String.format("%s/%s", cdn.baseUrl(), storageKey);
+            String fullUrl = String.format("%s/%s", cdn.baseUrl(), storageKey);
 
-            // Signed URL 포맷: {URL}?Expires={timestamp}&KeyName={keyName}&Signature={signature}
-            String urlWithExpiry = String.format("%s?Expires=%d&KeyName=%s",
-                    urlToSign, expirationTime, cdn.keyName());
+            // GCP Cloud CDN Signed URL 스펙:
+            // 개별 파일의 경우 경로만 서명 (URLPrefix 없이)
 
-            // 서명 생성
-            String signature = signUrl(urlWithExpiry, cdn.privateKey());
+            // 2. 쿼리 파라미터 구성 (서명용)
+            String toSign = UriComponentsBuilder.fromUriString(fullUrl)
+                    .queryParam("Expires", expirationTime)
+                    .queryParam("KeyName", cdn.keyName())
+                    .build(false)  // 인코딩하지 않음 (서명 전)
+                    .toUriString();
 
-            String signedUrl = String.format("%s&Signature=%s", urlWithExpiry, signature);
+            // 3. 서명 생성
+            String signature = signUrl(toSign, cdn.privateKey());
 
-            log.debug("CDN Signed URL 생성: storageKey={}", storageKey);
+            // 4. 최종 URL 구성
+            String signedUrl = UriComponentsBuilder.fromUriString(fullUrl)
+                    .queryParam("Expires", expirationTime)
+                    .queryParam("KeyName", cdn.keyName())
+                    .queryParam("Signature", signature)
+                    .build(false)  // 인코딩하지 않음 (이미 URL-safe Base64)
+                    .toUriString();
+
+            log.info("CDN Signed URL 생성 완료");
+            log.info("  Full URL: {}", fullUrl);
+            log.info("  Expires: {} ({})", expirationTime, Instant.ofEpochSecond(expirationTime));
+            log.info("  KeyName: {}", cdn.keyName());
+            log.info("  To Sign: {}", toSign);
+            log.info("  Signature: {}", signature);
+            log.info("  Final URL: {}", signedUrl);
 
             return signedUrl;
         } catch (Exception e) {
@@ -168,16 +190,34 @@ public class GcsStorageAdapter implements StoragePort {
      * <p>HMAC-SHA1을 사용하여 URL에 서명합니다.
      */
     private String signUrl(String urlToSign, String privateKey) throws Exception {
-        byte[] decodedKey = Base64.getDecoder().decode(privateKey.trim());
+        // URL-safe Base64 디코딩 (하이픈, 언더스코어 포함)
+        byte[] decodedKey = decodeBase64Key(privateKey.trim());
 
         // HMAC-SHA1 서명
-        javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA1");
-        javax.crypto.spec.SecretKeySpec secretKeySpec = new javax.crypto.spec.SecretKeySpec(decodedKey, "HmacSHA1");
+        final String algorithm = "HmacSHA1";
+
+        Mac mac = Mac.getInstance(algorithm);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(decodedKey, algorithm);
         mac.init(secretKeySpec);
 
         byte[] signatureBytes = mac.doFinal(urlToSign.getBytes(StandardCharsets.UTF_8));
 
         // URL-safe Base64 인코딩
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(signatureBytes);
+        return Base64.getUrlEncoder().encodeToString(signatureBytes);
+    }
+
+    /**
+     * Base64 키를 디코딩합니다.
+     *
+     * <p>URL-safe Base64(-, _) 우선 시도 후, 실패 시 표준 Base64(+, /) 시도
+     */
+    private byte[] decodeBase64Key(String key) {
+        try {
+            // URL-safe Base64 시도 (GCP 권장 형식)
+            return Base64.getUrlDecoder().decode(key);
+        } catch (IllegalArgumentException e) {
+            // 표준 Base64로 fallback
+            return Base64.getDecoder().decode(key);
+        }
     }
 }
