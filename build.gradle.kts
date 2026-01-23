@@ -99,9 +99,10 @@ dependencies {
     // SQL 출력용 P6Spy
     implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.10.0")
 
-    // --- AWS & Cloud (필요 시 주석 해제) ---
+    // --- Cloud Service ---
     implementation(platform("software.amazon.awssdk:bom:${awsVersion}"))
     implementation("software.amazon.awssdk:s3")
+    implementation("com.google.cloud:google-cloud-storage")
 
     // --- Email ---
     implementation("org.springframework.boot:spring-boot-starter-mail")
@@ -115,7 +116,6 @@ dependencies {
     implementation("io.micrometer:micrometer-tracing-bridge-otel") // OpenTelemetry 연동
     implementation("io.opentelemetry:opentelemetry-exporter-otlp") // OTLP Exporter
     implementation("io.micrometer:context-propagation") // 비동기 작업에서 context를 잃어버리지 않도록 함
-
 
     // Firebase Admin SDK
     implementation("com.google.firebase:firebase-admin:9.2.0")
