@@ -116,11 +116,12 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         schedule.update(
                 command.name(),
                 command.description(),
-                command.scheduleType(),
+                command.tags(),
                 command.startsAt(),
                 command.endsAt(),
                 command.isAllDay(),
-                command.locationName()
+                command.locationName(),
+                command.location()
         );
 
         saveSchedulePort.save(schedule);

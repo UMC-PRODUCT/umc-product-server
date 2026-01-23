@@ -1,15 +1,15 @@
 package com.umc.product.schedule.application.port.in.query.dto;
 
 import com.umc.product.schedule.domain.Schedule;
-import com.umc.product.schedule.domain.enums.ScheduleType;
 import com.umc.product.schedule.domain.vo.AttendanceStats;
 import java.time.LocalDateTime;
 
+// TODO : 주석 처리 부분 tags 로 변경
 public record ScheduleWithStatsInfo(
         // === Schedule Info ===
         Long scheduleId,
         String name,
-        ScheduleType type,
+//        ScheduleType type,
         String status,
         LocalDateTime startsAt,
         LocalDateTime endsAt,
@@ -27,7 +27,7 @@ public record ScheduleWithStatsInfo(
         return new ScheduleWithStatsInfo(
                 schedule.getId(),
                 schedule.getName(),
-                schedule.getType(),
+//                schedule.getType(),
                 schedule.resolveStatus(now),
                 schedule.getStartsAt(),
                 schedule.getEndsAt(),

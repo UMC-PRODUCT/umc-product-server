@@ -15,6 +15,7 @@ import com.umc.product.schedule.application.port.in.query.dto.ScheduleWithStatsI
 import java.util.List;
 import org.springframework.stereotype.Component;
 
+// TODO : 주석 처리 부분 tags 로 변경
 @Component
 public class ScheduleWebMapper {
 
@@ -23,7 +24,7 @@ public class ScheduleWebMapper {
         return new ScheduleListResponse(
                 info.scheduleId(),
                 info.name(),
-                info.type().name(),
+//                info.type().name(),
                 info.status(),
                 info.startsAt(),
                 info.startsAt(),
@@ -69,7 +70,7 @@ public class ScheduleWebMapper {
         return new AvailableAttendanceResponse(
                 info.scheduleId(),
                 info.scheduleName(),
-                info.scheduleType().name(),
+//                info.scheduleType().name(),
                 info.startTime(),
                 info.endTime(),
                 info.sheetId(),
