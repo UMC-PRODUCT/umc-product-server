@@ -112,8 +112,10 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus")
 
     // --- Sentry ---
-    implementation("io.sentry:sentry-spring-boot-starter-jakarta:7.22.0")
-    implementation("io.sentry:sentry-logback:7.22.0")
+    implementation(platform("io.sentry:sentry-bom:8.31.0"))
+    implementation("io.sentry:sentry-spring-boot-starter-jakarta")
+    implementation("io.sentry:sentry-logback")
+    implementation("io.sentry:sentry-core")
 
     // --- Tracing ---
     implementation("io.micrometer:micrometer-observation") // 관측 기능: metrics + tracing
