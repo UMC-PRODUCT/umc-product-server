@@ -19,6 +19,7 @@ import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -249,6 +250,26 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
                 .satisfies(exception -> {
                     BusinessException be = (BusinessException) exception;
                     assertThat(be.getCode()).isEqualTo(ScheduleErrorCode.SCHEDULE_NOT_FOUND);
+                });
+    }
+
+    @Test
+    void 태그를_빈_리스트로_수정하려_하면_예외가_발생한다() {
+        // given
+        Schedule schedule = saveSchedulePort.save(createSchedule(authorChallenger.getId()));
+
+        UpdateScheduleCommand command = UpdateScheduleCommand.of(
+                schedule.getId(),
+                null, null, null, null, null, null, null,
+                Collections.emptySet() // 빈 태그 리스트 전달
+        );
+
+        // when & then
+        assertThatThrownBy(() -> updateScheduleUseCase.update(command))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> {
+                    BusinessException be = (BusinessException) exception;
+                    assertThat(be.getCode()).isEqualTo(ScheduleErrorCode.TAG_REQUIRED);
                 });
     }
 
