@@ -5,6 +5,7 @@ import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
+import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormQuestionUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.PublishRecruitmentUseCase;
@@ -17,6 +18,7 @@ import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetRe
 import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormQuestionCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormResponseCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.PublishRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.PublishRecruitmentInfo;
@@ -41,7 +43,10 @@ import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
 import com.umc.product.survey.application.port.out.LoadFormPort;
+import com.umc.product.survey.application.port.out.LoadQuestionPort;
 import com.umc.product.survey.application.port.out.SaveFormPort;
+import com.umc.product.survey.application.port.out.SaveQuestionOptionPort;
+import com.umc.product.survey.application.port.out.SaveQuestionPort;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
@@ -63,7 +68,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         DeleteRecruitmentUseCase,
         UpdateRecruitmentDraftUseCase,
         UpsertRecruitmentFormQuestionsUseCase,
-        PublishRecruitmentUseCase {
+        PublishRecruitmentUseCase,
+        DeleteRecruitmentFormQuestionUseCase {
 
     private final SaveFormPort saveFormPort;
     private final SaveRecruitmentPort saveRecruitmentPort;
@@ -74,6 +80,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final ObjectMapper objectMapper;
     private final LoadFormPort loadFormPort;
     private final LoadApplicationPort loadApplicationPort;
+    private final SaveQuestionPort saveQuestionPort;
+    private final LoadQuestionPort loadQuestionPort;
+    private final SaveQuestionOptionPort saveQuestionOptionPort;
 
     private Long resolveSchoolId() {
         return 1L;
@@ -448,4 +457,33 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
         }
     }
+
+    @Override
+    public RecruitmentApplicationFormInfo delete(DeleteRecruitmentFormQuestionCommand command) {
+
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        // TODO: 권한 검증
+
+        Long formId = recruitment.getFormId();
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
+
+        Long questionId = command.questionId();
+
+        boolean owned = loadQuestionPort.existsByIdAndFormId(questionId, formId);
+        if (!owned) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    SurveyErrorCode.QUESTION_NOT_FOUND);
+        }
+
+        saveQuestionOptionPort.deleteAllByQuestionId(questionId);
+        saveQuestionPort.deleteById(questionId);
+
+        return loadRecruitmentPort.findApplicationFormInfoById(command.recruitmentId());
+    }
+
 }
