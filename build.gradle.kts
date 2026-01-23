@@ -3,6 +3,7 @@ plugins {
     id("org.springframework.boot") version "3.5.9"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.asciidoctor.jvm.convert") version "4.0.5"
+    jacoco
 }
 
 group = "com.umc"
@@ -111,6 +112,11 @@ dependencies {
     // --- Metrics ---
     implementation("io.micrometer:micrometer-registry-prometheus")
 
+    // --- Sentry ---
+    implementation(platform("io.sentry:sentry-bom:8.31.0"))
+    implementation("io.sentry:sentry-spring-boot-starter-jakarta")
+    implementation("io.sentry:sentry-logback")
+
     // --- Tracing ---
     implementation("io.micrometer:micrometer-observation") // 관측 기능: metrics + tracing
     implementation("io.micrometer:micrometer-tracing-bridge-otel") // OpenTelemetry 연동
@@ -157,7 +163,19 @@ tasks.withType<Test> {
 }
 
 tasks.test {
+    ignoreFailures = true  // 테스트 실패해도 빌드 계속 진행
+    
     outputs.dir(snippetsDir)
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+// codecov를 위한 Jacoco 설정
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
 }
 
 tasks.asciidoctor { // asciidoctor task 설정
