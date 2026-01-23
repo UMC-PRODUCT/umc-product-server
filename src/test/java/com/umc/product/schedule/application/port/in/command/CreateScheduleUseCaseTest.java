@@ -22,16 +22,13 @@ import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
+import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,7 +87,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 LocalDateTime.of(2024, 3, 16, 12, 0),
                 false,
                 "강남역 스터디룸",
-                createPoint(37.4979, 127.0276),
+                GeometryUtils.createPoint(37.4979, 127.0276),
                 "OT입니다",
                 List.of(),
                 Set.of(ScheduleTag.ORIENTATION),
@@ -158,7 +155,7 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 LocalDateTime.of(2024, 3, 16, 12, 0),
                 true,
                 "컨퍼런스홀",
-                createPoint(37.1234, 127.1234),
+                GeometryUtils.createPoint(37.1234, 127.1234),
                 "종일 진행",
                 List.of(),
                 Set.of(ScheduleTag.WORKSHOP),
@@ -260,8 +257,4 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 .willReturn(mockInfo);
     }
 
-    private Point createPoint(double latitude, double longitude) {
-        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
-        return geometryFactory.createPoint(new Coordinate(longitude, latitude));
-    }
 }

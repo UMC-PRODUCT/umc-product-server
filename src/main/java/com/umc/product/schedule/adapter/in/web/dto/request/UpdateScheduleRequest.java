@@ -1,5 +1,6 @@
 package com.umc.product.schedule.adapter.in.web.dto.request;
 
+import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -8,10 +9,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.Set;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.PrecisionModel;
 
 @Schema(description = "일정 수정 요청 (변경할 필드만 보내주세요)")
 public record UpdateScheduleRequest(
@@ -49,7 +46,6 @@ public record UpdateScheduleRequest(
         Set<ScheduleTag> tags
 ) {
     public UpdateScheduleCommand toCommand(Long scheduleId) {
-        Point point = createPoint(latitude, longitude);
         return UpdateScheduleCommand.of(
                 scheduleId,
                 name,
@@ -57,18 +53,9 @@ public record UpdateScheduleRequest(
                 endsAt,
                 isAllDay,
                 locationName,
-                point,
+                GeometryUtils.createPoint(latitude, longitude),
                 description,
                 tags
         );
-    }
-
-    // 좌표 변환 헬퍼 메서드
-    private Point createPoint(Double lat, Double lon) {
-        if (lat == null || lon == null) {
-            return null;
-        }
-        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
-        return geometryFactory.createPoint(new Coordinate(lon, lat));
     }
 }

@@ -17,6 +17,7 @@ import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
+import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,10 +25,6 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -201,7 +198,7 @@ public class ScheduleQueryUseCaseTest extends UseCaseTestSupport {
                     .endsAt(LocalDateTime.of(2030, 5, 20, 16, 0))
                     .isAllDay(false)
                     .locationName("강남역 스터디룸")
-                    .location(createPoint(37.4979, 127.0276))
+                    .location(GeometryUtils.createPoint(37.4979, 127.0276))
                     .build());
 
             // when
@@ -458,8 +455,4 @@ public class ScheduleQueryUseCaseTest extends UseCaseTestSupport {
                 .build();
     }
 
-    private Point createPoint(double latitude, double longitude) {
-        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
-        return geometryFactory.createPoint(new Coordinate(longitude, latitude));
-    }
 }

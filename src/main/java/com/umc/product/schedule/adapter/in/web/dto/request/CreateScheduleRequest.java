@@ -1,5 +1,6 @@
 package com.umc.product.schedule.adapter.in.web.dto.request;
 
+import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -10,10 +11,6 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Point;
-import org.locationtech.jts.geom.PrecisionModel;
 
 @Schema(description = "일정 생성 요청")
 public record CreateScheduleRequest(
@@ -55,28 +52,17 @@ public record CreateScheduleRequest(
         Set<ScheduleTag> tags
 ) {
     public CreateScheduleCommand toCommand(Long authorMemberId) {
-        Point point = createPoint(latitude, longitude);
-
         return CreateScheduleCommand.of(
                 name,
                 startsAt,
                 endsAt,
                 isAllDay,
                 locationName,
-                point,
+                GeometryUtils.createPoint(latitude, longitude),
                 description,
                 participantMemberIds,
                 tags,
                 authorMemberId
         );
-    }
-
-    // 좌표 변환 헬퍼 메서드
-    private Point createPoint(Double lat, Double lon) {
-        if (lat == null || lon == null) {
-            return null;
-        }
-        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
-        return geometryFactory.createPoint(new Coordinate(lon, lat));
     }
 }
