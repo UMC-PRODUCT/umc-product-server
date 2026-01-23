@@ -1,7 +1,7 @@
 package com.umc.product.terms.application.service.command;
 
 import com.umc.product.terms.application.port.in.command.ManageTermsAgreementUseCase;
-import com.umc.product.terms.application.port.in.command.dto.ChangeTermAgreementCommand;
+import com.umc.product.terms.application.port.in.command.dto.CreateTermConsentCommand;
 import com.umc.product.terms.application.port.out.LoadTermsConsentPort;
 import com.umc.product.terms.application.port.out.LoadTermsPort;
 import com.umc.product.terms.application.port.out.SaveTermsConsentPort;
@@ -24,7 +24,7 @@ public class TermsAgreementCommandService implements ManageTermsAgreementUseCase
     private final SaveTermsConsentPort saveTermsConsentPort;
 
     @Override
-    public void changeTermAgreement(ChangeTermAgreementCommand command) {
+    public void createTermConsent(CreateTermConsentCommand command) {
         // 약관 존재 확인
         Terms terms = loadTermsPort.findById(command.termId())
                 .orElseThrow(() -> new TermsDomainException(TermsErrorCode.TERMS_NOT_FOUND));

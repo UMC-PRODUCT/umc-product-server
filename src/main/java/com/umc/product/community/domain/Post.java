@@ -39,8 +39,8 @@ public class Post {
     @Getter
     private final boolean liked;
 
-    public static Post createpostIds(String title, String content, Category category, String region,
-                                     boolean anonymous) {
+    public static Post createPost(String title, String content, Category category, String region,
+                                   boolean anonymous) {
         if (category == Category.LIGHTNING) {
             throw new IllegalArgumentException("번개 게시글은 createLightning()을 사용하세요");
         }

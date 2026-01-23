@@ -1,5 +1,6 @@
 package com.umc.product.community.domain;
 
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -14,15 +15,17 @@ public class Comment {
     private String content;
     private final int likeCount;
     private final boolean liked;
+    private final Instant createdAt;
 
     public static Comment create(Long postId, Long challengerId, String content, Long parentId) {
         validateRequired(postId, challengerId, content);
-        return new Comment(null, postId, challengerId, content, 0, false);
+        return new Comment(null, postId, challengerId, content, 0, false, null);
     }
 
     public static Comment reconstruct(CommentId commentId, Long postId, Long challengerId,
-                                      String content, Long parentId, int likeCount, boolean liked) {
-        return new Comment(commentId, postId, challengerId, content, likeCount, liked);
+                                      String content, Long parentId, int likeCount, boolean liked,
+                                      Instant createdAt) {
+        return new Comment(commentId, postId, challengerId, content, likeCount, liked, createdAt);
     }
 
     public void updateContent(String content) {

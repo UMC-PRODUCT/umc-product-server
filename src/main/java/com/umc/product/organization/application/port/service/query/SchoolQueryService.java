@@ -2,9 +2,11 @@ package com.umc.product.organization.application.port.service.query;
 
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolLinkInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
+import com.umc.product.organization.domain.School;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,5 +28,14 @@ public class SchoolQueryService implements GetSchoolUseCase {
     @Override
     public SchoolInfo getSchoolDetail(Long schoolId) {
         return null;
+    }
+
+    @Override
+    public SchoolLinkInfo getSchoolLink(Long schoolId) {
+
+        School school = loadSchoolPort.findById(schoolId);
+
+        return SchoolLinkInfo.from(school);
+
     }
 }

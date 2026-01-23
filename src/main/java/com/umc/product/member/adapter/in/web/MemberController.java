@@ -1,5 +1,6 @@
 package com.umc.product.member.adapter.in.web;
 
+import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -13,6 +14,7 @@ import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class MemberController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final ManageMemberUseCase manageMemberUseCase;
+    private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
 
     // 로그인은 OAuth를 통해서만 진행됨!!
     @Public
@@ -58,6 +61,7 @@ public class MemberController {
                 .email(email)
                 .schoolId(request.schoolId())
                 .profileImageId(request.profileImageId())
+                .termConsents(request.termsAgreements().stream().map(TermConsents::fromRequest).toList())
                 .build();
 
         // TODO: 약관 동의 처리 해야함

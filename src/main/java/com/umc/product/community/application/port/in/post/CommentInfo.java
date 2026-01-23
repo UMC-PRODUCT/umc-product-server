@@ -1,7 +1,7 @@
 package com.umc.product.community.application.port.in.post;
 
 import com.umc.product.community.domain.Comment;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record CommentInfo(
         Long commentId,
@@ -9,9 +9,9 @@ public record CommentInfo(
         Long challengerId,
         String challengerName,
         String content,
-        LocalDateTime createdAt
+        Instant createdAt
 ) {
-    public static CommentInfo from(Comment comment, String challengerName, LocalDateTime createdAt) {
+    public static CommentInfo from(Comment comment, String challengerName) {
         Long id = comment.getCommentId() != null ? comment.getCommentId().id() : null;
         return new CommentInfo(
                 id,
@@ -19,7 +19,7 @@ public record CommentInfo(
                 comment.getChallengerId(),
                 challengerName,
                 comment.getContent(),
-                createdAt
+                comment.getCreatedAt()
         );
     }
 }
