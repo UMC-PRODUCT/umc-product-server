@@ -4,6 +4,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.List;
 
 public record CreateRecruitmentCommand(
+        Long memberId,
         String recruitmentName,
         List<ChallengerPart> parts
 ) {

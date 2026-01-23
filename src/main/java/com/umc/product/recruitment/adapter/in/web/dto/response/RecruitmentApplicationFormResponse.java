@@ -32,7 +32,10 @@ public record RecruitmentApplicationFormResponse(
                 info.noticeTitle(),
                 info.noticeContent(),
                 def.sections().stream()
-                        .sorted(Comparator.comparingInt(FormDefinitionInfo.FormSectionInfo::orderNo))
+                        .sorted(Comparator.comparing(
+                                FormDefinitionInfo.FormSectionInfo::orderNo,
+                                Comparator.nullsLast(Integer::compareTo)
+                        ))
                         .map(FormPageResponse::from)
                         .toList()
         );
@@ -42,14 +45,17 @@ public record RecruitmentApplicationFormResponse(
      * page (UI) == section.orderNo (백엔드)
      */
     public record FormPageResponse(
-            int page,
+            Integer page,
             List<QuestionResponse> questions,
             ScheduleQuestionResponse scheduleQuestion,
             List<PartQuestionGroupResponse> partQuestions
     ) {
         public static FormPageResponse from(FormDefinitionInfo.FormSectionInfo section) {
             List<QuestionResponse> ordered = section.questions().stream()
-                    .sorted(Comparator.comparingInt(FormDefinitionInfo.QuestionInfo::orderNo))
+                    .sorted(Comparator.comparing(
+                            FormDefinitionInfo.QuestionInfo::orderNo,
+                            Comparator.nullsLast(Integer::compareTo)
+                    ))
                     .map(QuestionResponse::from)
                     .toList();
 
@@ -65,8 +71,10 @@ public record RecruitmentApplicationFormResponse(
                     .filter(q -> q.type != QuestionType.SCHEDULE)
                     .toList();
 
+            int page = section.orderNo() == null ? -1 : section.orderNo(); // 임시로 part면 orderNo 안내려주는 방식으로 구현
+
             return new FormPageResponse(
-                    section.orderNo(),
+                    page,
                     normalQuestions,
                     schedule,
                     null // partQuestions: 실 구현 시 추가
@@ -85,7 +93,10 @@ public record RecruitmentApplicationFormResponse(
             List<OptionResponse> opts = (q.options() == null || q.options().isEmpty())
                     ? null
                     : q.options().stream()
-                            .sorted(Comparator.comparingInt(FormDefinitionInfo.QuestionOptionInfo::orderNo))
+                            .sorted(Comparator.comparing(
+                                    FormDefinitionInfo.QuestionOptionInfo::orderNo,
+                                    Comparator.nullsLast(Integer::compareTo)
+                            ))
                             .map(OptionResponse::from)
                             .toList();
 
