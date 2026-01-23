@@ -57,6 +57,29 @@ public class ScheduleQueryService implements
                 .toList();
     }
 
+    // 리스트 형식 나의 일정 조회하기 (커서 페이징)
+    @Override
+    public List<MyScheduleCalendarInfo> getMyMonthlyScheduleList(Long memberId, int year, int month, Long cursor, int size) {
+        LocalDateTime now = LocalDateTime.now();
+
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDateTime monthStart = yearMonth.atDay(1).atStartOfDay();
+        LocalDateTime nextMonthStart = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
+
+        List<Schedule> schedules = loadSchedulePort.findMySchedulesByMonthWithCursor(
+                memberId, monthStart, nextMonthStart, cursor, size + 1);
+
+        return schedules.stream()
+                .map(s -> MyScheduleCalendarInfo.of(
+                        s.getId(),
+                        s.getName(),
+                        s.getStartsAt(),
+                        s.getEndsAt(),
+                        now
+                ))
+                .toList();
+    }
+
     @Override
     public ScheduleDetailInfo getScheduleDetail(Long scheduleId) {
         LocalDateTime now = LocalDateTime.now();
