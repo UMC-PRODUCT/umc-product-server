@@ -122,6 +122,9 @@ public class Schedule extends BaseEntity {
             this.description = description;
         }
         if (tags != null) {
+            if (tags.isEmpty()) {
+                throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.TAG_REQUIRED);
+            }
             this.tags.clear();
             this.tags.addAll(tags);
         }

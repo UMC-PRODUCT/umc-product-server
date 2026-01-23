@@ -6,7 +6,7 @@ import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -41,8 +41,8 @@ public record UpdateScheduleRequest(
         @Schema(description = "메모/설명")
         String description,
 
-        @Schema(description = "태그 목록", example = "[\"STUDY\", \"PROJECT\"]")
-        @NotNull(message = "태그는 필수입니다")
+        @Schema(description = "태그 목록 (null이면 기존 태그 유지)", example = "[\"STUDY\", \"PROJECT\"]")
+        @Size(min = 1, message = "태그를 수정하려면 최소 1개 이상 선택해야 합니다")
         Set<ScheduleTag> tags
 ) {
     public UpdateScheduleCommand toCommand(Long scheduleId) {

@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +50,7 @@ public record CreateScheduleRequest(
 
         @Schema(description = "태그 목록", example = "[\"STUDY\", \"PROJECT\"]")
         @NotNull(message = "태그는 필수입니다")
+        @Size(min = 1, message = "최소 1개 이상의 태그를 선택해야 합니다")
         Set<ScheduleTag> tags
 ) {
     public CreateScheduleCommand toCommand(Long authorMemberId) {
