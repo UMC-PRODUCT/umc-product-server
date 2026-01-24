@@ -35,6 +35,7 @@ import com.umc.product.recruitment.application.port.in.command.DeleteRecruitment
 import com.umc.product.recruitment.application.port.in.command.PublishRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentDraftUseCase;
+import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentInterviewPreferenceUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormQuestionsUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormResponseAnswersUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
@@ -48,6 +49,8 @@ import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDr
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentDraftCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentInterviewPreferenceCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentInterviewPreferenceInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyApplicationListUseCase;
@@ -82,7 +85,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -120,6 +122,7 @@ public class RecruitmentController {
     private final GetRecruitmentDetailUseCase getRecruitmentDetailUseCase;
     private final GetRecruitmentPartListUseCase getRecruitmentPartListUseCase;
     private final DeleteRecruitmentFormQuestionUseCase deleteRecruitmentFormQuestionUseCase;
+    private final UpdateRecruitmentInterviewPreferenceUseCase updateRecruitmentInterviewPreferenceUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "사용자 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반)")
@@ -209,7 +212,6 @@ public class RecruitmentController {
         return UpsertRecruitmentFormResponseAnswersResponse.from(result);
     }
 
-    // todo: 추후 "평가하기" 설계하면서 엔티티 등 추가 예정이라, 관련 작업 시에 usecase 넣기
     @PatchMapping("/{recruitmentId}/applications/{formResponseId}/interview-preference")
     @Operation(
             summary = "면접 시간 선호 임시저장",
@@ -218,13 +220,21 @@ public class RecruitmentController {
                     """
     )
     public UpdateRecruitmentInterviewPreferenceResponse updateInterviewPreference(
+            @CurrentMember MemberPrincipal memberPrincipal,
             @Parameter(description = "모집 ID") @PathVariable Long recruitmentId,
             @Parameter(description = "폼 응답 ID") @PathVariable Long formResponseId,
             @Valid @RequestBody UpdateRecruitmentInterviewPreferenceRequest request
     ) {
-        Map<String, Object> saved = request.value();
+        UpdateRecruitmentInterviewPreferenceInfo info = updateRecruitmentInterviewPreferenceUseCase.update(
+                new UpdateRecruitmentInterviewPreferenceCommand(
+                        memberPrincipal.getMemberId(),
+                        recruitmentId,
+                        formResponseId,
+                        request.value()
+                )
+        );
 
-        return UpdateRecruitmentInterviewPreferenceResponse.of(formResponseId, saved);
+        return UpdateRecruitmentInterviewPreferenceResponse.of(info.formResponseId(), info.value());
     }
 
     @DeleteMapping("/{recruitmentId}/applications/{formResponseId}")

@@ -11,6 +11,7 @@ import com.umc.product.recruitment.application.port.in.command.DeleteRecruitment
 import com.umc.product.recruitment.application.port.in.command.PublishRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentDraftUseCase;
+import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentInterviewPreferenceUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormQuestionsUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormResponseAnswersUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
@@ -26,6 +27,8 @@ import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDr
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentDraftCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentInterviewPreferenceCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentInterviewPreferenceInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormQuestionsCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
@@ -54,6 +57,7 @@ import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.SingleAnswer;
+import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -75,7 +79,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         UpdateRecruitmentDraftUseCase,
         UpsertRecruitmentFormQuestionsUseCase,
         PublishRecruitmentUseCase,
-        DeleteRecruitmentFormQuestionUseCase {
+        DeleteRecruitmentFormQuestionUseCase,
+        UpdateRecruitmentInterviewPreferenceUseCase {
 
     private final SaveFormPort saveFormPort;
     private final SaveRecruitmentPort saveRecruitmentPort;
@@ -643,5 +648,49 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         formResponse.getAnswers().add(
                 SingleAnswer.create(formResponse, question, answeredAsType, safeValue)
         );
+    }
+
+    @Override
+    public UpdateRecruitmentInterviewPreferenceInfo update(UpdateRecruitmentInterviewPreferenceCommand command) {
+
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        if (!recruitment.isPublished()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
+        }
+
+        Long formId = recruitment.getFormId();
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
+
+        FormResponse formResponse = loadFormResponsePort.findById(command.formResponseId())
+                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+
+        if (!formResponse.getForm().getId().equals(formId)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
+        }
+
+        if (command.memberId() != null && !command.memberId().equals(formResponse.getRespondentMemberId())) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_FORBIDDEN);
+        }
+
+        Question scheduleQuestion = loadQuestionPort.findFirstByFormIdAndType(formId, QuestionType.SCHEDULE)
+                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
+
+        Map<String, Object> safeValue = (command.value() == null) ? Map.of() : command.value();
+
+        upsertSingleAnswer(
+                formResponse,
+                scheduleQuestion,
+                QuestionType.SCHEDULE,
+                safeValue
+        );
+
+        saveFormResponsePort.save(formResponse);
+
+        return UpdateRecruitmentInterviewPreferenceInfo.of(command.formResponseId(), safeValue);
     }
 }
