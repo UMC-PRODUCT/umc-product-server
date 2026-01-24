@@ -45,4 +45,12 @@ public interface LoadAttendanceSheetPort {
      * @return 활성 출석부 목록
      */
     List<AttendanceSheet> findActiveSheets();
+
+    /**
+     * ID 목록으로 출석부 일괄 조회
+     *
+     * @param ids 출석부 ID 목록
+     * @return 출석부 목록
+     */
+    List<AttendanceSheet> findAllByIds(List<Long> ids);
 }

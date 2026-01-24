@@ -35,26 +35,22 @@ public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseC
             return List.of();
         }
 
-        // 출석부 ID 목록 추출 및 조회
+        // 출석부 ID 목록 추출 및 일괄 조회
         List<Long> sheetIds = records.stream()
                 .map(AttendanceRecord::getAttendanceSheetId)
                 .distinct()
                 .toList();
 
-        Map<Long, AttendanceSheet> sheetByIdMap = sheetIds.stream()
-                .map(id -> loadAttendanceSheetPort.findById(id).orElse(null))
-                .filter(Objects::nonNull)
+        Map<Long, AttendanceSheet> sheetByIdMap = loadAttendanceSheetPort.findAllByIds(sheetIds).stream()
                 .collect(Collectors.toMap(AttendanceSheet::getId, Function.identity()));
 
-        // 일정 ID 목록 추출 및 조회
+        // 일정 ID 목록 추출 및 일괄 조회
         List<Long> scheduleIds = sheetByIdMap.values().stream()
                 .map(AttendanceSheet::getScheduleId)
                 .distinct()
                 .toList();
 
-        Map<Long, Schedule> scheduleMap = scheduleIds.stream()
-                .map(id -> loadSchedulePort.findById(id).orElse(null))
-                .filter(Objects::nonNull)
+        Map<Long, Schedule> scheduleMap = loadSchedulePort.findAllByIds(scheduleIds).stream()
                 .collect(Collectors.toMap(Schedule::getId, Function.identity()));
 
         // 결과 생성 (최신순 정렬)

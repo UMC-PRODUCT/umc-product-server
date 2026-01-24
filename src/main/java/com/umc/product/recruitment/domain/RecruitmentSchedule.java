@@ -33,12 +33,33 @@ public class RecruitmentSchedule {
     @Column(nullable = false)
     private RecruitmentScheduleType type;
 
-    @Column(name = "starts_at", nullable = false)
+    @Column(name = "starts_at")
     private Instant startsAt;
 
     @Column(name = "ends_at")
     private Instant endsAt;
 
     @Column
-    private String note;
+    private String note; // 표시용 문구. 추후 UI 보고 필요 없다 판단되면 삭제
+
+    public static RecruitmentSchedule createDraft(Long recruitmentId, RecruitmentScheduleType type) {
+        return RecruitmentSchedule.builder()
+                .recruitmentId(recruitmentId)
+                .type(type)
+                .startsAt(null)
+                .endsAt(null)
+                .note(null)
+                .build();
+    }
+
+    public void changePeriod(Instant startsAt, Instant endsAt) {
+        if (startsAt != null) {
+            this.startsAt = startsAt;
+        }
+        if (endsAt != null) {
+            this.endsAt = endsAt;
+        }
+    }
+
+
 }

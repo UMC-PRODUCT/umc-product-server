@@ -64,7 +64,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
                         () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
 
         // 승인 처리
-        record.approve();
+        record.approve(confirmerId);
 
         // 저장
         saveAttendanceRecordPort.save(record);
@@ -78,7 +78,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
                         () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
 
         // 반려 처리
-        record.reject();
+        record.reject(confirmerId);
 
         // 저장
         saveAttendanceRecordPort.save(record);

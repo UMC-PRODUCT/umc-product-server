@@ -1,6 +1,7 @@
 package com.umc.product.recruitment.application.port.in.command.dto;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.recruitment.domain.Recruitment;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -52,5 +53,24 @@ public record RecruitmentDraftInfo(
             LocalDate date,
             List<LocalTime> times
     ) {
+    }
+
+    public static RecruitmentDraftInfo from(
+            Recruitment recruitment,
+            List<ChallengerPart> parts,
+            ScheduleInfo schedule
+    ) {
+        return new RecruitmentDraftInfo(
+                recruitment.getId(),
+                recruitment.getStatus().name(),
+                recruitment.getFormId(),
+                recruitment.getTitle(),
+                parts,
+                recruitment.getMaxPreferredPartCount(),
+                schedule,
+                recruitment.getNoticeContent(),
+                recruitment.getCreatedAt(),
+                recruitment.getUpdatedAt()
+        );
     }
 }

@@ -1,8 +1,10 @@
 package com.umc.product.schedule.application.port.in.command.dto;
 
-import com.umc.product.schedule.domain.enums.ScheduleType;
+import com.umc.product.schedule.domain.enums.ScheduleTag;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.Set;
+import org.locationtech.jts.geom.Point;
 
 /**
  * 일정 수정 Command
@@ -14,8 +16,9 @@ public record UpdateScheduleCommand(
         LocalDateTime endsAt,
         Boolean isAllDay,
         String locationName,
+        Point location,
         String description,
-        ScheduleType scheduleType
+        Set<ScheduleTag> tags
 ) {
     public UpdateScheduleCommand {
         Objects.requireNonNull(scheduleId, "scheduleId must not be null");
@@ -32,8 +35,9 @@ public record UpdateScheduleCommand(
             LocalDateTime endsAt,
             Boolean isAllDay,
             String locationName,
+            Point location,
             String description,
-            ScheduleType scheduleType
+            Set<ScheduleTag> tags
     ) {
         return new UpdateScheduleCommand(
                 scheduleId,
@@ -42,8 +46,9 @@ public record UpdateScheduleCommand(
                 endsAt,
                 isAllDay,
                 locationName,
+                location,
                 description,
-                scheduleType
+                tags
         );
     }
 }

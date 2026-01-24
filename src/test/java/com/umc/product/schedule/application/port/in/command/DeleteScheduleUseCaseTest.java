@@ -21,12 +21,13 @@ import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import com.umc.product.schedule.domain.enums.ScheduleType;
+import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -137,7 +138,7 @@ class DeleteScheduleUseCaseTest extends UseCaseTestSupport {
                 .isAllDay(false)
                 .locationName("테스트 장소")
                 .description("테스트 내용")
-                .type(ScheduleType.TEAM_ACTIVITY)
+                .tags(Set.of(ScheduleTag.PROJECT))
                 .authorChallengerId(authorChallengerId)
                 .build();
     }

@@ -1,4 +1,4 @@
-package com.umc.product.recruitment.adapter.in.web.dto.response;
+package com.umc.product.recruitment.application.port.in.query;
 
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDetailQuery;

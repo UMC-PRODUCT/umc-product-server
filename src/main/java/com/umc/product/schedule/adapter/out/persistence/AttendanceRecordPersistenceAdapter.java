@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordPort, LoadAttendanceRecordPort,
         DeleteAttendanceRecordPort {
 
-    private static final List<AttendanceStatus> PENDING_STATUSES = List.of(
+    private static final List<AttendanceStatus> APPROVAL_PENDING_STATUSES = List.of(
             AttendanceStatus.PRESENT_PENDING,
             AttendanceStatus.LATE_PENDING,
             AttendanceStatus.EXCUSED_PENDING
@@ -59,7 +59,7 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
 
     @Override
     public List<AttendanceRecord> findPendingRecordsBySheetId(Long sheetId) {
-        return recordJpaRepository.findByAttendanceSheetIdAndStatusIn(sheetId, PENDING_STATUSES);
+        return recordJpaRepository.findByAttendanceSheetIdAndStatusIn(sheetId, APPROVAL_PENDING_STATUSES);
     }
 
     @Override

@@ -15,14 +15,22 @@ import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCo
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
 import com.umc.product.schedule.domain.Schedule;
-import com.umc.product.schedule.domain.enums.ScheduleType;
+import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Point;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
@@ -61,6 +69,7 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
 
         LocalDateTime newStartsAt = LocalDateTime.now().plusDays(3);
         LocalDateTime newEndsAt = newStartsAt.plusHours(3);
+        Point newLocation = createPoint(30.15474500622856, 31.093201386526953);
 
         UpdateScheduleCommand command = UpdateScheduleCommand.of(
                 schedule.getId(),
@@ -69,8 +78,9 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
                 newEndsAt,
                 false,
                 "수정된 장소",
+                newLocation,
                 "수정된 설명",
-                ScheduleType.EVENT
+                Set.of(ScheduleTag.NETWORKING, ScheduleTag.AFTER_PARTY)
         );
 
         // when
@@ -81,9 +91,11 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         assertThat(updatedSchedule.getName()).isEqualTo("수정된 일정 제목");
         assertThat(updatedSchedule.getLocationName()).isEqualTo("수정된 장소");
         assertThat(updatedSchedule.getDescription()).isEqualTo("수정된 설명");
-        assertThat(updatedSchedule.getType()).isEqualTo(ScheduleType.EVENT);
+        assertThat(updatedSchedule.getTags()).containsExactlyInAnyOrder(ScheduleTag.NETWORKING,
+                ScheduleTag.AFTER_PARTY);
         assertThat(updatedSchedule.getStartsAt()).isEqualTo(newStartsAt);
         assertThat(updatedSchedule.getEndsAt()).isEqualTo(newEndsAt);
+        assertThat(updatedSchedule.getLocation().getY()).isEqualTo(30.15474500622856); // 위도 확인
     }
 
     @Test
@@ -94,7 +106,8 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         // 기존 값 백업 (검증용)
         LocalDateTime originalStart = schedule.getStartsAt();
         LocalDateTime originalEnd = schedule.getEndsAt();
-        String originalLocation = schedule.getLocationName();
+        String originalLocationName = schedule.getLocationName();
+        Double originalLatitude = schedule.getLocation().getY();
 
         // 제목과 설명만 변경하고, 나머지는 null로 요청
         UpdateScheduleCommand command = UpdateScheduleCommand.of(
@@ -104,8 +117,9 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
                 null,             // 변경 안 함
                 null,             // 변경 안 함
                 null,             // 변경 안 함 (기존 장소 유지)
+                null,             // 변경 안 함 (기존 위도, 경도 유지)
                 "부분 수정된 설명", // 변경할 값
-                null              // 변경 안 함 (기존 타입 유지)
+                null              // 변경 안 함 (기존 태그 유지)
         );
 
         // when
@@ -121,8 +135,9 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         // 2. null로 보낸 필드는 기존 값이 유지되어야 함
         assertThat(updatedSchedule.getStartsAt()).isEqualTo(originalStart);
         assertThat(updatedSchedule.getEndsAt()).isEqualTo(originalEnd);
-        assertThat(updatedSchedule.getLocationName()).isEqualTo(originalLocation);
-        assertThat(updatedSchedule.getType()).isEqualTo(ScheduleType.TEAM_ACTIVITY); // 기존 타입
+        assertThat(updatedSchedule.getLocationName()).isEqualTo(originalLocationName);
+        assertThat(updatedSchedule.getTags()).contains(ScheduleTag.PROJECT); // 기존 타입
+        assertThat(updatedSchedule.getLocation().getY()).isEqualTo(originalLatitude);
     }
 
     @Test
@@ -141,7 +156,8 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
                 newStart,   // 시작 시간 변경
                 newEnd,     // 종료 시간 변경
                 null,       // 종일 여부 유지
-                null,
+                null,       // 장소 이름 유지
+                null,       // 장소 위도,경도 유지
                 null,
                 null
         );
@@ -165,7 +181,7 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         // 모든 필드를 null로 전송
         UpdateScheduleCommand command = UpdateScheduleCommand.of(
                 schedule.getId(),
-                null, null, null, null, null, null, null
+                null, null, null, null, null, null, null, null
         );
 
         // when
@@ -196,7 +212,8 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
                 true,  // 종일
                 null,
                 null,
-                ScheduleType.TEAM_ACTIVITY
+                null,
+                Set.of(ScheduleTag.HACKATHON)
         );
 
         // when
@@ -207,6 +224,7 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         assertThat(updatedSchedule.isAllDay()).isTrue();
         assertThat(updatedSchedule.getStartsAt()).isEqualTo(LocalDateTime.of(2026, 5, 10, 0, 0));
         assertThat(updatedSchedule.getEndsAt()).isEqualTo(LocalDateTime.of(2026, 5, 11, 23, 59, 59));
+        assertThat(updatedSchedule.getTags()).contains(ScheduleTag.HACKATHON);
     }
 
     @Test
@@ -221,8 +239,9 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
                 LocalDateTime.now().plusDays(1).plusHours(2),
                 false,
                 "장소",
+                null,
                 "설명",
-                ScheduleType.TEAM_ACTIVITY
+                Set.of(ScheduleTag.GENERAL)
         );
 
         // when & then
@@ -234,17 +253,40 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
                 });
     }
 
+    @Test
+    void 태그를_빈_리스트로_수정하려_하면_예외가_발생한다() {
+        // given
+        Schedule schedule = saveSchedulePort.save(createSchedule(authorChallenger.getId()));
+
+        UpdateScheduleCommand command = UpdateScheduleCommand.of(
+                schedule.getId(),
+                null, null, null, null, null, null, null,
+                Collections.emptySet() // 빈 태그 리스트 전달
+        );
+
+        // when & then
+        assertThatThrownBy(() -> updateScheduleUseCase.update(command))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> {
+                    BusinessException be = (BusinessException) exception;
+                    assertThat(be.getCode()).isEqualTo(ScheduleErrorCode.TAG_REQUIRED);
+                });
+    }
+
     // ========== Fixture Methods ==========
 
     private Schedule createSchedule(Long authorChallengerId) {
+        Point point = createPoint(37.4979, 127.0276);
+
         return Schedule.builder()
                 .name("수정 테스트 일정")
                 .startsAt(LocalDateTime.now().plusDays(1))
                 .endsAt(LocalDateTime.now().plusDays(1).plusHours(2))
                 .isAllDay(false)
                 .locationName("테스트 장소")
+                .location(point)
                 .description("테스트 내용")
-                .type(ScheduleType.TEAM_ACTIVITY)
+                .tags(Set.of(ScheduleTag.PROJECT))
                 .authorChallengerId(authorChallengerId)
                 .build();
     }
@@ -274,5 +316,10 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
                 .gisuId(gisuId)
                 .part(ChallengerPart.SPRINGBOOT)
                 .build();
+    }
+
+    private Point createPoint(double latitude, double longitude) {
+        GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+        return geometryFactory.createPoint(new Coordinate(longitude, latitude));
     }
 }

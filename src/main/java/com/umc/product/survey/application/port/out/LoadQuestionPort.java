@@ -6,4 +6,7 @@ import java.util.Set;
 
 public interface LoadQuestionPort {
     List<Question> findAllByFormSectionIdIn(Set<Long> formSectionIds);
+
+    boolean existsByIdAndFormId(Long questionId, Long formId);
+
 }

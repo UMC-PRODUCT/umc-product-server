@@ -11,6 +11,7 @@ import com.umc.product.schedule.application.port.in.query.dto.PendingAttendanceI
 import java.util.List;
 import org.springframework.stereotype.Component;
 
+// TODO : 주석 처리 부분 tags 로 변경
 @Component
 public class AttendanceWebMapper {
 
@@ -30,7 +31,7 @@ public class AttendanceWebMapper {
         return new AvailableAttendanceResponse(
                 info.scheduleId(),
                 info.scheduleName(),
-                info.scheduleType().name(),
+//                info.tags().toString(),
                 info.startTime(),
                 info.endTime(),
                 info.sheetId(),

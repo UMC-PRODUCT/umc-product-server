@@ -7,7 +7,8 @@ package com.umc.product.global.exception.constant;
  */
 public enum Domain {
     COMMON,
-    AUTH,
+    AUTHENTICATION,
+    AUTHORIZATION,
     MEMBER,
     CHALLENGER,
     ORGANIZATION,
@@ -19,5 +20,6 @@ public enum Domain {
     SURVEY,
     RECRUITMENT,
     TERMS,
-    EMAIL
+    EMAIL,
+    STORAGE
 }

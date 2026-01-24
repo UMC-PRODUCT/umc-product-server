@@ -9,7 +9,6 @@ import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 import com.umc.product.global.security.JwtAuthenticationFilter;
 import com.umc.product.global.security.util.PublicEndpointCollector;
 import java.util.List;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -92,7 +91,7 @@ public class SecurityConfig {
     @Bean
     @Order(2)
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        Set<String> publicEndpoints = PublicEndpointCollector
+        List<PublicEndpointCollector.EndpointMatcher> publicEndpoints = PublicEndpointCollector
                 .collectPublicEndpoints(requestMappingHandlerMapping);
 
         // ✅ 디버깅 로그
@@ -101,8 +100,10 @@ public class SecurityConfig {
         if (publicEndpoints.isEmpty()) {
             System.out.println("  ⚠️  수집된 엔드포인트가 없습니다!");
         } else {
-            publicEndpoints.forEach(endpoint ->
-                    System.out.println("  ✅ " + endpoint));
+            publicEndpoints.forEach(endpoint -> {
+                String method = endpoint.method() != null ? endpoint.method().name() : "ALL";
+                System.out.println("  ✅ " + method + " " + endpoint.pattern());
+            });
         }
         System.out.println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
@@ -130,23 +131,32 @@ public class SecurityConfig {
                         // OAuth 로그인이 실패했을 때 핸들링하는 곳 (그냥 실패한거)
                         .failureHandler(oAuth2FailureHandler)
                 )
-                .authorizeHttpRequests(auth -> auth
-                        // 공개 엔드포인트
-                        .requestMatchers(
-                                // Health Check & Error
-                                "/actuator/**",
-                                "/error",
-                                // OAuth2
-                                "/api/v1/auth/oauth2/authorization/**",
-                                "/api/v1/auth/oauth2/callback/**"
-                        ).permitAll()
-                        // Swagger
-                        .requestMatchers(SWAGGER_PATHS).permitAll()
-                        // @Public 어노테이션 (빈 배열도 안전하게 처리됨)
-                        .requestMatchers(publicEndpoints.toArray(new String[0])).permitAll()
-                        // 나머지는 인증 필요
-                        .anyRequest().authenticated()
-                )
+                .authorizeHttpRequests(auth -> {
+                    // 공개 엔드포인트
+                    auth.requestMatchers(
+                            // Health Check & Error
+                            "/actuator/**",
+                            "/error",
+                            // OAuth2
+                            "/api/v1/auth/oauth2/authorization/**",
+                            "/api/v1/auth/oauth2/callback/**"
+                    ).permitAll();
+
+                    // Swagger
+                    auth.requestMatchers(SWAGGER_PATHS).permitAll();
+
+                    // @Public 어노테이션이 달린 엔드포인트 (HTTP 메서드 포함)
+                    for (PublicEndpointCollector.EndpointMatcher endpoint : publicEndpoints) {
+                        if (endpoint.method() != null) {
+                            auth.requestMatchers(endpoint.method(), endpoint.pattern()).permitAll();
+                        } else {
+                            auth.requestMatchers(endpoint.pattern()).permitAll();
+                        }
+                    }
+
+                    // 나머지는 인증 필요
+                    auth.anyRequest().authenticated();
+                })
                 // Spring 기본 로그인 필터 동작 전에 JWT 동작
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex -> ex

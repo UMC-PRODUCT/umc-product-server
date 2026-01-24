@@ -9,10 +9,10 @@ import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
-import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
@@ -22,14 +22,19 @@ import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import com.umc.product.schedule.domain.enums.ScheduleType;
+import com.umc.product.schedule.domain.enums.ScheduleTag;
+import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
     @Autowired
     private CreateScheduleUseCase createScheduleUseCase;
@@ -45,9 +50,6 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
     private ManageGisuPort manageGisuPort;
-
-    @Autowired
-    private LoadGisuPort loadGisuPort;
 
     @Autowired
     private SaveMemberPort saveMemberPort;
@@ -87,9 +89,10 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 LocalDateTime.of(2024, 3, 16, 12, 0),
                 false,
                 "강남역 스터디룸",
+                GeometryUtils.createPoint(37.4979, 127.0276),
                 "OT입니다",
                 List.of(),
-                ScheduleType.TEAM_ACTIVITY,
+                Set.of(ScheduleTag.ORIENTATION),
                 authorMember.getId()
         );
 
@@ -99,8 +102,9 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
         // then
         Schedule savedSchedule = loadSchedulePort.findById(scheduleId).orElseThrow();
         assertThat(savedSchedule.getName()).isEqualTo("9기 OT");
-        assertThat(savedSchedule.getType()).isEqualTo(ScheduleType.TEAM_ACTIVITY);
+        assertThat(savedSchedule.getTags()).contains(ScheduleTag.ORIENTATION);
         assertThat(savedSchedule.getAuthorChallengerId()).isEqualTo(authorChallenger.getId());
+        assertThat(savedSchedule.getLocation().getY()).isEqualTo(37.4979); // 위도 확인
     }
 
     @Test
@@ -118,9 +122,10 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 LocalDateTime.of(2024, 3, 20, 16, 0),
                 false,
                 "홍대 카페",
+                null,
                 "스프링 스터디",
                 List.of(participant1.getId(), participant2.getId()),
-                ScheduleType.PERSONAL_STUDY,
+                Set.of(ScheduleTag.STUDY),
                 authorMember.getId()
         );
 
@@ -152,9 +157,10 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 LocalDateTime.of(2024, 3, 16, 12, 0),
                 true,
                 "컨퍼런스홀",
+                GeometryUtils.createPoint(37.1234, 127.1234),
                 "종일 진행",
                 List.of(),
-                ScheduleType.EVENT,
+                Set.of(ScheduleTag.WORKSHOP),
                 authorMember.getId()
         );
 
@@ -190,15 +196,43 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
                 LocalDateTime.of(2024, 3, 16, 12, 0),
                 false,
                 "장소",
+                null,
                 "설명",
                 List.of(),
-                ScheduleType.TEAM_ACTIVITY,
+                Set.of(ScheduleTag.GENERAL),
                 pastMember.getId() // 과거 멤버 ID로 요청
         );
 
         // when & then
         assertThatThrownBy(() -> createScheduleUseCase.create(command))
                 .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void 태그_없이_일정을_생성하려_하면_예외가_발생한다() {
+        // given
+        mockChallengerInfo(authorMember.getId(), activeGisu.getId(), authorChallenger.getId());
+
+        CreateScheduleCommand command = CreateScheduleCommand.of(
+                "태그 없는 일정",
+                LocalDateTime.of(2024, 3, 16, 10, 0),
+                LocalDateTime.of(2024, 3, 16, 12, 0),
+                false,
+                "장소",
+                null,
+                "설명",
+                List.of(),
+                Collections.emptySet(), // 빈 태그 리스트 전달
+                authorMember.getId()
+        );
+
+        // when & then
+        assertThatThrownBy(() -> createScheduleUseCase.create(command))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> {
+                    BusinessException be = (BusinessException) exception;
+                    assertThat(be.getCode()).isEqualTo(ScheduleErrorCode.TAG_REQUIRED);
+                });
     }
 
     // ========== Fixture 메서드 ==========
@@ -251,4 +285,5 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
         given(getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId))
                 .willReturn(mockInfo);
     }
+
 }
