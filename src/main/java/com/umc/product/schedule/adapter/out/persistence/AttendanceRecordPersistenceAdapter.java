@@ -1,5 +1,6 @@
 package com.umc.product.schedule.adapter.out.persistence;
 
+import com.umc.product.schedule.application.port.in.query.dto.PendingAttendanceInfo;
 import com.umc.product.schedule.application.port.out.DeleteAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.SaveAttendanceRecordPort;
@@ -22,6 +23,7 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
     );
 
     private final AttendanceRecordJpaRepository recordJpaRepository;
+    private final AttendanceRecordQueryRepository recordQueryRepository;
 
     // ========== SaveAttendanceRecordPort ==========
 
@@ -73,6 +75,11 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
             return List.of();
         }
         return recordJpaRepository.findByAttendanceSheetIdIn(sheetIds);
+    }
+
+    @Override
+    public List<PendingAttendanceInfo> findPendingWithMemberInfo(Long sheetId) {
+        return recordQueryRepository.findPendingWithMemberInfo(sheetId);
     }
 
     // ========== DeleteAttendanceRecordPort ==========

@@ -11,6 +11,7 @@ public record MyAttendanceHistoryInfo(
         Long scheduleId,
         String scheduleName,
         LocalDateTime scheduledAt,
+        String weekDisplay,       // "1주차"
         String dateDisplay,       // "03.16"
         AttendanceStatus status,
         String statusDisplay      // "출석", "지각", "결석"
@@ -23,6 +24,7 @@ public record MyAttendanceHistoryInfo(
                 schedule.getId(),
                 schedule.getName(),
                 schedule.getStartsAt(),
+                "",  // TODO: Schedule에 week 필드 추가 필요
                 schedule.getStartsAt().format(DATE_FORMATTER),
                 record.getStatus(),
                 record.getStatusDisplay()

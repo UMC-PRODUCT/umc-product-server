@@ -51,7 +51,7 @@ public class AttendanceWebMapper {
                 info.attendanceId(),
                 info.scheduleId(),
                 info.scheduleName(),
-                info.scheduledAt(),
+                info.weekDisplay(),
                 info.dateDisplay(),
                 info.status().name(),
                 info.statusDisplay()
@@ -66,7 +66,10 @@ public class AttendanceWebMapper {
     public PendingAttendanceResponse toPendingAttendanceResponse(PendingAttendanceInfo info) {
         return new PendingAttendanceResponse(
                 info.attendanceId(),
-                info.memberId(),
+                info.challengerId(),
+                info.memberName(),
+                info.nickname(),
+                info.schoolName(),
                 info.status().name(),
                 info.reason(),
                 info.requestedAt()

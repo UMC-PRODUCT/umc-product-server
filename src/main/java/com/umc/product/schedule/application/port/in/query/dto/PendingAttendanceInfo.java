@@ -6,15 +6,27 @@ import java.time.LocalDateTime;
 
 public record PendingAttendanceInfo(
         Long attendanceId,
-        Long memberId,
+        Long challengerId,
+        String memberName,
+        String nickname,
+        String schoolName,
         AttendanceStatus status,
         String reason,
         LocalDateTime requestedAt
 ) {
-    public static PendingAttendanceInfo from(AttendanceRecord record) {
+    public static PendingAttendanceInfo of(
+            AttendanceRecord record,
+            Long challengerId,
+            String memberName,
+            String nickname,
+            String schoolName
+    ) {
         return new PendingAttendanceInfo(
                 record.getId(),
-                record.getMemberId(),
+                challengerId,
+                memberName,
+                nickname,
+                schoolName,
                 record.getStatus(),
                 record.getMemo(),
                 record.getCheckedAt()

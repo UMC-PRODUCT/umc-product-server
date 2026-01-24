@@ -1,5 +1,6 @@
 package com.umc.product.schedule.application.port.out;
 
+import com.umc.product.schedule.application.port.in.query.dto.PendingAttendanceInfo;
 import com.umc.product.schedule.domain.AttendanceRecord;
 import java.util.List;
 import java.util.Optional;
@@ -64,4 +65,12 @@ public interface LoadAttendanceRecordPort {
      * @return 출석 기록 목록
      */
     List<AttendanceRecord> findByAttendanceSheetIds(List<Long> sheetIds);
+
+    /**
+     * 승인 대기 출석 기록을 멤버 정보와 함께 조회
+     *
+     * @param sheetId 출석부 ID
+     * @return 멤버 정보가 포함된 승인 대기 출석 정보 목록
+     */
+    List<PendingAttendanceInfo> findPendingWithMemberInfo(Long sheetId);
 }
