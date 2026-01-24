@@ -65,4 +65,14 @@ public class FormResponse extends BaseEntity {
         fr.status = com.umc.product.survey.domain.enums.FormResponseStatus.DRAFT;
         return fr;
     }
+
+    public void submit(java.time.Instant submittedAt, String submittedIp) {
+        if (this.status == com.umc.product.survey.domain.enums.FormResponseStatus.SUBMITTED) {
+            return;
+        }
+        this.status = com.umc.product.survey.domain.enums.FormResponseStatus.SUBMITTED;
+        this.submittedAt = submittedAt;
+        this.submittedIp = submittedIp;
+    }
+
 }

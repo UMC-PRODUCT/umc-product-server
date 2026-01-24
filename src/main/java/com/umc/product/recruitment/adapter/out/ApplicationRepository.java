@@ -14,4 +14,6 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     long countByRecruitmentId(@Param("recruitmentId") Long recruitmentId);
 
     boolean existsByRecruitmentId(Long recruitmentId);
+
+    boolean existsByRecruitmentIdAndApplicantMemberId(Long recruitmentId, Long applicantMemberId);
 }

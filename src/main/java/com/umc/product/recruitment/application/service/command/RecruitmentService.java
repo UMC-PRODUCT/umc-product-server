@@ -36,9 +36,11 @@ import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentAppl
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
+import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentSchedulePort;
+import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
@@ -57,12 +59,18 @@ import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.SingleAnswer;
+import com.umc.product.survey.domain.enums.FormResponseStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -96,6 +104,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final SaveQuestionOptionPort saveQuestionOptionPort;
     private final LoadFormResponsePort loadFormResponsePort;
     private final SaveFormResponsePort saveFormResponsePort;
+    private final SaveApplicationPort saveApplicationPort;
 
     private Long resolveSchoolId() {
         return 1L;
@@ -219,7 +228,73 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public SubmitRecruitmentApplicationInfo submit(SubmitRecruitmentApplicationCommand command) {
-        return null;
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        if (!recruitment.isPublished()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
+        }
+
+        Long formId = recruitment.getFormId();
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
+
+        validateApplyWindow(recruitment);
+
+        FormResponse formResponse = loadFormResponsePort.findById(command.formResponseId())
+                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+
+        if (!formResponse.getForm().getId().equals(formId)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
+        }
+
+        if (command.applicantMemberId() != null && !command.applicantMemberId()
+                .equals(formResponse.getRespondentMemberId())) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_FORBIDDEN);
+        }
+
+        if (formResponse.getStatus() == FormResponseStatus.SUBMITTED) {
+            var existingAppOpt = loadApplicationPort.findByRecruitmentIdAndApplicantMemberId(
+                    recruitment.getId(), command.applicantMemberId()
+            );
+            if (existingAppOpt.isPresent()) {
+                return SubmitRecruitmentApplicationInfo.of(
+                        recruitment.getId(),
+                        formResponse.getId(),
+                        existingAppOpt.get().getId(),
+                        com.umc.product.survey.domain.enums.FormResponseStatus.SUBMITTED
+                );
+            }
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLICATION_INCONSISTENT);
+        }
+
+        if (loadApplicationPort.existsByRecruitmentIdAndApplicantMemberId(recruitment.getId(),
+                command.applicantMemberId())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_APPLIED);
+        }
+
+        validateBeforeSubmit(recruitment, formId, formResponse);
+
+        formResponse.submit(Instant.now(), null);
+        saveFormResponsePort.save(formResponse);
+
+        Application savedApp =
+                saveApplicationPort.save(
+                        Application.createApplied(
+                                recruitment,
+                                command.applicantMemberId(),
+                                formResponse.getId()
+                        )
+                );
+
+        return SubmitRecruitmentApplicationInfo.of(
+                recruitment.getId(),
+                formResponse.getId(),
+                savedApp.getId(),
+                FormResponseStatus.SUBMITTED
+        );
     }
 
     @Override
@@ -692,5 +767,220 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         saveFormResponsePort.save(formResponse);
 
         return UpdateRecruitmentInterviewPreferenceInfo.of(command.formResponseId(), safeValue);
+    }
+
+    private void validateApplyWindow(Recruitment recruitment) {
+        RecruitmentSchedule applyWindow = loadRecruitmentSchedulePort
+                .findByRecruitmentIdAndType(recruitment.getId(), RecruitmentScheduleType.APPLY_WINDOW);
+
+        if (applyWindow == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_WINDOW_NOT_SET);
+        }
+
+        Instant start = applyWindow.getStartsAt();
+        Instant end = applyWindow.getEndsAt();
+
+        if (start == null || end == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_WINDOW_NOT_SET);
+        }
+
+        // start < end 기본 검증
+        if (!start.isBefore(end)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_WINDOW_INVALID);
+        }
+
+        Instant now = Instant.now();
+
+        if (now.isBefore(start)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_NOT_STARTED);
+        }
+
+        if (!now.isBefore(end)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_CLOSED);
+        }
+    }
+
+    private void validateBeforeSubmit(Recruitment recruitment, Long formId, FormResponse formResponse) {
+
+        RecruitmentApplicationFormInfo formInfo = loadRecruitmentPort.findApplicationFormInfoById(recruitment.getId());
+        if (formInfo == null || formInfo.formDefinition() == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND);
+        }
+
+        FormDefinitionInfo def = formInfo.formDefinition();
+
+        Set<Long> answeredQuestionIds = formResponse.getAnswers().stream()
+                .map(a -> a.getQuestion().getId())
+                .collect(java.util.stream.Collectors.toSet());
+
+        def.sections().forEach(section -> {
+            if (section.questions() == null) {
+                return;
+            }
+
+            section.questions().forEach(q -> {
+                if (!q.isRequired()) {
+                    return;
+                }
+
+                Long qid = q.questionId();
+                if (qid == null || !answeredQuestionIds.contains(qid)) {
+                    throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+                }
+            });
+        });
+
+        validatePreferredPartIfNeeded(recruitment, formResponse);
+
+        validateScheduleAnswerIfNeeded(recruitment, formResponse);
+    }
+
+    private void validatePreferredPartIfNeeded(Recruitment recruitment, FormResponse formResponse) {
+
+        Integer max = recruitment.getMaxPreferredPartCount();
+        if (max == null) {
+            return;
+        }
+
+        var opt = formResponse.getAnswers().stream()
+                .filter(a -> a.getAnsweredAsType() == com.umc.product.survey.domain.enums.QuestionType.PREFERRED_PART)
+                .findFirst();
+
+        if (opt.isEmpty()) {
+            return;
+        }
+
+        Map<String, Object> v = opt.get().getValue();
+        List<?> selected = (List<?>) (v.containsKey("preferredParts")
+                ? v.getOrDefault("preferredParts", List.of())
+                : v.getOrDefault("selectedParts", List.of()));
+
+        if (selected.isEmpty()) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+        }
+        if (selected.size() > max) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_EXCEEDS_MAX_COUNT);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void validateScheduleAnswerIfNeeded(Recruitment recruitment, FormResponse formResponse) {
+
+        Map<String, Object> tt = recruitment.getInterviewTimeTable();
+        if (tt == null || tt.isEmpty()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_NOT_SET);
+        }
+
+        var scheduleAnswerOpt = formResponse.getAnswers().stream()
+                .filter(a -> a.getAnsweredAsType() == QuestionType.SCHEDULE)
+                .findFirst();
+
+        if (scheduleAnswerOpt.isEmpty()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
+        }
+
+        Map<String, Object> value = scheduleAnswerOpt.get().getValue();
+        if (value == null) {
+            value = Map.of();
+        }
+
+        List<Map<String, Object>> selected =
+                (List<Map<String, Object>>) value.getOrDefault("selected", List.of());
+
+        if (selected.isEmpty()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
+        }
+
+        Map<String, Object> dateRange = (Map<String, Object>) tt.get("dateRange");
+        Map<String, Object> timeRange = (Map<String, Object>) tt.get("timeRange");
+
+        if (dateRange == null || timeRange == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_NOT_SET);
+        }
+
+        LocalDate startDate = parseDate(String.valueOf(dateRange.get("start")));
+        LocalDate endDate = parseDate(String.valueOf(dateRange.get("end")));
+
+        LocalTime startTime = parseTimeFlexible(String.valueOf(timeRange.get("start")));
+        LocalTime endTime = parseTimeFlexible(String.valueOf(timeRange.get("end")));
+
+        List<Map<String, Object>> enabledByDate =
+                (List<Map<String, Object>>) tt.getOrDefault("enabledByDate", List.of());
+
+        Map<LocalDate, java.util.Set<String>> allowed = new java.util.HashMap<>();
+        for (Map<String, Object> e : enabledByDate) {
+            LocalDate d = parseDate(String.valueOf(e.get("date")));
+            List<String> times = (List<String>) e.getOrDefault("times", List.of());
+
+            java.util.Set<String> normalized = new java.util.HashSet<>();
+            for (String t : times) {
+                normalized.add(normalizeToHHmm(t));
+            }
+            allowed.put(d, normalized);
+        }
+
+        for (Map<String, Object> s : selected) {
+            LocalDate d = parseDate(String.valueOf(s.get("date")));
+
+            if (d.isBefore(startDate) || d.isAfter(endDate)) {
+                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_OUT_OF_RANGE);
+            }
+
+            List<String> times = (List<String>) s.getOrDefault("times", List.of());
+            if (times.isEmpty()) {
+                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
+            }
+
+            java.util.Set<String> allowedTimes = allowed.get(d);
+            if (allowedTimes == null || allowedTimes.isEmpty()) {
+                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_SLOT);
+            }
+
+            for (String raw : times) {
+                String hhmm = normalizeToHHmm(raw);
+                LocalTime t = parseTimeFlexible(raw);
+
+                if (t.isBefore(startTime) || !t.isBefore(endTime)) {
+                    throw new BusinessException(
+                            Domain.RECRUITMENT,
+                            RecruitmentErrorCode.INTERVIEW_PREFERENCE_OUT_OF_RANGE
+                    );
+                }
+
+                if (!allowedTimes.contains(hhmm)) {
+                    throw new BusinessException(Domain.RECRUITMENT,
+                            RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_SLOT);
+                }
+            }
+        }
+    }
+
+    private static LocalDate parseDate(String s) {
+        try {
+            return LocalDate.parse(s, DateTimeFormatter.ISO_LOCAL_DATE);
+        } catch (DateTimeParseException e) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_FORMAT);
+        }
+    }
+
+    private static LocalTime parseTimeFlexible(String s) {
+        try {
+            if (s.length() == 5) {
+                return LocalTime.parse(s, DateTimeFormatter.ofPattern("HH:mm"));
+            }
+            return LocalTime.parse(s, DateTimeFormatter.ofPattern("HH:mm:ss"));
+        } catch (DateTimeParseException e) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_FORMAT);
+        }
+    }
+
+    private static String normalizeToHHmm(String s) {
+        if (s == null) {
+            return "";
+        }
+        if (s.length() >= 5) {
+            return s.substring(0, 5);
+        }
+        return s;
     }
 }

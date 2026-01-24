@@ -17,6 +17,7 @@ public enum SurveyErrorCode implements BaseCode {
     QUESTION_IS_NOT_OWNED_BY_FORM(HttpStatus.BAD_REQUEST, "SURVEY-0007", "질문이 해당 폼의 질문이 아닙니다."),
     FORM_RESPONSE_FORBIDDEN(HttpStatus.FORBIDDEN, "SURVEY-0008", "해당 폼 응답에 접근할 수 있는 권한이 없습니다."),
     QUESTION_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "SURVEY-0009", "질문 유형이 일치하지 않습니다."),
+    REQUIRED_QUESTION_NOT_ANSWERED(HttpStatus.BAD_REQUEST, "SURVEY-0010", "필수 질문에 대한 응답이 누락되었습니다."),
     ;
 
     private final HttpStatus httpStatus;

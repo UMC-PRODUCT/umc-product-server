@@ -9,4 +9,8 @@ public interface LoadApplicationPort {
     Optional<Application> findById(Long applicationId);
 
     boolean existsByRecruitmentId(Long recruitmentId);
+
+    boolean existsByRecruitmentIdAndApplicantMemberId(Long recruitmentId, Long applicantMemberId);
+
+    Optional<Application> findByRecruitmentIdAndApplicantMemberId(Long recruitmentId, Long applicantMemberId);
 }
