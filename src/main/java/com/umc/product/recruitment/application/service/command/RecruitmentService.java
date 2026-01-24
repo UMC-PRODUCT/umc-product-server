@@ -52,6 +52,8 @@ import com.umc.product.survey.application.port.out.SaveQuestionOptionPort;
 import com.umc.product.survey.application.port.out.SaveQuestionPort;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.FormResponse;
+import com.umc.product.survey.domain.Question;
+import com.umc.product.survey.domain.SingleAnswer;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -137,7 +139,73 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     @Override
     public UpsertRecruitmentFormResponseAnswersInfo upsert(
             UpsertRecruitmentFormResponseAnswersCommand command) {
-        return null;
+
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        if (!recruitment.isPublished()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
+        }
+
+        Long formId = recruitment.getFormId();
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
+
+        FormResponse formResponse = loadFormResponsePort.findById(command.formResponseId())
+                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+
+        if (!formResponse.getForm().getId().equals(formId)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
+        }
+
+        if (command.memberId() != null && !command.memberId().equals(formResponse.getRespondentMemberId())) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_FORBIDDEN);
+        }
+
+        List<UpsertRecruitmentFormResponseAnswersCommand.UpsertItem> items =
+                (command.items() == null) ? List.of() : command.items();
+
+        if (items.isEmpty()) {
+            return UpsertRecruitmentFormResponseAnswersInfo.of(command.formResponseId(), List.of());
+        }
+
+        List<Long> savedQuestionIds = new ArrayList<>(items.size());
+
+        for (UpsertRecruitmentFormResponseAnswersCommand.UpsertItem item : items) {
+            Long questionId = item.questionId();
+
+            if (questionId == null) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND);
+            }
+
+            Question question = loadQuestionPort.findById(questionId)
+                    .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
+
+            Long questionFormId = null;
+            if (question.getFormSection() != null
+                    && question.getFormSection().getForm() != null) {
+                questionFormId = question.getFormSection().getForm().getId();
+            }
+
+            if (questionFormId == null || !questionFormId.equals(formId)) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_IS_NOT_OWNED_BY_FORM);
+            }
+
+            var serverType = question.getType();
+            if (item.answeredAsType() != null && item.answeredAsType() != serverType) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_TYPE_MISMATCH);
+            }
+
+            upsertSingleAnswer(formResponse, question, serverType, item.value());
+
+            savedQuestionIds.add(questionId);
+        }
+
+        saveFormResponsePort.save(formResponse);
+
+        return UpsertRecruitmentFormResponseAnswersInfo.of(command.formResponseId(), savedQuestionIds);
     }
 
     @Override
@@ -550,4 +618,30 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         return loadRecruitmentPort.findApplicationFormInfoById(command.recruitmentId());
     }
 
+    private void upsertSingleAnswer(
+            FormResponse formResponse,
+            Question question,
+            com.umc.product.survey.domain.enums.QuestionType answeredAsType,
+            Map<String, Object> value
+    ) {
+        if (question == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND);
+        }
+
+        Map<String, Object> safeValue = (value == null) ? Map.of() : value;
+        Long questionId = question.getId();
+
+        var existingOpt = formResponse.getAnswers().stream()
+                .filter(a -> questionId.equals(a.getQuestion().getId()))
+                .findFirst();
+
+        if (existingOpt.isPresent()) {
+            existingOpt.get().change(answeredAsType, safeValue);
+            return;
+        }
+
+        formResponse.getAnswers().add(
+                SingleAnswer.create(formResponse, question, answeredAsType, safeValue)
+        );
+    }
 }

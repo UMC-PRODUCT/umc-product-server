@@ -7,6 +7,7 @@ import com.umc.product.survey.application.port.out.SaveQuestionPort;
 import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -39,4 +40,8 @@ public class QuestionPersistenceAdapter implements SaveQuestionPort, LoadQuestio
         questionJpaRepository.deleteById(questionId);
     }
 
+    @Override
+    public Optional<Question> findById(Long questionId) {
+        return questionJpaRepository.findById(questionId);
+    }
 }

@@ -49,5 +49,24 @@ public class SingleAnswer extends BaseEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb", nullable = false)
     private Map<String, Object> value;
+
+    public static SingleAnswer create(
+            FormResponse formResponse,
+            Question question,
+            QuestionType answeredAsType,
+            Map<String, Object> value
+    ) {
+        SingleAnswer a = new SingleAnswer();
+        a.formResponse = formResponse;
+        a.question = question;
+        a.answeredAsType = answeredAsType;
+        a.value = (value == null) ? Map.of() : value;
+        return a;
+    }
+
+    public void change(QuestionType answeredAsType, Map<String, Object> value) {
+        this.answeredAsType = answeredAsType;
+        this.value = (value == null) ? Map.of() : value;
+    }
 }
 

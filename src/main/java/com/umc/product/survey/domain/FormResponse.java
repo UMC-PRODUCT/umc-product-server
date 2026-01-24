@@ -55,6 +55,7 @@ public class FormResponse extends BaseEntity {
     private String submittedIp;
 
     @OneToMany(mappedBy = "formResponse", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
     private List<SingleAnswer> answers = new ArrayList<>();
 
     public static FormResponse createDraft(Form form, Long respondentMemberId) {

@@ -18,6 +18,7 @@ public enum RecruitmentErrorCode implements BaseCode {
     RECRUITMENT_PUBLISH_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "RECRUITMENT-007", "발행하기에 검증되지 않은 필드가 있습니다."),
     RECRUITMENT_NOT_PUBLISHED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0008", "발행 상태의 모집만 수정할 수 있습니다."),
     RECRUITMENT_DELETE_FORBIDDEN_HAS_APPLICANTS(HttpStatus.BAD_REQUEST, "RECRUITMENT-0009", "지원자가 있는 모집은 삭제할 수 없습니다."),
+    RECRUITMENT_FORM_MISMATCH(HttpStatus.BAD_REQUEST, "RECRUITMENT-00010", "지원하려는 폼이 해당 모집의 폼과 일치하지 않습니다."),
     ;
 
     private final HttpStatus httpStatus;

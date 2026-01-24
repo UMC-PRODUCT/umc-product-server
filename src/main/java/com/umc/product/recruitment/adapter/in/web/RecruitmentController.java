@@ -197,12 +197,13 @@ public class RecruitmentController {
             description = "formResponseId 기준으로 questionId 단위 답변을 upsert합니다. (단건/다건 모두 가능)"
     )
     public UpsertRecruitmentFormResponseAnswersResponse upsertAnswers(
+            @CurrentMember MemberPrincipal memberPrincipal,
             @PathVariable Long recruitmentId,
             @PathVariable Long formResponseId,
             @Valid @RequestBody UpsertRecruitmentFormResponseAnswersRequest request
     ) {
         UpsertRecruitmentFormResponseAnswersInfo result = upsertRecruitmentFormResponseAnswersUseCase.upsert(
-                request.toCommand(recruitmentId, formResponseId)
+                request.toCommand(memberPrincipal.getMemberId(), recruitmentId, formResponseId)
         );
 
         return UpsertRecruitmentFormResponseAnswersResponse.from(result);
