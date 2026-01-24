@@ -23,4 +23,11 @@ public interface LoadSchedulePort {
      * @return 일정 목록
      */
     List<Schedule> findAllByIds(List<Long> ids);
+
+    /**
+     * 모든 일정 조회
+     *
+     * @return 일정 목록
+     */
+    List<Schedule> findAll();
 }
