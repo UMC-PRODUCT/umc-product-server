@@ -42,7 +42,8 @@ public enum RecruitmentErrorCode implements BaseCode {
             "아직 지원 기간이 시작되지 않은 모집입니다."),
     RECRUITMENT_APPLY_CLOSED(HttpStatus.BAD_REQUEST, "RECRUITMENT-00022",
             "이미 지원 기간이 종료된 모집입니다."),
-    ;
+    ACTIVE_RECRUITMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "RECRUITMENT-0023",
+            "활성화된 모집을 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

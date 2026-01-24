@@ -64,7 +64,6 @@ import com.umc.product.recruitment.application.port.in.query.GetRecruitmentPartL
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentScheduleUseCase;
 import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
-import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDetailQuery;
@@ -129,8 +128,7 @@ public class RecruitmentController {
     public ActiveRecruitmentIdResponse getActiveRecruitmentId(
             @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        GetActiveRecruitmentQuery query = new GetActiveRecruitmentQuery(memberPrincipal.getMemberId());
-        ActiveRecruitmentInfo info = getActiveRecruitmentUseCase.get(query);
+        ActiveRecruitmentInfo info = getActiveRecruitmentUseCase.getActiveRecruitment(memberPrincipal.getMemberId());
         return ActiveRecruitmentIdResponse.of(info.recruitmentId());
     }
 

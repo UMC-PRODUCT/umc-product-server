@@ -15,7 +15,6 @@ import com.umc.product.recruitment.application.port.in.query.GetRecruitmentPartL
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentScheduleUseCase;
 import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
-import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDetailQuery;
@@ -44,6 +43,7 @@ import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.SingleAnswer;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -67,9 +67,29 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     private final LoadApplicationPort loadApplicationPort;
     private final LoadFormResponsePort loadFormResponsePort;
 
+    private Long resolveSchoolId() {
+        return 1L;
+    }
+
+    private Long resolveActiveGisuId(Long schoolId) {
+        return 1L;
+    }
+
     @Override
-    public ActiveRecruitmentInfo get(GetActiveRecruitmentQuery query) {
-        return null;
+    public ActiveRecruitmentInfo getActiveRecruitment(Long memberId) {
+        Long schoolId = resolveSchoolId(); // TODO: memberId -> schoolId
+        Long activeGisuId = resolveActiveGisuId(schoolId); // TODO: active gisu
+
+        Long recruitmentId = loadRecruitmentPort.findActiveRecruitmentId(
+                schoolId,
+                activeGisuId,
+                Instant.now()
+        ).orElseThrow(() -> new BusinessException(
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
+        ));
+
+        return new ActiveRecruitmentInfo(recruitmentId);
     }
 
     @Override

@@ -508,6 +508,11 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                 .toList();
     }
 
+    @Override
+    public Optional<Long> findActiveRecruitmentId(Long schoolId, Long gisuId, Instant now) {
+        return recruitmentRepository.findActiveRecruitmentId(schoolId, gisuId, now);
+    }
+
     private boolean matchesListStatus(RecruitmentListStatus status, RecruitmentPhase phase) {
         return switch (status) {
             case UPCOMING -> phase == RecruitmentPhase.BEFORE_APPLY;
