@@ -41,9 +41,7 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
                 .map(AttendanceSheet::getScheduleId)
                 .toList();
 
-        Map<Long, Schedule> scheduleMap = scheduleIds.stream()
-                .map(id -> loadSchedulePort.findById(id).orElse(null))
-                .filter(s -> s != null)
+        Map<Long, Schedule> scheduleMap = loadSchedulePort.findAllByIds(scheduleIds).stream()
                 .collect(Collectors.toMap(Schedule::getId, Function.identity()));
 
         // 해당 멤버의 출석 기록 조회
@@ -56,8 +54,7 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
                 .filter(r -> sheetIds.contains(r.getAttendanceSheetId()))
                 .collect(Collectors.toMap(
                         AttendanceRecord::getAttendanceSheetId,
-                        Function.identity(),
-                        (a, b) -> a));
+                        Function.identity()));
 
         // 결과 생성
         LocalDateTime now = LocalDateTime.now();

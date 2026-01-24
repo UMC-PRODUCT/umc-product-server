@@ -53,6 +53,14 @@ public class AttendanceSheetPersistenceAdapter implements SaveAttendanceSheetPor
         return sheetJpaRepository.findByActiveTrue();
     }
 
+    @Override
+    public List<AttendanceSheet> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return sheetJpaRepository.findAllById(ids);
+    }
+
     // ========== DeleteAttendanceSheetPort ==========
 
     @Override

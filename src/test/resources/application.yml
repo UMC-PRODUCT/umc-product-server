@@ -1,4 +1,9 @@
 spring:
+  config:
+    import: "classpath:application.yml"  # main의 설정을 가져옴
+  profiles:
+    active: test
+
   mail:
     host: dwqfwq
     port: 587
@@ -14,12 +19,12 @@ spring:
     hibernate:
       ddl-auto: create-drop
     open-in-view: false
-#    database-platform: org.hibernate.spatial.dialect.postgis.PostgisDialect
+    #    database-platform: org.hibernate.spatial.dialect.postgis.PostgisDialect
     properties:
       hibernate:
         format_sql: false
         show_sql: false
-#        dialect: org.hibernate.dialect.PostgreSQLDialect
+  #        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   flyway:
     enabled: false

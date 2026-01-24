@@ -1,5 +1,10 @@
 package com.umc.product.common.domain.enums;
 
+/**
+ * 챌린저가 가질 수 있는 Role의 유형을 정의합니다.
+ * <p>
+ * Role에 대한 상속 관계는 Spring Security로 표현됩니다.
+ */
 public enum ChallengerRoleType {
     // 중앙
     CENTRAL_PRESIDENT, // 총괄

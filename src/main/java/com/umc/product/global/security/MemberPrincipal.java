@@ -24,19 +24,19 @@ public class MemberPrincipal implements OAuth2User {
 
     @Override
     public Map<String, Object> getAttributes() {
-        log.warn("OAuth2User의 getAttributes()가 호출되었습니다.");
+//        log.warn("OAuth2User의 getAttributes()가 호출되었습니다.");
         return Collections.emptyMap();
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        log.warn("OAuth2User의 getAuthorities()가 호출되었습니다.");
+//        log.warn("OAuth2User의 getAuthorities()가 호출되었습니다.");
         return Collections.emptyList();
     }
 
     @Override
     public String getName() {
-        log.warn("OAuth2User의 getName()가 호출되었습니다.");
+//        log.warn("OAuth2User의 getName()가 호출되었습니다.");
         return String.valueOf(memberId);
     }
 

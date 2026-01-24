@@ -7,5 +7,6 @@ public enum QuestionType {
     CHECKBOX,    // 객관식 (다중 선택)
     DROPDOWN,     // 드롭다운
     SCHEDULE,
-    PORTFOLIO
+    PORTFOLIO,
+    PREFERRED_PART
 }

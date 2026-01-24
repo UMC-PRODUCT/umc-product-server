@@ -16,8 +16,8 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -55,6 +55,30 @@ public class Question extends BaseEntity {
 
     @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderNo ASC")
-    private List<QuestionOption> options = new ArrayList<>();
+    @Builder.Default
+    private Set<QuestionOption> options = new LinkedHashSet<>();
 
+    public void assignTo(FormSection section) {
+        this.formSection = section;
+    }
+
+    public void changeFormSection(FormSection section) {
+        this.formSection = section;
+    }
+
+    public void changeQuestionText(String text) {
+        this.questionText = text;
+    }
+
+    public void changeType(QuestionType type) {
+        this.type = type;
+    }
+
+    public void changeRequired(Boolean required) {
+        this.isRequired = required;
+    }
+
+    public void changeOrderNo(Integer orderNo) {
+        this.orderNo = orderNo;
+    }
 }

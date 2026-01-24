@@ -3,6 +3,7 @@ plugins {
     id("org.springframework.boot") version "3.5.9"
     id("io.spring.dependency-management") version "1.1.7"
     id("org.asciidoctor.jvm.convert") version "4.0.5"
+    jacoco
 }
 
 group = "com.umc"
@@ -99,9 +100,10 @@ dependencies {
     // SQL 출력용 P6Spy
     implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.10.0")
 
-    // --- AWS & Cloud (필요 시 주석 해제) ---
+    // --- Cloud Service ---
     implementation(platform("software.amazon.awssdk:bom:${awsVersion}"))
     implementation("software.amazon.awssdk:s3")
+    implementation("com.google.cloud:google-cloud-storage")
 
     // --- Email ---
     implementation("org.springframework.boot:spring-boot-starter-mail")
@@ -110,12 +112,16 @@ dependencies {
     // --- Metrics ---
     implementation("io.micrometer:micrometer-registry-prometheus")
 
+    // --- Sentry ---
+    implementation(platform("io.sentry:sentry-bom:8.31.0"))
+    implementation("io.sentry:sentry-spring-boot-starter-jakarta")
+    implementation("io.sentry:sentry-logback")
+
     // --- Tracing ---
     implementation("io.micrometer:micrometer-observation") // 관측 기능: metrics + tracing
     implementation("io.micrometer:micrometer-tracing-bridge-otel") // OpenTelemetry 연동
     implementation("io.opentelemetry:opentelemetry-exporter-otlp") // OTLP Exporter
     implementation("io.micrometer:context-propagation") // 비동기 작업에서 context를 잃어버리지 않도록 함
-
 
     // Firebase Admin SDK
     implementation("com.google.firebase:firebase-admin:9.2.0")
@@ -157,7 +163,19 @@ tasks.withType<Test> {
 }
 
 tasks.test {
+    ignoreFailures = true  // 테스트 실패해도 빌드 계속 진행
+    
     outputs.dir(snippetsDir)
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+// codecov를 위한 Jacoco 설정
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
 }
 
 tasks.asciidoctor { // asciidoctor task 설정

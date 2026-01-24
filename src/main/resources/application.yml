@@ -55,12 +55,6 @@ spring:
     encoding: UTF-8
     cache: false  # 개발 환경에서는 캐시 비활성화, 운영에서는 true로 변경 필요
 
-  # JS 환경에서 bigint 관련 문제 때문에 숫자를 모두 문자열로 변환하여 발송
-  # Depracated 기능이라서 향후 변경 필요
-  jackson:
-    generator:
-      write-numbers-as-strings: true
-
   datasource:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
@@ -217,3 +211,22 @@ app:
     password: ${SWAGGER_AUTH_PASSWORD:password}
   oauth2:
     frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT_URL}
+
+storage:
+  gcs:
+    project-id: ${GCS_PROJECT_ID}
+    bucket-name: ${GCS_BUCKET_NAME}
+    credentials-json: ${GCS_CREDENTIALS_JSON:}
+    cdn:
+      enabled: false
+      base-url: https://cdn.example.com
+      key-name: ${CDN_KEY_NAME}
+      private-key: ${CDN_PRIVATE_KEY}
+
+sentry:
+  dsn: ${SENTRY_DSN}
+  environment: ${spring.profiles.active}
+  exception-resolver-order: -2147483647
+  max-request-body-size: always
+  send-default-pii: true
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:1.0}
