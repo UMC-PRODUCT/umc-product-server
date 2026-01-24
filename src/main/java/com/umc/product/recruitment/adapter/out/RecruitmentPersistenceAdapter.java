@@ -266,9 +266,9 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
     private void upsertOptions(
             Question question,
-            List<UpsertRecruitmentFormQuestionsCommand.Option> options
+            List<UpsertRecruitmentFormQuestionsCommand.OptionInfo> options
     ) {
-        for (UpsertRecruitmentFormQuestionsCommand.Option o : options) {
+        for (UpsertRecruitmentFormQuestionsCommand.OptionInfo o : options) {
 
             QuestionOption option;
 
@@ -298,7 +298,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         }
     }
 
-    private Question upsertQuestionEntity(FormSection section, UpsertRecruitmentFormQuestionsCommand.Question req) {
+    private Question upsertQuestionEntity(FormSection section, UpsertRecruitmentFormQuestionsCommand.QuestionInfo req) {
 
         final Question question;
 
