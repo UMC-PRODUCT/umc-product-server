@@ -102,8 +102,17 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     @Override
     public RecruitmentApplicationFormInfo get(GetRecruitmentApplicationFormQuery query) {
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
-        return null;
+        if (recruitment.isPublished()) {
+            return loadRecruitmentPort.findApplicationFormInfoById(query.recruitmentId());
+        }
+
+        // TODO: 운영진 권한 검증 추가 (DRAFT면 운영진만 허용)
+
+        return loadRecruitmentPort.findApplicationFormInfoById(query.recruitmentId());
     }
 
     @Override

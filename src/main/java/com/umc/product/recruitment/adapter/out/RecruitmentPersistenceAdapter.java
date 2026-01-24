@@ -10,6 +10,7 @@ import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDr
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormQuestionsCommand;
 import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormDefinitionInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentListInfo;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPort;
@@ -190,9 +191,14 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
         Long formId = recruitment.getFormId();
 
-        FormDefinitionInfo formDefinitionInfo = loadFormPort.loadFormDefinition(formId);
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
 
-        return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo);
+        FormDefinitionInfo formDefinitionInfo = loadFormPort.loadFormDefinition(formId);
+        RecruitmentFormDefinitionInfo recruitmentDef = RecruitmentFormDefinitionInfo.from(formDefinitionInfo);
+
+        return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo, recruitmentDef);
     }
 
     @Override

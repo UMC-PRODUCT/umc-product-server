@@ -2,12 +2,17 @@ package com.umc.product.recruitment.adapter.in.web.dto.response;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormDefinitionInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormDefinitionInfo.RecruitmentSectionInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
 import com.umc.product.survey.domain.enums.QuestionType;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 지원서 작성 페이지에 해당 학교/파트의 폼을 불러오는 용도로 사용됩니다. (운영진이 모집 폼 작성 중 미리보기로 확인했다면 status에 DRAFT가 들어갑니다)
@@ -22,8 +27,7 @@ public record RecruitmentApplicationFormResponse(
         List<FormPageResponse> pages
 ) {
     public static RecruitmentApplicationFormResponse from(RecruitmentApplicationFormInfo info) {
-        FormDefinitionInfo def = info.formDefinition();
-
+        List<FormPageResponse> pages = buildPages(info);
         return new RecruitmentApplicationFormResponse(
                 info.recruitmentId(),
                 info.formId(),
@@ -31,14 +35,101 @@ public record RecruitmentApplicationFormResponse(
                 info.recruitmentFormTitle(),
                 info.noticeTitle(),
                 info.noticeContent(),
-                def.sections().stream()
-                        .sorted(Comparator.comparing(
-                                FormDefinitionInfo.FormSectionInfo::orderNo,
-                                Comparator.nullsLast(Integer::compareTo)
-                        ))
-                        .map(FormPageResponse::from)
-                        .toList()
+                pages
         );
+    }
+
+    private static List<FormPageResponse> buildPages(RecruitmentApplicationFormInfo info) {
+        RecruitmentFormDefinitionInfo rdef = info.recruitmentFormDefinition();
+
+        if (rdef != null && rdef.sections() != null && !rdef.sections().isEmpty()) {
+            return buildPagesFromRecruitmentDef(rdef);
+        }
+
+        FormDefinitionInfo def = info.formDefinition();
+        if (def == null || def.sections() == null) {
+            return List.of();
+        }
+
+        return def.sections().stream()
+                .sorted(Comparator.comparing(FormDefinitionInfo.FormSectionInfo::orderNo,
+                        Comparator.nullsLast(Integer::compareTo)))
+                .map(section -> FormPageResponse.fromCommonSectionOrderNoAsPage(section))
+                .toList();
+    }
+
+    private static List<FormPageResponse> buildPagesFromRecruitmentDef(RecruitmentFormDefinitionInfo rdef) {
+        List<RecruitmentFormDefinitionInfo.RecruitmentSectionInfo> sections =
+                rdef.sections() == null ? List.of() : rdef.sections();
+
+        Map<Integer, List<RecruitmentSectionInfo>> commonByPage =
+                sections.stream()
+                        .filter(s -> s != null && s.kind()
+                                == RecruitmentFormDefinitionInfo.RecruitmentSectionInfo.SectionKind.COMMON_PAGE)
+                        .filter(s -> s.pageNo() != null)
+                        .collect(Collectors.groupingBy(RecruitmentFormDefinitionInfo.RecruitmentSectionInfo::pageNo));
+
+        Map<ChallengerPart, List<FormDefinitionInfo.QuestionInfo>> partQuestions =
+                sections.stream()
+                        .filter(s -> s != null
+                                && s.kind() == RecruitmentFormDefinitionInfo.RecruitmentSectionInfo.SectionKind.PART)
+                        .filter(s -> s.part() != null)
+                        .collect(Collectors.groupingBy(
+                                RecruitmentFormDefinitionInfo.RecruitmentSectionInfo::part,
+                                Collectors.flatMapping(
+                                        s -> (s.questions() == null ? List.<FormDefinitionInfo.QuestionInfo>of()
+                                                : s.questions()).stream(),
+                                        Collectors.toList()
+                                )
+                        ));
+
+        List<Integer> orderedPages = new ArrayList<>(commonByPage.keySet());
+        orderedPages.sort(Integer::compareTo);
+
+        List<FormPageResponse> result = new ArrayList<>();
+
+        for (Integer pageNo : orderedPages) {
+            List<FormDefinitionInfo.QuestionInfo> commonQs = commonByPage.getOrDefault(pageNo, List.of()).stream()
+                    .flatMap(s -> (s.questions() == null ? List.<FormDefinitionInfo.QuestionInfo>of()
+                            : s.questions()).stream())
+                    .sorted(Comparator.comparing(FormDefinitionInfo.QuestionInfo::orderNo,
+                            Comparator.nullsLast(Integer::compareTo)))
+                    .toList();
+
+            FormDefinitionInfo.QuestionInfo scheduleQ = commonQs.stream()
+                    .filter(q -> q != null && q.type() == QuestionType.SCHEDULE)
+                    .findFirst()
+                    .orElse(null);
+
+            List<FormDefinitionInfo.QuestionInfo> normalCommon = commonQs.stream()
+                    .filter(q -> q != null && q.type() != QuestionType.SCHEDULE)
+                    .toList();
+
+            ScheduleQuestionResponse schedule = (scheduleQ == null)
+                    ? null
+                    : ScheduleQuestionResponse.from(QuestionResponse.from(scheduleQ), null); // schedule은 추후 채움
+
+            List<PartQuestionGroupResponse> partGroups = partQuestions.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey(Comparator.comparing(Enum::name)))
+                    .map(e -> {
+                        List<QuestionResponse> qs = e.getValue().stream()
+                                .sorted(Comparator.comparing(FormDefinitionInfo.QuestionInfo::orderNo,
+                                        Comparator.nullsLast(Integer::compareTo)))
+                                .map(QuestionResponse::from)
+                                .toList();
+                        return new PartQuestionGroupResponse(e.getKey(), qs);
+                    })
+                    .toList();
+
+            result.add(new FormPageResponse(
+                    pageNo,
+                    normalCommon.stream().map(QuestionResponse::from).toList(),
+                    schedule,
+                    partGroups.isEmpty() ? null : partGroups
+            ));
+        }
+
+        return result;
     }
 
     /**
@@ -50,6 +141,30 @@ public record RecruitmentApplicationFormResponse(
             ScheduleQuestionResponse scheduleQuestion,
             List<PartQuestionGroupResponse> partQuestions
     ) {
+
+        public static FormPageResponse fromCommonSectionOrderNoAsPage(FormDefinitionInfo.FormSectionInfo section) {
+            List<QuestionResponse> ordered = (section.questions() == null ? List.<FormDefinitionInfo.QuestionInfo>of()
+                    : section.questions()).stream()
+                    .sorted(Comparator.comparing(FormDefinitionInfo.QuestionInfo::orderNo,
+                            Comparator.nullsLast(Integer::compareTo)))
+                    .map(QuestionResponse::from)
+                    .toList();
+
+            ScheduleQuestionResponse schedule = ordered.stream()
+                    .filter(q -> q.type == QuestionType.SCHEDULE)
+                    .findFirst()
+                    .map(q -> ScheduleQuestionResponse.from(q, null))
+                    .orElse(null);
+
+            List<QuestionResponse> normalQuestions = ordered.stream()
+                    .filter(q -> q.type != QuestionType.SCHEDULE)
+                    .toList();
+
+            Integer page = section.orderNo() == null ? -1 : section.orderNo();
+
+            return new FormPageResponse(page, normalQuestions, schedule, null);
+        }
+
         public static FormPageResponse from(FormDefinitionInfo.FormSectionInfo section) {
             List<QuestionResponse> ordered = section.questions().stream()
                     .sorted(Comparator.comparing(
