@@ -1,5 +1,8 @@
 package com.umc.product.temp.controller;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.global.constant.SwaggerTag.Constants;
@@ -24,6 +27,26 @@ public class TempController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final GetChallengerUseCase getChallengerUseCase;
+
+    @GetMapping("permission/test")
+    @CheckAccess(
+            resourceType = ResourceType.NOTICE,
+            resourceId = "#noticeId",
+            permission = PermissionType.WRITE,
+            message = "하나야 스트레스 많이 받을거야~ 자기 전에도 생각 날꺼야~ 도움 많이 될꺼야~"
+    )
+    void permissionTest(Long noticeId) {
+    }
+
+    @GetMapping("permission/no-evaluator-test")
+    @CheckAccess(
+            resourceType = ResourceType.MEMBER,
+            resourceId = "#noticeId",
+            permission = PermissionType.WRITE,
+            message = "하나야 스트레스 많이 받을거야~ 자기 전에도 생각 날꺼야~ 도움 많이 될꺼야~"
+    )
+    void noEvaluatorForPermission(Long something) {
+    }
 
     @GetMapping("challenger")
     @Operation(summary = "memberId와 gisuId로 챌린저 정보 조회")

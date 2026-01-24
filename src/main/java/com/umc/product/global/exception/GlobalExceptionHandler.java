@@ -128,7 +128,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(value = BusinessException.class)
     public ResponseEntity<Object> onThrowException(BusinessException e, WebRequest request) {
-        return buildResponse(e, e.getCode(), HttpHeaders.EMPTY, request, null);
+        return buildResponse(e, e.getCode(), HttpHeaders.EMPTY, request, e.getMessage());
     }
 
     /**
