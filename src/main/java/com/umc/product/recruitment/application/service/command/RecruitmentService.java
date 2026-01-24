@@ -224,6 +224,39 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public void delete(DeleteRecruitmentFormResponseCommand command) {
+
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(() -> new BusinessException(
+                        Domain.RECRUITMENT,
+                        RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
+                ));
+
+        if (!recruitment.isPublished()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
+        }
+
+        Long formId = recruitment.getFormId();
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
+
+        FormResponse formResponse = loadFormResponsePort.findById(command.formResponseId())
+                .orElseThrow(() -> new BusinessException(
+                        Domain.SURVEY,
+                        SurveyErrorCode.FORM_RESPONSE_NOT_FOUND
+                ));
+
+        if (formResponse.getForm() == null || formResponse.getForm().getId() == null
+                || !formId.equals(formResponse.getForm().getId())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
+        }
+
+        // 제출본 삭제 방지
+        if (formResponse.getStatus() == FormResponseStatus.SUBMITTED) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_APPLIED);
+        }
+
+        saveFormResponsePort.deleteById(formResponse.getId());
     }
 
     @Override
