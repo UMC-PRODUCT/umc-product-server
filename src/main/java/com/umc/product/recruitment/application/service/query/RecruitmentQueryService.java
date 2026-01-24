@@ -39,6 +39,11 @@ import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import com.umc.product.survey.application.port.in.query.dto.AnswerInfo;
+import com.umc.product.survey.application.port.out.LoadFormResponsePort;
+import com.umc.product.survey.domain.FormResponse;
+import com.umc.product.survey.domain.SingleAnswer;
+import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -60,6 +65,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     private final LoadRecruitmentPort loadRecruitmentPort;
     private final LoadRecruitmentPartPort loadRecruitmentPartPort;
     private final LoadApplicationPort loadApplicationPort;
+    private final LoadFormResponsePort loadFormResponsePort;
 
     @Override
     public ActiveRecruitmentInfo get(GetActiveRecruitmentQuery query) {
@@ -102,7 +108,52 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     @Override
     public RecruitmentFormResponseDetailInfo get(GetRecruitmentFormResponseDetailQuery query) {
-        return null;
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+                .orElseThrow(() ->
+                        new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND)
+                );
+
+        if (!recruitment.isPublished()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
+        }
+
+        Long formId = recruitment.getFormId();
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
+
+        FormResponse formResponse = loadFormResponsePort.findById(query.formResponseId())
+                .orElseThrow(() ->
+                        new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND)
+                );
+
+        if (formResponse.getForm() == null || formResponse.getForm().getId() == null
+                || !formId.equals(formResponse.getForm().getId())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
+        }
+
+        if (query.memberId() != null && !query.memberId().equals(formResponse.getRespondentMemberId())) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_FORBIDDEN);
+        }
+
+        List<AnswerInfo> answers = (formResponse.getAnswers() == null ? List.<SingleAnswer>of()
+                : formResponse.getAnswers())
+                .stream()
+                .map(a -> new AnswerInfo(
+                        a.getQuestion().getId(),
+                        a.getValue(),
+                        a.getAnsweredAsType()
+                ))
+                .toList();
+
+        return new RecruitmentFormResponseDetailInfo(
+                formId,
+                formResponse.getId(),
+                formResponse.getStatus(),
+                formResponse.getUpdatedAt(),
+                formResponse.getSubmittedAt(),
+                answers
+        );
     }
 
     @Override
