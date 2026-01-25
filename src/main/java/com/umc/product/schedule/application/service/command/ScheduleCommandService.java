@@ -53,10 +53,10 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     // 일정 생성
     @Override
     public Long create(CreateScheduleCommand command) {
-        // 1. 현재 활성 기수 조회
+        // 현재 활성 기수 조회
         Long currentGisuId = getGisuUseCase.getActiveGisuId();
 
-        // 2. 작성자의 Challenger 조회 (Member + 현재 기수 기반)
+        // 작성자의 Challenger 조회 (Member + 현재 기수 기반)
         ChallengerInfo challengerInfo = getChallengerUseCase.getByMemberIdAndGisuId(
                 command.authorMemberId(),
                 currentGisuId
@@ -68,13 +68,13 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
 
         Long authorChallengerId = challengerInfo.challengerId();
 
-        // TODO: 3. 참여자 Member 검증 (필요하다고 판단 시 추후 추가, 검색해서 들어가는 거라서 필요 없을 수도)
+        // TODO: 3. 참여자 Member 검증 (검색해서 들어가는 거라서 필요가 있는지에 대해 고민중)
 
-        // 4. Schedule 생성 및 저장
+        // Schedule 생성 및 저장
         Schedule schedule = command.toEntity(authorChallengerId);
         Schedule savedSchedule = saveSchedulePort.save(schedule);
 
-        // 5. 참여자가 있을 시, 출석 관련 엔티티 생성
+        // 참여자가 있을 시, 출석 관련 엔티티 생성
         if (command.hasParticipants()) {
             createAttendanceForParticipants(savedSchedule, command.participantMemberIds());
         }
@@ -134,17 +134,17 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.SCHEDULE_NOT_FOUND);
         }
 
-        // 1. 해당 Schedule의 AttendanceSheet 조회
+        // 해당 Schedule의 AttendanceSheet 조회
         loadAttendanceSheetPort.findByScheduleId(scheduleId)
                 .ifPresent(sheet -> {
-                    // 2. Sheet에 연결된 모든 Record 삭제
+                    // Sheet에 연결된 모든 Record 삭제
                     deleteAttendanceRecordPort.deleteAllBySheetId(sheet.getId());
                 });
 
-        // 3. Sheet 삭제
+        // Sheet 삭제
         deleteAttendanceSheetPort.deleteByScheduleId(scheduleId);
 
-        // 4. Schedule 삭제
+        // Schedule 삭제
         deleteSchedulePort.delete(scheduleId);
     }
 }

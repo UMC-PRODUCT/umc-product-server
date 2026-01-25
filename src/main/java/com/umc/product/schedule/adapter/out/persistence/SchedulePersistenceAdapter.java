@@ -46,6 +46,19 @@ public class SchedulePersistenceAdapter implements
                 memberId, monthStart, nextMonthStart, cursor, fetchSize);
     }
 
+    @Override
+    public List<Schedule> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return scheduleJpaRepository.findAllById(ids);
+    }
+
+    @Override
+    public List<Schedule> findAll() {
+        return scheduleJpaRepository.findAll();
+    }
+
     // ========== SaveSchedulePort ==========
 
     @Override

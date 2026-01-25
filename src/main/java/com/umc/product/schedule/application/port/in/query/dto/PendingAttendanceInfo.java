@@ -14,18 +14,16 @@ public record PendingAttendanceInfo(
         String reason,
         LocalDateTime requestedAt
 ) {
-    /**
-     * AttendanceRecord와 멤버 정보로 생성 memberName, nickname, schoolName은 다른 도메인(member, organization)에서 조회해야 함
-     */
-    public static PendingAttendanceInfo from(
+    public static PendingAttendanceInfo of(
             AttendanceRecord record,
+            Long challengerId,
             String memberName,
             String nickname,
             String schoolName
     ) {
         return new PendingAttendanceInfo(
                 record.getId(),
-                record.getMemberId(),
+                challengerId,
                 memberName,
                 nickname,
                 schoolName,
