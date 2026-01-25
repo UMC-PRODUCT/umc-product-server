@@ -34,27 +34,15 @@ public class NoticeController implements NoticeApi {
     private final ManageNoticeUseCase manageNoticeUseCase;
 
     /*
-     * 공지사항 생성 (임시저장)
+     * 공지사항 생성
      */
-    @PostMapping("/draft")
-    public ApiResponse<CreateDraftNoticeResponse> createDraftNotice(@RequestBody @Valid CreateDraftNoticeRequest request,
+    @PostMapping("/notice")
+    public ApiResponse<CreateDraftNoticeResponse> createNotice(@RequestBody @Valid CreateDraftNoticeRequest request,
                                                                     @CurrentMember MemberPrincipal memberPrincipal) {
 
         Long memberId = memberPrincipal.getMemberId();
-        Long noticeId = manageNoticeUseCase.createDraftNotice(request.toCommand(memberId));
+        Long noticeId = manageNoticeUseCase.createNotice(request.toCommand(memberId));
         return ApiResponse.onSuccess(new CreateDraftNoticeResponse(noticeId));
-    }
-
-    /*
-     * 공지사항 최종 게시
-     */
-    @PatchMapping("/{noticeId}/publish")
-    public void publishNotice(@PathVariable Long noticeId, @CurrentMember MemberPrincipal memberPrincipal) {
-        /*
-         * TODO: challengerId 받아오는 방식 수정 필요
-         */
-        Long memberId = memberPrincipal.getMemberId();
-        manageNoticeUseCase.publishNotice(new PublishNoticeCommand(memberId, noticeId));
     }
 
     /*

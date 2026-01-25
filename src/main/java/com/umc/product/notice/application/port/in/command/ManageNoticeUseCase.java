@@ -11,14 +11,7 @@ public interface ManageNoticeUseCase {
      * 공지 임시작성, 다른 요소들(url, img, vote) 추가 후 작성완료 누르면 publish
      * @return 생성된 공지 ID
      */
-    Long createDraftNotice(CreateNoticeCommand command);
-
-    /*
-     * 공지 작성 확정
-     * @return
-     */
-    void publishNotice(PublishNoticeCommand command);
-
+    Long createNotice(CreateNoticeCommand command);
 
     /*
      * 공지 수정
