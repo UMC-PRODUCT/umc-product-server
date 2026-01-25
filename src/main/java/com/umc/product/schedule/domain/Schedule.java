@@ -83,10 +83,15 @@ public class Schedule extends BaseEntity {
             throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.TAG_REQUIRED);
         }
         this.tags = new HashSet<>(tags);
-        
+
         this.authorChallengerId = authorChallengerId;
+
+        if (startsAt.isAfter(endsAt)) {
+            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.INVALID_TIME_RANGE);
+        }
         this.startsAt = startsAt;
         this.endsAt = endsAt;
+
         this.isAllDay = isAllDay;
         this.locationName = locationName;
         this.location = location;

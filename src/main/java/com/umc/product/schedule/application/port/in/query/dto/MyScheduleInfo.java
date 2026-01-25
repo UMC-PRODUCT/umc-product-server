@@ -3,7 +3,7 @@ package com.umc.product.schedule.application.port.in.query.dto;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
-public record MyScheduleCalendarInfo(
+public record MyScheduleInfo(
         Long scheduleId,
         String name,
         LocalDateTime startsAt,
@@ -12,7 +12,7 @@ public record MyScheduleCalendarInfo(
         long dDay
 ) {
 
-    public static MyScheduleCalendarInfo of(
+    public static MyScheduleInfo of(
             Long scheduleId,
             String name,
             LocalDateTime startsAt,
@@ -22,7 +22,7 @@ public record MyScheduleCalendarInfo(
         String status = resolveStatus(startsAt, endsAt, now);
         long dDay = ChronoUnit.DAYS.between(now.toLocalDate(), startsAt.toLocalDate());
 
-        return new MyScheduleCalendarInfo(scheduleId, name, startsAt, endsAt, status, dDay);
+        return new MyScheduleInfo(scheduleId, name, startsAt, endsAt, status, dDay);
     }
 
     private static String resolveStatus(LocalDateTime startsAt, LocalDateTime endsAt, LocalDateTime now) {
