@@ -13,9 +13,6 @@ public interface LoadSchedulePort {
 
     List<Schedule> findMySchedulesByMonth(Long memberId, LocalDateTime monthStart, LocalDateTime nextMonthStart);
 
-    List<Schedule> findMySchedulesByMonthWithCursor(Long memberId, LocalDateTime monthStart,
-                                                    LocalDateTime nextMonthStart, Long cursor, int fetchSize);
-
     /**
      * ID 목록으로 일정 일괄 조회
      *

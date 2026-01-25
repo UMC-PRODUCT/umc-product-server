@@ -1,7 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.umc.product.schedule.application.port.in.query.dto.MyScheduleCalendarInfo;
+import com.umc.product.schedule.application.port.in.query.dto.MyScheduleInfo;
 import java.time.LocalDateTime;
 
 public record MyScheduleResponse(
@@ -15,7 +15,7 @@ public record MyScheduleResponse(
         long dDay
 ) {
 
-    public static MyScheduleResponse from(MyScheduleCalendarInfo info) {
+    public static MyScheduleResponse from(MyScheduleInfo info) {
         return new MyScheduleResponse(
                 info.scheduleId(),
                 info.name(),

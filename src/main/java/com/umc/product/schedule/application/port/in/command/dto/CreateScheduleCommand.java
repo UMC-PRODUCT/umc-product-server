@@ -27,10 +27,6 @@ public record CreateScheduleCommand(
 ) {
     public CreateScheduleCommand {
         Objects.requireNonNull(name, "Schedule name must not be null");
-
-        if (startsAt.isAfter(endsAt)) {
-            throw new IllegalArgumentException("시작 일시는 종료 일시보다 이전이어야 합니다");
-        }
     }
 
     public static CreateScheduleCommand of(

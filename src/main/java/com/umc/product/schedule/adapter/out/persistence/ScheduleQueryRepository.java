@@ -18,7 +18,8 @@ public class ScheduleQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public List<Schedule> findMySchedulesByMonth(Long memberId, LocalDateTime monthStart, LocalDateTime nextMonthStart) {
+    public List<Schedule> findMySchedulesByMonth(Long memberId, LocalDateTime monthStart,
+                                                 LocalDateTime nextMonthStart) {
         return queryFactory
                 .selectDistinct(schedule)
                 .from(attendanceRecord)
@@ -30,26 +31,6 @@ public class ScheduleQueryRepository {
                         schedule.startsAt.lt(nextMonthStart)
                 )
                 .orderBy(schedule.startsAt.asc())
-                .fetch();
-    }
-
-    public List<Schedule> findMySchedulesByMonthWithCursor(
-            Long memberId, LocalDateTime monthStart, LocalDateTime nextMonthStart,
-            Long cursor, int fetchSize
-    ) {
-        return queryFactory
-                .selectDistinct(schedule)
-                .from(attendanceRecord)
-                .join(attendanceSheet).on(attendanceSheet.id.eq(attendanceRecord.attendanceSheetId))
-                .join(schedule).on(schedule.id.eq(attendanceSheet.scheduleId))
-                .where(
-                        attendanceRecord.memberId.eq(memberId),
-                        schedule.startsAt.goe(monthStart),
-                        schedule.startsAt.lt(nextMonthStart),
-                        cursorCondition(cursor)
-                )
-                .orderBy(schedule.startsAt.asc(), schedule.id.asc())
-                .limit(fetchSize)
                 .fetch();
     }
 
