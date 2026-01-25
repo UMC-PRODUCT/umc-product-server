@@ -22,17 +22,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ScheduleQueryService implements
-        GetScheduleListUseCase,
         GetMyScheduleUseCase,
         GetScheduleDetailUseCase {
 
     private final LoadSchedulePort loadSchedulePort;
-
-    @Override
-    public List<ScheduleWithStatsInfo> getAll() {
-        // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
 
     // 캘린더 나의 일정 조회하기
     @Override
