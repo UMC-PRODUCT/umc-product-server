@@ -9,7 +9,7 @@ import com.umc.product.schedule.adapter.in.web.mapper.ScheduleWebMapper;
 import com.umc.product.schedule.application.port.in.query.GetMyScheduleUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleDetailUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleListUseCase;
-import com.umc.product.schedule.application.port.in.query.dto.MyScheduleCalendarInfo;
+import com.umc.product.schedule.application.port.in.query.dto.MyScheduleInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class ScheduleQueryController implements ScheduleQueryControllerApi {
             @RequestParam int year,
             @RequestParam int month
     ) {
-        List<MyScheduleCalendarInfo> infos = getMyScheduleUseCase.getMyMonthlySchedules(
+        List<MyScheduleInfo> infos = getMyScheduleUseCase.getMyMonthlySchedules(
                 memberPrincipal.getMemberId(), year, month);
 
         return infos.stream()

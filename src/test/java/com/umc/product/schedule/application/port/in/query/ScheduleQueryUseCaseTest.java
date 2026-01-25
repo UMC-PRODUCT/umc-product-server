@@ -7,7 +7,7 @@ import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
-import com.umc.product.schedule.application.port.in.query.dto.MyScheduleCalendarInfo;
+import com.umc.product.schedule.application.port.in.query.dto.MyScheduleInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
 import com.umc.product.schedule.application.port.out.SaveAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.SaveAttendanceSheetPort;
@@ -70,7 +70,7 @@ public class ScheduleQueryUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            List<MyScheduleCalendarInfo> result = getMyScheduleUseCase.getMyMonthlySchedules(
+            List<MyScheduleInfo> result = getMyScheduleUseCase.getMyMonthlySchedules(
                     member.getId(), 2026, 3);
 
             // then
@@ -90,7 +90,7 @@ public class ScheduleQueryUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            List<MyScheduleCalendarInfo> result = getMyScheduleUseCase.getMyMonthlySchedules(
+            List<MyScheduleInfo> result = getMyScheduleUseCase.getMyMonthlySchedules(
                     member.getId(), 2026, 3);
 
             // then
@@ -111,7 +111,7 @@ public class ScheduleQueryUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            List<MyScheduleCalendarInfo> result = getMyScheduleUseCase.getMyMonthlySchedules(
+            List<MyScheduleInfo> result = getMyScheduleUseCase.getMyMonthlySchedules(
                     member.getId(), 2026, 3);
 
             // then
@@ -129,7 +129,7 @@ public class ScheduleQueryUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            List<MyScheduleCalendarInfo> result = getMyScheduleUseCase.getMyMonthlySchedules(
+            List<MyScheduleInfo> result = getMyScheduleUseCase.getMyMonthlySchedules(
                     member.getId(), 2024, 1);
 
             // then
@@ -148,7 +148,7 @@ public class ScheduleQueryUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            List<MyScheduleCalendarInfo> result = getMyScheduleUseCase.getMyMonthlySchedules(
+            List<MyScheduleInfo> result = getMyScheduleUseCase.getMyMonthlySchedules(
                     member.getId(), 2030, 6);
 
             // then
@@ -173,7 +173,7 @@ public class ScheduleQueryUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            List<MyScheduleCalendarInfo> result = getMyScheduleUseCase.getMyMonthlySchedules(
+            List<MyScheduleInfo> result = getMyScheduleUseCase.getMyMonthlySchedules(
                     member.getId(), 2026, 3);
 
             // then

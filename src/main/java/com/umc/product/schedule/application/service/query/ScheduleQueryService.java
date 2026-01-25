@@ -4,7 +4,7 @@ import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.in.query.GetMyScheduleUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleDetailUseCase;
-import com.umc.product.schedule.application.port.in.query.dto.MyScheduleCalendarInfo;
+import com.umc.product.schedule.application.port.in.query.dto.MyScheduleInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.domain.Schedule;
@@ -27,7 +27,7 @@ public class ScheduleQueryService implements
 
     // 캘린더 나의 일정 조회하기
     @Override
-    public List<MyScheduleCalendarInfo> getMyMonthlySchedules(Long memberId, int year, int month) {
+    public List<MyScheduleInfo> getMyMonthlySchedules(Long memberId, int year, int month) {
         LocalDateTime now = LocalDateTime.now();
 
         YearMonth yearMonth = YearMonth.of(year, month);
@@ -38,7 +38,7 @@ public class ScheduleQueryService implements
                 memberId, monthStart, nextMonthStart);
 
         return schedules.stream()
-                .map(s -> MyScheduleCalendarInfo.of(
+                .map(s -> MyScheduleInfo.of(
                         s.getId(),
                         s.getName(),
                         s.getStartsAt(),
