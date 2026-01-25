@@ -4,10 +4,8 @@ import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.in.query.GetMyScheduleUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleDetailUseCase;
-import com.umc.product.schedule.application.port.in.query.GetScheduleListUseCase;
-import com.umc.product.schedule.application.port.in.query.dto.MyScheduleCalendarInfo;
+import com.umc.product.schedule.application.port.in.query.dto.MyScheduleInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
-import com.umc.product.schedule.application.port.in.query.dto.ScheduleWithStatsInfo;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
@@ -22,21 +20,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ScheduleQueryService implements
-        GetScheduleListUseCase,
         GetMyScheduleUseCase,
         GetScheduleDetailUseCase {
 
     private final LoadSchedulePort loadSchedulePort;
 
-    @Override
-    public List<ScheduleWithStatsInfo> getAll() {
-        // TODO: 구현 필요
-        throw new UnsupportedOperationException("Not implemented yet");
-    }
-
     // 캘린더 나의 일정 조회하기
     @Override
-    public List<MyScheduleCalendarInfo> getMyMonthlySchedules(Long memberId, int year, int month) {
+    public List<MyScheduleInfo> getMyMonthlySchedules(Long memberId, int year, int month) {
         LocalDateTime now = LocalDateTime.now();
 
         YearMonth yearMonth = YearMonth.of(year, month);
@@ -47,31 +38,7 @@ public class ScheduleQueryService implements
                 memberId, monthStart, nextMonthStart);
 
         return schedules.stream()
-                .map(s -> MyScheduleCalendarInfo.of(
-                        s.getId(),
-                        s.getName(),
-                        s.getStartsAt(),
-                        s.getEndsAt(),
-                        now
-                ))
-                .toList();
-    }
-
-    // 리스트 형식 나의 일정 조회하기 (커서 페이징)
-    @Override
-    public List<MyScheduleCalendarInfo> getMyMonthlyScheduleList(Long memberId, int year, int month, Long cursor,
-                                                                 int size) {
-        LocalDateTime now = LocalDateTime.now();
-
-        YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDateTime monthStart = yearMonth.atDay(1).atStartOfDay();
-        LocalDateTime nextMonthStart = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
-
-        List<Schedule> schedules = loadSchedulePort.findMySchedulesByMonthWithCursor(
-                memberId, monthStart, nextMonthStart, cursor, size + 1);
-
-        return schedules.stream()
-                .map(s -> MyScheduleCalendarInfo.of(
+                .map(s -> MyScheduleInfo.of(
                         s.getId(),
                         s.getName(),
                         s.getStartsAt(),
