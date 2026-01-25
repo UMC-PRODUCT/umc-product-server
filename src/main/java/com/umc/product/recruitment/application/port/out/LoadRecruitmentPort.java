@@ -38,4 +38,6 @@ public interface LoadRecruitmentPort {
     );
 
     Optional<Long> findActiveRecruitmentId(Long schoolId, Long gisuId, Instant now);
+
+    Optional<Recruitment> findByFormId(Long formId);
 }

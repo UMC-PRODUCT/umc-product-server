@@ -1,5 +1,7 @@
 package com.umc.product.recruitment.adapter.in.web.dto.response;
 
+import com.umc.product.recruitment.application.port.in.query.dto.ApplicationProgressNoticeType;
+import com.umc.product.recruitment.application.port.in.query.dto.EvaluationStatusCode;
 import com.umc.product.recruitment.application.port.in.query.dto.MyApplicationListInfo;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import java.time.Instant;
@@ -40,24 +42,27 @@ public record MyRecruitmentApplicationsResponse(
     }
 
     public record EvaluationStatusForApplicantResponse(
-            String status,
-            String label
+            EvaluationStatusCode status
     ) {
         public static EvaluationStatusForApplicantResponse from(MyApplicationListInfo.EvaluationStatusInfo info) {
-            return new EvaluationStatusForApplicantResponse(info.status(), info.label());
+            return new EvaluationStatusForApplicantResponse(info.status());
         }
     }
 
     public record ProgressResponse(
             String currentStep,
             List<ProgressStepResponse> steps,
-            LocalDate resultAnnounceAt
+            ApplicationProgressNoticeType noticeType,
+            LocalDate noticeDate,
+            Integer nextRecruitmentMonth
     ) {
         public static ProgressResponse from(MyApplicationListInfo.ProgressTimelineInfo info) {
             return new ProgressResponse(
                     info.currentStep(),
                     info.steps().stream().map(ProgressStepResponse::from).toList(),
-                    info.resultAnnounceAt()
+                    info.noticeType(),
+                    info.noticeDate(),
+                    info.nextRecruitmentMonth()
             );
         }
     }

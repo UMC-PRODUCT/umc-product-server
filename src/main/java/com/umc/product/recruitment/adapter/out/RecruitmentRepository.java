@@ -51,4 +51,5 @@ public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> 
             @Param("now") Instant now
     );
 
+    Optional<Recruitment> findByFormId(Long formId);
 }

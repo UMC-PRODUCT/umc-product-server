@@ -4,6 +4,7 @@ import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.application.port.out.SaveFormResponsePort;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -34,5 +35,12 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
     @Override
     public void deleteById(Long formResponseId) {
         formResponseJpaRepository.deleteById(formResponseId);
+    }
+
+    @Override
+    public List<FormResponse> findAllDraftByRespondentMemberId(Long respondentMemberId) {
+        return formResponseJpaRepository.findByRespondentMemberIdAndStatus(
+                respondentMemberId, FormResponseStatus.DRAFT
+        );
     }
 }

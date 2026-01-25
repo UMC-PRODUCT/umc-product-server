@@ -20,15 +20,16 @@ public record MyApplicationListInfo(
     }
 
     public record EvaluationStatusInfo(
-            String status, // "PASS" | "FAIL" | "PENDING" | "NONE"
-            String label
+            EvaluationStatusCode status
     ) {
     }
 
     public record ProgressTimelineInfo(
-            String currentStep,
+            String currentStep, // ApplicationProgressStep.name()
             List<ProgressStepInfo> steps,
-            LocalDate resultAnnounceAt
+            ApplicationProgressNoticeType noticeType, // nullable
+            LocalDate noticeDate, // nullable (APPLY/DOC/FINAL)
+            Integer nextRecruitmentMonth // nullable (불합격 시 3 or 9)
     ) {
     }
 
@@ -45,7 +46,7 @@ public record MyApplicationListInfo(
             Long applicationId,
             Long formResponseId,
             String recruitmentTitle,
-            String badge, // "SUBMITTED" | "PAST"
+            String badge, // "DRAFT" | "SUBMITTED" | "PAST"
             ApplicationStatus status,
             Instant submittedAt
     ) {

@@ -513,6 +513,11 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         return recruitmentRepository.findActiveRecruitmentId(schoolId, gisuId, now);
     }
 
+    @Override
+    public Optional<Recruitment> findByFormId(Long formId) {
+        return recruitmentRepository.findByFormId(formId);
+    }
+
     private boolean matchesListStatus(RecruitmentListStatus status, RecruitmentPhase phase) {
         return switch (status) {
             case UPCOMING -> phase == RecruitmentPhase.BEFORE_APPLY;
@@ -585,7 +590,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         if (start == null || end == null) {
             return false;
         }
-        return (now.equals(start) || now.isAfter(start)) && (now.equals(end) || now.isBefore(end));
+        return !now.isBefore(start) && now.isBefore(end);
     }
 
     private Map<Long, RecruitmentSchedule> toScheduleMap(List<Long> ids, RecruitmentScheduleType type) {

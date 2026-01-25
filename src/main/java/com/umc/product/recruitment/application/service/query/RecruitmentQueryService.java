@@ -2,6 +2,9 @@ package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.member.application.port.out.LoadMemberPort;
+import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyApplicationListUseCase;
@@ -15,6 +18,9 @@ import com.umc.product.recruitment.application.port.in.query.GetRecruitmentPartL
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentScheduleUseCase;
 import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.ApplicationProgressNoticeType;
+import com.umc.product.recruitment.application.port.in.query.dto.ApplicationProgressStep;
+import com.umc.product.recruitment.application.port.in.query.dto.EvaluationStatusCode;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDetailQuery;
@@ -31,11 +37,15 @@ import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentList
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentNoticeInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentPartListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentScheduleInfo;
+import com.umc.product.recruitment.application.port.out.LoadApplicationPartPreferencePort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
+import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
+import com.umc.product.recruitment.domain.RecruitmentSchedule;
+import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.survey.application.port.in.query.dto.AnswerInfo;
@@ -44,6 +54,9 @@ import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.SingleAnswer;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -66,6 +79,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     private final LoadRecruitmentPartPort loadRecruitmentPartPort;
     private final LoadApplicationPort loadApplicationPort;
     private final LoadFormResponsePort loadFormResponsePort;
+    private final LoadMemberPort loadMemberPort;
+    private final LoadApplicationPartPreferencePort loadApplicationPartPreferencePort;
 
     private Long resolveSchoolId() {
         return 1L;
@@ -105,7 +120,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         List<com.umc.product.common.domain.enums.ChallengerPart> openParts = recruitmentParts.stream()
                 .filter(p -> p.getStatus() != null && p.getStatus().name().equals("OPEN"))
                 .map(RecruitmentPart::getPart)
-                .sorted(java.util.Comparator.comparingInt(Enum::ordinal))
+                .sorted(Comparator.comparingInt(Enum::ordinal))
                 .toList();
 
         String title = (recruitment.getNoticeTitle() != null && !recruitment.getNoticeTitle().isBlank())
@@ -234,7 +249,688 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     @Override
     public MyApplicationListInfo get(GetMyApplicationListQuery query) {
+        Long memberId = query.memberId();
+
+        Member member = loadMemberPort.findById(memberId)
+                .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+
+        String nickName = member.getNickname();
+        String name = member.getName();
+
+        Long schoolId = resolveSchoolId(); // TODO: memberId -> schoolId
+        Long activeGisuId = resolveActiveGisuId(schoolId); // TODO: active gisu
+
+        Long activeRecruitmentId = loadRecruitmentPort.findActiveRecruitmentId(
+                schoolId, activeGisuId, Instant.now()
+        ).orElse(null);
+
+        List<FormResponse> drafts = loadFormResponsePort.findAllDraftByRespondentMemberId(memberId);
+        if (drafts == null) {
+            drafts = List.of();
+        }
+
+        List<Application> apps = loadApplicationPort.findAllByApplicantMemberId(memberId);
+        if (apps == null) {
+            apps = List.of();
+        }
+
+        CurrentPicked currentPicked = pickCurrent(activeRecruitmentId, drafts, apps);
+
+        MyApplicationListInfo.CurrentApplicationStatusInfo current =
+                buildCurrentOrBeforeApply(activeRecruitmentId, currentPicked);
+
+        List<MyApplicationListInfo.MyApplicationCardInfo> cards =
+                buildCards(activeRecruitmentId, drafts, apps, currentPicked);
+
+        return new MyApplicationListInfo(nickName, name, current, cards);
+    }
+
+    /**
+     * 활성 모집 기준 current 선택 - activeRecruitmentId 없으면 current 없음 - 활성 모집 submitted 있으면 submitted 우선 - 없으면 활성 모집 draft 있으면
+     * draft - 둘 다 없으면 current 없음 (=> 지금 열린 모집에 지원 안했으면 리스트에 없음)
+     */
+    private CurrentPicked pickCurrent(Long activeRecruitmentId, List<FormResponse> drafts, List<Application> apps) {
+        if (activeRecruitmentId == null) {
+            return null;
+        }
+
+        // submitted 우선
+        Application activeApp = (apps == null ? List.<Application>of() : apps).stream()
+                .filter(a -> a.getRecruitment() != null
+                        && activeRecruitmentId.equals(a.getRecruitment().getId()))
+                .max(Comparator.comparing(
+                        Application::getCreatedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ))
+                .orElse(null);
+
+        if (activeApp != null) {
+            return CurrentPicked.submitted(activeApp.getRecruitment(), activeApp);
+        }
+
+        FormResponse activeDraft = (drafts == null ? List.<FormResponse>of() : drafts).stream()
+                .filter(fr -> isRecruitmentMatchedByFormId(activeRecruitmentId, fr))
+                .max(Comparator.comparing(
+                        FormResponse::getUpdatedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ))
+                .orElse(null);
+
+        if (activeDraft != null) {
+            Long formId = activeDraft.getForm() == null ? null : activeDraft.getForm().getId();
+            Recruitment r = (formId == null) ? null
+                    : loadRecruitmentPort.findByFormId(formId).orElse(null);
+            if (r != null) {
+                return CurrentPicked.draft(r, activeDraft);
+            }
+        }
+
         return null;
+    }
+
+    /**
+     * 지원 전
+     */
+    private MyApplicationListInfo.CurrentApplicationStatusInfo buildCurrentOrBeforeApply(
+            Long activeRecruitmentId,
+            CurrentPicked currentPicked
+    ) {
+        if (activeRecruitmentId == null) {
+            return null;
+        }
+
+        // 지원이 있을 때
+        if (currentPicked != null) {
+            return buildCurrentStatus(currentPicked);
+        }
+
+        // 아직 지원하지 않았을 때
+        ProgressComputed progress = resolveProgressForUI(activeRecruitmentId, null);
+
+        List<String> appliedParts = List.of();
+
+        MyApplicationListInfo.EvaluationStatusInfo docEval =
+                new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING);
+        MyApplicationListInfo.EvaluationStatusInfo finalEval =
+                new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING);
+
+        return new MyApplicationListInfo.CurrentApplicationStatusInfo(
+                appliedParts,
+                docEval,
+                finalEval,
+                progress.timeline
+        );
+    }
+
+    /**
+     * 지원서 카드 리스트 구성 - current가 있으면 맨 위에 1개 (DRAFT or SUBMITTED) - 나머지 draft는 DRAFT, 나머지 submitted는 전부 PAST
+     */
+    private List<MyApplicationListInfo.MyApplicationCardInfo> buildCards(
+            Long activeRecruitmentId,
+            List<FormResponse> drafts,
+            List<Application> apps,
+            CurrentPicked currentPicked
+    ) {
+        List<MyApplicationListInfo.MyApplicationCardInfo> result = new java.util.ArrayList<>();
+
+        if (currentPicked != null) {
+            result.add(toCurrentCard(currentPicked));
+        }
+
+        // 활성 모집에 해당하는 draft/app 최신 1개
+        Long currentDraftFormResponseId = (currentPicked != null && currentPicked.kind == CurrentPicked.Kind.DRAFT)
+                ? currentPicked.formResponse.getId()
+                : null;
+
+        Long currentSubmittedAppId = (currentPicked != null && currentPicked.kind == CurrentPicked.Kind.SUBMITTED)
+                ? currentPicked.application.getId()
+                : null;
+
+        Long latestActiveDraftId = (activeRecruitmentId == null) ? null
+                : (drafts == null ? List.<FormResponse>of() : drafts).stream()
+                        .filter(fr -> isRecruitmentMatchedByFormId(activeRecruitmentId, fr))
+                        .max(java.util.Comparator.comparing(
+                                FormResponse::getUpdatedAt,
+                                java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())
+                        ))
+                        .map(FormResponse::getId)
+                        .orElse(null);
+
+        Long latestActiveSubmittedAppId = (activeRecruitmentId == null) ? null
+                : (apps == null ? List.<Application>of() : apps).stream()
+                        .filter(a -> a.getRecruitment() != null && activeRecruitmentId.equals(
+                                a.getRecruitment().getId()))
+                        .max(java.util.Comparator.comparing(
+                                Application::getCreatedAt,
+                                java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())
+                        ))
+                        .map(Application::getId)
+                        .orElse(null);
+
+        List<MyApplicationListInfo.MyApplicationCardInfo> draftCards =
+                (drafts == null ? List.<FormResponse>of() : drafts).stream()
+                        .map(fr -> {
+                            Long formId = (fr.getForm() == null) ? null : fr.getForm().getId();
+                            if (formId == null) {
+                                return null;
+                            }
+
+                            Recruitment recruitment = loadRecruitmentPort.findByFormId(formId).orElse(null);
+                            if (recruitment == null) {
+                                return null;
+                            }
+
+                            if (currentDraftFormResponseId != null && currentDraftFormResponseId.equals(fr.getId())) {
+                                return null;
+                            }
+
+                            if (activeRecruitmentId != null
+                                    && recruitment.getId() != null
+                                    && recruitment.getId().equals(activeRecruitmentId)) {
+                                if (latestActiveDraftId != null && !latestActiveDraftId.equals(fr.getId())) {
+                                    return null;
+                                }
+                            }
+
+                            return new MyApplicationListInfo.MyApplicationCardInfo(
+                                    recruitment.getId(),
+                                    null,
+                                    fr.getId(),
+                                    recruitment.getTitle(),
+                                    "DRAFT",
+                                    null,
+                                    fr.getUpdatedAt()
+                            );
+                        })
+                        .filter(java.util.Objects::nonNull)
+                        .sorted((a, b) -> compareInstantDesc(a.submittedAt(),
+                                b.submittedAt())) // DRAFT: updatedAt, SUBMITTED/PAST: createdAt 기준 정렬
+                        .toList();
+
+        List<MyApplicationListInfo.MyApplicationCardInfo> submittedCards =
+                (apps == null ? List.<Application>of() : apps).stream()
+                        .map(app -> {
+                            Recruitment recruitment = app.getRecruitment();
+                            if (recruitment == null) {
+                                return null;
+                            }
+
+                            if (currentSubmittedAppId != null && currentSubmittedAppId.equals(app.getId())) {
+                                return null;
+                            }
+
+                            if (activeRecruitmentId != null
+                                    && recruitment.getId() != null
+                                    && recruitment.getId().equals(activeRecruitmentId)) {
+                                if (latestActiveSubmittedAppId != null && !latestActiveSubmittedAppId.equals(
+                                        app.getId())) {
+                                    return null;
+                                }
+                            }
+
+                            return new MyApplicationListInfo.MyApplicationCardInfo(
+                                    recruitment.getId(),
+                                    app.getId(),
+                                    app.getFormResponseId(),
+                                    recruitment.getTitle(),
+                                    "PAST",
+                                    app.getStatus(),
+                                    app.getCreatedAt()
+                            );
+                        })
+                        .filter(java.util.Objects::nonNull)
+                        .sorted((a, b) -> compareInstantDesc(a.submittedAt(),
+                                b.submittedAt())) // DRAFT: updatedAt, SUBMITTED/PAST: createdAt 기준 정렬
+                        .toList();
+
+        result.addAll(draftCards);
+        result.addAll(submittedCards);
+        return result;
+    }
+
+    private MyApplicationListInfo.MyApplicationCardInfo toCurrentCard(CurrentPicked picked) {
+        if (picked.kind == CurrentPicked.Kind.DRAFT) {
+            return new MyApplicationListInfo.MyApplicationCardInfo(
+                    picked.recruitment.getId(),
+                    null,
+                    picked.formResponse.getId(),
+                    picked.recruitment.getTitle(),
+                    "DRAFT",
+                    null,
+                    picked.formResponse.getUpdatedAt()
+            );
+        }
+
+        return new MyApplicationListInfo.MyApplicationCardInfo(
+                picked.recruitment.getId(),
+                picked.application.getId(),
+                picked.application.getFormResponseId(),
+                picked.recruitment.getTitle(),
+                "SUBMITTED",
+                picked.application.getStatus(),
+                picked.application.getCreatedAt()
+        );
+    }
+
+    /**
+     * progress 계산 - progress(step/notice)는 schedule 기반으로만 계산 - docEval/finalEval은 발표 이후에만 EvaluationDecision을 DB에서 조회해
+     * 노출 - 서류 FAIL: finalEval은 "예정 없음"
+     */
+    private MyApplicationListInfo.CurrentApplicationStatusInfo buildCurrentStatus(CurrentPicked picked) {
+
+        ProgressComputed progress = resolveProgressForUI(
+                picked.recruitment.getId(),
+                picked.kind == CurrentPicked.Kind.SUBMITTED ? picked.application.getStatus() : null
+        );
+
+        if (picked.kind == CurrentPicked.Kind.DRAFT) {
+            return new MyApplicationListInfo.CurrentApplicationStatusInfo(
+                    List.of(),
+                    new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING),
+                    new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING),
+                    progress.timeline
+            );
+        }
+
+        // 지원서 제출 완료 시
+        List<String> appliedParts = loadApplicationPartPreferencePort
+                .findAllByApplicationIdOrderByPriorityAsc(picked.application.getId())
+                .stream()
+                .map(pp -> pp.getRecruitmentPart().getPart().name())
+                .toList();
+
+        MyApplicationListInfo.EvaluationStatusInfo docEval = buildDocEvalForUser(picked.application, progress);
+        MyApplicationListInfo.EvaluationStatusInfo finalEval = buildFinalEvalForUser(picked.application, progress,
+                docEval);
+
+        return new MyApplicationListInfo.CurrentApplicationStatusInfo(
+                appliedParts,
+                docEval,
+                finalEval,
+                progress.timeline
+        );
+    }
+
+    /**
+     * 진행 계산 결과 묶음
+     */
+    private static record ProgressComputed(
+            Instant now,
+            ApplicationProgressStep currentStep,
+            MyApplicationListInfo.ProgressTimelineInfo timeline,
+            Instant applyEndAt,
+            Instant docResultAt,
+            Instant finalResultAt
+    ) {
+    }
+
+    /**
+     * schedule 기반 6단계 + noticeType/date 계산 - BEFORE_APPLY: noticeType=APPLY_DEADLINE, date=applyWindow.endsAt -
+     * DOC_REVIEWING: noticeType=DOC_RESULT_ANNOUNCE, date=docResultAt - DOC_RESULT_PUBLISHED ~ FINAL_REVIEWING:
+     * noticeType=FINAL_RESULT_ANNOUNCE, date=finalResultAt - FINAL_RESULT_PUBLISHED: noticeType/date = null (프론트 고정 문구
+     * 출력)
+     */
+    private ProgressComputed resolveProgressForUI(Long recruitmentId, ApplicationStatus appStatus) {
+        List<RecruitmentSchedule> schedules = loadRecruitmentPort.findSchedulesByRecruitmentId(recruitmentId);
+        if (schedules == null) {
+            schedules = List.of();
+        }
+
+        Instant now = Instant.now();
+
+        RecruitmentSchedule applyWindow = findSchedule(schedules, RecruitmentScheduleType.APPLY_WINDOW);
+        RecruitmentSchedule docReviewWindow = findSchedule(schedules, RecruitmentScheduleType.DOC_REVIEW_WINDOW);
+        RecruitmentSchedule docResultAt = findSchedule(schedules, RecruitmentScheduleType.DOC_RESULT_AT);
+        RecruitmentSchedule interviewWindow = findSchedule(schedules, RecruitmentScheduleType.INTERVIEW_WINDOW);
+        RecruitmentSchedule finalReviewWindow = findSchedule(schedules, RecruitmentScheduleType.FINAL_REVIEW_WINDOW);
+        RecruitmentSchedule finalResultAt = findSchedule(schedules, RecruitmentScheduleType.FINAL_RESULT_AT);
+
+        ApplicationProgressStep currentStep = computeCurrentStepForUI(
+                now, applyWindow, docReviewWindow, docResultAt, interviewWindow, finalReviewWindow, finalResultAt
+        );
+
+        Instant docResultInstant = pickAt(docResultAt);
+        Instant finalResultInstant = pickAt(finalResultAt);
+
+        if (appStatus != null && currentStep == ApplicationProgressStep.BEFORE_APPLY) {
+            currentStep = ApplicationProgressStep.DOC_REVIEWING;
+        }
+
+        if (appStatus != null) {
+            // 서류 불합격은 "서류 결과 발표" 이후에만 고정
+            if (isDocFailed(appStatus)) {
+                if (docResultInstant != null && !now.isBefore(docResultInstant)) {
+                    currentStep = ApplicationProgressStep.DOC_RESULT_PUBLISHED;
+                }
+            }
+            // 최종 결과(합/불) 확정도 "최종 발표일" 이후에만 고정
+            else if (isFinalDecided(appStatus)) {
+                if (finalResultInstant != null && !now.isBefore(finalResultInstant)) {
+                    currentStep = ApplicationProgressStep.FINAL_RESULT_PUBLISHED;
+                }
+            }
+        }
+
+        List<MyApplicationListInfo.ProgressStepInfo> steps = List.of(
+                toStep(ApplicationProgressStep.BEFORE_APPLY, "지원 전", currentStep),
+                toStep(ApplicationProgressStep.DOC_REVIEWING, "서류 평가 중", currentStep),
+                toStep(ApplicationProgressStep.DOC_RESULT_PUBLISHED, "서류 결과 발표", currentStep),
+                toStep(ApplicationProgressStep.INTERVIEW_WAITING, "면접 대기 중", currentStep),
+                toStep(ApplicationProgressStep.FINAL_REVIEWING, "최종 평가 중", currentStep),
+                toStep(ApplicationProgressStep.FINAL_RESULT_PUBLISHED, "최종 결과 발표", currentStep)
+        );
+
+        NoticeComputed notice = computeNoticeForUI(now, currentStep, applyWindow, docResultAt, finalResultAt,
+                appStatus);
+
+        MyApplicationListInfo.ProgressTimelineInfo timeline = new MyApplicationListInfo.ProgressTimelineInfo(
+                currentStep.name(),
+                steps,
+                notice.noticeType,
+                notice.noticeDate,
+                notice.nextRecruitmentMonth
+        );
+
+        return new ProgressComputed(
+                now,
+                currentStep,
+                timeline,
+                (applyWindow == null) ? null : applyWindow.getEndsAt(),
+                docResultInstant,
+                finalResultInstant
+        );
+    }
+
+    private ApplicationProgressStep computeCurrentStepForUI(
+            Instant now,
+            RecruitmentSchedule applyWindow,
+            RecruitmentSchedule docReviewWindow,
+            RecruitmentSchedule docResultAt,
+            RecruitmentSchedule interviewWindow,
+            RecruitmentSchedule finalReviewWindow,
+            RecruitmentSchedule finalResultAt
+    ) {
+        Instant applyStart = (applyWindow == null) ? null : applyWindow.getStartsAt();
+        Instant applyEnd = (applyWindow == null) ? null : applyWindow.getEndsAt();
+
+        Instant docResultInstant = pickAt(docResultAt);
+        Instant interviewStart = (interviewWindow == null) ? null : interviewWindow.getStartsAt();
+        Instant interviewEnd = (interviewWindow == null) ? null : interviewWindow.getEndsAt();
+
+        Instant finalResultInstant = pickAt(finalResultAt);
+
+        // 1) 지원 전
+        if (applyStart != null && now.isBefore(applyStart)) {
+            return ApplicationProgressStep.BEFORE_APPLY;
+        }
+        if (isNowInWindow(now, applyWindow)) {
+            return ApplicationProgressStep.BEFORE_APPLY;
+        }
+
+        // 2) 서류 평가 중
+        if (isNowInWindow(now, docReviewWindow)) {
+            return ApplicationProgressStep.DOC_REVIEWING;
+        }
+        if (docResultInstant != null && now.isBefore(docResultInstant)) {
+            return ApplicationProgressStep.DOC_REVIEWING;
+        }
+
+        // 3) 서류 결과 발표 (docResultAt 이후 ~ 면접 시작 전)
+        if (docResultInstant != null && !now.isBefore(docResultInstant)) {
+            if (interviewStart == null || now.isBefore(interviewStart)) {
+                return ApplicationProgressStep.DOC_RESULT_PUBLISHED;
+            }
+        }
+
+        // 4) 면접 단계
+        if (isNowInWindow(now, interviewWindow)) {
+            return ApplicationProgressStep.INTERVIEW_WAITING;
+        }
+
+        // 5) 최종 평가 중
+        if (isNowInWindow(now, finalReviewWindow)) {
+            return ApplicationProgressStep.FINAL_REVIEWING;
+        }
+        if (finalResultInstant != null) {
+            if (interviewEnd != null && now.isAfter(interviewEnd) && now.isBefore(finalResultInstant)) {
+                return ApplicationProgressStep.FINAL_REVIEWING;
+            }
+        }
+
+        // 6) 최종 결과 발표
+        if (finalResultInstant != null && !now.isBefore(finalResultInstant)) {
+            return ApplicationProgressStep.FINAL_RESULT_PUBLISHED;
+        }
+
+        // fallback
+        return ApplicationProgressStep.BEFORE_APPLY;
+    }
+
+    private static record NoticeComputed(
+            ApplicationProgressNoticeType noticeType,
+            LocalDate noticeDate,
+            Integer nextRecruitmentMonth
+    ) {
+
+        static NoticeComputed ofDate(ApplicationProgressNoticeType type, Instant instantUtc) {
+            if (type == null || instantUtc == null) {
+                return new NoticeComputed(null, null, null);
+            }
+            return new NoticeComputed(type, LocalDate.ofInstant(instantUtc, ZoneId.of("Asia/Seoul")), null);
+        }
+
+        static NoticeComputed ofNextMonth(Integer month) {
+            return new NoticeComputed(ApplicationProgressNoticeType.NEXT_RECRUITMENT_EXPECTED, null, month);
+        }
+    }
+
+    private NoticeComputed computeNoticeForUI(
+            Instant now,
+            ApplicationProgressStep step,
+            RecruitmentSchedule applyWindow,
+            RecruitmentSchedule docResultAt,
+            RecruitmentSchedule finalResultAt,
+            ApplicationStatus appStatus
+    ) {
+        Instant docResultInstant = pickAt(docResultAt);
+        Instant finalResultInstant = pickAt(finalResultAt);
+
+        // 최종 합격자: (최종 발표 이후에만) 앱 공지 안내 문구
+        if (appStatus == ApplicationStatus.FINAL_ACCEPTED
+                && step == ApplicationProgressStep.FINAL_RESULT_PUBLISHED) {
+            return new NoticeComputed(ApplicationProgressNoticeType.CHALLENGER_NOTICE_IN_APP, null, null);
+        }
+
+        // 불합격자: (각 발표 이후에만) 다음 모집 월 안내
+        if (appStatus != null) {
+            if (isDocFailed(appStatus)) {
+                if (docResultInstant != null && !now.isBefore(docResultInstant)) {
+                    return NoticeComputed.ofNextMonth(computeNextRecruitmentMonth());
+                }
+            }
+            if (isFinalRejected(appStatus)) {
+                if (finalResultInstant != null && !now.isBefore(finalResultInstant)) {
+                    return NoticeComputed.ofNextMonth(computeNextRecruitmentMonth());
+                }
+            }
+        }
+
+        // 최종 결과 발표 이후: 프론트 고정 문구 (notice null)
+        if (step == ApplicationProgressStep.FINAL_RESULT_PUBLISHED) {
+            return new NoticeComputed(null, null, null);
+        }
+
+        if (step == ApplicationProgressStep.BEFORE_APPLY) {
+            Instant applyEnd = (applyWindow == null) ? null : applyWindow.getEndsAt();
+            return NoticeComputed.ofDate(ApplicationProgressNoticeType.APPLY_DEADLINE, applyEnd);
+        }
+
+        if (step == ApplicationProgressStep.DOC_REVIEWING) {
+            return NoticeComputed.ofDate(ApplicationProgressNoticeType.DOC_RESULT_ANNOUNCE, docResultInstant);
+        }
+
+        return NoticeComputed.ofDate(ApplicationProgressNoticeType.FINAL_RESULT_ANNOUNCE, finalResultInstant);
+    }
+
+    /**
+     * 서류 평가는 서류 결과 발표 이후에만 decision 노출
+     */
+    private MyApplicationListInfo.EvaluationStatusInfo buildDocEvalForUser(
+            Application app,
+            ProgressComputed progress
+    ) {
+        // 서류 발표 전: 미정
+        if (progress.docResultAt == null || progress.now.isBefore(progress.docResultAt)) {
+            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING);
+        }
+
+        ApplicationStatus st = app.getStatus();
+
+        if (st == ApplicationStatus.DOC_FAILED) {
+            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.FAIL);
+        }
+
+        if (st == ApplicationStatus.DOC_PASSED
+                || st == ApplicationStatus.INTERVIEW_SCHEDULED
+                || st == ApplicationStatus.INTERVIEW_PASSED
+                || st == ApplicationStatus.INTERVIEW_FAILED
+                || st == ApplicationStatus.FINAL_ACCEPTED
+                || st == ApplicationStatus.FINAL_REJECTED) {
+            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PASS);
+        }
+
+        // 발표 후인데 상태 반영 전
+        return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING);
+    }
+
+    /**
+     * 최종 평가는 최종 결과 발표 이후에만 decision 노출 - 서류 FAIL이면 최종은 "예정 없음"
+     */
+    private MyApplicationListInfo.EvaluationStatusInfo buildFinalEvalForUser(
+            Application app,
+            ProgressComputed progress,
+            MyApplicationListInfo.EvaluationStatusInfo docEval
+    ) {
+        // 서류 불합격이면 최종은 "예정 없음"
+        if (docEval.status() == EvaluationStatusCode.FAIL) {
+            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.NONE);
+        }
+
+        // 최종 발표 전: 미정
+        if (progress.finalResultAt == null || progress.now.isBefore(progress.finalResultAt)) {
+            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING);
+        }
+
+        ApplicationStatus st = app.getStatus();
+
+        // 최종 발표 이후에만 합/불 확정 노출
+        if (isFinalRejected(st)) {
+            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.FAIL);
+        }
+        if (st == ApplicationStatus.FINAL_ACCEPTED) {
+            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PASS);
+        }
+
+        // 발표 후인데 최종 상태 미반영
+        return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING);
+    }
+
+    private Integer computeNextRecruitmentMonth() {
+        int m = java.time.LocalDate.now().getMonthValue();
+        // 상반기(1~6)면 하반기(9월), 하반기(7~12)면 다음 상반기(3월)
+        return (m <= 6) ? 9 : 3;
+    }
+
+
+    private RecruitmentSchedule findSchedule(List<RecruitmentSchedule> schedules, RecruitmentScheduleType type) {
+        return schedules.stream().filter(s -> s.getType() == type).findFirst().orElse(null);
+    }
+
+    private boolean isNowInWindow(Instant now, RecruitmentSchedule s) {
+        if (s == null || s.getStartsAt() == null || s.getEndsAt() == null) {
+            return false;
+        }
+        return !now.isBefore(s.getStartsAt()) && now.isBefore(s.getEndsAt());
+    }
+
+    private Instant pickAt(RecruitmentSchedule s) {
+        if (s == null) {
+            return null;
+        }
+        return (s.getStartsAt() != null) ? s.getStartsAt() : s.getEndsAt();
+    }
+
+    private int compareInstantDesc(Instant a, Instant b) {
+        if (a == null && b == null) {
+            return 0;
+        }
+        if (a == null) {
+            return 1;
+        }
+        if (b == null) {
+            return -1;
+        }
+        return b.compareTo(a);
+    }
+
+    private boolean isRecruitmentMatchedByFormId(Long recruitmentId, FormResponse fr) {
+        if (recruitmentId == null || fr == null || fr.getForm() == null || fr.getForm().getId() == null) {
+            return false;
+        }
+        Recruitment r = loadRecruitmentPort.findByFormId(fr.getForm().getId()).orElse(null);
+        return r != null && recruitmentId.equals(r.getId());
+    }
+
+    private MyApplicationListInfo.ProgressStepInfo toStep(
+            ApplicationProgressStep step,
+            String label,
+            ApplicationProgressStep currentStep
+    ) {
+        int cur = stepOrderUI(currentStep);
+        int me = stepOrderUI(step);
+        return new MyApplicationListInfo.ProgressStepInfo(step.name(), label, me < cur, me == cur);
+    }
+
+    private int stepOrderUI(ApplicationProgressStep step) {
+        return switch (step) {
+            case BEFORE_APPLY -> 1;
+            case DOC_REVIEWING -> 2;
+            case DOC_RESULT_PUBLISHED -> 3;
+            case INTERVIEW_WAITING -> 4;
+            case FINAL_REVIEWING -> 5;
+            case FINAL_RESULT_PUBLISHED -> 6;
+        };
+    }
+
+    private static record CurrentPicked(
+            Kind kind,
+            Recruitment recruitment,
+            FormResponse formResponse,
+            Application application
+    ) {
+        enum Kind {DRAFT, SUBMITTED}
+
+        static CurrentPicked draft(Recruitment r, FormResponse fr) {
+            return new CurrentPicked(Kind.DRAFT, r, fr, null);
+        }
+
+        static CurrentPicked submitted(Recruitment r, Application app) {
+            return new CurrentPicked(Kind.SUBMITTED, r, null, app);
+        }
+    }
+
+    private boolean isDocFailed(ApplicationStatus st) {
+        return st == ApplicationStatus.DOC_FAILED;
+    }
+
+    private boolean isFinalRejected(ApplicationStatus st) {
+        // 면접 불합도 최종 불합으로 취급
+        return st == ApplicationStatus.INTERVIEW_FAILED || st == ApplicationStatus.FINAL_REJECTED;
+    }
+
+    private boolean isFinalDecided(ApplicationStatus st) {
+        // 최종 결과(합/불) 확정 상태
+        return st == ApplicationStatus.FINAL_ACCEPTED || isFinalRejected(st);
     }
 
     @Override
@@ -290,7 +986,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     }
 
     private RecruitmentPartListInfo.DatePeriod extractDatePeriod(
-            java.util.List<com.umc.product.recruitment.domain.RecruitmentSchedule> schedules,
+            List<com.umc.product.recruitment.domain.RecruitmentSchedule> schedules,
             String scheduleType) {
         return schedules.stream()
                 .filter(schedule -> schedule.getType().name().equals(scheduleType))
