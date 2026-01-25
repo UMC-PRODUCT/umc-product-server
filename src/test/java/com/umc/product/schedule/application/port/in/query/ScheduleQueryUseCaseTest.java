@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.schedule.application.port.in.query.dto.MyScheduleCalendarInfo;
@@ -17,7 +18,6 @@ import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
-import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -57,7 +57,7 @@ public class ScheduleQueryUseCaseTest extends UseCaseTestSupport {
     }
 
     @Nested
-    class 월별_캘린더_조회 {
+    class 월별_나의_일정_조회 {
 
         @Test
         void 해당_월의_참여_일정을_조회한다() {
@@ -285,135 +285,6 @@ public class ScheduleQueryUseCaseTest extends UseCaseTestSupport {
             // then
             assertThat(result.dDay()).isPositive();
             assertThat(result.status()).isEqualTo("예정");
-        }
-    }
-
-    @Nested
-    class 리스트_조회_커서_페이징 {
-
-        @Test
-        void 해당_월의_일정을_커서_기반으로_조회한다() {
-            // given
-            saveScheduleWithAttendance(
-                    "일정 1",
-                    LocalDateTime.of(2026, 3, 5, 10, 0),
-                    LocalDateTime.of(2026, 3, 5, 12, 0),
-                    member.getId()
-            );
-            saveScheduleWithAttendance(
-                    "일정 2",
-                    LocalDateTime.of(2026, 3, 10, 14, 0),
-                    LocalDateTime.of(2026, 3, 10, 16, 0),
-                    member.getId()
-            );
-
-            // when
-            List<MyScheduleCalendarInfo> result = getMyScheduleUseCase.getMyMonthlyScheduleList(
-                    member.getId(), 2026, 3, null, 10);
-
-            // then
-            assertThat(result).hasSize(2);
-            assertThat(result.get(0).name()).isEqualTo("일정 1");
-            assertThat(result.get(1).name()).isEqualTo("일정 2");
-        }
-
-        @Test
-        void size보다_많은_일정이_있으면_size_플러스_1개를_반환한다() {
-            // given
-            for (int i = 1; i <= 5; i++) {
-                saveScheduleWithAttendance(
-                        "일정 " + i,
-                        LocalDateTime.of(2026, 3, i * 5, 10, 0),
-                        LocalDateTime.of(2026, 3, i * 5, 12, 0),
-                        member.getId()
-                );
-            }
-
-            // when: size=3으로 요청하면 내부적으로 size+1=4개를 가져옴
-            List<MyScheduleCalendarInfo> result = getMyScheduleUseCase.getMyMonthlyScheduleList(
-                    member.getId(), 2026, 3, null, 3);
-
-            // then: 4개가 반환됨 (hasNext 판별용)
-            assertThat(result).hasSize(4);
-        }
-
-        @Test
-        void 커서_이후의_일정만_조회한다() {
-            // given
-            Schedule s1 = saveScheduleWithAttendance(
-                    "일정 A",
-                    LocalDateTime.of(2026, 3, 5, 10, 0),
-                    LocalDateTime.of(2026, 3, 5, 12, 0),
-                    member.getId()
-            );
-            Schedule s2 = saveScheduleWithAttendance(
-                    "일정 B",
-                    LocalDateTime.of(2026, 3, 15, 14, 0),
-                    LocalDateTime.of(2026, 3, 15, 16, 0),
-                    member.getId()
-            );
-            Schedule s3 = saveScheduleWithAttendance(
-                    "일정 C",
-                    LocalDateTime.of(2026, 3, 25, 10, 0),
-                    LocalDateTime.of(2026, 3, 25, 12, 0),
-                    member.getId()
-            );
-
-            // when: s1의 ID를 커서로 사용
-            List<MyScheduleCalendarInfo> result = getMyScheduleUseCase.getMyMonthlyScheduleList(
-                    member.getId(), 2026, 3, s1.getId(), 10);
-
-            // then: s1 이후의 일정만 반환
-            assertThat(result).hasSize(2);
-            assertThat(result.get(0).scheduleId()).isEqualTo(s2.getId());
-            assertThat(result.get(1).scheduleId()).isEqualTo(s3.getId());
-        }
-
-        @Test
-        void 참여하지_않는_일정은_리스트에서도_제외된다() {
-            // given
-            Member otherMember = saveMemberPort.save(
-                    createMember("다른사람", "other2", "other2@test.com", 1L, 3L));
-
-            saveScheduleWithAttendance(
-                    "내 일정",
-                    LocalDateTime.of(2026, 3, 10, 10, 0),
-                    LocalDateTime.of(2026, 3, 10, 12, 0),
-                    member.getId()
-            );
-            saveScheduleWithAttendance(
-                    "남의 일정",
-                    LocalDateTime.of(2026, 3, 15, 14, 0),
-                    LocalDateTime.of(2026, 3, 15, 16, 0),
-                    otherMember.getId()
-            );
-
-            // when
-            List<MyScheduleCalendarInfo> result = getMyScheduleUseCase.getMyMonthlyScheduleList(
-                    member.getId(), 2026, 3, null, 10);
-
-            // then
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).name()).isEqualTo("내 일정");
-        }
-
-        @Test
-        void 커서가_null이면_처음부터_조회한다() {
-            // given
-            saveScheduleWithAttendance(
-                    "첫번째 일정",
-                    LocalDateTime.of(2026, 3, 5, 10, 0),
-                    LocalDateTime.of(2026, 3, 5, 12, 0),
-                    member.getId()
-            );
-
-            // when
-            List<MyScheduleCalendarInfo> result = getMyScheduleUseCase.getMyMonthlyScheduleList(
-                    member.getId(), 2026, 3, null, 10);
-
-            // then
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).name()).isEqualTo("첫번째 일정");
         }
     }
 

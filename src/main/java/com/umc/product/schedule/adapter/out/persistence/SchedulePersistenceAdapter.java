@@ -40,13 +40,6 @@ public class SchedulePersistenceAdapter implements
     }
 
     @Override
-    public List<Schedule> findMySchedulesByMonthWithCursor(Long memberId, LocalDateTime monthStart,
-                                                           LocalDateTime nextMonthStart, Long cursor, int fetchSize) {
-        return scheduleQueryRepository.findMySchedulesByMonthWithCursor(
-                memberId, monthStart, nextMonthStart, cursor, fetchSize);
-    }
-
-    @Override
     public List<Schedule> findAllByIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return List.of();
