@@ -125,6 +125,9 @@ public class Notice extends BaseEntity {
         if (targetRoles != null) this.targetRoles = new ArrayList<>(targetRoles);
         if (targetParts != null) this.targetParts = new ArrayList<>(targetParts);
         this.shouldNotify = shouldNotify;
+        if (this.shouldNotify && this.notifiedAt == null) {
+            this.notifiedAt = Instant.now();
+        }
     }
 
     /*

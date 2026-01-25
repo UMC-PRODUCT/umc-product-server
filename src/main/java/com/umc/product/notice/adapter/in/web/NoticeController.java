@@ -35,7 +35,7 @@ public class NoticeController implements NoticeApi {
     /*
      * 공지사항 생성
      */
-    @PostMapping("/notice")
+    @PostMapping
     public ApiResponse<CreateNoticeResponse> createNotice(@RequestBody @Valid CreateNoticeRequest request,
                                                           @CurrentMember MemberPrincipal memberPrincipal) {
 
