@@ -4,14 +4,13 @@ import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
-import com.umc.product.notice.adapter.in.web.dto.request.CreateDraftNoticeRequest;
+import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.SendNoticeReminderRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
-import com.umc.product.notice.adapter.in.web.dto.response.CreateDraftNoticeResponse;
+import com.umc.product.notice.adapter.in.web.dto.response.CreateNoticeResponse;
 import com.umc.product.notice.adapter.in.web.swagger.NoticeApi;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
-import com.umc.product.notice.application.port.in.command.dto.PublishNoticeCommand;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,12 +36,12 @@ public class NoticeController implements NoticeApi {
      * 공지사항 생성
      */
     @PostMapping("/notice")
-    public ApiResponse<CreateDraftNoticeResponse> createNotice(@RequestBody @Valid CreateDraftNoticeRequest request,
-                                                                    @CurrentMember MemberPrincipal memberPrincipal) {
+    public ApiResponse<CreateNoticeResponse> createNotice(@RequestBody @Valid CreateNoticeRequest request,
+                                                          @CurrentMember MemberPrincipal memberPrincipal) {
 
         Long memberId = memberPrincipal.getMemberId();
         Long noticeId = manageNoticeUseCase.createNotice(request.toCommand(memberId));
-        return ApiResponse.onSuccess(new CreateDraftNoticeResponse(noticeId));
+        return ApiResponse.onSuccess(new CreateNoticeResponse(noticeId));
     }
 
     /*

@@ -3,10 +3,10 @@ package com.umc.product.notice.adapter.in.web.swagger;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
-import com.umc.product.notice.adapter.in.web.dto.request.CreateDraftNoticeRequest;
+import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.SendNoticeReminderRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
-import com.umc.product.notice.adapter.in.web.dto.response.CreateDraftNoticeResponse;
+import com.umc.product.notice.adapter.in.web.dto.response.CreateNoticeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -30,9 +30,9 @@ public interface NoticeApi {
                     description = "잘못된 요청"
             )
     })
-    ApiResponse<CreateDraftNoticeResponse> createNotice(
+    ApiResponse<CreateNoticeResponse> createNotice(
             @Parameter(description = "공지사항 생성 정보", required = true)
-            @RequestBody @Valid CreateDraftNoticeRequest request,
+            @RequestBody @Valid CreateNoticeRequest request,
 
             @Parameter(hidden = true)
             @CurrentMember MemberPrincipal memberPrincipal
