@@ -1,4 +1,4 @@
-package com.umc.product.common.dto.request;
+package com.umc.product.global.response;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
