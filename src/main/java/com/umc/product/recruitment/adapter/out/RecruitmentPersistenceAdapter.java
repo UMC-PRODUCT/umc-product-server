@@ -10,6 +10,7 @@ import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDr
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormQuestionsCommand;
 import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo.InterviewTimeTableInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormDefinitionInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentListInfo;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
@@ -198,7 +199,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         FormDefinitionInfo formDefinitionInfo = loadFormPort.loadFormDefinition(formId);
         RecruitmentFormDefinitionInfo recruitmentDef = RecruitmentFormDefinitionInfo.from(formDefinitionInfo);
 
-        return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo, recruitmentDef);
+        return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo, recruitmentDef, null);
     }
 
     @Override
@@ -528,6 +529,85 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
             case DRAFT -> false;
         };
     }
+
+    @Override
+    public RecruitmentApplicationFormInfo findApplicationFormInfoForApplicantById(Long recruitmentId) {
+        Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        Long formId = recruitment.getFormId();
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
+
+        FormDefinitionInfo formDefinitionInfo = loadFormPort.loadFormDefinition(formId);
+        RecruitmentFormDefinitionInfo recruitmentDef = RecruitmentFormDefinitionInfo.from(formDefinitionInfo);
+
+        InterviewTimeTableInfo applicantTimeTable = parseInterviewTimeTableForApplicant(
+                recruitment.getInterviewTimeTable());
+
+        return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo, recruitmentDef, applicantTimeTable);
+    }
+
+    private InterviewTimeTableInfo parseInterviewTimeTableForApplicant(Map<String, Object> interviewTimeTable) {
+        if (interviewTimeTable == null) {
+            return null;
+        }
+
+        try {
+            Enabled raw = objectMapper.convertValue(interviewTimeTable, Enabled.class);
+
+            RecruitmentDraftInfo.DateRangeInfo dr = raw.dateRange();
+            RecruitmentDraftInfo.TimeRangeInfo tr = raw.timeRange();
+            Integer slotMinutes = raw.slotMinutes();
+            List<RecruitmentDraftInfo.TimesByDateInfo> enabled =
+                    raw.enabledByDate() == null ? List.of() : raw.enabledByDate();
+
+            InterviewTimeTableDisabledCalculator.Normalized normalized =
+                    InterviewTimeTableDisabledCalculator.normalizeForApplicant(dr, tr, slotMinutes, enabled);
+
+            return toQueryInterviewTimeTableInfo(normalized);
+
+        } catch (Exception e) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+    }
+
+    private InterviewTimeTableInfo toQueryInterviewTimeTableInfo(InterviewTimeTableDisabledCalculator.Normalized n) {
+        if (n == null) {
+            return null;
+        }
+
+        InterviewTimeTableInfo.DateRangeInfo dateRange =
+                (n.dateRange() == null) ? null
+                        : new InterviewTimeTableInfo.DateRangeInfo(n.dateRange().start(), n.dateRange().end());
+
+        InterviewTimeTableInfo.TimeRangeInfo timeRange =
+                (n.timeRange() == null) ? null
+                        : new InterviewTimeTableInfo.TimeRangeInfo(n.timeRange().start(), n.timeRange().end());
+
+        List<InterviewTimeTableInfo.TimesByDateInfo> enabled =
+                (n.enabledByDate() == null) ? null
+                        : n.enabledByDate().stream()
+                                .map(x -> new InterviewTimeTableInfo.TimesByDateInfo(x.date(), x.times()))
+                                .toList();
+
+        List<InterviewTimeTableInfo.TimesByDateInfo> disabled =
+                (n.disabledByDate() == null) ? null
+                        : n.disabledByDate().stream()
+                                .map(x -> new InterviewTimeTableInfo.TimesByDateInfo(x.date(), x.times()))
+                                .toList();
+
+        return new InterviewTimeTableInfo(
+                dateRange,
+                timeRange,
+                n.slotMinutes(),
+                enabled,
+                disabled
+        );
+    }
+
 
     private RecruitmentPhase resolvePhase(
             Instant now,

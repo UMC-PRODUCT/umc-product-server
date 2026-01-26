@@ -2,12 +2,14 @@ package com.umc.product.recruitment.adapter.in.web.dto.response;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo.InterviewTimeTableInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormDefinitionInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormDefinitionInfo.RecruitmentSectionInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
 import com.umc.product.survey.domain.enums.QuestionType;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -41,12 +43,15 @@ public record RecruitmentApplicationFormResponse(
 
     private static List<FormPageResponse> buildPages(RecruitmentApplicationFormInfo info) {
         RecruitmentFormDefinitionInfo rdef = info.recruitmentFormDefinition();
+        FormDefinitionInfo def = info.formDefinition();
 
         if (rdef != null && rdef.sections() != null && !rdef.sections().isEmpty()) {
-            return buildPagesFromRecruitmentDef(rdef);
+            if (def == null || def.sections() == null) {
+                return List.of();
+            }
+            return buildPagesFromRecruitmentDef(info, def, rdef);
         }
 
-        FormDefinitionInfo def = info.formDefinition();
         if (def == null || def.sections() == null) {
             return List.of();
         }
@@ -54,70 +59,106 @@ public record RecruitmentApplicationFormResponse(
         return def.sections().stream()
                 .sorted(Comparator.comparing(FormDefinitionInfo.FormSectionInfo::orderNo,
                         Comparator.nullsLast(Integer::compareTo)))
-                .map(section -> FormPageResponse.fromCommonSectionOrderNoAsPage(section))
+                .map(section -> FormPageResponse.fromCommonSectionOrderNoAsPage(section, info.interviewTimeTableInfo()))
                 .toList();
     }
 
-    private static List<FormPageResponse> buildPagesFromRecruitmentDef(RecruitmentFormDefinitionInfo rdef) {
-        List<RecruitmentFormDefinitionInfo.RecruitmentSectionInfo> sections =
+    private static List<FormPageResponse> buildPagesFromRecruitmentDef(
+            RecruitmentApplicationFormInfo info,
+            FormDefinitionInfo def,
+            RecruitmentFormDefinitionInfo rdef
+    ) {
+        List<RecruitmentSectionInfo> sections =
                 rdef.sections() == null ? List.of() : rdef.sections();
 
+        // sectionId -> FormSectionInfo 매핑
+        Map<Long, FormDefinitionInfo.FormSectionInfo> sectionById =
+                (def.sections() == null ? List.<FormDefinitionInfo.FormSectionInfo>of() : def.sections())
+                        .stream()
+                        .filter(s -> s != null && s.sectionId() != null)
+                        .collect(Collectors.toMap(
+                                FormDefinitionInfo.FormSectionInfo::sectionId,
+                                s -> s,
+                                (a, b) -> a
+                        ));
+
+        // 1) 공통 페이지 섹션들: pageNo 기준 그룹
         Map<Integer, List<RecruitmentSectionInfo>> commonByPage =
                 sections.stream()
-                        .filter(s -> s != null && s.kind()
-                                == RecruitmentFormDefinitionInfo.RecruitmentSectionInfo.SectionKind.COMMON_PAGE)
+                        .filter(s -> s != null && s.kind() == RecruitmentSectionInfo.SectionKind.COMMON_PAGE)
                         .filter(s -> s.pageNo() != null)
-                        .collect(Collectors.groupingBy(RecruitmentFormDefinitionInfo.RecruitmentSectionInfo::pageNo));
+                        .collect(Collectors.groupingBy(RecruitmentSectionInfo::pageNo));
 
-        Map<ChallengerPart, List<FormDefinitionInfo.QuestionInfo>> partQuestions =
+        // 2) 파트 섹션들: part 기준 그룹
+        Map<ChallengerPart, List<RecruitmentSectionInfo>> partSections =
                 sections.stream()
-                        .filter(s -> s != null
-                                && s.kind() == RecruitmentFormDefinitionInfo.RecruitmentSectionInfo.SectionKind.PART)
+                        .filter(s -> s != null && s.kind() == RecruitmentSectionInfo.SectionKind.PART)
                         .filter(s -> s.part() != null)
-                        .collect(Collectors.groupingBy(
-                                RecruitmentFormDefinitionInfo.RecruitmentSectionInfo::part,
-                                Collectors.flatMapping(
-                                        s -> (s.questions() == null ? List.<FormDefinitionInfo.QuestionInfo>of()
-                                                : s.questions()).stream(),
-                                        Collectors.toList()
-                                )
-                        ));
+                        .collect(Collectors.groupingBy(RecruitmentSectionInfo::part));
 
         List<Integer> orderedPages = new ArrayList<>(commonByPage.keySet());
         orderedPages.sort(Integer::compareTo);
 
         List<FormPageResponse> result = new ArrayList<>();
 
+        ScheduleResponse schedulePayload = toScheduleResponse(info.interviewTimeTableInfo());
+
         for (Integer pageNo : orderedPages) {
-            List<FormDefinitionInfo.QuestionInfo> commonQs = commonByPage.getOrDefault(pageNo, List.of()).stream()
-                    .flatMap(s -> (s.questions() == null ? List.<FormDefinitionInfo.QuestionInfo>of()
-                            : s.questions()).stream())
-                    .sorted(Comparator.comparing(FormDefinitionInfo.QuestionInfo::orderNo,
-                            Comparator.nullsLast(Integer::compareTo)))
-                    .toList();
+            // 공통 질문 합치기
+            List<FormDefinitionInfo.QuestionInfo> commonQs =
+                    commonByPage.getOrDefault(pageNo, List.of()).stream()
+                            .map(RecruitmentSectionInfo::sectionId)
+                            .map(sectionById::get)
+                            .filter(java.util.Objects::nonNull)
+                            .flatMap(sec -> (sec.questions() == null
+                                    ? List.<FormDefinitionInfo.QuestionInfo>of()
+                                    : sec.questions()).stream())
+                            .filter(java.util.Objects::nonNull)
+                            .sorted(Comparator.comparing(
+                                    FormDefinitionInfo.QuestionInfo::orderNo,
+                                    Comparator.nullsLast(Integer::compareTo)
+                            ))
+                            .toList();
 
             FormDefinitionInfo.QuestionInfo scheduleQ = commonQs.stream()
-                    .filter(q -> q != null && q.type() == QuestionType.SCHEDULE)
+                    .filter(q -> q.type() == QuestionType.SCHEDULE)
                     .findFirst()
                     .orElse(null);
 
             List<FormDefinitionInfo.QuestionInfo> normalCommon = commonQs.stream()
-                    .filter(q -> q != null && q.type() != QuestionType.SCHEDULE)
+                    .filter(q -> q.type() != QuestionType.SCHEDULE)
                     .toList();
 
+            // 스케줄
             ScheduleQuestionResponse schedule = (scheduleQ == null)
                     ? null
-                    : ScheduleQuestionResponse.from(QuestionResponse.from(scheduleQ), null); // schedule은 추후 채움
+                    : ScheduleQuestionResponse.from(QuestionResponse.from(scheduleQ), schedulePayload);
 
-            List<PartQuestionGroupResponse> partGroups = partQuestions.entrySet().stream()
+            // 파트 질문 합치기
+            List<PartQuestionGroupResponse> partGroups = partSections.entrySet().stream()
                     .sorted(Map.Entry.comparingByKey(Comparator.comparing(Enum::name)))
                     .map(e -> {
-                        List<QuestionResponse> qs = e.getValue().stream()
-                                .sorted(Comparator.comparing(FormDefinitionInfo.QuestionInfo::orderNo,
-                                        Comparator.nullsLast(Integer::compareTo)))
+                        ChallengerPart part = e.getKey();
+
+                        List<FormDefinitionInfo.QuestionInfo> partQs = e.getValue().stream()
+                                .map(RecruitmentSectionInfo::sectionId)
+                                .map(sectionById::get)
+                                .filter(java.util.Objects::nonNull)
+                                .flatMap(sec -> (sec.questions() == null
+                                        ? List.<FormDefinitionInfo.QuestionInfo>of()
+                                        : sec.questions()).stream())
+                                .filter(java.util.Objects::nonNull)
+                                .sorted(Comparator.comparing(
+                                        FormDefinitionInfo.QuestionInfo::orderNo,
+                                        Comparator.nullsLast(Integer::compareTo)
+                                ))
+                                .toList();
+
+                        List<QuestionResponse> qs = partQs.stream()
                                 .map(QuestionResponse::from)
                                 .toList();
-                        return new PartQuestionGroupResponse(e.getKey(), qs);
+
+                        return new PartQuestionGroupResponse(part, qs);
                     })
                     .toList();
 
@@ -142,7 +183,10 @@ public record RecruitmentApplicationFormResponse(
             List<PartQuestionGroupResponse> partQuestions
     ) {
 
-        public static FormPageResponse fromCommonSectionOrderNoAsPage(FormDefinitionInfo.FormSectionInfo section) {
+        public static FormPageResponse fromCommonSectionOrderNoAsPage(
+                FormDefinitionInfo.FormSectionInfo section,
+                InterviewTimeTableInfo interviewTimeTable
+        ) {
             List<QuestionResponse> ordered = (section.questions() == null ? List.<FormDefinitionInfo.QuestionInfo>of()
                     : section.questions()).stream()
                     .sorted(Comparator.comparing(FormDefinitionInfo.QuestionInfo::orderNo,
@@ -150,10 +194,12 @@ public record RecruitmentApplicationFormResponse(
                     .map(QuestionResponse::from)
                     .toList();
 
+            ScheduleResponse schedulePayload = toScheduleResponse(interviewTimeTable);
+
             ScheduleQuestionResponse schedule = ordered.stream()
                     .filter(q -> q.type == QuestionType.SCHEDULE)
                     .findFirst()
-                    .map(q -> ScheduleQuestionResponse.from(q, null))
+                    .map(q -> ScheduleQuestionResponse.from(q, schedulePayload))
                     .orElse(null);
 
             List<QuestionResponse> normalQuestions = ordered.stream()
@@ -282,4 +328,48 @@ public record RecruitmentApplicationFormResponse(
             List<QuestionResponse> questions
     ) {
     }
+
+    private static ScheduleResponse toScheduleResponse(InterviewTimeTableInfo info) {
+        if (info == null) {
+            return null;
+        }
+
+        DateRangeResponse dr = (info.dateRange() == null) ? null
+                : new DateRangeResponse(info.dateRange().start(), info.dateRange().end());
+
+        TimeRangeResponse tr = (info.timeRange() == null) ? null
+                : new TimeRangeResponse(info.timeRange().start(), info.timeRange().end());
+
+        List<DateScheduleTimesResponse> enabled = (info.enabledByDate() == null) ? null
+                : info.enabledByDate().stream()
+                        .map(x -> new DateScheduleTimesResponse(
+                                x.date(),
+                                (x.times() == null) ? List.of()
+                                        : x.times().stream().map(RecruitmentApplicationFormResponse::formatTime)
+                                                .toList()
+                        ))
+                        .toList();
+
+        List<DateScheduleTimesResponse> disabled = (info.disabledByDate() == null) ? null
+                : info.disabledByDate().stream()
+                        .map(x -> new DateScheduleTimesResponse(
+                                x.date(),
+                                (x.times() == null) ? List.of()
+                                        : x.times().stream().map(RecruitmentApplicationFormResponse::formatTime)
+                                                .toList()
+                        ))
+                        .toList();
+
+        int slotMinutes = (info.slotMinutes() == null) ? 0 : info.slotMinutes();
+
+        return new ScheduleResponse(dr, tr, slotMinutes, enabled, disabled);
+    }
+
+    private static String formatTime(LocalTime t) {
+        if (t == null) {
+            return null;
+        }
+        return t.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+    }
+
 }

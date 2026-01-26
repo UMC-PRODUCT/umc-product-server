@@ -142,12 +142,12 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (recruitment.isPublished()) {
-            return loadRecruitmentPort.findApplicationFormInfoById(query.recruitmentId());
+            return loadRecruitmentPort.findApplicationFormInfoForApplicantById(query.recruitmentId());
         }
 
         // TODO: 운영진 권한 검증 추가 (DRAFT면 운영진만 허용)
 
-        return loadRecruitmentPort.findApplicationFormInfoById(query.recruitmentId());
+        return loadRecruitmentPort.findApplicationFormInfoForApplicantById(query.recruitmentId());
     }
 
     @Override

@@ -45,7 +45,9 @@ public enum RecruitmentErrorCode implements BaseCode {
     ACTIVE_RECRUITMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "RECRUITMENT-0023",
             "활성화된 모집을 찾을 수 없습니다."),
     DRAFT_FORM_RESPONSE_ALREADY_EXISTS(HttpStatus.CONFLICT, "RECRUITMENT-0024",
-            "해당 모집에 대한 임시저장된 지원서가 이미 존재합니다.");
+            "해당 모집에 대한 임시저장된 지원서가 이미 존재합니다."),
+    INTERVIEW_TIMETABLE_INVALID(HttpStatus.BAD_REQUEST, "RECRUITMENT-0025",
+            "면접 일정표가 올바르지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
