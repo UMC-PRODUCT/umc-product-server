@@ -19,7 +19,7 @@ public abstract class UseCaseTestSupport {
 
 
     @MockitoBean
-    private JavaMailSender mailSender;
+    protected JavaMailSender mailSender;
 
     @MockitoBean
     protected JwtTokenProvider jwtTokenProvider;
@@ -28,9 +28,9 @@ public abstract class UseCaseTestSupport {
     protected GetChallengerUseCase getChallengerUseCase;
 
     @MockitoBean
-    private FirebaseMessaging firebaseMessaging;
+    protected FirebaseMessaging firebaseMessaging;
 
     @MockitoBean
-    private Storage googleCloudStorage;
+    protected Storage googleCloudStorage;
 
 }
