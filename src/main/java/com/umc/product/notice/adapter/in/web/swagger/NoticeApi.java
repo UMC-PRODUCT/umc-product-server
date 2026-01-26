@@ -3,10 +3,10 @@ package com.umc.product.notice.adapter.in.web.swagger;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
-import com.umc.product.notice.adapter.in.web.dto.request.CreateDraftNoticeRequest;
+import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.SendNoticeReminderRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
-import com.umc.product.notice.adapter.in.web.dto.response.CreateDraftNoticeResponse;
+import com.umc.product.notice.adapter.in.web.dto.response.CreateNoticeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface NoticeApi {
 
     @Operation(
-            summary = "공지사항 생성 (임시저장)",
-            description = "새로운 공지사항을 임시저장(DRAFT) 상태로 생성합니다."
+            summary = "공지사항 생성",
+            description = "새로운 공지사항을 생성합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -30,39 +30,14 @@ public interface NoticeApi {
                     description = "잘못된 요청"
             )
     })
-    ApiResponse<CreateDraftNoticeResponse> createDraftNotice(
+    ApiResponse<CreateNoticeResponse> createNotice(
             @Parameter(description = "공지사항 생성 정보", required = true)
-            @RequestBody @Valid CreateDraftNoticeRequest request,
+            @RequestBody @Valid CreateNoticeRequest request,
 
             @Parameter(hidden = true)
             @CurrentMember MemberPrincipal memberPrincipal
     );
 
-    @Operation(
-            summary = "공지사항 최종 게시",
-            description = "임시저장 상태의 공지사항을 최종 게시(PUBLISHED)합니다. DRAFT → PUBLISHED 상태로 변경됩니다."
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
-                    description = "게시 성공"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "공지사항을 찾을 수 없음"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "이미 게시된 공지사항이거나 게시 불가능한 상태"
-            )
-    })
-    void publishNotice(
-            @Parameter(description = "공지사항 ID", required = true)
-            @PathVariable Long noticeId,
-
-            @Parameter(hidden = true)
-            @CurrentMember MemberPrincipal memberPrincipal
-    );
 
     @Operation(
             summary = "공지사항 삭제",

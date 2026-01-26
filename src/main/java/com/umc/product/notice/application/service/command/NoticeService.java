@@ -4,11 +4,9 @@ import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
-import com.umc.product.notice.application.port.in.command.dto.PublishNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
@@ -42,7 +40,7 @@ public class NoticeService implements ManageNoticeUseCase {
     private final LoadChallengerPort loadChallengerPort;
 
     @Override
-    public Long createDraftNotice(CreateNoticeCommand command) {
+    public Long createNotice(CreateNoticeCommand command) {
         Challenger challenger = findChallengerByMemberIdAndGisuId(command.memberId(), command.targetInfo().targetGisuId());
         challenger.validateChallengerStatus();
         /*
@@ -56,7 +54,7 @@ public class NoticeService implements ManageNoticeUseCase {
             validateGisuExists(command.targetInfo().targetGisuId());
         }
 
-        Notice notice = Notice.draft(
+        Notice notice = Notice.createNotice(
                 command.title(), command.content(), challenger.getId(), command.targetInfo().scope(),
                 command.targetInfo().organizationId(), command.targetInfo().targetGisuId(),
                 command.targetInfo().targetRoles(),
@@ -65,23 +63,6 @@ public class NoticeService implements ManageNoticeUseCase {
 
         Notice savedNotice = saveNoticePort.save(notice);
         return savedNotice.getId();
-    }
-
-    @Override
-    public void publishNotice(PublishNoticeCommand command) {
-        Gisu nowGisu = loadGisuPort.findActiveGisu();
-
-        Challenger challenger = findChallengerByMemberIdAndGisuId(command.memberId(), nowGisu.getId());
-        challenger.validateChallengerStatus();
-
-        Notice notice = findNoticeById(command.noticeId());
-
-        /*
-         * 작성자 검증
-         */
-        validateIsNoticeAuthor(challenger.getId(), notice.getAuthorChallengerId());
-
-        notice.publish();
     }
 
     @Override
@@ -111,8 +92,7 @@ public class NoticeService implements ManageNoticeUseCase {
                 command.targetInfo().targetGisuId(),
                 command.targetInfo().targetRoles(),
                 command.targetInfo().targetParts(),
-                command.shouldNotify(),
-                notice.getStatus()
+                command.shouldNotify()
         );
     }
 

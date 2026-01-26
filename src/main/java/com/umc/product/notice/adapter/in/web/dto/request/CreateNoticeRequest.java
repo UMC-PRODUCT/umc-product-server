@@ -6,7 +6,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
-public record CreateDraftNoticeRequest(
+public record CreateNoticeRequest(
         @NotBlank(message = "제목은 필수입니다.")
         String title,
 
