@@ -570,6 +570,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
      * noticeType=FINAL_RESULT_ANNOUNCE, date=finalResultAt - FINAL_RESULT_PUBLISHED: noticeType/date = null (프론트 고정 문구
      * 출력)
      */
+    // todo: phase 계산 공통 유틸로 빼기
     private ProgressComputed resolveProgressForUI(Long recruitmentId, ApplicationStatus appStatus) {
         List<RecruitmentSchedule> schedules = loadRecruitmentPort.findSchedulesByRecruitmentId(recruitmentId);
         if (schedules == null) {
