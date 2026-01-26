@@ -1,17 +1,13 @@
 package com.umc.product.notice.adapter.out.persistence;
 
-import static com.querydsl.core.types.ExpressionUtils.orderBy;
-
 import com.umc.product.challenger.domain.QChallenger;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.QNotice;
 import com.umc.product.notice.domain.QNoticeRead;
 import com.umc.product.notice.domain.enums.NoticeClassification;
-import com.umc.product.notice.domain.enums.NoticeStatus;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -61,8 +57,7 @@ public class NoticeQueryRepository {
         List<Notice> content = queryFactory
                 .selectFrom(notice)
                 .where(
-                        notice.scope.eq(classification),
-                        notice.status.eq(NoticeStatus.PUBLISHED)
+                        notice.scope.eq(classification)
                 )
                 .orderBy(notice.createdAt.desc())
                 .offset(pageable.getOffset())
@@ -74,8 +69,7 @@ public class NoticeQueryRepository {
                 .select(notice.count())
                 .from(notice)
                 .where(
-                        notice.scope.eq(classification),
-                        notice.status.eq(NoticeStatus.PUBLISHED)
+                        notice.scope.eq(classification)
                 )
                 .fetchOne();
 
@@ -92,7 +86,6 @@ public class NoticeQueryRepository {
         List<Notice> notices = queryFactory
                 .selectFrom(notice)
                 .where(
-                        notice.status.eq(NoticeStatus.PUBLISHED),
                         keywordContains(keyword)
                 )
                 .orderBy(notice.createdAt.desc())
@@ -104,7 +97,6 @@ public class NoticeQueryRepository {
                 .select(notice.count())
                 .from(notice)
                 .where(
-                        notice.status.eq(NoticeStatus.PUBLISHED),
                         keywordContains(keyword)
                 )
                 .fetchOne();

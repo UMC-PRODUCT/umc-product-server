@@ -163,8 +163,7 @@ tasks.withType<Test> {
 }
 
 tasks.test {
-    ignoreFailures = true  // 테스트 실패해도 빌드 계속 진행
-    
+    // 테스트가 터지면 이 곳에 ignoreFailures = true 를 넣으시면 됩니다.
     outputs.dir(snippetsDir)
     finalizedBy(tasks.jacocoTestReport)
 }

@@ -9,21 +9,15 @@ import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeDetailRespons
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeReadStatusResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeStaticsResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.GetNoticeSummaryResponse;
-import com.umc.product.notice.adapter.in.web.dto.response.GetNoticesCategoryResponse;
-import com.umc.product.notice.adapter.in.web.dto.response.GetNoticesScopeResponse;
 import com.umc.product.notice.adapter.in.web.swagger.NoticeQueryApi;
-import com.umc.product.notice.application.port.in.query.GetNoticeFilterUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
-import com.umc.product.notice.application.port.in.query.dto.NoticeScopeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
-import com.umc.product.notice.application.port.in.query.dto.WritableNoticeScopeOption;
 import com.umc.product.notice.domain.enums.NoticeClassification;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -45,7 +39,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class NoticeQueryController implements NoticeQueryApi {
 
     private final GetNoticeUseCase getNoticeUseCase;
-    private final GetNoticeFilterUseCase getNoticeFilterUseCase;
 
     /*
      * 공지 전체 조회
@@ -103,23 +96,5 @@ public class NoticeQueryController implements NoticeQueryApi {
         );
 
         return ApiResponse.onSuccess(response);
-    }
-
-    /*
-     * 공지사항 작성 시 카테고리 조회
-     */
-    @GetMapping("/categories")
-    public ApiResponse<GetNoticesCategoryResponse> getNoticesCategory() {
-        WritableNoticeScopeOption category = getNoticeFilterUseCase.getWritableNoticeScope();
-        return ApiResponse.onSuccess(GetNoticesCategoryResponse.from(category));
-    }
-
-    /*
-     * 공지사항 전체 조회시 회원별 필터 조회
-     */
-    @GetMapping("/filters")
-    public ApiResponse<GetNoticesScopeResponse> getNoticesScope() {
-        List<NoticeScopeInfo> filters = getNoticeFilterUseCase.getAvailableFilters();
-        return ApiResponse.onSuccess(new GetNoticesScopeResponse(filters));
     }
 }

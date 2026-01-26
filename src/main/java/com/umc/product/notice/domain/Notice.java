@@ -4,7 +4,6 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.notice.domain.enums.NoticeClassification;
-import com.umc.product.notice.domain.enums.NoticeStatus;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import jakarta.persistence.Column;
@@ -47,10 +46,6 @@ public class Notice extends BaseEntity {
     @Column(name = "author_challenger_id", nullable = false)
     private Long authorChallengerId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private NoticeStatus status; /* DRAFT, PUBLISHED */
-
     private boolean shouldNotify; /* 알림발송 여부 */
 
     private Instant notifiedAt; /* 알림발송 시각 */
@@ -88,7 +83,7 @@ public class Notice extends BaseEntity {
     private List<ChallengerPart> targetParts = new ArrayList<>();
 
 
-    public static Notice draft(String title, String content, Long authorChallengerId,
+    public static Notice createNotice(String title, String content, Long authorChallengerId,
                                NoticeClassification scope,
                                List<Long> organizationIds,
                                Long targetGisuId,
@@ -102,7 +97,6 @@ public class Notice extends BaseEntity {
                 .title(title)
                 .content(content)
                 .authorChallengerId(authorChallengerId)
-                .status(NoticeStatus.DRAFT)
                 .scope(scope)
                 .organizationIds(organizationIds != null ? organizationIds : new ArrayList<>())
                 .targetGisuId(targetGisuId)
@@ -119,8 +113,7 @@ public class Notice extends BaseEntity {
                                      Long targetGisuId,
                                      List<ChallengerRoleType> targetRoles,
                                      List<ChallengerPart> targetParts,
-                                     boolean shouldNotify,
-                                     NoticeStatus status) {
+                                     boolean shouldNotify) {
 
         validateCanUpdate(title, content, scope);
 
@@ -132,21 +125,6 @@ public class Notice extends BaseEntity {
         if (targetRoles != null) this.targetRoles = new ArrayList<>(targetRoles);
         if (targetParts != null) this.targetParts = new ArrayList<>(targetParts);
         this.shouldNotify = shouldNotify;
-        this.status = status;
-    }
-
-    public boolean isDraft() {
-        return this.status == NoticeStatus.DRAFT;
-    }
-
-    public boolean isPublished() {
-        return this.status == NoticeStatus.PUBLISHED;
-    }
-
-    public void publish() {
-        validateCanPublish();
-        this.status = NoticeStatus.PUBLISHED;
-
         if (this.shouldNotify && this.notifiedAt == null) {
             this.notifiedAt = Instant.now();
         }
@@ -155,11 +133,6 @@ public class Notice extends BaseEntity {
     /*
      * 검증 메서드
      */
-    public void validateCanSendReminder() {
-        if (this.status != NoticeStatus.PUBLISHED) {
-            throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_STATUS_FOR_REMINDER);
-        }
-    }
 
     private static void validateDraftCreation(String title, String content,
                                               Long authorChallengerId,
@@ -198,10 +171,6 @@ public class Notice extends BaseEntity {
     }
 
     private void validateCanPublish() {
-        if (this.status == NoticeStatus.PUBLISHED) {
-            throw new NoticeDomainException(NoticeErrorCode.ALREADY_PUBLISHED_NOTICE);
-        }
-
         if (this.title == null || this.title.isBlank()) {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_TITLE);
         }
