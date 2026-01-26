@@ -5,6 +5,7 @@ import static com.umc.product.terms.domain.QTerms.terms;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.terms.domain.Terms;
 import com.umc.product.terms.domain.enums.TermsType;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -28,5 +29,15 @@ public class TermsQueryRepository {
                         .orderBy(terms.effectiveDate.desc())
                         .fetchFirst()
         );
+    }
+
+    public List<Terms> findAllActiveRequired() {
+        return queryFactory.selectDistinct(terms)
+                .from(terms)
+                .where(
+                        terms.active.eq(true),
+                        terms.required.eq(true)
+                )
+                .fetch();
     }
 }
