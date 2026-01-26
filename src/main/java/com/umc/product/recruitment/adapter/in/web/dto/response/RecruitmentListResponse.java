@@ -1,6 +1,7 @@
 package com.umc.product.recruitment.adapter.in.web.dto.response;
 
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentListInfo;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -17,7 +18,8 @@ public record RecruitmentListResponse(
             int applicantCount,
             String phase,
             String phaseLabel,   // 배지용 "진행 중/예정/종료"
-            boolean editable
+            boolean editable,
+            Instant updatedAt
     ) {
     }
 
@@ -34,7 +36,8 @@ public record RecruitmentListResponse(
                                 r.applicantCount(),
                                 r.phase().name(),                         // phase
                                 r.phase().name(), // 추후 phases -> 진행중/예정/종료로 매핑하는 매퍼 구현 예정
-                                r.editable()
+                                r.editable(),
+                                r.updatedAt()
                         ))
                         .toList()
         );

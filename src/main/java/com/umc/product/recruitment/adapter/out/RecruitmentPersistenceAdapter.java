@@ -203,7 +203,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                 recruitmentPartRepository.findByRecruitmentId(recruitmentId);
 
         var preferredPartInfo = buildPreferredPartInfo(recruitment, parts);
-        
+
         return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo, recruitmentDef, null,
                 preferredPartInfo);
     }
@@ -445,7 +445,8 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                             endDate,
                             applicantCount,
                             phase,
-                            false
+                            false,
+                            r.getUpdatedAt()
                     );
                 })
                 .filter(x -> x != null)
@@ -509,7 +510,8 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                             endDate,
                             applicantCount,
                             phase,
-                            true
+                            true,
+                            r.getUpdatedAt()
                     );
                 })
                 .toList();
