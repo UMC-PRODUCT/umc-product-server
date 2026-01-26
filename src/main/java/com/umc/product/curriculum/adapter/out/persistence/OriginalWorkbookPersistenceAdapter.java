@@ -1,6 +1,7 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
+import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import java.util.List;
 import java.util.Optional;
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookPort {
+public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookPort, SaveOriginalWorkbookPort {
 
     private final OriginalWorkbookJpaRepository originalWorkbookJpaRepository;
 
@@ -31,5 +32,10 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
     @Override
     public List<Integer> findDistinctWeekNoByGisuId(Long gisuId) {
         return originalWorkbookJpaRepository.findDistinctWeekNoByGisuId(gisuId);
+    }
+
+    @Override
+    public OriginalWorkbook save(OriginalWorkbook workbook) {
+        return originalWorkbookJpaRepository.save(workbook);
     }
 }

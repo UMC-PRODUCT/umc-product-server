@@ -4,18 +4,18 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.CurriculumProgressInfo;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumPort;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumProgressPort;
+import com.umc.product.curriculum.application.port.out.SaveCurriculumPort;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
-import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCurriculumProgressPort {
+public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCurriculumProgressPort, SaveCurriculumPort {
 
     private final CurriculumJpaRepository curriculumJpaRepository;
     private final CurriculumQueryRepository curriculumQueryRepository;
@@ -26,13 +26,8 @@ public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCur
     }
 
     @Override
-    public Optional<Curriculum> findByGisuIdAndPart(Long gisuId, ChallengerPart part) {
-        return curriculumJpaRepository.findByGisuIdAndPart(gisuId, part);
-    }
-
-    @Override
-    public List<Curriculum> findByGisuId(Long gisuId) {
-        return curriculumJpaRepository.findByGisuId(gisuId);
+    public Optional<Curriculum> findByActiveGisuAndPart(ChallengerPart part) {
+        return curriculumJpaRepository.findByActiveGisuAndPart(part);
     }
 
     @Override
@@ -44,5 +39,15 @@ public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCur
     public CurriculumProgressInfo findCurriculumProgress(Long challengerId, ChallengerPart part) {
         return curriculumQueryRepository.findCurriculumProgress(challengerId, part)
                 .orElseThrow(() -> new BusinessException(Domain.CURRICULUM, CurriculumErrorCode.CURRICULUM_NOT_FOUND));
+    }
+
+    @Override
+    public Curriculum save(Curriculum curriculum) {
+        return curriculumJpaRepository.save(curriculum);
+    }
+
+    @Override
+    public void delete(Curriculum curriculum) {
+        curriculumJpaRepository.delete(curriculum);
     }
 }

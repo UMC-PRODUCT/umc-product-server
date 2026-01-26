@@ -42,10 +42,26 @@ public class Curriculum extends BaseEntity {
     @OneToMany(mappedBy = "curriculum", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OriginalWorkbook> originalWorkbooks = new ArrayList<>();
 
-    @Builder
+    @Builder(access = AccessLevel.PRIVATE)
     private Curriculum(Long gisuId, ChallengerPart part, String title) {
         this.gisuId = gisuId;
         this.part = part;
         this.title = title;
+    }
+
+    public static Curriculum create(Long gisuId, ChallengerPart part, String title) {
+        return Curriculum.builder().gisuId(gisuId).part(part).title(title).build();
+    }
+
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    public void addWorkbook(OriginalWorkbook workbook) {
+        this.originalWorkbooks.add(workbook);
+    }
+
+    public void removeOriginalWorkbook(OriginalWorkbook workbook) {
+        this.originalWorkbooks.remove(workbook);
     }
 }

@@ -5,10 +5,12 @@ import com.umc.product.curriculum.domain.Curriculum;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface CurriculumJpaRepository extends JpaRepository<Curriculum, Long> {
 
-    Optional<Curriculum> findByGisuIdAndPart(Long gisuId, ChallengerPart part);
-
-    List<Curriculum> findByGisuId(Long gisuId);
+    @Query("SELECT c FROM Curriculum c WHERE c.part = :part " +
+            "AND c.gisuId = (SELECT g.id FROM Gisu g WHERE g.isActive = true)")
+    Optional<Curriculum> findByActiveGisuAndPart(@Param("part") ChallengerPart part);
 }
