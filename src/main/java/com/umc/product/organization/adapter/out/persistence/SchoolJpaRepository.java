@@ -24,7 +24,7 @@ public interface SchoolJpaRepository extends Repository<School, Long> {
             "LEFT JOIN FETCH c.gisu " +
             "WHERE s.id = :schoolId")
     Optional<School> findByIdWithDetails(@Param("schoolId") Long schoolId);
-
+    
     List<School> findAllByIdIn(List<Long> ids);
 
     @Query("SELECT s FROM School s " +
@@ -33,4 +33,6 @@ public interface SchoolJpaRepository extends Repository<School, Long> {
             "    WHERE cs.chapter.gisu.id = :gisuId" +
             ")")
     List<School> findUnassignedByGisuId(@Param("gisuId") Long gisuId);
+
+    boolean existsById(Long schoolId);
 }

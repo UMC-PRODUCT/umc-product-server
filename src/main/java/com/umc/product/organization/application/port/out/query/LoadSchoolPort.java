@@ -1,6 +1,5 @@
 package com.umc.product.organization.application.port.out.query;
 
-import com.umc.product.organization.application.port.in.query.dto.SchoolLinkInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.domain.School;
@@ -21,4 +20,6 @@ public interface LoadSchoolPort {
     List<School> findAllByIds(List<Long> schoolIds);
 
     List<School> findUnassignedByGisuId(Long gisuId);
+
+    boolean existsById(Long schoolId);
 }
