@@ -5,6 +5,6 @@ import com.umc.product.global.exception.constant.Domain;
 
 public class AuthenticationDomainException extends BusinessException {
     public AuthenticationDomainException(AuthenticationErrorCode errorCode) {
-        super(Domain.AUTH, errorCode);
+        super(Domain.AUTHENTICATION, errorCode);
     }
 }

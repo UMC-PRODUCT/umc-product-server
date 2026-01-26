@@ -37,12 +37,28 @@ public class AttendanceSheetPersistenceAdapter implements SaveAttendanceSheetPor
 
     @Override
     public List<AttendanceSheet> findByScheduleIds(List<Long> scheduleIds) {
-        return null;
+        if (scheduleIds == null || scheduleIds.isEmpty()) {
+            return List.of();
+        }
+        return sheetJpaRepository.findByScheduleIdIn(scheduleIds);
     }
 
     @Override
     public boolean existsByScheduleId(Long scheduleId) {
         return sheetJpaRepository.existsByScheduleId(scheduleId);
+    }
+
+    @Override
+    public List<AttendanceSheet> findActiveSheets() {
+        return sheetJpaRepository.findByActiveTrue();
+    }
+
+    @Override
+    public List<AttendanceSheet> findAllByIds(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return sheetJpaRepository.findAllById(ids);
     }
 
     // ========== DeleteAttendanceSheetPort ==========

@@ -4,14 +4,14 @@ import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import com.umc.product.schedule.domain.enums.ScheduleType;
 import java.time.LocalTime;
 
+// TODO : 주석 처리 부분 tags 로 변경
 public record AvailableAttendanceInfo(
         // ==== Schedule 정보 ====
         Long scheduleId,
         String scheduleName,
-        ScheduleType scheduleType,
+//        ScheduleType scheduleType,
         LocalTime startTime,
         LocalTime endTime,
 
@@ -30,7 +30,7 @@ public record AvailableAttendanceInfo(
         return new AvailableAttendanceInfo(
                 schedule.getId(),
                 schedule.getName(),
-                schedule.getType(),
+//                schedule.getType(),
                 schedule.getStartsAt().toLocalTime(),
                 schedule.getEndsAt().toLocalTime(),
                 sheet.getId(),
@@ -47,7 +47,7 @@ public record AvailableAttendanceInfo(
         return new AvailableAttendanceInfo(
                 schedule.getId(),
                 schedule.getName(),
-                schedule.getType(),
+//                schedule.getType(),
                 schedule.getStartsAt().toLocalTime(),
                 schedule.getEndsAt().toLocalTime(),
                 sheet.getId(),

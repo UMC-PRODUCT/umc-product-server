@@ -10,4 +10,8 @@ public class NotImplementedException extends BusinessException {
     public NotImplementedException() {
         super(Domain.COMMON, CommonErrorCode.NOT_IMPLEMENTED);
     }
+
+    public NotImplementedException(String message) {
+        super(Domain.COMMON, CommonErrorCode.NOT_IMPLEMENTED, message);
+    }
 }

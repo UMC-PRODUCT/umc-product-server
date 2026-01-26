@@ -40,6 +40,10 @@ public class AttendanceRecord {
     @Column(length = 500)
     private String memo;
 
+    private Long confirmedBy;
+
+    private LocalDateTime confirmedAt;
+
     @Builder
     private AttendanceRecord(
             Long attendanceSheetId,
@@ -59,9 +63,26 @@ public class AttendanceRecord {
         this.memo = memo;
     }
 
+    // Domain Logic: 출석 체크
+    public void checkIn(AttendanceStatus newStatus, LocalDateTime checkedAt) {
+        if (this.checkedAt != null) {
+            throw new IllegalStateException("이미 출석 체크가 완료되었습니다");
+        }
+        if (newStatus == null) {
+            throw new IllegalArgumentException("출석 상태는 필수입니다");
+        }
+        if (checkedAt == null) {
+            throw new IllegalArgumentException("체크 시간은 필수입니다");
+        }
+
+        this.status = newStatus;
+        this.checkedAt = checkedAt;
+    }
+
     // Domain Logic: 승인
-    public void approve() {
+    public void approve(Long confirmerId) {
         validatePendingStatus();
+        validateConfirmerId(confirmerId);
 
         this.status = switch (status) {
             case PRESENT_PENDING -> AttendanceStatus.PRESENT;
@@ -69,12 +90,18 @@ public class AttendanceRecord {
             case EXCUSED_PENDING -> AttendanceStatus.EXCUSED;
             default -> throw new IllegalStateException("승인 가능한 상태가 아닙니다: " + status);
         };
+        this.confirmedBy = confirmerId;
+        this.confirmedAt = LocalDateTime.now();
     }
 
     // Domain Logic: 반려
-    public void reject() {
+    public void reject(Long confirmerId) {
         validatePendingStatus();
+        validateConfirmerId(confirmerId);
+
         this.status = AttendanceStatus.ABSENT;
+        this.confirmedBy = confirmerId;
+        this.confirmedAt = LocalDateTime.now();
     }
 
     // Domain Logic: 인정결석 신청
@@ -138,6 +165,12 @@ public class AttendanceRecord {
     private void validateStatus(AttendanceStatus status) {
         if (status == null) {
             throw new IllegalArgumentException("출석 상태는 필수입니다");
+        }
+    }
+
+    private void validateConfirmerId(Long confirmerId) {
+        if (confirmerId == null || confirmerId <= 0) {
+            throw new IllegalArgumentException("유효하지 않은 승인자 ID입니다");
         }
     }
 

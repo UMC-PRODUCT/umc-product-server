@@ -3,8 +3,9 @@ package com.umc.product.schedule;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import com.umc.product.schedule.domain.Schedule;
-import com.umc.product.schedule.domain.enums.ScheduleType;
+import com.umc.product.schedule.domain.enums.ScheduleTag;
 import java.time.LocalDateTime;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class ScheduleTest {
@@ -16,7 +17,7 @@ class ScheduleTest {
                 .name("테스트")
                 .startsAt(LocalDateTime.of(2024, 3, 16, 10, 0))
                 .endsAt(LocalDateTime.of(2024, 3, 16, 12, 0))
-                .type(ScheduleType.TEAM_ACTIVITY)
+                .tags(Set.of(ScheduleTag.PROJECT))
                 .authorChallengerId(1L)
                 .build();
 
@@ -34,7 +35,7 @@ class ScheduleTest {
                 .name("테스트")
                 .startsAt(LocalDateTime.of(2024, 3, 16, 10, 0))
                 .endsAt(LocalDateTime.of(2024, 3, 16, 12, 0))
-                .type(ScheduleType.TEAM_ACTIVITY)
+                .tags(Set.of(ScheduleTag.PROJECT))
                 .authorChallengerId(1L)
                 .build();
 

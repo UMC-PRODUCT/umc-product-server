@@ -103,6 +103,7 @@ public class AuthenticationController implements AuthenticationControllerInterfa
 
     @Override
     @PostMapping("token/renew")
+    @Public
     public RenewAccessTokenResponse renewAccessToken(
             @RequestBody RenewAccessTokenRequest request
     ) {
