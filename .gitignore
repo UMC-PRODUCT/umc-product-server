@@ -241,3 +241,4 @@ $RECYCLE.BIN/
 !**/src/test/**/build/
 !**/src/main/**/out/
 !**/src/test/**/out/
+/.run/
