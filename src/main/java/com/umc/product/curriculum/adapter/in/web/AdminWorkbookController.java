@@ -17,6 +17,7 @@ public class AdminWorkbookController implements AdminWorkbookControllerApi {
     @Override
     @PostMapping("/{workbookId}/release")
     public void releaseWorkbook(@PathVariable Long workbookId) {
+        // TODO: user의 권한에 따라 막히게 구현 필요
         releaseWorkbookUseCase.release(workbookId);
     }
 }

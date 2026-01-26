@@ -32,6 +32,7 @@ public class WorkbookSubmissionQueryController implements WorkbookSubmissionQuer
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
+        // TODO: 운영진 권한 필요하도록 수정
         GetWorkbookSubmissionsQuery query = new GetWorkbookSubmissionsQuery(
                 schoolId, weekNo, studyGroupId, cursor, size
         );
@@ -52,6 +53,7 @@ public class WorkbookSubmissionQueryController implements WorkbookSubmissionQuer
             @RequestParam Long schoolId,
             @RequestParam ChallengerPart part
     ) {
+        // TODO: 운영진 권한 필요하도록 수정
         return getStudyGroupsForFilterUseCase.getStudyGroupsForFilter(schoolId, part).stream()
                 .map(StudyGroupFilterResponse::from)
                 .toList();

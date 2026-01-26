@@ -27,6 +27,7 @@ public class AdminCurriculumController implements AdminCurriculumControllerApi {
     public AdminCurriculumResponse getCurriculum(
             @RequestParam ChallengerPart part
     ) {
+        // TODO: user의 권한에 따라 막히게 구현 필요
         return AdminCurriculumResponse.from(getAdminCurriculumUseCase.getByActiveGisuAndPart(part));
     }
 
@@ -35,6 +36,7 @@ public class AdminCurriculumController implements AdminCurriculumControllerApi {
     public void manageCurriculum(
             @Valid @RequestBody ManageCurriculumRequest request
     ) {
+        // TODO: user의 권한에 따라 막히게 구현 필요
         manageCurriculumUseCase.manage(request.toCommand());
     }
 }
