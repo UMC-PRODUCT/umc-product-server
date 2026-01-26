@@ -98,8 +98,7 @@ public class CurriculumCommandService implements ManageCurriculumUseCase, Releas
 
     @Override
     public void release(Long workbookId) {
-        OriginalWorkbook workbook = loadOriginalWorkbookPort.findById(workbookId)
-                .orElseThrow(() -> new BusinessException(Domain.CURRICULUM, CurriculumErrorCode.WORKBOOK_NOT_FOUND));
+        OriginalWorkbook workbook = loadOriginalWorkbookPort.findById(workbookId);
 
         workbook.release();
         saveOriginalWorkbookPort.save(workbook);
