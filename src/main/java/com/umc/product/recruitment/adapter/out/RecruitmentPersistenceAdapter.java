@@ -199,7 +199,13 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         FormDefinitionInfo formDefinitionInfo = loadFormPort.loadFormDefinition(formId);
         RecruitmentFormDefinitionInfo recruitmentDef = RecruitmentFormDefinitionInfo.from(formDefinitionInfo);
 
-        return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo, recruitmentDef, null);
+        List<RecruitmentPart> parts =
+                recruitmentPartRepository.findByRecruitmentId(recruitmentId);
+
+        var preferredPartInfo = buildPreferredPartInfo(recruitment, parts);
+        
+        return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo, recruitmentDef, null,
+                preferredPartInfo);
     }
 
     @Override
@@ -531,7 +537,10 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     }
 
     @Override
-    public RecruitmentApplicationFormInfo findApplicationFormInfoForApplicantById(Long recruitmentId) {
+    public RecruitmentApplicationFormInfo findApplicationFormInfoForApplicantById(
+            Long recruitmentId,
+            RecruitmentApplicationFormInfo.PreferredPartInfo preferredPartInfo
+    ) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
                 .orElseThrow(
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
@@ -547,7 +556,8 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         InterviewTimeTableInfo applicantTimeTable = parseInterviewTimeTableForApplicant(
                 recruitment.getInterviewTimeTable());
 
-        return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo, recruitmentDef, applicantTimeTable);
+        return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo, recruitmentDef, applicantTimeTable,
+                preferredPartInfo);
     }
 
     private InterviewTimeTableInfo parseInterviewTimeTableForApplicant(Map<String, Object> interviewTimeTable) {
@@ -682,5 +692,35 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                         (a, b) -> a
                 ));
     }
+
+    private RecruitmentApplicationFormInfo.PreferredPartInfo buildPreferredPartInfo(
+            Recruitment recruitment,
+            List<RecruitmentPart> parts
+    ) {
+        if (recruitment == null || parts == null) {
+            return null;
+        }
+
+        int max = recruitment.getMaxPreferredPartCount() != null
+                ? recruitment.getMaxPreferredPartCount()
+                : 1;
+
+        List<RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo> options =
+                parts.stream()
+                        .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+                        .map(p -> new RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo(
+                                p.getId(),
+                                p.getPart().name(),
+                                p.getPart().name()
+                        ))
+                        .toList();
+
+        if (options.isEmpty()) {
+            return null;
+        }
+
+        return new RecruitmentApplicationFormInfo.PreferredPartInfo(max, options);
+    }
+
 
 }

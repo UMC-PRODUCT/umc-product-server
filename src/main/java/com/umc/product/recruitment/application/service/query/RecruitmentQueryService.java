@@ -46,6 +46,7 @@ import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
+import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.survey.application.port.in.query.dto.AnswerInfo;
@@ -141,13 +142,34 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
                 .orElseThrow(
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
+        List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
+
+        List<RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo> preferredPartOptions =
+                (parts == null ? List.<RecruitmentPart>of() : parts).stream()
+                        .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+                        .map(p -> new RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo(
+                                p.getId(),
+                                p.getPart().name(),
+                                p.getPart().name()
+                        ))
+                        .toList();
+
+        Integer max = recruitment.getMaxPreferredPartCount();
+        if (max == null) {
+            max = 1;
+        }
+
+        var preferredPartInfo =
+                new RecruitmentApplicationFormInfo.PreferredPartInfo(max, preferredPartOptions);
+
         if (recruitment.isPublished()) {
-            return loadRecruitmentPort.findApplicationFormInfoForApplicantById(query.recruitmentId());
+            return loadRecruitmentPort.findApplicationFormInfoForApplicantById(query.recruitmentId(),
+                    preferredPartInfo);
         }
 
         // TODO: 운영진 권한 검증 추가 (DRAFT면 운영진만 허용)
 
-        return loadRecruitmentPort.findApplicationFormInfoForApplicantById(query.recruitmentId());
+        return loadRecruitmentPort.findApplicationFormInfoForApplicantById(query.recruitmentId(), preferredPartInfo);
     }
 
     @Override

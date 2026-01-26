@@ -41,5 +41,8 @@ public interface LoadRecruitmentPort {
 
     Optional<Recruitment> findByFormId(Long formId);
 
-    RecruitmentApplicationFormInfo findApplicationFormInfoForApplicantById(Long recruitmentId);
+    RecruitmentApplicationFormInfo findApplicationFormInfoForApplicantById(
+            Long recruitmentId,
+            RecruitmentApplicationFormInfo.PreferredPartInfo preferredPartInfo
+    );
 }

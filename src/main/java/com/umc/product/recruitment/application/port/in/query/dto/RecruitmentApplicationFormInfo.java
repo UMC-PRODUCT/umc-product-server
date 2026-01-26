@@ -15,8 +15,21 @@ public record RecruitmentApplicationFormInfo(
         String noticeContent,
         FormDefinitionInfo formDefinition,
         RecruitmentFormDefinitionInfo recruitmentFormDefinition,
-        InterviewTimeTableInfo interviewTimeTableInfo
+        InterviewTimeTableInfo interviewTimeTableInfo,
+        PreferredPartInfo preferredPartInfo
 ) {
+    public record PreferredPartInfo(
+            Integer maxSelectCount,
+            List<PreferredPartOptionInfo> options
+    ) {
+        public record PreferredPartOptionInfo(
+                Long recruitmentPartId,
+                String label,
+                String value
+        ) {
+        }
+    }
+
     public record InterviewTimeTableInfo(
             DateRangeInfo dateRange,
             TimeRangeInfo timeRange, // applicant view용: enabled 전체 min/max로 계산된 값
@@ -56,7 +69,8 @@ public record RecruitmentApplicationFormInfo(
             Recruitment recruitment,
             FormDefinitionInfo formDefinition,
             RecruitmentFormDefinitionInfo recruitmentFormDefinition,
-            InterviewTimeTableInfo interviewTimeTableInfo
+            InterviewTimeTableInfo interviewTimeTableInfo,
+            PreferredPartInfo preferredPartInfo
     ) {
         return new RecruitmentApplicationFormInfo(
                 recruitment.getId(),
@@ -67,7 +81,8 @@ public record RecruitmentApplicationFormInfo(
                 recruitment.getNoticeContent(),
                 formDefinition,
                 recruitmentFormDefinition,
-                interviewTimeTableInfo
+                interviewTimeTableInfo,
+                preferredPartInfo
         );
     }
 }

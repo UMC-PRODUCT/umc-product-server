@@ -59,7 +59,14 @@ public record RecruitmentApplicationFormResponse(
         return def.sections().stream()
                 .sorted(Comparator.comparing(FormDefinitionInfo.FormSectionInfo::orderNo,
                         Comparator.nullsLast(Integer::compareTo)))
-                .map(section -> FormPageResponse.fromCommonSectionOrderNoAsPage(section, info.interviewTimeTableInfo()))
+                .map(section -> {
+                    var preferredPartInfo = info.preferredPartInfo();
+                    return FormPageResponse.fromCommonSectionOrderNoAsPage(
+                            section,
+                            info.interviewTimeTableInfo(),
+                            preferredPartInfo
+                    );
+                })
                 .toList();
     }
 
@@ -129,6 +136,8 @@ public record RecruitmentApplicationFormResponse(
                     .filter(q -> q.type() != QuestionType.SCHEDULE)
                     .toList();
 
+            var preferredPartInfo = info.preferredPartInfo();
+
             // 스케줄
             ScheduleQuestionResponse schedule = (scheduleQ == null)
                     ? null
@@ -155,7 +164,7 @@ public record RecruitmentApplicationFormResponse(
                                 .toList();
 
                         List<QuestionResponse> qs = partQs.stream()
-                                .map(QuestionResponse::from)
+                                .map(q -> QuestionResponse.from(q, preferredPartInfo))
                                 .toList();
 
                         return new PartQuestionGroupResponse(part, qs);
@@ -164,7 +173,7 @@ public record RecruitmentApplicationFormResponse(
 
             result.add(new FormPageResponse(
                     pageNo,
-                    normalCommon.stream().map(QuestionResponse::from).toList(),
+                    normalCommon.stream().map(q -> QuestionResponse.from(q, preferredPartInfo)).toList(),
                     schedule,
                     partGroups.isEmpty() ? null : partGroups
             ));
@@ -185,13 +194,17 @@ public record RecruitmentApplicationFormResponse(
 
         public static FormPageResponse fromCommonSectionOrderNoAsPage(
                 FormDefinitionInfo.FormSectionInfo section,
-                InterviewTimeTableInfo interviewTimeTable
+                InterviewTimeTableInfo interviewTimeTable,
+                RecruitmentApplicationFormInfo.PreferredPartInfo preferredPartInfo
         ) {
-            List<QuestionResponse> ordered = (section.questions() == null ? List.<FormDefinitionInfo.QuestionInfo>of()
+            List<QuestionResponse> ordered = (section.questions() == null
+                    ? List.<FormDefinitionInfo.QuestionInfo>of()
                     : section.questions()).stream()
-                    .sorted(Comparator.comparing(FormDefinitionInfo.QuestionInfo::orderNo,
-                            Comparator.nullsLast(Integer::compareTo)))
-                    .map(QuestionResponse::from)
+                    .sorted(Comparator.comparing(
+                            FormDefinitionInfo.QuestionInfo::orderNo,
+                            Comparator.nullsLast(Integer::compareTo)
+                    ))
+                    .map(q -> QuestionResponse.from(q, preferredPartInfo))
                     .toList();
 
             ScheduleResponse schedulePayload = toScheduleResponse(interviewTimeTable);
@@ -248,9 +261,32 @@ public record RecruitmentApplicationFormResponse(
             QuestionType type,
             String questionText,
             boolean required,
-            List<OptionResponse> options
+            List<OptionResponse> options,
+            Integer maxSelectCount,
+            List<PreferredPartOptionResponse> preferredPartOptions
     ) {
         public static QuestionResponse from(FormDefinitionInfo.QuestionInfo q) {
+            return from(q, null);
+        }
+        
+        public static QuestionResponse from(FormDefinitionInfo.QuestionInfo q,
+                                            RecruitmentApplicationFormInfo.PreferredPartInfo preferredPartInfo) {
+
+            if (q.type() == QuestionType.PREFERRED_PART) {
+                return new QuestionResponse(
+                        q.questionId(),
+                        q.type(),
+                        q.questionText(),
+                        q.isRequired(),
+                        null,
+                        preferredPartInfo == null ? null : preferredPartInfo.maxSelectCount(),
+                        preferredPartInfo == null ? null
+                                : preferredPartInfo.options().stream()
+                                        .map(PreferredPartOptionResponse::from)
+                                        .toList()
+                );
+            }
+
             List<OptionResponse> opts = (q.options() == null || q.options().isEmpty())
                     ? null
                     : q.options().stream()
@@ -266,8 +302,22 @@ public record RecruitmentApplicationFormResponse(
                     q.type(),
                     q.questionText(),
                     q.isRequired(),
-                    opts
+                    opts,
+                    null,
+                    null
             );
+        }
+    }
+
+    public record PreferredPartOptionResponse(
+            Long recruitmentPartId,
+            String label,
+            String value
+    ) {
+        public static PreferredPartOptionResponse from(
+                RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo o
+        ) {
+            return new PreferredPartOptionResponse(o.recruitmentPartId(), o.label(), o.value());
         }
     }
 
