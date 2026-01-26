@@ -51,7 +51,9 @@ public enum RecruitmentErrorCode implements BaseCode {
     PREFERRED_PART_INVALID_MAX_COUNT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0026",
             "선호 파트의 최대 개수가 올바르지 않습니다."),
     PREFERRED_PART_INVALID(HttpStatus.BAD_REQUEST, "RECRUITMENT-0027",
-            "선호 파트가 올바르지 않습니다.");
+            "선호 파트가 올바르지 않습니다."),
+    MULTIPLE_ACTIVE_RECRUITMENTS(HttpStatus.INTERNAL_SERVER_ERROR, "RECRUITMENT-0028",
+            "하나의 학교와 기수에 대해 여러 개의 발행된 모집이 존재합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

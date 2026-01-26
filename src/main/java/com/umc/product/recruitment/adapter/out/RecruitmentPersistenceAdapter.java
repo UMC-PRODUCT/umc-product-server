@@ -562,6 +562,11 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                 preferredPartInfo);
     }
 
+    @Override
+    public List<Long> findActiveRecruitmentIds(Long schoolId, Long gisuId, Instant now) {
+        return recruitmentRepository.findLatestPublishedId(schoolId, gisuId);
+    }
+
     private InterviewTimeTableInfo parseInterviewTimeTableForApplicant(Map<String, Object> interviewTimeTable) {
         if (interviewTimeTable == null) {
             return null;

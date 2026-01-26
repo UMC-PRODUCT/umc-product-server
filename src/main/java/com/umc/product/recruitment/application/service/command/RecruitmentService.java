@@ -3,6 +3,10 @@ package com.umc.product.recruitment.application.service.command;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.member.application.port.out.LoadMemberPort;
+import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.exception.MemberErrorCode;
+import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormQuestionUseCase;
@@ -113,13 +117,17 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final SaveApplicationPort saveApplicationPort;
     private final LoadRecruitmentPartPort loadRecruitmentPartPort;
     private final SaveApplicationPartPreferencePort saveApplicationPartPreferencePort;
+    private final LoadMemberPort loadMemberPort;
+    private final LoadGisuPort loadGisuPort;
 
-    private Long resolveSchoolId() {
-        return 1L;
+    private Long resolveSchoolId(Long memberId) {
+        Member member = loadMemberPort.findById(memberId)
+                .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+        return member.getSchoolId();
     }
 
-    private Long resolveActiveGisuId(Long schoolId) {
-        return 1L;
+    private Long resolveActiveGisuId() {
+        return loadGisuPort.findActiveGisu().getId();
     }
 
     @Override
@@ -385,8 +393,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     @Override
     public CreateRecruitmentInfo create(CreateRecruitmentCommand command) {
 
-        Long schoolId = resolveSchoolId();
-        Long gisuId = resolveActiveGisuId(schoolId);
+        Long schoolId = resolveSchoolId(command.memberId());
+        Long gisuId = resolveActiveGisuId();
 
         Form savedForm = saveFormPort.save(Form.createDraft(command.memberId()));
 

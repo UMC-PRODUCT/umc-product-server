@@ -45,4 +45,6 @@ public interface LoadRecruitmentPort {
             Long recruitmentId,
             RecruitmentApplicationFormInfo.PreferredPartInfo preferredPartInfo
     );
+
+    List<Long> findActiveRecruitmentIds(Long schoolId, Long gisuId, Instant now);
 }

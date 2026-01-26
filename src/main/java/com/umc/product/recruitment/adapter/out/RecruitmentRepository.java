@@ -52,4 +52,14 @@ public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> 
     );
 
     Optional<Recruitment> findByFormId(Long formId);
+
+    @Query("""
+              select r.id
+              from Recruitment r
+              where r.schoolId = :schoolId
+                and r.gisuId = :gisuId
+                and r.status = com.umc.product.recruitment.domain.enums.RecruitmentStatus.PUBLISHED
+              order by r.updatedAt desc
+            """)
+    List<Long> findLatestPublishedId(Long schoolId, Long gisuId);
 }

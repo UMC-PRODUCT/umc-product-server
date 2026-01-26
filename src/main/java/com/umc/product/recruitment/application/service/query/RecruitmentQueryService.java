@@ -5,6 +5,7 @@ import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberErrorCode;
+import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyApplicationListUseCase;
@@ -21,6 +22,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitme
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationProgressNoticeType;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationProgressStep;
 import com.umc.product.recruitment.application.port.in.query.dto.EvaluationStatusCode;
+import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDetailQuery;
@@ -82,30 +84,39 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     private final LoadFormResponsePort loadFormResponsePort;
     private final LoadMemberPort loadMemberPort;
     private final LoadApplicationPartPreferencePort loadApplicationPartPreferencePort;
+    private final LoadGisuPort loadGisuPort;
 
-    private Long resolveSchoolId() {
-        return 1L;
+    private Long resolveSchoolId(Long memberId) {
+        Member member = loadMemberPort.findById(memberId)
+                .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+        return member.getSchoolId();
     }
 
-    private Long resolveActiveGisuId(Long schoolId) {
-        return 1L;
+    private Long resolveActiveGisuId() {
+        return loadGisuPort.findActiveGisu().getId();
     }
 
     @Override
-    public ActiveRecruitmentInfo getActiveRecruitment(Long memberId) {
-        Long schoolId = resolveSchoolId(); // TODO: memberId -> schoolId
-        Long activeGisuId = resolveActiveGisuId(schoolId); // TODO: active gisu
+    public ActiveRecruitmentInfo getActiveRecruitment(GetActiveRecruitmentQuery query) {
+        Long resolvedSchoolId =
+                (query.schoolId() != null) ? query.schoolId() : resolveSchoolId(query.requesterMemberId());
+        Long resolvedGisuId = (query.gisuId() != null) ? query.gisuId() : resolveActiveGisuId();
 
-        Long recruitmentId = loadRecruitmentPort.findActiveRecruitmentId(
-                schoolId,
-                activeGisuId,
+        List<Long> activeIds = loadRecruitmentPort.findActiveRecruitmentIds(
+                resolvedSchoolId,
+                resolvedGisuId,
                 Instant.now()
-        ).orElseThrow(() -> new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
-        ));
+        );
 
-        return new ActiveRecruitmentInfo(recruitmentId);
+        if (activeIds.isEmpty()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND);
+        }
+
+        if (activeIds.size() > 1) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.MULTIPLE_ACTIVE_RECRUITMENTS);
+        }
+
+        return new ActiveRecruitmentInfo(activeIds.get(0));
     }
 
     @Override
@@ -279,8 +290,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         String nickName = member.getNickname();
         String name = member.getName();
 
-        Long schoolId = resolveSchoolId(); // TODO: memberId -> schoolId
-        Long activeGisuId = resolveActiveGisuId(schoolId); // TODO: active gisu
+        Long schoolId = resolveSchoolId(memberId);
+        Long activeGisuId = resolveActiveGisuId();
 
         Long activeRecruitmentId = loadRecruitmentPort.findActiveRecruitmentId(
                 schoolId, activeGisuId, Instant.now()

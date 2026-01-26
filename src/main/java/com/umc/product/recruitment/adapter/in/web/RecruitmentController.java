@@ -64,6 +64,7 @@ import com.umc.product.recruitment.application.port.in.query.GetRecruitmentPartL
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentScheduleUseCase;
 import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDetailQuery;
@@ -125,11 +126,15 @@ public class RecruitmentController {
     private final ResetRecruitmentDraftFormResponseUseCase resetRecruitmentDraftFormResponseUseCase;
 
     @GetMapping("/active-id")
-    @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "사용자 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반)")
+    @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "사용자 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (schoolId/gisuId 미지정 시 사용자 학교, active 기수 기반)")
     public ActiveRecruitmentIdResponse getActiveRecruitmentId(
-            @CurrentMember MemberPrincipal memberPrincipal
+            @CurrentMember MemberPrincipal memberPrincipal,
+            @RequestParam(required = false) Long schoolId,
+            @RequestParam(required = false) Long gisuId
     ) {
-        ActiveRecruitmentInfo info = getActiveRecruitmentUseCase.getActiveRecruitment(memberPrincipal.getMemberId());
+        ActiveRecruitmentInfo info = getActiveRecruitmentUseCase.getActiveRecruitment(
+                new GetActiveRecruitmentQuery(memberPrincipal.getMemberId(), schoolId, gisuId)
+        );
         return ActiveRecruitmentIdResponse.of(info.recruitmentId());
     }
 
