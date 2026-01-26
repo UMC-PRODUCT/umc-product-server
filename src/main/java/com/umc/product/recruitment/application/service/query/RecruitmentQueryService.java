@@ -994,15 +994,9 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
                 ))
                 .toList();
 
-        // 지원자의 해당 모집 지원 현황 조회 (없으면 null)
-        RecruitmentPartListInfo.MyApplicationInfo myApplicationInfo = loadApplicationPort
-                .findByRecruitmentIdAndApplicantId(query.recruitmentId(), query.memberId())
-                .map(app -> new RecruitmentPartListInfo.MyApplicationInfo(
-                        app.getId(),
-                        app.getFormResponseId(),
-                        app.getStatus()
-                ))
-                .orElse(null);
+        // 내 지원 상태: SUBMITTED 우선 -> 없으면 DRAFT -> 없으면 NONE
+        RecruitmentPartListInfo.MyApplicationInfo myApplicationInfo = resolveMyApplicationStatus(recruitment,
+                query.memberId());
 
         var schedules = loadRecruitmentPort.findSchedulesByRecruitmentId(query.recruitmentId());
         var recruitmentPeriod = extractDatePeriod(schedules, "APPLY_WINDOW");
@@ -1036,5 +1030,24 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         if (recruitment.getStatus() != com.umc.product.recruitment.domain.enums.RecruitmentStatus.PUBLISHED) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
         }
+    }
+
+    private RecruitmentPartListInfo.MyApplicationInfo resolveMyApplicationStatus(Recruitment recruitment,
+                                                                                 Long memberId) {
+        // 1) SUBMITTED(Application) 존재하면 SUBMITTED
+        var submittedOpt = loadApplicationPort.findByRecruitmentIdAndApplicantId(recruitment.getId(), memberId);
+        if (submittedOpt.isPresent()) {
+            return RecruitmentPartListInfo.MyApplicationInfo.submitted(submittedOpt.get().getId());
+        }
+
+        // 2) 없으면 DRAFT(FormResponse) 찾기
+        Long formId = recruitment.getFormId();
+        if (formId == null) {
+            return RecruitmentPartListInfo.MyApplicationInfo.none();
+        }
+
+        return loadFormResponsePort.findDraftByFormIdAndRespondentMemberId(formId, memberId)
+                .map(fr -> RecruitmentPartListInfo.MyApplicationInfo.draft(fr.getId()))
+                .orElseGet(RecruitmentPartListInfo.MyApplicationInfo::none);
     }
 }
