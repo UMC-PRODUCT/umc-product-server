@@ -9,13 +9,14 @@ import com.umc.product.recruitment.application.port.in.command.DeleteRecruitment
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.PublishRecruitmentUseCase;
+import com.umc.product.recruitment.application.port.in.command.ResetRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentDraftUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentInterviewPreferenceUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormQuestionsUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormResponseAnswersUseCase;
-import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
-import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetRecruitmentDraftCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.CreateDraftFormResponseCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.CreateDraftFormResponseInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentCommand;
@@ -24,6 +25,7 @@ import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruit
 import com.umc.product.recruitment.application.port.in.command.dto.PublishRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.PublishRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
+import com.umc.product.recruitment.application.port.in.command.dto.ResetDraftFormResponseCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentDraftCommand;
@@ -46,7 +48,6 @@ import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
-import com.umc.product.survey.application.port.in.query.dto.DraftFormResponseInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
 import com.umc.product.survey.application.port.out.LoadFormPort;
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
@@ -88,7 +89,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         UpsertRecruitmentFormQuestionsUseCase,
         PublishRecruitmentUseCase,
         DeleteRecruitmentFormQuestionUseCase,
-        UpdateRecruitmentInterviewPreferenceUseCase {
+        UpdateRecruitmentInterviewPreferenceUseCase,
+        ResetRecruitmentDraftFormResponseUseCase {
 
     private final SaveFormPort saveFormPort;
     private final SaveRecruitmentPort saveRecruitmentPort;
@@ -115,12 +117,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     @Override
-    public CreateOrGetDraftFormResponseInfo createOrGet(CreateOrGetRecruitmentDraftCommand command) {
+    public CreateDraftFormResponseInfo create(CreateDraftFormResponseCommand command) {
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
                 .orElseThrow(
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
-        if (recruitment.getStatus() != com.umc.product.recruitment.domain.enums.RecruitmentStatus.PUBLISHED) {
+        if (!recruitment.isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
         }
 
@@ -129,11 +131,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
-        var existingDraftOpt = loadFormResponsePort.findDraftByFormIdAndRespondentMemberId(formId, command.memberId());
-        if (existingDraftOpt.isPresent()) {
-            return new CreateOrGetDraftFormResponseInfo(
-                    DraftFormResponseInfo.from(existingDraftOpt.get()),
-                    false
+        if (loadApplicationPort.existsByRecruitmentIdAndApplicantMemberId(
+                recruitment.getId(), command.memberId())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_APPLIED);
+        }
+
+        boolean existsDraft = loadFormResponsePort
+                .findDraftByFormIdAndRespondentMemberId(formId, command.memberId())
+                .isPresent();
+        if (existsDraft) {
+            throw new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.DRAFT_FORM_RESPONSE_ALREADY_EXISTS
             );
         }
 
@@ -144,10 +153,45 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 FormResponse.createDraft(form, command.memberId())
         );
 
-        return new CreateOrGetDraftFormResponseInfo(
-                DraftFormResponseInfo.from(created),
-                true
+        return CreateDraftFormResponseInfo.from(
+                formId,
+                created.getId(),
+                created.getCreatedAt()
         );
+    }
+
+    @Override
+    public CreateDraftFormResponseInfo reset(ResetDraftFormResponseCommand command) {
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(() -> new BusinessException(
+                        Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        if (!recruitment.isPublished()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
+        }
+
+        Long formId = recruitment.getFormId();
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
+
+        if (loadApplicationPort.existsByRecruitmentIdAndApplicantMemberId(
+                recruitment.getId(), command.memberId())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_APPLIED);
+        }
+
+        // 기존 draft 있으면 삭제 (없으면 그냥 새로 생성)
+        loadFormResponsePort.findDraftByFormIdAndRespondentMemberId(formId, command.memberId())
+                .ifPresent(fr -> saveFormResponsePort.deleteById(fr.getId()));
+
+        Form form = loadFormPort.findById(formId)
+                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+
+        FormResponse created = saveFormResponsePort.save(
+                FormResponse.createDraft(form, command.memberId())
+        );
+
+        return CreateDraftFormResponseInfo.from(formId, created.getId(), created.getCreatedAt());
     }
 
     @Override

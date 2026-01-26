@@ -12,7 +12,6 @@ import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentF
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormResponseAnswersRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.CreateRecruitmentResponse;
-import com.umc.product.recruitment.adapter.in.web.dto.response.DeleteRecruitmentFormResponseResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.MyRecruitmentApplicationsResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.PublishRecruitmentResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentApplicationFormResponse;
@@ -33,19 +32,20 @@ import com.umc.product.recruitment.application.port.in.command.DeleteRecruitment
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.PublishRecruitmentUseCase;
+import com.umc.product.recruitment.application.port.in.command.ResetRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentDraftUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentInterviewPreferenceUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormQuestionsUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormResponseAnswersUseCase;
-import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
-import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetRecruitmentDraftCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.CreateDraftFormResponseCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.CreateDraftFormResponseInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormQuestionCommand;
-import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormResponseCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
+import com.umc.product.recruitment.application.port.in.command.dto.ResetDraftFormResponseCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentDraftCommand;
@@ -122,6 +122,7 @@ public class RecruitmentController {
     private final GetRecruitmentPartListUseCase getRecruitmentPartListUseCase;
     private final DeleteRecruitmentFormQuestionUseCase deleteRecruitmentFormQuestionUseCase;
     private final UpdateRecruitmentInterviewPreferenceUseCase updateRecruitmentInterviewPreferenceUseCase;
+    private final ResetRecruitmentDraftFormResponseUseCase resetRecruitmentDraftFormResponseUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "사용자 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (사용자의 학교, active 기수 기반)")
@@ -152,23 +153,57 @@ public class RecruitmentController {
 
     @PostMapping("/{recruitmentId}/applications/draft")
     @Operation(
-            summary = "지원 폼 응답 최초 생성(없으면 생성, 있으면 반환)",
-            description = "지원서 작성 시작 시 호출합니다. 해당 모집에 대한 DRAFT formResponse가 없으면 생성하고, 이미 있으면 기존 formResponse를 반환합니다."
+            summary = "지원 폼 응답 최초 생성",
+            description = """
+                    지원서 작성 시작 시 호출합니다.
+                    - 해당 모집에 대한 DRAFT 지원서가 없으면 새로 생성합니다.
+                    - 이미 DRAFT가 존재하면 생성하지 않고 오류를 반환합니다. (이어쓰기/새로작성하기는 별도 플로우)
+                    - 이미 최종 제출(SUBMITTED)한 경우에도 오류를 반환합니다.
+                    """
     )
-    public RecruitmentDraftFormResponseResponse createOrGetApplicationDraft(
+    public RecruitmentDraftFormResponseResponse createApplicationDraft(
             @CurrentMember MemberPrincipal memberPrincipal,
             @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
     ) {
-        CreateOrGetRecruitmentDraftCommand command = new CreateOrGetRecruitmentDraftCommand(
+        CreateDraftFormResponseCommand command = new CreateDraftFormResponseCommand(
                 recruitmentId,
                 memberPrincipal.getMemberId()
         );
-        CreateOrGetDraftFormResponseInfo info = createRecruitmentDraftFormResponseUseCase.createOrGet(command);
+        CreateDraftFormResponseInfo info = createRecruitmentDraftFormResponseUseCase.create(command);
 
         return RecruitmentDraftFormResponseResponse.from(
                 recruitmentId,
-                info.draftFormResponseInfo(),
-                info.created()
+                info.formId(),
+                info.formResponseId(),
+                info.createdAt()
+        );
+    }
+
+    @PostMapping("/{recruitmentId}/applications/draft/reset")
+    @Operation(
+            summary = "지원서 임시본(DRAFT) 초기화 후 재생성",
+            description = """
+                    '새로 작성하기' 동작을 위한 API입니다.
+                    - 기존 DRAFT 지원서가 있으면 삭제한 뒤 새 DRAFT를 생성합니다.
+                    - 기존 DRAFT가 없어도 새 DRAFT를 생성합니다.
+                    - 이미 해당 모집에 지원(최종 제출)한 이력이 있으면 오류를 반환합니다.
+                    """
+    )
+    public RecruitmentDraftFormResponseResponse resetDraft(
+            @CurrentMember MemberPrincipal memberPrincipal,
+            @PathVariable Long recruitmentId
+    ) {
+        ResetDraftFormResponseCommand command = new ResetDraftFormResponseCommand(
+                recruitmentId,
+                memberPrincipal.getMemberId()
+        );
+        CreateDraftFormResponseInfo info = resetRecruitmentDraftFormResponseUseCase.reset(command);
+
+        return RecruitmentDraftFormResponseResponse.from(
+                recruitmentId,
+                info.formId(),
+                info.formResponseId(),
+                info.createdAt()
         );
     }
 
@@ -235,24 +270,24 @@ public class RecruitmentController {
         return UpdateRecruitmentInterviewPreferenceResponse.of(info.formResponseId(), info.value());
     }
 
-    @DeleteMapping("/{recruitmentId}/applications/{formResponseId}")
-    @Operation(
-            summary = "지원 폼 응답 삭제",
-            description = """
-                    formResponseId에 해당하는 지원 폼 응답을 삭제합니다.
-                    "지원하기" UI에서, 기존에 작성하던 응답이 있는 경우 사용자가 "새로작성하기"를 눌렀을 때 호출됩니다.
-                    """
-    )
-    public DeleteRecruitmentFormResponseResponse deleteFormResponse(
-            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId,
-            @Parameter(description = "폼 응답 ID") @PathVariable Long formResponseId
-    ) {
-        deleteRecruitmentFormResponseUseCase.delete(
-                new DeleteRecruitmentFormResponseCommand(recruitmentId, formResponseId)
-        );
-
-        return DeleteRecruitmentFormResponseResponse.of(formResponseId);
-    }
+//    @DeleteMapping("/{recruitmentId}/applications/{formResponseId}")
+//    @Operation(
+//            summary = "지원 폼 응답 삭제",
+//            description = """
+//                    formResponseId에 해당하는 지원 폼 응답을 삭제합니다.
+//                    "지원하기" UI에서, 기존에 작성하던 응답이 있는 경우 사용자가 "새로작성하기"를 눌렀을 때 호출됩니다.
+//                    """
+//    )
+//    public DeleteRecruitmentFormResponseResponse deleteFormResponse(
+//            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId,
+//            @Parameter(description = "폼 응답 ID") @PathVariable Long formResponseId
+//    ) {
+//        deleteRecruitmentFormResponseUseCase.delete(
+//                new DeleteRecruitmentFormResponseCommand(recruitmentId, formResponseId)
+//        );
+//
+//        return DeleteRecruitmentFormResponseResponse.of(formResponseId);
+//    }
 
     @PostMapping("/{recruitmentId}/applications/{formResponseId}/submit")
     @Operation(
