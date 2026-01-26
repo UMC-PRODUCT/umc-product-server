@@ -110,16 +110,4 @@ public interface NoticeQueryApi {
             @Parameter(description = "읽음 현황 필터 조건")
             @ModelAttribute @Valid GetNoticeStatusRequest request
     );
-
-    @Operation(
-            summary = "공지사항 작성 가능 범위 조회",
-            description = "현재 사용자가 공지사항을 작성할 수 있는 범위(카테고리)를 조회합니다."
-    )
-    ApiResponse<GetNoticesCategoryResponse> getNoticesCategory();
-
-    @Operation(
-            summary = "공지사항 필터 옵션 조회",
-            description = "공지사항 목록 조회 시 사용 가능한 필터 옵션을 조회합니다."
-    )
-    ApiResponse<GetNoticesScopeResponse> getNoticesScope();
 }
