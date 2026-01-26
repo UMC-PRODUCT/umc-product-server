@@ -13,6 +13,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+//추가
 @Repository
 @RequiredArgsConstructor
 public class AttendanceRecordQueryRepository {
