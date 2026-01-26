@@ -5,6 +5,8 @@ docker/db/postgres
 logs/
 *.log
 
+/.run/
+
 application-*.yml
 .env
 .env.*
@@ -236,9 +238,10 @@ $RECYCLE.BIN/
 
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij+all,macos,windows,linux
 
+# gitignore의 예외 사항들 (가장 하단에 위치해야함)
+
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
 !**/src/main/**/out/
 !**/src/test/**/out/
-/.run/
