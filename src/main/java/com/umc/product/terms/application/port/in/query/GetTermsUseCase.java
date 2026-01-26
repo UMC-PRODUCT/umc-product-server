@@ -2,6 +2,7 @@ package com.umc.product.terms.application.port.in.query;
 
 import com.umc.product.terms.application.port.in.query.dto.TermsInfo;
 import com.umc.product.terms.domain.enums.TermsType;
+import java.util.Set;
 
 public interface GetTermsUseCase {
     /**
@@ -15,4 +16,9 @@ public interface GetTermsUseCase {
      * ID로 약관 정보를 가져옵니다.
      */
     TermsInfo getTermsById(Long termsId);
+
+    /**
+     * 현재 활성화된 필수 약관 ID 목록을 조회합니다.
+     */
+    Set<Long> getRequiredTermIds();
 }
