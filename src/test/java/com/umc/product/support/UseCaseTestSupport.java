@@ -1,5 +1,6 @@
 package com.umc.product.support;
 
+import com.google.cloud.storage.Storage;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -18,7 +19,7 @@ public abstract class UseCaseTestSupport {
 
 
     @MockitoBean
-    private JavaMailSender mailSender;
+    protected JavaMailSender mailSender;
 
     @MockitoBean
     protected JwtTokenProvider jwtTokenProvider;
@@ -27,6 +28,9 @@ public abstract class UseCaseTestSupport {
     protected GetChallengerUseCase getChallengerUseCase;
 
     @MockitoBean
-    private FirebaseMessaging firebaseMessaging;
+    protected FirebaseMessaging firebaseMessaging;
+
+    @MockitoBean
+    protected Storage googleCloudStorage;
 
 }
