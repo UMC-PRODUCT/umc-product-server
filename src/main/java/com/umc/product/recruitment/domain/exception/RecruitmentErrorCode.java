@@ -47,7 +47,11 @@ public enum RecruitmentErrorCode implements BaseCode {
     DRAFT_FORM_RESPONSE_ALREADY_EXISTS(HttpStatus.CONFLICT, "RECRUITMENT-0024",
             "해당 모집에 대한 임시저장된 지원서가 이미 존재합니다."),
     INTERVIEW_TIMETABLE_INVALID(HttpStatus.BAD_REQUEST, "RECRUITMENT-0025",
-            "면접 일정표가 올바르지 않습니다.");
+            "면접 일정표가 올바르지 않습니다."),
+    PREFERRED_PART_INVALID_MAX_COUNT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0026",
+            "선호 파트의 최대 개수가 올바르지 않습니다."),
+    PREFERRED_PART_INVALID(HttpStatus.BAD_REQUEST, "RECRUITMENT-0027",
+            "선호 파트가 올바르지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

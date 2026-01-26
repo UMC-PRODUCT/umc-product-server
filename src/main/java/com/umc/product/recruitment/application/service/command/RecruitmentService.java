@@ -36,16 +36,20 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruit
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
+import com.umc.product.recruitment.application.port.out.SaveApplicationPartPreferencePort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentSchedulePort;
 import com.umc.product.recruitment.domain.Application;
+import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
+import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
@@ -107,6 +111,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final LoadFormResponsePort loadFormResponsePort;
     private final SaveFormResponsePort saveFormResponsePort;
     private final SaveApplicationPort saveApplicationPort;
+    private final LoadRecruitmentPartPort loadRecruitmentPartPort;
+    private final SaveApplicationPartPreferencePort saveApplicationPartPreferencePort;
 
     private Long resolveSchoolId() {
         return 1L;
@@ -365,6 +371,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                                 formResponse.getId()
                         )
                 );
+
+        persistAppliedPreferredParts(recruitment, formResponse, savedApp);
 
         return SubmitRecruitmentApplicationInfo.of(
                 recruitment.getId(),
@@ -739,6 +747,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         if (!hasAnyQuestion) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
         }
+
+        if (draft.maxPreferredPartCount() != null && draft.maxPreferredPartCount() <= 0) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+        }
     }
 
     private void requireNonNull(Object v) {
@@ -1060,4 +1072,163 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
         return s;
     }
+
+    private void persistAppliedPreferredParts(
+            Recruitment recruitment,
+            FormResponse formResponse,
+            Application application
+    ) {
+        Integer maxPreferred = recruitment.getMaxPreferredPartCount();
+        if (maxPreferred != null && maxPreferred <= 0) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID_MAX_COUNT);
+        }
+
+        List<RecruitmentPart> parts =
+                loadRecruitmentPartPort.findByRecruitmentId(recruitment.getId());
+        if (parts == null) {
+            parts = List.of();
+        }
+
+        List<Long> selectedRecruitmentPartIds =
+                extractPreferredRecruitmentPartIds(recruitment, formResponse);
+
+        int max = (recruitment.getMaxPreferredPartCount() != null)
+                ? recruitment.getMaxPreferredPartCount()
+                : 1;
+
+        if (selectedRecruitmentPartIds.isEmpty()) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+        }
+        if (selectedRecruitmentPartIds.size() > max) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_EXCEEDS_MAX_COUNT);
+        }
+
+        Map<Long, RecruitmentPart> partById = parts.stream()
+                .filter(p -> p.getId() != null)
+                .collect(java.util.stream.Collectors.toMap(
+                        RecruitmentPart::getId,
+                        p -> p,
+                        (a, b) -> a
+                ));
+
+        List<RecruitmentPart> selectedParts = new java.util.ArrayList<>();
+        java.util.Set<Long> dedup = new java.util.HashSet<>();
+
+        for (Long partId : selectedRecruitmentPartIds) {
+            if (partId == null) {
+                continue;
+            }
+            if (!dedup.add(partId)) {
+                continue; // 중복 제거
+            }
+
+            RecruitmentPart rp = partById.get(partId);
+            if (rp == null) {
+                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
+            }
+            if (rp.getStatus() != RecruitmentPartStatus.OPEN) {
+                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
+            }
+            selectedParts.add(rp);
+        }
+
+        if (selectedParts.isEmpty()) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+        }
+
+        List<ApplicationPartPreference> prefs = new java.util.ArrayList<>();
+        for (int i = 0; i < selectedParts.size(); i++) {
+            int priority = i + 1;
+            prefs.add(ApplicationPartPreference.create(application, selectedParts.get(i), priority));
+        }
+
+        saveApplicationPartPreferencePort.saveAll(prefs);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Long> extractPreferredRecruitmentPartIds(
+            Recruitment recruitment,
+            FormResponse formResponse
+    ) {
+        if (formResponse == null || formResponse.getAnswers() == null) {
+            return List.of();
+        }
+
+        var opt = formResponse.getAnswers().stream()
+                .filter(a -> a.getAnsweredAsType() == QuestionType.PREFERRED_PART)
+                .findFirst();
+
+        if (opt.isEmpty()) {
+            return List.of();
+        }
+
+        Map<String, Object> v = opt.get().getValue();
+        if (v == null) {
+            v = Map.of();
+        }
+
+        Object rawList =
+                v.containsKey("preferredParts") ? v.get("preferredParts")
+                        : v.containsKey("selectedParts") ? v.get("selectedParts")
+                                : v.getOrDefault("preferredPartIds", List.of());
+
+        if (!(rawList instanceof List<?> list)) {
+            return List.of();
+        }
+
+        // recruitment 기준으로 OPEN part를 name->id로 매핑
+        List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentId(recruitment.getId());
+        if (parts == null) {
+            parts = List.of();
+        }
+
+        Map<String, Long> openPartIdByName = parts.stream()
+                .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+                .filter(p -> p.getPart() != null && p.getId() != null)
+                .collect(java.util.stream.Collectors.toMap(
+                        p -> p.getPart().name(),
+                        RecruitmentPart::getId,
+                        (a, b) -> a
+                ));
+
+        List<Long> result = new ArrayList<>();
+
+        for (Object item : list) {
+            // 1) 숫자면 id
+            if (item instanceof Number n) {
+                result.add(n.longValue());
+                continue;
+            }
+
+            // 2) 문자열이면: (a) 숫자 문자열 or (b) enum name
+            if (item instanceof String s) {
+                try {
+                    result.add(Long.parseLong(s)); // "3"
+                } catch (NumberFormatException ignore) {
+                    Long mapped = openPartIdByName.get(s); // "SPRINGBOOT"
+                    if (mapped != null) {
+                        result.add(mapped);
+                    }
+                }
+                continue;
+            }
+
+            // 3) map이면 recruitmentPartId / id 읽기
+            if (item instanceof Map<?, ?> m) {
+                Object idObj = (m.get("recruitmentPartId") != null) ? m.get("recruitmentPartId") : m.get("id");
+                if (idObj instanceof Number nn) {
+                    result.add(nn.longValue());
+                } else if (idObj instanceof String ss) {
+                    try {
+                        result.add(Long.parseLong(ss));
+                    } catch (NumberFormatException ignore) {
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+
 }
