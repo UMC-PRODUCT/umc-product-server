@@ -18,7 +18,6 @@ import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import com.umc.product.member.domain.Member;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
-import com.umc.product.organization.application.port.out.command.ManageStudyGroupMemberPort;
 import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
@@ -48,9 +47,6 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
     private ManageStudyGroupPort manageStudyGroupPort;
-
-    @Autowired
-    private ManageStudyGroupMemberPort manageStudyGroupMemberPort;
 
     @Autowired
     private TestMemberRepository memberRepository;
@@ -271,22 +267,20 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     }
 
     private Curriculum createCurriculum(Long gisuId, ChallengerPart part) {
-        return Curriculum.builder()
-                .gisuId(gisuId)
-                .part(part)
-                .title("9기 " + part.name())
-                .build();
+        return Curriculum.create(gisuId, part, "9기 " + part.name());
     }
 
     private OriginalWorkbook createWorkbook(Curriculum curriculum, int weekNo, String title) {
-        return OriginalWorkbook.builder()
-                .curriculum(curriculum)
-                .weekNo(weekNo)
-                .title(title)
-                .startDate(LocalDate.of(2024, 3, 1))
-                .endDate(LocalDate.of(2024, 3, 7))
-                .missionType(MissionType.LINK)
-                .build();
+        return OriginalWorkbook.create(
+                curriculum,
+                weekNo,
+                title,
+                null,
+                null,
+                LocalDate.of(2024, 3, 1),
+                LocalDate.of(2024, 3, 7),
+                MissionType.LINK
+        );
     }
 
     private ChallengerWorkbook createChallengerWorkbook(Long challengerId, Long workbookId, WorkbookStatus status) {
