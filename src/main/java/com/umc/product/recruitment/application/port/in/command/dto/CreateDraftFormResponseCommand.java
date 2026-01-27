@@ -1,6 +1,6 @@
 package com.umc.product.recruitment.application.port.in.command.dto;
 
-public record CreateOrGetRecruitmentDraftCommand(
+public record CreateDraftFormResponseCommand(
         Long recruitmentId,
         Long memberId
 ) {

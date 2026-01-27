@@ -1,7 +1,9 @@
 package com.umc.product.survey.application.port.out;
 
 import com.umc.product.survey.domain.Question;
+import com.umc.product.survey.domain.enums.QuestionType;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface LoadQuestionPort {
@@ -9,4 +11,7 @@ public interface LoadQuestionPort {
 
     boolean existsByIdAndFormId(Long questionId, Long formId);
 
+    Optional<Question> findById(Long questionId);
+
+    Optional<Question> findFirstByFormIdAndType(Long formId, QuestionType type);
 }

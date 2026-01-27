@@ -84,6 +84,21 @@ public class AttendanceWindow {
     }
 
     /**
+     * 시작/종료 시간을 직접 지정하여 출석 시간대 생성
+     *
+     * @param startTime            출석 시작 시간
+     * @param endTime              출석 종료 시간
+     * @param lateThresholdMinutes 지각 인정 시간 (분)
+     */
+    public static AttendanceWindow from(
+            LocalDateTime startTime,
+            LocalDateTime endTime,
+            int lateThresholdMinutes
+    ) {
+        return new AttendanceWindow(startTime, endTime, lateThresholdMinutes);
+    }
+
+    /**
      * 주어진 시간이 출석 시간대 내에 있는지 확인
      */
     public boolean contains(LocalDateTime checkTime) {

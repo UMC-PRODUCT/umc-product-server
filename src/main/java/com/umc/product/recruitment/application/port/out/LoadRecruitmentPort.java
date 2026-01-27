@@ -27,7 +27,7 @@ public interface LoadRecruitmentPort {
     List<ChallengerPart> findPartsByRecruitmentId(Long recruitmentId);
 
     List<RecruitmentSchedule> findSchedulesByRecruitmentId(Long recruitmentId);
-    
+
     List<RecruitmentListInfo.RecruitmentSummary> findRecruitmentSummaries(
             Long requesterMemberId,
             RecruitmentListStatus status
@@ -37,4 +37,14 @@ public interface LoadRecruitmentPort {
             Long requesterMemberId
     );
 
+    Optional<Long> findActiveRecruitmentId(Long schoolId, Long gisuId, Instant now);
+
+    Optional<Recruitment> findByFormId(Long formId);
+
+    RecruitmentApplicationFormInfo findApplicationFormInfoForApplicantById(
+            Long recruitmentId,
+            RecruitmentApplicationFormInfo.PreferredPartInfo preferredPartInfo
+    );
+
+    List<Long> findActiveRecruitmentIds(Long schoolId, Long gisuId, Instant now);
 }
