@@ -115,46 +115,12 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
                 .toList();
     }
 
-    @Override
-    public void removeVotes(RemoveNoticeVotesCommand command) {
-        for (Long noticeVoteId : command.noticeVoteIds()) {
-            NoticeVote noticeVote = loadNoticeVotePort.findVoteById(noticeVoteId)
-                    .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
-
-            saveNoticeVotePort.deleteVote(noticeVote);
-        }
-    }
-
-    @Override
-    public void removeImages(RemoveNoticeImagesCommand command) {
-        for (Long noticeImageId : command.noticeImageIds()) {
-            NoticeImage noticeImage = loadNoticeImagePort.findImageById(noticeImageId)
-                    .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_IMAGE_NOT_FOUND));
-
-            saveNoticeImagePort.deleteImage(noticeImage);
-        }
-    }
-
-    @Override
-    public void removeLinks(RemoveNoticeLinksCommand command) {
-        for (Long noticeLinkId : command.noticeLinkIds()) {
-            NoticeLink noticeLink = loadNoticeLinkPort.findLinkById(noticeLinkId)
-                    .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_LINK_NOT_FOUND));
-
-            saveNoticeLinkPort.deleteLink(noticeLink);
-        }
-    }
 
     @Override
     public void removeContentsByNoticeId(Long noticeId) {
-        List<NoticeImage> images = loadNoticeImagePort.findImagesByNoticeId(noticeId);
-        images.forEach(saveNoticeImagePort::deleteImage);
-
-        List<NoticeLink> links = loadNoticeLinkPort.findLinksByNoticeId(noticeId);
-        links.forEach(saveNoticeLinkPort::deleteLink);
-
-        List<NoticeVote> votes = loadNoticeVotePort.findVotesByNoticeId(noticeId);
-        votes.forEach(saveNoticeVotePort::deleteVote);
+        saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
+        saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
+        saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
     }
 
     @Override
@@ -164,8 +130,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         }
 
         Notice notice = findNoticeById(noticeId);
-        List<NoticeVote> existingVotes = loadNoticeVotePort.findVotesByNoticeId(noticeId);
-        existingVotes.forEach(saveNoticeVotePort::deleteVote);
+        saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
 
         if (command.voteIds().isEmpty()) {
             return;
@@ -190,8 +155,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         }
 
         Notice notice = findNoticeById(noticeId);
-        List<NoticeImage> existingImages = loadNoticeImagePort.findImagesByNoticeId(noticeId);
-        existingImages.forEach(saveNoticeImagePort::deleteImage);
+        saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
 
         if (command.imageIds().isEmpty()) {
             return;
@@ -212,8 +176,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         }
 
         Notice notice = findNoticeById(noticeId);
-        List<NoticeLink> existingLinks = loadNoticeLinkPort.findLinksByNoticeId(noticeId);
-        existingLinks.forEach(saveNoticeLinkPort::deleteLink);
+        saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
 
         if (command.links().isEmpty()) {
             return;

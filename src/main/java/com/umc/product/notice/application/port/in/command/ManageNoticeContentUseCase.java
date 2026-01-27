@@ -34,24 +34,6 @@ public interface ManageNoticeContentUseCase {
      */
     List<Long> addLinks(AddNoticeLinksCommand command, Long noticeId);
 
-    /*
-     * 공지에서 투표 삭제
-     * @return
-     */
-    void removeVotes(RemoveNoticeVotesCommand command);
-
-    /*
-     * 공지에서 이미지 삭제
-     * @return
-     */
-    void removeImages(RemoveNoticeImagesCommand command);
-
-    /*
-     * 공지에서 링크 삭제
-     * @return
-     */
-    void removeLinks(RemoveNoticeLinksCommand command);
-
     void removeContentsByNoticeId(Long noticeId);
 
     void replaceVotes(ReplaceNoticeVotesCommand command, Long noticeId);
