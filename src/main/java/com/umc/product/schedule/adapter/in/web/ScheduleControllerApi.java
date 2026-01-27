@@ -4,6 +4,7 @@ import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleRequest;
+import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleWithAttendanceRequest;
 import com.umc.product.schedule.adapter.in.web.dto.request.UpdateScheduleRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -56,6 +57,12 @@ public interface ScheduleControllerApi {
             @Valid @RequestBody CreateScheduleRequest request
     );
 
+    @Operation(summary = "일정 + 출석부 통합 생성", description = "일정과 출석부를 함께 생성합니다")
+    Long createScheduleWithAttendance(
+            @CurrentMember MemberPrincipal memberPrincipal,
+            @Valid @RequestBody CreateScheduleWithAttendanceRequest request
+    );
+
     @Operation(summary = "일정 수정", description = "일정 정보를 부분 수정합니다 (변경할 필드만 전송)")
     void updateSchedule(
             @Parameter(description = "일정 ID") @PathVariable Long scheduleId,
@@ -67,4 +74,8 @@ public interface ScheduleControllerApi {
             @Parameter(description = "일정 ID") @PathVariable Long scheduleId
     );
 
+    @Operation(summary = "일정 + 출석부 통합 삭제", description = "일정과 연결된 출석부를 함께 삭제합니다")
+    void deleteScheduleWithAttendance(
+            @Parameter(description = "일정 ID") @PathVariable Long scheduleId
+    );
 }

@@ -18,7 +18,7 @@ public class CurriculumQueryController implements CurriculumQueryControllerApi {
     @GetMapping("/challengers/me/progress")
     public CurriculumProgressResponse getMyProgress(
     ) {
-        // TODO: 인증 개선 필요
+        // TODO: memberPrincipal로 바꾸기
         Long challengerId = 1L;
 
         CurriculumProgressInfo info = getCurriculumProgressUseCase.getMyProgress(challengerId);

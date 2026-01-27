@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 public record UpsertRecruitmentFormResponseAnswersCommand(
+        Long memberId,
         Long recruitmentId,
         Long formResponseId,
         List<UpsertItem> items
