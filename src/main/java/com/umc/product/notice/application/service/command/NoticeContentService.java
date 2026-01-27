@@ -4,9 +4,9 @@ import com.umc.product.notice.application.port.in.command.ManageNoticeContentUse
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeLinksCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeVotesCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeImageCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeLinkCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVoteCommand;
+import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeImagesCommand;
+import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeLinksCommand;
+import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVotesCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeVotesCommand;
@@ -23,7 +23,6 @@ import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
@@ -117,27 +116,45 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     }
 
     @Override
-    public void removeVote(RemoveNoticeVoteCommand command) {
-        NoticeVote noticeVote = loadNoticeVotePort.findVoteById(command.noticeVoteId())
-                .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
+    public void removeVotes(RemoveNoticeVotesCommand command) {
+        for (Long noticeVoteId : command.noticeVoteIds()) {
+            NoticeVote noticeVote = loadNoticeVotePort.findVoteById(noticeVoteId)
+                    .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
 
-        saveNoticeVotePort.deleteVote(noticeVote);
+            saveNoticeVotePort.deleteVote(noticeVote);
+        }
     }
 
     @Override
-    public void removeImage(RemoveNoticeImageCommand command) {
-        NoticeImage noticeImage = loadNoticeImagePort.findImageById(command.noticeImageId())
-                .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_IMAGE_NOT_FOUND));
+    public void removeImages(RemoveNoticeImagesCommand command) {
+        for (Long noticeImageId : command.noticeImageIds()) {
+            NoticeImage noticeImage = loadNoticeImagePort.findImageById(noticeImageId)
+                    .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_IMAGE_NOT_FOUND));
 
-        saveNoticeImagePort.deleteImage(noticeImage);
+            saveNoticeImagePort.deleteImage(noticeImage);
+        }
     }
 
     @Override
-    public void removeLink(RemoveNoticeLinkCommand command) {
-        NoticeLink noticeLink = loadNoticeLinkPort.findLinkById(command.noticeLinkId())
-                .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_LINK_NOT_FOUND));
+    public void removeLinks(RemoveNoticeLinksCommand command) {
+        for (Long noticeLinkId : command.noticeLinkIds()) {
+            NoticeLink noticeLink = loadNoticeLinkPort.findLinkById(noticeLinkId)
+                    .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_LINK_NOT_FOUND));
 
-        saveNoticeLinkPort.deleteLink(noticeLink);
+            saveNoticeLinkPort.deleteLink(noticeLink);
+        }
+    }
+
+    @Override
+    public void removeContentsByNoticeId(Long noticeId) {
+        List<NoticeImage> images = loadNoticeImagePort.findImagesByNoticeId(noticeId);
+        images.forEach(saveNoticeImagePort::deleteImage);
+
+        List<NoticeLink> links = loadNoticeLinkPort.findLinksByNoticeId(noticeId);
+        links.forEach(saveNoticeLinkPort::deleteLink);
+
+        List<NoticeVote> votes = loadNoticeVotePort.findVotesByNoticeId(noticeId);
+        votes.forEach(saveNoticeVotePort::deleteVote);
     }
 
     @Override

@@ -3,9 +3,9 @@ package com.umc.product.notice.application.port.in.command;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeLinksCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeVotesCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeImageCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeLinkCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVoteCommand;
+import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeImagesCommand;
+import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeLinksCommand;
+import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVotesCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeVotesCommand;
@@ -38,19 +38,21 @@ public interface ManageNoticeContentUseCase {
      * 공지에서 투표 삭제
      * @return
      */
-    void removeVote(RemoveNoticeVoteCommand command);
+    void removeVotes(RemoveNoticeVotesCommand command);
 
     /*
      * 공지에서 이미지 삭제
      * @return
      */
-    void removeImage(RemoveNoticeImageCommand command);
+    void removeImages(RemoveNoticeImagesCommand command);
 
     /*
      * 공지에서 링크 삭제
      * @return
      */
-    void removeLink(RemoveNoticeLinkCommand command);
+    void removeLinks(RemoveNoticeLinksCommand command);
+
+    void removeContentsByNoticeId(Long noticeId);
 
     void replaceVotes(ReplaceNoticeVotesCommand command, Long noticeId);
 

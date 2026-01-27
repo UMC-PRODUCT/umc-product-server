@@ -8,17 +8,18 @@ import com.umc.product.notice.application.port.in.command.ManageNoticeContentUse
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
-import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
-import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeVotesCommand;
-import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
+import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
+import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
+import com.umc.product.notification.application.port.in.ManageFcmUseCase;
+import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.exception.OrganizationDomainException;
@@ -36,9 +37,16 @@ public class NoticeService implements ManageNoticeUseCase {
 
     private final LoadNoticePort loadNoticePort;
     private final SaveNoticePort saveNoticePort;
+
     private final LoadGisuPort loadGisuPort;
     private final LoadChallengerPort loadChallengerPort;
+
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
+
+    private final ManageFcmUseCase manageFcmUseCase;
+
+    private static final String NOTICE_REMINDER_TITLE_PREFIX = "[리마인드 공지] ";
+    private static final String REMINDER_BODY_SUFFIX = " 공지를 확인해주세요.";
 
     @Override
     public Long createNotice(CreateNoticeCommand command) {
@@ -129,13 +137,24 @@ public class NoticeService implements ManageNoticeUseCase {
          * 작성자 검증
          */
         validateIsNoticeAuthor(challenger.getId(), notice.getAuthorChallengerId());
+
+        /*
+         * 관련 이미지, 투표, 링크 등도 모두 삭제
+         */
+        manageNoticeContentUseCase.removeContentsByNoticeId(notice.getId());
+
         saveNoticePort.delete(notice);
     }
 
     @Override
     public void remindNotice(SendNoticeReminderCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-        // TODO: 알림 전송 로직 추가 예정
+        for (Long targetId : command.targetIds()) {
+            manageFcmUseCase.sendMessageByToken(new NotificationCommand(targetId,
+                    NOTICE_REMINDER_TITLE_PREFIX + notice.getTitle(),
+                    REMINDER_BODY_SUFFIX))
+            ;
+        }
     }
 
 

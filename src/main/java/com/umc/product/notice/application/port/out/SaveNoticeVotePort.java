@@ -7,4 +7,5 @@ public interface SaveNoticeVotePort {
     NoticeVote saveVote(NoticeVote noticeVote);
     List<NoticeVote> saveAllVotes(List<NoticeVote> noticeVotes);
     void deleteVote(NoticeVote noticeVote);
+    void deleteAllVotes(List<NoticeVote> noticeVotes);
 }
