@@ -6,7 +6,6 @@ import com.umc.product.terms.application.port.out.SaveTermsPort;
 import com.umc.product.terms.domain.Terms;
 import com.umc.product.terms.domain.exception.TermsDomainException;
 import com.umc.product.terms.domain.exception.TermsErrorCode;
-import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +39,7 @@ public class TermsCommandService implements ManageTermsUseCase {
                 .content(command.content())
                 .version(command.version())
                 .required(command.required())
-                .effectiveDate(Instant.now())
+                .effectiveDate(command.effectiveDate())
                 .build();
 
         return saveTermsPort.save(terms).getId();

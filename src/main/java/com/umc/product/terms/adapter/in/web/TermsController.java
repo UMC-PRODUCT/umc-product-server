@@ -53,6 +53,7 @@ public class TermsController {
                         .version(request.version())
                         .required(request.isMandatory())
                         .type(request.termsType())
+                        .effectiveDate(request.effectiveDate())
                         .build()
         );
     }
