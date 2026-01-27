@@ -6,11 +6,13 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
 import com.umc.product.terms.application.port.in.command.dto.CreateTermCommand;
+import com.umc.product.terms.application.port.out.LoadTermsPort;
 import com.umc.product.terms.application.port.out.SaveTermsPort;
 import com.umc.product.terms.application.service.command.TermsCommandService;
 import com.umc.product.terms.domain.Terms;
 import com.umc.product.terms.domain.enums.TermsType;
 import java.time.Instant;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,6 +25,9 @@ class ManageTermsUseCaseTest {
 
     @Mock
     SaveTermsPort saveTermsPort;
+
+    @Mock
+    LoadTermsPort loadTermsPort;
 
     @InjectMocks
     TermsCommandService sut;
@@ -39,6 +44,7 @@ class ManageTermsUseCaseTest {
                 .effectiveDate(Instant.now())
                 .build();
 
+        given(loadTermsPort.findActiveByType(TermsType.SERVICE)).willReturn(Optional.empty());
         given(saveTermsPort.save(any(Terms.class))).willAnswer(invocation -> {
             Terms terms = invocation.getArgument(0);
             ReflectionTestUtils.setField(terms, "id", 1L);
@@ -65,6 +71,7 @@ class ManageTermsUseCaseTest {
                 .effectiveDate(Instant.now())
                 .build();
 
+        given(loadTermsPort.findActiveByType(TermsType.MARKETING)).willReturn(Optional.empty());
         given(saveTermsPort.save(any(Terms.class))).willAnswer(invocation -> {
             Terms terms = invocation.getArgument(0);
             ReflectionTestUtils.setField(terms, "id", 2L);
