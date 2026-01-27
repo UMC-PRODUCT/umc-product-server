@@ -52,6 +52,18 @@ public class ChapterQueryService implements GetChapterUseCase {
     }
 
     @Override
+    public List<ChapterInfo> getChaptersBySchool(Long schoolId) {
+        // 지부별 학교 정보를 학교 ID로 전부 먼저 가져오고
+        List<ChapterSchool> chapterSchools = loadChapterSchoolPort.findBySchoolId(schoolId);
+
+        // 거기서 지부 정보를 매핑해서 List 형태로 반환함
+        return chapterSchools.stream()
+                .map(ChapterSchool::getChapter)
+                .map(ChapterInfo::from)
+                .toList();
+    }
+
+    @Override
     public List<ChapterWithSchoolsInfo> getChaptersWithSchoolsByGisuId(Long gisuId) {
         List<Chapter> chapters = loadChapterPort.findByGisuId(gisuId);
         List<ChapterSchool> chapterSchools = loadChapterSchoolPort.findByGisuId(gisuId);

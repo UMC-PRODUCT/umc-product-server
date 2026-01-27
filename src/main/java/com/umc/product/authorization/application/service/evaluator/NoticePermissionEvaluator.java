@@ -1,11 +1,9 @@
-package com.umc.product.authorization.adapter.out.policy.evaluator;
+package com.umc.product.authorization.application.service.evaluator;
 
-import com.umc.product.authorization.adapter.out.policy.ResourcePermissionEvaluator;
-import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.global.exception.NotImplementedException;
-import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +20,8 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     }
 
     @Override
-    public boolean evaluate(List<ChallengerRoleType> roles, String resourceId, PermissionType permission) {
+    public boolean evaluate(SubjectAttributes subjectAttributes,
+                            ResourcePermission resourcePermission) {
         // TODO: 공지사항 평가 로직 구현 .. 다시 ..
 
         throw new NotImplementedException(this.getClass().getName() + " Permission Evaluator를 구현해주세요.");

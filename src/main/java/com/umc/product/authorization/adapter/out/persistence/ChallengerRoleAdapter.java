@@ -1,48 +1,27 @@
 package com.umc.product.authorization.adapter.out.persistence;
 
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
-import jakarta.persistence.EntityManager;
+import com.umc.product.authorization.domain.ChallengerRole;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * ChallengerRole 정보를 조회하는 Adapter
+ * ChallengerRole Persistence Adapter
  */
 @Component
 @RequiredArgsConstructor
 public class ChallengerRoleAdapter implements LoadChallengerRolePort {
 
-    private final EntityManager entityManager;
+    private final ChallengerRoleQueryRepository queryRepository;
 
     @Override
-    public List<ChallengerRoleType> findRolesByMemberId(Long memberId) {
-        String jpql = """
-                SELECT cr.challengerRoleType
-                FROM ChallengerRole cr
-                JOIN cr.challenger c
-                WHERE c.memberId = :memberId
-                """;
-
-        return entityManager.createQuery(jpql, ChallengerRoleType.class)
-                .setParameter("memberId", memberId)
-                .getResultList();
+    public List<ChallengerRole> findByMemberId(Long memberId) {
+        return queryRepository.findByMemberId(memberId);
     }
 
     @Override
-    public List<ChallengerRoleType> findRolesByMemberIdAndGisuId(Long memberId, Long gisuId) {
-        String jpql = """
-                SELECT cr.challengerRoleType
-                FROM ChallengerRole cr
-                JOIN cr.challenger c
-                WHERE c.memberId = :memberId
-                  AND cr.gisuId = :gisuId
-                """;
-
-        return entityManager.createQuery(jpql, ChallengerRoleType.class)
-                .setParameter("memberId", memberId)
-                .setParameter("gisuId", gisuId)
-                .getResultList();
+    public List<ChallengerRole> findRolesByMemberIdAndGisuId(Long memberId, Long gisuId) {
+        return queryRepository.findByMemberIdAndGisuId(memberId, gisuId);
     }
 }

@@ -1,5 +1,6 @@
-package com.umc.product.challenger.domain;
+package com.umc.product.authorization.domain;
 
+import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;

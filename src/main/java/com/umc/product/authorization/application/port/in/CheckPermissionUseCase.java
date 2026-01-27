@@ -3,7 +3,11 @@ package com.umc.product.authorization.application.port.in;
 import com.umc.product.authorization.domain.ResourcePermission;
 
 /**
- * 권한 체크 UseCase
+ * 특정 주체가 권한이 있는지를 평가합니다.
+ * <p>
+ * RBAC 및 ABAC를 모두 사용하도록 하며, 주체 속성이 특정 리소스에 대한 권한을 가지고 있는지를 평가합니다.
+ * <p>
+ * 추후 객체 속성 및 환경 속성 또한 추가하는 메소드를 오버로딩하여 구현할 수 있습니다.
  */
 public interface CheckPermissionUseCase {
 
