@@ -84,4 +84,5 @@ class ManageTermsUseCaseTest {
         // then
         assertThat(termsId).isEqualTo(2L);
     }
+
 }
