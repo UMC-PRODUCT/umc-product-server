@@ -2,7 +2,7 @@ package com.umc.product.curriculum.adapter.in.web;
 
 import com.umc.product.curriculum.adapter.in.web.dto.request.ReviewWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.dto.request.SelectBestWorkbookRequest;
-import com.umc.product.curriculum.application.port.in.command.ManageAdminChallengerWorkbookUseCase;
+import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.ReleaseWorkbookUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminWorkbookController implements AdminWorkbookControllerApi {
 
     private final ReleaseWorkbookUseCase releaseWorkbookUseCase;
-    private final ManageAdminChallengerWorkbookUseCase manageAdminChallengerWorkbookUseCase;
+    private final ManageWorkbookUseCase manageWorkbookUseCase;
 
     @Override
     @PostMapping("/{workbookId}/release")
@@ -33,7 +33,7 @@ public class AdminWorkbookController implements AdminWorkbookControllerApi {
     public void reviewWorkbook(
             @PathVariable Long challengerWorkbookId,
             @Valid @RequestBody ReviewWorkbookRequest request) {
-        manageAdminChallengerWorkbookUseCase.review(request.toCommand(challengerWorkbookId));
+        manageWorkbookUseCase.review(request.toCommand(challengerWorkbookId));
     }
 
     @Override
@@ -41,6 +41,6 @@ public class AdminWorkbookController implements AdminWorkbookControllerApi {
     public void selectBestWorkbook(
             @PathVariable Long challengerWorkbookId,
             @Valid @RequestBody SelectBestWorkbookRequest request) {
-        manageAdminChallengerWorkbookUseCase.selectBest(request.toCommand(challengerWorkbookId));
+        manageWorkbookUseCase.selectBest(request.toCommand(challengerWorkbookId));
     }
 }

@@ -5,7 +5,6 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,10 +12,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -51,8 +47,8 @@ public class ChallengerWorkbook extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String bestReason;
 
-    @OneToMany(mappedBy = "challengerWorkbook", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ChallengerMission> missions = new ArrayList<>();
+    @Column(columnDefinition = "TEXT")
+    private String submission;
 
     @Builder
     private ChallengerWorkbook(Long challengerId, Long originalWorkbookId, Long scheduleId,
@@ -65,9 +61,12 @@ public class ChallengerWorkbook extends BaseEntity {
 
     /**
      * 워크북 제출 (PENDING → SUBMITTED)
+     *
+     * @param submission 제출 링크 (깃허브, 노션 등)
      */
-    public void submit() {
+    public void submit(String submission) {
         validatePendingStatus();
+        this.submission = submission;
         this.status = WorkbookStatus.SUBMITTED;
     }
 
