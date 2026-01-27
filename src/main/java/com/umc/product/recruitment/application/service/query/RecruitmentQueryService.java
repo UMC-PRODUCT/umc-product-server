@@ -12,6 +12,7 @@ import com.umc.product.recruitment.application.port.in.query.GetMyApplicationLis
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDashboardUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDetailUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDraftApplicationFormUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentFormResponseDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentNoticeUseCase;
@@ -26,6 +27,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecrui
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDetailQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDraftApplicationFormQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentFormResponseDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentNoticeQuery;
@@ -76,7 +78,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         GetRecruitmentDashboardUseCase,
         GetMyApplicationListUseCase,
         GetRecruitmentDetailUseCase,
-        GetRecruitmentPartListUseCase {
+        GetRecruitmentPartListUseCase,
+        GetRecruitmentDraftApplicationFormUseCase {
 
     private final LoadRecruitmentPort loadRecruitmentPort;
     private final LoadRecruitmentPartPort loadRecruitmentPartPort;
@@ -1011,6 +1014,35 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
                 partSummaries,
                 myApplicationInfo
         );
+    }
+
+    @Override
+    public RecruitmentApplicationFormInfo get(GetRecruitmentDraftApplicationFormQuery query) {
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+                .orElseThrow(() -> new BusinessException(
+                        Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
+                ));
+
+        // TODO: 운영진 권한 검증 필요 (requesterMemberId 기반)
+
+        List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
+
+        List<RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo> preferredPartOptions =
+                (parts == null ? List.<RecruitmentPart>of() : parts).stream()
+                        .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+                        .map(p -> new RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo(
+                                p.getId(),
+                                p.getPart().name(),
+                                p.getPart().name()
+                        ))
+                        .toList();
+
+        Integer max = recruitment.getMaxPreferredPartCount();
+        if (max == null) {
+            max = 1;
+        }
+
+        return loadRecruitmentPort.findApplicationFormInfoById(query.recruitmentId());
     }
 
     private RecruitmentPartListInfo.DatePeriod extractDatePeriod(

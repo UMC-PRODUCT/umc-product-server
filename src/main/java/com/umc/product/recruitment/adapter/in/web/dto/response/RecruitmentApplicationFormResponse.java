@@ -109,6 +109,7 @@ public record RecruitmentApplicationFormResponse(
         List<FormPageResponse> result = new ArrayList<>();
 
         ScheduleResponse schedulePayload = toScheduleResponse(info.interviewTimeTableInfo());
+        var preferredPartInfo = info.preferredPartInfo();
 
         for (Integer pageNo : orderedPages) {
             // 공통 질문 합치기
@@ -136,49 +137,53 @@ public record RecruitmentApplicationFormResponse(
                     .filter(q -> q.type() != QuestionType.SCHEDULE)
                     .toList();
 
-            var preferredPartInfo = info.preferredPartInfo();
-
             // 스케줄
             ScheduleQuestionResponse schedule = (scheduleQ == null)
                     ? null
-                    : ScheduleQuestionResponse.from(QuestionResponse.from(scheduleQ), schedulePayload);
-
-            // 파트 질문 합치기
-            List<PartQuestionGroupResponse> partGroups = partSections.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey(Comparator.comparing(Enum::name)))
-                    .map(e -> {
-                        ChallengerPart part = e.getKey();
-
-                        List<FormDefinitionInfo.QuestionInfo> partQs = e.getValue().stream()
-                                .map(RecruitmentSectionInfo::sectionId)
-                                .map(sectionById::get)
-                                .filter(java.util.Objects::nonNull)
-                                .flatMap(sec -> (sec.questions() == null
-                                        ? List.<FormDefinitionInfo.QuestionInfo>of()
-                                        : sec.questions()).stream())
-                                .filter(java.util.Objects::nonNull)
-                                .sorted(Comparator.comparing(
-                                        FormDefinitionInfo.QuestionInfo::orderNo,
-                                        Comparator.nullsLast(Integer::compareTo)
-                                ))
-                                .toList();
-
-                        List<QuestionResponse> qs = partQs.stream()
-                                .map(q -> QuestionResponse.from(q, preferredPartInfo))
-                                .toList();
-
-                        return new PartQuestionGroupResponse(part, qs);
-                    })
-                    .toList();
+                    : ScheduleQuestionResponse.from(QuestionResponse.from(scheduleQ, preferredPartInfo),
+                            schedulePayload);
 
             result.add(new FormPageResponse(
                     pageNo,
                     normalCommon.stream().map(q -> QuestionResponse.from(q, preferredPartInfo)).toList(),
                     schedule,
-                    partGroups.isEmpty() ? null : partGroups
+                    null
             ));
         }
 
+        List<PartQuestionGroupResponse> partGroups = partSections.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(Comparator.comparing(Enum::name)))
+                .map(e -> {
+                    ChallengerPart part = e.getKey();
+
+                    List<FormDefinitionInfo.QuestionInfo> partQs = e.getValue().stream()
+                            .map(RecruitmentSectionInfo::sectionId)
+                            .map(sectionById::get)
+                            .filter(java.util.Objects::nonNull)
+                            .flatMap(sec -> (sec.questions() == null
+                                    ? List.<FormDefinitionInfo.QuestionInfo>of()
+                                    : sec.questions()).stream())
+                            .filter(java.util.Objects::nonNull)
+                            .sorted(Comparator.comparing(
+                                    FormDefinitionInfo.QuestionInfo::orderNo,
+                                    Comparator.nullsLast(Integer::compareTo)
+                            ))
+                            .toList();
+
+                    List<QuestionResponse> qs = partQs.stream()
+                            .map(q -> QuestionResponse.from(q, preferredPartInfo))
+                            .toList();
+
+                    return new PartQuestionGroupResponse(part, qs);
+                })
+                .toList();
+
+        result.add(new FormPageResponse(
+                3,
+                List.of(),
+                null,
+                partGroups.isEmpty() ? null : partGroups
+        ));
         return result;
     }
 
@@ -268,7 +273,7 @@ public record RecruitmentApplicationFormResponse(
         public static QuestionResponse from(FormDefinitionInfo.QuestionInfo q) {
             return from(q, null);
         }
-        
+
         public static QuestionResponse from(FormDefinitionInfo.QuestionInfo q,
                                             RecruitmentApplicationFormInfo.PreferredPartInfo preferredPartInfo) {
 

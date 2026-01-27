@@ -57,6 +57,7 @@ import com.umc.product.recruitment.application.port.in.query.GetMyApplicationLis
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDashboardUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDetailUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDraftApplicationFormUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentFormResponseDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentNoticeUseCase;
@@ -68,6 +69,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecrui
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDetailQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDraftApplicationFormQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentFormResponseDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentNoticeQuery;
@@ -124,6 +126,7 @@ public class RecruitmentController {
     private final DeleteRecruitmentFormQuestionUseCase deleteRecruitmentFormQuestionUseCase;
     private final UpdateRecruitmentInterviewPreferenceUseCase updateRecruitmentInterviewPreferenceUseCase;
     private final ResetRecruitmentDraftFormResponseUseCase resetRecruitmentDraftFormResponseUseCase;
+    private final GetRecruitmentDraftApplicationFormUseCase getRecruitmentDraftApplicationFormUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "사용자 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (schoolId/gisuId 미지정 시 사용자 학교, active 기수 기반)")
@@ -532,4 +535,24 @@ public class RecruitmentController {
         return RecruitmentApplicationFormResponse.from(info);
     }
 
+    @GetMapping("/{recruitmentId}/application-form/draft")
+    @Operation(
+            summary = "운영진 지원서 폼(문항 draft) 조회",
+            description = """
+                    운영진 모집 작성(임시저장) 화면에서, 작성 중인 지원서 폼(문항 draft)만 조회합니다.
+                    - upsert/delete 응답과 동일한 형태로 반환합니다.
+                    """
+    )
+    public RecruitmentApplicationFormResponse getDraftApplicationForm(
+            @CurrentMember MemberPrincipal memberPrincipal,
+            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
+    ) {
+        var query = new GetRecruitmentDraftApplicationFormQuery(
+                recruitmentId,
+                memberPrincipal.getMemberId()
+        );
+        return RecruitmentApplicationFormResponse.from(
+                getRecruitmentDraftApplicationFormUseCase.get(query)
+        );
+    }
 }
