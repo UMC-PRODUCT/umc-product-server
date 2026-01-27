@@ -2,10 +2,6 @@ package com.umc.product.notice.application.service.command;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import com.umc.product.challenger.application.port.out.LoadChallengerPort;
-import com.umc.product.challenger.domain.Challenger;
-import com.umc.product.challenger.domain.exception.ChallengerDomainException;
-import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
@@ -23,7 +19,6 @@ import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,8 +33,8 @@ public class NoticeService implements ManageNoticeUseCase {
     private final LoadNoticePort loadNoticePort;
     private final SaveNoticePort saveNoticePort;
 
-    private final GetGisuUseCase getGisuUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
+    private final GetGisuUseCase getGisuUseCase;
 
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
 
@@ -55,11 +50,6 @@ public class NoticeService implements ManageNoticeUseCase {
         /*
          * TODO: 권한 검증 추가 예정
          */
-
-        /*
-         * 기수 검증 (null이면 전체니까 필요 X)
-         */
-        GisuInfo gisu = getGisuUseCase.getById(command.targetInfo().targetGisuId());
 
         Notice notice = Notice.createNotice(
                 command.title(), command.content(), challenger.challengerId(), command.targetInfo().scope(),
@@ -79,7 +69,6 @@ public class NoticeService implements ManageNoticeUseCase {
 
     @Override
     public void updateNotice(UpdateNoticeCommand command) {
-        GisuInfo gisu = getGisuUseCase.getById(command.targetInfo().targetGisuId());
         ChallengerInfo challenger = findChallengerByMemberIdAndGisuId(command.memberId(), command.targetInfo().targetGisuId());
 
         // TODO: 작성자에 대한 상태 검증 추가
