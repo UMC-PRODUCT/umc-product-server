@@ -245,3 +245,6 @@ $RECYCLE.BIN/
 !**/src/test/**/build/
 !**/src/main/**/out/
 !**/src/test/**/out/
+
+# HTTP Client private env (tokens)
+http-client.private.env.json
