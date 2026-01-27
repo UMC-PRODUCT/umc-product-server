@@ -1,21 +1,24 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
+import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
+import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookPort {
+public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookPort, SaveOriginalWorkbookPort {
 
     private final OriginalWorkbookJpaRepository originalWorkbookJpaRepository;
 
     @Override
-    public Optional<OriginalWorkbook> findById(Long id) {
-        return originalWorkbookJpaRepository.findById(id);
+    public OriginalWorkbook findById(Long id) {
+        return originalWorkbookJpaRepository.findById(id).orElseThrow(() -> new BusinessException(Domain.CURRICULUM, CurriculumErrorCode.WORKBOOK_NOT_FOUND));
     }
 
     @Override
@@ -31,5 +34,10 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
     @Override
     public List<Integer> findDistinctWeekNoByGisuId(Long gisuId) {
         return originalWorkbookJpaRepository.findDistinctWeekNoByGisuId(gisuId);
+    }
+
+    @Override
+    public OriginalWorkbook save(OriginalWorkbook workbook) {
+        return originalWorkbookJpaRepository.save(workbook);
     }
 }

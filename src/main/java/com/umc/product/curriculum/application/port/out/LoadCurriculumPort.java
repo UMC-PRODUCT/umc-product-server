@@ -9,9 +9,7 @@ public interface LoadCurriculumPort {
 
     Optional<Curriculum> findById(Long id);
 
-    Optional<Curriculum> findByGisuIdAndPart(Long gisuId, ChallengerPart part);
-
-    List<Curriculum> findByGisuId(Long gisuId);
+    Optional<Curriculum> findByActiveGisuAndPart(ChallengerPart part);
 
     boolean existsById(Long id);
 }

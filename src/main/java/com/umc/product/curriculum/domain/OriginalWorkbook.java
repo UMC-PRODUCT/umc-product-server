@@ -56,7 +56,7 @@ public class OriginalWorkbook extends BaseEntity {
 
     private LocalDateTime releasedAt;
 
-    @Builder
+    @Builder(access = AccessLevel.PRIVATE)
     private OriginalWorkbook(Curriculum curriculum, String title, String description,
                              String workbookUrl, Integer weekNo, LocalDate startDate,
                              LocalDate endDate, MissionType missionType) {
@@ -69,6 +69,22 @@ public class OriginalWorkbook extends BaseEntity {
         this.endDate = endDate;
         this.missionType = missionType;
         this.releasedAt = null;
+    }
+
+    public static OriginalWorkbook create(Curriculum curriculum, Integer weekNo, String title,
+                                          String description, String workbookUrl,
+                                          LocalDate startDate, LocalDate endDate,
+                                          MissionType missionType) {
+        return OriginalWorkbook.builder()
+                .curriculum(curriculum)
+                .weekNo(weekNo)
+                .title(title)
+                .description(description)
+                .workbookUrl(workbookUrl)
+                .startDate(startDate)
+                .endDate(endDate)
+                .missionType(missionType)
+                .build();
     }
 
     /**
@@ -90,5 +106,21 @@ public class OriginalWorkbook extends BaseEntity {
      */
     public void updateWorkbookUrl(String workbookUrl) {
         this.workbookUrl = workbookUrl;
+    }
+
+    /**
+     * 워크북 정보 업데이트
+     * null인 필드는 기존 값을 유지
+     */
+    public void update(String title, String description, String workbookUrl,
+                       Integer weekNo, LocalDate startDate, LocalDate endDate,
+                       MissionType missionType) {
+        this.title = title;
+        this.description = description;
+        this.workbookUrl = workbookUrl;
+        this.weekNo = weekNo;
+        this.startDate = startDate != null ? startDate : this.startDate;
+        this.endDate = endDate != null ? endDate : this.endDate;
+        this.missionType = missionType != null ? missionType : this.missionType;
     }
 }
