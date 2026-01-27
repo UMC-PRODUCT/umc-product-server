@@ -148,4 +148,5 @@ public class NoticeContentPersistenceAdapter implements
     public void deleteVote(NoticeVote noticeVote) {
         voteJpaRepository.delete(noticeVote);
     }
+
 }
