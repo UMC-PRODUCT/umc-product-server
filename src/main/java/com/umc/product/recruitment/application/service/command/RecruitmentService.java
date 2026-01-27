@@ -995,18 +995,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_NOT_SET);
         }
 
-        LocalDate startDate = parseDate(String.valueOf(dateRange.get("start")));
-        LocalDate endDate = parseDate(String.valueOf(dateRange.get("end")));
+        LocalDate startDate = parseDate(requireString(dateRange, "start"));
+        LocalDate endDate = parseDate(requireString(dateRange, "end"));
 
-        LocalTime startTime = parseTimeFlexible(String.valueOf(timeRange.get("start")));
-        LocalTime endTime = parseTimeFlexible(String.valueOf(timeRange.get("end")));
+        LocalTime startTime = parseTimeFlexible(requireString(timeRange, "start"));
+        LocalTime endTime = parseTimeFlexible(requireString(timeRange, "end"));
 
         List<Map<String, Object>> enabledByDate =
                 (List<Map<String, Object>>) tt.getOrDefault("enabledByDate", List.of());
 
         Map<LocalDate, java.util.Set<String>> allowed = new java.util.HashMap<>();
         for (Map<String, Object> e : enabledByDate) {
-            LocalDate d = parseDate(String.valueOf(e.get("date")));
+            LocalDate d = parseDate(requireString(e, "date"));
             List<String> times = (List<String>) e.getOrDefault("times", List.of());
 
             java.util.Set<String> normalized = new java.util.HashSet<>();
@@ -1238,5 +1238,15 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         return result;
     }
 
+    private String requireString(Map<String, Object> map, String key) {
+        Object v = (map == null) ? null : map.get(key);
+        if (v == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+        if (v instanceof String s) {
+            return s;
+        }
+        return String.valueOf(v);
+    }
 
 }
