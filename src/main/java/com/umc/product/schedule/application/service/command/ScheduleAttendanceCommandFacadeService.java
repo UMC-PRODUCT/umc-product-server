@@ -3,14 +3,12 @@ package com.umc.product.schedule.application.service.command;
 import com.umc.product.schedule.application.port.in.command.CreateAttendanceSheetUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleWithAttendanceUseCase;
-import com.umc.product.schedule.application.port.in.command.DeleteAttendanceSheetUseCase;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleWithAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateAttendanceSheetCommand;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleWithAttendanceCommand;
-import com.umc.product.schedule.application.port.in.query.GetAttendanceSheetUseCase;
-import com.umc.product.schedule.application.port.in.query.dto.AttendanceSheetInfo;
+import com.umc.product.schedule.application.port.out.DeleteAttendanceSheetPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,8 +28,7 @@ public class ScheduleAttendanceCommandFacadeService implements
     private final CreateScheduleUseCase createScheduleUseCase;
     private final CreateAttendanceSheetUseCase createAttendanceSheetUseCase;
     private final DeleteScheduleUseCase deleteScheduleUseCase;
-    private final DeleteAttendanceSheetUseCase deleteAttendanceSheetUseCase;
-    private final GetAttendanceSheetUseCase getAttendanceSheetUseCase;
+    private final DeleteAttendanceSheetPort deleteAttendanceSheetPort;
 
     @Override
     public Long create(CreateScheduleWithAttendanceCommand command) {
@@ -48,11 +45,8 @@ public class ScheduleAttendanceCommandFacadeService implements
 
     @Override
     public void delete(Long scheduleId) {
-        // 1. 출석부 조회 및 삭제 (있는 경우)
-        AttendanceSheetInfo sheetInfo = getAttendanceSheetUseCase.getByScheduleId(scheduleId);
-        if (sheetInfo != null && sheetInfo.id() != null) {
-            deleteAttendanceSheetUseCase.delete(sheetInfo.id());
-        }
+        // 1. 출석부 삭제 (있는 경우)
+        deleteAttendanceSheetPort.deleteByScheduleId(scheduleId);
 
         // 2. 일정 삭제
         deleteScheduleUseCase.delete(scheduleId);

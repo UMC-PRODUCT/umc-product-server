@@ -1,26 +1,13 @@
 package com.umc.product.schedule.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag.Constants;
-import com.umc.product.schedule.adapter.in.web.dto.request.CreateAttendanceSheetRequest;
 import com.umc.product.schedule.adapter.in.web.dto.request.UpdateAttendanceSheetRequest;
-import com.umc.product.schedule.adapter.in.web.dto.response.AttendanceSheetResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = Constants.SCHEDULE)
 public interface AttendanceSheetControllerApi {
-
-    @Operation(summary = "출석부 조회", description = "일정에 대한 출석부를 조회합니다")
-    AttendanceSheetResponse getAttendanceSheetBySchedule(
-            @Parameter(description = "일정 ID") Long scheduleId
-    );
-
-    @Operation(summary = "출석부 생성", description = "일정에 대한 출석부를 생성합니다")
-    Long createAttendanceSheet(
-            @Parameter(description = "일정 ID") Long scheduleId,
-            CreateAttendanceSheetRequest request
-    );
 
     @Operation(summary = "출석부 수정", description = "출석부 설정을 수정합니다")
     void updateAttendanceSheet(
