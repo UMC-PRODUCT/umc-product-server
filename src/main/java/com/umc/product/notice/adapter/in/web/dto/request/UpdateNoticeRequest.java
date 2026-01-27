@@ -16,7 +16,7 @@ public record UpdateNoticeRequest(
         NoticeTargetInfo targetInfo,
         @NotNull(message = "알림 발송 여부는 비어 있을 수 없습니다.")
         Boolean shouldNotify, /* 알림 발송 여부 */
-        List<Long> imageIds,
+        List<String> imageIds,
         List<String> links,
         List<Long> voteIds
 ) {

@@ -10,7 +10,7 @@ public record UpdateNoticeCommand(
         String content,
         NoticeTargetInfo targetInfo,
         Boolean shouldNotify, /* 알림 발송 여부 */
-        List<Long> imageIds,
+        List<String> imageIds,
         List<String> links,
         List<Long> voteIds
 ) {
