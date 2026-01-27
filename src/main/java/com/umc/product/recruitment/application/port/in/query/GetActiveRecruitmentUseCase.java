@@ -4,5 +4,5 @@ import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitme
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
 
 public interface GetActiveRecruitmentUseCase {
-    ActiveRecruitmentInfo get(GetActiveRecruitmentQuery query);
+    ActiveRecruitmentInfo getActiveRecruitment(GetActiveRecruitmentQuery query);
 }

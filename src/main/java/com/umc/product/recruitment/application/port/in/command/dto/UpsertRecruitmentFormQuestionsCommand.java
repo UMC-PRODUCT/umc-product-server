@@ -10,7 +10,7 @@ public record UpsertRecruitmentFormQuestionsCommand(
 ) {
     public record Item(
             Target target,
-            Question question
+            QuestionInfo question
     ) {
     }
 
@@ -22,17 +22,17 @@ public record UpsertRecruitmentFormQuestionsCommand(
         public enum Kind {COMMON_PAGE, PART}
     }
 
-    public record Question(
+    public record QuestionInfo(
             Long questionId,
             QuestionType type,
             String questionText,
             Boolean required,
             Integer orderNo,
-            List<Option> options
+            List<OptionInfo> options
     ) {
     }
 
-    public record Option(
+    public record OptionInfo(
             Long optionId,
             String content,
             Integer orderNo

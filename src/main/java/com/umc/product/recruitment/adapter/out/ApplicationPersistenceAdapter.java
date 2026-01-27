@@ -1,14 +1,16 @@
 package com.umc.product.recruitment.adapter.out;
 
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
+import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
 import com.umc.product.recruitment.domain.Application;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ApplicationPersistenceAdapter implements LoadApplicationPort {
+public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveApplicationPort {
 
     private final ApplicationRepository applicationRepository;
 
@@ -27,4 +29,23 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort {
         return applicationRepository.existsByRecruitmentId(recruitmentId);
     }
 
+    @Override
+    public boolean existsByRecruitmentIdAndApplicantMemberId(Long recruitmentId, Long applicantMemberId) {
+        return applicationRepository.existsByRecruitmentIdAndApplicantMemberId(recruitmentId, applicantMemberId);
+    }
+
+    @Override
+    public Application save(Application application) {
+        return applicationRepository.save(application);
+    }
+
+    @Override
+    public Optional<Application> findByRecruitmentIdAndApplicantMemberId(Long recruitmentId, Long applicantMemberId) {
+        return applicationRepository.findByRecruitmentIdAndApplicantMemberId(recruitmentId, applicantMemberId);
+    }
+
+    @Override
+    public List<Application> findAllByApplicantMemberId(Long applicantMemberId) {
+        return applicationRepository.findAllByApplicantMemberId(applicantMemberId);
+    }
 }

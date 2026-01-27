@@ -53,4 +53,13 @@ public class Application extends BaseEntity {
     @Column(name = "final_score")
     private Integer finalScore;
 
+    public static Application createApplied(Recruitment recruitment, Long applicantMemberId, Long formResponseId) {
+        return Application.builder()
+                .recruitment(recruitment)
+                .applicantMemberId(applicantMemberId)
+                .formResponseId(formResponseId)
+                .status(com.umc.product.recruitment.domain.enums.ApplicationStatus.APPLIED)
+                .build();
+    }
+
 }

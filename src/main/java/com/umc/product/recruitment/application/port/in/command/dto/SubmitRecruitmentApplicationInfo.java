@@ -8,7 +8,8 @@ public record SubmitRecruitmentApplicationInfo(
         Long applicationId,
         FormResponseStatus status
 ) {
-    public static SubmitRecruitmentApplicationInfo of(Long recruitmentId, Long formResponseId, Long applicationId) {
+    public static SubmitRecruitmentApplicationInfo of(Long recruitmentId, Long formResponseId, Long applicationId,
+                                                      FormResponseStatus status) {
         return new SubmitRecruitmentApplicationInfo(
                 recruitmentId,
                 formResponseId,
