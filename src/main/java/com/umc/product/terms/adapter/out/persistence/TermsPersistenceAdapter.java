@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 public class TermsPersistenceAdapter implements LoadTermsPort, SaveTermsPort {
 
     private final TermsRepository repository;
+    private final TermsQueryRepository queryRepository;
 
     @Override
     public Optional<Terms> findById(Long id) {
@@ -22,7 +23,7 @@ public class TermsPersistenceAdapter implements LoadTermsPort, SaveTermsPort {
 
     @Override
     public Optional<Terms> findActiveByType(TermsType type) {
-        return repository.findActiveByType(type);
+        return queryRepository.findActiveByType(type);
     }
 
     @Override
