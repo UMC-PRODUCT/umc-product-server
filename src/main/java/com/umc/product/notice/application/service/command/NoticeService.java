@@ -71,6 +71,11 @@ public class NoticeService implements ManageNoticeUseCase {
         );
 
         Notice savedNotice = saveNoticePort.save(notice);
+        /*
+         * TODO: 권한 추가 후 공지 알림 전송 로직 구현
+         */
+//        manageFcmUseCase.sendMessageByToken(new NotificationCommand());
+
         return savedNotice.getId();
     }
 
