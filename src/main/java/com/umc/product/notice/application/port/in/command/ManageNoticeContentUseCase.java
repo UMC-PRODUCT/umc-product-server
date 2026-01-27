@@ -3,9 +3,12 @@ package com.umc.product.notice.application.port.in.command;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeLinksCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeVotesCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeImageCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeLinkCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVoteCommand;
+import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeImagesCommand;
+import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeLinksCommand;
+import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVotesCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeVotesCommand;
 import java.util.List;
 
 /*
@@ -31,21 +34,11 @@ public interface ManageNoticeContentUseCase {
      */
     List<Long> addLinks(AddNoticeLinksCommand command, Long noticeId);
 
-    /*
-     * 공지에서 투표 삭제
-     * @return
-     */
-    void removeVote(RemoveNoticeVoteCommand command);
+    void removeContentsByNoticeId(Long noticeId);
 
-    /*
-     * 공지에서 이미지 삭제
-     * @return
-     */
-    void removeImage(RemoveNoticeImageCommand command);
+    void replaceVotes(ReplaceNoticeVotesCommand command, Long noticeId);
 
-    /*
-     * 공지에서 링크 삭제
-     * @return
-     */
-    void removeLink(RemoveNoticeLinkCommand command);
+    void replaceImages(ReplaceNoticeImagesCommand command, Long noticeId);
+
+    void replaceLinks(ReplaceNoticeLinksCommand command, Long noticeId);
 }
