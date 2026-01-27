@@ -4,9 +4,13 @@ import com.umc.product.terms.application.port.in.command.ManageTermsAgreementUse
 import com.umc.product.terms.application.port.in.command.dto.CreateTermConsentCommand;
 import com.umc.product.terms.application.port.out.LoadTermsConsentPort;
 import com.umc.product.terms.application.port.out.LoadTermsPort;
+import com.umc.product.terms.application.port.out.SaveTermsConsentLogPort;
 import com.umc.product.terms.application.port.out.SaveTermsConsentPort;
 import com.umc.product.terms.domain.Terms;
 import com.umc.product.terms.domain.TermsConsent;
+import com.umc.product.terms.domain.TermsConsentLog;
+import com.umc.product.terms.domain.enums.TermsConsentStatus;
+import com.umc.product.terms.domain.enums.TermsType;
 import com.umc.product.terms.domain.exception.TermsDomainException;
 import com.umc.product.terms.domain.exception.TermsErrorCode;
 import java.time.Instant;
@@ -22,6 +26,7 @@ public class TermsAgreementCommandService implements ManageTermsAgreementUseCase
     private final LoadTermsPort loadTermsPort;
     private final LoadTermsConsentPort loadTermsConsentPort;
     private final SaveTermsConsentPort saveTermsConsentPort;
+    private final SaveTermsConsentLogPort saveTermsConsentLogPort;
 
     @Override
     public void createTermConsent(CreateTermConsentCommand command) {
@@ -43,6 +48,9 @@ public class TermsAgreementCommandService implements ManageTermsAgreementUseCase
                     .build();
 
             saveTermsConsentPort.save(termsConsent);
+
+            // 동의 로그 기록
+            saveConsentLog(command.memberId(), terms.getType(), TermsConsentStatus.AGREED);
         } else {
             // 동의 철회 처리
             TermsConsent termsConsent = loadTermsConsentPort
@@ -50,6 +58,19 @@ public class TermsAgreementCommandService implements ManageTermsAgreementUseCase
                     .orElseThrow(() -> new TermsDomainException(TermsErrorCode.TERMS_CONSENT_NOT_FOUND));
 
             saveTermsConsentPort.delete(termsConsent);
+
+            // 철회 로그 기록
+            saveConsentLog(command.memberId(), terms.getType(), TermsConsentStatus.WITHDRAWN);
         }
+    }
+
+    private void saveConsentLog(Long memberId, TermsType termType, TermsConsentStatus status) {
+        saveTermsConsentLogPort.save(
+                TermsConsentLog.builder()
+                        .memberId(memberId)
+                        .termType(termType)
+                        .status(status)
+                        .build()
+        );
     }
 }
