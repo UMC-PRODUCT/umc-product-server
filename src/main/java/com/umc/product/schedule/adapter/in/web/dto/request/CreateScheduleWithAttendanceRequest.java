@@ -13,7 +13,6 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -82,10 +81,9 @@ public record CreateScheduleWithAttendanceRequest(
     }
 
     public CreateScheduleWithAttendanceCommand toCommand(Long authorMemberId) {
-        AttendanceWindow window = AttendanceWindow.of(
+        AttendanceWindow window = AttendanceWindow.from(
                 attendanceStartTime,
-                0,
-                (int) Duration.between(attendanceStartTime, attendanceEndTime).toMinutes(),
+                attendanceEndTime,
                 lateThresholdMinutes
         );
 

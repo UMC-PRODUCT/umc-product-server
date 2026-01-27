@@ -28,10 +28,9 @@ public record CreateAttendanceSheetRequest(
     }
 
     public CreateAttendanceSheetCommand toCommand(Long scheduleId) {
-        AttendanceWindow window = AttendanceWindow.of(
+        AttendanceWindow window = AttendanceWindow.from(
                 startTime,
-                0,
-                (int) java.time.Duration.between(startTime, endTime).toMinutes(),
+                endTime,
                 lateThresholdMinutes
         );
         return new CreateAttendanceSheetCommand(scheduleId, window, requiresApproval);
