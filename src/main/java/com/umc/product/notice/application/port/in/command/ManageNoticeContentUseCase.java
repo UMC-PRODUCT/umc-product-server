@@ -6,6 +6,9 @@ import com.umc.product.notice.application.port.in.command.dto.AddNoticeVotesComm
 import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeImageCommand;
 import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeLinkCommand;
 import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVoteCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeVotesCommand;
 import java.util.List;
 
 /*
@@ -48,4 +51,10 @@ public interface ManageNoticeContentUseCase {
      * @return
      */
     void removeLink(RemoveNoticeLinkCommand command);
+
+    void replaceVotes(ReplaceNoticeVotesCommand command, Long noticeId);
+
+    void replaceImages(ReplaceNoticeImagesCommand command, Long noticeId);
+
+    void replaceLinks(ReplaceNoticeLinksCommand command, Long noticeId);
 }

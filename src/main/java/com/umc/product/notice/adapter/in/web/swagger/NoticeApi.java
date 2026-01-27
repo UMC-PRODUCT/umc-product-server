@@ -63,7 +63,8 @@ public interface NoticeApi {
 
     @Operation(
             summary = "공지사항 수정",
-            description = "공지사항 내용을 수정합니다. DRAFT/PUBLISHED 상태 모두 수정 가능합니다. "
+            description = "공지사항 내용을 수정합니다. DRAFT/PUBLISHED 상태 모두 수정 가능합니다. " +
+                    "imageIds/links/voteIds가 포함되면 전체 교체(replace)됩니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(

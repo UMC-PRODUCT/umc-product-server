@@ -4,15 +4,18 @@ import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
+import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeVotesCommand;
+import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
-import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
-import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
@@ -33,11 +36,9 @@ public class NoticeService implements ManageNoticeUseCase {
 
     private final LoadNoticePort loadNoticePort;
     private final SaveNoticePort saveNoticePort;
-    private final LoadNoticeReadPort loadNoticeReadPort;
-    private final SaveNoticeReadPort saveNoticeReadPort;
-
     private final LoadGisuPort loadGisuPort;
     private final LoadChallengerPort loadChallengerPort;
+    private final ManageNoticeContentUseCase manageNoticeContentUseCase;
 
     @Override
     public Long createNotice(CreateNoticeCommand command) {
@@ -84,6 +85,9 @@ public class NoticeService implements ManageNoticeUseCase {
          */
         validateIsNoticeAuthor(challenger.getId(), notice.getAuthorChallengerId());
 
+        /*
+         * 내용 수정
+         */
         notice.update(
                 command.title(),
                 command.content(),
@@ -94,6 +98,22 @@ public class NoticeService implements ManageNoticeUseCase {
                 command.targetInfo().targetParts(),
                 command.shouldNotify()
         );
+
+        /*
+         * 이미지, 투표, 링크 등 수정
+         */
+        if (command.imageIds() != null) {
+            manageNoticeContentUseCase.replaceImages(new ReplaceNoticeImagesCommand(command.imageIds()), notice.getId());
+        }
+
+        if (command.links() != null) {
+            manageNoticeContentUseCase.replaceLinks(new ReplaceNoticeLinksCommand(command.links()), notice.getId());
+        }
+
+        if (command.voteIds() != null) {
+            manageNoticeContentUseCase.replaceVotes(new ReplaceNoticeVotesCommand(command.voteIds()), notice.getId());
+        }
+
     }
 
     @Override

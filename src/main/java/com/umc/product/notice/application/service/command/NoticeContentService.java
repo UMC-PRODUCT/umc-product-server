@@ -7,6 +7,9 @@ import com.umc.product.notice.application.port.in.command.dto.AddNoticeVotesComm
 import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeImageCommand;
 import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeLinkCommand;
 import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVoteCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeVotesCommand;
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
@@ -135,6 +138,76 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
                 .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_LINK_NOT_FOUND));
 
         saveNoticeLinkPort.deleteLink(noticeLink);
+    }
+
+    @Override
+    public void replaceVotes(ReplaceNoticeVotesCommand command, Long noticeId) {
+        if (command.voteIds() == null) {
+            return;
+        }
+
+        Notice notice = findNoticeById(noticeId);
+        List<NoticeVote> existingVotes = loadNoticeVotePort.findVotesByNoticeId(noticeId);
+        existingVotes.forEach(saveNoticeVotePort::deleteVote);
+
+        if (command.voteIds().isEmpty()) {
+            return;
+        }
+
+        AtomicInteger order = new AtomicInteger(0);
+        List<NoticeVote> votes = command.voteIds().stream()
+                .map(voteId -> NoticeVote.create(voteId, notice, order.getAndIncrement()))
+                .toList();
+
+        saveNoticeVotePort.saveAllVotes(votes);
+    }
+
+    @Override
+    public void replaceImages(ReplaceNoticeImagesCommand command, Long noticeId) {
+        if (command.imageIds() == null) {
+            return;
+        }
+
+        if (command.imageIds().size() > 10) {
+            throw new NoticeDomainException(NoticeErrorCode.IMAGE_LIMIT_EXCEEDED);
+        }
+
+        Notice notice = findNoticeById(noticeId);
+        List<NoticeImage> existingImages = loadNoticeImagePort.findImagesByNoticeId(noticeId);
+        existingImages.forEach(saveNoticeImagePort::deleteImage);
+
+        if (command.imageIds().isEmpty()) {
+            return;
+        }
+
+        AtomicInteger order = new AtomicInteger(0);
+        List<NoticeImage> images = command.imageIds().stream()
+                .map(imageId -> NoticeImage.create(imageId, notice, order.getAndIncrement()))
+                .toList();
+
+        saveNoticeImagePort.saveAllImages(images);
+    }
+
+    @Override
+    public void replaceLinks(ReplaceNoticeLinksCommand command, Long noticeId) {
+        if (command.links() == null) {
+            return;
+        }
+
+        Notice notice = findNoticeById(noticeId);
+        List<NoticeLink> existingLinks = loadNoticeLinkPort.findLinksByNoticeId(noticeId);
+        existingLinks.forEach(saveNoticeLinkPort::deleteLink);
+
+        if (command.links().isEmpty()) {
+            return;
+        }
+
+        AtomicInteger order = new AtomicInteger(0);
+        List<NoticeLink> links = command.links().stream()
+                .map(link -> NoticeLink.create(link, notice, order.getAndIncrement()))
+                .toList();
+
+        saveNoticeLinkPort.saveAllLinks(links);
     }
 
     private Notice findNoticeById(Long noticeId) {
