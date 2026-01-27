@@ -1,5 +1,7 @@
 package com.umc.product.notice.application.service.command;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
@@ -20,10 +22,8 @@ import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
-import com.umc.product.organization.application.port.out.query.LoadGisuPort;
-import com.umc.product.organization.domain.Gisu;
-import com.umc.product.organization.exception.OrganizationDomainException;
-import com.umc.product.organization.exception.OrganizationErrorCode;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,8 +38,8 @@ public class NoticeService implements ManageNoticeUseCase {
     private final LoadNoticePort loadNoticePort;
     private final SaveNoticePort saveNoticePort;
 
-    private final LoadGisuPort loadGisuPort;
-    private final LoadChallengerPort loadChallengerPort;
+    private final GetGisuUseCase getGisuUseCase;
+    private final GetChallengerUseCase getChallengerUseCase;
 
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
 
@@ -50,8 +50,8 @@ public class NoticeService implements ManageNoticeUseCase {
 
     @Override
     public Long createNotice(CreateNoticeCommand command) {
-        Challenger challenger = findChallengerByMemberIdAndGisuId(command.memberId(), command.targetInfo().targetGisuId());
-        challenger.validateChallengerStatus();
+        ChallengerInfo challenger = findChallengerByMemberIdAndGisuId(command.memberId(), command.targetInfo().targetGisuId());
+
         /*
          * TODO: 권한 검증 추가 예정
          */
@@ -59,12 +59,10 @@ public class NoticeService implements ManageNoticeUseCase {
         /*
          * 기수 검증 (null이면 전체니까 필요 X)
          */
-        if (command.targetInfo().targetGisuId() != null) {
-            validateGisuExists(command.targetInfo().targetGisuId());
-        }
+        GisuInfo gisu = getGisuUseCase.getById(command.targetInfo().targetGisuId());
 
         Notice notice = Notice.createNotice(
-                command.title(), command.content(), challenger.getId(), command.targetInfo().scope(),
+                command.title(), command.content(), challenger.challengerId(), command.targetInfo().scope(),
                 command.targetInfo().organizationId(), command.targetInfo().targetGisuId(),
                 command.targetInfo().targetRoles(),
                 command.targetInfo().targetParts(), command.shouldNotify()
@@ -81,22 +79,17 @@ public class NoticeService implements ManageNoticeUseCase {
 
     @Override
     public void updateNotice(UpdateNoticeCommand command) {
-        /*
-         * 기수 검증 (null이면 전체니까 필요 X)
-         */
-        if (command.targetInfo().targetGisuId() != null) {
-            validateGisuExists(command.targetInfo().targetGisuId());
-        }
+        GisuInfo gisu = getGisuUseCase.getById(command.targetInfo().targetGisuId());
+        ChallengerInfo challenger = findChallengerByMemberIdAndGisuId(command.memberId(), command.targetInfo().targetGisuId());
 
-        Challenger challenger = findChallengerByMemberIdAndGisuId(command.memberId(), command.targetInfo().targetGisuId());
-        challenger.validateChallengerStatus();
+        // TODO: 작성자에 대한 상태 검증 추가
 
         Notice notice = findNoticeById(command.noticeId());
 
         /*
          * 작성자 검증
          */
-        validateIsNoticeAuthor(challenger.getId(), notice.getAuthorChallengerId());
+        validateIsNoticeAuthor(challenger.challengerId(), notice.getAuthorChallengerId());
 
         /*
          * 내용 수정
@@ -131,17 +124,19 @@ public class NoticeService implements ManageNoticeUseCase {
 
     @Override
     public void deleteNotice(DeleteNoticeCommand command) {
-        Gisu nowGisu = loadGisuPort.findActiveGisu();
+        Long gisuId = getGisuUseCase.getActiveGisuId();
 
-        Challenger challenger = findChallengerByMemberIdAndGisuId(command.memberId(), nowGisu.getId());
-        challenger.validateChallengerStatus();
+        ChallengerInfo challenger = findChallengerByMemberIdAndGisuId(command.memberId(), gisuId);
+
+        // TODO: 작성자에 대한 상태 검증 추가
+//        challenger.validateChallengerStatus();
 
         Notice notice = findNoticeById(command.noticeId());
 
         /*
          * 작성자 검증
          */
-        validateIsNoticeAuthor(challenger.getId(), notice.getAuthorChallengerId());
+        validateIsNoticeAuthor(challenger.challengerId(), notice.getAuthorChallengerId());
 
         /*
          * 관련 이미지, 투표, 링크 등도 모두 삭제
@@ -166,21 +161,13 @@ public class NoticeService implements ManageNoticeUseCase {
     /*
      * private 메서드
      */
-    private Challenger findChallengerByMemberIdAndGisuId(Long memberId, Long gisuId) {
-        return loadChallengerPort.findByMemberIdAndGisuId(memberId, gisuId)
-                .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_FOUND));
+    private ChallengerInfo findChallengerByMemberIdAndGisuId(Long memberId, Long gisuId) {
+        return getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId);
     }
 
     private Notice findNoticeById(Long noticeId) {
         return loadNoticePort.findNoticeById(noticeId)
                 .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
-    }
-
-    private void validateGisuExists(Long gisuId) {
-        Gisu gisu = loadGisuPort.findById(gisuId);
-        if (gisu == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.GISU_NOT_FOUND);
-        }
     }
 
     private void validateIsNoticeAuthor(Long challengerId, Long authorChallengerId) {
