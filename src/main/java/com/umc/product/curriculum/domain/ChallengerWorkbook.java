@@ -45,8 +45,11 @@ public class ChallengerWorkbook extends BaseEntity {
     @Column(nullable = false)
     private Long scheduleId;
 
-    @Column(nullable = false)
-    private boolean isBest;
+    @Column(columnDefinition = "TEXT")
+    private String feedback;
+
+    @Column(columnDefinition = "TEXT")
+    private String bestReason;
 
     @OneToMany(mappedBy = "challengerWorkbook", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ChallengerMission> missions = new ArrayList<>();
@@ -58,7 +61,6 @@ public class ChallengerWorkbook extends BaseEntity {
         this.originalWorkbookId = originalWorkbookId;
         this.scheduleId = scheduleId;
         this.status = status != null ? status : WorkbookStatus.PENDING;
-        this.isBest = false;
     }
 
     /**
@@ -72,26 +74,28 @@ public class ChallengerWorkbook extends BaseEntity {
     /**
      * 심사 통과 (SUBMITTED → PASS)
      */
-    public void markAsPass() {
+    public void markAsPass(String feedback) {
         validateSubmittedStatus();
         this.status = WorkbookStatus.PASS;
+        this.feedback = feedback;
     }
 
     /**
      * 심사 불합격 (SUBMITTED → FAIL)
      */
-    public void markAsFail() {
+    public void markAsFail(String feedback) {
         validateSubmittedStatus();
         this.status = WorkbookStatus.FAIL;
+        this.feedback = feedback;
     }
 
-    public void selectAsBest() {
-        validatePassStatus();
-        this.isBest = true;
-    }
-
-    public void unselectAsBest() {
-        this.isBest = false;
+    /**
+     * 베스트 워크북 선정 (SUBMITTED 또는 PASS 상태여야 함)
+     */
+    public void selectBest(String bestReason) {
+        validateCanSelectBest();
+        this.status = WorkbookStatus.BEST;
+        this.bestReason = bestReason;
     }
 
     private void validatePendingStatus() {
@@ -106,8 +110,8 @@ public class ChallengerWorkbook extends BaseEntity {
         }
     }
 
-    private void validatePassStatus() {
-        if (this.status != WorkbookStatus.PASS) {
+    private void validateCanSelectBest() {
+        if (this.status != WorkbookStatus.SUBMITTED && this.status != WorkbookStatus.PASS) {
             throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
         }
     }
