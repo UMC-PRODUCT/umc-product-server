@@ -70,6 +70,7 @@ import com.umc.product.survey.application.port.out.SaveQuestionPort;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.Question;
+import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.SingleAnswer;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
@@ -83,6 +84,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -278,6 +280,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 validatePortfolioAnswerValue(item.value());
             }
 
+            validateOtherTextIfNeeded(question, serverType, item.value());
             upsertSingleAnswer(formResponse, question, serverType, item.value());
 
             savedQuestionIds.add(questionId);
@@ -1491,6 +1494,122 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 );
             }
         }
+    }
+
+    private void validateOtherTextIfNeeded(Question question, QuestionType type, Map<String, Object> value) {
+        if (question == null || type == null) {
+            return;
+        }
+        if (value == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+        }
+
+        if (type != QuestionType.RADIO && type != QuestionType.DROPDOWN && type != QuestionType.CHECKBOX) {
+            return;
+        }
+
+        Map<Long, Boolean> isOtherByOptionId = (question.getOptions() == null ? List.<QuestionOption>of()
+                : question.getOptions())
+                .stream()
+                .filter(o -> o != null && o.getId() != null)
+                .collect(Collectors.toMap(
+                        QuestionOption::getId,
+                        o -> o.isOther(),
+                        (a, b) -> a
+                ));
+
+        String otherText = null;
+        Object otherTextRaw = value.get("otherText");
+        if (otherTextRaw != null) {
+            otherText = String.valueOf(otherTextRaw).trim();
+            if (otherText.isEmpty()) {
+                otherText = null;
+            }
+        }
+
+        if (type == QuestionType.RADIO || type == QuestionType.DROPDOWN) {
+            Long selectedOptionId = asLong(value.get("selectedOptionId"));
+            if (selectedOptionId == null) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+            }
+
+            Boolean isOther = isOtherByOptionId.get(selectedOptionId);
+            if (isOther == null) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_NOT_IN_QUESTION);
+            }
+
+            if (Boolean.TRUE.equals(isOther) && otherText == null) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_TEXT_REQUIRED);
+            }
+
+            if (!Boolean.TRUE.equals(isOther) && otherText != null) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+            }
+
+            return;
+        }
+
+        // CHECKBOX
+        List<Long> selectedOptionIds = asLongList(value.get("selectedOptionIds"));
+        if (selectedOptionIds == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+        }
+
+        boolean hasUnknown = selectedOptionIds.stream().anyMatch(id -> !isOtherByOptionId.containsKey(id));
+        if (hasUnknown) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_NOT_IN_QUESTION);
+        }
+
+        long selectedOtherCount = selectedOptionIds.stream()
+                .map(isOtherByOptionId::get)
+                .filter(Boolean.TRUE::equals)
+                .count();
+
+        if (selectedOtherCount > 0 && otherText == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_TEXT_REQUIRED);
+        }
+
+        if (selectedOtherCount == 0 && otherText != null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+        }
+
+        if (selectedOtherCount > 1) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+        }
+    }
+
+    private Long asLong(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        try {
+            if (raw instanceof Number n) {
+                return n.longValue();
+            }
+            return Long.parseLong(String.valueOf(raw));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Long> asLongList(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        if (!(raw instanceof List<?> list)) {
+            return null;
+        }
+
+        List<Long> result = new ArrayList<>(list.size());
+        for (Object x : list) {
+            Long v = asLong(x);
+            if (v == null) {
+                return null;
+            }
+            result.add(v);
+        }
+        return result;
     }
 
 
