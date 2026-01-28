@@ -15,6 +15,11 @@ public class ChapterSchoolPersistenceAdapter implements LoadChapterSchoolPort, M
     private final ChapterSchoolJpaRepository chapterSchoolJpaRepository;
 
     @Override
+    public List<ChapterSchool> findByGisuId(Long gisuId) {
+        return chapterSchoolJpaRepository.findByGisuIdWithChapterAndSchool(gisuId);
+    }
+
+    @Override
     public ChapterSchool save(ChapterSchool chapterSchool) {
         return chapterSchoolJpaRepository.save(chapterSchool);
     }

@@ -10,4 +10,6 @@ public interface LoadChapterPort {
     Chapter findById(Long chapterId);
 
     List<Chapter> findAll();
+
+    List<Chapter> findByGisuId(Long gisuId);
 }

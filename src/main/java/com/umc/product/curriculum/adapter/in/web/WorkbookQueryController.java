@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/curriculums")
 @RequiredArgsConstructor
-public class WorkbookSubmissionQueryController implements WorkbookSubmissionQueryControllerApi {
+public class WorkbookQueryController implements WorkbookQueryControllerApi {
 
     private final GetWorkbookSubmissionsUseCase getWorkbookSubmissionsUseCase;
     private final GetStudyGroupsForFilterUseCase getStudyGroupsForFilterUseCase;

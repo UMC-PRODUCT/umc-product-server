@@ -84,4 +84,15 @@ public class School extends BaseEntity {
         ChapterSchool chapterSchool = ChapterSchool.create(newChapter, this);
         this.chapterSchools.add(chapterSchool);
     }
+
+    public void assignToChapter(Chapter chapter) {
+        Long gisuId = chapter.getGisu().getId();
+        this.chapterSchools.removeIf(cs -> cs.getChapter().getGisu().getId().equals(gisuId));
+        ChapterSchool chapterSchool = ChapterSchool.create(chapter, this);
+        this.chapterSchools.add(chapterSchool);
+    }
+
+    public void unassignFromGisu(Long gisuId) {
+        this.chapterSchools.removeIf(cs -> cs.getChapter().getGisu().getId().equals(gisuId));
+    }
 }

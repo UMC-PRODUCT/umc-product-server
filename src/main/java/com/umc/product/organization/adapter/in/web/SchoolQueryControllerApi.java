@@ -5,6 +5,7 @@ import com.umc.product.organization.adapter.in.web.dto.request.SchoolListRequest
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolLinkResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolPageResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.UnassignedSchoolListResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -55,5 +56,17 @@ public interface SchoolQueryControllerApi {
     })
     SchoolLinkResponse getSchoolLink(
             @Parameter(description = "학교 ID", required = true) Long schoolId
+    );
+
+    @Operation(summary = "배정 대기 중인 학교 목록 조회", description = "특정 기수에서 어떤 지부에도 속하지 않은 학교 목록을 조회합니다")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = UnassignedSchoolListResponse.class))
+            )
+    })
+    UnassignedSchoolListResponse getUnassignedSchools(
+            @Parameter(description = "기수 ID", required = true, example = "1") Long gisuId
     );
 }
