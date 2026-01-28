@@ -7,6 +7,7 @@ import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResp
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolLinkResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolListItemResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolPageResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.UnassignedSchoolListResponse;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -48,5 +50,11 @@ public class SchoolQueryController implements SchoolQueryControllerApi {
     @GetMapping("/link/{schoolId}")
     public SchoolLinkResponse getSchoolLink(@PathVariable Long schoolId) {
         return SchoolLinkResponse.of(getSchoolUseCase.getSchoolLink(schoolId));
+    }
+
+    @Override
+    @GetMapping("/unassigned")
+    public UnassignedSchoolListResponse getUnassignedSchools(@RequestParam Long gisuId) {
+        return UnassignedSchoolListResponse.from(getSchoolUseCase.getUnassignedSchools(gisuId));
     }
 }

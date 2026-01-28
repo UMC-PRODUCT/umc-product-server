@@ -19,4 +19,6 @@ public interface LoadSchoolPort {
     School findById(Long schoolId);
 
     List<School> findAllByIds(List<Long> schoolIds);
+
+    List<School> findUnassignedByGisuId(Long gisuId);
 }
