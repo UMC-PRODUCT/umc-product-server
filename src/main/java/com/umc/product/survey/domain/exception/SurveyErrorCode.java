@@ -19,7 +19,7 @@ public enum SurveyErrorCode implements BaseCode {
     QUESTION_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "SURVEY-0009", "질문 유형이 일치하지 않습니다."),
     REQUIRED_QUESTION_NOT_ANSWERED(HttpStatus.BAD_REQUEST, "SURVEY-0010", "필수 질문에 대한 응답이 누락되었습니다."),
     INVALID_ANSWER_FORMAT(HttpStatus.BAD_REQUEST, "SURVEY-0011", "응답 형식이 올바르지 않습니다."),
-    ;
+    OTHER_OPTION_DUPLICATED(HttpStatus.BAD_REQUEST, "SURVEY-0012", "'기타' 선택지가 중복되었습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

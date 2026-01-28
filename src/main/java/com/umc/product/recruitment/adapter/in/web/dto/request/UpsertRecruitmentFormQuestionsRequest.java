@@ -75,10 +75,11 @@ public record UpsertRecruitmentFormQuestionsRequest(
     public record Option(
             Long optionId,
             String content,
-            Integer orderNo
+            Integer orderNo,
+            Boolean isOther
     ) {
         private UpsertRecruitmentFormQuestionsCommand.OptionInfo toCommandOption() {
-            return new UpsertRecruitmentFormQuestionsCommand.OptionInfo(optionId, content, orderNo);
+            return new UpsertRecruitmentFormQuestionsCommand.OptionInfo(optionId, content, orderNo, isOther);
         }
     }
 }

@@ -38,11 +38,19 @@ public class QuestionOption extends BaseEntity {
     @Column(name = "order_no", nullable = false)
     private Integer orderNo; // 보기 순서
 
+    @Column(name = "is_other", nullable = false)
+    private boolean isOther;
+
+
     public void changeContent(String content) {
         this.content = content;
     }
 
     public void changeOrderNo(Integer orderNo) {
         this.orderNo = orderNo;
+    }
+
+    public void changeIsOther(boolean isOther) {
+        this.isOther = isOther;
     }
 }

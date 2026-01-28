@@ -35,7 +35,8 @@ public record UpsertRecruitmentFormQuestionsCommand(
     public record OptionInfo(
             Long optionId,
             String content,
-            Integer orderNo
+            Integer orderNo,
+            Boolean isOther
     ) {
     }
 }

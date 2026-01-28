@@ -647,6 +647,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public RecruitmentApplicationFormInfo upsert(UpsertRecruitmentFormQuestionsCommand command) {
+        validateOtherOption(command);
+
         Long formId = loadRecruitmentPort.findById(command.recruitmentId())
                 .orElseThrow(
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND))
@@ -1466,5 +1468,30 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         return result;
     }
+
+    private void validateOtherOption(UpsertRecruitmentFormQuestionsCommand command) {
+        if (command.items() == null || command.items().isEmpty()) {
+            return;
+        }
+
+        for (UpsertRecruitmentFormQuestionsCommand.Item item : command.items()) {
+            var question = item.question();
+            if (question == null || question.options() == null) {
+                continue;
+            }
+
+            long otherCount = question.options().stream()
+                    .filter(o -> Boolean.TRUE.equals(o.isOther()))
+                    .count();
+
+            if (otherCount > 1) {
+                throw new BusinessException(
+                        Domain.SURVEY,
+                        SurveyErrorCode.OTHER_OPTION_DUPLICATED
+                );
+            }
+        }
+    }
+
 
 }
