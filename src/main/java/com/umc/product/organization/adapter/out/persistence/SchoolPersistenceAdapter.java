@@ -49,5 +49,8 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
                 .orElseThrow(() -> new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.SCHOOL_NOT_FOUND));
     }
 
-
+    @Override
+    public List<School> findAllByIds(List<Long> schoolIds) {
+        return schoolJpaRepository.findAllByIdIn(schoolIds);
+    }
 }

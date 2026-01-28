@@ -4,6 +4,7 @@ import com.umc.product.organization.application.port.in.query.dto.SchoolLinkInfo
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.domain.School;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -17,4 +18,5 @@ public interface LoadSchoolPort {
 
     School findById(Long schoolId);
 
+    List<School> findAllByIds(List<Long> schoolIds);
 }
