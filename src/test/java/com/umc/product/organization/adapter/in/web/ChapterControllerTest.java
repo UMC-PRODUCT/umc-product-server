@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.umc.product.organization.adapter.in.web.dto.request.CreateChapterRequest;
 import com.umc.product.support.DocumentationTest;
+import java.util.List;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -16,10 +17,9 @@ import org.springframework.test.web.servlet.ResultActions;
 class ChapterControllerTest extends DocumentationTest {
 
     @Test
-    @Disabled("리팩토링 진행 중")
     void 신규_지부를_생성한다() throws Exception {
         // given
-        CreateChapterRequest request = new CreateChapterRequest(1L, "Scorpio");
+        CreateChapterRequest request = new CreateChapterRequest(1L, "Scorpio", List.of());
 
         // when
         ResultActions result = mockMvc.perform(
@@ -29,6 +29,7 @@ class ChapterControllerTest extends DocumentationTest {
         // then
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(
                 requestFields(fieldWithPath("gisuId").type(JsonFieldType.STRING).description("기수 ID"),
-                        fieldWithPath("name").type(JsonFieldType.STRING).description("지부명"))));
+                        fieldWithPath("name").type(JsonFieldType.STRING).description("지부명"),
+                        fieldWithPath("schoolIds").type(JsonFieldType.ARRAY).description("소속 학교 ID 목록").optional())));
     }
 }
