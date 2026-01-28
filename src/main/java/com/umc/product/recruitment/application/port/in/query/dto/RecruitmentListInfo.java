@@ -1,6 +1,7 @@
 package com.umc.product.recruitment.application.port.in.query.dto;
 
 import com.umc.product.recruitment.domain.enums.RecruitmentPhase;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -16,7 +17,8 @@ public record RecruitmentListInfo(
             LocalDate endDate,
             int applicantCount,
             RecruitmentPhase phase,
-            boolean editable
+            boolean editable,
+            Instant updatedAt
     ) {
     }
 }

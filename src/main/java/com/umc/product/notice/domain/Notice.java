@@ -91,7 +91,7 @@ public class Notice extends BaseEntity {
                                List<ChallengerPart> targetParts,
                                boolean shouldNotify) {
 
-        validateDraftCreation(title, content, authorChallengerId, scope);
+        validateNoticeCreation(title, content, authorChallengerId, scope);
 
         return Notice.builder()
                 .title(title)
@@ -134,9 +134,9 @@ public class Notice extends BaseEntity {
      * 검증 메서드
      */
 
-    private static void validateDraftCreation(String title, String content,
-                                              Long authorChallengerId,
-                                              NoticeClassification scopes) {
+    private static void validateNoticeCreation(String title, String content,
+                                               Long authorChallengerId,
+                                               NoticeClassification scopes) {
         // 필수값 null 체크
         if (title == null || title.isBlank()) {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_TITLE);
@@ -170,19 +170,6 @@ public class Notice extends BaseEntity {
         }
     }
 
-    private void validateCanPublish() {
-        if (this.title == null || this.title.isBlank()) {
-            throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_TITLE);
-        }
-
-        if (this.content == null || this.content.isBlank()) {
-            throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_CONTENT);
-        }
-
-        if (this.scope == null) {
-            throw new NoticeDomainException(NoticeErrorCode.NOTICE_SCOPE_REQUIRED);
-        }
-    }
 
     public boolean hasScope(NoticeClassification scope) {
         return this.scope != null;

@@ -4,6 +4,7 @@ import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,4 +30,36 @@ public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> 
     );
 
     List<Recruitment> findByStatus(RecruitmentStatus status);
+
+    @Query(value = """
+            select r.id
+            from recruitment r
+            join recruitment_schedule s
+              on s.recruitment_id = r.id
+            where r.school_id = :schoolId
+              and r.gisu_id = :gisuId
+              and r.status = 'PUBLISHED'
+              and s.type = 'APPLY_WINDOW'
+              and s.starts_at <= :now
+              and :now < s.ends_at
+            order by s.starts_at desc
+            limit 1
+            """, nativeQuery = true)
+    Optional<Long> findActiveRecruitmentId(
+            @Param("schoolId") Long schoolId,
+            @Param("gisuId") Long gisuId,
+            @Param("now") Instant now
+    );
+
+    Optional<Recruitment> findByFormId(Long formId);
+
+    @Query("""
+              select r.id
+              from Recruitment r
+              where r.schoolId = :schoolId
+                and r.gisuId = :gisuId
+                and r.status = com.umc.product.recruitment.domain.enums.RecruitmentStatus.PUBLISHED
+              order by r.updatedAt desc
+            """)
+    List<Long> findLatestPublishedId(Long schoolId, Long gisuId);
 }

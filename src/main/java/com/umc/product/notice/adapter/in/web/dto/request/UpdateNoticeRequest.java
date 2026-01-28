@@ -4,6 +4,7 @@ import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeComman
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
 
 public record UpdateNoticeRequest(
 
@@ -14,10 +15,23 @@ public record UpdateNoticeRequest(
         @NotNull(message = "공지 대상 정보는 비어 있을 수 없습니다.")
         NoticeTargetInfo targetInfo,
         @NotNull(message = "알림 발송 여부는 비어 있을 수 없습니다.")
-        Boolean shouldNotify /* 알림 발송 여부 */
+        Boolean shouldNotify, /* 알림 발송 여부 */
+        List<String> imageIds,
+        List<String> links,
+        List<Long> voteIds
 ) {
 
     public UpdateNoticeCommand toCommand(Long authorChallengerId, Long noticeId) {
-        return new UpdateNoticeCommand(authorChallengerId, noticeId, title, content, targetInfo, shouldNotify);
+        return new UpdateNoticeCommand(
+                authorChallengerId,
+                noticeId,
+                title,
+                content,
+                targetInfo,
+                shouldNotify,
+                imageIds,
+                links,
+                voteIds
+        );
     }
 }

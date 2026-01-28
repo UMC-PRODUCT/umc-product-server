@@ -120,6 +120,11 @@ public class NoticeContentPersistenceAdapter implements
     }
 
     @Override
+    public void deleteAllImagesByNoticeId(Long noticeId) {
+        imageJpaRepository.deleteAllByNoticeId(noticeId);
+    }
+
+    @Override
     public NoticeLink saveLink(NoticeLink noticeLink) {
         return linkJpaRepository.save(noticeLink);
     }
@@ -132,6 +137,11 @@ public class NoticeContentPersistenceAdapter implements
     @Override
     public void deleteLink(NoticeLink noticeLink) {
         linkJpaRepository.delete(noticeLink);
+    }
+
+    @Override
+    public void deleteAllLinksByNoticeId(Long noticeId) {
+        linkJpaRepository.deleteAllByNoticeId(noticeId);
     }
 
     @Override
@@ -148,4 +158,10 @@ public class NoticeContentPersistenceAdapter implements
     public void deleteVote(NoticeVote noticeVote) {
         voteJpaRepository.delete(noticeVote);
     }
+
+    @Override
+    public void deleteAllVotesByNoticeId(Long noticeId) {
+        voteJpaRepository.deleteAllByNoticeId(noticeId);
+    }
+
 }

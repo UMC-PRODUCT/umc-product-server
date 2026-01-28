@@ -1,8 +1,8 @@
 package com.umc.product.recruitment.application.port.in.command;
 
-import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetDraftFormResponseInfo;
-import com.umc.product.recruitment.application.port.in.command.dto.CreateOrGetRecruitmentDraftCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.CreateDraftFormResponseCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.CreateDraftFormResponseInfo;
 
 public interface CreateRecruitmentDraftFormResponseUseCase {
-    CreateOrGetDraftFormResponseInfo createOrGet(CreateOrGetRecruitmentDraftCommand command);
+    CreateDraftFormResponseInfo create(CreateDraftFormResponseCommand command);
 }
