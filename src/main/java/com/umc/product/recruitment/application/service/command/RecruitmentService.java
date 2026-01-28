@@ -56,6 +56,9 @@ import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
+import com.umc.product.storage.application.port.in.query.dto.FileInfo;
+import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
 import com.umc.product.survey.application.port.out.LoadFormPort;
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
@@ -67,6 +70,7 @@ import com.umc.product.survey.application.port.out.SaveQuestionPort;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.Question;
+import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.SingleAnswer;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
@@ -80,6 +84,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -119,6 +124,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final SaveApplicationPartPreferencePort saveApplicationPartPreferencePort;
     private final LoadMemberPort loadMemberPort;
     private final LoadGisuPort loadGisuPort;
+    private final GetFileUseCase getFileUseCase;
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
@@ -270,6 +276,11 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_TYPE_MISMATCH);
             }
 
+            if (serverType == QuestionType.PORTFOLIO) {
+                validatePortfolioAnswerValue(item.value());
+            }
+
+            validateOtherTextIfNeeded(question, serverType, item.value());
             upsertSingleAnswer(formResponse, question, serverType, item.value());
 
             savedQuestionIds.add(questionId);
@@ -639,6 +650,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public RecruitmentApplicationFormInfo upsert(UpsertRecruitmentFormQuestionsCommand command) {
+        validateOtherOption(command);
+
         Long formId = loadRecruitmentPort.findById(command.recruitmentId())
                 .orElseThrow(
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND))
@@ -853,17 +866,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
 
         Map<String, Object> safeValue = (command.value() == null) ? Map.of() : command.value();
+        Map<String, Object> normalized = normalizeInterviewPreferenceToHHmm(safeValue);
 
         upsertSingleAnswer(
                 formResponse,
                 scheduleQuestion,
                 QuestionType.SCHEDULE,
-                safeValue
+                normalized
         );
 
         saveFormResponsePort.save(formResponse);
 
-        return UpdateRecruitmentInterviewPreferenceInfo.of(command.formResponseId(), safeValue);
+        return UpdateRecruitmentInterviewPreferenceInfo.of(command.formResponseId(), normalized);
     }
 
     private void validateApplyWindow(Recruitment recruitment) {
@@ -923,6 +937,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 Long qid = q.questionId();
                 if (qid == null || !answeredQuestionIds.contains(qid)) {
                     throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+                }
+
+                if (q.type() == QuestionType.PORTFOLIO) {
+                    Map<String, Object> value = findAnswerValue(formResponse, qid);
+                    validatePortfolioAnswerValue(value);
+                    validatePortfolioFilesUploaded(value);
                 }
             });
         });
@@ -1051,6 +1071,40 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             }
         }
     }
+
+    private Map<String, Object> findAnswerValue(FormResponse formResponse, Long questionId) {
+        if (formResponse == null || formResponse.getAnswers() == null) {
+            return Map.of();
+        }
+
+        return formResponse.getAnswers().stream()
+                .filter(a -> a.getQuestion() != null && questionId.equals(a.getQuestion().getId()))
+                .map(SingleAnswer::getValue)
+                .findFirst()
+                .orElse(Map.of());
+    }
+
+    private void validatePortfolioFilesUploaded(Map<String, Object> value) {
+        List<String> fileIds = extractFileIdsFromPortfolioValue(value);
+        if (fileIds == null || fileIds.isEmpty()) {
+            return;
+        }
+
+        for (String fileId : fileIds) {
+            if (fileId == null || fileId.isBlank()) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+            }
+
+            FileInfo fi = getFileUseCase.getById(fileId);
+            if (fi == null) {
+                throw new BusinessException(Domain.STORAGE, StorageErrorCode.FILE_NOT_FOUND);
+            }
+            if (fi.isUploaded() == null || !fi.isUploaded()) {
+                throw new BusinessException(Domain.STORAGE, StorageErrorCode.FILE_UPLOAD_NOT_COMPLETED);
+            }
+        }
+    }
+
 
     private static LocalDate parseDate(String s) {
         try {
@@ -1248,5 +1302,315 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
         return String.valueOf(v);
     }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> normalizeInterviewPreferenceToHHmm(Map<String, Object> value) {
+        if (value == null || value.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, Object> result = new java.util.HashMap<>(value);
+
+        Object selectedObj = result.get("selected");
+        if (!(selectedObj instanceof List<?> selectedList)) {
+            return result;
+        }
+
+        List<Map<String, Object>> normalizedSelected = new java.util.ArrayList<>();
+
+        for (Object itemObj : selectedList) {
+            if (!(itemObj instanceof Map<?, ?> rawItem)) {
+                continue;
+            }
+
+            Map<String, Object> item = new java.util.HashMap<>();
+            rawItem.forEach((k, v) -> item.put(String.valueOf(k), v));
+
+            Object timesObj = item.get("times");
+            if (timesObj instanceof List<?> timesList) {
+                List<String> normalizedTimes = new java.util.ArrayList<>();
+                for (Object tObj : timesList) {
+                    if (tObj == null) {
+                        continue;
+                    }
+
+                    String s = String.valueOf(tObj);
+                    // "14:00:00" -> "14:00", "14:00" -> "14:00"
+                    if (s.length() >= 5) {
+                        s = s.substring(0, 5);
+                    }
+
+                    normalizedTimes.add(s);
+                }
+                item.put("times", normalizedTimes);
+            }
+
+            normalizedSelected.add(item);
+        }
+
+        result.put("selected", normalizedSelected);
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void validatePortfolioAnswerValue(Map<String, Object> value) {
+        Map<String, Object> safe = (value == null) ? Map.of() : value;
+
+        // files/links 둘 중 하나는 있어야 함
+        List<String> fileIds = extractFileIdsFromPortfolioValue(safe);
+        List<String> links = extractLinksFromPortfolioValue(safe);
+
+        boolean hasFiles = fileIds != null && !fileIds.isEmpty();
+        boolean hasLinks = links != null && !links.isEmpty();
+
+        if (!hasFiles && !hasLinks) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+        }
+
+        if (hasLinks) {
+            for (String url : links) {
+                if (url == null || url.isBlank()) {
+                    throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                }
+                String u = url.trim().toLowerCase();
+                if (!(u.startsWith("http://") || u.startsWith("https://"))) {
+                    throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                }
+            }
+        }
+
+        if (hasFiles) {
+            for (String fileId : fileIds) {
+                if (fileId == null || fileId.isBlank()) {
+                    throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                }
+
+                getFileUseCase.getById(fileId);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> extractFileIdsFromPortfolioValue(Map<String, Object> value) {
+        if (value == null || value.isEmpty()) {
+            return List.of();
+        }
+
+        Object filesObj = value.get("files");
+        Object fileIdsObj = value.get("fileIds");
+
+        List<String> result = new ArrayList<>();
+
+        // 1) fileIds: ["id1","id2"]
+        if (fileIdsObj instanceof List<?> list) {
+            for (Object it : list) {
+                if (it == null) {
+                    continue;
+                }
+                result.add(String.valueOf(it));
+            }
+            return result;
+        }
+
+        // 2) files: [...]
+        if (filesObj instanceof List<?> list) {
+            for (Object it : list) {
+                if (it == null) {
+                    continue;
+                }
+
+                // files: ["id1","id2"]
+                if (it instanceof String s) {
+                    result.add(s);
+                    continue;
+                }
+
+                // files: [{fileId:"..."}, ...]
+                if (it instanceof Map<?, ?> m) {
+                    Object fid = m.get("fileId");
+                    if (fid != null) {
+                        result.add(String.valueOf(fid));
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> extractLinksFromPortfolioValue(Map<String, Object> value) {
+        if (value == null || value.isEmpty()) {
+            return List.of();
+        }
+
+        Object linksObj = value.get("links");
+        if (!(linksObj instanceof List<?> list)) {
+            return List.of();
+        }
+
+        List<String> result = new ArrayList<>();
+
+        for (Object it : list) {
+            if (it == null) {
+                continue;
+            }
+
+            if (it instanceof String s) {
+                result.add(s);
+                continue;
+            }
+
+            if (it instanceof Map<?, ?> m) {
+                Object url = m.get("url");
+                if (url != null) {
+                    result.add(String.valueOf(url));
+                }
+            }
+        }
+
+        return result;
+    }
+
+    private void validateOtherOption(UpsertRecruitmentFormQuestionsCommand command) {
+        if (command.items() == null || command.items().isEmpty()) {
+            return;
+        }
+
+        for (UpsertRecruitmentFormQuestionsCommand.Item item : command.items()) {
+            var question = item.question();
+            if (question == null || question.options() == null) {
+                continue;
+            }
+
+            long otherCount = question.options().stream()
+                    .filter(o -> Boolean.TRUE.equals(o.isOther()))
+                    .count();
+
+            if (otherCount > 1) {
+                throw new BusinessException(
+                        Domain.SURVEY,
+                        SurveyErrorCode.OTHER_OPTION_DUPLICATED
+                );
+            }
+        }
+    }
+
+    private void validateOtherTextIfNeeded(Question question, QuestionType type, Map<String, Object> value) {
+        if (question == null || type == null) {
+            return;
+        }
+        if (value == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+        }
+
+        if (type != QuestionType.RADIO && type != QuestionType.DROPDOWN && type != QuestionType.CHECKBOX) {
+            return;
+        }
+
+        Map<Long, Boolean> isOtherByOptionId = (question.getOptions() == null ? List.<QuestionOption>of()
+                : question.getOptions())
+                .stream()
+                .filter(o -> o != null && o.getId() != null)
+                .collect(Collectors.toMap(
+                        QuestionOption::getId,
+                        o -> o.isOther(),
+                        (a, b) -> a
+                ));
+
+        String otherText = null;
+        Object otherTextRaw = value.get("otherText");
+        if (otherTextRaw != null) {
+            otherText = String.valueOf(otherTextRaw).trim();
+            if (otherText.isEmpty()) {
+                otherText = null;
+            }
+        }
+
+        if (type == QuestionType.RADIO || type == QuestionType.DROPDOWN) {
+            Long selectedOptionId = asLong(value.get("selectedOptionId"));
+            if (selectedOptionId == null) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+            }
+
+            Boolean isOther = isOtherByOptionId.get(selectedOptionId);
+            if (isOther == null) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_NOT_IN_QUESTION);
+            }
+
+            if (Boolean.TRUE.equals(isOther) && otherText == null) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_TEXT_REQUIRED);
+            }
+
+            if (!Boolean.TRUE.equals(isOther) && otherText != null) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+            }
+
+            return;
+        }
+
+        // CHECKBOX
+        List<Long> selectedOptionIds = asLongList(value.get("selectedOptionIds"));
+        if (selectedOptionIds == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+        }
+
+        boolean hasUnknown = selectedOptionIds.stream().anyMatch(id -> !isOtherByOptionId.containsKey(id));
+        if (hasUnknown) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_NOT_IN_QUESTION);
+        }
+
+        long selectedOtherCount = selectedOptionIds.stream()
+                .map(isOtherByOptionId::get)
+                .filter(Boolean.TRUE::equals)
+                .count();
+
+        if (selectedOtherCount > 0 && otherText == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_TEXT_REQUIRED);
+        }
+
+        if (selectedOtherCount == 0 && otherText != null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+        }
+
+        if (selectedOtherCount > 1) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+        }
+    }
+
+    private Long asLong(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        try {
+            if (raw instanceof Number n) {
+                return n.longValue();
+            }
+            return Long.parseLong(String.valueOf(raw));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Long> asLongList(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        if (!(raw instanceof List<?> list)) {
+            return null;
+        }
+
+        List<Long> result = new ArrayList<>(list.size());
+        for (Object x : list) {
+            Long v = asLong(x);
+            if (v == null) {
+                return null;
+            }
+            result.add(v);
+        }
+        return result;
+    }
+
 
 }

@@ -295,6 +295,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
             else {
                 option = QuestionOption.builder()
                         .question(question)
+                        .isOther(Boolean.TRUE.equals(o.isOther()))
                         .build();
 
                 question.getOptions().add(option);
@@ -305,6 +306,9 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
             }
             if (o.orderNo() != null) {
                 option.changeOrderNo(o.orderNo());
+            }
+            if (o.isOther() != null) {
+                option.changeIsOther(o.isOther());
             }
 
             questionOptionJpaRepository.save(option);
