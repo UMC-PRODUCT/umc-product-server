@@ -56,6 +56,9 @@ import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
+import com.umc.product.storage.application.port.in.query.dto.FileInfo;
+import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
 import com.umc.product.survey.application.port.out.LoadFormPort;
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
@@ -119,6 +122,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final SaveApplicationPartPreferencePort saveApplicationPartPreferencePort;
     private final LoadMemberPort loadMemberPort;
     private final LoadGisuPort loadGisuPort;
+    private final GetFileUseCase getFileUseCase;
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
@@ -268,6 +272,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             var serverType = question.getType();
             if (item.answeredAsType() != null && item.answeredAsType() != serverType) {
                 throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_TYPE_MISMATCH);
+            }
+
+            if (serverType == QuestionType.PORTFOLIO) {
+                validatePortfolioAnswerValue(item.value());
             }
 
             upsertSingleAnswer(formResponse, question, serverType, item.value());
@@ -925,6 +933,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 if (qid == null || !answeredQuestionIds.contains(qid)) {
                     throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
                 }
+
+                if (q.type() == QuestionType.PORTFOLIO) {
+                    Map<String, Object> value = findAnswerValue(formResponse, qid);
+                    validatePortfolioAnswerValue(value);
+                    validatePortfolioFilesUploaded(value);
+                }
             });
         });
 
@@ -1052,6 +1066,40 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             }
         }
     }
+
+    private Map<String, Object> findAnswerValue(FormResponse formResponse, Long questionId) {
+        if (formResponse == null || formResponse.getAnswers() == null) {
+            return Map.of();
+        }
+
+        return formResponse.getAnswers().stream()
+                .filter(a -> a.getQuestion() != null && questionId.equals(a.getQuestion().getId()))
+                .map(SingleAnswer::getValue)
+                .findFirst()
+                .orElse(Map.of());
+    }
+
+    private void validatePortfolioFilesUploaded(Map<String, Object> value) {
+        List<String> fileIds = extractFileIdsFromPortfolioValue(value);
+        if (fileIds == null || fileIds.isEmpty()) {
+            return;
+        }
+
+        for (String fileId : fileIds) {
+            if (fileId == null || fileId.isBlank()) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+            }
+
+            FileInfo fi = getFileUseCase.getById(fileId);
+            if (fi == null) {
+                throw new BusinessException(Domain.STORAGE, StorageErrorCode.FILE_NOT_FOUND);
+            }
+            if (fi.isUploaded() == null || !fi.isUploaded()) {
+                throw new BusinessException(Domain.STORAGE, StorageErrorCode.FILE_UPLOAD_NOT_COMPLETED);
+            }
+        }
+    }
+
 
     private static LocalDate parseDate(String s) {
         try {
@@ -1296,6 +1344,126 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         result.put("selected", normalizedSelected);
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void validatePortfolioAnswerValue(Map<String, Object> value) {
+        Map<String, Object> safe = (value == null) ? Map.of() : value;
+
+        // files/links 둘 중 하나는 있어야 함
+        List<String> fileIds = extractFileIdsFromPortfolioValue(safe);
+        List<String> links = extractLinksFromPortfolioValue(safe);
+
+        boolean hasFiles = fileIds != null && !fileIds.isEmpty();
+        boolean hasLinks = links != null && !links.isEmpty();
+
+        if (!hasFiles && !hasLinks) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+        }
+
+        if (hasLinks) {
+            for (String url : links) {
+                if (url == null || url.isBlank()) {
+                    throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                }
+                String u = url.trim().toLowerCase();
+                if (!(u.startsWith("http://") || u.startsWith("https://"))) {
+                    throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                }
+            }
+        }
+
+        if (hasFiles) {
+            for (String fileId : fileIds) {
+                if (fileId == null || fileId.isBlank()) {
+                    throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                }
+
+                getFileUseCase.getById(fileId);
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> extractFileIdsFromPortfolioValue(Map<String, Object> value) {
+        if (value == null || value.isEmpty()) {
+            return List.of();
+        }
+
+        Object filesObj = value.get("files");
+        Object fileIdsObj = value.get("fileIds");
+
+        List<String> result = new ArrayList<>();
+
+        // 1) fileIds: ["id1","id2"]
+        if (fileIdsObj instanceof List<?> list) {
+            for (Object it : list) {
+                if (it == null) {
+                    continue;
+                }
+                result.add(String.valueOf(it));
+            }
+            return result;
+        }
+
+        // 2) files: [...]
+        if (filesObj instanceof List<?> list) {
+            for (Object it : list) {
+                if (it == null) {
+                    continue;
+                }
+
+                // files: ["id1","id2"]
+                if (it instanceof String s) {
+                    result.add(s);
+                    continue;
+                }
+
+                // files: [{fileId:"..."}, ...]
+                if (it instanceof Map<?, ?> m) {
+                    Object fid = m.get("fileId");
+                    if (fid != null) {
+                        result.add(String.valueOf(fid));
+                    }
+                }
+            }
+        }
+
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> extractLinksFromPortfolioValue(Map<String, Object> value) {
+        if (value == null || value.isEmpty()) {
+            return List.of();
+        }
+
+        Object linksObj = value.get("links");
+        if (!(linksObj instanceof List<?> list)) {
+            return List.of();
+        }
+
+        List<String> result = new ArrayList<>();
+
+        for (Object it : list) {
+            if (it == null) {
+                continue;
+            }
+
+            if (it instanceof String s) {
+                result.add(s);
+                continue;
+            }
+
+            if (it instanceof Map<?, ?> m) {
+                Object url = m.get("url");
+                if (url != null) {
+                    result.add(String.valueOf(url));
+                }
+            }
+        }
+
         return result;
     }
 
