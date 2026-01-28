@@ -21,4 +21,6 @@ public interface ChapterJpaRepository extends Repository<Chapter, Long> {
     Chapter save(Chapter chapter);
 
     List<Chapter> findAll();
+
+    List<Chapter> findByGisuId(Long gisuId);
 }

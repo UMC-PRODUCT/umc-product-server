@@ -12,4 +12,10 @@ public interface ChapterSchoolJpaRepository extends JpaRepository<ChapterSchool,
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM ChapterSchool cs WHERE cs.school.id IN :schoolIds")
     void deleteAllBySchoolIdIn(@Param("schoolIds") List<Long> schoolIds);
+
+    @Query("SELECT cs FROM ChapterSchool cs " +
+            "JOIN FETCH cs.chapter " +
+            "JOIN FETCH cs.school " +
+            "WHERE cs.chapter.gisu.id = :gisuId")
+    List<ChapterSchool> findByGisuIdWithChapterAndSchool(@Param("gisuId") Long gisuId);
 }
