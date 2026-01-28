@@ -1,8 +1,10 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.organization.adapter.in.web.dto.request.AssignSchoolRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateSchoolRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.DeleteSchoolsRequest;
+import com.umc.product.organization.adapter.in.web.dto.request.UnassignSchoolRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateSchoolRequest;
 import com.umc.product.organization.application.port.in.command.ManageSchoolUseCase;
 import jakarta.validation.Valid;
@@ -41,6 +43,18 @@ public class SchoolController implements SchoolControllerApi {
     @DeleteMapping
     public void deleteSchools(@RequestBody @Valid DeleteSchoolsRequest request) {
         manageSchoolUseCase.deleteSchools(request.schoolIds());
+    }
+
+    @Override
+    @PatchMapping("/{schoolId}/assign")
+    public void assignToChapter(@PathVariable Long schoolId, @RequestBody @Valid AssignSchoolRequest request) {
+        manageSchoolUseCase.assignToChapter(request.toCommand(schoolId));
+    }
+
+    @Override
+    @PatchMapping("/{schoolId}/unassign")
+    public void unassignFromChapter(@PathVariable Long schoolId, @RequestBody @Valid UnassignSchoolRequest request) {
+        manageSchoolUseCase.unassignFromChapter(request.toCommand(schoolId));
     }
 }
 
