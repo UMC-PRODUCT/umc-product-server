@@ -38,7 +38,8 @@ public record FormDefinitionInfo(
     public record QuestionOptionInfo(
             Long optionId,
             String content,
-            Integer orderNo
+            Integer orderNo,
+            boolean isOther
     ) {
     }
 
@@ -85,7 +86,8 @@ public record FormDefinitionInfo(
                                 .map(o -> new FormDefinitionInfo.QuestionOptionInfo(
                                         o.getId(),
                                         o.getContent(),
-                                        o.getOrderNo()
+                                        o.getOrderNo(),
+                                        o.isOther()
                                 ))
                                 .toList()
         );

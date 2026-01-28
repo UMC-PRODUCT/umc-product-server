@@ -329,10 +329,11 @@ public record RecruitmentApplicationFormResponse(
 
     public record OptionResponse(
             Long optionId,
-            String content
+            String content,
+            boolean isOther
     ) {
         public static OptionResponse from(FormDefinitionInfo.QuestionOptionInfo o) {
-            return new OptionResponse(o.optionId(), o.content());
+            return new OptionResponse(o.optionId(), o.content(), o.isOther());
         }
     }
 
