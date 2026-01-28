@@ -45,8 +45,8 @@ public record UpdateRecruitmentDraftRequest(
     }
 
     public record TimeRangeRequest(
-            LocalTime start,
-            LocalTime end
+            @JsonFormat(pattern = "HH:mm") LocalTime start,
+            @JsonFormat(pattern = "HH:mm") LocalTime end
     ) {
     }
 

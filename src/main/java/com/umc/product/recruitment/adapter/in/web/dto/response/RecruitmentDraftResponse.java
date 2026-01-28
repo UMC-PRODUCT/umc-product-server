@@ -5,6 +5,7 @@ import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDr
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public record RecruitmentDraftResponse(
@@ -16,25 +17,25 @@ public record RecruitmentDraftResponse(
         List<ChallengerPart> recruitmentParts,
         Integer maxPreferredPartCount,
 
-        ScheduleResponse schedule,
+        RecruitmentDraftScheduleResponse schedule,
 
         String noticeContent,
 
         Instant createdAt,
         Instant updatedAt
 ) {
-    public record ScheduleResponse(
+    public record RecruitmentDraftScheduleResponse(
             Instant applyStartAt,
             Instant applyEndAt,
             Instant docResultAt,
             Instant interviewStartAt,
             Instant interviewEndAt,
             Instant finalResultAt,
-            InterviewTimeTableResponse interviewTimeTable
+            RecruitmentDraftInterviewTimeTableResponse interviewTimeTable
     ) {
     }
 
-    public record InterviewTimeTableResponse(
+    public record RecruitmentDraftInterviewTimeTableResponse(
             DateRangeResponse dateRange,
             TimeRangeResponse timeRange,
             Integer slotMinutes,
@@ -46,12 +47,12 @@ public record RecruitmentDraftResponse(
     public record DateRangeResponse(LocalDate start, LocalDate end) {
     }
 
-    public record TimeRangeResponse(LocalTime start, LocalTime end) {
+    public record TimeRangeResponse(String start, String end) {
     }
 
     public record TimesByDateResponse(
             LocalDate date,
-            List<LocalTime> times
+            List<String> times
     ) {
     }
 
@@ -70,12 +71,12 @@ public record RecruitmentDraftResponse(
         );
     }
 
-    private static ScheduleResponse toSchedule(RecruitmentDraftInfo.ScheduleInfo s) {
+    private static RecruitmentDraftScheduleResponse toSchedule(RecruitmentDraftInfo.ScheduleInfo s) {
         if (s == null) {
             return null;
         }
 
-        return new ScheduleResponse(
+        return new RecruitmentDraftScheduleResponse(
                 s.applyStartAt(),
                 s.applyEndAt(),
                 s.docResultAt(),
@@ -86,21 +87,37 @@ public record RecruitmentDraftResponse(
         );
     }
 
-    private static InterviewTimeTableResponse toInterviewTimeTable(RecruitmentDraftInfo.InterviewTimeTableInfo t) {
+    private static RecruitmentDraftInterviewTimeTableResponse toInterviewTimeTable(
+            RecruitmentDraftInfo.InterviewTimeTableInfo t) {
         if (t == null) {
             return null;
         }
 
-        return new InterviewTimeTableResponse(
+        return new RecruitmentDraftInterviewTimeTableResponse(
                 new DateRangeResponse(t.dateRange().start(), t.dateRange().end()),
-                new TimeRangeResponse(t.timeRange().start(), t.timeRange().end()),
+                new TimeRangeResponse(formatTime(t.timeRange().start()), formatTime(t.timeRange().end())),
                 t.slotMinutes(),
                 t.enabledByDate() == null ? null : t.enabledByDate().stream()
-                        .map(x -> new TimesByDateResponse(x.date(), x.times()))
+                        .map(x -> new TimesByDateResponse(
+                                x.date(),
+                                x.times() == null ? List.of()
+                                        : x.times().stream().map(RecruitmentDraftResponse::formatTime).toList()
+                        ))
                         .toList(),
                 t.disabledByDate() == null ? null : t.disabledByDate().stream()
-                        .map(x -> new TimesByDateResponse(x.date(), x.times()))
+                        .map(x -> new TimesByDateResponse(
+                                x.date(),
+                                x.times() == null ? List.of()
+                                        : x.times().stream().map(RecruitmentDraftResponse::formatTime).toList()
+                        ))
                         .toList()
         );
+    }
+
+    private static String formatTime(LocalTime t) {
+        if (t == null) {
+            return null;
+        }
+        return t.format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 }

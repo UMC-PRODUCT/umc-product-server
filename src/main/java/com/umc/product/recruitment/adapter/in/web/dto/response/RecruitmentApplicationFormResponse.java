@@ -108,7 +108,8 @@ public record RecruitmentApplicationFormResponse(
 
         List<FormPageResponse> result = new ArrayList<>();
 
-        ScheduleResponse schedulePayload = toScheduleResponse(info.interviewTimeTableInfo());
+        InterviewTimeTablePayloadResponse schedulePayload = toInterviewTimeTablePayloadResponse(
+                info.interviewTimeTableInfo());
         var preferredPartInfo = info.preferredPartInfo();
 
         for (Integer pageNo : orderedPages) {
@@ -212,7 +213,7 @@ public record RecruitmentApplicationFormResponse(
                     .map(q -> QuestionResponse.from(q, preferredPartInfo))
                     .toList();
 
-            ScheduleResponse schedulePayload = toScheduleResponse(interviewTimeTable);
+            InterviewTimeTablePayloadResponse schedulePayload = toInterviewTimeTablePayloadResponse(interviewTimeTable);
 
             ScheduleQuestionResponse schedule = ordered.stream()
                     .filter(q -> q.type == QuestionType.SCHEDULE)
@@ -340,9 +341,9 @@ public record RecruitmentApplicationFormResponse(
             QuestionType type,
             String questionText,
             boolean required,
-            ScheduleResponse schedule
+            InterviewTimeTablePayloadResponse schedule
     ) {
-        public static ScheduleQuestionResponse from(QuestionResponse base, ScheduleResponse schedule) {
+        public static ScheduleQuestionResponse from(QuestionResponse base, InterviewTimeTablePayloadResponse schedule) {
             return new ScheduleQuestionResponse(
                     base.questionId(),
                     base.type(),
@@ -353,7 +354,7 @@ public record RecruitmentApplicationFormResponse(
         }
     }
 
-    public record ScheduleResponse(
+    public record InterviewTimeTablePayloadResponse(
             DateRangeResponse dateRange,
             TimeRangeResponse timeRange,
             int slotMinutes,
@@ -365,7 +366,7 @@ public record RecruitmentApplicationFormResponse(
     public record DateRangeResponse(LocalDate start, LocalDate end) {
     }
 
-    public record TimeRangeResponse(LocalTime start, LocalTime end) {
+    public record TimeRangeResponse(String start, String end) {
     }
 
     /**
@@ -384,7 +385,7 @@ public record RecruitmentApplicationFormResponse(
     ) {
     }
 
-    private static ScheduleResponse toScheduleResponse(InterviewTimeTableInfo info) {
+    private static InterviewTimeTablePayloadResponse toInterviewTimeTablePayloadResponse(InterviewTimeTableInfo info) {
         if (info == null) {
             return null;
         }
@@ -393,7 +394,7 @@ public record RecruitmentApplicationFormResponse(
                 : new DateRangeResponse(info.dateRange().start(), info.dateRange().end());
 
         TimeRangeResponse tr = (info.timeRange() == null) ? null
-                : new TimeRangeResponse(info.timeRange().start(), info.timeRange().end());
+                : new TimeRangeResponse(formatTime(info.timeRange().start()), formatTime(info.timeRange().end()));
 
         List<DateScheduleTimesResponse> enabled = (info.enabledByDate() == null) ? null
                 : info.enabledByDate().stream()
@@ -417,14 +418,14 @@ public record RecruitmentApplicationFormResponse(
 
         int slotMinutes = (info.slotMinutes() == null) ? 0 : info.slotMinutes();
 
-        return new ScheduleResponse(dr, tr, slotMinutes, enabled, disabled);
+        return new InterviewTimeTablePayloadResponse(dr, tr, slotMinutes, enabled, disabled);
     }
 
     private static String formatTime(LocalTime t) {
         if (t == null) {
             return null;
         }
-        return t.format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+        return t.format(DateTimeFormatter.ofPattern("HH:mm"));
     }
 
 }

@@ -853,17 +853,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
 
         Map<String, Object> safeValue = (command.value() == null) ? Map.of() : command.value();
+        Map<String, Object> normalized = normalizeInterviewPreferenceToHHmm(safeValue);
 
         upsertSingleAnswer(
                 formResponse,
                 scheduleQuestion,
                 QuestionType.SCHEDULE,
-                safeValue
+                normalized
         );
 
         saveFormResponsePort.save(formResponse);
 
-        return UpdateRecruitmentInterviewPreferenceInfo.of(command.formResponseId(), safeValue);
+        return UpdateRecruitmentInterviewPreferenceInfo.of(command.formResponseId(), normalized);
     }
 
     private void validateApplyWindow(Recruitment recruitment) {
@@ -1247,6 +1248,55 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             return s;
         }
         return String.valueOf(v);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> normalizeInterviewPreferenceToHHmm(Map<String, Object> value) {
+        if (value == null || value.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, Object> result = new java.util.HashMap<>(value);
+
+        Object selectedObj = result.get("selected");
+        if (!(selectedObj instanceof List<?> selectedList)) {
+            return result;
+        }
+
+        List<Map<String, Object>> normalizedSelected = new java.util.ArrayList<>();
+
+        for (Object itemObj : selectedList) {
+            if (!(itemObj instanceof Map<?, ?> rawItem)) {
+                continue;
+            }
+
+            Map<String, Object> item = new java.util.HashMap<>();
+            rawItem.forEach((k, v) -> item.put(String.valueOf(k), v));
+
+            Object timesObj = item.get("times");
+            if (timesObj instanceof List<?> timesList) {
+                List<String> normalizedTimes = new java.util.ArrayList<>();
+                for (Object tObj : timesList) {
+                    if (tObj == null) {
+                        continue;
+                    }
+
+                    String s = String.valueOf(tObj);
+                    // "14:00:00" -> "14:00", "14:00" -> "14:00"
+                    if (s.length() >= 5) {
+                        s = s.substring(0, 5);
+                    }
+
+                    normalizedTimes.add(s);
+                }
+                item.put("times", normalizedTimes);
+            }
+
+            normalizedSelected.add(item);
+        }
+
+        result.put("selected", normalizedSelected);
+        return result;
     }
 
 }
