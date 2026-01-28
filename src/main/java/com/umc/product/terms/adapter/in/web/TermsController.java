@@ -11,6 +11,7 @@ import com.umc.product.terms.application.port.in.query.GetTermsUseCase;
 import com.umc.product.terms.domain.enums.TermsType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,7 +46,7 @@ public class TermsController {
 
     @PostMapping
     @Operation(summary = "약관 생성")
-    Long createTerms(@RequestBody CreateTermRequest request) {
+    Long createTerms(@Valid @RequestBody CreateTermRequest request) {
         return manageTermsUseCase.createTerms(
                 CreateTermCommand.builder()
                         .title(request.title())
@@ -53,6 +54,7 @@ public class TermsController {
                         .version(request.version())
                         .required(request.isMandatory())
                         .type(request.termsType())
+                        .effectiveDate(request.effectiveDate())
                         .build()
         );
     }

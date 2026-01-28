@@ -2,6 +2,7 @@ package com.umc.product.terms.application.port.out;
 
 import com.umc.product.terms.domain.Terms;
 import com.umc.product.terms.domain.enums.TermsType;
+import java.util.List;
 import java.util.Optional;
 
 public interface LoadTermsPort {
@@ -19,4 +20,9 @@ public interface LoadTermsPort {
      * ID로 약관이 존재하는지 확인합니다.
      */
     boolean existsById(Long id);
+
+    /**
+     * 전달받은 타입들에 해당하는 활성 약관을 한 번에 조회합니다.
+     */
+    List<Terms> findAllActiveByTypes(List<TermsType> types);
 }
