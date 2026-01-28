@@ -5,6 +5,7 @@ import com.umc.product.curriculum.adapter.in.web.dto.request.SelectBestWorkbookR
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -62,7 +63,7 @@ public interface AdminWorkbookControllerApi {
     })
     void reviewWorkbook(
             @Parameter(description = "챌린저 워크북 ID", required = true) Long challengerWorkbookId,
-            ReviewWorkbookRequest request
+            @RequestBody(description = "워크북 검토 요청") ReviewWorkbookRequest request
     );
 
     @Operation(
@@ -90,6 +91,6 @@ public interface AdminWorkbookControllerApi {
     })
     void selectBestWorkbook(
             @Parameter(description = "챌린저 워크북 ID", required = true) Long challengerWorkbookId,
-            SelectBestWorkbookRequest request
+            @RequestBody(description = "베스트 워크북 선정 요청") SelectBestWorkbookRequest request
     );
 }

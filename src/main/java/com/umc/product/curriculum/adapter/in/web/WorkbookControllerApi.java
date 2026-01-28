@@ -4,6 +4,7 @@ import com.umc.product.curriculum.adapter.in.web.dto.request.SubmitWorkbookReque
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -36,6 +37,6 @@ public interface WorkbookControllerApi {
     })
     void submitWorkbook(
             @Parameter(description = "챌린저 워크북 ID", required = true) Long challengerWorkbookId,
-            SubmitWorkbookRequest request
+            @RequestBody(description = "워크북 제출 요청") SubmitWorkbookRequest request
     );
 }

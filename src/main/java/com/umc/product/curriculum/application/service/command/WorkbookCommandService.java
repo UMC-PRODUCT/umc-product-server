@@ -64,7 +64,7 @@ public class WorkbookCommandService implements ManageWorkbookUseCase {
     public void selectBest(SelectBestWorkbookCommand command) {
         ChallengerWorkbook workbook = loadChallengerWorkbookPort.findById(command.challengerWorkbookId());
 
-        workbook.selectBest(command.recommendation());
+        workbook.selectBest(command.bestReason());
 
         saveChallengerWorkbookPort.save(workbook);
     }
