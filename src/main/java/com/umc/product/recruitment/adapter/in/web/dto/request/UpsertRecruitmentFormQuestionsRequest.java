@@ -60,8 +60,8 @@ public record UpsertRecruitmentFormQuestionsRequest(
             Integer orderNo,
             List<Option> options
     ) {
-        private UpsertRecruitmentFormQuestionsCommand.Question toCommandQuestion() {
-            return new UpsertRecruitmentFormQuestionsCommand.Question(
+        private UpsertRecruitmentFormQuestionsCommand.QuestionInfo toCommandQuestion() {
+            return new UpsertRecruitmentFormQuestionsCommand.QuestionInfo(
                     questionId,
                     type,
                     questionText,
@@ -77,8 +77,8 @@ public record UpsertRecruitmentFormQuestionsRequest(
             String content,
             Integer orderNo
     ) {
-        private UpsertRecruitmentFormQuestionsCommand.Option toCommandOption() {
-            return new UpsertRecruitmentFormQuestionsCommand.Option(optionId, content, orderNo);
+        private UpsertRecruitmentFormQuestionsCommand.OptionInfo toCommandOption() {
+            return new UpsertRecruitmentFormQuestionsCommand.OptionInfo(optionId, content, orderNo);
         }
     }
 }

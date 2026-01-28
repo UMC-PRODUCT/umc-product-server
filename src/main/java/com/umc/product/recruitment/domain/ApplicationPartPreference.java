@@ -36,4 +36,15 @@ public class ApplicationPartPreference {
     @Column(nullable = false)
     private Integer priority;
 
+    public static ApplicationPartPreference create(
+            Application application,
+            RecruitmentPart recruitmentPart,
+            int priority
+    ) {
+        return ApplicationPartPreference.builder()
+                .application(application)
+                .recruitmentPart(recruitmentPart)
+                .priority(priority)
+                .build();
+    }
 }

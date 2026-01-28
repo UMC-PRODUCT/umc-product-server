@@ -4,9 +4,12 @@ import com.umc.product.notice.application.port.in.command.ManageNoticeContentUse
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeLinksCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeVotesCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeImageCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeLinkCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVoteCommand;
+import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeImagesCommand;
+import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeLinksCommand;
+import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVotesCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
+import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeVotesCommand;
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
@@ -20,7 +23,6 @@ import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
@@ -113,28 +115,79 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
                 .toList();
     }
 
-    @Override
-    public void removeVote(RemoveNoticeVoteCommand command) {
-        NoticeVote noticeVote = loadNoticeVotePort.findVoteById(command.noticeVoteId())
-                .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
 
-        saveNoticeVotePort.deleteVote(noticeVote);
+    @Override
+    public void removeContentsByNoticeId(Long noticeId) {
+        saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
+        saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
+        saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
     }
 
     @Override
-    public void removeImage(RemoveNoticeImageCommand command) {
-        NoticeImage noticeImage = loadNoticeImagePort.findImageById(command.noticeImageId())
-                .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_IMAGE_NOT_FOUND));
+    public void replaceVotes(ReplaceNoticeVotesCommand command, Long noticeId) {
+        if (command.voteIds() == null) {
+            return;
+        }
 
-        saveNoticeImagePort.deleteImage(noticeImage);
+        Notice notice = findNoticeById(noticeId);
+        saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
+
+        if (command.voteIds().isEmpty()) {
+            return;
+        }
+
+        AtomicInteger order = new AtomicInteger(0);
+        List<NoticeVote> votes = command.voteIds().stream()
+                .map(voteId -> NoticeVote.create(voteId, notice, order.getAndIncrement()))
+                .toList();
+
+        saveNoticeVotePort.saveAllVotes(votes);
     }
 
     @Override
-    public void removeLink(RemoveNoticeLinkCommand command) {
-        NoticeLink noticeLink = loadNoticeLinkPort.findLinkById(command.noticeLinkId())
-                .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_LINK_NOT_FOUND));
+    public void replaceImages(ReplaceNoticeImagesCommand command, Long noticeId) {
+        if (command.imageIds() == null) {
+            return;
+        }
 
-        saveNoticeLinkPort.deleteLink(noticeLink);
+        if (command.imageIds().size() > 10) {
+            throw new NoticeDomainException(NoticeErrorCode.IMAGE_LIMIT_EXCEEDED);
+        }
+
+        Notice notice = findNoticeById(noticeId);
+        saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
+
+        if (command.imageIds().isEmpty()) {
+            return;
+        }
+
+        AtomicInteger order = new AtomicInteger(0);
+        List<NoticeImage> images = command.imageIds().stream()
+                .map(imageId -> NoticeImage.create(imageId, notice, order.getAndIncrement()))
+                .toList();
+
+        saveNoticeImagePort.saveAllImages(images);
+    }
+
+    @Override
+    public void replaceLinks(ReplaceNoticeLinksCommand command, Long noticeId) {
+        if (command.links() == null) {
+            return;
+        }
+
+        Notice notice = findNoticeById(noticeId);
+        saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
+
+        if (command.links().isEmpty()) {
+            return;
+        }
+
+        AtomicInteger order = new AtomicInteger(0);
+        List<NoticeLink> links = command.links().stream()
+                .map(link -> NoticeLink.create(link, notice, order.getAndIncrement()))
+                .toList();
+
+        saveNoticeLinkPort.saveAllLinks(links);
     }
 
     private Notice findNoticeById(Long noticeId) {

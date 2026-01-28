@@ -25,7 +25,9 @@ public record NoticeInfo(
         List<NoticeLinkInfo> links,
         Integer viewCount,
         Instant createdAt,
-        boolean isUpdated
+        boolean isUpdated,
+        boolean canUpdate, // 수정 가능 여부
+        boolean canDelete // 삭제 가능 여부
 ) {
     public static NoticeInfo of(
             Notice notice,
@@ -35,7 +37,9 @@ public record NoticeInfo(
             List<NoticeVoteInfo> votes,
             List<NoticeImageInfo> images,
             List<NoticeLinkInfo> links,
-            boolean isUpdated
+            boolean isUpdated,
+            boolean canUpdate,
+            boolean canDelete
     ) {
         return new NoticeInfo(
                 notice.getId(),
@@ -54,7 +58,9 @@ public record NoticeInfo(
                 links,
                 viewCount,
                 notice.getCreatedAt(),
-                isUpdated
+                isUpdated,
+                canUpdate,
+                canDelete
         );
     }
 }

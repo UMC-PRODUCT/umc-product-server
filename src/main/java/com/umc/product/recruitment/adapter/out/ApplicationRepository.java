@@ -1,6 +1,7 @@
 package com.umc.product.recruitment.adapter.out;
 
 import com.umc.product.recruitment.domain.Application;
+import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -14,4 +15,8 @@ public interface ApplicationRepository extends JpaRepository<Application, Long> 
     long countByRecruitmentId(@Param("recruitmentId") Long recruitmentId);
 
     boolean existsByRecruitmentId(Long recruitmentId);
+
+    boolean existsByRecruitmentIdAndApplicantMemberId(Long recruitmentId, Long applicantMemberId);
+
+    List<Application> findAllByApplicantMemberId(Long applicantMemberId);
 }

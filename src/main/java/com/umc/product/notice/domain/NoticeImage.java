@@ -30,19 +30,19 @@ public class NoticeImage extends BaseEntity {
     private Notice notice;
 
     @Column(name = "image_id", nullable = false)
-    private Long imageId;
+    private String imageId;
 
     @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
 
     @Builder
-    private NoticeImage(Notice notice, Long imageId, Integer displayOrder) {
+    private NoticeImage(Notice notice, String imageId, Integer displayOrder) {
         this.notice = notice;
         this.imageId = imageId;
         this.displayOrder = displayOrder;
     }
 
-    public static NoticeImage create(Long imageId, Notice notice, int displayOrder) {
+    public static NoticeImage create(String imageId, Notice notice, int displayOrder) {
         return NoticeImage.builder()
                 .imageId(imageId)
                 .notice(notice)

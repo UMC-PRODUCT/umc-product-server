@@ -10,6 +10,8 @@ import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDr
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormQuestionsCommand;
 import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo.InterviewTimeTableInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormDefinitionInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentListInfo;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPort;
@@ -190,9 +192,20 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
         Long formId = recruitment.getFormId();
 
-        FormDefinitionInfo formDefinitionInfo = loadFormPort.loadFormDefinition(formId);
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
 
-        return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo);
+        FormDefinitionInfo formDefinitionInfo = loadFormPort.loadFormDefinition(formId);
+        RecruitmentFormDefinitionInfo recruitmentDef = RecruitmentFormDefinitionInfo.from(formDefinitionInfo);
+
+        List<RecruitmentPart> parts =
+                recruitmentPartRepository.findByRecruitmentId(recruitmentId);
+
+        var preferredPartInfo = buildPreferredPartInfo(recruitment, parts);
+
+        return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo, recruitmentDef, null,
+                preferredPartInfo);
     }
 
     @Override
@@ -266,9 +279,9 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
     private void upsertOptions(
             Question question,
-            List<UpsertRecruitmentFormQuestionsCommand.Option> options
+            List<UpsertRecruitmentFormQuestionsCommand.OptionInfo> options
     ) {
-        for (UpsertRecruitmentFormQuestionsCommand.Option o : options) {
+        for (UpsertRecruitmentFormQuestionsCommand.OptionInfo o : options) {
 
             QuestionOption option;
 
@@ -298,7 +311,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         }
     }
 
-    private Question upsertQuestionEntity(FormSection section, UpsertRecruitmentFormQuestionsCommand.Question req) {
+    private Question upsertQuestionEntity(FormSection section, UpsertRecruitmentFormQuestionsCommand.QuestionInfo req) {
 
         final Question question;
 
@@ -432,7 +445,8 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                             endDate,
                             applicantCount,
                             phase,
-                            false
+                            false,
+                            r.getUpdatedAt()
                     );
                 })
                 .filter(x -> x != null)
@@ -496,10 +510,21 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                             endDate,
                             applicantCount,
                             phase,
-                            true
+                            true,
+                            r.getUpdatedAt()
                     );
                 })
                 .toList();
+    }
+
+    @Override
+    public Optional<Long> findActiveRecruitmentId(Long schoolId, Long gisuId, Instant now) {
+        return recruitmentRepository.findActiveRecruitmentId(schoolId, gisuId, now);
+    }
+
+    @Override
+    public Optional<Recruitment> findByFormId(Long formId) {
+        return recruitmentRepository.findByFormId(formId);
     }
 
     private boolean matchesListStatus(RecruitmentListStatus status, RecruitmentPhase phase) {
@@ -512,6 +537,94 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
             case DRAFT -> false;
         };
     }
+
+    @Override
+    public RecruitmentApplicationFormInfo findApplicationFormInfoForApplicantById(
+            Long recruitmentId,
+            RecruitmentApplicationFormInfo.PreferredPartInfo preferredPartInfo
+    ) {
+        Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        Long formId = recruitment.getFormId();
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
+
+        FormDefinitionInfo formDefinitionInfo = loadFormPort.loadFormDefinition(formId);
+        RecruitmentFormDefinitionInfo recruitmentDef = RecruitmentFormDefinitionInfo.from(formDefinitionInfo);
+
+        InterviewTimeTableInfo applicantTimeTable = parseInterviewTimeTableForApplicant(
+                recruitment.getInterviewTimeTable());
+
+        return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo, recruitmentDef, applicantTimeTable,
+                preferredPartInfo);
+    }
+
+    @Override
+    public List<Long> findActiveRecruitmentIds(Long schoolId, Long gisuId, Instant now) {
+        return recruitmentRepository.findLatestPublishedId(schoolId, gisuId);
+    }
+
+    private InterviewTimeTableInfo parseInterviewTimeTableForApplicant(Map<String, Object> interviewTimeTable) {
+        if (interviewTimeTable == null) {
+            return null;
+        }
+
+        try {
+            Enabled raw = objectMapper.convertValue(interviewTimeTable, Enabled.class);
+
+            RecruitmentDraftInfo.DateRangeInfo dr = raw.dateRange();
+            RecruitmentDraftInfo.TimeRangeInfo tr = raw.timeRange();
+            Integer slotMinutes = raw.slotMinutes();
+            List<RecruitmentDraftInfo.TimesByDateInfo> enabled =
+                    raw.enabledByDate() == null ? List.of() : raw.enabledByDate();
+
+            InterviewTimeTableDisabledCalculator.Normalized normalized =
+                    InterviewTimeTableDisabledCalculator.normalizeForApplicant(dr, tr, slotMinutes, enabled);
+
+            return toQueryInterviewTimeTableInfo(normalized);
+
+        } catch (Exception e) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+    }
+
+    private InterviewTimeTableInfo toQueryInterviewTimeTableInfo(InterviewTimeTableDisabledCalculator.Normalized n) {
+        if (n == null) {
+            return null;
+        }
+
+        InterviewTimeTableInfo.DateRangeInfo dateRange =
+                (n.dateRange() == null) ? null
+                        : new InterviewTimeTableInfo.DateRangeInfo(n.dateRange().start(), n.dateRange().end());
+
+        InterviewTimeTableInfo.TimeRangeInfo timeRange =
+                (n.timeRange() == null) ? null
+                        : new InterviewTimeTableInfo.TimeRangeInfo(n.timeRange().start(), n.timeRange().end());
+
+        List<InterviewTimeTableInfo.TimesByDateInfo> enabled =
+                (n.enabledByDate() == null) ? null
+                        : n.enabledByDate().stream()
+                                .map(x -> new InterviewTimeTableInfo.TimesByDateInfo(x.date(), x.times()))
+                                .toList();
+
+        List<InterviewTimeTableInfo.TimesByDateInfo> disabled =
+                (n.disabledByDate() == null) ? null
+                        : n.disabledByDate().stream()
+                                .map(x -> new InterviewTimeTableInfo.TimesByDateInfo(x.date(), x.times()))
+                                .toList();
+
+        return new InterviewTimeTableInfo(
+                dateRange,
+                timeRange,
+                n.slotMinutes(),
+                enabled,
+                disabled
+        );
+    }
+
 
     private RecruitmentPhase resolvePhase(
             Instant now,
@@ -574,7 +687,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         if (start == null || end == null) {
             return false;
         }
-        return (now.equals(start) || now.isAfter(start)) && (now.equals(end) || now.isBefore(end));
+        return !now.isBefore(start) && now.isBefore(end);
     }
 
     private Map<Long, RecruitmentSchedule> toScheduleMap(List<Long> ids, RecruitmentScheduleType type) {
@@ -586,5 +699,35 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                         (a, b) -> a
                 ));
     }
+
+    private RecruitmentApplicationFormInfo.PreferredPartInfo buildPreferredPartInfo(
+            Recruitment recruitment,
+            List<RecruitmentPart> parts
+    ) {
+        if (recruitment == null || parts == null) {
+            return null;
+        }
+
+        int max = recruitment.getMaxPreferredPartCount() != null
+                ? recruitment.getMaxPreferredPartCount()
+                : 1;
+
+        List<RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo> options =
+                parts.stream()
+                        .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+                        .map(p -> new RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo(
+                                p.getId(),
+                                p.getPart().name(),
+                                p.getPart().name()
+                        ))
+                        .toList();
+
+        if (options.isEmpty()) {
+            return null;
+        }
+
+        return new RecruitmentApplicationFormInfo.PreferredPartInfo(max, options);
+    }
+
 
 }
