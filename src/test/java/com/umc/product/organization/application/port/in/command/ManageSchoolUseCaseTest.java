@@ -163,8 +163,8 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 학교를_지부에_배정한다() {
         // given
         Gisu gisu = manageGisuPort.save(createGisu(9L));
-        Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("서울").build());
-        School school = manageSchoolPort.save(School.create("서울대", null));
+        Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
+        School school = manageSchoolPort.save(School.create("한성대", null));
 
         AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), chapter.getId());
 
@@ -174,20 +174,20 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         // then
         School updatedSchool = loadSchoolPort.findSchoolDetailById(school.getId());
         assertThat(updatedSchool.getChapterSchools()).hasSize(1);
-        assertThat(updatedSchool.getChapterSchools().get(0).getChapter().getName()).isEqualTo("서울");
+        assertThat(updatedSchool.getChapterSchools().get(0).getChapter().getName()).isEqualTo("Scorpio");
     }
 
     @Test
     void 이미_배정된_학교를_다른_지부로_이동한다() {
         // given
         Gisu gisu = manageGisuPort.save(createGisu(9L));
-        Chapter seoulChapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("서울").build());
-        Chapter gyeonggiChapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("경기").build());
+        Chapter scorpioChapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
+        Chapter leoChapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Leo").build());
 
-        School school = manageSchoolPort.save(School.create("서울대", null));
-        manageChapterSchoolPort.save(ChapterSchool.create(seoulChapter, school));
+        School school = manageSchoolPort.save(School.create("한성대", null));
+        manageChapterSchoolPort.save(ChapterSchool.create(scorpioChapter, school));
 
-        AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), gyeonggiChapter.getId());
+        AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), leoChapter.getId());
 
         // when
         manageSchoolUseCase.assignToChapter(command);
@@ -195,7 +195,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         // then
         School updatedSchool = loadSchoolPort.findSchoolDetailById(school.getId());
         assertThat(updatedSchool.getChapterSchools()).hasSize(1);
-        assertThat(updatedSchool.getChapterSchools().get(0).getChapter().getName()).isEqualTo("경기");
+        assertThat(updatedSchool.getChapterSchools().get(0).getChapter().getName()).isEqualTo("Leo");
     }
 
     @Test
@@ -204,10 +204,10 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         Gisu gisu9 = manageGisuPort.save(createGisu(9L));
         Gisu gisu10 = manageGisuPort.save(createGisu(10L));
 
-        Chapter chapter9 = manageChapterPort.save(Chapter.builder().gisu(gisu9).name("서울").build());
-        Chapter chapter10 = manageChapterPort.save(Chapter.builder().gisu(gisu10).name("부산").build());
+        Chapter chapter9 = manageChapterPort.save(Chapter.builder().gisu(gisu9).name("Scorpio").build());
+        Chapter chapter10 = manageChapterPort.save(Chapter.builder().gisu(gisu10).name("Leo").build());
 
-        School school = manageSchoolPort.save(School.create("서울대", null));
+        School school = manageSchoolPort.save(School.create("한성대", null));
         manageChapterSchoolPort.save(ChapterSchool.create(chapter10, school));
 
         AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), chapter9.getId());
@@ -220,16 +220,16 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         assertThat(updatedSchool.getChapterSchools()).hasSize(2);
         assertThat(updatedSchool.getChapterSchools())
                 .extracting(cs -> cs.getChapter().getName())
-                .containsExactlyInAnyOrder("서울", "부산");
+                .containsExactlyInAnyOrder("Scorpio", "Leo");
     }
 
     @Test
     void 학교의_지부_배정을_해제한다() {
         // given
         Gisu gisu = manageGisuPort.save(createGisu(9L));
-        Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("서울").build());
+        Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
 
-        School school = manageSchoolPort.save(School.create("서울대", null));
+        School school = manageSchoolPort.save(School.create("한성대", null));
         manageChapterSchoolPort.save(ChapterSchool.create(chapter, school));
 
         UnassignSchoolCommand command = new UnassignSchoolCommand(school.getId(), gisu.getId());
@@ -248,10 +248,10 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         Gisu gisu9 = manageGisuPort.save(createGisu(9L));
         Gisu gisu10 = manageGisuPort.save(createGisu(10L));
 
-        Chapter chapter9 = manageChapterPort.save(Chapter.builder().gisu(gisu9).name("서울").build());
-        Chapter chapter10 = manageChapterPort.save(Chapter.builder().gisu(gisu10).name("부산").build());
+        Chapter chapter9 = manageChapterPort.save(Chapter.builder().gisu(gisu9).name("Scorpio").build());
+        Chapter chapter10 = manageChapterPort.save(Chapter.builder().gisu(gisu10).name("Leo").build());
 
-        School school = manageSchoolPort.save(School.create("서울대", null));
+        School school = manageSchoolPort.save(School.create("한성대", null));
         manageChapterSchoolPort.save(ChapterSchool.create(chapter9, school));
         manageChapterSchoolPort.save(ChapterSchool.create(chapter10, school));
 
@@ -263,14 +263,14 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         // then
         School updatedSchool = loadSchoolPort.findSchoolDetailById(school.getId());
         assertThat(updatedSchool.getChapterSchools()).hasSize(1);
-        assertThat(updatedSchool.getChapterSchools().get(0).getChapter().getName()).isEqualTo("부산");
+        assertThat(updatedSchool.getChapterSchools().get(0).getChapter().getName()).isEqualTo("Leo");
     }
 
     @Test
     void 존재하지_않는_학교를_배정하면_예외가_발생한다() {
         // given
         Gisu gisu = manageGisuPort.save(createGisu(9L));
-        Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("서울").build());
+        Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
 
         AssignSchoolCommand command = new AssignSchoolCommand(999L, chapter.getId());
 
@@ -282,7 +282,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 존재하지_않는_지부에_배정하면_예외가_발생한다() {
         // given
-        School school = manageSchoolPort.save(School.create("서울대", null));
+        School school = manageSchoolPort.save(School.create("한성대", null));
 
         AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), 999L);
 
