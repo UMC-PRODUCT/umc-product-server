@@ -1,11 +1,12 @@
 ---
-name: "\U0001F9F9 Chore"
-about: "분류가 어렵다면? \U0001F9F9"
+name: "🧹 Chore"
+about: 소스 코드와 무관한 작업
 title: '[Chore] '
-labels: ':broom: Chore, D-3'
+labels: ':broom: Chore'
 assignees: ''
 ---
 
 ### 작업 내용
 
-(여기에 작업 내용을 자유롭게 작성해주세요.)
+> 육하원칙에 의거해서 무엇을, 왜 해야하는지 작성해주세요.
+
