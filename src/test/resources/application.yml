@@ -5,26 +5,19 @@ spring:
     active: test
 
   mail:
-    host: dwqfwq
+    host: some_mail_host
     port: 587
-    username: fqwfwq
-    password: fwqfwq
-
-  jackson:
-    generator:
-      write-numbers-as-strings: true
-
+    username: mail_username
+    password: mail_password
 
   jpa:
     hibernate:
       ddl-auto: create-drop
     open-in-view: false
-    #    database-platform: org.hibernate.spatial.dialect.postgis.PostgisDialect
     properties:
       hibernate:
         format_sql: false
         show_sql: false
-  #        dialect: org.hibernate.dialect.PostgreSQLDialect
 
   flyway:
     enabled: false
@@ -34,14 +27,14 @@ spring:
       client:
         registration:
           google:
-            client-id: test
-            client-secret: test
+            client-id: google_client_id
+            client-secret: google_client_secret
 
 jwt:
-  access-token-secret: ioconw
-  refresh-token-secret: fewqgfqww
-  oauth-verification-token-secret: 1241412fwqqw
-  email-verification-token-secret: WQFEQ
+  access-token-secret: access_token_secret
+  refresh-token-secret: refresh_token_secret
+  oauth-verification-token-secret: oauth_verification_token_secret
+  email-verification-token-secret: email_verification_token_secret
   access-token-validity-in-seconds: 3600
   refresh-token-validity-in-seconds: 604800
   verification-token-validity-in-seconds: 600
@@ -63,7 +56,7 @@ logging:
       level: DEBUG
 
 app:
-  base-url: ${APP_BASE_URL:http://localhost:${SERVER_PORT:8080}}
+  base-url: http://localhost:8080
   firebase-configuration: |
     {
         "type": "service_account",
