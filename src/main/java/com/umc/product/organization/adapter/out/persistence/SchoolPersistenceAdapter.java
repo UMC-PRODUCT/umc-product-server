@@ -54,6 +54,10 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
         return schoolJpaRepository.findAllByIdIn(schoolIds);
     }
 
+    public boolean existsById(Long schoolId) {
+        return schoolJpaRepository.existsById(schoolId);
+    }
+
     @Override
     public List<School> findUnassignedByGisuId(Long gisuId) {
         return schoolJpaRepository.findUnassignedByGisuId(gisuId);

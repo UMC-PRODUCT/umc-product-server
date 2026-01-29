@@ -42,7 +42,7 @@ public class MemberController {
             description = """
                     OAuth2 로그인을 통해서 oAuthVerificationToken을 발급받은 후,
                     해당 토큰을 첨부해서 회원가입을 진행해주세요.
-                    
+                                        
                     해당 토큰은 사전에 인증된 OAuth2 Provider와 ProviderId를 인증해줍니다.
                     """)
     @PostMapping("register")
@@ -63,8 +63,6 @@ public class MemberController {
                 .profileImageId(request.profileImageId())
                 .termConsents(request.termsAgreements().stream().map(TermConsents::fromRequest).toList())
                 .build();
-
-        // TODO: 약관 동의 처리 해야함
 
         Long createdMemberId = manageMemberUseCase.registerMember(command);
 

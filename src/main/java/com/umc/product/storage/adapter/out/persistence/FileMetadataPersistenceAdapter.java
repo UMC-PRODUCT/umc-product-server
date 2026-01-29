@@ -24,6 +24,11 @@ public class FileMetadataPersistenceAdapter implements LoadFileMetadataPort, Sav
     }
 
     @Override
+    public boolean existsById(Long id) {
+        return fileMetadataRepository.existsById(id);
+    }
+
+    @Override
     public FileMetadata save(FileMetadata fileMetadata) {
         return fileMetadataRepository.save(fileMetadata);
     }

@@ -25,4 +25,9 @@ public interface LoadTermsPort {
      * 전달받은 타입들에 해당하는 활성 약관을 한 번에 조회합니다.
      */
     List<Terms> findAllActiveByTypes(List<TermsType> types);
+
+    /**
+     * 현재 활성화된 필수 약관 목록을 조회합니다.
+     */
+    List<Terms> findAllActiveRequired();
 }

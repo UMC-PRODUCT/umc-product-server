@@ -7,6 +7,8 @@ import com.umc.product.terms.domain.Terms;
 import com.umc.product.terms.domain.enums.TermsType;
 import com.umc.product.terms.domain.exception.TermsDomainException;
 import com.umc.product.terms.domain.exception.TermsErrorCode;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,5 +56,12 @@ public class TermsQueryService implements GetTermsUseCase {
                 terms.getType(),
                 terms.getEffectiveDate()
         );
+    }
+
+    @Override
+    public Set<Long> getRequiredTermIds() {
+        return loadTermsPort.findAllActiveRequired().stream()
+                .map(Terms::getId)
+                .collect(Collectors.toSet());
     }
 }
