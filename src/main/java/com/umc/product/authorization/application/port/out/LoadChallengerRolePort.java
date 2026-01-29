@@ -1,6 +1,6 @@
 package com.umc.product.authorization.application.port.out;
 
-import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.authorization.domain.ChallengerRole;
 import java.util.List;
 
 /**
@@ -14,7 +14,7 @@ public interface LoadChallengerRolePort {
      * @param memberId 사용자 ID
      * @return Role 리스트 (Role이 없으면 빈 리스트)
      */
-    List<ChallengerRoleType> findRolesByMemberId(Long memberId);
+    List<ChallengerRole> findByMemberId(Long memberId);
 
     /**
      * 특정 기수에서의 사용자 Role 조회
@@ -23,5 +23,5 @@ public interface LoadChallengerRolePort {
      * @param gisuId   기수 ID
      * @return Role 리스트
      */
-    List<ChallengerRoleType> findRolesByMemberIdAndGisuId(Long memberId, Long gisuId);
+    List<ChallengerRole> findRolesByMemberIdAndGisuId(Long memberId, Long gisuId);
 }

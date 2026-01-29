@@ -7,6 +7,11 @@ import com.umc.product.organization.application.port.out.query.LoadChapterPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
+import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
+import com.umc.product.organization.domain.Chapter;
+import com.umc.product.organization.domain.ChapterSchool;
+import com.umc.product.organization.exception.OrganizationDomainException;
+import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,6 +32,35 @@ public class ChapterQueryService implements GetChapterUseCase {
 
         return loadChapterPort.findAll().stream().map(ChapterInfo::from).toList();
 
+    }
+
+    @Override
+    public ChapterInfo byGisuAndSchool(Long gisuId, Long schoolId) {
+        // 지부 정보를 보여줘야 하면 ChapterSchool을 봐야 함
+        // 전체 ChapterSchool 중에서 schoolId에 따라서 필터링하고
+        // ChapterSchool 중에서 gisuId가 일치하는 chapter를 반환하면 됨
+
+        List<ChapterSchool> chapterSchools = loadChapterSchoolPort.findBySchoolId(schoolId);
+        for (ChapterSchool chapterSchool : chapterSchools) {
+            Chapter chapter = chapterSchool.getChapter();
+            if (chapter.getGisu().getId().equals(gisuId)) {
+                return ChapterInfo.from(chapter);
+            }
+        }
+
+        throw new OrganizationDomainException(OrganizationErrorCode.CHAPTER_NOT_FOUND);
+    }
+
+    @Override
+    public List<ChapterInfo> getChaptersBySchool(Long schoolId) {
+        // 지부별 학교 정보를 학교 ID로 전부 먼저 가져오고
+        List<ChapterSchool> chapterSchools = loadChapterSchoolPort.findBySchoolId(schoolId);
+
+        // 거기서 지부 정보를 매핑해서 List 형태로 반환함
+        return chapterSchools.stream()
+                .map(ChapterSchool::getChapter)
+                .map(ChapterInfo::from)
+                .toList();
     }
 
     @Override
