@@ -57,7 +57,7 @@ class ManageMemberUseCaseTest {
     GetTermsUseCase getTermsUseCase;
 
     @InjectMocks
-    MemberService sut;
+    MemberService memberService;
 
     @Test
     @DisplayName("일반적인 회원가입 성공")
@@ -80,7 +80,7 @@ class ManageMemberUseCaseTest {
         });
 
         // when
-        Long memberId = sut.registerMember(command);
+        Long memberId = memberService.registerMember(command);
 
         // then
         assertThat(memberId).isEqualTo(1L);
@@ -99,7 +99,7 @@ class ManageMemberUseCaseTest {
         given(loadSchoolPort.existsById(999L)).willReturn(false);
 
         // when & then
-        assertThatThrownBy(() -> sut.registerMember(command))
+        assertThatThrownBy(() -> memberService.registerMember(command))
             .isInstanceOf(OrganizationDomainException.class)
             .extracting("code")
             .isEqualTo(OrganizationErrorCode.SCHOOL_NOT_FOUND);
@@ -119,7 +119,7 @@ class ManageMemberUseCaseTest {
         given(loadFileMetadataPort.existsByFileId("profile_image_id")).willReturn(false);
 
         // when & then
-        assertThatThrownBy(() -> sut.registerMember(command))
+        assertThatThrownBy(() -> memberService.registerMember(command))
             .isInstanceOf(StorageException.class)
             .extracting("code")
             .isEqualTo(StorageErrorCode.FILE_NOT_FOUND);
@@ -143,7 +143,7 @@ class ManageMemberUseCaseTest {
         });
 
         // when
-        Long memberId = sut.registerMember(command);
+        Long memberId = memberService.registerMember(command);
 
         // then
         assertThat(memberId).isEqualTo(1L);
@@ -162,7 +162,7 @@ class ManageMemberUseCaseTest {
         given(getTermsUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));
 
         // when & then
-        assertThatThrownBy(() -> sut.registerMember(command))
+        assertThatThrownBy(() -> memberService.registerMember(command))
             .isInstanceOf(TermsDomainException.class)
             .extracting("code")
             .isEqualTo(TermsErrorCode.MANDATORY_TERMS_NOT_AGREED);
@@ -182,7 +182,7 @@ class ManageMemberUseCaseTest {
         given(getTermsUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));
 
         // when & then
-        assertThatThrownBy(() -> sut.registerMember(command))
+        assertThatThrownBy(() -> memberService.registerMember(command))
             .isInstanceOf(TermsDomainException.class)
             .extracting("code")
             .isEqualTo(TermsErrorCode.MANDATORY_TERMS_NOT_AGREED);
@@ -208,7 +208,7 @@ class ManageMemberUseCaseTest {
         });
 
         // when
-        Long memberId = sut.registerMember(command);
+        Long memberId = memberService.registerMember(command);
 
         // then
         assertThat(memberId).isEqualTo(1L);
