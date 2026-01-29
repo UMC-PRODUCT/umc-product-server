@@ -27,6 +27,7 @@ import com.umc.product.terms.domain.exception.TermsDomainException;
 import com.umc.product.terms.domain.exception.TermsErrorCode;
 import java.util.List;
 import java.util.Set;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -59,15 +60,19 @@ class ManageMemberUseCaseTest {
     MemberService sut;
 
     @Test
-    void 회원가입_성공() {
+    @DisplayName("일반적인 회원가입 성공")
+    void 일반_회원가입_성공() {
         // given
         RegisterMemberCommand command = createCommand(1L, null, List.of(
-                new TermConsents(1L, true),
-                new TermConsents(2L, true)
+            new TermConsents(1L, true),
+            new TermConsents(2L, true)
         ));
 
+        // 학교가 존재 검증 bypass
         given(loadSchoolPort.existsById(1L)).willReturn(true);
+        // 필수 약관을 동의했는지 검증하는 부분 bypass
         given(getTermsUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));
+        // member entity 저장 시 id를 1로 반환할 것
         given(saveMemberPort.save(any(Member.class))).willAnswer(invocation -> {
             Member member = invocation.getArgument(0);
             ReflectionTestUtils.setField(member, "id", 1L);
@@ -88,35 +93,36 @@ class ManageMemberUseCaseTest {
     void 학교가_존재하지_않으면_예외() {
         // given
         RegisterMemberCommand command = createCommand(999L, null, List.of(
-                new TermConsents(1L, true)
+            new TermConsents(1L, true)
         ));
 
         given(loadSchoolPort.existsById(999L)).willReturn(false);
 
         // when & then
         assertThatThrownBy(() -> sut.registerMember(command))
-                .isInstanceOf(OrganizationDomainException.class)
-                .extracting("code")
-                .isEqualTo(OrganizationErrorCode.SCHOOL_NOT_FOUND);
+            .isInstanceOf(OrganizationDomainException.class)
+            .extracting("code")
+            .isEqualTo(OrganizationErrorCode.SCHOOL_NOT_FOUND);
 
         then(saveMemberPort).should(never()).save(any());
     }
 
     @Test
+    @DisplayName("제공된 프로필 이미지가 존재하지 않으면 에러 발생")
     void 프로필_이미지가_존재하지_않으면_예외() {
         // given
-        RegisterMemberCommand command = createCommand(1L, 999L, List.of(
-                new TermConsents(1L, true)
+        RegisterMemberCommand command = createCommand(1L, "profile_image_id", List.of(
+            new TermConsents(1L, true)
         ));
 
         given(loadSchoolPort.existsById(1L)).willReturn(true);
-        given(loadFileMetadataPort.existsById(999L)).willReturn(false);
+        given(loadFileMetadataPort.existsByFileId("profile_image_id")).willReturn(false);
 
         // when & then
         assertThatThrownBy(() -> sut.registerMember(command))
-                .isInstanceOf(StorageException.class)
-                .extracting("code")
-                .isEqualTo(StorageErrorCode.FILE_NOT_FOUND);
+            .isInstanceOf(StorageException.class)
+            .extracting("code")
+            .isEqualTo(StorageErrorCode.FILE_NOT_FOUND);
 
         then(saveMemberPort).should(never()).save(any());
     }
@@ -125,7 +131,7 @@ class ManageMemberUseCaseTest {
     void 프로필_이미지_ID가_null이면_검증_스킵() {
         // given
         RegisterMemberCommand command = createCommand(1L, null, List.of(
-                new TermConsents(1L, true)
+            new TermConsents(1L, true)
         ));
 
         given(loadSchoolPort.existsById(1L)).willReturn(true);
@@ -141,15 +147,15 @@ class ManageMemberUseCaseTest {
 
         // then
         assertThat(memberId).isEqualTo(1L);
-        then(loadFileMetadataPort).should(never()).existsById(any());
+        then(loadFileMetadataPort).should(never()).existsByFileId(any());
     }
 
     @Test
     void 필수_약관_미동의시_예외() {
         // given
         RegisterMemberCommand command = createCommand(1L, null, List.of(
-                new TermConsents(1L, false),
-                new TermConsents(2L, false)
+            new TermConsents(1L, false),
+            new TermConsents(2L, false)
         ));
 
         given(loadSchoolPort.existsById(1L)).willReturn(true);
@@ -157,9 +163,9 @@ class ManageMemberUseCaseTest {
 
         // when & then
         assertThatThrownBy(() -> sut.registerMember(command))
-                .isInstanceOf(TermsDomainException.class)
-                .extracting("code")
-                .isEqualTo(TermsErrorCode.MANDATORY_TERMS_NOT_AGREED);
+            .isInstanceOf(TermsDomainException.class)
+            .extracting("code")
+            .isEqualTo(TermsErrorCode.MANDATORY_TERMS_NOT_AGREED);
 
         then(saveMemberPort).should(never()).save(any());
     }
@@ -168,8 +174,8 @@ class ManageMemberUseCaseTest {
     void 필수_약관_일부만_동의시_예외() {
         // given
         RegisterMemberCommand command = createCommand(1L, null, List.of(
-                new TermConsents(1L, true),
-                new TermConsents(2L, false)
+            new TermConsents(1L, true),
+            new TermConsents(2L, false)
         ));
 
         given(loadSchoolPort.existsById(1L)).willReturn(true);
@@ -177,9 +183,9 @@ class ManageMemberUseCaseTest {
 
         // when & then
         assertThatThrownBy(() -> sut.registerMember(command))
-                .isInstanceOf(TermsDomainException.class)
-                .extracting("code")
-                .isEqualTo(TermsErrorCode.MANDATORY_TERMS_NOT_AGREED);
+            .isInstanceOf(TermsDomainException.class)
+            .extracting("code")
+            .isEqualTo(TermsErrorCode.MANDATORY_TERMS_NOT_AGREED);
 
         then(saveMemberPort).should(never()).save(any());
     }
@@ -188,9 +194,9 @@ class ManageMemberUseCaseTest {
     void 선택_약관만_미동의해도_성공() {
         // given
         RegisterMemberCommand command = createCommand(1L, null, List.of(
-                new TermConsents(1L, true),   // 필수 약관 동의
-                new TermConsents(2L, true),   // 필수 약관 동의
-                new TermConsents(3L, false)   // 선택 약관 미동의
+            new TermConsents(1L, true),   // 필수 약관 동의
+            new TermConsents(2L, true),   // 필수 약관 동의
+            new TermConsents(3L, false)   // 선택 약관 미동의
         ));
 
         given(loadSchoolPort.existsById(1L)).willReturn(true);
@@ -208,16 +214,16 @@ class ManageMemberUseCaseTest {
         assertThat(memberId).isEqualTo(1L);
     }
 
-    private RegisterMemberCommand createCommand(Long schoolId, Long profileImageId, List<TermConsents> termConsents) {
+    private RegisterMemberCommand createCommand(Long schoolId, String profileImageId, List<TermConsents> termConsents) {
         return RegisterMemberCommand.builder()
-                .provider(OAuthProvider.KAKAO)
-                .providerId("kakao_12345")
-                .name("홍길동")
-                .nickname("길동이")
-                .email("test@example.com")
-                .schoolId(schoolId)
-                .profileImageId(profileImageId)
-                .termConsents(termConsents)
-                .build();
+            .provider(OAuthProvider.KAKAO)
+            .providerId("some_kakao_provider_id")
+            .name("홍길동")
+            .nickname("길동")
+            .email("test@example.com")
+            .schoolId(schoolId)
+            .profileImageId(profileImageId)
+            .termConsents(termConsents)
+            .build();
     }
 }

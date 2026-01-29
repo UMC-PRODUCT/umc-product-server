@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FileMetadataRepository extends JpaRepository<FileMetadata, Long> {
 
-    Optional<FileMetadata> findByFileId(String fileId);
+    Optional<FileMetadata> findById(String fileId);
 
-    boolean existsByFileId(String fileId);
+    boolean existsById(String fileId);
 
-    void deleteByFileId(String fileId);
+    void deleteById(String fileId);
 }

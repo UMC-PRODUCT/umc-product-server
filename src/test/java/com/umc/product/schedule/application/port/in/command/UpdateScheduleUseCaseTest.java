@@ -72,15 +72,15 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         Point newLocation = createPoint(30.15474500622856, 31.093201386526953);
 
         UpdateScheduleCommand command = UpdateScheduleCommand.of(
-                schedule.getId(),
-                "수정된 일정 제목",
-                newStartsAt,
-                newEndsAt,
-                false,
-                "수정된 장소",
-                newLocation,
-                "수정된 설명",
-                Set.of(ScheduleTag.NETWORKING, ScheduleTag.AFTER_PARTY)
+            schedule.getId(),
+            "수정된 일정 제목",
+            newStartsAt,
+            newEndsAt,
+            false,
+            "수정된 장소",
+            newLocation,
+            "수정된 설명",
+            Set.of(ScheduleTag.NETWORKING, ScheduleTag.AFTER_PARTY)
         );
 
         // when
@@ -92,7 +92,7 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         assertThat(updatedSchedule.getLocationName()).isEqualTo("수정된 장소");
         assertThat(updatedSchedule.getDescription()).isEqualTo("수정된 설명");
         assertThat(updatedSchedule.getTags()).containsExactlyInAnyOrder(ScheduleTag.NETWORKING,
-                ScheduleTag.AFTER_PARTY);
+            ScheduleTag.AFTER_PARTY);
         assertThat(updatedSchedule.getStartsAt()).isEqualTo(newStartsAt);
         assertThat(updatedSchedule.getEndsAt()).isEqualTo(newEndsAt);
         assertThat(updatedSchedule.getLocation().getY()).isEqualTo(30.15474500622856); // 위도 확인
@@ -111,15 +111,15 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
 
         // 제목과 설명만 변경하고, 나머지는 null로 요청
         UpdateScheduleCommand command = UpdateScheduleCommand.of(
-                schedule.getId(),
-                "부분 수정된 제목", // 변경할 값
-                null,             // 변경 안 함 (기존 시간 유지)
-                null,             // 변경 안 함
-                null,             // 변경 안 함
-                null,             // 변경 안 함 (기존 장소 유지)
-                null,             // 변경 안 함 (기존 위도, 경도 유지)
-                "부분 수정된 설명", // 변경할 값
-                null              // 변경 안 함 (기존 태그 유지)
+            schedule.getId(),
+            "부분 수정된 제목", // 변경할 값
+            null,             // 변경 안 함 (기존 시간 유지)
+            null,             // 변경 안 함
+            null,             // 변경 안 함
+            null,             // 변경 안 함 (기존 장소 유지)
+            null,             // 변경 안 함 (기존 위도, 경도 유지)
+            "부분 수정된 설명", // 변경할 값
+            null              // 변경 안 함 (기존 태그 유지)
         );
 
         // when
@@ -151,15 +151,15 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         LocalDateTime newEnd = schedule.getEndsAt().plusHours(1);
 
         UpdateScheduleCommand command = UpdateScheduleCommand.of(
-                schedule.getId(),
-                null,       // 이름 유지
-                newStart,   // 시작 시간 변경
-                newEnd,     // 종료 시간 변경
-                null,       // 종일 여부 유지
-                null,       // 장소 이름 유지
-                null,       // 장소 위도,경도 유지
-                null,
-                null
+            schedule.getId(),
+            null,       // 이름 유지
+            newStart,   // 시작 시간 변경
+            newEnd,     // 종료 시간 변경
+            null,       // 종일 여부 유지
+            null,       // 장소 이름 유지
+            null,       // 장소 위도,경도 유지
+            null,
+            null
         );
 
         // when
@@ -180,8 +180,8 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
 
         // 모든 필드를 null로 전송
         UpdateScheduleCommand command = UpdateScheduleCommand.of(
-                schedule.getId(),
-                null, null, null, null, null, null, null, null
+            schedule.getId(),
+            null, null, null, null, null, null, null, null
         );
 
         // when
@@ -205,15 +205,15 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         LocalDateTime endsAt = LocalDateTime.of(2026, 5, 11, 18, 0);
 
         UpdateScheduleCommand command = UpdateScheduleCommand.of(
-                schedule.getId(),
-                "종일 일정",
-                startsAt,
-                endsAt,
-                true,  // 종일
-                null,
-                null,
-                null,
-                Set.of(ScheduleTag.HACKATHON)
+            schedule.getId(),
+            "종일 일정",
+            startsAt,
+            endsAt,
+            true,  // 종일
+            null,
+            null,
+            null,
+            Set.of(ScheduleTag.HACKATHON)
         );
 
         // when
@@ -233,24 +233,24 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         Long nonExistentId = 99999L;
 
         UpdateScheduleCommand command = UpdateScheduleCommand.of(
-                nonExistentId,
-                "수정된 제목",
-                LocalDateTime.now().plusDays(1),
-                LocalDateTime.now().plusDays(1).plusHours(2),
-                false,
-                "장소",
-                null,
-                "설명",
-                Set.of(ScheduleTag.GENERAL)
+            nonExistentId,
+            "수정된 제목",
+            LocalDateTime.now().plusDays(1),
+            LocalDateTime.now().plusDays(1).plusHours(2),
+            false,
+            "장소",
+            null,
+            "설명",
+            Set.of(ScheduleTag.GENERAL)
         );
 
         // when & then
         assertThatThrownBy(() -> updateScheduleUseCase.update(command))
-                .isInstanceOf(BusinessException.class)
-                .satisfies(exception -> {
-                    BusinessException be = (BusinessException) exception;
-                    assertThat(be.getCode()).isEqualTo(ScheduleErrorCode.SCHEDULE_NOT_FOUND);
-                });
+            .isInstanceOf(BusinessException.class)
+            .satisfies(exception -> {
+                BusinessException be = (BusinessException) exception;
+                assertThat(be.getCode()).isEqualTo(ScheduleErrorCode.SCHEDULE_NOT_FOUND);
+            });
     }
 
     @Test
@@ -259,18 +259,18 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         Schedule schedule = saveSchedulePort.save(createSchedule(authorChallenger.getId()));
 
         UpdateScheduleCommand command = UpdateScheduleCommand.of(
-                schedule.getId(),
-                null, null, null, null, null, null, null,
-                Collections.emptySet() // 빈 태그 리스트 전달
+            schedule.getId(),
+            null, null, null, null, null, null, null,
+            Collections.emptySet() // 빈 태그 리스트 전달
         );
 
         // when & then
         assertThatThrownBy(() -> updateScheduleUseCase.update(command))
-                .isInstanceOf(BusinessException.class)
-                .satisfies(exception -> {
-                    BusinessException be = (BusinessException) exception;
-                    assertThat(be.getCode()).isEqualTo(ScheduleErrorCode.TAG_REQUIRED);
-                });
+            .isInstanceOf(BusinessException.class)
+            .satisfies(exception -> {
+                BusinessException be = (BusinessException) exception;
+                assertThat(be.getCode()).isEqualTo(ScheduleErrorCode.TAG_REQUIRED);
+            });
     }
 
     // ========== Fixture Methods ==========
@@ -279,43 +279,43 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         Point point = createPoint(37.4979, 127.0276);
 
         return Schedule.builder()
-                .name("수정 테스트 일정")
-                .startsAt(LocalDateTime.now().plusDays(1))
-                .endsAt(LocalDateTime.now().plusDays(1).plusHours(2))
-                .isAllDay(false)
-                .locationName("테스트 장소")
-                .location(point)
-                .description("테스트 내용")
-                .tags(Set.of(ScheduleTag.PROJECT))
-                .authorChallengerId(authorChallengerId)
-                .build();
+            .name("수정 테스트 일정")
+            .startsAt(LocalDateTime.now().plusDays(1))
+            .endsAt(LocalDateTime.now().plusDays(1).plusHours(2))
+            .isAllDay(false)
+            .locationName("테스트 장소")
+            .location(point)
+            .description("테스트 내용")
+            .tags(Set.of(ScheduleTag.PROJECT))
+            .authorChallengerId(authorChallengerId)
+            .build();
     }
 
     private Gisu createActiveGisu(Long generation) {
         return Gisu.builder()
-                .generation(generation)
-                .isActive(true)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
-                .build();
+            .generation(generation)
+            .isActive(true)
+            .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
+            .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
+            .build();
     }
 
     private Member createMember(String name, String nickname, String email) {
         return Member.builder()
-                .email(email)
-                .name(name)
-                .nickname(nickname)
-                .schoolId(1L)
-                .profileImageId(1L)
-                .build();
+            .email(email)
+            .name(name)
+            .nickname(nickname)
+            .schoolId(1L)
+            .profileImageId("1")
+            .build();
     }
 
     private Challenger createChallenger(Long memberId, Long gisuId) {
         return Challenger.builder()
-                .memberId(memberId)
-                .gisuId(gisuId)
-                .part(ChallengerPart.SPRINGBOOT)
-                .build();
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .build();
     }
 
     private Point createPoint(double latitude, double longitude) {

@@ -40,14 +40,14 @@ public class Member extends BaseEntity {
     private Long schoolId;  // ID 참조만 (organization 도메인 의존 방지)
 
     @Column(name = "profile_image_id")
-    private Long profileImageId;
+    private String profileImageId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private MemberStatus status;
 
     @Builder
-    private Member(String name, String nickname, String email, Long schoolId, Long profileImageId) {
+    private Member(String name, String nickname, String email, Long schoolId, String profileImageId) {
         this.name = name;
         this.nickname = nickname;
         this.email = email;
@@ -57,7 +57,7 @@ public class Member extends BaseEntity {
     }
 
     // Domain Logic: 프로필 업데이트
-    public void updateProfile(String nickname, Long schoolId, Long profileImageId) {
+    public void updateProfile(String nickname, Long schoolId, String profileImageId) {
         validateActive();
         if (nickname != null) {
             this.nickname = nickname;

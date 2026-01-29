@@ -40,7 +40,9 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc(addFilters = false)
 @AutoConfigureRestDocs
 public class DocumentationTest {
-
+    // =================================================
+    // Rest Docs 생성을 위한 기본적인 주입을 처리하는 부모 클래스
+    // =================================================
 
     @Autowired
     protected MockMvc mockMvc;

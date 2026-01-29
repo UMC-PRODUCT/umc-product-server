@@ -83,7 +83,7 @@ class DeleteScheduleUseCaseTest extends UseCaseTestSupport {
         // 3. 참여자 및 출석 기록 생성
         Member participant = saveMemberPort.save(createMember("참여자", "참여닉", "part@test.com"));
         saveAttendanceRecordPort.saveAllRecords(List.of(
-                createAttendanceRecord(sheet.getId(), participant.getId())
+            createAttendanceRecord(sheet.getId(), participant.getId())
         ));
 
         // when
@@ -121,68 +121,68 @@ class DeleteScheduleUseCaseTest extends UseCaseTestSupport {
 
         // when & then
         assertThatThrownBy(() -> deleteScheduleUseCase.delete(nonExistentId))
-                .isInstanceOf(BusinessException.class)
-                .satisfies(exception -> {
-                    BusinessException be = (BusinessException) exception;
-                    assertThat(be.getCode()).isEqualTo(ScheduleErrorCode.SCHEDULE_NOT_FOUND);
-                });
+            .isInstanceOf(BusinessException.class)
+            .satisfies(exception -> {
+                BusinessException be = (BusinessException) exception;
+                assertThat(be.getCode()).isEqualTo(ScheduleErrorCode.SCHEDULE_NOT_FOUND);
+            });
     }
 
     // ========== Fixture Methods ==========
 
     private Schedule createSchedule(Long authorChallengerId) {
         return Schedule.builder()
-                .name("삭제 테스트 일정")
-                .startsAt(LocalDateTime.now().plusDays(1))
-                .endsAt(LocalDateTime.now().plusDays(1).plusHours(2))
-                .isAllDay(false)
-                .locationName("테스트 장소")
-                .description("테스트 내용")
-                .tags(Set.of(ScheduleTag.PROJECT))
-                .authorChallengerId(authorChallengerId)
-                .build();
+            .name("삭제 테스트 일정")
+            .startsAt(LocalDateTime.now().plusDays(1))
+            .endsAt(LocalDateTime.now().plusDays(1).plusHours(2))
+            .isAllDay(false)
+            .locationName("테스트 장소")
+            .description("테스트 내용")
+            .tags(Set.of(ScheduleTag.PROJECT))
+            .authorChallengerId(authorChallengerId)
+            .build();
     }
 
     private AttendanceSheet createAttendanceSheet(Long scheduleId) {
         return AttendanceSheet.builder()
-                .scheduleId(scheduleId)
-                .window(AttendanceWindow.ofDefault(LocalDateTime.now().plusDays(1)))
-                .requiresApproval(false)
-                .build();
+            .scheduleId(scheduleId)
+            .window(AttendanceWindow.ofDefault(LocalDateTime.now().plusDays(1)))
+            .requiresApproval(false)
+            .build();
     }
 
     private AttendanceRecord createAttendanceRecord(Long sheetId, Long memberId) {
         return AttendanceRecord.builder()
-                .attendanceSheetId(sheetId)
-                .memberId(memberId)
-                .status(AttendanceStatus.PENDING)
-                .build();
+            .attendanceSheetId(sheetId)
+            .memberId(memberId)
+            .status(AttendanceStatus.PENDING)
+            .build();
     }
 
     private Gisu createActiveGisu(Long generation) {
         return Gisu.builder()
-                .generation(generation)
-                .isActive(true)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
-                .build();
+            .generation(generation)
+            .isActive(true)
+            .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
+            .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
+            .build();
     }
 
     private Member createMember(String name, String nickname, String email) {
         return Member.builder()
-                .email(email)
-                .name(name)
-                .nickname(nickname)
-                .schoolId(1L)
-                .profileImageId(1L)
-                .build();
+            .email(email)
+            .name(name)
+            .nickname(nickname)
+            .schoolId(1L)
+            .profileImageId("1")
+            .build();
     }
 
     private Challenger createChallenger(Long memberId, Long gisuId) {
         return Challenger.builder()
-                .memberId(memberId)
-                .gisuId(gisuId)
-                .part(ChallengerPart.SPRINGBOOT)
-                .build();
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .build();
     }
 }
