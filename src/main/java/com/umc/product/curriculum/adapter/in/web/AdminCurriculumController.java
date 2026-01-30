@@ -5,6 +5,7 @@ import com.umc.product.curriculum.adapter.in.web.dto.request.ManageCurriculumReq
 import com.umc.product.curriculum.adapter.in.web.dto.response.AdminCurriculumResponse;
 import com.umc.product.curriculum.application.port.in.command.ManageCurriculumUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetAdminCurriculumUseCase;
+import com.umc.product.global.security.annotation.Public;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

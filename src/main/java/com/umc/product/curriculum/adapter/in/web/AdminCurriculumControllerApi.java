@@ -11,7 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = Constants.ADMIN)
+@Tag(name = Constants.CURRICULUM)
 public interface AdminCurriculumControllerApi {
 
     @Operation(

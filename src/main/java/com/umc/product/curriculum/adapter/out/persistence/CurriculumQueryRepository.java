@@ -6,10 +6,12 @@ import static com.umc.product.curriculum.domain.QOriginalWorkbook.originalWorkbo
 import static com.umc.product.organization.domain.QGisu.gisu;
 
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.CurriculumProgressInfo;
 import com.umc.product.curriculum.application.port.in.query.CurriculumProgressInfo.WorkbookProgressInfo;
+import com.umc.product.curriculum.application.port.in.query.CurriculumWeekInfo;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import java.time.LocalDate;
@@ -112,5 +114,26 @@ public class CurriculumQueryRepository {
                 totalCount,
                 workbooks
         ));
+    }
+
+    /**
+     * 활성 기수의 파트별 커리큘럼 주차 정보 조회 (weekNo, title만)
+     */
+    public List<CurriculumWeekInfo> findWeekInfoByActiveGisuAndPart(ChallengerPart part) {
+        return queryFactory
+                .select(Projections.constructor(
+                        CurriculumWeekInfo.class,
+                        originalWorkbook.weekNo,
+                        originalWorkbook.title
+                ))
+                .from(originalWorkbook)
+                .join(curriculum).on(curriculum.id.eq(originalWorkbook.curriculum.id))
+                .join(gisu).on(gisu.id.eq(curriculum.gisuId))
+                .where(
+                        gisu.isActive.eq(true),
+                        curriculum.part.eq(part)
+                )
+                .orderBy(originalWorkbook.weekNo.asc())
+                .fetch();
     }
 }
