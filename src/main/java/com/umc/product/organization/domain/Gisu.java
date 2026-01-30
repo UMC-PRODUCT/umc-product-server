@@ -3,6 +3,7 @@ package com.umc.product.organization.domain;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -24,6 +25,7 @@ public class Gisu {
 
     private Long generation;
 
+    @Column(name = "is_active")
     private boolean isActive;
 
     private LocalDateTime startAt;
