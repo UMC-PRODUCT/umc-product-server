@@ -7,6 +7,7 @@ import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.adapter.out.util.InterviewTimeTableDisabledCalculator;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo.ScheduleInfo;
+import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentPublishedInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormQuestionsCommand;
 import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
@@ -42,6 +43,7 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -572,6 +574,33 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         return recruitmentRepository.findLatestPublishedId(schoolId, gisuId);
     }
 
+    @Override
+    public RecruitmentPublishedInfo.ScheduleInfo findPublishedScheduleInfoByRecruitmentId(Long recruitmentId) {
+        Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        List<RecruitmentSchedule> schedules =
+                recruitmentScheduleRepository.findByRecruitmentId(recruitmentId);
+
+        RecruitmentPublishedInfo.InterviewTimeTableInfo timeTable =
+                parseInterviewTimeTableForPublished(recruitment.getInterviewTimeTable());
+
+        return toPublishedScheduleInfo(schedules, timeTable);
+    }
+
+    @Override
+    public Map<RecruitmentScheduleType, RecruitmentSchedule>
+    findScheduleMapByRecruitmentId(Long recruitmentId) {
+
+        return recruitmentScheduleRepository.findByRecruitmentId(recruitmentId)
+                .stream()
+                .collect(Collectors.toMap(
+                        RecruitmentSchedule::getType,
+                        Function.identity()
+                ));
+    }
+
     private InterviewTimeTableInfo parseInterviewTimeTableForApplicant(Map<String, Object> interviewTimeTable) {
         if (interviewTimeTable == null) {
             return null;
@@ -741,5 +770,90 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         return phase != RecruitmentPhase.CLOSED;
     }
 
+    private RecruitmentPublishedInfo.ScheduleInfo toPublishedScheduleInfo(
+            List<RecruitmentSchedule> schedules,
+            RecruitmentPublishedInfo.InterviewTimeTableInfo interviewTimeTable
+    ) {
+        Map<RecruitmentScheduleType, RecruitmentSchedule> map =
+                (schedules == null ? List.<RecruitmentSchedule>of() : schedules).stream()
+                        .collect(Collectors.toMap(RecruitmentSchedule::getType, Function.identity(), (a, b) -> a));
+
+        RecruitmentSchedule apply = map.get(RecruitmentScheduleType.APPLY_WINDOW);
+        RecruitmentSchedule interview = map.get(RecruitmentScheduleType.INTERVIEW_WINDOW);
+        RecruitmentSchedule docResult = map.get(RecruitmentScheduleType.DOC_RESULT_AT);
+        RecruitmentSchedule finalResult = map.get(RecruitmentScheduleType.FINAL_RESULT_AT);
+
+        return new RecruitmentPublishedInfo.ScheduleInfo(
+                apply == null ? null : apply.getStartsAt(),
+                apply == null ? null : apply.getEndsAt(),
+                docResult == null ? null : docResult.getStartsAt(),
+                interview == null ? null : interview.getStartsAt(),
+                interview == null ? null : interview.getEndsAt(),
+                finalResult == null ? null : finalResult.getStartsAt(),
+                interviewTimeTable
+        );
+    }
+
+    private RecruitmentPublishedInfo.InterviewTimeTableInfo parseInterviewTimeTableForPublished(
+            Map<String, Object> interviewTimeTable
+    ) {
+        if (interviewTimeTable == null) {
+            return null;
+        }
+
+        try {
+            Enabled raw = objectMapper.convertValue(interviewTimeTable, Enabled.class);
+
+            List<RecruitmentDraftInfo.TimesByDateInfo> disabledByDate =
+                    InterviewTimeTableDisabledCalculator.calculateDisabled(
+                            raw.dateRange(),
+                            raw.timeRange(),
+                            raw.slotMinutes(),
+                            raw.enabledByDate()
+                    );
+
+            return toPublishedInterviewTimeTableInfo(raw, disabledByDate);
+
+        } catch (Exception e) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+    }
+
+    private RecruitmentPublishedInfo.InterviewTimeTableInfo toPublishedInterviewTimeTableInfo(
+            Enabled raw,
+            List<RecruitmentDraftInfo.TimesByDateInfo> disabledByDate
+    ) {
+        if (raw == null) {
+            return null;
+        }
+
+        RecruitmentPublishedInfo.DateRangeInfo dateRange =
+                (raw.dateRange() == null) ? null
+                        : new RecruitmentPublishedInfo.DateRangeInfo(raw.dateRange().start(), raw.dateRange().end());
+
+        RecruitmentPublishedInfo.TimeRangeInfo timeRange =
+                (raw.timeRange() == null) ? null
+                        : new RecruitmentPublishedInfo.TimeRangeInfo(raw.timeRange().start(), raw.timeRange().end());
+
+        List<RecruitmentPublishedInfo.TimesByDateInfo> enabled =
+                (raw.enabledByDate() == null) ? List.of()
+                        : raw.enabledByDate().stream()
+                                .map(x -> new RecruitmentPublishedInfo.TimesByDateInfo(x.date(), x.times()))
+                                .toList();
+
+        List<RecruitmentPublishedInfo.TimesByDateInfo> disabled =
+                (disabledByDate == null) ? List.of()
+                        : disabledByDate.stream()
+                                .map(x -> new RecruitmentPublishedInfo.TimesByDateInfo(x.date(), x.times()))
+                                .toList();
+
+        return new RecruitmentPublishedInfo.InterviewTimeTableInfo(
+                dateRange,
+                timeRange,
+                raw.slotMinutes(),
+                enabled,
+                disabled
+        );
+    }
 
 }

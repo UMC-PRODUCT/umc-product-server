@@ -6,6 +6,7 @@ import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateRecruitmentRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.PublishRecruitmentRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.RecruitmentListStatusQuery;
+import com.umc.product.recruitment.adapter.in.web.dto.request.UpdatePublishedRecruitmentScheduleRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentDraftRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentInterviewPreferenceRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormQuestionsRequest;
@@ -22,6 +23,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentFormRe
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentListResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentNoticeResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentPartListResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentPublishedResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentSchedulesResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.SubmitRecruitmentApplicationResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateRecruitmentInterviewPreferenceResponse;
@@ -34,6 +36,7 @@ import com.umc.product.recruitment.application.port.in.command.DeleteRecruitment
 import com.umc.product.recruitment.application.port.in.command.PublishRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.ResetRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
+import com.umc.product.recruitment.application.port.in.command.UpdatePublishedRecruitmentScheduleUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentDraftUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentInterviewPreferenceUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormQuestionsUseCase;
@@ -45,15 +48,18 @@ import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruit
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormQuestionCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
+import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentPublishedInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.ResetDraftFormResponseCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationInfo;
+import com.umc.product.recruitment.application.port.in.command.dto.UpdatePublishedRecruitmentScheduleCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentDraftCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentInterviewPreferenceCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentInterviewPreferenceInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyApplicationListUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetPublishedRecruitmentDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDashboardUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDetailUseCase;
@@ -127,6 +133,8 @@ public class RecruitmentController {
     private final UpdateRecruitmentInterviewPreferenceUseCase updateRecruitmentInterviewPreferenceUseCase;
     private final ResetRecruitmentDraftFormResponseUseCase resetRecruitmentDraftFormResponseUseCase;
     private final GetRecruitmentDraftApplicationFormUseCase getRecruitmentDraftApplicationFormUseCase;
+    private final UpdatePublishedRecruitmentScheduleUseCase updatePublishedRecruitmentScheduleUseCase;
+    private final GetPublishedRecruitmentDetailUseCase getPublishedRecruitmentDetailUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "사용자 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (schoolId/gisuId 미지정 시 사용자 학교, active 기수 기반)")
@@ -477,9 +485,9 @@ public class RecruitmentController {
 
     @GetMapping("/{recruitmentId}")
     @Operation(
-            summary = "임시저장한 모집 불러오기(작성 중 모집 상세 조회)",
+            summary = "모집 불러오기(작성 중 모집 상세 조회, 발행된 모집 조회)",
             description = """
-                    운영진 모집 생성/편집 화면에서 '작성 이어하기'로 사용할 draft 상세 조회 API입니다.
+                    운영진 모집 생성/편집 화면에서 '작성 이어하기'로 사용할 모집 임시저장본을 조회하거나, 발행된 모집을 조회할 때 이용하는 API입니다.aft 상세 조회 API입니다.
                     모집 정보(제목/파트/일정/공지/타임테이블 등)와 formId를 포함해 반환합니다.
                     """
     )
@@ -555,4 +563,68 @@ public class RecruitmentController {
                 getRecruitmentDraftApplicationFormUseCase.get(query)
         );
     }
+
+    @PatchMapping("/{recruitmentId}/published")
+    @Operation(
+            summary = "발행된 모집 수정",
+            description = """
+                    운영진이 배포(PUBLISHED) 상태의 모집 정보를 수정하는 API입니다.
+                    
+                    - 수정 가능 범위
+                        - 배포(PUBLISHED) 상태의 모집은 일정(schedule) 정보만 수정할 수 있습니다.
+                      (모집 제목, 파트 구성, 문항, 공지 내용, 면접 가능 타임테이블은 수정할 수 없습니다.)
+                    
+                    - 배포(PUBLISHED) 상태 일정 수정 정책
+                        - 과거 시점으로의 일정 변경은 허용되지 않습니다.
+                        - 서류 모집이 시작된 이후에는 서류 모집 시작일을 수정할 수 없습니다.
+                        - 공고 중인 모집의 마감일을 앞당기는 것은 허용되지 않습니다.
+                        - 이미 종료된 단계의 일정은 수정할 수 없습니다.
+                        - 단계 간 일정 순서가 역전되는 변경은 허용되지 않습니다.
+                          (예: 면접 시작일이 서류 마감일보다 빠를 수 없음)
+                        - 서류/최종 결과 발표일은 해당 평가 단계 종료 이후로만 설정할 수 있습니다.
+                        - 면접 시작/종료 시점은 기존보다 앞당기거나 기간을 단축할 수 없습니다.
+                    
+                    - 면접 시간표(interviewTimeTable) 정책
+                        - 배포(PUBLISHED) 이후에는 면접 시간표는 수정할 수 없습니다.
+                        - 이미 제출된 지원자의 면접 가능 시간 및 배치 데이터의 일관성을 보장하기 위함입니다.
+                    
+                    - 기타
+                        - 본 API는 수정 가능 여부를 서버에서 엄격하게 검증하며, 정책에 위배되는 변경 요청은 오류로 응답합니다.
+                    """
+    )
+    public RecruitmentPublishedResponse updatePublishedRecruitmentSchedule(
+            @CurrentMember MemberPrincipal memberPrincipal,
+            @PathVariable Long recruitmentId,
+            @RequestBody UpdatePublishedRecruitmentScheduleRequest request
+    ) {
+        UpdatePublishedRecruitmentScheduleCommand command =
+                request.toCommand(recruitmentId, memberPrincipal.getMemberId());
+
+        RecruitmentPublishedInfo info = updatePublishedRecruitmentScheduleUseCase.update(command);
+        return RecruitmentPublishedResponse.from(info);
+
+    }
+
+//    @GetMapping("/{recruitmentId}/published")
+//    @Operation(
+//            summary = "배포된 모집 상세 조회",
+//            description = """
+//                    배포(PUBLISHED)된 모집의 상세 정보를 조회합니다.
+//
+//                    - 운영진의 모집 관리/수정 화면에서 사용합니다.
+//                    - 응답에는 모집 기본 정보(제목/파트/공지)와 일정(schedule), 면접 시간표(interviewTimeTable)가 포함됩니다.
+//                    - 본 API는 PUBLISHED 상태의 모집만 대상으로 하며, DRAFT는 draft 전용 조회 API를 사용합니다.
+//                    """
+//    )
+//    public RecruitmentPublishedResponse getPublishedRecruitmentDetail(
+//            @CurrentMember MemberPrincipal memberPrincipal,
+//            @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
+//    ) {
+//        GetPublishedRecruitmentDetailQuery query =
+//                new GetPublishedRecruitmentDetailQuery(memberPrincipal.getMemberId(), recruitmentId);
+//
+//        RecruitmentPublishedInfo info = getPublishedRecruitmentDetailUseCase.get(query);
+//        return RecruitmentPublishedResponse.from(info);
+//    }
+
 }

@@ -67,4 +67,13 @@ public class RecruitmentPart {
             throw new IllegalStateException("recruitmentId/part must not be null");
         }
     }
+
+    public boolean isOpen() {
+        return this.status == RecruitmentPartStatus.OPEN;
+    }
+
+    public boolean isClosed() {
+        return this.status == RecruitmentPartStatus.CLOSED;
+    }
+
 }

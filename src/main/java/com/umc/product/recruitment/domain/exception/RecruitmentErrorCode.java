@@ -53,7 +53,19 @@ public enum RecruitmentErrorCode implements BaseCode {
     PREFERRED_PART_INVALID(HttpStatus.BAD_REQUEST, "RECRUITMENT-0027",
             "선호 파트가 올바르지 않습니다."),
     MULTIPLE_ACTIVE_RECRUITMENTS(HttpStatus.INTERNAL_SERVER_ERROR, "RECRUITMENT-0028",
-            "하나의 학교와 기수에 대해 여러 개의 발행된 모집이 존재합니다.");
+            "하나의 학교와 기수에 대해 여러 개의 발행된 모집이 존재합니다."),
+    RECRUITMENT_SCHEDULE_INVALID(HttpStatus.BAD_REQUEST, "RECRUITMENT-0029",
+            "모집 일정이 올바르지 않습니다."),
+    RECRUITMENT_SCHEDULE_APPLY_START_FROZEN(HttpStatus.BAD_REQUEST, "RECRUITMENT-0030",
+            "지원 시작 일정은 발행 이후 변경할 수 없습니다."),
+    RECRUITMENT_SCHEDULE_APPLY_END_SHORTEN_FORBIDDEN(HttpStatus.BAD_REQUEST, "RECRUITMENT-0031",
+            "지원 종료 일정을 앞당길 수 없습니다."),
+    RECRUITMENT_SCHEDULE_INTERVIEW_ADVANCE_FORBIDDEN(HttpStatus.BAD_REQUEST, "RECRUITMENT-0032",
+            "면접 일정을 앞당길 수 없습니다."),
+    RECRUITMENT_SCHEDULE_INTERVIEW_SHORTEN_FORBIDDEN(HttpStatus.BAD_REQUEST, "RECRUITMENT-0033",
+            "면접 일정을 단축할 수 없습니다."),
+    RECRUITMENT_SCHEDULE_INVALID_ORDER(HttpStatus.BAD_REQUEST, "RECRUITMENT-0034",
+            "모집 일정의 순서가 올바르지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
