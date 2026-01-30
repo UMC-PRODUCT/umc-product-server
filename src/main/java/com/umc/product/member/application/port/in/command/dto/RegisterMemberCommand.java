@@ -20,23 +20,23 @@ import lombok.Builder;
  */
 @Builder
 public record RegisterMemberCommand(
-        OAuthProvider provider,
-        String providerId,
-        String name,
-        String nickname,
-        String email,
-        Long schoolId,
-        Long profileImageId,
-        List<TermConsents> termConsents
+    OAuthProvider provider,
+    String providerId,
+    String name,
+    String nickname,
+    String email,
+    Long schoolId,
+    String profileImageId,
+    List<TermConsents> termConsents
 ) {
 
     public Member toEntity() {
         return Member.builder()
-                .name(this.name)
-                .nickname(this.nickname)
-                .email(this.email)
-                .schoolId(this.schoolId)
-                .profileImageId(this.profileImageId)
-                .build();
+            .name(this.name)
+            .nickname(this.nickname)
+            .email(this.email)
+            .schoolId(this.schoolId)
+            .profileImageId(this.profileImageId)
+            .build();
     }
 }

@@ -7,8 +7,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -28,15 +26,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class FileMetadata extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     /**
      * 파일 고유 ID (외부 스토리지 key 생성에 사용)
      */
-    @Column(nullable = false, unique = true, length = 36)
-    private String fileId;
+    @Id
+    private String id;
 
     /**
      * 원본 파일명
@@ -91,16 +85,16 @@ public class FileMetadata extends BaseEntity {
 
     @Builder
     private FileMetadata(
-            String fileId,
-            String originalFileName,
-            FileCategory category,
-            String contentType,
-            Long fileSize,
-            StorageProvider storageProvider,
-            String storageKey,
-            Long uploadedMemberId
+        String fileId,
+        String originalFileName,
+        FileCategory category,
+        String contentType,
+        Long fileSize,
+        StorageProvider storageProvider,
+        String storageKey,
+        Long uploadedMemberId
     ) {
-        this.fileId = fileId;
+        this.id = fileId;
         this.originalFileName = originalFileName;
         this.category = category;
         this.contentType = contentType;

@@ -11,13 +11,11 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@SpringBootTest(properties = "app.base-url=http://localhost:8080")
+@SpringBootTest
 @DatabaseIsolation
 @Import(TestContainersConfig.class)
 @Testcontainers
 public abstract class UseCaseTestSupport {
-
-
     @MockitoBean
     protected JavaMailSender mailSender;
 
@@ -32,5 +30,4 @@ public abstract class UseCaseTestSupport {
 
     @MockitoBean
     protected Storage googleCloudStorage;
-
 }

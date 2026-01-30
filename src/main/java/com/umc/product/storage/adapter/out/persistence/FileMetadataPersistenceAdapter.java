@@ -15,17 +15,12 @@ public class FileMetadataPersistenceAdapter implements LoadFileMetadataPort, Sav
 
     @Override
     public Optional<FileMetadata> findByFileId(String fileId) {
-        return fileMetadataRepository.findByFileId(fileId);
+        return fileMetadataRepository.findById(fileId);
     }
 
     @Override
     public boolean existsByFileId(String fileId) {
-        return fileMetadataRepository.existsByFileId(fileId);
-    }
-
-    @Override
-    public boolean existsById(Long id) {
-        return fileMetadataRepository.existsById(id);
+        return fileMetadataRepository.existsById(fileId);
     }
 
     @Override
@@ -35,6 +30,6 @@ public class FileMetadataPersistenceAdapter implements LoadFileMetadataPort, Sav
 
     @Override
     public void deleteByFileId(String fileId) {
-        fileMetadataRepository.deleteByFileId(fileId);
+        fileMetadataRepository.deleteById(fileId);
     }
 }
