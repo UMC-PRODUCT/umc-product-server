@@ -715,10 +715,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_CONFLICT);
         }
 
+        Instant now = Instant.now();
+
         Recruitment latest = loadRecruitmentPort.findById(command.recruitmentId())
                 .orElseThrow(
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
-        latest.publish();
+        latest.publish(now);
         saveRecruitmentPort.save(latest);
 
         Form form = loadFormPort.findById(latest.getFormId())
@@ -734,7 +736,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 published.getId(),
                 published.getFormId(),
                 published.getStatus().name(),
-                published.getUpdatedAt()
+                published.getPublishedAt()
         );
     }
 
