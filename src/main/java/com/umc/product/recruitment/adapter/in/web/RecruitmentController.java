@@ -32,6 +32,7 @@ import com.umc.product.recruitment.application.port.in.command.CreateRecruitment
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormQuestionUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
+import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentQuestionOptionUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.PublishRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.ResetRecruitmentDraftFormResponseUseCase;
@@ -47,6 +48,7 @@ import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruit
 import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormQuestionCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentQuestionOptionCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentPublishedInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.ResetDraftFormResponseCommand;
@@ -135,6 +137,7 @@ public class RecruitmentController {
     private final GetRecruitmentDraftApplicationFormUseCase getRecruitmentDraftApplicationFormUseCase;
     private final UpdatePublishedRecruitmentScheduleUseCase updatePublishedRecruitmentScheduleUseCase;
     private final GetPublishedRecruitmentDetailUseCase getPublishedRecruitmentDetailUseCase;
+    private final DeleteRecruitmentQuestionOptionUseCase deleteRecruitmentQuestionOptionUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "사용자 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (schoolId/gisuId 미지정 시 사용자 학교, active 기수 기반)")
@@ -627,4 +630,28 @@ public class RecruitmentController {
 //        return RecruitmentPublishedResponse.from(info);
 //    }
 
+    @DeleteMapping("/{recruitmentId}/application-form/questions/{questionId}/options/{optionId}")
+    @Operation(
+            summary = "지원서 폼 질문 옵션 삭제",
+            description = """
+                    운영진이 모집 임시저장(DRAFT) 상태에서 지원서 폼의 특정 질문에 포함된 옵션을 단건 삭제합니다.
+                    
+                    - 모집 상태가 DRAFT인 경우에만 삭제 가능합니다.
+                    - 해당 모집의 폼에 속한 질문의 옵션만 삭제할 수 있습니다.
+                    - 삭제 후 최신 지원서 폼 정의 정보를 반환합니다.
+                    """
+    )
+
+    public RecruitmentApplicationFormResponse deleteQuestionOption(
+            @CurrentMember MemberPrincipal memberPrincipal,
+            @PathVariable Long recruitmentId,
+            @PathVariable Long questionId,
+            @PathVariable Long optionId
+    ) {
+        var info = deleteRecruitmentQuestionOptionUseCase.delete(
+                new DeleteRecruitmentQuestionOptionCommand(recruitmentId, questionId, optionId,
+                        memberPrincipal.getMemberId())
+        );
+        return RecruitmentApplicationFormResponse.from(info);
+    }
 }

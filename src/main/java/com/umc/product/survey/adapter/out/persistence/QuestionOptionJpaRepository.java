@@ -13,4 +13,6 @@ public interface QuestionOptionJpaRepository extends JpaRepository<QuestionOptio
     @Transactional
     @Query("delete from QuestionOption o where o.question.id = :questionId")
     int deleteAllByQuestionId(@Param("questionId") Long questionId);
+
+    boolean existsByIdAndQuestion_Id(Long optionId, Long questionId);
 }
