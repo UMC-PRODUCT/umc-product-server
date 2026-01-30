@@ -66,11 +66,11 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
         activeGisu = manageGisuPort.save(createActiveGisu(9L));
         System.out.println("=== 저장된 Gisu ID: " + activeGisu.getId());
 
-        authorMember = saveMemberPort.save(createMember("박세은", "세니", "test0@dd.com", 1L, 1L));
+        authorMember = saveMemberPort.save(createMember("박세은", "세니", "test0@dd.com", 1L, "123"));
         System.out.println("=== 저장된 Member ID: " + authorMember.getId());
 
         authorChallenger = saveChallengerPort.save(
-                createChallenger(authorMember.getId(), activeGisu.getId())
+            createChallenger(authorMember.getId(), activeGisu.getId())
         );
         System.out.println("=== 저장된 Challenger ID: " + authorChallenger.getId());
         System.out.println("=== Challenger의 memberId: " + authorChallenger.getMemberId());
@@ -84,16 +84,16 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
         mockChallengerInfo(authorMember.getId(), activeGisu.getId(), authorChallenger.getId());
 
         CreateScheduleCommand command = CreateScheduleCommand.of(
-                "9기 OT",
-                LocalDateTime.of(2024, 3, 16, 10, 0),
-                LocalDateTime.of(2024, 3, 16, 12, 0),
-                false,
-                "강남역 스터디룸",
-                GeometryUtils.createPoint(37.4979, 127.0276),
-                "OT입니다",
-                List.of(),
-                Set.of(ScheduleTag.ORIENTATION),
-                authorMember.getId()
+            "9기 OT",
+            LocalDateTime.of(2024, 3, 16, 10, 0),
+            LocalDateTime.of(2024, 3, 16, 12, 0),
+            false,
+            "강남역 스터디룸",
+            GeometryUtils.createPoint(37.4979, 127.0276),
+            "OT입니다",
+            List.of(),
+            Set.of(ScheduleTag.ORIENTATION),
+            authorMember.getId()
         );
 
         // when
@@ -113,20 +113,20 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
         // Mock 객체가 올바른 DTO를 반환하도록 설정 (Stubbing)
         mockChallengerInfo(authorMember.getId(), activeGisu.getId(), authorChallenger.getId());
 
-        Member participant1 = saveMemberPort.save(createMember("참여자1", "참여1", "test1@dd.com", 1L, 2L));
-        Member participant2 = saveMemberPort.save(createMember("참여자2", "참여2", "test2@dd.com", 1L, 3L));
+        Member participant1 = saveMemberPort.save(createMember("참여자1", "참여1", "test1@dd.com", 1L, "2L"));
+        Member participant2 = saveMemberPort.save(createMember("참여자2", "참여2", "test2@dd.com", 1L, "3L"));
 
         CreateScheduleCommand command = CreateScheduleCommand.of(
-                "스터디 모임",
-                LocalDateTime.of(2024, 3, 20, 14, 0),
-                LocalDateTime.of(2024, 3, 20, 16, 0),
-                false,
-                "홍대 카페",
-                null,
-                "스프링 스터디",
-                List.of(participant1.getId(), participant2.getId()),
-                Set.of(ScheduleTag.STUDY),
-                authorMember.getId()
+            "스터디 모임",
+            LocalDateTime.of(2024, 3, 20, 14, 0),
+            LocalDateTime.of(2024, 3, 20, 16, 0),
+            false,
+            "홍대 카페",
+            null,
+            "스프링 스터디",
+            List.of(participant1.getId(), participant2.getId()),
+            Set.of(ScheduleTag.STUDY),
+            authorMember.getId()
         );
 
         // when
@@ -152,16 +152,16 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
         mockChallengerInfo(authorMember.getId(), activeGisu.getId(), authorChallenger.getId());
 
         CreateScheduleCommand command = CreateScheduleCommand.of(
-                "종일 행사",
-                LocalDateTime.of(2024, 3, 16, 10, 0),
-                LocalDateTime.of(2024, 3, 16, 12, 0),
-                true,
-                "컨퍼런스홀",
-                GeometryUtils.createPoint(37.1234, 127.1234),
-                "종일 진행",
-                List.of(),
-                Set.of(ScheduleTag.WORKSHOP),
-                authorMember.getId()
+            "종일 행사",
+            LocalDateTime.of(2024, 3, 16, 10, 0),
+            LocalDateTime.of(2024, 3, 16, 12, 0),
+            true,
+            "컨퍼런스홀",
+            GeometryUtils.createPoint(37.1234, 127.1234),
+            "종일 진행",
+            List.of(),
+            Set.of(ScheduleTag.WORKSHOP),
+            authorMember.getId()
         );
 
         // when
@@ -180,32 +180,32 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
         Gisu pastGisu = manageGisuPort.save(createInactiveGisu(8L));
 
         // OB 멤버 생성
-        Member pastMember = saveMemberPort.save(createMember("졸업생", "선배", "past@dd.com", 1L, 5L));
+        Member pastMember = saveMemberPort.save(createMember("졸업생", "선배", "past@dd.com", 1L, "5L"));
 
         // OB 멤버에 대한 8기 Challenger 저장
         saveChallengerPort.save(
-                createChallenger(pastMember.getId(), pastGisu.getId())
+            createChallenger(pastMember.getId(), pastGisu.getId())
         );
 
         given(getChallengerUseCase.getByMemberIdAndGisuId(pastMember.getId(), activeGisu.getId()))
-                .willReturn(null);
+            .willReturn(null);
 
         CreateScheduleCommand command = CreateScheduleCommand.of(
-                "OB의 침입",
-                LocalDateTime.of(2024, 3, 16, 10, 0),
-                LocalDateTime.of(2024, 3, 16, 12, 0),
-                false,
-                "장소",
-                null,
-                "설명",
-                List.of(),
-                Set.of(ScheduleTag.GENERAL),
-                pastMember.getId() // 과거 멤버 ID로 요청
+            "OB의 침입",
+            LocalDateTime.of(2024, 3, 16, 10, 0),
+            LocalDateTime.of(2024, 3, 16, 12, 0),
+            false,
+            "장소",
+            null,
+            "설명",
+            List.of(),
+            Set.of(ScheduleTag.GENERAL),
+            pastMember.getId() // 과거 멤버 ID로 요청
         );
 
         // when & then
         assertThatThrownBy(() -> createScheduleUseCase.create(command))
-                .isInstanceOf(BusinessException.class);
+            .isInstanceOf(BusinessException.class);
     }
 
     @Test
@@ -214,76 +214,76 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
         mockChallengerInfo(authorMember.getId(), activeGisu.getId(), authorChallenger.getId());
 
         CreateScheduleCommand command = CreateScheduleCommand.of(
-                "태그 없는 일정",
-                LocalDateTime.of(2024, 3, 16, 10, 0),
-                LocalDateTime.of(2024, 3, 16, 12, 0),
-                false,
-                "장소",
-                null,
-                "설명",
-                List.of(),
-                Collections.emptySet(), // 빈 태그 리스트 전달
-                authorMember.getId()
+            "태그 없는 일정",
+            LocalDateTime.of(2024, 3, 16, 10, 0),
+            LocalDateTime.of(2024, 3, 16, 12, 0),
+            false,
+            "장소",
+            null,
+            "설명",
+            List.of(),
+            Collections.emptySet(), // 빈 태그 리스트 전달
+            authorMember.getId()
         );
 
         // when & then
         assertThatThrownBy(() -> createScheduleUseCase.create(command))
-                .isInstanceOf(BusinessException.class)
-                .satisfies(exception -> {
-                    BusinessException be = (BusinessException) exception;
-                    assertThat(be.getCode()).isEqualTo(ScheduleErrorCode.TAG_REQUIRED);
-                });
+            .isInstanceOf(BusinessException.class)
+            .satisfies(exception -> {
+                BusinessException be = (BusinessException) exception;
+                assertThat(be.getCode()).isEqualTo(ScheduleErrorCode.TAG_REQUIRED);
+            });
     }
 
     // ========== Fixture 메서드 ==========
 
     private Gisu createActiveGisu(Long generation) {
         return Gisu.builder()
-                .generation(generation)
-                .isActive(true)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
-                .build();
+            .generation(generation)
+            .isActive(true)
+            .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
+            .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
+            .build();
     }
 
     private Gisu createInactiveGisu(Long generation) {
         return Gisu.builder()
-                .generation(generation)
-                .isActive(false)
-                .startAt(LocalDateTime.of(2023, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2023, 8, 31, 23, 59))
-                .build();
+            .generation(generation)
+            .isActive(false)
+            .startAt(LocalDateTime.of(2023, 3, 1, 0, 0))
+            .endAt(LocalDateTime.of(2023, 8, 31, 23, 59))
+            .build();
     }
 
-    private Member createMember(String name, String nickname, String email, Long schoolId, Long profileImageId) {
+    private Member createMember(String name, String nickname, String email, Long schoolId, String profileImageId) {
         return Member.builder()
-                .email(email)
-                .name(name)
-                .nickname(nickname)
-                .schoolId(schoolId)
-                .profileImageId(profileImageId)
-                .build();
+            .email(email)
+            .name(name)
+            .nickname(nickname)
+            .schoolId(schoolId)
+            .profileImageId(profileImageId)
+            .build();
     }
 
     private Challenger createChallenger(Long memberId, Long gisuId) {
         return Challenger.builder()
-                .memberId(memberId)
-                .gisuId(gisuId)
-                .part(ChallengerPart.SPRINGBOOT)
-                .build();
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .build();
     }
 
     private void mockChallengerInfo(Long memberId, Long gisuId, Long challengerId) {
         ChallengerInfo mockInfo = ChallengerInfo.builder()
-                .challengerId(challengerId)
-                .memberId(memberId)
-                .gisuId(gisuId)
-                .part(ChallengerPart.SPRINGBOOT)
-                .challengerPoints(List.of())
-                .build();
+            .challengerId(challengerId)
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .challengerPoints(List.of())
+            .build();
 
         given(getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId))
-                .willReturn(mockInfo);
+            .willReturn(mockInfo);
     }
 
 }

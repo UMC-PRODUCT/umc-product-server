@@ -26,25 +26,15 @@ public class FileQueryService implements GetFileUseCase {
     @Override
     public FileInfo getById(String fileId) {
         FileMetadata metadata = loadFileMetadataPort.findByFileId(fileId)
-                .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
+            .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
 
         // CDN을 통한 Signed URL 생성
         String fileLink = storagePort.generateAccessUrl(
-                metadata.getStorageKey(),
-                ACCESS_URL_DURATION_MINUTES
+            metadata.getStorageKey(),
+            ACCESS_URL_DURATION_MINUTES
         );
 
-        return new FileInfo(
-                metadata.getFileId(),
-                metadata.getOriginalFileName(),
-                metadata.getCategory(),
-                metadata.getContentType(),
-                metadata.getFileSize(),
-                fileLink,
-                metadata.isUploaded(),
-                metadata.getUploadedMemberId(),
-                metadata.getCreatedAt()
-        );
+        return FileInfo.of(metadata, fileLink);
     }
 
     @Override

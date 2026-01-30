@@ -23,12 +23,4 @@ public interface LoadFileMetadataPort {
      * @return 존재 여부
      */
     boolean existsByFileId(String fileId);
-
-    /**
-     * pk ID로 메타데이터 존재 여부를 확인합니다.
-     *
-     * @param id 파일 pk ID
-     * @return 존재 여부
-     */
-    boolean existsById(Long id);
 }

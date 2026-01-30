@@ -47,7 +47,7 @@ public class MemberService implements ManageMemberUseCase {
         }
 
         // ProfileImageId 존재 검증 (선택적 필드이므로 null이 아닐 때만 검증)
-        if (command.profileImageId() != null && !loadFileMetadataPort.existsById(command.profileImageId())) {
+        if (command.profileImageId() != null && !loadFileMetadataPort.existsByFileId(command.profileImageId())) {
             throw new StorageException(StorageErrorCode.FILE_NOT_FOUND);
         }
 
@@ -58,18 +58,18 @@ public class MemberService implements ManageMemberUseCase {
 
         // OAuth 계정 정보 저장
         oAuthAuthenticationUseCase.linkOAuth(
-                LinkOAuthCommand.builder()
-                        .memberId(savedMember.getId())
-                        .provider(command.provider())
-                        .providerId(command.providerId())
-                        .build()
+            LinkOAuthCommand.builder()
+                .memberId(savedMember.getId())
+                .provider(command.provider())
+                .providerId(command.providerId())
+                .build()
         );
 
         // 약관 동의 정보 저장
         command.termConsents().forEach(termConsent ->
-                manageTermsAgreementUseCase.createTermConsent(
-                        termConsent.toCommand(savedMember.getId())
-                )
+            manageTermsAgreementUseCase.createTermConsent(
+                termConsent.toCommand(savedMember.getId())
+            )
         );
 
         return savedMember.getId();
@@ -89,9 +89,9 @@ public class MemberService implements ManageMemberUseCase {
         Set<Long> requiredTermIds = getTermsUseCase.getRequiredTermIds();
 
         Set<Long> agreedTermIds = command.termConsents().stream()
-                .filter(TermConsents::isAgreed)
-                .map(TermConsents::termId)
-                .collect(Collectors.toSet());
+            .filter(TermConsents::isAgreed)
+            .map(TermConsents::termId)
+            .collect(Collectors.toSet());
 
         if (!agreedTermIds.containsAll(requiredTermIds)) {
             throw new TermsDomainException(TermsErrorCode.MANDATORY_TERMS_NOT_AGREED);

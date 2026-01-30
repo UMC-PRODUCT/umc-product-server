@@ -2,6 +2,7 @@ package com.umc.product.support;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.organization.adapter.in.web.ChapterController;
 import com.umc.product.organization.adapter.in.web.ChapterQueryController;
@@ -25,20 +26,23 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = {
-        SchoolController.class,
-        SchoolQueryController.class,
-        ChapterController.class,
-        ChapterQueryController.class,
-        GisuController.class,
-        GisuQueryController.class,
+    SchoolController.class,
+    SchoolQueryController.class,
+    ChapterController.class,
+    ChapterQueryController.class,
+    GisuController.class,
+    GisuQueryController.class,
 })
 @Import({
-        RestDocsConfig.class,
+    RestDocsConfig.class,
+    JacksonConfig.class
 })
 @AutoConfigureMockMvc(addFilters = false)
 @AutoConfigureRestDocs
 public class DocumentationTest {
-
+    // =================================================
+    // Rest Docs 생성을 위한 기본적인 주입을 처리하는 부모 클래스
+    // =================================================
 
     @Autowired
     protected MockMvc mockMvc;

@@ -39,12 +39,12 @@ public class MemberController {
     // 로그인은 OAuth를 통해서만 진행됨!!
     @Public
     @Operation(summary = "회원가입",
-            description = """
-                    OAuth2 로그인을 통해서 oAuthVerificationToken을 발급받은 후,
-                    해당 토큰을 첨부해서 회원가입을 진행해주세요.
-                                        
-                    해당 토큰은 사전에 인증된 OAuth2 Provider와 ProviderId를 인증해줍니다.
-                    """)
+        description = """
+            OAuth2 로그인을 통해서 oAuthVerificationToken을 발급받은 후,
+            해당 토큰을 첨부해서 회원가입을 진행해주세요.
+
+            해당 토큰은 사전에 인증된 OAuth2 Provider와 ProviderId를 인증해줍니다.
+            """)
     @PostMapping("register")
     RegisterResponse registerMember(@RequestBody RegisterMemberRequest request) {
         // TODO: oAuthVerificationToken은 authentication domain에서 port 가져와서 처리함
@@ -53,22 +53,22 @@ public class MemberController {
         String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
 
         RegisterMemberCommand command = RegisterMemberCommand
-                .builder()
-                .provider(claims.provider())
-                .providerId(claims.providerId())
-                .name(request.name())
-                .nickname(request.nickname())
-                .email(email)
-                .schoolId(request.schoolId())
-                .profileImageId(request.profileImageId())
-                .termConsents(request.termsAgreements().stream().map(TermConsents::fromRequest).toList())
-                .build();
+            .builder()
+            .provider(claims.provider())
+            .providerId(claims.providerId())
+            .name(request.name())
+            .nickname(request.nickname())
+            .email(email)
+            .schoolId(request.schoolId())
+            .profileImageId(request.profileImageId())
+            .termConsents(request.termsAgreements().stream().map(TermConsents::fromRequest).toList())
+            .build();
 
         Long createdMemberId = manageMemberUseCase.registerMember(command);
 
         return RegisterResponse.builder()
-                .memberId(createdMemberId)
-                .build();
+            .memberId(createdMemberId)
+            .build();
     }
 
     @Operation(summary = "내 프로필 조회")
@@ -80,7 +80,7 @@ public class MemberController {
     @Operation(summary = "memberId로 회원 정보 조회")
     @GetMapping("profile/{memberId}")
     MemberInfoResponse getMemberProfile(
-            @PathVariable String memberId
+        @PathVariable String memberId
     ) {
         throw new NotImplementedException();
     }
@@ -88,8 +88,8 @@ public class MemberController {
     @Operation(summary = "회원 정보 수정")
     @PatchMapping
     MemberInfoResponse editMemberInfo(
-            @CurrentMember MemberPrincipal memberPrincipal,
-            @RequestBody EditMemberInfoRequest request
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @RequestBody EditMemberInfoRequest request
     ) {
         throw new NotImplementedException();
     }
