@@ -440,16 +440,18 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
                     int applicantCount = (int) applicationRepository.countByRecruitmentId(rid);
 
+                    boolean editable = isEditablePublished(phase); // 권한 제외 1차 로직
+                    // todo: 권한 도입 시 해당 editable을 덮는 수정 권한 체크 로직 추가
+
                     return new RecruitmentListInfo.RecruitmentSummary(
-                            null,
-                            null, // todo: schoolName, gisu 추후 조인 필요
                             rid,
                             r.getTitle(),
                             startDate,
                             endDate,
                             applicantCount,
+                            r.getStatus(),
                             phase,
-                            false,
+                            editable,
                             r.getUpdatedAt()
                     );
                 })
@@ -506,14 +508,13 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                     int applicantCount = 0;
 
                     return new RecruitmentListInfo.RecruitmentSummary(
-                            null,
-                            null,
                             rid,
                             r.getTitle(),
                             startDate,
                             endDate,
-                            applicantCount,
-                            phase,
+                            0,
+                            r.getStatus(), // DRAFT
+                            null,
                             true,
                             r.getUpdatedAt()
                     );
@@ -731,6 +732,13 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         }
 
         return new RecruitmentApplicationFormInfo.PreferredPartInfo(max, options);
+    }
+
+    private boolean isEditablePublished(RecruitmentPhase phase) {
+        if (phase == null) {
+            return true;
+        }
+        return phase != RecruitmentPhase.CLOSED;
     }
 
 
