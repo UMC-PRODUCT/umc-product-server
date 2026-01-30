@@ -7,6 +7,7 @@ import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
+import com.umc.product.organization.domain.Gisu;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentPublishedInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
@@ -1011,7 +1012,9 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         var schedules = loadRecruitmentPort.findSchedulesByRecruitmentId(query.recruitmentId());
         var recruitmentPeriod = extractDatePeriod(schedules, "APPLY_WINDOW");
-        var activityPeriod = extractDatePeriod(schedules, "ACTIVITY_WINDOW");
+        //var activityPeriod = extractDatePeriod(schedules, "ACTIVITY_WINDOW");
+        Gisu gisu = loadGisuPort.findById(recruitment.getGisuId());
+        var activityPeriod = toDatePeriod(gisu);
 
         return new RecruitmentPartListInfo(
                 recruitment.getId(),
@@ -1338,5 +1341,15 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         return new RecruitmentPublishedInfo.TimesByDateInfo(date, times);
     }
 
+    private RecruitmentPartListInfo.DatePeriod toDatePeriod(Gisu gisu) {
+        if (gisu == null || gisu.getStartAt() == null || gisu.getEndAt() == null) {
+            return null;
+        }
 
+        ZoneId zone = ZoneId.of("Asia/Seoul");
+        return new RecruitmentPartListInfo.DatePeriod(
+                gisu.getStartAt().atZone(zone).toInstant(),
+                gisu.getEndAt().atZone(zone).toInstant()
+        );
+    }
 }
