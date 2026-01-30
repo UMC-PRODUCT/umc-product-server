@@ -72,6 +72,7 @@ import com.umc.product.survey.application.port.out.SaveFormPort;
 import com.umc.product.survey.application.port.out.SaveFormResponsePort;
 import com.umc.product.survey.application.port.out.SaveQuestionOptionPort;
 import com.umc.product.survey.application.port.out.SaveQuestionPort;
+import com.umc.product.survey.application.port.out.SaveSingleAnswerPort;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.Question;
@@ -131,6 +132,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final LoadMemberPort loadMemberPort;
     private final LoadGisuPort loadGisuPort;
     private final GetFileUseCase getFileUseCase;
+    private final SaveSingleAnswerPort saveSingleAnswerPort;
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
@@ -473,7 +475,6 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         // TODO: 권한 검증
 
-        // 우선 application 기준으로 삭제 조건 (기획에 문의)
         if (loadApplicationPort.existsByRecruitmentId(recruitment.getId())) {
             throw new BusinessException(Domain.RECRUITMENT,
                     RecruitmentErrorCode.RECRUITMENT_DELETE_FORBIDDEN_HAS_APPLICANTS);
@@ -481,6 +482,15 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         Long formId = recruitment.getFormId();
         Long recruitmentId = recruitment.getId();
+
+        if (formId != null) {
+            List<Long> draftIds = loadFormResponsePort.findDraftIdsByFormId(formId);
+
+            if (!draftIds.isEmpty()) {
+                saveSingleAnswerPort.deleteAllByFormResponseIds(draftIds);
+                saveFormResponsePort.deleteAllByIds(draftIds);
+            }
+        }
 
         saveRecruitmentPartPort.deleteAllByRecruitmentId(recruitmentId);
         saveRecruitmentSchedulePort.deleteAllByRecruitmentId(recruitmentId);

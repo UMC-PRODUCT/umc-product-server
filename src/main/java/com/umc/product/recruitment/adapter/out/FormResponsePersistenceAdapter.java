@@ -2,6 +2,7 @@ package com.umc.product.recruitment.adapter.out;
 
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.application.port.out.SaveFormResponsePort;
+import com.umc.product.survey.application.port.out.SaveSingleAnswerPort;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
 import java.util.List;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 public class FormResponsePersistenceAdapter implements LoadFormResponsePort, SaveFormResponsePort {
 
     private final FormResponseJpaRepository formResponseJpaRepository;
+    private final SaveSingleAnswerPort saveSingleAnswerPort;
 
     @Override
     public Optional<FormResponse> findById(Long formResponseId) {
@@ -42,5 +44,27 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
         return formResponseJpaRepository.findByRespondentMemberIdAndStatus(
                 respondentMemberId, FormResponseStatus.DRAFT
         );
+    }
+
+    @Override
+    public void deleteDraftsByFormId(Long formId) {
+        List<Long> draftIds = formResponseJpaRepository.findIdsByFormIdAndStatus(formId, FormResponseStatus.DRAFT);
+        if (draftIds.isEmpty()) {
+            return;
+        }
+
+        saveSingleAnswerPort.deleteAllByFormResponseIds(draftIds);
+
+        formResponseJpaRepository.deleteAllByIdInBatch(draftIds);
+    }
+
+    @Override
+    public List<Long> findDraftIdsByFormId(Long formId) {
+        return formResponseJpaRepository.findIdsByFormIdAndStatus(formId, FormResponseStatus.DRAFT);
+    }
+
+    @Override
+    public void deleteAllByIds(List<Long> ids) {
+        formResponseJpaRepository.deleteAllByIdInBatch(ids);
     }
 }
