@@ -515,7 +515,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         if (command.schedule() != null) {
-            upsertSchedules(recruitment, command.schedule());
+            upsertSchedulesForDraft(recruitment, command.schedule());
         }
 
         if (command.recruitmentParts() != null) {
@@ -543,39 +543,46 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
 
-    private void upsertSchedules(Recruitment recruitment, UpdateRecruitmentDraftCommand.ScheduleCommand schedule) {
+    private void upsertSchedulesForDraft(Recruitment recruitment,
+                                         UpdateRecruitmentDraftCommand.ScheduleCommand schedule) {
 
         Long recruitmentId = recruitment.getId();
+
+        Map<RecruitmentScheduleType, RecruitmentSchedule> existing =
+                loadRecruitmentPort.findScheduleMapByRecruitmentId(recruitmentId);
+
+        ResolvedRecruitmentSchedule resolved =
+                ResolvedRecruitmentSchedule.merge(existing, schedule);
 
         upsertSchedulePeriod(
                 recruitmentId,
                 RecruitmentScheduleType.APPLY_WINDOW,
-                schedule.applyStartAt(),
-                schedule.applyEndAt()
+                resolved.applyStartAt(),
+                resolved.applyEndAt()
         );
 
         upsertSchedulePeriod(
                 recruitmentId,
                 RecruitmentScheduleType.DOC_RESULT_AT,
-                schedule.docResultAt(),
+                resolved.docResultAt(),
                 null
         );
 
         upsertSchedulePeriod(
                 recruitmentId,
                 RecruitmentScheduleType.INTERVIEW_WINDOW,
-                schedule.interviewStartAt(),
-                schedule.interviewEndAt()
+                resolved.interviewStartAt(),
+                resolved.interviewEndAt()
         );
 
         upsertSchedulePeriod(
                 recruitmentId,
                 RecruitmentScheduleType.FINAL_RESULT_AT,
-                schedule.finalResultAt(),
+                resolved.finalResultAt(),
                 null
         );
 
-        upsertReviewWindows(recruitmentId, schedule);
+        upsertReviewWindowsForDraftResolved(recruitmentId, resolved);
 
         if (schedule.interviewTimeTable() != null) {
             var enabledOnlyMap = toEnabledOnlyMap(schedule.interviewTimeTable());
@@ -920,16 +927,16 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         // upsert schedules
         upsertSchedule(recruitmentId, existing, RecruitmentScheduleType.APPLY_WINDOW,
-                resolved.applyStartAt, resolved.applyEndAt);
+                resolved.applyStartAt(), resolved.applyEndAt());
 
         upsertAtSchedule(recruitmentId, existing, RecruitmentScheduleType.DOC_RESULT_AT,
-                resolved.docResultAt);
+                resolved.docResultAt());
 
         upsertSchedule(recruitmentId, existing, RecruitmentScheduleType.INTERVIEW_WINDOW,
-                resolved.interviewStartAt, resolved.interviewEndAt);
+                resolved.interviewStartAt(), resolved.interviewEndAt());
 
         upsertAtSchedule(recruitmentId, existing, RecruitmentScheduleType.FINAL_RESULT_AT,
-                resolved.finalResultAt);
+                resolved.finalResultAt());
 
         upsertReviewWindowsPublished(recruitmentId, existing, resolved);
 
@@ -1762,23 +1769,24 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     private void validateOrdering(ResolvedRecruitmentSchedule c) {
         // applyStart <= applyEnd
-        if (c.applyStartAt != null && c.applyEndAt != null && c.applyEndAt.isBefore(c.applyStartAt)) {
+        if (c.applyStartAt() != null && c.applyEndAt() != null && c.applyEndAt().isBefore(c.applyStartAt())) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
         }
         // applyEnd <= docResult
-        if (c.applyEndAt != null && c.docResultAt != null && c.docResultAt.isBefore(c.applyEndAt)) {
+        if (c.applyEndAt() != null && c.docResultAt() != null && c.docResultAt().isBefore(c.applyEndAt())) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
         }
         // docResult <= interviewStart
-        if (c.docResultAt != null && c.interviewStartAt != null && c.interviewStartAt.isBefore(c.docResultAt)) {
+        if (c.docResultAt() != null && c.interviewStartAt() != null && c.interviewStartAt().isBefore(c.docResultAt())) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
         }
         // interviewStart <= interviewEnd
-        if (c.interviewStartAt != null && c.interviewEndAt != null && c.interviewEndAt.isBefore(c.interviewStartAt)) {
+        if (c.interviewStartAt() != null && c.interviewEndAt() != null && c.interviewEndAt()
+                .isBefore(c.interviewStartAt())) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
         }
         // interviewEnd <= finalResult
-        if (c.interviewEndAt != null && c.finalResultAt != null && c.finalResultAt.isBefore(c.interviewEndAt)) {
+        if (c.interviewEndAt() != null && c.finalResultAt() != null && c.finalResultAt().isBefore(c.interviewEndAt())) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
         }
     }
@@ -1823,25 +1831,19 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
     }
 
-    private static final class ResolvedRecruitmentSchedule {
-        final Instant applyStartAt;
-        final Instant applyEndAt;
-        final Instant docResultAt;
-        final Instant interviewStartAt;
-        final Instant interviewEndAt;
-        final Instant finalResultAt;
+    private record ResolvedRecruitmentSchedule(
+            Instant applyStartAt,
+            Instant applyEndAt,
+            Instant docResultAt,
+            Instant interviewStartAt,
+            Instant interviewEndAt,
+            Instant finalResultAt
+    ) {
 
-        private ResolvedRecruitmentSchedule(Instant aS, Instant aE, Instant dR, Instant iS, Instant iE, Instant fR) {
-            this.applyStartAt = aS;
-            this.applyEndAt = aE;
-            this.docResultAt = dR;
-            this.interviewStartAt = iS;
-            this.interviewEndAt = iE;
-            this.finalResultAt = fR;
-        }
-
-        static ResolvedRecruitmentSchedule merge(Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
-                                                 UpdatePublishedRecruitmentScheduleCommand.SchedulePatch patch) {
+        static ResolvedRecruitmentSchedule merge(
+                Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+                UpdatePublishedRecruitmentScheduleCommand.SchedulePatch patch
+        ) {
             RecruitmentSchedule apply = existing.get(RecruitmentScheduleType.APPLY_WINDOW);
             RecruitmentSchedule docResult = existing.get(RecruitmentScheduleType.DOC_RESULT_AT);
             RecruitmentSchedule interview = existing.get(RecruitmentScheduleType.INTERVIEW_WINDOW);
@@ -1852,16 +1854,52 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             Instant applyEnd =
                     patch.applyEndAt() != null ? patch.applyEndAt() : (apply == null ? null : apply.getEndsAt());
 
-            Instant docR = patch.docResultAt() != null ? patch.docResultAt()
-                    : (docResult == null ? null : docResult.getStartsAt());
+            Instant docR =
+                    patch.docResultAt() != null ? patch.docResultAt()
+                            : (docResult == null ? null : docResult.getStartsAt());
 
-            Instant interviewStart = patch.interviewStartAt() != null ? patch.interviewStartAt()
-                    : (interview == null ? null : interview.getStartsAt());
-            Instant interviewEnd = patch.interviewEndAt() != null ? patch.interviewEndAt()
-                    : (interview == null ? null : interview.getEndsAt());
+            Instant interviewStart =
+                    patch.interviewStartAt() != null ? patch.interviewStartAt()
+                            : (interview == null ? null : interview.getStartsAt());
+            Instant interviewEnd =
+                    patch.interviewEndAt() != null ? patch.interviewEndAt()
+                            : (interview == null ? null : interview.getEndsAt());
 
-            Instant finalR = patch.finalResultAt() != null ? patch.finalResultAt()
-                    : (finalResult == null ? null : finalResult.getStartsAt());
+            Instant finalR =
+                    patch.finalResultAt() != null ? patch.finalResultAt()
+                            : (finalResult == null ? null : finalResult.getStartsAt());
+
+            return new ResolvedRecruitmentSchedule(applyStart, applyEnd, docR, interviewStart, interviewEnd, finalR);
+        }
+
+        static ResolvedRecruitmentSchedule merge(
+                Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+                UpdateRecruitmentDraftCommand.ScheduleCommand patch
+        ) {
+            RecruitmentSchedule apply = existing.get(RecruitmentScheduleType.APPLY_WINDOW);
+            RecruitmentSchedule docResult = existing.get(RecruitmentScheduleType.DOC_RESULT_AT);
+            RecruitmentSchedule interview = existing.get(RecruitmentScheduleType.INTERVIEW_WINDOW);
+            RecruitmentSchedule finalResult = existing.get(RecruitmentScheduleType.FINAL_RESULT_AT);
+
+            Instant applyStart =
+                    patch.applyStartAt() != null ? patch.applyStartAt() : (apply == null ? null : apply.getStartsAt());
+            Instant applyEnd =
+                    patch.applyEndAt() != null ? patch.applyEndAt() : (apply == null ? null : apply.getEndsAt());
+
+            Instant docR =
+                    patch.docResultAt() != null ? patch.docResultAt()
+                            : (docResult == null ? null : docResult.getStartsAt());
+
+            Instant interviewStart =
+                    patch.interviewStartAt() != null ? patch.interviewStartAt()
+                            : (interview == null ? null : interview.getStartsAt());
+            Instant interviewEnd =
+                    patch.interviewEndAt() != null ? patch.interviewEndAt()
+                            : (interview == null ? null : interview.getEndsAt());
+
+            Instant finalR =
+                    patch.finalResultAt() != null ? patch.finalResultAt()
+                            : (finalResult == null ? null : finalResult.getStartsAt());
 
             return new ResolvedRecruitmentSchedule(applyStart, applyEnd, docR, interviewStart, interviewEnd, finalR);
         }
@@ -1873,27 +1911,37 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             ResolvedRecruitmentSchedule c
     ) {
         // DOC_REVIEW_WINDOW: applyEnd -> docResult
-        if (c.applyEndAt != null && c.docResultAt != null && c.applyEndAt.isBefore(c.docResultAt)) {
+        if (c.applyEndAt() != null && c.docResultAt() != null && c.applyEndAt().isBefore(c.docResultAt())) {
             upsertSchedule(
                     recruitmentId,
                     existing,
                     RecruitmentScheduleType.DOC_REVIEW_WINDOW,
-                    c.applyEndAt,
-                    c.docResultAt
+                    c.applyEndAt(),
+                    c.docResultAt()
             );
         }
 
         // FINAL_REVIEW_WINDOW: interviewEnd -> finalResult
-        if (c.interviewEndAt != null && c.finalResultAt != null && c.interviewEndAt.isBefore(c.finalResultAt)) {
+        if (c.interviewEndAt() != null && c.finalResultAt() != null && c.interviewEndAt().isBefore(c.finalResultAt())) {
             upsertSchedule(
                     recruitmentId,
                     existing,
                     RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
-                    c.interviewEndAt,
-                    c.finalResultAt
+                    c.interviewEndAt(),
+                    c.finalResultAt()
             );
         }
     }
 
+    private void upsertReviewWindowsForDraftResolved(Long recruitmentId, ResolvedRecruitmentSchedule r) {
+        if (r.applyEndAt() != null && r.docResultAt() != null && r.applyEndAt().isBefore(r.docResultAt())) {
+            upsertSchedulePeriod(recruitmentId, RecruitmentScheduleType.DOC_REVIEW_WINDOW,
+                    r.applyEndAt(), r.docResultAt());
+        }
+        if (r.interviewEndAt() != null && r.finalResultAt() != null && r.interviewEndAt().isBefore(r.finalResultAt())) {
+            upsertSchedulePeriod(recruitmentId, RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
+                    r.interviewEndAt(), r.finalResultAt());
+        }
 
+    }
 }
