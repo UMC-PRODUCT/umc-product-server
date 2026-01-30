@@ -28,7 +28,7 @@ repositories {
     mavenCentral()
 }
 
-// 의존성 버전 관리
+// 의존성 버전
 val springDocVersion = "2.8.14"
 val queryDslVersion = "5.0.0"
 val jwtVersion = "0.12.5"
@@ -36,7 +36,8 @@ val awsVersion = "2.40.12"
 
 // REST DOCS
 val snippetsDir = file("build/generated-snippets")
-val docsDir = "docs/asciidoc"
+val asciiDocsSourceDir = "docs/asciidoc"
+val asciiDocsDir = "docs/static"
 
 // QueryDSL Q클래스 생성 경로 설정
 val querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
@@ -92,7 +93,7 @@ dependencies {
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${springDocVersion}")
 
     // --- Utils ---
-    // 서버 시작 시 자동으로 Dokcer Compose 실행
+    // 서버 시작 시 자동으로 Docker Compose 실행
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     // 다들 잘 아는 그 lombok
     compileOnly("org.projectlombok:lombok")
@@ -163,9 +164,21 @@ tasks.withType<Test> {
 }
 
 tasks.test {
+    doFirst { // 기존에 존재하는 파일들을 지우고 시작함
+        println("=".repeat(50))
+        println("[test] 테스트를 시작합니다.")
+        println("=".repeat(50))
+    }
+
     // 테스트가 터지면 이 곳에 ignoreFailures = true 를 넣으시면 됩니다.
     outputs.dir(snippetsDir)
     finalizedBy(tasks.jacocoTestReport)
+
+    doLast {
+        println("=".repeat(50))
+        println("[test] 테스트가 완료되었습니다.")
+        println("=".repeat(50))
+    }
 }
 
 // codecov를 위한 Jacoco 설정
@@ -177,36 +190,130 @@ tasks.jacocoTestReport {
     }
 }
 
-tasks.asciidoctor { // asciidoctor task 설정
-    doFirst { // 기존에 존재하는 파일들을 지우고 시작함
-        println("=".repeat(50))
-        println("[asciidoctor] docs/static 디렉토리를 삭제합니다.")
-        println("=".repeat(50))
-        delete(file(docsDir))
+tasks.register("generateRestDocsIndex") {
+    dependsOn(tasks.test)
+
+    doLast {
+        val indexFile = file("docs/asciidoc/index.adoc")
+
+        val content = buildString {
+            appendLine("= UMC Product API Documentation")
+            appendLine(":doctype: book")
+            appendLine(":icons: font")
+            appendLine(":source-highlighter: highlightjs")
+            appendLine(":toc: left")
+            appendLine(":toclevels: 2")
+            appendLine(":sectlinks:")
+            appendLine()
+            appendLine("ifndef::snippets[]")
+            appendLine(":snippets: ../../../build/generated-snippets")
+            appendLine("endif::[]")
+            appendLine()
+
+            // 컨트롤러별로 그룹핑
+            val controllerMap = mutableMapOf<String, MutableList<String>>()
+
+            snippetsDir.listFiles()?.forEach { controllerDir ->
+                if (controllerDir.isDirectory) {
+                    val controllerName = controllerDir.name
+                    controllerDir.listFiles()?.forEach { testDir ->
+                        if (testDir.isDirectory) {
+                            controllerMap
+                                .getOrPut(controllerName) { mutableListOf() }
+                                .add(testDir.name)
+                        }
+                    }
+                }
+            }
+
+            // 정렬 후 출력
+            controllerMap.keys.sorted().forEach { controller ->
+                val displayName = controller
+                    .replace("-controller-test", "")
+                    .replace("-", " ")
+                    .replaceFirstChar { it.uppercase() }
+
+                appendLine("== $displayName")
+                appendLine()
+
+                controllerMap[controller]!!.sorted().forEach { testName ->
+                    appendLine("=== $testName")
+
+                    // 실제 존재하는 snippet 타입만 찾기
+                    val testDir = file("${snippetsDir}/$controller/$testName")
+                    val availableSnippets = listOf(
+                        "http-request", "http-response",
+                        "path-parameters", "query-parameters",
+                        "request-fields", "response-fields"
+                    ).filter { snippetType ->
+                        File(testDir, "$snippetType.adoc").exists()
+                    }
+
+                    // 존재하는 snippet만으로 operation 매크로 생성
+                    if (availableSnippets.isNotEmpty()) {
+                        val snippetsParam = availableSnippets.joinToString(",")
+                        appendLine("operation::$controller/$testName[snippets='$snippetsParam']")
+                    } else {
+                        // snippet 없으면 기본 operation (모든 snippet 포함 시도)
+                        appendLine("operation::$controller/$testName[]")
+                    }
+
+                    appendLine()
+                }
+            }
+        }
+
+        indexFile.writeText(content)
+        println("[generateRestDocsIndex] index.adoc 자동 생성 완료: ${indexFile.absolutePath}")
     }
+}
 
+tasks.asciidoctor { // asciidoctor task 설정
+    dependsOn("generateRestDocsIndex")  // asciidoctor 전에 index 먼저 생성
     configurations("asciidoctorExt") // asciidoctorExt 설정 추가
-    baseDirFollowsSourceDir() // .adoc 파일에서 다른 .adoc을 include하여 사용하는 경우에 대한 경로 문제 해결
-    setSourceDir(file(docsDir)) // AsciiDoc 소스 경로 지정 (repo custom)
     inputs.dir(snippetsDir) // 테스트를 통해서 생성된 snippets를 입력으로 사용
-    dependsOn(tasks.test) // test task에 의존하도록 설정
 
-    attributes(mapOf("snippets" to snippetsDir)) // .adoc 파일 안에서 {snippets} 변수 사용 가능
+    baseDirFollowsSourceDir() // .adoc 파일에서 다른 .adoc을 include하여 사용하는 경우에 대한 경로 문제 해결
+    setSourceDir(file(asciiDocsSourceDir)) // AsciiDoc 소스 경로 지정 (repo custom)
 
     // index.adoc 파일만 변환 대상으로 설정
     sources {
         include("**/index.adoc")
+    }
+
+    attributes(mapOf("snippets" to snippetsDir.toString())) // .adoc 파일 안에서 {snippets} 변수 사용 가능
+
+    doFirst { // 기존에 존재하는 파일들을 지우고 시작함
+        println("=".repeat(50))
+        println("[asciidoctor] AsciiDoc 문서 생성을 시작합니다.")
+        println("=".repeat(50))
+    }
+
+    doLast {
+        println("=".repeat(50))
+        println("[asciidoctor] AsciiDoc 문서 생성이 완료되었습니다.")
+        println("=".repeat(50))
     }
 }
 
 val copyDocument = tasks.register<Copy>("copyDocument") { // REST DOCS 복사하는 task
     dependsOn(tasks.asciidoctor) // asciidoctor task에 의존하도록 설정
 
+    doFirst {
+        println("=".repeat(50))
+        println("[asciidoctor] 생성된 Rest Docs를 복사합니다. 기존 문서들을 삭제됩니다.")
+        delete(file(asciiDocsDir))
+        println("=".repeat(50))
+    }
+
+
     from(file("build/docs/asciidoc")) // 기본 생성된 경로
-    into(file("docs/static")) // 파일을 복사할 경로
+    into(file(asciiDocsDir)) // 파일을 복사할 경로
 
     doLast {
+        println("=".repeat(50))
         println("[copyDocument] AsciiDoc 문서를 docs/static에 복사하였습니니다.")
+        println("=".repeat(50))
     }
 }
 
