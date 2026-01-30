@@ -703,6 +703,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         validatePublishable(finalDraft, finalFormInfo);
 
+        syncReviewWindowsOnPublish(command.recruitmentId(), finalDraft.schedule());
+
         boolean hasOtherOngoing = loadRecruitmentPort.existsOtherOngoingPublishedRecruitment(
                 recruitment.getSchoolId(),
                 recruitment.getId(),
@@ -745,33 +747,26 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         if (draft.title() == null || draft.title().isBlank()) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_TITLE_REQUIRED);
         }
 
         if (draft.recruitmentParts() == null || draft.recruitmentParts().isEmpty()) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_PART_REQUIRED);
         }
 
         RecruitmentDraftInfo.ScheduleInfo s = draft.schedule();
         if (s == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_REQUIRED);
         }
 
-        requireNonNull(s.applyStartAt());
-        requireNonNull(s.applyEndAt());
-        if (!s.applyStartAt().isBefore(s.applyEndAt())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
-        }
+        requireNonNull(s.applyStartAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_APPLY_START_REQUIRED);
+        requireNonNull(s.applyEndAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_APPLY_END_REQUIRED);
+        requireNonNull(s.docResultAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_DOC_RESULT_REQUIRED);
+        requireNonNull(s.interviewStartAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_INTERVIEW_START_REQUIRED);
+        requireNonNull(s.interviewEndAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_INTERVIEW_END_REQUIRED);
+        requireNonNull(s.finalResultAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_FINAL_RESULT_REQUIRED);
 
-        requireNonNull(s.docResultAt());
-
-        requireNonNull(s.interviewStartAt());
-        requireNonNull(s.interviewEndAt());
-        if (!s.interviewStartAt().isBefore(s.interviewEndAt())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
-        }
-
-        requireNonNull(s.finalResultAt());
+        validateScheduleOrderOrThrow(s);
 
         if (formInfo == null || formInfo.formDefinition() == null) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
@@ -783,17 +778,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 .anyMatch(sec -> sec.questions() != null && !sec.questions().isEmpty());
 
         if (!hasAnyQuestion) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_QUESTION_REQUIRED);
         }
 
         if (draft.maxPreferredPartCount() != null && draft.maxPreferredPartCount() <= 0) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_MAX_PREFERRED_PART_INVALID);
         }
     }
 
-    private void requireNonNull(Object v) {
+    private void requireNonNull(Object v, RecruitmentErrorCode code) {
         if (v == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+            throw new BusinessException(Domain.RECRUITMENT, code);
         }
     }
 
@@ -1911,7 +1907,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             ResolvedRecruitmentSchedule c
     ) {
         // DOC_REVIEW_WINDOW: applyEnd -> docResult
-        if (c.applyEndAt() != null && c.docResultAt() != null && c.applyEndAt().isBefore(c.docResultAt())) {
+        if (c.applyEndAt() != null && c.docResultAt() != null && c.applyEndAt().isAfter(c.docResultAt())) {
             upsertSchedule(
                     recruitmentId,
                     existing,
@@ -1922,7 +1918,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         // FINAL_REVIEW_WINDOW: interviewEnd -> finalResult
-        if (c.interviewEndAt() != null && c.finalResultAt() != null && c.interviewEndAt().isBefore(c.finalResultAt())) {
+        if (c.interviewEndAt() != null && c.finalResultAt() != null && c.interviewEndAt().isAfter(c.finalResultAt())) {
             upsertSchedule(
                     recruitmentId,
                     existing,
@@ -1943,5 +1939,60 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                     r.interviewEndAt(), r.finalResultAt());
         }
 
+    }
+
+    private void syncReviewWindowsOnPublish(Long recruitmentId, RecruitmentDraftInfo.ScheduleInfo s) {
+        if (s == null) {
+            return;
+        }
+
+        // doc review window = applyEnd -> docResult
+        if (s.applyEndAt() != null && s.docResultAt() != null && !s.applyEndAt().isAfter(s.docResultAt())) {
+            upsertSchedulePeriod(
+                    recruitmentId,
+                    RecruitmentScheduleType.DOC_REVIEW_WINDOW,
+                    s.applyEndAt(),
+                    s.docResultAt()
+            );
+        }
+
+        // final review window = interviewEnd -> finalResult
+        if (s.interviewEndAt() != null && s.finalResultAt() != null && !s.interviewEndAt().isAfter(s.finalResultAt())) {
+            upsertSchedulePeriod(
+                    recruitmentId,
+                    RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
+                    s.interviewEndAt(),
+                    s.finalResultAt()
+            );
+        }
+        s.finalResultAt();
+    }
+
+    private void validateScheduleOrderOrThrow(RecruitmentDraftInfo.ScheduleInfo s) {
+        // applyStart < applyEnd
+        if (!s.applyStartAt().isBefore(s.applyEndAt())) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+        }
+        // applyEnd <= docResult
+        if (s.docResultAt().isBefore(s.applyEndAt())) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+        }
+        // docResult <= interviewStart
+        if (s.interviewStartAt().isBefore(s.docResultAt())) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+        }
+        // interviewStart < interviewEnd
+        if (!s.interviewStartAt().isBefore(s.interviewEndAt())) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+        }
+        // interviewEnd <= finalResult
+        if (s.finalResultAt().isBefore(s.interviewEndAt())) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+        }
     }
 }

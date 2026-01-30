@@ -65,7 +65,31 @@ public enum RecruitmentErrorCode implements BaseCode {
     RECRUITMENT_SCHEDULE_INTERVIEW_SHORTEN_FORBIDDEN(HttpStatus.BAD_REQUEST, "RECRUITMENT-0033",
             "면접 일정을 단축할 수 없습니다."),
     RECRUITMENT_SCHEDULE_INVALID_ORDER(HttpStatus.BAD_REQUEST, "RECRUITMENT-0034",
-            "모집 일정의 순서가 올바르지 않습니다.");
+            "모집 일정의 순서가 올바르지 않습니다."),
+    RECRUITMENT_PUBLISH_TITLE_REQUIRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0035",
+            "모집 제목은 필수 항목입니다."),
+    RECRUITMENT_PUBLISH_PART_REQUIRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0036",
+            "모집 파트는 최소 하나 이상 선택해야 합니다."),
+    RECRUITMENT_PUBLISH_SCHEDULE_REQUIRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0037",
+            "모집 일정은 필수 항목입니다."),
+    RECRUITMENT_PUBLISH_APPLY_START_REQUIRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0038",
+            "지원 시작 일정은 필수 항목입니다."),
+    RECRUITMENT_PUBLISH_APPLY_END_REQUIRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0039",
+            "지원 종료 일정은 필수 항목입니다."),
+    RECRUITMENT_PUBLISH_DOC_RESULT_REQUIRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0040",
+            "서류 결과 발표 일정은 필수 항목입니다."),
+    RECRUITMENT_PUBLISH_INTERVIEW_START_REQUIRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0041",
+            "면접 시작 일정은 필수 항목입니다."),
+    RECRUITMENT_PUBLISH_INTERVIEW_END_REQUIRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0042",
+            "면접 종료 일정은 필수 항목입니다."),
+    RECRUITMENT_PUBLISH_FINAL_RESULT_REQUIRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0043",
+            "최종 결과 발표 일정은 필수 항목입니다."),
+    RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID(HttpStatus.BAD_REQUEST, "RECRUITMENT-0044",
+            "모집 일정의 순서가 올바르지 않습니다."),
+    RECRUITMENT_PUBLISH_QUESTION_REQUIRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0045",
+            "모집 질문은 최소 하나 이상 필요합니다."),
+    RECRUITMENT_PUBLISH_MAX_PREFERRED_PART_INVALID(HttpStatus.BAD_REQUEST, "RECRUITMENT-0046",
+            "선호 파트의 최대 개수가 올바르지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
