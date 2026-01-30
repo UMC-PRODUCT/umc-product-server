@@ -50,6 +50,4 @@ public class ChallengerRole {
 
     @Column(nullable = false, name = "gisu_id")
     private Long gisuId;
-
-
 }
