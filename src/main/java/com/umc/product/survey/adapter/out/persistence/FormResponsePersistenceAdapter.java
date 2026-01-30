@@ -1,4 +1,4 @@
-package com.umc.product.recruitment.adapter.out;
+package com.umc.product.survey.adapter.out.persistence;
 
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.application.port.out.SaveFormResponsePort;
