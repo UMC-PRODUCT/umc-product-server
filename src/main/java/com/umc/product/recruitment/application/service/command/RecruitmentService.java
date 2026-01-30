@@ -2013,7 +2013,6 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                     s.finalResultAt()
             );
         }
-        s.finalResultAt();
     }
 
     private void validateScheduleOrderOrThrow(RecruitmentDraftInfo.ScheduleInfo s) {
