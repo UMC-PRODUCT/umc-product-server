@@ -6,13 +6,16 @@ import static java.util.Objects.requireNonNull;
  * 리소스에 대한 권한 정보
  */
 public record ResourcePermission(
-        ResourceType resourceType,  // CURRICULUM, SCHEDULE, NOTICE 등
-        String resourceId,          // "123" (optional, null이면 타입 전체)
-        PermissionType permission
+    ResourceType resourceType,  // CURRICULUM, SCHEDULE, NOTICE 등
+    String resourceId,          // "123" (optional, null이면 타입 전체)
+    PermissionType permission
 ) {
     public ResourcePermission {
         requireNonNull(resourceType, "리소스 유형은 null일 수 없습니다.");
         requireNonNull(permission, "권한 유형은 null일 수 없습니다.");
+
+        // ResourceType이 해당 PermissionType을 지원하는지 검증
+        resourceType.validatePermission(permission);
     }
 
     /**
