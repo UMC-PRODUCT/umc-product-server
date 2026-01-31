@@ -46,6 +46,12 @@ public class Challenger extends BaseEntity {
     @Column(nullable = false, name = "status")
     private ChallengerStatus status;
 
+    @Column(name = "modification_reason")
+    private String modificationReason;
+
+    @Column(name = "modified_by")
+    private Long modifiedBy;
+
     @OneToMany(
             mappedBy = "challenger",
             fetch = FetchType.LAZY,
@@ -53,6 +59,7 @@ public class Challenger extends BaseEntity {
             orphanRemoval = true
     )
     private List<ChallengerPoint> challengerPoints = new ArrayList<>();
+
 
     @Builder
     public Challenger(Long memberId, ChallengerPart part, Long gisuId) {
@@ -79,8 +86,12 @@ public class Challenger extends BaseEntity {
     /**
      * 챌린저의 상태를 변경합니다.
      */
-    public void changeStatus(ChallengerStatus newStatus) {
+    public void changeStatus(ChallengerStatus newStatus, Long modifiedBy, String reason) {
+        validateChallengerStatus();
+        
         this.status = newStatus;
+        this.modifiedBy = modifiedBy;
+        this.modificationReason = reason;
     }
 
     /**

@@ -53,7 +53,24 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
     @Override
     public void updateChallenger(UpdateChallengerCommand command) {
         Challenger challenger = loadChallengerPort.getById(command.challengerId());
-        challenger.changePart(command.newPart());
+
+        // 변경이 필요한 내용이 둘 다 있는 경우 에러를 표시하도록 함
+        if (command.newPart() == null && command.newStatus() == null) {
+            throw new ChallengerDomainException(ChallengerErrorCode.BAD_CHALLENGER_UPDATE_REQUEST);
+        }
+
+        if (command.newPart() != null) {
+            challenger.changePart(command.newPart());
+        }
+
+        if (command.newStatus() != null) {
+            challenger.changeStatus(
+                    command.newStatus(),
+                    command.modifiedBy(),
+                    command.reason()
+            );
+        }
+
         saveChallengerPort.save(challenger);
     }
 
@@ -66,7 +83,11 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
     @Override
     public void deactivateChallenger(DeactivateChallengerCommand command) {
         Challenger challenger = loadChallengerPort.getById(command.challengerId());
-        challenger.changeStatus(resolveDeactivationStatus(command.deactivationType()));
+        challenger.changeStatus(
+            resolveDeactivationStatus(command.deactivationType()),
+            command.modifiedBy(),
+            command.reason()
+        );
     }
 
     @Override

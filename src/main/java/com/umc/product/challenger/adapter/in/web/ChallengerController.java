@@ -3,18 +3,22 @@ package com.umc.product.challenger.adapter.in.web;
 import com.umc.product.challenger.adapter.in.web.dto.request.CreateChallengerInfoRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.DeactivateChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.DeleteChallengerPointRequest;
+import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPartRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPointRequest;
-import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.GrantChallengerPointRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
 import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerCommand;
+import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerCommand;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.response.PageResponse;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -67,13 +71,14 @@ public class ChallengerController {
         manageChallengerUseCase.deactivateChallenger(request.toCommand(challengerId));
     }
 
-    @Operation(summary = "챌린저 정보 수정 (파트 변경)")
-    @PatchMapping("{challengerId}")
+    @Operation(summary = "챌린저 파트 변경")
+    @PatchMapping("{challengerId}/part")
     ChallengerInfoResponse editChallengerInfo(
+            @CurrentMember MemberPrincipal memberPrincipal,
             @PathVariable Long challengerId,
-            @RequestBody EditChallengerRequest request
+            @RequestBody EditChallengerPartRequest request
     ) {
-        manageChallengerUseCase.updateChallenger(request.toCommand(challengerId));
+        manageChallengerUseCase.updateChallenger(request.toCommand(challengerId, memberPrincipal.getMemberId()));
         ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
         return ChallengerInfoResponse.from(info);
     }
