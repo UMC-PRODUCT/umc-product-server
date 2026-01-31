@@ -54,6 +54,9 @@ public class FormResponse extends BaseEntity {
     @Column(name = "submitted_ip")
     private String submittedIp;
 
+    @Column(name = "last_saved_at", nullable = false)
+    private Instant lastSavedAt;
+
     @OneToMany(mappedBy = "formResponse", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<SingleAnswer> answers = new ArrayList<>();
@@ -63,6 +66,7 @@ public class FormResponse extends BaseEntity {
         fr.form = form;
         fr.respondentMemberId = respondentMemberId;
         fr.status = com.umc.product.survey.domain.enums.FormResponseStatus.DRAFT;
+        fr.lastSavedAt = Instant.now();
         return fr;
     }
 
@@ -73,6 +77,10 @@ public class FormResponse extends BaseEntity {
         this.status = com.umc.product.survey.domain.enums.FormResponseStatus.SUBMITTED;
         this.submittedAt = submittedAt;
         this.submittedIp = submittedIp;
+    }
+
+    public void updateLastSavedAt(Instant now) {
+        this.lastSavedAt = now;
     }
 
 }

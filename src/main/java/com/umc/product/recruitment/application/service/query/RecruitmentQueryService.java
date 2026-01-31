@@ -239,7 +239,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
                 formId,
                 formResponse.getId(),
                 formResponse.getStatus(),
-                formResponse.getUpdatedAt(),
+                formResponse.getLastSavedAt(),
                 formResponse.getSubmittedAt(),
                 answers
         );

@@ -299,6 +299,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             savedQuestionIds.add(questionId);
         }
 
+        formResponse.updateLastSavedAt(Instant.now());
         saveFormResponsePort.save(formResponse);
 
         return UpsertRecruitmentFormResponseAnswersInfo.of(command.formResponseId(), savedQuestionIds);
