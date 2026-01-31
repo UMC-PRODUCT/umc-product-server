@@ -15,9 +15,31 @@ public record MemberInfoResponse(
         String nickname,
         String email,
         Long schoolId,
-        Long schoolName,
-        Long profileImageLink,
+        String schoolName,
+        String profileImageLink,
         MemberStatus status
         // TODO: 활동 이력이나 각종 링크들 추가해야 함
 ) {
+
+    public static MemberInfoResponse from(
+            Long id,
+            String name,
+            String nickname,
+            String email,
+            Long schoolId,
+            String schoolName,
+            String profileImageLink,
+            MemberStatus status
+    ) {
+        return new MemberInfoResponse(
+                id,
+                name,
+                nickname,
+                email,
+                schoolId,
+                schoolName,
+                profileImageLink,
+                status
+        );
+    }
 }

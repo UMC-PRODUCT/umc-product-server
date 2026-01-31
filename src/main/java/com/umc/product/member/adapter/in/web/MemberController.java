@@ -15,6 +15,12 @@ import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
+import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
+import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +40,9 @@ public class MemberController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final ManageMemberUseCase manageMemberUseCase;
+    private final GetMemberUseCase getMemberUseCase;
+    private final GetSchoolUseCase getSchoolUseCase;
+    private final GetFileUseCase getFileUseCase;
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
 
     // 로그인은 OAuth를 통해서만 진행됨!!
@@ -74,15 +83,59 @@ public class MemberController {
     @Operation(summary = "내 프로필 조회")
     @GetMapping("me")
     MemberInfoResponse getMyProfile(@CurrentMember MemberPrincipal memberPrincipal) {
-        throw new NotImplementedException();
+        MemberInfo info = getMemberUseCase.getProfile(memberPrincipal.getMemberId());
+        String schoolName = null;
+        if (info.schoolId() != null) {
+            SchoolInfo schoolInfo = getSchoolUseCase.getSchoolDetail(info.schoolId());
+            schoolName = schoolInfo.schoolName();
+        }
+
+        String profileImageLink = null;
+        if (info.profileImageId() != null) {
+            FileInfo imgInfo = getFileUseCase.getById(info.profileImageId());
+            profileImageLink = imgInfo.fileLink();
+        }
+
+        return MemberInfoResponse.from(
+            info.id(),
+            info.name(),
+            info.nickname(),
+            info.email(),
+            info.schoolId(),
+            schoolName,
+            profileImageLink,
+            info.status()
+        );
     }
 
     @Operation(summary = "memberId로 회원 정보 조회")
     @GetMapping("profile/{memberId}")
     MemberInfoResponse getMemberProfile(
-        @PathVariable String memberId
+        @PathVariable Long memberId
     ) {
-        throw new NotImplementedException();
+        MemberInfo info = getMemberUseCase.getProfile(memberId);
+        String schoolName = null;
+        if (info.schoolId() != null) {
+            SchoolInfo schoolInfo = getSchoolUseCase.getSchoolDetail(info.schoolId());
+            schoolName = schoolInfo.schoolName();
+        }
+
+        String profileImageLink = null;
+        if (info.profileImageId() != null) {
+            FileInfo imgInfo = getFileUseCase.getById(info.profileImageId());
+            profileImageLink = imgInfo.fileLink();
+        }
+
+        return MemberInfoResponse.from(
+            info.id(),
+            info.name(),
+            info.nickname(),
+            info.email(),
+            info.schoolId(),
+            schoolName,
+            profileImageLink,
+            info.status()
+        );
     }
 
     @Operation(summary = "회원 정보 수정")
@@ -91,7 +144,8 @@ public class MemberController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody EditMemberInfoRequest request
     ) {
-        throw new NotImplementedException();
+
+
     }
 
 }
