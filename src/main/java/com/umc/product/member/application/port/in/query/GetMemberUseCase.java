@@ -5,7 +5,7 @@ public interface GetMemberUseCase {
 
     MemberInfo getByEmail(String email);
 
-    MemberInfo getProfile(Long memberId);
+    MemberProfileInfo getProfile(Long memberId);
 
     boolean existsById(Long memberId);
 

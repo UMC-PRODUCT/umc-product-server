@@ -15,12 +15,9 @@ import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
+import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
-import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
-import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
-import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import com.umc.product.storage.application.port.in.query.dto.FileInfo;
+import com.umc.product.member.application.port.in.query.MemberProfileInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -41,8 +38,6 @@ public class MemberController {
     private final JwtTokenProvider jwtTokenProvider;
     private final ManageMemberUseCase manageMemberUseCase;
     private final GetMemberUseCase getMemberUseCase;
-    private final GetSchoolUseCase getSchoolUseCase;
-    private final GetFileUseCase getFileUseCase;
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
 
     // 로그인은 OAuth를 통해서만 진행됨!!
@@ -83,27 +78,15 @@ public class MemberController {
     @Operation(summary = "내 프로필 조회")
     @GetMapping("me")
     MemberInfoResponse getMyProfile(@CurrentMember MemberPrincipal memberPrincipal) {
-        MemberInfo info = getMemberUseCase.getProfile(memberPrincipal.getMemberId());
-        String schoolName = null;
-        if (info.schoolId() != null) {
-            SchoolInfo schoolInfo = getSchoolUseCase.getSchoolDetail(info.schoolId());
-            schoolName = schoolInfo.schoolName();
-        }
-
-        String profileImageLink = null;
-        if (info.profileImageId() != null) {
-            FileInfo imgInfo = getFileUseCase.getById(info.profileImageId());
-            profileImageLink = imgInfo.fileLink();
-        }
-
+        MemberProfileInfo info = getMemberUseCase.getProfile(memberPrincipal.getMemberId());
         return MemberInfoResponse.from(
             info.id(),
             info.name(),
             info.nickname(),
             info.email(),
             info.schoolId(),
-            schoolName,
-            profileImageLink,
+            info.schoolName(),
+            info.profileImageLink(),
             info.status()
         );
     }
@@ -113,27 +96,15 @@ public class MemberController {
     MemberInfoResponse getMemberProfile(
         @PathVariable Long memberId
     ) {
-        MemberInfo info = getMemberUseCase.getProfile(memberId);
-        String schoolName = null;
-        if (info.schoolId() != null) {
-            SchoolInfo schoolInfo = getSchoolUseCase.getSchoolDetail(info.schoolId());
-            schoolName = schoolInfo.schoolName();
-        }
-
-        String profileImageLink = null;
-        if (info.profileImageId() != null) {
-            FileInfo imgInfo = getFileUseCase.getById(info.profileImageId());
-            profileImageLink = imgInfo.fileLink();
-        }
-
+        MemberProfileInfo info = getMemberUseCase.getProfile(memberId);
         return MemberInfoResponse.from(
             info.id(),
             info.name(),
             info.nickname(),
             info.email(),
             info.schoolId(),
-            schoolName,
-            profileImageLink,
+            info.schoolName(),
+            info.profileImageLink(),
             info.status()
         );
     }
@@ -144,8 +115,22 @@ public class MemberController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody EditMemberInfoRequest request
     ) {
+        manageMemberUseCase.updateMember(UpdateMemberCommand.forProfileUpdate(
+            memberPrincipal.getMemberId(),
+            request.profileImageId())
+        );
 
-
+        MemberProfileInfo info = getMemberUseCase.getProfile(memberPrincipal.getMemberId());
+        return MemberInfoResponse.from(
+            info.id(),
+            info.name(),
+            info.nickname(),
+            info.email(),
+            info.schoolId(),
+            info.schoolName(),
+            info.profileImageLink(),
+            info.status()
+        );
     }
 
 }
