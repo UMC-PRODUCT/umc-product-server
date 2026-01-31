@@ -2,7 +2,7 @@ package com.umc.product.authorization.application.service;
 
 import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
-import com.umc.product.authorization.application.service.evaluator.ResourcePermissionEvaluator;
+import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.ChallengerRole;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
@@ -47,10 +47,10 @@ public class AuthorizationService implements CheckPermissionUseCase {
         this.getChapterUseCase = getChapterUseCase;
         this.getChallengerUseCase = getChallengerUseCase;
         this.evaluators = evaluatorList.stream()
-                .collect(Collectors.toMap(
-                        ResourcePermissionEvaluator::supportedResourceType,
-                        Function.identity()
-                ));
+            .collect(Collectors.toMap(
+                ResourcePermissionEvaluator::supportedResourceType,
+                Function.identity()
+            ));
 
         log.info("등록된 ResourcePermissionEvaluator: {}", evaluators.keySet());
     }
@@ -63,7 +63,7 @@ public class AuthorizationService implements CheckPermissionUseCase {
         ResourcePermissionEvaluator evaluator = evaluators.get(permission.resourceType());
         if (evaluator == null) {
             throw new AuthorizationDomainException(AuthorizationErrorCode.NO_EVALUATOR_MATCHING_RESOURCE_TYPE,
-                    "Evaluator for Resource Type [" + permission.resourceType() + "] not found.");
+                "Evaluator for Resource Type [" + permission.resourceType() + "] not found.");
         }
 
         // 사용자가 활동한 모든 기수를 확인
@@ -78,16 +78,16 @@ public class AuthorizationService implements CheckPermissionUseCase {
         // 그러면 기수와 학교를 조합해서 챕터들이 나오겠지? 굳 그거 쓰면 될듯
         List<ChallengerInfo> memberChallengerList = getChallengerUseCase.getMemberChallengerList(memberId);
         List<Long> chapterIds = memberChallengerList.stream().map((challengerInfo) ->
-                        getChapterUseCase.byGisuAndSchool(challengerInfo.gisuId(), schoolId).id())
-                .toList();
+                getChapterUseCase.byGisuAndSchool(challengerInfo.gisuId(), schoolId).id())
+            .toList();
         List<ChallengerRole> roles = loadChallengerRolePort.findByMemberId(memberId);
 
         SubjectAttributes subjectAttributes = SubjectAttributes.builder()
-                .memberId(memberId)
-                .schoolId(schoolId)
-                .chapterIds(chapterIds)
-                .roles(roles)
-                .build();
+            .memberId(memberId)
+            .schoolId(schoolId)
+            .chapterIds(chapterIds)
+            .roles(roles)
+            .build();
 
         log.info("Subject Attribute {}가 평가를 요청했습니다.", subjectAttributes.toString());
 
@@ -95,8 +95,8 @@ public class AuthorizationService implements CheckPermissionUseCase {
         boolean hasPermission = true;
 
         log.debug("Permission check - memberId: {}, roles: {}, resource: {}:{}, permission: {}, result: {}",
-                memberId, roles, permission.resourceType(), permission.resourceId(),
-                permission.permission(), hasPermission);
+            memberId, roles, permission.resourceType(), permission.resourceId(),
+            permission.permission(), hasPermission);
 
         return hasPermission;
     }
@@ -105,7 +105,7 @@ public class AuthorizationService implements CheckPermissionUseCase {
     public void checkOrThrow(Long memberId, ResourcePermission permission) {
         if (!check(memberId, permission)) {
             log.warn("Permission denied - memberId: {}, resource: {}:{}, permission: {}",
-                    memberId, permission.resourceType(), permission.resourceId(), permission.permission());
+                memberId, permission.resourceType(), permission.resourceId(), permission.permission());
 
             throw new AuthorizationDomainException(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED);
         }

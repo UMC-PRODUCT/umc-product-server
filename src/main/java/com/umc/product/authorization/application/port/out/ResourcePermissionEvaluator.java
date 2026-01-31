@@ -1,4 +1,4 @@
-package com.umc.product.authorization.application.service.evaluator;
+package com.umc.product.authorization.application.port.out;
 
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
@@ -25,7 +25,7 @@ public interface ResourcePermissionEvaluator {
      * @return 권한 있으면 true
      */
     boolean evaluate(
-            SubjectAttributes subjectAttributes,
-            ResourcePermission resourcePermission
+        SubjectAttributes subjectAttributes,
+        ResourcePermission resourcePermission
     );
 }

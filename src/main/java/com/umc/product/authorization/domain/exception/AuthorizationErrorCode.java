@@ -17,6 +17,7 @@ public enum AuthorizationErrorCode implements BaseCode {
         "해당 리소스 타입에 해당하는 Permission Evaluator가 존재하지 않습니다. 관리자에게 문의하세요."),
     PERMISSION_TYPE_NOT_SUPPORTED_BY_RESOURCE_TYPE(HttpStatus.INTERNAL_SERVER_ERROR, "AUTHORIZATION-0006",
         "리소스 유형에서 지원하지 않는 권한 유형을 검사하고자 시도하였습니다. 관리자에게 문의하세요."),
+    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "AUTHORIZATION-0007", "잘못된 권한 확인입니다."),
     ;
 
     private final HttpStatus httpStatus;
