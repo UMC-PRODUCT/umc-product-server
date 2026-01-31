@@ -822,6 +822,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_QUESTION_REQUIRED);
         }
 
+        boolean hasPreferredPartQuestion = def.sections().stream()
+                .filter(sec -> sec.questions() != null)
+                .flatMap(sec -> sec.questions().stream())
+                .anyMatch(q -> q != null && q.type() == QuestionType.PREFERRED_PART);
+
+        if (!hasPreferredPartQuestion) {
+            throw new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_PREFERRED_PART_REQUIRED
+            );
+        }
+
         if (draft.maxPreferredPartCount() != null && draft.maxPreferredPartCount() <= 0) {
             throw new BusinessException(Domain.RECRUITMENT,
                     RecruitmentErrorCode.RECRUITMENT_PUBLISH_MAX_PREFERRED_PART_INVALID);
@@ -1150,9 +1162,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         Map<String, Object> v = opt.get().getValue();
+        if (v == null) {
+            v = Map.of();
+        }
+
         List<?> selected = (List<?>) (v.containsKey("preferredParts")
                 ? v.getOrDefault("preferredParts", List.of())
                 : v.getOrDefault("selectedParts", List.of()));
+
+        List<Long> selectedRecruitmentPartIds = extractPreferredRecruitmentPartIds(recruitment, formResponse);
+        if (selectedRecruitmentPartIds == null || selectedRecruitmentPartIds.isEmpty()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
+        }
 
         if (selected.isEmpty()) {
             logRequiredMissing(
@@ -1169,6 +1190,42 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
         if (selected.size() > max) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_EXCEEDS_MAX_COUNT);
+        }
+
+        if (max >= 2 && selectedRecruitmentPartIds.size() < max) {
+            logRequiredMissing(
+                    "validatePreferredPartIfNeeded.notEnoughSelections",
+                    recruitment.getId(),
+                    formResponse.getId(),
+                    recruitment.getFormId(),
+                    java.util.Map.of(
+                            "maxPreferredPartCount", max,
+                            "selectedSize", selectedRecruitmentPartIds.size(),
+                            "preferredValue", v
+                    )
+            );
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.PREFERRED_PART_REQUIRED_COUNT_MISMATCH);
+        }
+
+        if (selectedRecruitmentPartIds == null || selectedRecruitmentPartIds.isEmpty()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
+        }
+
+        List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentId(recruitment.getId());
+        if (parts == null) {
+            parts = List.of();
+        }
+
+        java.util.Set<Long> openPartIds = parts.stream()
+                .filter(p -> p.getId() != null)
+                .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+                .map(RecruitmentPart::getId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        boolean hasInvalid = selectedRecruitmentPartIds.stream().anyMatch(id -> !openPartIds.contains(id));
+        if (hasInvalid) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
         }
     }
 
@@ -1456,8 +1513,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             parts = List.of();
         }
 
-        Map<String, Long> openPartIdByName = parts.stream()
-                .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+        Map<String, Long> partIdByName = parts.stream()
                 .filter(p -> p.getPart() != null && p.getId() != null)
                 .collect(java.util.stream.Collectors.toMap(
                         p -> p.getPart().name(),
@@ -1477,12 +1533,14 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             // 2) 문자열이면: (a) 숫자 문자열 or (b) enum name
             if (item instanceof String s) {
                 try {
-                    result.add(Long.parseLong(s)); // "3"
+                    result.add(Long.parseLong(s));
                 } catch (NumberFormatException ignore) {
-                    Long mapped = openPartIdByName.get(s); // "SPRINGBOOT"
-                    if (mapped != null) {
-                        result.add(mapped);
+                    Long mapped = partIdByName.get(s);
+                    if (mapped == null) {
+                        throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
                     }
+                    result.add(mapped);
+
                 }
                 continue;
             }
