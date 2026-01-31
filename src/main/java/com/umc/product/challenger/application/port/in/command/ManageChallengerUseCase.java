@@ -34,7 +34,7 @@ public interface ManageChallengerUseCase {
     /**
      * 챌린저를 비활성화 처리합니다. (제명/탈부 처리)
      */
-    void deactiveteChallenger(DeactivateChallengerCommand command);
+    void deactivateChallenger(DeactivateChallengerCommand command);
 
     /**
      * 챌린저에게 상벌점을 부여합니다.

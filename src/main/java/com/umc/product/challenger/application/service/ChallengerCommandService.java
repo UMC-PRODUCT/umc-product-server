@@ -64,7 +64,7 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
     }
 
     @Override
-    public void deactiveteChallenger(DeactivateChallengerCommand command) {
+    public void deactivateChallenger(DeactivateChallengerCommand command) {
         Challenger challenger = loadChallengerPort.getById(command.challengerId());
         challenger.changeStatus(resolveDeactivationStatus(command.deactivationType()));
     }

@@ -64,7 +64,7 @@ public class ChallengerController {
             @PathVariable Long challengerId,
             @RequestBody DeactivateChallengerRequest request
     ) {
-        manageChallengerUseCase.deactiveteChallenger(request.toCommand(challengerId));
+        manageChallengerUseCase.deactivateChallenger(request.toCommand(challengerId));
     }
 
     @Operation(summary = "챌린저 정보 수정 (파트 변경)")
