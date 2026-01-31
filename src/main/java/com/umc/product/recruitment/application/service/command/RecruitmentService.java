@@ -95,10 +95,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @Transactional
 @RequiredArgsConstructor
 public class RecruitmentService implements CreateRecruitmentDraftFormResponseUseCase,
@@ -365,6 +367,20 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         if (!formResponse.getForm().getId().equals(formId)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
         }
+
+        Long applicantId = command.applicantMemberId();
+        Long respondentId = formResponse.getRespondentMemberId();
+
+        boolean applicantIdExists = applicantId != null;
+        boolean isSameMember = applicantIdExists && applicantId.equals(respondentId);
+
+        log.debug(
+                "[FORM_RESPONSE_AUTH] applicantMemberId={}, respondentMemberId={}, applicantIdExists={}, isSameMember={}",
+                applicantId,
+                respondentId,
+                applicantIdExists,
+                isSameMember
+        );
 
         if (command.applicantMemberId() != null && !command.applicantMemberId()
                 .equals(formResponse.getRespondentMemberId())) {
@@ -1051,9 +1067,36 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 .map(a -> a.getQuestion().getId())
                 .collect(java.util.stream.Collectors.toSet());
 
+        log.debug("[SUBMIT_VALIDATE] recruitmentId={}, formResponseId={}, answeredQuestionIds={}",
+                recruitment.getId(), formResponse.getId(), answeredQuestionIds);
+
+        Set<ChallengerPart> selectedParts = resolveSelectedPartsForSubmit(recruitment, formResponse);
+
+        log.debug("[SUBMIT_VALIDATE] recruitmentId={}, formResponseId={}, selectedPartsForSubmit={}",
+                recruitment.getId(), formResponse.getId(), selectedParts);
+
+        var requiredAll = def.sections().stream()
+                .flatMap(sec -> sec.questions() == null ? java.util.stream.Stream.empty() : sec.questions().stream())
+                .filter(FormDefinitionInfo.QuestionInfo::isRequired)
+                .map(q -> java.util.Map.of("questionId", q.questionId(), "type", q.type(), "questionText",
+                        q.questionText()))
+                .toList();
+
+        log.debug("[SUBMIT_VALIDATE_REQUIRED_LIST] recruitmentId={}, formResponseId={}, requiredQuestions={}",
+                recruitment.getId(), formResponse.getId(), requiredAll);
+
         def.sections().forEach(section -> {
             if (section.questions() == null) {
                 return;
+            }
+
+            String targetKey = section.targetKey();
+            if (isPartSection(targetKey)) {
+                ChallengerPart sectionPart = parsePartFromTargetKey(targetKey);
+
+                if (sectionPart == null || !selectedParts.contains(sectionPart)) {
+                    return;
+                }
             }
 
             section.questions().forEach(q -> {
@@ -1063,6 +1106,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
                 Long qid = q.questionId();
                 if (qid == null || !answeredQuestionIds.contains(qid)) {
+                    logRequiredMissing(
+                            "validateBeforeSubmit.requiredQuestion",
+                            recruitment.getId(),
+                            formResponse.getId(),
+                            formId,
+                            java.util.Map.of(
+                                    "sectionTargetKey", targetKey,
+                                    "questionId", qid,
+                                    "questionType", q.type(),
+                                    "questionText", q.questionText(),
+                                    "answeredQuestionIds", answeredQuestionIds
+                            ));
                     throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
                 }
 
@@ -1100,6 +1155,16 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 : v.getOrDefault("selectedParts", List.of()));
 
         if (selected.isEmpty()) {
+            logRequiredMissing(
+                    "validatePreferredPartIfNeeded.emptySelection",
+                    recruitment.getId(),
+                    formResponse.getId(),
+                    recruitment.getFormId(),
+                    java.util.Map.of(
+                            "maxPreferredPartCount", recruitment.getMaxPreferredPartCount(),
+                            "preferredValue", v
+                    )
+            );
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
         if (selected.size() > max) {
@@ -1286,6 +1351,16 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 : 1;
 
         if (selectedRecruitmentPartIds.isEmpty()) {
+            logRequiredMissing(
+                    "persistAppliedPreferredParts.emptySelectedPartIds",
+                    recruitment.getId(),
+                    formResponse.getId(),
+                    recruitment.getFormId(),
+                    java.util.Map.of(
+                            "maxPreferredPartCount", recruitment.getMaxPreferredPartCount(),
+                            "answersCount", formResponse.getAnswers() == null ? 0 : formResponse.getAnswers().size()
+                    )
+            );
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
         if (selectedRecruitmentPartIds.size() > max) {
@@ -1322,6 +1397,16 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         if (selectedParts.isEmpty()) {
+            logRequiredMissing(
+                    "persistAppliedPreferredParts.selectedPartsEmptyAfterValidation",
+                    recruitment.getId(),
+                    formResponse.getId(),
+                    recruitment.getFormId(),
+                    java.util.Map.of(
+                            "selectedRecruitmentPartIds", selectedRecruitmentPartIds,
+                            "openPartIds", partById.keySet()
+                    )
+            );
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
 
@@ -1963,7 +2048,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             ResolvedRecruitmentSchedule c
     ) {
         // DOC_REVIEW_WINDOW: applyEnd -> docResult
-        if (c.applyEndAt() != null && c.docResultAt() != null && c.applyEndAt().isAfter(c.docResultAt())) {
+        if (c.applyEndAt() != null && c.docResultAt() != null) {
             upsertSchedule(
                     recruitmentId,
                     existing,
@@ -1974,7 +2059,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         // FINAL_REVIEW_WINDOW: interviewEnd -> finalResult
-        if (c.interviewEndAt() != null && c.finalResultAt() != null && c.interviewEndAt().isAfter(c.finalResultAt())) {
+        if (c.interviewEndAt() != null && c.finalResultAt() != null) {
             upsertSchedule(
                     recruitmentId,
                     existing,
@@ -2050,4 +2135,57 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                     RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
         }
     }
+
+    private Set<ChallengerPart> resolveSelectedPartsForSubmit(Recruitment recruitment, FormResponse formResponse) {
+        List<Long> selectedRecruitmentPartIds = extractPreferredRecruitmentPartIds(recruitment, formResponse);
+        if (selectedRecruitmentPartIds == null || selectedRecruitmentPartIds.isEmpty()) {
+            return Set.of();
+        }
+
+        List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentId(recruitment.getId());
+        if (parts == null) {
+            parts = List.of();
+        }
+
+        Map<Long, ChallengerPart> partById = parts.stream()
+                .filter(p -> p.getId() != null && p.getPart() != null)
+                .collect(Collectors.toMap(RecruitmentPart::getId, RecruitmentPart::getPart, (a, b) -> a));
+
+        return selectedRecruitmentPartIds.stream()
+                .map(partById::get)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
+    private static boolean isPartSection(String targetKey) {
+        return targetKey != null && targetKey.startsWith("PART:");
+    }
+
+    private static ChallengerPart parsePartFromTargetKey(String targetKey) {
+        if (!isPartSection(targetKey)) {
+            return null;
+        }
+        String raw = targetKey.substring("PART:".length()).trim();
+        if (raw.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return ChallengerPart.valueOf(raw);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private void logRequiredMissing(
+            String where,
+            Long recruitmentId,
+            Long formResponseId,
+            Long formId,
+            Object extra
+    ) {
+        log.warn("[REQUIRED_MISSING] where={}, recruitmentId={}, formResponseId={}, formId={}, extra={}",
+                where, recruitmentId, formResponseId, formId, extra);
+    }
+
 }
