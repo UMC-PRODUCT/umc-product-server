@@ -75,7 +75,9 @@ spring:
       keepalive-time: 60000       # DB에 1분마다 생존 신고 (유휴 커넥션 방지)
 
   flyway:
-    enabled: false # 필요 시 각 환경에 대한 설정에서 활성화하도록 함
+    enabled: true
+    baseline-version: 1
+    baseline-on-migrate: true
 
   jpa:
     # database-platform은 SpringBoot가 hibernate-spatial 의존성을 기반으로 자동으로 선택함
