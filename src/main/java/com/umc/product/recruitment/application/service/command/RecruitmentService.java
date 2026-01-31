@@ -705,6 +705,13 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 .orElseThrow(
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
+        Member requester = loadMemberPort.findById(command.requesterMemberId())
+                .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+
+        if (!recruitment.getSchoolId().equals(requester.getSchoolId())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORBIDDEN);
+        }
+
         if (command.updateRecruitmentDraftCommand() != null) {
             update(command.updateRecruitmentDraftCommand());
         }
@@ -721,6 +728,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         syncReviewWindowsOnPublish(command.recruitmentId(), finalDraft.schedule());
 
+        Instant now = Instant.now();
+
         boolean hasOtherOngoing = loadRecruitmentPort.existsOtherOngoingPublishedRecruitment(
                 recruitment.getSchoolId(),
                 recruitment.getId(),
@@ -730,8 +739,6 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         if (hasOtherOngoing) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_CONFLICT);
         }
-
-        Instant now = Instant.now();
 
         Recruitment latest = loadRecruitmentPort.findById(command.recruitmentId())
                 .orElseThrow(
