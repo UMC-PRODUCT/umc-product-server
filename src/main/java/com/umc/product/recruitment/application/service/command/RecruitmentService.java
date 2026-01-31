@@ -87,6 +87,7 @@ import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -624,6 +625,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         upsertReviewWindowsForDraftResolved(recruitmentId, resolved);
 
         if (schedule.interviewTimeTable() != null) {
+            validateTimeTableStructure(schedule.interviewTimeTable());
             var enabledOnlyMap = toEnabledOnlyMap(schedule.interviewTimeTable());
             recruitment.changeInterviewTimeTable(enabledOnlyMap);
         }
@@ -680,15 +682,29 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             RecruitmentDraftInfo.DateRangeInfo dateRange,
             RecruitmentDraftInfo.TimeRangeInfo timeRange,
             Integer slotMinutes,
-            List<RecruitmentDraftInfo.TimesByDateInfo> enabledByDate
+            List<EnabledTimesByDatePayload> enabledByDate
     ) {
     }
 
+    private record EnabledTimesByDatePayload(
+            LocalDate date,
+            List<String> times
+    ) {
+    }
+
+
     private Map<String, Object> toEnabledOnlyMap(UpdateRecruitmentDraftCommand.InterviewTimeTableCommand t) {
-        List<RecruitmentDraftInfo.TimesByDateInfo> enabled =
+        List<EnabledTimesByDatePayload> enabled =
                 t.enabledByDate() == null ? List.of()
                         : t.enabledByDate().stream()
-                                .map(e -> new RecruitmentDraftInfo.TimesByDateInfo(e.date(), e.times()))
+                                .map(e -> new EnabledTimesByDatePayload(
+                                        e.date(),
+                                        e.times() == null ? List.of()
+                                                : e.times().stream()
+                                                        .filter(java.util.Objects::nonNull)
+                                                        .map(x -> x.format(DateTimeFormatter.ofPattern("HH:mm")))
+                                                        .toList()
+                                ))
                                 .toList();
 
         EnabledOnly payload = new EnabledOnly(
@@ -749,7 +765,20 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         validatePublishable(finalDraft, finalFormInfo);
 
-        syncReviewWindowsOnPublish(command.recruitmentId(), finalDraft.schedule());
+        RecruitmentDraftInfo syncedDraft = loadRecruitmentPort.findDraftInfoById(command.recruitmentId());
+
+        var s = syncedDraft.schedule();
+        if (s != null && s.interviewTimeTable() != null) {
+            validateTimeTableStructure(s.interviewTimeTable());
+
+            validateInterviewWindowCoversTimeTable(
+                    s.interviewStartAt(),
+                    s.interviewEndAt(),
+                    s.interviewTimeTable()
+            );
+        }
+        syncReviewWindowsOnPublish(command.recruitmentId(), syncedDraft.schedule());
+        validateScheduleOrderOrThrow(syncedDraft.schedule());
 
         Instant now = Instant.now();
 
@@ -2275,6 +2304,207 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     ) {
         log.warn("[REQUIRED_MISSING] where={}, recruitmentId={}, formResponseId={}, formId={}, extra={}",
                 where, recruitmentId, formResponseId, formId, extra);
+    }
+
+    private Map<String, Object> normalizeInterviewTimeTableToHHmm(Map<String, Object> tt) {
+        if (tt == null || tt.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, Object> result = new HashMap<>(tt);
+
+        Object enabledObj = result.get("enabledByDate");
+        if (!(enabledObj instanceof List<?> enabledList)) {
+            return result;
+        }
+
+        List<Map<String, Object>> normalizedEnabled = new ArrayList<>();
+
+        for (Object itemObj : enabledList) {
+            if (!(itemObj instanceof Map<?, ?> raw)) {
+                continue;
+            }
+
+            Map<String, Object> item = new HashMap<>();
+            raw.forEach((k, v) -> item.put(String.valueOf(k), v));
+
+            Object timesObj = item.get("times");
+            if (timesObj instanceof List<?> timesList) {
+                List<String> normalizedTimes = new ArrayList<>();
+                for (Object tObj : timesList) {
+                    if (tObj == null) {
+                        continue;
+                    }
+
+                    // LocalTime / "HH:mm" / "HH:mm:ss" 모두 처리
+                    if (tObj instanceof LocalTime lt) {
+                        normalizedTimes.add(lt.format(DateTimeFormatter.ofPattern("HH:mm")));
+                        continue;
+                    }
+
+                    String s = String.valueOf(tObj).trim();
+                    normalizedTimes.add(normalizeTimePrefixHHmm(s));
+                }
+                item.put("times", normalizedTimes);
+            }
+
+            normalizedEnabled.add(item);
+        }
+
+        result.put("enabledByDate", normalizedEnabled);
+        return result;
+    }
+
+    private void validateInterviewWindowCoversTimeTable(
+            Instant interviewStartAt,
+            Instant interviewEndAt,
+            RecruitmentDraftInfo.InterviewTimeTableInfo tt
+    ) {
+        if (interviewStartAt == null || interviewEndAt == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_REQUIRED);
+        }
+        if (tt == null || tt.dateRange() == null || tt.timeRange() == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+
+        ZoneId zone = ZoneId.of("Asia/Seoul");
+
+        LocalDate ds = tt.dateRange().start();
+        LocalDate de = tt.dateRange().end();
+        LocalTime ts = tt.timeRange().start();
+        LocalTime te = tt.timeRange().end();
+
+        if (ds == null || de == null || ts == null || te == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+
+        Instant ttStart = ds.atTime(ts).atZone(zone).toInstant();
+        Instant ttEnd = de.atTime(te).atZone(zone).toInstant();
+
+        if (!ttStart.isBefore(ttEnd)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+
+        boolean coversStart = !interviewStartAt.isAfter(ttStart); // interviewStartAt <= ttStart
+        boolean coversEnd = !interviewEndAt.isBefore(ttEnd);      // ttEnd <= interviewEndAt
+
+        if (!coversStart || !coversEnd) {
+            throw new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_COVER_TIMETABLE
+            );
+        }
+    }
+
+    private void validateTimeTableStructure(UpdateRecruitmentDraftCommand.InterviewTimeTableCommand tt) {
+        if (tt == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+        validateTimeTableStructureCommon(
+                tt.dateRange() == null ? null : tt.dateRange().start(),
+                tt.dateRange() == null ? null : tt.dateRange().end(),
+                tt.timeRange() == null ? null : tt.timeRange().start(),
+                tt.timeRange() == null ? null : tt.timeRange().end(),
+                tt.slotMinutes(),
+                tt.enabledByDate() == null ? List.of() : tt.enabledByDate().stream()
+                        .map(e -> new EnabledTimesByDatePayload(
+                                e.date(),
+                                e.times() == null ? List.of()
+                                        : e.times().stream()
+                                                .filter(java.util.Objects::nonNull)
+                                                .map(x -> x.format(DateTimeFormatter.ofPattern("HH:mm")))
+                                                .toList()
+                        ))
+                        .toList()
+        );
+    }
+
+    private void validateTimeTableStructure(RecruitmentDraftInfo.InterviewTimeTableInfo tt) {
+        if (tt == null) {
+            seeInvalidTimeTable();
+        }
+        List<EnabledTimesByDatePayload> enabled = tt.enabledByDate() == null ? List.of()
+                : tt.enabledByDate().stream()
+                        .map(e -> new EnabledTimesByDatePayload(
+                                e.date(),
+                                e.times() == null ? List.of()
+                                        : e.times().stream()
+                                                .filter(java.util.Objects::nonNull)
+                                                .map(t -> t.format(DateTimeFormatter.ofPattern("HH:mm")))
+                                                .toList()
+                        ))
+                        .toList();
+
+        validateTimeTableStructureCommon(
+                tt.dateRange() == null ? null : tt.dateRange().start(),
+                tt.dateRange() == null ? null : tt.dateRange().end(),
+                tt.timeRange() == null ? null : tt.timeRange().start(),
+                tt.timeRange() == null ? null : tt.timeRange().end(),
+                tt.slotMinutes(),
+                enabled
+        );
+    }
+
+    private void seeInvalidTimeTable() {
+        throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+    }
+
+    private void validateTimeTableStructureCommon(
+            LocalDate startDate,
+            LocalDate endDate,
+            LocalTime startTime,
+            LocalTime endTime,
+            Integer slotMinutes,
+            List<EnabledTimesByDatePayload> enabledByDate
+    ) {
+        if (startDate == null || endDate == null || startTime == null || endTime == null) {
+            seeInvalidTimeTable();
+        }
+
+        // 날짜 범위: start <= end (같은 날 허용)
+        if (endDate.isBefore(startDate)) {
+            seeInvalidTimeTable();
+        }
+
+        // 시간 범위: start < end (같은 시간 금지)
+        if (!startTime.isBefore(endTime)) {
+            seeInvalidTimeTable();
+        }
+
+        if (slotMinutes == null || slotMinutes <= 0) {
+            seeInvalidTimeTable();
+        }
+
+        if (enabledByDate == null) {
+            enabledByDate = List.of();
+        }
+
+        // enabledByDate의 date는 dateRange 안에 있어야 함
+        // enabledByDate.times는 timeRange 안에 있어야 함 (endTime은 exclusive)
+        for (EnabledTimesByDatePayload e : enabledByDate) {
+            if (e == null || e.date() == null) {
+                seeInvalidTimeTable();
+            }
+
+            LocalDate d = e.date();
+            if (d.isBefore(startDate) || d.isAfter(endDate)) {
+                seeInvalidTimeTable();
+            }
+
+            List<String> times = (e.times() == null) ? List.of() : e.times();
+            for (String raw : times) {
+                if (raw == null || raw.isBlank()) {
+                    seeInvalidTimeTable();
+                }
+
+                // "HH:mm" / "HH:mm:ss"
+                LocalTime t = parseTimeFlexible(raw);
+
+                if (t.isBefore(startTime) || !t.isBefore(endTime)) {
+                    seeInvalidTimeTable();
+                }
+            }
+        }
     }
 
 }
