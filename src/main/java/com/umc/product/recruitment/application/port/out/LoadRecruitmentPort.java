@@ -32,12 +32,12 @@ public interface LoadRecruitmentPort {
     List<RecruitmentSchedule> findSchedulesByRecruitmentId(Long recruitmentId);
 
     List<RecruitmentListInfo.RecruitmentSummary> findRecruitmentSummaries(
-            Long requesterMemberId,
+            Long schoolId,
             RecruitmentListStatus status
     );
 
     List<RecruitmentListInfo.RecruitmentSummary> findDraftRecruitmentSummaries(
-            Long requesterMemberId
+            Long schoolId
     );
 
     Optional<Long> findActiveRecruitmentId(Long schoolId, Long gisuId, Instant now);

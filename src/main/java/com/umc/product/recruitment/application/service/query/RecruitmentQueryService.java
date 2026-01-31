@@ -8,6 +8,7 @@ import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
+import com.umc.product.organization.exception.OrganizationErrorCode;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentPublishedInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
@@ -248,15 +249,23 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     @Override
     public RecruitmentListInfo getList(GetRecruitmentListQuery query) {
 
+        Member member = loadMemberPort.findById(query.requesterMemberId())
+                .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+
+        Long schoolId = member.getSchoolId();
+        if (schoolId == null) {
+            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.SCHOOL_NOT_FOUND);
+        }
+
         if (query.status() == RecruitmentListStatus.DRAFT) {
             return new RecruitmentListInfo(
-                    loadRecruitmentPort.findDraftRecruitmentSummaries(query.requesterMemberId())
+                    loadRecruitmentPort.findDraftRecruitmentSummaries(schoolId)
             );
         }
 
         List<RecruitmentListInfo.RecruitmentSummary> summaries =
                 loadRecruitmentPort.findRecruitmentSummaries(
-                        query.requesterMemberId(),
+                        schoolId,
                         query.status()
                 );
 
