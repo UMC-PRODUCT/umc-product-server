@@ -264,6 +264,7 @@ public class RecruitmentController {
         return UpsertRecruitmentFormResponseAnswersResponse.from(result);
     }
 
+    @Deprecated
     @PatchMapping("/{recruitmentId}/applications/{formResponseId}/interview-preference")
     @Operation(
             summary = "면접 시간 선호 임시저장",

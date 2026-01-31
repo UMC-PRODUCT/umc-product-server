@@ -30,8 +30,11 @@ public record UpsertRecruitmentFormResponseAnswersRequest(
     ) {
     }
 
-    public UpsertRecruitmentFormResponseAnswersCommand toCommand(Long memberId, Long recruitmentId,
-                                                                 Long formResponseId) {
+    public UpsertRecruitmentFormResponseAnswersCommand toCommand(
+            Long memberId,
+            Long recruitmentId,
+            Long formResponseId
+    ) {
         return new UpsertRecruitmentFormResponseAnswersCommand(
                 memberId,
                 recruitmentId,

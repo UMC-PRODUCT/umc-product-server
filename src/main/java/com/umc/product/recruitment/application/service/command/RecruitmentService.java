@@ -90,6 +90,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -291,12 +292,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_TYPE_MISMATCH);
             }
 
-            if (serverType == QuestionType.PORTFOLIO) {
-                validatePortfolioAnswerValue(item.value());
+            Map<String, Object> value = (item.value() == null) ? Map.of() : item.value();
+
+            if (serverType == QuestionType.SCHEDULE) {
+                value = normalizeInterviewPreferenceToHHmm(value);
             }
 
-            validateOtherTextIfNeeded(question, serverType, item.value());
-            upsertSingleAnswer(formResponse, question, serverType, item.value());
+            if (serverType == QuestionType.PORTFOLIO) {
+                validatePortfolioAnswerValue(value);
+            }
+
+            validateOtherTextIfNeeded(question, serverType, value);
+            upsertSingleAnswer(formResponse, question, serverType, value);
 
             savedQuestionIds.add(questionId);
         }
@@ -1574,12 +1581,13 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> normalizeInterviewPreferenceToHHmm(Map<String, Object> value) {
-        if (value == null || value.isEmpty()) {
+    private Map<String, Object> normalizeInterviewPreferenceToHHmm(Map<String, Object> input) {
+        if (input == null || input.isEmpty()) {
             return Map.of();
         }
 
-        Map<String, Object> result = new java.util.HashMap<>(value);
+        Map<String, Object> value = unwrapValueIfNeeded(input);
+        Map<String, Object> result = new HashMap<>(value);
 
         Object selectedObj = result.get("selected");
         if (!(selectedObj instanceof List<?> selectedList)) {
@@ -1604,11 +1612,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                         continue;
                     }
 
-                    String s = String.valueOf(tObj);
-                    // "14:00:00" -> "14:00", "14:00" -> "14:00"
-                    if (s.length() >= 5) {
-                        s = s.substring(0, 5);
-                    }
+                    String s = String.valueOf(tObj).trim();
+
+                    s = normalizeTimePrefixHHmm(s);
 
                     normalizedTimes.add(s);
                 }
@@ -1620,6 +1626,31 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         result.put("selected", normalizedSelected);
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> unwrapValueIfNeeded(Map<String, Object> input) {
+        Object inner = input.get("value");
+        if (inner instanceof Map<?, ?> innerMap) {
+            Map<String, Object> unwrapped = new java.util.HashMap<>();
+            innerMap.forEach((k, v) -> unwrapped.put(String.valueOf(k), v));
+            return unwrapped;
+        }
+        return input;
+    }
+
+    private String normalizeTimePrefixHHmm(String s) {
+        if (s.matches("^\\d{1,2}:\\d{2}(:\\d{2}(\\.\\d+)?)?$")) {
+            String[] parts = s.split(":");
+            String hh = parts[0].length() == 1 ? "0" + parts[0] : parts[0];
+            String mm = parts[1];
+            return hh + ":" + mm;
+        }
+
+        if (s.length() >= 5) {
+            return s.substring(0, 5);
+        }
+        return s;
     }
 
     @SuppressWarnings("unchecked")
