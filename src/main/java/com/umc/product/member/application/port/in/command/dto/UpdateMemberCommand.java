@@ -9,4 +9,15 @@ public record UpdateMemberCommand(
         MemberStatus newStatus
 
 ) {
+    public static UpdateMemberCommand forProfileUpdate(
+            Long memberId,
+            String newProfileImageId
+    ) {
+        return new UpdateMemberCommand(
+                memberId,
+                null,
+                newProfileImageId,
+                null
+        );
+    }
 }
