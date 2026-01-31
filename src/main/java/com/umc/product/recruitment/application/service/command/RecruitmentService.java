@@ -1,6 +1,7 @@
 package com.umc.product.recruitment.application.service.command;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.out.LoadMemberPort;
@@ -11,10 +12,12 @@ import com.umc.product.recruitment.application.port.in.command.CreateRecruitment
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormQuestionUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormResponseUseCase;
+import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentQuestionOptionUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.PublishRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.ResetRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.SubmitRecruitmentApplicationUseCase;
+import com.umc.product.recruitment.application.port.in.command.UpdatePublishedRecruitmentScheduleUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentDraftUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateRecruitmentInterviewPreferenceUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpsertRecruitmentFormQuestionsUseCase;
@@ -26,12 +29,15 @@ import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruit
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormQuestionCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentFormResponseCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.DeleteRecruitmentQuestionOptionCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.PublishRecruitmentCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.PublishRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
+import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentPublishedInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.ResetDraftFormResponseCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.SubmitRecruitmentApplicationInfo;
+import com.umc.product.recruitment.application.port.in.command.dto.UpdatePublishedRecruitmentScheduleCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentDraftCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentInterviewPreferenceCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentInterviewPreferenceInfo;
@@ -55,6 +61,7 @@ import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
+import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
@@ -62,11 +69,13 @@ import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
 import com.umc.product.survey.application.port.out.LoadFormPort;
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
+import com.umc.product.survey.application.port.out.LoadQuestionOptionPort;
 import com.umc.product.survey.application.port.out.LoadQuestionPort;
 import com.umc.product.survey.application.port.out.SaveFormPort;
 import com.umc.product.survey.application.port.out.SaveFormResponsePort;
 import com.umc.product.survey.application.port.out.SaveQuestionOptionPort;
 import com.umc.product.survey.application.port.out.SaveQuestionPort;
+import com.umc.product.survey.application.port.out.SaveSingleAnswerPort;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.Question;
@@ -103,7 +112,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         PublishRecruitmentUseCase,
         DeleteRecruitmentFormQuestionUseCase,
         UpdateRecruitmentInterviewPreferenceUseCase,
-        ResetRecruitmentDraftFormResponseUseCase {
+        ResetRecruitmentDraftFormResponseUseCase,
+        UpdatePublishedRecruitmentScheduleUseCase,
+        DeleteRecruitmentQuestionOptionUseCase {
 
     private final SaveFormPort saveFormPort;
     private final SaveRecruitmentPort saveRecruitmentPort;
@@ -125,6 +136,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final LoadMemberPort loadMemberPort;
     private final LoadGisuPort loadGisuPort;
     private final GetFileUseCase getFileUseCase;
+    private final SaveSingleAnswerPort saveSingleAnswerPort;
+    private final LoadQuestionOptionPort loadQuestionOptionPort;
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
@@ -467,7 +480,6 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         // TODO: 권한 검증
 
-        // 우선 application 기준으로 삭제 조건 (기획에 문의)
         if (loadApplicationPort.existsByRecruitmentId(recruitment.getId())) {
             throw new BusinessException(Domain.RECRUITMENT,
                     RecruitmentErrorCode.RECRUITMENT_DELETE_FORBIDDEN_HAS_APPLICANTS);
@@ -475,6 +487,15 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         Long formId = recruitment.getFormId();
         Long recruitmentId = recruitment.getId();
+
+        if (formId != null) {
+            List<Long> draftIds = loadFormResponsePort.findDraftIdsByFormId(formId);
+
+            if (!draftIds.isEmpty()) {
+                saveSingleAnswerPort.deleteAllByFormResponseIds(draftIds);
+                saveFormResponsePort.deleteAllByIds(draftIds);
+            }
+        }
 
         saveRecruitmentPartPort.deleteAllByRecruitmentId(recruitmentId);
         saveRecruitmentSchedulePort.deleteAllByRecruitmentId(recruitmentId);
@@ -492,6 +513,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 .orElseThrow(
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
+        if (recruitment.getStatus() != RecruitmentStatus.DRAFT) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_PUBLISHED);
+        }
+
         if (command.title() != null) {
             recruitment.changeTitle(command.title());
         }
@@ -505,7 +530,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         if (command.schedule() != null) {
-            upsertSchedules(recruitment, command.schedule());
+            upsertSchedulesForDraft(recruitment, command.schedule());
         }
 
         if (command.recruitmentParts() != null) {
@@ -533,39 +558,46 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
 
-    private void upsertSchedules(Recruitment recruitment, UpdateRecruitmentDraftCommand.ScheduleCommand schedule) {
+    private void upsertSchedulesForDraft(Recruitment recruitment,
+                                         UpdateRecruitmentDraftCommand.ScheduleCommand schedule) {
 
         Long recruitmentId = recruitment.getId();
+
+        Map<RecruitmentScheduleType, RecruitmentSchedule> existing =
+                loadRecruitmentPort.findScheduleMapByRecruitmentId(recruitmentId);
+
+        ResolvedRecruitmentSchedule resolved =
+                ResolvedRecruitmentSchedule.merge(existing, schedule);
 
         upsertSchedulePeriod(
                 recruitmentId,
                 RecruitmentScheduleType.APPLY_WINDOW,
-                schedule.applyStartAt(),
-                schedule.applyEndAt()
+                resolved.applyStartAt(),
+                resolved.applyEndAt()
         );
 
         upsertSchedulePeriod(
                 recruitmentId,
                 RecruitmentScheduleType.DOC_RESULT_AT,
-                schedule.docResultAt(),
+                resolved.docResultAt(),
                 null
         );
 
         upsertSchedulePeriod(
                 recruitmentId,
                 RecruitmentScheduleType.INTERVIEW_WINDOW,
-                schedule.interviewStartAt(),
-                schedule.interviewEndAt()
+                resolved.interviewStartAt(),
+                resolved.interviewEndAt()
         );
 
         upsertSchedulePeriod(
                 recruitmentId,
                 RecruitmentScheduleType.FINAL_RESULT_AT,
-                schedule.finalResultAt(),
+                resolved.finalResultAt(),
                 null
         );
 
-        upsertReviewWindows(recruitmentId, schedule);
+        upsertReviewWindowsForDraftResolved(recruitmentId, resolved);
 
         if (schedule.interviewTimeTable() != null) {
             var enabledOnlyMap = toEnabledOnlyMap(schedule.interviewTimeTable());
@@ -686,6 +718,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         validatePublishable(finalDraft, finalFormInfo);
 
+        syncReviewWindowsOnPublish(command.recruitmentId(), finalDraft.schedule());
+
         boolean hasOtherOngoing = loadRecruitmentPort.existsOtherOngoingPublishedRecruitment(
                 recruitment.getSchoolId(),
                 recruitment.getId(),
@@ -696,10 +730,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_CONFLICT);
         }
 
+        Instant now = Instant.now();
+
         Recruitment latest = loadRecruitmentPort.findById(command.recruitmentId())
                 .orElseThrow(
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
-        latest.publish();
+        latest.publish(now);
         saveRecruitmentPort.save(latest);
 
         Form form = loadFormPort.findById(latest.getFormId())
@@ -715,7 +751,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 published.getId(),
                 published.getFormId(),
                 published.getStatus().name(),
-                published.getUpdatedAt()
+                published.getPublishedAt()
         );
     }
 
@@ -728,33 +764,26 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         if (draft.title() == null || draft.title().isBlank()) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_TITLE_REQUIRED);
         }
 
         if (draft.recruitmentParts() == null || draft.recruitmentParts().isEmpty()) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_PART_REQUIRED);
         }
 
         RecruitmentDraftInfo.ScheduleInfo s = draft.schedule();
         if (s == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_REQUIRED);
         }
 
-        requireNonNull(s.applyStartAt());
-        requireNonNull(s.applyEndAt());
-        if (!s.applyStartAt().isBefore(s.applyEndAt())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
-        }
+        requireNonNull(s.applyStartAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_APPLY_START_REQUIRED);
+        requireNonNull(s.applyEndAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_APPLY_END_REQUIRED);
+        requireNonNull(s.docResultAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_DOC_RESULT_REQUIRED);
+        requireNonNull(s.interviewStartAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_INTERVIEW_START_REQUIRED);
+        requireNonNull(s.interviewEndAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_INTERVIEW_END_REQUIRED);
+        requireNonNull(s.finalResultAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_FINAL_RESULT_REQUIRED);
 
-        requireNonNull(s.docResultAt());
-
-        requireNonNull(s.interviewStartAt());
-        requireNonNull(s.interviewEndAt());
-        if (!s.interviewStartAt().isBefore(s.interviewEndAt())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
-        }
-
-        requireNonNull(s.finalResultAt());
+        validateScheduleOrderOrThrow(s);
 
         if (formInfo == null || formInfo.formDefinition() == null) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
@@ -766,17 +795,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 .anyMatch(sec -> sec.questions() != null && !sec.questions().isEmpty());
 
         if (!hasAnyQuestion) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_QUESTION_REQUIRED);
         }
 
         if (draft.maxPreferredPartCount() != null && draft.maxPreferredPartCount() <= 0) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_MAX_PREFERRED_PART_INVALID);
         }
     }
 
-    private void requireNonNull(Object v) {
+    private void requireNonNull(Object v, RecruitmentErrorCode code) {
         if (v == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
+            throw new BusinessException(Domain.RECRUITMENT, code);
         }
     }
 
@@ -879,6 +909,95 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         return UpdateRecruitmentInterviewPreferenceInfo.of(command.formResponseId(), normalized);
     }
+
+    @Override
+    public RecruitmentPublishedInfo update(UpdatePublishedRecruitmentScheduleCommand command) {
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        if (recruitment.getStatus() != RecruitmentStatus.PUBLISHED) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
+        }
+
+        // TODO: 권한 검증 (memberId 기반)
+
+        Map<RecruitmentScheduleType, RecruitmentSchedule> existing =
+                loadRecruitmentPort.findScheduleMapByRecruitmentId(command.recruitmentId());
+
+        Instant now = Instant.now();
+        Long recruitmentId = command.recruitmentId();
+
+        // 수정 가능 여부 검증
+        validateNoPastChange(now, existing, command.schedule());
+        validateApplyStartFrozenAfterStarted(now, existing, command.schedule());
+        validateApplyEndNoShortenDuringOpen(now, existing, command.schedule());
+        validateInterviewNoShorten(existing, command.schedule());
+
+        ResolvedRecruitmentSchedule resolved =
+                ResolvedRecruitmentSchedule.merge(existing, command.schedule());
+        validateOrdering(resolved);
+
+        // upsert schedules
+        upsertSchedule(recruitmentId, existing, RecruitmentScheduleType.APPLY_WINDOW,
+                resolved.applyStartAt(), resolved.applyEndAt());
+
+        upsertAtSchedule(recruitmentId, existing, RecruitmentScheduleType.DOC_RESULT_AT,
+                resolved.docResultAt());
+
+        upsertSchedule(recruitmentId, existing, RecruitmentScheduleType.INTERVIEW_WINDOW,
+                resolved.interviewStartAt(), resolved.interviewEndAt());
+
+        upsertAtSchedule(recruitmentId, existing, RecruitmentScheduleType.FINAL_RESULT_AT,
+                resolved.finalResultAt());
+
+        upsertReviewWindowsPublished(recruitmentId, existing, resolved);
+
+        saveRecruitmentSchedulePort.saveAll(existing.values().stream().toList());
+
+        List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(recruitmentId);
+        List<ChallengerPart> parts = recruitmentParts.stream()
+                .filter(RecruitmentPart::isOpen)
+                .map(RecruitmentPart::getPart)
+                .toList();
+
+        RecruitmentPublishedInfo.ScheduleInfo scheduleInfo =
+                loadRecruitmentPort.findPublishedScheduleInfoByRecruitmentId(recruitmentId);
+
+        return RecruitmentPublishedInfo.from(recruitment, parts, scheduleInfo);
+    }
+
+    @Override
+    public RecruitmentApplicationFormInfo delete(DeleteRecruitmentQuestionOptionCommand command) {
+
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+                .orElseThrow(() -> new BusinessException(
+                        Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        if (recruitment.getStatus() != RecruitmentStatus.DRAFT) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_PUBLISHED);
+        }
+
+        Long formId = recruitment.getFormId();
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
+
+        boolean ownedQuestion = loadQuestionPort.existsByIdAndFormId(command.questionId(), formId);
+        if (!ownedQuestion) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND);
+        }
+
+        boolean ownedOption = loadQuestionOptionPort.existsByIdAndQuestionId(command.optionId(), command.questionId());
+        if (!ownedOption) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_NOT_IN_QUESTION);
+        }
+
+        saveQuestionOptionPort.deleteById(command.optionId());
+
+        return loadRecruitmentPort.findApplicationFormInfoById(command.recruitmentId());
+    }
+
 
     private void validateApplyWindow(Recruitment recruitment) {
         RecruitmentSchedule applyWindow = loadRecruitmentSchedulePort
@@ -1612,5 +1731,315 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         return result;
     }
 
+    // published 모집 수정 가능 검증
 
+    private void validateNoPastChange(Instant now,
+                                      Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+                                      UpdatePublishedRecruitmentScheduleCommand.SchedulePatch patch) {
+        if (patch.applyStartAt() != null && patch.applyStartAt().isBefore(now)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
+        }
+        if (patch.applyEndAt() != null && patch.applyEndAt().isBefore(now)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
+        }
+        if (patch.docResultAt() != null && patch.docResultAt().isBefore(now)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
+        }
+        if (patch.interviewStartAt() != null && patch.interviewStartAt().isBefore(now)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
+        }
+        if (patch.interviewEndAt() != null && patch.interviewEndAt().isBefore(now)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
+        }
+        if (patch.finalResultAt() != null && patch.finalResultAt().isBefore(now)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
+        }
+    }
+
+    private void validateApplyStartFrozenAfterStarted(Instant now,
+                                                      Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+                                                      UpdatePublishedRecruitmentScheduleCommand.SchedulePatch patch) {
+        RecruitmentSchedule apply = existing.get(RecruitmentScheduleType.APPLY_WINDOW);
+        if (apply == null || apply.getStartsAt() == null) {
+            return;
+        }
+
+        boolean alreadyStarted = !now.isBefore(apply.getStartsAt());
+        if (alreadyStarted && patch.applyStartAt() != null && !patch.applyStartAt().equals(apply.getStartsAt())) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_START_FROZEN);
+        }
+    }
+
+    private void validateApplyEndNoShortenDuringOpen(Instant now,
+                                                     Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+                                                     UpdatePublishedRecruitmentScheduleCommand.SchedulePatch patch) {
+        RecruitmentSchedule apply = existing.get(RecruitmentScheduleType.APPLY_WINDOW);
+        if (apply == null || apply.getStartsAt() == null || apply.getEndsAt() == null) {
+            return;
+        }
+        if (patch.applyEndAt() == null) {
+            return;
+        }
+
+        boolean isOpen = !now.isBefore(apply.getStartsAt()) && now.isBefore(apply.getEndsAt());
+        if (isOpen && patch.applyEndAt().isBefore(apply.getEndsAt())) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_END_SHORTEN_FORBIDDEN);
+        }
+    }
+
+    private void validateInterviewNoShorten(Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+                                            UpdatePublishedRecruitmentScheduleCommand.SchedulePatch patch) {
+        RecruitmentSchedule interview = existing.get(RecruitmentScheduleType.INTERVIEW_WINDOW);
+        if (interview == null) {
+            return;
+        }
+
+        if (!interview.canChangeStartNotAdvanced(patch.interviewStartAt())) {
+            throw new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INTERVIEW_ADVANCE_FORBIDDEN
+            );
+        }
+
+        if (!interview.canChangeEndNotShortened(patch.interviewEndAt())) {
+            throw new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INTERVIEW_SHORTEN_FORBIDDEN
+            );
+        }
+    }
+
+    private void validateOrdering(ResolvedRecruitmentSchedule c) {
+        // applyStart <= applyEnd
+        if (c.applyStartAt() != null && c.applyEndAt() != null && c.applyEndAt().isBefore(c.applyStartAt())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
+        }
+        // applyEnd <= docResult
+        if (c.applyEndAt() != null && c.docResultAt() != null && c.docResultAt().isBefore(c.applyEndAt())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
+        }
+        // docResult <= interviewStart
+        if (c.docResultAt() != null && c.interviewStartAt() != null && c.interviewStartAt().isBefore(c.docResultAt())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
+        }
+        // interviewStart <= interviewEnd
+        if (c.interviewStartAt() != null && c.interviewEndAt() != null && c.interviewEndAt()
+                .isBefore(c.interviewStartAt())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
+        }
+        // interviewEnd <= finalResult
+        if (c.interviewEndAt() != null && c.finalResultAt() != null && c.finalResultAt().isBefore(c.interviewEndAt())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
+        }
+    }
+
+    // published 모집 수정 upsert 함수
+    private void upsertSchedule(
+            Long recruitmentId,
+            Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+            RecruitmentScheduleType type,
+            Instant startsAt,
+            Instant endsAt
+    ) {
+        if (startsAt == null && endsAt == null) {
+            return;
+        }
+
+        RecruitmentSchedule s = existing.get(type);
+        if (s == null) {
+            s = RecruitmentSchedule.create(recruitmentId, type, startsAt, endsAt);
+            existing.put(type, s);
+        } else {
+            s.changePeriod(startsAt, endsAt);
+        }
+    }
+
+    private void upsertAtSchedule(
+            Long recruitmentId,
+            Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+            RecruitmentScheduleType type,
+            Instant at
+    ) {
+        if (at == null) {
+            return;
+        }
+
+        RecruitmentSchedule s = existing.get(type);
+        if (s == null) {
+            s = RecruitmentSchedule.createAt(recruitmentId, type, at);
+            existing.put(type, s);
+        } else {
+            s.changeAt(at);
+        }
+    }
+
+    private record ResolvedRecruitmentSchedule(
+            Instant applyStartAt,
+            Instant applyEndAt,
+            Instant docResultAt,
+            Instant interviewStartAt,
+            Instant interviewEndAt,
+            Instant finalResultAt
+    ) {
+
+        static ResolvedRecruitmentSchedule merge(
+                Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+                UpdatePublishedRecruitmentScheduleCommand.SchedulePatch patch
+        ) {
+            RecruitmentSchedule apply = existing.get(RecruitmentScheduleType.APPLY_WINDOW);
+            RecruitmentSchedule docResult = existing.get(RecruitmentScheduleType.DOC_RESULT_AT);
+            RecruitmentSchedule interview = existing.get(RecruitmentScheduleType.INTERVIEW_WINDOW);
+            RecruitmentSchedule finalResult = existing.get(RecruitmentScheduleType.FINAL_RESULT_AT);
+
+            Instant applyStart =
+                    patch.applyStartAt() != null ? patch.applyStartAt() : (apply == null ? null : apply.getStartsAt());
+            Instant applyEnd =
+                    patch.applyEndAt() != null ? patch.applyEndAt() : (apply == null ? null : apply.getEndsAt());
+
+            Instant docR =
+                    patch.docResultAt() != null ? patch.docResultAt()
+                            : (docResult == null ? null : docResult.getStartsAt());
+
+            Instant interviewStart =
+                    patch.interviewStartAt() != null ? patch.interviewStartAt()
+                            : (interview == null ? null : interview.getStartsAt());
+            Instant interviewEnd =
+                    patch.interviewEndAt() != null ? patch.interviewEndAt()
+                            : (interview == null ? null : interview.getEndsAt());
+
+            Instant finalR =
+                    patch.finalResultAt() != null ? patch.finalResultAt()
+                            : (finalResult == null ? null : finalResult.getStartsAt());
+
+            return new ResolvedRecruitmentSchedule(applyStart, applyEnd, docR, interviewStart, interviewEnd, finalR);
+        }
+
+        static ResolvedRecruitmentSchedule merge(
+                Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+                UpdateRecruitmentDraftCommand.ScheduleCommand patch
+        ) {
+            RecruitmentSchedule apply = existing.get(RecruitmentScheduleType.APPLY_WINDOW);
+            RecruitmentSchedule docResult = existing.get(RecruitmentScheduleType.DOC_RESULT_AT);
+            RecruitmentSchedule interview = existing.get(RecruitmentScheduleType.INTERVIEW_WINDOW);
+            RecruitmentSchedule finalResult = existing.get(RecruitmentScheduleType.FINAL_RESULT_AT);
+
+            Instant applyStart =
+                    patch.applyStartAt() != null ? patch.applyStartAt() : (apply == null ? null : apply.getStartsAt());
+            Instant applyEnd =
+                    patch.applyEndAt() != null ? patch.applyEndAt() : (apply == null ? null : apply.getEndsAt());
+
+            Instant docR =
+                    patch.docResultAt() != null ? patch.docResultAt()
+                            : (docResult == null ? null : docResult.getStartsAt());
+
+            Instant interviewStart =
+                    patch.interviewStartAt() != null ? patch.interviewStartAt()
+                            : (interview == null ? null : interview.getStartsAt());
+            Instant interviewEnd =
+                    patch.interviewEndAt() != null ? patch.interviewEndAt()
+                            : (interview == null ? null : interview.getEndsAt());
+
+            Instant finalR =
+                    patch.finalResultAt() != null ? patch.finalResultAt()
+                            : (finalResult == null ? null : finalResult.getStartsAt());
+
+            return new ResolvedRecruitmentSchedule(applyStart, applyEnd, docR, interviewStart, interviewEnd, finalR);
+        }
+    }
+
+    private void upsertReviewWindowsPublished(
+            Long recruitmentId,
+            Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+            ResolvedRecruitmentSchedule c
+    ) {
+        // DOC_REVIEW_WINDOW: applyEnd -> docResult
+        if (c.applyEndAt() != null && c.docResultAt() != null && c.applyEndAt().isAfter(c.docResultAt())) {
+            upsertSchedule(
+                    recruitmentId,
+                    existing,
+                    RecruitmentScheduleType.DOC_REVIEW_WINDOW,
+                    c.applyEndAt(),
+                    c.docResultAt()
+            );
+        }
+
+        // FINAL_REVIEW_WINDOW: interviewEnd -> finalResult
+        if (c.interviewEndAt() != null && c.finalResultAt() != null && c.interviewEndAt().isAfter(c.finalResultAt())) {
+            upsertSchedule(
+                    recruitmentId,
+                    existing,
+                    RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
+                    c.interviewEndAt(),
+                    c.finalResultAt()
+            );
+        }
+    }
+
+    private void upsertReviewWindowsForDraftResolved(Long recruitmentId, ResolvedRecruitmentSchedule r) {
+        if (r.applyEndAt() != null && r.docResultAt() != null && r.applyEndAt().isBefore(r.docResultAt())) {
+            upsertSchedulePeriod(recruitmentId, RecruitmentScheduleType.DOC_REVIEW_WINDOW,
+                    r.applyEndAt(), r.docResultAt());
+        }
+        if (r.interviewEndAt() != null && r.finalResultAt() != null && r.interviewEndAt().isBefore(r.finalResultAt())) {
+            upsertSchedulePeriod(recruitmentId, RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
+                    r.interviewEndAt(), r.finalResultAt());
+        }
+
+    }
+
+    private void syncReviewWindowsOnPublish(Long recruitmentId, RecruitmentDraftInfo.ScheduleInfo s) {
+        if (s == null) {
+            return;
+        }
+
+        // doc review window = applyEnd -> docResult
+        if (s.applyEndAt() != null && s.docResultAt() != null && !s.applyEndAt().isAfter(s.docResultAt())) {
+            upsertSchedulePeriod(
+                    recruitmentId,
+                    RecruitmentScheduleType.DOC_REVIEW_WINDOW,
+                    s.applyEndAt(),
+                    s.docResultAt()
+            );
+        }
+
+        // final review window = interviewEnd -> finalResult
+        if (s.interviewEndAt() != null && s.finalResultAt() != null && !s.interviewEndAt().isAfter(s.finalResultAt())) {
+            upsertSchedulePeriod(
+                    recruitmentId,
+                    RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
+                    s.interviewEndAt(),
+                    s.finalResultAt()
+            );
+        }
+    }
+
+    private void validateScheduleOrderOrThrow(RecruitmentDraftInfo.ScheduleInfo s) {
+        // applyStart < applyEnd
+        if (!s.applyStartAt().isBefore(s.applyEndAt())) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+        }
+        // applyEnd <= docResult
+        if (s.docResultAt().isBefore(s.applyEndAt())) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+        }
+        // docResult <= interviewStart
+        if (s.interviewStartAt().isBefore(s.docResultAt())) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+        }
+        // interviewStart < interviewEnd
+        if (!s.interviewStartAt().isBefore(s.interviewEndAt())) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+        }
+        // interviewEnd <= finalResult
+        if (s.finalResultAt().isBefore(s.interviewEndAt())) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+        }
+    }
 }

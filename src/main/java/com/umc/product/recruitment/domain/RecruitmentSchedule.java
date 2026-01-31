@@ -61,5 +61,53 @@ public class RecruitmentSchedule {
         }
     }
 
+    public boolean canChangeStartNotAdvanced(Instant newStartAt) {
+        if (newStartAt == null || this.startsAt == null) {
+            return true;
+        }
+        return !newStartAt.isBefore(this.startsAt); // 면접 일정 앞당기기 금지
+    }
+
+    public boolean canChangeEndNotShortened(Instant newEndAt) {
+        if (newEndAt == null || this.endsAt == null) {
+            return true;
+        }
+        return !newEndAt.isBefore(this.endsAt); // 단축 금지
+    }
+
+    public void changeAt(Instant at) {
+        if (at != null) {
+            this.startsAt = at;
+        }
+    }
+
+    public static RecruitmentSchedule create(
+            Long recruitmentId,
+            RecruitmentScheduleType type,
+            Instant startsAt,
+            Instant endsAt
+    ) {
+        return RecruitmentSchedule.builder()
+                .recruitmentId(recruitmentId)
+                .type(type)
+                .startsAt(startsAt)
+                .endsAt(endsAt)
+                .note(null)
+                .build();
+    }
+
+    public static RecruitmentSchedule createAt(
+            Long recruitmentId,
+            RecruitmentScheduleType type,
+            Instant at
+    ) {
+        return RecruitmentSchedule.builder()
+                .recruitmentId(recruitmentId)
+                .type(type)
+                .startsAt(at)
+                .endsAt(null)
+                .note(null)
+                .build();
+    }
 
 }

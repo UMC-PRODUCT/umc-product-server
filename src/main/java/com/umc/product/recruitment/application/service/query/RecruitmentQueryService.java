@@ -1,14 +1,18 @@
 package com.umc.product.recruitment.application.service.query;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
+import com.umc.product.organization.domain.Gisu;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
+import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentPublishedInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyApplicationListUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetPublishedRecruitmentDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDashboardUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentDetailUseCase;
@@ -25,6 +29,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.ApplicationProg
 import com.umc.product.recruitment.application.port.in.query.dto.EvaluationStatusCode;
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetPublishedRecruitmentDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentDraftApplicationFormQuery;
@@ -52,6 +57,7 @@ import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
+import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
@@ -63,6 +69,7 @@ import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
@@ -83,7 +90,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         GetMyApplicationListUseCase,
         GetRecruitmentDetailUseCase,
         GetRecruitmentPartListUseCase,
-        GetRecruitmentDraftApplicationFormUseCase {
+        GetRecruitmentDraftApplicationFormUseCase,
+        GetPublishedRecruitmentDetailUseCase {
 
     private final LoadRecruitmentPort loadRecruitmentPort;
     private final LoadRecruitmentPartPort loadRecruitmentPartPort;
@@ -1004,7 +1012,9 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         var schedules = loadRecruitmentPort.findSchedulesByRecruitmentId(query.recruitmentId());
         var recruitmentPeriod = extractDatePeriod(schedules, "APPLY_WINDOW");
-        var activityPeriod = extractDatePeriod(schedules, "ACTIVITY_WINDOW");
+        //var activityPeriod = extractDatePeriod(schedules, "ACTIVITY_WINDOW");
+        Gisu gisu = loadGisuPort.findById(recruitment.getGisuId());
+        var activityPeriod = toDatePeriod(gisu);
 
         return new RecruitmentPartListInfo(
                 recruitment.getId(),
@@ -1046,8 +1056,32 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         return loadRecruitmentPort.findApplicationFormInfoById(query.recruitmentId());
     }
 
+    @Override
+    public RecruitmentPublishedInfo get(GetPublishedRecruitmentDetailQuery query) {
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+                .orElseThrow(
+                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        if (recruitment.getStatus() != RecruitmentStatus.PUBLISHED) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
+        }
+
+        // TODO: 권한 검증
+
+        List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
+        List<ChallengerPart> parts = recruitmentParts.stream()
+                .filter(RecruitmentPart::isOpen)
+                .map(RecruitmentPart::getPart)
+                .toList();
+
+        RecruitmentPublishedInfo.ScheduleInfo scheduleInfo =
+                loadRecruitmentPort.findPublishedScheduleInfoByRecruitmentId(query.recruitmentId());
+
+        return RecruitmentPublishedInfo.from(recruitment, parts, scheduleInfo);
+    }
+
     private RecruitmentPartListInfo.DatePeriod extractDatePeriod(
-            List<com.umc.product.recruitment.domain.RecruitmentSchedule> schedules,
+            List<RecruitmentSchedule> schedules,
             String scheduleType) {
         return schedules.stream()
                 .filter(schedule -> schedule.getType().name().equals(scheduleType))
@@ -1189,4 +1223,133 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         return out;
     }
 
+    private RecruitmentPublishedInfo.ScheduleInfo toPublishedScheduleInfo(
+            Map<RecruitmentScheduleType, RecruitmentSchedule> map,
+            Map<String, Object> interviewTimeTableRaw
+    ) {
+        RecruitmentSchedule apply = map == null ? null : map.get(RecruitmentScheduleType.APPLY_WINDOW);
+        RecruitmentSchedule docResult = map == null ? null : map.get(RecruitmentScheduleType.DOC_RESULT_AT);
+        RecruitmentSchedule interview = map == null ? null : map.get(RecruitmentScheduleType.INTERVIEW_WINDOW);
+        RecruitmentSchedule finalResult = map == null ? null : map.get(RecruitmentScheduleType.FINAL_RESULT_AT);
+
+        return new RecruitmentPublishedInfo.ScheduleInfo(
+                apply == null ? null : apply.getStartsAt(),
+                apply == null ? null : apply.getEndsAt(),
+                docResult == null ? null : docResult.getStartsAt(),
+                interview == null ? null : interview.getStartsAt(),
+                interview == null ? null : interview.getEndsAt(),
+                finalResult == null ? null : finalResult.getStartsAt(),
+                toInterviewTimeTableInfo(interviewTimeTableRaw)
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    private RecruitmentPublishedInfo.InterviewTimeTableInfo toInterviewTimeTableInfo(Map<String, Object> raw) {
+        if (raw == null) {
+            return null;
+        }
+
+        Map<String, Object> dateRange = asMap(raw.get("dateRange"));
+        Map<String, Object> timeRange = asMap(raw.get("timeRange"));
+
+        LocalDate dateStart = parseLocalDate(dateRange.get("start"));
+        LocalDate dateEnd = parseLocalDate(dateRange.get("end"));
+
+        LocalTime timeStart = parseLocalTime(timeRange.get("start"));
+        LocalTime timeEnd = parseLocalTime(timeRange.get("end"));
+
+        Integer slotMinutes = asInteger(raw.get("slotMinutes"));
+
+        List<RecruitmentPublishedInfo.TimesByDateInfo> enabledByDate =
+                toTimesByDateInfos(raw.get("enabledByDate"));
+
+        List<RecruitmentPublishedInfo.TimesByDateInfo> disabledByDate =
+                toTimesByDateInfos(raw.get("disabledByDate"));
+
+        return new RecruitmentPublishedInfo.InterviewTimeTableInfo(
+                new RecruitmentPublishedInfo.DateRangeInfo(dateStart, dateEnd),
+                new RecruitmentPublishedInfo.TimeRangeInfo(timeStart, timeEnd),
+                slotMinutes,
+                enabledByDate,
+                disabledByDate
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> asMap(Object o) {
+        return (o instanceof Map<?, ?> m) ? (Map<String, Object>) m : java.util.Map.of();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Object> asList(Object o) {
+        return (o instanceof List<?> l) ? (List<Object>) l : java.util.List.of();
+    }
+
+    private Integer asInteger(Object o) {
+        if (o == null) {
+            return null;
+        }
+        if (o instanceof Integer i) {
+            return i;
+        }
+        if (o instanceof Number n) {
+            return n.intValue();
+        }
+        if (o instanceof String s && !s.isBlank()) {
+            return Integer.parseInt(s);
+        }
+        return null;
+    }
+
+    private LocalDate parseLocalDate(Object o) {
+        if (o == null) {
+            return null;
+        }
+        return LocalDate.parse(o.toString()); // "YYYY-MM-DD"
+    }
+
+    private LocalTime parseLocalTime(Object o) {
+        if (o == null) {
+            return null;
+        }
+        return LocalTime.parse(o.toString()); // "HH:mm" or ISO
+    }
+
+    private List<RecruitmentPublishedInfo.TimesByDateInfo> toTimesByDateInfos(Object o) {
+        List<Object> rows = asList(o);
+        if (rows.isEmpty()) {
+            return java.util.List.of();
+        }
+
+        return rows.stream()
+                .map(this::toTimesByDateInfo)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
+    private RecruitmentPublishedInfo.TimesByDateInfo toTimesByDateInfo(Object row) {
+        Map<String, Object> m = asMap(row);
+
+        LocalDate date = parseLocalDate(m.get("date"));
+
+        List<Object> timesRaw = asList(m.get("times"));
+        List<LocalTime> times = timesRaw.stream()
+                .map(this::parseLocalTime)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+
+        return new RecruitmentPublishedInfo.TimesByDateInfo(date, times);
+    }
+
+    private RecruitmentPartListInfo.DatePeriod toDatePeriod(Gisu gisu) {
+        if (gisu == null || gisu.getStartAt() == null || gisu.getEndAt() == null) {
+            return null;
+        }
+
+        ZoneId zone = ZoneId.of("Asia/Seoul");
+        return new RecruitmentPartListInfo.DatePeriod(
+                gisu.getStartAt().atZone(zone).toInstant(),
+                gisu.getEndAt().atZone(zone).toInstant()
+        );
+    }
 }

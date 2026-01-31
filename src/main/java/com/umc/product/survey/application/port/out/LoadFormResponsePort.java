@@ -11,4 +11,6 @@ public interface LoadFormResponsePort {
     Optional<FormResponse> findDraftByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId);
 
     List<FormResponse> findAllDraftByRespondentMemberId(Long respondentMemberId);
+
+    List<Long> findDraftIdsByFormId(Long formId);
 }

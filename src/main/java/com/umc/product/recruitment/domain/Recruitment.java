@@ -12,6 +12,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import java.time.Instant;
 import java.util.Map;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -68,6 +69,10 @@ public class Recruitment extends BaseEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "interview_time_table", columnDefinition = "jsonb")
     private Map<String, Object> interviewTimeTable;
+
+    @Column(name = "published_at")
+    private Instant publishedAt;
+
 
     public static Recruitment createDraft(
             Long schoolId,
@@ -149,12 +154,16 @@ public class Recruitment extends BaseEntity {
         return this.status == RecruitmentStatus.PUBLISHED;
     }
 
-    public void publish() {
+    public void publish(Instant now) {
 
         if (isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_PUBLISHED);
         }
 
         this.status = RecruitmentStatus.PUBLISHED;
+
+        if (this.publishedAt == null) {
+            this.publishedAt = now;
+        }
     }
 }
