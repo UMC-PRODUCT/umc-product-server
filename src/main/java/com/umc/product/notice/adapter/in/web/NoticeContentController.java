@@ -31,19 +31,22 @@ public class NoticeContentController implements NoticeContentApi {
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
 
     @PostMapping("/{noticeId}/images")
-    public ApiResponse<AddNoticeImagesResponse> addNoticeImages(@PathVariable Long noticeId, @RequestBody @Valid AddNoticeImagesRequest request) {
+    public ApiResponse<AddNoticeImagesResponse> addNoticeImages(@PathVariable Long noticeId,
+                                                                @RequestBody @Valid AddNoticeImagesRequest request) {
         List<Long> imageIds = manageNoticeContentUseCase.addImages(request.toCommand(), noticeId);
         return ApiResponse.onSuccess(new AddNoticeImagesResponse(imageIds));
     }
 
     @PostMapping("/{noticeId}/links")
-    public ApiResponse<AddNoticeLinksResponse> addNoticeLinks(@PathVariable Long noticeId, @RequestBody @Valid AddNoticeLinksRequest request) {
+    public ApiResponse<AddNoticeLinksResponse> addNoticeLinks(@PathVariable Long noticeId,
+                                                              @RequestBody @Valid AddNoticeLinksRequest request) {
         List<Long> linkIds = manageNoticeContentUseCase.addLinks(request.toCommand(), noticeId);
         return ApiResponse.onSuccess(new AddNoticeLinksResponse(linkIds));
     }
 
     @PostMapping("/{noticeId}/votes")
-    public ApiResponse<AddNoticeVotesResponse> addNoticeVotes(@PathVariable Long noticeId, @RequestBody @Valid AddNoticeVotesRequest request) {
+    public ApiResponse<AddNoticeVotesResponse> addNoticeVotes(@PathVariable Long noticeId,
+                                                              @RequestBody @Valid AddNoticeVotesRequest request) {
         List<Long> voteIds = manageNoticeContentUseCase.addVotes(request.toCommand(), noticeId);
         return ApiResponse.onSuccess(new AddNoticeVotesResponse(voteIds));
     }

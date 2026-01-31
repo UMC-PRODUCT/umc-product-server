@@ -44,10 +44,11 @@ public class NoticeQueryController implements NoticeQueryApi {
      * 공지 전체 조회
      */
     @GetMapping
-    public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(@RequestParam NoticeClassification classification,
-                                                   @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(
+        @RequestParam NoticeClassification classification,
+        @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(classification,
-                pageable);
+            pageable);
 
         return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
     }
@@ -56,8 +57,8 @@ public class NoticeQueryController implements NoticeQueryApi {
      * 검색어 기반 공지 전체 조회
      */
     @GetMapping("/search")
-    public ApiResponse<PageResponse<GetNoticeSummaryResponse>>  searchNotices(@RequestParam String keyword,
-                                                   @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+    public ApiResponse<PageResponse<GetNoticeSummaryResponse>> searchNotices(@RequestParam String keyword,
+                                                                             @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(keyword, pageable);
 
         return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
@@ -85,14 +86,15 @@ public class NoticeQueryController implements NoticeQueryApi {
      * 공지사항 수신 현황 조회
      */
     @GetMapping("/{noticeId}/read-status")
-    public ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus(@PathVariable Long noticeId, @ModelAttribute @Valid GetNoticeStatusRequest request) {
+    public ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus(@PathVariable Long noticeId,
+                                                                                        @ModelAttribute @Valid GetNoticeStatusRequest request) {
         NoticeReadStatusResult result = getNoticeUseCase.getReadStatus(request.toQuery(noticeId));
         CursorResponse<GetNoticeReadStatusResponse> response = CursorResponse.of(
-                result.content().stream()
-                        .map(GetNoticeReadStatusResponse::from)
-                        .toList(),
-                result.cursorId(),
-                result.hasNext()
+            result.content().stream()
+                .map(GetNoticeReadStatusResponse::from)
+                .toList(),
+            result.cursorId(),
+            result.hasNext()
         );
 
         return ApiResponse.onSuccess(response);

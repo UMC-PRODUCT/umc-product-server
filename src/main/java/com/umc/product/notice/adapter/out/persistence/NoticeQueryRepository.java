@@ -1,9 +1,9 @@
 package com.umc.product.notice.adapter.out.persistence;
 
-import com.umc.product.challenger.domain.QChallenger;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.umc.product.challenger.domain.QChallenger;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.QNotice;
 import com.umc.product.notice.domain.QNoticeRead;
@@ -30,48 +30,49 @@ public class NoticeQueryRepository {
         QChallenger challenger = QChallenger.challenger;
 
         return queryFactory
-                .select(challenger.id)
-                .from(challenger)
-                .where(
-                        challenger.id.notIn(
-                                JPAExpressions
-                                        .select(noticeRead.challengerId)
-                                        .from(noticeRead)
-                                        .where(noticeRead.notice.id.eq(noticeId))
-                        )
+            .select(challenger.id)
+            .from(challenger)
+            .where(
+                challenger.id.notIn(
+                    JPAExpressions
+                        .select(noticeRead.challengerId)
+                        .from(noticeRead)
+                        .where(noticeRead.notice.id.eq(noticeId))
                 )
-                .fetch();
+            )
+            .fetch();
     }
 
     /*
      * 분류 (중앙, 지부, 학교, 파트) 별 조회
      * @return Notice 페이지
-    * */
+     * */
     public Page<Notice> findByClassification(
-            NoticeClassification classification,
-            Pageable pageable) {
+        NoticeClassification classification,
+        Pageable pageable) {
 
         QNotice notice = QNotice.notice;
 
         // 데이터 조회
         List<Notice> content = queryFactory
-                .selectFrom(notice)
-                .where(
-                        notice.scope.eq(classification)
-                )
-                .orderBy(notice.createdAt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+            .selectFrom(notice)
+            // TODO: NoticePermission과 연계해서 검색할 것
+//            .where(
+//                notice.scope.eq(classification)
+//            )
+            .orderBy(notice.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
         // 개수 조회
         Long total = queryFactory
-                .select(notice.count())
-                .from(notice)
-                .where(
-                        notice.scope.eq(classification)
-                )
-                .fetchOne();
+            .select(notice.count())
+            .from(notice)
+//            .where(
+//                notice.scope.eq(classification)
+//            )
+            .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
@@ -79,27 +80,27 @@ public class NoticeQueryRepository {
     /*
      * 검색어 기반 조회
      * @return Notice 페이지
-    * */
+     * */
     public Page<Notice> findByKeyword(String keyword, Pageable pageable) {
-        QNotice notice =  QNotice.notice;
+        QNotice notice = QNotice.notice;
 
         List<Notice> notices = queryFactory
-                .selectFrom(notice)
-                .where(
-                        keywordContains(keyword)
-                )
-                .orderBy(notice.createdAt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+            .selectFrom(notice)
+            .where(
+                keywordContains(keyword)
+            )
+            .orderBy(notice.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
         Long total = queryFactory
-                .select(notice.count())
-                .from(notice)
-                .where(
-                        keywordContains(keyword)
-                )
-                .fetchOne();
+            .select(notice.count())
+            .from(notice)
+            .where(
+                keywordContains(keyword)
+            )
+            .fetchOne();
 
         return new PageImpl<>(notices, pageable, total != null ? total : 0L);
     }
@@ -112,6 +113,6 @@ public class NoticeQueryRepository {
         QNotice notice = QNotice.notice;
 
         return notice.title.containsIgnoreCase(keyword)
-                .or(notice.content.containsIgnoreCase(keyword));
+            .or(notice.content.containsIgnoreCase(keyword));
     }
 }

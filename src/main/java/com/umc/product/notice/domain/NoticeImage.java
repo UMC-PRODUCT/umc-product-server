@@ -44,10 +44,10 @@ public class NoticeImage extends BaseEntity {
 
     public static NoticeImage create(String imageId, Notice notice, int displayOrder) {
         return NoticeImage.builder()
-                .imageId(imageId)
-                .notice(notice)
-                .displayOrder(displayOrder)
-                .build();
+            .imageId(imageId)
+            .notice(notice)
+            .displayOrder(displayOrder)
+            .build();
     }
 
 }

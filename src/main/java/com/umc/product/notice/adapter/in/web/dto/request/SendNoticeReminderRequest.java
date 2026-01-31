@@ -5,11 +5,11 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 public record SendNoticeReminderRequest(
-        @NotEmpty(message = "리마인드 대상ID 리스트는 비어 있을 수 없습니다.")
-        List<Long> targetIds /* 리마인드 대상ID */
+    @NotEmpty(message = "리마인드 대상ID 리스트는 비어 있을 수 없습니다.")
+    List<Long> targetIds /* 리마인드 대상ID */
 ) {
 
-    public SendNoticeReminderCommand toCommand(Long authorChallengerId, Long noticeId) {
-        return new SendNoticeReminderCommand(authorChallengerId, noticeId, targetIds);
+    public SendNoticeReminderCommand toCommand(Long memberId, Long noticeId) {
+        return new SendNoticeReminderCommand(memberId, noticeId, targetIds);
     }
 }
