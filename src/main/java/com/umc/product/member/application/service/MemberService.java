@@ -8,8 +8,11 @@ import com.umc.product.member.application.port.in.command.dto.DeleteMemberComman
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
+import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.exception.MemberDomainException;
+import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
@@ -30,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MemberService implements ManageMemberUseCase {
 
+    private final LoadMemberPort loadMemberPort;
     private final SaveMemberPort saveMemberPort;
     private final LoadSchoolPort loadSchoolPort;
     private final LoadFileMetadataPort loadFileMetadataPort;
@@ -77,7 +81,8 @@ public class MemberService implements ManageMemberUseCase {
 
     @Override
     public void updateMember(UpdateMemberCommand command) {
-        throw new NotImplementedException();
+        Member member = findById(command.memberId());
+        member.updateProfile(command.newProfileImageId());
     }
 
     @Override
@@ -96,5 +101,10 @@ public class MemberService implements ManageMemberUseCase {
         if (!agreedTermIds.containsAll(requiredTermIds)) {
             throw new TermsDomainException(TermsErrorCode.MANDATORY_TERMS_NOT_AGREED);
         }
+    }
+
+    private Member findById(Long memberId) {
+        return loadMemberPort.findById(memberId).orElseThrow(
+            () -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 }

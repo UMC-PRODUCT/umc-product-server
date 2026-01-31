@@ -57,14 +57,20 @@ public class Member extends BaseEntity {
     }
 
     // Domain Logic: 프로필 업데이트
-    public void updateProfile(String nickname, Long schoolId, String profileImageId) {
+    public void updateProfile(String nickname, String profileImageId) {
         validateActive();
         if (nickname != null) {
             this.nickname = nickname;
         }
-        if (schoolId != null) {
-            this.schoolId = schoolId;
+
+        if (profileImageId != null) {
+            this.profileImageId = profileImageId;
         }
+    }
+
+    public void updateProfile(String profileImageId) {
+        validateActive();
+
         if (profileImageId != null) {
             this.profileImageId = profileImageId;
         }

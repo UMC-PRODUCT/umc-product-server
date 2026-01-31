@@ -1,7 +1,9 @@
 package com.umc.product.challenger.application.service;
 
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
+import com.umc.product.challenger.application.port.in.command.dto.ChallengerDeactivationType;
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
+import com.umc.product.challenger.application.port.in.command.dto.DeactivateChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerPointCommand;
 import com.umc.product.challenger.application.port.in.command.dto.GrantChallengerPointCommand;
@@ -15,6 +17,7 @@ import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.ChallengerPoint;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +64,12 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
     }
 
     @Override
+    public void deactivateChallenger(DeactivateChallengerCommand command) {
+        Challenger challenger = loadChallengerPort.getById(command.challengerId());
+        challenger.changeStatus(resolveDeactivationStatus(command.deactivationType()));
+    }
+
+    @Override
     public void grantChallengerPoint(GrantChallengerPointCommand command) {
         Challenger challenger = loadChallengerPort.getById(command.challengerId());
         challenger.validateChallengerStatus();
@@ -87,4 +96,12 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
         ChallengerPoint point = loadChallengerPointPort.getById(command.challengerPointId());
         saveChallengerPointPort.delete(point);
     }
+
+    private ChallengerStatus resolveDeactivationStatus(ChallengerDeactivationType deactivationType) {
+        return switch (deactivationType) {
+            case WITHDRAW -> ChallengerStatus.WITHDRAWN;
+            case EXPEL -> ChallengerStatus.EXPELLED;
+        };
+    }
+
 }
