@@ -79,16 +79,7 @@ public class MemberController {
     @GetMapping("me")
     MemberInfoResponse getMyProfile(@CurrentMember MemberPrincipal memberPrincipal) {
         MemberProfileInfo info = getMemberUseCase.getProfile(memberPrincipal.getMemberId());
-        return MemberInfoResponse.from(
-            info.id(),
-            info.name(),
-            info.nickname(),
-            info.email(),
-            info.schoolId(),
-            info.schoolName(),
-            info.profileImageLink(),
-            info.status()
-        );
+        return MemberInfoResponse.from(info);
     }
 
     @Operation(summary = "memberId로 회원 정보 조회")
@@ -97,16 +88,7 @@ public class MemberController {
         @PathVariable Long memberId
     ) {
         MemberProfileInfo info = getMemberUseCase.getProfile(memberId);
-        return MemberInfoResponse.from(
-            info.id(),
-            info.name(),
-            info.nickname(),
-            info.email(),
-            info.schoolId(),
-            info.schoolName(),
-            info.profileImageLink(),
-            info.status()
-        );
+        return MemberInfoResponse.from(info);
     }
 
     @Operation(summary = "회원 정보 수정")
@@ -121,16 +103,7 @@ public class MemberController {
         );
 
         MemberProfileInfo info = getMemberUseCase.getProfile(memberPrincipal.getMemberId());
-        return MemberInfoResponse.from(
-            info.id(),
-            info.name(),
-            info.nickname(),
-            info.email(),
-            info.schoolId(),
-            info.schoolName(),
-            info.profileImageLink(),
-            info.status()
-        );
+        return MemberInfoResponse.from(info);
     }
 
 }

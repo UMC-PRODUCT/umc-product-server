@@ -1,6 +1,7 @@
 package com.umc.product.member.adapter.in.web.dto.response;
 
 import com.umc.product.common.domain.enums.MemberStatus;
+import com.umc.product.member.application.port.in.query.MemberProfileInfo;
 
 /**
  * 사용자 정보를 응답하는 DTO 입니다.
@@ -40,6 +41,19 @@ public record MemberInfoResponse(
                 schoolName,
                 profileImageLink,
                 status
+        );
+    }
+
+    public static MemberInfoResponse from(MemberProfileInfo info) {
+        return new MemberInfoResponse(
+                info.id(),
+                info.name(),
+                info.nickname(),
+                info.email(),
+                info.schoolId(),
+                info.schoolName(),
+                info.profileImageLink(),
+                info.status()
         );
     }
 }
