@@ -1,6 +1,7 @@
 package com.umc.product.challenger.adapter.in.web;
 
 import com.umc.product.challenger.adapter.in.web.dto.request.CreateChallengerInfoRequest;
+import com.umc.product.challenger.adapter.in.web.dto.request.DeactivateChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.DeleteChallengerPointRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPointRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerRequest;
@@ -59,9 +60,11 @@ public class ChallengerController {
 
     @Operation(summary = "챌린저 비활성화 (제명/탈부 처리)")
     @PostMapping("{challengerId}/deactivate")
-    void deactivateChallenger(@PathVariable Long challengerId) {
-        // TODO: DeactivateChallengerUseCase 구현 필요
-        throw new NotImplementedException();
+    void deactivateChallenger(
+            @PathVariable Long challengerId,
+            @RequestBody DeactivateChallengerRequest request
+    ) {
+        manageChallengerUseCase.deactiveteChallenger(request.toCommand(challengerId));
     }
 
     @Operation(summary = "챌린저 정보 수정 (파트 변경)")

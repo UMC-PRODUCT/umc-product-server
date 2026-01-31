@@ -1,6 +1,7 @@
 package com.umc.product.challenger.application.port.in.command;
 
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
+import com.umc.product.challenger.application.port.in.command.dto.DeactivateChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerPointCommand;
 import com.umc.product.challenger.application.port.in.command.dto.GrantChallengerPointCommand;
@@ -31,6 +32,11 @@ public interface ManageChallengerUseCase {
     void deleteChallenger(DeleteChallengerCommand command);
 
     /**
+     * 챌린저를 비활성화 처리합니다. (제명/탈부 처리)
+     */
+    void deactiveteChallenger(DeactivateChallengerCommand command);
+
+    /**
      * 챌린저에게 상벌점을 부여합니다.
      * <p>
      * 상벌점에 대한 사유도 함께 기록이 가능합니다.
@@ -48,4 +54,5 @@ public interface ManageChallengerUseCase {
      * 챌린저에게 부여한 상벌점을 삭제합니다.
      */
     void deleteChallengerPoint(DeleteChallengerPointCommand command);
+
 }
