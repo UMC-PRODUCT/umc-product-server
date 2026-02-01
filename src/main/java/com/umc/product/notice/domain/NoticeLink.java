@@ -44,10 +44,10 @@ public class NoticeLink extends BaseEntity {
 
     public static NoticeLink create(String link, Notice notice, int displayOrder) {
         return NoticeLink.builder()
-                .link(link)
-                .notice(notice)
-                .displayOrder(displayOrder)
-                .build();
+            .link(link)
+            .notice(notice)
+            .displayOrder(displayOrder)
+            .build();
     }
 
 }

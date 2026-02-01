@@ -1,14 +1,12 @@
 package com.umc.product.notice.application.service.command;
 
+import com.umc.product.authorization.application.port.in.query.GetMemberRolesUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
-import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
-import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
-import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeVotesCommand;
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
@@ -16,6 +14,8 @@ import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
+import com.umc.product.notice.dto.NoticeTargetInfo;
+import com.umc.product.notice.dto.NoticeTargetPattern;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -30,102 +30,69 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NoticeService implements ManageNoticeUseCase {
 
-    private final LoadNoticePort loadNoticePort;
-    private final SaveNoticePort saveNoticePort;
-
-    private final GetChallengerUseCase getChallengerUseCase;
-    private final GetGisuUseCase getGisuUseCase;
-
-    private final ManageNoticeContentUseCase manageNoticeContentUseCase;
-
-    private final ManageFcmUseCase manageFcmUseCase;
-
     private static final String NOTICE_REMINDER_TITLE_PREFIX = "[리마인드 공지] ";
     private static final String REMINDER_BODY_SUFFIX = " 공지를 확인해주세요.";
+    // 도메인 내부 포트
+    private final LoadNoticePort loadNoticePort;
+    private final SaveNoticePort saveNoticePort;
+    // 도메인 외부 UseCase
+    private final GetChallengerUseCase getChallengerUseCase;
+    private final GetGisuUseCase getGisuUseCase;
+    private final GetMemberRolesUseCase getMemberRolesUseCase;
+    private final ManageNoticeContentUseCase manageNoticeContentUseCase;
+    private final ManageFcmUseCase manageFcmUseCase;
 
     @Override
     public Long createNotice(CreateNoticeCommand command) {
-        ChallengerInfo challenger = findChallengerByMemberIdAndGisuId(command.memberId(), command.targetInfo().targetGisuId());
+        ChallengerInfo challenger = getChallengerByMemberAndGisu(
+            command.memberId(),
+            command.targetInfo().targetGisuId());
 
-        /*
-         * TODO: 권한 검증 추가 예정
-         */
+        // TODO: 작성 권한이 있는지 판단하는 로직 추가 필요
 
-        Notice notice = Notice.createNotice(
-                command.title(), command.content(), challenger.challengerId(), command.targetInfo().scope(),
-                command.targetInfo().organizationId(), command.targetInfo().targetGisuId(),
-                command.targetInfo().targetRoles(),
-                command.targetInfo().targetParts(), command.shouldNotify()
+        Notice notice = Notice.create(
+            command.title(),
+            command.content(),
+            challenger.challengerId(),
+            command.shouldNotify()
         );
 
         Notice savedNotice = saveNoticePort.save(notice);
-        /*
-         * TODO: 권한 추가 후 공지 알림 전송 로직 구현
-         */
-//        manageFcmUseCase.sendMessageByToken(new NotificationCommand());
+
+        // TODO: shouldNotify가 true일 경우, 발송 대상을 파악하고 알림 전송, 발송 후 notifiedAt 호출
 
         return savedNotice.getId();
     }
 
     @Override
-    public void updateNotice(UpdateNoticeCommand command) {
-        ChallengerInfo challenger = findChallengerByMemberIdAndGisuId(command.memberId(), command.targetInfo().targetGisuId());
+    public void updateNoticeTitleOrContent(UpdateNoticeCommand command) {
+        // TODO: 작성자가 일치하는지 여부를 검증
 
         // TODO: 작성자에 대한 상태 검증 추가
 
         Notice notice = findNoticeById(command.noticeId());
 
-        /*
-         * 작성자 검증
-         */
-        validateIsNoticeAuthor(challenger.challengerId(), notice.getAuthorChallengerId());
+        // TODO: 작성자 일치 여부 검증 (도메인 로직으로 추가)
 
-        /*
-         * 내용 수정
-         */
-        notice.update(
-                command.title(),
-                command.content(),
-                command.targetInfo().scope(),
-                command.targetInfo().organizationId(),
-                command.targetInfo().targetGisuId(),
-                command.targetInfo().targetRoles(),
-                command.targetInfo().targetParts(),
-                command.shouldNotify()
+        notice.updateTitleOrContent(
+            command.title(),
+            command.content()
         );
 
-        /*
-         * 이미지, 투표, 링크 등 수정
-         */
-        if (command.imageIds() != null) {
-            manageNoticeContentUseCase.replaceImages(new ReplaceNoticeImagesCommand(command.imageIds()), notice.getId());
-        }
-
-        if (command.links() != null) {
-            manageNoticeContentUseCase.replaceLinks(new ReplaceNoticeLinksCommand(command.links()), notice.getId());
-        }
-
-        if (command.voteIds() != null) {
-            manageNoticeContentUseCase.replaceVotes(new ReplaceNoticeVotesCommand(command.voteIds()), notice.getId());
-        }
-
+        // 이미지, 투표, 링크 등은 별도의 command로 분리 구현
     }
 
     @Override
     public void deleteNotice(DeleteNoticeCommand command) {
         Long gisuId = getGisuUseCase.getActiveGisuId();
 
-        ChallengerInfo challenger = findChallengerByMemberIdAndGisuId(command.memberId(), gisuId);
+        ChallengerInfo challenger = getChallengerByMemberAndGisu(command.memberId(), gisuId);
 
-        // TODO: 작성자에 대한 상태 검증 추가
-//        challenger.validateChallengerStatus();
+        // TODO: 작성자에 대한 상태 검증 추가 (유효한 챌린저인지)
 
         Notice notice = findNoticeById(command.noticeId());
 
-        /*
-         * 작성자 검증
-         */
-        validateIsNoticeAuthor(challenger.challengerId(), notice.getAuthorChallengerId());
+        // TODO: 공지 작성자인지 검증하는 로직 추가 (CheckAccess 어노테이션을 활용할 것)
 
         /*
          * 관련 이미지, 투표, 링크 등도 모두 삭제
@@ -140,28 +107,34 @@ public class NoticeService implements ManageNoticeUseCase {
         Notice notice = findNoticeById(command.noticeId());
         for (Long targetId : command.targetIds()) {
             manageFcmUseCase.sendMessageByToken(new NotificationCommand(targetId,
-                    NOTICE_REMINDER_TITLE_PREFIX + notice.getTitle(),
-                    REMINDER_BODY_SUFFIX))
+                NOTICE_REMINDER_TITLE_PREFIX + notice.getTitle(),
+                REMINDER_BODY_SUFFIX))
             ;
         }
     }
 
+    // === PRIVATE METHODS ===
 
-    /*
-     * private 메서드
+    /**
+     * 회원ID와 기수ID로 챌린저 조회
      */
-    private ChallengerInfo findChallengerByMemberIdAndGisuId(Long memberId, Long gisuId) {
+    private ChallengerInfo getChallengerByMemberAndGisu(Long memberId, Long gisuId) {
         return getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId);
     }
 
+    /**
+     * Notice ID로 Entity를 조회, 없으면 Exception 발생
+     */
     private Notice findNoticeById(Long noticeId) {
         return loadNoticePort.findNoticeById(noticeId)
-                .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
+            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
-    private void validateIsNoticeAuthor(Long challengerId, Long authorChallengerId) {
-        if (!challengerId.equals(authorChallengerId)) {
-            throw new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH);
-        }
+    /**
+     * 공지 작성 권한이 있는지 검증함
+     */
+    private boolean validateNoticeWritePermission(NoticeTargetInfo noticeTargetInfo, Long authorMemberId) {
+        NoticeTargetPattern pattern = NoticeTargetPattern.from(noticeTargetInfo);
+        return pattern.validatePermission(noticeTargetInfo, authorMemberId, getMemberRolesUseCase);
     }
 }

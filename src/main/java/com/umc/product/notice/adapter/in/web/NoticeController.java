@@ -7,7 +7,7 @@ import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.SendNoticeReminderRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
-import com.umc.product.notice.adapter.in.web.dto.response.CreateNoticeResponse;
+import com.umc.product.notice.adapter.in.web.dto.response.command.CreateNoticeResponse;
 import com.umc.product.notice.adapter.in.web.swagger.NoticeApi;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
@@ -36,11 +36,13 @@ public class NoticeController implements NoticeApi {
      * 공지사항 생성
      */
     @PostMapping
-    public ApiResponse<CreateNoticeResponse> createNotice(@RequestBody @Valid CreateNoticeRequest request,
-                                                          @CurrentMember MemberPrincipal memberPrincipal) {
+    public ApiResponse<CreateNoticeResponse> createNotice(
+        @RequestBody @Valid CreateNoticeRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal) {
 
         Long memberId = memberPrincipal.getMemberId();
         Long noticeId = manageNoticeUseCase.createNotice(request.toCommand(memberId));
+
         return ApiResponse.onSuccess(new CreateNoticeResponse(noticeId));
     }
 
@@ -48,11 +50,13 @@ public class NoticeController implements NoticeApi {
      * 공지사항 삭제
      */
     @DeleteMapping("/{noticeId}")
-    public void deleteNotice(@PathVariable Long noticeId, @CurrentMember MemberPrincipal memberPrincipal) {
-        /*
-         * TODO: challengerId 받아오는 방식 수정 필요
-         */
+    public void deleteNotice(
+        @PathVariable Long noticeId,
+        @CurrentMember MemberPrincipal memberPrincipal) {
+        // TODO: challengerId 받아오는 방식 수정 필요
+
         Long memberId = memberPrincipal.getMemberId();
+
         manageNoticeUseCase.deleteNotice(new DeleteNoticeCommand(memberId, noticeId));
     }
 
@@ -60,25 +64,29 @@ public class NoticeController implements NoticeApi {
      * 공지사항 수정
      */
     @PatchMapping("/{noticeId}")
-    public void updateNotice(@PathVariable Long noticeId, @RequestBody @Valid UpdateNoticeRequest request,
-                             @CurrentMember MemberPrincipal memberPrincipal) {
-        /*
-         * TODO: challengerId 받아오는 방식 수정 필요
-         */
+    public void updateNotice(
+        @PathVariable Long noticeId,
+        @RequestBody @Valid UpdateNoticeRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal) {
+        // TODO: challengerId 받아오는 방식 수정 필요
+
         Long memberId = memberPrincipal.getMemberId();
-        manageNoticeUseCase.updateNotice(request.toCommand(memberId, noticeId));
+
+        manageNoticeUseCase.updateNoticeTitleOrContent(request.toCommand(memberId, noticeId));
     }
 
     /*
      * 공지사항 리마인드 알림 보내기
      */
     @PostMapping("/{noticeId}/reminders")
-    public void sendNoticeReminder(@PathVariable Long noticeId, @RequestBody @Valid SendNoticeReminderRequest request,
-                                   @CurrentMember MemberPrincipal memberPrincipal) {
-        /*
-         * TODO: challengerId 받아오는 방식 수정 필요
-         */
+    public void sendNoticeReminder(
+        @PathVariable Long noticeId,
+        @RequestBody @Valid SendNoticeReminderRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal) {
+        // TODO: challengerId 받아오는 방식 수정 필요
+
         Long memberId = memberPrincipal.getMemberId();
+
         manageNoticeUseCase.remindNotice(request.toCommand(memberId, noticeId));
     }
 

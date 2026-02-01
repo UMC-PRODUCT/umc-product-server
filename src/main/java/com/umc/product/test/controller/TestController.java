@@ -1,4 +1,4 @@
-package com.umc.product.temp.controller;
+package com.umc.product.test.controller;
 
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
@@ -17,33 +17,35 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
 @Profile("local | dev")
-@RestController("temp")
+@RestController
+@RequestMapping("/test")
 @Tag(name = Constants.TEST)
-public class TempController {
+public class TestController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final GetChallengerUseCase getChallengerUseCase;
 
-    @GetMapping("permission/test")
+    @GetMapping("permission/notice-read")
     @CheckAccess(
-            resourceType = ResourceType.NOTICE,
-            resourceId = "#noticeId",
-            permission = PermissionType.WRITE,
-            message = "하나야 스트레스 많이 받을거야~ 자기 전에도 생각 날꺼야~ 도움 많이 될꺼야~"
+        resourceType = ResourceType.NOTICE,
+        resourceId = "#noticeId", // SpEL 표현식 - 공부하세요!!
+        permission = PermissionType.READ,
+        message = "하나야 스트레스 많이 받을거야~ 자기 전에도 생각 날꺼야~ 도움 많이 될꺼야~"
     )
     void permissionTest(Long noticeId) {
     }
 
     @GetMapping("permission/no-evaluator-test")
     @CheckAccess(
-            resourceType = ResourceType.MEMBER,
-            resourceId = "#noticeId",
-            permission = PermissionType.WRITE,
-            message = "하나야 스트레스 많이 받을거야~ 자기 전에도 생각 날꺼야~ 도움 많이 될꺼야~"
+        resourceType = ResourceType.CURRICULUM,
+        resourceId = "#noticeId",
+        permission = PermissionType.DELETE,
+        message = "하나야 스트레스 많이 받을거야~ 자기 전에도 생각 날꺼야~ 도움 많이 될꺼야~"
     )
     void noEvaluatorForPermission(Long something) {
     }
@@ -51,10 +53,10 @@ public class TempController {
     @GetMapping("challenger")
     @Operation(summary = "memberId와 gisuId로 챌린저 정보 조회")
     public ChallengerInfo getChallengerByMemberAndGisuId(
-            Long memberId, Long gisuId
+        Long memberId, Long gisuId
     ) {
         return getChallengerUseCase.getByMemberIdAndGisuId(
-                memberId, gisuId
+            memberId, gisuId
         );
     }
 
