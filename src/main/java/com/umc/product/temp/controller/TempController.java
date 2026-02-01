@@ -31,7 +31,7 @@ public class TempController {
     @GetMapping("permission/test")
     @CheckAccess(
         resourceType = ResourceType.NOTICE,
-        resourceId = "#noticeId",
+        resourceId = "#noticeId", // SpEL 표현식 - 공부하세요!!
         permission = PermissionType.WRITE,
         message = "하나야 스트레스 많이 받을거야~ 자기 전에도 생각 날꺼야~ 도움 많이 될꺼야~"
     )

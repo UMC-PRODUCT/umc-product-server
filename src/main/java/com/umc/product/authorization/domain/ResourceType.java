@@ -16,7 +16,8 @@ public enum ResourceType {
     SCHEDULE("schedule", "일정",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
     NOTICE("notice", "공지사항",
-        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
+        // WRITE는 Service 단에서 처리함
+        Set.of(PermissionType.READ, PermissionType.DELETE)),
     ;
 
     private final String code;

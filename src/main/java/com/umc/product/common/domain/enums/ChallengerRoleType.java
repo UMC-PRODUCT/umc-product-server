@@ -26,9 +26,6 @@ public enum ChallengerRoleType {
     SCHOOL_VICE_PRESIDENT, // 부회장 (isSchoolCore)
     SCHOOL_PART_LEADER, // 교내 파트장
     SCHOOL_ETC_ADMIN, // 기타 교내 운영진
-
-    // 일반
-    CHALLENGER, // 챌린저
     ;
 
     /**

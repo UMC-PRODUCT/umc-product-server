@@ -1,7 +1,7 @@
 package com.umc.product.authorization.domain;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.Builder;
 
 /**
@@ -11,30 +11,21 @@ import lombok.Builder;
  */
 @Builder
 public record SubjectAttributes(
-        Long memberId,
-        Long schoolId,
-        // 지부, 기수, 역할은 기수에 따라 달라짐
-        // 기수에 대한 k
-        List<Long> chapterIds,
-        List<ChallengerRole> roles
+    Long memberId,
+    Long schoolId,
+    // 지부, 기수, 역할은 기수에 따라 달라짐
+    List<GisuChallengerInfo> gisuChallengerInfos,
+    List<RoleAttribute> roleAttributes
 
-        // Environment Attributes
-        // 선택 사항, 고려해볼만한 사항들을 추가할 수는 있을 것 같음
+    // Environment Attributes
+    // 선택 사항, 고려해볼만한 사항들을 추가할 수는 있을 것 같음
 ) {
-
-    @Override
-    public String toString() {
-        String roleTypes = roles != null
-                ? roles.stream()
-                .map(role -> role.getChallengerRoleType().name())
-                .collect(Collectors.joining(", ", "[", "]"))
-                : "[]";
-
-        return "SubjectAttributes{" +
-                "memberId=" + memberId +
-                ", schoolId=" + schoolId +
-                ", chapterIds=" + chapterIds +
-                ", roles=" + roleTypes +
-                '}';
+    @Builder
+    public record GisuChallengerInfo(
+        Long gisuId,
+        Long chapterId,
+        ChallengerPart part,
+        Long challengerId
+    ) {
     }
 }

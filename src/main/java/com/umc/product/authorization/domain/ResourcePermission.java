@@ -2,12 +2,17 @@ package com.umc.product.authorization.domain;
 
 import static java.util.Objects.requireNonNull;
 
+import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
+import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
+
 /**
  * 리소스에 대한 권한 정보
  */
 public record ResourcePermission(
     ResourceType resourceType,  // CURRICULUM, SCHEDULE, NOTICE 등
-    String resourceId,          // "123" (optional, null이면 타입 전체)
+    // "123" (optional, null이면 타입 전체)
+    // 호환성을 위해서 String으로 설정, Long인 ID 값은 메소드 활용
+    String resourceId,
     PermissionType permission
 ) {
     public ResourcePermission {
@@ -37,5 +42,17 @@ public record ResourcePermission(
      */
     public static ResourcePermission of(ResourceType resourceType, Long resourceId, PermissionType permission) {
         return new ResourcePermission(resourceType, resourceId.toString(), permission);
+    }
+
+    public Long getResourceIdAsLong() {
+        if (resourceId == null) {
+            return null;
+        }
+
+        try {
+            return Long.valueOf(resourceId);
+        } catch (Exception e) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_RESOURCE_ID_TYPE);
+        }
     }
 }

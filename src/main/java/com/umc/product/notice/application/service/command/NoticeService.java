@@ -130,6 +130,9 @@ public class NoticeService implements ManageNoticeUseCase {
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
+    /**
+     * 공지 작성 권한이 있는지 검증함
+     */
     private boolean validateNoticeWritePermission(NoticeTargetInfo noticeTargetInfo, Long authorMemberId) {
         NoticeTargetPattern pattern = NoticeTargetPattern.from(noticeTargetInfo);
         return pattern.validatePermission(noticeTargetInfo, authorMemberId, getMemberRolesUseCase);
