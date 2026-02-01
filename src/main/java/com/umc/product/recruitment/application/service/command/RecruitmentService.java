@@ -87,18 +87,22 @@ import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @Transactional
 @RequiredArgsConstructor
 public class RecruitmentService implements CreateRecruitmentDraftFormResponseUseCase,
@@ -289,16 +293,23 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_TYPE_MISMATCH);
             }
 
-            if (serverType == QuestionType.PORTFOLIO) {
-                validatePortfolioAnswerValue(item.value());
+            Map<String, Object> value = (item.value() == null) ? Map.of() : item.value();
+
+            if (serverType == QuestionType.SCHEDULE) {
+                value = normalizeInterviewPreferenceToHHmm(value);
             }
 
-            validateOtherTextIfNeeded(question, serverType, item.value());
-            upsertSingleAnswer(formResponse, question, serverType, item.value());
+            if (serverType == QuestionType.PORTFOLIO) {
+                validatePortfolioAnswerValue(value);
+            }
+
+            validateOtherTextIfNeeded(question, serverType, value);
+            upsertSingleAnswer(formResponse, question, serverType, value);
 
             savedQuestionIds.add(questionId);
         }
 
+        formResponse.updateLastSavedAt(Instant.now());
         saveFormResponsePort.save(formResponse);
 
         return UpsertRecruitmentFormResponseAnswersInfo.of(command.formResponseId(), savedQuestionIds);
@@ -364,6 +375,20 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         if (!formResponse.getForm().getId().equals(formId)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
         }
+
+        Long applicantId = command.applicantMemberId();
+        Long respondentId = formResponse.getRespondentMemberId();
+
+        boolean applicantIdExists = applicantId != null;
+        boolean isSameMember = applicantIdExists && applicantId.equals(respondentId);
+
+        log.debug(
+                "[FORM_RESPONSE_AUTH] applicantMemberId={}, respondentMemberId={}, applicantIdExists={}, isSameMember={}",
+                applicantId,
+                respondentId,
+                applicantIdExists,
+                isSameMember
+        );
 
         if (command.applicantMemberId() != null && !command.applicantMemberId()
                 .equals(formResponse.getRespondentMemberId())) {
@@ -600,6 +625,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         upsertReviewWindowsForDraftResolved(recruitmentId, resolved);
 
         if (schedule.interviewTimeTable() != null) {
+            validateTimeTableStructure(schedule.interviewTimeTable());
             var enabledOnlyMap = toEnabledOnlyMap(schedule.interviewTimeTable());
             recruitment.changeInterviewTimeTable(enabledOnlyMap);
         }
@@ -656,15 +682,29 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             RecruitmentDraftInfo.DateRangeInfo dateRange,
             RecruitmentDraftInfo.TimeRangeInfo timeRange,
             Integer slotMinutes,
-            List<RecruitmentDraftInfo.TimesByDateInfo> enabledByDate
+            List<EnabledTimesByDatePayload> enabledByDate
     ) {
     }
 
+    private record EnabledTimesByDatePayload(
+            LocalDate date,
+            List<String> times
+    ) {
+    }
+
+
     private Map<String, Object> toEnabledOnlyMap(UpdateRecruitmentDraftCommand.InterviewTimeTableCommand t) {
-        List<RecruitmentDraftInfo.TimesByDateInfo> enabled =
+        List<EnabledTimesByDatePayload> enabled =
                 t.enabledByDate() == null ? List.of()
                         : t.enabledByDate().stream()
-                                .map(e -> new RecruitmentDraftInfo.TimesByDateInfo(e.date(), e.times()))
+                                .map(e -> new EnabledTimesByDatePayload(
+                                        e.date(),
+                                        e.times() == null ? List.of()
+                                                : e.times().stream()
+                                                        .filter(java.util.Objects::nonNull)
+                                                        .map(x -> x.format(DateTimeFormatter.ofPattern("HH:mm")))
+                                                        .toList()
+                                ))
                                 .toList();
 
         EnabledOnly payload = new EnabledOnly(
@@ -704,6 +744,13 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 .orElseThrow(
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
+        Member requester = loadMemberPort.findById(command.requesterMemberId())
+                .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+
+        if (!recruitment.getSchoolId().equals(requester.getSchoolId())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORBIDDEN);
+        }
+
         if (command.updateRecruitmentDraftCommand() != null) {
             update(command.updateRecruitmentDraftCommand());
         }
@@ -718,7 +765,22 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         validatePublishable(finalDraft, finalFormInfo);
 
-        syncReviewWindowsOnPublish(command.recruitmentId(), finalDraft.schedule());
+        RecruitmentDraftInfo syncedDraft = loadRecruitmentPort.findDraftInfoById(command.recruitmentId());
+
+        var s = syncedDraft.schedule();
+        if (s != null && s.interviewTimeTable() != null) {
+            validateTimeTableStructure(s.interviewTimeTable());
+
+            validateInterviewWindowCoversTimeTable(
+                    s.interviewStartAt(),
+                    s.interviewEndAt(),
+                    s.interviewTimeTable()
+            );
+        }
+        syncReviewWindowsOnPublish(command.recruitmentId(), syncedDraft.schedule());
+        validateScheduleOrderOrThrow(syncedDraft.schedule());
+
+        Instant now = Instant.now();
 
         boolean hasOtherOngoing = loadRecruitmentPort.existsOtherOngoingPublishedRecruitment(
                 recruitment.getSchoolId(),
@@ -729,8 +791,6 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         if (hasOtherOngoing) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_CONFLICT);
         }
-
-        Instant now = Instant.now();
 
         Recruitment latest = loadRecruitmentPort.findById(command.recruitmentId())
                 .orElseThrow(
@@ -796,6 +856,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         if (!hasAnyQuestion) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_QUESTION_REQUIRED);
+        }
+
+        boolean hasPreferredPartQuestion = def.sections().stream()
+                .filter(sec -> sec.questions() != null)
+                .flatMap(sec -> sec.questions().stream())
+                .anyMatch(q -> q != null && q.type() == QuestionType.PREFERRED_PART);
+
+        if (!hasPreferredPartQuestion) {
+            throw new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_PREFERRED_PART_REQUIRED
+            );
         }
 
         if (draft.maxPreferredPartCount() != null && draft.maxPreferredPartCount() <= 0) {
@@ -1043,9 +1115,36 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 .map(a -> a.getQuestion().getId())
                 .collect(java.util.stream.Collectors.toSet());
 
+        log.debug("[SUBMIT_VALIDATE] recruitmentId={}, formResponseId={}, answeredQuestionIds={}",
+                recruitment.getId(), formResponse.getId(), answeredQuestionIds);
+
+        Set<ChallengerPart> selectedParts = resolveSelectedPartsForSubmit(recruitment, formResponse);
+
+        log.debug("[SUBMIT_VALIDATE] recruitmentId={}, formResponseId={}, selectedPartsForSubmit={}",
+                recruitment.getId(), formResponse.getId(), selectedParts);
+
+        var requiredAll = def.sections().stream()
+                .flatMap(sec -> sec.questions() == null ? java.util.stream.Stream.empty() : sec.questions().stream())
+                .filter(FormDefinitionInfo.QuestionInfo::isRequired)
+                .map(q -> java.util.Map.of("questionId", q.questionId(), "type", q.type(), "questionText",
+                        q.questionText()))
+                .toList();
+
+        log.debug("[SUBMIT_VALIDATE_REQUIRED_LIST] recruitmentId={}, formResponseId={}, requiredQuestions={}",
+                recruitment.getId(), formResponse.getId(), requiredAll);
+
         def.sections().forEach(section -> {
             if (section.questions() == null) {
                 return;
+            }
+
+            String targetKey = section.targetKey();
+            if (isPartSection(targetKey)) {
+                ChallengerPart sectionPart = parsePartFromTargetKey(targetKey);
+
+                if (sectionPart == null || !selectedParts.contains(sectionPart)) {
+                    return;
+                }
             }
 
             section.questions().forEach(q -> {
@@ -1055,6 +1154,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
                 Long qid = q.questionId();
                 if (qid == null || !answeredQuestionIds.contains(qid)) {
+                    logRequiredMissing(
+                            "validateBeforeSubmit.requiredQuestion",
+                            recruitment.getId(),
+                            formResponse.getId(),
+                            formId,
+                            java.util.Map.of(
+                                    "sectionTargetKey", targetKey,
+                                    "questionId", qid,
+                                    "questionType", q.type(),
+                                    "questionText", q.questionText(),
+                                    "answeredQuestionIds", answeredQuestionIds
+                            ));
                     throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
                 }
 
@@ -1087,15 +1198,70 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         Map<String, Object> v = opt.get().getValue();
+        if (v == null) {
+            v = Map.of();
+        }
+
         List<?> selected = (List<?>) (v.containsKey("preferredParts")
                 ? v.getOrDefault("preferredParts", List.of())
                 : v.getOrDefault("selectedParts", List.of()));
 
+        List<Long> selectedRecruitmentPartIds = extractPreferredRecruitmentPartIds(recruitment, formResponse);
+        if (selectedRecruitmentPartIds == null || selectedRecruitmentPartIds.isEmpty()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
+        }
+
         if (selected.isEmpty()) {
+            logRequiredMissing(
+                    "validatePreferredPartIfNeeded.emptySelection",
+                    recruitment.getId(),
+                    formResponse.getId(),
+                    recruitment.getFormId(),
+                    java.util.Map.of(
+                            "maxPreferredPartCount", recruitment.getMaxPreferredPartCount(),
+                            "preferredValue", v
+                    )
+            );
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
         if (selected.size() > max) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_EXCEEDS_MAX_COUNT);
+        }
+
+        if (max >= 2 && selectedRecruitmentPartIds.size() < max) {
+            logRequiredMissing(
+                    "validatePreferredPartIfNeeded.notEnoughSelections",
+                    recruitment.getId(),
+                    formResponse.getId(),
+                    recruitment.getFormId(),
+                    java.util.Map.of(
+                            "maxPreferredPartCount", max,
+                            "selectedSize", selectedRecruitmentPartIds.size(),
+                            "preferredValue", v
+                    )
+            );
+            throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.PREFERRED_PART_REQUIRED_COUNT_MISMATCH);
+        }
+
+        if (selectedRecruitmentPartIds == null || selectedRecruitmentPartIds.isEmpty()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
+        }
+
+        List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentId(recruitment.getId());
+        if (parts == null) {
+            parts = List.of();
+        }
+
+        java.util.Set<Long> openPartIds = parts.stream()
+                .filter(p -> p.getId() != null)
+                .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+                .map(RecruitmentPart::getId)
+                .collect(java.util.stream.Collectors.toSet());
+
+        boolean hasInvalid = selectedRecruitmentPartIds.stream().anyMatch(id -> !openPartIds.contains(id));
+        if (hasInvalid) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
         }
     }
 
@@ -1278,6 +1444,16 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 : 1;
 
         if (selectedRecruitmentPartIds.isEmpty()) {
+            logRequiredMissing(
+                    "persistAppliedPreferredParts.emptySelectedPartIds",
+                    recruitment.getId(),
+                    formResponse.getId(),
+                    recruitment.getFormId(),
+                    java.util.Map.of(
+                            "maxPreferredPartCount", recruitment.getMaxPreferredPartCount(),
+                            "answersCount", formResponse.getAnswers() == null ? 0 : formResponse.getAnswers().size()
+                    )
+            );
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
         if (selectedRecruitmentPartIds.size() > max) {
@@ -1314,6 +1490,16 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         if (selectedParts.isEmpty()) {
+            logRequiredMissing(
+                    "persistAppliedPreferredParts.selectedPartsEmptyAfterValidation",
+                    recruitment.getId(),
+                    formResponse.getId(),
+                    recruitment.getFormId(),
+                    java.util.Map.of(
+                            "selectedRecruitmentPartIds", selectedRecruitmentPartIds,
+                            "openPartIds", partById.keySet()
+                    )
+            );
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
 
@@ -1363,8 +1549,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             parts = List.of();
         }
 
-        Map<String, Long> openPartIdByName = parts.stream()
-                .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+        Map<String, Long> partIdByName = parts.stream()
                 .filter(p -> p.getPart() != null && p.getId() != null)
                 .collect(java.util.stream.Collectors.toMap(
                         p -> p.getPart().name(),
@@ -1384,12 +1569,14 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             // 2) 문자열이면: (a) 숫자 문자열 or (b) enum name
             if (item instanceof String s) {
                 try {
-                    result.add(Long.parseLong(s)); // "3"
+                    result.add(Long.parseLong(s));
                 } catch (NumberFormatException ignore) {
-                    Long mapped = openPartIdByName.get(s); // "SPRINGBOOT"
-                    if (mapped != null) {
-                        result.add(mapped);
+                    Long mapped = partIdByName.get(s);
+                    if (mapped == null) {
+                        throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
                     }
+                    result.add(mapped);
+
                 }
                 continue;
             }
@@ -1423,12 +1610,13 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, Object> normalizeInterviewPreferenceToHHmm(Map<String, Object> value) {
-        if (value == null || value.isEmpty()) {
+    private Map<String, Object> normalizeInterviewPreferenceToHHmm(Map<String, Object> input) {
+        if (input == null || input.isEmpty()) {
             return Map.of();
         }
 
-        Map<String, Object> result = new java.util.HashMap<>(value);
+        Map<String, Object> value = unwrapValueIfNeeded(input);
+        Map<String, Object> result = new HashMap<>(value);
 
         Object selectedObj = result.get("selected");
         if (!(selectedObj instanceof List<?> selectedList)) {
@@ -1453,11 +1641,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                         continue;
                     }
 
-                    String s = String.valueOf(tObj);
-                    // "14:00:00" -> "14:00", "14:00" -> "14:00"
-                    if (s.length() >= 5) {
-                        s = s.substring(0, 5);
-                    }
+                    String s = String.valueOf(tObj).trim();
+
+                    s = normalizeTimePrefixHHmm(s);
 
                     normalizedTimes.add(s);
                 }
@@ -1469,6 +1655,31 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         result.put("selected", normalizedSelected);
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> unwrapValueIfNeeded(Map<String, Object> input) {
+        Object inner = input.get("value");
+        if (inner instanceof Map<?, ?> innerMap) {
+            Map<String, Object> unwrapped = new java.util.HashMap<>();
+            innerMap.forEach((k, v) -> unwrapped.put(String.valueOf(k), v));
+            return unwrapped;
+        }
+        return input;
+    }
+
+    private String normalizeTimePrefixHHmm(String s) {
+        if (s.matches("^\\d{1,2}:\\d{2}(:\\d{2}(\\.\\d+)?)?$")) {
+            String[] parts = s.split(":");
+            String hh = parts[0].length() == 1 ? "0" + parts[0] : parts[0];
+            String mm = parts[1];
+            return hh + ":" + mm;
+        }
+
+        if (s.length() >= 5) {
+            return s.substring(0, 5);
+        }
+        return s;
     }
 
     @SuppressWarnings("unchecked")
@@ -1955,7 +2166,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             ResolvedRecruitmentSchedule c
     ) {
         // DOC_REVIEW_WINDOW: applyEnd -> docResult
-        if (c.applyEndAt() != null && c.docResultAt() != null && c.applyEndAt().isAfter(c.docResultAt())) {
+        if (c.applyEndAt() != null && c.docResultAt() != null) {
             upsertSchedule(
                     recruitmentId,
                     existing,
@@ -1966,7 +2177,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         // FINAL_REVIEW_WINDOW: interviewEnd -> finalResult
-        if (c.interviewEndAt() != null && c.finalResultAt() != null && c.interviewEndAt().isAfter(c.finalResultAt())) {
+        if (c.interviewEndAt() != null && c.finalResultAt() != null) {
             upsertSchedule(
                     recruitmentId,
                     existing,
@@ -2042,4 +2253,258 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                     RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
         }
     }
+
+    private Set<ChallengerPart> resolveSelectedPartsForSubmit(Recruitment recruitment, FormResponse formResponse) {
+        List<Long> selectedRecruitmentPartIds = extractPreferredRecruitmentPartIds(recruitment, formResponse);
+        if (selectedRecruitmentPartIds == null || selectedRecruitmentPartIds.isEmpty()) {
+            return Set.of();
+        }
+
+        List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentId(recruitment.getId());
+        if (parts == null) {
+            parts = List.of();
+        }
+
+        Map<Long, ChallengerPart> partById = parts.stream()
+                .filter(p -> p.getId() != null && p.getPart() != null)
+                .collect(Collectors.toMap(RecruitmentPart::getId, RecruitmentPart::getPart, (a, b) -> a));
+
+        return selectedRecruitmentPartIds.stream()
+                .map(partById::get)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
+    private static boolean isPartSection(String targetKey) {
+        return targetKey != null && targetKey.startsWith("PART:");
+    }
+
+    private static ChallengerPart parsePartFromTargetKey(String targetKey) {
+        if (!isPartSection(targetKey)) {
+            return null;
+        }
+        String raw = targetKey.substring("PART:".length()).trim();
+        if (raw.isEmpty()) {
+            return null;
+        }
+
+        try {
+            return ChallengerPart.valueOf(raw);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
+
+    private void logRequiredMissing(
+            String where,
+            Long recruitmentId,
+            Long formResponseId,
+            Long formId,
+            Object extra
+    ) {
+        log.warn("[REQUIRED_MISSING] where={}, recruitmentId={}, formResponseId={}, formId={}, extra={}",
+                where, recruitmentId, formResponseId, formId, extra);
+    }
+
+    private Map<String, Object> normalizeInterviewTimeTableToHHmm(Map<String, Object> tt) {
+        if (tt == null || tt.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<String, Object> result = new HashMap<>(tt);
+
+        Object enabledObj = result.get("enabledByDate");
+        if (!(enabledObj instanceof List<?> enabledList)) {
+            return result;
+        }
+
+        List<Map<String, Object>> normalizedEnabled = new ArrayList<>();
+
+        for (Object itemObj : enabledList) {
+            if (!(itemObj instanceof Map<?, ?> raw)) {
+                continue;
+            }
+
+            Map<String, Object> item = new HashMap<>();
+            raw.forEach((k, v) -> item.put(String.valueOf(k), v));
+
+            Object timesObj = item.get("times");
+            if (timesObj instanceof List<?> timesList) {
+                List<String> normalizedTimes = new ArrayList<>();
+                for (Object tObj : timesList) {
+                    if (tObj == null) {
+                        continue;
+                    }
+
+                    // LocalTime / "HH:mm" / "HH:mm:ss" 모두 처리
+                    if (tObj instanceof LocalTime lt) {
+                        normalizedTimes.add(lt.format(DateTimeFormatter.ofPattern("HH:mm")));
+                        continue;
+                    }
+
+                    String s = String.valueOf(tObj).trim();
+                    normalizedTimes.add(normalizeTimePrefixHHmm(s));
+                }
+                item.put("times", normalizedTimes);
+            }
+
+            normalizedEnabled.add(item);
+        }
+
+        result.put("enabledByDate", normalizedEnabled);
+        return result;
+    }
+
+    private void validateInterviewWindowCoversTimeTable(
+            Instant interviewStartAt,
+            Instant interviewEndAt,
+            RecruitmentDraftInfo.InterviewTimeTableInfo tt
+    ) {
+        if (interviewStartAt == null || interviewEndAt == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_REQUIRED);
+        }
+        if (tt == null || tt.dateRange() == null || tt.timeRange() == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+
+        ZoneId zone = ZoneId.of("Asia/Seoul");
+
+        LocalDate ds = tt.dateRange().start();
+        LocalDate de = tt.dateRange().end();
+        LocalTime ts = tt.timeRange().start();
+        LocalTime te = tt.timeRange().end();
+
+        if (ds == null || de == null || ts == null || te == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+
+        Instant ttStart = ds.atTime(ts).atZone(zone).toInstant();
+        Instant ttEnd = de.atTime(te).atZone(zone).toInstant();
+
+        if (!ttStart.isBefore(ttEnd)) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+
+        boolean coversStart = !interviewStartAt.isAfter(ttStart); // interviewStartAt <= ttStart
+        boolean coversEnd = !interviewEndAt.isBefore(ttEnd);      // ttEnd <= interviewEndAt
+
+        if (!coversStart || !coversEnd) {
+            throw new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_COVER_TIMETABLE
+            );
+        }
+    }
+
+    private void validateTimeTableStructure(UpdateRecruitmentDraftCommand.InterviewTimeTableCommand tt) {
+        if (tt == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+        validateTimeTableStructureCommon(
+                tt.dateRange() == null ? null : tt.dateRange().start(),
+                tt.dateRange() == null ? null : tt.dateRange().end(),
+                tt.timeRange() == null ? null : tt.timeRange().start(),
+                tt.timeRange() == null ? null : tt.timeRange().end(),
+                tt.slotMinutes(),
+                tt.enabledByDate() == null ? List.of() : tt.enabledByDate().stream()
+                        .map(e -> new EnabledTimesByDatePayload(
+                                e.date(),
+                                e.times() == null ? List.of()
+                                        : e.times().stream()
+                                                .filter(java.util.Objects::nonNull)
+                                                .map(x -> x.format(DateTimeFormatter.ofPattern("HH:mm")))
+                                                .toList()
+                        ))
+                        .toList()
+        );
+    }
+
+    private void validateTimeTableStructure(RecruitmentDraftInfo.InterviewTimeTableInfo tt) {
+        if (tt == null) {
+            seeInvalidTimeTable();
+        }
+        List<EnabledTimesByDatePayload> enabled = tt.enabledByDate() == null ? List.of()
+                : tt.enabledByDate().stream()
+                        .map(e -> new EnabledTimesByDatePayload(
+                                e.date(),
+                                e.times() == null ? List.of()
+                                        : e.times().stream()
+                                                .filter(java.util.Objects::nonNull)
+                                                .map(t -> t.format(DateTimeFormatter.ofPattern("HH:mm")))
+                                                .toList()
+                        ))
+                        .toList();
+
+        validateTimeTableStructureCommon(
+                tt.dateRange() == null ? null : tt.dateRange().start(),
+                tt.dateRange() == null ? null : tt.dateRange().end(),
+                tt.timeRange() == null ? null : tt.timeRange().start(),
+                tt.timeRange() == null ? null : tt.timeRange().end(),
+                tt.slotMinutes(),
+                enabled
+        );
+    }
+
+    private void seeInvalidTimeTable() {
+        throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+    }
+
+    private void validateTimeTableStructureCommon(
+            LocalDate startDate,
+            LocalDate endDate,
+            LocalTime startTime,
+            LocalTime endTime,
+            Integer slotMinutes,
+            List<EnabledTimesByDatePayload> enabledByDate
+    ) {
+        if (startDate == null || endDate == null || startTime == null || endTime == null) {
+            seeInvalidTimeTable();
+        }
+
+        // 날짜 범위: start <= end (같은 날 허용)
+        if (endDate.isBefore(startDate)) {
+            seeInvalidTimeTable();
+        }
+
+        // 시간 범위: start < end (같은 시간 금지)
+        if (!startTime.isBefore(endTime)) {
+            seeInvalidTimeTable();
+        }
+
+        if (slotMinutes == null || slotMinutes <= 0) {
+            seeInvalidTimeTable();
+        }
+
+        if (enabledByDate == null) {
+            enabledByDate = List.of();
+        }
+
+        // enabledByDate의 date는 dateRange 안에 있어야 함
+        // enabledByDate.times는 timeRange 안에 있어야 함 (endTime은 exclusive)
+        for (EnabledTimesByDatePayload e : enabledByDate) {
+            if (e == null || e.date() == null) {
+                seeInvalidTimeTable();
+            }
+
+            LocalDate d = e.date();
+            if (d.isBefore(startDate) || d.isAfter(endDate)) {
+                seeInvalidTimeTable();
+            }
+
+            List<String> times = (e.times() == null) ? List.of() : e.times();
+            for (String raw : times) {
+                if (raw == null || raw.isBlank()) {
+                    seeInvalidTimeTable();
+                }
+
+                // "HH:mm" / "HH:mm:ss"
+                LocalTime t = parseTimeFlexible(raw);
+
+                if (t.isBefore(startTime) || !t.isBefore(endTime)) {
+                    seeInvalidTimeTable();
+                }
+            }
+        }
+    }
+
 }

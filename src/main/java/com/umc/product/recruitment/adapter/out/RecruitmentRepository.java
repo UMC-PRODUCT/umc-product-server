@@ -62,4 +62,6 @@ public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> 
               order by r.updatedAt desc
             """)
     List<Long> findLatestPublishedId(Long schoolId, Long gisuId);
+
+    List<Recruitment> findBySchoolIdAndStatus(Long schoolId, RecruitmentStatus status);
 }

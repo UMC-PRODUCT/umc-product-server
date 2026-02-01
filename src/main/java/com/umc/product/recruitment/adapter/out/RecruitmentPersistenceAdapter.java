@@ -390,12 +390,12 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
     @Override
     public List<RecruitmentListInfo.RecruitmentSummary> findRecruitmentSummaries(
-            Long requesterMemberId,
+            Long schoolId,
             RecruitmentListStatus status
     ) {
-        // TODO: 권한 추가
 
-        List<Recruitment> recruitments = recruitmentRepository.findByStatus(RecruitmentStatus.PUBLISHED);
+        List<Recruitment> recruitments = recruitmentRepository.findBySchoolIdAndStatus(schoolId,
+                RecruitmentStatus.PUBLISHED);
 
         if (recruitments.isEmpty()) {
             return List.of();
@@ -463,11 +463,10 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
     @Override
     public List<RecruitmentListInfo.RecruitmentSummary> findDraftRecruitmentSummaries(
-            Long requesterMemberId
+            Long schoolId
     ) {
 
-        // TODO: 권한 추가
-        List<Recruitment> drafts = recruitmentRepository.findByStatus(RecruitmentStatus.DRAFT);
+        List<Recruitment> drafts = recruitmentRepository.findBySchoolIdAndStatus(schoolId, RecruitmentStatus.DRAFT);
         if (drafts.isEmpty()) {
             return List.of();
         }
