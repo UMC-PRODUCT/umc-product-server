@@ -17,7 +17,7 @@ public record GetNoticeReadStatusResponse(
     String schoolName,
     Long chapterId,
     String chapterName,
-    Boolean isReminded
+    Boolean isRenotifiedMember
 ) {
     public static GetNoticeReadStatusResponse from(NoticeReadStatusInfo info) {
         return new GetNoticeReadStatusResponse(
@@ -29,7 +29,7 @@ public record GetNoticeReadStatusResponse(
             info.schoolName(),
             info.chapterId(),
             info.chapterName(),
-            info.isReminded()
+            info.isRenotifiedMember()
         );
     }
 }

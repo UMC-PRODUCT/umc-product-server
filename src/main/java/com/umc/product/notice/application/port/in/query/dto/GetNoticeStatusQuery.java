@@ -4,6 +4,9 @@ import com.umc.product.notice.domain.enums.NoticeReadStatus;
 import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
 import java.util.List;
 
+/**
+ * 공지사항 상태를 가져오는 Query
+ */
 public record GetNoticeStatusQuery(
     Long cursorId, /* 공지를 읽은 경우: NoticeReadId, 공지를 읽지 않은 경우: ChallengerId */
     Long noticeId,

@@ -17,6 +17,8 @@ public enum NoticeErrorCode implements BaseCode {
     AUTHOR_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-0006", "공지사항 작성자는 필수입니다."),
     NOTICE_SCOPE_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-0007", "공지사항 대상 범위는 필수입니다."),
     NOTICE_AUTHOR_MISMATCH(HttpStatus.FORBIDDEN, "NOTICE-0008", "공지사항 작성자가 아닙니다."),
+    NO_WRITE_PERMISSION(HttpStatus.FORBIDDEN, "NOTICE-0009", "해당 공지사항을 작성할 권한이 없습니다."),
+    INVALID_TARGET_SETTING(HttpStatus.BAD_REQUEST, "NOTICE-0010", "공지사항 수신자 설정이 잘못되었습니다."),
 
 
     VOTE_IDS_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0001", "투표 ID 목록은 필수입니다."),
@@ -28,9 +30,7 @@ public enum NoticeErrorCode implements BaseCode {
     IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0007", "공지사항 이미지는 최대 10장까지 등록할 수 있습니다."),
 
 
-
-    NOT_IMPLEMENTED_YET(HttpStatus.NOT_IMPLEMENTED, "NOTICE-9999", "아직 구현되지 않은 기능입니다.")
-    ;
+    NOT_IMPLEMENTED_YET(HttpStatus.NOT_IMPLEMENTED, "NOTICE-9999", "아직 구현되지 않은 기능입니다.");
 
 
     private final HttpStatus httpStatus;

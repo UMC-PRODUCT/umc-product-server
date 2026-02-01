@@ -1,33 +1,24 @@
 package com.umc.product.notice.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.notice.domain.enums.NoticeClassification;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Entity
 @Getter
-@Builder
+@Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Table(name = "notice")
@@ -40,146 +31,38 @@ public class Notice extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 3000)
     private String content;
 
     @Column(name = "author_challenger_id", nullable = false)
     private Long authorChallengerId;
 
-    private boolean shouldNotify; /* 알림발송 여부 */
+    /* 알림발송 여부 */
+    private boolean shouldSendNotification;
 
-    private Instant notifiedAt; /* 알림발송 시각 */
+    /* 알림발송 시각 */
+    private Instant notifiedAt;
 
-    /*
-     * target 관련
-     */
-
-    /*
-     * 어떤 scope에서 작성된 공지인가?
-     * 원래 OrganizationType이었으나, PART가 OrganizationType에는 필요 없어서 별도의 enum 사용
-     */
-    @Column(name = "scope")
-    @Enumerated(EnumType.STRING)
-    private NoticeClassification scope;
-
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "organization_ids", columnDefinition = "bigint[]")
-    @Builder.Default
-    private List<Long> organizationIds = new ArrayList<>(); /* scope에 따른 조직(중앙, 학교 등) ID */
-
-    @Column(name = "target_gisu_id")
-    private Long targetGisuId;
-
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "target_roles", columnDefinition = "varchar[]")
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private List<ChallengerRoleType> targetRoles = new ArrayList<>();
-
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "target_parts", columnDefinition = "varchar[]")
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private List<ChallengerPart> targetParts = new ArrayList<>();
-
-
-    public static Notice createNotice(String title, String content, Long authorChallengerId,
-                               NoticeClassification scope,
-                               List<Long> organizationIds,
-                               Long targetGisuId,
-                               List<ChallengerRoleType> targetRoles,
-                               List<ChallengerPart> targetParts,
-                               boolean shouldNotify) {
-
-        validateNoticeCreation(title, content, authorChallengerId, scope);
-
+    public static Notice create(String title, String content, Long authorChallengerId, boolean shouldNotify) {
         return Notice.builder()
-                .title(title)
-                .content(content)
-                .authorChallengerId(authorChallengerId)
-                .scope(scope)
-                .organizationIds(organizationIds != null ? organizationIds : new ArrayList<>())
-                .targetGisuId(targetGisuId)
-                .targetRoles(targetRoles != null ? targetRoles : new ArrayList<>())
-                .targetParts(targetParts != null ? targetParts : new ArrayList<>())
-                .shouldNotify(shouldNotify)
-                .notifiedAt(null)
-                .build();
+            .title(title)
+            .content(content)
+            .authorChallengerId(authorChallengerId)
+            .shouldSendNotification(shouldNotify)
+            .build();
     }
 
-    public void update(String title, String content,
-                                     NoticeClassification scope,
-                                     List<Long> organizationIds,
-                                     Long targetGisuId,
-                                     List<ChallengerRoleType> targetRoles,
-                                     List<ChallengerPart> targetParts,
-                                     boolean shouldNotify) {
-
-        validateCanUpdate(title, content, scope);
-
+    public void updateTitleOrContent(String title, String content) {
         this.title = title;
         this.content = content;
-        this.scope = scope;
-        if (organizationIds != null) this.organizationIds = new ArrayList<>(organizationIds);
-        this.targetGisuId = targetGisuId;
-        if (targetRoles != null) this.targetRoles = new ArrayList<>(targetRoles);
-        if (targetParts != null) this.targetParts = new ArrayList<>(targetParts);
-        this.shouldNotify = shouldNotify;
-        if (this.shouldNotify && this.notifiedAt == null) {
-            this.notifiedAt = Instant.now();
-        }
     }
 
-    /*
-     * 검증 메서드
+    /**
+     * 공지사항 작성자와 일치하는 챌린저인지 확인함
      */
-
-    private static void validateNoticeCreation(String title, String content,
-                                               Long authorChallengerId,
-                                               NoticeClassification scopes) {
-        // 필수값 null 체크
-        if (title == null || title.isBlank()) {
-            throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_TITLE);
+    public void validateAuthorChallenger(Long challengerId) {
+        if (!this.authorChallengerId.equals(challengerId)) {
+            throw new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH);
         }
-
-        if (content == null || content.isBlank()) {
-            throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_CONTENT);
-        }
-
-        if (authorChallengerId == null) {
-            throw new NoticeDomainException(NoticeErrorCode.AUTHOR_REQUIRED);
-        }
-
-        if (scopes == null) {
-            throw new NoticeDomainException(NoticeErrorCode.NOTICE_SCOPE_REQUIRED);
-        }
-    }
-
-    private void validateCanUpdate(String title, String content,
-                                          NoticeClassification scope) {
-        if (title == null || title.isBlank()) {
-            throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_TITLE);
-        }
-
-        if (content == null || content.isBlank()) {
-            throw new NoticeDomainException(NoticeErrorCode.INVALID_NOTICE_CONTENT);
-        }
-
-        if (scope == null) {
-            throw new NoticeDomainException(NoticeErrorCode.NOTICE_SCOPE_REQUIRED);
-        }
-    }
-
-
-    public boolean hasScope(NoticeClassification scope) {
-        return this.scope != null;
-    }
-
-    public boolean hasTargetRoles() {
-        return this.targetRoles != null && !this.targetRoles.isEmpty();
-    }
-
-    public boolean hasTargetParts() {
-        return this.targetParts != null && !this.targetParts.isEmpty();
     }
 }

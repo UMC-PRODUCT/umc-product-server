@@ -8,8 +8,10 @@ public record NoticeReadStatusInfo(
     String name,
     String profileImageUrl,
     ChallengerPart part,
+    Long schoolId,
     String schoolName,
-    String region,
-    Boolean isRead
+    Long chapterId,
+    String chapterName,
+    Boolean isRenotifiedMember
 ) {
 }
