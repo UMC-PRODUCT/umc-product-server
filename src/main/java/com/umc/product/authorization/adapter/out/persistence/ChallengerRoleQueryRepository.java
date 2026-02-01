@@ -26,10 +26,10 @@ public class ChallengerRoleQueryRepository {
      */
     public List<ChallengerRole> findByMemberId(Long memberId) {
         return queryFactory
-                .selectFrom(challengerRole)
-                .join(challengerRole.challenger, challenger)
-                .where(challenger.memberId.eq(memberId))
-                .fetch();
+            .selectFrom(challengerRole)
+            .join(challenger).on(challengerRole.challengerId.eq(challenger.id))
+            .where(challenger.memberId.eq(memberId))
+            .fetch();
     }
 
     /**
@@ -41,12 +41,12 @@ public class ChallengerRoleQueryRepository {
      */
     public List<ChallengerRole> findByMemberIdAndGisuId(Long memberId, Long gisuId) {
         return queryFactory
-                .selectFrom(challengerRole)
-                .join(challengerRole.challenger, challenger)
-                .where(
-                        challenger.memberId.eq(memberId),
-                        challengerRole.gisuId.eq(gisuId)
-                )
-                .fetch();
+            .selectFrom(challengerRole)
+            .join(challenger).on(challengerRole.challengerId.eq(challenger.id))
+            .where(
+                challenger.memberId.eq(memberId),
+                challengerRole.gisuId.eq(gisuId)
+            )
+            .fetch();
     }
 }

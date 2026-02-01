@@ -62,4 +62,17 @@ public enum ChallengerRoleType {
             || this == SCHOOL_PART_LEADER
             || this == SCHOOL_ETC_ADMIN;
     }
+
+    /**
+     * 해당 역할이 속하는 조직 타입을 반환합니다.
+     */
+    public OrganizationType organizationType() {
+        if (this == CHAPTER_PRESIDENT) {
+            return OrganizationType.CHAPTER;
+        }
+        if (isSchoolAdmin()) {
+            return OrganizationType.SCHOOL;
+        }
+        return OrganizationType.CENTRAL;
+    }
 }
