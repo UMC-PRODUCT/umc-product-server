@@ -9,13 +9,13 @@ public class AttendanceSheetWebMapper {
 
     public AttendanceSheetResponse toAttendanceSheetResponse(AttendanceSheetInfo info) {
         return new AttendanceSheetResponse(
-                info.id() != null ? info.id().id() : null,
-                info.scheduleId(),
-                info.window().getStartTime(),
-                info.window().getEndTime(),
-                info.window().getLateThresholdMinutes(),
-                info.requiresApproval(),
-                info.active()
+            info.id() != null ? info.id().id() : null,
+            info.scheduleId(),
+            info.window().getStartTime(),
+            info.window().getEndTime(),
+            info.window().getLateThresholdMinutes(),
+            info.requiresApproval(),
+            info.active()
         );
     }
 }

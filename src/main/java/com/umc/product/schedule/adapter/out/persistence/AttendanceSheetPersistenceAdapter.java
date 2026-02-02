@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class AttendanceSheetPersistenceAdapter implements SaveAttendanceSheetPort, LoadAttendanceSheetPort,
-        DeleteAttendanceSheetPort {
+    DeleteAttendanceSheetPort {
 
     private final AttendanceSheetJpaRepository sheetJpaRepository;
 

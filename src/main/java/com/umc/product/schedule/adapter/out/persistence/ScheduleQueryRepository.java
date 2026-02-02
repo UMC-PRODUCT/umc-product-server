@@ -21,17 +21,17 @@ public class ScheduleQueryRepository {
     public List<Schedule> findMySchedulesByMonth(Long memberId, LocalDateTime monthStart,
                                                  LocalDateTime nextMonthStart) {
         return queryFactory
-                .selectDistinct(schedule)
-                .from(attendanceRecord)
-                .join(attendanceSheet).on(attendanceSheet.id.eq(attendanceRecord.attendanceSheetId))
-                .join(schedule).on(schedule.id.eq(attendanceSheet.scheduleId))
-                .where(
-                        attendanceRecord.memberId.eq(memberId),
-                        schedule.startsAt.goe(monthStart),
-                        schedule.startsAt.lt(nextMonthStart)
-                )
-                .orderBy(schedule.startsAt.asc())
-                .fetch();
+            .selectDistinct(schedule)
+            .from(attendanceRecord)
+            .join(attendanceSheet).on(attendanceSheet.id.eq(attendanceRecord.attendanceSheetId))
+            .join(schedule).on(schedule.id.eq(attendanceSheet.scheduleId))
+            .where(
+                attendanceRecord.memberId.eq(memberId),
+                schedule.startsAt.goe(monthStart),
+                schedule.startsAt.lt(nextMonthStart)
+            )
+            .orderBy(schedule.startsAt.asc())
+            .fetch();
     }
 
     private BooleanExpression cursorCondition(Long cursor) {

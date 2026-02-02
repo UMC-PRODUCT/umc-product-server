@@ -15,12 +15,12 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordPort, LoadAttendanceRecordPort,
-        DeleteAttendanceRecordPort {
+    DeleteAttendanceRecordPort {
 
     private static final List<AttendanceStatus> APPROVAL_PENDING_STATUSES = List.of(
-            AttendanceStatus.PRESENT_PENDING,
-            AttendanceStatus.LATE_PENDING,
-            AttendanceStatus.EXCUSED_PENDING
+        AttendanceStatus.PRESENT_PENDING,
+        AttendanceStatus.LATE_PENDING,
+        AttendanceStatus.EXCUSED_PENDING
     );
 
     private final AttendanceRecordJpaRepository recordJpaRepository;

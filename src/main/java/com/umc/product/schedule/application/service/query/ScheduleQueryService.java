@@ -20,8 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ScheduleQueryService implements
-        GetMyScheduleUseCase,
-        GetScheduleDetailUseCase {
+    GetMyScheduleUseCase,
+    GetScheduleDetailUseCase {
 
     private final LoadSchedulePort loadSchedulePort;
 
@@ -35,17 +35,17 @@ public class ScheduleQueryService implements
         LocalDateTime nextMonthStart = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
 
         List<Schedule> schedules = loadSchedulePort.findMySchedulesByMonth(
-                memberId, monthStart, nextMonthStart);
+            memberId, monthStart, nextMonthStart);
 
         return schedules.stream()
-                .map(s -> MyScheduleInfo.of(
-                        s.getId(),
-                        s.getName(),
-                        s.getStartsAt(),
-                        s.getEndsAt(),
-                        now
-                ))
-                .toList();
+            .map(s -> MyScheduleInfo.of(
+                s.getId(),
+                s.getName(),
+                s.getStartsAt(),
+                s.getEndsAt(),
+                now
+            ))
+            .toList();
     }
 
     @Override
@@ -53,8 +53,8 @@ public class ScheduleQueryService implements
         LocalDateTime now = LocalDateTime.now();
 
         Schedule schedule = loadSchedulePort.findById(scheduleId)
-                .orElseThrow(() -> new BusinessException(
-                        Domain.SCHEDULE, ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(
+                Domain.SCHEDULE, ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
         return ScheduleDetailInfo.from(schedule, now);
     }

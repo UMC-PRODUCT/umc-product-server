@@ -9,10 +9,10 @@ import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import java.time.LocalDateTime;
 
 public record UpdateAttendanceSheetRequest(
-        LocalDateTime startTime,
-        LocalDateTime endTime,
-        Integer lateThresholdMinutes,
-        boolean requiresApproval
+    LocalDateTime startTime,
+    LocalDateTime endTime,
+    Integer lateThresholdMinutes,
+    boolean requiresApproval
 ) {
     public UpdateAttendanceSheetRequest {
         if (startTime == null || endTime == null) {
@@ -30,9 +30,9 @@ public record UpdateAttendanceSheetRequest(
 
     public UpdateAttendanceSheetCommand toCommand(Long sheetId) {
         AttendanceWindow window = AttendanceWindow.from(
-                startTime,
-                endTime,
-                lateThresholdMinutes
+            startTime,
+            endTime,
+            lateThresholdMinutes
         );
         return new UpdateAttendanceSheetCommand(new AttendanceSheetId(sheetId), window, requiresApproval);
     }

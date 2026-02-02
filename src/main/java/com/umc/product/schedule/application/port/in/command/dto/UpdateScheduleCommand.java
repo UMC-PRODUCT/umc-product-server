@@ -10,15 +10,15 @@ import org.locationtech.jts.geom.Point;
  * 일정 수정 Command
  */
 public record UpdateScheduleCommand(
-        Long scheduleId,
-        String name,
-        LocalDateTime startsAt,
-        LocalDateTime endsAt,
-        Boolean isAllDay,
-        String locationName,
-        Point location,
-        String description,
-        Set<ScheduleTag> tags
+    Long scheduleId,
+    String name,
+    LocalDateTime startsAt,
+    LocalDateTime endsAt,
+    Boolean isAllDay,
+    String locationName,
+    Point location,
+    String description,
+    Set<ScheduleTag> tags
 ) {
     public UpdateScheduleCommand {
         Objects.requireNonNull(scheduleId, "scheduleId must not be null");
@@ -29,26 +29,26 @@ public record UpdateScheduleCommand(
     }
 
     public static UpdateScheduleCommand of(
-            Long scheduleId,
-            String name,
-            LocalDateTime startsAt,
-            LocalDateTime endsAt,
-            Boolean isAllDay,
-            String locationName,
-            Point location,
-            String description,
-            Set<ScheduleTag> tags
+        Long scheduleId,
+        String name,
+        LocalDateTime startsAt,
+        LocalDateTime endsAt,
+        Boolean isAllDay,
+        String locationName,
+        Point location,
+        String description,
+        Set<ScheduleTag> tags
     ) {
         return new UpdateScheduleCommand(
-                scheduleId,
-                name,
-                startsAt,
-                endsAt,
-                isAllDay,
-                locationName,
-                location,
-                description,
-                tags
+            scheduleId,
+            name,
+            startsAt,
+            endsAt,
+            isAllDay,
+            locationName,
+            location,
+            description,
+            tags
         );
     }
 }
