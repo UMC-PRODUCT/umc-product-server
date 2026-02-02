@@ -1,9 +1,8 @@
 package com.umc.product.schedule.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
+import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
@@ -47,8 +46,8 @@ public class Schedule extends BaseEntity {
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
-            name = "schedule_tags",
-            joinColumns = @JoinColumn(name = "schedule_id")
+        name = "schedule_tags",
+        joinColumns = @JoinColumn(name = "schedule_id")
     )
     @Enumerated(EnumType.STRING)
     @Column(name = "tag")
@@ -80,14 +79,14 @@ public class Schedule extends BaseEntity {
         this.description = description;
 
         if (tags == null || tags.isEmpty()) {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.TAG_REQUIRED);
+            throw new ScheduleDomainException(ScheduleErrorCode.TAG_REQUIRED);
         }
         this.tags = new HashSet<>(tags);
 
         this.authorChallengerId = authorChallengerId;
 
         if (startsAt.isAfter(endsAt)) {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.INVALID_TIME_RANGE);
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
         }
         this.startsAt = startsAt;
         this.endsAt = endsAt;
@@ -116,14 +115,14 @@ public class Schedule extends BaseEntity {
     }
 
     public void update(
-            String name,
-            String description,
-            Set<ScheduleTag> tags,
-            LocalDateTime startsAt,
-            LocalDateTime endsAt,
-            Boolean isAllDay,
-            String locationName,
-            Point location
+        String name,
+        String description,
+        Set<ScheduleTag> tags,
+        LocalDateTime startsAt,
+        LocalDateTime endsAt,
+        Boolean isAllDay,
+        String locationName,
+        Point location
     ) {
         if (name != null) {
             this.name = name;
@@ -133,7 +132,7 @@ public class Schedule extends BaseEntity {
         }
         if (tags != null) {
             if (tags.isEmpty()) {
-                throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.TAG_REQUIRED);
+                throw new ScheduleDomainException(ScheduleErrorCode.TAG_REQUIRED);
             }
             this.tags.clear();
             this.tags.addAll(tags);
@@ -163,7 +162,7 @@ public class Schedule extends BaseEntity {
         }
 
         if (effectiveStartsAt.isAfter(effectiveEndsAt)) {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.INVALID_TIME_RANGE);
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
         }
 
         this.isAllDay = effectiveIsAllDay;

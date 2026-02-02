@@ -32,7 +32,7 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     @Override
     public Challenger getById(Long id) {
         return repository.findById(id)
-                .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_FOUND));
+            .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_FOUND));
     }
 
     @Override
@@ -53,6 +53,12 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     @Override
     public Long countByIdIn(Set<Long> ids) {
         return repository.countByIdIn(ids);
+    }
+
+    @Override
+    public Challenger findTopByMemberIdOrderByCreatedAtDesc(Long memberId) {
+        return repository.findTopByMemberIdOrderByCreatedAtDesc(memberId)
+            .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_FOUND));
     }
 
     @Override

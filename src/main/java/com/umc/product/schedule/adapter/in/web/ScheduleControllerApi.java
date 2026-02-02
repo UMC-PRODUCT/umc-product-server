@@ -51,31 +51,31 @@ public interface ScheduleControllerApi {
 //            @Parameter(description = "일정 ID") Long scheduleId
 //    );
 
-    @Operation(summary = "일정 생성", description = "새로운 일정을 생성합니다")
+    @Operation(summary = "일정 단독 생성", description = "새로운 일정을 생성합니다")
     void createSchedule(
-            @CurrentMember MemberPrincipal memberPrincipal,
-            @Valid @RequestBody CreateScheduleRequest request
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Valid @RequestBody CreateScheduleRequest request
     );
 
     @Operation(summary = "일정 + 출석부 통합 생성", description = "일정과 출석부를 함께 생성합니다")
     Long createScheduleWithAttendance(
-            @CurrentMember MemberPrincipal memberPrincipal,
-            @Valid @RequestBody CreateScheduleWithAttendanceRequest request
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Valid @RequestBody CreateScheduleWithAttendanceRequest request
     );
 
     @Operation(summary = "일정 수정", description = "일정 정보를 부분 수정합니다 (변경할 필드만 전송)")
     void updateSchedule(
-            @Parameter(description = "일정 ID") @PathVariable Long scheduleId,
-            @RequestBody UpdateScheduleRequest request
+        @Parameter(description = "일정 ID") @PathVariable Long scheduleId,
+        @RequestBody UpdateScheduleRequest request
     );
 
     @Operation(summary = "일정 삭제", description = "일정을 삭제합니다")
     void deleteSchedule(
-            @Parameter(description = "일정 ID") @PathVariable Long scheduleId
+        @Parameter(description = "일정 ID") @PathVariable Long scheduleId
     );
 
     @Operation(summary = "일정 + 출석부 통합 삭제", description = "일정과 연결된 출석부를 함께 삭제합니다")
     void deleteScheduleWithAttendance(
-            @Parameter(description = "일정 ID") @PathVariable Long scheduleId
+        @Parameter(description = "일정 ID") @PathVariable Long scheduleId
     );
 }
