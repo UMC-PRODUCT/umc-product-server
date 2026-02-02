@@ -5,31 +5,31 @@ import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.LocalDateTime;
 
 public record PendingAttendanceInfo(
-        Long attendanceId,
+    Long attendanceId,
+    Long challengerId,
+    String memberName,
+    String nickname,
+    String schoolName,
+    AttendanceStatus status,
+    String reason,
+    LocalDateTime requestedAt
+) {
+    public static PendingAttendanceInfo of(
+        AttendanceRecord record,
         Long challengerId,
         String memberName,
         String nickname,
-        String schoolName,
-        AttendanceStatus status,
-        String reason,
-        LocalDateTime requestedAt
-) {
-    public static PendingAttendanceInfo of(
-            AttendanceRecord record,
-            Long challengerId,
-            String memberName,
-            String nickname,
-            String schoolName
+        String schoolName
     ) {
         return new PendingAttendanceInfo(
-                record.getId(),
-                challengerId,
-                memberName,
-                nickname,
-                schoolName,
-                record.getStatus(),
-                record.getMemo(),
-                record.getCheckedAt()
+            record.getId(),
+            challengerId,
+            memberName,
+            nickname,
+            schoolName,
+            record.getStatus(),
+            record.getMemo(),
+            record.getCheckedAt()
         );
     }
 }

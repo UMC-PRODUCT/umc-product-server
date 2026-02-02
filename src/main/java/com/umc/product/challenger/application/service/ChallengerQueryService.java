@@ -6,6 +6,7 @@ import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,7 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     @Override
     public ChallengerInfo getByMemberIdAndGisuId(Long memberId, Long gisuId) {
         Challenger challenger = loadChallengerPort.findByMemberIdAndGisuId(memberId, gisuId)
-                .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_FOUND));
+            .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_FOUND));
         return ChallengerInfo.from(challenger);
     }
 
@@ -35,7 +36,16 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     public List<ChallengerInfo> getMemberChallengerList(Long memberId) {
         List<Challenger> challengers = loadChallengerPort.findByMemberId(memberId);
         return challengers.stream()
-                .map(ChallengerInfo::from)
-                .toList();
+            .map(ChallengerInfo::from)
+            .toList();
+    }
+
+    @Override
+    public ChallengerInfo getLatestActiveChallengerByMemberId(Long memberId) {
+        Challenger challenger = loadChallengerPort.findTopByMemberIdOrderByCreatedAtDesc(memberId);
+        if (challenger.getStatus() != ChallengerStatus.ACTIVE) {
+            throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_ACTIVE);
+        }
+        return ChallengerInfo.from(challenger);
     }
 }

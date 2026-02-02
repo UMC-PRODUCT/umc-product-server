@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -109,8 +108,8 @@ public class ScheduleController implements ScheduleControllerApi {
     @Override
     @PostMapping
     public void createSchedule(
-            @CurrentMember MemberPrincipal memberPrincipal,
-            @Valid @RequestBody CreateScheduleRequest request
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Valid @RequestBody CreateScheduleRequest request
     ) {
         CreateScheduleCommand command = request.toCommand(memberPrincipal.getMemberId());
         createScheduleUseCase.create(command);
@@ -119,19 +118,19 @@ public class ScheduleController implements ScheduleControllerApi {
     @Override
     @PostMapping("/with-attendance")
     public Long createScheduleWithAttendance(
-            @CurrentMember MemberPrincipal memberPrincipal,
-            @Valid @RequestBody CreateScheduleWithAttendanceRequest request
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Valid @RequestBody CreateScheduleWithAttendanceRequest request
     ) {
         return createScheduleWithAttendanceUseCase.create(
-                request.toCommand(memberPrincipal.getMemberId())
+            request.toCommand(memberPrincipal.getMemberId())
         );
     }
 
     @Override
     @PatchMapping("/{scheduleId}")
     public void updateSchedule(
-            @PathVariable Long scheduleId,
-            @RequestBody UpdateScheduleRequest request
+        @PathVariable Long scheduleId,
+        @RequestBody UpdateScheduleRequest request
     ) {
         updateScheduleUseCase.update(request.toCommand(scheduleId));
     }

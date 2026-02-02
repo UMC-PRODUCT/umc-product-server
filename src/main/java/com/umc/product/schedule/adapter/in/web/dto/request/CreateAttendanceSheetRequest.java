@@ -8,10 +8,10 @@ import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import java.time.LocalDateTime;
 
 public record CreateAttendanceSheetRequest(
-        LocalDateTime startTime,
-        LocalDateTime endTime,
-        Integer lateThresholdMinutes,
-        boolean requiresApproval
+    LocalDateTime startTime,
+    LocalDateTime endTime,
+    Integer lateThresholdMinutes,
+    boolean requiresApproval
 ) {
     public CreateAttendanceSheetRequest {
         if (startTime == null || endTime == null) {
@@ -29,9 +29,9 @@ public record CreateAttendanceSheetRequest(
 
     public CreateAttendanceSheetCommand toCommand(Long scheduleId) {
         AttendanceWindow window = AttendanceWindow.from(
-                startTime,
-                endTime,
-                lateThresholdMinutes
+            startTime,
+            endTime,
+            lateThresholdMinutes
         );
         return new CreateAttendanceSheetCommand(scheduleId, window, requiresApproval);
     }

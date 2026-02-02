@@ -21,31 +21,31 @@ public class AttendanceRecordQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     private static final List<AttendanceStatus> APPROVAL_PENDING_STATUSES = List.of(
-            AttendanceStatus.PRESENT_PENDING,
-            AttendanceStatus.LATE_PENDING,
-            AttendanceStatus.EXCUSED_PENDING
+        AttendanceStatus.PRESENT_PENDING,
+        AttendanceStatus.LATE_PENDING,
+        AttendanceStatus.EXCUSED_PENDING
     );
 
     public List<PendingAttendanceInfo> findPendingWithMemberInfo(Long sheetId) {
         return queryFactory
-                .select(Projections.constructor(PendingAttendanceInfo.class,
-                        attendanceRecord.id,
-                        challenger.id,
-                        member.name,
-                        member.nickname,
-                        school.name,
-                        attendanceRecord.status,
-                        attendanceRecord.memo,
-                        attendanceRecord.checkedAt
-                ))
-                .from(attendanceRecord)
-                .join(member).on(member.id.eq(attendanceRecord.memberId))
-                .leftJoin(school).on(school.id.eq(member.schoolId))
-                .leftJoin(challenger).on(challenger.memberId.eq(member.id))
-                .where(
-                        attendanceRecord.attendanceSheetId.eq(sheetId),
-                        attendanceRecord.status.in(APPROVAL_PENDING_STATUSES)
-                )
-                .fetch();
+            .select(Projections.constructor(PendingAttendanceInfo.class,
+                attendanceRecord.id,
+                challenger.id,
+                member.name,
+                member.nickname,
+                school.name,
+                attendanceRecord.status,
+                attendanceRecord.memo,
+                attendanceRecord.checkedAt
+            ))
+            .from(attendanceRecord)
+            .join(member).on(member.id.eq(attendanceRecord.memberId))
+            .leftJoin(school).on(school.id.eq(member.schoolId))
+            .leftJoin(challenger).on(challenger.memberId.eq(member.id))
+            .where(
+                attendanceRecord.attendanceSheetId.eq(sheetId),
+                attendanceRecord.status.in(APPROVAL_PENDING_STATUSES)
+            )
+            .fetch();
     }
 }

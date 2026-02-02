@@ -22,4 +22,9 @@ public interface GetChallengerUseCase {
      * memberId로 해당 사용자가 가지고 있는 모든 챌린저 정보 조회
      */
     List<ChallengerInfo> getMemberChallengerList(Long memberId);
+
+    /**
+     * memberId로 해당 사용자가 가지고 있는 가장 최근 챌린저 정보 조회
+     */
+    ChallengerInfo getLatestActiveChallengerByMemberId(Long memberId);
 }

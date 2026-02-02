@@ -13,9 +13,9 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class SchedulePersistenceAdapter implements
-        LoadSchedulePort,
-        SaveSchedulePort,
-        DeleteSchedulePort {
+    LoadSchedulePort,
+    SaveSchedulePort,
+    DeleteSchedulePort {
 
     private final ScheduleJpaRepository scheduleJpaRepository;
     private final ScheduleQueryRepository scheduleQueryRepository;
@@ -36,7 +36,7 @@ public class SchedulePersistenceAdapter implements
     public List<Schedule> findMySchedulesByMonth(Long memberId, LocalDateTime monthStart,
                                                  LocalDateTime nextMonthStart) {
         return scheduleQueryRepository.findMySchedulesByMonth(
-                memberId, monthStart, nextMonthStart);
+            memberId, monthStart, nextMonthStart);
     }
 
     @Override

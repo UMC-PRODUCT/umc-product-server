@@ -33,4 +33,9 @@ public interface LoadChallengerPort {
     List<Challenger> findByGisuId(Long gisuId);
 
     Long countByIdIn(Set<Long> ids);
+
+    /**
+     * memberId로 가장 최근 챌린저 조회
+     */
+    Challenger findTopByMemberIdOrderByCreatedAtDesc(Long memberId);
 }

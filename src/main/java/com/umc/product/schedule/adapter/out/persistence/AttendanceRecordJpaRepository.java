@@ -22,10 +22,10 @@ public interface AttendanceRecordJpaRepository extends JpaRepository<AttendanceR
     boolean existsByAttendanceSheetIdAndMemberId(Long sheetId, Long memberId);
 
     @Query("SELECT r FROM AttendanceRecord r WHERE r.attendanceSheetId = :sheetId " +
-            "AND r.status IN (:statuses)")
+        "AND r.status IN (:statuses)")
     List<AttendanceRecord> findByAttendanceSheetIdAndStatusIn(
-            @Param("sheetId") Long sheetId,
-            @Param("statuses") List<AttendanceStatus> statuses);
+        @Param("sheetId") Long sheetId,
+        @Param("statuses") List<AttendanceStatus> statuses);
 
     List<AttendanceRecord> findByAttendanceSheetIdIn(List<Long> sheetIds);
 }

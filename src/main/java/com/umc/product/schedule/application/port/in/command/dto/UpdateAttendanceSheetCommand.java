@@ -8,9 +8,9 @@ import java.util.Objects;
  * 출석부 수정 Command
  */
 public record UpdateAttendanceSheetCommand(
-        AttendanceSheetId sheetId,
-        AttendanceWindow window,
-        boolean requiresApproval
+    AttendanceSheetId sheetId,
+    AttendanceWindow window,
+    boolean requiresApproval
 ) {
     public UpdateAttendanceSheetCommand {
         Objects.requireNonNull(sheetId, "출석부 ID는 필수입니다");
