@@ -44,7 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/recruitments/{recruitmentId}/applications")
 @RequiredArgsConstructor
 @Tag(name = SwaggerTag.Constants.DOC_EVALUATION)
-public class RecruitmentEvaluationController {
+public class RecruitmentDocEvaluationController {
 
     private final GetApplicationDetailUseCase getApplicationDetailUseCase;
     private final GetApplicationListUseCase getApplicationListUseCase;
@@ -55,7 +55,7 @@ public class RecruitmentEvaluationController {
 
     private final UpdateDocumentStatusUseCase updateDocumentStatusUseCase;
 
-    @GetMapping("/evaluations")
+    @GetMapping("/document-evaluations")
     @Operation(
             summary = "서류 평가 대상 목록 조회",
             description = """
@@ -106,7 +106,7 @@ public class RecruitmentEvaluationController {
     }
 
 
-    @GetMapping("/{applicationId}/evaluations")
+    @GetMapping("/{applicationId}/document-evaluations")
     @Operation(
             summary = "(운영진) 지원서에 대한 운영진 평가 목록 조회",
             description = "특정 지원서에 대해 운영진들이 남긴 서류 평가 내역 목록을 조회합니다."
@@ -122,7 +122,7 @@ public class RecruitmentEvaluationController {
         return ApplicationEvaluationsResponse.from(result);
     }
 
-    @GetMapping("/{applicationId}/evaluations/me")
+    @GetMapping("/{applicationId}/document-evaluations/me")
     @Operation(
             summary = "(운영진) 지원서에 대한, 자신의 평가 조회하기",
             description = """
@@ -143,7 +143,7 @@ public class RecruitmentEvaluationController {
         return MyEvaluationResponse.from(result);
     }
 
-    @PatchMapping("/{applicationId}/evaluations/me")
+    @PatchMapping("/{applicationId}/document-evaluations/me")
     @Operation(
             summary = "(운영진) 지원서에 대한 평가 등록하기 (내 평가 Upsert)",
             description = """
@@ -171,7 +171,7 @@ public class RecruitmentEvaluationController {
         return MyEvaluationResponse.from(result);
     }
 
-    @PostMapping("/{applicationId}/evaluations/me")
+    @PostMapping("/{applicationId}/document-evaluations/me")
     @Operation(
             summary = "(운영진) 지원서에 대한 평가 등록하기 (내 평가 최초 생성)",
             description = """
