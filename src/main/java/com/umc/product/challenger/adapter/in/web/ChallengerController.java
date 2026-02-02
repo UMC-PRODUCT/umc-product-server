@@ -8,15 +8,14 @@ import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPoint
 import com.umc.product.challenger.adapter.in.web.dto.request.GrantChallengerPointRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
+import com.umc.product.challenger.adapter.in.web.dto.response.SearchChallengerResponse;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
 import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerCommand;
-import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerCommand;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.SearchChallengerQuery;
+import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.global.constant.SwaggerTag.Constants;
-import com.umc.product.global.exception.NotImplementedException;
-import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,6 +44,7 @@ public class ChallengerController {
 
     private final GetChallengerUseCase getChallengerUseCase;
     private final ManageChallengerUseCase manageChallengerUseCase;
+    private final SearchChallengerUseCase searchChallengerUseCase;
 
     @Operation(summary = "챌린저 정보 조회")
     @GetMapping("{challengerId}")
@@ -113,12 +113,23 @@ public class ChallengerController {
 
     @Operation(summary = "챌린저 검색 (챌린저 ID, 닉네임, 기수별)")
     @GetMapping("search")
-    PageResponse<ChallengerInfoResponse> searchChallenger(
+    SearchChallengerResponse searchChallenger(
             @ParameterObject Pageable pageable,
             @ParameterObject SearchChallengerRequest searchRequest
     ) {
-        // TODO: SearchChallengerUseCase 구현 필요
-        throw new NotImplementedException();
+        return SearchChallengerResponse.from(
+                searchChallengerUseCase.search(
+                        new SearchChallengerQuery(
+                                searchRequest.challengerId(),
+                                searchRequest.nickname(),
+                                searchRequest.schoolId(),
+                                searchRequest.chapterId(),
+                                searchRequest.part(),
+                                searchRequest.gisuId()
+                        ),
+                        pageable
+                )
+        );
     }
 
     @Operation(summary = "챌린저 생성 (합격 처리와 통합 필요)")
