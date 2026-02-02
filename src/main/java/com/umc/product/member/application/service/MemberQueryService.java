@@ -11,6 +11,10 @@ import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,6 +63,45 @@ public class MemberQueryService implements GetMemberUseCase {
         }
 
         return MemberProfileInfo.from(memberInfo, schoolName, profileImageLink);
+    }
+
+    @Override
+    public Map<Long, MemberProfileInfo> getProfiles(Set<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Member> members = loadMemberPort.findByIdIn(memberIds);
+
+        Map<Long, String> schoolNameCache = new HashMap<>();
+        Map<String, String> profileLinkCache = new HashMap<>();
+        Map<Long, MemberProfileInfo> results = new HashMap<>(members.size());
+
+        for (Member member : members) {
+            MemberInfo memberInfo = MemberInfo.from(member);
+
+            String schoolName = null;
+            Long schoolId = memberInfo.schoolId();
+            if (schoolId != null) {
+                schoolName = schoolNameCache.computeIfAbsent(schoolId, id -> {
+                    SchoolInfo schoolInfo = getSchoolUseCase.getSchoolDetail(id);
+                    return schoolInfo != null ? schoolInfo.schoolName() : null;
+                });
+            }
+
+            String profileImageLink = null;
+            String profileImageId = memberInfo.profileImageId();
+            if (profileImageId != null) {
+                profileImageLink = profileLinkCache.computeIfAbsent(profileImageId, id -> {
+                    FileInfo fileInfo = getFileUseCase.getById(id);
+                    return fileInfo.fileLink();
+                });
+            }
+
+            results.put(memberInfo.id(), MemberProfileInfo.from(memberInfo, schoolName, profileImageLink));
+        }
+
+        return results;
     }
 
     @Override

@@ -119,14 +119,7 @@ public class ChallengerController {
     ) {
         return SearchChallengerResponse.from(
                 searchChallengerUseCase.search(
-                        new SearchChallengerQuery(
-                                searchRequest.challengerId(),
-                                searchRequest.nickname(),
-                                searchRequest.schoolId(),
-                                searchRequest.chapterId(),
-                                searchRequest.part(),
-                                searchRequest.gisuId()
-                        ),
+                        searchRequest.toQuery(),
                         pageable
                 )
         );

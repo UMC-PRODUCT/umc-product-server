@@ -111,13 +111,13 @@ public class ChallengerQueryRepository {
 
     private NumberExpression<Integer> partOrder(QChallenger challenger) {
         return new CaseBuilder()
-                .when(challenger.part.eq(ChallengerPart.PLAN)).then(0)
-                .when(challenger.part.eq(ChallengerPart.DESIGN)).then(1)
-                .when(challenger.part.eq(ChallengerPart.WEB)).then(2)
-                .when(challenger.part.eq(ChallengerPart.ANDROID)).then(3)
-                .when(challenger.part.eq(ChallengerPart.IOS)).then(4)
-                .when(challenger.part.eq(ChallengerPart.NODEJS)).then(5)
-                .when(challenger.part.eq(ChallengerPart.SPRINGBOOT)).then(6)
+                .when(challenger.part.eq(ChallengerPart.PLAN)).then(ChallengerPart.PLAN.getSortOrder())
+                .when(challenger.part.eq(ChallengerPart.DESIGN)).then(ChallengerPart.DESIGN.getSortOrder())
+                .when(challenger.part.eq(ChallengerPart.WEB)).then(ChallengerPart.WEB.getSortOrder())
+                .when(challenger.part.eq(ChallengerPart.ANDROID)).then(ChallengerPart.ANDROID.getSortOrder())
+                .when(challenger.part.eq(ChallengerPart.IOS)).then(ChallengerPart.IOS.getSortOrder())
+                .when(challenger.part.eq(ChallengerPart.NODEJS)).then(ChallengerPart.NODEJS.getSortOrder())
+                .when(challenger.part.eq(ChallengerPart.SPRINGBOOT)).then(ChallengerPart.SPRINGBOOT.getSortOrder())
                 .otherwise(999);
     }
 

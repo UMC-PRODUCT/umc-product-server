@@ -10,4 +10,5 @@ public record SearchChallengerQuery(
         ChallengerPart part,
         Long gisuId
 ) {
+
 }

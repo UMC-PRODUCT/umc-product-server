@@ -13,7 +13,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -80,13 +80,15 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
 
 
     private Map<Long, MemberProfileInfo> loadMemberProfiles(Page<Challenger> challengers) {
-        return challengers.getContent().stream()
+        Set<Long> memberIds = challengers.getContent().stream()
                 .map(Challenger::getMemberId)
                 .filter(Objects::nonNull)
-                .distinct()
-                .collect(Collectors.toMap(
-                        Function.identity(),
-                        getMemberUseCase::getProfile
-                ));
+                .collect(Collectors.toSet());
+
+        if (memberIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return getMemberUseCase.getProfiles(memberIds);
     }
 }
