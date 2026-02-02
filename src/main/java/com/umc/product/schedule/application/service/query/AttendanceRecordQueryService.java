@@ -13,6 +13,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 출석 기록(AttendanceRecord) 단건/목록 조회
+ * <p> 출석부(sheetId) 기준, 챌린저(challengerId) 기준, PENDING 상태 기준으로 조회 가능 상태
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -23,29 +27,29 @@ public class AttendanceRecordQueryService implements GetAttendanceRecordUseCase 
     @Override
     public AttendanceRecordInfo getById(AttendanceRecordId recordId) {
         AttendanceRecord record = loadAttendanceRecordPort.findById(recordId.id())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
         return AttendanceRecordInfo.from(record);
     }
 
     @Override
     public List<AttendanceRecordInfo> getBySheetId(Long sheetId) {
         return loadAttendanceRecordPort.findByAttendanceSheetId(sheetId).stream()
-                .map(AttendanceRecordInfo::from)
-                .toList();
+            .map(AttendanceRecordInfo::from)
+            .toList();
     }
 
     @Override
     public List<AttendanceRecordInfo> getByChallengerId(Long challengerId) {
         return loadAttendanceRecordPort.findByMemberId(challengerId).stream()
-                .map(AttendanceRecordInfo::from)
-                .toList();
+            .map(AttendanceRecordInfo::from)
+            .toList();
     }
 
     @Override
     public List<AttendanceRecordInfo> getPendingBySheetId(Long sheetId) {
         return loadAttendanceRecordPort.findPendingRecordsBySheetId(sheetId).stream()
-                .map(AttendanceRecordInfo::from)
-                .toList();
+            .map(AttendanceRecordInfo::from)
+            .toList();
     }
 }

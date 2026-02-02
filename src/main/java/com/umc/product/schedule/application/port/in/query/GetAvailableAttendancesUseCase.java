@@ -3,10 +3,12 @@ package com.umc.product.schedule.application.port.in.query;
 import com.umc.product.schedule.application.port.in.query.dto.AvailableAttendanceInfo;
 import java.util.List;
 
+/**
+ * 챌린저가 현재 출석 체크할 수 있는 일정 목록을 조회하는 UseCase.
+ * <p>
+ * 활성 출석부 중 아직 종료되지 않은 일정만 필터링. 조회 시작 시간 오름차순 정렬.
+ */
 public interface GetAvailableAttendancesUseCase {
 
-    /**
-     * 출석 가능한 세션 목록 조회 (멤버용) - 현재 진행 중이거나 곧 시작하는 세션 - 아직 출석 처리가 완료되지 않은 것
-     */
     List<AvailableAttendanceInfo> getAvailableList(Long memberId);
 }

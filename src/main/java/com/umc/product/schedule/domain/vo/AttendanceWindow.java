@@ -9,7 +9,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 출석 시간대 상세
+ * 출석 가능 시간대를 표현하는 Value Object (AttendanceSheet에 @Embedded로 포함됨)
+ * <p>
+ * 출석 판정의 핵심 로직 클래스 startTime ~ endTime 범위 내에서 체크인한 시각에 따라 출석/지각을 구분
+ * <p>
+ * 판정 기준 (determineStatus) startTime, 출석, startTime + lateThresholdMinutes, 지각, endTime 이중 startTime +
+ * lateThresholdMinutes 파트가 출석인정 endTime 이후 체크인은 결석
  */
 @Embeddable
 @Getter
@@ -40,6 +45,7 @@ public class AttendanceWindow {
         }
         if (lateThresholdMinutes > 120) {
             throw new IllegalArgumentException("지각 인정 시간은 120분을 초과할 수 없습니다");
+            //스터디를 보통 2시간 정도 하는 것같아서 세운 기준
         }
         this.startTime = startTime;
         this.endTime = endTime;
@@ -47,18 +53,18 @@ public class AttendanceWindow {
     }
 
     /**
-     * 출석 시간대 생성 팩토리 메서드
+     * 출석 시간대 생성 파트
      *
-     * @param baseTime             기준 시간 (ex: 일정 시작 시간)
+     * @param baseTime             기준 시간
      * @param beforeMinutes        기준 시간 전 몇 분부터 출석 가능
      * @param afterMinutes         기준 시간 후 몇 분까지 출석 가능
-     * @param lateThresholdMinutes 지각 인정 시간 (분)
+     * @param lateThresholdMinutes 지각 인정 시간
      */
     public static AttendanceWindow of(
-            LocalDateTime baseTime,
-            int beforeMinutes,
-            int afterMinutes,
-            int lateThresholdMinutes
+        LocalDateTime baseTime,
+        int beforeMinutes,
+        int afterMinutes,
+        int lateThresholdMinutes
     ) {
         if (baseTime == null) {
             throw new IllegalArgumentException("기준 시간은 필수입니다");
@@ -77,7 +83,7 @@ public class AttendanceWindow {
     }
 
     /**
-     * 기본 출석 시간대 생성 (30분 전 ~ 30분 후, 10분 지각 인정)
+     * 기본 출석 시간대 생성 - 테스트용 신경 쓸 필요 Xx
      */
     public static AttendanceWindow ofDefault(LocalDateTime baseTime) {
         return of(baseTime, 30, 30, 10);
@@ -88,12 +94,12 @@ public class AttendanceWindow {
      *
      * @param startTime            출석 시작 시간
      * @param endTime              출석 종료 시간
-     * @param lateThresholdMinutes 지각 인정 시간 (분)
+     * @param lateThresholdMinutes 지각 인정 시간
      */
     public static AttendanceWindow from(
-            LocalDateTime startTime,
-            LocalDateTime endTime,
-            int lateThresholdMinutes
+        LocalDateTime startTime,
+        LocalDateTime endTime,
+        int lateThresholdMinutes
     ) {
         return new AttendanceWindow(startTime, endTime, lateThresholdMinutes);
     }
@@ -131,13 +137,13 @@ public class AttendanceWindow {
         // 정시 출석
         if (!checkTime.isAfter(lateThreshold)) {
             return requiresApproval
-                    ? AttendanceStatus.PRESENT_PENDING
-                    : AttendanceStatus.PRESENT;
+                ? AttendanceStatus.PRESENT_PENDING
+                : AttendanceStatus.PRESENT;
         }
 
         // 지각
         return requiresApproval
-                ? AttendanceStatus.LATE_PENDING
-                : AttendanceStatus.LATE;
+            ? AttendanceStatus.LATE_PENDING
+            : AttendanceStatus.LATE;
     }
 }

@@ -18,6 +18,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 개인 출석 이력을 조회
+ * <p>
+ * 조회 흐름: 출석 기록(Record) → 출석부(Sheet) → 일정(Schedule)을 역추적. 개인 Id 받고 내 출석 기록 해당 sheetId, 거기서 일정으로 가고 조합해서 응답 생성
+ * <p> 일정 정보와 출석 상태를 결합한 이력을 최신순으로 반환 일괄(batch)
+ * <p> N+1 방지를 위해 ID 목록을 추출하여 조회
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -37,39 +44,39 @@ public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseC
 
         // 출석부 ID 목록 추출 및 일괄 조회
         List<Long> sheetIds = records.stream()
-                .map(AttendanceRecord::getAttendanceSheetId)
-                .distinct()
-                .toList();
+            .map(AttendanceRecord::getAttendanceSheetId)
+            .distinct()
+            .toList();
 
         Map<Long, AttendanceSheet> sheetByIdMap = loadAttendanceSheetPort.findAllByIds(sheetIds).stream()
-                .collect(Collectors.toMap(AttendanceSheet::getId, Function.identity()));
+            .collect(Collectors.toMap(AttendanceSheet::getId, Function.identity()));
 
         // 일정 ID 목록 추출 및 일괄 조회
         List<Long> scheduleIds = sheetByIdMap.values().stream()
-                .map(AttendanceSheet::getScheduleId)
-                .distinct()
-                .toList();
+            .map(AttendanceSheet::getScheduleId)
+            .distinct()
+            .toList();
 
         Map<Long, Schedule> scheduleMap = loadSchedulePort.findAllByIds(scheduleIds).stream()
-                .collect(Collectors.toMap(Schedule::getId, Function.identity()));
+            .collect(Collectors.toMap(Schedule::getId, Function.identity()));
 
         // 결과 생성 (최신순 정렬)
         return records.stream()
-                .map(record -> {
-                    AttendanceSheet sheet = sheetByIdMap.get(record.getAttendanceSheetId());
-                    if (sheet == null) {
-                        return null;
-                    }
+            .map(record -> {
+                AttendanceSheet sheet = sheetByIdMap.get(record.getAttendanceSheetId());
+                if (sheet == null) {
+                    return null;
+                }
 
-                    Schedule schedule = scheduleMap.get(sheet.getScheduleId());
-                    if (schedule == null) {
-                        return null;
-                    }
+                Schedule schedule = scheduleMap.get(sheet.getScheduleId());
+                if (schedule == null) {
+                    return null;
+                }
 
-                    return MyAttendanceHistoryInfo.of(schedule, record);
-                })
-                .filter(Objects::nonNull)
-                .sorted(Comparator.comparing(MyAttendanceHistoryInfo::scheduledAt).reversed())
-                .toList();
+                return MyAttendanceHistoryInfo.of(schedule, record);
+            })
+            .filter(Objects::nonNull)
+            .sorted(Comparator.comparing(MyAttendanceHistoryInfo::scheduledAt).reversed())
+            .toList();
     }
 }
