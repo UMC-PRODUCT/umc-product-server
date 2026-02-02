@@ -1,6 +1,5 @@
 package com.umc.product.recruitment.domain;
 
-import com.umc.product.recruitment.domain.enums.EvaluationDecision;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -43,11 +42,6 @@ public class Evaluation {
     @Column
     private Integer score;
 
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private EvaluationDecision decision = EvaluationDecision.HOLD;
-
     @Column
-    private String memo;
+    private String comments;
 }
