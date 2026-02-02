@@ -43,7 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/recruitments/{recruitmentId}/applications")
 @RequiredArgsConstructor
-@Tag(name = SwaggerTag.Constants.EVALUATION)
+@Tag(name = SwaggerTag.Constants.DOC_EVALUATION)
 public class RecruitmentEvaluationController {
 
     private final GetApplicationDetailUseCase getApplicationDetailUseCase;

@@ -26,7 +26,8 @@ public enum SwaggerTag {
     NOTICE("공지사항", "notice | 공지사항 API", 80),
     SURVEY("설문", "survey | 설문 API", 90),
     RECRUITMENT("모집", "recruitment | 모집 API", 100),
-    EVALUATION("평가", "evaluation | 평가 API", 105),
+    DOC_EVALUATION("서류 평가", "document evaluation | 평가 API", 105),
+    INTERVIEW_SCHEDULING("면접 일정 관리", "interview scheduling | 면접 일정 관리 API", 107),
     NOTIFICATION("알람", "notification | 알림 API", 110),
     STORAGE("파일 저장소", "storage | 파일 저장 API", 120),
     PROJECT("UPMS", "project | 프로젝트 매칭 API", 130),
@@ -80,7 +81,8 @@ public enum SwaggerTag {
         public static final String NOTICE = "공지사항";
         public static final String SURVEY = "설문";
         public static final String RECRUITMENT = "모집";
-        public static final String EVALUATION = "평가";
+        public static final String DOC_EVALUATION = "서류 평가";
+        public static final String INTERVIEW_SCHEDULING = "면접 일정 관리";
         public static final String NOTIFICATION = "알람";
         public static final String STORAGE = "파일 저장소";
         public static final String PROJECT = "UPMS";
