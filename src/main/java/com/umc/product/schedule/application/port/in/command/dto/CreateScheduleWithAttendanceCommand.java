@@ -12,20 +12,20 @@ import org.locationtech.jts.geom.Point;
  * 일정 + 출석부 통합 생성 Command (Facade)
  */
 public record CreateScheduleWithAttendanceCommand(
-        // Schedule 정보
-        String name,
-        LocalDateTime startsAt,
-        LocalDateTime endsAt,
-        boolean isAllDay,
-        String locationName,
-        Point location,
-        String description,
-        List<Long> participantMemberIds,
-        Set<ScheduleTag> tags,
-        Long authorMemberId,
-        // AttendanceSheet 정보
-        AttendanceWindow attendanceWindow,
-        boolean requiresApproval
+    // Schedule 정보
+    String name,
+    LocalDateTime startsAt,
+    LocalDateTime endsAt,
+    boolean isAllDay,
+    String locationName,
+    Point location,
+    String description,
+    List<Long> participantMemberIds,
+    Set<ScheduleTag> tags,
+    Long authorMemberId,
+    // AttendanceSheet 정보
+    AttendanceWindow attendanceWindow,
+    boolean requiresApproval
 ) {
     public CreateScheduleWithAttendanceCommand {
         Objects.requireNonNull(name, "Schedule name must not be null");
@@ -37,16 +37,16 @@ public record CreateScheduleWithAttendanceCommand(
      */
     public CreateScheduleCommand toScheduleCommand() {
         return CreateScheduleCommand.of(
-                name,
-                startsAt,
-                endsAt,
-                isAllDay,
-                locationName,
-                location,
-                description,
-                participantMemberIds,
-                tags,
-                authorMemberId
+            name,
+            startsAt,
+            endsAt,
+            isAllDay,
+            locationName,
+            location,
+            description,
+            participantMemberIds,
+            tags,
+            authorMemberId
         );
     }
 
@@ -55,9 +55,9 @@ public record CreateScheduleWithAttendanceCommand(
      */
     public CreateAttendanceSheetCommand toAttendanceSheetCommand(Long scheduleId) {
         return new CreateAttendanceSheetCommand(
-                scheduleId,
-                attendanceWindow,
-                requiresApproval
+            scheduleId,
+            attendanceWindow,
+            requiresApproval
         );
     }
 }

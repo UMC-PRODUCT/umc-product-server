@@ -18,26 +18,26 @@ public class AttendanceWebMapper {
     // 출석 기록 단건
     public AttendanceRecordResponse toAttendanceRecordResponse(AttendanceRecordInfo info) {
         return new AttendanceRecordResponse(
-                info.id() != null ? info.id().id() : null,
-                info.attendanceSheetId(),
-                info.memberId(),
-                info.status().name(),
-                info.memo()
+            info.id() != null ? info.id().id() : null,
+            info.attendanceSheetId(),
+            info.memberId(),
+            info.status().name(),
+            info.memo()
         );
     }
 
     // 내가 현재 할 수 있는 출석 목록
     public AvailableAttendanceResponse toAvailableAttendanceResponse(AvailableAttendanceInfo info) {
         return new AvailableAttendanceResponse(
-                info.scheduleId(),
-                info.scheduleName(),
+            info.scheduleId(),
+            info.scheduleName(),
 //                info.tags().toString(),
-                info.startTime(),
-                info.endTime(),
-                info.sheetId(),
-                info.recordId(),
-                info.status().name(),
-                info.statusDisplay()
+            info.startTime(),
+            info.endTime(),
+            info.sheetId(),
+            info.recordId(),
+            info.status().name(),
+            info.statusDisplay()
         );
     }
 
@@ -48,13 +48,13 @@ public class AttendanceWebMapper {
     // 내 출석 히스토리
     public MyAttendanceHistoryResponse toMyAttendanceHistoryResponse(MyAttendanceHistoryInfo info) {
         return new MyAttendanceHistoryResponse(
-                info.attendanceId(),
-                info.scheduleId(),
-                info.scheduleName(),
-                info.weekDisplay(),
-                info.dateDisplay(),
-                info.status().name(),
-                info.statusDisplay()
+            info.attendanceId(),
+            info.scheduleId(),
+            info.scheduleName(),
+            info.weekDisplay(),
+            info.dateDisplay(),
+            info.status().name(),
+            info.statusDisplay()
         );
     }
 
@@ -65,14 +65,14 @@ public class AttendanceWebMapper {
     // 관리자용 승인 대기 목록
     public PendingAttendanceResponse toPendingAttendanceResponse(PendingAttendanceInfo info) {
         return new PendingAttendanceResponse(
-                info.attendanceId(),
-                info.challengerId(),
-                info.memberName(),
-                info.nickname(),
-                info.schoolName(),
-                info.status().name(),
-                info.reason(),
-                info.requestedAt()
+            info.attendanceId(),
+            info.challengerId(),
+            info.memberName(),
+            info.nickname(),
+            info.schoolName(),
+            info.status().name(),
+            info.reason(),
+            info.requestedAt()
         );
     }
 

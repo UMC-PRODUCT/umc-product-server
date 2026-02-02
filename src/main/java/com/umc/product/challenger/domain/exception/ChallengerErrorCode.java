@@ -16,6 +16,7 @@ public enum ChallengerErrorCode implements BaseCode {
     CHALLENGER_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "CHALLENGER-0005", "유효한 챌린저가 아닙니다."),
     INVALID_WORKBOOK_STATUS(HttpStatus.BAD_REQUEST, "CHALLENGER-0006", "워크북 상태가 유효하지 않습니다."),
     CHALLENGER_POINT_NOT_FOUND(HttpStatus.NOT_FOUND, "CHALLENGER-0007", "상벌점 기록을 찾을 수 없습니다."),
+    BAD_CHALLENGER_UPDATE_REQUEST(HttpStatus.NOT_FOUND, "CHALLENGER-0008", "잘못된 챌린저 업데이트 요청입니다."),
     ;
 
     private final HttpStatus httpStatus;

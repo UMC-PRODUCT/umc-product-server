@@ -6,36 +6,36 @@ import java.time.LocalDateTime;
 
 // TODO : 주석 처리 부분 tags 로 변경
 public record ScheduleWithStatsInfo(
-        // === Schedule Info ===
-        Long scheduleId,
-        String name,
+    // === Schedule Info ===
+    Long scheduleId,
+    String name,
 //        ScheduleType type,
-        String status,
-        LocalDateTime startsAt,
-        LocalDateTime endsAt,
-        String locationName,
-        // === Attendance Stats ===
-        Integer totalCount,
-        Integer presentCount,
-        Integer pendingCount,
-        Double attendanceRate
+    String status,
+    LocalDateTime startsAt,
+    LocalDateTime endsAt,
+    String locationName,
+    // === Attendance Stats ===
+    Integer totalCount,
+    Integer presentCount,
+    Integer pendingCount,
+    Double attendanceRate
 ) {
     /**
      * Schedule 엔티티와 통계 수치를 받아 Info DTO 생성
      */
     public static ScheduleWithStatsInfo of(Schedule schedule, AttendanceStats stats, LocalDateTime now) {
         return new ScheduleWithStatsInfo(
-                schedule.getId(),
-                schedule.getName(),
+            schedule.getId(),
+            schedule.getName(),
 //                schedule.getType(),
-                schedule.resolveStatus(now),
-                schedule.getStartsAt(),
-                schedule.getEndsAt(),
-                schedule.getLocationName(),
-                stats.totalCount(),
-                stats.presentCount(),
-                stats.pendingCount(),
-                stats.calculateAttendanceRate()
+            schedule.resolveStatus(now),
+            schedule.getStartsAt(),
+            schedule.getEndsAt(),
+            schedule.getLocationName(),
+            stats.totalCount(),
+            stats.presentCount(),
+            stats.pendingCount(),
+            stats.calculateAttendanceRate()
         );
     }
 }

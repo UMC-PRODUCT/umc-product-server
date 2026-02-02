@@ -2,7 +2,6 @@ package com.umc.product.notice.application.port.in.command;
 
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
-import com.umc.product.notice.application.port.in.command.dto.PublishNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
 
@@ -14,10 +13,9 @@ public interface ManageNoticeUseCase {
     Long createNotice(CreateNoticeCommand command);
 
     /*
-     * 공지 수정
-     * @return
+     * 공지 제목 또는 내용 수정
      */
-    void updateNotice(UpdateNoticeCommand command);
+    void updateNoticeTitleOrContent(UpdateNoticeCommand command);
 
     /*
      * 공지 삭제

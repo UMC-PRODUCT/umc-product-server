@@ -42,38 +42,38 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
 
         // 2. 일정 ID 목록 추출
         List<Long> scheduleIds = schedules.stream()
-                .map(Schedule::getId)
-                .toList();
+            .map(Schedule::getId)
+            .toList();
 
         // 3. 해당 일정들의 출석부 조회
         List<AttendanceSheet> sheets = loadAttendanceSheetPort.findByScheduleIds(scheduleIds);
         Map<Long, AttendanceSheet> sheetByScheduleId = sheets.stream()
-                .collect(Collectors.toMap(AttendanceSheet::getScheduleId, Function.identity()));
+            .collect(Collectors.toMap(AttendanceSheet::getScheduleId, Function.identity()));
 
         // 4. 출석부 ID 목록 추출
         List<Long> sheetIds = sheets.stream()
-                .map(AttendanceSheet::getId)
-                .toList();
+            .map(AttendanceSheet::getId)
+            .toList();
 
         // 5. 출석 기록 조회 및 출석부별로 그룹화
         Map<Long, List<AttendanceRecord>> recordsBySheetId = sheetIds.isEmpty()
-                ? Map.of()
-                : loadAttendanceRecordPort.findByAttendanceSheetIds(sheetIds).stream()
+            ? Map.of()
+            : loadAttendanceRecordPort.findByAttendanceSheetIds(sheetIds).stream()
                 .collect(Collectors.groupingBy(AttendanceRecord::getAttendanceSheetId));
 
         // 6. 각 일정에 대해 통계 계산 및 Info 생성
         List<ScheduleWithStatsInfo> result = schedules.stream()
-                .map(schedule -> {
-                    AttendanceSheet sheet = sheetByScheduleId.get(schedule.getId());
-                    AttendanceStats stats = calculateStats(sheet, recordsBySheetId);
-                    return ScheduleWithStatsInfo.of(schedule, stats, now);
-                })
-                .toList();
+            .map(schedule -> {
+                AttendanceSheet sheet = sheetByScheduleId.get(schedule.getId());
+                AttendanceStats stats = calculateStats(sheet, recordsBySheetId);
+                return ScheduleWithStatsInfo.of(schedule, stats, now);
+            })
+            .toList();
 
         // 7. 정렬: 진행 중 → 예정 → 종료됨 (종료됨은 최근 것부터)
         return result.stream()
-                .sorted(scheduleComparator(now))
-                .toList();
+            .sorted(scheduleComparator(now))
+            .toList();
     }
 
     private AttendanceStats calculateStats(AttendanceSheet sheet, Map<Long, List<AttendanceRecord>> recordsBySheetId) {
@@ -85,13 +85,13 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
 
         int totalCount = records.size();
         int presentCount = (int) records.stream()
-                .filter(r -> r.getStatus() == AttendanceStatus.PRESENT
-                        || r.getStatus() == AttendanceStatus.LATE
-                        || r.getStatus() == AttendanceStatus.EXCUSED)
-                .count();
+            .filter(r -> r.getStatus() == AttendanceStatus.PRESENT
+                || r.getStatus() == AttendanceStatus.LATE
+                || r.getStatus() == AttendanceStatus.EXCUSED)
+            .count();
         int pendingCount = (int) records.stream()
-                .filter(r -> r.getStatus().isPending())
-                .count();
+            .filter(r -> r.getStatus().isPending())
+            .count();
 
         return new AttendanceStats(totalCount, presentCount, pendingCount);
     }

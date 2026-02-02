@@ -27,18 +27,23 @@ public enum FileCategory {
      * 게시글 첨부파일
      */
     POST_ATTACHMENT("attachment", 50 * 1024 * 1024,
-            new String[]{"pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "zip"}),
+        new String[]{"pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "zip"}),
 
     /**
      * 공지사항 첨부파일
      */
     NOTICE_ATTACHMENT("notice", 50 * 1024 * 1024,
-            new String[]{"pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "zip"}),
+        new String[]{"pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "zip"}),
 
     /**
      * 워크북 제출 파일
      */
     WORKBOOK_SUBMISSION("workbook", 20 * 1024 * 1024, new String[]{"pdf", "jpg", "jpeg", "png", "zip"}),
+
+    /**
+     * PDF 포트폴리오 파일; Web에서 지원서 작성 시 활용합니다.
+     */
+    PORTFOLIO("portfolio", 20 * 1024 * 1024, new String[]{"pdf"}),
 
     /**
      * 기타

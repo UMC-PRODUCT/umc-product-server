@@ -7,7 +7,7 @@ import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.time.LocalDateTime;
 
 public record CheckAttendanceRequest(
-        Long attendanceSheetId
+    Long attendanceSheetId
 ) {
     public CheckAttendanceRequest {
         if (attendanceSheetId == null) {

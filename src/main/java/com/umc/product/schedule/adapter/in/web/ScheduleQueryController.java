@@ -38,22 +38,22 @@ public class ScheduleQueryController implements ScheduleQueryControllerApi {
     @Override
     @GetMapping("/my-list")
     public List<MyScheduleResponse> getMyScheduleList(
-            @CurrentMember MemberPrincipal memberPrincipal,
-            @RequestParam int year,
-            @RequestParam int month
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @RequestParam int year,
+        @RequestParam int month
     ) {
         List<MyScheduleInfo> infos = getMyScheduleUseCase.getMyMonthlySchedules(
-                memberPrincipal.getMemberId(), year, month);
+            memberPrincipal.getMemberId(), year, month);
 
         return infos.stream()
-                .map(MyScheduleResponse::from)
-                .toList();
+            .map(MyScheduleResponse::from)
+            .toList();
     }
 
     @Override
     @GetMapping("/{scheduleId}")
     public ScheduleDetailResponse getScheduleDetail(
-            @PathVariable Long scheduleId
+        @PathVariable Long scheduleId
     ) {
         ScheduleDetailInfo info = getScheduleDetailUseCase.getScheduleDetail(scheduleId);
         return ScheduleDetailResponse.from(info);

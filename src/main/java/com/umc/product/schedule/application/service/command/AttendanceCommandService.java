@@ -17,6 +17,14 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 출석 체크 및 승인/반려 처리를 오케스트레이션하는 커맨드 서비스.
+ * <p>
+ * 주요 흐름: 1. check: 출석부 조회 → 활성 상태 보고 → 기존 출석 기록 조회 → AttendanceSheet가 시간 기반으로 상태 판정 → AttendanceRecord에 체크인 처리 2.
+ * approve: PENDING 상태의 출석 기록을 승인 → 확정 상태(PRESENT/LATE/EXCUSED)로 3. reject: PENDING 상태의 출석 기록을 거부 → ABSENT로
+ * <p>
+ * 비즈니스 규칙 판정(시간 판정, 상태 전이)은 도메인 객체(AttendanceSheet, AttendanceRecord)에있음 , 이 서비스는 조회/검증/저장 흐름만
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -30,8 +38,8 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
     public AttendanceRecordId check(CheckAttendanceCommand command) {
         // 출석부 조회 및 검증
         AttendanceSheet sheet = loadAttendanceSheetPort.findById(command.attendanceSheetId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
         // 출석부 활성 상태 검증
         if (!sheet.isActive()) {
@@ -40,9 +48,9 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
 
         // 기존 출석 기록 조회
         AttendanceRecord record = loadAttendanceRecordPort
-                .findBySheetIdAndMemberId(command.attendanceSheetId(), command.challengerId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
+            .findBySheetIdAndMemberId(command.attendanceSheetId(), command.challengerId())
+            .orElseThrow(
+                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
 
         // 시간에 따른 출석 상태 결정
         AttendanceStatus newStatus = sheet.determineStatusByTime(command.checkedAt());
@@ -60,8 +68,8 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
     public void approve(AttendanceRecordId recordId, Long confirmerId) {
         // 출석 기록 조회
         AttendanceRecord record = loadAttendanceRecordPort.findById(recordId.id())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
 
         // 승인 처리
         record.approve(confirmerId);
@@ -74,13 +82,14 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
     public void reject(AttendanceRecordId recordId, Long confirmerId) {
         // 출석 기록 조회
         AttendanceRecord record = loadAttendanceRecordPort.findById(recordId.id())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
 
         // 반려 처리
         record.reject(confirmerId);
 
         // 저장
+
         saveAttendanceRecordPort.save(record);
     }
 }

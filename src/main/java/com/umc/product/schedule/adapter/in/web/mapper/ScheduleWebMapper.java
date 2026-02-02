@@ -12,18 +12,18 @@ public class ScheduleWebMapper {
     // Schedule
     public ScheduleListResponse toScheduleListResponse(ScheduleWithStatsInfo info) {
         return new ScheduleListResponse(
-                info.scheduleId(),
-                info.name(),
+            info.scheduleId(),
+            info.name(),
 //                info.type().name(),
-                info.status(),
-                info.startsAt(),
-                info.startsAt(),
-                info.endsAt(),
-                info.locationName(),
-                info.totalCount(),
-                info.presentCount(),
-                info.pendingCount(),
-                info.attendanceRate()
+            info.status(),
+            info.startsAt(),
+            info.startsAt(),
+            info.endsAt(),
+            info.locationName(),
+            info.totalCount(),
+            info.presentCount(),
+            info.pendingCount(),
+            info.attendanceRate()
         );
     }
 

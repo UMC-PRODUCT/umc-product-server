@@ -4,9 +4,6 @@ import com.umc.product.notice.application.port.in.command.ManageNoticeContentUse
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeLinksCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeVotesCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeImagesCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeLinksCommand;
-import com.umc.product.notice.application.port.in.command.dto.RemoveNoticeVotesCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeVotesCommand;
@@ -54,15 +51,14 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
         AtomicInteger order = new AtomicInteger(loadNoticeVotePort.findNextVoteDisplayOrder(noticeId));
         List<NoticeVote> votes = command.voteIds().stream()
-                .map(voteId -> NoticeVote.create(voteId, notice, order.getAndIncrement()))
-                .toList()
-        ;
+            .map(voteId -> NoticeVote.create(voteId, notice, order.getAndIncrement()))
+            .toList();
 
         List<NoticeVote> savedVotes = saveNoticeVotePort.saveAllVotes(votes);
 
         return savedVotes.stream()
-                .map(NoticeVote::getId)
-                .toList();
+            .map(NoticeVote::getId)
+            .toList();
     }
 
     @Override
@@ -85,14 +81,13 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
         AtomicInteger order = new AtomicInteger(loadNoticeImagePort.findNextImageDisplayOrder(noticeId));
         List<NoticeImage> images = command.imageIds().stream()
-                .map(imgId -> NoticeImage.create(imgId, notice, order.getAndIncrement()))
-                .toList()
-        ;
+            .map(imgId -> NoticeImage.create(imgId, notice, order.getAndIncrement()))
+            .toList();
 
         List<NoticeImage> savedImages = saveNoticeImagePort.saveAllImages(images);
         return savedImages.stream()
-                .map(NoticeImage::getId)
-                .toList();
+            .map(NoticeImage::getId)
+            .toList();
     }
 
     @Override
@@ -105,14 +100,13 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
         AtomicInteger order = new AtomicInteger(loadNoticeLinkPort.findNextLinkDisplayOrder(noticeId));
         List<NoticeLink> links = command.links().stream()
-                .map(link -> NoticeLink.create(link, notice, order.getAndIncrement()))
-                .toList()
-        ;
+            .map(link -> NoticeLink.create(link, notice, order.getAndIncrement()))
+            .toList();
 
         List<NoticeLink> savedLinks = saveNoticeLinkPort.saveAllLinks(links);
         return savedLinks.stream()
-                .map(NoticeLink::getId)
-                .toList();
+            .map(NoticeLink::getId)
+            .toList();
     }
 
 
@@ -138,8 +132,8 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
         AtomicInteger order = new AtomicInteger(0);
         List<NoticeVote> votes = command.voteIds().stream()
-                .map(voteId -> NoticeVote.create(voteId, notice, order.getAndIncrement()))
-                .toList();
+            .map(voteId -> NoticeVote.create(voteId, notice, order.getAndIncrement()))
+            .toList();
 
         saveNoticeVotePort.saveAllVotes(votes);
     }
@@ -163,8 +157,8 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
         AtomicInteger order = new AtomicInteger(0);
         List<NoticeImage> images = command.imageIds().stream()
-                .map(imageId -> NoticeImage.create(imageId, notice, order.getAndIncrement()))
-                .toList();
+            .map(imageId -> NoticeImage.create(imageId, notice, order.getAndIncrement()))
+            .toList();
 
         saveNoticeImagePort.saveAllImages(images);
     }
@@ -184,14 +178,14 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
         AtomicInteger order = new AtomicInteger(0);
         List<NoticeLink> links = command.links().stream()
-                .map(link -> NoticeLink.create(link, notice, order.getAndIncrement()))
-                .toList();
+            .map(link -> NoticeLink.create(link, notice, order.getAndIncrement()))
+            .toList();
 
         saveNoticeLinkPort.saveAllLinks(links);
     }
 
     private Notice findNoticeById(Long noticeId) {
         return loadNoticePort.findNoticeById(noticeId)
-                .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
+            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 }

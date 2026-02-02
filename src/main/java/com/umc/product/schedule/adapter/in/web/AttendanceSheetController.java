@@ -22,8 +22,8 @@ public class AttendanceSheetController implements AttendanceSheetControllerApi {
     @Override
     @PutMapping("/attendance-sheets/{sheetId}")
     public void updateAttendanceSheet(
-            @PathVariable Long sheetId,
-            @RequestBody UpdateAttendanceSheetRequest request
+        @PathVariable Long sheetId,
+        @RequestBody UpdateAttendanceSheetRequest request
     ) {
         updateAttendanceSheetUseCase.update(request.toCommand(sheetId));
     }

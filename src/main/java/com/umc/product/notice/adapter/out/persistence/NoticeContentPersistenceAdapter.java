@@ -17,12 +17,12 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class NoticeContentPersistenceAdapter implements
-        SaveNoticeImagePort,
-        SaveNoticeVotePort,
-        SaveNoticeLinkPort,
-        LoadNoticeImagePort,
-        LoadNoticeVotePort,
-        LoadNoticeLinkPort {
+    SaveNoticeImagePort,
+    SaveNoticeVotePort,
+    SaveNoticeLinkPort,
+    LoadNoticeImagePort,
+    LoadNoticeVotePort,
+    LoadNoticeLinkPort {
 
     private final NoticeVoteJpaRepository voteJpaRepository;
     private final NoticeLinkJpaRepository linkJpaRepository;

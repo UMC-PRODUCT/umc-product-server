@@ -5,9 +5,9 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface NoticeReadJpaRepository extends JpaRepository<NoticeRead, Long> {
-        List<NoticeRead> findAllByNoticeId(Long noticeId);
+    List<NoticeRead> findAllByNoticeId(Long noticeId);
 
-        boolean existsByNoticeIdAndChallengerId(Long noticeId, Long challengerId);
+    boolean existsByNoticeIdAndChallengerId(Long noticeId, Long challengerId);
 
-        int countByNoticeId(Long noticeId);
+    int countByNoticeId(Long noticeId);
 }

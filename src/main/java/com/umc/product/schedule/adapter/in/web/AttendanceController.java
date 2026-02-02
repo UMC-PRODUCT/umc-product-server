@@ -40,8 +40,8 @@ public class AttendanceController implements AttendanceControllerApi {
     @Override
     @PostMapping("/check")
     public Long checkAttendance(
-            @CurrentMember Long challengerId,
-            @RequestBody CheckAttendanceRequest request
+        @CurrentMember Long challengerId,
+        @RequestBody CheckAttendanceRequest request
     ) {
         return checkAttendanceUseCase.check(request.toCommand(challengerId)).id();
     }
@@ -49,49 +49,49 @@ public class AttendanceController implements AttendanceControllerApi {
     @Override
     @GetMapping("/available")
     public List<AvailableAttendanceResponse> getAvailableAttendances(
-            @CurrentMember Long challengerId
+        @CurrentMember Long challengerId
     ) {
         // [Output Mapping] 분리된 mapper의 메서드를 호출합니다.
         return mapper.toAvailableAttendanceResponses(
-                getAvailableAttendancesUseCase.getAvailableList(challengerId)
+            getAvailableAttendancesUseCase.getAvailableList(challengerId)
         );
     }
 
     @Override
     @GetMapping("/history")
     public List<MyAttendanceHistoryResponse> getMyAttendanceHistory(
-            @CurrentMember Long challengerId
+        @CurrentMember Long challengerId
     ) {
         return mapper.toMyAttendanceHistoryResponses(
-                getMyAttendanceHistoryUseCase.getHistory(challengerId)
+            getMyAttendanceHistoryUseCase.getHistory(challengerId)
         );
     }
 
     @Override
     @GetMapping("/{recordId}")
     public AttendanceRecordResponse getAttendanceRecord(
-            @PathVariable Long recordId
+        @PathVariable Long recordId
     ) {
         return mapper.toAttendanceRecordResponse(
-                getAttendanceRecordUseCase.getById(new AttendanceRecordId(recordId))
+            getAttendanceRecordUseCase.getById(new AttendanceRecordId(recordId))
         );
     }
 
     @Override
     @GetMapping("/pending/{scheduleId}")
     public List<PendingAttendanceResponse> getPendingAttendances(
-            @PathVariable Long scheduleId
+        @PathVariable Long scheduleId
     ) {
         return mapper.toPendingAttendanceResponses(
-                getPendingAttendancesUseCase.getPendingList(scheduleId)
+            getPendingAttendancesUseCase.getPendingList(scheduleId)
         );
     }
 
     @Override
     @PostMapping("/{recordId}/approve")
     public void approveAttendance(
-            @CurrentMember Long confirmerId,
-            @PathVariable Long recordId
+        @CurrentMember Long confirmerId,
+        @PathVariable Long recordId
     ) {
         approveAttendanceUseCase.approve(new AttendanceRecordId(recordId), confirmerId);
     }
@@ -99,8 +99,8 @@ public class AttendanceController implements AttendanceControllerApi {
     @Override
     @PostMapping("/{recordId}/reject")
     public void rejectAttendance(
-            @CurrentMember Long confirmerId,
-            @PathVariable Long recordId
+        @CurrentMember Long confirmerId,
+        @PathVariable Long recordId
     ) {
         approveAttendanceUseCase.reject(new AttendanceRecordId(recordId), confirmerId);
     }

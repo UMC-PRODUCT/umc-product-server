@@ -17,6 +17,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 출석부(AttendanceSheet) 생성/수정/활성화/비활성화를 처리
+ * <p>
+ * 출석부는 Schedule(일정)에 1:1로 연결, 출석 가능 시간대(window)와 승인 정책(requiresApproval)을 설정가능
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -30,7 +35,7 @@ public class AttendanceSheetCommandService implements CreateAttendanceSheetUseCa
     public AttendanceSheetId create(CreateAttendanceSheetCommand command) {
         // 일정 존재 확인
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
-                .orElseThrow(() -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
         // 출석부 생성
         AttendanceSheet sheet = command.toEntity(schedule);
@@ -45,8 +50,8 @@ public class AttendanceSheetCommandService implements CreateAttendanceSheetUseCa
     public void update(UpdateAttendanceSheetCommand command) {
         // 출석부 조회
         AttendanceSheet sheet = loadAttendanceSheetPort.findById(command.sheetId().id())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
         // 출석 시간대 업데이트
         sheet.update(command.window());
@@ -62,8 +67,8 @@ public class AttendanceSheetCommandService implements CreateAttendanceSheetUseCa
     public void deactivate(AttendanceSheetId sheetId) {
         // 출석부 조회
         AttendanceSheet sheet = loadAttendanceSheetPort.findById(sheetId.id())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
         // 비활성화 (도메인 로직)
         sheet.deactivate();
@@ -76,8 +81,8 @@ public class AttendanceSheetCommandService implements CreateAttendanceSheetUseCa
     public void activate(AttendanceSheetId sheetId) {
         // 출석부 조회
         AttendanceSheet sheet = loadAttendanceSheetPort.findById(sheetId.id())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
         // 활성화 (도메인 로직)
         sheet.activate();

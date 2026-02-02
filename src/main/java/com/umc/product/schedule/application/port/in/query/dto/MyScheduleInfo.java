@@ -4,20 +4,20 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 public record MyScheduleInfo(
+    Long scheduleId,
+    String name,
+    LocalDateTime startsAt,
+    LocalDateTime endsAt,
+    String status,
+    long dDay
+) {
+
+    public static MyScheduleInfo of(
         Long scheduleId,
         String name,
         LocalDateTime startsAt,
         LocalDateTime endsAt,
-        String status,
-        long dDay
-) {
-
-    public static MyScheduleInfo of(
-            Long scheduleId,
-            String name,
-            LocalDateTime startsAt,
-            LocalDateTime endsAt,
-            LocalDateTime now
+        LocalDateTime now
     ) {
         String status = resolveStatus(startsAt, endsAt, now);
         long dDay = ChronoUnit.DAYS.between(now.toLocalDate(), startsAt.toLocalDate());

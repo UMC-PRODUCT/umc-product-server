@@ -15,6 +15,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**
+ * 개별 챌린저의 출석 기록 파트
+ * <p>
+ * 하나의 AttendanceSheet(출석부)에 소속된 챌린저별 출석 상태를 관리한다. 상태 변경은 반드시 아래 도메인 메서드를 통해서만 이루어지며, 외부에서 직접 상태를 수정할 수 없음.
+ * <p>
+ * 상태 규칙 PENDING ──checkIn()──→ PRESENT / LATE / PRESENT_PENDING / LATE_PENDING PENDING ──approve()──→ PRESENT / LATE/
+ * EXCUSED  (승인자 ID 기록 남도록) PENDING ──reject()───→ ABSENT──requestExcuse()──→ EXCUSED_PENDING        (사유 memo 필수)
+ */
 @Entity
 @Table(name = "attendance_record")
 @Getter
@@ -46,11 +54,11 @@ public class AttendanceRecord {
 
     @Builder
     private AttendanceRecord(
-            Long attendanceSheetId,
-            Long memberId,
-            AttendanceStatus status,
-            LocalDateTime checkedAt,
-            String memo
+        Long attendanceSheetId,
+        Long memberId,
+        AttendanceStatus status,
+        LocalDateTime checkedAt,
+        String memo
     ) {
         validateAttendanceSheetId(attendanceSheetId);
         validateMemberId(memberId);
@@ -63,7 +71,9 @@ public class AttendanceRecord {
         this.memo = memo;
     }
 
-    // Domain Logic: 출석 체크
+    /**
+     * 출석 체크 처리. 한 번만 호출 가능하며, 이미 체크된 기록에 재호출하면 예외 발생. newStatus는 AttendanceSheet.determineStatusByTime()이 시간 기반으로 결정
+     */
     public void checkIn(AttendanceStatus newStatus, LocalDateTime checkedAt) {
         if (this.checkedAt != null) {
             throw new IllegalStateException("이미 출석 체크가 완료되었습니다");
@@ -79,7 +89,10 @@ public class AttendanceRecord {
         this.checkedAt = checkedAt;
     }
 
-    // Domain Logic: 승인
+    /**
+     * 관리자가 PENDING 상태의 출석을 승인한다. PRESENT_PENDING → PRESENT, LATE_PENDING → LATE, EXCUSED_PENDING → EXCUSED로 전이. 승인자 ID와
+     * 승인 시각이 함께 기록된다.
+     */
     public void approve(Long confirmerId) {
         validatePendingStatus();
         validateConfirmerId(confirmerId);
@@ -94,7 +107,9 @@ public class AttendanceRecord {
         this.confirmedAt = LocalDateTime.now();
     }
 
-    // Domain Logic: 반려
+    /**
+     * 관리자가 PENDING 상태의 출석을 거절함. 상태는 무조건 ABSENT로 바뀜
+     */
     public void reject(Long confirmerId) {
         validatePendingStatus();
         validateConfirmerId(confirmerId);
@@ -104,7 +119,9 @@ public class AttendanceRecord {
         this.confirmedAt = LocalDateTime.now();
     }
 
-    // Domain Logic: 인정결석 신청
+    /**
+     * 결석 상태(ABSENT)에서만 인정결석을 신청할 수 있음. EXCUSED_PENDING 상태로 바뀌며, 이후 관리자가 approve/reject 처리
+     */
     public void requestExcuse(String memo) {
         if (status != AttendanceStatus.ABSENT) {
             throw new IllegalStateException("결석 상태만 인정결석을 신청할 수 있습니다");
@@ -117,7 +134,9 @@ public class AttendanceRecord {
         this.memo = memo;
     }
 
-    // Domain Logic: 상태 변경
+    /**
+     * 관리자 직접 상태 변경용 권한 설정 차후 결정 *_PENDING 상태로는 이 메서드로 변경 안됨.
+     */
     public void updateStatus(AttendanceStatus newStatus) {
         validateStatus(newStatus);
 
@@ -195,7 +214,7 @@ public class AttendanceRecord {
     }
 
     /**
-     * 출석 기록 ID (타입 안전성을 위한 래퍼)
+     * 출석 기록 ID 타입안정성 때매 별도 구현
      */
     public record AttendanceRecordId(long id) {
         public AttendanceRecordId {

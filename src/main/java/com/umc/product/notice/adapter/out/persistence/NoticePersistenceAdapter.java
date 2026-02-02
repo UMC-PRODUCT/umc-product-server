@@ -17,10 +17,10 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class NoticePersistenceAdapter implements
-        LoadNoticePort,
-        SaveNoticePort,
-        LoadNoticeReadPort,
-        SaveNoticeReadPort {
+    LoadNoticePort,
+    SaveNoticePort,
+    LoadNoticeReadPort,
+    SaveNoticeReadPort {
 
     private final NoticeJpaRepository noticeJpaRepository;
     private final NoticeReadJpaRepository noticeReadJpaRepository;

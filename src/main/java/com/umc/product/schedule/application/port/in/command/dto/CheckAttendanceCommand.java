@@ -7,9 +7,9 @@ import java.util.Objects;
  * 출석 체크 Command
  */
 public record CheckAttendanceCommand(
-        Long attendanceSheetId,
-        Long challengerId,
-        LocalDateTime checkedAt
+    Long attendanceSheetId,
+    Long challengerId,
+    LocalDateTime checkedAt
 ) {
     public CheckAttendanceCommand {
         Objects.requireNonNull(attendanceSheetId, "출석부 ID는 필수입니다");

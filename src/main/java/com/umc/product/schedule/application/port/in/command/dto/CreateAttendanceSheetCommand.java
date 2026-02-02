@@ -9,9 +9,9 @@ import java.util.Objects;
  * 출석부 생성 Command
  */
 public record CreateAttendanceSheetCommand(
-        Long scheduleId,
-        AttendanceWindow window,
-        boolean requiresApproval
+    Long scheduleId,
+    AttendanceWindow window,
+    boolean requiresApproval
 ) {
     public CreateAttendanceSheetCommand {
         Objects.requireNonNull(scheduleId, "일정 ID는 필수입니다");
@@ -20,9 +20,9 @@ public record CreateAttendanceSheetCommand(
 
     public AttendanceSheet toEntity(Schedule schedule) {
         return AttendanceSheet.builder()
-                .scheduleId(schedule.getId())
-                .window(window)
-                .requiresApproval(requiresApproval)
-                .build();
+            .scheduleId(schedule.getId())
+            .window(window)
+            .requiresApproval(requiresApproval)
+            .build();
     }
 }
