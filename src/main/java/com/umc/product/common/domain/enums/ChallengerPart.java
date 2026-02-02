@@ -6,13 +6,14 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum ChallengerPart {
-    PLAN("기획"),
-    DESIGN("디자인"),
-    WEB("웹"),
-    IOS("iOS"),
-    ANDROID("안드로이드"),
-    SPRINGBOOT("스프링부트"),
-    NODEJS("노드");
+    PLAN("기획", 0),
+    DESIGN("디자인", 1),
+    WEB("웹", 2),
+    ANDROID("안드로이드", 3),
+    IOS("iOS", 4),
+    NODEJS("노드", 5),
+    SPRINGBOOT("스프링부트", 6);
 
     private final String displayName;
+    private final int sortOrder;
 }

@@ -21,7 +21,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 @Service
 @RequiredArgsConstructor
-public class EmailVerificationService implements ManageAuthenticationUseCase {
+public class AuthenticationService implements ManageAuthenticationUseCase {
 
     private final SendEmailUseCase sendEmailUseCase;
     private final LoadEmailVerificationPort loadEmailVerificationPort;
@@ -30,6 +30,7 @@ public class EmailVerificationService implements ManageAuthenticationUseCase {
     @Value("${app.base-url}")
     private String serverUrl;
 
+    // TODO: EmailSendUseCase와 구분할 필요가 있습니다.
     @Override
     public String renewAccessToken(RenewAccessTokenCommand command) {
         // TODO: refresh token을 검증하는 로직을 추가할 필요성이 있음

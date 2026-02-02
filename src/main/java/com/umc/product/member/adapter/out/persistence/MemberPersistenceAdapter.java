@@ -3,7 +3,10 @@ package com.umc.product.member.adapter.out.persistence;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.StreamSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,6 +31,12 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort 
     @Override
     public Optional<Member> findByNickname(String nickname) {
         return memberQueryRepository.findByNickname(nickname);
+    }
+
+    @Override
+    public List<Member> findByIdIn(Set<Long> ids) {
+        return StreamSupport.stream(memberJpaRepository.findAllById(ids).spliterator(), false)
+                .toList();
     }
 
     @Override

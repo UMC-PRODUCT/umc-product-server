@@ -1,21 +1,28 @@
 package com.umc.product.challenger.adapter.out.persistence;
 
+import com.umc.product.challenger.application.port.in.query.SearchChallengerQuery;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
+import com.umc.product.challenger.application.port.out.SearchChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveChallengerPort {
+public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveChallengerPort, SearchChallengerPort {
 
     private final ChallengerJpaRepository repository;
+    private final ChallengerQueryRepository queryRepository;
 
     @Override
     public Optional<Challenger> findById(Long id) {
@@ -46,6 +53,21 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     @Override
     public Long countByIdIn(Set<Long> ids) {
         return repository.countByIdIn(ids);
+    }
+
+    @Override
+    public Page<Challenger> search(SearchChallengerQuery query, Pageable pageable) {
+        return queryRepository.search(query, pageable);
+    }
+
+    @Override
+    public Map<ChallengerPart, Long> countByPart(SearchChallengerQuery query) {
+        return queryRepository.countByPart(query);
+    }
+
+    @Override
+    public Map<Long, Double> sumPointsByChallengerIds(Set<Long> challengerIds) {
+        return queryRepository.sumPointsByChallengerIds(challengerIds);
     }
 
     @Override
