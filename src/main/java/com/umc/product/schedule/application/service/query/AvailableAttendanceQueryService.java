@@ -18,6 +18,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 현재 출석 체크 가능한 일정 목록을 조회
+ *
+ * <p>활성 출석부 중 아직 종료되지 않은 일정만,
+ * <p>해당 챌린저의 기존 출석 기록이 있으면 함께 가져옴.
+ * <p>시작 시간 오름차순.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -38,41 +45,41 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
 
         // 해당 출석부들의 일정 조회
         List<Long> scheduleIds = activeSheets.stream()
-                .map(AttendanceSheet::getScheduleId)
-                .toList();
+            .map(AttendanceSheet::getScheduleId)
+            .toList();
 
         Map<Long, Schedule> scheduleMap = loadSchedulePort.findAllByIds(scheduleIds).stream()
-                .collect(Collectors.toMap(Schedule::getId, Function.identity()));
+            .collect(Collectors.toMap(Schedule::getId, Function.identity()));
 
         // 해당 멤버의 출석 기록 조회
         List<Long> sheetIds = activeSheets.stream()
-                .map(AttendanceSheet::getId)
-                .toList();
+            .map(AttendanceSheet::getId)
+            .toList();
 
         List<AttendanceRecord> memberRecords = loadAttendanceRecordPort.findByMemberId(memberId);
         Map<Long, AttendanceRecord> recordBySheetId = memberRecords.stream()
-                .filter(r -> sheetIds.contains(r.getAttendanceSheetId()))
-                .collect(Collectors.toMap(
-                        AttendanceRecord::getAttendanceSheetId,
-                        Function.identity()));
+            .filter(r -> sheetIds.contains(r.getAttendanceSheetId()))
+            .collect(Collectors.toMap(
+                AttendanceRecord::getAttendanceSheetId,
+                Function.identity()));
 
         // 결과 생성
         LocalDateTime now = LocalDateTime.now();
         return activeSheets.stream()
-                .filter(sheet -> {
-                    Schedule schedule = scheduleMap.get(sheet.getScheduleId());
-                    return schedule != null && !schedule.isEnded(now);
-                })
-                .map(sheet -> {
-                    Schedule schedule = scheduleMap.get(sheet.getScheduleId());
-                    AttendanceRecord record = recordBySheetId.get(sheet.getId());
+            .filter(sheet -> {
+                Schedule schedule = scheduleMap.get(sheet.getScheduleId());
+                return schedule != null && !schedule.isEnded(now);
+            })
+            .map(sheet -> {
+                Schedule schedule = scheduleMap.get(sheet.getScheduleId());
+                AttendanceRecord record = recordBySheetId.get(sheet.getId());
 
-                    if (record != null) {
-                        return AvailableAttendanceInfo.of(schedule, sheet, record);
-                    }
-                    return AvailableAttendanceInfo.of(schedule, sheet);
-                })
-                .sorted(Comparator.comparing(AvailableAttendanceInfo::startTime))
-                .toList();
+                if (record != null) {
+                    return AvailableAttendanceInfo.of(schedule, sheet, record);
+                }
+                return AvailableAttendanceInfo.of(schedule, sheet);
+            })
+            .sorted(Comparator.comparing(AvailableAttendanceInfo::startTime))
+            .toList();
     }
 }
