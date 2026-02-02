@@ -26,5 +26,5 @@ public interface GetChallengerUseCase {
     /**
      * memberId로 해당 사용자가 가지고 있는 가장 최근 챌린저 정보 조회
      */
-    ChallengerInfo getLatestByMemberId(Long memberId);
+    ChallengerInfo getLatestActiveChallengerByMemberId(Long memberId);
 }

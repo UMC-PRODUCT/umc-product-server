@@ -6,6 +6,7 @@ import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,11 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     }
 
     @Override
-    public ChallengerInfo getLatestByMemberId(Long memberId) {
-        return ChallengerInfo.from(loadChallengerPort.findTopByMemberIdOrderByCreatedAtDesc(memberId));
+    public ChallengerInfo getLatestActiveChallengerByMemberId(Long memberId) {
+        Challenger challenger = loadChallengerPort.findTopByMemberIdOrderByCreatedAtDesc(memberId);
+        if (challenger.getStatus() != ChallengerStatus.ACTIVE) {
+            throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_ACTIVE);
+        }
+        return ChallengerInfo.from(challenger);
     }
 }

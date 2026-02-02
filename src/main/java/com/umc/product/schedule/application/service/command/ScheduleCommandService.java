@@ -42,7 +42,8 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     @Override
     public Long create(CreateScheduleCommand command) {
         // 작성자의 가장 최근 Challenger 조회
-        ChallengerInfo challengerInfo = getChallengerUseCase.getLatestByMemberId(command.authorMemberId());
+        ChallengerInfo challengerInfo = getChallengerUseCase.getLatestActiveChallengerByMemberId(
+            command.authorMemberId());
 
         Long authorChallengerId = challengerInfo.challengerId();
 
