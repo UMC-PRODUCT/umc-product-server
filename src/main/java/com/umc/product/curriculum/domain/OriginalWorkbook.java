@@ -13,8 +13,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -45,21 +44,21 @@ public class OriginalWorkbook extends BaseEntity {
     private Integer weekNo;
 
     @Column(nullable = false)
-    private LocalDate startDate;
+    private Instant startDate;
 
     @Column(nullable = false)
-    private LocalDate endDate;
+    private Instant endDate;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MissionType missionType;
 
-    private LocalDateTime releasedAt;
+    private Instant releasedAt;
 
     @Builder(access = AccessLevel.PRIVATE)
     private OriginalWorkbook(Curriculum curriculum, String title, String description,
-                             String workbookUrl, Integer weekNo, LocalDate startDate,
-                             LocalDate endDate, MissionType missionType) {
+                             String workbookUrl, Integer weekNo, Instant startDate,
+                             Instant endDate, MissionType missionType) {
         this.curriculum = curriculum;
         this.title = title;
         this.description = description;
@@ -73,7 +72,7 @@ public class OriginalWorkbook extends BaseEntity {
 
     public static OriginalWorkbook create(Curriculum curriculum, Integer weekNo, String title,
                                           String description, String workbookUrl,
-                                          LocalDate startDate, LocalDate endDate,
+                                          Instant startDate, Instant endDate,
                                           MissionType missionType) {
         return OriginalWorkbook.builder()
                 .curriculum(curriculum)
@@ -91,7 +90,7 @@ public class OriginalWorkbook extends BaseEntity {
      * 워크북 배포
      */
     public void release() {
-        this.releasedAt = LocalDateTime.now();
+        this.releasedAt = Instant.now();
     }
 
     /**
@@ -113,7 +112,7 @@ public class OriginalWorkbook extends BaseEntity {
      * null인 필드는 기존 값을 유지
      */
     public void update(String title, String description, String workbookUrl,
-                       Integer weekNo, LocalDate startDate, LocalDate endDate,
+                       Integer weekNo, Instant startDate, Instant endDate,
                        MissionType missionType) {
         this.title = title;
         this.description = description;

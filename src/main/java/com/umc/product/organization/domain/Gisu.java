@@ -8,7 +8,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,12 +28,12 @@ public class Gisu {
     @Column(name = "is_active")
     private boolean isActive;
 
-    private LocalDateTime startAt;
+    private Instant startAt;
 
-    private LocalDateTime endAt;
+    private Instant endAt;
 
     @Builder
-    private Gisu(Long generation, boolean isActive, LocalDateTime startAt, LocalDateTime endAt) {
+    private Gisu(Long generation, boolean isActive, Instant startAt, Instant endAt) {
         validate(startAt, endAt);
         this.generation = generation;
         this.isActive = isActive;
@@ -41,7 +41,7 @@ public class Gisu {
         this.endAt = endAt;
     }
 
-    private static void validate(LocalDateTime startAt, LocalDateTime endAt) {
+    private static void validate(Instant startAt, Instant endAt) {
         if (startAt == null) {
             throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_START_AT_REQUIRED);
         }
@@ -61,8 +61,8 @@ public class Gisu {
         this.isActive = false;
     }
 
-    public boolean isInPeriod(LocalDateTime now) {
-        return (now.isEqual(startAt) || now.isAfter(startAt)) && now.isBefore(endAt);
+    public boolean isInPeriod(Instant now) {
+        return (now.equals(startAt) || now.isAfter(startAt)) && now.isBefore(endAt);
     }
 
     public void updateIsActive(boolean isActive) {
