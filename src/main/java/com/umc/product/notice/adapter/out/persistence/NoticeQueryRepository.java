@@ -108,59 +108,6 @@ public class NoticeQueryRepository {
         return new PageImpl<>(notices, pageable, total != null ? total : 0L);
     }
 
-    /**
-     * 사용자 대상 공지 조회 (정확한 페이지네이션)
-     * <p>조회자의 gisu/chapter/part 조합과 schoolId로 NoticeTarget을 매칭하고,
-     * classification 조건까지 DB에서 필터링한 뒤 페이지네이션을 적용합니다.</p>
-     *
-     * @return 조회자에게 노출 가능한 공지 페이지
-     */
-    public Page<Notice> findVisibleNotices(
-        Long schoolId,
-        List<NoticeTargetCondition> conditions,
-        NoticeClassification classification,
-        Pageable pageable) {
-
-        if (conditions == null || conditions.isEmpty()) {
-            return new PageImpl<>(List.of(), pageable, 0L);
-        }
-
-        QNotice notice = QNotice.notice;
-        QNoticeTarget target = QNoticeTarget.noticeTarget;
-
-        BooleanExpression visibility = null;
-        for (NoticeTargetCondition condition : conditions) {
-            BooleanExpression match = target.targetGisuId.eq(condition.gisuId())
-                .and(target.targetChapterId.isNull().or(target.targetChapterId.eq(condition.chapterId())))
-                .and(target.targetSchoolId.isNull().or(target.targetSchoolId.eq(schoolId)))
-                .and(partMatch(target, condition));
-
-            visibility = (visibility == null) ? match : visibility.or(match);
-        }
-
-        BooleanExpression classificationFilter = classificationFilter(target, classification);
-        BooleanExpression whereClause = (classificationFilter == null)
-            ? visibility
-            : visibility.and(classificationFilter);
-
-        List<Notice> content = queryFactory
-            .selectFrom(notice)
-            .join(target).on(target.noticeId.eq(notice.id))
-            .where(whereClause)
-            .orderBy(notice.createdAt.desc())
-            .offset(pageable.getOffset())
-            .limit(pageable.getPageSize())
-            .fetch();
-
-        Long total = queryFactory
-            .select(notice.count())
-            .from(notice)
-            .join(target).on(target.noticeId.eq(notice.id))
-            .where(whereClause)
-            .fetchOne();
-
-        return new PageImpl<>(content, pageable, total != null ? total : 0L);
-    }
 
     private BooleanExpression keywordContains(String keyword) {
         if (keyword == null || keyword.isBlank()) {
@@ -171,50 +118,5 @@ public class NoticeQueryRepository {
 
         return notice.title.containsIgnoreCase(keyword)
             .or(notice.content.containsIgnoreCase(keyword));
-    }
-
-    /**
-     * NoticeClassification을 NoticeTarget 기반 필터로 변환합니다.
-     * <p>NoticeClassification은 Notice에 직접 저장되지 않으므로, 타겟 컬럼을 기준으로 추론합니다.</p>
-     *
-     * @return 분류 필터 표현식 (없으면 null)
-     */
-    private BooleanExpression classificationFilter(QNoticeTarget target, NoticeClassification classification) {
-        if (classification == null) {
-            return null;
-        }
-        return switch (classification) {
-            case PART -> partSpecified(target);
-            case CHAPTER -> target.targetChapterId.isNotNull();
-            case SCHOOL -> target.targetSchoolId.isNotNull();
-            case MANAGER_NOTI -> target.targetChapterId.isNull().and(target.targetSchoolId.isNull());
-        };
-    }
-
-    /**
-     * 조회자의 part가 타겟 part 조건에 부합하는지 확인합니다.
-     * 타겟 part가 null/empty이면 무조건 매칭으로 간주합니다.
-     *
-     * @return part 매칭 조건식
-     */
-    private BooleanExpression partMatch(QNoticeTarget target, NoticeTargetCondition condition) {
-        String part = condition.part().name();
-        return Expressions.booleanTemplate(
-            "({0} is null or cardinality({0}) = 0 or {1} = any({0}))",
-            target.targetChallengerPart,
-            part
-        );
-    }
-
-    /**
-     * 타겟 part가 명시되어 있는지(비어있지 않은지) 확인합니다.
-     *
-     * @return 타겟 part가 지정된 경우 true
-     */
-    private BooleanExpression partSpecified(QNoticeTarget target) {
-        return Expressions.booleanTemplate(
-            "({0} is not null and cardinality({0}) > 0)",
-            target.targetChallengerPart
-        );
     }
 }

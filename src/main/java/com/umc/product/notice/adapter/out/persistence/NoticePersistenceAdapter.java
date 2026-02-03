@@ -2,7 +2,6 @@ package com.umc.product.notice.adapter.out.persistence;
 
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
-import com.umc.product.notice.application.port.out.NoticeTargetCondition;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.domain.Notice;
@@ -47,11 +46,6 @@ public class NoticePersistenceAdapter implements
         return noticeJpaRepository.findAll(pageable);
     }
 
-    @Override
-    public Page<Notice> findVisibleNotices(Long schoolId, List<NoticeTargetCondition> conditions,
-                                           NoticeClassification classification, Pageable pageable) {
-        return noticeQueryRepository.findVisibleNotices(schoolId, conditions, classification, pageable);
-    }
 
     @Override
     public Notice save(Notice notice) {
