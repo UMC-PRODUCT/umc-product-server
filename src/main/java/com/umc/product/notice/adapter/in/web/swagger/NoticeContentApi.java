@@ -93,12 +93,4 @@ public interface NoticeContentApi {
         @RequestBody @Valid ReplaceNoticeVotesRequest request
     );
 
-    @Operation(
-        summary = "공지사항 콘텐츠 전체 삭제",
-        description = "공지사항의 이미지/링크/투표를 모두 삭제합니다."
-    )
-    void removeNoticeContents(
-        @Parameter(description = "공지사항 ID", required = true)
-        @PathVariable Long noticeId
-    );
 }

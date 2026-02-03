@@ -3,6 +3,8 @@ package com.umc.product.notice.application.service.command;
 import com.umc.product.authorization.application.port.in.query.GetMemberRolesUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.out.LoadChallengerPort;
+import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
@@ -21,8 +23,12 @@ import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.notice.dto.NoticeTargetPattern;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
-import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,12 +49,16 @@ public class NoticeService implements ManageNoticeUseCase {
     private final LoadNoticePort loadNoticePort;
     private final SaveNoticePort saveNoticePort;
     private final SaveNoticeTargetPort saveNoticeTargetPort;
+    private final LoadChallengerPort loadChallengerPort;
 
     // 도메인 외부 UseCase
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberRolesUseCase getMemberRolesUseCase;
     private final GetNoticeTargetUseCase getNoticeTargetUseCase;
     private final ManageFcmUseCase manageFcmUseCase;
+    private final ManageNoticeContentUseCase manageNoticeContentUseCase;
+    private final GetMemberUseCase getMemberUseCase;
+    private final GetChapterUseCase getChapterUseCase;
 
     @Override
     public Long createNotice(CreateNoticeCommand command) {
@@ -82,11 +92,14 @@ public class NoticeService implements ManageNoticeUseCase {
          * 공지 알림 전송
          */
         if (savedNotice.isNotificationRequired()) {
-            manageFcmUseCase.sendMessageByToken(new NotificationCommand(
-                command.memberId(),
-                NOTICE_TITLE_PREFIX + savedNotice.getTitle(),
-                NOTICE_BODY_SUFFIX
-            ));
+            List<Long> targetIds = resolveTargetChallengerIds(command.targetInfo());
+            for (Long targetId : targetIds) {
+                manageFcmUseCase.sendMessageByToken(new NotificationCommand(
+                    targetId,
+                    NOTICE_TITLE_PREFIX + savedNotice.getTitle(),
+                    NOTICE_BODY_SUFFIX
+                ));
+            }
             savedNotice.markAsNotified(Instant.now());
         }
 
@@ -140,6 +153,11 @@ public class NoticeService implements ManageNoticeUseCase {
             throw new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH);
         }
 
+        /*
+         * 관련 이미지, 투표, 링크 등도 모두 삭제
+         */
+        manageNoticeContentUseCase.removeContentsByNoticeId(notice.getId());
+
         saveNoticePort.delete(notice);
     }
 
@@ -177,5 +195,37 @@ public class NoticeService implements ManageNoticeUseCase {
     private boolean validateNoticeWritePermission(NoticeTargetInfo noticeTargetInfo, Long authorMemberId) {
         NoticeTargetPattern pattern = NoticeTargetPattern.from(noticeTargetInfo);
         return pattern.validatePermission(noticeTargetInfo, authorMemberId, getMemberRolesUseCase);
+    }
+
+    /**
+     * NoticeTargetInfo에 매칭되는 챌린저 ID 목록을 조회합니다. (알림 전송용)
+     *
+     * TODO: 헥사고날 관점 상 추후 리팩토링 필요
+     * @return 대상 챌린저 ID 리스트
+     */
+    private List<Long> resolveTargetChallengerIds(NoticeTargetInfo targetInfo) {
+        if (targetInfo == null || targetInfo.targetGisuId() == null) {
+            return List.of();
+        }
+
+        List<Challenger> challengers = loadChallengerPort.findByGisuId(targetInfo.targetGisuId());
+        List<Long> targetIds = new ArrayList<>();
+
+        for (Challenger challenger : challengers) {
+            MemberInfo memberInfo = getMemberUseCase.getById(challenger.getMemberId());
+            Long schoolId = memberInfo.schoolId();
+            Long chapterId = getChapterUseCase.byGisuAndSchool(challenger.getGisuId(), schoolId).id();
+
+            if (targetInfo.isTarget(
+                challenger.getGisuId(),
+                chapterId,
+                schoolId,
+                challenger.getPart()
+            )) {
+                targetIds.add(challenger.getId());
+            }
+        }
+
+        return targetIds;
     }
 }

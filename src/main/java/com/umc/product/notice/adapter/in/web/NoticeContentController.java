@@ -104,9 +104,4 @@ public class NoticeContentController implements NoticeContentApi {
         return ApiResponse.onSuccess(new ReplaceNoticeVotesResponse(request.voteIds()));
     }
 
-    // 공지사항 콘텐츠 전체 삭제
-    @DeleteMapping("/{noticeId}/contents")
-    public void removeNoticeContents(@PathVariable Long noticeId) {
-        manageNoticeContentUseCase.removeContentsByNoticeId(noticeId);
-    }
 }
