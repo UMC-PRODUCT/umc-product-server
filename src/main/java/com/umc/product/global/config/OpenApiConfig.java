@@ -22,7 +22,7 @@ import org.springframework.context.annotation.Configuration;
 public class OpenApiConfig {
 
     private final String accessToken = "Access Token";
-    private final String refreshToken = "Refresh Token";
+
     @Value("${server.port:8080}")
     private String serverPort;
 
@@ -30,31 +30,31 @@ public class OpenApiConfig {
     public OpenAPI umcProductApi() {
 
         return new OpenAPI()
-                .info(apiInfo())
-                .servers(servers())
-                .tags(tags())  // Enum으로 관리하는 Tags
-                .components(securityComponents())
-                .addSecurityItem(securityRequirement());
+            .info(apiInfo())
+            .servers(servers())
+            .tags(tags())  // Enum으로 관리하는 Tags
+            .components(securityComponents())
+            .addSecurityItem(securityRequirement());
     }
 
     private Info apiInfo() {
         return new Info()
-                .title("UMC PRODUCT TEAM API")
-                .version("0.1.0")
-                .description("UMC Product Team API");
+            .title("UMC PRODUCT TEAM API")
+            .version("0.1.0")
+            .description("UMC Product Team API");
     }
 
     private List<Server> servers() {
         return List.of(
-                new Server()
-                        .url("http://localhost:" + serverPort)
-                        .description("Local"),
-                new Server()
-                        .url("https://dev.umc-product.kyeoungwoon.kr")
-                        .description("Development"),
-                new Server()
-                        .url("https://umc-product.kyeoungwoon.kr")
-                        .description("Production")
+            new Server()
+                .url("http://localhost:" + serverPort)
+                .description("Local"),
+            new Server()
+                .url("https://dev.api.umc.it.kr")
+                .description("Development"),
+            new Server()
+                .url("https://api.umc.it.kr")
+                .description("Production")
         );
     }
 
@@ -69,25 +69,24 @@ public class OpenApiConfig {
      */
     private List<Tag> tags() {
         return Arrays.stream(SwaggerTag.values())
-                .sorted(Comparator.comparingInt(SwaggerTag::getOrder))  // order 순으로 정렬
-                .map(SwaggerTag::toTag)
-                .collect(Collectors.toList());
+            .sorted(Comparator.comparingInt(SwaggerTag::getOrder))  // order 순으로 정렬
+            .map(SwaggerTag::toTag)
+            .collect(Collectors.toList());
     }
 
     private Components securityComponents() {
         return new Components()
-                .addSecuritySchemes(accessToken,
-                        new SecurityScheme()
-                                .type(SecurityScheme.Type.HTTP)
-                                .scheme("bearer")
-                                .bearerFormat("JWT")
-                                .description("발급받은 Access Token을 입력해주세요.")
-                );
+            .addSecuritySchemes(accessToken,
+                new SecurityScheme()
+                    .type(SecurityScheme.Type.HTTP)
+                    .scheme("bearer")
+                    .bearerFormat("JWT")
+                    .description("발급받은 Access Token을 입력해주세요.")
+            );
     }
 
     private SecurityRequirement securityRequirement() {
         return new SecurityRequirement()
-                .addList(accessToken)
-                .addList(refreshToken);
+            .addList(accessToken);
     }
 }
