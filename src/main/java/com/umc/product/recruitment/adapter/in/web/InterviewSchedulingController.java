@@ -42,7 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/recruitments/{recruitmentId}/interviews/scheduling")
 @RequiredArgsConstructor
 @Tag(name = SwaggerTag.Constants.INTERVIEW_SCHEDULING)
-public class RecruitmentInterviewSchedulingController {
+public class InterviewSchedulingController {
 
     private final GetInterviewSchedulingSummaryUseCase getInterviewSchedulingSummaryUseCase;
     private final GetInterviewSchedulingSlotsUseCase getInterviewSchedulingSlotsUseCase;
