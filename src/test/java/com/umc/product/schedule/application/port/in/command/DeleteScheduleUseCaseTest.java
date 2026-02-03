@@ -25,6 +25,7 @@ import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import com.umc.product.support.UseCaseTestSupport;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -163,8 +164,8 @@ class DeleteScheduleUseCaseTest extends UseCaseTestSupport {
         return Gisu.builder()
             .generation(generation)
             .isActive(true)
-            .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
-            .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
+            .startAt(Instant.parse("2026-03-01T00:00:00Z"))
+            .endAt(Instant.parse("2026-08-31T00:00:00Z"))
             .build();
     }
 
