@@ -3,7 +3,6 @@ package com.umc.product.recruitment.adapter.in.web;
 import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
-import com.umc.product.recruitment.adapter.in.web.dto.request.CreateMyEvaluationRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateDocumentStatusRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateMyEvaluationRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicationDetailResponse;
@@ -11,9 +10,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicationEvalua
 import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicationListResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.MyEvaluationResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateDocumentStatusResponse;
-import com.umc.product.recruitment.application.port.in.command.CreateMyEvaluationUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateMyEvaluationUseCase;
-import com.umc.product.recruitment.application.port.in.command.dto.CreateMyEvaluationCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateDocumentStatusCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateMyEvaluationCommand;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationDetailUseCase;
@@ -34,7 +31,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -51,8 +47,6 @@ public class RecruitmentDocumentEvaluationController {
     private final GetApplicationEvaluationListUseCase getApplicationEvaluationListUseCase;
     private final GetMyEvaluationUseCase getMyEvaluationUseCase;
     private final UpdateMyEvaluationUseCase updateMyEvaluationUseCase;
-    private final CreateMyEvaluationUseCase createMyEvaluationUseCase;
-
     private final UpdateDocumentStatusUseCase updateDocumentStatusUseCase;
 
     @GetMapping("/document-evaluations")
@@ -148,8 +142,7 @@ public class RecruitmentDocumentEvaluationController {
             summary = "(운영진) 지원서에 대한 평가 등록하기 (내 평가 Upsert)",
             description = """
                     로그인한 운영진이 특정 지원서에 대한 평가를 임시저장/제출/재제출합니다.
-                    * 지원서 평가에 임시저장이 필요할지를 기획단에 문의해놓은 상태인데, 필요하다는 응답이 오면 임시저장/제출/재제출을 하나의 API로 처리하는 방식으로 (존재한다면 업데이트, 존재하지 않는다면 생성) 구현하면 될 것 같습니다.
-                    * 임시저장이 필요하지 않다면, 제출은 post, 재제출은 patch로 나누어 구현해도 좋을 것 같습니다. (post 컨트롤러 및 usecase도 구현해놓았습니다.)
+                    임시저장/제출/재제출을 하나의 API로 처리합니다. (존재한다면 업데이트, 존재하지 않는다면 생성)
                     """
     )
     public MyEvaluationResponse upsertMyEvaluation(
@@ -161,34 +154,6 @@ public class RecruitmentDocumentEvaluationController {
         Long evaluatorId = memberPrincipal.getMemberId();
         var result = updateMyEvaluationUseCase.update(
                 new UpdateMyEvaluationCommand(
-                        recruitmentId,
-                        applicationId,
-                        evaluatorId,
-                        request.score(),
-                        request.comments()
-                )
-        );
-        return MyEvaluationResponse.from(result);
-    }
-
-    @PostMapping("/{applicationId}/document-evaluations/me")
-    @Operation(
-            summary = "(운영진) 지원서에 대한 평가 등록하기 (내 평가 최초 생성)",
-            description = """
-                    로그인한 운영진이 특정 지원서에 대한 평가를 최초 생성합니다.
-                    * 지원서 평가에 임시저장이 필요할지를 기획단에 문의해놓은 상태인데, 필요하다는 응답이 오면 임시저장/제출/재제출을 하나의 API로 처리하는 방식으로 (존재한다면 업데이트, 존재하지 않는다면 생성) 구현하면 될 것 같습니다. (PATCH를 사용)
-                    * 임시저장이 필요하지 않다면, 제출은 post, 재제출은 patch로 나누어 구현해도 좋을 것 같습니다.
-                    """
-    )
-    public MyEvaluationResponse createMyEvaluation(
-            @PathVariable Long recruitmentId,
-            @PathVariable Long applicationId,
-            @RequestBody @Valid CreateMyEvaluationRequest request,
-            @CurrentMember MemberPrincipal memberPrincipal
-    ) {
-        Long evaluatorId = memberPrincipal.getMemberId();
-        var result = createMyEvaluationUseCase.create(
-                new CreateMyEvaluationCommand(
                         recruitmentId,
                         applicationId,
                         evaluatorId,
