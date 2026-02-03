@@ -10,8 +10,8 @@ import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -128,8 +128,8 @@ class GetCurriculumWeeksUseCaseTest extends UseCaseTestSupport {
         return Gisu.builder()
                 .generation(generation)
                 .isActive(true)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
+                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
+                .endAt(Instant.parse("2024-08-31T23:59:00Z"))
                 .build();
     }
 
@@ -137,20 +137,22 @@ class GetCurriculumWeeksUseCaseTest extends UseCaseTestSupport {
         return Gisu.builder()
                 .generation(generation)
                 .isActive(false)
-                .startAt(LocalDateTime.of(2023, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2023, 8, 31, 23, 59))
+                .startAt(Instant.parse("2023-03-01T00:00:00Z"))
+                .endAt(Instant.parse("2023-08-31T00:00:00Z"))
                 .build();
     }
 
     private OriginalWorkbook createWorkbook(Curriculum curriculum, int weekNo, String title) {
+        Instant startBase = Instant.parse("2024-03-01T00:00:00Z");
+        Instant endBase = Instant.parse("2024-03-07T00:00:00Z");
         return OriginalWorkbook.create(
                 curriculum,
                 weekNo,
                 title,
                 null,
                 null,
-                LocalDate.of(2024, 3, 1).plusDays((long) (weekNo - 1) * 7),
-                LocalDate.of(2024, 3, 7).plusDays((long) (weekNo - 1) * 7),
+                startBase.plus((long) (weekNo - 1) * 7, ChronoUnit.DAYS),
+                endBase.plus((long) (weekNo - 1) * 7, ChronoUnit.DAYS),
                 MissionType.LINK
         );
     }

@@ -8,6 +8,7 @@ import static com.umc.product.organization.domain.QSchool.school;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
@@ -29,7 +30,7 @@ public class SchoolQueryRepository {
 
     public Page<SchoolListItemInfo> getSchools(SchoolSearchCondition condition, Pageable pageable) {
         // 활성 기수의 chapter id 서브쿼리
-        var activeChapterIds = JPAExpressions
+        JPQLQuery<Long> activeChapterIds = JPAExpressions
                 .select(chapter.id)
                 .from(chapter)
                 .join(chapter.gisu, gisu)
@@ -84,7 +85,7 @@ public class SchoolQueryRepository {
     }
 
     public SchoolInfo getSchoolDetail(Long schoolId) {
-        JPAQuery<Long> activeChapterIds = JPAExpressions
+        JPQLQuery<Long> activeChapterIds = JPAExpressions
                 .select(chapter.id)
                 .from(chapter)
                 .join(chapter.gisu, gisu)

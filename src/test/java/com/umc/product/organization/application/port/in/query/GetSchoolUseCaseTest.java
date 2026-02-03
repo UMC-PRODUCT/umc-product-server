@@ -1,7 +1,10 @@
 package com.umc.product.organization.application.port.in.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.application.port.in.query.dto.UnassignedSchoolInfo;
@@ -292,10 +295,70 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
         assertThat(result).isEmpty();
     }
 
+    @Test
+    void 학교_상세를_조회한다_활성_기수_지부_정보를_포함한다() {
+        // given
+        Gisu gisu = manageGisuPort.save(createGisu(8L));
+        Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Ain").build());
+
+        School school = School.create("중앙대", "비고");
+        school.updateChapterSchool(chapter);
+        manageSchoolPort.save(school);
+
+        // when
+        SchoolInfo result = getSchoolUseCase.getSchoolDetail(school.getId());
+
+        // then
+        assertThat(result.schoolId()).isEqualTo(school.getId());
+        assertThat(result.schoolName()).isEqualTo("중앙대");
+        assertThat(result.remark()).isEqualTo("비고");
+        assertThat(result.chapterId()).isEqualTo(chapter.getId());
+        assertThat(result.chapterName()).isEqualTo("Ain");
+        assertThat(result.createdAt()).isNotNull();
+        assertThat(result.updatedAt()).isNotNull();
+    }
+
+    @Test
+    void 비활성_기수_지부는_상세_조회에서_null로_반환된다() {
+        // given
+        Gisu inactiveGisu = manageGisuPort.save(createGisu(7L, false));
+        Chapter inactiveChapter = manageChapterPort.save(
+                Chapter.builder().gisu(inactiveGisu).name("Scorpio").build()
+        );
+
+        School school = School.create("동국대", "비고");
+        school.updateChapterSchool(inactiveChapter);
+        manageSchoolPort.save(school);
+
+        // when
+        SchoolInfo result = getSchoolUseCase.getSchoolDetail(school.getId());
+
+        // then
+        assertThat(result.schoolId()).isEqualTo(school.getId());
+        assertThat(result.chapterId()).isNull();
+        assertThat(result.chapterName()).isNull();
+    }
+
+    @Test
+    void 존재하지_않는_학교_상세를_조회하면_예외가_발생한다() {
+        // when & then
+        assertThatThrownBy(() -> getSchoolUseCase.getSchoolDetail(999L))
+                .isInstanceOf(BusinessException.class);
+    }
+
     private Gisu createGisu(Long generation) {
         return Gisu.builder()
                 .generation(generation)
                 .isActive(true)
+                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
+                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
+                .build();
+    }
+
+    private Gisu createGisu(Long generation, boolean isActive) {
+        return Gisu.builder()
+                .generation(generation)
+                .isActive(isActive)
                 .startAt(Instant.parse("2024-03-01T00:00:00Z"))
                 .endAt(Instant.parse("2024-08-31T23:59:59Z"))
                 .build();
