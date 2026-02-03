@@ -69,13 +69,13 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
                 return true;
             }
 
-            // 기수 상관 없이 총괄단 역할이 있으면 허용
-            // TODO: 향후 기수 제한이 필요할 수 있음
-            if (subjectAttributes.roleAttributes().stream()
-                .anyMatch(roleAttribute ->
-                    roleAttribute.roleType().isCentralCore())) {
-                return true;
-            }
+//            // 기수 상관 없이 총괄단 역할이 있으면 허용
+//            // TODO: 향후 기수 제한이 필요할 수 있음
+//            if (subjectAttributes.roleAttributes().stream()
+//                .anyMatch(roleAttribute ->
+//                    roleAttribute.roleType().isCentralCore())) {
+//                return true;
+//            }
         }
 
         throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_RESOURCE_PERMISSION_GIVEN,

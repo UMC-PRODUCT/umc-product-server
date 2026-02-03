@@ -9,6 +9,7 @@ import com.umc.product.notice.application.port.in.command.dto.CreateNoticeComman
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
+import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.domain.Notice;
@@ -19,6 +20,7 @@ import com.umc.product.notice.dto.NoticeTargetPattern;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +33,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class NoticeService implements ManageNoticeUseCase {
 
     private static final String NOTICE_REMINDER_TITLE_PREFIX = "[리마인드 공지] ";
+    private static final String NOTICE_TITLE_PREFIX = "[새 공지] ";
     private static final String REMINDER_BODY_SUFFIX = " 공지를 확인해주세요.";
+    private static final String NOTICE_BODY_SUFFIX = "새로운 공지가 등록되었습니다: ";
     // 도메인 내부 포트
     private final LoadNoticePort loadNoticePort;
     private final SaveNoticePort saveNoticePort;
@@ -39,6 +43,7 @@ public class NoticeService implements ManageNoticeUseCase {
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final GetMemberRolesUseCase getMemberRolesUseCase;
+    private final GetNoticeTargetUseCase getNoticeTargetUseCase;
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
     private final ManageFcmUseCase manageFcmUseCase;
 
@@ -48,7 +53,9 @@ public class NoticeService implements ManageNoticeUseCase {
             command.memberId(),
             command.targetInfo().targetGisuId());
 
-        // TODO: 작성 권한이 있는지 판단하는 로직 추가 필요
+        if (!validateNoticeWritePermission(command.targetInfo(), command.memberId())) {
+            throw new NoticeDomainException(NoticeErrorCode.NO_WRITE_PERMISSION);
+        }
 
         Notice notice = Notice.create(
             command.title(),
@@ -59,21 +66,40 @@ public class NoticeService implements ManageNoticeUseCase {
 
         Notice savedNotice = saveNoticePort.save(notice);
 
-        // TODO: shouldNotify가 true일 경우, 발송 대상을 파악하고 알림 전송, 발송 후 notifiedAt 호출
+        if (savedNotice.isNotificationRequired()) {
+            manageFcmUseCase.sendMessageByToken(new NotificationCommand(
+                command.memberId(),
+                NOTICE_TITLE_PREFIX + savedNotice.getTitle(),
+                NOTICE_BODY_SUFFIX
+            ));
+            savedNotice.markAsNotified(Instant.now());
+        }
 
         return savedNotice.getId();
     }
 
     @Override
     public void updateNoticeTitleOrContent(UpdateNoticeCommand command) {
-        // TODO: 작성자가 일치하는지 여부를 검증
-
-        // TODO: 작성자에 대한 상태 검증 추가
-
         Notice notice = findNoticeById(command.noticeId());
+        NoticeTargetInfo targets = getNoticeTargetUseCase.findByNoticeId(command.noticeId());
 
-        // TODO: 작성자 일치 여부 검증 (도메인 로직으로 추가)
+        /**
+         * 작성자 일치 여부 검증 (이 메서드로 ACTIVE 상태인 챌린저만 올 수 있으므로 별도 상태 검증은 불필요)
+         */
+        boolean isAuthor = notice.isAuthorChallenger(
+            getChallengerUseCase.getActiveByMemberIdAndGisuId(
+                command.memberId(),
+                targets.targetGisuId()
+            ).challengerId()
+        );
 
+        if (!isAuthor) {
+            throw new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH);
+        }
+
+        /**
+         * 제목/내용만 수정
+         */
         notice.updateTitleOrContent(
             command.title(),
             command.content()
@@ -84,15 +110,21 @@ public class NoticeService implements ManageNoticeUseCase {
 
     @Override
     public void deleteNotice(DeleteNoticeCommand command) {
-        Long gisuId = getGisuUseCase.getActiveGisuId();
-
-        ChallengerInfo challenger = getChallengerByMemberAndGisu(command.memberId(), gisuId);
-
-        // TODO: 작성자에 대한 상태 검증 추가 (유효한 챌린저인지)
-
         Notice notice = findNoticeById(command.noticeId());
+        NoticeTargetInfo targets = getNoticeTargetUseCase.findByNoticeId(command.noticeId());
+        /**
+         * 작성자 일치 여부 검증 (이 메서드로 ACTIVE 상태인 챌린저만 올 수 있으므로 별도 상태 검증은 불필요)
+         */
+        boolean isAuthor = notice.isAuthorChallenger(
+            getChallengerUseCase.getActiveByMemberIdAndGisuId(
+                command.memberId(),
+                targets.targetGisuId()
+            ).challengerId()
+        );
 
-        // TODO: 공지 작성자인지 검증하는 로직 추가 (CheckAccess 어노테이션을 활용할 것)
+        if (!isAuthor) {
+            throw new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH);
+        }
 
         /*
          * 관련 이미지, 투표, 링크 등도 모두 삭제
