@@ -1,14 +1,18 @@
 package com.umc.product.schedule.application.service.command;
 
-import com.umc.product.schedule.application.port.in.command.CreateAttendanceSheetUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleWithAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleWithAttendanceUseCase;
-import com.umc.product.schedule.application.port.in.command.dto.CreateAttendanceSheetCommand;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleWithAttendanceCommand;
 import com.umc.product.schedule.application.port.out.DeleteAttendanceSheetPort;
+import com.umc.product.schedule.application.port.out.SaveAttendanceRecordPort;
+import com.umc.product.schedule.application.port.out.SaveAttendanceSheetPort;
+import com.umc.product.schedule.domain.AttendanceRecord;
+import com.umc.product.schedule.domain.AttendanceSheet;
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,9 +30,10 @@ public class ScheduleAttendanceCommandFacadeService implements
     DeleteScheduleWithAttendanceUseCase {
 
     private final CreateScheduleUseCase createScheduleUseCase;
-    private final CreateAttendanceSheetUseCase createAttendanceSheetUseCase;
     private final DeleteScheduleUseCase deleteScheduleUseCase;
     private final DeleteAttendanceSheetPort deleteAttendanceSheetPort;
+    private final SaveAttendanceSheetPort saveAttendanceSheetPort;
+    private final SaveAttendanceRecordPort saveAttendanceRecordPort;
 
     @Override
     public Long create(CreateScheduleWithAttendanceCommand command) {
@@ -36,9 +41,30 @@ public class ScheduleAttendanceCommandFacadeService implements
         CreateScheduleCommand scheduleCommand = command.toScheduleCommand();
         Long scheduleId = createScheduleUseCase.create(scheduleCommand);
 
-        // 2. 출석부 생성
-        CreateAttendanceSheetCommand sheetCommand = command.toAttendanceSheetCommand(scheduleId);
-        createAttendanceSheetUseCase.create(sheetCommand);
+        // 2. 출석부 생성 - 일정 시간 기준으로 AttendanceSheet가 Window를 조립
+        AttendanceSheet sheet = AttendanceSheet.createWithSchedule(
+            scheduleId,
+            command.startsAt(),
+            command.endsAt(),
+            command.lateThresholdMinutes(),
+            command.requiresApproval()
+        );
+        AttendanceSheet savedSheet = saveAttendanceSheetPort.save(sheet);
+
+        // 3. 참여자별 출석 기록(AttendanceRecord) 생성
+        List<Long> participantMemberIds = command.participantMemberIds();
+        if (participantMemberIds != null && !participantMemberIds.isEmpty()) {
+            List<AttendanceRecord> records = participantMemberIds.stream()
+                .distinct()
+                .map(memberId -> AttendanceRecord.builder()
+                    .attendanceSheetId(savedSheet.getId())
+                    .memberId(memberId)
+                    .status(AttendanceStatus.PENDING)
+                    .build())
+                .toList();
+
+            saveAttendanceRecordPort.saveAllRecords(records);
+        }
 
         return scheduleId;
     }

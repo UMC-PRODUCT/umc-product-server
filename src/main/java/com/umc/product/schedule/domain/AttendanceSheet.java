@@ -62,6 +62,37 @@ public class AttendanceSheet {
     }
 
     /**
+     * 일정 기반 출석부 생성 (동시 생성용)
+     * <p>
+     * 출석 시간대(Window)는 일정의 시작/종료 시간을 기준으로 내부에서 생성됩니다.
+     *
+     * @param scheduleId            연결할 일정 ID
+     * @param scheduleStartsAt      일정 시작 시간 (출석 시간대 시작)
+     * @param scheduleEndsAt        일정 종료 시간 (출석 시간대 종료)
+     * @param lateThresholdMinutes  지각 기준 시간(분)
+     * @param requiresApproval      승인 필요 여부
+     */
+    public static AttendanceSheet createWithSchedule(
+        Long scheduleId,
+        LocalDateTime scheduleStartsAt,
+        LocalDateTime scheduleEndsAt,
+        int lateThresholdMinutes,
+        boolean requiresApproval
+    ) {
+        AttendanceWindow window = AttendanceWindow.from(
+            scheduleStartsAt,
+            scheduleEndsAt,
+            lateThresholdMinutes
+        );
+
+        return AttendanceSheet.builder()
+            .scheduleId(scheduleId)
+            .window(window)
+            .requiresApproval(requiresApproval)
+            .build();
+    }
+
+    /**
      * 체크 시간이 출석 가능 시간대(window) 안에 있는지 확인.
      */
     public boolean isWithinTimeWindow(LocalDateTime checkTime) {

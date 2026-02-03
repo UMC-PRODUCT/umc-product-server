@@ -49,6 +49,7 @@ public class AttendanceSheetCommandService implements CreateAttendanceSheetUseCa
         // 참여자별 출석 기록(AttendanceRecord) 생성
         if (command.hasParticipants()) {
             List<AttendanceRecord> records = command.participantMemberIds().stream()
+                .distinct()
                 .map(memberId -> AttendanceRecord.builder()
                     .attendanceSheetId(savedSheet.getId())
                     .memberId(memberId)
