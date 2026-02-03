@@ -58,38 +58,38 @@ public interface NoticeContentApi {
     );
 
     @Operation(
-        summary = "공지사항 이미지 교체",
-        description = "공지사항 이미지를 전체 교체합니다."
+        summary = "공지사항 이미지 수정",
+        description = "공지사항 이미지를 전체 수정합니다."
     )
     ApiResponse<ReplaceNoticeImagesResponse> replaceNoticeImages(
         @Parameter(description = "공지사항 ID", required = true)
         @PathVariable Long noticeId,
 
-        @Parameter(description = "교체할 이미지 정보", required = true)
+        @Parameter(description = "수정할 이미지 정보", required = true)
         @RequestBody @Valid ReplaceNoticeImagesRequest request
     );
 
     @Operation(
-        summary = "공지사항 링크 교체",
-        description = "공지사항 링크를 전체 교체합니다."
+        summary = "공지사항 링크 수정",
+        description = "공지사항 링크를 전체 수정합니다."
     )
     ApiResponse<ReplaceNoticeLinksResponse> replaceNoticeLinks(
         @Parameter(description = "공지사항 ID", required = true)
         @PathVariable Long noticeId,
 
-        @Parameter(description = "교체할 링크 정보", required = true)
+        @Parameter(description = "수정할 링크 정보", required = true)
         @RequestBody @Valid ReplaceNoticeLinksRequest request
     );
 
     @Operation(
-        summary = "공지사항 투표 교체",
-        description = "공지사항 투표를 전체 교체합니다."
+        summary = "공지사항 투표 수정",
+        description = "공지사항 투표를 전체 수정합니다."
     )
     ApiResponse<ReplaceNoticeVotesResponse> replaceNoticeVotes(
         @Parameter(description = "공지사항 ID", required = true)
         @PathVariable Long noticeId,
 
-        @Parameter(description = "교체할 투표 정보", required = true)
+        @Parameter(description = "수정할 투표 정보", required = true)
         @RequestBody @Valid ReplaceNoticeVotesRequest request
     );
 
