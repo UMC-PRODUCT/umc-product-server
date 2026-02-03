@@ -2,8 +2,7 @@ package com.umc.product.organization.adapter.in.web.dto.response;
 
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.util.List;
 
 @Schema(description = "스터디 그룹 상세 정보")
@@ -13,7 +12,7 @@ public record StudyGroupResponse(
                 @Schema(description = "파트", example = "WEB") String part,
                 @Schema(description = "파트 표시명", example = "웹") String partDisplayName,
                 @Schema(description = "소속 학교 목록") List<School> schools,
-                @Schema(description = "생성일시") LocalDateTime createdAt,
+                @Schema(description = "생성일시") Instant createdAt,
                 @Schema(description = "멤버 수", example = "4") int memberCount,
                 @Schema(description = "리더 정보") Leader leader,
                 @Schema(description = "멤버 목록 (리더 제외)") List<Member> members) {
@@ -24,7 +23,7 @@ public record StudyGroupResponse(
                                 detail.part().name(),
                                 detail.part().getDisplayName(),
                                 School.fromList(detail.schools()),
-                                LocalDateTime.ofInstant(detail.createdAt(), ZoneId.of("Asia/Seoul")),
+                                detail.createdAt(),
                                 detail.memberCount(),
                                 Leader.from(detail.leader()),
                                 Member.fromList(detail.members()));

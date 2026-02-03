@@ -4,8 +4,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.MissionType;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 
@@ -35,10 +34,10 @@ public record AdminCurriculumInfo(
             String title,
             String description,
             String workbookUrl,
-            LocalDate startDate,
-            LocalDate endDate,
+            Instant startDate,
+            Instant endDate,
             MissionType missionType,
-            LocalDateTime releasedAt,
+            Instant releasedAt,
             boolean isReleased
     ) {
         public static WorkbookInfo from(OriginalWorkbook workbook) {
