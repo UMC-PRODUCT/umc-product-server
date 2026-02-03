@@ -15,10 +15,7 @@ public record UpdateNoticeRequest(
     @NotNull(message = "공지 대상 정보는 비어 있을 수 없습니다.")
     NoticeTargetInfo targetInfo,
     @NotNull(message = "알림 발송 여부는 비어 있을 수 없습니다.")
-    Boolean shouldNotify, /* 알림 발송 여부 */
-    List<String> imageIds,
-    List<String> links,
-    List<Long> voteIds
+    Boolean shouldNotify /* 알림 발송 여부 */
 ) {
 
     public UpdateNoticeCommand toCommand(Long memberId, Long noticeId) {
@@ -26,7 +23,9 @@ public record UpdateNoticeRequest(
             memberId,
             noticeId,
             title,
-            content
+            content,
+            targetInfo,
+            shouldNotify
         );
     }
 }

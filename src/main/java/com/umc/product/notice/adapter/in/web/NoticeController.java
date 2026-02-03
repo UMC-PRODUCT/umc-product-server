@@ -12,6 +12,7 @@ import com.umc.product.notice.adapter.in.web.dto.request.SendNoticeReminderReque
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.response.command.CreateNoticeResponse;
 import com.umc.product.notice.adapter.in.web.swagger.NoticeApi;
+import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -76,7 +77,10 @@ public class NoticeController implements NoticeApi {
         @CurrentMember MemberPrincipal memberPrincipal) {
 
         Long memberId = memberPrincipal.getMemberId();
-        manageNoticeUseCase.updateNoticeTitleOrContent(request.toCommand(memberId, noticeId));
+        manageNoticeUseCase.updateNoticeTitleOrContent(
+            request.toCommand(memberId, noticeId)
+        );
+
     }
 
     /*

@@ -105,7 +105,6 @@ public class NoticeService implements ManageNoticeUseCase {
             command.content()
         );
 
-        // 이미지, 투표, 링크 등은 별도의 command로 분리 구현
     }
 
     @Override
@@ -125,11 +124,6 @@ public class NoticeService implements ManageNoticeUseCase {
         if (!isAuthor) {
             throw new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH);
         }
-
-        /*
-         * 관련 이미지, 투표, 링크 등도 모두 삭제
-         */
-        manageNoticeContentUseCase.removeContentsByNoticeId(notice.getId());
 
         saveNoticePort.delete(notice);
     }

@@ -59,7 +59,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
             return false;
         }
 
-        // DELETE는 작성자 본인 또는 중앙운영사무국 총괄단만 가능함
+        // DELETE는 작성자 본인만 가능함.
         else if (resourcePermission.permission() == PermissionType.DELETE) {
             NoticeInfo noticeInfo = getNoticeUseCase.getNoticeDetail(resourcePermission.getResourceIdAsLong());
             Long authorMemberId = getChallengerUseCase.getChallengerPublicInfo(noticeInfo.authorChallengerId())
@@ -68,14 +68,6 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
             if (Objects.equals(subjectAttributes.memberId(), authorMemberId)) {
                 return true;
             }
-
-//            // 기수 상관 없이 총괄단 역할이 있으면 허용
-//            // TODO: 향후 기수 제한이 필요할 수 있음
-//            if (subjectAttributes.roleAttributes().stream()
-//                .anyMatch(roleAttribute ->
-//                    roleAttribute.roleType().isCentralCore())) {
-//                return true;
-//            }
         }
 
         throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_RESOURCE_PERMISSION_GIVEN,
