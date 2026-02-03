@@ -52,7 +52,7 @@ public class ScheduleQueryService implements
     public ScheduleDetailInfo getScheduleDetail(Long scheduleId) {
         LocalDateTime now = LocalDateTime.now();
 
-        Schedule schedule = loadSchedulePort.findById(scheduleId)
+        Schedule schedule = loadSchedulePort.findByIdWithTags(scheduleId)
             .orElseThrow(() -> new BusinessException(
                 Domain.SCHEDULE, ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
