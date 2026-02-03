@@ -12,7 +12,9 @@ import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeComman
 import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
+import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
+import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeTargetInfo;
@@ -36,15 +38,16 @@ public class NoticeService implements ManageNoticeUseCase {
     private static final String NOTICE_TITLE_PREFIX = "[새 공지] ";
     private static final String REMINDER_BODY_SUFFIX = " 공지를 확인해주세요.";
     private static final String NOTICE_BODY_SUFFIX = "새로운 공지가 등록되었습니다: ";
+
     // 도메인 내부 포트
     private final LoadNoticePort loadNoticePort;
     private final SaveNoticePort saveNoticePort;
+    private final SaveNoticeTargetPort saveNoticeTargetPort;
+
     // 도메인 외부 UseCase
     private final GetChallengerUseCase getChallengerUseCase;
-    private final GetGisuUseCase getGisuUseCase;
     private final GetMemberRolesUseCase getMemberRolesUseCase;
     private final GetNoticeTargetUseCase getNoticeTargetUseCase;
-    private final ManageNoticeContentUseCase manageNoticeContentUseCase;
     private final ManageFcmUseCase manageFcmUseCase;
 
     @Override
@@ -66,6 +69,18 @@ public class NoticeService implements ManageNoticeUseCase {
 
         Notice savedNotice = saveNoticePort.save(notice);
 
+        saveNoticeTargetPort.save(NoticeTarget.builder()
+            .noticeId(savedNotice.getId())
+            .targetGisuId(command.targetInfo().targetGisuId())
+            .targetChapterId(command.targetInfo().targetChapterId())
+            .targetSchoolId(command.targetInfo().targetSchoolId())
+            .targetChallengerPart(command.targetInfo().targetParts())
+            .build()
+        );
+
+        /**
+         * 공지 알림 전송
+         */
         if (savedNotice.isNotificationRequired()) {
             manageFcmUseCase.sendMessageByToken(new NotificationCommand(
                 command.memberId(),
