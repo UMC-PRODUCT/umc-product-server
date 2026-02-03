@@ -155,8 +155,7 @@ public class SecurityConfig {
                     }
 
                     // 나머지는 인증 필요
-//                    auth.anyRequest().authenticated();
-                    auth.anyRequest().permitAll(); // TODO: 나중에 지우기
+                    auth.anyRequest().authenticated();
                 })
                 // Spring 기본 로그인 필터 동작 전에 JWT 동작
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
