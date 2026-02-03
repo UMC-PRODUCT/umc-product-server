@@ -4,26 +4,26 @@ import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateDocumentStatusRequest;
-import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateMyEvaluationRequest;
+import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateMyDocumentEvaluationRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicationDetailResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicationEvaluationsResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicationListResponse;
-import com.umc.product.recruitment.adapter.in.web.dto.response.MyEvaluationResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.GetMyDocumentEvaluationResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateDocumentStatusResponse;
-import com.umc.product.recruitment.application.port.in.command.UpdateMyEvaluationUseCase;
+import com.umc.product.recruitment.application.port.in.command.UpdateMyDocumentEvaluationUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateDocumentStatusCommand;
-import com.umc.product.recruitment.application.port.in.command.dto.UpdateMyEvaluationCommand;
+import com.umc.product.recruitment.application.port.in.command.dto.UpdateMyDocumentEvaluationCommand;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationEvaluationListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationListUseCase;
-import com.umc.product.recruitment.application.port.in.query.GetMyEvaluationUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetMyDocumentEvaluationUseCase;
 import com.umc.product.recruitment.application.port.in.query.UpdateDocumentStatusUseCase;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationEvaluationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationEvaluationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationListQuery;
-import com.umc.product.recruitment.application.port.in.query.dto.GetMyEvaluationQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEvaluationQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -45,8 +45,8 @@ public class RecruitmentDocumentEvaluationController {
     private final GetApplicationDetailUseCase getApplicationDetailUseCase;
     private final GetApplicationListUseCase getApplicationListUseCase;
     private final GetApplicationEvaluationListUseCase getApplicationEvaluationListUseCase;
-    private final GetMyEvaluationUseCase getMyEvaluationUseCase;
-    private final UpdateMyEvaluationUseCase updateMyEvaluationUseCase;
+    private final GetMyDocumentEvaluationUseCase getMyDocumentEvaluationUseCase;
+    private final UpdateMyDocumentEvaluationUseCase updateMyDocumentEvaluationUseCase;
     private final UpdateDocumentStatusUseCase updateDocumentStatusUseCase;
 
     @GetMapping("/document-evaluations")
@@ -124,17 +124,17 @@ public class RecruitmentDocumentEvaluationController {
                     평가가 아직 없으면 null을 반환합니다.
                     """
     )
-    public MyEvaluationResponse getMyEvaluation(
+    public GetMyDocumentEvaluationResponse getMyEvaluation(
             @PathVariable Long recruitmentId,
             @PathVariable Long applicationId,
             @CurrentMember MemberPrincipal memberPrincipal
     ) {
         Long evaluatorId = memberPrincipal.getMemberId();
 
-        var result = getMyEvaluationUseCase.get(
-                new GetMyEvaluationQuery(recruitmentId, applicationId, evaluatorId)
+        var result = getMyDocumentEvaluationUseCase.get(
+                new GetMyDocumentEvaluationQuery(recruitmentId, applicationId, evaluatorId)
         );
-        return MyEvaluationResponse.from(result);
+        return GetMyDocumentEvaluationResponse.from(result);
     }
 
     @PatchMapping("/{applicationId}/document-evaluations/me")
@@ -145,15 +145,15 @@ public class RecruitmentDocumentEvaluationController {
                     임시저장/제출/재제출을 하나의 API로 처리합니다. (존재한다면 업데이트, 존재하지 않는다면 생성)
                     """
     )
-    public MyEvaluationResponse upsertMyEvaluation(
+    public GetMyDocumentEvaluationResponse upsertMyEvaluation(
             @PathVariable Long recruitmentId,
             @PathVariable Long applicationId,
-            @RequestBody @Valid UpdateMyEvaluationRequest request,
+            @RequestBody @Valid UpdateMyDocumentEvaluationRequest request,
             @CurrentMember MemberPrincipal memberPrincipal
     ) {
         Long evaluatorId = memberPrincipal.getMemberId();
-        var result = updateMyEvaluationUseCase.update(
-                new UpdateMyEvaluationCommand(
+        var result = updateMyDocumentEvaluationUseCase.update(
+                new UpdateMyDocumentEvaluationCommand(
                         recruitmentId,
                         applicationId,
                         evaluatorId,
@@ -161,7 +161,7 @@ public class RecruitmentDocumentEvaluationController {
                         request.comments()
                 )
         );
-        return MyEvaluationResponse.from(result);
+        return GetMyDocumentEvaluationResponse.from(result);
     }
 
     @PatchMapping("/{applicationId}/document-status")

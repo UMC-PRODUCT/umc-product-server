@@ -21,7 +21,7 @@ public record ApplicationListResponse(
             String applicantName,
             String applicantNickname,
 
-            List<PreferredPartResponse> preferredParts,
+            List<PreferredPartWithPriorityResponse> preferredParts,
 
             boolean isEvaluated
     ) {
@@ -31,20 +31,22 @@ public record ApplicationListResponse(
                     summary.applicantMemberId(),
                     summary.applicantName(),
                     summary.applicantNickname(),
-                    summary.preferredParts().stream().map(PreferredPartResponse::from).toList(),
+                    summary.preferredParts().stream().map(PreferredPartWithPriorityResponse::from).toList(),
                     summary.isEvaluated()
             );
         }
     }
 
-    public record PreferredPartResponse(
+    public record PreferredPartWithPriorityResponse(
             Integer priority,
-            String part
+            String part,
+            String label
     ) {
-        static PreferredPartResponse from(ApplicationListInfo.PreferredPartInfo p) {
-            return new PreferredPartResponse(
+        static PreferredPartWithPriorityResponse from(ApplicationListInfo.PreferredPartInfo p) {
+            return new PreferredPartWithPriorityResponse(
                     p.priority(),
-                    p.part()
+                    p.part().getCode(),
+                    p.part().getLabel()
             );
         }
     }

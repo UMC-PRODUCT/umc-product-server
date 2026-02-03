@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.application.port.in.query.dto;
 
+import com.umc.product.recruitment.application.port.in.PartOption;
 import java.util.List;
 
 public record ApplicationListInfo(
@@ -18,7 +19,7 @@ public record ApplicationListInfo(
 
     public record PreferredPartInfo(
             Integer priority,
-            String part
+            PartOption part
     ) {
     }
 }
