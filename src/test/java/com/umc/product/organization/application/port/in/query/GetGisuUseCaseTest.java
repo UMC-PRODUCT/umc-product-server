@@ -6,7 +6,7 @@ import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,8 +51,8 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
     @Test
     void 기수_정보에_시작일과_종료일이_포함된다() {
         // given
-        LocalDateTime startAt = LocalDateTime.of(2024, 3, 1, 0, 0);
-        LocalDateTime endAt = LocalDateTime.of(2024, 8, 31, 23, 59);
+        Instant startAt = Instant.parse("2024-03-01T00:00:00Z");
+        Instant endAt = Instant.parse("2024-08-31T23:59:59Z");
         Gisu gisu = manageGisuPort.save(Gisu.builder()
                 .generation(8L)
                 .isActive(true)
@@ -64,16 +64,16 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
         GisuInfo result = getGisuUseCase.getById(gisu.getId());
 
         // then
-        assertThat(result.startAt()).isEqualTo(startAt.toLocalDate());
-        assertThat(result.endAt()).isEqualTo(endAt.toLocalDate());
+        assertThat(result.startAt()).isEqualTo(startAt);
+        assertThat(result.endAt()).isEqualTo(endAt);
     }
 
     private Gisu createGisu(Long generation, boolean isActive) {
         return Gisu.builder()
                 .generation(generation)
                 .isActive(isActive)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
+                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
+                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
                 .build();
     }
 }

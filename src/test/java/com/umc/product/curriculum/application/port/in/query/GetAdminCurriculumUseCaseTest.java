@@ -10,8 +10,7 @@ import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,11 +39,11 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "9기 Springboot");
         OriginalWorkbook workbook1 = OriginalWorkbook.create(
                 curriculum, 1, "1주차 - Spring 시작하기", "Spring Boot 기초", "http://workbook1.url",
-                LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 7), MissionType.LINK
+                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
         );
         OriginalWorkbook workbook2 = OriginalWorkbook.create(
                 curriculum, 2, "2주차 - JPA 기초", "JPA 입문", "http://workbook2.url",
-                LocalDate.of(2024, 3, 8), LocalDate.of(2024, 3, 14), MissionType.MEMO
+                Instant.parse("2024-03-08T00:00:00Z"), Instant.parse("2024-03-14T23:59:59Z"), MissionType.MEMO
         );
         curriculum.addWorkbook(workbook1);
         curriculum.addWorkbook(workbook2);
@@ -66,15 +65,15 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "커리큘럼");
         OriginalWorkbook workbook3 = OriginalWorkbook.create(
                 curriculum, 3, "3주차", null, null,
-                LocalDate.of(2024, 3, 15), LocalDate.of(2024, 3, 21), MissionType.LINK
+                Instant.parse("2024-03-15T00:00:00Z"), Instant.parse("2024-03-21T23:59:59Z"), MissionType.LINK
         );
         OriginalWorkbook workbook1 = OriginalWorkbook.create(
                 curriculum, 1, "1주차", null, null,
-                LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 7), MissionType.LINK
+                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
         );
         OriginalWorkbook workbook2 = OriginalWorkbook.create(
                 curriculum, 2, "2주차", null, null,
-                LocalDate.of(2024, 3, 8), LocalDate.of(2024, 3, 14), MissionType.LINK
+                Instant.parse("2024-03-08T00:00:00Z"), Instant.parse("2024-03-14T23:59:59Z"), MissionType.LINK
         );
         // 순서 섞어서 추가
         curriculum.addWorkbook(workbook3);
@@ -98,7 +97,7 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "커리큘럼");
         OriginalWorkbook workbook = OriginalWorkbook.create(
                 curriculum, 1, "1주차 제목", "1주차 설명", "http://workbook.url",
-                LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 7), MissionType.MEMO
+                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.MEMO
         );
         curriculum.addWorkbook(workbook);
         saveCurriculumPort.save(curriculum);
@@ -113,8 +112,8 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         assertThat(workbookInfo.title()).isEqualTo("1주차 제목");
         assertThat(workbookInfo.description()).isEqualTo("1주차 설명");
         assertThat(workbookInfo.workbookUrl()).isEqualTo("http://workbook.url");
-        assertThat(workbookInfo.startDate()).isEqualTo(LocalDate.of(2024, 3, 1));
-        assertThat(workbookInfo.endDate()).isEqualTo(LocalDate.of(2024, 3, 7));
+        assertThat(workbookInfo.startDate()).isEqualTo(Instant.parse("2024-03-01T00:00:00Z"));
+        assertThat(workbookInfo.endDate()).isEqualTo(Instant.parse("2024-03-07T23:59:59Z"));
         assertThat(workbookInfo.missionType()).isEqualTo(MissionType.MEMO);
         assertThat(workbookInfo.isReleased()).isFalse();
         assertThat(workbookInfo.releasedAt()).isNull();
@@ -126,7 +125,7 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "커리큘럼");
         OriginalWorkbook workbook = OriginalWorkbook.create(
                 curriculum, 1, "1주차", null, null,
-                LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 7), MissionType.LINK
+                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
         );
         workbook.release();
         curriculum.addWorkbook(workbook);
@@ -183,8 +182,8 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         return Gisu.builder()
                 .generation(generation)
                 .isActive(true)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
+                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
+                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
                 .build();
     }
 
@@ -192,8 +191,8 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         return Gisu.builder()
                 .generation(generation)
                 .isActive(false)
-                .startAt(LocalDateTime.of(2023, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2023, 8, 31, 23, 59))
+                .startAt(Instant.parse("2023-03-01T00:00:00Z"))
+                .endAt(Instant.parse("2023-08-31T23:59:59Z"))
                 .build();
     }
 }
