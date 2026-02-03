@@ -14,7 +14,7 @@ import com.umc.product.curriculum.application.port.in.query.CurriculumProgressIn
 import com.umc.product.curriculum.application.port.in.query.CurriculumWeekInfo;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -69,22 +69,22 @@ public class CurriculumQueryRepository {
                 .fetch();
 
         // 3. 결과 변환
-        LocalDate today = LocalDate.now();
+        Instant now = Instant.now();
         List<WorkbookProgressInfo> workbooks = results.stream()
                 .map(tuple -> {
                     Integer weekNo = tuple.get(originalWorkbook.weekNo);
                     Long challengerWorkbookId = tuple.get(challengerWorkbook.id);
                     WorkbookStatus challengerWorkbookStatus = tuple.get(challengerWorkbook.status);
-                    LocalDate startDate = tuple.get(originalWorkbook.startDate);
-                    LocalDate endDate = tuple.get(originalWorkbook.endDate);
+                    Instant startDate = tuple.get(originalWorkbook.startDate);
+                    Instant endDate = tuple.get(originalWorkbook.endDate);
                     boolean isReleased = tuple.get(originalWorkbook.releasedAt) != null;
 
                     // 상태 결정
                     WorkbookStatus finalStatus = challengerWorkbookId == null ? null : challengerWorkbookStatus;
 
                     boolean isInDateRange = startDate != null && endDate != null
-                            && !today.isBefore(startDate)
-                            && !today.isAfter(endDate);
+                            && !now.isBefore(startDate)
+                            && !now.isAfter(endDate);
                     boolean isInProgress = isReleased && isInDateRange;
 
                     return new WorkbookProgressInfo(

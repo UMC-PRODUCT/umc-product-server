@@ -3,6 +3,7 @@ package com.umc.product.organization.adapter.out.persistence;
 
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
@@ -61,5 +62,14 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
     @Override
     public List<School> findUnassignedByGisuId(Long gisuId) {
         return schoolJpaRepository.findUnassignedByGisuId(gisuId);
+    }
+
+    @Override
+    public SchoolInfo findSchoolDetailByIdWithActiveChapter(Long schoolId) {
+        SchoolInfo schoolInfo = schoolQueryRepository.getSchoolDetail(schoolId);
+        if (schoolInfo == null) {
+            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.SCHOOL_NOT_FOUND);
+        }
+        return schoolInfo;
     }
 }

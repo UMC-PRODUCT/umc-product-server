@@ -2,7 +2,7 @@ package com.umc.product.organization.adapter.in.web.dto.response;
 
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDate;
+import java.time.Instant;
 
 @Schema(description = "기수 정보")
 public record GisuResponse(
@@ -10,10 +10,10 @@ public record GisuResponse(
         Long gisuId,
         @Schema(description = "기수 번호", example = "8")
         Long generation,
-        @Schema(description = "시작일", example = "2024-03-01")
-        LocalDate startAt,
-        @Schema(description = "종료일", example = "2024-08-31")
-        LocalDate endAt,
+        @Schema(description = "시작일", example = "2024-03-01T00:00:00Z")
+        Instant startAt,
+        @Schema(description = "종료일", example = "2024-08-31T23:59:59Z")
+        Instant endAt,
         @Schema(description = "활성 여부", example = "true")
         boolean isActive
 ) {

@@ -14,7 +14,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.umc.product.organization.adapter.in.web.dto.request.CreateGisuRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateGisuRequest;
 import com.umc.product.support.DocumentationTest;
-import java.time.LocalDate;
+import java.time.Instant;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -27,7 +27,7 @@ class GisuControllerTest extends DocumentationTest {
     @Disabled("아직 없는 기능")
     void 신규_기수를_추가한다() throws Exception {
         // given
-        CreateGisuRequest request = new CreateGisuRequest(9L, LocalDate.of(2025, 3, 1), LocalDate.of(2025, 8, 31));
+        CreateGisuRequest request = new CreateGisuRequest(9L, Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-08-31T23:59:59Z"));
 
         given(manageGisuUseCase.register(any())).willReturn(1L);
 
@@ -48,7 +48,7 @@ class GisuControllerTest extends DocumentationTest {
     void 기수_정보를_수정한다() throws Exception {
         // given
         Long gisuId = 1L;
-        UpdateGisuRequest request = new UpdateGisuRequest(LocalDate.of(2025, 3, 1), LocalDate.of(2025, 9, 30));
+        UpdateGisuRequest request = new UpdateGisuRequest(Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-09-30T23:59:59Z"));
 
         // when
         ResultActions result = mockMvc.perform(

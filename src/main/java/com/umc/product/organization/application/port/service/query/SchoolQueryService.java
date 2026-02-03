@@ -29,8 +29,7 @@ public class SchoolQueryService implements GetSchoolUseCase {
 
     @Override
     public SchoolInfo getSchoolDetail(Long schoolId) {
-        // TODO: 학교 상세 조회 구현 필요
-        return null;
+        return loadSchoolPort.findSchoolDetailByIdWithActiveChapter(schoolId);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package com.umc.product.organization.application.port.in.query.dto;
 
-import java.time.LocalDate;
+import java.time.Instant;
 
 public record SchoolInfo(
         Long chapterId,
@@ -8,7 +8,7 @@ public record SchoolInfo(
         String schoolName,
         Long schoolId,
         String remark,
-        LocalDate createdAt,
-        LocalDate updatedAt
+        Instant createdAt,
+        Instant updatedAt
 ) {
 }
