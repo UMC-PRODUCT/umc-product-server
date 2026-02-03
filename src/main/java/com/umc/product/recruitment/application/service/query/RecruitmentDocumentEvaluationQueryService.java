@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
-public class RecruitmentDocEvalQueryService implements GetApplicationDetailUseCase,
+public class RecruitmentDocumentEvaluationQueryService implements GetApplicationDetailUseCase,
         GetApplicationListUseCase,
         GetApplicationEvaluationListUseCase,
         GetMyEvaluationUseCase {
