@@ -1,12 +1,14 @@
 package com.umc.product.notice.adapter.out.persistence;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.challenger.domain.QChallenger;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.QNotice;
 import com.umc.product.notice.domain.QNoticeRead;
+import com.umc.product.notice.domain.QNoticeTarget;
 import com.umc.product.notice.domain.enums.NoticeClassification;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -104,6 +106,7 @@ public class NoticeQueryRepository {
 
         return new PageImpl<>(notices, pageable, total != null ? total : 0L);
     }
+
 
     private BooleanExpression keywordContains(String keyword) {
         if (keyword == null || keyword.isBlank()) {

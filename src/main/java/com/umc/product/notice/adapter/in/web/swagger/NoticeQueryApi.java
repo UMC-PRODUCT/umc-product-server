@@ -9,6 +9,8 @@ import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeReadSta
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeStaticsResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeSummaryResponse;
 import com.umc.product.notice.domain.enums.NoticeClassification;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -36,8 +38,8 @@ public interface NoticeQueryApi {
         )
     })
     ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(
-        @Parameter(description = "공지 분류 (GENERAL, IMPORTANT 등)", required = true)
-        @RequestParam NoticeClassification classification,
+        @Parameter(description = "공지 분류 (GENERAL, IMPORTANT 등)", required = false)
+        @RequestParam(required = false) NoticeClassification classification,
 
         @Parameter(description = "페이징 정보 (page, size, sort)")
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)

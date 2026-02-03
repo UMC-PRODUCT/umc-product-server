@@ -33,6 +33,14 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     }
 
     @Override
+    public ChallengerInfo getActiveByMemberIdAndGisuId(Long memberId, Long gisuId) {
+        Challenger challenger = loadChallengerPort.findByMemberIdAndGisuId(memberId, gisuId)
+            .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_FOUND));
+        challenger.validateChallengerStatus();
+        return ChallengerInfo.from(challenger);
+    }
+
+    @Override
     public List<ChallengerInfo> getMemberChallengerList(Long memberId) {
         List<Challenger> challengers = loadChallengerPort.findByMemberId(memberId);
         return challengers.stream()
