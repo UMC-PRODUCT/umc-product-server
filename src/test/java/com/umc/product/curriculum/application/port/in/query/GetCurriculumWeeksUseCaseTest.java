@@ -129,7 +129,7 @@ class GetCurriculumWeeksUseCaseTest extends UseCaseTestSupport {
                 .generation(generation)
                 .isActive(true)
                 .startAt(Instant.parse("2024-03-01T00:00:00Z"))
-                .endAt(Instant.parse("2024-08-31T23:59:00Z"))
+                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
                 .build();
     }
 
@@ -138,7 +138,7 @@ class GetCurriculumWeeksUseCaseTest extends UseCaseTestSupport {
                 .generation(generation)
                 .isActive(false)
                 .startAt(Instant.parse("2023-03-01T00:00:00Z"))
-                .endAt(Instant.parse("2023-08-31T00:00:00Z"))
+                .endAt(Instant.parse("2023-08-31T23:59:59Z"))
                 .build();
     }
 

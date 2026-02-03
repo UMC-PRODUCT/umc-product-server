@@ -61,10 +61,6 @@ public class Gisu {
         this.isActive = false;
     }
 
-    public boolean isInPeriod(Instant now) {
-        return (now.equals(startAt) || now.isAfter(startAt)) && now.isBefore(endAt);
-    }
-
     public void updateIsActive(boolean isActive) {
         this.isActive = isActive;
     }
