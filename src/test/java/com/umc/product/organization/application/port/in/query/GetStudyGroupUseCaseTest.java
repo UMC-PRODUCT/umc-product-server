@@ -18,7 +18,7 @@ import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.support.TestChallengerRepository;
 import com.umc.product.support.TestMemberRepository;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -280,8 +280,8 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
         return Gisu.builder()
                 .generation(generation)
                 .isActive(true)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
+                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
+                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
                 .build();
     }
 
@@ -289,8 +289,8 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
         return Gisu.builder()
                 .generation(generation)
                 .isActive(false)
-                .startAt(LocalDateTime.of(2023, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2023, 8, 31, 23, 59))
+                .startAt(Instant.parse("2023-03-01T00:00:00Z"))
+                .endAt(Instant.parse("2023-08-31T23:59:59Z"))
                 .build();
     }
 

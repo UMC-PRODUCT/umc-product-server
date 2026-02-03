@@ -65,4 +65,25 @@ public class Notice extends BaseEntity {
             throw new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH);
         }
     }
+
+    /**
+     * 알림 전송이 필요한 공지인지 확인
+     */
+    public boolean isNotificationRequired() {
+        return this.shouldSendNotification && this.notifiedAt == null;
+    }
+
+    /**
+     * 알림 전송 시각 설정
+     */
+    public void markAsNotified(Instant notifiedAt) {
+        this.notifiedAt = notifiedAt;
+    }
+
+    /**
+     * 공지 작성자 동일인물 여부 확인
+     */
+    public boolean isAuthorChallenger(Long challengerId) {
+        return this.authorChallengerId.equals(challengerId);
+    }
 }

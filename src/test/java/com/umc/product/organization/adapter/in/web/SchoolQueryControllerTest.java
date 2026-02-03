@@ -14,8 +14,6 @@ import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.support.DocumentationTest;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -97,8 +95,8 @@ class SchoolQueryControllerTest extends DocumentationTest {
     void 학교_상세정보를_조회합니다() throws Exception {
         // give
         Long schoolId = 1L;
-        LocalDate createdAt = LocalDate.of(2026, 1, 1);
-        LocalDate updatedAt = LocalDate.of(2026, 1, 4);
+        Instant createdAt = Instant.parse("2026-01-01T00:00:00Z");
+        Instant updatedAt = Instant.parse("2026-01-04T00:00:00Z");
 
         SchoolInfo schoolInfo = new SchoolInfo(3L, "Ain 지부", "중앙대학교", 1L, "비고", createdAt, updatedAt);
 
@@ -121,9 +119,7 @@ class SchoolQueryControllerTest extends DocumentationTest {
     }
 
     private Instant toInstant(int year, int month, int day) {
-        return LocalDate.of(year, month, day)
-                .atStartOfDay(ZoneId.systemDefault())
-                .toInstant();
+        return Instant.parse(String.format("%04d-%02d-%02dT00:00:00Z", year, month, day));
     }
 
 }

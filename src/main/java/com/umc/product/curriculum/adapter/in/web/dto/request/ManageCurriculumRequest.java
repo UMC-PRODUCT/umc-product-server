@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.List;
 
 @Schema(description = "커리큘럼 관리 요청")
@@ -53,11 +53,11 @@ public record ManageCurriculumRequest(
             @Schema(description = "워크북 URL", example = "https://...")
             String workbookUrl,
 
-            @Schema(description = "시작일 (미입력 시 기본값: 2099-12-31)", example = "2024-03-01")
-            LocalDate startDate,
+            @Schema(description = "시작일 (미입력 시 기본값: 2099-12-31)", example = "2024-03-01T00:00:00Z")
+            Instant startDate,
 
-            @Schema(description = "종료일 (미입력 시 기본값: 2099-12-31)", example = "2024-03-07")
-            LocalDate endDate,
+            @Schema(description = "종료일 (미입력 시 기본값: 2099-12-31)", example = "2024-03-07T23:59:59Z")
+            Instant endDate,
 
             @Schema(description = "미션 타입 (미입력 시 기본값: LINK)", example = "LINK")
             MissionType missionType

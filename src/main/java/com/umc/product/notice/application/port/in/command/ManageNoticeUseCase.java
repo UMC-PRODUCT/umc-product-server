@@ -7,7 +7,7 @@ import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeComman
 
 public interface ManageNoticeUseCase {
     /*
-     * 공지 임시작성, 다른 요소들(url, img, vote) 추가 후 작성완료 누르면 publish
+     * 공지 생성
      * @return 생성된 공지 ID
      */
     Long createNotice(CreateNoticeCommand command);
