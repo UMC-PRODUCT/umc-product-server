@@ -25,9 +25,9 @@ import com.umc.product.recruitment.application.port.in.query.GetRecruitmentPartL
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentScheduleUseCase;
 import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.ApplicationEvaluationStatusCode;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationProgressNoticeType;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationProgressStep;
-import com.umc.product.recruitment.application.port.in.query.dto.EvaluationStatusCode;
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetPublishedRecruitmentDetailQuery;
@@ -404,9 +404,9 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         List<String> appliedParts = List.of();
 
         MyApplicationListInfo.EvaluationStatusInfo docEval =
-                new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING);
+                new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING);
         MyApplicationListInfo.EvaluationStatusInfo finalEval =
-                new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING);
+                new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING);
 
         return new MyApplicationListInfo.CurrentApplicationStatusInfo(
                 appliedParts,
@@ -580,8 +580,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         if (picked.kind == CurrentPicked.Kind.DRAFT) {
             return new MyApplicationListInfo.CurrentApplicationStatusInfo(
                     List.of(),
-                    new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING),
-                    new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING),
+                    new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING),
+                    new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING),
                     progress.timeline
             );
         }
@@ -836,13 +836,13 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     ) {
         // 서류 발표 전: 미정
         if (progress.docResultAt == null || progress.now.isBefore(progress.docResultAt)) {
-            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING);
+            return new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING);
         }
 
         ApplicationStatus st = app.getStatus();
 
         if (st == ApplicationStatus.DOC_FAILED) {
-            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.FAIL);
+            return new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.FAIL);
         }
 
         if (st == ApplicationStatus.DOC_PASSED
@@ -851,11 +851,11 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
                 || st == ApplicationStatus.INTERVIEW_FAILED
                 || st == ApplicationStatus.FINAL_ACCEPTED
                 || st == ApplicationStatus.FINAL_REJECTED) {
-            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PASS);
+            return new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PASS);
         }
 
         // 발표 후인데 상태 반영 전
-        return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING);
+        return new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING);
     }
 
     /**
@@ -867,27 +867,27 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
             MyApplicationListInfo.EvaluationStatusInfo docEval
     ) {
         // 서류 불합격이면 최종은 "예정 없음"
-        if (docEval.status() == EvaluationStatusCode.FAIL) {
-            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.NONE);
+        if (docEval.status() == ApplicationEvaluationStatusCode.FAIL) {
+            return new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.NONE);
         }
 
         // 최종 발표 전: 미정
         if (progress.finalResultAt == null || progress.now.isBefore(progress.finalResultAt)) {
-            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING);
+            return new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING);
         }
 
         ApplicationStatus st = app.getStatus();
 
         // 최종 발표 이후에만 합/불 확정 노출
         if (isFinalRejected(st)) {
-            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.FAIL);
+            return new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.FAIL);
         }
         if (st == ApplicationStatus.FINAL_ACCEPTED) {
-            return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PASS);
+            return new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PASS);
         }
 
         // 발표 후인데 최종 상태 미반영
-        return new MyApplicationListInfo.EvaluationStatusInfo(EvaluationStatusCode.PENDING);
+        return new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING);
     }
 
     private Integer computeNextRecruitmentMonth() {
