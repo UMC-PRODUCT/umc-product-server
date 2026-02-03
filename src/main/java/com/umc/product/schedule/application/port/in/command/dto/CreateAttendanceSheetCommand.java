@@ -3,6 +3,7 @@ package com.umc.product.schedule.application.port.in.command.dto;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -11,7 +12,8 @@ import java.util.Objects;
 public record CreateAttendanceSheetCommand(
     Long scheduleId,
     AttendanceWindow window,
-    boolean requiresApproval
+    boolean requiresApproval,
+    List<Long> participantMemberIds
 ) {
     public CreateAttendanceSheetCommand {
         Objects.requireNonNull(scheduleId, "일정 ID는 필수입니다");
@@ -24,5 +26,9 @@ public record CreateAttendanceSheetCommand(
             .window(window)
             .requiresApproval(requiresApproval)
             .build();
+    }
+
+    public boolean hasParticipants() {
+        return participantMemberIds != null && !participantMemberIds.isEmpty();
     }
 }

@@ -1,5 +1,6 @@
 package com.umc.product.schedule.adapter.in.web;
 
+import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CheckAttendanceRequest;
 import com.umc.product.schedule.adapter.in.web.dto.response.AttendanceRecordResponse;
@@ -40,30 +41,29 @@ public class AttendanceController implements AttendanceControllerApi {
     @Override
     @PostMapping("/check")
     public Long checkAttendance(
-        @CurrentMember Long challengerId,
+        @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody CheckAttendanceRequest request
     ) {
-        return checkAttendanceUseCase.check(request.toCommand(challengerId)).id();
+        return checkAttendanceUseCase.check(request.toCommand(memberPrincipal.getMemberId())).id();
     }
 
     @Override
     @GetMapping("/available")
     public List<AvailableAttendanceResponse> getAvailableAttendances(
-        @CurrentMember Long challengerId
+        @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        // [Output Mapping] 분리된 mapper의 메서드를 호출합니다.
         return mapper.toAvailableAttendanceResponses(
-            getAvailableAttendancesUseCase.getAvailableList(challengerId)
+            getAvailableAttendancesUseCase.getAvailableList(memberPrincipal.getMemberId())
         );
     }
 
     @Override
     @GetMapping("/history")
     public List<MyAttendanceHistoryResponse> getMyAttendanceHistory(
-        @CurrentMember Long challengerId
+        @CurrentMember MemberPrincipal memberPrincipal
     ) {
         return mapper.toMyAttendanceHistoryResponses(
-            getMyAttendanceHistoryUseCase.getHistory(challengerId)
+            getMyAttendanceHistoryUseCase.getHistory(memberPrincipal.getMemberId())
         );
     }
 
@@ -90,18 +90,18 @@ public class AttendanceController implements AttendanceControllerApi {
     @Override
     @PostMapping("/{recordId}/approve")
     public void approveAttendance(
-        @CurrentMember Long confirmerId,
+        @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long recordId
     ) {
-        approveAttendanceUseCase.approve(new AttendanceRecordId(recordId), confirmerId);
+        approveAttendanceUseCase.approve(new AttendanceRecordId(recordId), memberPrincipal.getMemberId());
     }
 
     @Override
     @PostMapping("/{recordId}/reject")
     public void rejectAttendance(
-        @CurrentMember Long confirmerId,
+        @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long recordId
     ) {
-        approveAttendanceUseCase.reject(new AttendanceRecordId(recordId), confirmerId);
+        approveAttendanceUseCase.reject(new AttendanceRecordId(recordId), memberPrincipal.getMemberId());
     }
 }

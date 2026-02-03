@@ -57,7 +57,8 @@ public record CreateScheduleWithAttendanceCommand(
         return new CreateAttendanceSheetCommand(
             scheduleId,
             attendanceWindow,
-            requiresApproval
+            requiresApproval,
+            participantMemberIds
         );
     }
 }

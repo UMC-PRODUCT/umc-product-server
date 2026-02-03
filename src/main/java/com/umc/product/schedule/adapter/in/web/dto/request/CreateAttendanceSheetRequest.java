@@ -33,6 +33,6 @@ public record CreateAttendanceSheetRequest(
             endTime,
             lateThresholdMinutes
         );
-        return new CreateAttendanceSheetCommand(scheduleId, window, requiresApproval);
+        return new CreateAttendanceSheetCommand(scheduleId, window, requiresApproval, null);
     }
 }

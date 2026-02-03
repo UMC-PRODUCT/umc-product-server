@@ -8,11 +8,15 @@ import com.umc.product.schedule.application.port.in.command.dto.CreateAttendance
 import com.umc.product.schedule.application.port.in.command.dto.UpdateAttendanceSheetCommand;
 import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
+import com.umc.product.schedule.application.port.out.SaveAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.SaveAttendanceSheetPort;
+import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
 import com.umc.product.schedule.domain.Schedule;
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +34,7 @@ public class AttendanceSheetCommandService implements CreateAttendanceSheetUseCa
     private final LoadSchedulePort loadSchedulePort;
     private final LoadAttendanceSheetPort loadAttendanceSheetPort;
     private final SaveAttendanceSheetPort saveAttendanceSheetPort;
+    private final SaveAttendanceRecordPort saveAttendanceRecordPort;
 
     @Override
     public AttendanceSheetId create(CreateAttendanceSheetCommand command) {
@@ -39,9 +44,20 @@ public class AttendanceSheetCommandService implements CreateAttendanceSheetUseCa
 
         // 출석부 생성
         AttendanceSheet sheet = command.toEntity(schedule);
-
-        // 저장
         AttendanceSheet savedSheet = saveAttendanceSheetPort.save(sheet);
+
+        // 참여자별 출석 기록(AttendanceRecord) 생성
+        if (command.hasParticipants()) {
+            List<AttendanceRecord> records = command.participantMemberIds().stream()
+                .map(memberId -> AttendanceRecord.builder()
+                    .attendanceSheetId(savedSheet.getId())
+                    .memberId(memberId)
+                    .status(AttendanceStatus.PENDING)
+                    .build())
+                .toList();
+
+            saveAttendanceRecordPort.saveAllRecords(records);
+        }
 
         return savedSheet.getAttendanceSheetId();
     }
