@@ -7,6 +7,8 @@ public record GetFinalSelectionApplicationListQuery(
         Long recruitmentId,
         PartOption part,
         SortOption sort,
+        int page,
+        int size,
         Long requesterId
 ) {
 }

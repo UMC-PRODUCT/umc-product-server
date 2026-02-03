@@ -40,8 +40,8 @@ public class RecruitmentAdminApplicationController {
             @RequestParam(required = false) Long schoolId,
             @RequestParam(required = false, defaultValue = "ALL") PartOption part,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false, defaultValue = "1") int page,
-            @RequestParam(required = false, defaultValue = "20") int limit,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             @CurrentMember MemberPrincipal memberPrincipal
     ) {
         ApplicationListForAdminInfo info = getApplicationListForAdminUseCase.get(
@@ -52,7 +52,7 @@ public class RecruitmentAdminApplicationController {
                         part,
                         keyword,
                         page,
-                        limit,
+                        size,
                         memberPrincipal.getMemberId()
                 )
         );

@@ -5,12 +5,19 @@ import java.util.List;
 
 public record ApplicationListResponse(
         Long recruitmentId,
-        List<ApplicationSummaryResponse> applicationSummaries
+        List<ApplicationSummaryResponse> applicationSummaries,
+        PaginationResponse pagination
 ) {
     public static ApplicationListResponse from(ApplicationListInfo info) {
         return new ApplicationListResponse(
                 info.recruitmentId(),
-                info.applicationSummaries().stream().map(ApplicationSummaryResponse::from).toList()
+                info.applicationSummaries().stream().map(ApplicationSummaryResponse::from).toList(),
+                new PaginationResponse(
+                        info.pagination().page(),
+                        info.pagination().size(),
+                        info.pagination().totalPages(),
+                        info.pagination().totalElements()
+                )
         );
     }
 
@@ -49,5 +56,13 @@ public record ApplicationListResponse(
                     p.part().getLabel()
             );
         }
+    }
+
+    public record PaginationResponse(
+            int page,
+            int size,
+            int totalPages,
+            long totalElements
+    ) {
     }
 }

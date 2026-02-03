@@ -9,7 +9,7 @@ public record GetApplicationListForAdminQuery(
         PartOption part,
         String keyword,
         int page,
-        int limit,
+        int size,
         Long requesterId
 ) {
 }

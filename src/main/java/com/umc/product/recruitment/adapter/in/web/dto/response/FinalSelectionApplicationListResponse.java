@@ -7,7 +7,8 @@ import java.util.Map;
 
 public record FinalSelectionApplicationListResponse(
         FinalSelectionSummary summary,
-        List<FinalSelectionApplicationResponse> finalSelectionApplications
+        List<FinalSelectionApplicationResponse> finalSelectionApplications,
+        PaginationResponse pagination
 ) {
     public static FinalSelectionApplicationListResponse from(FinalSelectionApplicationListInfo info) {
         return new FinalSelectionApplicationListResponse(
@@ -16,7 +17,13 @@ public record FinalSelectionApplicationListResponse(
                         info.summary().selectedCount(),
                         info.summary().byPart()
                 ),
-                info.finalSelectionApplications().stream().map(FinalSelectionApplicationResponse::from).toList()
+                info.finalSelectionApplications().stream().map(FinalSelectionApplicationResponse::from).toList(),
+                new PaginationResponse(
+                        info.pagination().page(),
+                        info.pagination().size(),
+                        info.pagination().totalPages(),
+                        info.pagination().totalElements()
+                )
         );
     }
 
@@ -70,5 +77,13 @@ public record FinalSelectionApplicationListResponse(
     }
 
     public record PartResponse(String key, String label) {
+    }
+
+    public record PaginationResponse(
+            int page,
+            int size,
+            int totalPages,
+            long totalElements
+    ) {
     }
 }

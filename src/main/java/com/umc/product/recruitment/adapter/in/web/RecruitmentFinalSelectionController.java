@@ -74,10 +74,13 @@ public class RecruitmentFinalSelectionController {
             @PathVariable Long recruitmentId,
             @RequestParam(required = false, defaultValue = "ALL") PartOption part,
             @RequestParam(required = false, defaultValue = "SCORE_DESC") SortOption sort,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
             @CurrentMember MemberPrincipal memberPrincipal
     ) {
         FinalSelectionApplicationListInfo info = getFinalSelectionListUseCase.get(
-                new GetFinalSelectionApplicationListQuery(recruitmentId, part, sort, memberPrincipal.getMemberId())
+                new GetFinalSelectionApplicationListQuery(recruitmentId, part, sort, page, size,
+                        memberPrincipal.getMemberId())
         );
         return FinalSelectionApplicationListResponse.from(info);
     }

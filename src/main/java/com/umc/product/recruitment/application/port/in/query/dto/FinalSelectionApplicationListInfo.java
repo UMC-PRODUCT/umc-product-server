@@ -6,7 +6,8 @@ import java.util.Map;
 
 public record FinalSelectionApplicationListInfo(
         Summary summary,
-        List<FinalSelectionApplicationInfo> finalSelectionApplications
+        List<FinalSelectionApplicationInfo> finalSelectionApplications,
+        PaginationInfo pagination
 ) {
     public record Summary(
             long totalCount,
@@ -47,6 +48,14 @@ public record FinalSelectionApplicationListInfo(
     public record Selection(
             String status,
             PartKey part
+    ) {
+    }
+
+    public record PaginationInfo(
+            int page,
+            int size,
+            int totalPages,
+            long totalElements
     ) {
     }
 }

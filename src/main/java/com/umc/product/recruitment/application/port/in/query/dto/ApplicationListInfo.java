@@ -5,7 +5,8 @@ import java.util.List;
 
 public record ApplicationListInfo(
         Long recruitmentId,
-        List<ApplicationSummary> applicationSummaries
+        List<ApplicationSummary> applicationSummaries,
+        PaginationInfo pagination
 ) {
     public record ApplicationSummary(
             Long applicationId,
@@ -20,6 +21,14 @@ public record ApplicationListInfo(
     public record PreferredPartInfo(
             Integer priority,
             PartOption part
+    ) {
+    }
+
+    public record PaginationInfo(
+            int page,
+            int size,
+            int totalPages,
+            long totalElements
     ) {
     }
 }
