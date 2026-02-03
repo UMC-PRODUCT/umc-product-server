@@ -1,5 +1,6 @@
 package com.umc.product.organization.application.port.out.query;
 
+import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.domain.School;
@@ -11,11 +12,11 @@ public interface LoadSchoolPort {
 
     Page<SchoolListItemInfo> findSchools(SchoolSearchCondition condition, Pageable pageable);
 
-//    void validateExistsById(Long schoolId);
-
     School findSchoolDetailById(Long schoolId);
 
     School findById(Long schoolId);
+
+    SchoolInfo findSchoolDetailByIdWithActiveChapter(Long schoolId);
 
     List<School> findAllByIds(List<Long> schoolIds);
 
