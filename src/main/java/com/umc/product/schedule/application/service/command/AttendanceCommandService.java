@@ -48,7 +48,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
 
         // 기존 출석 기록 조회
         AttendanceRecord record = loadAttendanceRecordPort
-            .findBySheetIdAndMemberId(command.attendanceSheetId(), command.challengerId())
+            .findBySheetIdAndMemberId(command.attendanceSheetId(), command.memberId())
             .orElseThrow(
                 () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
 

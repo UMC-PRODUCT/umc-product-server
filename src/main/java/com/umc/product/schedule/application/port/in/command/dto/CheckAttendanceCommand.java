@@ -8,12 +8,12 @@ import java.util.Objects;
  */
 public record CheckAttendanceCommand(
     Long attendanceSheetId,
-    Long challengerId,
+    Long memberId,
     LocalDateTime checkedAt
 ) {
     public CheckAttendanceCommand {
         Objects.requireNonNull(attendanceSheetId, "출석부 ID는 필수입니다");
-        Objects.requireNonNull(challengerId, "챌린저 ID는 필수입니다");
+        Objects.requireNonNull(memberId, "멤버 ID는 필수입니다");
         Objects.requireNonNull(checkedAt, "체크 시간은 필수입니다");
     }
 }
