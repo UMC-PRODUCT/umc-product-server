@@ -12,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import java.math.BigDecimal;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -44,14 +45,16 @@ public class Application extends BaseEntity {
     @Column(nullable = false)
     private ApplicationStatus status = ApplicationStatus.APPLIED;
 
+    // 운영진의 평가 점수를 평균내어 저장하는 용도
     @Column(name = "doc_score")
-    private Integer docScore;
+    private BigDecimal docScore;
 
     @Column(name = "interview_score")
-    private Integer interviewScore;
+    private BigDecimal interviewScore;
 
+    // 서류 점수 + 면접 점수로 평균내서 저장. 별도의 컬럼으로 저장해놓을 필요가 있을지 검토 필요.
     @Column(name = "final_score")
-    private Integer finalScore;
+    private BigDecimal finalScore;
 
     public static Application createApplied(Recruitment recruitment, Long applicantMemberId, Long formResponseId) {
         return Application.builder()
