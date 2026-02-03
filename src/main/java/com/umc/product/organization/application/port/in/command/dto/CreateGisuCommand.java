@@ -1,6 +1,6 @@
 package com.umc.product.organization.application.port.in.command.dto;
 
-import java.time.LocalDate;
+import java.time.Instant;
 
-public record CreateGisuCommand(Long number, LocalDate startAt, LocalDate endAt) {
+public record CreateGisuCommand(Long number, Instant startAt, Instant endAt) {
 }

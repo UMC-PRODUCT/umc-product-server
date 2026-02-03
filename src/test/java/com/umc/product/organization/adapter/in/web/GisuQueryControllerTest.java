@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.support.DocumentationTest;
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.restdocs.payload.JsonFieldType;
@@ -20,9 +20,9 @@ class GisuQueryControllerTest extends DocumentationTest {
     void 기수_목록을_조회한다() throws Exception {
         // given
         List<GisuInfo> gisuList = List.of(
-                new GisuInfo(1L, 7L, LocalDate.of(2024, 3, 1), LocalDate.of(2024, 8, 31), false),
-                new GisuInfo(2L, 8L, LocalDate.of(2024, 9, 1), LocalDate.of(2025, 2, 28), false),
-                new GisuInfo(3L, 9L, LocalDate.of(2025, 3, 1), LocalDate.of(2025, 8, 31), true));
+                new GisuInfo(1L, 7L, Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-08-31T23:59:59Z"), false),
+                new GisuInfo(2L, 8L, Instant.parse("2024-09-01T00:00:00Z"), Instant.parse("2025-02-28T23:59:59Z"), false),
+                new GisuInfo(3L, 9L, Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-08-31T23:59:59Z"), true));
 
         given(getGisuUseCase.getList()).willReturn(gisuList);
 

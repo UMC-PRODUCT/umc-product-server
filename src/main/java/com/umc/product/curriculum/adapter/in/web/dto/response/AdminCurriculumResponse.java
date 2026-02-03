@@ -5,8 +5,7 @@ import com.umc.product.curriculum.application.port.in.query.AdminCurriculumInfo;
 import com.umc.product.curriculum.application.port.in.query.AdminCurriculumInfo.WorkbookInfo;
 import com.umc.product.curriculum.domain.enums.MissionType;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Schema(description = "Admin 커리큘럼 조회 응답")
@@ -57,17 +56,17 @@ public record AdminCurriculumResponse(
             @Schema(description = "워크북 URL", example = "https://...")
             String workbookUrl,
 
-            @Schema(description = "시작일", example = "2024-03-01")
-            LocalDate startDate,
+            @Schema(description = "시작일", example = "2024-03-01T00:00:00Z")
+            Instant startDate,
 
-            @Schema(description = "종료일", example = "2024-03-07")
-            LocalDate endDate,
+            @Schema(description = "종료일", example = "2024-03-07T23:59:59Z")
+            Instant endDate,
 
             @Schema(description = "미션 타입", example = "LINK")
             MissionType missionType,
 
-            @Schema(description = "배포일시", example = "2024-03-01T00:00:00")
-            LocalDateTime releasedAt,
+            @Schema(description = "배포일시", example = "2024-03-01T00:00:00Z")
+            Instant releasedAt,
 
             @Schema(description = "배포 여부", example = "true")
             boolean isReleased

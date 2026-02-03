@@ -2,7 +2,7 @@ package com.umc.product.curriculum.application.port.in.command;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.domain.enums.MissionType;
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.List;
 
 public record CurriculumCommand(
@@ -16,21 +16,21 @@ public record CurriculumCommand(
             String title,
             String description,
             String workbookUrl,
-            LocalDate startDate,
-            LocalDate endDate,
+            Instant startDate,
+            Instant endDate,
             MissionType missionType
     ) {
-        private static final LocalDate DEFAULT_DATE = LocalDate.of(2099, 12, 31);
+        private static final Instant DEFAULT_DATE = Instant.parse("2099-12-31T00:00:00Z");
         private static final MissionType DEFAULT_MISSION_TYPE = MissionType.LINK;
 
 
         // 웹은 아직 UI가 바뀌기 전이라서 기본 값을 넣습니다.
         // TODO: 디자인 개선 후 없앨 예정
-        public LocalDate resolveStartDate() {
+        public Instant resolveStartDate() {
             return startDate != null ? startDate : DEFAULT_DATE;
         }
 
-        public LocalDate resolveEndDate() {
+        public Instant resolveEndDate() {
             return endDate != null ? endDate : DEFAULT_DATE;
         }
 
