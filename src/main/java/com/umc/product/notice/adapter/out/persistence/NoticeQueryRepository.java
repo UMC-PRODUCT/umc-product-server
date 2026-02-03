@@ -10,7 +10,6 @@ import com.umc.product.notice.domain.QNotice;
 import com.umc.product.notice.domain.QNoticeRead;
 import com.umc.product.notice.domain.QNoticeTarget;
 import com.umc.product.notice.domain.enums.NoticeClassification;
-import com.umc.product.notice.application.port.out.NoticeTargetCondition;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
