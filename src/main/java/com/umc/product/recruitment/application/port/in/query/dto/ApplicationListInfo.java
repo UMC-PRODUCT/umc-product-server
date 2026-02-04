@@ -1,21 +1,34 @@
 package com.umc.product.recruitment.application.port.in.query.dto;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.recruitment.domain.enums.ApplicationStatus;
+import com.umc.product.recruitment.application.port.in.PartOption;
 import java.util.List;
 
 public record ApplicationListInfo(
         Long recruitmentId,
-        List<ApplicationSummary> applications
+        List<ApplicationSummary> applicationSummaries,
+        PaginationInfo pagination
 ) {
     public record ApplicationSummary(
             Long applicationId,
             Long applicantMemberId,
-            String name,
-            String nickname,
-            ChallengerPart appliedPart,     // 1지망 or 확정파트 등 정책에 맞게
-            ApplicationStatus status,
-            Integer docTotalScore
+            String applicantName,
+            String applicantNickname,
+            List<PreferredPartInfo> preferredParts,
+            boolean isEvaluated
+    ) {
+    }
+
+    public record PreferredPartInfo(
+            Integer priority,
+            PartOption part
+    ) {
+    }
+
+    public record PaginationInfo(
+            int page,
+            int size,
+            int totalPages,
+            long totalElements
     ) {
     }
 }

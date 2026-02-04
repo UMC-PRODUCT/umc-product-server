@@ -61,6 +61,22 @@ public class AttendanceSheetPersistenceAdapter implements SaveAttendanceSheetPor
         return sheetJpaRepository.findAllById(ids);
     }
 
+    @Override
+    public List<AttendanceSheet> findByGisuId(Long gisuId) {
+        if (gisuId == null) {
+            return List.of();
+        }
+        return sheetJpaRepository.findByGisuId(gisuId);
+    }
+
+    @Override
+    public List<AttendanceSheet> findActiveSheetsByGisuId(Long gisuId) {
+        if (gisuId == null) {
+            return List.of();
+        }
+        return sheetJpaRepository.findByGisuIdAndActiveTrue(gisuId);
+    }
+
     // ========== DeleteAttendanceSheetPort ==========
 
     @Override

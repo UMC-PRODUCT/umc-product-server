@@ -15,4 +15,8 @@ public interface AttendanceSheetJpaRepository extends JpaRepository<AttendanceSh
     boolean existsByScheduleId(Long scheduleId);
 
     List<AttendanceSheet> findByActiveTrue();
+
+    List<AttendanceSheet> findByGisuId(Long gisuId);
+
+    List<AttendanceSheet> findByGisuIdAndActiveTrue(Long gisuId);
 }

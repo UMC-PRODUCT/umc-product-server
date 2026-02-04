@@ -1,6 +1,6 @@
 package com.umc.product.recruitment.domain.enums;
 
-public enum InterviewAssignmentStatus {
+public enum EvaluationStatus {
     DRAFT,
-    CONFIRMED
+    SUBMITTED
 }

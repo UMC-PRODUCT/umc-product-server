@@ -21,8 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 현재 출석 체크 가능한 일정 목록을 조회
  *
- * <p>활성 출석부 중 아직 종료되지 않은 일정만,
- * <p>해당 챌린저의 기존 출석 기록이 있으면 함께 가져옴.
+ * <p>해당 기수의 활성 출석부 중 아직 종료되지 않은 일정만,
+ * <p>해당 멤버의 기존 출석 기록이 있으면 함께 가져옴.
  * <p>시작 시간 오름차순.
  */
 @Service
@@ -35,9 +35,9 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
     private final LoadAttendanceRecordPort loadAttendanceRecordPort;
 
     @Override
-    public List<AvailableAttendanceInfo> getAvailableList(Long memberId) {
-        // 활성 출석부 조회
-        List<AttendanceSheet> activeSheets = loadAttendanceSheetPort.findActiveSheets();
+    public List<AvailableAttendanceInfo> getAvailableList(Long memberId, Long gisuId) {
+        // 해당 기수의 활성 출석부 조회
+        List<AttendanceSheet> activeSheets = loadAttendanceSheetPort.findActiveSheetsByGisuId(gisuId);
 
         if (activeSheets.isEmpty()) {
             return List.of();
