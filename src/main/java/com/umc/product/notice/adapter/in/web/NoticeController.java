@@ -12,7 +12,7 @@ import com.umc.product.notice.adapter.in.web.dto.request.SendNoticeReminderReque
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.response.command.CreateNoticeResponse;
 import com.umc.product.notice.adapter.in.web.swagger.NoticeApi;
-import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
+import com.umc.product.notice.application.port.in.command.ManageNoticeReadUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class NoticeController implements NoticeApi {
 
     private final ManageNoticeUseCase manageNoticeUseCase;
+    private final ManageNoticeReadUseCase manageNoticeReadUseCase;
 
     /*
      * 공지사항 생성
@@ -94,6 +95,23 @@ public class NoticeController implements NoticeApi {
 
         Long memberId = memberPrincipal.getMemberId();
         manageNoticeUseCase.remindNotice(request.toCommand(memberId, noticeId));
+    }
+
+    /*
+     * 공지사항 읽음 처리
+     */
+    @PostMapping("/{noticeId}/read")
+    @CheckAccess(
+        resourceType = ResourceType.NOTICE,
+        resourceId = "#noticeId",
+        permission = PermissionType.READ
+    )
+    public ApiResponse<Void> recordNoticeRead(
+        @PathVariable Long noticeId,
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        manageNoticeReadUseCase.recordRead(noticeId, memberPrincipal.getMemberId());
+        return ApiResponse.onSuccess(null);
     }
 
 }

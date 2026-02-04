@@ -5,7 +5,7 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
-import com.umc.product.notice.domain.enums.NoticeClassification;
+import com.umc.product.notice.dto.NoticeClassification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -21,7 +21,7 @@ public interface GetNoticeUseCase {
     /*
      * 검색어 기반 공지 전체 조회
      */
-    Page<NoticeSummary> searchNoticesByKeyword(String keyword, Pageable pageable);
+    Page<NoticeSummary> searchNoticesByKeyword(String keyword, NoticeClassification noticeClassification, Pageable pageable);
 
     /*
      * 공지 세부조회 -> 이때 조회수를 증가시켜야 함
