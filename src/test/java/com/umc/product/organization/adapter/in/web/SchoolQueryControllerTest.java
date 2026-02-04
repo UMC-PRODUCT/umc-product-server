@@ -12,6 +12,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
+import com.umc.product.storage.application.port.in.query.dto.FileInfo;
+import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.support.DocumentationTest;
 import java.time.Instant;
 import java.util.List;
@@ -98,9 +100,10 @@ class SchoolQueryControllerTest extends DocumentationTest {
         Instant createdAt = Instant.parse("2026-01-01T00:00:00Z");
         Instant updatedAt = Instant.parse("2026-01-04T00:00:00Z");
 
-        SchoolInfo schoolInfo = new SchoolInfo(3L, "Ain 지부", "중앙대학교", 1L, "비고", createdAt, updatedAt);
-
+        SchoolInfo schoolInfo = new SchoolInfo(3L, "Ain 지부", "중앙대학교", 1L, "비고", "logo-file-123", createdAt, updatedAt);
+        FileInfo fileInfo = new FileInfo("logo-file-123", "동국대학교 로고", FileCategory.SCHOOL_LOGO, null, null, "https://storage.example.com/school-logo/logo.png", null, null, null);
         given(getSchoolUseCase.getSchoolDetail(schoolId)).willReturn(schoolInfo);
+        given(getFileUseCase.getById("logo-file-123")).willReturn(fileInfo);
         // when
         ResultActions result = mockMvc.perform(get("/api/v1/admin/schools/{schoolId}", schoolId));
         // then
@@ -114,6 +117,7 @@ class SchoolQueryControllerTest extends DocumentationTest {
                                 fieldWithPath("result.schoolName").type(JsonFieldType.STRING).description("학교 이름"),
                                 fieldWithPath("result.schoolId").type(JsonFieldType.STRING).description("학교 ID"),
                                 fieldWithPath("result.remark").type(JsonFieldType.STRING).description("비고"),
+                                fieldWithPath("result.logoImageLink").type(JsonFieldType.STRING).description("로고 이미지 URL").optional(),
                                 fieldWithPath("result.createdAt").type(JsonFieldType.STRING).description("생성일자"),
                                 fieldWithPath("result.updatedAt").type(JsonFieldType.STRING).description("수정일자"))));
     }

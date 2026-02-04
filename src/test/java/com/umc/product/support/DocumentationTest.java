@@ -16,6 +16,7 @@ import com.umc.product.organization.application.port.in.command.ManageSchoolUseC
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.restdocs.AutoConfigureRestDocs;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -73,4 +74,7 @@ public class DocumentationTest {
 
     @MockitoBean
     protected GetGisuUseCase getGisuUseCase;
+
+    @MockitoBean
+    protected GetFileUseCase getFileUseCase;
 }
