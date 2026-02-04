@@ -2,6 +2,7 @@ package com.umc.product.organization.application.port.service.query;
 
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.GisuNameInfo;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,13 @@ public class GisuQueryService implements GetGisuUseCase {
     public Page<GisuInfo> getList(Pageable pageable) {
         return loadGisuPort.findAll(pageable)
                 .map(GisuInfo::from);
+    }
+
+    @Override
+    public List<GisuNameInfo> getAllGisuNames() {
+        return loadGisuPort.findAll().stream()
+                .map(GisuNameInfo::from)
+                .toList();
     }
 
     @Override

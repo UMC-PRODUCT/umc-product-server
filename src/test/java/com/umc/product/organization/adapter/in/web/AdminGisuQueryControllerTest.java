@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.GisuNameInfo;
 import com.umc.product.support.DocumentationTest;
 import java.time.Instant;
 import java.util.List;
@@ -71,6 +72,35 @@ class AdminGisuQueryControllerTest extends DocumentationTest {
                                 fieldWithPath("result.totalPages").type(JsonFieldType.STRING).description("전체 페이지 수"),
                                 fieldWithPath("result.hasNext").type(JsonFieldType.BOOLEAN).description("다음 페이지 존재 여부"),
                                 fieldWithPath("result.hasPrevious").type(JsonFieldType.BOOLEAN).description("이전 페이지 존재 여부")
+                        )
+                ));
+    }
+
+    @Test
+    void 기수_전체_목록을_조회한다() throws Exception {
+        // given
+        List<GisuNameInfo> gisuNames = List.of(
+                new GisuNameInfo(3L, 9L, true),
+                new GisuNameInfo(2L, 8L, false),
+                new GisuNameInfo(1L, 7L, false)
+        );
+
+        given(getGisuUseCase.getAllGisuNames()).willReturn(gisuNames);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/v1/gisu/all"));
+
+        // then
+        result.andExpect(status().isOk())
+                .andDo(restDocsHandler.document(
+                        responseFields(
+                                fieldWithPath("success").type(JsonFieldType.BOOLEAN).description("요청 성공 여부"),
+                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
+                                fieldWithPath("result.gisuList").type(JsonFieldType.ARRAY).description("기수 목록"),
+                                fieldWithPath("result.gisuList[].gisuId").type(JsonFieldType.STRING).description("기수 ID"),
+                                fieldWithPath("result.gisuList[].generation").type(JsonFieldType.STRING).description("기수 번호"),
+                                fieldWithPath("result.gisuList[].isActive").type(JsonFieldType.BOOLEAN).description("활성 여부")
                         )
                 ));
     }

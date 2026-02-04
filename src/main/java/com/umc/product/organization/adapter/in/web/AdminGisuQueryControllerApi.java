@@ -1,6 +1,7 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag.Constants;
+import com.umc.product.organization.adapter.in.web.dto.response.GisuNameListResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.GisuPageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -22,4 +23,14 @@ public interface AdminGisuQueryControllerApi {
             )
     })
     GisuPageResponse getGisuList(Pageable pageable);
+
+    @Operation(summary = "기수 전체 목록 조회", description = "전체 기수 목록을 최신순(generation 내림차순)으로 조회합니다. 기수 ID와 기수 번호만 반환합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = GisuNameListResponse.class))
+            )
+    })
+    GisuNameListResponse getAllGisu();
 }

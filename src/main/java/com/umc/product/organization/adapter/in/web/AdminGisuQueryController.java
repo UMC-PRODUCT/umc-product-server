@@ -1,6 +1,7 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.global.response.PageResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.GisuNameListResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.GisuPageResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.GisuResponse;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -25,5 +26,11 @@ public class AdminGisuQueryController implements AdminGisuQueryControllerApi {
                 GisuResponse::from
         );
         return GisuPageResponse.from(pageResponse);
+    }
+
+    @Override
+    @GetMapping("/all")
+    public GisuNameListResponse getAllGisu() {
+        return GisuNameListResponse.from(getGisuUseCase.getAllGisuNames());
     }
 }

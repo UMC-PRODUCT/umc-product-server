@@ -3,6 +3,7 @@ package com.umc.product.organization.application.port.in.query;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.GisuNameInfo;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
@@ -138,6 +139,31 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
         assertThat(result.getContent().get(0).generation()).isEqualTo(9L);
         assertThat(result.getContent().get(1).generation()).isEqualTo(8L);
         assertThat(result.getContent().get(2).generation()).isEqualTo(7L);
+    }
+
+    @Test
+    void 전체_기수_이름_목록을_조회한다() {
+        // given
+        manageGisuPort.save(createGisu(7L, false));
+        manageGisuPort.save(createGisu(9L, true));
+        manageGisuPort.save(createGisu(8L, false));
+
+        // when
+        List<GisuNameInfo> result = getGisuUseCase.getAllGisuNames();
+
+        // then
+        assertThat(result).hasSize(3);
+        assertThat(result).extracting(GisuNameInfo::generation)
+                .containsExactly(9L, 8L, 7L);
+    }
+
+    @Test
+    void 기수가_없으면_빈_이름_목록을_반환한다() {
+        // when
+        List<GisuNameInfo> result = getGisuUseCase.getAllGisuNames();
+
+        // then
+        assertThat(result).isEmpty();
     }
 
     private Gisu createGisu(Long generation, boolean isActive) {
