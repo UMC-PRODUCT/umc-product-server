@@ -50,11 +50,8 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     }
 
     @Override
-    public List<Post> findAllByQuery(PostSearchQuery query) {
-        // TODO: QueryDSL로 동적 쿼리 구현 필요
-        return postRepository.findAll().stream()
-                .map(PostJpaEntity::toDomain)
-                .toList();
+    public Page<Post> findAllByQuery(PostSearchQuery query, Pageable pageable) {
+        return postQueryRepository.findAllByQuery(query, pageable);
     }
 
     @Override

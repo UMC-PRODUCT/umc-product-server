@@ -9,7 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface LoadPostPort {
-    List<Post> findAllByQuery(PostSearchQuery query);
+    Page<Post> findAllByQuery(PostSearchQuery query, Pageable pageable);
 
     Optional<Post> findById(Long postId);
 

@@ -43,17 +43,24 @@ public class PostQueryController {
 
     @GetMapping
     @Operation(summary = "게시글 목록 조회", description = "모집중 여부, 정렬 기준으로 게시글 목록을 조회합니다.")
-    public List<PostResponse> getPostList(
-            @RequestParam(defaultValue = "false") boolean ing,
-            @RequestParam(defaultValue = "ALL") PostSortType sort,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "20") Integer size
+    public ApiResponse<PageResponse<PostResponse>> getPostList(
+            @RequestParam(defaultValue = "false")
+            @Parameter(description = "모집중인 번개 게시글만 조회")
+            boolean ing,
+            @RequestParam(defaultValue = "ALL")
+            @Parameter(description = "정렬 기준 (SOFT: 좋아요순, HARD: 좋아요역순, ALL: 최신순)")
+            PostSortType sort,
+            @PageableDefault(size = 20)
+            @Parameter(description = "페이지네이션 (page, size)")
+            Pageable pageable
     ) {
-        PostSearchQuery query = new PostSearchQuery(ing, sort, page, size);
-        return getPostListUseCase.getPostList(query)
-                .stream()
-                .map(PostResponse::from)
-                .toList();
+        PostSearchQuery query = new PostSearchQuery(ing, sort);
+        PageResponse<PostResponse> response = PageResponse.of(
+                getPostListUseCase.getPostList(query, pageable),
+                PostResponse::from
+        );
+
+        return ApiResponse.onSuccess(response);
     }
 
     @GetMapping("/search")

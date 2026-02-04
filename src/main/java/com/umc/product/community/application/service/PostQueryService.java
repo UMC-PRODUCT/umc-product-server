@@ -49,12 +49,10 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
     }
 
     @Override
-    public List<PostInfo> getPostList(PostSearchQuery query) {
-        List<Post> posts = loadPostPort.findAllByQuery(query);
+    public Page<PostInfo> getPostList(PostSearchQuery query, Pageable pageable) {
+        Page<Post> posts = loadPostPort.findAllByQuery(query, pageable);
 
-        return posts.stream()
-                .map(PostInfo::from)
-                .toList();
+        return posts.map(PostInfo::from);
     }
 
     @Override
