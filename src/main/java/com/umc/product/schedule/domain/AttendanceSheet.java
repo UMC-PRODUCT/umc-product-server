@@ -1,5 +1,6 @@
 package com.umc.product.schedule.domain;
 
+import com.umc.product.common.BaseEntity;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import jakarta.persistence.Column;
@@ -28,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "attendance_sheet")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AttendanceSheet {
+public class AttendanceSheet extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
