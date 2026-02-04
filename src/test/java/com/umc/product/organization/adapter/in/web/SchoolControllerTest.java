@@ -25,7 +25,7 @@ public class SchoolControllerTest extends DocumentationTest {
     void 총괄_신규학교를_추가한다() throws Exception {
         // given when
         CreateSchoolRequest request = CreateSchoolRequest.builder().schoolName("중앙대학교").chapterId(3L)
-                .remark("중앙대는 멋집니다.").build();
+                .remark("중앙대는 멋집니다.").logoImageId("file-123").build();
 
         // then
         ResultActions result = mockMvc.perform(
@@ -35,7 +35,8 @@ public class SchoolControllerTest extends DocumentationTest {
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(
                 requestFields(fieldWithPath("schoolName").type(JsonFieldType.STRING).description("학교 이름"),
                         fieldWithPath("chapterId").type(JsonFieldType.STRING).description("소속 지부 ID"),
-                        fieldWithPath("remark").type(JsonFieldType.STRING).description("비고"))));
+                        fieldWithPath("remark").type(JsonFieldType.STRING).description("비고"),
+                        fieldWithPath("logoImageId").optional().type(JsonFieldType.STRING).description("로고 이미지 파일 ID"))));
 
     }
 
@@ -45,7 +46,7 @@ public class SchoolControllerTest extends DocumentationTest {
         Long schoolId = 1L;
 
         CreateSchoolRequest request = CreateSchoolRequest.builder().schoolName("동국대학교").chapterId(3L)
-                .remark("신승호 라면이 맛있습니다.").build();
+                .remark("신승호 라면이 맛있습니다.").logoImageId("file-456").build();
 
         ResultActions result = mockMvc.perform(
                 patch("/api/v1/admin/schools/{schoolId}", schoolId).content(objectMapper.writeValueAsString(request))
@@ -58,7 +59,8 @@ public class SchoolControllerTest extends DocumentationTest {
                                 fieldWithPath("schoolName").optional().type(JsonFieldType.STRING).description("학교 이름"),
                                 fieldWithPath("chapterId").optional().type(JsonFieldType.STRING)
                                         .description("소속 지부 ID"),
-                                fieldWithPath("remark").optional().type(JsonFieldType.STRING).description("비고"))));
+                                fieldWithPath("remark").optional().type(JsonFieldType.STRING).description("비고"),
+                                fieldWithPath("logoImageId").optional().type(JsonFieldType.STRING).description("로고 이미지 파일 ID"))));
 
     }
 
