@@ -53,12 +53,7 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
         // given
         Instant startAt = Instant.parse("2024-03-01T00:00:00Z");
         Instant endAt = Instant.parse("2024-08-31T23:59:59Z");
-        Gisu gisu = manageGisuPort.save(Gisu.builder()
-                .generation(8L)
-                .isActive(true)
-                .startAt(startAt)
-                .endAt(endAt)
-                .build());
+        Gisu gisu = manageGisuPort.save(Gisu.create(8L, startAt, endAt, true));
 
         // when
         GisuInfo result = getGisuUseCase.getById(gisu.getId());
@@ -69,11 +64,11 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
     }
 
     private Gisu createGisu(Long generation, boolean isActive) {
-        return Gisu.builder()
-                .generation(generation)
-                .isActive(isActive)
-                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
-                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
-                .build();
+        return Gisu.create(
+                generation,
+                Instant.parse("2024-03-01T00:00:00Z"),
+                Instant.parse("2024-08-31T23:59:59Z"),
+                isActive
+        );
     }
 }

@@ -161,12 +161,12 @@ class DeleteScheduleUseCaseTest extends UseCaseTestSupport {
     }
 
     private Gisu createActiveGisu(Long generation) {
-        return Gisu.builder()
-            .generation(generation)
-            .isActive(true)
-            .startAt(Instant.parse("2026-03-01T00:00:00Z"))
-            .endAt(Instant.parse("2026-08-31T00:00:00Z"))
-            .build();
+        return Gisu.create(
+            generation,
+            Instant.parse("2026-03-01T00:00:00Z"),
+            Instant.parse("2026-08-31T00:00:00Z"),
+            true
+        );
     }
 
     private Member createMember(String name, String nickname, String email) {

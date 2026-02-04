@@ -347,20 +347,20 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
     }
 
     private Gisu createGisu(Long generation) {
-        return Gisu.builder()
-                .generation(generation)
-                .isActive(true)
-                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
-                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
-                .build();
+        return Gisu.create(
+                generation,
+                Instant.parse("2024-03-01T00:00:00Z"),
+                Instant.parse("2024-08-31T23:59:59Z"),
+                true
+        );
     }
 
     private Gisu createGisu(Long generation, boolean isActive) {
-        return Gisu.builder()
-                .generation(generation)
-                .isActive(isActive)
-                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
-                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
-                .build();
+        return Gisu.create(
+                generation,
+                Instant.parse("2024-03-01T00:00:00Z"),
+                Instant.parse("2024-08-31T23:59:59Z"),
+                isActive
+        );
     }
 }

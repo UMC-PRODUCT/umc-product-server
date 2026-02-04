@@ -233,12 +233,12 @@ class ManageCurriculumUseCaseTest extends UseCaseTestSupport {
     }
 
     private Gisu createActiveGisu(Long generation) {
-        return Gisu.builder()
-                .generation(generation)
-                .isActive(true)
-                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
-                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
-                .build();
+        return Gisu.create(
+                generation,
+                Instant.parse("2024-03-01T00:00:00Z"),
+                Instant.parse("2024-08-31T23:59:59Z"),
+                true
+        );
     }
 
     private WorkbookCommand createWorkbookCommand(Long id, Integer weekNo, String title) {

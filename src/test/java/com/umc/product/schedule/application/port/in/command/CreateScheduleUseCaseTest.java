@@ -205,12 +205,12 @@ public class CreateScheduleUseCaseTest extends UseCaseTestSupport {
     // ========== Fixture 메서드 ==========
 
     private Gisu createActiveGisu(Long generation) {
-        return Gisu.builder()
-            .generation(generation)
-            .isActive(true)
-            .startAt(Instant.parse("2024-03-01T00:00:00Z"))
-            .endAt(Instant.parse("2026-08-31T00:00:00Z"))
-            .build();
+        return Gisu.create(
+            generation,
+            Instant.parse("2024-03-01T00:00:00Z"),
+            Instant.parse("2026-08-31T00:00:00Z"),
+            true
+        );
     }
 
     private Member createMember(String name, String nickname, String email, Long schoolId, String profileImageId) {

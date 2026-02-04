@@ -24,7 +24,6 @@ import org.springframework.test.web.servlet.ResultActions;
 class GisuControllerTest extends DocumentationTest {
 
     @Test
-    @Disabled("아직 없는 기능")
     void 신규_기수를_추가한다() throws Exception {
         // given
         CreateGisuRequest request = new CreateGisuRequest(9L, Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-08-31T23:59:59Z"));
@@ -33,12 +32,14 @@ class GisuControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                post("/api/v1/admin/gisuId").content(objectMapper.writeValueAsString(request))
+                post("/api/v1/admin/gisu")
+                        .content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
         // then
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(
-                requestFields(fieldWithPath("number").type(JsonFieldType.STRING).description("기수 번호"),
+                requestFields(
+                        fieldWithPath("number").type(JsonFieldType.STRING).description("기수 번호"),
                         fieldWithPath("startAt").type(JsonFieldType.STRING).description("기수 시작일시"),
                         fieldWithPath("endAt").type(JsonFieldType.STRING).description("기수 종료일시"))));
     }
@@ -52,7 +53,8 @@ class GisuControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                patch("/api/v1/admin/gisuId/{gisuId}", gisuId).content(objectMapper.writeValueAsString(request))
+                patch("/api/v1/admin/gisu/{gisuId}", gisuId)
+                        .content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
         // then
@@ -63,13 +65,12 @@ class GisuControllerTest extends DocumentationTest {
     }
 
     @Test
-    @Disabled("아직 없는 기능")
     void 기수를_삭제한다() throws Exception {
         // given
         Long gisuId = 1L;
 
         // when
-        ResultActions result = mockMvc.perform(delete("/api/v1/admin/gisuId/{gisuId}", gisuId));
+        ResultActions result = mockMvc.perform(delete("/api/v1/admin/gisu/{gisuId}", gisuId));
 
         // then
         result.andExpect(status().isOk())

@@ -277,21 +277,21 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     }
 
     private Gisu createActiveGisu(Long generation) {
-        return Gisu.builder()
-                .generation(generation)
-                .isActive(true)
-                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
-                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
-                .build();
+        return Gisu.create(
+                generation,
+                Instant.parse("2024-03-01T00:00:00Z"),
+                Instant.parse("2024-08-31T23:59:59Z"),
+                true
+        );
     }
 
     private Gisu createInactiveGisu(Long generation) {
-        return Gisu.builder()
-                .generation(generation)
-                .isActive(false)
-                .startAt(Instant.parse("2023-03-01T00:00:00Z"))
-                .endAt(Instant.parse("2023-08-31T23:59:59Z"))
-                .build();
+        return Gisu.create(
+                generation,
+                Instant.parse("2023-03-01T00:00:00Z"),
+                Instant.parse("2023-08-31T23:59:59Z"),
+                false
+        );
     }
 
     private StudyGroup createStudyGroup(String name, Gisu gisu, ChallengerPart part) {
