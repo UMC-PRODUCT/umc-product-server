@@ -1,8 +1,11 @@
 package com.umc.product.organization.adapter.in.web;
 
-import com.umc.product.organization.adapter.in.web.dto.response.GisuListResponse;
+import com.umc.product.global.response.PageResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.GisuPageResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.GisuResponse;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -16,7 +19,11 @@ public class AdminGisuQueryController implements AdminGisuQueryControllerApi {
 
     @Override
     @GetMapping
-    public GisuListResponse getGisuList() {
-        return GisuListResponse.from(getGisuUseCase.getList());
+    public GisuPageResponse getGisuList(Pageable pageable) {
+        PageResponse<GisuResponse> pageResponse = PageResponse.of(
+                getGisuUseCase.getList(pageable),
+                GisuResponse::from
+        );
+        return GisuPageResponse.from(pageResponse);
     }
 }

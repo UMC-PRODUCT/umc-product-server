@@ -9,6 +9,8 @@ import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,6 +33,11 @@ public class GisuPersistenceAdapter implements ManageGisuPort, LoadGisuPort {
     @Override
     public List<Gisu> findAll() {
         return gisuJpaRepository.findAllByOrderByGenerationDesc();
+    }
+
+    @Override
+    public Page<Gisu> findAll(Pageable pageable) {
+        return gisuJpaRepository.findAllByOrderByGenerationDesc(pageable);
     }
 
     @Override

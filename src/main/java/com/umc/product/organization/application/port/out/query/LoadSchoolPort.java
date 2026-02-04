@@ -12,6 +12,8 @@ public interface LoadSchoolPort {
 
     Page<SchoolListItemInfo> findSchools(SchoolSearchCondition condition, Pageable pageable);
 
+    List<School> findAll();
+
     School findSchoolDetailById(Long schoolId);
 
     School findById(Long schoolId);

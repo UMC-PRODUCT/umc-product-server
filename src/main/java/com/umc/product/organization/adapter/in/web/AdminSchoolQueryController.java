@@ -4,6 +4,7 @@ import com.umc.product.global.response.PageResponse;
 import com.umc.product.organization.adapter.in.web.dto.request.SchoolListRequest;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolListItemResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.SchoolNameListResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolPageResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.UnassignedSchoolListResponse;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
@@ -36,6 +37,12 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
                 SchoolListItemResponse::of
         );
         return SchoolPageResponse.from(pageResponse);
+    }
+
+    @Override
+    @GetMapping("/all")
+    public SchoolNameListResponse getAllSchools() {
+        return SchoolNameListResponse.from(getSchoolUseCase.getAllSchoolNames());
     }
 
     @Override

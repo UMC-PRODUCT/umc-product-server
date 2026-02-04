@@ -4,6 +4,7 @@ import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolLinkInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.application.port.in.query.dto.UnassignedSchoolInfo;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
@@ -25,6 +26,13 @@ public class SchoolQueryService implements GetSchoolUseCase {
     @Override
     public Page<SchoolListItemInfo> getSchools(SchoolSearchCondition condition, Pageable pageable) {
         return loadSchoolPort.findSchools(condition, pageable);
+    }
+
+    @Override
+    public List<SchoolNameInfo> getAllSchoolNames() {
+        return loadSchoolPort.findAll().stream()
+                .map(SchoolNameInfo::from)
+                .toList();
     }
 
     @Override

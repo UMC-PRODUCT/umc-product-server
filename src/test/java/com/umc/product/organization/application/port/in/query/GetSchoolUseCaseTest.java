@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.application.port.in.query.dto.UnassignedSchoolInfo;
 import com.umc.product.organization.application.port.out.command.ManageChapterPort;
@@ -337,6 +338,31 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
         assertThat(result.schoolId()).isEqualTo(school.getId());
         assertThat(result.chapterId()).isNull();
         assertThat(result.chapterName()).isNull();
+    }
+
+    @Test
+    void 전체_학교_이름_목록을_조회한다() {
+        // given
+        manageSchoolPort.save(School.create("한성대", "비고1"));
+        manageSchoolPort.save(School.create("동국대", "비고2"));
+        manageSchoolPort.save(School.create("중앙대", "비고3"));
+
+        // when
+        List<SchoolNameInfo> result = getSchoolUseCase.getAllSchoolNames();
+
+        // then
+        assertThat(result).hasSize(3);
+        assertThat(result).extracting(SchoolNameInfo::schoolName)
+                .containsExactly("동국대", "중앙대", "한성대");
+    }
+
+    @Test
+    void 학교가_없으면_빈_목록을_반환한다() {
+        // when
+        List<SchoolNameInfo> result = getSchoolUseCase.getAllSchoolNames();
+
+        // then
+        assertThat(result).isEmpty();
     }
 
     @Test

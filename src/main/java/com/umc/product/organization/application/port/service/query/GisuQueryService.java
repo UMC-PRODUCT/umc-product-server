@@ -5,6 +5,8 @@ import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +22,12 @@ public class GisuQueryService implements GetGisuUseCase {
         return loadGisuPort.findAll().stream()
                 .map(GisuInfo::from)
                 .toList();
+    }
+
+    @Override
+    public Page<GisuInfo> getList(Pageable pageable) {
+        return loadGisuPort.findAll(pageable)
+                .map(GisuInfo::from);
     }
 
     @Override

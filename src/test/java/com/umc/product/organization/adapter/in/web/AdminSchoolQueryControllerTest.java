@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.support.DocumentationTest;
@@ -120,6 +121,34 @@ class AdminSchoolQueryControllerTest extends DocumentationTest {
                                 fieldWithPath("result.logoImageLink").type(JsonFieldType.STRING).description("로고 이미지 URL").optional(),
                                 fieldWithPath("result.createdAt").type(JsonFieldType.STRING).description("생성일자"),
                                 fieldWithPath("result.updatedAt").type(JsonFieldType.STRING).description("수정일자"))));
+    }
+
+    @Test
+    void 학교_전체_목록을_조회합니다() throws Exception {
+        // given
+        List<SchoolNameInfo> schoolNames = List.of(
+                new SchoolNameInfo(1L, "동국대학교"),
+                new SchoolNameInfo(2L, "서울대학교"),
+                new SchoolNameInfo(3L, "중앙대학교")
+        );
+
+        given(getSchoolUseCase.getAllSchoolNames()).willReturn(schoolNames);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/v1/schools/all"));
+
+        // then
+        result.andExpect(status().isOk())
+                .andDo(restDocsHandler.document(
+                        responseFields(
+                                fieldWithPath("success").type(JsonFieldType.BOOLEAN).description("요청 성공 여부"),
+                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
+                                fieldWithPath("result.schools").type(JsonFieldType.ARRAY).description("학교 목록"),
+                                fieldWithPath("result.schools[].schoolId").type(JsonFieldType.STRING).description("학교 ID"),
+                                fieldWithPath("result.schools[].schoolName").type(JsonFieldType.STRING).description("학교 이름")
+                        )
+                ));
     }
 
     private Instant toInstant(int year, int month, int day) {

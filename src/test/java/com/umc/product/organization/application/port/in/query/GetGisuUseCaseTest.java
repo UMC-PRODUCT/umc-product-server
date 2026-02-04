@@ -10,6 +10,8 @@ import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 class GetGisuUseCaseTest extends UseCaseTestSupport {
 
@@ -61,6 +63,81 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
         // then
         assertThat(result.startAt()).isEqualTo(startAt);
         assertThat(result.endAt()).isEqualTo(endAt);
+    }
+
+    @Test
+    void 기수_목록을_페이징하여_조회한다() {
+        // given
+        for (int i = 1; i <= 5; i++) {
+            manageGisuPort.save(createGisu((long) i, false));
+        }
+
+        PageRequest pageRequest = PageRequest.of(0, 3);
+
+        // when
+        Page<GisuInfo> result = getGisuUseCase.getList(pageRequest);
+
+        // then
+        assertThat(result.getContent()).hasSize(3);
+        assertThat(result.getTotalElements()).isEqualTo(5);
+        assertThat(result.getTotalPages()).isEqualTo(2);
+        assertThat(result.getNumber()).isEqualTo(0);
+        assertThat(result.hasNext()).isTrue();
+        assertThat(result.hasPrevious()).isFalse();
+    }
+
+    @Test
+    void 기수_페이징_마지막_페이지를_조회한다() {
+        // given
+        for (int i = 1; i <= 5; i++) {
+            manageGisuPort.save(createGisu((long) i, false));
+        }
+
+        PageRequest pageRequest = PageRequest.of(1, 3);
+
+        // when
+        Page<GisuInfo> result = getGisuUseCase.getList(pageRequest);
+
+        // then
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getTotalElements()).isEqualTo(5);
+        assertThat(result.getNumber()).isEqualTo(1);
+        assertThat(result.hasNext()).isFalse();
+        assertThat(result.hasPrevious()).isTrue();
+    }
+
+    @Test
+    void 기수가_없으면_빈_페이지를_반환한다() {
+        // given
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        // when
+        Page<GisuInfo> result = getGisuUseCase.getList(pageRequest);
+
+        // then
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isEqualTo(0);
+        assertThat(result.getTotalPages()).isEqualTo(0);
+        assertThat(result.hasNext()).isFalse();
+    }
+
+    @Test
+    void 페이징_결과가_generation_내림차순으로_정렬된다() {
+        // given
+        manageGisuPort.save(createGisu(7L, false));
+        manageGisuPort.save(createGisu(9L, true));
+        manageGisuPort.save(createGisu(8L, false));
+
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        // when
+        Page<GisuInfo> result = getGisuUseCase.getList(pageRequest);
+
+        // then
+        assertThat(result.getContent()).hasSize(3);
+        assertThat(result.getContent().get(0).generation()).isEqualTo(9L);
+        assertThat(result.getContent().get(1).generation()).isEqualTo(8L);
+        assertThat(result.getContent().get(2).generation()).isEqualTo(7L);
     }
 
     private Gisu createGisu(Long generation, boolean isActive) {

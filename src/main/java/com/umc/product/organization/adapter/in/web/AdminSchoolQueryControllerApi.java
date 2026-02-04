@@ -3,6 +3,7 @@ package com.umc.product.organization.adapter.in.web;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.organization.adapter.in.web.dto.request.SchoolListRequest;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.SchoolNameListResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolPageResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.UnassignedSchoolListResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +31,16 @@ public interface AdminSchoolQueryControllerApi {
             @ParameterObject SchoolListRequest request,
             @ParameterObject Pageable pageable
     );
+
+    @Operation(summary = "학교 전체 목록 조회", description = "전체 학교 목록을 이름순으로 조회합니다. 학교 ID와 이름만 반환합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = SchoolNameListResponse.class))
+            )
+    })
+    SchoolNameListResponse getAllSchools();
 
     @Operation(summary = "학교 상세 조회 ", description = "학교 상세 정보를 조회합니다")
     @ApiResponses(value = {
