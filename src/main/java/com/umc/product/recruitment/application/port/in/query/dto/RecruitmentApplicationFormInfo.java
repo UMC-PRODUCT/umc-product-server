@@ -1,10 +1,12 @@
 package com.umc.product.recruitment.application.port.in.query.dto;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 
 public record RecruitmentApplicationFormInfo(
         Long recruitmentId,
@@ -81,6 +83,28 @@ public record RecruitmentApplicationFormInfo(
                 recruitment.getNoticeContent(),
                 formDefinition,
                 recruitmentFormDefinition,
+                interviewTimeTableInfo,
+                preferredPartInfo
+        );
+    }
+
+    public RecruitmentApplicationFormInfo filterPartQuestions(Set<ChallengerPart> openParts) {
+        if (openParts == null || openParts.isEmpty() || recruitmentFormDefinition == null) {
+            return this;
+        }
+
+        RecruitmentFormDefinitionInfo filtered =
+                recruitmentFormDefinition.filterForApplicantOpenParts(openParts);
+
+        return new RecruitmentApplicationFormInfo(
+                recruitmentId,
+                formId,
+                status,
+                recruitmentFormTitle,
+                noticeTitle,
+                noticeContent,
+                formDefinition,
+                filtered,
                 interviewTimeTableInfo,
                 preferredPartInfo
         );

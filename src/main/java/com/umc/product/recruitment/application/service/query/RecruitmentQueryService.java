@@ -75,6 +75,8 @@ import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -172,6 +174,12 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
 
+        Set<ChallengerPart> openParts =
+                parts.stream()
+                        .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+                        .map(p -> p.getPart())
+                        .collect(Collectors.toSet());
+
         List<RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo> preferredPartOptions =
                 (parts == null ? List.<RecruitmentPart>of() : parts).stream()
                         .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
@@ -190,14 +198,13 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         var preferredPartInfo =
                 new RecruitmentApplicationFormInfo.PreferredPartInfo(max, preferredPartOptions);
 
-        if (recruitment.isPublished()) {
-            return loadRecruitmentPort.findApplicationFormInfoForApplicantById(query.recruitmentId(),
-                    preferredPartInfo);
+        if (!recruitment.isPublished()) {
+            // TODO: 운영진 권한 검증 추가 (DRAFT면 운영진만 허용)
         }
+        RecruitmentApplicationFormInfo raw =
+                loadRecruitmentPort.findApplicationFormInfoForApplicantById(query.recruitmentId(), preferredPartInfo);
 
-        // TODO: 운영진 권한 검증 추가 (DRAFT면 운영진만 허용)
-
-        return loadRecruitmentPort.findApplicationFormInfoForApplicantById(query.recruitmentId(), preferredPartInfo);
+        return raw.filterPartQuestions(openParts);
     }
 
     @Override
