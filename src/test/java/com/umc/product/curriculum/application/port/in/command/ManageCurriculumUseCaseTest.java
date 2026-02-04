@@ -14,8 +14,7 @@ import com.umc.product.global.exception.BusinessException;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -92,7 +91,7 @@ class ManageCurriculumUseCaseTest extends UseCaseTestSupport {
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "커리큘럼");
         OriginalWorkbook workbook = OriginalWorkbook.create(
                 curriculum, 1, "기존 제목", "기존 설명", "http://old.url",
-                LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 7), MissionType.LINK
+                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
         );
         curriculum.addWorkbook(workbook);
         Curriculum savedCurriculum = saveCurriculumPort.save(curriculum);
@@ -103,7 +102,7 @@ class ManageCurriculumUseCaseTest extends UseCaseTestSupport {
                 "커리큘럼",
                 List.of(new WorkbookCommand(
                         workbookId, 1, "수정된 제목", "수정된 설명", "http://new.url",
-                        LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 7), MissionType.MEMO
+                        Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.MEMO
                 ))
         );
 
@@ -125,7 +124,7 @@ class ManageCurriculumUseCaseTest extends UseCaseTestSupport {
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "커리큘럼");
         OriginalWorkbook existingWorkbook = OriginalWorkbook.create(
                 curriculum, 1, "1주차", null, null,
-                LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 7), MissionType.LINK
+                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
         );
         curriculum.addWorkbook(existingWorkbook);
         Curriculum savedCurriculum = saveCurriculumPort.save(curriculum);
@@ -154,11 +153,11 @@ class ManageCurriculumUseCaseTest extends UseCaseTestSupport {
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "커리큘럼");
         OriginalWorkbook workbook1 = OriginalWorkbook.create(
                 curriculum, 1, "1주차", null, null,
-                LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 7), MissionType.LINK
+                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
         );
         OriginalWorkbook workbook2 = OriginalWorkbook.create(
                 curriculum, 2, "2주차", null, null,
-                LocalDate.of(2024, 3, 8), LocalDate.of(2024, 3, 14), MissionType.LINK
+                Instant.parse("2024-03-08T00:00:00Z"), Instant.parse("2024-03-14T23:59:59Z"), MissionType.LINK
         );
         curriculum.addWorkbook(workbook1);
         curriculum.addWorkbook(workbook2);
@@ -205,7 +204,7 @@ class ManageCurriculumUseCaseTest extends UseCaseTestSupport {
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "커리큘럼");
         OriginalWorkbook workbook = OriginalWorkbook.create(
                 curriculum, 1, "기존 제목", "기존 설명", "http://old.url",
-                LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 7), MissionType.LINK
+                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
         );
         curriculum.addWorkbook(workbook);
         Curriculum savedCurriculum = saveCurriculumPort.save(curriculum);
@@ -228,8 +227,8 @@ class ManageCurriculumUseCaseTest extends UseCaseTestSupport {
         Curriculum updatedCurriculum = loadCurriculumPort.findById(savedCurriculum.getId()).orElseThrow();
         OriginalWorkbook updatedWorkbook = updatedCurriculum.getOriginalWorkbooks().get(0);
         assertThat(updatedWorkbook.getTitle()).isEqualTo("수정된 제목");
-        assertThat(updatedWorkbook.getStartDate()).isEqualTo(LocalDate.of(2024, 3, 1));
-        assertThat(updatedWorkbook.getEndDate()).isEqualTo(LocalDate.of(2024, 3, 7));
+        assertThat(updatedWorkbook.getStartDate()).isEqualTo(Instant.parse("2024-03-01T00:00:00Z"));
+        assertThat(updatedWorkbook.getEndDate()).isEqualTo(Instant.parse("2024-03-07T23:59:59Z"));
         assertThat(updatedWorkbook.getMissionType()).isEqualTo(MissionType.LINK);
     }
 
@@ -237,15 +236,15 @@ class ManageCurriculumUseCaseTest extends UseCaseTestSupport {
         return Gisu.builder()
                 .generation(generation)
                 .isActive(true)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
+                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
+                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
                 .build();
     }
 
     private WorkbookCommand createWorkbookCommand(Long id, Integer weekNo, String title) {
         return new WorkbookCommand(
                 id, weekNo, title, null, null,
-                LocalDate.of(2024, 3, 1), LocalDate.of(2024, 3, 7), MissionType.LINK
+                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
         );
     }
 }

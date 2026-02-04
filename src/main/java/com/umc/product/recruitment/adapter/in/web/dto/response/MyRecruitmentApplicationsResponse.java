@@ -1,7 +1,7 @@
 package com.umc.product.recruitment.adapter.in.web.dto.response;
 
+import com.umc.product.recruitment.application.port.in.query.dto.ApplicationEvaluationStatusCode;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationProgressNoticeType;
-import com.umc.product.recruitment.application.port.in.query.dto.EvaluationStatusCode;
 import com.umc.product.recruitment.application.port.in.query.dto.MyApplicationListInfo;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import java.time.Instant;
@@ -42,7 +42,7 @@ public record MyRecruitmentApplicationsResponse(
     }
 
     public record EvaluationStatusForApplicantResponse(
-            EvaluationStatusCode status
+            ApplicationEvaluationStatusCode status
     ) {
         public static EvaluationStatusForApplicantResponse from(MyApplicationListInfo.EvaluationStatusInfo info) {
             return new EvaluationStatusForApplicantResponse(info.status());

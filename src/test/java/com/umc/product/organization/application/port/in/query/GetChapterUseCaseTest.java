@@ -13,7 +13,7 @@ import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -111,8 +111,8 @@ class GetChapterUseCaseTest extends UseCaseTestSupport {
         return Gisu.builder()
                 .generation(generation)
                 .isActive(true)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
+                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
+                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
                 .build();
     }
 }

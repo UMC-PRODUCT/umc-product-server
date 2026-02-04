@@ -2,7 +2,7 @@ package com.umc.product.organization.adapter.in.web.dto.response;
 
 import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDate;
+import java.time.Instant;
 
 @Schema(description = "학교 상세 정보")
 public record SchoolDetailResponse(
@@ -21,14 +21,21 @@ public record SchoolDetailResponse(
         @Schema(description = "비고", example = "관악캠퍼스")
         String remark,
 
-        @Schema(description = "생성일", example = "2024-03-01")
-        LocalDate createdAt,
+        @Schema(description = "생성일", example = "2024-03-01T00:00:00Z")
+        Instant createdAt,
 
-        @Schema(description = "수정일", example = "2024-03-15")
-        LocalDate updatedAt
+        @Schema(description = "수정일", example = "2024-03-15T00:00:00Z")
+        Instant updatedAt
 ) {
     public static SchoolDetailResponse of(SchoolInfo info) {
-        return new SchoolDetailResponse(info.chapterId(), info.chapterName(), info.schoolName(), info.schoolId(),
-                info.remark(), info.createdAt(), info.updatedAt());
+        return new SchoolDetailResponse(
+                info.chapterId(),
+                info.chapterName(),
+                info.schoolName(),
+                info.schoolId(),
+                info.remark(),
+                info.createdAt(),
+                info.updatedAt()
+        );
     }
 }

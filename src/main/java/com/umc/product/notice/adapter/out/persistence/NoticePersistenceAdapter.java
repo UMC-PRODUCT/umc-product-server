@@ -46,6 +46,7 @@ public class NoticePersistenceAdapter implements
         return noticeJpaRepository.findAll(pageable);
     }
 
+
     @Override
     public Notice save(Notice notice) {
         return noticeJpaRepository.save(notice);

@@ -20,7 +20,7 @@ public record MyApplicationListInfo(
     }
 
     public record EvaluationStatusInfo(
-            EvaluationStatusCode status
+            ApplicationEvaluationStatusCode status
     ) {
     }
 

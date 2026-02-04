@@ -26,6 +26,12 @@ public enum SwaggerTag {
     NOTICE("공지사항", "notice | 공지사항 API", 80),
     SURVEY("설문", "survey | 설문 API", 90),
     RECRUITMENT("모집", "recruitment | 모집 API", 100),
+    DOC_EVALUATION("서류 평가", "document evaluation | 평가 API", 105),
+    INTERVIEW_SCHEDULING("면접 스케줄링 관리", "interview scheduling | 면접 스케줄링 관리 API", 107),
+    INTERVIEW_QUESTION_SHEET("면접 질문지 관리", "interview question sheet | 면접 질문지 관리 API", 108),
+    INTERVIEW_EVALUATION("면접 평가", "interview evaluation | 면접 평가 API", 109),
+    FINAL_SELECTION("최종 합격 관리", "final selection | 최종 합격 관리 API", 110),
+    RECRUITMENT_ADMIN("총괄 권한 모집 관리", "recruitment admin | 총괄 권한 모집 API", 111),
     NOTIFICATION("알람", "notification | 알림 API", 110),
     STORAGE("파일 저장소", "storage | 파일 저장 API", 120),
     PROJECT("UPMS", "project | 프로젝트 매칭 API", 130),
@@ -79,6 +85,12 @@ public enum SwaggerTag {
         public static final String NOTICE = "공지사항";
         public static final String SURVEY = "설문";
         public static final String RECRUITMENT = "모집";
+        public static final String DOC_EVALUATION = "서류 평가";
+        public static final String INTERVIEW_SCHEDULING = "면접 스케줄링 관리";
+        public static final String INTERVIEW_QUESTION_SHEET = "면접 질문지 관리";
+        public static final String INTERVIEW_EVALUATION = "면접 평가";
+        public static final String FINAL_SELECTION = "최종 합격 관리";
+        public static final String RECRUITMENT_ADMIN = "총괄 권한 모집 관리";
         public static final String NOTIFICATION = "알람";
         public static final String STORAGE = "파일 저장소";
         public static final String PROJECT = "UPMS";
