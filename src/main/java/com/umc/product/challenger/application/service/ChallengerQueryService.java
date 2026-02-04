@@ -71,4 +71,11 @@ public class ChallengerQueryService implements GetChallengerUseCase {
                 ChallengerInfo::from
             ));
     }
+
+    @Override
+    public List<ChallengerInfo> getByGisuId(Long gisuId) {
+        return loadChallengerPort.findByGisuId(gisuId).stream()
+            .map(ChallengerInfo::from)
+            .toList();
+    }
 }

@@ -42,4 +42,12 @@ public interface GetChallengerUseCase {
      * @return challengerId → ChallengerInfo Map
      */
     Map<Long, ChallengerInfo> getChallengerPublicInfoByIds(Set<Long> challengerIds);
+
+    /**
+     * 기수 ID로 해당 기수의 모든 챌린저 정보 조회
+     *
+     * @param gisuId 기수 ID
+     * @return 해당 기수의 챌린저 정보 목록
+     */
+    List<ChallengerInfo> getByGisuId(Long gisuId);
 }

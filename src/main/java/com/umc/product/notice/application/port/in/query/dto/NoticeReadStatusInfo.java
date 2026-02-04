@@ -11,7 +11,6 @@ public record NoticeReadStatusInfo(
     Long schoolId,
     String schoolName,
     Long chapterId,
-    String chapterName,
-    Boolean isRenotifiedMember
+    String chapterName
 ) {
 }

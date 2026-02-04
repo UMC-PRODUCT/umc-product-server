@@ -91,6 +91,11 @@ public class NoticeQueryController implements NoticeQueryApi {
     /*
      * 공지사항 수신 현황 통계 조회
      */
+    @CheckAccess(
+        resourceType = ResourceType.NOTICE,
+        resourceId = "#noticeId",
+        permission = PermissionType.MANAGE
+    )
     @GetMapping("/{noticeId}/read-statics")
     public ApiResponse<GetNoticeStaticsResponse> getNoticeReadStatics(@PathVariable Long noticeId) {
 
@@ -101,6 +106,11 @@ public class NoticeQueryController implements NoticeQueryApi {
     /*
      * 공지사항 수신 현황 조회
      */
+    @CheckAccess(
+        resourceType = ResourceType.NOTICE,
+        resourceId = "#noticeId",
+        permission = PermissionType.MANAGE
+    )
     @GetMapping("/{noticeId}/read-status")
     public ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus(
         @PathVariable Long noticeId,
