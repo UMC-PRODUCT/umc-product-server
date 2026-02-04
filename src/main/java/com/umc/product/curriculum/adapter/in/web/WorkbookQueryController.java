@@ -7,14 +7,14 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.dto.response.StudyGroupFilterResponse;
 import com.umc.product.curriculum.adapter.in.web.dto.response.WorkbookSubmissionResponse;
 import com.umc.product.curriculum.application.port.in.query.GetStudyGroupsForFilterUseCase;
-import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionContextUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
-import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionContext;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.organization.application.port.in.query.GetSchoolAccessContextUseCase;
+import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class WorkbookQueryController implements WorkbookQueryControllerApi {
 
     private final GetWorkbookSubmissionsUseCase getWorkbookSubmissionsUseCase;
-    private final GetWorkbookSubmissionContextUseCase getWorkbookSubmissionContextUseCase;
+    private final GetSchoolAccessContextUseCase getSchoolAccessContextUseCase;
     private final GetStudyGroupsForFilterUseCase getStudyGroupsForFilterUseCase;
 
     @Override
@@ -46,7 +46,7 @@ public class WorkbookQueryController implements WorkbookQueryControllerApi {
             @RequestParam(defaultValue = "20") int size
     ) {
         // 사용자 역할에 따른 조회 컨텍스트 추출 (schoolId, part)
-        WorkbookSubmissionContext context = getWorkbookSubmissionContextUseCase.getContext(
+        SchoolAccessContext context = getSchoolAccessContextUseCase.getContext(
                 memberPrincipal.getMemberId()
         );
 

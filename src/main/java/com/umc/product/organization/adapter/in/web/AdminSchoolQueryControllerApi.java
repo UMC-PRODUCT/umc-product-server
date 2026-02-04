@@ -18,7 +18,7 @@ import org.springframework.data.domain.Pageable;
 @Tag(name = Constants.ORGANIZATION)
 public interface AdminSchoolQueryControllerApi {
 
-    @Operation(summary = "학교 목록 조회 ", description = "학교 목록을 페이징하여 조회합니다. 키워드 검색 및 지부 필터링이 가능합니다.")
+    @Operation(summary = "학교 목록 조회 Deprecated", description = "학교 목록을 페이징하여 조회합니다. 키워드 검색 및 지부 필터링이 가능합니다.")
     @ApiResponses(value = {
             @ApiResponse(
                     responseCode = "200",

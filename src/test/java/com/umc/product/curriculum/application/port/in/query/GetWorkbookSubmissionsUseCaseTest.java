@@ -13,7 +13,8 @@ import com.umc.product.curriculum.adapter.out.persistence.CurriculumJpaRepositor
 import com.umc.product.curriculum.adapter.out.persistence.OriginalWorkbookJpaRepository;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
 import com.umc.product.curriculum.application.port.in.query.dto.StudyGroupFilterInfo;
-import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionContext;
+import com.umc.product.organization.application.port.in.query.GetSchoolAccessContextUseCase;
+import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
 import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.Curriculum;
@@ -42,7 +43,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     private GetWorkbookSubmissionsUseCase getWorkbookSubmissionsUseCase;
 
     @Autowired
-    private GetWorkbookSubmissionContextUseCase getWorkbookSubmissionContextUseCase;
+    private GetSchoolAccessContextUseCase getSchoolAccessContextUseCase;
 
     @Autowired
     private GetStudyGroupsForFilterUseCase getStudyGroupsForFilterUseCase;
@@ -277,7 +278,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
                     school.getId(), null, gisu.getId()));
 
             // when
-            WorkbookSubmissionContext context = getWorkbookSubmissionContextUseCase.getContext(member.getId());
+            SchoolAccessContext context = getSchoolAccessContextUseCase.getContext(member.getId());
 
             // then
             assertThat(context.schoolId()).isEqualTo(school.getId());
@@ -299,7 +300,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
                     school.getId(), null, gisu.getId()));
 
             // when
-            WorkbookSubmissionContext context = getWorkbookSubmissionContextUseCase.getContext(member.getId());
+            SchoolAccessContext context = getSchoolAccessContextUseCase.getContext(member.getId());
 
             // then
             assertThat(context.schoolId()).isEqualTo(school.getId());
@@ -321,7 +322,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
                     school.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
 
             // when
-            WorkbookSubmissionContext context = getWorkbookSubmissionContextUseCase.getContext(member.getId());
+            SchoolAccessContext context = getSchoolAccessContextUseCase.getContext(member.getId());
 
             // then
             assertThat(context.schoolId()).isEqualTo(school.getId());
@@ -343,7 +344,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
                     school.getId(), ChallengerPart.WEB, gisu.getId()));
 
             // when
-            WorkbookSubmissionContext context = getWorkbookSubmissionContextUseCase.getContext(member.getId());
+            SchoolAccessContext context = getSchoolAccessContextUseCase.getContext(member.getId());
 
             // then
             assertThat(context.schoolId()).isEqualTo(school.getId());
@@ -361,7 +362,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
                     new Challenger(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
 
             // when & then
-            assertThatThrownBy(() -> getWorkbookSubmissionContextUseCase.getContext(member.getId()))
+            assertThatThrownBy(() -> getSchoolAccessContextUseCase.getContext(member.getId()))
                     .isInstanceOf(IllegalStateException.class);
         }
     }
