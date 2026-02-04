@@ -4,12 +4,12 @@ package com.umc.product.support;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.organization.adapter.in.web.AdminChapterController;
+import com.umc.product.organization.adapter.in.web.AdminGisuController;
+import com.umc.product.organization.adapter.in.web.AdminGisuQueryController;
+import com.umc.product.organization.adapter.in.web.AdminSchoolController;
 import com.umc.product.organization.adapter.in.web.AdminSchoolQueryController;
-import com.umc.product.organization.adapter.in.web.ChapterController;
 import com.umc.product.organization.adapter.in.web.ChapterQueryController;
-import com.umc.product.organization.adapter.in.web.GisuController;
-import com.umc.product.organization.adapter.in.web.GisuQueryController;
-import com.umc.product.organization.adapter.in.web.SchoolController;
 import com.umc.product.organization.adapter.in.web.SchoolQueryController;
 import com.umc.product.organization.application.port.in.command.ManageChapterUseCase;
 import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
@@ -28,13 +28,13 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = {
-    SchoolController.class,
+    AdminSchoolController.class,
     SchoolQueryController.class,
     AdminSchoolQueryController.class,
-    ChapterController.class,
+    AdminChapterController.class,
     ChapterQueryController.class,
-    GisuController.class,
-    GisuQueryController.class,
+    AdminGisuController.class,
+    AdminGisuQueryController.class,
 })
 @Import({
     RestDocsConfig.class,

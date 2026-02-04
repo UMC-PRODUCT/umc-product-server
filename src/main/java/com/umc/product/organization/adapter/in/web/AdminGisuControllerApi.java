@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = Constants.ORGANIZATION)
-public interface GisuControllerApi {
+public interface AdminGisuControllerApi {
 
     @Operation(summary = "기수 생성", description = "새로운 기수를 생성합니다.")
     @ApiResponses(value = {

@@ -24,7 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
 
-class SchoolQueryControllerTest extends DocumentationTest {
+class AdminSchoolQueryControllerTest extends DocumentationTest {
 
     @Test
     void 학교_목록을_조회합니다() throws Exception {
@@ -48,7 +48,7 @@ class SchoolQueryControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                get("/api/v1/admin/schools")
+                get("/api/v1/schools")
                         .param("keyword", "중앙대학교")
                         .param("chapterId", "1")
                         .param("page", "0")
@@ -105,7 +105,7 @@ class SchoolQueryControllerTest extends DocumentationTest {
         given(getSchoolUseCase.getSchoolDetail(schoolId)).willReturn(schoolInfo);
         given(getFileUseCase.getById("logo-file-123")).willReturn(fileInfo);
         // when
-        ResultActions result = mockMvc.perform(get("/api/v1/admin/schools/{schoolId}", schoolId));
+        ResultActions result = mockMvc.perform(get("/api/v1/schools/{schoolId}", schoolId));
         // then
         result.andExpect((status().isOk()))
                 .andDo(restDocsHandler.document(pathParameters(parameterWithName("schoolId").description("학교 ID")),

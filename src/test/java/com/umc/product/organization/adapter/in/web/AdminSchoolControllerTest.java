@@ -18,7 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
 
-public class SchoolControllerTest extends DocumentationTest {
+public class AdminSchoolControllerTest extends DocumentationTest {
 
 
     @Test
@@ -29,7 +29,7 @@ public class SchoolControllerTest extends DocumentationTest {
 
         // then
         ResultActions result = mockMvc.perform(
-                post("/api/v1/admin/schools").content(objectMapper.writeValueAsString(request))
+                post("/api/v1/schools").content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(
@@ -49,7 +49,7 @@ public class SchoolControllerTest extends DocumentationTest {
                 .remark("신승호 라면이 맛있습니다.").logoImageId("file-456").build();
 
         ResultActions result = mockMvc.perform(
-                patch("/api/v1/admin/schools/{schoolId}", schoolId).content(objectMapper.writeValueAsString(request))
+                patch("/api/v1/schools/{schoolId}", schoolId).content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
         // then
@@ -71,7 +71,7 @@ public class SchoolControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                delete("/api/v1/admin/schools").content(objectMapper.writeValueAsString(request))
+                delete("/api/v1/schools").content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
         // then
