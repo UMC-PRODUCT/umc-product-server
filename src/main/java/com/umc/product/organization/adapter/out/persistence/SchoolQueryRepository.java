@@ -98,6 +98,7 @@ public class SchoolQueryRepository {
                         school.name,
                         school.id,
                         school.remark,
+                        school.logoImageId,
                         school.createdAt,
                         school.updatedAt
                 ))

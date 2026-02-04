@@ -8,6 +8,7 @@ public record SchoolInfo(
         String schoolName,
         Long schoolId,
         String remark,
+        String logoImageId,
         Instant createdAt,
         Instant updatedAt
 ) {

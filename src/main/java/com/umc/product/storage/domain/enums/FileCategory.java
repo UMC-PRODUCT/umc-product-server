@@ -41,6 +41,11 @@ public enum FileCategory {
     WORKBOOK_SUBMISSION("workbook", 20 * 1024 * 1024, new String[]{"pdf", "jpg", "jpeg", "png", "zip"}),
 
     /**
+     * 학교 로고 이미지
+     */
+    SCHOOL_LOGO("school-logo", 5 * 1024 * 1024, new String[]{"jpg", "jpeg", "png", "webp"}),
+
+    /**
      * PDF 포트폴리오 파일; Web에서 지원서 작성 시 활용합니다.
      */
     PORTFOLIO("portfolio", 20 * 1024 * 1024, new String[]{"pdf"}),

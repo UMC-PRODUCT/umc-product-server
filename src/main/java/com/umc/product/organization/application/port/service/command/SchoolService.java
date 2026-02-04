@@ -33,6 +33,7 @@ public class SchoolService implements ManageSchoolUseCase {
     public Long register(CreateSchoolCommand command) {
 
         School newSchool = School.create(command.schoolName(), command.remark());
+        newSchool.updateLogoImageId(command.logoImageId());
         School savedSchool = manageSchoolPort.save(newSchool);
 
         if (command.chapterId() != null) {
@@ -51,6 +52,7 @@ public class SchoolService implements ManageSchoolUseCase {
 
         school.updateName(command.schoolName());
         school.updateRemark(command.remark());
+        school.updateLogoImageId(command.logoImageId());
 
         if (command.chapterId() != null) {
             Chapter chapter = loadChapterPort.findById(command.chapterId());

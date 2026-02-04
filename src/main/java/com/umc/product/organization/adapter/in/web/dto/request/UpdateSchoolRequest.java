@@ -12,9 +12,12 @@ public record UpdateSchoolRequest(
         Long chapterId,
 
         @Schema(description = "비고 (수정할 경우만 입력)", example = "관악캠퍼스")
-        String remark
+        String remark,
+
+        @Schema(description = "로고 이미지 파일 ID (수정할 경우만 입력)", example = "abc123-def456")
+        String logoImageId
 ) {
     public UpdateSchoolCommand toCommand() {
-        return new UpdateSchoolCommand(schoolName, chapterId, remark);
+        return new UpdateSchoolCommand(schoolName, chapterId, remark, logoImageId);
     }
 }
