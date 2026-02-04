@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -170,6 +171,15 @@ public class AttendanceSheet extends BaseEntity {
     private void validateWindow(AttendanceWindow window) {
         if (window == null) {
             throw new IllegalArgumentException("출석 시간대는 필수입니다");
+        }
+    }
+
+    /**
+     * 일정 시간이 변경됨에 따라 출석 시간대도 같이 이동
+     */
+    public void shiftWindow(Duration diff) {
+        if (diff != null && !diff.isZero()) {
+            this.window = this.window.shift(diff);
         }
     }
 

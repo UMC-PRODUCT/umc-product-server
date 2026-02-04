@@ -13,18 +13,19 @@ import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
 import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
+import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-@Slf4j
 public class ScheduleCommandService implements CreateScheduleUseCase, UpdateScheduleUseCase, DeleteScheduleUseCase {
 
     private final SaveSchedulePort saveSchedulePort;
@@ -54,13 +55,20 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
 
         return savedSchedule.getId();
     }
-    
+
     // 일정 수정
     @Override
     public void update(UpdateScheduleCommand command) {
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
+        AttendanceSheet attendanceSheet = loadAttendanceSheetPort.findByScheduleId(command.scheduleId())
+            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+
+        // 변경 전 기존 일정 시작 시간
+        LocalDateTime oldStartsAt = schedule.getStartsAt();
+
+        // 일정 정보 업데이트
         schedule.update(
             command.name(),
             command.description(),
@@ -71,6 +79,15 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             command.locationName(),
             command.location()
         );
+
+        // 일정 시간이 변경되었으면, 그 차이만큼 출석부 시간대 이동
+        if (command.startsAt() != null) {
+            Duration diff = Duration.between(oldStartsAt, command.startsAt());
+            
+            if (!diff.isZero()) {
+                attendanceSheet.shiftWindow(diff);
+            }
+        }
 
         saveSchedulePort.save(schedule);
     }
