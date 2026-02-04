@@ -22,7 +22,8 @@ public record ScheduleDetailResponse(
     Double latitude,
     Double longitude,
     String status,
-    long dDay
+    long dDay,
+    boolean requiresAttendanceApproval
 ) {
 
     public static ScheduleDetailResponse from(ScheduleDetailInfo info) {
@@ -42,7 +43,8 @@ public record ScheduleDetailResponse(
             info.latitude(),
             info.longitude(),
             info.status(),
-            info.dDay()
+            info.dDay(),
+            info.requiresAttendanceApproval()
         );
     }
 }

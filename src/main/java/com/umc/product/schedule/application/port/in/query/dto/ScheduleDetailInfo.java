@@ -18,10 +18,11 @@ public record ScheduleDetailInfo(
     Double latitude,
     Double longitude,
     String status,
-    long dDay
+    long dDay,
+    boolean requiresAttendanceApproval
 ) {
 
-    public static ScheduleDetailInfo from(Schedule schedule, LocalDateTime now) {
+    public static ScheduleDetailInfo from(Schedule schedule, LocalDateTime now, boolean requiresAttendanceApproval) {
         Double lat = schedule.getLocation() != null ? schedule.getLocation().getY() : null;
         Double lng = schedule.getLocation() != null ? schedule.getLocation().getX() : null;
         long dDay = ChronoUnit.DAYS.between(now.toLocalDate(), schedule.getStartsAt().toLocalDate());
@@ -38,7 +39,8 @@ public record ScheduleDetailInfo(
             lat,
             lng,
             schedule.resolveStatus(now),
-            dDay
+            dDay,
+            requiresAttendanceApproval
         );
     }
 }
