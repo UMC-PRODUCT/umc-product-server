@@ -38,4 +38,9 @@ public interface LoadChallengerPort {
      * memberId로 가장 최근 챌린저 조회
      */
     Challenger findTopByMemberIdOrderByCreatedAtDesc(Long memberId);
+
+    /**
+     * 여러 ID로 챌린저 배치 조회
+     */
+    List<Challenger> findByIdIn(Set<Long> ids);
 }

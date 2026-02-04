@@ -8,6 +8,9 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -55,5 +58,17 @@ public class ChallengerQueryService implements GetChallengerUseCase {
             throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_ACTIVE);
         }
         return ChallengerInfo.from(challenger);
+    }
+
+    @Override
+    public Map<Long, ChallengerInfo> getChallengerPublicInfoByIds(Set<Long> challengerIds) {
+        if (challengerIds == null || challengerIds.isEmpty()) {
+            return Map.of();
+        }
+        return loadChallengerPort.findByIdIn(challengerIds).stream()
+            .collect(Collectors.toMap(
+                Challenger::getId,
+                ChallengerInfo::from
+            ));
     }
 }
