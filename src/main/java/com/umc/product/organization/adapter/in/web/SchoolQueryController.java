@@ -1,7 +1,6 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.global.response.PageResponse;
-import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.request.SchoolListRequest;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolLinkResponse;
@@ -9,6 +8,9 @@ import com.umc.product.organization.adapter.in.web.dto.response.SchoolListItemRe
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolPageResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.UnassignedSchoolListResponse;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
+import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
+import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,8 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class SchoolQueryController implements SchoolQueryControllerApi {
 
     private final GetSchoolUseCase getSchoolUseCase;
+    private final GetFileUseCase getFileUseCase;
 
-    @Public
     @Override
     @GetMapping
     public SchoolPageResponse getSchools(@ModelAttribute SchoolListRequest request,
@@ -38,14 +40,14 @@ public class SchoolQueryController implements SchoolQueryControllerApi {
         return SchoolPageResponse.from(pageResponse);
     }
 
-    @Public
     @Override
     @GetMapping("/{schoolId}")
     public SchoolDetailResponse getSchoolDetail(@PathVariable Long schoolId) {
-        return SchoolDetailResponse.of(getSchoolUseCase.getSchoolDetail(schoolId));
+        SchoolInfo schoolInfo = getSchoolUseCase.getSchoolDetail(schoolId);
+        FileInfo fileInfo = getFileUseCase.getById(schoolInfo.logoImageId());
+        return SchoolDetailResponse.of(schoolInfo, fileInfo.fileLink());
     }
 
-    @Public
     @Override
     @GetMapping("/link/{schoolId}")
     public SchoolLinkResponse getSchoolLink(@PathVariable Long schoolId) {

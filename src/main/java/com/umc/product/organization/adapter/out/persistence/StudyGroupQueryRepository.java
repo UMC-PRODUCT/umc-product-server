@@ -39,7 +39,7 @@ public class StudyGroupQueryRepository {
                 .select(Projections.constructor(SchoolStudyGroupInfo.class,
                         school.id,
                         school.name,
-                        school.logoImageUrl,
+                        school.logoImageId,
                         studyGroup.id.countDistinct().intValue(),
                         studyGroupMember.id.count().intValue()
                 ))
@@ -49,7 +49,7 @@ public class StudyGroupQueryRepository {
                 .join(member).on(member.id.eq(challenger.memberId))
                 .join(school).on(school.id.eq(member.schoolId))
                 .where(studyGroup.gisu.isActive.eq(true))
-                .groupBy(school.id, school.name, school.logoImageUrl)
+                .groupBy(school.id, school.name, school.logoImageId)
                 .orderBy(school.name.asc())
                 .fetch();
     }
