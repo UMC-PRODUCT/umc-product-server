@@ -26,4 +26,6 @@ public interface ChallengerJpaRepository extends JpaRepository<Challenger, Long>
     Long countByIdIn(Set<Long> challengerIds);
 
     Optional<Challenger> findTopByMemberIdOrderByCreatedAtDesc(Long memberId);
+
+    List<Challenger> findByIdIn(Set<Long> ids);
 }

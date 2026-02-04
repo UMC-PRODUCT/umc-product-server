@@ -62,6 +62,11 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     }
 
     @Override
+    public List<Challenger> findByIdIn(Set<Long> ids) {
+        return repository.findByIdIn(ids);
+    }
+
+    @Override
     public Page<Challenger> search(SearchChallengerQuery query, Pageable pageable) {
         return queryRepository.search(query, pageable);
     }

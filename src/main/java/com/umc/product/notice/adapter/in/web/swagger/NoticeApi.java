@@ -118,4 +118,26 @@ public interface NoticeApi {
         @Parameter(hidden = true)
         @CurrentMember MemberPrincipal memberPrincipal
     );
+
+    @Operation(
+        summary = "공지사항 읽음 처리",
+        description = "공지사항을 읽음 처리합니다."
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "처리 성공"
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "공지사항을 찾을 수 없음"
+        )
+    })
+    ApiResponse<Void> recordNoticeRead(
+        @Parameter(description = "공지사항 ID", required = true)
+        @PathVariable Long noticeId,
+
+        @Parameter(hidden = true)
+        @CurrentMember MemberPrincipal memberPrincipal
+    );
 }
