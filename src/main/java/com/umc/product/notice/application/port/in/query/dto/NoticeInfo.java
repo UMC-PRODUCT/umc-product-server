@@ -25,25 +25,4 @@ public record NoticeInfo(
     Instant createdAt
 ) {
 
-    public NoticeInfo from(Notice notice,
-                           List<NoticeVoteInfo> votes,
-                           List<NoticeImageInfo> images,
-                           List<NoticeLinkInfo> links,
-                           NoticeTargetInfo targetInfo,
-                           Integer viewCount,
-                           Instant createdAt
-                           ) {
-        return new NoticeInfo(
-            notice.getId(),
-            notice.getTitle(),
-            notice.getContent(),
-            notice.getAuthorChallengerId(),
-            votes,
-            images,
-            links,
-            targetInfo,
-            viewCount,
-            createdAt
-        );
-    }
 }

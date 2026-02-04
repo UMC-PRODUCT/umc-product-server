@@ -117,7 +117,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         List<NoticeRead> reads = loadNoticeReadPort.findNoticeReadByNoticeId(command.noticeId());
         Map<Long, NoticeRead> readMap = reads.stream()
-            .collect(Collectors.toMap(NoticeRead::getChallengerId, Function.identity(), (a, b) -> a));
+            .collect(Collectors.toMap(NoticeRead::getChallengerId, Function.identity()));
 
         // 읽음/안읽음 상태에 따라 필터링
         List<ChallengerInfo> filteredByStatus = switch (command.status()) {

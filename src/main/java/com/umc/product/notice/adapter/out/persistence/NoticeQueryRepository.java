@@ -72,8 +72,8 @@ public class NoticeQueryRepository {
 
         BooleanExpression condition = buildClassificationCondition(classification, target);
 
-        List<Notice> content = getContentQuery(notice, target, condition, pageable);
-        Long total = getTotalCountQuery(notice, target, condition);
+        List<Notice> content = getContentQuery(notice, target, condition, null, pageable);
+        Long total = getTotalCountQuery(notice, target, condition, null);
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
@@ -93,7 +93,7 @@ public class NoticeQueryRepository {
         BooleanExpression condition = buildClassificationConditionForKeywordSearch(classification, target);
 
         List<Notice> notices = getContentQuery(notice, target, condition, keyword, pageable);
-        Long total = getTotalCountQuery(notice, target, keyword, condition);
+        Long total = getTotalCountQuery(notice, target, condition, keyword);
 
         return new PageImpl<>(notices, pageable, total != null ? total : 0L);
     }
@@ -127,17 +127,8 @@ public class NoticeQueryRepository {
     // ========== PRIVATE ====================
 
     // 조건에 맞는 공지 총 개수
-    private Long getTotalCountQuery(QNotice notice, QNoticeTarget target, BooleanExpression condition) {
-        return queryFactory
-            .select(notice.count())
-            .from(notice)
-            .join(target).on(target.noticeId.eq(notice.id))
-            .where(condition)
-            .fetchOne();
-    }
-
-    // 조건에 맞는 공지 총 개수 - 검색어 기반 조회용
-    private Long getTotalCountQuery(QNotice notice, QNoticeTarget target, String keyword, BooleanExpression condition) {
+    private Long getTotalCountQuery(QNotice notice, QNoticeTarget target,
+                                    BooleanExpression condition, String keyword) {
         return queryFactory
             .select(notice.count())
             .from(notice)
@@ -147,20 +138,6 @@ public class NoticeQueryRepository {
     }
 
     // 조건에 맞는 공지 반환
-    private List<Notice> getContentQuery(QNotice notice, QNoticeTarget target,
-                                         BooleanExpression condition, Pageable pageable) {
-
-        return queryFactory
-            .selectFrom(notice)
-            .join(target).on(target.noticeId.eq(notice.id))
-            .where(condition)
-            .orderBy(notice.createdAt.desc())
-            .offset(pageable.getOffset())
-            .limit(pageable.getPageSize())
-            .fetch();
-    }
-
-    // 조건에 맞는 공지 반환 - 검색어 기반 조회용
     private List<Notice> getContentQuery(QNotice notice, QNoticeTarget target,
                                          BooleanExpression condition, String keyword, Pageable pageable) {
 
