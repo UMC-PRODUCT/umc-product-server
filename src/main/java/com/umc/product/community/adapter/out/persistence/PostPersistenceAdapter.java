@@ -3,12 +3,15 @@ package com.umc.product.community.adapter.out.persistence;
 import com.umc.product.community.application.port.in.post.TogglePostLikeUseCase.LikeResult;
 import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
 import com.umc.product.community.application.port.out.LoadPostPort;
+import com.umc.product.community.application.port.out.PostSearchData;
 import com.umc.product.community.application.port.out.SavePostPort;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -16,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
 
     private final PostRepository postRepository;
+    private final PostQueryRepository postQueryRepository;
     // private final PostLikeRepository postLikeRepository;
 
     @Override
@@ -79,5 +83,10 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
         boolean liked = entity.toggleLike(challengerId);
         return new LikeResult(liked, entity.getLikeCount());
+    }
+
+    @Override
+    public Page<PostSearchData> searchByKeyword(String keyword, Pageable pageable) {
+        return postQueryRepository.searchByKeyword(keyword, pageable);
     }
 }
