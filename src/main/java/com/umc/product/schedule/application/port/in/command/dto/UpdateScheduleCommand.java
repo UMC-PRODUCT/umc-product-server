@@ -1,6 +1,8 @@
 package com.umc.product.schedule.application.port.in.command.dto;
 
 import com.umc.product.schedule.domain.enums.ScheduleTag;
+import com.umc.product.schedule.domain.exception.ScheduleDomainException;
+import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Set;
@@ -24,7 +26,7 @@ public record UpdateScheduleCommand(
         Objects.requireNonNull(scheduleId, "scheduleId must not be null");
 
         if (startsAt != null && endsAt != null && startsAt.isAfter(endsAt)) {
-            throw new IllegalArgumentException("시작 일시는 종료 일시보다 이전이어야 합니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
         }
     }
 
