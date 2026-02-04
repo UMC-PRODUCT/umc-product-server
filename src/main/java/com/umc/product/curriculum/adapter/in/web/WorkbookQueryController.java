@@ -1,13 +1,20 @@
 package com.umc.product.curriculum.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.dto.response.StudyGroupFilterResponse;
 import com.umc.product.curriculum.adapter.in.web.dto.response.WorkbookSubmissionResponse;
 import com.umc.product.curriculum.application.port.in.query.GetStudyGroupsForFilterUseCase;
+import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionContextUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
+import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionContext;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
 import com.umc.product.global.response.CursorResponse;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,27 +28,42 @@ import org.springframework.web.bind.annotation.RestController;
 public class WorkbookQueryController implements WorkbookQueryControllerApi {
 
     private final GetWorkbookSubmissionsUseCase getWorkbookSubmissionsUseCase;
+    private final GetWorkbookSubmissionContextUseCase getWorkbookSubmissionContextUseCase;
     private final GetStudyGroupsForFilterUseCase getStudyGroupsForFilterUseCase;
 
     @Override
     @GetMapping("/workbook-submissions")
+    @CheckAccess(
+        resourceType = ResourceType.WORKBOOK_SUBMISSION,
+        permission = PermissionType.READ,
+        message = "워크북 제출 현황 조회는 학교 운영진만 가능합니다."
+    )
     public CursorResponse<WorkbookSubmissionResponse> getWorkbookSubmissions(
-            @RequestParam(required = false) Long schoolId,
+            @CurrentMember MemberPrincipal memberPrincipal,
             @RequestParam Integer weekNo,
             @RequestParam(required = false) Long studyGroupId,
             @RequestParam(required = false) Long cursor,
             @RequestParam(defaultValue = "20") int size
     ) {
-        // TODO: 운영진 권한 필요하도록 수정
+        // 사용자 역할에 따른 조회 컨텍스트 추출 (schoolId, part)
+        WorkbookSubmissionContext context = getWorkbookSubmissionContextUseCase.getContext(
+                memberPrincipal.getMemberId()
+        );
+
         GetWorkbookSubmissionsQuery query = new GetWorkbookSubmissionsQuery(
-                schoolId, weekNo, studyGroupId, cursor, size
+                context.schoolId(),
+                weekNo,
+                studyGroupId,
+                context.part(),
+                cursor,
+                size
         );
 
         List<WorkbookSubmissionInfo> content = getWorkbookSubmissionsUseCase.getSubmissions(query);
 
         return CursorResponse.of(
                 content,
-                query.size(),
+                size,
                 WorkbookSubmissionInfo::challengerWorkbookId,
                 WorkbookSubmissionResponse::from
         );

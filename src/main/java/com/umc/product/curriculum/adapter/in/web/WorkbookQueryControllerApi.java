@@ -5,6 +5,7 @@ import com.umc.product.curriculum.adapter.in.web.dto.response.StudyGroupFilterRe
 import com.umc.product.curriculum.adapter.in.web.dto.response.WorkbookSubmissionResponse;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.CursorResponse;
+import com.umc.product.global.security.MemberPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,21 +14,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 
 /**
- * 워크북 제출 현황 조회 API (운영진용)
+ * 워크북 제출 현황 조회 API (학교 운영진 전용)
  *
- * <p>파트장이 파트원들의 워크북 제출 현황을 조회합니다.</p>
+ * <p>학교 운영진(회장/부회장/파트장/기타 운영진)이 파트원들의 워크북 제출 현황을 조회합니다.</p>
  *
  * <h2>필터링 옵션</h2>
  * <ul>
- *   <li>schoolId: 학교별 필터링 (중앙 파트장용)</li>
  *   <li>weekNo: 주차별 필터링 (필수)</li>
  *   <li>studyGroupId: 스터디 그룹별 필터링</li>
  * </ul>
  *
- * <h2>권한별 동작 (추후 구현)</h2>
+ * <h2>권한별 동작</h2>
  * <ul>
- *   <li>중앙 파트장: schoolId 필수, 본인 파트만 조회</li>
- *   <li>학교 파트장: schoolId 무시 (본인 학교), 본인 파트만 조회</li>
+ *   <li>학교 회장/부회장: 본인 학교의 모든 파트 조회 가능</li>
+ *   <li>학교 파트장/기타 운영진: 본인 학교의 담당 파트만 조회 가능</li>
  * </ul>
  */
 @Tag(name = Constants.CURRICULUM)
@@ -35,13 +35,14 @@ public interface WorkbookQueryControllerApi {
 
     @Operation(
             summary = "워크북 제출 현황 조회",
-            description = "학교, 주차, 스터디 그룹별로 파트원의 워크북 제출 현황을 조회합니다. 커서 기반 무한스크롤."
+            description = "주차, 스터디 그룹별로 파트원의 워크북 제출 현황을 조회합니다. 학교 운영진(회장/부회장/파트장/기타 운영진)만 접근 가능합니다."
     )
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "조회 성공")
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (학교 운영진이 아닌 경우)")
     })
     CursorResponse<WorkbookSubmissionResponse> getWorkbookSubmissions(
-            @Parameter(description = "학교 ID (중앙 파트장용, 선택)") Long schoolId,
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal,
             @Parameter(description = "주차 (필수)", required = true) Integer weekNo,
             @Parameter(description = "스터디 그룹 ID (선택)") Long studyGroupId,
             @Parameter(description = "페이지 커서 (첫 페이지는 null)") Long cursor,
