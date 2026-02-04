@@ -18,7 +18,7 @@ public class WorkbookController implements WorkbookControllerApi {
     private final ManageWorkbookUseCase manageWorkbookUseCase;
 
     @Override
-    @PostMapping("/{challengerWorkbookId}/submit")
+    @PostMapping("/{challengerWorkbookId}/submissions")
     public void submitWorkbook(
             @PathVariable Long challengerWorkbookId,
             @Valid @RequestBody SubmitWorkbookRequest request) {

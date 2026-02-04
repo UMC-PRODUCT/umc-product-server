@@ -13,6 +13,7 @@ import com.umc.product.curriculum.adapter.out.persistence.CurriculumJpaRepositor
 import com.umc.product.curriculum.adapter.out.persistence.OriginalWorkbookJpaRepository;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
 import com.umc.product.curriculum.application.port.in.query.dto.StudyGroupFilterInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionDetailInfo;
 import com.umc.product.organization.application.port.in.query.GetSchoolAccessContextUseCase;
 import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
@@ -258,6 +259,58 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
 
         // then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void 챌린저_워크북의_제출_URL을_조회한다() {
+        // given
+        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
+
+        Member member = memberRepository.save(createMember("홍길동", school.getId()));
+        Challenger challenger = challengerRepository.save(
+                new Challenger(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
+
+        Curriculum curriculum = curriculumJpaRepository.save(createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));
+        OriginalWorkbook workbook = originalWorkbookJpaRepository.save(createWorkbook(curriculum, 1, "1주차 워크북"));
+
+        ChallengerWorkbook challengerWorkbook = challengerWorkbookJpaRepository.save(
+                createChallengerWorkbook(challenger.getId(), workbook.getId(), WorkbookStatus.PENDING));
+        challengerWorkbook.submit("https://github.com/user/repo");
+        challengerWorkbookJpaRepository.save(challengerWorkbook);
+
+        // when
+        WorkbookSubmissionDetailInfo result = getWorkbookSubmissionsUseCase.getSubmissionDetail(
+                challengerWorkbook.getId());
+
+        // then
+        assertThat(result.challengerWorkbookId()).isEqualTo(challengerWorkbook.getId());
+        assertThat(result.submission()).isEqualTo("https://github.com/user/repo");
+    }
+
+    @Test
+    void 미제출_워크북의_제출_URL은_null이다() {
+        // given
+        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
+
+        Member member = memberRepository.save(createMember("홍길동", school.getId()));
+        Challenger challenger = challengerRepository.save(
+                new Challenger(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
+
+        Curriculum curriculum = curriculumJpaRepository.save(createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));
+        OriginalWorkbook workbook = originalWorkbookJpaRepository.save(createWorkbook(curriculum, 1, "1주차 워크북"));
+
+        ChallengerWorkbook challengerWorkbook = challengerWorkbookJpaRepository.save(
+                createChallengerWorkbook(challenger.getId(), workbook.getId(), WorkbookStatus.PENDING));
+
+        // when
+        WorkbookSubmissionDetailInfo result = getWorkbookSubmissionsUseCase.getSubmissionDetail(
+                challengerWorkbook.getId());
+
+        // then
+        assertThat(result.challengerWorkbookId()).isEqualTo(challengerWorkbook.getId());
+        assertThat(result.submission()).isNull();
     }
 
     @Nested

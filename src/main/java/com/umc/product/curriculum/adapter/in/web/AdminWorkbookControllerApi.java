@@ -2,10 +2,14 @@ package com.umc.product.curriculum.adapter.in.web;
 
 import com.umc.product.curriculum.adapter.in.web.dto.request.ReviewWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.dto.request.SelectBestWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.dto.response.WorkbookSubmissionDetailResponse;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -92,5 +96,21 @@ public interface AdminWorkbookControllerApi {
     void selectBestWorkbook(
             @Parameter(description = "챌린저 워크북 ID", required = true) Long challengerWorkbookId,
             @RequestBody(description = "베스트 워크북 선정 요청") SelectBestWorkbookRequest request
+    );
+
+    @Operation(
+            summary = "챌린저 워크북 제출 URL 조회",
+            description = "챌린저가 제출한 워크북의 제출 URL을 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = WorkbookSubmissionDetailResponse.class))
+            ),
+            @ApiResponse(responseCode = "404", description = "챌린저 워크북을 찾을 수 없음")
+    })
+    WorkbookSubmissionDetailResponse getSubmissionDetail(
+            @Parameter(description = "챌린저 워크북 ID", required = true) Long challengerWorkbookId
     );
 }
