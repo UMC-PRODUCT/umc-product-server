@@ -19,11 +19,19 @@ import com.umc.product.schedule.application.port.in.query.dto.AvailableAttendanc
 import com.umc.product.schedule.application.port.in.query.dto.MyAttendanceHistoryInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleWithStatsInfo;
 import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
+import com.umc.product.schedule.application.port.out.LoadSchedulePort;
+import com.umc.product.schedule.application.port.out.SaveAttendanceRecordPort;
+import com.umc.product.schedule.application.port.out.SaveAttendanceSheetPort;
+import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
+import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
+import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import com.umc.product.support.UseCaseTestSupport;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +63,15 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
     private LoadAttendanceSheetPort loadAttendanceSheetPort;
 
     @Autowired
+    private SaveAttendanceSheetPort saveAttendanceSheetPort;
+
+    @Autowired
+    private SaveAttendanceRecordPort saveAttendanceRecordPort;
+
+    @Autowired
+    private LoadSchedulePort loadSchedulePort;
+
+    @Autowired
     private ManageGisuPort manageGisuPort;
 
     @Autowired
@@ -74,11 +91,11 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
         activeGisu = manageGisuPort.save(createActiveGisu(9L));
 
         // 작성자 생성
-        authorMember = saveMemberPort.save(createMember("작성자", "작성자닉네임", "author@test.com", 1L, 1L));
+        authorMember = saveMemberPort.save(createMember("작성자", "작성자닉네임", "author@test.com", 1L, "1"));
         authorChallenger = saveChallengerPort.save(createChallenger(authorMember.getId(), activeGisu.getId()));
 
         // 참여자 생성
-        participantMember = saveMemberPort.save(createMember("참여자", "참여자닉네임", "participant@test.com", 1L, 2L));
+        participantMember = saveMemberPort.save(createMember("참여자", "참여자닉네임", "participant@test.com", 1L, "2"));
         saveChallengerPort.save(createChallenger(participantMember.getId(), activeGisu.getId()));
 
         // Mock 설정
@@ -150,7 +167,7 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
 
             // when
             List<AvailableAttendanceInfo> result = getAvailableAttendancesUseCase
-                    .getAvailableList(participantMember.getId());
+                    .getAvailableList(participantMember.getId(), activeGisu.getId());
 
             // then
             assertThat(result).isNotEmpty();
@@ -167,7 +184,7 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
 
             // when
             List<AvailableAttendanceInfo> result = getAvailableAttendancesUseCase
-                    .getAvailableList(participantMember.getId());
+                    .getAvailableList(participantMember.getId(), activeGisu.getId());
 
             // then
             assertThat(result).isNotEmpty();
@@ -188,7 +205,7 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
 
             // when
             List<AvailableAttendanceInfo> result = getAvailableAttendancesUseCase
-                    .getAvailableList(participantMember.getId());
+                    .getAvailableList(participantMember.getId(), activeGisu.getId());
 
             // then
             assertThat(result).noneMatch(info -> info.scheduleId().equals(scheduleId));
@@ -218,7 +235,7 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
 
             // when
             List<MyAttendanceHistoryInfo> result = getMyAttendanceHistoryUseCase
-                    .getHistory(participantMember.getId());
+                    .getHistory(participantMember.getId(), activeGisu.getId());
 
             // then
             assertThat(result).isNotEmpty();
@@ -232,7 +249,7 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
 
             // when
             List<MyAttendanceHistoryInfo> result = getMyAttendanceHistoryUseCase
-                    .getHistory(participantMember.getId());
+                    .getHistory(participantMember.getId(), activeGisu.getId());
 
             // then
             assertThat(result).isEmpty();
@@ -266,7 +283,7 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
 
             // when
             List<MyAttendanceHistoryInfo> result = getMyAttendanceHistoryUseCase
-                    .getHistory(participantMember.getId());
+                    .getHistory(participantMember.getId(), activeGisu.getId());
 
             // then
             assertThat(result).hasSize(2);
@@ -292,7 +309,27 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
                 Set.of(ScheduleTag.GENERAL),
                 authorMember.getId()
         );
-        return createScheduleUseCase.create(command);
+        Long scheduleId = createScheduleUseCase.create(command);
+
+        // 출석부 수동 생성
+        Schedule schedule = loadSchedulePort.findById(scheduleId).orElseThrow();
+        AttendanceSheet sheet = saveAttendanceSheetPort.save(AttendanceSheet.builder()
+                .scheduleId(scheduleId)
+                .gisuId(activeGisu.getId())
+                .window(AttendanceWindow.ofDefault(schedule.getStartsAt()))
+                .requiresApproval(false)
+                .build());
+
+        // 참여자 출석 기록 생성
+        for (Long participantId : participantIds) {
+            saveAttendanceRecordPort.save(AttendanceRecord.builder()
+                    .attendanceSheetId(sheet.getId())
+                    .memberId(participantId)
+                    .status(AttendanceStatus.PENDING)
+                    .build());
+        }
+
+        return scheduleId;
     }
 
     // ========== Fixture 메서드 ==========
@@ -301,12 +338,12 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
         return Gisu.builder()
                 .generation(generation)
                 .isActive(true)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
+                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0).atZone(ZoneId.systemDefault()).toInstant())
+                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59).atZone(ZoneId.systemDefault()).toInstant())
                 .build();
     }
 
-    private Member createMember(String name, String nickname, String email, Long schoolId, Long profileImageId) {
+    private Member createMember(String name, String nickname, String email, Long schoolId, String profileImageId) {
         return Member.builder()
                 .email(email)
                 .name(name)
@@ -334,6 +371,8 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
                 .build();
 
         given(getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId))
+                .willReturn(mockInfo);
+        given(getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId))
                 .willReturn(mockInfo);
     }
 }

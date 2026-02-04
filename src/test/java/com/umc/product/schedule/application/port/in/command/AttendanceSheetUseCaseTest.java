@@ -24,7 +24,9 @@ import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import com.umc.product.support.UseCaseTestSupport;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
@@ -72,7 +74,7 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
         activeGisu = manageGisuPort.save(createActiveGisu(9L));
 
         // 작성자 생성
-        authorMember = saveMemberPort.save(createMember("작성자", "작성자닉네임", "author@test.com", 1L, 1L));
+        authorMember = saveMemberPort.save(createMember("작성자", "작성자닉네임", "author@test.com", 1L, "1"));
         authorChallenger = saveChallengerPort.save(createChallenger(authorMember.getId(), activeGisu.getId()));
 
         // Mock 설정
@@ -113,8 +115,10 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
 
             CreateAttendanceSheetCommand command = new CreateAttendanceSheetCommand(
                     scheduleIdWithoutSheet,
+                    activeGisu.getId(),
                     window,
-                    false
+                    false,
+                    List.of()
             );
 
             // when
@@ -137,8 +141,10 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
 
             CreateAttendanceSheetCommand command = new CreateAttendanceSheetCommand(
                     scheduleIdWithoutSheet,
+                    activeGisu.getId(),
                     window,
-                    true // 승인 필요
+                    true, // 승인 필요
+                    List.of()
             );
 
             // when
@@ -156,8 +162,10 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
             AttendanceWindow window = AttendanceWindow.ofDefault(LocalDateTime.now());
             CreateAttendanceSheetCommand command = new CreateAttendanceSheetCommand(
                     999999L, // 존재하지 않는 일정 ID
+                    activeGisu.getId(),
                     window,
-                    false
+                    false,
+                    List.of()
             );
 
             // when & then
@@ -178,8 +186,10 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
             AttendanceWindow window = AttendanceWindow.ofDefault(schedule.getStartsAt());
             CreateAttendanceSheetCommand createCommand = new CreateAttendanceSheetCommand(
                     scheduleIdWithoutSheet,
+                    activeGisu.getId(),
                     window,
-                    false
+                    false,
+                    List.of()
             );
             AttendanceSheetId sheetId = createAttendanceSheetUseCase.create(createCommand);
             existingSheet = loadAttendanceSheetPort.findById(sheetId.id()).orElseThrow();
@@ -243,8 +253,10 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
             AttendanceWindow window = AttendanceWindow.ofDefault(schedule.getStartsAt());
             CreateAttendanceSheetCommand createCommand = new CreateAttendanceSheetCommand(
                     scheduleIdWithoutSheet,
+                    activeGisu.getId(),
                     window,
-                    false
+                    false,
+                    List.of()
             );
             AttendanceSheetId sheetId = createAttendanceSheetUseCase.create(createCommand);
             existingSheet = loadAttendanceSheetPort.findById(sheetId.id()).orElseThrow();
@@ -310,12 +322,12 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
         return Gisu.builder()
                 .generation(generation)
                 .isActive(true)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0))
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59))
+                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0).atZone(ZoneId.systemDefault()).toInstant())
+                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59).atZone(ZoneId.systemDefault()).toInstant())
                 .build();
     }
 
-    private Member createMember(String name, String nickname, String email, Long schoolId, Long profileImageId) {
+    private Member createMember(String name, String nickname, String email, Long schoolId, String profileImageId) {
         return Member.builder()
                 .email(email)
                 .name(name)
@@ -343,6 +355,8 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
                 .build();
 
         given(getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId))
+                .willReturn(mockInfo);
+        given(getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId))
                 .willReturn(mockInfo);
     }
 }

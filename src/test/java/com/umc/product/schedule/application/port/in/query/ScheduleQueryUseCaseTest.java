@@ -69,6 +69,7 @@ public class ScheduleQueryUseCaseTest extends UseCaseTestSupport {
 
         AttendanceSheet sheet = saveAttendanceSheetPort.save(AttendanceSheet.builder()
             .scheduleId(schedule.getId())
+            .gisuId(1L)
             .window(AttendanceWindow.ofDefault(startsAt))
             .requiresApproval(false)
             .build());
