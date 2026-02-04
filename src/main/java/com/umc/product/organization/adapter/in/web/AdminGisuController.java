@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/admin/gisu")
+@RequestMapping("/api/v1/gisu")
 @RequiredArgsConstructor
-public class GisuController implements GisuControllerApi {
+public class AdminGisuController implements AdminGisuControllerApi {
 
     private final ManageGisuUseCase manageGisuUseCase;
 

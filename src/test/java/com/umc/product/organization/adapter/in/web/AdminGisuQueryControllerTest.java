@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
 
-class GisuQueryControllerTest extends DocumentationTest {
+class AdminGisuQueryControllerTest extends DocumentationTest {
 
     @Test
     void 기수_목록을_조회한다() throws Exception {
@@ -27,7 +27,7 @@ class GisuQueryControllerTest extends DocumentationTest {
         given(getGisuUseCase.getList()).willReturn(gisuList);
 
         // when
-        ResultActions result = mockMvc.perform(get("/api/v1/admin/gisu"));
+        ResultActions result = mockMvc.perform(get("/api/v1/gisu"));
 
         // then
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(

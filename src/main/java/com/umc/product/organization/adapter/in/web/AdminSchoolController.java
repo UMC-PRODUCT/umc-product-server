@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/admin/schools")
+@RequestMapping("/api/v1/schools")
 @RequiredArgsConstructor
-public class SchoolController implements SchoolControllerApi {
+public class AdminSchoolController implements AdminSchoolControllerApi {
 
     private final ManageSchoolUseCase manageSchoolUseCase;
 
@@ -55,4 +55,3 @@ public class SchoolController implements SchoolControllerApi {
         manageSchoolUseCase.unassignFromChapter(request.toCommand(schoolId));
     }
 }
-

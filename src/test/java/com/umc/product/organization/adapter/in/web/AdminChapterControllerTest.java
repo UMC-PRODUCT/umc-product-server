@@ -14,7 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
 
-class ChapterControllerTest extends DocumentationTest {
+class AdminChapterControllerTest extends DocumentationTest {
 
     @Test
     void 신규_지부를_생성한다() throws Exception {
@@ -23,7 +23,7 @@ class ChapterControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                post("/api/v1/admin/chapters").content(objectMapper.writeValueAsString(request))
+                post("/api/v1/chapters").content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
         // then

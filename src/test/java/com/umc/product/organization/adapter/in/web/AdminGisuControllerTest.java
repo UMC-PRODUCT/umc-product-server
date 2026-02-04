@@ -21,7 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
 
-class GisuControllerTest extends DocumentationTest {
+class AdminGisuControllerTest extends DocumentationTest {
 
     @Test
     void 신규_기수를_추가한다() throws Exception {
@@ -32,7 +32,7 @@ class GisuControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                post("/api/v1/admin/gisu")
+                post("/api/v1/gisu")
                         .content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
@@ -53,7 +53,7 @@ class GisuControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                patch("/api/v1/admin/gisu/{gisuId}", gisuId)
+                patch("/api/v1/gisu/{gisuId}", gisuId)
                         .content(objectMapper.writeValueAsString(request))
                         .contentType(MediaType.APPLICATION_JSON));
 
@@ -70,7 +70,7 @@ class GisuControllerTest extends DocumentationTest {
         Long gisuId = 1L;
 
         // when
-        ResultActions result = mockMvc.perform(delete("/api/v1/admin/gisu/{gisuId}", gisuId));
+        ResultActions result = mockMvc.perform(delete("/api/v1/gisu/{gisuId}", gisuId));
 
         // then
         result.andExpect(status().isOk())
@@ -83,7 +83,7 @@ class GisuControllerTest extends DocumentationTest {
         Long gisuId = 3L;
 
         // when
-        ResultActions result = mockMvc.perform(post("/api/v1/admin/gisu/{gisuId}/active", gisuId));
+        ResultActions result = mockMvc.perform(post("/api/v1/gisu/{gisuId}/active", gisuId));
 
         // then
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(

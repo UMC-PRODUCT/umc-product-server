@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/admin/gisu")
+@RequestMapping("/api/v1/gisu")
 @RequiredArgsConstructor
-public class GisuQueryController implements GisuQueryControllerApi {
+public class AdminGisuQueryController implements AdminGisuQueryControllerApi {
 
     private final GetGisuUseCase getGisuUseCase;
 
