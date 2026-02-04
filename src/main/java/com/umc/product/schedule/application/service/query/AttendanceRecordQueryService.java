@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 출석 기록(AttendanceRecord) 단건/목록 조회
- * <p> 출석부(sheetId) 기준, 챌린저(challengerId) 기준, PENDING 상태 기준으로 조회 가능 상태
+ * <p> 출석부(sheetId) 기준, 멤버(memberId) 기준, PENDING 상태 기준으로 조회 가능 상태
  */
 @Service
 @RequiredArgsConstructor
@@ -40,8 +40,8 @@ public class AttendanceRecordQueryService implements GetAttendanceRecordUseCase 
     }
 
     @Override
-    public List<AttendanceRecordInfo> getByChallengerId(Long challengerId) {
-        return loadAttendanceRecordPort.findByMemberId(challengerId).stream()
+    public List<AttendanceRecordInfo> getByMemberId(Long memberId) {
+        return loadAttendanceRecordPort.findByMemberId(memberId).stream()
             .map(AttendanceRecordInfo::from)
             .toList();
     }

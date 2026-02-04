@@ -23,9 +23,9 @@ public interface GetAttendanceRecordUseCase {
     List<AttendanceRecordInfo> getBySheetId(Long sheetId);
 
     /**
-     * 특정 챌린저의 전체 출석 기록 조회
+     * 특정 멤버의 전체 출석 기록 조회
      */
-    List<AttendanceRecordInfo> getByChallengerId(Long challengerId);
+    List<AttendanceRecordInfo> getByMemberId(Long memberId);
 
     /**
      * 특정 출석부에서 승인 대기 중(PENDING)인 기록만 조회

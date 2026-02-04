@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public record PendingAttendanceResponse(
     Long attendanceId,
-    Long challengerId,
+    Long memberId,
     String memberName,
     String nickname,
     String schoolName,
