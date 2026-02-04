@@ -37,4 +37,14 @@ public class GisuPersistenceAdapter implements ManageGisuPort, LoadGisuPort {
     public Gisu save(Gisu gisu) {
         return gisuJpaRepository.save(gisu);
     }
+
+    @Override
+    public boolean existsByGeneration(Long generation) {
+        return gisuJpaRepository.existsByGeneration(generation);
+    }
+
+    @Override
+    public void delete(Gisu gisu) {
+        gisuJpaRepository.delete(gisu);
+    }
 }
