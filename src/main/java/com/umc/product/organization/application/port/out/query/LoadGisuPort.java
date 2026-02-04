@@ -10,4 +10,6 @@ public interface LoadGisuPort {
     Gisu findById(Long gisuId);
 
     List<Gisu> findAll();
+
+    boolean existsByGeneration(Long generation);
 }

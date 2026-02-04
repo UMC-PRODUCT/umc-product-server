@@ -10,7 +10,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.time.Instant;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -32,13 +31,16 @@ public class Gisu {
 
     private Instant endAt;
 
-    @Builder
-    private Gisu(Long generation, boolean isActive, Instant startAt, Instant endAt) {
+    private Gisu(Long generation, Instant startAt, Instant endAt, boolean isActive) {
         validate(startAt, endAt);
         this.generation = generation;
         this.isActive = isActive;
         this.startAt = startAt;
         this.endAt = endAt;
+    }
+
+    public static Gisu create(Long generation, Instant startAt, Instant endAt, boolean isActive) {
+        return new Gisu(generation, startAt, endAt, isActive);
     }
 
     private static void validate(Instant startAt, Instant endAt) {
