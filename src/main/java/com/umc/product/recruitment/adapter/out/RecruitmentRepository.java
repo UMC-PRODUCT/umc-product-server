@@ -39,9 +39,8 @@ public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> 
             where r.school_id = :schoolId
               and r.gisu_id = :gisuId
               and r.status = 'PUBLISHED'
-              and s.type = 'APPLY_WINDOW'
-              and s.starts_at <= :now
-              and :now < s.ends_at
+              and s.type = 'FINAL_RESULT_AT'
+              and s.starts_at >= :now
             order by s.starts_at desc
             limit 1
             """, nativeQuery = true)
