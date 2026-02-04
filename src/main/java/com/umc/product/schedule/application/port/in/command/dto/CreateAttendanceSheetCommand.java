@@ -11,18 +11,21 @@ import java.util.Objects;
  */
 public record CreateAttendanceSheetCommand(
     Long scheduleId,
+    Long gisuId,
     AttendanceWindow window,
     boolean requiresApproval,
     List<Long> participantMemberIds
 ) {
     public CreateAttendanceSheetCommand {
         Objects.requireNonNull(scheduleId, "일정 ID는 필수입니다");
+        Objects.requireNonNull(gisuId, "기수 ID는 필수입니다");
         Objects.requireNonNull(window, "출석 시간대는 필수입니다");
     }
 
     public AttendanceSheet toEntity(Schedule schedule) {
         return AttendanceSheet.builder()
             .scheduleId(schedule.getId())
+            .gisuId(gisuId)
             .window(window)
             .requiresApproval(requiresApproval)
             .build();

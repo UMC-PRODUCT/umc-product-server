@@ -54,9 +54,9 @@ public record CreateScheduleWithAttendanceRequest(
     Set<ScheduleTag> tags,
 
     // AttendanceSheet 정보
-    @Schema(description = "지각 기준 시간(분) - 일정 시작 시간 기준으로 이 시간까지 출석 인정", example = "10")
-    @NotNull(message = "지각 기준 시간은 필수입니다")
-    Integer lateThresholdMinutes,
+    @Schema(description = "기수 ID", example = "1")
+    @NotNull(message = "기수 ID는 필수입니다")
+    Long gisuId,
 
     @Schema(description = "승인 필요 여부", example = "true")
     boolean requiresApproval
@@ -73,7 +73,7 @@ public record CreateScheduleWithAttendanceRequest(
             participantMemberIds,
             tags,
             authorMemberId,
-            lateThresholdMinutes,
+            gisuId,
             requiresApproval
         );
     }

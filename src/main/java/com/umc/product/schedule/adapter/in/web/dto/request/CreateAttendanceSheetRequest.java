@@ -8,18 +8,20 @@ import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import java.time.LocalDateTime;
 
 public record CreateAttendanceSheetRequest(
+    Long gisuId,
     LocalDateTime startTime,
     LocalDateTime endTime,
-    Integer lateThresholdMinutes,
     boolean requiresApproval
 ) {
+    private static final int DEFAULT_LATE_THRESHOLD_MINUTES = 10;
+
     public CreateAttendanceSheetRequest {
-        if (startTime == null || endTime == null) {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.INVALID_TIME_RANGE);
+        if (gisuId == null) {
+            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.GISU_ID_REQUIRED);
         }
 
-        if (lateThresholdMinutes == null) {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.INVALID_ATTENDANCE_STATUS);
+        if (startTime == null || endTime == null) {
+            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.INVALID_TIME_RANGE);
         }
 
         if (startTime.isAfter(endTime)) {
@@ -31,8 +33,8 @@ public record CreateAttendanceSheetRequest(
         AttendanceWindow window = AttendanceWindow.from(
             startTime,
             endTime,
-            lateThresholdMinutes
+            DEFAULT_LATE_THRESHOLD_MINUTES
         );
-        return new CreateAttendanceSheetCommand(scheduleId, window, requiresApproval, null);
+        return new CreateAttendanceSheetCommand(scheduleId, gisuId, window, requiresApproval, null);
     }
 }

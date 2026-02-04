@@ -26,7 +26,7 @@ public interface AttendanceControllerApi {
         @Parameter(hidden = true) MemberPrincipal memberPrincipal
     );
 
-    @Operation(summary = "내 출석 이력 조회", description = "나의 출석 이력을 조회합니다")
+    @Operation(summary = "내 출석 이력 조회", description = "현재 활성 기수의 출석 이력을 조회합니다")
     List<MyAttendanceHistoryResponse> getMyAttendanceHistory(
         @Parameter(hidden = true) MemberPrincipal memberPrincipal
     );

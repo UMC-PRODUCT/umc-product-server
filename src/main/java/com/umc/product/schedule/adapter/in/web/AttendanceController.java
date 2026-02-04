@@ -1,5 +1,6 @@
 package com.umc.product.schedule.adapter.in.web;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CheckAttendanceRequest;
@@ -35,6 +36,7 @@ public class AttendanceController implements AttendanceControllerApi {
     private final GetAvailableAttendancesUseCase getAvailableAttendancesUseCase;
     private final GetMyAttendanceHistoryUseCase getMyAttendanceHistoryUseCase;
     private final GetPendingAttendancesUseCase getPendingAttendancesUseCase;
+    private final GetChallengerUseCase getChallengerUseCase;
 
     private final AttendanceWebMapper mapper;
 
@@ -52,8 +54,11 @@ public class AttendanceController implements AttendanceControllerApi {
     public List<AvailableAttendanceResponse> getAvailableAttendances(
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
+        Long memberId = memberPrincipal.getMemberId();
+        Long gisuId = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId).gisuId();
+
         return mapper.toAvailableAttendanceResponses(
-            getAvailableAttendancesUseCase.getAvailableList(memberPrincipal.getMemberId())
+            getAvailableAttendancesUseCase.getAvailableList(memberId, gisuId)
         );
     }
 
@@ -62,8 +67,11 @@ public class AttendanceController implements AttendanceControllerApi {
     public List<MyAttendanceHistoryResponse> getMyAttendanceHistory(
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
+        Long memberId = memberPrincipal.getMemberId();
+        Long gisuId = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId).gisuId();
+
         return mapper.toMyAttendanceHistoryResponses(
-            getMyAttendanceHistoryUseCase.getHistory(memberPrincipal.getMemberId())
+            getMyAttendanceHistoryUseCase.getHistory(memberId, gisuId)
         );
     }
 
