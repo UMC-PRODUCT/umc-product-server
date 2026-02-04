@@ -24,14 +24,12 @@ public class SchoolController implements SchoolControllerApi {
 
     private final ManageSchoolUseCase manageSchoolUseCase;
 
-    @Public
     @Override
     @PostMapping
     public void createSchool(@RequestBody @Valid CreateSchoolRequest request) {
         manageSchoolUseCase.register(request.toCommand());
     }
 
-    @Public
     @Override
     @PatchMapping("/{schoolId}")
     public void updateSchool(@PathVariable Long schoolId, @RequestBody @Valid UpdateSchoolRequest request) {
