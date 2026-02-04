@@ -62,7 +62,7 @@ public class ScheduleController implements ScheduleControllerApi {
     ) {
         updateScheduleUseCase.update(request.toCommand(scheduleId));
     }
-    
+
     @Override
     @DeleteMapping("/{scheduleId}/with-attendance")
     public void deleteScheduleWithAttendance(@PathVariable Long scheduleId) {
