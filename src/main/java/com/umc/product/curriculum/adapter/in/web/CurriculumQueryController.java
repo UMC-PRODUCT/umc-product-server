@@ -6,6 +6,8 @@ import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumWeeksRes
 import com.umc.product.curriculum.application.port.in.query.CurriculumProgressInfo;
 import com.umc.product.curriculum.application.port.in.query.CurriculumWeekInfo;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumProgressUseCase;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,11 +24,8 @@ public class CurriculumQueryController implements CurriculumQueryControllerApi {
 
     @Override
     @GetMapping("/challengers/me/progress")
-    public CurriculumProgressResponse getMyProgress() {
-        // TODO: memberPrincipal로 바꾸기
-        Long challengerId = 1L;
-
-        CurriculumProgressInfo info = getCurriculumProgressUseCase.getMyProgress(challengerId);
+    public CurriculumProgressResponse getMyProgress(@CurrentMember MemberPrincipal memberPrincipal) {
+        CurriculumProgressInfo info = getCurriculumProgressUseCase.getMyProgress(memberPrincipal.getMemberId());
         return CurriculumProgressResponse.from(info);
     }
 
