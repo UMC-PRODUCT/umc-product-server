@@ -4,6 +4,7 @@ package com.umc.product.support;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.organization.adapter.in.web.AdminSchoolQueryController;
 import com.umc.product.organization.adapter.in.web.ChapterController;
 import com.umc.product.organization.adapter.in.web.ChapterQueryController;
 import com.umc.product.organization.adapter.in.web.GisuController;
@@ -29,6 +30,7 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(controllers = {
     SchoolController.class,
     SchoolQueryController.class,
+    AdminSchoolQueryController.class,
     ChapterController.class,
     ChapterQueryController.class,
     GisuController.class,
