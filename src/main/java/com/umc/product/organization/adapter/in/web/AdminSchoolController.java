@@ -36,7 +36,6 @@ public class AdminSchoolController implements AdminSchoolControllerApi {
         manageSchoolUseCase.updateSchool(schoolId, request.toCommand());
     }
 
-    @Public
     @Override
     @DeleteMapping
     public void deleteSchools(@RequestBody @Valid DeleteSchoolsRequest request) {
