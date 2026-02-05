@@ -1,6 +1,6 @@
 package com.umc.product.authentication.adapter.in.web.dto.request;
 
 public record AddOAuthRequest(
-        String oAuthVerificationToken
+    String oAuthVerificationToken
 ) {
 }

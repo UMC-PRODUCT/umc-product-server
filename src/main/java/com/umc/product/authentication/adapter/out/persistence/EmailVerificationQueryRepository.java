@@ -14,15 +14,15 @@ public class EmailVerificationQueryRepository {
 
     EmailVerification findById(Long id) {
         return jpaQueryFactory
-                .selectFrom(emailVerification)
-                .where(emailVerification.id.eq(id))
-                .fetchOne();
+            .selectFrom(emailVerification)
+            .where(emailVerification.id.eq(id))
+            .fetchOne();
     }
 
     EmailVerification findByToken(String token) {
         return jpaQueryFactory
-                .selectFrom(emailVerification)
-                .where(emailVerification.token.eq(token))
-                .fetchOne();
+            .selectFrom(emailVerification)
+            .where(emailVerification.token.eq(token))
+            .fetchOne();
     }
 }

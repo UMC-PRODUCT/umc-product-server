@@ -35,42 +35,42 @@ public class UmcProductOAuth2UserService extends DefaultOAuth2UserService {
         var reg = userRequest.getClientRegistration();
 
         log.debug("""
-                        === OAuth2 ClientRegistration ===
-                        registrationId: {}
-                        clientId: {}
-                        clientName: {}
-                        redirectUri: {}
-                        scopes: {}
-                        authorizationGrantType: {}
-                        
-                        === ProviderDetails ===
-                        authorizationUri: {}
-                        tokenUri: {}
-                        userInfoUri: {}
-                        jwkSetUri: {}
-                        issuerUri: {}
-                        """,
-                reg.getRegistrationId(),
-                reg.getClientId(),
-                reg.getClientName(),
-                reg.getRedirectUri(),
-                reg.getScopes(),
-                reg.getAuthorizationGrantType(),
-                reg.getProviderDetails().getAuthorizationUri(),
-                reg.getProviderDetails().getTokenUri(),
-                reg.getProviderDetails().getUserInfoEndpoint().getUri(),
-                reg.getProviderDetails().getJwkSetUri(),
-                reg.getProviderDetails().getIssuerUri()
+                === OAuth2 ClientRegistration ===
+                registrationId: {}
+                clientId: {}
+                clientName: {}
+                redirectUri: {}
+                scopes: {}
+                authorizationGrantType: {}
+
+                === ProviderDetails ===
+                authorizationUri: {}
+                tokenUri: {}
+                userInfoUri: {}
+                jwkSetUri: {}
+                issuerUri: {}
+                """,
+            reg.getRegistrationId(),
+            reg.getClientId(),
+            reg.getClientName(),
+            reg.getRedirectUri(),
+            reg.getScopes(),
+            reg.getAuthorizationGrantType(),
+            reg.getProviderDetails().getAuthorizationUri(),
+            reg.getProviderDetails().getTokenUri(),
+            reg.getProviderDetails().getUserInfoEndpoint().getUri(),
+            reg.getProviderDetails().getJwkSetUri(),
+            reg.getProviderDetails().getIssuerUri()
         );
 
         log.debug("Access Token: {}\nID Token: {}",
-                userRequest.getAccessToken().getTokenValue(),
-                userRequest.getAdditionalParameters().get("id_token"));
+            userRequest.getAccessToken().getTokenValue(),
+            userRequest.getAdditionalParameters().get("id_token"));
 
         // Attributes를 파싱하는 역할은 OAuth2Attributes가 담당
         OAuth2Attributes oAuth2Attributes = OAuth2Attributes.of(
-                userRequest.getClientRegistration().getRegistrationId(),
-                attributes
+            userRequest.getClientRegistration().getRegistrationId(),
+            attributes
         );
 
         // Request에 OAuth 정보 저장 (FailureHandler에서 사용)
@@ -82,22 +82,22 @@ public class UmcProductOAuth2UserService extends DefaultOAuth2UserService {
         if (result.isExistingMember()) {
             // 가입된 사용자인 경우 MemberPrincipal에 담아서 제공
             return MemberPrincipal.builder()
-                    .memberId(result.memberId())
-                    .build();
+                .memberId(result.memberId())
+                .build();
         } else {
             // OAuth 로그인은 성공했지만, 우리에게 가입된 사용자가 아니라면 failure로 들어갈 수 있도록
             // OAuth2Error throw
             log.info("사용자 정보가 없습니다. provider: {}, providerId: {}",
-                    oAuth2Attributes.getProvider(),
-                    oAuth2Attributes.getProviderId()
+                oAuth2Attributes.getProvider(),
+                oAuth2Attributes.getProviderId()
             );
 
             AuthenticationErrorCode NO_MEMBER = AuthenticationErrorCode.OAUTH_SUCCESS_BUT_NO_MEMBER;
 
             OAuth2Error oauth2Error = new OAuth2Error(
-                    NO_MEMBER.getCode(),
-                    NO_MEMBER.getMessage(),
-                    null
+                NO_MEMBER.getCode(),
+                NO_MEMBER.getMessage(),
+                null
             );
 
             throw new OAuth2AuthenticationException(oauth2Error, new AuthenticationDomainException(NO_MEMBER));
@@ -106,7 +106,7 @@ public class UmcProductOAuth2UserService extends DefaultOAuth2UserService {
 
     private void storeOAuthInfoInRequest(OAuth2Attributes oAuth2Attributes) {
         ServletRequestAttributes attributes =
-                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
         if (attributes != null) {
             attributes.getRequest().setAttribute("oauth_email", oAuth2Attributes.getEmail());
             attributes.getRequest().setAttribute("oauth_provider", oAuth2Attributes.getProvider());

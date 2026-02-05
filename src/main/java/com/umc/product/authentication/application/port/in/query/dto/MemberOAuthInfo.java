@@ -6,15 +6,15 @@ import lombok.Builder;
 
 @Builder
 public record MemberOAuthInfo(
-        Long memberOAuthId,
-        Long memberId,
-        OAuthProvider provider
+    Long memberOAuthId,
+    Long memberId,
+    OAuthProvider provider
 ) {
     public static MemberOAuthInfo fromEntity(MemberOAuth memberOAuth) {
         return MemberOAuthInfo.builder()
-                .memberOAuthId(memberOAuth.getId())
-                .memberId(memberOAuth.getMemberId())
-                .provider(memberOAuth.getProvider())
-                .build();
+            .memberOAuthId(memberOAuth.getId())
+            .memberId(memberOAuth.getMemberId())
+            .provider(memberOAuth.getProvider())
+            .build();
     }
 }

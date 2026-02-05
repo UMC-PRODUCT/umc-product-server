@@ -18,9 +18,9 @@ public class OAuthQueryService implements GetMemberOAuthUseCase {
     @Override
     public MemberOAuthInfo getMemberByOAuthInfo(OAuthProvider provider, String providerId) {
         return loadMemberOAuthPort.findByProviderAndProviderId(provider, providerId)
-                .map(MemberOAuthInfo::fromEntity)
-                .orElseThrow(() ->
-                        new AuthenticationDomainException(AuthenticationErrorCode.NO_MATCHING_MEMBER)
-                );
+            .map(MemberOAuthInfo::fromEntity)
+            .orElseThrow(() ->
+                new AuthenticationDomainException(AuthenticationErrorCode.NO_MATCHING_MEMBER)
+            );
     }
 }

@@ -43,7 +43,7 @@ public class AuthenticationController implements AuthenticationControllerInterfa
     @PostMapping("login/google")
     @Public
     public OAuthLoginResponse googleOAuthLogin(
-            @RequestBody GoogleLoginRequest request
+        @RequestBody GoogleLoginRequest request
     ) {
         return processAccessTokenLogin(OAuthProvider.GOOGLE, request.accessToken());
     }
@@ -52,7 +52,7 @@ public class AuthenticationController implements AuthenticationControllerInterfa
     @PostMapping("login/kakao")
     @Public
     public OAuthLoginResponse kakaoOAuthLogin(
-            @RequestBody KakaoLoginRequest request
+        @RequestBody KakaoLoginRequest request
     ) {
         return processAccessTokenLogin(OAuthProvider.KAKAO, request.accessToken());
     }
@@ -61,7 +61,7 @@ public class AuthenticationController implements AuthenticationControllerInterfa
     @Public
     @PostMapping("login/apple")
     public OAuthLoginResponse appleOAuthLogin(
-            @RequestBody AppleLoginRequest request
+        @RequestBody AppleLoginRequest request
     ) {
         throw new NotImplementedException();
     }
@@ -70,51 +70,47 @@ public class AuthenticationController implements AuthenticationControllerInterfa
     @PostMapping("email-verification/code")
     @Public
     public CompleteEmailVerificationResponse verifyEmailByCode(
-            @RequestBody CompleteEmailVerificationRequest request
+        @RequestBody CompleteEmailVerificationRequest request
     ) {
         String emailVerificationToken = manageAuthenticationUseCase
-                .validateEmailVerificationSession(
-                        ValidateEmailVerificationSessionCommand
-                                .builder()
-                                .sessionId(request.emailVerificationId().toString())
-                                .code(request.verificationCode())
-                                .build()
-                );
+            .validateEmailVerificationSession(
+                ValidateEmailVerificationSessionCommand
+                    .builder()
+                    .sessionId(request.emailVerificationId().toString())
+                    .code(request.verificationCode())
+                    .build()
+            );
 
         return CompleteEmailVerificationResponse
-                .builder()
-                .emailVerificationToken(emailVerificationToken)
-                .build();
+            .builder()
+            .emailVerificationToken(emailVerificationToken)
+            .build();
     }
 
     @Override
     @PostMapping("email-verification")
     @Public
     public SendEmailVerificationResponse sendEmailVerification(
-            @RequestBody SendEmailVerificationRequest request
+        @RequestBody SendEmailVerificationRequest request
     ) {
         Long sessionId = manageAuthenticationUseCase.createEmailVerificationSession(request.email());
 
         return SendEmailVerificationResponse
-                .builder()
-                .emailVerificationId(sessionId.toString())
-                .build();
+            .builder()
+            .emailVerificationId(sessionId.toString())
+            .build();
     }
 
     @Override
     @PostMapping("token/renew")
     @Public
     public RenewAccessTokenResponse renewAccessToken(
-            @RequestBody RenewAccessTokenRequest request
+        @RequestBody RenewAccessTokenRequest request
     ) {
-        String newAccessToken = manageAuthenticationUseCase.renewAccessToken(
+        return RenewAccessTokenResponse.from(
+            manageAuthenticationUseCase.renewAccessToken(
                 request.toCommand()
-        );
-
-        return RenewAccessTokenResponse
-                .builder()
-                .accessToken(newAccessToken)
-                .build();
+            ));
     }
 
     /**
@@ -122,40 +118,40 @@ public class AuthenticationController implements AuthenticationControllerInterfa
      */
     private OAuthLoginResponse processAccessTokenLogin(OAuthProvider provider, String token) {
         OAuthTokenLoginResult result = oAuthAuthenticationUseCase.accessTokenLogin(
-                new AccessTokenLoginCommand(provider, token)
+            new AccessTokenLoginCommand(provider, token)
         );
 
         if (result.isExistingMember()) {
             // 기존 회원: JWT 발급
             String accessToken = jwtTokenProvider.createAccessToken(
-                    result.memberId(),
-                    Collections.emptyList()
+                result.memberId(),
+                Collections.emptyList()
             );
             String refreshToken = jwtTokenProvider.createRefreshToken(result.memberId());
 
             return new OAuthLoginResponse(
-                    provider,
-                    OAuth2ResultCode.SUCCESS.isSuccess(),
-                    OAuth2ResultCode.SUCCESS.getCode(),
-                    null,  // oAuthVerificationToken 불필요
-                    accessToken,
-                    refreshToken
+                provider,
+                OAuth2ResultCode.SUCCESS.isSuccess(),
+                OAuth2ResultCode.SUCCESS.getCode(),
+                null,  // oAuthVerificationToken 불필요
+                accessToken,
+                refreshToken
             );
         } else {
             // 신규 회원: oAuthVerificationToken 발급 (회원가입 시 사용)
             String oAuthVerificationToken = jwtTokenProvider.createOAuthVerificationToken(
-                    result.email(),
-                    result.provider(),
-                    result.providerId()
+                result.email(),
+                result.provider(),
+                result.providerId()
             );
 
             return new OAuthLoginResponse(
-                    provider,
-                    OAuth2ResultCode.REGISTER_REQUIRED.isSuccess(),
-                    OAuth2ResultCode.REGISTER_REQUIRED.getCode(),
-                    oAuthVerificationToken,
-                    null,  // accessToken 없음
-                    null   // refreshToken 없음
+                provider,
+                OAuth2ResultCode.REGISTER_REQUIRED.isSuccess(),
+                OAuth2ResultCode.REGISTER_REQUIRED.getCode(),
+                oAuthVerificationToken,
+                null,  // accessToken 없음
+                null   // refreshToken 없음
             );
         }
     }

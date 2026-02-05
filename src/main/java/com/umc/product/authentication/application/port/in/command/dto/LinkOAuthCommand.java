@@ -6,15 +6,15 @@ import lombok.Builder;
 
 @Builder
 public record LinkOAuthCommand(
-        Long memberId,
-        OAuthProvider provider,
-        String providerId
+    Long memberId,
+    OAuthProvider provider,
+    String providerId
 ) {
     public static MemberOAuth toEntity(LinkOAuthCommand command) {
         return MemberOAuth.builder()
-                .memberId(command.memberId())
-                .provider(command.provider())
-                .providerId(command.providerId())
-                .build();
+            .memberId(command.memberId())
+            .provider(command.provider())
+            .providerId(command.providerId())
+            .build();
     }
 }
