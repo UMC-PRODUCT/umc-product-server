@@ -11,7 +11,7 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import java.util.List;
@@ -84,7 +84,7 @@ public class SchoolQueryRepository {
         return chapterId != null ? chapter.id.eq(chapterId) : null;
     }
 
-    public SchoolInfo getSchoolDetail(Long schoolId) {
+    public SchoolDetailInfo.SchoolInfo getSchoolDetail(Long schoolId) {
         JPQLQuery<Long> activeChapterIds = JPAExpressions
                 .select(chapter.id)
                 .from(chapter)
@@ -92,12 +92,13 @@ public class SchoolQueryRepository {
                 .where(gisu.isActive.isTrue());
 
         return queryFactory
-                .select(Projections.constructor(SchoolInfo.class,
+                .select(Projections.constructor(SchoolDetailInfo.SchoolInfo.class,
                         chapter.id,
                         chapter.name,
                         school.name,
                         school.id,
                         school.remark,
+                        school.logoImageId,
                         school.createdAt,
                         school.updatedAt
                 ))

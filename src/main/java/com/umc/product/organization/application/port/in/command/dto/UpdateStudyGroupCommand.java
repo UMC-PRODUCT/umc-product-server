@@ -1,11 +1,10 @@
 package com.umc.product.organization.application.port.in.command.dto;
 
-import java.util.Set;
+import com.umc.product.common.domain.enums.ChallengerPart;
 
 public record UpdateStudyGroupCommand(
         Long groupId,
         String name,
-        Long leaderId,
-        Set<Long> memberIds
+        ChallengerPart part
 ) {
 }

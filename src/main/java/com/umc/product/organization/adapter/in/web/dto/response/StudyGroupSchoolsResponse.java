@@ -16,13 +16,13 @@ public record StudyGroupSchoolsResponse(
     public record School(
             @Schema(description = "학교 ID", example = "1") Long schoolId,
             @Schema(description = "학교명", example = "서울대학교") String schoolName,
-            @Schema(description = "학교 로고 이미지 URL") String logoImageUrl,
+            @Schema(description = "학교 로고 이미지 ID") String logoImageId,
             @Schema(description = "총 스터디 그룹 수", example = "12") int totalStudyGroupCount,
             @Schema(description = "총 멤버 수", example = "48") int totalMemberCount
     ) {
         public static School from(SchoolStudyGroupInfo s) {
             return new School(
-                    s.schoolId(), s.schoolName(), s.logoImageUrl(),
+                    s.schoolId(), s.schoolName(), s.logoImageId(),
                     s.totalStudyGroupCount(), s.totalMemberCount()
             );
         }

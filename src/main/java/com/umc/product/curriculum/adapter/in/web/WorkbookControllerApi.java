@@ -5,6 +5,7 @@ import com.umc.product.global.constant.SwaggerTag.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
@@ -22,18 +23,9 @@ public interface WorkbookControllerApi {
                     """
     )
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
-                    description = "제출 성공"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "워크북 상태가 유효하지 않음 (PENDING 상태만 제출 가능)"
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "챌린저 워크북을 찾을 수 없음"
-            )
+            @ApiResponse(responseCode = "200", description = "제출 성공"),
+            @ApiResponse(responseCode = "400", description = "워크북 상태가 유효하지 않음 (PENDING 상태만 제출 가능)"),
+            @ApiResponse(responseCode = "404", description = "챌린저 워크북을 찾을 수 없음")
     })
     void submitWorkbook(
             @Parameter(description = "챌린저 워크북 ID", required = true) Long challengerWorkbookId,

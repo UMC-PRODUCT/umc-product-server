@@ -9,6 +9,7 @@ import com.umc.product.global.exception.BusinessException;
 import com.umc.product.member.domain.Member;
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupCommand;
+import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupMembersCommand;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
@@ -107,8 +108,7 @@ class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
         UpdateStudyGroupCommand command = new UpdateStudyGroupCommand(
                 studyGroup.getId(),
                 "New Name",
-                leader.getId(),
-                Set.of()
+                ChallengerPart.WEB
         );
 
         // when
@@ -120,52 +120,16 @@ class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
     }
 
     @Test
-    void 스터디_그룹_리더를_변경한다() {
-        // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(8L));
-        Challenger oldLeader = createAndSaveChallenger("기존리더", ChallengerPart.WEB, gisu.getId());
-        Challenger newLeader = createAndSaveChallenger("새리더", ChallengerPart.WEB, gisu.getId());
-        Challenger member1 = createAndSaveChallenger("멤버1", ChallengerPart.WEB, gisu.getId());
-        Challenger member2 = createAndSaveChallenger("멤버2", ChallengerPart.WEB, gisu.getId());
-        StudyGroup studyGroup = createAndSaveStudyGroup(gisu, "React A팀", ChallengerPart.WEB, oldLeader.getId());
-
-        UpdateStudyGroupCommand command = new UpdateStudyGroupCommand(
-                studyGroup.getId(),
-                "React A팀",
-                newLeader.getId(),
-                Set.of(member1.getId(), member2.getId())
-        );
-
-        // when
-        manageStudyGroupUseCase.update(command);
-
-        // then
-        StudyGroup result = loadStudyGroupPort.findById(studyGroup.getId());
-        assertThat(getLeaderId(result)).isEqualTo(newLeader.getId());
-        assertThat(getMemberIds(result)).containsExactlyInAnyOrder(member1.getId(), member2.getId());
-    }
-
-    @Test
-    void 스터디_그룹_멤버를_전체_교체한다() {
+    void 스터디_그룹_파트를_변경한다() {
         // given
         Gisu gisu = manageGisuPort.save(createActiveGisu(8L));
         Challenger leader = createAndSaveChallenger("리더", ChallengerPart.WEB, gisu.getId());
-        Challenger oldMember1 = createAndSaveChallenger("기존멤버1", ChallengerPart.WEB, gisu.getId());
-        Challenger oldMember2 = createAndSaveChallenger("기존멤버2", ChallengerPart.WEB, gisu.getId());
-        Challenger newMember1 = createAndSaveChallenger("새멤버1", ChallengerPart.WEB, gisu.getId());
-        Challenger newMember2 = createAndSaveChallenger("새멤버2", ChallengerPart.WEB, gisu.getId());
-        Challenger newMember3 = createAndSaveChallenger("새멤버3", ChallengerPart.WEB, gisu.getId());
-
         StudyGroup studyGroup = createAndSaveStudyGroup(gisu, "React A팀", ChallengerPart.WEB, leader.getId());
-        studyGroup.addMember(oldMember1.getId());
-        studyGroup.addMember(oldMember2.getId());
-        manageStudyGroupPort.save(studyGroup);
 
         UpdateStudyGroupCommand command = new UpdateStudyGroupCommand(
                 studyGroup.getId(),
                 "React A팀",
-                leader.getId(),
-                Set.of(newMember1.getId(), newMember2.getId(), newMember3.getId())
+                ChallengerPart.SPRINGBOOT
         );
 
         // when
@@ -173,8 +137,29 @@ class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
 
         // then
         StudyGroup result = loadStudyGroupPort.findById(studyGroup.getId());
-        assertThat(getMemberIds(result)).containsExactlyInAnyOrder(newMember1.getId(), newMember2.getId(), newMember3.getId());
-        assertThat(getMemberIds(result)).doesNotContain(oldMember1.getId(), oldMember2.getId());
+        assertThat(result.getPart()).isEqualTo(ChallengerPart.SPRINGBOOT);
+    }
+
+    @Test
+    void 스터디_그룹_이름과_파트를_동시에_변경한다() {
+        // given
+        Gisu gisu = manageGisuPort.save(createActiveGisu(8L));
+        Challenger leader = createAndSaveChallenger("리더", ChallengerPart.WEB, gisu.getId());
+        StudyGroup studyGroup = createAndSaveStudyGroup(gisu, "React A팀", ChallengerPart.WEB, leader.getId());
+
+        UpdateStudyGroupCommand command = new UpdateStudyGroupCommand(
+                studyGroup.getId(),
+                "Spring B팀",
+                ChallengerPart.SPRINGBOOT
+        );
+
+        // when
+        manageStudyGroupUseCase.update(command);
+
+        // then
+        StudyGroup result = loadStudyGroupPort.findById(studyGroup.getId());
+        assertThat(result.getName()).isEqualTo("Spring B팀");
+        assertThat(result.getPart()).isEqualTo(ChallengerPart.SPRINGBOOT);
     }
 
     @Test
@@ -198,8 +183,7 @@ class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
         UpdateStudyGroupCommand command = new UpdateStudyGroupCommand(
                 999L,
                 "New Name",
-                101L,
-                Set.of()
+                ChallengerPart.WEB
         );
 
         // when & then
@@ -238,6 +222,91 @@ class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
     }
 
     @Test
+    void 스터디_그룹_멤버를_전체_교체한다() {
+        // given
+        Gisu gisu = manageGisuPort.save(createActiveGisu(8L));
+        Challenger leader = createAndSaveChallenger("리더", ChallengerPart.WEB, gisu.getId());
+        Challenger member1 = createAndSaveChallenger("멤버1", ChallengerPart.WEB, gisu.getId());
+        Challenger member2 = createAndSaveChallenger("멤버2", ChallengerPart.WEB, gisu.getId());
+        Challenger newMember1 = createAndSaveChallenger("새멤버1", ChallengerPart.WEB, gisu.getId());
+        Challenger newMember2 = createAndSaveChallenger("새멤버2", ChallengerPart.WEB, gisu.getId());
+
+        StudyGroup studyGroup = createAndSaveStudyGroup(gisu, "React A팀", ChallengerPart.WEB, leader.getId());
+        studyGroup.addMember(member1.getId());
+        studyGroup.addMember(member2.getId());
+        manageStudyGroupPort.save(studyGroup);
+
+        UpdateStudyGroupMembersCommand command = new UpdateStudyGroupMembersCommand(
+                studyGroup.getId(),
+                Set.of(newMember1.getId(), newMember2.getId())
+        );
+
+        // when
+        manageStudyGroupUseCase.updateMembers(command);
+
+        // then
+        StudyGroup result = loadStudyGroupPort.findById(studyGroup.getId());
+        List<Long> allMemberIds = result.getStudyGroupMembers().stream()
+                .map(StudyGroupMember::getChallengerId)
+                .toList();
+        assertThat(allMemberIds).containsExactlyInAnyOrder(newMember1.getId(), newMember2.getId());
+    }
+
+    @Test
+    void 스터디_그룹_멤버를_빈_목록으로_교체하면_모든_멤버가_제거된다() {
+        // given
+        Gisu gisu = manageGisuPort.save(createActiveGisu(8L));
+        Challenger leader = createAndSaveChallenger("리더", ChallengerPart.WEB, gisu.getId());
+        Challenger member1 = createAndSaveChallenger("멤버1", ChallengerPart.WEB, gisu.getId());
+
+        StudyGroup studyGroup = createAndSaveStudyGroup(gisu, "React A팀", ChallengerPart.WEB, leader.getId());
+        studyGroup.addMember(member1.getId());
+        manageStudyGroupPort.save(studyGroup);
+
+        UpdateStudyGroupMembersCommand command = new UpdateStudyGroupMembersCommand(
+                studyGroup.getId(),
+                Set.of()
+        );
+
+        // when
+        manageStudyGroupUseCase.updateMembers(command);
+
+        // then
+        StudyGroup result = loadStudyGroupPort.findById(studyGroup.getId());
+        assertThat(result.getStudyGroupMembers()).isEmpty();
+    }
+
+    @Test
+    void 존재하지_않는_챌린저_ID로_멤버를_수정하면_예외가_발생한다() {
+        // given
+        Gisu gisu = manageGisuPort.save(createActiveGisu(8L));
+        Challenger leader = createAndSaveChallenger("리더", ChallengerPart.WEB, gisu.getId());
+        StudyGroup studyGroup = createAndSaveStudyGroup(gisu, "React A팀", ChallengerPart.WEB, leader.getId());
+
+        UpdateStudyGroupMembersCommand command = new UpdateStudyGroupMembersCommand(
+                studyGroup.getId(),
+                Set.of(999L, 998L)
+        );
+
+        // when & then
+        assertThatThrownBy(() -> manageStudyGroupUseCase.updateMembers(command))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void 존재하지_않는_스터디_그룹의_멤버를_수정하면_예외가_발생한다() {
+        // given
+        UpdateStudyGroupMembersCommand command = new UpdateStudyGroupMembersCommand(
+                999L,
+                Set.of(1L, 2L)
+        );
+
+        // when & then
+        assertThatThrownBy(() -> manageStudyGroupUseCase.updateMembers(command))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
     void 리더가_멤버에_포함되면_예외가_발생한다() {
         // given
         manageGisuPort.save(createActiveGisu(8L));
@@ -255,12 +324,12 @@ class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
     }
 
     private Gisu createActiveGisu(Long generation) {
-        return Gisu.builder()
-                .generation(generation)
-                .isActive(true)
-                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
-                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
-                .build();
+        return Gisu.create(
+                generation,
+                Instant.parse("2024-03-01T00:00:00Z"),
+                Instant.parse("2024-08-31T23:59:59Z"),
+                true
+        );
     }
 
     private StudyGroup createAndSaveStudyGroup(Gisu gisu, String name, ChallengerPart part, Long leaderId) {

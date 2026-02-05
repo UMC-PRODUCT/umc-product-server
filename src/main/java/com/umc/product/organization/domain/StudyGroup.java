@@ -137,6 +137,18 @@ public class StudyGroup extends BaseEntity {
     }
 
     /**
+     * 스터디 그룹 파트 변경
+     *
+     * @param newPart 새로운 파트
+     */
+    public void updatePart(ChallengerPart newPart) {
+        if (newPart == null) {
+            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.PART_REQUIRED);
+        }
+        this.part = newPart;
+    }
+
+    /**
      * 리더 지정
      *
      * @param challengerId 리더로 지정할 챌린저 ID

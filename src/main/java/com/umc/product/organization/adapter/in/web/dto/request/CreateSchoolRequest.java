@@ -21,9 +21,12 @@ public record CreateSchoolRequest(
 
         @Schema(description = "비고", example = "관악캠퍼스", maxLength = 200)
         @NotNull @Size(max = 200, message = "비고는 200자 이내")
-        String remark
+        String remark,
+
+        @Schema(description = "로고 이미지 파일 ID (presigned URL 업로드 후 전달)", example = "abc123-def456")
+        String logoImageId
 ) {
     public CreateSchoolCommand toCommand() {
-        return new CreateSchoolCommand(schoolName, chapterId, remark);
+        return new CreateSchoolCommand(schoolName, chapterId, remark, logoImageId);
     }
 }

@@ -1,14 +1,15 @@
 package com.umc.product.organization.adapter.in.web;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.response.CursorResponse;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupListResponse.Summary;
+import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupPartsResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSchoolsResponse;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo.StudyGroupInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,8 +26,9 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     private final GetStudyGroupUseCase getStudyGroupUseCase;
 
     /**
-     * 1단계: 스터디 그룹이 있는 학교 목록 조회
+     * 스터디 그룹이 있는 학교 목록 조회 @deprecated
      */
+    @Deprecated
     @Override
     @GetMapping("/schools")
     public StudyGroupSchoolsResponse getSchools() {
@@ -34,8 +36,9 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     }
 
     /**
-     * 2단계: 특정 학교의 파트별 스터디 그룹 요약 조회
+     * 특정 학교의 파트별 스터디 그룹 요약 조회 @deprecated
      */
+    @Deprecated
     @Override
     @GetMapping("/schools/{schoolId}/parts")
     public StudyGroupPartsResponse getParts(@PathVariable Long schoolId) {
@@ -43,27 +46,41 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     }
 
     /**
-     * 3단계: 스터디 그룹 목록 조회 (cursor 기반 페이지네이션)
+     * 내 스터디 그룹 목록 조회 - 유저의 schoolId/part 기반 자동 조회
      */
     @Override
     @GetMapping
-    public CursorResponse<Summary> getStudyGroups(@RequestParam Long schoolId, @RequestParam ChallengerPart part,
-                                                  @RequestParam(required = false) Long cursor,
-                                                  @RequestParam(defaultValue = "20") int size) {
+    public CursorResponse<Summary> getStudyGroups(
+            @CurrentMember MemberPrincipal memberPrincipal,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size) {
 
-        StudyGroupListQuery query = new StudyGroupListQuery(schoolId, part, cursor, size);
-        List<StudyGroupInfo> content = getStudyGroupUseCase.getStudyGroups(query);
+        List<StudyGroupInfo> content = getStudyGroupUseCase.getMyStudyGroups(
+                memberPrincipal.getMemberId(), cursor, size
+        );
 
         return CursorResponse.of(
                 content,
-                query.size(),
-                info -> info.groupId(),
+                size,
+                StudyGroupInfo::groupId,
                 Summary::from
         );
     }
 
     /**
-     * 4단계: 스터디 그룹 상세 조회
+     * 권한에 따라 스터디 그룹 이름 목록 조회 - 토글/드롭다운 용도
+     */
+    @Override
+    @GetMapping("/names")
+    public StudyGroupNameResponse getStudyGroupNames(
+            @CurrentMember MemberPrincipal memberPrincipal) {
+        return StudyGroupNameResponse.from(
+                getStudyGroupUseCase.getStudyGroupNames(memberPrincipal.getMemberId())
+        );
+    }
+
+    /**
+     * 스터디 그룹 상세 조회
      */
     @Override
     @GetMapping("/{groupId}")

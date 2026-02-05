@@ -1,11 +1,13 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.organization.adapter.in.web.dto.request.CreateStudyGroupRequest;
+import com.umc.product.organization.adapter.in.web.dto.request.UpdateStudyGroupMembersRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateStudyGroupRequest;
 import com.umc.product.organization.application.port.in.command.ManageStudyGroupUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -27,11 +29,19 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
     }
 
     @Override
-    @PutMapping("/{groupId}")
+    @PatchMapping("/{groupId}")
     public void update(
             @PathVariable Long groupId,
             @Valid @RequestBody UpdateStudyGroupRequest request) {
         manageStudyGroupUseCase.update(request.toCommand(groupId));
+    }
+
+    @Override
+    @PutMapping("/{groupId}/members")
+    public void updateMembers(
+            @PathVariable Long groupId,
+            @Valid @RequestBody UpdateStudyGroupMembersRequest request) {
+        manageStudyGroupUseCase.updateMembers(request.toCommand(groupId));
     }
 
     @Override
