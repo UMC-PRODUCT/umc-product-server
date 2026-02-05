@@ -5,9 +5,11 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
@@ -33,15 +35,12 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
-// TODO: 예은이가 처리해주세요.
-@Disabled("ChallengerInfo -> ChallengerInfoWithStatus 타입으로 변경됨에 따라 임시 비활성화 처리")
 @Transactional
 public class AttendanceUseCaseTest extends UseCaseTestSupport {
 
@@ -294,9 +293,17 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
             .challengerPoints(List.of())
             .build();
 
+        ChallengerInfoWithStatus mockInfoWithStatus = ChallengerInfoWithStatus.builder()
+            .challengerId(challengerId)
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .status(ChallengerStatus.ACTIVE)
+            .build();
+
         given(getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId))
             .willReturn(mockInfo);
         given(getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId))
-            .willReturn(mockInfo);
+            .willReturn(mockInfoWithStatus);
     }
 }
