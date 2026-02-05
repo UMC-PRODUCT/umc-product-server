@@ -4,8 +4,10 @@ import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.curriculum.adapter.in.web.dto.response.AvailableWeeksResponse;
 import com.umc.product.curriculum.adapter.in.web.dto.response.StudyGroupFilterResponse;
 import com.umc.product.curriculum.adapter.in.web.dto.response.WorkbookSubmissionResponse;
+import com.umc.product.curriculum.application.port.in.query.GetAvailableWeeksUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetStudyGroupsForFilterUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
@@ -30,6 +32,7 @@ public class WorkbookQueryController implements WorkbookQueryControllerApi {
     private final GetWorkbookSubmissionsUseCase getWorkbookSubmissionsUseCase;
     private final GetSchoolAccessContextUseCase getSchoolAccessContextUseCase;
     private final GetStudyGroupsForFilterUseCase getStudyGroupsForFilterUseCase;
+    private final GetAvailableWeeksUseCase getAvailableWeeksUseCase;
 
     @Override
     @GetMapping("/workbook-submissions")
@@ -66,6 +69,24 @@ public class WorkbookQueryController implements WorkbookQueryControllerApi {
                 size,
                 WorkbookSubmissionInfo::challengerWorkbookId,
                 WorkbookSubmissionResponse::from
+        );
+    }
+
+    @Override
+    @GetMapping("/available-weeks")
+    @CheckAccess(
+        resourceType = ResourceType.WORKBOOK_SUBMISSION,
+        permission = PermissionType.READ,
+        message = "배포된 주차 조회는 학교 운영진만 가능합니다."
+    )
+    public AvailableWeeksResponse getAvailableWeeks(
+            @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        SchoolAccessContext context = getSchoolAccessContextUseCase.getContext(
+                memberPrincipal.getMemberId()
+        );
+        return AvailableWeeksResponse.from(
+                getAvailableWeeksUseCase.getAvailableWeeks(context.part())
         );
     }
 

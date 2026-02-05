@@ -7,6 +7,7 @@ import static com.umc.product.organization.domain.QGisu.gisu;
 
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.CurriculumProgressInfo;
@@ -135,5 +136,31 @@ public class CurriculumQueryRepository {
                 )
                 .orderBy(originalWorkbook.weekNo.asc())
                 .fetch();
+    }
+
+    /**
+     * 활성 기수에서 배포된(releasedAt IS NOT NULL) 주차 번호 목록 조회
+     *
+     * @param part 파트 (null이면 모든 파트의 주차를 합산)
+     * @return 배포된 주차 번호 목록 (오름차순, 중복 제거)
+     */
+    public List<Integer> findReleasedWeekNos(ChallengerPart part) {
+        return queryFactory
+                .select(originalWorkbook.weekNo)
+                .distinct()
+                .from(originalWorkbook)
+                .join(curriculum).on(curriculum.id.eq(originalWorkbook.curriculum.id))
+                .join(gisu).on(gisu.id.eq(curriculum.gisuId))
+                .where(
+                        gisu.isActive.eq(true),
+                        originalWorkbook.releasedAt.isNotNull(),
+                        partCondition(part)
+                )
+                .orderBy(originalWorkbook.weekNo.asc())
+                .fetch();
+    }
+
+    private BooleanExpression partCondition(ChallengerPart part) {
+        return part != null ? curriculum.part.eq(part) : null;
     }
 }

@@ -1,6 +1,7 @@
 package com.umc.product.curriculum.adapter.in.web;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.curriculum.adapter.in.web.dto.response.AvailableWeeksResponse;
 import com.umc.product.curriculum.adapter.in.web.dto.response.StudyGroupFilterResponse;
 import com.umc.product.curriculum.adapter.in.web.dto.response.WorkbookSubmissionResponse;
 import com.umc.product.global.constant.SwaggerTag.Constants;
@@ -47,6 +48,19 @@ public interface WorkbookQueryControllerApi {
             @Parameter(description = "스터디 그룹 ID (선택)") Long studyGroupId,
             @Parameter(description = "페이지 커서 (첫 페이지는 null)") Long cursor,
             @Parameter(description = "페이지 크기 (기본 20, 최대 100)") int size
+    );
+
+    @Operation(
+            summary = "배포된 주차 번호 목록 조회",
+            description = "워크북 제출 현황 필터에 사용할 배포된 주차 번호 목록을 조회합니다. "
+                    + "회장/부회장은 모든 파트의 주차를 조회하고, 파트장/운영진은 자신의 파트 주차만 조회합니다."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "조회 성공"),
+            @ApiResponse(responseCode = "403", description = "권한 없음 (학교 운영진이 아닌 경우)")
+    })
+    AvailableWeeksResponse getAvailableWeeks(
+            @Parameter(hidden = true) MemberPrincipal memberPrincipal
     );
 
     @Operation(
