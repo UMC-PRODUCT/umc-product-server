@@ -48,25 +48,25 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
         String token = UUID.randomUUID().toString();
 
         EmailVerification emailVerification = EmailVerification.builder()
-                .email(email)
-                .code(code)
-                .token(token)
-                .build();
+            .email(email)
+            .code(code)
+            .token(token)
+            .build();
 
         String emailVerificationPath = "/api/v1/auth/email-verification/token";
 
         String verificationLink = UriComponentsBuilder
-                .fromUriString(serverUrl)
-                .path(emailVerificationPath)
-                .queryParam("token", token)
-                .toUriString();
+            .fromUriString(serverUrl)
+            .path(emailVerificationPath)
+            .queryParam("token", token)
+            .toUriString();
 
         sendEmailUseCase.sendVerificationEmail(
-                SendVerificationEmailCommand.builder()
-                        .to(email)
-                        .verificationCode(code)
-                        .verificationLink(verificationLink)
-                        .build()
+            SendVerificationEmailCommand.builder()
+                .to(email)
+                .verificationCode(code)
+                .verificationLink(verificationLink)
+                .build()
         );
 
         return saveEmailVerificationPort.save(emailVerification).getId();
@@ -77,7 +77,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
         // code가 주어지면 토큰이 우선 순위
         if (command.code() != null) {
             EmailVerification emailVerification = loadEmailVerificationPort.getById(
-                    Long.valueOf(command.sessionId())
+                Long.valueOf(command.sessionId())
             );
 
             emailVerification.verifyCode(command.code());

@@ -4,6 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record RenewAccessTokenResponse(
-        String accessToken
+    String accessToken,
+    String refreshToken
 ) {
 }
