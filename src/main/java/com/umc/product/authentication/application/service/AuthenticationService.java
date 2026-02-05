@@ -1,6 +1,7 @@
 package com.umc.product.authentication.application.service;
 
 import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
+import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
 import com.umc.product.authentication.application.port.in.command.dto.RenewAccessTokenCommand;
 import com.umc.product.authentication.application.port.in.command.dto.ValidateEmailVerificationSessionCommand;
 import com.umc.product.authentication.application.port.out.LoadEmailVerificationPort;
@@ -32,11 +33,22 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
 
     // TODO: EmailSendUseCase와 구분할 필요가 있습니다.
     @Override
-    public String renewAccessToken(RenewAccessTokenCommand command) {
-        // TODO: refresh token을 검증하는 로직을 추가할 필요성이 있음
+    public NewTokens renewAccessToken(RenewAccessTokenCommand command) {
+        /*
+            TODO
+            ---
+            refresh token을 검증하는 로직을 추가할 필요성이 있음 + refresh token은 1회만 사용 가능하도록 변경할 것.
+            단, RT의 마지막 사용으로부터 5분 이내에는 사용 가능하도록 함.
+
+            이는 네트워크 이슈로 인해서 Server에 요청이 접수되었지만 클라이언트에게는 응답이 가지 않은 경우를 대비하기 위함임
+         */
+        
         Long memberId = jwtTokenProvider.parseRefreshToken(command.refreshToken());
 
-        return jwtTokenProvider.createAccessToken(memberId, null);
+        return NewTokens.builder()
+            .accessToken(jwtTokenProvider.createAccessToken(memberId, null))
+            .refreshToken(jwtTokenProvider.createRefreshToken(memberId))
+            .build();
     }
 
     @Override

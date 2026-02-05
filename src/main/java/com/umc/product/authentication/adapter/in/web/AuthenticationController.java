@@ -107,16 +107,10 @@ public class AuthenticationController implements AuthenticationControllerInterfa
     public RenewAccessTokenResponse renewAccessToken(
         @RequestBody RenewAccessTokenRequest request
     ) {
-        String newAccessToken = manageAuthenticationUseCase.renewAccessToken(
-            request.toCommand()
-        );
-
-        return RenewAccessTokenResponse
-            .builder()
-            .accessToken(newAccessToken)
-            // TODO: 실제로는 refresh Token도 갱신해서 제공
-            .refreshToken(request.refreshToken())
-            .build();
+        return RenewAccessTokenResponse.from(
+            manageAuthenticationUseCase.renewAccessToken(
+                request.toCommand()
+            ));
     }
 
     /**
