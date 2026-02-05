@@ -46,16 +46,19 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruit
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
+import com.umc.product.recruitment.application.port.out.LoadInterviewSlotPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPartPreferencePort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
+import com.umc.product.recruitment.application.port.out.SaveInterviewSlotPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentSchedulePort;
 import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
+import com.umc.product.recruitment.domain.InterviewSlot;
 import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
@@ -88,6 +91,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -142,6 +146,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final GetFileUseCase getFileUseCase;
     private final SaveSingleAnswerPort saveSingleAnswerPort;
     private final LoadQuestionOptionPort loadQuestionOptionPort;
+    private final LoadInterviewSlotPort loadInterviewSlotPort;
+    private final SaveInterviewSlotPort saveInterviewSlotPort;
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
@@ -797,6 +803,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                         () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         latest.publish(now);
         saveRecruitmentPort.save(latest);
+
+        createInterviewSlotsOnPublish(latest);
 
         Form form = loadFormPort.findById(latest.getFormId())
                 .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
@@ -2504,6 +2512,144 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                     seeInvalidTimeTable();
                 }
             }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void createInterviewSlotsOnPublish(Recruitment recruitment) {
+        if (recruitment == null) {
+            return;
+        }
+
+        Long recruitmentId = recruitment.getId();
+        Map<String, Object> timeTable = recruitment.getInterviewTimeTable();
+
+        if (timeTable == null || timeTable.isEmpty()) {
+            return;
+        }
+
+        // 이미 슬롯 있으면 재생성 안함
+        if (loadInterviewSlotPort.existsByRecruitmentId(recruitmentId)) {
+            return;
+        }
+
+        Map<String, Object> dateRange = (Map<String, Object>) timeTable.get("dateRange");
+        Map<String, Object> timeRange = (Map<String, Object>) timeTable.get("timeRange");
+
+        if (dateRange == null || timeRange == null) {
+            return;
+        }
+
+        LocalDate startDate = LocalDate.parse(String.valueOf(dateRange.get("start")));
+        LocalDate endDate = LocalDate.parse(String.valueOf(dateRange.get("end")));
+
+        LocalTime startTime = LocalTime.parse(String.valueOf(timeRange.get("start")));
+        LocalTime endTime = LocalTime.parse(String.valueOf(timeRange.get("end")));
+
+        int slotMinutes = parseSlotMinutes(timeTable.get("slotMinutes"));
+        if (slotMinutes <= 0) {
+            throw new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID
+            );
+        }
+
+        Map<LocalDate, Set<LocalTime>> enabledByDate = new HashMap<>();
+        Object enabledRaw = timeTable.get("enabledByDate");
+        if (enabledRaw instanceof List<?> enabledList) {
+            for (Object itemObj : enabledList) {
+                if (!(itemObj instanceof Map<?, ?> item)) {
+                    continue;
+                }
+
+                LocalDate date = LocalDate.parse(String.valueOf(item.get("date")));
+                Object timesRaw = item.get("times");
+                if (!(timesRaw instanceof List<?> timesList)) {
+                    continue;
+                }
+
+                Set<LocalTime> times = timesList.stream()
+                        .map(String::valueOf)
+                        .map(LocalTime::parse)
+                        .collect(Collectors.toSet());
+
+                enabledByDate.merge(date, times, (a, b) -> {
+                    a.addAll(b);
+                    return a;
+                });
+            }
+        }
+
+        List<InterviewSlot> slots = new ArrayList<>();
+
+        for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
+
+            Set<LocalTime> enabledTimes = enabledByDate.get(d);
+            if (enabledTimes != null && !enabledTimes.isEmpty()) {
+                for (LocalTime t : enabledTimes) {
+                    if (t.isBefore(startTime) || t.plusMinutes(slotMinutes).isAfter(endTime)) {
+                        continue;
+                    }
+                    slots.add(buildSlot(recruitment, d, t, slotMinutes));
+                }
+                continue;
+            }
+
+            for (LocalTime t = startTime;
+                 !t.plusMinutes(slotMinutes).isAfter(endTime);
+                 t = t.plusMinutes(slotMinutes)) {
+
+                slots.add(buildSlot(recruitment, d, t, slotMinutes));
+            }
+        }
+
+        if (slots.isEmpty()) {
+            return;
+        }
+
+        saveInterviewSlotPort.saveAll(slots);
+    }
+
+    private InterviewSlot buildSlot(Recruitment recruitment, LocalDate date, LocalTime startTime, int slotMinutes) {
+        Instant startsAt = ZonedDateTime.of(date, startTime, ZoneId.of("Asia/Seoul")).toInstant();
+        Instant endsAt = ZonedDateTime.of(date, startTime.plusMinutes(slotMinutes), ZoneId.of("Asia/Seoul"))
+                .toInstant();
+
+        return InterviewSlot.builder()
+                .recruitment(recruitment)
+                .startsAt(startsAt)
+                .endsAt(endsAt)
+                .build();
+    }
+
+    private int parseSlotMinutes(Object raw) {
+        if (raw == null) {
+            throw new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID
+            );
+        }
+
+        try {
+            if (raw instanceof Number n) {
+                return n.intValue();
+            }
+
+            if (raw instanceof String s) {
+                String trimmed = s.trim();
+                if (trimmed.isEmpty()) {
+                    throw new NumberFormatException();
+                }
+                return Integer.parseInt(trimmed);
+            }
+
+            throw new NumberFormatException();
+
+        } catch (NumberFormatException e) {
+            throw new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID
+            );
         }
     }
 
