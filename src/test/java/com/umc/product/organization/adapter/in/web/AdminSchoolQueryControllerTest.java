@@ -10,7 +10,7 @@ import static org.springframework.restdocs.request.RequestDocumentation.queryPar
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
@@ -101,9 +101,9 @@ class AdminSchoolQueryControllerTest extends DocumentationTest {
         Instant createdAt = Instant.parse("2026-01-01T00:00:00Z");
         Instant updatedAt = Instant.parse("2026-01-04T00:00:00Z");
 
-        SchoolInfo schoolInfo = new SchoolInfo(3L, "Ain 지부", "중앙대학교", 1L, "비고", "logo-file-123", createdAt, updatedAt);
+        SchoolDetailInfo schoolDetailInfo = new SchoolDetailInfo(3L, "Ain 지부", "중앙대학교", 1L, "비고", "logo-file-123", createdAt, updatedAt);
         FileInfo fileInfo = new FileInfo("logo-file-123", "동국대학교 로고", FileCategory.SCHOOL_LOGO, null, null, "https://storage.example.com/school-logo/logo.png", null, null, null);
-        given(getSchoolUseCase.getSchoolDetail(schoolId)).willReturn(schoolInfo);
+        given(getSchoolUseCase.getSchoolDetail(schoolId)).willReturn(schoolDetailInfo);
         given(getFileUseCase.getById("logo-file-123")).willReturn(fileInfo);
         // when
         ResultActions result = mockMvc.perform(get("/api/v1/schools/{schoolId}", schoolId));

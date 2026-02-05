@@ -1,6 +1,6 @@
 package com.umc.product.organization.adapter.in.web.dto.response;
 
-import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
@@ -30,14 +30,14 @@ public record SchoolDetailResponse(
         @Schema(description = "수정일", example = "2024-03-15T00:00:00Z")
         Instant updatedAt
 ) {
-    public static SchoolDetailResponse of(SchoolInfo info, String logoImageLink) {
+    public static SchoolDetailResponse of(SchoolDetailInfo info) {
         return new SchoolDetailResponse(
                 info.chapterId(),
                 info.chapterName(),
                 info.schoolName(),
                 info.schoolId(),
                 info.remark(),
-                logoImageLink,
+                info.logoImageUrl(),
                 info.createdAt(),
                 info.updatedAt()
         );

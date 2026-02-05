@@ -3,7 +3,7 @@ package com.umc.product.organization.adapter.out.persistence;
 
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
-import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
@@ -70,8 +70,8 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
     }
 
     @Override
-    public SchoolInfo findSchoolDetailByIdWithActiveChapter(Long schoolId) {
-        SchoolInfo schoolInfo = schoolQueryRepository.getSchoolDetail(schoolId);
+    public SchoolDetailInfo.SchoolInfo findSchoolDetailByIdWithActiveChapter(Long schoolId) {
+        SchoolDetailInfo.SchoolInfo schoolInfo = schoolQueryRepository.getSchoolDetail(schoolId);
         if (schoolInfo == null) {
             throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.SCHOOL_NOT_FOUND);
         }

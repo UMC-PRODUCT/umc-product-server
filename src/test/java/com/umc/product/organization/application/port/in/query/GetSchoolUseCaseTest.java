@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.umc.product.global.exception.BusinessException;
-import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
@@ -307,7 +307,7 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
         manageSchoolPort.save(school);
 
         // when
-        SchoolInfo result = getSchoolUseCase.getSchoolDetail(school.getId());
+        SchoolDetailInfo result = getSchoolUseCase.getSchoolDetail(school.getId());
 
         // then
         assertThat(result.schoolId()).isEqualTo(school.getId());
@@ -332,7 +332,7 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
         manageSchoolPort.save(school);
 
         // when
-        SchoolInfo result = getSchoolUseCase.getSchoolDetail(school.getId());
+        SchoolDetailInfo result = getSchoolUseCase.getSchoolDetail(school.getId());
 
         // then
         assertThat(result.schoolId()).isEqualTo(school.getId());

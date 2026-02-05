@@ -1,7 +1,7 @@
 package com.umc.product.organization.application.port.service.query;
 
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
-import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolLinkInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
@@ -9,6 +9,8 @@ import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCo
 import com.umc.product.organization.application.port.in.query.dto.UnassignedSchoolInfo;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.School;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
+import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SchoolQueryService implements GetSchoolUseCase {
 
     private final LoadSchoolPort loadSchoolPort;
+    private final GetFileUseCase getFileUseCase;
 
     @Override
     public Page<SchoolListItemInfo> getSchools(SchoolSearchCondition condition, Pageable pageable) {
@@ -36,8 +39,18 @@ public class SchoolQueryService implements GetSchoolUseCase {
     }
 
     @Override
-    public SchoolInfo getSchoolDetail(Long schoolId) {
-        return loadSchoolPort.findSchoolDetailByIdWithActiveChapter(schoolId);
+    public SchoolDetailInfo getSchoolDetail(Long schoolId) {
+
+        SchoolDetailInfo.SchoolInfo schoolInfo = loadSchoolPort.findSchoolDetailByIdWithActiveChapter(schoolId);
+
+        String logoImageLink = null;
+        if (schoolInfo.logoImageId() != null) {
+            FileInfo fileInfo = getFileUseCase.getById(schoolInfo.logoImageId());
+            logoImageLink = fileInfo.fileLink();
+        }
+
+        return schoolInfo.toDetailInfo(logoImageLink);
+
     }
 
     @Override

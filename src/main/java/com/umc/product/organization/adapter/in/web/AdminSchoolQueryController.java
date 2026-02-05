@@ -8,9 +8,8 @@ import com.umc.product.organization.adapter.in.web.dto.response.SchoolNameListRe
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolPageResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.UnassignedSchoolListResponse;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
-import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,13 +47,8 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
     @Override
     @GetMapping("/{schoolId}")
     public SchoolDetailResponse getSchoolDetail(@PathVariable Long schoolId) {
-        SchoolInfo schoolInfo = getSchoolUseCase.getSchoolDetail(schoolId);
-        String logoImageLink = null;
-        if (schoolInfo.logoImageId() != null) {
-            FileInfo fileInfo = getFileUseCase.getById(schoolInfo.logoImageId());
-            logoImageLink = fileInfo.fileLink();
-        }
-        return SchoolDetailResponse.of(schoolInfo, logoImageLink);
+        SchoolDetailInfo schoolDetailInfo = getSchoolUseCase.getSchoolDetail(schoolId);
+        return SchoolDetailResponse.of(schoolDetailInfo);
     }
 
     @Override

@@ -8,7 +8,7 @@ import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
-import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import java.util.HashMap;
@@ -48,10 +48,10 @@ public class MemberQueryService implements GetMemberUseCase {
 
         String schoolName = null;
         if (memberInfo.schoolId() != null) {
-            SchoolInfo schoolInfo = getSchoolUseCase.getSchoolDetail(memberInfo.schoolId());
+            SchoolDetailInfo schoolDetailInfo = getSchoolUseCase.getSchoolDetail(memberInfo.schoolId());
 
-            if (schoolInfo != null) {
-                schoolName = schoolInfo.schoolName();
+            if (schoolDetailInfo != null) {
+                schoolName = schoolDetailInfo.schoolName();
             }
         }
 
@@ -83,8 +83,8 @@ public class MemberQueryService implements GetMemberUseCase {
             Long schoolId = memberInfo.schoolId();
             if (schoolId != null) {
                 schoolName = schoolNameCache.computeIfAbsent(schoolId, id -> {
-                    SchoolInfo schoolInfo = getSchoolUseCase.getSchoolDetail(id);
-                    return schoolInfo != null ? schoolInfo.schoolName() : null;
+                    SchoolDetailInfo schoolDetailInfo = getSchoolUseCase.getSchoolDetail(id);
+                    return schoolDetailInfo != null ? schoolDetailInfo.schoolName() : null;
                 });
             }
 
