@@ -219,6 +219,8 @@ public class SecurityConfig {
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+        // Trace ID 헤더를 클라이언트에서 읽을 수 있도록 노출
+        configuration.setExposedHeaders(List.of("X-Trace-Id"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
