@@ -1,6 +1,7 @@
 package com.umc.product.challenger.application.port.in.query;
 
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,11 +32,6 @@ public interface GetChallengerUseCase {
     List<ChallengerInfo> getMemberChallengerList(Long memberId);
 
     /**
-     * memberId로 해당 사용자가 가지고 있는 가장 최근 챌린저 정보 조회
-     */
-    ChallengerInfo getLatestActiveChallengerByMemberId(Long memberId);
-
-    /**
      * 여러 challengerId로 챌린저 정보 배치 조회
      *
      * @param challengerIds 챌린저 ID 목록
@@ -50,4 +46,9 @@ public interface GetChallengerUseCase {
      * @return 해당 기수의 챌린저 정보 목록
      */
     List<ChallengerInfo> getByGisuId(Long gisuId);
+
+    /**
+     * memberId로 해당 사용자가 가지고 있는 가장 최근 챌린저 정보 조회
+     */
+    ChallengerInfoWithStatus getLatestActiveChallengerByMemberId(Long memberId);
 }
