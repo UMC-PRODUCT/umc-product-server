@@ -47,15 +47,10 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     @Override
     public void update(UpdateStudyGroupCommand command) {
-        validateChallengerIdsExist(command.leaderId(), command.memberIds());
-
         StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
 
         studyGroup.updateName(command.name());
-
-        studyGroup.updateMembers(command.memberIds());
-
-        studyGroup.addMember(command.leaderId(), true);
+        studyGroup.updatePart(command.part());
 
         manageStudyGroupPort.save(studyGroup);
     }
