@@ -4,6 +4,6 @@ import com.umc.product.recruitment.domain.enums.PartKey;
 import java.util.List;
 
 public record GetInterviewSheetPartsInfo(
-        List<PartKey> parts
+    List<PartKey> parts
 ) {
 }

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class ApplicationPartPreferencePersistenceAdapter implements LoadApplicationPartPreferencePort,
-        SaveApplicationPartPreferencePort {
+    SaveApplicationPartPreferencePort {
 
     private final ApplicationPartPreferenceJpaRepository applicationPartPreferenceJpaRepository;
     private final ApplicationQueryRepository applicationQueryRepository;

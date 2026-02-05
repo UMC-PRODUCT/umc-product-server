@@ -5,37 +5,37 @@ import com.umc.product.recruitment.application.port.in.query.dto.InterviewSchedu
 import java.util.List;
 
 public record InterviewSchedulingApplicantsResponse(
-        List<AvailableApplicant> available,
-        List<AlreadyScheduledApplicant> alreadyScheduled
+    List<AvailableApplicant> available,
+    List<AlreadyScheduledApplicant> alreadyScheduled
 ) {
     public static InterviewSchedulingApplicantsResponse from(InterviewSchedulingApplicantsInfo info) {
         return new InterviewSchedulingApplicantsResponse(
-                info.available().stream()
-                        .map(a -> new AvailableApplicant(
-                                a.applicationId(),
-                                a.nickname(),
-                                a.name(),
-                                toPreferredPart(a.firstPart()),
-                                toPreferredPart(a.secondPart()),
-                                a.documentScore()
-                        ))
-                        .toList(),
-                info.alreadyScheduled().stream()
-                        .map(a -> new AlreadyScheduledApplicant(
-                                a.applicationId(),
-                                a.assignmentId(),
-                                a.nickname(),
-                                a.name(),
-                                toPreferredPart(a.firstPart()),
-                                toPreferredPart(a.secondPart()),
-                                a.documentScore(),
-                                new ScheduledSlot(
-                                        a.scheduledSlot().date(),
-                                        a.scheduledSlot().start(),
-                                        a.scheduledSlot().end()
-                                )
-                        ))
-                        .toList()
+            info.available().stream()
+                .map(a -> new AvailableApplicant(
+                    a.applicationId(),
+                    a.nickname(),
+                    a.name(),
+                    toPreferredPart(a.firstPart()),
+                    toPreferredPart(a.secondPart()),
+                    a.documentScore()
+                ))
+                .toList(),
+            info.alreadyScheduled().stream()
+                .map(a -> new AlreadyScheduledApplicant(
+                    a.applicationId(),
+                    a.assignmentId(),
+                    a.nickname(),
+                    a.name(),
+                    toPreferredPart(a.firstPart()),
+                    toPreferredPart(a.secondPart()),
+                    a.documentScore(),
+                    new ScheduledSlot(
+                        a.scheduledSlot().date(),
+                        a.scheduledSlot().start(),
+                        a.scheduledSlot().end()
+                    )
+                ))
+                .toList()
         );
     }
 
@@ -47,24 +47,24 @@ public record InterviewSchedulingApplicantsResponse(
     }
 
     public record AvailableApplicant(
-            Long applicationId,
-            String nickname,
-            String name,
-            PreferredPartResponse firstPart,
-            PreferredPartResponse secondPart,
-            double documentScore
+        Long applicationId,
+        String nickname,
+        String name,
+        PreferredPartResponse firstPart,
+        PreferredPartResponse secondPart,
+        double documentScore
     ) {
     }
 
     public record AlreadyScheduledApplicant(
-            Long applicationId,
-            Long assignmentId,
-            String nickname,
-            String name,
-            PreferredPartResponse firstPart,
-            PreferredPartResponse secondPart,
-            double documentScore,
-            ScheduledSlot scheduledSlot
+        Long applicationId,
+        Long assignmentId,
+        String nickname,
+        String name,
+        PreferredPartResponse firstPart,
+        PreferredPartResponse secondPart,
+        double documentScore,
+        ScheduledSlot scheduledSlot
     ) {
     }
 
@@ -72,9 +72,9 @@ public record InterviewSchedulingApplicantsResponse(
     }
 
     public record ScheduledSlot(
-            String date,
-            String start,
-            String end
+        String date,
+        String start,
+        String end
     ) {
     }
 }

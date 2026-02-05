@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class RecruitmentInterviewSchedulingService implements CreateInterviewAssignmentUseCase,
-        DeleteInterviewAssignmentUseCase {
+    DeleteInterviewAssignmentUseCase {
 
     @Override
     public CreateInterviewAssignmentResult create(CreateInterviewAssignmentCommand command) {

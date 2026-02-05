@@ -4,25 +4,25 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpdatePublish
 import java.time.Instant;
 
 public record UpdatePublishedRecruitmentScheduleRequest(
-        Instant applyStartAt,
-        Instant applyEndAt,
-        Instant docResultAt,
-        Instant interviewStartAt,
-        Instant interviewEndAt,
-        Instant finalResultAt
+    Instant applyStartAt,
+    Instant applyEndAt,
+    Instant docResultAt,
+    Instant interviewStartAt,
+    Instant interviewEndAt,
+    Instant finalResultAt
 ) {
     public UpdatePublishedRecruitmentScheduleCommand toCommand(Long recruitmentId, Long memberId) {
         return new UpdatePublishedRecruitmentScheduleCommand(
-                memberId,
-                recruitmentId,
-                new UpdatePublishedRecruitmentScheduleCommand.SchedulePatch(
-                        applyStartAt,
-                        applyEndAt,
-                        docResultAt,
-                        interviewStartAt,
-                        interviewEndAt,
-                        finalResultAt
-                )
+            memberId,
+            recruitmentId,
+            new UpdatePublishedRecruitmentScheduleCommand.SchedulePatch(
+                applyStartAt,
+                applyEndAt,
+                docResultAt,
+                interviewStartAt,
+                interviewEndAt,
+                finalResultAt
+            )
         );
     }
 }

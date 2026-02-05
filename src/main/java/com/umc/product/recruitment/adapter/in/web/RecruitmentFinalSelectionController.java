@@ -37,50 +37,50 @@ public class RecruitmentFinalSelectionController {
 
     @PatchMapping("/applications/{applicationId}/final-status")
     @Operation(
-            summary = "최종 선발 단건 합격/합격 취소",
-            description = """
-                    특정 지원서의 최종 합격 상태를 변경합니다.
-                    - 합격 처리: status=PASS, selectedPart 필수
-                    - 합격 취소: status=WAIT, selectedPart 미전송 또는 null
-                    """
+        summary = "최종 선발 단건 합격/합격 취소",
+        description = """
+            특정 지원서의 최종 합격 상태를 변경합니다.
+            - 합격 처리: status=PASS, selectedPart 필수
+            - 합격 취소: status=WAIT, selectedPart 미전송 또는 null
+            """
     )
     public UpdateFinalStatusResponse updateFinalStatus(
-            @PathVariable Long recruitmentId,
-            @PathVariable Long applicationId,
-            @RequestBody @Valid UpdateFinalStatusRequest request,
-            @CurrentMember MemberPrincipal memberPrincipal
+        @PathVariable Long recruitmentId,
+        @PathVariable Long applicationId,
+        @RequestBody @Valid UpdateFinalStatusRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal
     ) {
         UpdateFinalStatusResult result = updateFinalStatusUseCase.update(
-                new UpdateFinalStatusCommand(
-                        recruitmentId,
-                        applicationId,
-                        request.decision(),
-                        request.selectedPart(),
-                        memberPrincipal.getMemberId()
-                )
+            new UpdateFinalStatusCommand(
+                recruitmentId,
+                applicationId,
+                request.decision(),
+                request.selectedPart(),
+                memberPrincipal.getMemberId()
+            )
         );
         return UpdateFinalStatusResponse.from(result);
     }
 
     @GetMapping("/final-selections")
     @Operation(
-            summary = "최종 선발 리스트 조회",
-            description = """
-                    최종 선발(선정/미선정) 리스트를 조회합니다.
-                    part 필터 및 정렬(sort)을 지원합니다.
-                    """
+        summary = "최종 선발 리스트 조회",
+        description = """
+            최종 선발(선정/미선정) 리스트를 조회합니다.
+            part 필터 및 정렬(sort)을 지원합니다.
+            """
     )
     public FinalSelectionApplicationListResponse getFinalSelections(
-            @PathVariable Long recruitmentId,
-            @RequestParam(required = false, defaultValue = "ALL") PartOption part,
-            @RequestParam(required = false, defaultValue = "SCORE_DESC") SortOption sort,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @CurrentMember MemberPrincipal memberPrincipal
+        @PathVariable Long recruitmentId,
+        @RequestParam(required = false, defaultValue = "ALL") PartOption part,
+        @RequestParam(required = false, defaultValue = "SCORE_DESC") SortOption sort,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size,
+        @CurrentMember MemberPrincipal memberPrincipal
     ) {
         FinalSelectionApplicationListInfo info = getFinalSelectionListUseCase.get(
-                new GetFinalSelectionApplicationListQuery(recruitmentId, part, sort, page, size,
-                        memberPrincipal.getMemberId())
+            new GetFinalSelectionApplicationListQuery(recruitmentId, part, sort, page, size,
+                memberPrincipal.getMemberId())
         );
         return FinalSelectionApplicationListResponse.from(info);
     }

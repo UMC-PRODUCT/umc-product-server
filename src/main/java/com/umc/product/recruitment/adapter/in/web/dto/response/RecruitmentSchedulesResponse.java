@@ -8,30 +8,30 @@ import java.util.Comparator;
 import java.util.List;
 
 public record RecruitmentSchedulesResponse(
-        Long recruitmentId,
-        List<ScheduleItemResponse> schedules
+    Long recruitmentId,
+    List<ScheduleItemResponse> schedules
 ) {
 
     private static final ZoneId ZONE_ID = ZoneId.of("Asia/Seoul");
 
     public static RecruitmentSchedulesResponse from(RecruitmentScheduleInfo info) {
         List<RecruitmentScheduleInfo.ScheduleItem> source =
-                info.schedules() == null ? List.of() : info.schedules();
+            info.schedules() == null ? List.of() : info.schedules();
 
         List<ScheduleItemResponse> items = source.stream()
-                .filter(schedule -> schedule.startsAt() != null)
-                .sorted(Comparator.comparing(RecruitmentScheduleInfo.ScheduleItem::startsAt))
-                .map(ScheduleItemResponse::from)
-                .toList();
+            .filter(schedule -> schedule.startsAt() != null)
+            .sorted(Comparator.comparing(RecruitmentScheduleInfo.ScheduleItem::startsAt))
+            .map(ScheduleItemResponse::from)
+            .toList();
 
         return new RecruitmentSchedulesResponse(info.recruitmentId(), items);
     }
 
     public record ScheduleItemResponse(
-            RecruitmentScheduleType type,
-            RecruitmentScheduleInfo.ScheduleKind kind,
-            LocalDate startDate,
-            LocalDate endDate
+        RecruitmentScheduleType type,
+        RecruitmentScheduleInfo.ScheduleKind kind,
+        LocalDate startDate,
+        LocalDate endDate
     ) {
         public static ScheduleItemResponse from(RecruitmentScheduleInfo.ScheduleItem item) {
             LocalDate start = item.startsAt() == null ? null : item.startsAt().atZone(ZONE_ID).toLocalDate();

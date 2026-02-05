@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveApplicationPort,
-        LoadApplicationListPort {
+    LoadApplicationListPort {
 
     private final ApplicationRepository applicationRepository;
     private final ApplicationQueryRepository applicationQueryRepository;
@@ -62,11 +62,11 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
 
     @Override
     public Page<ApplicationListItemProjection> searchApplications(
-            Long recruitmentId,
-            String keyword,
-            String part,
-            Long evaluatorId,
-            Pageable pageable
+        Long recruitmentId,
+        String keyword,
+        String part,
+        Long evaluatorId,
+        Pageable pageable
     ) {
         return applicationQueryRepository.searchApplications(recruitmentId, keyword, part, evaluatorId, pageable);
     }

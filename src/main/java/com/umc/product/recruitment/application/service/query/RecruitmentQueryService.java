@@ -85,16 +85,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, GetRecruitmentNoticeUseCase,
-        GetRecruitmentApplicationFormUseCase,
-        GetRecruitmentFormResponseDetailUseCase,
-        GetRecruitmentListUseCase,
-        GetRecruitmentScheduleUseCase,
-        GetRecruitmentDashboardUseCase,
-        GetMyApplicationListUseCase,
-        GetRecruitmentDetailUseCase,
-        GetRecruitmentPartListUseCase,
-        GetRecruitmentDraftApplicationFormUseCase,
-        GetPublishedRecruitmentDetailUseCase {
+    GetRecruitmentApplicationFormUseCase,
+    GetRecruitmentFormResponseDetailUseCase,
+    GetRecruitmentListUseCase,
+    GetRecruitmentScheduleUseCase,
+    GetRecruitmentDashboardUseCase,
+    GetMyApplicationListUseCase,
+    GetRecruitmentDetailUseCase,
+    GetRecruitmentPartListUseCase,
+    GetRecruitmentDraftApplicationFormUseCase,
+    GetPublishedRecruitmentDetailUseCase {
 
     private final LoadRecruitmentPort loadRecruitmentPort;
     private final LoadRecruitmentPartPort loadRecruitmentPartPort;
@@ -107,7 +107,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
-                .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
         return member.getSchoolId();
     }
 
@@ -118,13 +118,13 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     @Override
     public ActiveRecruitmentInfo getActiveRecruitment(GetActiveRecruitmentQuery query) {
         Long resolvedSchoolId =
-                (query.schoolId() != null) ? query.schoolId() : resolveSchoolId(query.requesterMemberId());
+            (query.schoolId() != null) ? query.schoolId() : resolveSchoolId(query.requesterMemberId());
         Long resolvedGisuId = (query.gisuId() != null) ? query.gisuId() : resolveActiveGisuId();
 
         List<Long> activeIds = loadRecruitmentPort.findActiveRecruitmentIds(
-                resolvedSchoolId,
-                resolvedGisuId,
-                Instant.now()
+            resolvedSchoolId,
+            resolvedGisuId,
+            Instant.now()
         );
 
         if (activeIds.isEmpty()) {
@@ -141,54 +141,54 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     @Override
     public RecruitmentNoticeInfo get(GetRecruitmentNoticeQuery query) {
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         requirePublished(recruitment);
 
         List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
 
         List<com.umc.product.common.domain.enums.ChallengerPart> openParts = recruitmentParts.stream()
-                .filter(p -> p.getStatus() != null && p.getStatus().name().equals("OPEN"))
-                .map(RecruitmentPart::getPart)
-                .sorted(Comparator.comparingInt(Enum::ordinal))
-                .toList();
+            .filter(p -> p.getStatus() != null && p.getStatus().name().equals("OPEN"))
+            .map(RecruitmentPart::getPart)
+            .sorted(Comparator.comparingInt(Enum::ordinal))
+            .toList();
 
         String title = (recruitment.getNoticeTitle() != null && !recruitment.getNoticeTitle().isBlank())
-                ? recruitment.getNoticeTitle()
-                : recruitment.getTitle();
+            ? recruitment.getNoticeTitle()
+            : recruitment.getTitle();
 
         return new RecruitmentNoticeInfo(
-                recruitment.getId(),
-                title,
-                recruitment.getNoticeContent(),
-                openParts
+            recruitment.getId(),
+            title,
+            recruitment.getNoticeContent(),
+            openParts
         );
     }
 
     @Override
     public RecruitmentApplicationFormInfo get(GetRecruitmentApplicationFormQuery query) {
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
 
         Set<ChallengerPart> openParts =
-                parts.stream()
-                        .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
-                        .map(p -> p.getPart())
-                        .collect(Collectors.toSet());
+            parts.stream()
+                .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+                .map(p -> p.getPart())
+                .collect(Collectors.toSet());
 
         List<RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo> preferredPartOptions =
-                (parts == null ? List.<RecruitmentPart>of() : parts).stream()
-                        .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
-                        .map(p -> new RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo(
-                                p.getId(),
-                                p.getPart().name(),
-                                p.getPart().name()
-                        ))
-                        .toList();
+            (parts == null ? List.<RecruitmentPart>of() : parts).stream()
+                .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+                .map(p -> new RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo(
+                    p.getId(),
+                    p.getPart().name(),
+                    p.getPart().name()
+                ))
+                .toList();
 
         Integer max = recruitment.getMaxPreferredPartCount();
         if (max == null) {
@@ -196,13 +196,13 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         }
 
         var preferredPartInfo =
-                new RecruitmentApplicationFormInfo.PreferredPartInfo(max, preferredPartOptions);
+            new RecruitmentApplicationFormInfo.PreferredPartInfo(max, preferredPartOptions);
 
         if (!recruitment.isPublished()) {
             // TODO: 운영진 권한 검증 추가 (DRAFT면 운영진만 허용)
         }
         RecruitmentApplicationFormInfo raw =
-                loadRecruitmentPort.findApplicationFormInfoForApplicantById(query.recruitmentId(), preferredPartInfo);
+            loadRecruitmentPort.findApplicationFormInfoForApplicantById(query.recruitmentId(), preferredPartInfo);
 
         return raw.filterPartQuestions(openParts);
     }
@@ -210,9 +210,9 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     @Override
     public RecruitmentFormResponseDetailInfo get(GetRecruitmentFormResponseDetailQuery query) {
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-                .orElseThrow(() ->
-                        new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND)
-                );
+            .orElseThrow(() ->
+                new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND)
+            );
 
         if (!recruitment.isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
@@ -224,12 +224,12 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         }
 
         FormResponse formResponse = loadFormResponsePort.findById(query.formResponseId())
-                .orElseThrow(() ->
-                        new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND)
-                );
+            .orElseThrow(() ->
+                new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND)
+            );
 
         if (formResponse.getForm() == null || formResponse.getForm().getId() == null
-                || !formId.equals(formResponse.getForm().getId())) {
+            || !formId.equals(formResponse.getForm().getId())) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
         }
 
@@ -238,18 +238,18 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         }
 
         List<AnswerInfo> answers = (formResponse.getAnswers() == null ? List.<SingleAnswer>of()
-                : formResponse.getAnswers())
-                .stream()
-                .map(this::toAnswerInfoWithPresignedUrlIfNeeded)
-                .toList();
+            : formResponse.getAnswers())
+            .stream()
+            .map(this::toAnswerInfoWithPresignedUrlIfNeeded)
+            .toList();
 
         return new RecruitmentFormResponseDetailInfo(
-                formId,
-                formResponse.getId(),
-                formResponse.getStatus(),
-                formResponse.getLastSavedAt(),
-                formResponse.getSubmittedAt(),
-                answers
+            formId,
+            formResponse.getId(),
+            formResponse.getStatus(),
+            formResponse.getLastSavedAt(),
+            formResponse.getSubmittedAt(),
+            answers
         );
     }
 
@@ -257,7 +257,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     public RecruitmentListInfo getList(GetRecruitmentListQuery query) {
 
         Member member = loadMemberPort.findById(query.requesterMemberId())
-                .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
 
         Long schoolId = member.getSchoolId();
         if (schoolId == null) {
@@ -266,15 +266,15 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         if (query.status() == RecruitmentListStatus.DRAFT) {
             return new RecruitmentListInfo(
-                    loadRecruitmentPort.findDraftRecruitmentSummaries(schoolId)
+                loadRecruitmentPort.findDraftRecruitmentSummaries(schoolId)
             );
         }
 
         List<RecruitmentListInfo.RecruitmentSummary> summaries =
-                loadRecruitmentPort.findRecruitmentSummaries(
-                        schoolId,
-                        query.status()
-                );
+            loadRecruitmentPort.findRecruitmentSummaries(
+                schoolId,
+                query.status()
+            );
 
         return new RecruitmentListInfo(summaries);
     }
@@ -282,23 +282,23 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     @Override
     public RecruitmentScheduleInfo get(GetRecruitmentScheduleQuery query) {
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         requirePublished(recruitment);
 
         var schedules = loadRecruitmentPort.findSchedulesByRecruitmentId(query.recruitmentId());
 
         var scheduleItems = schedules.stream()
-                .map(schedule -> new RecruitmentScheduleInfo.ScheduleItem(
-                        schedule.getType(),
-                        schedule.getType().kind() == RecruitmentScheduleType.Kind.WINDOW
-                                ? RecruitmentScheduleInfo.ScheduleKind.WINDOW
-                                : RecruitmentScheduleInfo.ScheduleKind.AT,
-                        schedule.getStartsAt(),
-                        schedule.getEndsAt()
-                ))
-                .toList();
+            .map(schedule -> new RecruitmentScheduleInfo.ScheduleItem(
+                schedule.getType(),
+                schedule.getType().kind() == RecruitmentScheduleType.Kind.WINDOW
+                    ? RecruitmentScheduleInfo.ScheduleKind.WINDOW
+                    : RecruitmentScheduleInfo.ScheduleKind.AT,
+                schedule.getStartsAt(),
+                schedule.getEndsAt()
+            ))
+            .toList();
 
         return new RecruitmentScheduleInfo(query.recruitmentId(), scheduleItems);
     }
@@ -313,7 +313,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         Long memberId = query.memberId();
 
         Member member = loadMemberPort.findById(memberId)
-                .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
 
         String nickName = member.getNickname();
         String name = member.getName();
@@ -322,7 +322,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         Long activeGisuId = resolveActiveGisuId();
 
         Long activeRecruitmentId = loadRecruitmentPort.findActiveRecruitmentId(
-                schoolId, activeGisuId, Instant.now()
+            schoolId, activeGisuId, Instant.now()
         ).orElse(null);
 
         List<FormResponse> drafts = loadFormResponsePort.findAllDraftByRespondentMemberId(memberId);
@@ -338,10 +338,10 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         CurrentPicked currentPicked = pickCurrent(activeRecruitmentId, drafts, apps);
 
         MyApplicationListInfo.CurrentApplicationStatusInfo current =
-                buildCurrentOrBeforeApply(activeRecruitmentId, currentPicked);
+            buildCurrentOrBeforeApply(activeRecruitmentId, currentPicked);
 
         List<MyApplicationListInfo.MyApplicationCardInfo> cards =
-                buildCards(activeRecruitmentId, drafts, apps, currentPicked);
+            buildCards(activeRecruitmentId, drafts, apps, currentPicked);
 
         return new MyApplicationListInfo(nickName, name, current, cards);
     }
@@ -357,30 +357,30 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         // submitted 우선
         Application activeApp = (apps == null ? List.<Application>of() : apps).stream()
-                .filter(a -> a.getRecruitment() != null
-                        && activeRecruitmentId.equals(a.getRecruitment().getId()))
-                .max(Comparator.comparing(
-                        Application::getCreatedAt,
-                        Comparator.nullsLast(Comparator.naturalOrder())
-                ))
-                .orElse(null);
+            .filter(a -> a.getRecruitment() != null
+                && activeRecruitmentId.equals(a.getRecruitment().getId()))
+            .max(Comparator.comparing(
+                Application::getCreatedAt,
+                Comparator.nullsLast(Comparator.naturalOrder())
+            ))
+            .orElse(null);
 
         if (activeApp != null) {
             return CurrentPicked.submitted(activeApp.getRecruitment(), activeApp);
         }
 
         FormResponse activeDraft = (drafts == null ? List.<FormResponse>of() : drafts).stream()
-                .filter(fr -> isRecruitmentMatchedByFormId(activeRecruitmentId, fr))
-                .max(Comparator.comparing(
-                        FormResponse::getUpdatedAt,
-                        Comparator.nullsLast(Comparator.naturalOrder())
-                ))
-                .orElse(null);
+            .filter(fr -> isRecruitmentMatchedByFormId(activeRecruitmentId, fr))
+            .max(Comparator.comparing(
+                FormResponse::getUpdatedAt,
+                Comparator.nullsLast(Comparator.naturalOrder())
+            ))
+            .orElse(null);
 
         if (activeDraft != null) {
             Long formId = activeDraft.getForm() == null ? null : activeDraft.getForm().getId();
             Recruitment r = (formId == null) ? null
-                    : loadRecruitmentPort.findByFormId(formId).orElse(null);
+                : loadRecruitmentPort.findByFormId(formId).orElse(null);
             if (r != null) {
                 return CurrentPicked.draft(r, activeDraft);
             }
@@ -393,8 +393,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
      * 지원 전
      */
     private MyApplicationListInfo.CurrentApplicationStatusInfo buildCurrentOrBeforeApply(
-            Long activeRecruitmentId,
-            CurrentPicked currentPicked
+        Long activeRecruitmentId,
+        CurrentPicked currentPicked
     ) {
         if (activeRecruitmentId == null) {
             return null;
@@ -411,15 +411,15 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         List<String> appliedParts = List.of();
 
         MyApplicationListInfo.EvaluationStatusInfo docEval =
-                new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING);
+            new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING);
         MyApplicationListInfo.EvaluationStatusInfo finalEval =
-                new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING);
+            new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING);
 
         return new MyApplicationListInfo.CurrentApplicationStatusInfo(
-                appliedParts,
-                docEval,
-                finalEval,
-                progress.timeline
+            appliedParts,
+            docEval,
+            finalEval,
+            progress.timeline
         );
     }
 
@@ -427,10 +427,10 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
      * 지원서 카드 리스트 구성 - current가 있으면 맨 위에 1개 (DRAFT or SUBMITTED) - 나머지 draft는 DRAFT, 나머지 submitted는 전부 PAST
      */
     private List<MyApplicationListInfo.MyApplicationCardInfo> buildCards(
-            Long activeRecruitmentId,
-            List<FormResponse> drafts,
-            List<Application> apps,
-            CurrentPicked currentPicked
+        Long activeRecruitmentId,
+        List<FormResponse> drafts,
+        List<Application> apps,
+        CurrentPicked currentPicked
     ) {
         List<MyApplicationListInfo.MyApplicationCardInfo> result = new java.util.ArrayList<>();
 
@@ -440,109 +440,109 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         // 활성 모집에 해당하는 draft/app 최신 1개
         Long currentDraftFormResponseId = (currentPicked != null && currentPicked.kind == CurrentPicked.Kind.DRAFT)
-                ? currentPicked.formResponse.getId()
-                : null;
+            ? currentPicked.formResponse.getId()
+            : null;
 
         Long currentSubmittedAppId = (currentPicked != null && currentPicked.kind == CurrentPicked.Kind.SUBMITTED)
-                ? currentPicked.application.getId()
-                : null;
+            ? currentPicked.application.getId()
+            : null;
 
         Long latestActiveDraftId = (activeRecruitmentId == null) ? null
-                : (drafts == null ? List.<FormResponse>of() : drafts).stream()
-                        .filter(fr -> isRecruitmentMatchedByFormId(activeRecruitmentId, fr))
-                        .max(java.util.Comparator.comparing(
-                                FormResponse::getUpdatedAt,
-                                java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())
-                        ))
-                        .map(FormResponse::getId)
-                        .orElse(null);
+            : (drafts == null ? List.<FormResponse>of() : drafts).stream()
+                .filter(fr -> isRecruitmentMatchedByFormId(activeRecruitmentId, fr))
+                .max(java.util.Comparator.comparing(
+                    FormResponse::getUpdatedAt,
+                    java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())
+                ))
+                .map(FormResponse::getId)
+                .orElse(null);
 
         Long latestActiveSubmittedAppId = (activeRecruitmentId == null) ? null
-                : (apps == null ? List.<Application>of() : apps).stream()
-                        .filter(a -> a.getRecruitment() != null && activeRecruitmentId.equals(
-                                a.getRecruitment().getId()))
-                        .max(java.util.Comparator.comparing(
-                                Application::getCreatedAt,
-                                java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())
-                        ))
-                        .map(Application::getId)
-                        .orElse(null);
+            : (apps == null ? List.<Application>of() : apps).stream()
+                .filter(a -> a.getRecruitment() != null && activeRecruitmentId.equals(
+                    a.getRecruitment().getId()))
+                .max(java.util.Comparator.comparing(
+                    Application::getCreatedAt,
+                    java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())
+                ))
+                .map(Application::getId)
+                .orElse(null);
 
         List<MyApplicationListInfo.MyApplicationCardInfo> draftCards =
-                (drafts == null ? List.<FormResponse>of() : drafts).stream()
-                        .map(fr -> {
-                            Long formId = (fr.getForm() == null) ? null : fr.getForm().getId();
-                            if (formId == null) {
-                                return null;
-                            }
+            (drafts == null ? List.<FormResponse>of() : drafts).stream()
+                .map(fr -> {
+                    Long formId = (fr.getForm() == null) ? null : fr.getForm().getId();
+                    if (formId == null) {
+                        return null;
+                    }
 
-                            Recruitment recruitment = loadRecruitmentPort.findByFormId(formId).orElse(null);
-                            if (recruitment == null) {
-                                return null;
-                            }
+                    Recruitment recruitment = loadRecruitmentPort.findByFormId(formId).orElse(null);
+                    if (recruitment == null) {
+                        return null;
+                    }
 
-                            if (currentDraftFormResponseId != null && currentDraftFormResponseId.equals(fr.getId())) {
-                                return null;
-                            }
+                    if (currentDraftFormResponseId != null && currentDraftFormResponseId.equals(fr.getId())) {
+                        return null;
+                    }
 
-                            if (activeRecruitmentId != null
-                                    && recruitment.getId() != null
-                                    && recruitment.getId().equals(activeRecruitmentId)) {
-                                if (latestActiveDraftId != null && !latestActiveDraftId.equals(fr.getId())) {
-                                    return null;
-                                }
-                            }
+                    if (activeRecruitmentId != null
+                        && recruitment.getId() != null
+                        && recruitment.getId().equals(activeRecruitmentId)) {
+                        if (latestActiveDraftId != null && !latestActiveDraftId.equals(fr.getId())) {
+                            return null;
+                        }
+                    }
 
-                            return new MyApplicationListInfo.MyApplicationCardInfo(
-                                    recruitment.getId(),
-                                    null,
-                                    fr.getId(),
-                                    recruitment.getTitle(),
-                                    "DRAFT",
-                                    null,
-                                    fr.getUpdatedAt()
-                            );
-                        })
-                        .filter(java.util.Objects::nonNull)
-                        .sorted((a, b) -> compareInstantDesc(a.submittedAt(),
-                                b.submittedAt())) // DRAFT: updatedAt, SUBMITTED/PAST: createdAt 기준 정렬
-                        .toList();
+                    return new MyApplicationListInfo.MyApplicationCardInfo(
+                        recruitment.getId(),
+                        null,
+                        fr.getId(),
+                        recruitment.getTitle(),
+                        "DRAFT",
+                        null,
+                        fr.getUpdatedAt()
+                    );
+                })
+                .filter(java.util.Objects::nonNull)
+                .sorted((a, b) -> compareInstantDesc(a.submittedAt(),
+                    b.submittedAt())) // DRAFT: updatedAt, SUBMITTED/PAST: createdAt 기준 정렬
+                .toList();
 
         List<MyApplicationListInfo.MyApplicationCardInfo> submittedCards =
-                (apps == null ? List.<Application>of() : apps).stream()
-                        .map(app -> {
-                            Recruitment recruitment = app.getRecruitment();
-                            if (recruitment == null) {
-                                return null;
-                            }
+            (apps == null ? List.<Application>of() : apps).stream()
+                .map(app -> {
+                    Recruitment recruitment = app.getRecruitment();
+                    if (recruitment == null) {
+                        return null;
+                    }
 
-                            if (currentSubmittedAppId != null && currentSubmittedAppId.equals(app.getId())) {
-                                return null;
-                            }
+                    if (currentSubmittedAppId != null && currentSubmittedAppId.equals(app.getId())) {
+                        return null;
+                    }
 
-                            if (activeRecruitmentId != null
-                                    && recruitment.getId() != null
-                                    && recruitment.getId().equals(activeRecruitmentId)) {
-                                if (latestActiveSubmittedAppId != null && !latestActiveSubmittedAppId.equals(
-                                        app.getId())) {
-                                    return null;
-                                }
-                            }
+                    if (activeRecruitmentId != null
+                        && recruitment.getId() != null
+                        && recruitment.getId().equals(activeRecruitmentId)) {
+                        if (latestActiveSubmittedAppId != null && !latestActiveSubmittedAppId.equals(
+                            app.getId())) {
+                            return null;
+                        }
+                    }
 
-                            return new MyApplicationListInfo.MyApplicationCardInfo(
-                                    recruitment.getId(),
-                                    app.getId(),
-                                    app.getFormResponseId(),
-                                    recruitment.getTitle(),
-                                    "PAST",
-                                    app.getStatus(),
-                                    app.getCreatedAt()
-                            );
-                        })
-                        .filter(java.util.Objects::nonNull)
-                        .sorted((a, b) -> compareInstantDesc(a.submittedAt(),
-                                b.submittedAt())) // DRAFT: updatedAt, SUBMITTED/PAST: createdAt 기준 정렬
-                        .toList();
+                    return new MyApplicationListInfo.MyApplicationCardInfo(
+                        recruitment.getId(),
+                        app.getId(),
+                        app.getFormResponseId(),
+                        recruitment.getTitle(),
+                        "PAST",
+                        app.getStatus(),
+                        app.getCreatedAt()
+                    );
+                })
+                .filter(java.util.Objects::nonNull)
+                .sorted((a, b) -> compareInstantDesc(a.submittedAt(),
+                    b.submittedAt())) // DRAFT: updatedAt, SUBMITTED/PAST: createdAt 기준 정렬
+                .toList();
 
         result.addAll(draftCards);
         result.addAll(submittedCards);
@@ -552,24 +552,24 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     private MyApplicationListInfo.MyApplicationCardInfo toCurrentCard(CurrentPicked picked) {
         if (picked.kind == CurrentPicked.Kind.DRAFT) {
             return new MyApplicationListInfo.MyApplicationCardInfo(
-                    picked.recruitment.getId(),
-                    null,
-                    picked.formResponse.getId(),
-                    picked.recruitment.getTitle(),
-                    "DRAFT",
-                    null,
-                    picked.formResponse.getUpdatedAt()
+                picked.recruitment.getId(),
+                null,
+                picked.formResponse.getId(),
+                picked.recruitment.getTitle(),
+                "DRAFT",
+                null,
+                picked.formResponse.getUpdatedAt()
             );
         }
 
         return new MyApplicationListInfo.MyApplicationCardInfo(
-                picked.recruitment.getId(),
-                picked.application.getId(),
-                picked.application.getFormResponseId(),
-                picked.recruitment.getTitle(),
-                "SUBMITTED",
-                picked.application.getStatus(),
-                picked.application.getCreatedAt()
+            picked.recruitment.getId(),
+            picked.application.getId(),
+            picked.application.getFormResponseId(),
+            picked.recruitment.getTitle(),
+            "SUBMITTED",
+            picked.application.getStatus(),
+            picked.application.getCreatedAt()
         );
     }
 
@@ -580,35 +580,35 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     private MyApplicationListInfo.CurrentApplicationStatusInfo buildCurrentStatus(CurrentPicked picked) {
 
         ProgressComputed progress = resolveProgressForUI(
-                picked.recruitment.getId(),
-                picked.kind == CurrentPicked.Kind.SUBMITTED ? picked.application.getStatus() : null
+            picked.recruitment.getId(),
+            picked.kind == CurrentPicked.Kind.SUBMITTED ? picked.application.getStatus() : null
         );
 
         if (picked.kind == CurrentPicked.Kind.DRAFT) {
             return new MyApplicationListInfo.CurrentApplicationStatusInfo(
-                    List.of(),
-                    new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING),
-                    new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING),
-                    progress.timeline
+                List.of(),
+                new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING),
+                new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PENDING),
+                progress.timeline
             );
         }
 
         // 지원서 제출 완료 시
         List<String> appliedParts = loadApplicationPartPreferencePort
-                .findAllByApplicationIdOrderByPriorityAsc(picked.application.getId())
-                .stream()
-                .map(pp -> pp.getRecruitmentPart().getPart().name())
-                .toList();
+            .findAllByApplicationIdOrderByPriorityAsc(picked.application.getId())
+            .stream()
+            .map(pp -> pp.getRecruitmentPart().getPart().name())
+            .toList();
 
         MyApplicationListInfo.EvaluationStatusInfo docEval = buildDocEvalForUser(picked.application, progress);
         MyApplicationListInfo.EvaluationStatusInfo finalEval = buildFinalEvalForUser(picked.application, progress,
-                docEval);
+            docEval);
 
         return new MyApplicationListInfo.CurrentApplicationStatusInfo(
-                appliedParts,
-                docEval,
-                finalEval,
-                progress.timeline
+            appliedParts,
+            docEval,
+            finalEval,
+            progress.timeline
         );
     }
 
@@ -616,12 +616,12 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
      * 진행 계산 결과 묶음
      */
     private static record ProgressComputed(
-            Instant now,
-            ApplicationProgressStep currentStep,
-            MyApplicationListInfo.ProgressTimelineInfo timeline,
-            Instant applyEndAt,
-            Instant docResultAt,
-            Instant finalResultAt
+        Instant now,
+        ApplicationProgressStep currentStep,
+        MyApplicationListInfo.ProgressTimelineInfo timeline,
+        Instant applyEndAt,
+        Instant docResultAt,
+        Instant finalResultAt
     ) {
     }
 
@@ -648,7 +648,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         RecruitmentSchedule finalResultAt = findSchedule(schedules, RecruitmentScheduleType.FINAL_RESULT_AT);
 
         ApplicationProgressStep currentStep = computeCurrentStepForUI(
-                now, applyWindow, docReviewWindow, docResultAt, interviewWindow, finalReviewWindow, finalResultAt
+            now, applyWindow, docReviewWindow, docResultAt, interviewWindow, finalReviewWindow, finalResultAt
         );
 
         Instant docResultInstant = pickAt(docResultAt);
@@ -674,43 +674,43 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         }
 
         List<MyApplicationListInfo.ProgressStepInfo> steps = List.of(
-                toStep(ApplicationProgressStep.BEFORE_APPLY, "지원 전", currentStep),
-                toStep(ApplicationProgressStep.DOC_REVIEWING, "서류 평가 중", currentStep),
-                toStep(ApplicationProgressStep.DOC_RESULT_PUBLISHED, "서류 결과 발표", currentStep),
-                toStep(ApplicationProgressStep.INTERVIEW_WAITING, "면접 대기 중", currentStep),
-                toStep(ApplicationProgressStep.FINAL_REVIEWING, "최종 평가 중", currentStep),
-                toStep(ApplicationProgressStep.FINAL_RESULT_PUBLISHED, "최종 결과 발표", currentStep)
+            toStep(ApplicationProgressStep.BEFORE_APPLY, "지원 전", currentStep),
+            toStep(ApplicationProgressStep.DOC_REVIEWING, "서류 평가 중", currentStep),
+            toStep(ApplicationProgressStep.DOC_RESULT_PUBLISHED, "서류 결과 발표", currentStep),
+            toStep(ApplicationProgressStep.INTERVIEW_WAITING, "면접 대기 중", currentStep),
+            toStep(ApplicationProgressStep.FINAL_REVIEWING, "최종 평가 중", currentStep),
+            toStep(ApplicationProgressStep.FINAL_RESULT_PUBLISHED, "최종 결과 발표", currentStep)
         );
 
         NoticeComputed notice = computeNoticeForUI(now, currentStep, applyWindow, docResultAt, finalResultAt,
-                appStatus);
+            appStatus);
 
         MyApplicationListInfo.ProgressTimelineInfo timeline = new MyApplicationListInfo.ProgressTimelineInfo(
-                currentStep.name(),
-                steps,
-                notice.noticeType,
-                notice.noticeDate,
-                notice.nextRecruitmentMonth
+            currentStep.name(),
+            steps,
+            notice.noticeType,
+            notice.noticeDate,
+            notice.nextRecruitmentMonth
         );
 
         return new ProgressComputed(
-                now,
-                currentStep,
-                timeline,
-                (applyWindow == null) ? null : applyWindow.getEndsAt(),
-                docResultInstant,
-                finalResultInstant
+            now,
+            currentStep,
+            timeline,
+            (applyWindow == null) ? null : applyWindow.getEndsAt(),
+            docResultInstant,
+            finalResultInstant
         );
     }
 
     private ApplicationProgressStep computeCurrentStepForUI(
-            Instant now,
-            RecruitmentSchedule applyWindow,
-            RecruitmentSchedule docReviewWindow,
-            RecruitmentSchedule docResultAt,
-            RecruitmentSchedule interviewWindow,
-            RecruitmentSchedule finalReviewWindow,
-            RecruitmentSchedule finalResultAt
+        Instant now,
+        RecruitmentSchedule applyWindow,
+        RecruitmentSchedule docReviewWindow,
+        RecruitmentSchedule docResultAt,
+        RecruitmentSchedule interviewWindow,
+        RecruitmentSchedule finalReviewWindow,
+        RecruitmentSchedule finalResultAt
     ) {
         Instant applyStart = (applyWindow == null) ? null : applyWindow.getStartsAt();
         Instant applyEnd = (applyWindow == null) ? null : applyWindow.getEndsAt();
@@ -769,9 +769,9 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     }
 
     private static record NoticeComputed(
-            ApplicationProgressNoticeType noticeType,
-            LocalDate noticeDate,
-            Integer nextRecruitmentMonth
+        ApplicationProgressNoticeType noticeType,
+        LocalDate noticeDate,
+        Integer nextRecruitmentMonth
     ) {
 
         static NoticeComputed ofDate(ApplicationProgressNoticeType type, Instant instantUtc) {
@@ -787,19 +787,19 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     }
 
     private NoticeComputed computeNoticeForUI(
-            Instant now,
-            ApplicationProgressStep step,
-            RecruitmentSchedule applyWindow,
-            RecruitmentSchedule docResultAt,
-            RecruitmentSchedule finalResultAt,
-            ApplicationStatus appStatus
+        Instant now,
+        ApplicationProgressStep step,
+        RecruitmentSchedule applyWindow,
+        RecruitmentSchedule docResultAt,
+        RecruitmentSchedule finalResultAt,
+        ApplicationStatus appStatus
     ) {
         Instant docResultInstant = pickAt(docResultAt);
         Instant finalResultInstant = pickAt(finalResultAt);
 
         // 최종 합격자: (최종 발표 이후에만) 앱 공지 안내 문구
         if (appStatus == ApplicationStatus.FINAL_ACCEPTED
-                && step == ApplicationProgressStep.FINAL_RESULT_PUBLISHED) {
+            && step == ApplicationProgressStep.FINAL_RESULT_PUBLISHED) {
             return new NoticeComputed(ApplicationProgressNoticeType.CHALLENGER_NOTICE_IN_APP, null, null);
         }
 
@@ -838,8 +838,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
      * 서류 평가는 서류 결과 발표 이후에만 decision 노출
      */
     private MyApplicationListInfo.EvaluationStatusInfo buildDocEvalForUser(
-            Application app,
-            ProgressComputed progress
+        Application app,
+        ProgressComputed progress
     ) {
         // 서류 발표 전: 미정
         if (progress.docResultAt == null || progress.now.isBefore(progress.docResultAt)) {
@@ -853,11 +853,11 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         }
 
         if (st == ApplicationStatus.DOC_PASSED
-                || st == ApplicationStatus.INTERVIEW_SCHEDULED
-                || st == ApplicationStatus.INTERVIEW_PASSED
-                || st == ApplicationStatus.INTERVIEW_FAILED
-                || st == ApplicationStatus.FINAL_ACCEPTED
-                || st == ApplicationStatus.FINAL_REJECTED) {
+            || st == ApplicationStatus.INTERVIEW_SCHEDULED
+            || st == ApplicationStatus.INTERVIEW_PASSED
+            || st == ApplicationStatus.INTERVIEW_FAILED
+            || st == ApplicationStatus.FINAL_ACCEPTED
+            || st == ApplicationStatus.FINAL_REJECTED) {
             return new MyApplicationListInfo.EvaluationStatusInfo(ApplicationEvaluationStatusCode.PASS);
         }
 
@@ -869,9 +869,9 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
      * 최종 평가는 최종 결과 발표 이후에만 decision 노출 - 서류 FAIL이면 최종은 "예정 없음"
      */
     private MyApplicationListInfo.EvaluationStatusInfo buildFinalEvalForUser(
-            Application app,
-            ProgressComputed progress,
-            MyApplicationListInfo.EvaluationStatusInfo docEval
+        Application app,
+        ProgressComputed progress,
+        MyApplicationListInfo.EvaluationStatusInfo docEval
     ) {
         // 서류 불합격이면 최종은 "예정 없음"
         if (docEval.status() == ApplicationEvaluationStatusCode.FAIL) {
@@ -944,9 +944,9 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     }
 
     private MyApplicationListInfo.ProgressStepInfo toStep(
-            ApplicationProgressStep step,
-            String label,
-            ApplicationProgressStep currentStep
+        ApplicationProgressStep step,
+        String label,
+        ApplicationProgressStep currentStep
     ) {
         int cur = stepOrderUI(currentStep);
         int me = stepOrderUI(step);
@@ -965,10 +965,10 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     }
 
     private static record CurrentPicked(
-            Kind kind,
-            Recruitment recruitment,
-            FormResponse formResponse,
-            Application application
+        Kind kind,
+        Recruitment recruitment,
+        FormResponse formResponse,
+        Application application
     ) {
         enum Kind {DRAFT, SUBMITTED}
 
@@ -998,8 +998,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     @Override
     public RecruitmentDraftInfo get(GetRecruitmentDetailQuery query) {
         loadRecruitmentPort.findById(query.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         // TODO: 권한 검증 필요 (memberId 기반)
 
@@ -1009,22 +1009,22 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     @Override
     public RecruitmentPartListInfo get(GetRecruitmentPartListQuery query) {
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
 
         var partSummaries = recruitmentParts.stream()
-                .map(part -> new RecruitmentPartListInfo.RecruitmentPartSummary(
-                        part.getId(),
-                        part.getPart(),
-                        part.getStatus()
-                ))
-                .toList();
+            .map(part -> new RecruitmentPartListInfo.RecruitmentPartSummary(
+                part.getId(),
+                part.getPart(),
+                part.getStatus()
+            ))
+            .toList();
 
         // 내 지원 상태: SUBMITTED 우선 -> 없으면 DRAFT -> 없으면 NONE
         RecruitmentPartListInfo.MyApplicationInfo myApplicationInfo = resolveMyApplicationStatus(recruitment,
-                query.memberId());
+            query.memberId());
 
         var schedules = loadRecruitmentPort.findSchedulesByRecruitmentId(query.recruitmentId());
         var recruitmentPeriod = extractDatePeriod(schedules, "APPLY_WINDOW");
@@ -1033,36 +1033,36 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         var activityPeriod = toDatePeriod(gisu);
 
         return new RecruitmentPartListInfo(
-                recruitment.getId(),
-                recruitment.getTitle(),
-                recruitmentPeriod,
-                activityPeriod,
-                recruitment.getNoticeContent(),
-                partSummaries,
-                myApplicationInfo
+            recruitment.getId(),
+            recruitment.getTitle(),
+            recruitmentPeriod,
+            activityPeriod,
+            recruitment.getNoticeContent(),
+            partSummaries,
+            myApplicationInfo
         );
     }
 
     @Override
     public RecruitmentApplicationFormInfo get(GetRecruitmentDraftApplicationFormQuery query) {
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-                .orElseThrow(() -> new BusinessException(
-                        Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
-                ));
+            .orElseThrow(() -> new BusinessException(
+                Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
+            ));
 
         // TODO: 운영진 권한 검증 필요 (requesterMemberId 기반)
 
         List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
 
         List<RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo> preferredPartOptions =
-                (parts == null ? List.<RecruitmentPart>of() : parts).stream()
-                        .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
-                        .map(p -> new RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo(
-                                p.getId(),
-                                p.getPart().name(),
-                                p.getPart().name()
-                        ))
-                        .toList();
+            (parts == null ? List.<RecruitmentPart>of() : parts).stream()
+                .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+                .map(p -> new RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo(
+                    p.getId(),
+                    p.getPart().name(),
+                    p.getPart().name()
+                ))
+                .toList();
 
         Integer max = recruitment.getMaxPreferredPartCount();
         if (max == null) {
@@ -1075,8 +1075,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     @Override
     public RecruitmentPublishedInfo get(GetPublishedRecruitmentDetailQuery query) {
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (recruitment.getStatus() != RecruitmentStatus.PUBLISHED) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
@@ -1086,27 +1086,27 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
         List<ChallengerPart> parts = recruitmentParts.stream()
-                .filter(RecruitmentPart::isOpen)
-                .map(RecruitmentPart::getPart)
-                .toList();
+            .filter(RecruitmentPart::isOpen)
+            .map(RecruitmentPart::getPart)
+            .toList();
 
         RecruitmentPublishedInfo.ScheduleInfo scheduleInfo =
-                loadRecruitmentPort.findPublishedScheduleInfoByRecruitmentId(query.recruitmentId());
+            loadRecruitmentPort.findPublishedScheduleInfoByRecruitmentId(query.recruitmentId());
 
         return RecruitmentPublishedInfo.from(recruitment, parts, scheduleInfo);
     }
 
     private RecruitmentPartListInfo.DatePeriod extractDatePeriod(
-            List<RecruitmentSchedule> schedules,
-            String scheduleType) {
+        List<RecruitmentSchedule> schedules,
+        String scheduleType) {
         return schedules.stream()
-                .filter(schedule -> schedule.getType().name().equals(scheduleType))
-                .findFirst()
-                .map(schedule -> new RecruitmentPartListInfo.DatePeriod(
-                        schedule.getStartsAt(),
-                        schedule.getEndsAt()
-                ))
-                .orElse(null);
+            .filter(schedule -> schedule.getType().name().equals(scheduleType))
+            .findFirst()
+            .map(schedule -> new RecruitmentPartListInfo.DatePeriod(
+                schedule.getStartsAt(),
+                schedule.getEndsAt()
+            ))
+            .orElse(null);
     }
 
     private void requirePublished(Recruitment recruitment) {
@@ -1130,8 +1130,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         }
 
         return loadFormResponsePort.findDraftByFormIdAndRespondentMemberId(formId, memberId)
-                .map(fr -> RecruitmentPartListInfo.MyApplicationInfo.draft(fr.getId()))
-                .orElseGet(RecruitmentPartListInfo.MyApplicationInfo::none);
+            .map(fr -> RecruitmentPartListInfo.MyApplicationInfo.draft(fr.getId()))
+            .orElseGet(RecruitmentPartListInfo.MyApplicationInfo::none);
     }
 
     private AnswerInfo toAnswerInfoWithPresignedUrlIfNeeded(SingleAnswer a) {
@@ -1240,8 +1240,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     }
 
     private RecruitmentPublishedInfo.ScheduleInfo toPublishedScheduleInfo(
-            Map<RecruitmentScheduleType, RecruitmentSchedule> map,
-            Map<String, Object> interviewTimeTableRaw
+        Map<RecruitmentScheduleType, RecruitmentSchedule> map,
+        Map<String, Object> interviewTimeTableRaw
     ) {
         RecruitmentSchedule apply = map == null ? null : map.get(RecruitmentScheduleType.APPLY_WINDOW);
         RecruitmentSchedule docResult = map == null ? null : map.get(RecruitmentScheduleType.DOC_RESULT_AT);
@@ -1249,13 +1249,13 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         RecruitmentSchedule finalResult = map == null ? null : map.get(RecruitmentScheduleType.FINAL_RESULT_AT);
 
         return new RecruitmentPublishedInfo.ScheduleInfo(
-                apply == null ? null : apply.getStartsAt(),
-                apply == null ? null : apply.getEndsAt(),
-                docResult == null ? null : docResult.getStartsAt(),
-                interview == null ? null : interview.getStartsAt(),
-                interview == null ? null : interview.getEndsAt(),
-                finalResult == null ? null : finalResult.getStartsAt(),
-                toInterviewTimeTableInfo(interviewTimeTableRaw)
+            apply == null ? null : apply.getStartsAt(),
+            apply == null ? null : apply.getEndsAt(),
+            docResult == null ? null : docResult.getStartsAt(),
+            interview == null ? null : interview.getStartsAt(),
+            interview == null ? null : interview.getEndsAt(),
+            finalResult == null ? null : finalResult.getStartsAt(),
+            toInterviewTimeTableInfo(interviewTimeTableRaw)
         );
     }
 
@@ -1277,17 +1277,17 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         Integer slotMinutes = asInteger(raw.get("slotMinutes"));
 
         List<RecruitmentPublishedInfo.TimesByDateInfo> enabledByDate =
-                toTimesByDateInfos(raw.get("enabledByDate"));
+            toTimesByDateInfos(raw.get("enabledByDate"));
 
         List<RecruitmentPublishedInfo.TimesByDateInfo> disabledByDate =
-                toTimesByDateInfos(raw.get("disabledByDate"));
+            toTimesByDateInfos(raw.get("disabledByDate"));
 
         return new RecruitmentPublishedInfo.InterviewTimeTableInfo(
-                new RecruitmentPublishedInfo.DateRangeInfo(dateStart, dateEnd),
-                new RecruitmentPublishedInfo.TimeRangeInfo(timeStart, timeEnd),
-                slotMinutes,
-                enabledByDate,
-                disabledByDate
+            new RecruitmentPublishedInfo.DateRangeInfo(dateStart, dateEnd),
+            new RecruitmentPublishedInfo.TimeRangeInfo(timeStart, timeEnd),
+            slotMinutes,
+            enabledByDate,
+            disabledByDate
         );
     }
 
@@ -1338,9 +1338,9 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         }
 
         return rows.stream()
-                .map(this::toTimesByDateInfo)
-                .filter(java.util.Objects::nonNull)
-                .toList();
+            .map(this::toTimesByDateInfo)
+            .filter(java.util.Objects::nonNull)
+            .toList();
     }
 
     private RecruitmentPublishedInfo.TimesByDateInfo toTimesByDateInfo(Object row) {
@@ -1350,9 +1350,9 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         List<Object> timesRaw = asList(m.get("times"));
         List<LocalTime> times = timesRaw.stream()
-                .map(this::parseLocalTime)
-                .filter(java.util.Objects::nonNull)
-                .toList();
+            .map(this::parseLocalTime)
+            .filter(java.util.Objects::nonNull)
+            .toList();
 
         return new RecruitmentPublishedInfo.TimesByDateInfo(date, times);
     }
@@ -1364,8 +1364,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         ZoneId zone = ZoneId.of("Asia/Seoul");
         return new RecruitmentPartListInfo.DatePeriod(
-                gisu.getStartAt().atZone(zone).toInstant(),
-                gisu.getEndAt().atZone(zone).toInstant()
+            gisu.getStartAt().atZone(zone).toInstant(),
+            gisu.getEndAt().atZone(zone).toInstant()
         );
     }
 }

@@ -13,11 +13,11 @@ public interface LoadApplicationListPort {
      * 서류 평가 대상 지원서 목록 조회 (페이지네이션, 검색, 파트 필터링 지원)
      */
     Page<ApplicationListItemProjection> searchApplications(
-            Long recruitmentId,
-            String keyword,
-            String part,
-            Long evaluatorId,
-            Pageable pageable
+        Long recruitmentId,
+        String keyword,
+        String part,
+        Long evaluatorId,
+        Pageable pageable
     );
 
     /**

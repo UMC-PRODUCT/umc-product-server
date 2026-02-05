@@ -14,10 +14,10 @@ public final class InterviewTimeTableDisabledCalculator {
     }
 
     public static List<TimesByDateInfo> calculateDisabled(
-            RecruitmentDraftInfo.DateRangeInfo dateRange,
-            RecruitmentDraftInfo.TimeRangeInfo timeRange,
-            Integer slotMinutes,
-            List<RecruitmentDraftInfo.TimesByDateInfo> enabledByDate
+        RecruitmentDraftInfo.DateRangeInfo dateRange,
+        RecruitmentDraftInfo.TimeRangeInfo timeRange,
+        Integer slotMinutes,
+        List<RecruitmentDraftInfo.TimesByDateInfo> enabledByDate
     ) {
         if (dateRange == null || timeRange == null || slotMinutes == null || slotMinutes <= 0) {
             return List.of();
@@ -37,16 +37,16 @@ public final class InterviewTimeTableDisabledCalculator {
             final List<LocalTime> all = generateSlots(timeRange.start(), timeRange.end(), slotMinutes);
 
             final List<LocalTime> enabled =
-                    enabledByDate == null ? List.of()
-                            : enabledByDate.stream()
-                                    .filter(e -> targetDate.equals(e.date()))
-                                    .findFirst()
-                                    .map(TimesByDateInfo::times)
-                                    .orElse(List.of());
+                enabledByDate == null ? List.of()
+                    : enabledByDate.stream()
+                        .filter(e -> targetDate.equals(e.date()))
+                        .findFirst()
+                        .map(TimesByDateInfo::times)
+                        .orElse(List.of());
 
             final List<LocalTime> disabled = all.stream()
-                    .filter(t -> !enabled.contains(t))
-                    .toList();
+                .filter(t -> !enabled.contains(t))
+                .toList();
 
             result.add(new TimesByDateInfo(targetDate, disabled));
         }
@@ -59,10 +59,10 @@ public final class InterviewTimeTableDisabledCalculator {
      * default 30) - timeRange가 없으면 enabled 전체에서 min~max(+slotMinutes)로 계산
      */
     public static Normalized normalizeForApplicant(
-            RecruitmentDraftInfo.DateRangeInfo dateRange, // 또는 query용 DateRangeInfo로 맞춰도 됨
-            RecruitmentDraftInfo.TimeRangeInfo timeRange, // 없을 수 있음
-            Integer slotMinutes,
-            List<RecruitmentDraftInfo.TimesByDateInfo> enabledByDate
+        RecruitmentDraftInfo.DateRangeInfo dateRange, // 또는 query용 DateRangeInfo로 맞춰도 됨
+        RecruitmentDraftInfo.TimeRangeInfo timeRange, // 없을 수 있음
+        Integer slotMinutes,
+        List<RecruitmentDraftInfo.TimesByDateInfo> enabledByDate
     ) {
         if (slotMinutes == null || slotMinutes <= 0) {
             return new Normalized(dateRange, timeRange, slotMinutes, enabledByDate, List.of());
@@ -95,23 +95,23 @@ public final class InterviewTimeTableDisabledCalculator {
         }
 
         RecruitmentDraftInfo.TimeRangeInfo derivedRange =
-                (min == null || maxExclusive == null || !min.isBefore(maxExclusive))
-                        ? timeRange
-                        : new RecruitmentDraftInfo.TimeRangeInfo(min, maxExclusive);
+            (min == null || maxExclusive == null || !min.isBefore(maxExclusive))
+                ? timeRange
+                : new RecruitmentDraftInfo.TimeRangeInfo(min, maxExclusive);
 
         // 2) dateRange는 그대로 사용(없으면 enabledByDate에서 min/max date로 계산해도 되는데 일단은 그대로)
         List<RecruitmentDraftInfo.TimesByDateInfo> disabled =
-                calculateDisabled(dateRange, derivedRange, slotMinutes, enabledByDate);
+            calculateDisabled(dateRange, derivedRange, slotMinutes, enabledByDate);
 
         return new Normalized(dateRange, derivedRange, slotMinutes, enabledByDate, disabled);
     }
 
     public record Normalized(
-            RecruitmentDraftInfo.DateRangeInfo dateRange,
-            RecruitmentDraftInfo.TimeRangeInfo timeRange,
-            Integer slotMinutes,
-            List<RecruitmentDraftInfo.TimesByDateInfo> enabledByDate,
-            List<RecruitmentDraftInfo.TimesByDateInfo> disabledByDate
+        RecruitmentDraftInfo.DateRangeInfo dateRange,
+        RecruitmentDraftInfo.TimeRangeInfo timeRange,
+        Integer slotMinutes,
+        List<RecruitmentDraftInfo.TimesByDateInfo> enabledByDate,
+        List<RecruitmentDraftInfo.TimesByDateInfo> disabledByDate
     ) {
     }
 
@@ -158,10 +158,10 @@ public final class InterviewTimeTableDisabledCalculator {
     private static RecruitmentDraftInfo.TimeRangeInfo inferTimeRangeFromEnabled(List<TimesByDateInfo> enabledByDate,
                                                                                 int slotMinutes) {
         List<LocalTime> allTimes = enabledByDate.stream()
-                .filter(Objects::nonNull)
-                .flatMap(e -> (e.times() == null ? List.<LocalTime>of() : e.times()).stream())
-                .filter(Objects::nonNull)
-                .toList();
+            .filter(Objects::nonNull)
+            .flatMap(e -> (e.times() == null ? List.<LocalTime>of() : e.times()).stream())
+            .filter(Objects::nonNull)
+            .toList();
 
         if (allTimes.isEmpty()) {
             return new RecruitmentDraftInfo.TimeRangeInfo(null, null);

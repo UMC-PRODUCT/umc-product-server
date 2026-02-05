@@ -35,8 +35,8 @@ public class RecruitmentSchedulePersistenceAdapter implements SaveRecruitmentSch
     @Override
     public RecruitmentSchedule findByRecruitmentIdAndType(Long recruitmentId, RecruitmentScheduleType type) {
         return recruitmentScheduleRepository.findByRecruitmentIdAndType(recruitmentId, type)
-                .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT,
-                        RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT,
+                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_FOUND));
     }
 
     @Override

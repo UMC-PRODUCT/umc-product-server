@@ -38,14 +38,14 @@ public class ApplicationPartPreference extends BaseEntity {
     private Integer priority;
 
     public static ApplicationPartPreference create(
-            Application application,
-            RecruitmentPart recruitmentPart,
-            int priority
+        Application application,
+        RecruitmentPart recruitmentPart,
+        int priority
     ) {
         return ApplicationPartPreference.builder()
-                .application(application)
-                .recruitmentPart(recruitmentPart)
-                .priority(priority)
-                .build();
+            .application(application)
+            .recruitmentPart(recruitmentPart)
+            .priority(priority)
+            .build();
     }
 }

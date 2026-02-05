@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record CreateInterviewSheetQuestionRequest(
-        @NotNull PartKey partKey,
-        @NotBlank String questionText
+    @NotNull PartKey partKey,
+    @NotBlank String questionText
 ) {
 }

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class RecruitmentDocumentEvaluationService implements UpdateMyDocumentEvaluationUseCase,
-        UpdateDocumentStatusUseCase {
+    UpdateDocumentStatusUseCase {
 
     @Override
     public GetMyDocumentEvaluationInfo update(UpdateMyDocumentEvaluationCommand command) {
