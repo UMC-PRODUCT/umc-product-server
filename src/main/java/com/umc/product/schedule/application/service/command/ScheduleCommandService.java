@@ -20,7 +20,7 @@ import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -68,7 +68,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         var attendanceSheetOpt = loadAttendanceSheetPort.findByScheduleId(command.scheduleId());
 
         // 변경 전 기존 일정 시작 시간
-        LocalDateTime oldStartsAt = schedule.getStartsAt();
+        Instant oldStartsAt = schedule.getStartsAt();
 
         // 일정 정보 업데이트
         schedule.update(

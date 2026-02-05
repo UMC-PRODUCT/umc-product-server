@@ -34,7 +34,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Disabled
+@Disabled("LocalDateTime -> Instant로 변경함에 따라 비활성화 처리")
 class DeleteScheduleUseCaseTest extends UseCaseTestSupport {
 
     @Autowired

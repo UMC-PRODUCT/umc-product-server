@@ -6,8 +6,9 @@ import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Set;
 
 @Schema(description = "일정 수정 요청 (변경할 필드만 보내주세요)")
@@ -16,11 +17,13 @@ public record UpdateScheduleRequest(
     @Schema(description = "일정 제목", example = "9기 OT")
     String name,
 
-    @Schema(description = "시작 일시", example = "2026-03-16T10:00:00")
-    LocalDateTime startsAt,
+    @Schema(description = "시작 일시 (UTC)", example = "2026-03-16T01:00:00Z")
+    @NotNull(message = "시작 일시는 필수입니다")
+    Instant startsAt,
 
-    @Schema(description = "종료 일시", example = "2026-03-16T12:00:00")
-    LocalDateTime endsAt,
+    @Schema(description = "종료 일시 (UTC)", example = "2026-03-16T03:00:00Z")
+    @NotNull(message = "종료 일시는 필수입니다")
+    Instant endsAt,
 
     @Schema(description = "종일 여부", example = "false")
     Boolean isAllDay,

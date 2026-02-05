@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,12 +24,12 @@ public record ScheduleDetailResponse(
     Set<String> tags,
 
     @Schema(description = "시작 일시", example = "2026-03-16T10:00:00")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    LocalDateTime startsAt,
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
+    Instant startsAt,
 
     @Schema(description = "종료 일시", example = "2026-03-16T12:00:00")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    LocalDateTime endsAt,
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", timezone = "UTC")
+    Instant endsAt,
 
     @Schema(description = "종일 여부", example = "false")
     boolean isAllDay,
@@ -70,7 +70,6 @@ public record ScheduleDetailResponse(
             info.latitude(),
             info.longitude(),
             info.status(),
-            info.dDay(),
             info.requiresAttendanceApproval()
         );
     }

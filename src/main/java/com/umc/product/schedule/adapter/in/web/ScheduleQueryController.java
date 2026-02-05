@@ -11,6 +11,7 @@ import com.umc.product.schedule.application.port.in.query.GetScheduleDetailUseCa
 import com.umc.product.schedule.application.port.in.query.GetScheduleListUseCase;
 import com.umc.product.schedule.application.port.in.query.dto.MyScheduleInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,11 +40,11 @@ public class ScheduleQueryController implements ScheduleQueryControllerApi {
     @GetMapping("/my-list")
     public List<MyScheduleResponse> getMyScheduleList(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestParam int year,
-        @RequestParam int month
+        @RequestParam Instant from,
+        @RequestParam Instant to
     ) {
         List<MyScheduleInfo> infos = getMyScheduleUseCase.getMyMonthlySchedules(
-            memberPrincipal.getMemberId(), year, month);
+            memberPrincipal.getMemberId(), from, to);
 
         return infos.stream()
             .map(MyScheduleResponse::from)

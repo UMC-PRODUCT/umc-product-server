@@ -2,9 +2,7 @@ package com.umc.product.schedule.application.port.in.command.dto;
 
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -15,8 +13,8 @@ import org.locationtech.jts.geom.Point;
  */
 public record CreateScheduleCommand(
     String name,
-    LocalDateTime startsAt,
-    LocalDateTime endsAt,
+    Instant startsAt,
+    Instant endsAt,
     boolean isAllDay,
     String locationName,
     Point location,
@@ -31,8 +29,8 @@ public record CreateScheduleCommand(
 
     public static CreateScheduleCommand of(
         String name,
-        LocalDateTime startsAt,
-        LocalDateTime endsAt,
+        Instant startsAt,
+        Instant endsAt,
         boolean isAllDay,
         String locationName,
         Point location,
@@ -41,20 +39,10 @@ public record CreateScheduleCommand(
         Set<ScheduleTag> tags,
         Long authorMemberId
     ) {
-        LocalDateTime adjustedStartsAt = startsAt;
-        LocalDateTime adjustedEndsAt = endsAt;
-
-        if (isAllDay) { // 하루종일 이면 시간을 23:59 로 지정
-            LocalDate startDate = startsAt.toLocalDate();
-            LocalDate endDate = endsAt.toLocalDate();
-            adjustedStartsAt = startDate.atStartOfDay();
-            adjustedEndsAt = endDate.atTime(LocalTime.of(23, 59, 59));
-        }
-
         return new CreateScheduleCommand(
             name,
-            adjustedStartsAt,
-            adjustedEndsAt,
+            startsAt,
+            endsAt,
             isAllDay,
             locationName,
             location,

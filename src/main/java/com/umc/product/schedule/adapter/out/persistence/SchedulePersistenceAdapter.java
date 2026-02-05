@@ -4,7 +4,7 @@ import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
 import com.umc.product.schedule.domain.Schedule;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -33,10 +33,9 @@ public class SchedulePersistenceAdapter implements
     }
 
     @Override
-    public List<Schedule> findMySchedulesByMonth(Long memberId, LocalDateTime monthStart,
-                                                 LocalDateTime nextMonthStart) {
+    public List<Schedule> findMySchedulesByMonth(Long memberId, Instant start, Instant end) {
         return scheduleQueryRepository.findMySchedulesByMonth(
-            memberId, monthStart, nextMonthStart);
+            memberId, start, end);
     }
 
     @Override

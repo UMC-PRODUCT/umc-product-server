@@ -1,7 +1,7 @@
 package com.umc.product.schedule.application.port.in.command.dto;
 
 import com.umc.product.schedule.domain.enums.ScheduleTag;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -10,14 +10,13 @@ import org.locationtech.jts.geom.Point;
 /**
  * 일정 + 출석부 통합 생성 Command (Facade)
  * <p>
- * 출석 시간대는 일정의 startsAt ~ endsAt을 기준으로 AttendanceSheet에서 자동 생성됩니다.
- * 지각 기준 시간은 10분으로 고정됩니다.
+ * 출석 시간대는 일정의 startsAt ~ endsAt을 기준으로 AttendanceSheet에서 자동 생성됩니다. 지각 기준 시간은 10분으로 고정됩니다.
  */
 public record CreateScheduleWithAttendanceCommand(
     // Schedule 정보
     String name,
-    LocalDateTime startsAt,
-    LocalDateTime endsAt,
+    Instant startsAt,
+    Instant endsAt,
     boolean isAllDay,
     String locationName,
     Point location,

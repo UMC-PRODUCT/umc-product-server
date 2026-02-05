@@ -11,7 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -74,20 +74,19 @@ public class AttendanceSheet extends BaseEntity {
     /**
      * 일정 기반 출석부 생성 (동시 생성용)
      * <p>
-     * 출석 시간대(Window)는 일정의 시작/종료 시간을 기준으로 내부에서 생성됩니다.
-     * 지각 기준 시간은 10분으로 고정됩니다.
+     * 출석 시간대(Window)는 일정의 시작/종료 시간을 기준으로 내부에서 생성됩니다. 지각 기준 시간은 10분으로 고정됩니다.
      *
-     * @param scheduleId            연결할 일정 ID
-     * @param gisuId                기수 ID
-     * @param scheduleStartsAt      일정 시작 시간 (출석 시간대 시작)
-     * @param scheduleEndsAt        일정 종료 시간 (출석 시간대 종료)
-     * @param requiresApproval      승인 필요 여부
+     * @param scheduleId       연결할 일정 ID
+     * @param gisuId           기수 ID
+     * @param scheduleStartsAt 일정 시작 시간 (출석 시간대 시작)
+     * @param scheduleEndsAt   일정 종료 시간 (출석 시간대 종료)
+     * @param requiresApproval 승인 필요 여부
      */
     public static AttendanceSheet createWithSchedule(
         Long scheduleId,
         Long gisuId,
-        LocalDateTime scheduleStartsAt,
-        LocalDateTime scheduleEndsAt,
+        Instant scheduleStartsAt,
+        Instant scheduleEndsAt,
         boolean requiresApproval
     ) {
         AttendanceWindow window = AttendanceWindow.from(
@@ -107,7 +106,7 @@ public class AttendanceSheet extends BaseEntity {
     /**
      * 체크 시간이 출석 가능 시간대(window) 안에 있는지 확인.
      */
-    public boolean isWithinTimeWindow(LocalDateTime checkTime) {
+    public boolean isWithinTimeWindow(Instant checkTime) {
         if (!active) {
             throw new IllegalStateException("비활성화된 출석부입니다");
         }
@@ -117,7 +116,7 @@ public class AttendanceSheet extends BaseEntity {
     /**
      * 체크 시간과 승인 정책(requiresApproval)을 기반으로 출석 상태를 결정한다. 실제 판정 로직은 AttendanceWindow.determineStatus()에 위임.
      */
-    public AttendanceStatus determineStatusByTime(LocalDateTime checkTime) {
+    public AttendanceStatus determineStatusByTime(Instant checkTime) {
         if (!active) {
             throw new IllegalStateException("비활성화된 출석부입니다");
         }

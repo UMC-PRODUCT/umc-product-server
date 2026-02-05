@@ -1,6 +1,6 @@
 package com.umc.product.schedule.application.port.in.command.dto;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Objects;
 
 /**
@@ -9,7 +9,7 @@ import java.util.Objects;
 public record CheckAttendanceCommand(
     Long attendanceSheetId,
     Long memberId,
-    LocalDateTime checkedAt,
+    Instant checkedAt,
     Double latitude,
     Double longitude,
     Boolean locationVerified

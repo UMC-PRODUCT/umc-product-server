@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
@@ -20,11 +20,13 @@ public record CreateScheduleWithAttendanceRequest(
     @NotBlank(message = "일정 제목은 필수입니다")
     String name,
 
-    @Schema(description = "시작 일시", example = "2026-03-16T10:00:00")
-    LocalDateTime startsAt,
+    @Schema(description = "시작 일시 (UTC)", example = "2026-03-16T01:00:00Z")
+    @NotNull(message = "시작 일시는 필수입니다")
+    Instant startsAt,
 
-    @Schema(description = "종료 일시", example = "2026-03-16T12:00:00")
-    LocalDateTime endsAt,
+    @Schema(description = "종료 일시 (UTC)", example = "2026-03-16T03:00:00Z")
+    @NotNull(message = "종료 일시는 필수입니다")
+    Instant endsAt,
 
     @Schema(description = "종일 여부", example = "false")
     boolean isAllDay,

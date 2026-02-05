@@ -10,8 +10,7 @@ import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
-import java.time.LocalDateTime;
-import java.time.YearMonth;
+import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -29,15 +28,8 @@ public class ScheduleQueryService implements
 
     // 캘린더 나의 일정 조회하기
     @Override
-    public List<MyScheduleInfo> getMyMonthlySchedules(Long memberId, int year, int month) {
-        LocalDateTime now = LocalDateTime.now();
-
-        YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDateTime monthStart = yearMonth.atDay(1).atStartOfDay();
-        LocalDateTime nextMonthStart = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
-
-        List<Schedule> schedules = loadSchedulePort.findMySchedulesByMonth(
-            memberId, monthStart, nextMonthStart);
+    public List<MyScheduleInfo> getMyMonthlySchedules(Long memberId, Instant from, Instant to) {
+        List<Schedule> schedules = loadSchedulePort.findMySchedulesByMonth(memberId, from, to);
 
         return schedules.stream()
             .map(s -> MyScheduleInfo.of(
@@ -45,21 +37,19 @@ public class ScheduleQueryService implements
                 s.getName(),
                 s.getStartsAt(),
                 s.getEndsAt(),
-                now
+                Instant.now()
             ))
             .toList();
     }
 
     @Override
     public ScheduleDetailInfo getScheduleDetail(Long scheduleId) {
-        LocalDateTime now = LocalDateTime.now();
-
         Schedule schedule = loadSchedulePort.findByIdWithTags(scheduleId)
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
         AttendanceSheet attendanceSheet = loadAttendanceSheetPort.findByScheduleId(scheduleId)
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
-        return ScheduleDetailInfo.from(schedule, now, attendanceSheet.isRequiresApproval());
+        return ScheduleDetailInfo.from(schedule, Instant.now(), attendanceSheet.isRequiresApproval());
     }
 }

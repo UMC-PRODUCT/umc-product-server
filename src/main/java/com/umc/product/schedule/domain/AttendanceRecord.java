@@ -10,7 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -44,14 +44,14 @@ public class AttendanceRecord extends BaseEntity {
     @Column(nullable = false)
     private AttendanceStatus status;
 
-    private LocalDateTime checkedAt;
+    private Instant checkedAt;
 
     @Column(length = 500)
     private String memo;
 
     private Long confirmedBy;
 
-    private LocalDateTime confirmedAt;
+    private Instant confirmedAt;
 
     private Double latitude;
 
@@ -65,7 +65,7 @@ public class AttendanceRecord extends BaseEntity {
         Long attendanceSheetId,
         Long memberId,
         AttendanceStatus status,
-        LocalDateTime checkedAt,
+        Instant checkedAt,
         String memo
     ) {
         validateAttendanceSheetId(attendanceSheetId);
@@ -84,7 +84,7 @@ public class AttendanceRecord extends BaseEntity {
      */
     public void checkIn(
         AttendanceStatus newStatus,
-        LocalDateTime checkedAt,
+        Instant checkedAt,
         Double latitude,
         Double longitude,
         boolean locationVerified
@@ -121,15 +121,14 @@ public class AttendanceRecord extends BaseEntity {
             default -> throw new IllegalStateException("승인 가능한 상태가 아닙니다: " + status);
         };
         this.confirmedBy = confirmerId;
-        this.confirmedAt = LocalDateTime.now();
+        this.confirmedAt = Instant.now();
     }
 
     /**
      * 관리자가 PENDING 상태의 출석을 거절함. 상태는 무조건 ABSENT로 바뀜
      * <p>
-     * 재시도 정책:
-     * - PRESENT_PENDING, LATE_PENDING (일반 출석): 거절 후 재시도 가능 (checkedAt 초기화)
-     * - EXCUSED_PENDING (사유 제출): 거절 후 재시도 불가 (checkedAt 유지)
+     * 재시도 정책: - PRESENT_PENDING, LATE_PENDING (일반 출석): 거절 후 재시도 가능 (checkedAt 초기화) - EXCUSED_PENDING (사유 제출): 거절 후 재시도
+     * 불가 (checkedAt 유지)
      */
     public void reject(Long confirmerId) {
         validatePendingStatus();
@@ -137,11 +136,11 @@ public class AttendanceRecord extends BaseEntity {
 
         // 일반 출석 체크는 재시도 허용 (단순 오류 가능성)
         boolean isRegularAttendance = (status == AttendanceStatus.PRESENT_PENDING
-                                    || status == AttendanceStatus.LATE_PENDING);
+            || status == AttendanceStatus.LATE_PENDING);
 
         this.status = AttendanceStatus.ABSENT;
         this.confirmedBy = confirmerId;
-        this.confirmedAt = LocalDateTime.now();
+        this.confirmedAt = Instant.now();
 
         // 일반 출석 거절 시 재시도를 위해 체크 데이터 초기화
         if (isRegularAttendance) {
@@ -170,8 +169,7 @@ public class AttendanceRecord extends BaseEntity {
     }
 
     /**
-     * 출석 체크 전에 사유를 제출하는 메서드 (사유 작성 출석)
-     * 위치 인증은 실패로 간주됨
+     * 출석 체크 전에 사유를 제출하는 메서드 (사유 작성 출석) 위치 인증은 실패로 간주됨
      */
     public void submitReasonBeforeCheck(String reason, LocalDateTime submittedAt) {
         if (this.checkedAt != null) {
@@ -204,7 +202,7 @@ public class AttendanceRecord extends BaseEntity {
         this.status = newStatus;
     }
 
-    public void updateCheckInfo(LocalDateTime checkedAt) {
+    public void updateCheckInfo(Instant checkedAt) {
         if (this.checkedAt == null) {
             throw new IllegalStateException("출석 체크가 되지 않은 기록입니다");
         }
