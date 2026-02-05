@@ -6,6 +6,7 @@ import com.umc.product.survey.domain.enums.FormSectionType;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 public record RecruitmentFormDefinitionInfo(
         List<RecruitmentSectionInfo> sections
@@ -83,5 +84,33 @@ public record RecruitmentFormDefinitionInfo(
         } catch (IllegalArgumentException e) {
             return null;
         }
+    }
+
+    public RecruitmentFormDefinitionInfo filterForApplicantOpenParts(Set<ChallengerPart> openParts) {
+        if (sections == null || sections.isEmpty()) {
+            return this;
+        }
+        if (openParts == null || openParts.isEmpty()) {
+            // OPEN 파트가 없으면 지원자에게 PART 섹션은 안 보여주는 게 자연스러움
+            List<RecruitmentSectionInfo> commons = sections.stream()
+                    .filter(s -> s != null && s.kind() == RecruitmentSectionInfo.SectionKind.COMMON_PAGE)
+                    .toList();
+            return new RecruitmentFormDefinitionInfo(commons);
+        }
+
+        List<RecruitmentSectionInfo> filtered = sections.stream()
+                .filter(Objects::nonNull)
+                .filter(s -> {
+                    if (s.kind() == RecruitmentSectionInfo.SectionKind.COMMON_PAGE) {
+                        return true;
+                    }
+                    if (s.kind() == RecruitmentSectionInfo.SectionKind.PART) {
+                        return s.part() != null && openParts.contains(s.part());
+                    }
+                    return false;
+                })
+                .toList();
+
+        return new RecruitmentFormDefinitionInfo(filtered);
     }
 }

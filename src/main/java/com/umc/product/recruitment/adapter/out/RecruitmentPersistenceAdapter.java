@@ -432,9 +432,9 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                         return null;
                     }
 
-                    LocalDate startDate = (docReview == null || docReview.getStartsAt() == null)
+                    LocalDate startDate = (apply == null || apply.getStartsAt() == null)
                             ? null
-                            : docReview.getStartsAt().atZone(zone).toLocalDate();
+                            : apply.getStartsAt().atZone(zone).toLocalDate();
 
                     LocalDate endDate = (finalResult == null || finalResult.getStartsAt() == null)
                             ? null
@@ -498,9 +498,9 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
                     RecruitmentPhase phase = resolvePhase(now, apply, docReview, docResult, interview, finalReview,
                             finalResult);
 
-                    LocalDate startDate = (docReview == null || docReview.getStartsAt() == null)
+                    LocalDate startDate = (apply == null || apply.getStartsAt() == null)
                             ? null
-                            : docReview.getStartsAt().atZone(zone).toLocalDate();
+                            : apply.getStartsAt().atZone(zone).toLocalDate();
 
                     LocalDate endDate = (finalResult == null || finalResult.getStartsAt() == null)
                             ? null

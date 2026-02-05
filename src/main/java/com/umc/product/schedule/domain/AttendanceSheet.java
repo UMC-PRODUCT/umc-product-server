@@ -1,5 +1,6 @@
 package com.umc.product.schedule.domain;
 
+import com.umc.product.common.BaseEntity;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import jakarta.persistence.Column;
@@ -9,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -28,7 +30,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "attendance_sheet")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AttendanceSheet {
+public class AttendanceSheet extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -169,6 +171,15 @@ public class AttendanceSheet {
     private void validateWindow(AttendanceWindow window) {
         if (window == null) {
             throw new IllegalArgumentException("출석 시간대는 필수입니다");
+        }
+    }
+
+    /**
+     * 일정 시간이 변경됨에 따라 출석 시간대도 같이 이동
+     */
+    public void shiftWindow(Duration diff) {
+        if (diff != null && !diff.isZero()) {
+            this.window = this.window.shift(diff);
         }
     }
 

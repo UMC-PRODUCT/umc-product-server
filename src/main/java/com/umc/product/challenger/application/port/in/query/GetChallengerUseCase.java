@@ -1,7 +1,10 @@
 package com.umc.product.challenger.application.port.in.query;
 
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public interface GetChallengerUseCase {
     // TODO: 챌린저에 대해서 public/private 정보 구분 필요 시 method 추가해서 진행하여야 함
@@ -29,7 +32,23 @@ public interface GetChallengerUseCase {
     List<ChallengerInfo> getMemberChallengerList(Long memberId);
 
     /**
+     * 여러 challengerId로 챌린저 정보 배치 조회
+     *
+     * @param challengerIds 챌린저 ID 목록
+     * @return challengerId → ChallengerInfo Map
+     */
+    Map<Long, ChallengerInfo> getChallengerPublicInfoByIds(Set<Long> challengerIds);
+
+    /**
+     * 기수 ID로 해당 기수의 모든 챌린저 정보 조회
+     *
+     * @param gisuId 기수 ID
+     * @return 해당 기수의 챌린저 정보 목록
+     */
+    List<ChallengerInfo> getByGisuId(Long gisuId);
+
+    /**
      * memberId로 해당 사용자가 가지고 있는 가장 최근 챌린저 정보 조회
      */
-    ChallengerInfo getLatestActiveChallengerByMemberId(Long memberId);
+    ChallengerInfoWithStatus getLatestActiveChallengerByMemberId(Long memberId);
 }

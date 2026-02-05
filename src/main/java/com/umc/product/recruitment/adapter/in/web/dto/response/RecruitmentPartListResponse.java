@@ -4,6 +4,8 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentPartListInfo;
 import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 
 public record RecruitmentPartListResponse(
@@ -28,11 +30,21 @@ public record RecruitmentPartListResponse(
     }
 
     public record DatePeriodResponse(
-            Instant startsAt,
-            Instant endsAt
+            LocalDate startsAt,
+            LocalDate endsAt
     ) {
         public static DatePeriodResponse from(RecruitmentPartListInfo.DatePeriod period) {
-            return period == null ? null : new DatePeriodResponse(period.startsAt(), period.endsAt());
+            if (period == null) {
+                return null;
+            }
+            return new DatePeriodResponse(
+                    toKstDate(period.startsAt()),
+                    toKstDate(period.endsAt())
+            );
+        }
+
+        private static LocalDate toKstDate(Instant instant) {
+            return instant == null ? null : instant.atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
         }
     }
 

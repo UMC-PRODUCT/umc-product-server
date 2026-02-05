@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
@@ -29,7 +31,6 @@ import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -127,16 +128,16 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
             // given
             LocalDateTime now = LocalDateTime.now();
             Long scheduleId = createSchedule("통계 테스트 일정", now.plusHours(1), now.plusHours(2),
-                    List.of(participantMember.getId()));
+                List.of(participantMember.getId()));
 
             // when
             List<ScheduleWithStatsInfo> result = getScheduleListUseCase.getAll();
 
             // then
             ScheduleWithStatsInfo scheduleInfo = result.stream()
-                    .filter(s -> s.scheduleId().equals(scheduleId))
-                    .findFirst()
-                    .orElseThrow();
+                .filter(s -> s.scheduleId().equals(scheduleId))
+                .findFirst()
+                .orElseThrow();
 
             assertThat(scheduleInfo.totalCount()).isNotNull();
             assertThat(scheduleInfo.totalCount()).isEqualTo(1); // 참여자 1명
@@ -163,11 +164,11 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
             // given
             LocalDateTime now = LocalDateTime.now();
             Long scheduleId = createSchedule("출석 가능 일정", now.plusHours(1), now.plusHours(2),
-                    List.of(participantMember.getId()));
+                List.of(participantMember.getId()));
 
             // when
             List<AvailableAttendanceInfo> result = getAvailableAttendancesUseCase
-                    .getAvailableList(participantMember.getId(), activeGisu.getId());
+                .getAvailableList(participantMember.getId(), activeGisu.getId());
 
             // then
             assertThat(result).isNotEmpty();
@@ -180,11 +181,11 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
             // given
             LocalDateTime now = LocalDateTime.now();
             createSchedule("미출석 일정", now.plusHours(1), now.plusHours(2),
-                    List.of(participantMember.getId()));
+                List.of(participantMember.getId()));
 
             // when
             List<AvailableAttendanceInfo> result = getAvailableAttendancesUseCase
-                    .getAvailableList(participantMember.getId(), activeGisu.getId());
+                .getAvailableList(participantMember.getId(), activeGisu.getId());
 
             // then
             assertThat(result).isNotEmpty();
@@ -197,7 +198,7 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
             // given
             LocalDateTime now = LocalDateTime.now();
             Long scheduleId = createSchedule("비활성 일정", now.plusHours(1), now.plusHours(2),
-                    List.of(participantMember.getId()));
+                List.of(participantMember.getId()));
 
             // 출석부 비활성화
             AttendanceSheet sheet = loadAttendanceSheetPort.findByScheduleId(scheduleId).orElseThrow();
@@ -205,7 +206,7 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
 
             // when
             List<AvailableAttendanceInfo> result = getAvailableAttendancesUseCase
-                    .getAvailableList(participantMember.getId(), activeGisu.getId());
+                .getAvailableList(participantMember.getId(), activeGisu.getId());
 
             // then
             assertThat(result).noneMatch(info -> info.scheduleId().equals(scheduleId));
@@ -222,20 +223,20 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
             // given
             LocalDateTime now = LocalDateTime.now();
             Long scheduleId = createSchedule("출석 기록 일정", now.plusHours(1), now.plusHours(2),
-                    List.of(participantMember.getId()));
+                List.of(participantMember.getId()));
 
             // 출석 체크
             AttendanceSheet sheet = loadAttendanceSheetPort.findByScheduleId(scheduleId).orElseThrow();
             CheckAttendanceCommand checkCommand = new CheckAttendanceCommand(
-                    sheet.getId(),
-                    participantMember.getId(),
-                    sheet.getWindow().getStartTime().plusMinutes(5)
+                sheet.getId(),
+                participantMember.getId(),
+                sheet.getWindow().getStartTime().plusMinutes(5)
             );
             checkAttendanceUseCase.check(checkCommand);
 
             // when
             List<MyAttendanceHistoryInfo> result = getMyAttendanceHistoryUseCase
-                    .getHistory(participantMember.getId(), activeGisu.getId());
+                .getHistory(participantMember.getId(), activeGisu.getId());
 
             // then
             assertThat(result).isNotEmpty();
@@ -249,7 +250,7 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
 
             // when
             List<MyAttendanceHistoryInfo> result = getMyAttendanceHistoryUseCase
-                    .getHistory(participantMember.getId(), activeGisu.getId());
+                .getHistory(participantMember.getId(), activeGisu.getId());
 
             // then
             assertThat(result).isEmpty();
@@ -263,27 +264,27 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
 
             // 첫 번째 일정 (더 이른 시간)
             Long scheduleId1 = createSchedule("첫번째 일정", now.plusHours(1), now.plusHours(2),
-                    List.of(participantMember.getId()));
+                List.of(participantMember.getId()));
             AttendanceSheet sheet1 = loadAttendanceSheetPort.findByScheduleId(scheduleId1).orElseThrow();
             checkAttendanceUseCase.check(new CheckAttendanceCommand(
-                    sheet1.getId(),
-                    participantMember.getId(),
-                    sheet1.getWindow().getStartTime().plusMinutes(5)
+                sheet1.getId(),
+                participantMember.getId(),
+                sheet1.getWindow().getStartTime().plusMinutes(5)
             ));
 
             // 두 번째 일정 (더 늦은 시간)
             Long scheduleId2 = createSchedule("두번째 일정", now.plusHours(3), now.plusHours(4),
-                    List.of(participantMember.getId()));
+                List.of(participantMember.getId()));
             AttendanceSheet sheet2 = loadAttendanceSheetPort.findByScheduleId(scheduleId2).orElseThrow();
             checkAttendanceUseCase.check(new CheckAttendanceCommand(
-                    sheet2.getId(),
-                    participantMember.getId(),
-                    sheet2.getWindow().getStartTime().plusMinutes(5)
+                sheet2.getId(),
+                participantMember.getId(),
+                sheet2.getWindow().getStartTime().plusMinutes(5)
             ));
 
             // when
             List<MyAttendanceHistoryInfo> result = getMyAttendanceHistoryUseCase
-                    .getHistory(participantMember.getId(), activeGisu.getId());
+                .getHistory(participantMember.getId(), activeGisu.getId());
 
             // then
             assertThat(result).hasSize(2);
@@ -298,35 +299,35 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
     private Long createSchedule(String name, LocalDateTime startsAt, LocalDateTime endsAt,
                                 List<Long> participantIds) {
         CreateScheduleCommand command = CreateScheduleCommand.of(
-                name,
-                startsAt,
-                endsAt,
-                false,
-                "테스트 장소",
-                null,
-                "테스트 설명",
-                participantIds,
-                Set.of(ScheduleTag.GENERAL),
-                authorMember.getId()
+            name,
+            startsAt,
+            endsAt,
+            false,
+            "테스트 장소",
+            null,
+            "테스트 설명",
+            participantIds,
+            Set.of(ScheduleTag.GENERAL),
+            authorMember.getId()
         );
         Long scheduleId = createScheduleUseCase.create(command);
 
         // 출석부 수동 생성
         Schedule schedule = loadSchedulePort.findById(scheduleId).orElseThrow();
         AttendanceSheet sheet = saveAttendanceSheetPort.save(AttendanceSheet.builder()
-                .scheduleId(scheduleId)
-                .gisuId(activeGisu.getId())
-                .window(AttendanceWindow.ofDefault(schedule.getStartsAt()))
-                .requiresApproval(false)
-                .build());
+            .scheduleId(scheduleId)
+            .gisuId(activeGisu.getId())
+            .window(AttendanceWindow.ofDefault(schedule.getStartsAt()))
+            .requiresApproval(false)
+            .build());
 
         // 참여자 출석 기록 생성
         for (Long participantId : participantIds) {
             saveAttendanceRecordPort.save(AttendanceRecord.builder()
-                    .attendanceSheetId(sheet.getId())
-                    .memberId(participantId)
-                    .status(AttendanceStatus.PENDING)
-                    .build());
+                .attendanceSheetId(sheet.getId())
+                .memberId(participantId)
+                .status(AttendanceStatus.PENDING)
+                .build());
         }
 
         return scheduleId;
@@ -336,43 +337,51 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
 
     private Gisu createActiveGisu(Long generation) {
         return Gisu.builder()
-                .generation(generation)
-                .isActive(true)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0).atZone(ZoneId.systemDefault()).toInstant())
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59).atZone(ZoneId.systemDefault()).toInstant())
-                .build();
+            .generation(generation)
+            .isActive(true)
+            .startAt(LocalDateTime.of(2024, 3, 1, 0, 0).atZone(ZoneId.systemDefault()).toInstant())
+            .endAt(LocalDateTime.of(2024, 8, 31, 23, 59).atZone(ZoneId.systemDefault()).toInstant())
+            .build();
     }
 
     private Member createMember(String name, String nickname, String email, Long schoolId, String profileImageId) {
         return Member.builder()
-                .email(email)
-                .name(name)
-                .nickname(nickname)
-                .schoolId(schoolId)
-                .profileImageId(profileImageId)
-                .build();
+            .email(email)
+            .name(name)
+            .nickname(nickname)
+            .schoolId(schoolId)
+            .profileImageId(profileImageId)
+            .build();
     }
 
     private Challenger createChallenger(Long memberId, Long gisuId) {
         return Challenger.builder()
-                .memberId(memberId)
-                .gisuId(gisuId)
-                .part(ChallengerPart.SPRINGBOOT)
-                .build();
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .build();
     }
 
     private void mockChallengerInfo(Long memberId, Long gisuId, Long challengerId) {
         ChallengerInfo mockInfo = ChallengerInfo.builder()
-                .challengerId(challengerId)
-                .memberId(memberId)
-                .gisuId(gisuId)
-                .part(ChallengerPart.SPRINGBOOT)
-                .challengerPoints(List.of())
-                .build();
+            .challengerId(challengerId)
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .challengerPoints(List.of())
+            .build();
+
+        ChallengerInfoWithStatus mockInfoWithStatus = ChallengerInfoWithStatus.builder()
+            .challengerId(challengerId)
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .status(ChallengerStatus.ACTIVE)
+            .build();
 
         given(getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId))
-                .willReturn(mockInfo);
+            .willReturn(mockInfo);
         given(getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId))
-                .willReturn(mockInfo);
+            .willReturn(mockInfoWithStatus);
     }
 }

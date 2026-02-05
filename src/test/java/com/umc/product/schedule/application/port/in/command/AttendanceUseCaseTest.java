@@ -5,9 +5,11 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
@@ -28,7 +30,6 @@ import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -102,16 +103,16 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
         // 일정 생성
         LocalDateTime now = LocalDateTime.now();
         CreateScheduleCommand command = CreateScheduleCommand.of(
-                "테스트 일정",
-                now.plusHours(1),
-                now.plusHours(3),
-                false,
-                "테스트 장소",
-                null,
-                "테스트 설명",
-                List.of(participantMember.getId()),
-                Set.of(ScheduleTag.GENERAL),
-                authorMember.getId()
+            "테스트 일정",
+            now.plusHours(1),
+            now.plusHours(3),
+            false,
+            "테스트 장소",
+            null,
+            "테스트 설명",
+            List.of(participantMember.getId()),
+            Set.of(ScheduleTag.GENERAL),
+            authorMember.getId()
         );
 
         scheduleId = createScheduleUseCase.create(command);
@@ -119,18 +120,18 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
 
         // 출석부 수동 생성
         attendanceSheet = saveAttendanceSheetPort.save(AttendanceSheet.builder()
-                .scheduleId(scheduleId)
-                .gisuId(activeGisu.getId())
-                .window(AttendanceWindow.ofDefault(schedule.getStartsAt()))
-                .requiresApproval(false)
-                .build());
+            .scheduleId(scheduleId)
+            .gisuId(activeGisu.getId())
+            .window(AttendanceWindow.ofDefault(schedule.getStartsAt()))
+            .requiresApproval(false)
+            .build());
 
         // 참여자 출석 기록 생성
         saveAttendanceRecordPort.save(AttendanceRecord.builder()
-                .attendanceSheetId(attendanceSheet.getId())
-                .memberId(participantMember.getId())
-                .status(AttendanceStatus.PENDING)
-                .build());
+            .attendanceSheetId(attendanceSheet.getId())
+            .memberId(participantMember.getId())
+            .status(AttendanceStatus.PENDING)
+            .build());
     }
 
     @Nested
@@ -143,9 +144,9 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
             // given
             LocalDateTime checkTime = attendanceSheet.getWindow().getStartTime().plusMinutes(5);
             CheckAttendanceCommand command = new CheckAttendanceCommand(
-                    attendanceSheet.getId(),
-                    participantMember.getId(),
-                    checkTime
+                attendanceSheet.getId(),
+                participantMember.getId(),
+                checkTime
             );
 
             // when
@@ -163,11 +164,11 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
             // given
             // 지각 임계값 이후 시간
             LocalDateTime checkTime = attendanceSheet.getWindow().getStartTime()
-                    .plusMinutes(attendanceSheet.getWindow().getLateThresholdMinutes() + 5);
+                .plusMinutes(attendanceSheet.getWindow().getLateThresholdMinutes() + 5);
             CheckAttendanceCommand command = new CheckAttendanceCommand(
-                    attendanceSheet.getId(),
-                    participantMember.getId(),
-                    checkTime
+                attendanceSheet.getId(),
+                participantMember.getId(),
+                checkTime
             );
 
             // when
@@ -186,14 +187,14 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
             loadAttendanceSheetPort.findById(attendanceSheet.getId());
 
             CheckAttendanceCommand command = new CheckAttendanceCommand(
-                    attendanceSheet.getId(),
-                    participantMember.getId(),
-                    LocalDateTime.now()
+                attendanceSheet.getId(),
+                participantMember.getId(),
+                LocalDateTime.now()
             );
 
             // when & then
             assertThatThrownBy(() -> checkAttendanceUseCase.check(command))
-                    .isInstanceOf(BusinessException.class);
+                .isInstanceOf(BusinessException.class);
         }
     }
 
@@ -210,9 +211,9 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
 
             LocalDateTime checkTime = attendanceSheet.getWindow().getStartTime().plusMinutes(5);
             CheckAttendanceCommand checkCommand = new CheckAttendanceCommand(
-                    attendanceSheet.getId(),
-                    participantMember.getId(),
-                    checkTime
+                attendanceSheet.getId(),
+                participantMember.getId(),
+                checkTime
             );
             AttendanceRecordId recordId = checkAttendanceUseCase.check(checkCommand);
 
@@ -238,9 +239,9 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
 
             LocalDateTime checkTime = attendanceSheet.getWindow().getStartTime().plusMinutes(5);
             CheckAttendanceCommand checkCommand = new CheckAttendanceCommand(
-                    attendanceSheet.getId(),
-                    participantMember.getId(),
-                    checkTime
+                attendanceSheet.getId(),
+                participantMember.getId(),
+                checkTime
             );
             AttendanceRecordId recordId = checkAttendanceUseCase.check(checkCommand);
 
@@ -258,43 +259,51 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
 
     private Gisu createActiveGisu(Long generation) {
         return Gisu.builder()
-                .generation(generation)
-                .isActive(true)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0).atZone(ZoneId.systemDefault()).toInstant())
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59).atZone(ZoneId.systemDefault()).toInstant())
-                .build();
+            .generation(generation)
+            .isActive(true)
+            .startAt(LocalDateTime.of(2024, 3, 1, 0, 0).atZone(ZoneId.systemDefault()).toInstant())
+            .endAt(LocalDateTime.of(2024, 8, 31, 23, 59).atZone(ZoneId.systemDefault()).toInstant())
+            .build();
     }
 
     private Member createMember(String name, String nickname, String email, Long schoolId, String profileImageId) {
         return Member.builder()
-                .email(email)
-                .name(name)
-                .nickname(nickname)
-                .schoolId(schoolId)
-                .profileImageId(profileImageId)
-                .build();
+            .email(email)
+            .name(name)
+            .nickname(nickname)
+            .schoolId(schoolId)
+            .profileImageId(profileImageId)
+            .build();
     }
 
     private Challenger createChallenger(Long memberId, Long gisuId) {
         return Challenger.builder()
-                .memberId(memberId)
-                .gisuId(gisuId)
-                .part(ChallengerPart.SPRINGBOOT)
-                .build();
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .build();
     }
 
     private void mockChallengerInfo(Long memberId, Long gisuId, Long challengerId) {
         ChallengerInfo mockInfo = ChallengerInfo.builder()
-                .challengerId(challengerId)
-                .memberId(memberId)
-                .gisuId(gisuId)
-                .part(ChallengerPart.SPRINGBOOT)
-                .challengerPoints(List.of())
-                .build();
+            .challengerId(challengerId)
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .challengerPoints(List.of())
+            .build();
+
+        ChallengerInfoWithStatus mockInfoWithStatus = ChallengerInfoWithStatus.builder()
+            .challengerId(challengerId)
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .status(ChallengerStatus.ACTIVE)
+            .build();
 
         given(getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId))
-                .willReturn(mockInfo);
+            .willReturn(mockInfo);
         given(getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId))
-                .willReturn(mockInfo);
+            .willReturn(mockInfoWithStatus);
     }
 }

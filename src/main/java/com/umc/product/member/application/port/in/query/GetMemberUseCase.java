@@ -1,5 +1,7 @@
 package com.umc.product.member.application.port.in.query;
 
+import java.util.Set;
+
 public interface GetMemberUseCase {
     MemberInfo getById(Long memberId);
 
@@ -7,7 +9,7 @@ public interface GetMemberUseCase {
 
     MemberProfileInfo getProfile(Long memberId);
 
-    java.util.Map<Long, MemberProfileInfo> getProfiles(java.util.Set<Long> memberIds);
+    java.util.Map<Long, MemberProfileInfo> getProfiles(Set<Long> memberIds);
 
     boolean existsById(Long memberId);
 

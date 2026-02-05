@@ -9,6 +9,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.schedule.domain.Schedule;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -32,6 +33,14 @@ public class ScheduleQueryRepository {
             )
             .orderBy(schedule.startsAt.asc())
             .fetch();
+    }
+
+    public Optional<Schedule> findByIdWithTags(Long scheduleId) {
+        return Optional.ofNullable(queryFactory
+            .selectFrom(schedule)
+            .leftJoin(schedule.tags).fetchJoin()
+            .where(schedule.id.eq(scheduleId))
+            .fetchOne());
     }
 
     private BooleanExpression cursorCondition(Long cursor) {

@@ -3,6 +3,7 @@ package com.umc.product.schedule.domain.vo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -145,5 +146,21 @@ public class AttendanceWindow {
         return requiresApproval
             ? AttendanceStatus.LATE_PENDING
             : AttendanceStatus.LATE;
+    }
+
+    /**
+     * 시간 차이만큼 출석 시간대를 이동시킴 (일정 수정 - 시간 변경 시 사용)
+     *
+     * @param duration 이동할 시간 간격 (양수면 미래로, 음수면 과거로)
+     */
+    public AttendanceWindow shift(Duration duration) {
+        if (duration == null || duration.isZero()) {
+            return this;
+        }
+        return new AttendanceWindow(
+            this.startTime.plus(duration),
+            this.endTime.plus(duration),
+            this.lateThresholdMinutes
+        );
     }
 }

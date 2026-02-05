@@ -4,8 +4,6 @@ import com.umc.product.community.domain.enums.PostSortType;
 
 public record PostSearchQuery(
         boolean ing,        // 모집중
-        PostSortType sort,  // Soft, Hard, ALL
-        Integer page,
-        Integer size
+        PostSortType sort   // Soft, Hard, ALL
 ) {
 }

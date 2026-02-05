@@ -5,6 +5,7 @@ import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDr
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -25,12 +26,12 @@ public record RecruitmentDraftResponse(
         Instant updatedAt
 ) {
     public record RecruitmentDraftScheduleResponse(
-            Instant applyStartAt,
-            Instant applyEndAt,
-            Instant docResultAt,
-            Instant interviewStartAt,
-            Instant interviewEndAt,
-            Instant finalResultAt,
+            LocalDate applyStartAt,
+            LocalDate applyEndAt,
+            LocalDate docResultAt,
+            LocalDate interviewStartAt,
+            LocalDate interviewEndAt,
+            LocalDate finalResultAt,
             RecruitmentDraftInterviewTimeTableResponse interviewTimeTable
     ) {
     }
@@ -77,14 +78,21 @@ public record RecruitmentDraftResponse(
         }
 
         return new RecruitmentDraftScheduleResponse(
-                s.applyStartAt(),
-                s.applyEndAt(),
-                s.docResultAt(),
-                s.interviewStartAt(),
-                s.interviewEndAt(),
-                s.finalResultAt(),
+                toKstDate(s.applyStartAt()),
+                toKstDate(s.applyEndAt()),
+                toKstDate(s.docResultAt()),
+                toKstDate(s.interviewStartAt()),
+                toKstDate(s.interviewEndAt()),
+                toKstDate(s.finalResultAt()),
                 toInterviewTimeTable(s.interviewTimeTable())
         );
+    }
+
+    private static LocalDate toKstDate(Instant instant) {
+        if (instant == null) {
+            return null;
+        }
+        return instant.atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
     }
 
     private static RecruitmentDraftInterviewTimeTableResponse toInterviewTimeTable(
