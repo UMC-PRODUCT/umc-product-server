@@ -5,12 +5,17 @@ import java.util.List;
 
 public record ApplicationListResponse(
         Long recruitmentId,
+        SummaryResponse summary,
         List<ApplicationSummaryResponse> applicationSummaries,
         PaginationResponse pagination
 ) {
     public static ApplicationListResponse from(ApplicationListInfo info) {
         return new ApplicationListResponse(
                 info.recruitmentId(),
+                new SummaryResponse(
+                        info.summary().totalCount(),
+                        info.summary().evaluatedCount()
+                ),
                 info.applicationSummaries().stream().map(ApplicationSummaryResponse::from).toList(),
                 new PaginationResponse(
                         info.pagination().page(),
@@ -19,6 +24,12 @@ public record ApplicationListResponse(
                         info.pagination().totalElements()
                 )
         );
+    }
+
+    public record SummaryResponse(
+            long totalCount,
+            long evaluatedCount
+    ) {
     }
 
     public record ApplicationSummaryResponse(

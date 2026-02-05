@@ -5,9 +5,16 @@ import java.util.List;
 
 public record ApplicationListInfo(
         Long recruitmentId,
+        SummaryInfo summary,
         List<ApplicationSummary> applicationSummaries,
         PaginationInfo pagination
 ) {
+    public record SummaryInfo(
+            long totalCount,
+            long evaluatedCount
+    ) {
+    }
+
     public record ApplicationSummary(
             Long applicationId,
             Long applicantMemberId,
