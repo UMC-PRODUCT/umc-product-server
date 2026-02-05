@@ -1,8 +1,9 @@
 package com.umc.product.community.application.port.in.post.query;
 
 import com.umc.product.community.application.port.in.PostInfo;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface GetPostListUseCase {
-    List<PostInfo> getPostList(PostSearchQuery query);
+    Page<PostInfo> getPostList(PostSearchQuery query, Pageable pageable);
 }

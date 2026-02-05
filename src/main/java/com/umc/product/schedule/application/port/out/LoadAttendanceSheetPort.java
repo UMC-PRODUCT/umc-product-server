@@ -53,4 +53,20 @@ public interface LoadAttendanceSheetPort {
      * @return 출석부 목록
      */
     List<AttendanceSheet> findAllByIds(List<Long> ids);
+
+    /**
+     * 기수 ID로 출석부 목록 조회
+     *
+     * @param gisuId 기수 ID
+     * @return 해당 기수의 출석부 목록
+     */
+    List<AttendanceSheet> findByGisuId(Long gisuId);
+
+    /**
+     * 기수 ID로 활성 출석부 목록 조회
+     *
+     * @param gisuId 기수 ID
+     * @return 해당 기수의 활성 출석부 목록
+     */
+    List<AttendanceSheet> findActiveSheetsByGisuId(Long gisuId);
 }

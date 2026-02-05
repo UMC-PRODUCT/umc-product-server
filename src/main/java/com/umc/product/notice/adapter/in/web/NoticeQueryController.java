@@ -1,5 +1,8 @@
 package com.umc.product.notice.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.CursorResponse;
@@ -15,7 +18,7 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
-import com.umc.product.notice.domain.enums.NoticeClassification;
+import com.umc.product.notice.dto.NoticeClassification;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -45,9 +48,10 @@ public class NoticeQueryController implements NoticeQueryApi {
      */
     @GetMapping
     public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(
-        @RequestParam NoticeClassification classification,
+        @ModelAttribute @Valid NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
         Pageable pageable) {
+
         Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(classification,
             pageable);
 
@@ -60,9 +64,11 @@ public class NoticeQueryController implements NoticeQueryApi {
     @GetMapping("/search")
     public ApiResponse<PageResponse<GetNoticeSummaryResponse>> searchNotices(
         @RequestParam String keyword,
+        @ModelAttribute @Valid NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
         Pageable pageable) {
-        Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(keyword, pageable);
+
+        Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(keyword, classification, pageable);
 
         return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
     }
@@ -70,8 +76,14 @@ public class NoticeQueryController implements NoticeQueryApi {
     /*
      * 공지사항 상세 조회
      */
+    @CheckAccess(
+        resourceType = ResourceType.NOTICE,
+        resourceId = "#noticeId", // SpEL 표현식 - 공부하세요!!
+        permission = PermissionType.READ
+    )
     @GetMapping("/{noticeId}")
     public ApiResponse<GetNoticeDetailResponse> getNotice(@PathVariable Long noticeId) {
+
         NoticeInfo noticeDetail = getNoticeUseCase.getNoticeDetail(noticeId);
         return ApiResponse.onSuccess(GetNoticeDetailResponse.from(noticeDetail));
     }
@@ -79,8 +91,14 @@ public class NoticeQueryController implements NoticeQueryApi {
     /*
      * 공지사항 수신 현황 통계 조회
      */
+    @CheckAccess(
+        resourceType = ResourceType.NOTICE,
+        resourceId = "#noticeId",
+        permission = PermissionType.MANAGE
+    )
     @GetMapping("/{noticeId}/read-statics")
     public ApiResponse<GetNoticeStaticsResponse> getNoticeReadStatics(@PathVariable Long noticeId) {
+
         NoticeReadStatusSummary statistics = getNoticeUseCase.getReadStatistics(noticeId);
         return ApiResponse.onSuccess(GetNoticeStaticsResponse.from(statistics));
     }
@@ -88,10 +106,16 @@ public class NoticeQueryController implements NoticeQueryApi {
     /*
      * 공지사항 수신 현황 조회
      */
+    @CheckAccess(
+        resourceType = ResourceType.NOTICE,
+        resourceId = "#noticeId",
+        permission = PermissionType.MANAGE
+    )
     @GetMapping("/{noticeId}/read-status")
     public ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus(
         @PathVariable Long noticeId,
         @ModelAttribute @Valid GetNoticeStatusRequest request) {
+
         NoticeReadStatusResult result = getNoticeUseCase.getReadStatus(request.toQuery(noticeId));
         CursorResponse<GetNoticeReadStatusResponse> response = CursorResponse.of(
             result.content().stream()

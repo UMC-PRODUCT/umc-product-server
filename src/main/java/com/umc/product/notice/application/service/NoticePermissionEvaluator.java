@@ -1,5 +1,6 @@
 package com.umc.product.notice.application.service;
 
+import com.umc.product.authorization.application.port.in.query.GetMemberRolesUseCase;
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourcePermission;
@@ -28,6 +29,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     private final GetNoticeTargetUseCase getNoticeTargetUseCase;
     private final GetNoticeUseCase getNoticeUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
+    private final GetMemberRolesUseCase getMemberRolesUseCase;
 
     @Override
     public ResourceType supportedResourceType() {
@@ -59,7 +61,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
             return false;
         }
 
-        // DELETE는 작성자 본인 또는 중앙운영사무국 총괄단만 가능함
+        // DELETE는 작성자 본인만 가능함.
         else if (resourcePermission.permission() == PermissionType.DELETE) {
             NoticeInfo noticeInfo = getNoticeUseCase.getNoticeDetail(resourcePermission.getResourceIdAsLong());
             Long authorMemberId = getChallengerUseCase.getChallengerPublicInfo(noticeInfo.authorChallengerId())
@@ -68,19 +70,41 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
             if (Objects.equals(subjectAttributes.memberId(), authorMemberId)) {
                 return true;
             }
+        }
 
-            // 기수 상관 없이 총괄단 역할이 있으면 허용
-            // TODO: 향후 기수 제한이 필요할 수 있음
-            if (subjectAttributes.roleAttributes().stream()
-                .anyMatch(roleAttribute ->
-                    roleAttribute.roleType().isCentralCore())) {
-                return true;
-            }
+        // MANAGE는 공지 카테고리에 해당하는 운영진만 가능
+        else if (resourcePermission.permission() == PermissionType.MANAGE) {
+            return canManageNotice(subjectAttributes.memberId(), targetInfo);
         }
 
         throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_RESOURCE_PERMISSION_GIVEN,
             "NoticePermissionEvaluator애서 지원하지 않는 권한 유형에 대한 평가가 시도되었습니다: " + resourcePermission.permission());
     }
 
-    // resourcePermission에서 resourceId를 가져와서 -> target들을 가져와야함
+    /**
+     * 공지사항 관리 권한 확인 (수신 현황 조회 등)
+     * - 총괄/부총괄: 항상 허용
+     * - School 레벨 공지: 해당 학교 운영진
+     * - Chapter 레벨 공지: 해당 지부장
+     * - Gisu 레벨 공지: 중앙 멤버
+     */
+    private boolean canManageNotice(Long memberId, NoticeTargetInfo targetInfo) {
+        // 총괄/부총괄은 항상 허용
+        if (getMemberRolesUseCase.isCentralCore(memberId)) {
+            return true;
+        }
+
+        // School 레벨 공지: 해당 학교 운영진
+        if (targetInfo.targetSchoolId() != null) {
+            return getMemberRolesUseCase.isSchoolAdmin(memberId, targetInfo.targetSchoolId());
+        }
+
+        // Chapter 레벨 공지: 해당 지부장
+        if (targetInfo.targetChapterId() != null) {
+            return getMemberRolesUseCase.isChapterPresident(memberId, targetInfo.targetChapterId());
+        }
+
+        // Gisu 레벨 공지 (전체): 중앙 멤버
+        return getMemberRolesUseCase.isCentralMember(memberId);
+    }
 }

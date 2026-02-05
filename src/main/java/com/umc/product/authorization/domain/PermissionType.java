@@ -7,5 +7,6 @@ public enum PermissionType {
     READ,       // 조회
     WRITE,      // 생성/수정
     DELETE,     // 삭제
-    APPROVE     // 승인 (출석, 워크북 등)
+    APPROVE,    // 승인 (출석, 워크북 등)
+    MANAGE      // 관리 (운영진 전용)
 }

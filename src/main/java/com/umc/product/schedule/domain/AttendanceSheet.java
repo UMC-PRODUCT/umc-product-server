@@ -1,5 +1,6 @@
 package com.umc.product.schedule.domain;
 
+import com.umc.product.common.BaseEntity;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import jakarta.persistence.Column;
@@ -9,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -28,7 +30,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "attendance_sheet")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AttendanceSheet {
+public class AttendanceSheet extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,6 +38,9 @@ public class AttendanceSheet {
 
     @Column(nullable = false)
     private Long scheduleId;
+
+    @Column(nullable = false)
+    private Long gisuId;
 
     @Embedded
     private AttendanceWindow window;
@@ -49,16 +54,54 @@ public class AttendanceSheet {
     @Builder
     private AttendanceSheet(
         Long scheduleId,
+        Long gisuId,
         AttendanceWindow window,
         boolean requiresApproval
     ) {
         validateScheduleId(scheduleId);
+        validateGisuId(gisuId);
         validateWindow(window);
 
         this.scheduleId = scheduleId;
+        this.gisuId = gisuId;
         this.window = window;
         this.requiresApproval = requiresApproval;
         this.active = true;
+    }
+
+    private static final int DEFAULT_LATE_THRESHOLD_MINUTES = 10;
+
+    /**
+     * 일정 기반 출석부 생성 (동시 생성용)
+     * <p>
+     * 출석 시간대(Window)는 일정의 시작/종료 시간을 기준으로 내부에서 생성됩니다.
+     * 지각 기준 시간은 10분으로 고정됩니다.
+     *
+     * @param scheduleId            연결할 일정 ID
+     * @param gisuId                기수 ID
+     * @param scheduleStartsAt      일정 시작 시간 (출석 시간대 시작)
+     * @param scheduleEndsAt        일정 종료 시간 (출석 시간대 종료)
+     * @param requiresApproval      승인 필요 여부
+     */
+    public static AttendanceSheet createWithSchedule(
+        Long scheduleId,
+        Long gisuId,
+        LocalDateTime scheduleStartsAt,
+        LocalDateTime scheduleEndsAt,
+        boolean requiresApproval
+    ) {
+        AttendanceWindow window = AttendanceWindow.from(
+            scheduleStartsAt,
+            scheduleEndsAt,
+            DEFAULT_LATE_THRESHOLD_MINUTES
+        );
+
+        return AttendanceSheet.builder()
+            .scheduleId(scheduleId)
+            .gisuId(gisuId)
+            .window(window)
+            .requiresApproval(requiresApproval)
+            .build();
     }
 
     /**
@@ -119,9 +162,24 @@ public class AttendanceSheet {
         }
     }
 
+    private void validateGisuId(Long gisuId) {
+        if (gisuId == null || gisuId <= 0) {
+            throw new IllegalArgumentException("유효하지 않은 기수 ID입니다");
+        }
+    }
+
     private void validateWindow(AttendanceWindow window) {
         if (window == null) {
             throw new IllegalArgumentException("출석 시간대는 필수입니다");
+        }
+    }
+
+    /**
+     * 일정 시간이 변경됨에 따라 출석 시간대도 같이 이동
+     */
+    public void shiftWindow(Duration diff) {
+        if (diff != null && !diff.isZero()) {
+            this.window = this.window.shift(diff);
         }
     }
 

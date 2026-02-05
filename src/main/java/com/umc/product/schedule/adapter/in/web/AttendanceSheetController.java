@@ -6,8 +6,8 @@ import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +20,7 @@ public class AttendanceSheetController implements AttendanceSheetControllerApi {
     private final UpdateAttendanceSheetUseCase updateAttendanceSheetUseCase;
 
     @Override
-    @PutMapping("/attendance-sheets/{sheetId}")
+    @PatchMapping("/attendance-sheets/{sheetId}")
     public void updateAttendanceSheet(
         @PathVariable Long sheetId,
         @RequestBody UpdateAttendanceSheetRequest request

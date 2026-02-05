@@ -50,7 +50,6 @@ public class MemberQueryService implements GetMemberUseCase {
         if (memberInfo.schoolId() != null) {
             SchoolInfo schoolInfo = getSchoolUseCase.getSchoolDetail(memberInfo.schoolId());
 
-            // 학교 정보 null이 아닌 경우에만 학교 이름 할당 - 미구현상태라 null check 추가
             if (schoolInfo != null) {
                 schoolName = schoolInfo.schoolName();
             }

@@ -8,7 +8,7 @@ import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeDetailR
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeReadStatusResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeStaticsResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeSummaryResponse;
-import com.umc.product.notice.domain.enums.NoticeClassification;
+import com.umc.product.notice.dto.NoticeClassification;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -36,8 +36,10 @@ public interface NoticeQueryApi {
         )
     })
     ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(
-        @Parameter(description = "공지 분류 (GENERAL, IMPORTANT 등)", required = true)
-        @RequestParam NoticeClassification classification,
+        @Parameter(description = "필터에 맞게! 공지를 조회하는 사람의 정보를 넣어주세요."
+            + "전체조회 : gisuId만 넣기 / 지부별 조회 : gisuId + chapterId 넣기 / "
+            + "학교별 조회 : + schoolId 넣기 / 파트별 조회 : + ChallengerPart 넣기", required = false)
+        @RequestParam(required = false) NoticeClassification classification,
 
         @Parameter(description = "페이징 정보 (page, size, sort)")
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
@@ -57,6 +59,11 @@ public interface NoticeQueryApi {
     ApiResponse<PageResponse<GetNoticeSummaryResponse>> searchNotices(
         @Parameter(description = "검색 키워드", required = true, example = "회의")
         @RequestParam String keyword,
+
+        @Parameter(description = "필터에 맞게! 공지를 조회하는 사람의 정보를 넣어주세요."
+            + "전체조회 : gisuId만 넣기 / 지부별 조회 : gisuId + chapterId 넣기 / "
+            + "학교별 조회 : + schoolId 넣기 / 파트별 조회 : + ChallengerPart 넣기", required = false)
+        @RequestParam(required = false) NoticeClassification classification,
 
         @Parameter(description = "페이징 정보")
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)

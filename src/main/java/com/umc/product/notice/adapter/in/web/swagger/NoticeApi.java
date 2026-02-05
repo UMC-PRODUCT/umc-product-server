@@ -63,8 +63,7 @@ public interface NoticeApi {
 
     @Operation(
         summary = "공지사항 수정",
-        description = "공지사항 내용을 수정합니다." +
-            "imageIds/links/voteIds가 포함되면 전체 교체(replace) 됩니다."
+        description = "공지사항 내용을 수정합니다."
     )
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -115,6 +114,28 @@ public interface NoticeApi {
 
         @Parameter(description = "리마인더 발송 정보", required = true)
         @RequestBody @Valid SendNoticeReminderRequest request,
+
+        @Parameter(hidden = true)
+        @CurrentMember MemberPrincipal memberPrincipal
+    );
+
+    @Operation(
+        summary = "공지사항 읽음 처리",
+        description = "공지사항을 읽음 처리합니다."
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "200",
+            description = "처리 성공"
+        ),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+            responseCode = "404",
+            description = "공지사항을 찾을 수 없음"
+        )
+    })
+    ApiResponse<Void> recordNoticeRead(
+        @Parameter(description = "공지사항 ID", required = true)
+        @PathVariable Long noticeId,
 
         @Parameter(hidden = true)
         @CurrentMember MemberPrincipal memberPrincipal

@@ -65,6 +65,7 @@ public interface StudyGroupQueryControllerApi {
                         @Parameter(description = "페이지 커서 (첫 페이지는 null)") Long cursor,
                         @Parameter(description = "페이지 크기 (기본 20, 최대 100)") int size);
 
+<<<<<<< HEAD
         @Operation(summary = "권한에 따라 스터디 그룹 이름 목록 조회", description = "로그인한 유저의 학교/파트 기반으로 스터디 그룹의 ID와 이름 목록을 조회합니다. 토글/드롭다운 용도.")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupNameResponse.class)))
@@ -72,6 +73,8 @@ public interface StudyGroupQueryControllerApi {
         StudyGroupNameResponse getStudyGroupNames(
                         @Parameter(hidden = true) MemberPrincipal memberPrincipal);
 
+=======
+>>>>>>> 5447cb8f1af6a362cee69dfbc502fd0ba238cd48
         @Operation(summary = "스터디 그룹 상세 조회", description = "스터디 그룹의 상세 정보와 멤버 목록을 조회합니다.")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupResponse.class))),

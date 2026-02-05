@@ -147,6 +147,7 @@ class DeleteScheduleUseCaseTest extends UseCaseTestSupport {
     private AttendanceSheet createAttendanceSheet(Long scheduleId) {
         return AttendanceSheet.builder()
             .scheduleId(scheduleId)
+            .gisuId(activeGisu.getId())
             .window(AttendanceWindow.ofDefault(LocalDateTime.now().plusDays(1)))
             .requiresApproval(false)
             .build();

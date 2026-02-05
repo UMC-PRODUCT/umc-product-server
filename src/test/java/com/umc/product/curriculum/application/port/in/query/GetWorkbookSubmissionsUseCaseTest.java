@@ -13,7 +13,10 @@ import com.umc.product.curriculum.adapter.out.persistence.CurriculumJpaRepositor
 import com.umc.product.curriculum.adapter.out.persistence.OriginalWorkbookJpaRepository;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
 import com.umc.product.curriculum.application.port.in.query.dto.StudyGroupFilterInfo;
+<<<<<<< HEAD
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionDetailInfo;
+=======
+>>>>>>> 5447cb8f1af6a362cee69dfbc502fd0ba238cd48
 import com.umc.product.organization.application.port.in.query.GetSchoolAccessContextUseCase;
 import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
@@ -261,6 +264,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         assertThat(result).isEmpty();
     }
 
+<<<<<<< HEAD
     @Test
     void 챌린저_워크북의_제출_URL을_조회한다() {
         // given
@@ -313,6 +317,8 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         assertThat(result.submission()).isNull();
     }
 
+=======
+>>>>>>> 5447cb8f1af6a362cee69dfbc502fd0ba238cd48
     @Nested
     class 권한별_컨텍스트_조회 {
 

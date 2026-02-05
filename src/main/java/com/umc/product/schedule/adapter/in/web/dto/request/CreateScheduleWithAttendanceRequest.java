@@ -1,12 +1,8 @@
 package com.umc.product.schedule.adapter.in.web.dto.request;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleWithAttendanceCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
-import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
-import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -58,35 +54,14 @@ public record CreateScheduleWithAttendanceRequest(
     Set<ScheduleTag> tags,
 
     // AttendanceSheet 정보
-    @Schema(description = "출석 시작 시간", example = "2026-03-16T09:50:00")
-    @NotNull(message = "출석 시작 시간은 필수입니다")
-    LocalDateTime attendanceStartTime,
-
-    @Schema(description = "출석 종료 시간", example = "2026-03-16T10:10:00")
-    @NotNull(message = "출석 종료 시간은 필수입니다")
-    LocalDateTime attendanceEndTime,
-
-    @Schema(description = "지각 기준 시간(분)", example = "10")
-    @NotNull(message = "지각 기준 시간은 필수입니다")
-    Integer lateThresholdMinutes,
+    @Schema(description = "기수 ID", example = "1")
+    @NotNull(message = "기수 ID는 필수입니다")
+    Long gisuId,
 
     @Schema(description = "승인 필요 여부", example = "true")
     boolean requiresApproval
 ) {
-    public CreateScheduleWithAttendanceRequest {
-        if (attendanceStartTime != null && attendanceEndTime != null
-            && attendanceStartTime.isAfter(attendanceEndTime)) {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.INVALID_TIME_RANGE);
-        }
-    }
-
     public CreateScheduleWithAttendanceCommand toCommand(Long authorMemberId) {
-        AttendanceWindow window = AttendanceWindow.from(
-            attendanceStartTime,
-            attendanceEndTime,
-            lateThresholdMinutes
-        );
-
         return new CreateScheduleWithAttendanceCommand(
             name,
             startsAt,
@@ -98,7 +73,7 @@ public record CreateScheduleWithAttendanceRequest(
             participantMemberIds,
             tags,
             authorMemberId,
-            window,
+            gisuId,
             requiresApproval
         );
     }

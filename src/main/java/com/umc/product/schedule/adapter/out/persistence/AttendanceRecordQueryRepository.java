@@ -1,6 +1,5 @@
 package com.umc.product.schedule.adapter.out.persistence;
 
-import static com.umc.product.challenger.domain.QChallenger.challenger;
 import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.organization.domain.QSchool.school;
 import static com.umc.product.schedule.domain.QAttendanceRecord.attendanceRecord;
@@ -30,7 +29,7 @@ public class AttendanceRecordQueryRepository {
         return queryFactory
             .select(Projections.constructor(PendingAttendanceInfo.class,
                 attendanceRecord.id,
-                challenger.id,
+                member.id,
                 member.name,
                 member.nickname,
                 school.name,
@@ -41,7 +40,6 @@ public class AttendanceRecordQueryRepository {
             .from(attendanceRecord)
             .join(member).on(member.id.eq(attendanceRecord.memberId))
             .leftJoin(school).on(school.id.eq(member.schoolId))
-            .leftJoin(challenger).on(challenger.memberId.eq(member.id))
             .where(
                 attendanceRecord.attendanceSheetId.eq(sheetId),
                 attendanceRecord.status.in(APPROVAL_PENDING_STATUSES)

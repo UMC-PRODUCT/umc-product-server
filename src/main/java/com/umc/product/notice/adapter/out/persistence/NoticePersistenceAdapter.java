@@ -6,8 +6,9 @@ import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeRead;
-import com.umc.product.notice.domain.enums.NoticeClassification;
+import com.umc.product.notice.dto.NoticeClassification;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,14 +38,15 @@ public class NoticePersistenceAdapter implements
     }
 
     @Override
-    public Page<Notice> findNoticesByKeyword(String keyword, Pageable pageable) {
-        return noticeQueryRepository.findByKeyword(keyword, pageable);
+    public Page<Notice> findNoticesByKeyword(String keyword, NoticeClassification noticeClassification, Pageable pageable) {
+        return noticeQueryRepository.findByKeyword(keyword, noticeClassification, pageable);
     }
 
     @Override
     public Page<Notice> findAllNotices(Pageable pageable) {
         return noticeJpaRepository.findAll(pageable);
     }
+
 
     @Override
     public Notice save(Notice notice) {
@@ -74,6 +76,11 @@ public class NoticePersistenceAdapter implements
     @Override
     public long countReadsByNoticeId(Long noticeId) {
         return noticeReadJpaRepository.countByNoticeId(noticeId);
+    }
+
+    @Override
+    public Map<Long, Long> countReadsByNoticeIds(List<Long> noticeIds) {
+        return noticeQueryRepository.countReadsByNoticeIds(noticeIds);
     }
 
     @Override

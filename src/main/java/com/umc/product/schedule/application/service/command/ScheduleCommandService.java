@@ -1,7 +1,7 @@
 package com.umc.product.schedule.application.service.command;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
@@ -13,9 +13,12 @@ import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
 import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
+import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,11 +44,10 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     // 일정 생성
     @Override
     public Long create(CreateScheduleCommand command) {
-        // 작성자의 가장 최근 Challenger 조회
-        ChallengerInfo challengerInfo = getChallengerUseCase.getLatestActiveChallengerByMemberId(
+        // 작성자의 Challenger 상태 조회 (탈부, 제명 상태일 시 exeption)
+        ChallengerInfoWithStatus challengerInfoWithStatus = getChallengerUseCase.getLatestActiveChallengerByMemberId(
             command.authorMemberId());
-
-        Long authorChallengerId = challengerInfo.challengerId();
+        Long authorChallengerId = challengerInfoWithStatus.challengerId();
 
         // Schedule 생성 및 저장
         Schedule schedule = command.toEntity(authorChallengerId);
@@ -54,13 +56,19 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         return savedSchedule.getId();
     }
 
-
     // 일정 수정
     @Override
     public void update(UpdateScheduleCommand command) {
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
+        AttendanceSheet attendanceSheet = loadAttendanceSheetPort.findByScheduleId(command.scheduleId())
+            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+
+        // 변경 전 기존 일정 시작 시간
+        LocalDateTime oldStartsAt = schedule.getStartsAt();
+
+        // 일정 정보 업데이트
         schedule.update(
             command.name(),
             command.description(),
@@ -71,6 +79,15 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             command.locationName(),
             command.location()
         );
+
+        // 일정 시간이 변경되었으면, 그 차이만큼 출석부 시간대 이동
+        if (command.startsAt() != null) {
+            Duration diff = Duration.between(oldStartsAt, command.startsAt());
+            
+            if (!diff.isZero()) {
+                attendanceSheet.shiftWindow(diff);
+            }
+        }
 
         saveSchedulePort.save(schedule);
     }

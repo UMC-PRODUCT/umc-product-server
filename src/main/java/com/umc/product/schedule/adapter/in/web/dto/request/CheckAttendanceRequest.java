@@ -15,7 +15,7 @@ public record CheckAttendanceRequest(
         }
     }
 
-    public CheckAttendanceCommand toCommand(Long challengerId) {
-        return new CheckAttendanceCommand(attendanceSheetId, challengerId, LocalDateTime.now());
+    public CheckAttendanceCommand toCommand(Long memberId) {
+        return new CheckAttendanceCommand(attendanceSheetId, memberId, LocalDateTime.now());
     }
 }

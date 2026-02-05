@@ -4,7 +4,10 @@ import com.umc.product.global.response.PageResponse;
 import com.umc.product.organization.adapter.in.web.dto.request.SchoolListRequest;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolListItemResponse;
+<<<<<<< HEAD
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolNameListResponse;
+=======
+>>>>>>> 5447cb8f1af6a362cee69dfbc502fd0ba238cd48
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolPageResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.UnassignedSchoolListResponse;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
@@ -40,12 +43,15 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
     }
 
     @Override
+<<<<<<< HEAD
     @GetMapping("/all")
     public SchoolNameListResponse getAllSchools() {
         return SchoolNameListResponse.from(getSchoolUseCase.getAllSchoolNames());
     }
 
     @Override
+=======
+>>>>>>> 5447cb8f1af6a362cee69dfbc502fd0ba238cd48
     @GetMapping("/{schoolId}")
     public SchoolDetailResponse getSchoolDetail(@PathVariable Long schoolId) {
         SchoolInfo schoolInfo = getSchoolUseCase.getSchoolDetail(schoolId);
