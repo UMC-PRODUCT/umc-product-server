@@ -70,10 +70,7 @@ public class Member extends BaseEntity {
 
     public void updateProfile(String profileImageId) {
         validateActive();
-
-        if (profileImageId != null) {
-            this.profileImageId = profileImageId;
-        }
+        this.profileImageId = profileImageId;
     }
 
     /**
