@@ -71,10 +71,7 @@ public class ScheduleAttendanceCommandFacadeService implements
 
     @Override
     public void delete(Long scheduleId) {
-        // 1. 출석부 삭제 (있는 경우)
-        deleteAttendanceSheetPort.deleteByScheduleId(scheduleId);
-
-        // 2. 일정 삭제
+        // 일정 삭제 (출석부가 있을 시, 출석부 + 출석 기록까지 삭제)
         deleteScheduleUseCase.delete(scheduleId);
     }
 }

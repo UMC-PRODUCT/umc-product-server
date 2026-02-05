@@ -5,9 +5,11 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
@@ -24,7 +26,6 @@ import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -83,16 +84,16 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
         // 참여자 없는 일정 생성 (출석부 자동 생성 안됨)
         LocalDateTime now = LocalDateTime.now();
         CreateScheduleCommand command = CreateScheduleCommand.of(
-                "출석부 없는 일정",
-                now.plusHours(1),
-                now.plusHours(3),
-                false,
-                "테스트 장소",
-                null,
-                "테스트 설명",
-                List.of(), // 참여자 없음
-                Set.of(ScheduleTag.GENERAL),
-                authorMember.getId()
+            "출석부 없는 일정",
+            now.plusHours(1),
+            now.plusHours(3),
+            false,
+            "테스트 장소",
+            null,
+            "테스트 설명",
+            List.of(), // 참여자 없음
+            Set.of(ScheduleTag.GENERAL),
+            authorMember.getId()
         );
         scheduleIdWithoutSheet = createScheduleUseCase.create(command);
     }
@@ -107,18 +108,18 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
             // given
             Schedule schedule = loadSchedulePort.findById(scheduleIdWithoutSheet).orElseThrow();
             AttendanceWindow window = AttendanceWindow.of(
-                    schedule.getStartsAt(),
-                    30, // 30분 전부터
-                    30, // 30분 후까지
-                    10  // 10분 지각 인정
+                schedule.getStartsAt(),
+                30, // 30분 전부터
+                30, // 30분 후까지
+                10  // 10분 지각 인정
             );
 
             CreateAttendanceSheetCommand command = new CreateAttendanceSheetCommand(
-                    scheduleIdWithoutSheet,
-                    activeGisu.getId(),
-                    window,
-                    false,
-                    List.of()
+                scheduleIdWithoutSheet,
+                activeGisu.getId(),
+                window,
+                false,
+                List.of()
             );
 
             // when
@@ -140,11 +141,11 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
             AttendanceWindow window = AttendanceWindow.ofDefault(schedule.getStartsAt());
 
             CreateAttendanceSheetCommand command = new CreateAttendanceSheetCommand(
-                    scheduleIdWithoutSheet,
-                    activeGisu.getId(),
-                    window,
-                    true, // 승인 필요
-                    List.of()
+                scheduleIdWithoutSheet,
+                activeGisu.getId(),
+                window,
+                true, // 승인 필요
+                List.of()
             );
 
             // when
@@ -161,16 +162,16 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
             // given
             AttendanceWindow window = AttendanceWindow.ofDefault(LocalDateTime.now());
             CreateAttendanceSheetCommand command = new CreateAttendanceSheetCommand(
-                    999999L, // 존재하지 않는 일정 ID
-                    activeGisu.getId(),
-                    window,
-                    false,
-                    List.of()
+                999999L, // 존재하지 않는 일정 ID
+                activeGisu.getId(),
+                window,
+                false,
+                List.of()
             );
 
             // when & then
             assertThatThrownBy(() -> createAttendanceSheetUseCase.create(command))
-                    .isInstanceOf(BusinessException.class);
+                .isInstanceOf(BusinessException.class);
         }
     }
 
@@ -185,11 +186,11 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
             Schedule schedule = loadSchedulePort.findById(scheduleIdWithoutSheet).orElseThrow();
             AttendanceWindow window = AttendanceWindow.ofDefault(schedule.getStartsAt());
             CreateAttendanceSheetCommand createCommand = new CreateAttendanceSheetCommand(
-                    scheduleIdWithoutSheet,
-                    activeGisu.getId(),
-                    window,
-                    false,
-                    List.of()
+                scheduleIdWithoutSheet,
+                activeGisu.getId(),
+                window,
+                false,
+                List.of()
             );
             AttendanceSheetId sheetId = createAttendanceSheetUseCase.create(createCommand);
             existingSheet = loadAttendanceSheetPort.findById(sheetId.id()).orElseThrow();
@@ -200,16 +201,16 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
         void 출석부의_시간대를_수정할_수_있다() {
             // given
             AttendanceWindow newWindow = AttendanceWindow.of(
-                    existingSheet.getWindow().getStartTime(),
-                    60, // 60분 전부터
-                    60, // 60분 후까지
-                    15  // 15분 지각 인정
+                existingSheet.getWindow().getStartTime(),
+                60, // 60분 전부터
+                60, // 60분 후까지
+                15  // 15분 지각 인정
             );
 
             UpdateAttendanceSheetCommand command = new UpdateAttendanceSheetCommand(
-                    existingSheet.getAttendanceSheetId(),
-                    newWindow,
-                    false
+                existingSheet.getAttendanceSheetId(),
+                newWindow,
+                false
             );
 
             // when
@@ -227,9 +228,9 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
             assertThat(existingSheet.isRequiresApproval()).isFalse();
 
             UpdateAttendanceSheetCommand command = new UpdateAttendanceSheetCommand(
-                    existingSheet.getAttendanceSheetId(),
-                    existingSheet.getWindow(),
-                    true // 승인 필요로 변경
+                existingSheet.getAttendanceSheetId(),
+                existingSheet.getWindow(),
+                true // 승인 필요로 변경
             );
 
             // when
@@ -252,11 +253,11 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
             Schedule schedule = loadSchedulePort.findById(scheduleIdWithoutSheet).orElseThrow();
             AttendanceWindow window = AttendanceWindow.ofDefault(schedule.getStartsAt());
             CreateAttendanceSheetCommand createCommand = new CreateAttendanceSheetCommand(
-                    scheduleIdWithoutSheet,
-                    activeGisu.getId(),
-                    window,
-                    false,
-                    List.of()
+                scheduleIdWithoutSheet,
+                activeGisu.getId(),
+                window,
+                false,
+                List.of()
             );
             AttendanceSheetId sheetId = createAttendanceSheetUseCase.create(createCommand);
             existingSheet = loadAttendanceSheetPort.findById(sheetId.id()).orElseThrow();
@@ -300,8 +301,8 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
 
             // when & then
             assertThatThrownBy(() ->
-                    updateAttendanceSheetUseCase.deactivate(existingSheet.getAttendanceSheetId()))
-                    .isInstanceOf(IllegalStateException.class);
+                updateAttendanceSheetUseCase.deactivate(existingSheet.getAttendanceSheetId()))
+                .isInstanceOf(IllegalStateException.class);
         }
 
         @Test
@@ -311,8 +312,8 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
 
             // when & then
             assertThatThrownBy(() ->
-                    updateAttendanceSheetUseCase.activate(existingSheet.getAttendanceSheetId()))
-                    .isInstanceOf(IllegalStateException.class);
+                updateAttendanceSheetUseCase.activate(existingSheet.getAttendanceSheetId()))
+                .isInstanceOf(IllegalStateException.class);
         }
     }
 
@@ -320,43 +321,51 @@ public class AttendanceSheetUseCaseTest extends UseCaseTestSupport {
 
     private Gisu createActiveGisu(Long generation) {
         return Gisu.builder()
-                .generation(generation)
-                .isActive(true)
-                .startAt(LocalDateTime.of(2024, 3, 1, 0, 0).atZone(ZoneId.systemDefault()).toInstant())
-                .endAt(LocalDateTime.of(2024, 8, 31, 23, 59).atZone(ZoneId.systemDefault()).toInstant())
-                .build();
+            .generation(generation)
+            .isActive(true)
+            .startAt(LocalDateTime.of(2024, 3, 1, 0, 0).atZone(ZoneId.systemDefault()).toInstant())
+            .endAt(LocalDateTime.of(2024, 8, 31, 23, 59).atZone(ZoneId.systemDefault()).toInstant())
+            .build();
     }
 
     private Member createMember(String name, String nickname, String email, Long schoolId, String profileImageId) {
         return Member.builder()
-                .email(email)
-                .name(name)
-                .nickname(nickname)
-                .schoolId(schoolId)
-                .profileImageId(profileImageId)
-                .build();
+            .email(email)
+            .name(name)
+            .nickname(nickname)
+            .schoolId(schoolId)
+            .profileImageId(profileImageId)
+            .build();
     }
 
     private Challenger createChallenger(Long memberId, Long gisuId) {
         return Challenger.builder()
-                .memberId(memberId)
-                .gisuId(gisuId)
-                .part(ChallengerPart.SPRINGBOOT)
-                .build();
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .build();
     }
 
     private void mockChallengerInfo(Long memberId, Long gisuId, Long challengerId) {
         ChallengerInfo mockInfo = ChallengerInfo.builder()
-                .challengerId(challengerId)
-                .memberId(memberId)
-                .gisuId(gisuId)
-                .part(ChallengerPart.SPRINGBOOT)
-                .challengerPoints(List.of())
-                .build();
+            .challengerId(challengerId)
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .challengerPoints(List.of())
+            .build();
+
+        ChallengerInfoWithStatus mockInfoWithStatus = ChallengerInfoWithStatus.builder()
+            .challengerId(challengerId)
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(ChallengerPart.SPRINGBOOT)
+            .status(ChallengerStatus.ACTIVE)
+            .build();
 
         given(getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId))
-                .willReturn(mockInfo);
+            .willReturn(mockInfo);
         given(getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId))
-                .willReturn(mockInfo);
+            .willReturn(mockInfoWithStatus);
     }
 }

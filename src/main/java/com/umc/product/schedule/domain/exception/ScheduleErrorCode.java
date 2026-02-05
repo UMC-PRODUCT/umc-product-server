@@ -24,7 +24,6 @@ public enum ScheduleErrorCode implements BaseCode {
     INVALID_LATE_THRESHOLD(HttpStatus.BAD_REQUEST, "SCHEDULE-0007", "지각 인정 시간이 유효하지 않습니다"),
 
     // 일정 생성 관련
-    NOT_ACTIVE_CHALLENGER(HttpStatus.BAD_REQUEST, "SCHEDULE-0008", "현재 활성 기수의 챌린저만 일정을 생성할 수 있습니다."),
     TAG_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0010", "태그는 최소 1개 이상 선택해야 합니다"),
     GISU_ID_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0011", "기수 ID는 필수입니다"),
     ;

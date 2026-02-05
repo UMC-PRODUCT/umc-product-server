@@ -2,6 +2,7 @@ package com.umc.product.challenger.application.service;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
@@ -52,12 +53,13 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     }
 
     @Override
-    public ChallengerInfo getLatestActiveChallengerByMemberId(Long memberId) {
+    public ChallengerInfoWithStatus getLatestActiveChallengerByMemberId(Long memberId) {
         Challenger challenger = loadChallengerPort.findTopByMemberIdOrderByCreatedAtDesc(memberId);
-        if (challenger.getStatus() != ChallengerStatus.ACTIVE) {
-            throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_ACTIVE);
+        if (challenger.getStatus() == ChallengerStatus.WITHDRAWN
+            || challenger.getStatus() == ChallengerStatus.EXPELLED) {
+            throw new ChallengerDomainException(ChallengerErrorCode.NOT_ALLOWED_AUTHOR);
         }
-        return ChallengerInfo.from(challenger);
+        return ChallengerInfoWithStatus.from(challenger);
     }
 
     @Override

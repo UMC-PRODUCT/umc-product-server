@@ -52,6 +52,11 @@ public class SchedulePersistenceAdapter implements
         return scheduleJpaRepository.findAll();
     }
 
+    @Override
+    public Optional<Schedule> findByIdWithTags(Long scheduleId) {
+        return scheduleQueryRepository.findByIdWithTags(scheduleId);
+    }
+
     // ========== SaveSchedulePort ==========
 
     @Override
