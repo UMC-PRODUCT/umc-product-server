@@ -49,8 +49,12 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
     @GetMapping("/{schoolId}")
     public SchoolDetailResponse getSchoolDetail(@PathVariable Long schoolId) {
         SchoolInfo schoolInfo = getSchoolUseCase.getSchoolDetail(schoolId);
-        FileInfo fileInfo = getFileUseCase.getById(schoolInfo.logoImageId());
-        return SchoolDetailResponse.of(schoolInfo, fileInfo.fileLink());
+        String logoImageLink = null;
+        if (schoolInfo.logoImageId() != null) {
+            FileInfo fileInfo = getFileUseCase.getById(schoolInfo.logoImageId());
+            logoImageLink = fileInfo.fileLink();
+        }
+        return SchoolDetailResponse.of(schoolInfo, logoImageLink);
     }
 
     @Override
