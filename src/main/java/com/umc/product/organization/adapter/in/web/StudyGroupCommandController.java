@@ -6,9 +6,9 @@ import com.umc.product.organization.application.port.in.command.ManageStudyGroup
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +27,7 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
     }
 
     @Override
-    @PutMapping("/{groupId}")
+    @PatchMapping("/{groupId}")
     public void update(
             @PathVariable Long groupId,
             @Valid @RequestBody UpdateStudyGroupRequest request) {
