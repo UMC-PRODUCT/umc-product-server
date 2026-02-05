@@ -9,9 +9,11 @@ import com.umc.product.organization.application.port.in.query.dto.PartSummaryInf
 import com.umc.product.organization.application.port.in.query.dto.SchoolStudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
+import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
+import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
 import com.umc.product.organization.domain.StudyGroup;
@@ -39,6 +41,9 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
     private TestMemberRepository memberRepository;
+
+    @Autowired
+    private LoadStudyGroupPort loadStudyGroupPort;
 
     @Autowired
     private TestChallengerRepository challengerRepository;
@@ -271,6 +276,102 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
         // when - 다른 학교 조회
         StudyGroupListQuery query = new StudyGroupListQuery(999L, ChallengerPart.WEB, null, 10);
         List<StudyGroupListInfo.StudyGroupInfo> result = getStudyGroupUseCase.getStudyGroups(query);
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void 스터디_그룹_이름_목록을_파트_필터로_조회한다() {
+        // given
+        Gisu activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        School school = manageSchoolPort.save(School.create("서울대학교", "비고1"));
+
+        Challenger webChallenger1 = createAndSaveChallenger("웹1", school.getId(), ChallengerPart.WEB, activeGisu.getId());
+        Challenger webChallenger2 = createAndSaveChallenger("웹2", school.getId(), ChallengerPart.WEB, activeGisu.getId());
+        Challenger springChallenger = createAndSaveChallenger("스프링1", school.getId(), ChallengerPart.SPRINGBOOT, activeGisu.getId());
+
+        StudyGroup reactA = createStudyGroup("React A팀", activeGisu, ChallengerPart.WEB);
+        reactA.addMember(webChallenger1.getId());
+        manageStudyGroupPort.save(reactA);
+
+        StudyGroup reactB = createStudyGroup("React B팀", activeGisu, ChallengerPart.WEB);
+        reactB.addMember(webChallenger2.getId());
+        manageStudyGroupPort.save(reactB);
+
+        StudyGroup springA = createStudyGroup("Spring A팀", activeGisu, ChallengerPart.SPRINGBOOT);
+        springA.addMember(springChallenger.getId());
+        manageStudyGroupPort.save(springA);
+
+        // when
+        List<StudyGroupNameInfo> result = loadStudyGroupPort.findStudyGroupNames(school.getId(), ChallengerPart.WEB);
+
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(StudyGroupNameInfo::name)
+                .containsExactly("React A팀", "React B팀");
+    }
+
+    @Test
+    void 파트가_null이면_모든_파트의_스터디_그룹_이름을_조회한다() {
+        // given
+        Gisu activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        School school = manageSchoolPort.save(School.create("서울대학교", "비고1"));
+
+        Challenger webChallenger = createAndSaveChallenger("웹1", school.getId(), ChallengerPart.WEB, activeGisu.getId());
+        Challenger springChallenger = createAndSaveChallenger("스프링1", school.getId(), ChallengerPart.SPRINGBOOT, activeGisu.getId());
+
+        StudyGroup reactA = createStudyGroup("React A팀", activeGisu, ChallengerPart.WEB);
+        reactA.addMember(webChallenger.getId());
+        manageStudyGroupPort.save(reactA);
+
+        StudyGroup springA = createStudyGroup("Spring A팀", activeGisu, ChallengerPart.SPRINGBOOT);
+        springA.addMember(springChallenger.getId());
+        manageStudyGroupPort.save(springA);
+
+        // when
+        List<StudyGroupNameInfo> result = loadStudyGroupPort.findStudyGroupNames(school.getId(), null);
+
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(StudyGroupNameInfo::name)
+                .containsExactly("React A팀", "Spring A팀");
+    }
+
+    @Test
+    void 비활성_기수의_스터디_그룹_이름은_조회되지_않는다() {
+        // given
+        Gisu inactiveGisu = manageGisuPort.save(createInactiveGisu(8L));
+        Gisu activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        School school = manageSchoolPort.save(School.create("서울대학교", "비고1"));
+
+        Challenger oldChallenger = createAndSaveChallenger("옛날1", school.getId(), ChallengerPart.WEB, inactiveGisu.getId());
+        Challenger newChallenger = createAndSaveChallenger("현재1", school.getId(), ChallengerPart.WEB, activeGisu.getId());
+
+        StudyGroup oldGroup = createStudyGroup("Old팀", inactiveGisu, ChallengerPart.WEB);
+        oldGroup.addMember(oldChallenger.getId());
+        manageStudyGroupPort.save(oldGroup);
+
+        StudyGroup newGroup = createStudyGroup("New팀", activeGisu, ChallengerPart.WEB);
+        newGroup.addMember(newChallenger.getId());
+        manageStudyGroupPort.save(newGroup);
+
+        // when
+        List<StudyGroupNameInfo> result = loadStudyGroupPort.findStudyGroupNames(school.getId(), ChallengerPart.WEB);
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).name()).isEqualTo("New팀");
+    }
+
+    @Test
+    void 스터디_그룹이_없으면_빈_이름_목록을_반환한다() {
+        // given
+        manageGisuPort.save(createActiveGisu(9L));
+        School school = manageSchoolPort.save(School.create("서울대학교", "비고1"));
+
+        // when
+        List<StudyGroupNameInfo> result = loadStudyGroupPort.findStudyGroupNames(school.getId(), ChallengerPart.WEB);
 
         // then
         assertThat(result).isEmpty();

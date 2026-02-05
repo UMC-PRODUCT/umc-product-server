@@ -15,6 +15,7 @@ import com.umc.product.organization.application.port.in.query.dto.PartSummaryInf
 import com.umc.product.organization.application.port.in.query.dto.SchoolStudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -287,6 +288,43 @@ public class StudyGroupQueryRepository {
                 leaderResult,
                 nonLeaderMembers
         );
+    }
+
+    /**
+     * 스터디 그룹 이름 목록 조회 (활성 기수 기준, 학교/파트 필터)
+     * - 해당 학교 멤버가 포함된 스터디 그룹의 ID/이름만 반환
+     */
+    public List<StudyGroupNameInfo> findStudyGroupNames(Long schoolId, ChallengerPart part) {
+        List<Long> studyGroupIds = queryFactory
+                .selectDistinct(studyGroup.id)
+                .from(studyGroupMember)
+                .join(studyGroupMember.studyGroup, studyGroup)
+                .join(challenger).on(challenger.id.eq(studyGroupMember.challengerId))
+                .join(member).on(member.id.eq(challenger.memberId))
+                .where(
+                        studyGroup.gisu.isActive.eq(true),
+                        member.schoolId.eq(schoolId),
+                        partCondition(part)
+                )
+                .fetch();
+
+        if (studyGroupIds.isEmpty()) {
+            return List.of();
+        }
+
+        return queryFactory
+                .select(Projections.constructor(StudyGroupNameInfo.class,
+                        studyGroup.id,
+                        studyGroup.name
+                ))
+                .from(studyGroup)
+                .where(studyGroup.id.in(studyGroupIds))
+                .orderBy(studyGroup.name.asc())
+                .fetch();
+    }
+
+    private BooleanExpression partCondition(ChallengerPart part) {
+        return part != null ? studyGroup.part.eq(part) : null;
     }
 
     private BooleanExpression cursorCondition(Long cursor) {

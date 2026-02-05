@@ -5,6 +5,7 @@ import com.umc.product.organization.application.port.in.query.dto.PartSummaryInf
 import com.umc.product.organization.application.port.in.query.dto.SchoolStudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
 import com.umc.product.organization.domain.StudyGroup;
 import java.util.List;
 
@@ -29,6 +30,11 @@ public interface LoadStudyGroupPort {
      * 페이지네이션 처리는 Controller에서 CursorResponse.of()로 수행
      */
     List<StudyGroupListInfo.StudyGroupInfo> findStudyGroups(Long schoolId, ChallengerPart part, Long cursor, int size);
+
+    /**
+     * 스터디 그룹 이름 목록 조회 (활성 기수 기준, 학교/파트 필터)
+     */
+    List<StudyGroupNameInfo> findStudyGroupNames(Long schoolId, ChallengerPart part);
 
     /**
      * 4단계: 스터디 그룹 상세 조회

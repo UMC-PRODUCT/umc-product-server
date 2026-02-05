@@ -4,6 +4,7 @@ import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupListResponse.Summary;
+import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupPartsResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSchoolsResponse;
@@ -63,6 +64,18 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
                 size,
                 StudyGroupInfo::groupId,
                 Summary::from
+        );
+    }
+
+    /**
+     * 스터디 그룹 이름 목록 조회 - 토글/드롭다운 용도
+     */
+    @Override
+    @GetMapping("/names")
+    public StudyGroupNameResponse getStudyGroupNames(
+            @CurrentMember MemberPrincipal memberPrincipal) {
+        return StudyGroupNameResponse.from(
+                getStudyGroupUseCase.getStudyGroupNames(memberPrincipal.getMemberId())
         );
     }
 
