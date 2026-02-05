@@ -79,7 +79,7 @@ public class DocumentEvaluationController {
         return ApplicationListResponse.from(info);
     }
 
-    @GetMapping("/{applicationId}")
+    @GetMapping("/{applicationId}/document-evaluation")
     @Operation(
             summary = "(운영진) 지원서 상세 조회",
             description = """
