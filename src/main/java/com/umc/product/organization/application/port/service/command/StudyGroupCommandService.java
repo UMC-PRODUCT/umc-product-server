@@ -6,6 +6,7 @@ import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.in.command.ManageStudyGroupUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupCommand;
+import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupMembersCommand;
 import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
@@ -56,6 +57,16 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
     }
 
     @Override
+    public void updateMembers(UpdateStudyGroupMembersCommand command) {
+        validateChallengerIdsExist(command.challengerIds());
+
+        StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
+        studyGroup.updateMembers(command.challengerIds());
+
+        manageStudyGroupPort.save(studyGroup);
+    }
+
+    @Override
     public void delete(Long groupId) {
         StudyGroup studyGroup = loadStudyGroupPort.findById(groupId);
 
@@ -67,6 +78,13 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
         challengerIds.add(leaderId);
         if (memberIds != null) {
             challengerIds.addAll(memberIds);
+        }
+        validateChallengerIdsExist(challengerIds);
+    }
+
+    private void validateChallengerIdsExist(Set<Long> challengerIds) {
+        if (challengerIds == null || challengerIds.isEmpty()) {
+            return;
         }
 
         Long count = loadChallengerPort.countByIdIn(challengerIds);
