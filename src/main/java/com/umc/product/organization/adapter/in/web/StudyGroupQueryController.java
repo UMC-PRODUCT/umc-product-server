@@ -68,7 +68,7 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     }
 
     /**
-     * 스터디 그룹 이름 목록 조회 - 토글/드롭다운 용도
+     * 권한에 따라 스터디 그룹 이름 목록 조회 - 토글/드롭다운 용도
      */
     @Override
     @GetMapping("/names")
