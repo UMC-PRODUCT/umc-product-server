@@ -16,7 +16,7 @@ import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
-import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
 import com.umc.product.terms.application.port.in.command.ManageTermsAgreementUseCase;
@@ -36,7 +36,8 @@ public class MemberService implements ManageMemberUseCase {
     private final LoadMemberPort loadMemberPort;
     private final SaveMemberPort saveMemberPort;
     private final LoadSchoolPort loadSchoolPort;
-    private final LoadFileMetadataPort loadFileMetadataPort;
+
+    private final GetFileUseCase getFileUseCase;
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
     private final ManageTermsAgreementUseCase manageTermsAgreementUseCase;
     private final GetTermsUseCase getTermsUseCase;
@@ -51,9 +52,7 @@ public class MemberService implements ManageMemberUseCase {
         }
 
         // ProfileImageId 존재 검증 (선택적 필드이므로 null이 아닐 때만 검증)
-        if (command.profileImageId() != null && !loadFileMetadataPort.existsByFileId(command.profileImageId())) {
-            throw new StorageException(StorageErrorCode.FILE_NOT_FOUND);
-        }
+        validateProfileImageExists(command.profileImageId());
 
         // 필수 동의 약관에 전부 동의했는지 확인
         validateMandatoryTermsAgreed(command);
@@ -80,8 +79,12 @@ public class MemberService implements ManageMemberUseCase {
     }
 
     @Override
+    @Transactional
     public void updateMember(UpdateMemberCommand command) {
         Member member = findById(command.memberId());
+
+        validateProfileImageExists(command.newProfileImageId());
+
         member.updateProfile(command.newProfileImageId());
     }
 
@@ -106,5 +109,11 @@ public class MemberService implements ManageMemberUseCase {
     private Member findById(Long memberId) {
         return loadMemberPort.findById(memberId).orElseThrow(
             () -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private void validateProfileImageExists(String profileImageId) {
+        if (profileImageId != null && !getFileUseCase.existsById(profileImageId)) {
+            throw new StorageException(StorageErrorCode.FILE_NOT_FOUND);
+        }
     }
 }
