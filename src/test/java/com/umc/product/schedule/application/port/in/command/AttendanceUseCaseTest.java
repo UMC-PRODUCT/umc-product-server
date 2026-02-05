@@ -30,6 +30,7 @@ import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import com.umc.product.support.UseCaseTestSupport;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -258,12 +259,12 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
     // ========== Fixture 메서드 ==========
 
     private Gisu createActiveGisu(Long generation) {
-        return Gisu.builder()
-            .generation(generation)
-            .isActive(true)
-            .startAt(LocalDateTime.of(2024, 3, 1, 0, 0).atZone(ZoneId.systemDefault()).toInstant())
-            .endAt(LocalDateTime.of(2024, 8, 31, 23, 59).atZone(ZoneId.systemDefault()).toInstant())
-            .build();
+        return Gisu.create(
+            generation,
+            Instant.parse("2024-03-01T00:00:00Z"),
+            Instant.parse("2024-08-31T23:59:00Z"),
+            true
+        );
     }
 
     private Member createMember(String name, String nickname, String email, Long schoolId, String profileImageId) {

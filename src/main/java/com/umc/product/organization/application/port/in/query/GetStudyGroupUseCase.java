@@ -36,14 +36,11 @@ public interface GetStudyGroupUseCase {
         List<StudyGroupListInfo.StudyGroupInfo> getStudyGroups(StudyGroupListQuery query);
 
         /**
-<<<<<<< HEAD
          * 스터디 그룹 이름 목록 조회 - memberId 기반으로 schoolId/part를 자동 resolve
          */
         List<StudyGroupNameInfo> getStudyGroupNames(Long memberId);
 
         /**
-=======
->>>>>>> 5447cb8f1af6a362cee69dfbc502fd0ba238cd48
          * 스터디 그룹 상세 조회
          */
         StudyGroupDetailInfo getStudyGroupDetail(Long groupId);

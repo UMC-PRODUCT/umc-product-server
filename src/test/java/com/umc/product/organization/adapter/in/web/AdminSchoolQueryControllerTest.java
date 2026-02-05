@@ -12,10 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.umc.product.organization.application.port.in.query.dto.SchoolInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
-<<<<<<< HEAD
 import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
-=======
->>>>>>> 5447cb8f1af6a362cee69dfbc502fd0ba238cd48
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.support.DocumentationTest;
