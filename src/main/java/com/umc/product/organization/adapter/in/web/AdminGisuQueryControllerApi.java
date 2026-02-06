@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import com.umc.product.organization.adapter.in.web.dto.response.ActiveGisuResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.data.domain.Pageable;
 
@@ -34,4 +35,14 @@ public interface AdminGisuQueryControllerApi {
             )
     })
     GisuNameListResponse getAllGisu();
+
+    @Operation(summary = "활성화된 기수 조회", description = "현재 활성화된 기수의 ID와 기수 번호를 조회합니다.")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = ActiveGisuResponse.class))
+            )
+    })
+    ActiveGisuResponse getActiveGisu();
 }
