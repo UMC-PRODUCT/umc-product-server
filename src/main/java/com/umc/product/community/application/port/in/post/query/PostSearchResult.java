@@ -8,8 +8,6 @@ public record PostSearchResult(
         String title,
         String contentPreview,
         Category category,
-        String region,
-        boolean anonymous,
         int likeCount,
         Instant createdAt,
         MatchType matchType
@@ -26,8 +24,6 @@ public record PostSearchResult(
             String title,
             String content,
             Category category,
-            String region,
-            boolean anonymous,
             int likeCount,
             Instant createdAt,
             MatchType matchType
@@ -37,8 +33,6 @@ public record PostSearchResult(
                 title,
                 truncateContent(content, 100),
                 category,
-                region,
-                anonymous,
                 likeCount,
                 createdAt,
                 matchType

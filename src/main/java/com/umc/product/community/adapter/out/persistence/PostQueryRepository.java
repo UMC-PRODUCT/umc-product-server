@@ -120,8 +120,6 @@ public class PostQueryRepository {
                 entity.getTitle(),
                 entity.getContent(),
                 entity.getCategory(),
-                entity.getRegion(),
-                entity.isAnonymous(),
                 entity.getLikeCount(),
                 entity.getCreatedAt(),
                 matchType,
