@@ -174,6 +174,28 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
     @Override
     public GetMyDocumentEvaluationInfo get(GetMyDocumentEvaluationQuery query) {
         // todo: 본인 검증 필요
-        return null;
+
+        Long recruitmentId = query.recruitmentId();
+        Long applicationId = query.applicationId();
+        Long evaluatorMemberId = query.evaluatorMemberId();
+
+        // 1. 해당 지원서가 이 모집에 속하는지 검증
+        if (!loadApplicationListPort.isApplicationBelongsToRecruitment(applicationId, recruitmentId)) {
+            throw new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
+        }
+
+        // 2. 내 서류 평가 조회
+        return loadApplicationListPort.findMyDocumentEvaluation(applicationId, evaluatorMemberId)
+            .map(projection -> new GetMyDocumentEvaluationInfo(
+                new GetMyDocumentEvaluationInfo.MyDocumentEvaluationInfo(
+                    projection.applicationId(),
+                    projection.evaluationId(),
+                    projection.score(),
+                    projection.comments(),
+                    projection.isSubmitted(),
+                    projection.updatedAt()
+                )
+            ))
+            .orElse(new GetMyDocumentEvaluationInfo(null));
     }
 }

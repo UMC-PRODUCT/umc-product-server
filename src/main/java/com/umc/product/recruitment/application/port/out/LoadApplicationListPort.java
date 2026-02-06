@@ -2,9 +2,11 @@ package com.umc.product.recruitment.application.port.out;
 
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
 import com.umc.product.recruitment.domain.Application;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -47,4 +49,9 @@ public interface LoadApplicationListPort {
      * (application → formResponse → form → recruitment 경로)
      */
     boolean isApplicationBelongsToRecruitment(Long applicationId, Long recruitmentId);
+
+    /**
+     * 특정 지원서에 대해 해당 평가자가 작성한 서류 평가 조회 (DRAFT, SUBMITTED 모두 포함)
+     */
+    Optional<MyDocumentEvaluationProjection> findMyDocumentEvaluation(Long applicationId, Long evaluatorMemberId);
 }

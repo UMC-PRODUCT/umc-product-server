@@ -2,6 +2,7 @@ package com.umc.product.recruitment.adapter.out;
 
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
@@ -96,5 +97,10 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
     @Override
     public boolean isApplicationBelongsToRecruitment(Long applicationId, Long recruitmentId) {
         return applicationQueryRepository.isApplicationBelongsToRecruitment(applicationId, recruitmentId);
+    }
+
+    @Override
+    public Optional<MyDocumentEvaluationProjection> findMyDocumentEvaluation(Long applicationId, Long evaluatorMemberId) {
+        return applicationQueryRepository.findMyDocumentEvaluation(applicationId, evaluatorMemberId);
     }
 }

@@ -17,11 +17,13 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.enums.EvaluationStatus;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -202,6 +204,33 @@ public class ApplicationQueryRepository {
             .fetchOne();
 
         return count != null && count > 0;
+    }
+
+    /**
+     * 특정 지원서에 대해 해당 평가자가 작성한 서류 평가 조회 (DRAFT, SUBMITTED 모두 포함)
+     */
+    public Optional<MyDocumentEvaluationProjection> findMyDocumentEvaluation(
+        Long applicationId,
+        Long evaluatorMemberId
+    ) {
+        MyDocumentEvaluationProjection result = queryFactory
+            .select(Projections.constructor(MyDocumentEvaluationProjection.class,
+                evaluation.application.id,
+                evaluation.id,
+                evaluation.score,
+                evaluation.comments,
+                evaluation.status,
+                evaluation.updatedAt
+            ))
+            .from(evaluation)
+            .where(
+                evaluation.application.id.eq(applicationId),
+                evaluation.evaluatorUserId.eq(evaluatorMemberId),
+                evaluation.stage.eq(EvaluationStage.DOCUMENT)
+            )
+            .fetchOne();
+
+        return Optional.ofNullable(result);
     }
 
     // ========================================================================
