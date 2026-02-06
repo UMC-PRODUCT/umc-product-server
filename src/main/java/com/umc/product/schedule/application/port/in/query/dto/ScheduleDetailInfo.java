@@ -31,7 +31,7 @@ public record ScheduleDetailInfo(
             schedule.getId(),
             schedule.getName(),
             schedule.getDescription(),
-            schedule.getTags(),
+            Set.copyOf(schedule.getTags()),
             schedule.getStartsAt(),
             schedule.getEndsAt(),
             schedule.isAllDay(),
