@@ -7,7 +7,7 @@ import com.umc.product.community.application.port.in.post.query.GetPostListUseCa
 import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
 import com.umc.product.community.application.port.in.post.query.PostSearchResult;
 import com.umc.product.community.application.port.in.post.query.SearchPostUseCase;
-import com.umc.product.community.domain.enums.PostSortType;
+import com.umc.product.community.domain.enums.Category;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.PageResponse;
@@ -42,16 +42,16 @@ public class PostQueryController {
     }
 
     @GetMapping
-    @Operation(summary = "게시글 목록 조회", description = "정렬 기준으로 게시글 목록을 조회합니다.")
+    @Operation(summary = "게시글 목록 조회", description = "카테고리별로 게시글 목록을 조회합니다. (최신순 정렬)")
     public ApiResponse<PageResponse<PostResponse>> getPostList(
-            @RequestParam(defaultValue = "ALL")
-            @Parameter(description = "정렬 기준 (SOFT: 좋아요순, HARD: 좋아요역순, ALL: 최신순)")
-            PostSortType sort,
+            @RequestParam(required = false)
+            @Parameter(description = "카테고리 (LIGHTNING: 번개, QUESTION: 질문, FREE: 자유). 미지정시 전체 조회")
+            Category category,
             @PageableDefault(size = 20)
             @Parameter(description = "페이지네이션 (page, size)")
             Pageable pageable
     ) {
-        PostSearchQuery query = new PostSearchQuery(sort);
+        PostSearchQuery query = new PostSearchQuery(category);
         PageResponse<PostResponse> response = PageResponse.of(
                 getPostListUseCase.getPostList(query, pageable),
                 PostResponse::from

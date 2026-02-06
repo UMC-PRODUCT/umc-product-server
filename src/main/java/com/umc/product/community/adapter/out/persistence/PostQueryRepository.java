@@ -2,7 +2,6 @@ package com.umc.product.community.adapter.out.persistence;
 
 import static com.umc.product.community.adapter.out.persistence.QPostJpaEntity.postJpaEntity;
 
-import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -12,8 +11,6 @@ import com.umc.product.community.application.port.in.post.query.PostSearchResult
 import com.umc.product.community.application.port.out.PostSearchData;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
-import com.umc.product.community.domain.enums.PostSortType;
-import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,12 +27,11 @@ public class PostQueryRepository {
 
     public Page<Post> findAllByQuery(PostSearchQuery query, Pageable pageable) {
         BooleanExpression condition = buildCondition(query);
-        OrderSpecifier<?> orderSpecifier = buildOrderSpecifier(query.sort());
 
         List<PostJpaEntity> results = queryFactory
                 .selectFrom(postJpaEntity)
                 .where(condition)
-                .orderBy(orderSpecifier, postJpaEntity.createdAt.desc())
+                .orderBy(postJpaEntity.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
@@ -54,20 +50,10 @@ public class PostQueryRepository {
     }
 
     private BooleanExpression buildCondition(PostSearchQuery query) {
-        // 조건 없음 (전체 조회)
-        return null;
-    }
-
-    private OrderSpecifier<?> buildOrderSpecifier(PostSortType sort) {
-        if (sort == null || sort == PostSortType.ALL) {
-            return postJpaEntity.createdAt.desc();
+        if (query.category() != null) {
+            return postJpaEntity.category.eq(query.category());
         }
-
-        return switch (sort) {
-            case SOFT -> postJpaEntity.likedChallengerIds.size().desc();
-            case HARD -> postJpaEntity.likedChallengerIds.size().asc();
-            default -> postJpaEntity.createdAt.desc();
-        };
+        return null;
     }
 
     public Page<PostSearchData> searchByKeyword(String keyword, Pageable pageable) {
