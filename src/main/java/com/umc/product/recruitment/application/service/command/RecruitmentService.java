@@ -2554,7 +2554,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             );
         }
 
-        Map<LocalDate, Set<LocalTime>> enabledByDate = new HashMap<>();
+        Map<LocalDate, List<LocalTime>> enabledByDate = new HashMap<>();
         Object enabledRaw = timeTable.get("enabledByDate");
         if (enabledRaw instanceof List<?> enabledList) {
             for (Object itemObj : enabledList) {
@@ -2562,43 +2562,62 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                     continue;
                 }
 
-                LocalDate date = LocalDate.parse(String.valueOf(item.get("date")));
+                Object dateObj = item.get("date");
+                if (dateObj == null) {
+                    continue;
+                }
+                LocalDate date = LocalDate.parse(String.valueOf(dateObj));
+
                 Object timesRaw = item.get("times");
                 if (!(timesRaw instanceof List<?> timesList)) {
                     continue;
                 }
 
-                Set<LocalTime> times = timesList.stream()
+                List<LocalTime> times = timesList.stream()
+                        .filter(java.util.Objects::nonNull)
                         .map(String::valueOf)
+                        .map(String::trim)
+                        .filter(s -> !s.isBlank())
                         .map(LocalTime::parse)
-                        .collect(Collectors.toSet());
+                        .distinct()
+                        .sorted()
+                        .toList();
 
+                if (times.isEmpty()) {
+                    // 해당 날짜 enabled 0개 -> continue
+                    continue;
+                }
+
+                // 같은 날짜가 여러 번 들어오면 merge (중복 제거 + 정렬 유지)
                 enabledByDate.merge(date, times, (a, b) -> {
-                    a.addAll(b);
-                    return a;
+                    return java.util.stream.Stream.concat(a.stream(), b.stream())
+                            .distinct()
+                            .sorted()
+                            .toList();
                 });
             }
+        }
+
+        // enabledByDate가 비어있으면 슬롯 생성 안함
+        if (enabledByDate.isEmpty()) {
+            return;
         }
 
         List<InterviewSlot> slots = new ArrayList<>();
 
         for (LocalDate d = startDate; !d.isAfter(endDate); d = d.plusDays(1)) {
 
-            Set<LocalTime> enabledTimes = enabledByDate.get(d);
-            if (enabledTimes != null && !enabledTimes.isEmpty()) {
-                for (LocalTime t : enabledTimes) {
-                    if (t.isBefore(startTime) || t.plusMinutes(slotMinutes).isAfter(endTime)) {
-                        continue;
-                    }
-                    slots.add(buildSlot(recruitment, d, t, slotMinutes));
-                }
+            // dateRange 안에 있어도 enabledByDate에 없으면 생성 안함
+            List<LocalTime> enabledTimes = enabledByDate.get(d);
+            if (enabledTimes == null || enabledTimes.isEmpty()) {
                 continue;
             }
 
-            for (LocalTime t = startTime;
-                 !t.plusMinutes(slotMinutes).isAfter(endTime);
-                 t = t.plusMinutes(slotMinutes)) {
-
+            for (LocalTime t : enabledTimes) {
+                // timeRange 밖은 skip
+                if (t.isBefore(startTime) || t.plusMinutes(slotMinutes).isAfter(endTime)) {
+                    continue;
+                }
                 slots.add(buildSlot(recruitment, d, t, slotMinutes));
             }
         }
