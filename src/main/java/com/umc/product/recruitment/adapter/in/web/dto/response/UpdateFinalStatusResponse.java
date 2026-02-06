@@ -8,13 +8,16 @@ public record UpdateFinalStatusResponse(
         FinalResultResponse finalResult
 ) {
     public static UpdateFinalStatusResponse from(UpdateFinalStatusResult result) {
+        PartKey selectedPart = result.finalResult().selectedPart();
+
+        FinalResultResponse.PartResponse partResponse =
+                (selectedPart == null)
+                        ? null
+                        : new FinalResultResponse.PartResponse(selectedPart, selectedPart.getLabel());
+
         return new UpdateFinalStatusResponse(
                 result.applicationId(),
-                new FinalResultResponse(result.finalResult().decision(),
-                        new FinalResultResponse.PartResponse(
-                                result.finalResult().selectedPart(),
-                                result.finalResult().selectedPart().getLabel()
-                        ))
+                new FinalResultResponse(result.finalResult().decision(), partResponse)
         );
     }
 

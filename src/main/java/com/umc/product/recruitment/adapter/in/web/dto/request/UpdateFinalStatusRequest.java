@@ -1,10 +1,10 @@
 package com.umc.product.recruitment.adapter.in.web.dto.request;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 public record UpdateFinalStatusRequest(
-        @NotBlank EvaluationDecision decision,
+        @NotNull EvaluationDecision decision,
         ChallengerPart selectedPart
 ) {
 }
