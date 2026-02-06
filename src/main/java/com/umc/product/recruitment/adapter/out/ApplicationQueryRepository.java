@@ -25,12 +25,14 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.support.PageableExecutionUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.StringUtils;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class ApplicationQueryRepository {
@@ -253,6 +255,7 @@ public class ApplicationQueryRepository {
         try {
             challengerPart = ChallengerPart.valueOf(part.toUpperCase());
         } catch (IllegalArgumentException e) {
+            log.warn("Invalid part parameter: {}", part);
             return null;
         }
 
