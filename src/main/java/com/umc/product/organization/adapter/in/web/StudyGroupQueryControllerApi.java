@@ -1,9 +1,10 @@
 package com.umc.product.organization.adapter.in.web;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.CursorResponse;
+import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupListResponse.Summary;
+import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupPartsResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSchoolsResponse;
@@ -16,83 +17,38 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
- * 스터디 그룹 조회 API (단계별 drill-down)
+ * 스터디 그룹 조회 API
  *
  * <p>모든 조회는 현재 활성화된 기수(isActive=true) 기준으로 동작합니다.</p>
  *
- * <h2>권한별 API 접근 흐름</h2>
- *
- * <h3>1. 중앙 운영진</h3>
- *
+ * <h2>API 흐름</h2>
  * <pre>
- * GET /schools
- *   → 학교 목록 (서울대, 연세대, 고려대, ...)
- *   → 학교 선택
- *
- * GET /schools/{schoolId}/parts
- *   → 파트 목록 (WEB, SERVER, iOS, ...)
- *   → 파트 선택
- *
- * GET /?schoolId=1&part=WEB&cursor=&size=20
- *   → 스터디 그룹 목록 (무한스크롤)
+ * GET /
+ *   → 내 학교/파트 기반 스터디 그룹 목록 (무한스크롤)
  *   → 그룹 선택
  *
  * GET /{groupId}
  *   → 스터디 그룹 상세 + 멤버 목록
  * </pre>
- *
- * <h3>2. 중앙 파트장</h3>
- *
- * <pre>
- * GET /schools
- *   → 학교 목록
- *   → 학교 선택
- *
- * GET /schools/{schoolId}/parts
- *   → 본인 파트만 반환 (ABAC 필터링)
- *   → 파트 선택 (자동)
- *
- * GET /?schoolId=1&part={본인파트}&cursor=&size=20
- *   → 스터디 그룹 목록 (무한스크롤)
- *
- * GET /{groupId}
- *   → 스터디 그룹 상세
- * </pre>
- *
- * <h3>3. 회장</h3>
- *
- * <pre>
- * GET /schools/{본인학교ID}/parts
- *   → 파트 목록 (모든 파트)
- *   → 파트 선택
- *
- * GET /?schoolId={본인학교}&part=WEB&cursor=&size=20
- *   → 스터디 그룹 목록 (무한스크롤)
- *
- * GET /{groupId}
- *   → 스터디 그룹 상세
- * </pre>
- *
- * <h3>4. 파트장</h3>
- *
- * <pre>
- * GET /?schoolId={본인학교}&part={본인파트}&cursor=&size=20
- *   → 스터디 그룹 목록 (무한스크롤)
- *
- * GET /{groupId}
- *   → 스터디 그룹 상세
- * </pre>
  */
 @Tag(name = Constants.ORGANIZATION)
 public interface StudyGroupQueryControllerApi {
 
-        @Operation(summary = "학교 목록 조회", description = "스터디 그룹이 있는 학교 목록을 조회합니다. 활성 기수 기준. ")
+        /**
+         * @deprecated getStudyGroups로 대체
+         */
+        @Deprecated
+        @Operation(summary = "[Deprecated] 학교 목록 조회", description = "스터디 그룹이 있는 학교 목록을 조회합니다.", deprecated = true)
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupSchoolsResponse.class)))
         })
         StudyGroupSchoolsResponse getSchools();
 
-        @Operation(summary = "파트 목록 조회", description = "특정 학교의 파트별 스터디 그룹 요약을 조회합니다. 활성 기수 기준. ")
+        /**
+         * @deprecated getStudyGroups로 대체
+         */
+        @Deprecated
+        @Operation(summary = "[Deprecated] 파트 목록 조회", description = "특정 학교의 파트별 스터디 그룹 요약을 조회합니다.", deprecated = true)
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupPartsResponse.class))),
                         @ApiResponse(responseCode = "404", description = "학교를 찾을 수 없음")
@@ -100,17 +56,23 @@ public interface StudyGroupQueryControllerApi {
         StudyGroupPartsResponse getParts(
                         @Parameter(description = "학교 ID", required = true) Long schoolId);
 
-        @Operation(summary = "스터디 그룹 목록 조회", description = "특정 학교, 파트의 스터디 그룹 목록을 조회합니다. cursor 기반 무한스크롤. 활성 기수 기준. ")
+        @Operation(summary = "내 스터디 그룹 목록 조회", description = "로그인한 유저의 학교/파트 기반으로 스터디 그룹 목록을 조회합니다. cursor 기반 무한스크롤.")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공")
         })
         CursorResponse<Summary> getStudyGroups(
-                        @Parameter(description = "학교 ID", required = true) Long schoolId,
-                        @Parameter(description = "파트", required = true) ChallengerPart part,
+                        @Parameter(hidden = true) MemberPrincipal memberPrincipal,
                         @Parameter(description = "페이지 커서 (첫 페이지는 null)") Long cursor,
                         @Parameter(description = "페이지 크기 (기본 20, 최대 100)") int size);
 
-        @Operation(summary = "스터디 그룹 상세 조회", description = "스터디 그룹의 상세 정보와 멤버 목록을 조회합니다. ")
+        @Operation(summary = "권한에 따라 스터디 그룹 이름 목록 조회", description = "로그인한 유저의 학교/파트 기반으로 스터디 그룹의 ID와 이름 목록을 조회합니다. 토글/드롭다운 용도.")
+        @ApiResponses(value = {
+                        @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupNameResponse.class)))
+        })
+        StudyGroupNameResponse getStudyGroupNames(
+                        @Parameter(hidden = true) MemberPrincipal memberPrincipal);
+
+        @Operation(summary = "스터디 그룹 상세 조회", description = "스터디 그룹의 상세 정보와 멤버 목록을 조회합니다.")
         @ApiResponses(value = {
                         @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupResponse.class))),
                         @ApiResponse(responseCode = "404", description = "스터디 그룹을 찾을 수 없음")

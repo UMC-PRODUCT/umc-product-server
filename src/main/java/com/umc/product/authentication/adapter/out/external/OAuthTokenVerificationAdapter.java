@@ -30,7 +30,7 @@ public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort {
             case GOOGLE -> googleIdTokenVerifier.verifyAccessToken(token);
             case KAKAO -> kakaoTokenVerifier.verifyAccessToken(token);
             case APPLE -> throw new AuthenticationDomainException(
-                    AuthenticationErrorCode.OAUTH_PROVIDER_NOT_FOUND
+                AuthenticationErrorCode.OAUTH_PROVIDER_NOT_FOUND
             ); // TODO: Apple 구현 필요
         };
     }

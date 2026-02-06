@@ -45,6 +45,11 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
     }
 
     @Override
+    public List<Integer> findReleasedWeekNos(ChallengerPart part) {
+        return curriculumQueryRepository.findReleasedWeekNos(part);
+    }
+
+    @Override
     public OriginalWorkbook save(OriginalWorkbook workbook) {
         return originalWorkbookJpaRepository.save(workbook);
     }

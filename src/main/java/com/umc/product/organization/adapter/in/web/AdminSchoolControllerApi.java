@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = Constants.ORGANIZATION)
-public interface SchoolControllerApi {
+public interface AdminSchoolControllerApi {
 
     @Operation(summary = "학교 생성 ", description = "새로운 학교를 등록합니다")
     @ApiResponses(value = {

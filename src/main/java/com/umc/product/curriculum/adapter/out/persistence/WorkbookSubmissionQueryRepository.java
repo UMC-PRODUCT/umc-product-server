@@ -11,6 +11,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
 import java.util.List;
@@ -53,6 +54,7 @@ public class WorkbookSubmissionQueryRepository {
                         weekNoEq(query.weekNo()),
                         schoolIdEq(query.schoolId()),
                         studyGroupIdEq(query.studyGroupId()),
+                        partEq(query.part()),
                         cursorGt(query.cursor())
                 )
                 .orderBy(challengerWorkbook.id.asc())
@@ -70,6 +72,10 @@ public class WorkbookSubmissionQueryRepository {
 
     private BooleanExpression studyGroupIdEq(Long studyGroupId) {
         return studyGroupId != null ? studyGroupMember.studyGroup.id.eq(studyGroupId) : null;
+    }
+
+    private BooleanExpression partEq(ChallengerPart part) {
+        return part != null ? challenger.part.eq(part) : null;
     }
 
     private BooleanExpression cursorGt(Long cursor) {

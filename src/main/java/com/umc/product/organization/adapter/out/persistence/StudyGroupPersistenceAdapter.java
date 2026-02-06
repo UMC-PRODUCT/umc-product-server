@@ -8,6 +8,7 @@ import com.umc.product.organization.application.port.in.query.dto.PartSummaryInf
 import com.umc.product.organization.application.port.in.query.dto.SchoolStudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.StudyGroup;
@@ -49,6 +50,11 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
     public List<StudyGroupListInfo.StudyGroupInfo> findStudyGroups(Long schoolId, ChallengerPart part, Long cursor,
                                                                    int size) {
         return studyGroupQueryRepository.findStudyGroups(schoolId, part, cursor, size);
+    }
+
+    @Override
+    public List<StudyGroupNameInfo> findStudyGroupNames(Long schoolId, ChallengerPart part) {
+        return studyGroupQueryRepository.findStudyGroupNames(schoolId, part);
     }
 
     @Override

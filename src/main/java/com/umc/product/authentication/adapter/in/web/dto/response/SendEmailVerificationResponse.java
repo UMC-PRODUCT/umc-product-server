@@ -4,6 +4,6 @@ import lombok.Builder;
 
 @Builder
 public record SendEmailVerificationResponse(
-        String emailVerificationId
+    String emailVerificationId
 ) {
 }

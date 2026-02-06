@@ -24,8 +24,8 @@ public class OAuth2Attributes {
     private String providerId;
 
     public static OAuth2Attributes of(
-            String registrationId,
-            Map<String, Object> attributes
+        String registrationId,
+        Map<String, Object> attributes
     ) {
 
         log.info("OAuth2Attributes - RegistrationID: {}", registrationId);
@@ -40,19 +40,19 @@ public class OAuth2Attributes {
 
     // 구글에서 제공하는 형식에 맞게 Attributes 파싱
     private static OAuth2Attributes ofGoogle(
-            Map<String, Object> attributes
+        Map<String, Object> attributes
     ) {
         return OAuth2Attributes.builder()
-                .provider(OAuthProvider.GOOGLE)
-                .providerId((String) attributes.get("sub"))
-                .email((String) attributes.get("email"))
-                .attributes(attributes)
-                .build();
+            .provider(OAuthProvider.GOOGLE)
+            .providerId((String) attributes.get("sub"))
+            .email((String) attributes.get("email"))
+            .attributes(attributes)
+            .build();
     }
 
     // 카카오에서 제공하는 형식에 맞게 Attributes 파싱
     private static OAuth2Attributes ofKakao(
-            Map<String, Object> attributes
+        Map<String, Object> attributes
     ) {
         @SuppressWarnings("unchecked")
         Map<String, Object> kakaoAccount = (Map<String, Object>) attributes.get("kakao_account");
@@ -61,18 +61,18 @@ public class OAuth2Attributes {
         Map<String, Object> profile = (Map<String, Object>) kakaoAccount.get("profile");
 
         return OAuth2Attributes.builder()
-                .provider(OAuthProvider.KAKAO)
-                .providerId(String.valueOf(attributes.get("id")))
-                .email((String) kakaoAccount.get("email"))
-                .attributes(attributes)
-                .build();
+            .provider(OAuthProvider.KAKAO)
+            .providerId(String.valueOf(attributes.get("id")))
+            .email((String) kakaoAccount.get("email"))
+            .attributes(attributes)
+            .build();
     }
 
 
     // 애플에서 제공하는 방식에 맞게 파싱
     private static OAuth2Attributes ofApple(
-            String userNameAttributeName,
-            Map<String, Object> attributes
+        String userNameAttributeName,
+        Map<String, Object> attributes
     ) {
         // TODO: Apple OAuth2 구현 필요
         throw new NotImplementedException();

@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/admin/schools")
+@RequestMapping("/api/v1/schools")
 @RequiredArgsConstructor
-public class SchoolController implements SchoolControllerApi {
+public class AdminSchoolController implements AdminSchoolControllerApi {
 
     private final ManageSchoolUseCase manageSchoolUseCase;
 
@@ -45,16 +45,17 @@ public class SchoolController implements SchoolControllerApi {
         manageSchoolUseCase.deleteSchools(request.schoolIds());
     }
 
+    @Public
     @Override
     @PatchMapping("/{schoolId}/assign")
     public void assignToChapter(@PathVariable Long schoolId, @RequestBody @Valid AssignSchoolRequest request) {
         manageSchoolUseCase.assignToChapter(request.toCommand(schoolId));
     }
 
+    @Public
     @Override
     @PatchMapping("/{schoolId}/unassign")
     public void unassignFromChapter(@PathVariable Long schoolId, @RequestBody @Valid UnassignSchoolRequest request) {
         manageSchoolUseCase.unassignFromChapter(request.toCommand(schoolId));
     }
 }
-

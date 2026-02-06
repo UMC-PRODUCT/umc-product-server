@@ -43,13 +43,13 @@ public class GoogleIdTokenVerifier {
         try {
             // Google tokeninfo endpoint 호출
             GoogleTokenInfoResponse response = restClient.get()
-                    .uri(GOOGLE_TOKEN_INFO_URL + "?id_token=" + idToken)
-                    .retrieve()
-                    .onStatus(HttpStatusCode::isError, (req, res) -> {
-                        log.error("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
-                        throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
-                    })
-                    .body(GoogleTokenInfoResponse.class);
+                .uri(GOOGLE_TOKEN_INFO_URL + "?id_token=" + idToken)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    log.error("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
+                    throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
+                })
+                .body(GoogleTokenInfoResponse.class);
 
             if (response == null) {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
@@ -86,13 +86,13 @@ public class GoogleIdTokenVerifier {
         try {
             // Google tokeninfo endpoint 호출
             GoogleAccessTokenInfoResponse response = restClient.get()
-                    .uri(GOOGLE_TOKEN_INFO_URL + "?access_token=" + accessToken)
-                    .retrieve()
-                    .onStatus(HttpStatusCode::isError, (req, res) -> {
-                        log.error("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
-                        throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
-                    })
-                    .body(GoogleAccessTokenInfoResponse.class);
+                .uri(GOOGLE_TOKEN_INFO_URL + "?access_token=" + accessToken)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    log.error("Google tokeninfo 호출 실패: status={}", res.getStatusCode());
+                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
+                })
+                .body(GoogleAccessTokenInfoResponse.class);
 
             if (response == null) {
                 throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
@@ -125,25 +125,25 @@ public class GoogleIdTokenVerifier {
      * Google tokeninfo endpoint 응답 DTO
      */
     private record GoogleTokenInfoResponse(
-            String iss,         // issuer
-            String azp,         // authorized party
-            String aud,         // audience (client ID)
-            String sub,         // subject (사용자 고유 ID)
-            String email,
-            String email_verified,
-            String name,
-            String picture,
-            String given_name,
-            String family_name,
-            String iat,         // issued at
-            String exp          // expiration
+        String iss,         // issuer
+        String azp,         // authorized party
+        String aud,         // audience (client ID)
+        String sub,         // subject (사용자 고유 ID)
+        String email,
+        String email_verified,
+        String name,
+        String picture,
+        String given_name,
+        String family_name,
+        String iat,         // issued at
+        String exp          // expiration
     ) {
     }
 
     private record GoogleAccessTokenInfoResponse(
-            String sub,
-            String email,
-            String aud         // audience (client ID)
+        String sub,
+        String email,
+        String aud         // audience (client ID)
     ) {
     }
 }

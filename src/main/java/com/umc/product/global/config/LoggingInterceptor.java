@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.ModelAndView;
@@ -19,12 +20,21 @@ import org.springframework.web.servlet.ModelAndView;
 public class LoggingInterceptor implements HandlerInterceptor {
 
     private static final String START_TIME_ATTR = "startTime";
+    private static final String TRACE_ID_HEADER = "X-Trace-Id";
+    private static final String TRACE_ID = "traceId";
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         request.setAttribute(START_TIME_ATTR, Instant.now());
 
-        log.info("→ {} {}", request.getMethod(), request.getRequestURI());
+        log.info("[REQ] {} {}", request.getMethod(), request.getRequestURI());
+
+        log.debug("[MDC] {}", MDC.getCopyOfContextMap());
+
+        String traceId = MDC.get(TRACE_ID);
+        if (traceId != null) {
+            response.setHeader(TRACE_ID_HEADER, traceId);
+        }
 
         return true;
     }
@@ -47,11 +57,11 @@ public class LoggingInterceptor implements HandlerInterceptor {
 
         String status = getStatusEmoji(response.getStatus());
 
-        log.info("← {} {} {} {}ms",
-                status,
-                response.getStatus(),
-                request.getRequestURI(),
-                duration.toMillis());
+        log.info("[RES] {} {} {} {}ms",
+            status,
+            response.getStatus(),
+            request.getRequestURI(),
+            duration.toMillis());
 
         if (ex != null) {
             log.error("  └─ Exception: {}", ex.getMessage());

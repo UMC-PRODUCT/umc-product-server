@@ -12,8 +12,8 @@ import java.util.Objects;
  * @param token    검증할 토큰 (Google: ID Token, Kakao: Access Token)
  */
 public record AccessTokenLoginCommand(
-        OAuthProvider provider,
-        String token
+    OAuthProvider provider,
+    String token
 ) {
     public AccessTokenLoginCommand {
         Objects.requireNonNull(provider, "provider must not be null");

@@ -45,11 +45,11 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         // 프론트엔드로 리다이렉트 (토큰 전달)
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl)
-                .queryParam("success", oAuth2ResultCode.isSuccess())
-                .queryParam("code", oAuth2ResultCode.getCode())
-                .queryParam("accessToken", accessToken)
-                .queryParam("refreshToken", refreshToken)
-                .build().toUriString();
+            .queryParam("success", oAuth2ResultCode.isSuccess())
+            .queryParam("code", oAuth2ResultCode.getCode())
+            .queryParam("accessToken", accessToken)
+            .queryParam("refreshToken", refreshToken)
+            .build().toUriString();
 
         log.info("Redirecting to: {}", targetUrl);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);

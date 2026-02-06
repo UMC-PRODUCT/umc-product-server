@@ -10,8 +10,8 @@ public interface LoadMemberOAuthPort {
      * OAuth Provider와 Provider ID로 MemberOAuth를 가져옵니다.
      */
     Optional<MemberOAuth> findByProviderAndProviderId(
-            OAuthProvider provider,
-            String providerId
+        OAuthProvider provider,
+        String providerId
     );
 
     /**

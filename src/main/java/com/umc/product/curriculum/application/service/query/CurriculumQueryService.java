@@ -8,6 +8,7 @@ import com.umc.product.curriculum.application.port.in.query.CurriculumWeekInfo;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumProgressUseCase;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumProgressPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,14 +20,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class CurriculumQueryService implements GetCurriculumProgressUseCase {
 
     private final GetChallengerUseCase getChallengerUseCase;
+    private final GetGisuUseCase getGisuUseCase;
     private final LoadCurriculumProgressPort loadCurriculumProgressPort;
     private final LoadOriginalWorkbookPort loadOriginalWorkbookPort;
 
     @Override
-    public CurriculumProgressInfo getMyProgress(Long challengerId) {
-        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+    public CurriculumProgressInfo getMyProgress(Long memberId) {
+        Long activeGisuId = getGisuUseCase.getActiveGisuId();
+        ChallengerInfo challengerInfo = getChallengerUseCase.getByMemberIdAndGisuId(memberId, activeGisuId);
 
-        return loadCurriculumProgressPort.findCurriculumProgress(challengerId, challengerInfo.part());
+        return loadCurriculumProgressPort.findCurriculumProgress(challengerInfo.challengerId(), challengerInfo.part());
     }
 
     @Override

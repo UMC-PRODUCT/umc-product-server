@@ -14,20 +14,20 @@ import com.umc.product.common.domain.enums.OAuthProvider;
  * @param nickname         닉네임
  */
 public record OAuthTokenLoginResult(
-        boolean isExistingMember,
-        Long memberId,
-        OAuthProvider provider,
-        String providerId,
-        String email
+    boolean isExistingMember,
+    Long memberId,
+    OAuthProvider provider,
+    String providerId,
+    String email
 ) {
     /**
      * 기존 회원 로그인 성공
      */
     public static OAuthTokenLoginResult existingMember(
-            Long memberId,
-            OAuthProvider provider,
-            String providerId,
-            String email
+        Long memberId,
+        OAuthProvider provider,
+        String providerId,
+        String email
     ) {
         return new OAuthTokenLoginResult(true, memberId, provider, providerId, email);
     }
@@ -36,9 +36,9 @@ public record OAuthTokenLoginResult(
      * 신규 회원 - 회원가입 필요
      */
     public static OAuthTokenLoginResult newMember(
-            OAuthProvider provider,
-            String providerId,
-            String email
+        OAuthProvider provider,
+        String providerId,
+        String email
     ) {
         return new OAuthTokenLoginResult(false, null, provider, providerId, email);
     }

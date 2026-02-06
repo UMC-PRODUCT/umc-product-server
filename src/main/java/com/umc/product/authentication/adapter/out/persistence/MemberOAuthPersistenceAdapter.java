@@ -18,7 +18,7 @@ public class MemberOAuthPersistenceAdapter implements LoadMemberOAuthPort, SaveM
     @Override
     public Optional<MemberOAuth> findByProviderAndProviderId(OAuthProvider provider, String providerId) {
         return memberOAuthRepository.findByProviderAndProviderId(
-                provider, providerId
+            provider, providerId
         );
     }
 

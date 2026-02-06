@@ -46,7 +46,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 지부_없이_학교를_등록한다() {
         // given
-        CreateSchoolCommand command = new CreateSchoolCommand("한성대", null, "비고");
+        CreateSchoolCommand command = new CreateSchoolCommand("한성대", null, "비고", null);
 
         // when
         Long schoolId = manageSchoolUseCase.register(command);
@@ -64,7 +64,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         Gisu gisu = manageGisuPort.save(createGisu(8L));
         Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
 
-        CreateSchoolCommand command = new CreateSchoolCommand("한성대", chapter.getId(), "비고");
+        CreateSchoolCommand command = new CreateSchoolCommand("한성대", chapter.getId(), "비고", null);
 
         // when
         Long schoolId = manageSchoolUseCase.register(command);
@@ -81,7 +81,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         // given
         School school = manageSchoolPort.save(School.create("한성대", "비고"));
 
-        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대", null, "수정된 비고");
+        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대", null, "수정된 비고", null);
 
         // when
         manageSchoolUseCase.updateSchool(school.getId(), command);
@@ -101,7 +101,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
 
         School school = manageSchoolPort.save(School.create("한성대", "비고"));
 
-        UpdateSchoolCommand command = new UpdateSchoolCommand("한성대", leoChapter.getId(), "비고");
+        UpdateSchoolCommand command = new UpdateSchoolCommand("한성대", leoChapter.getId(), "비고", null);
 
         // when
         manageSchoolUseCase.updateSchool(school.getId(), command);
@@ -115,7 +115,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 존재하지_않는_학교를_수정하면_예외가_발생한다() {
         // given
-        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대", null, "비고");
+        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대", null, "비고", null);
 
         // when & then
         assertThatThrownBy(() -> manageSchoolUseCase.updateSchool(999L, command))
@@ -292,11 +292,11 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     }
 
     private Gisu createGisu(Long generation) {
-        return Gisu.builder()
-                .generation(generation)
-                .isActive(true)
-                .startAt(Instant.parse("2024-03-01T00:00:00Z"))
-                .endAt(Instant.parse("2024-08-31T23:59:59Z"))
-                .build();
+        return Gisu.create(
+                generation,
+                Instant.parse("2024-03-01T00:00:00Z"),
+                Instant.parse("2024-08-31T23:59:59Z"),
+                true
+        );
     }
 }

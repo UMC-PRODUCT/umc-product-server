@@ -32,7 +32,7 @@ public class School extends BaseEntity {
     private String name;
 
     @Column(nullable = true)
-    private String logoImageUrl;
+    private String logoImageId;
 
     @Column(nullable = true)
     private String remark;
@@ -61,9 +61,9 @@ public class School extends BaseEntity {
                 .build();
     }
 
-    public void updateLogoImageUrl(String logoImageUrl) {
-        if (StringUtils.hasText(logoImageUrl)) {
-            this.logoImageUrl = logoImageUrl;
+    public void updateLogoImageId(String logoImageId) {
+        if (StringUtils.hasText(logoImageId)) {
+            this.logoImageId = logoImageId;
         }
     }
 

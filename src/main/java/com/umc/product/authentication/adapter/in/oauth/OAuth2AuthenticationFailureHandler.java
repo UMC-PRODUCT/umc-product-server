@@ -28,9 +28,9 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
     @Override
     public void onAuthenticationFailure(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            AuthenticationException exception
+        HttpServletRequest request,
+        HttpServletResponse response,
+        AuthenticationException exception
     ) throws IOException {
         log.error("=== OAuth2 Authentication Failed ===");
         log.error("Request URI: {}", request.getRequestURI());
@@ -58,20 +58,20 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
         // 일반 OAuth 실패
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl)
-                .queryParam("error", "oauth_failed")
-                .queryParam("message", exception.getMessage())
-                .build()
-                .encode()
-                .toUriString();
+            .queryParam("error", "oauth_failed")
+            .queryParam("message", exception.getMessage())
+            .build()
+            .encode()
+            .toUriString();
 
         log.error("Redirecting to: {}", targetUrl);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);
     }
 
     private void handleMemberNotFound(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            AuthenticationDomainException memberException
+        HttpServletRequest request,
+        HttpServletResponse response,
+        AuthenticationDomainException memberException
     ) throws IOException {
         // OAuth 인증 정보 추출 (request attribute에서)
         String email = (String) request.getAttribute("oauth_email");
@@ -85,11 +85,11 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
             // 무언가 잘못된 것에 대한 에러 응답 처리
             String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl)
-                    .queryParam("success", oAuth2ResultCode.isSuccess())
-                    .queryParam("code", oAuth2ResultCode.getCode())
-                    .build()
-                    .encode()
-                    .toUriString();
+                .queryParam("success", oAuth2ResultCode.isSuccess())
+                .queryParam("code", oAuth2ResultCode.getCode())
+                .build()
+                .encode()
+                .toUriString();
             getRedirectStrategy().sendRedirect(request, response, targetUrl);
             return;
         }
@@ -102,13 +102,13 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
         // 프론트엔드로 리다이렉트 (회원가입 필요 상태)
         String targetUrl = UriComponentsBuilder.fromUriString(redirectUrl)
-                .queryParam("success", oAuth2ResultCode.isSuccess())
-                .queryParam("code", oAuth2ResultCode.getCode())
-                .queryParam("email", email)
-                .queryParam("oAuthVerificationToken", oAuthVerificationToken)
-                .build()
-                .encode()
-                .toUriString();
+            .queryParam("success", oAuth2ResultCode.isSuccess())
+            .queryParam("code", oAuth2ResultCode.getCode())
+            .queryParam("email", email)
+            .queryParam("oAuthVerificationToken", oAuthVerificationToken)
+            .build()
+            .encode()
+            .toUriString();
 
         log.info("Redirecting to registration flow: {}", targetUrl);
         getRedirectStrategy().sendRedirect(request, response, targetUrl);

@@ -41,14 +41,14 @@ public class KakaoTokenVerifier {
         try {
             // Kakao 사용자 정보 조회 API 호출
             KakaoUserResponse response = restClient.get()
-                    .uri(KAKAO_USER_INFO_URL)
-                    .header("Authorization", "Bearer " + accessToken)
-                    .retrieve()
-                    .onStatus(HttpStatusCode::isError, (req, res) -> {
-                        log.error("Kakao 사용자 정보 조회 실패: status={}", res.getStatusCode());
-                        throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
-                    })
-                    .body(KakaoUserResponse.class);
+                .uri(KAKAO_USER_INFO_URL)
+                .header("Authorization", "Bearer " + accessToken)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    log.error("Kakao 사용자 정보 조회 실패: status={}", res.getStatusCode());
+                    throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
+                })
+                .body(KakaoUserResponse.class);
 
             // 응답을 검증합니다.
             if (response == null || response.id() == null) {
@@ -56,8 +56,8 @@ public class KakaoTokenVerifier {
             }
 
             log.info("Kakao Access Token 검증 성공: id={}, email={}",
-                    response.id(),
-                    response.kakaoAccount() != null ? response.kakaoAccount().email() : "N/A"
+                response.id(),
+                response.kakaoAccount() != null ? response.kakaoAccount().email() : "N/A"
             );
 
             // OAuth2Attributes.of("kakao", ...) 형식에 맞게 Map 생성
@@ -101,20 +101,20 @@ public class KakaoTokenVerifier {
     // ===== Response DTOs =====
 
     private record KakaoUserResponse(
-            Long id,
-            @JsonProperty("kakao_account")
-            KakaoAccount kakaoAccount
+        Long id,
+        @JsonProperty("kakao_account")
+        KakaoAccount kakaoAccount
     ) {
     }
 
     private record KakaoAccount(
-            String email,
-            Profile profile
+        String email,
+        Profile profile
     ) {
     }
 
     private record Profile(
-            String nickname
+        String nickname
     ) {
     }
 }
