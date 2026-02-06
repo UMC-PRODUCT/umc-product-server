@@ -1,6 +1,7 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag.Constants;
+import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateChapterRequest;
 import com.umc.product.organization.application.port.in.command.ManageChapterUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,6 +21,7 @@ public class AdminChapterController {
 
     private final ManageChapterUseCase manageChapterUseCase;
 
+    @Public
     @PostMapping
     @Operation(summary = "지부 생성", description = "새로운 지부를 생성합니다. 소속 학교를 함께 지정할 수 있습니다.")
     public Long createChapter(@RequestBody @Valid CreateChapterRequest request) {

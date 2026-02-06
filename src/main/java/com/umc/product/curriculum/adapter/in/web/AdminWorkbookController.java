@@ -6,6 +6,7 @@ import com.umc.product.curriculum.adapter.in.web.dto.response.WorkbookSubmission
 import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.ReleaseWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;
+import com.umc.product.global.security.annotation.Public;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +26,7 @@ public class AdminWorkbookController implements AdminWorkbookControllerApi {
     private final ManageWorkbookUseCase manageWorkbookUseCase;
     private final GetWorkbookSubmissionsUseCase getWorkbookSubmissionsUseCase;
 
+    @Public
     @Override
     @PostMapping("/{workbookId}/release")
     public void releaseWorkbook(@PathVariable Long workbookId) {
