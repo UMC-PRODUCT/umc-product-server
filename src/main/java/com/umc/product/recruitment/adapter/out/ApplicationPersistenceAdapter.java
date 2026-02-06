@@ -1,10 +1,12 @@
 package com.umc.product.recruitment.adapter.out;
 
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
 import com.umc.product.recruitment.domain.Application;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -79,5 +81,20 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
     @Override
     public long countEvaluatedApplications(Long recruitmentId, Long evaluatorId) {
         return applicationQueryRepository.countEvaluatedApplications(recruitmentId, evaluatorId);
+    }
+
+    @Override
+    public List<EvaluationListItemProjection> findDocumentEvaluationsByApplicationId(Long applicationId) {
+        return applicationQueryRepository.findDocumentEvaluationsByApplicationId(applicationId);
+    }
+
+    @Override
+    public BigDecimal calculateAvgDocScoreByApplicationId(Long applicationId) {
+        return applicationQueryRepository.calculateAvgDocScoreByApplicationId(applicationId);
+    }
+
+    @Override
+    public boolean isApplicationBelongsToRecruitment(Long applicationId, Long recruitmentId) {
+        return applicationQueryRepository.isApplicationBelongsToRecruitment(applicationId, recruitmentId);
     }
 }

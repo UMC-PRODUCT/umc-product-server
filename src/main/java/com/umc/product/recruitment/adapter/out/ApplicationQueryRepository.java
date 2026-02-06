@@ -16,9 +16,11 @@ import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.enums.EvaluationStatus;
+import java.math.BigDecimal;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -137,6 +139,69 @@ public class ApplicationQueryRepository {
             .where(applicationPartPreference.application.id.in(applicationIds))
             .orderBy(applicationPartPreference.application.id.asc(), applicationPartPreference.priority.asc())
             .fetch();
+    }
+
+    /**
+     * 특정 지원서에 대한 서류 평가 목록 조회 (SUBMITTED 상태만)
+     */
+    public List<EvaluationListItemProjection> findDocumentEvaluationsByApplicationId(Long applicationId) {
+        return queryFactory
+            .select(Projections.constructor(EvaluationListItemProjection.class,
+                evaluation.id,
+                evaluation.evaluatorUserId,
+                member.name,
+                member.nickname,
+                evaluation.score,
+                evaluation.comments
+            ))
+            .from(evaluation)
+            .join(member).on(member.id.eq(evaluation.evaluatorUserId))
+            .where(
+                evaluation.application.id.eq(applicationId),
+                evaluation.stage.eq(EvaluationStage.DOCUMENT),
+                evaluation.status.eq(EvaluationStatus.SUBMITTED)
+            )
+            .orderBy(evaluation.id.asc())
+            .fetch();
+    }
+
+    /**
+     * 특정 지원서에 대한 서류 평가 평균 점수 조회 (SUBMITTED 상태만)
+     */
+    public BigDecimal calculateAvgDocScoreByApplicationId(Long applicationId) {
+        Double avg = queryFactory
+            .select(evaluation.score.avg())
+            .from(evaluation)
+            .where(
+                evaluation.application.id.eq(applicationId),
+                evaluation.stage.eq(EvaluationStage.DOCUMENT),
+                evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                evaluation.score.isNotNull()
+            )
+            .fetchOne();
+
+        return avg != null ? BigDecimal.valueOf(avg).setScale(1, java.math.RoundingMode.HALF_UP) : null;
+    }
+
+    /**
+     * 특정 Application이 특정 Recruitment에 속하는지 확인
+     * (application → formResponse → form → recruitment 경로)
+     */
+    public boolean isApplicationBelongsToRecruitment(Long applicationId, Long recruitmentId) {
+        if (applicationId == null || recruitmentId == null) {
+            return false;
+        }
+
+        Long count = queryFactory
+            .select(application.count())
+            .from(application)
+            .where(
+                application.id.eq(applicationId),
+                belongsToRecruitment(recruitmentId)
+            )
+            .fetchOne();
+
+        return count != null && count > 0;
     }
 
     // ========================================================================

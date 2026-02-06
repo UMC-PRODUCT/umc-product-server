@@ -2,6 +2,7 @@ package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationEvaluationListUseCase;
@@ -18,6 +19,9 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEv
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPartPreferencePort;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
+import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
+import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -132,7 +136,39 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
     @Override
     public ApplicationEvaluationListInfo get(GetApplicationEvaluationListQuery query) {
         // todo: 운영진 권한 검증 필요
-        return null;
+
+        Long recruitmentId = query.recruitmentId();
+        Long applicationId = query.applicationId();
+
+        // 1. 해당 지원서가 이 모집에 속하는지 검증
+        if (!loadApplicationListPort.isApplicationBelongsToRecruitment(applicationId, recruitmentId)) {
+            throw new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
+        }
+
+        // 2. 서류 평가 목록 조회
+        List<EvaluationListItemProjection> evaluations =
+            loadApplicationListPort.findDocumentEvaluationsByApplicationId(applicationId);
+
+        // 3. 서류 평가 평균 점수 조회
+        BigDecimal avgDocScore = loadApplicationListPort.calculateAvgDocScoreByApplicationId(applicationId);
+
+        // 4. 응답 DTO 변환
+        List<ApplicationEvaluationListInfo.DocEvaluationSummary> docEvaluationSummaries = evaluations.stream()
+            .map(e -> new ApplicationEvaluationListInfo.DocEvaluationSummary(
+                e.evaluationId(),
+                e.evaluatorName(),
+                e.evaluatorNickname(),
+                e.score(),
+                e.comments()
+            ))
+            .toList();
+
+        return new ApplicationEvaluationListInfo(
+            recruitmentId,
+            applicationId,
+            avgDocScore,
+            docEvaluationSummaries
+        );
     }
 
     @Override

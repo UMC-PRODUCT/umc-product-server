@@ -1,7 +1,9 @@
 package com.umc.product.recruitment.application.port.out;
 
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.domain.Application;
+import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,4 +31,20 @@ public interface LoadApplicationListPort {
      * 현재 평가자가 서류 평가 완료한 지원서 수
      */
     long countEvaluatedApplications(Long recruitmentId, Long evaluatorId);
+
+    /**
+     * 특정 지원서에 대한 서류 평가 목록 조회
+     */
+    List<EvaluationListItemProjection> findDocumentEvaluationsByApplicationId(Long applicationId);
+
+    /**
+     * 특정 지원서에 대한 서류 평가 평균 점수 조회
+     */
+    BigDecimal calculateAvgDocScoreByApplicationId(Long applicationId);
+
+    /**
+     * 특정 Application이 특정 Recruitment에 속하는지 확인
+     * (application → formResponse → form → recruitment 경로)
+     */
+    boolean isApplicationBelongsToRecruitment(Long applicationId, Long recruitmentId);
 }
