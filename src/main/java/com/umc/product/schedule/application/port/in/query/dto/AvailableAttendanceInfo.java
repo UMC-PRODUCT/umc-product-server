@@ -31,7 +31,7 @@ public record AvailableAttendanceInfo(
         return new AvailableAttendanceInfo(
             schedule.getId(),
             schedule.getName(),
-            schedule.getTags(),
+            Set.copyOf(schedule.getTags()),
             schedule.getStartsAt().toLocalTime(),
             schedule.getEndsAt().toLocalTime(),
             sheet.getId(),
@@ -48,7 +48,7 @@ public record AvailableAttendanceInfo(
         return new AvailableAttendanceInfo(
             schedule.getId(),
             schedule.getName(),
-            schedule.getTags(),
+            Set.copyOf(schedule.getTags()),
             schedule.getStartsAt().toLocalTime(),
             schedule.getEndsAt().toLocalTime(),
             sheet.getId(),
