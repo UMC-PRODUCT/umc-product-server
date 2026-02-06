@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.domain;
 
+import com.umc.product.common.BaseEntity;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.enums.EvaluationStatus;
 import jakarta.persistence.Column;
@@ -23,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Evaluation {
+public class Evaluation extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
