@@ -157,6 +157,7 @@ public class DocumentEvaluationController {
                 recruitmentId,
                 applicationId,
                 evaluatorId,
+                request.action(),
                 request.score(),
                 request.comments()
             )
