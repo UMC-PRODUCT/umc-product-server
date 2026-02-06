@@ -13,21 +13,17 @@ public class Post {
     @Getter
     private final PostId postId;
 
-    //작가는 challenge id가져와서 쓰자 잠시기둘
-
     @Getter
     private String title;
-    //얘네는 수정될수 있으니까..
+
     @Getter
     private String content;
 
     @Getter
     private Category category;
 
-    @Getter
-    private String region;
-
-    @Getter
+    // region, anonymous는 더 이상 사용하지 않지만 DB 호환성을 위해 유지
+    private final String region;
     private final boolean anonymous;
 
     @Getter
@@ -39,22 +35,23 @@ public class Post {
     @Getter
     private final boolean liked;
 
-    public static Post createPost(String title, String content, Category category, String region,
-                                   boolean anonymous) {
+    private static final String DEFAULT_REGION = "";
+    private static final boolean DEFAULT_ANONYMOUS = false;
+
+    public static Post createPost(String title, String content, Category category) {
         if (category == Category.LIGHTNING) {
             throw new IllegalArgumentException("번개 게시글은 createLightning()을 사용하세요");
         }
-        validateCommonFields(title, content, region);
-        return new Post(null, title, content, category, region, anonymous, null, 0, false);
+        validateCommonFields(title, content);
+        return new Post(null, title, content, category, DEFAULT_REGION, DEFAULT_ANONYMOUS, null, 0, false);
     }
 
-    public static Post createLightning(String title, String content, String region, boolean anonymous,
-                                       LightningInfo info) {
+    public static Post createLightning(String title, String content, LightningInfo info) {
         if (info == null) {
             throw new IllegalArgumentException("번개 게시글은 추가 정보가 필수입니다.");
         }
-        validateCommonFields(title, content, region);
-        return new Post(null, title, content, Category.LIGHTNING, region, anonymous, info, 0, false);
+        validateCommonFields(title, content);
+        return new Post(null, title, content, Category.LIGHTNING, DEFAULT_REGION, DEFAULT_ANONYMOUS, info, 0, false);
     }
 
     public static Post reconstruct(PostId postId, String title, String content, Category category, String region,
@@ -73,19 +70,16 @@ public class Post {
         return lightningInfo;
     }
 
-    private static void validateCommonFields(String title, String content, String region) {
+    private static void validateCommonFields(String title, String content) {
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("제목은 필수입니다.");
         }
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("내용은 필수입니다.");
         }
-        if (region == null || region.isBlank()) {
-            throw new IllegalArgumentException("지역은 필수입니다.");
-        }
     }
 
-    public void update(String title, String content, Category category, String region) {
+    public void update(String title, String content, Category category) {
         if (title == null || title.isBlank()) {
             throw new IllegalArgumentException("제목은 필수입니다.");
         }
@@ -94,9 +88,6 @@ public class Post {
         }
         if (category == null) {
             throw new IllegalArgumentException("카테고리는 필수입니다.");
-        }
-        if (region == null || region.isBlank()) {
-            throw new IllegalArgumentException("지역은 필수입니다.");
         }
         // 번개 게시글로 카테고리 변경 불가
         if (category == Category.LIGHTNING && this.category != Category.LIGHTNING) {
@@ -110,7 +101,15 @@ public class Post {
         this.title = title;
         this.content = content;
         this.category = category;
-        this.region = region;
+    }
+
+    // DB 호환성을 위한 getter (deprecated)
+    String getRegion() {
+        return region;
+    }
+
+    boolean isAnonymous() {
+        return anonymous;
     }
 
     public record PostId(Long id) {

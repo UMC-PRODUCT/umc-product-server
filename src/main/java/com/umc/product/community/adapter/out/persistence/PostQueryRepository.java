@@ -54,15 +54,8 @@ public class PostQueryRepository {
     }
 
     private BooleanExpression buildCondition(PostSearchQuery query) {
-        BooleanExpression condition = null;
-
-        // 모집중 필터 (번개 게시글 중 meetAt이 미래인 것만)
-        if (query.ing()) {
-            condition = postJpaEntity.category.eq(Category.LIGHTNING)
-                    .and(postJpaEntity.meetAt.after(LocalDateTime.now()));
-        }
-
-        return condition;
+        // 조건 없음 (전체 조회)
+        return null;
     }
 
     private OrderSpecifier<?> buildOrderSpecifier(PostSortType sort) {
