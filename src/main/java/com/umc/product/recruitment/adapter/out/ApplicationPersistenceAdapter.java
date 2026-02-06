@@ -100,7 +100,8 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
     }
 
     @Override
-    public Optional<MyDocumentEvaluationProjection> findMyDocumentEvaluation(Long applicationId, Long evaluatorMemberId) {
+    public Optional<MyDocumentEvaluationProjection> findMyDocumentEvaluation(Long applicationId,
+                                                                             Long evaluatorMemberId) {
         return applicationQueryRepository.findMyDocumentEvaluation(applicationId, evaluatorMemberId);
     }
 }

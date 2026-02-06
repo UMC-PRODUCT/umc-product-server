@@ -45,8 +45,7 @@ public interface LoadApplicationListPort {
     BigDecimal calculateAvgDocScoreByApplicationId(Long applicationId);
 
     /**
-     * 특정 Application이 특정 Recruitment에 속하는지 확인
-     * (application → formResponse → form → recruitment 경로)
+     * 특정 Application이 특정 Recruitment에 속하는지 확인 (application → formResponse → form → recruitment 경로)
      */
     boolean isApplicationBelongsToRecruitment(Long applicationId, Long recruitmentId);
 
