@@ -97,7 +97,12 @@ public enum RecruitmentErrorCode implements BaseCode {
     PREFERRED_PART_REQUIRED_COUNT_MISMATCH(HttpStatus.BAD_REQUEST, "RECRUITMENT-0049",
             "선호 파트 질문의 필수 개수와 현재 선택 개수가 일치하지 않습니다."),
     RECRUITMENT_SCHEDULE_NOT_COVER_TIMETABLE(HttpStatus.BAD_REQUEST, "RECRUITMENT-0050",
-            "면접 일정표가 면접 일정에 포함되지 않습니다.");
+            "면접 일정표가 면접 일정에 포함되지 않습니다."),
+    FINAL_SELECTED_PART_REQUIRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0051",
+            "최종 합격 처리 시 선택 파트(selectedPart)는 필수입니다."),
+    APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "RECRUITMENT-0052",
+            "해당 모집 지원서를 찾을 수 없습니다."),
+    ;
 
     private final HttpStatus httpStatus;
     private final String code;

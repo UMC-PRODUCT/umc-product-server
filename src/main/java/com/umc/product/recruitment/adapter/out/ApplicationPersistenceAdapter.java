@@ -48,4 +48,9 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
     public List<Application> findAllByApplicantMemberId(Long applicantMemberId) {
         return applicationRepository.findAllByApplicantMemberId(applicantMemberId);
     }
+
+    @Override
+    public Optional<Application> getByRecruitmentIdAndApplicationId(Long recruitmentId, Long applicationId) {
+        return applicationRepository.findByRecruitmentIdAndId(recruitmentId, applicationId);
+    }
 }

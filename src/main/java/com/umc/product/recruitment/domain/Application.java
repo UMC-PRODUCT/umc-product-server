@@ -1,7 +1,11 @@
 package com.umc.product.recruitment.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
+import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -45,6 +49,10 @@ public class Application extends BaseEntity {
     @Column(nullable = false)
     private ApplicationStatus status = ApplicationStatus.APPLIED;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "selected_part")
+    private ChallengerPart selectedPart;
+
     // 운영진의 평가 점수를 평균내어 저장하는 용도
     @Column(name = "doc_score")
     private BigDecimal docScore;
@@ -63,6 +71,20 @@ public class Application extends BaseEntity {
                 .formResponseId(formResponseId)
                 .status(com.umc.product.recruitment.domain.enums.ApplicationStatus.APPLIED)
                 .build();
+    }
+
+    public void acceptFinal(ChallengerPart selectedPart) {
+        if (selectedPart == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.FINAL_SELECTED_PART_REQUIRED);
+        }
+        this.status = ApplicationStatus.FINAL_ACCEPTED;
+        this.selectedPart = selectedPart;
+    }
+
+    public void cancelFinalAccept() {
+        // 최종 합격 취소 시 결정 전 상태로 돌아감
+        this.status = ApplicationStatus.DOC_PASSED;
+        this.selectedPart = null;
     }
 
 }
