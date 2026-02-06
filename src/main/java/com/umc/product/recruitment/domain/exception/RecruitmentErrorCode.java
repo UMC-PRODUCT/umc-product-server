@@ -102,6 +102,8 @@ public enum RecruitmentErrorCode implements BaseCode {
             "최종 합격 처리 시 선택 파트(selectedPart)는 필수입니다."),
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "RECRUITMENT-0052",
             "해당 모집 지원서를 찾을 수 없습니다."),
+    FINAL_SELECTED_PART_NOT_PREFERRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0053",
+            "최종 합격 처리 시 선택 파트(selectedPart)는 지원자가 선택한 지원 파트(preferred) 중 하나여야 합니다."),
     ;
 
     private final HttpStatus httpStatus;

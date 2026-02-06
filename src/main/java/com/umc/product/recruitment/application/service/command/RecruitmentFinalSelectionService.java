@@ -6,6 +6,7 @@ import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.application.port.in.command.UpdateFinalStatusUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateFinalStatusCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateFinalStatusResult;
+import com.umc.product.recruitment.application.port.out.LoadApplicationPartPreferencePort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
 import com.umc.product.recruitment.domain.Application;
@@ -21,6 +22,7 @@ public class RecruitmentFinalSelectionService implements UpdateFinalStatusUseCas
 
     private final LoadApplicationPort loadApplicationPort;
     private final SaveApplicationPort saveApplicationPort;
+    private final LoadApplicationPartPreferencePort loadApplicationPartPreferencePort;
 
     @Override
     @Transactional
@@ -34,7 +36,16 @@ public class RecruitmentFinalSelectionService implements UpdateFinalStatusUseCas
 
         switch (command.evaluationDecision()) {
             case PASS -> {
-                application.acceptFinal(command.selectedPart());
+                ChallengerPart selectedPart = command.selectedPart();
+
+                if (selectedPart != null && !loadApplicationPartPreferencePort.existsPreferredOpenPart(
+                        application.getId(),
+                        selectedPart
+                )) {
+                    throw new BusinessException(Domain.RECRUITMENT,
+                            RecruitmentErrorCode.FINAL_SELECTED_PART_NOT_PREFERRED);
+                }
+                application.acceptFinal(selectedPart);
             }
             case WAIT -> {
                 application.cancelFinalAccept();
