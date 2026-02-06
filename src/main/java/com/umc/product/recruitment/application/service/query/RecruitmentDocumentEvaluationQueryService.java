@@ -122,15 +122,7 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
     }
 
     private PartOption toPartOption(ChallengerPart challengerPart) {
-        return switch (challengerPart) {
-            case PLAN -> PartOption.PLAN;
-            case DESIGN -> PartOption.DESIGN;
-            case WEB -> PartOption.WEB;
-            case IOS -> PartOption.IOS;
-            case ANDROID -> PartOption.ANDROID;
-            case SPRINGBOOT -> PartOption.SPRINGBOOT;
-            case NODEJS -> PartOption.NODEJS;
-        };
+        return PartOption.valueOf(challengerPart.name());
     }
 
     @Override
