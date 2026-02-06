@@ -1,6 +1,7 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.global.response.PageResponse;
+import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.request.SchoolListRequest;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolListItemResponse;
@@ -27,6 +28,7 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
     private final GetSchoolUseCase getSchoolUseCase;
     private final GetFileUseCase getFileUseCase;
 
+    @Public
     @Override
     @GetMapping
     public SchoolPageResponse getSchools(@ModelAttribute SchoolListRequest request, Pageable pageable) {
@@ -38,12 +40,14 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
         return SchoolPageResponse.from(pageResponse);
     }
 
+    @Public
     @Override
     @GetMapping("/all")
     public SchoolNameListResponse getAllSchools() {
         return SchoolNameListResponse.from(getSchoolUseCase.getAllSchoolNames());
     }
 
+    @Public
     @Override
     @GetMapping("/{schoolId}")
     public SchoolDetailResponse getSchoolDetail(@PathVariable Long schoolId) {
@@ -51,6 +55,7 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
         return SchoolDetailResponse.of(schoolDetailInfo);
     }
 
+    @Public
     @Override
     @GetMapping("/unassigned")
     public UnassignedSchoolListResponse getUnassignedSchools(@RequestParam Long gisuId) {

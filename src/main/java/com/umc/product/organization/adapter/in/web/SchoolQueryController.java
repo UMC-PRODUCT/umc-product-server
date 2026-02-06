@@ -1,5 +1,6 @@
 package com.umc.product.organization.adapter.in.web;
 
+import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolLinkResponse;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ public class SchoolQueryController implements SchoolQueryControllerApi {
 
     private final GetSchoolUseCase getSchoolUseCase;
 
+    @Public
     @Override
     @GetMapping("/link/{schoolId}")
     public SchoolLinkResponse getSchoolLink(@PathVariable Long schoolId) {

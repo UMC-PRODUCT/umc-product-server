@@ -23,6 +23,7 @@ public class AdminCurriculumController implements AdminCurriculumControllerApi {
     private final GetAdminCurriculumUseCase getAdminCurriculumUseCase;
     private final ManageCurriculumUseCase manageCurriculumUseCase;
 
+    @Public
     @Override
     @GetMapping
     public AdminCurriculumResponse getCurriculum(
@@ -32,6 +33,7 @@ public class AdminCurriculumController implements AdminCurriculumControllerApi {
         return AdminCurriculumResponse.from(getAdminCurriculumUseCase.getByActiveGisuAndPart(part));
     }
 
+    @Public
     @Override
     @PutMapping
     public void manageCurriculum(

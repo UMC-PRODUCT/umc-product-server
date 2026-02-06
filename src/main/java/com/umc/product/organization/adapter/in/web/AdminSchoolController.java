@@ -24,30 +24,35 @@ public class AdminSchoolController implements AdminSchoolControllerApi {
 
     private final ManageSchoolUseCase manageSchoolUseCase;
 
+    @Public
     @Override
     @PostMapping
     public void createSchool(@RequestBody @Valid CreateSchoolRequest request) {
         manageSchoolUseCase.register(request.toCommand());
     }
 
+    @Public
     @Override
     @PatchMapping("/{schoolId}")
     public void updateSchool(@PathVariable Long schoolId, @RequestBody @Valid UpdateSchoolRequest request) {
         manageSchoolUseCase.updateSchool(schoolId, request.toCommand());
     }
 
+    @Public
     @Override
     @DeleteMapping
     public void deleteSchools(@RequestBody @Valid DeleteSchoolsRequest request) {
         manageSchoolUseCase.deleteSchools(request.schoolIds());
     }
 
+    @Public
     @Override
     @PatchMapping("/{schoolId}/assign")
     public void assignToChapter(@PathVariable Long schoolId, @RequestBody @Valid AssignSchoolRequest request) {
         manageSchoolUseCase.assignToChapter(request.toCommand(schoolId));
     }
 
+    @Public
     @Override
     @PatchMapping("/{schoolId}/unassign")
     public void unassignFromChapter(@PathVariable Long schoolId, @RequestBody @Valid UnassignSchoolRequest request) {
