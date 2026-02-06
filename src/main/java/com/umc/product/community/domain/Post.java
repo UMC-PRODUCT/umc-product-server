@@ -22,7 +22,7 @@ public class Post {
     @Getter
     private Category category;
 
-    // region, anonymous는 더 이상 사용하지 않지만 DB 호환성을 위해 유지
+    // DB 호환성을 위해 유지 제거가능
     private final String region;
     private final boolean anonymous;
 
@@ -103,15 +103,6 @@ public class Post {
         this.category = category;
     }
 
-    // DB 호환성을 위한 getter (deprecated)
-    String getRegion() {
-        return region;
-    }
-
-    boolean isAnonymous() {
-        return anonymous;
-    }
-
     public record PostId(Long id) {
         public PostId {
             if (id <= 0) {
@@ -121,9 +112,9 @@ public class Post {
     }
 
     public record LightningInfo(
-            LocalDateTime meetAt,
-            String location,
-            Integer maxParticipants
+        LocalDateTime meetAt,
+        String location,
+        Integer maxParticipants
     ) {
         public LightningInfo {
             if (meetAt == null || meetAt.isBefore(LocalDateTime.now())) {
