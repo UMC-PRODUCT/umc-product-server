@@ -60,7 +60,7 @@ public class RecruitmentDocumentEvaluationService implements UpdateMyDocumentEva
             .orElseGet(() -> {
                 Application application = loadApplicationPort.findById(applicationId)
                     .orElseThrow(() -> new RecruitmentDomainException(
-                        RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT));
+                        RecruitmentErrorCode.APPLICATION_NOT_FOUND));
 
                 return Evaluation.createDocumentEvaluation(
                     application,
