@@ -1,5 +1,7 @@
 package com.umc.product.member.application.service;
 
+import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
+import com.umc.product.authorization.application.port.in.query.GetMemberRolesUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.member.application.port.in.query.MemberProfileInfo;
@@ -25,20 +27,22 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberQueryService implements GetMemberUseCase {
 
     private final LoadMemberPort loadMemberPort;
+
     private final GetSchoolUseCase getSchoolUseCase;
     private final GetFileUseCase getFileUseCase;
+    private final GetMemberRolesUseCase getMemberRolesUseCase;
 
     @Override
     public MemberInfo getById(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
-                .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
         return MemberInfo.from(member);
     }
 
     @Override
     public MemberInfo getByEmail(String email) {
         Member member = loadMemberPort.findByEmail(email)
-                .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
         return MemberInfo.from(member);
     }
 
@@ -61,7 +65,9 @@ public class MemberQueryService implements GetMemberUseCase {
             profileImageLink = fileInfo.fileLink();
         }
 
-        return MemberProfileInfo.from(memberInfo, schoolName, profileImageLink);
+        List<ChallengerRoleInfo> roles = getMemberRolesUseCase.getRoles(memberId);
+
+        return MemberProfileInfo.from(memberInfo, schoolName, profileImageLink, roles);
     }
 
     @Override

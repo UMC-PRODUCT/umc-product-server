@@ -2,7 +2,6 @@ package com.umc.product.member.adapter.in.web;
 
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.global.constant.SwaggerTag;
-import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.OAuthVerificationClaims;
@@ -83,11 +82,13 @@ public class MemberController {
     }
 
     @Operation(summary = "memberId로 회원 정보 조회")
+    @Deprecated
     @GetMapping("profile/{memberId}")
     MemberInfoResponse getMemberProfile(
         @PathVariable Long memberId
     ) {
         MemberProfileInfo info = getMemberUseCase.getProfile(memberId);
+
         return MemberInfoResponse.from(info);
     }
 

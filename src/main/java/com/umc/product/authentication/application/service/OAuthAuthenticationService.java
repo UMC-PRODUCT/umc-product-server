@@ -12,7 +12,7 @@ import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
 import com.umc.product.authentication.domain.MemberOAuth;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
-import com.umc.product.global.exception.NotImplementedException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -94,10 +94,11 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             });
 
         // 2. 해당 회원이 이미 같은 provider로 연동했는지 확인 (선택적)
-        loadMemberOAuthPort.findByMemberIdAndProvider(command.memberId(), command.provider())
-            .ifPresent(existing -> {
-                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_PROVIDER_ALREADY_LINKED);
-            });
+        // 일단 나중에 적용하기 위해서 주석 처리
+//        loadMemberOAuthPort.findByMemberIdAndProvider(command.memberId(), command.provider())
+//            .ifPresent(existing -> {
+//                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_PROVIDER_ALREADY_LINKED);
+//            });
 
         MemberOAuth created = saveMemberOAuthPort.save(LinkOAuthCommand.toEntity(command));
 
@@ -106,7 +107,17 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
 
     @Override
     public void unlinkOAuth(UnlinkOAuthCommand command) {
-        // TODO: OAuth 계정 연동 해제 구현
-        throw new NotImplementedException();
+        MemberOAuth memberOAuth = loadMemberOAuthPort.findByMemberOAuthId(command.memberOAuthId())
+            .orElseThrow(() -> new AuthenticationDomainException(AuthenticationErrorCode.MEMBER_OAUTH_NOT_FOUND));
+
+        memberOAuth.throwIfNotValidMember(command.memberId());
+
+        // 회원에 연결된 OAuth 계정이 최소한 한 개는 있어야 함
+        List<MemberOAuth> linkedOAuth = loadMemberOAuthPort.findAllByMemberId(command.memberId());
+        if (linkedOAuth.size() <= 1) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_CANNOT_UNLINK_LAST_PROVIDER);
+        }
+
+        saveMemberOAuthPort.delete(memberOAuth);
     }
 }
