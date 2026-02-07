@@ -76,7 +76,7 @@ public class AttendanceWindow {
         if (afterMinutes < 0) {
             throw new IllegalArgumentException("이후 시간은 0분 이상이어야 합니다");
         }
-
+;
         Instant start = baseTime.minus(Duration.ofMinutes(beforeMinutes));
         Instant end = baseTime.plus(Duration.ofMinutes(afterMinutes));
 

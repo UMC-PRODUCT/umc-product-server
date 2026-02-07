@@ -1,7 +1,5 @@
 package com.umc.product.schedule.adapter.in.web.dto.request;
 
-import static com.umc.product.schedule.domain.ScheduleConstants.KST;
-
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;

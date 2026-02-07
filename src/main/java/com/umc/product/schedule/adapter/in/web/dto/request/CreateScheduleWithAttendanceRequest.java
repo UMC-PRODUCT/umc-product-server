@@ -1,7 +1,5 @@
 package com.umc.product.schedule.adapter.in.web.dto.request;
 
-import static com.umc.product.schedule.domain.ScheduleConstants.KST;
-
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleWithAttendanceCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
@@ -22,10 +20,12 @@ public record CreateScheduleWithAttendanceRequest(
     @NotBlank(message = "일정 제목은 필수입니다")
     String name,
 
-    @Schema(description = "시작 일시", example = "2026-03-16T01:00:00Z")
+    @Schema(description = "시작 일시 (UTC)", example = "2026-03-16T01:00:00Z")
+    @NotNull(message = "시작 일시는 필수입니다")
     Instant startsAt,
 
-    @Schema(description = "종료 일시", example = "2026-03-16T03:00:00Z")
+    @Schema(description = "종료 일시 (UTC)", example = "2026-03-16T03:00:00Z")
+    @NotNull(message = "종료 일시는 필수입니다")
     Instant endsAt,
 
     @Schema(description = "종일 여부", example = "false")
