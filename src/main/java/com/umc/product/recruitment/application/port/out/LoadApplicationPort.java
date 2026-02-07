@@ -16,4 +16,6 @@ public interface LoadApplicationPort {
     Optional<Application> findByRecruitmentIdAndApplicantMemberId(Long recruitmentId, Long applicantMemberId);
 
     List<Application> findAllByApplicantMemberId(Long applicantMemberId);
+
+    Optional<Application> getByRecruitmentIdAndApplicationId(Long recruitmentId, Long applicationId);
 }

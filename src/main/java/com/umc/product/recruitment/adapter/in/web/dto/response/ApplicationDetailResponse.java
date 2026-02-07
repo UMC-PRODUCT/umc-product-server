@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.adapter.in.web.dto.response;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationDetailInfo;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
@@ -38,12 +39,28 @@ public record ApplicationDetailResponse(
     @Schema(name = "FormPageResponse", description = "폼 페이지")
     public record FormPageResponse(
         Integer pageNo,
-        List<QuestionResponse> questions
+        List<QuestionResponse> questions,
+        List<PartQuestionGroupResponse> partQuestions
     ) {
         static FormPageResponse from(ApplicationDetailInfo.PageInfo p) {
             return new FormPageResponse(
                 p.pageNo(),
-                p.questions() == null ? List.of() : p.questions().stream().map(QuestionResponse::from).toList()
+                p.questions() == null ? List.of() : p.questions().stream().map(QuestionResponse::from).toList(),
+                p.partQuestions() == null ? List.of()
+                    : p.partQuestions().stream().map(PartQuestionGroupResponse::from).toList()
+            );
+        }
+    }
+
+    @Schema(name = "PartQuestionGroupResponse", description = "파트별 질문 그룹")
+    public record PartQuestionGroupResponse(
+        ChallengerPart part,
+        List<QuestionResponse> questions
+    ) {
+        static PartQuestionGroupResponse from(ApplicationDetailInfo.PartQuestionGroupInfo g) {
+            return new PartQuestionGroupResponse(
+                g.part(),
+                g.questions() == null ? List.of() : g.questions().stream().map(QuestionResponse::from).toList()
             );
         }
     }
@@ -53,10 +70,8 @@ public record ApplicationDetailResponse(
         Long questionId,
         Integer orderNo,
         QuestionType type,
-
         String questionText,
         boolean required,
-
         List<OptionResponse> options,
         AnswerResponse answer
     ) {

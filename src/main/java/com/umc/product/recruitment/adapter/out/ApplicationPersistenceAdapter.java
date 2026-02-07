@@ -104,4 +104,9 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
                                                                              Long evaluatorMemberId) {
         return applicationQueryRepository.findMyDocumentEvaluation(applicationId, evaluatorMemberId);
     }
+
+    @Override
+    public Optional<Application> getByRecruitmentIdAndApplicationId(Long recruitmentId, Long applicationId) {
+        return applicationRepository.findByRecruitmentIdAndId(recruitmentId, applicationId);
+    }
 }

@@ -1,6 +1,13 @@
 package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.member.application.port.out.LoadMemberPort;
+import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.exception.MemberErrorCode;
+import com.umc.product.recruitment.adapter.in.web.mapper.AnswerInfoMapper;
+import com.umc.product.recruitment.adapter.in.web.mapper.ApplicationDetailMapper;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.application.port.in.PartOption;
@@ -16,11 +23,24 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationE
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEvaluationInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEvaluationQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormDefinitionInfo;
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPartPreferencePort;
+import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
+import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
+import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
+import com.umc.product.survey.application.port.in.query.dto.AnswerInfo;
+import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
+import com.umc.product.survey.application.port.out.LoadFormPort;
+import com.umc.product.survey.application.port.out.LoadFormResponsePort;
+import com.umc.product.survey.domain.FormResponse;
+import com.umc.product.survey.domain.SingleAnswer;
+import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -43,11 +63,58 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
 
     private final LoadApplicationListPort loadApplicationListPort;
     private final LoadApplicationPartPreferencePort loadApplicationPartPreferencePort;
+    private final LoadRecruitmentPort loadRecruitmentPort;
+    private final LoadApplicationPort loadApplicationPort;
+    private final LoadMemberPort loadMemberPort;
+    private final LoadFormPort loadFormPort;
+    private final LoadFormResponsePort loadFormResponsePort;
+    private final GetFileUseCase getFileUseCase;
+    private final AnswerInfoMapper answerInfoMapper;
+    private final ApplicationDetailMapper applicationDetailMapper;
 
     @Override
     public ApplicationDetailInfo get(GetApplicationDetailQuery query) {
-        // todo: 운영진 권한 검증 필요
-        return null;
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        // todo: 운영진 권한 검증
+
+        Application application = loadApplicationPort.getByRecruitmentIdAndApplicationId(
+            query.recruitmentId(),
+            query.applicationId()
+        ).orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
+
+        Member applicant = loadMemberPort.findById(application.getApplicantMemberId())
+            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+
+        Long formId = recruitment.getFormId();
+        if (formId == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+        }
+        FormDefinitionInfo formDefinition = loadFormPort.loadFormDefinition(formId);
+        RecruitmentFormDefinitionInfo recruitmentDef = RecruitmentFormDefinitionInfo.from(formDefinition);
+
+        FormResponse formResponse = loadFormResponsePort.findById(application.getFormResponseId())
+            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+
+        List<AnswerInfo> answers = (formResponse.getAnswers() == null ? List.<SingleAnswer>of()
+            : formResponse.getAnswers())
+            .stream()
+            .map(answerInfoMapper::toAnswerInfoWithPresignedUrlIfNeeded)
+            .toList();
+
+        // 지원자 파트 선호 로드 (priority 순)
+        List<ApplicationPartPreference> prefs = loadApplicationPartPreferencePort.findByApplicationId(
+            application.getId());
+
+        return applicationDetailMapper.map(
+            application,
+            applicant,
+            formDefinition,
+            recruitmentDef,
+            answers,
+            prefs
+        );
     }
 
     @Override
