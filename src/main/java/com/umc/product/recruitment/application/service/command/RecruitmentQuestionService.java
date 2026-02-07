@@ -23,7 +23,12 @@ import com.umc.product.recruitment.domain.enums.PartKey;
 import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,11 +49,11 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
     @Override
     public CreateInterviewSheetQuestionResult create(CreateInterviewSheetQuestionCommand command) {
 
-        // 1. Recruitment 찾기
+        // 1. 검증 : Recruitment 존재
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
-        // 2. partKey 검증 (COMMON이 아니면 모집 중인 파트인지 확인)
+        // 2. 검증 : partKey가 COMMON이 아니면 모집 중인 파트인지
         validatePartKey(command.recruitmentId(), command.partKey());
 
         // 3. orderNo 설정 (recruitment & partKey의 InterviewQuestion 중 max + 1)
@@ -81,7 +86,47 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
 
     @Override
     public ReorderInterviewSheetQuestionResult reorder(ReorderInterviewSheetQuestionCommand command) {
-        return null;
+        // 1. 검증 : Recruitment 존재
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        // 2. 해당 파트 기존 질문들 조회
+        List<InterviewQuestionSheet> existingQuestions = loadInterviewQuestionSheetPort
+            .findByRecruitmentAndPartKey(recruitment, command.partKey());
+
+        // 3. 검증 : 기존 질문 ID 목록과 요청된 ID 목록 일치하는지
+        Set<Long> existingIds = existingQuestions.stream()
+            .map(InterviewQuestionSheet::getId)
+            .collect(Collectors.toSet());
+
+        List<Long> orderedIds = command.orderedQuestionIds();
+        Set<Long> requestedIds = new HashSet<>(command.orderedQuestionIds());
+
+        // 3-1. ID 중복 검증
+        if (requestedIds.size() != command.orderedQuestionIds().size()) {
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SHEET_QUESTION_DUPLICATE);
+        }
+
+        // 3-2. ID 일치 검증
+        if (!existingIds.equals(requestedIds)) {
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SHEET_QUESTION_MISMATCH);
+        }
+
+        // 4. id -> InterviewQuestionSheet 엔티티 매핑
+        Map<Long, InterviewQuestionSheet> questionMap = existingQuestions.stream()
+            .collect(Collectors.toMap(InterviewQuestionSheet::getId, Function.identity()));
+
+        // 5. 순서 업데이트
+        for (int i = 0; i < orderedIds.size(); i++) {
+            Long questionId = orderedIds.get(i);
+            InterviewQuestionSheet question = questionMap.get(questionId);
+            question.changeOrderNo(i + 1);
+        }
+
+        return new ReorderInterviewSheetQuestionResult(
+            command.partKey(),
+            orderedIds
+        );
     }
 
     private void validatePartKey(Long recruitmentId, PartKey partKey) {

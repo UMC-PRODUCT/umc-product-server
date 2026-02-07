@@ -5,6 +5,7 @@ import com.umc.product.recruitment.application.port.out.SaveInterviewQuestionShe
 import com.umc.product.recruitment.domain.InterviewQuestionSheet;
 import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.enums.PartKey;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,5 +28,10 @@ public class InterviewQuestionSheetPersistenceAdapter implements SaveInterviewQu
     public Optional<InterviewQuestionSheet> findTopByRecruitmentAndPartKeyOrderByOrderNoDesc(Recruitment recruitment,
                                                                                              PartKey partKey) {
         return interviewQuestionSheetRepository.findTopByRecruitmentAndPartKeyOrderByOrderNoDesc(recruitment, partKey);
+    }
+
+    @Override
+    public List<InterviewQuestionSheet> findByRecruitmentAndPartKey(Recruitment recruitment, PartKey partKey) {
+        return interviewQuestionSheetRepository.findByRecruitmentAndPartKey(recruitment, partKey);
     }
 }
