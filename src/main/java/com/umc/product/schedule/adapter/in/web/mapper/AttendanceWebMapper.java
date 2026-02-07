@@ -1,5 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.mapper;
 
+import static com.umc.product.schedule.domain.ScheduleConstants.KST;
+
 import com.umc.product.schedule.adapter.in.web.dto.response.AttendanceRecordResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.AvailableAttendanceResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.MyAttendanceHistoryResponse;
@@ -73,7 +75,7 @@ public class AttendanceWebMapper {
             info.schoolName(),
             info.status().name(),
             info.reason(),
-            info.requestedAt()
+            info.requestedAt() != null ? info.requestedAt().atZone(KST).toLocalDateTime() : null
         );
     }
 

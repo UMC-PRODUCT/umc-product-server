@@ -8,7 +8,7 @@ import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +64,7 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
                 Function.identity()));
 
         // 결과 생성
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         return activeSheets.stream()
             .filter(sheet -> {
                 Schedule schedule = scheduleMap.get(sheet.getScheduleId());

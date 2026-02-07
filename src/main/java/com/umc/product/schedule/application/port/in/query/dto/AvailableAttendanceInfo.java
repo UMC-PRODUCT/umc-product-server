@@ -1,5 +1,7 @@
 package com.umc.product.schedule.application.port.in.query.dto;
 
+import static com.umc.product.schedule.domain.ScheduleConstants.KST;
+
 import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
@@ -33,8 +35,8 @@ public record AvailableAttendanceInfo(
             schedule.getId(),
             schedule.getName(),
             Set.copyOf(schedule.getTags()),
-            schedule.getStartsAt().toLocalTime(),
-            schedule.getEndsAt().toLocalTime(),
+            schedule.getStartsAt().atZone(KST).toLocalTime(),
+            schedule.getEndsAt().atZone(KST).toLocalTime(),
             sheet.getId(),
             null,
             AttendanceStatus.PENDING,
@@ -51,8 +53,8 @@ public record AvailableAttendanceInfo(
             schedule.getId(),
             schedule.getName(),
             Set.copyOf(schedule.getTags()),
-            schedule.getStartsAt().toLocalTime(),
-            schedule.getEndsAt().toLocalTime(),
+            schedule.getStartsAt().atZone(KST).toLocalTime(),
+            schedule.getEndsAt().atZone(KST).toLocalTime(),
             sheet.getId(),
             record.getId(),
             record.getStatus(),

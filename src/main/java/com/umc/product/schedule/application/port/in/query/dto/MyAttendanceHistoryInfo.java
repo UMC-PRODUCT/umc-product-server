@@ -1,16 +1,18 @@
 package com.umc.product.schedule.application.port.in.query.dto;
 
+import static com.umc.product.schedule.domain.ScheduleConstants.KST;
+
 import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 
 public record MyAttendanceHistoryInfo(
     Long attendanceId,
     Long scheduleId,
     String scheduleName,
-    LocalDateTime scheduledAt,
+    Instant scheduledAt,
     String weekDisplay,       // "1주차"
     String dateDisplay,       // "03.16"
     AttendanceStatus status,
@@ -25,7 +27,7 @@ public record MyAttendanceHistoryInfo(
             schedule.getName(),
             schedule.getStartsAt(),
             "",  // TODO: Schedule에 week 필드 추가 필요
-            schedule.getStartsAt().format(DATE_FORMATTER),
+            schedule.getStartsAt().atZone(KST).format(DATE_FORMATTER),
             record.getStatus(),
             record.getStatusDisplay()
         );

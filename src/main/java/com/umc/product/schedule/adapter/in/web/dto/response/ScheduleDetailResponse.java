@@ -1,5 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.dto.response;
 
+import static com.umc.product.schedule.domain.ScheduleConstants.KST;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
@@ -63,8 +65,8 @@ public record ScheduleDetailResponse(
             info.name(),
             info.description(),
             tagNames,
-            info.startsAt(),
-            info.endsAt(),
+            info.startsAt().atZone(KST).toLocalDateTime(),
+            info.endsAt().atZone(KST).toLocalDateTime(),
             info.isAllDay(),
             info.locationName(),
             info.latitude(),

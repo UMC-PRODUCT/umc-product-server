@@ -1,5 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.dto.request;
 
+import static com.umc.product.schedule.domain.ScheduleConstants.KST;
+
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
@@ -52,8 +54,8 @@ public record UpdateScheduleRequest(
         return UpdateScheduleCommand.of(
             scheduleId,
             name,
-            startsAt,
-            endsAt,
+            startsAt != null ? startsAt.atZone(KST).toInstant() : null,
+            endsAt != null ? endsAt.atZone(KST).toInstant() : null,
             isAllDay,
             locationName,
             GeometryUtils.createPoint(latitude, longitude),

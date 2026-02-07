@@ -5,7 +5,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -78,8 +77,8 @@ public class AttendanceWindow {
             throw new IllegalArgumentException("이후 시간은 0분 이상이어야 합니다");
         }
 
-        Instant start = baseTime.minus(beforeMinutes, ChronoUnit.MINUTES);
-        Instant end = baseTime.plus(afterMinutes, ChronoUnit.MINUTES);
+        Instant start = baseTime.minus(Duration.ofMinutes(beforeMinutes));
+        Instant end = baseTime.plus(Duration.ofMinutes(afterMinutes));
 
         return new AttendanceWindow(start, end, lateThresholdMinutes);
     }
@@ -134,7 +133,7 @@ public class AttendanceWindow {
         }
 
         // 출석 인정 시간 계산
-        Instant lateThreshold = startTime.plus(lateThresholdMinutes, ChronoUnit.MINUTES);
+        Instant lateThreshold = startTime.plus(Duration.ofMinutes(lateThresholdMinutes));
 
         // 정시 출석
         if (!checkTime.isAfter(lateThreshold)) {

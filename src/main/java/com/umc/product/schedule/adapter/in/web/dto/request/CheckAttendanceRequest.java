@@ -5,7 +5,7 @@ import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.in.command.dto.CheckAttendanceCommand;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Schema(description = "출석 체크 요청")
 public record CheckAttendanceRequest(
@@ -34,7 +34,7 @@ public record CheckAttendanceRequest(
         return new CheckAttendanceCommand(
             attendanceSheetId,
             memberId,
-            LocalDateTime.now(),
+            Instant.now(),
             latitude,
             longitude,
             locationVerified

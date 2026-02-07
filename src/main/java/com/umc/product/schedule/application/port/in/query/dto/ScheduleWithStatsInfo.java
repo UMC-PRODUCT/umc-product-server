@@ -2,7 +2,7 @@ package com.umc.product.schedule.application.port.in.query.dto;
 
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.vo.AttendanceStats;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 // TODO : 주석 처리 부분 tags 로 변경
 public record ScheduleWithStatsInfo(
@@ -11,8 +11,8 @@ public record ScheduleWithStatsInfo(
     String name,
 //        ScheduleType type,
     String status,
-    LocalDateTime startsAt,
-    LocalDateTime endsAt,
+    Instant startsAt,
+    Instant endsAt,
     String locationName,
     // === Attendance Stats ===
     Integer totalCount,
@@ -23,7 +23,7 @@ public record ScheduleWithStatsInfo(
     /**
      * Schedule 엔티티와 통계 수치를 받아 Info DTO 생성
      */
-    public static ScheduleWithStatsInfo of(Schedule schedule, AttendanceStats stats, LocalDateTime now) {
+    public static ScheduleWithStatsInfo of(Schedule schedule, AttendanceStats stats, Instant now) {
         return new ScheduleWithStatsInfo(
             schedule.getId(),
             schedule.getName(),

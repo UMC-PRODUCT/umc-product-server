@@ -1,5 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.dto.request;
 
+import static com.umc.product.schedule.domain.ScheduleConstants.KST;
+
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleWithAttendanceCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
@@ -66,8 +68,8 @@ public record CreateScheduleWithAttendanceRequest(
     public CreateScheduleWithAttendanceCommand toCommand(Long authorMemberId) {
         return new CreateScheduleWithAttendanceCommand(
             name,
-            startsAt,
-            endsAt,
+            startsAt.atZone(KST).toInstant(),
+            endsAt.atZone(KST).toInstant(),
             isAllDay,
             locationName,
             GeometryUtils.createPoint(latitude, longitude),

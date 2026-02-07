@@ -2,7 +2,7 @@ package com.umc.product.schedule.application.port.in.query.dto;
 
 import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record PendingAttendanceInfo(
     Long attendanceId,
@@ -12,7 +12,7 @@ public record PendingAttendanceInfo(
     String schoolName,
     AttendanceStatus status,
     String reason,
-    LocalDateTime requestedAt
+    Instant requestedAt
 ) {
     public static PendingAttendanceInfo of(
         AttendanceRecord record,

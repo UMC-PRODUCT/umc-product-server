@@ -1,5 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.dto.request;
 
+import static com.umc.product.schedule.domain.ScheduleConstants.KST;
+
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.in.command.dto.UpdateAttendanceSheetCommand;
@@ -30,8 +32,8 @@ public record UpdateAttendanceSheetRequest(
 
     public UpdateAttendanceSheetCommand toCommand(Long sheetId) {
         AttendanceWindow window = AttendanceWindow.from(
-            startTime,
-            endTime,
+            startTime.atZone(KST).toInstant(),
+            endTime.atZone(KST).toInstant(),
             lateThresholdMinutes
         );
         return new UpdateAttendanceSheetCommand(new AttendanceSheetId(sheetId), window, requiresApproval);

@@ -1,5 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.mapper;
 
+import static com.umc.product.schedule.domain.ScheduleConstants.KST;
+
 import com.umc.product.schedule.adapter.in.web.dto.response.ScheduleListResponse;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleWithStatsInfo;
 import java.util.List;
@@ -16,9 +18,9 @@ public class ScheduleWebMapper {
             info.name(),
 //                info.type().name(),
             info.status(),
-            info.startsAt(),
-            info.startsAt(),
-            info.endsAt(),
+            info.startsAt().atZone(KST).toLocalDateTime(),
+            info.startsAt().atZone(KST).toLocalDateTime(),
+            info.endsAt().atZone(KST).toLocalDateTime(),
             info.locationName(),
             info.totalCount(),
             info.presentCount(),

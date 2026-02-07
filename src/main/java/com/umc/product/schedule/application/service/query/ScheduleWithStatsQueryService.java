@@ -10,7 +10,7 @@ import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.vo.AttendanceStats;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +31,7 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
 
     @Override
     public List<ScheduleWithStatsInfo> getAll() {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         // 1. 모든 일정 조회
         List<Schedule> schedules = loadSchedulePort.findAll();
@@ -97,7 +97,7 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
         return new AttendanceStats(totalCount, presentCount, pendingCount);
     }
 
-    private Comparator<ScheduleWithStatsInfo> scheduleComparator(LocalDateTime now) {
+    private Comparator<ScheduleWithStatsInfo> scheduleComparator(Instant now) {
         return (a, b) -> {
             int orderA = getStatusOrder(a.status());
             int orderB = getStatusOrder(b.status());

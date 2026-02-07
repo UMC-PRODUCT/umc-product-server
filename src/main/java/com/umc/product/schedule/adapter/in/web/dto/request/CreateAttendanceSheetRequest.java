@@ -1,5 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.dto.request;
 
+import static com.umc.product.schedule.domain.ScheduleConstants.KST;
+
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.in.command.dto.CreateAttendanceSheetCommand;
@@ -33,8 +35,8 @@ public record CreateAttendanceSheetRequest(
 
     public CreateAttendanceSheetCommand toCommand(Long scheduleId) {
         AttendanceWindow window = AttendanceWindow.from(
-            startTime,
-            endTime,
+            startTime.atZone(KST).toInstant(),
+            endTime.atZone(KST).toInstant(),
             DEFAULT_LATE_THRESHOLD_MINUTES
         );
         return new CreateAttendanceSheetCommand(scheduleId, gisuId, window, requiresApproval, participantMemberIds);
