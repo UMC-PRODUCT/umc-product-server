@@ -98,7 +98,18 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
 
     @Override
     public void delete(DeleteInterviewSheetQuestionCommand command) {
+        // 1. 검증 : InterviewQuestionSheet 존재
+        InterviewQuestionSheet question = loadInterviewQuestionSheetPort.findById(command.questionId())
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SHEET_QUESTION_NOT_FOUND));
 
+        // 2. 검증 : 해당 Recruitment의 질문인지
+        if (!question.getRecruitment().getId().equals(command.recruitmentId())) {
+            throw new RecruitmentDomainException(
+                RecruitmentErrorCode.INTERVIEW_SHEET_QUESTION_NOT_BELONGS_TO_RECRUITMENT);
+        }
+
+        // 3. 질문 삭제
+        saveInterviewQuestionSheetPort.deleteById(question.getId());
     }
 
     @Override

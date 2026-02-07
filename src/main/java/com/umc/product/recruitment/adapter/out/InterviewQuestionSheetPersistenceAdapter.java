@@ -23,6 +23,11 @@ public class InterviewQuestionSheetPersistenceAdapter implements SaveInterviewQu
         return interviewQuestionSheetRepository.save(interviewQuestionSheet);
     }
 
+    @Override
+    public void deleteById(Long interviewQuestionSheetId) {
+        interviewQuestionSheetRepository.deleteById(interviewQuestionSheetId);
+    }
+
     // ================ LoadInterviewQuestionSheetPort ================
     @Override
     public Optional<InterviewQuestionSheet> findTopByRecruitmentAndPartKeyOrderByOrderNoDesc(Recruitment recruitment,
