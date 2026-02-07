@@ -15,7 +15,6 @@ import com.umc.product.recruitment.application.port.in.command.CreateInterviewSh
 import com.umc.product.recruitment.application.port.in.command.DeleteInterviewSheetQuestionUseCase;
 import com.umc.product.recruitment.application.port.in.command.ReorderInterviewSheetQuestionUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateInterviewSheetQuestionUseCase;
-import com.umc.product.recruitment.application.port.in.command.dto.CreateInterviewSheetQuestionCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.DeleteInterviewSheetQuestionCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.ReorderInterviewSheetQuestionCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateInterviewSheetQuestionCommand;
@@ -103,12 +102,7 @@ public class InterviewQuestionSheetController {
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         var result = createInterviewSheetQuestionUseCase.create(
-            new CreateInterviewSheetQuestionCommand(
-                recruitmentId,
-                request.partKey(),
-                request.questionText(),
-                memberPrincipal.getMemberId()
-            )
+            request.toCommand(recruitmentId, memberPrincipal.getMemberId())
         );
         return CreateInterviewSheetQuestionResponse.from(result);
     }

@@ -103,7 +103,7 @@ public enum RecruitmentErrorCode implements BaseCode {
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "RECRUITMENT-0052", "지원서를 찾을 수 없습니다."),
     APPLICATION_RECRUITMENT_MISMATCH(HttpStatus.INTERNAL_SERVER_ERROR, "RECRUITMENT-0053",
         "지원서와 모집의 데이터가 일치하지 않습니다."),
-
+    INTERVIEW_SHEET_PART_NOT_OPEN(HttpStatus.BAD_REQUEST, "RECRUITMENT-0054", "해당 파트는 모집 중이 아닙니다."),
     ;
 
     private final HttpStatus httpStatus;
