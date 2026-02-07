@@ -47,4 +47,190 @@ class GetMemberUseCaseTest {
 
     @InjectMocks
     MemberQueryService memberQueryService;
+
+    @Nested
+    @DisplayName("getById")
+    class GetById {
+
+        @Test
+        void 회원_조회_성공() {
+            // given
+            Member member = createMember(1L, 1L, "profile_img_1");
+            given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
+
+            // when
+            MemberInfo result = memberQueryService.getById(1L);
+
+            // then
+            assertThat(result.id()).isEqualTo(1L);
+            assertThat(result.name()).isEqualTo("홍길동");
+            assertThat(result.nickname()).isEqualTo("길동");
+            assertThat(result.email()).isEqualTo("test@example.com");
+        }
+
+        @Test
+        void 회원이_존재하지_않으면_예외() {
+            // given
+            given(loadMemberPort.findById(999L)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> memberQueryService.getById(999L))
+                .isInstanceOf(MemberDomainException.class)
+                .extracting("code")
+                .isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName("getProfile")
+    class GetProfile {
+
+        @Test
+        @DisplayName("학교, 프로필 이미지, 역할 모두 있을 때 프로필 조회 성공")
+        void 프로필_조회_성공_모든_정보_있음() {
+            // given
+            Member member = createMember(1L, 1L, "profile_img_1");
+            given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
+            given(getSchoolUseCase.getSchoolDetail(1L))
+                .willReturn(createSchoolDetailInfo(1L, "한양대학교ERICA"));
+            given(getFileUseCase.getById("profile_img_1"))
+                .willReturn(createFileInfo("profile_img_1", "https://cdn.example.com/profile.jpg"));
+            given(getMemberRolesUseCase.getRoles(1L)).willReturn(List.of());
+
+            // when
+            MemberProfileInfo result = memberQueryService.getProfile(1L);
+
+            // then
+            assertThat(result.name()).isEqualTo("홍길동");
+            assertThat(result.schoolName()).isEqualTo("한양대학교ERICA");
+            assertThat(result.profileImageLink()).isEqualTo("https://cdn.example.com/profile.jpg");
+            assertThat(result.roles()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("schoolId가 null이면 학교 조회를 하지 않는다")
+        void 프로필_조회_성공_학교ID가_null() {
+            // given
+            Member member = createMember(1L, null, "profile_img_1");
+            given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
+            given(getFileUseCase.getById("profile_img_1"))
+                .willReturn(createFileInfo("profile_img_1", "https://cdn.example.com/profile.jpg"));
+            given(getMemberRolesUseCase.getRoles(1L)).willReturn(List.of());
+
+            // when
+            MemberProfileInfo result = memberQueryService.getProfile(1L);
+
+            // then
+            assertThat(result.schoolName()).isNull();
+            then(getSchoolUseCase).should(never()).getSchoolDetail(any());
+        }
+
+        @Test
+        @DisplayName("profileImageId가 null이면 파일 조회를 하지 않는다")
+        void 프로필_조회_성공_프로필이미지ID가_null() {
+            // given
+            Member member = createMember(1L, 1L, null);
+            given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
+            given(getSchoolUseCase.getSchoolDetail(1L))
+                .willReturn(createSchoolDetailInfo(1L, "한양대학교ERICA"));
+            given(getMemberRolesUseCase.getRoles(1L)).willReturn(List.of());
+
+            // when
+            MemberProfileInfo result = memberQueryService.getProfile(1L);
+
+            // then
+            assertThat(result.profileImageLink()).isNull();
+            then(getFileUseCase).should(never()).getById(any());
+        }
+
+        @Test
+        @DisplayName("schoolId와 profileImageId 모두 null이면 둘 다 조회하지 않는다")
+        void 프로필_조회_성공_학교와_이미지_모두_null() {
+            // given
+            Member member = createMember(1L, null, null);
+            given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
+            given(getMemberRolesUseCase.getRoles(1L)).willReturn(List.of());
+
+            // when
+            MemberProfileInfo result = memberQueryService.getProfile(1L);
+
+            // then
+            assertThat(result.schoolName()).isNull();
+            assertThat(result.profileImageLink()).isNull();
+            then(getSchoolUseCase).should(never()).getSchoolDetail(any());
+            then(getFileUseCase).should(never()).getById(any());
+        }
+
+        @Test
+        void 회원이_존재하지_않으면_예외() {
+            // given
+            given(loadMemberPort.findById(999L)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> memberQueryService.getProfile(999L))
+                .isInstanceOf(MemberDomainException.class)
+                .extracting("code")
+                .isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
+
+            then(getSchoolUseCase).should(never()).getSchoolDetail(any());
+            then(getFileUseCase).should(never()).getById(any());
+        }
+
+        @Test
+        @DisplayName("getSchoolDetail이 null을 반환하면 schoolName은 null이다")
+        void 프로필_조회_학교정보가_null_반환() {
+            // given
+            Member member = createMember(1L, 1L, null);
+            given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
+            given(getSchoolUseCase.getSchoolDetail(1L)).willReturn(null);
+            given(getMemberRolesUseCase.getRoles(1L)).willReturn(List.of());
+
+            // when
+            MemberProfileInfo result = memberQueryService.getProfile(1L);
+
+            // then
+            assertThat(result.schoolName()).isNull();
+        }
+    }
+
+    // ── 헬퍼 메서드 ──
+
+    private Member createMember(Long id, Long schoolId, String profileImageId) {
+        Member member = Member.builder()
+            .name("홍길동")
+            .nickname("길동")
+            .email("test@example.com")
+            .schoolId(schoolId)
+            .profileImageId(profileImageId)
+            .build();
+        ReflectionTestUtils.setField(member, "id", id);
+        return member;
+    }
+
+    private SchoolDetailInfo createSchoolDetailInfo(Long schoolId, String schoolName) {
+        return new SchoolDetailInfo(
+            1L,           // chapterId
+            "cassiopeia",    // chapterName
+            schoolName,
+            schoolId,
+            null,         // remark
+            null,         // logoImageUrl
+            Instant.now(),
+            Instant.now()
+        );
+    }
+
+    private FileInfo createFileInfo(String fileId, String fileLink) {
+        return new FileInfo(
+            fileId,
+            "profile.jpg",
+            null,         // category
+            "image/jpeg",
+            1024L,
+            fileLink,
+            true,
+            1L,
+            Instant.now()
+        );
+    }
 }
