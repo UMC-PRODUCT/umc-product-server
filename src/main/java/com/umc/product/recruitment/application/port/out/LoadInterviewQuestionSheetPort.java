@@ -12,4 +12,7 @@ public interface LoadInterviewQuestionSheetPort {
                                                                                       PartKey partKey);
 
     List<InterviewQuestionSheet> findByRecruitmentAndPartKey(Recruitment recruitment, PartKey partKey);
+
+    Optional<InterviewQuestionSheet> findById(Long interviewQuestionSheetId);
+
 }

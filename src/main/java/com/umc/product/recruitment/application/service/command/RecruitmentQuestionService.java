@@ -76,7 +76,24 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
 
     @Override
     public UpdateInterviewSheetQuestionResult update(UpdateInterviewSheetQuestionCommand command) {
-        return null;
+
+        // 1. 검증 : InterviewQuestionSheet 존재
+        InterviewQuestionSheet question = loadInterviewQuestionSheetPort.findById(command.questionId())
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SHEET_QUESTION_NOT_FOUND));
+
+        // 2. 검증 : 해당 Recruitment의 질문인지
+        if (!question.getRecruitment().getId().equals(command.recruitmentId())) {
+            throw new RecruitmentDomainException(
+                RecruitmentErrorCode.INTERVIEW_SHEET_QUESTION_NOT_BELONGS_TO_RECRUITMENT);
+        }
+
+        // 3. 질문 content 수정
+        question.changeContent(command.questionText());
+
+        return new UpdateInterviewSheetQuestionResult(
+            question.getId(),
+            question.getContent()
+        );
     }
 
     @Override

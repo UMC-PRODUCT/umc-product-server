@@ -34,4 +34,9 @@ public class InterviewQuestionSheetPersistenceAdapter implements SaveInterviewQu
     public List<InterviewQuestionSheet> findByRecruitmentAndPartKey(Recruitment recruitment, PartKey partKey) {
         return interviewQuestionSheetRepository.findByRecruitmentAndPartKey(recruitment, partKey);
     }
+
+    @Override
+    public Optional<InterviewQuestionSheet> findById(Long interviewQuestionSheetId) {
+        return interviewQuestionSheetRepository.findById(interviewQuestionSheetId);
+    }
 }
