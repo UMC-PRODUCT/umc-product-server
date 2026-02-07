@@ -7,7 +7,6 @@ import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAut
 import com.umc.product.authentication.application.port.in.query.GetOAuthListUseCase;
 import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
 import com.umc.product.global.constant.SwaggerTag.Constants;
-import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.OAuthVerificationClaims;
@@ -35,7 +34,8 @@ public class MemberOAuthController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping
-    @Operation(summary = "로그인용 OAuth 수단 추가")
+    @Operation(summary = "로그인용 OAuth 수단 추가",
+        description = "같은 OAuth Provider도 여러 개 추가할 수 있습니다. 단, Provider+ProviderId 조합은 시스템 전체에서 고유하여야 합니다.")
     List<MemberOAuthInfo> addMemberOAuth(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody AddOAuthRequest request) {
@@ -75,7 +75,7 @@ public class MemberOAuthController {
 
     @GetMapping("me")
     @Operation(summary = "현재 회원 계정과 연동된 OAuth 정보 조회")
-    List<MemberOAuthInfo> getMyOAuthInfos() {
-        throw new NotImplementedException();
+    List<MemberOAuthInfo> getMyOAuthInfos(@CurrentMember MemberPrincipal memberPrincipal) {
+        return oAuthListUseCase.getOAuthList(memberPrincipal.getMemberId());
     }
 }
