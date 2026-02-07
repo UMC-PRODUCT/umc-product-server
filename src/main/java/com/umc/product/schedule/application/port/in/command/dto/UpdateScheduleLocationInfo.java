@@ -12,8 +12,8 @@ public record UpdateScheduleLocationInfo(
         return new UpdateScheduleLocationInfo(
             scheduleId,
             locationName,
-            location.getX(),
-            location.getY()
+            location.getY(),
+            location.getX()
         );
     }
 }
