@@ -4,30 +4,30 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpdateFinalSt
 import com.umc.product.recruitment.domain.enums.PartKey;
 
 public record UpdateFinalStatusResponse(
-        Long applicationId,
-        FinalResultResponse finalResult
+    Long applicationId,
+    FinalResultResponse finalResult
 ) {
     public static UpdateFinalStatusResponse from(UpdateFinalStatusResult result) {
         PartKey selectedPart = result.finalResult().selectedPart();
 
         FinalResultResponse.PartResponse partResponse =
-                (selectedPart == null)
-                        ? null
-                        : new FinalResultResponse.PartResponse(selectedPart, selectedPart.getLabel());
+            (selectedPart == null)
+                ? null
+                : new FinalResultResponse.PartResponse(selectedPart, selectedPart.getLabel());
 
         return new UpdateFinalStatusResponse(
-                result.applicationId(),
-                new FinalResultResponse(result.finalResult().decision(), partResponse)
+            result.applicationId(),
+            new FinalResultResponse(result.finalResult().decision(), partResponse)
         );
     }
 
     public record FinalResultResponse(
-            String decision,
-            PartResponse selectedPart
+        String decision,
+        PartResponse selectedPart
     ) {
         public record PartResponse(
-                PartKey key,
-                String label
+            PartKey key,
+            String label
         ) {
         }
     }
