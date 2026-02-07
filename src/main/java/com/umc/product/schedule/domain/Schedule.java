@@ -147,6 +147,18 @@ public class Schedule extends BaseEntity {
         updateTime(startsAt, endsAt, isAllDay);
     }
 
+    public void updateLocation(
+        String locationName,
+        Point location
+    ) {
+        if (locationName != null) {
+            this.locationName = locationName;
+        }
+        if (location != null) {
+            this.location = location;
+        }
+    }
+
     private void updateTime(LocalDateTime newStartsAt, LocalDateTime newEndsAt, Boolean newIsAllDay) {
         // 변경할 값이 없으면 기존 값 유지
         boolean effectiveIsAllDay = (newIsAllDay != null) ? newIsAllDay : this.isAllDay;
