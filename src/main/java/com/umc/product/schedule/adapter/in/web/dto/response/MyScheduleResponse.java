@@ -21,7 +21,7 @@ public record MyScheduleResponse(
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     LocalDateTime endsAt,
 
-    @Schema(description = "일정 상태", example = "UPCOMING")
+    @Schema(description = "일정 상태", example = "참여 예정")
     String status,
 
     @Schema(description = "D-Day", example = "7")

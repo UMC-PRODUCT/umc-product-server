@@ -30,7 +30,7 @@ public record AvailableAttendanceResponse(
     @Schema(description = "출석 상태", example = "PENDING")
     String status,
 
-    @Schema(description = "출석 상태 표시", example = "대기중")
+    @Schema(description = "출석 상태 표시", example = "출석 전")
     String statusDisplay
 ) {
 }

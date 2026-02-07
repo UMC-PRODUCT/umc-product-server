@@ -43,7 +43,7 @@ public record ScheduleDetailResponse(
     @Schema(description = "경도", example = "127.027610")
     Double longitude,
 
-    @Schema(description = "일정 상태", example = "UPCOMING")
+    @Schema(description = "일정 상태", example = "예정")
     String status,
 
     @Schema(description = "D-Day", example = "7")
