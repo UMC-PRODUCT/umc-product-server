@@ -105,4 +105,26 @@ class AdminGisuQueryControllerTest extends DocumentationTest {
                 ));
     }
 
+    @Test
+    void 활성화된_기수를_조회한다() throws Exception {
+        // given
+        GisuInfo activeGisu = new GisuInfo(3L, 9L, Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-08-31T23:59:59Z"), true);
+        given(getGisuUseCase.getActiveGisu()).willReturn(activeGisu);
+
+        // when
+        ResultActions result = mockMvc.perform(get("/api/v1/gisu/active"));
+
+        // then
+        result.andExpect(status().isOk())
+                .andDo(restDocsHandler.document(
+                        responseFields(
+                                fieldWithPath("success").type(JsonFieldType.BOOLEAN).description("요청 성공 여부"),
+                                fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
+                                fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
+                                fieldWithPath("result.gisuId").type(JsonFieldType.STRING).description("기수 ID"),
+                                fieldWithPath("result.generation").type(JsonFieldType.STRING).description("기수 번호")
+                        )
+                ));
+    }
+
 }
