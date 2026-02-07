@@ -6,38 +6,38 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record ApplicationEvaluationsResponse(
-        Long recruitmentId,
-        Long applicationId,
-        BigDecimal avgDocScore,
-        List<DocEvaluationSummaryResponse> docEvaluationSummaries
+    Long recruitmentId,
+    Long applicationId,
+    BigDecimal avgDocScore,
+    List<DocEvaluationSummaryResponse> docEvaluationSummaries
 ) {
     public static ApplicationEvaluationsResponse from(
-            ApplicationEvaluationListInfo info
+        ApplicationEvaluationListInfo info
     ) {
         return new ApplicationEvaluationsResponse(
-                info.recruitmentId(),
-                info.applicationId(),
-                info.avgDocScore(),
-                info.docEvaluationSummaries().stream()
-                        .map(DocEvaluationSummaryResponse::from)
-                        .toList()
+            info.recruitmentId(),
+            info.applicationId(),
+            info.avgDocScore(),
+            info.docEvaluationSummaries().stream()
+                .map(DocEvaluationSummaryResponse::from)
+                .toList()
         );
     }
 
     public record DocEvaluationSummaryResponse(
-            Long evaluatorMemberId,
-            String evaluatorName,
-            String evaluatorNickname,
-            Integer score,
-            String comments
+        Long evaluatorMemberId,
+        String evaluatorName,
+        String evaluatorNickname,
+        Integer score,
+        String comments
     ) {
         static DocEvaluationSummaryResponse from(DocEvaluationSummary s) {
             return new DocEvaluationSummaryResponse(
-                    s.evaluationId(),
-                    s.evaluatorName(),
-                    s.evaluatorNickname(),
-                    s.score(),
-                    s.comments()
+                s.evaluationId(),
+                s.evaluatorName(),
+                s.evaluatorNickname(),
+                s.score(),
+                s.comments()
             );
         }
     }

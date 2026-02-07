@@ -8,38 +8,38 @@ import java.time.LocalTime;
 import java.util.List;
 
 public record RecruitmentDraftInfo(
-        Long recruitmentId,
-        String status,
-        Long formId,
+    Long recruitmentId,
+    String status,
+    Long formId,
 
-        String title,
-        List<ChallengerPart> recruitmentParts,
-        Integer maxPreferredPartCount,
+    String title,
+    List<ChallengerPart> recruitmentParts,
+    Integer maxPreferredPartCount,
 
-        ScheduleInfo schedule,
+    ScheduleInfo schedule,
 
-        String noticeContent,
+    String noticeContent,
 
-        Instant createdAt,
-        Instant updatedAt
+    Instant createdAt,
+    Instant updatedAt
 ) {
     public record ScheduleInfo(
-            Instant applyStartAt,
-            Instant applyEndAt,
-            Instant docResultAt,
-            Instant interviewStartAt,
-            Instant interviewEndAt,
-            Instant finalResultAt,
-            InterviewTimeTableInfo interviewTimeTable
+        Instant applyStartAt,
+        Instant applyEndAt,
+        Instant docResultAt,
+        Instant interviewStartAt,
+        Instant interviewEndAt,
+        Instant finalResultAt,
+        InterviewTimeTableInfo interviewTimeTable
     ) {
     }
 
     public record InterviewTimeTableInfo(
-            DateRangeInfo dateRange,
-            TimeRangeInfo timeRange,
-            Integer slotMinutes,
-            List<TimesByDateInfo> enabledByDate,
-            List<TimesByDateInfo> disabledByDate
+        DateRangeInfo dateRange,
+        TimeRangeInfo timeRange,
+        Integer slotMinutes,
+        List<TimesByDateInfo> enabledByDate,
+        List<TimesByDateInfo> disabledByDate
     ) {
     }
 
@@ -50,27 +50,27 @@ public record RecruitmentDraftInfo(
     }
 
     public record TimesByDateInfo(
-            LocalDate date,
-            List<LocalTime> times
+        LocalDate date,
+        List<LocalTime> times
     ) {
     }
 
     public static RecruitmentDraftInfo from(
-            Recruitment recruitment,
-            List<ChallengerPart> parts,
-            ScheduleInfo schedule
+        Recruitment recruitment,
+        List<ChallengerPart> parts,
+        ScheduleInfo schedule
     ) {
         return new RecruitmentDraftInfo(
-                recruitment.getId(),
-                recruitment.getStatus().name(),
-                recruitment.getFormId(),
-                recruitment.getTitle(),
-                parts,
-                recruitment.getMaxPreferredPartCount(),
-                schedule,
-                recruitment.getNoticeContent(),
-                recruitment.getCreatedAt(),
-                recruitment.getUpdatedAt()
+            recruitment.getId(),
+            recruitment.getStatus().name(),
+            recruitment.getFormId(),
+            recruitment.getTitle(),
+            parts,
+            recruitment.getMaxPreferredPartCount(),
+            schedule,
+            recruitment.getNoticeContent(),
+            recruitment.getCreatedAt(),
+            recruitment.getUpdatedAt()
         );
     }
 }

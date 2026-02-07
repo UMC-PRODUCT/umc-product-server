@@ -4,13 +4,13 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruit
 import java.util.List;
 
 public record UpsertRecruitmentFormResponseAnswersResponse(
-        Long formResponseId,
-        List<Long> savedQuestionIds
+    Long formResponseId,
+    List<Long> savedQuestionIds
 ) {
     public static UpsertRecruitmentFormResponseAnswersResponse from(UpsertRecruitmentFormResponseAnswersInfo result) {
         return new UpsertRecruitmentFormResponseAnswersResponse(
-                result.formResponseId(),
-                result.savedQuestionIds()
+            result.formResponseId(),
+            result.savedQuestionIds()
         );
     }
 }

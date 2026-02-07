@@ -6,20 +6,20 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record GetInterviewOptionsResponse(
-        List<LocalDate> dates,
-        List<PartResponse> parts
+    List<LocalDate> dates,
+    List<PartResponse> parts
 ) {
     public static GetInterviewOptionsResponse from(GetInterviewOptionsInfo info) {
         return new GetInterviewOptionsResponse(
-                info.dates(),
-                info.parts().stream().map(p -> new PartResponse(p, p.getLabel())).toList()
+            info.dates(),
+            info.parts().stream().map(p -> new PartResponse(p, p.getLabel())).toList()
         );
     }
 
 
     public record PartResponse(
-            PartOption key,
-            String label
+        PartOption key,
+        String label
     ) {
     }
 }

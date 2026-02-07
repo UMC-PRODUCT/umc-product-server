@@ -4,9 +4,9 @@ import com.umc.product.recruitment.application.port.in.PartOption;
 import java.time.LocalDate;
 
 public record GetInterviewAssignmentsQuery(
-        Long recruitmentId,
-        LocalDate date,
-        PartOption part,
-        Long memberId
+    Long recruitmentId,
+    LocalDate date,
+    PartOption part,
+    Long memberId
 ) {
 }

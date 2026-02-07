@@ -106,19 +106,19 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @RequiredArgsConstructor
 public class RecruitmentService implements CreateRecruitmentDraftFormResponseUseCase,
-        UpsertRecruitmentFormResponseAnswersUseCase,
-        DeleteRecruitmentFormResponseUseCase,
-        SubmitRecruitmentApplicationUseCase,
-        CreateRecruitmentUseCase,
-        DeleteRecruitmentUseCase,
-        UpdateRecruitmentDraftUseCase,
-        UpsertRecruitmentFormQuestionsUseCase,
-        PublishRecruitmentUseCase,
-        DeleteRecruitmentFormQuestionUseCase,
-        UpdateRecruitmentInterviewPreferenceUseCase,
-        ResetRecruitmentDraftFormResponseUseCase,
-        UpdatePublishedRecruitmentScheduleUseCase,
-        DeleteRecruitmentQuestionOptionUseCase {
+    UpsertRecruitmentFormResponseAnswersUseCase,
+    DeleteRecruitmentFormResponseUseCase,
+    SubmitRecruitmentApplicationUseCase,
+    CreateRecruitmentUseCase,
+    DeleteRecruitmentUseCase,
+    UpdateRecruitmentDraftUseCase,
+    UpsertRecruitmentFormQuestionsUseCase,
+    PublishRecruitmentUseCase,
+    DeleteRecruitmentFormQuestionUseCase,
+    UpdateRecruitmentInterviewPreferenceUseCase,
+    ResetRecruitmentDraftFormResponseUseCase,
+    UpdatePublishedRecruitmentScheduleUseCase,
+    DeleteRecruitmentQuestionOptionUseCase {
 
     private final SaveFormPort saveFormPort;
     private final SaveRecruitmentPort saveRecruitmentPort;
@@ -145,7 +145,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
-                .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
         return member.getSchoolId();
     }
 
@@ -156,8 +156,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     @Override
     public CreateDraftFormResponseInfo create(CreateDraftFormResponseCommand command) {
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (!recruitment.isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
@@ -169,39 +169,39 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         if (loadApplicationPort.existsByRecruitmentIdAndApplicantMemberId(
-                recruitment.getId(), command.memberId())) {
+            recruitment.getId(), command.memberId())) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_APPLIED);
         }
 
         boolean existsDraft = loadFormResponsePort
-                .findDraftByFormIdAndRespondentMemberId(formId, command.memberId())
-                .isPresent();
+            .findDraftByFormIdAndRespondentMemberId(formId, command.memberId())
+            .isPresent();
         if (existsDraft) {
             throw new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.DRAFT_FORM_RESPONSE_ALREADY_EXISTS
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.DRAFT_FORM_RESPONSE_ALREADY_EXISTS
             );
         }
 
         Form form = loadFormPort.findById(formId)
-                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
 
         FormResponse created = saveFormResponsePort.save(
-                FormResponse.createDraft(form, command.memberId())
+            FormResponse.createDraft(form, command.memberId())
         );
 
         return CreateDraftFormResponseInfo.from(
-                formId,
-                created.getId(),
-                created.getCreatedAt()
+            formId,
+            created.getId(),
+            created.getCreatedAt()
         );
     }
 
     @Override
     public CreateDraftFormResponseInfo reset(ResetDraftFormResponseCommand command) {
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(() -> new BusinessException(
-                        Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(
+                Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (!recruitment.isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
@@ -213,19 +213,19 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         if (loadApplicationPort.existsByRecruitmentIdAndApplicantMemberId(
-                recruitment.getId(), command.memberId())) {
+            recruitment.getId(), command.memberId())) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_APPLIED);
         }
 
         // 기존 draft 있으면 삭제 (없으면 그냥 새로 생성)
         loadFormResponsePort.findDraftByFormIdAndRespondentMemberId(formId, command.memberId())
-                .ifPresent(fr -> saveFormResponsePort.deleteById(fr.getId()));
+            .ifPresent(fr -> saveFormResponsePort.deleteById(fr.getId()));
 
         Form form = loadFormPort.findById(formId)
-                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
 
         FormResponse created = saveFormResponsePort.save(
-                FormResponse.createDraft(form, command.memberId())
+            FormResponse.createDraft(form, command.memberId())
         );
 
         return CreateDraftFormResponseInfo.from(formId, created.getId(), created.getCreatedAt());
@@ -233,11 +233,11 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @Override
     public UpsertRecruitmentFormResponseAnswersInfo upsert(
-            UpsertRecruitmentFormResponseAnswersCommand command) {
+        UpsertRecruitmentFormResponseAnswersCommand command) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (!recruitment.isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
@@ -249,7 +249,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         FormResponse formResponse = loadFormResponsePort.findById(command.formResponseId())
-                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
 
         if (!formResponse.getForm().getId().equals(formId)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
@@ -260,7 +260,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         List<UpsertRecruitmentFormResponseAnswersCommand.UpsertItem> items =
-                (command.items() == null) ? List.of() : command.items();
+            (command.items() == null) ? List.of() : command.items();
 
         if (items.isEmpty()) {
             return UpsertRecruitmentFormResponseAnswersInfo.of(command.formResponseId(), List.of());
@@ -276,11 +276,11 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             }
 
             Question question = loadQuestionPort.findById(questionId)
-                    .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
 
             Long questionFormId = null;
             if (question.getFormSection() != null
-                    && question.getFormSection().getForm() != null) {
+                && question.getFormSection().getForm() != null) {
                 questionFormId = question.getFormSection().getForm().getId();
             }
 
@@ -319,10 +319,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     public void delete(DeleteRecruitmentFormResponseCommand command) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(() -> new BusinessException(
-                        Domain.RECRUITMENT,
-                        RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
-                ));
+            .orElseThrow(() -> new BusinessException(
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
+            ));
 
         if (!recruitment.isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
@@ -334,13 +334,13 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         FormResponse formResponse = loadFormResponsePort.findById(command.formResponseId())
-                .orElseThrow(() -> new BusinessException(
-                        Domain.SURVEY,
-                        SurveyErrorCode.FORM_RESPONSE_NOT_FOUND
-                ));
+            .orElseThrow(() -> new BusinessException(
+                Domain.SURVEY,
+                SurveyErrorCode.FORM_RESPONSE_NOT_FOUND
+            ));
 
         if (formResponse.getForm() == null || formResponse.getForm().getId() == null
-                || !formId.equals(formResponse.getForm().getId())) {
+            || !formId.equals(formResponse.getForm().getId())) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
         }
 
@@ -355,8 +355,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     @Override
     public SubmitRecruitmentApplicationInfo submit(SubmitRecruitmentApplicationCommand command) {
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (!recruitment.isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
@@ -370,7 +370,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         validateApplyWindow(recruitment);
 
         FormResponse formResponse = loadFormResponsePort.findById(command.formResponseId())
-                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
 
         if (!formResponse.getForm().getId().equals(formId)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
@@ -383,35 +383,35 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         boolean isSameMember = applicantIdExists && applicantId.equals(respondentId);
 
         log.debug(
-                "[FORM_RESPONSE_AUTH] applicantMemberId={}, respondentMemberId={}, applicantIdExists={}, isSameMember={}",
-                applicantId,
-                respondentId,
-                applicantIdExists,
-                isSameMember
+            "[FORM_RESPONSE_AUTH] applicantMemberId={}, respondentMemberId={}, applicantIdExists={}, isSameMember={}",
+            applicantId,
+            respondentId,
+            applicantIdExists,
+            isSameMember
         );
 
         if (command.applicantMemberId() != null && !command.applicantMemberId()
-                .equals(formResponse.getRespondentMemberId())) {
+            .equals(formResponse.getRespondentMemberId())) {
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_FORBIDDEN);
         }
 
         if (formResponse.getStatus() == FormResponseStatus.SUBMITTED) {
             var existingAppOpt = loadApplicationPort.findByRecruitmentIdAndApplicantMemberId(
-                    recruitment.getId(), command.applicantMemberId()
+                recruitment.getId(), command.applicantMemberId()
             );
             if (existingAppOpt.isPresent()) {
                 return SubmitRecruitmentApplicationInfo.of(
-                        recruitment.getId(),
-                        formResponse.getId(),
-                        existingAppOpt.get().getId(),
-                        com.umc.product.survey.domain.enums.FormResponseStatus.SUBMITTED
+                    recruitment.getId(),
+                    formResponse.getId(),
+                    existingAppOpt.get().getId(),
+                    com.umc.product.survey.domain.enums.FormResponseStatus.SUBMITTED
                 );
             }
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLICATION_INCONSISTENT);
         }
 
         if (loadApplicationPort.existsByRecruitmentIdAndApplicantMemberId(recruitment.getId(),
-                command.applicantMemberId())) {
+            command.applicantMemberId())) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_APPLIED);
         }
 
@@ -421,21 +421,21 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         saveFormResponsePort.save(formResponse);
 
         Application savedApp =
-                saveApplicationPort.save(
-                        Application.createApplied(
-                                recruitment,
-                                command.applicantMemberId(),
-                                formResponse.getId()
-                        )
-                );
+            saveApplicationPort.save(
+                Application.createApplied(
+                    recruitment,
+                    command.applicantMemberId(),
+                    formResponse.getId()
+                )
+            );
 
         persistAppliedPreferredParts(recruitment, formResponse, savedApp);
 
         return SubmitRecruitmentApplicationInfo.of(
-                recruitment.getId(),
-                formResponse.getId(),
-                savedApp.getId(),
-                FormResponseStatus.SUBMITTED
+            recruitment.getId(),
+            formResponse.getId(),
+            savedApp.getId(),
+            FormResponseStatus.SUBMITTED
         );
     }
 
@@ -448,34 +448,34 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         Form savedForm = saveFormPort.save(Form.createDraft(command.memberId()));
 
         Recruitment savedRecruitment = saveRecruitmentPort.save(
-                Recruitment.createDraft(
-                        schoolId,
-                        gisuId,
-                        savedForm.getId(),
-                        command.recruitmentName()
-                )
+            Recruitment.createDraft(
+                schoolId,
+                gisuId,
+                savedForm.getId(),
+                command.recruitmentName()
+            )
         );
 
         if (command.parts() != null && !command.parts().isEmpty()) {
             List<RecruitmentPart> openParts = command.parts().stream()
-                    .distinct()
-                    .map(part -> RecruitmentPart.createOpen(savedRecruitment.getId(), part))
-                    .toList();
+                .distinct()
+                .map(part -> RecruitmentPart.createOpen(savedRecruitment.getId(), part))
+                .toList();
 
             List<RecruitmentPart> closedParts = java.util.Arrays.stream(
-                            com.umc.product.common.domain.enums.ChallengerPart.values())
-                    .filter(part -> !command.parts().contains(part))
-                    .map(part -> RecruitmentPart.createClosed(savedRecruitment.getId(), part))
-                    .toList();
+                    com.umc.product.common.domain.enums.ChallengerPart.values())
+                .filter(part -> !command.parts().contains(part))
+                .map(part -> RecruitmentPart.createClosed(savedRecruitment.getId(), part))
+                .toList();
 
             List<RecruitmentPart> allParts = new java.util.ArrayList<>(openParts);
             allParts.addAll(closedParts);
             saveRecruitmentPartPort.saveAll(allParts);
         } else {
             List<RecruitmentPart> closedParts = java.util.Arrays.stream(
-                            com.umc.product.common.domain.enums.ChallengerPart.values())
-                    .map(part -> RecruitmentPart.createClosed(savedRecruitment.getId(), part))
-                    .toList();
+                    com.umc.product.common.domain.enums.ChallengerPart.values())
+                .map(part -> RecruitmentPart.createClosed(savedRecruitment.getId(), part))
+                .toList();
 
             saveRecruitmentPartPort.saveAll(closedParts);
         }
@@ -483,14 +483,14 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         List<RecruitmentSchedule> schedules = new ArrayList<>();
         schedules.add(RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.APPLY_WINDOW));
         schedules.add(
-                RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.DOC_REVIEW_WINDOW));
+            RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.DOC_REVIEW_WINDOW));
         schedules.add(RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.DOC_RESULT_AT));
         schedules.add(
-                RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.INTERVIEW_WINDOW));
+            RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.INTERVIEW_WINDOW));
         schedules.add(
-                RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.FINAL_REVIEW_WINDOW));
+            RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.FINAL_REVIEW_WINDOW));
         schedules.add(
-                RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.FINAL_RESULT_AT));
+            RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.FINAL_RESULT_AT));
 
         saveRecruitmentSchedulePort.saveAll(schedules);
 
@@ -500,14 +500,14 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     @Override
     public void delete(DeleteRecruitmentCommand command) {
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         // TODO: 권한 검증
 
         if (loadApplicationPort.existsByRecruitmentId(recruitment.getId())) {
             throw new BusinessException(Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_DELETE_FORBIDDEN_HAS_APPLICANTS);
+                RecruitmentErrorCode.RECRUITMENT_DELETE_FORBIDDEN_HAS_APPLICANTS);
         }
 
         Long formId = recruitment.getFormId();
@@ -535,8 +535,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     @Override
     public RecruitmentDraftInfo update(UpdateRecruitmentDraftCommand command) {
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (recruitment.getStatus() != RecruitmentStatus.DRAFT) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_PUBLISHED);
@@ -562,15 +562,15 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             saveRecruitmentPartPort.deleteAllByRecruitmentId(command.recruitmentId());
 
             List<RecruitmentPart> openParts = command.recruitmentParts().stream()
-                    .distinct()
-                    .map(part -> RecruitmentPart.createOpen(command.recruitmentId(), part))
-                    .toList();
+                .distinct()
+                .map(part -> RecruitmentPart.createOpen(command.recruitmentId(), part))
+                .toList();
 
             List<RecruitmentPart> closedParts = java.util.Arrays.stream(
-                            com.umc.product.common.domain.enums.ChallengerPart.values())
-                    .filter(part -> !command.recruitmentParts().contains(part))
-                    .map(part -> RecruitmentPart.createClosed(command.recruitmentId(), part))
-                    .toList();
+                    com.umc.product.common.domain.enums.ChallengerPart.values())
+                .filter(part -> !command.recruitmentParts().contains(part))
+                .map(part -> RecruitmentPart.createClosed(command.recruitmentId(), part))
+                .toList();
 
             List<RecruitmentPart> allParts = new java.util.ArrayList<>(openParts);
             allParts.addAll(closedParts);
@@ -589,37 +589,37 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         Long recruitmentId = recruitment.getId();
 
         Map<RecruitmentScheduleType, RecruitmentSchedule> existing =
-                loadRecruitmentPort.findScheduleMapByRecruitmentId(recruitmentId);
+            loadRecruitmentPort.findScheduleMapByRecruitmentId(recruitmentId);
 
         ResolvedRecruitmentSchedule resolved =
-                ResolvedRecruitmentSchedule.merge(existing, schedule);
+            ResolvedRecruitmentSchedule.merge(existing, schedule);
 
         upsertSchedulePeriod(
-                recruitmentId,
-                RecruitmentScheduleType.APPLY_WINDOW,
-                resolved.applyStartAt(),
-                resolved.applyEndAt()
+            recruitmentId,
+            RecruitmentScheduleType.APPLY_WINDOW,
+            resolved.applyStartAt(),
+            resolved.applyEndAt()
         );
 
         upsertSchedulePeriod(
-                recruitmentId,
-                RecruitmentScheduleType.DOC_RESULT_AT,
-                resolved.docResultAt(),
-                null
+            recruitmentId,
+            RecruitmentScheduleType.DOC_RESULT_AT,
+            resolved.docResultAt(),
+            null
         );
 
         upsertSchedulePeriod(
-                recruitmentId,
-                RecruitmentScheduleType.INTERVIEW_WINDOW,
-                resolved.interviewStartAt(),
-                resolved.interviewEndAt()
+            recruitmentId,
+            RecruitmentScheduleType.INTERVIEW_WINDOW,
+            resolved.interviewStartAt(),
+            resolved.interviewEndAt()
         );
 
         upsertSchedulePeriod(
-                recruitmentId,
-                RecruitmentScheduleType.FINAL_RESULT_AT,
-                resolved.finalResultAt(),
-                null
+            recruitmentId,
+            RecruitmentScheduleType.FINAL_RESULT_AT,
+            resolved.finalResultAt(),
+            null
         );
 
         upsertReviewWindowsForDraftResolved(recruitmentId, resolved);
@@ -637,10 +637,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         Instant docReviewEnd = schedule.docResultAt();
         if (docReviewStart != null && docReviewEnd != null && docReviewStart.isBefore(docReviewEnd)) {
             upsertSchedulePeriod(
-                    recruitmentId,
-                    RecruitmentScheduleType.DOC_REVIEW_WINDOW,
-                    docReviewStart,
-                    docReviewEnd
+                recruitmentId,
+                RecruitmentScheduleType.DOC_REVIEW_WINDOW,
+                docReviewStart,
+                docReviewEnd
             );
         }
 
@@ -648,26 +648,26 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         Instant finalReviewEnd = schedule.finalResultAt();
         if (finalReviewStart != null && finalReviewEnd != null && finalReviewStart.isBefore(finalReviewEnd)) {
             upsertSchedulePeriod(
-                    recruitmentId,
-                    RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
-                    finalReviewStart,
-                    finalReviewEnd
+                recruitmentId,
+                RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
+                finalReviewStart,
+                finalReviewEnd
             );
         }
     }
 
     private void upsertSchedulePeriod(
-            Long recruitmentId,
-            RecruitmentScheduleType type,
-            Instant startsAt,
-            Instant endsAt
+        Long recruitmentId,
+        RecruitmentScheduleType type,
+        Instant startsAt,
+        Instant endsAt
     ) {
         if (startsAt == null && endsAt == null) {
             return;
         }
 
         RecruitmentSchedule schedule = loadRecruitmentSchedulePort
-                .findByRecruitmentIdAndType(recruitmentId, type);
+            .findByRecruitmentIdAndType(recruitmentId, type);
 
         if (schedule == null) {
             schedule = RecruitmentSchedule.createDraft(recruitmentId, type);
@@ -679,44 +679,44 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     private record EnabledOnly(
-            RecruitmentDraftInfo.DateRangeInfo dateRange,
-            RecruitmentDraftInfo.TimeRangeInfo timeRange,
-            Integer slotMinutes,
-            List<EnabledTimesByDatePayload> enabledByDate
+        RecruitmentDraftInfo.DateRangeInfo dateRange,
+        RecruitmentDraftInfo.TimeRangeInfo timeRange,
+        Integer slotMinutes,
+        List<EnabledTimesByDatePayload> enabledByDate
     ) {
     }
 
     private record EnabledTimesByDatePayload(
-            LocalDate date,
-            List<String> times
+        LocalDate date,
+        List<String> times
     ) {
     }
 
 
     private Map<String, Object> toEnabledOnlyMap(UpdateRecruitmentDraftCommand.InterviewTimeTableCommand t) {
         List<EnabledTimesByDatePayload> enabled =
-                t.enabledByDate() == null ? List.of()
-                        : t.enabledByDate().stream()
-                                .map(e -> new EnabledTimesByDatePayload(
-                                        e.date(),
-                                        e.times() == null ? List.of()
-                                                : e.times().stream()
-                                                        .filter(java.util.Objects::nonNull)
-                                                        .map(x -> x.format(DateTimeFormatter.ofPattern("HH:mm")))
-                                                        .toList()
-                                ))
-                                .toList();
+            t.enabledByDate() == null ? List.of()
+                : t.enabledByDate().stream()
+                    .map(e -> new EnabledTimesByDatePayload(
+                        e.date(),
+                        e.times() == null ? List.of()
+                            : e.times().stream()
+                                .filter(java.util.Objects::nonNull)
+                                .map(x -> x.format(DateTimeFormatter.ofPattern("HH:mm")))
+                                .toList()
+                    ))
+                    .toList();
 
         EnabledOnly payload = new EnabledOnly(
-                new RecruitmentDraftInfo.DateRangeInfo(t.dateRange().start(), t.dateRange().end()),
-                new RecruitmentDraftInfo.TimeRangeInfo(t.timeRange().start(), t.timeRange().end()),
-                t.slotMinutes(),
-                enabled
+            new RecruitmentDraftInfo.DateRangeInfo(t.dateRange().start(), t.dateRange().end()),
+            new RecruitmentDraftInfo.TimeRangeInfo(t.timeRange().start(), t.timeRange().end()),
+            t.slotMinutes(),
+            enabled
         );
 
         return objectMapper.convertValue(payload,
-                new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {
-                });
+            new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {
+            });
     }
 
 
@@ -725,12 +725,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         validateOtherOption(command);
 
         Long formId = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND))
-                .getFormId();
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND))
+            .getFormId();
 
         List<UpsertRecruitmentFormQuestionsCommand.Item> items =
-                command.items() == null ? List.of() : command.items();
+            command.items() == null ? List.of() : command.items();
 
         saveRecruitmentPort.upsertQuestions(formId, items);
 
@@ -741,11 +741,11 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     public PublishRecruitmentInfo publish(PublishRecruitmentCommand command) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         Member requester = loadMemberPort.findById(command.requesterMemberId())
-                .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
 
         if (!recruitment.getSchoolId().equals(requester.getSchoolId())) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORBIDDEN);
@@ -761,7 +761,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         RecruitmentDraftInfo finalDraft = loadRecruitmentPort.findDraftInfoById(command.recruitmentId());
         RecruitmentApplicationFormInfo finalFormInfo = loadRecruitmentPort.findApplicationFormInfoById(
-                command.recruitmentId());
+            command.recruitmentId());
 
         validatePublishable(finalDraft, finalFormInfo);
 
@@ -772,9 +772,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             validateTimeTableStructure(s.interviewTimeTable());
 
             validateInterviewWindowCoversTimeTable(
-                    s.interviewStartAt(),
-                    s.interviewEndAt(),
-                    s.interviewTimeTable()
+                s.interviewStartAt(),
+                s.interviewEndAt(),
+                s.interviewTimeTable()
             );
         }
         syncReviewWindowsOnPublish(command.recruitmentId(), syncedDraft.schedule());
@@ -783,9 +783,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         Instant now = Instant.now();
 
         boolean hasOtherOngoing = loadRecruitmentPort.existsOtherOngoingPublishedRecruitment(
-                recruitment.getSchoolId(),
-                recruitment.getId(),
-                Instant.now()
+            recruitment.getSchoolId(),
+            recruitment.getId(),
+            Instant.now()
         );
 
         if (hasOtherOngoing) {
@@ -793,31 +793,31 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         Recruitment latest = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         latest.publish(now);
         saveRecruitmentPort.save(latest);
 
         Form form = loadFormPort.findById(latest.getFormId())
-                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
         form.publish();
         saveFormPort.save(form);
 
         Recruitment published = loadRecruitmentPort.findById(latest.getId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         return new PublishRecruitmentInfo(
-                published.getId(),
-                published.getFormId(),
-                published.getStatus().name(),
-                published.getPublishedAt()
+            published.getId(),
+            published.getFormId(),
+            published.getStatus().name(),
+            published.getPublishedAt()
         );
     }
 
     private void validatePublishable(
-            RecruitmentDraftInfo draft,
-            RecruitmentApplicationFormInfo formInfo
+        RecruitmentDraftInfo draft,
+        RecruitmentApplicationFormInfo formInfo
     ) {
         if (draft == null) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
@@ -852,27 +852,27 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         FormDefinitionInfo def = formInfo.formDefinition();
 
         boolean hasAnyQuestion = def.sections().stream()
-                .anyMatch(sec -> sec.questions() != null && !sec.questions().isEmpty());
+            .anyMatch(sec -> sec.questions() != null && !sec.questions().isEmpty());
 
         if (!hasAnyQuestion) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_QUESTION_REQUIRED);
         }
 
         boolean hasPreferredPartQuestion = def.sections().stream()
-                .filter(sec -> sec.questions() != null)
-                .flatMap(sec -> sec.questions().stream())
-                .anyMatch(q -> q != null && q.type() == QuestionType.PREFERRED_PART);
+            .filter(sec -> sec.questions() != null)
+            .flatMap(sec -> sec.questions().stream())
+            .anyMatch(q -> q != null && q.type() == QuestionType.PREFERRED_PART);
 
         if (!hasPreferredPartQuestion) {
             throw new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_PREFERRED_PART_REQUIRED
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.RECRUITMENT_PUBLISH_PREFERRED_PART_REQUIRED
             );
         }
 
         if (draft.maxPreferredPartCount() != null && draft.maxPreferredPartCount() <= 0) {
             throw new BusinessException(Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_MAX_PREFERRED_PART_INVALID);
+                RecruitmentErrorCode.RECRUITMENT_PUBLISH_MAX_PREFERRED_PART_INVALID);
         }
     }
 
@@ -886,8 +886,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     public RecruitmentApplicationFormInfo delete(DeleteRecruitmentFormQuestionCommand command) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         // TODO: 권한 검증
 
@@ -901,7 +901,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         boolean owned = loadQuestionPort.existsByIdAndFormId(questionId, formId);
         if (!owned) {
             throw new BusinessException(Domain.RECRUITMENT,
-                    SurveyErrorCode.QUESTION_NOT_FOUND);
+                SurveyErrorCode.QUESTION_NOT_FOUND);
         }
 
         saveQuestionOptionPort.deleteAllByQuestionId(questionId);
@@ -911,10 +911,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     private void upsertSingleAnswer(
-            FormResponse formResponse,
-            Question question,
-            com.umc.product.survey.domain.enums.QuestionType answeredAsType,
-            Map<String, Object> value
+        FormResponse formResponse,
+        Question question,
+        com.umc.product.survey.domain.enums.QuestionType answeredAsType,
+        Map<String, Object> value
     ) {
         if (question == null) {
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND);
@@ -924,8 +924,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         Long questionId = question.getId();
 
         var existingOpt = formResponse.getAnswers().stream()
-                .filter(a -> questionId.equals(a.getQuestion().getId()))
-                .findFirst();
+            .filter(a -> questionId.equals(a.getQuestion().getId()))
+            .findFirst();
 
         if (existingOpt.isPresent()) {
             existingOpt.get().change(answeredAsType, safeValue);
@@ -933,7 +933,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         formResponse.getAnswers().add(
-                SingleAnswer.create(formResponse, question, answeredAsType, safeValue)
+            SingleAnswer.create(formResponse, question, answeredAsType, safeValue)
         );
     }
 
@@ -941,8 +941,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     public UpdateRecruitmentInterviewPreferenceInfo update(UpdateRecruitmentInterviewPreferenceCommand command) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (!recruitment.isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
@@ -954,7 +954,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         FormResponse formResponse = loadFormResponsePort.findById(command.formResponseId())
-                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
 
         if (!formResponse.getForm().getId().equals(formId)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
@@ -965,16 +965,16 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         Question scheduleQuestion = loadQuestionPort.findFirstByFormIdAndType(formId, QuestionType.SCHEDULE)
-                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
 
         Map<String, Object> safeValue = (command.value() == null) ? Map.of() : command.value();
         Map<String, Object> normalized = normalizeInterviewPreferenceToHHmm(safeValue);
 
         upsertSingleAnswer(
-                formResponse,
-                scheduleQuestion,
-                QuestionType.SCHEDULE,
-                normalized
+            formResponse,
+            scheduleQuestion,
+            QuestionType.SCHEDULE,
+            normalized
         );
 
         saveFormResponsePort.save(formResponse);
@@ -985,8 +985,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     @Override
     public RecruitmentPublishedInfo update(UpdatePublishedRecruitmentScheduleCommand command) {
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (recruitment.getStatus() != RecruitmentStatus.PUBLISHED) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
@@ -995,7 +995,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         // TODO: 권한 검증 (memberId 기반)
 
         Map<RecruitmentScheduleType, RecruitmentSchedule> existing =
-                loadRecruitmentPort.findScheduleMapByRecruitmentId(command.recruitmentId());
+            loadRecruitmentPort.findScheduleMapByRecruitmentId(command.recruitmentId());
 
         Instant now = Instant.now();
         Long recruitmentId = command.recruitmentId();
@@ -1007,21 +1007,21 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         validateInterviewNoShorten(existing, command.schedule());
 
         ResolvedRecruitmentSchedule resolved =
-                ResolvedRecruitmentSchedule.merge(existing, command.schedule());
+            ResolvedRecruitmentSchedule.merge(existing, command.schedule());
         validateOrdering(resolved);
 
         // upsert schedules
         upsertSchedule(recruitmentId, existing, RecruitmentScheduleType.APPLY_WINDOW,
-                resolved.applyStartAt(), resolved.applyEndAt());
+            resolved.applyStartAt(), resolved.applyEndAt());
 
         upsertAtSchedule(recruitmentId, existing, RecruitmentScheduleType.DOC_RESULT_AT,
-                resolved.docResultAt());
+            resolved.docResultAt());
 
         upsertSchedule(recruitmentId, existing, RecruitmentScheduleType.INTERVIEW_WINDOW,
-                resolved.interviewStartAt(), resolved.interviewEndAt());
+            resolved.interviewStartAt(), resolved.interviewEndAt());
 
         upsertAtSchedule(recruitmentId, existing, RecruitmentScheduleType.FINAL_RESULT_AT,
-                resolved.finalResultAt());
+            resolved.finalResultAt());
 
         upsertReviewWindowsPublished(recruitmentId, existing, resolved);
 
@@ -1029,12 +1029,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(recruitmentId);
         List<ChallengerPart> parts = recruitmentParts.stream()
-                .filter(RecruitmentPart::isOpen)
-                .map(RecruitmentPart::getPart)
-                .toList();
+            .filter(RecruitmentPart::isOpen)
+            .map(RecruitmentPart::getPart)
+            .toList();
 
         RecruitmentPublishedInfo.ScheduleInfo scheduleInfo =
-                loadRecruitmentPort.findPublishedScheduleInfoByRecruitmentId(recruitmentId);
+            loadRecruitmentPort.findPublishedScheduleInfoByRecruitmentId(recruitmentId);
 
         return RecruitmentPublishedInfo.from(recruitment, parts, scheduleInfo);
     }
@@ -1043,8 +1043,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     public RecruitmentApplicationFormInfo delete(DeleteRecruitmentQuestionOptionCommand command) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-                .orElseThrow(() -> new BusinessException(
-                        Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(
+                Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (recruitment.getStatus() != RecruitmentStatus.DRAFT) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_PUBLISHED);
@@ -1073,7 +1073,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     private void validateApplyWindow(Recruitment recruitment) {
         RecruitmentSchedule applyWindow = loadRecruitmentSchedulePort
-                .findByRecruitmentIdAndType(recruitment.getId(), RecruitmentScheduleType.APPLY_WINDOW);
+            .findByRecruitmentIdAndType(recruitment.getId(), RecruitmentScheduleType.APPLY_WINDOW);
 
         if (applyWindow == null) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_WINDOW_NOT_SET);
@@ -1112,26 +1112,26 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         FormDefinitionInfo def = formInfo.formDefinition();
 
         Set<Long> answeredQuestionIds = formResponse.getAnswers().stream()
-                .map(a -> a.getQuestion().getId())
-                .collect(java.util.stream.Collectors.toSet());
+            .map(a -> a.getQuestion().getId())
+            .collect(java.util.stream.Collectors.toSet());
 
         log.debug("[SUBMIT_VALIDATE] recruitmentId={}, formResponseId={}, answeredQuestionIds={}",
-                recruitment.getId(), formResponse.getId(), answeredQuestionIds);
+            recruitment.getId(), formResponse.getId(), answeredQuestionIds);
 
         Set<ChallengerPart> selectedParts = resolveSelectedPartsForSubmit(recruitment, formResponse);
 
         log.debug("[SUBMIT_VALIDATE] recruitmentId={}, formResponseId={}, selectedPartsForSubmit={}",
-                recruitment.getId(), formResponse.getId(), selectedParts);
+            recruitment.getId(), formResponse.getId(), selectedParts);
 
         var requiredAll = def.sections().stream()
-                .flatMap(sec -> sec.questions() == null ? java.util.stream.Stream.empty() : sec.questions().stream())
-                .filter(FormDefinitionInfo.QuestionInfo::isRequired)
-                .map(q -> java.util.Map.of("questionId", q.questionId(), "type", q.type(), "questionText",
-                        q.questionText()))
-                .toList();
+            .flatMap(sec -> sec.questions() == null ? java.util.stream.Stream.empty() : sec.questions().stream())
+            .filter(FormDefinitionInfo.QuestionInfo::isRequired)
+            .map(q -> java.util.Map.of("questionId", q.questionId(), "type", q.type(), "questionText",
+                q.questionText()))
+            .toList();
 
         log.debug("[SUBMIT_VALIDATE_REQUIRED_LIST] recruitmentId={}, formResponseId={}, requiredQuestions={}",
-                recruitment.getId(), formResponse.getId(), requiredAll);
+            recruitment.getId(), formResponse.getId(), requiredAll);
 
         def.sections().forEach(section -> {
             if (section.questions() == null) {
@@ -1155,17 +1155,17 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 Long qid = q.questionId();
                 if (qid == null || !answeredQuestionIds.contains(qid)) {
                     logRequiredMissing(
-                            "validateBeforeSubmit.requiredQuestion",
-                            recruitment.getId(),
-                            formResponse.getId(),
-                            formId,
-                            java.util.Map.of(
-                                    "sectionTargetKey", targetKey,
-                                    "questionId", qid,
-                                    "questionType", q.type(),
-                                    "questionText", q.questionText(),
-                                    "answeredQuestionIds", answeredQuestionIds
-                            ));
+                        "validateBeforeSubmit.requiredQuestion",
+                        recruitment.getId(),
+                        formResponse.getId(),
+                        formId,
+                        java.util.Map.of(
+                            "sectionTargetKey", targetKey,
+                            "questionId", qid,
+                            "questionType", q.type(),
+                            "questionText", q.questionText(),
+                            "answeredQuestionIds", answeredQuestionIds
+                        ));
                     throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
                 }
 
@@ -1190,8 +1190,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         var opt = formResponse.getAnswers().stream()
-                .filter(a -> a.getAnsweredAsType() == com.umc.product.survey.domain.enums.QuestionType.PREFERRED_PART)
-                .findFirst();
+            .filter(a -> a.getAnsweredAsType() == com.umc.product.survey.domain.enums.QuestionType.PREFERRED_PART)
+            .findFirst();
 
         if (opt.isEmpty()) {
             return;
@@ -1203,8 +1203,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         List<?> selected = (List<?>) (v.containsKey("preferredParts")
-                ? v.getOrDefault("preferredParts", List.of())
-                : v.getOrDefault("selectedParts", List.of()));
+            ? v.getOrDefault("preferredParts", List.of())
+            : v.getOrDefault("selectedParts", List.of()));
 
         List<Long> selectedRecruitmentPartIds = extractPreferredRecruitmentPartIds(recruitment, formResponse);
         if (selectedRecruitmentPartIds == null || selectedRecruitmentPartIds.isEmpty()) {
@@ -1213,14 +1213,14 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         if (selected.isEmpty()) {
             logRequiredMissing(
-                    "validatePreferredPartIfNeeded.emptySelection",
-                    recruitment.getId(),
-                    formResponse.getId(),
-                    recruitment.getFormId(),
-                    java.util.Map.of(
-                            "maxPreferredPartCount", recruitment.getMaxPreferredPartCount(),
-                            "preferredValue", v
-                    )
+                "validatePreferredPartIfNeeded.emptySelection",
+                recruitment.getId(),
+                formResponse.getId(),
+                recruitment.getFormId(),
+                java.util.Map.of(
+                    "maxPreferredPartCount", recruitment.getMaxPreferredPartCount(),
+                    "preferredValue", v
+                )
             );
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
@@ -1230,18 +1230,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         if (max >= 2 && selectedRecruitmentPartIds.size() < max) {
             logRequiredMissing(
-                    "validatePreferredPartIfNeeded.notEnoughSelections",
-                    recruitment.getId(),
-                    formResponse.getId(),
-                    recruitment.getFormId(),
-                    java.util.Map.of(
-                            "maxPreferredPartCount", max,
-                            "selectedSize", selectedRecruitmentPartIds.size(),
-                            "preferredValue", v
-                    )
+                "validatePreferredPartIfNeeded.notEnoughSelections",
+                recruitment.getId(),
+                formResponse.getId(),
+                recruitment.getFormId(),
+                java.util.Map.of(
+                    "maxPreferredPartCount", max,
+                    "selectedSize", selectedRecruitmentPartIds.size(),
+                    "preferredValue", v
+                )
             );
             throw new BusinessException(Domain.RECRUITMENT,
-                    RecruitmentErrorCode.PREFERRED_PART_REQUIRED_COUNT_MISMATCH);
+                RecruitmentErrorCode.PREFERRED_PART_REQUIRED_COUNT_MISMATCH);
         }
 
         if (selectedRecruitmentPartIds == null || selectedRecruitmentPartIds.isEmpty()) {
@@ -1254,10 +1254,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         java.util.Set<Long> openPartIds = parts.stream()
-                .filter(p -> p.getId() != null)
-                .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
-                .map(RecruitmentPart::getId)
-                .collect(java.util.stream.Collectors.toSet());
+            .filter(p -> p.getId() != null)
+            .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+            .map(RecruitmentPart::getId)
+            .collect(java.util.stream.Collectors.toSet());
 
         boolean hasInvalid = selectedRecruitmentPartIds.stream().anyMatch(id -> !openPartIds.contains(id));
         if (hasInvalid) {
@@ -1274,8 +1274,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         var scheduleAnswerOpt = formResponse.getAnswers().stream()
-                .filter(a -> a.getAnsweredAsType() == QuestionType.SCHEDULE)
-                .findFirst();
+            .filter(a -> a.getAnsweredAsType() == QuestionType.SCHEDULE)
+            .findFirst();
 
         if (scheduleAnswerOpt.isEmpty()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
@@ -1287,7 +1287,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         List<Map<String, Object>> selected =
-                (List<Map<String, Object>>) value.getOrDefault("selected", List.of());
+            (List<Map<String, Object>>) value.getOrDefault("selected", List.of());
 
         if (selected.isEmpty()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
@@ -1307,7 +1307,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         LocalTime endTime = parseTimeFlexible(requireString(timeRange, "end"));
 
         List<Map<String, Object>> enabledByDate =
-                (List<Map<String, Object>>) tt.getOrDefault("enabledByDate", List.of());
+            (List<Map<String, Object>>) tt.getOrDefault("enabledByDate", List.of());
 
         Map<LocalDate, java.util.Set<String>> allowed = new java.util.HashMap<>();
         for (Map<String, Object> e : enabledByDate) {
@@ -1344,14 +1344,14 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
                 if (t.isBefore(startTime) || !t.isBefore(endTime)) {
                     throw new BusinessException(
-                            Domain.RECRUITMENT,
-                            RecruitmentErrorCode.INTERVIEW_PREFERENCE_OUT_OF_RANGE
+                        Domain.RECRUITMENT,
+                        RecruitmentErrorCode.INTERVIEW_PREFERENCE_OUT_OF_RANGE
                     );
                 }
 
                 if (!allowedTimes.contains(hhmm)) {
                     throw new BusinessException(Domain.RECRUITMENT,
-                            RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_SLOT);
+                        RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_SLOT);
                 }
             }
         }
@@ -1363,10 +1363,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         return formResponse.getAnswers().stream()
-                .filter(a -> a.getQuestion() != null && questionId.equals(a.getQuestion().getId()))
-                .map(SingleAnswer::getValue)
-                .findFirst()
-                .orElse(Map.of());
+            .filter(a -> a.getQuestion() != null && questionId.equals(a.getQuestion().getId()))
+            .map(SingleAnswer::getValue)
+            .findFirst()
+            .orElse(Map.of());
     }
 
     private void validatePortfolioFilesUploaded(Map<String, Object> value) {
@@ -1421,9 +1421,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     private void persistAppliedPreferredParts(
-            Recruitment recruitment,
-            FormResponse formResponse,
-            Application application
+        Recruitment recruitment,
+        FormResponse formResponse,
+        Application application
     ) {
         Integer maxPreferred = recruitment.getMaxPreferredPartCount();
         if (maxPreferred != null && maxPreferred <= 0) {
@@ -1431,28 +1431,28 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         List<RecruitmentPart> parts =
-                loadRecruitmentPartPort.findByRecruitmentId(recruitment.getId());
+            loadRecruitmentPartPort.findByRecruitmentId(recruitment.getId());
         if (parts == null) {
             parts = List.of();
         }
 
         List<Long> selectedRecruitmentPartIds =
-                extractPreferredRecruitmentPartIds(recruitment, formResponse);
+            extractPreferredRecruitmentPartIds(recruitment, formResponse);
 
         int max = (recruitment.getMaxPreferredPartCount() != null)
-                ? recruitment.getMaxPreferredPartCount()
-                : 1;
+            ? recruitment.getMaxPreferredPartCount()
+            : 1;
 
         if (selectedRecruitmentPartIds.isEmpty()) {
             logRequiredMissing(
-                    "persistAppliedPreferredParts.emptySelectedPartIds",
-                    recruitment.getId(),
-                    formResponse.getId(),
-                    recruitment.getFormId(),
-                    java.util.Map.of(
-                            "maxPreferredPartCount", recruitment.getMaxPreferredPartCount(),
-                            "answersCount", formResponse.getAnswers() == null ? 0 : formResponse.getAnswers().size()
-                    )
+                "persistAppliedPreferredParts.emptySelectedPartIds",
+                recruitment.getId(),
+                formResponse.getId(),
+                recruitment.getFormId(),
+                java.util.Map.of(
+                    "maxPreferredPartCount", recruitment.getMaxPreferredPartCount(),
+                    "answersCount", formResponse.getAnswers() == null ? 0 : formResponse.getAnswers().size()
+                )
             );
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
@@ -1461,12 +1461,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         Map<Long, RecruitmentPart> partById = parts.stream()
-                .filter(p -> p.getId() != null)
-                .collect(java.util.stream.Collectors.toMap(
-                        RecruitmentPart::getId,
-                        p -> p,
-                        (a, b) -> a
-                ));
+            .filter(p -> p.getId() != null)
+            .collect(java.util.stream.Collectors.toMap(
+                RecruitmentPart::getId,
+                p -> p,
+                (a, b) -> a
+            ));
 
         List<RecruitmentPart> selectedParts = new java.util.ArrayList<>();
         java.util.Set<Long> dedup = new java.util.HashSet<>();
@@ -1491,14 +1491,14 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         if (selectedParts.isEmpty()) {
             logRequiredMissing(
-                    "persistAppliedPreferredParts.selectedPartsEmptyAfterValidation",
-                    recruitment.getId(),
-                    formResponse.getId(),
-                    recruitment.getFormId(),
-                    java.util.Map.of(
-                            "selectedRecruitmentPartIds", selectedRecruitmentPartIds,
-                            "openPartIds", partById.keySet()
-                    )
+                "persistAppliedPreferredParts.selectedPartsEmptyAfterValidation",
+                recruitment.getId(),
+                formResponse.getId(),
+                recruitment.getFormId(),
+                java.util.Map.of(
+                    "selectedRecruitmentPartIds", selectedRecruitmentPartIds,
+                    "openPartIds", partById.keySet()
+                )
             );
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
@@ -1514,16 +1514,16 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     @SuppressWarnings("unchecked")
     private List<Long> extractPreferredRecruitmentPartIds(
-            Recruitment recruitment,
-            FormResponse formResponse
+        Recruitment recruitment,
+        FormResponse formResponse
     ) {
         if (formResponse == null || formResponse.getAnswers() == null) {
             return List.of();
         }
 
         var opt = formResponse.getAnswers().stream()
-                .filter(a -> a.getAnsweredAsType() == QuestionType.PREFERRED_PART)
-                .findFirst();
+            .filter(a -> a.getAnsweredAsType() == QuestionType.PREFERRED_PART)
+            .findFirst();
 
         if (opt.isEmpty()) {
             return List.of();
@@ -1535,9 +1535,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         Object rawList =
-                v.containsKey("preferredParts") ? v.get("preferredParts")
-                        : v.containsKey("selectedParts") ? v.get("selectedParts")
-                                : v.getOrDefault("preferredPartIds", List.of());
+            v.containsKey("preferredParts") ? v.get("preferredParts")
+                : v.containsKey("selectedParts") ? v.get("selectedParts")
+                    : v.getOrDefault("preferredPartIds", List.of());
 
         if (!(rawList instanceof List<?> list)) {
             return List.of();
@@ -1550,12 +1550,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         Map<String, Long> partIdByName = parts.stream()
-                .filter(p -> p.getPart() != null && p.getId() != null)
-                .collect(java.util.stream.Collectors.toMap(
-                        p -> p.getPart().name(),
-                        RecruitmentPart::getId,
-                        (a, b) -> a
-                ));
+            .filter(p -> p.getPart() != null && p.getId() != null)
+            .collect(java.util.stream.Collectors.toMap(
+                p -> p.getPart().name(),
+                RecruitmentPart::getId,
+                (a, b) -> a
+            ));
 
         List<Long> result = new ArrayList<>();
 
@@ -1814,13 +1814,13 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             }
 
             long otherCount = question.options().stream()
-                    .filter(o -> Boolean.TRUE.equals(o.isOther()))
-                    .count();
+                .filter(o -> Boolean.TRUE.equals(o.isOther()))
+                .count();
 
             if (otherCount > 1) {
                 throw new BusinessException(
-                        Domain.SURVEY,
-                        SurveyErrorCode.OTHER_OPTION_DUPLICATED
+                    Domain.SURVEY,
+                    SurveyErrorCode.OTHER_OPTION_DUPLICATED
                 );
             }
         }
@@ -1839,14 +1839,14 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         Map<Long, Boolean> isOtherByOptionId = (question.getOptions() == null ? List.<QuestionOption>of()
-                : question.getOptions())
-                .stream()
-                .filter(o -> o != null && o.getId() != null)
-                .collect(Collectors.toMap(
-                        QuestionOption::getId,
-                        o -> o.isOther(),
-                        (a, b) -> a
-                ));
+            : question.getOptions())
+            .stream()
+            .filter(o -> o != null && o.getId() != null)
+            .collect(Collectors.toMap(
+                QuestionOption::getId,
+                o -> o.isOther(),
+                (a, b) -> a
+            ));
 
         String otherText = null;
         Object otherTextRaw = value.get("otherText");
@@ -1891,9 +1891,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         long selectedOtherCount = selectedOptionIds.stream()
-                .map(isOtherByOptionId::get)
-                .filter(Boolean.TRUE::equals)
-                .count();
+            .map(isOtherByOptionId::get)
+            .filter(Boolean.TRUE::equals)
+            .count();
 
         if (selectedOtherCount > 0 && otherText == null) {
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_TEXT_REQUIRED);
@@ -1978,7 +1978,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         boolean alreadyStarted = !now.isBefore(apply.getStartsAt());
         if (alreadyStarted && patch.applyStartAt() != null && !patch.applyStartAt().equals(apply.getStartsAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_START_FROZEN);
+                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_START_FROZEN);
         }
     }
 
@@ -1996,7 +1996,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         boolean isOpen = !now.isBefore(apply.getStartsAt()) && now.isBefore(apply.getEndsAt());
         if (isOpen && patch.applyEndAt().isBefore(apply.getEndsAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_END_SHORTEN_FORBIDDEN);
+                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_END_SHORTEN_FORBIDDEN);
         }
     }
 
@@ -2009,15 +2009,15 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         if (!interview.canChangeStartNotAdvanced(patch.interviewStartAt())) {
             throw new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INTERVIEW_ADVANCE_FORBIDDEN
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INTERVIEW_ADVANCE_FORBIDDEN
             );
         }
 
         if (!interview.canChangeEndNotShortened(patch.interviewEndAt())) {
             throw new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INTERVIEW_SHORTEN_FORBIDDEN
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INTERVIEW_SHORTEN_FORBIDDEN
             );
         }
     }
@@ -2037,7 +2037,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
         // interviewStart <= interviewEnd
         if (c.interviewStartAt() != null && c.interviewEndAt() != null && c.interviewEndAt()
-                .isBefore(c.interviewStartAt())) {
+            .isBefore(c.interviewStartAt())) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
         }
         // interviewEnd <= finalResult
@@ -2048,11 +2048,11 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     // published 모집 수정 upsert 함수
     private void upsertSchedule(
-            Long recruitmentId,
-            Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
-            RecruitmentScheduleType type,
-            Instant startsAt,
-            Instant endsAt
+        Long recruitmentId,
+        Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+        RecruitmentScheduleType type,
+        Instant startsAt,
+        Instant endsAt
     ) {
         if (startsAt == null && endsAt == null) {
             return;
@@ -2068,10 +2068,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     private void upsertAtSchedule(
-            Long recruitmentId,
-            Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
-            RecruitmentScheduleType type,
-            Instant at
+        Long recruitmentId,
+        Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+        RecruitmentScheduleType type,
+        Instant at
     ) {
         if (at == null) {
             return;
@@ -2087,17 +2087,17 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     private record ResolvedRecruitmentSchedule(
-            Instant applyStartAt,
-            Instant applyEndAt,
-            Instant docResultAt,
-            Instant interviewStartAt,
-            Instant interviewEndAt,
-            Instant finalResultAt
+        Instant applyStartAt,
+        Instant applyEndAt,
+        Instant docResultAt,
+        Instant interviewStartAt,
+        Instant interviewEndAt,
+        Instant finalResultAt
     ) {
 
         static ResolvedRecruitmentSchedule merge(
-                Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
-                UpdatePublishedRecruitmentScheduleCommand.SchedulePatch patch
+            Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+            UpdatePublishedRecruitmentScheduleCommand.SchedulePatch patch
         ) {
             RecruitmentSchedule apply = existing.get(RecruitmentScheduleType.APPLY_WINDOW);
             RecruitmentSchedule docResult = existing.get(RecruitmentScheduleType.DOC_RESULT_AT);
@@ -2105,31 +2105,31 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             RecruitmentSchedule finalResult = existing.get(RecruitmentScheduleType.FINAL_RESULT_AT);
 
             Instant applyStart =
-                    patch.applyStartAt() != null ? patch.applyStartAt() : (apply == null ? null : apply.getStartsAt());
+                patch.applyStartAt() != null ? patch.applyStartAt() : (apply == null ? null : apply.getStartsAt());
             Instant applyEnd =
-                    patch.applyEndAt() != null ? patch.applyEndAt() : (apply == null ? null : apply.getEndsAt());
+                patch.applyEndAt() != null ? patch.applyEndAt() : (apply == null ? null : apply.getEndsAt());
 
             Instant docR =
-                    patch.docResultAt() != null ? patch.docResultAt()
-                            : (docResult == null ? null : docResult.getStartsAt());
+                patch.docResultAt() != null ? patch.docResultAt()
+                    : (docResult == null ? null : docResult.getStartsAt());
 
             Instant interviewStart =
-                    patch.interviewStartAt() != null ? patch.interviewStartAt()
-                            : (interview == null ? null : interview.getStartsAt());
+                patch.interviewStartAt() != null ? patch.interviewStartAt()
+                    : (interview == null ? null : interview.getStartsAt());
             Instant interviewEnd =
-                    patch.interviewEndAt() != null ? patch.interviewEndAt()
-                            : (interview == null ? null : interview.getEndsAt());
+                patch.interviewEndAt() != null ? patch.interviewEndAt()
+                    : (interview == null ? null : interview.getEndsAt());
 
             Instant finalR =
-                    patch.finalResultAt() != null ? patch.finalResultAt()
-                            : (finalResult == null ? null : finalResult.getStartsAt());
+                patch.finalResultAt() != null ? patch.finalResultAt()
+                    : (finalResult == null ? null : finalResult.getStartsAt());
 
             return new ResolvedRecruitmentSchedule(applyStart, applyEnd, docR, interviewStart, interviewEnd, finalR);
         }
 
         static ResolvedRecruitmentSchedule merge(
-                Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
-                UpdateRecruitmentDraftCommand.ScheduleCommand patch
+            Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+            UpdateRecruitmentDraftCommand.ScheduleCommand patch
         ) {
             RecruitmentSchedule apply = existing.get(RecruitmentScheduleType.APPLY_WINDOW);
             RecruitmentSchedule docResult = existing.get(RecruitmentScheduleType.DOC_RESULT_AT);
@@ -2137,53 +2137,53 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             RecruitmentSchedule finalResult = existing.get(RecruitmentScheduleType.FINAL_RESULT_AT);
 
             Instant applyStart =
-                    patch.applyStartAt() != null ? patch.applyStartAt() : (apply == null ? null : apply.getStartsAt());
+                patch.applyStartAt() != null ? patch.applyStartAt() : (apply == null ? null : apply.getStartsAt());
             Instant applyEnd =
-                    patch.applyEndAt() != null ? patch.applyEndAt() : (apply == null ? null : apply.getEndsAt());
+                patch.applyEndAt() != null ? patch.applyEndAt() : (apply == null ? null : apply.getEndsAt());
 
             Instant docR =
-                    patch.docResultAt() != null ? patch.docResultAt()
-                            : (docResult == null ? null : docResult.getStartsAt());
+                patch.docResultAt() != null ? patch.docResultAt()
+                    : (docResult == null ? null : docResult.getStartsAt());
 
             Instant interviewStart =
-                    patch.interviewStartAt() != null ? patch.interviewStartAt()
-                            : (interview == null ? null : interview.getStartsAt());
+                patch.interviewStartAt() != null ? patch.interviewStartAt()
+                    : (interview == null ? null : interview.getStartsAt());
             Instant interviewEnd =
-                    patch.interviewEndAt() != null ? patch.interviewEndAt()
-                            : (interview == null ? null : interview.getEndsAt());
+                patch.interviewEndAt() != null ? patch.interviewEndAt()
+                    : (interview == null ? null : interview.getEndsAt());
 
             Instant finalR =
-                    patch.finalResultAt() != null ? patch.finalResultAt()
-                            : (finalResult == null ? null : finalResult.getStartsAt());
+                patch.finalResultAt() != null ? patch.finalResultAt()
+                    : (finalResult == null ? null : finalResult.getStartsAt());
 
             return new ResolvedRecruitmentSchedule(applyStart, applyEnd, docR, interviewStart, interviewEnd, finalR);
         }
     }
 
     private void upsertReviewWindowsPublished(
-            Long recruitmentId,
-            Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
-            ResolvedRecruitmentSchedule c
+        Long recruitmentId,
+        Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
+        ResolvedRecruitmentSchedule c
     ) {
         // DOC_REVIEW_WINDOW: applyEnd -> docResult
         if (c.applyEndAt() != null && c.docResultAt() != null) {
             upsertSchedule(
-                    recruitmentId,
-                    existing,
-                    RecruitmentScheduleType.DOC_REVIEW_WINDOW,
-                    c.applyEndAt(),
-                    c.docResultAt()
+                recruitmentId,
+                existing,
+                RecruitmentScheduleType.DOC_REVIEW_WINDOW,
+                c.applyEndAt(),
+                c.docResultAt()
             );
         }
 
         // FINAL_REVIEW_WINDOW: interviewEnd -> finalResult
         if (c.interviewEndAt() != null && c.finalResultAt() != null) {
             upsertSchedule(
-                    recruitmentId,
-                    existing,
-                    RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
-                    c.interviewEndAt(),
-                    c.finalResultAt()
+                recruitmentId,
+                existing,
+                RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
+                c.interviewEndAt(),
+                c.finalResultAt()
             );
         }
     }
@@ -2191,11 +2191,11 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private void upsertReviewWindowsForDraftResolved(Long recruitmentId, ResolvedRecruitmentSchedule r) {
         if (r.applyEndAt() != null && r.docResultAt() != null && r.applyEndAt().isBefore(r.docResultAt())) {
             upsertSchedulePeriod(recruitmentId, RecruitmentScheduleType.DOC_REVIEW_WINDOW,
-                    r.applyEndAt(), r.docResultAt());
+                r.applyEndAt(), r.docResultAt());
         }
         if (r.interviewEndAt() != null && r.finalResultAt() != null && r.interviewEndAt().isBefore(r.finalResultAt())) {
             upsertSchedulePeriod(recruitmentId, RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
-                    r.interviewEndAt(), r.finalResultAt());
+                r.interviewEndAt(), r.finalResultAt());
         }
 
     }
@@ -2208,20 +2208,20 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         // doc review window = applyEnd -> docResult
         if (s.applyEndAt() != null && s.docResultAt() != null && !s.applyEndAt().isAfter(s.docResultAt())) {
             upsertSchedulePeriod(
-                    recruitmentId,
-                    RecruitmentScheduleType.DOC_REVIEW_WINDOW,
-                    s.applyEndAt(),
-                    s.docResultAt()
+                recruitmentId,
+                RecruitmentScheduleType.DOC_REVIEW_WINDOW,
+                s.applyEndAt(),
+                s.docResultAt()
             );
         }
 
         // final review window = interviewEnd -> finalResult
         if (s.interviewEndAt() != null && s.finalResultAt() != null && !s.interviewEndAt().isAfter(s.finalResultAt())) {
             upsertSchedulePeriod(
-                    recruitmentId,
-                    RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
-                    s.interviewEndAt(),
-                    s.finalResultAt()
+                recruitmentId,
+                RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
+                s.interviewEndAt(),
+                s.finalResultAt()
             );
         }
     }
@@ -2230,27 +2230,27 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         // applyStart < applyEnd
         if (!s.applyStartAt().isBefore(s.applyEndAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+                RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
         }
         // applyEnd <= docResult
         if (s.docResultAt().isBefore(s.applyEndAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+                RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
         }
         // docResult <= interviewStart
         if (s.interviewStartAt().isBefore(s.docResultAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+                RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
         }
         // interviewStart < interviewEnd
         if (!s.interviewStartAt().isBefore(s.interviewEndAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+                RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
         }
         // interviewEnd <= finalResult
         if (s.finalResultAt().isBefore(s.interviewEndAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+                RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
         }
     }
 
@@ -2266,13 +2266,13 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         Map<Long, ChallengerPart> partById = parts.stream()
-                .filter(p -> p.getId() != null && p.getPart() != null)
-                .collect(Collectors.toMap(RecruitmentPart::getId, RecruitmentPart::getPart, (a, b) -> a));
+            .filter(p -> p.getId() != null && p.getPart() != null)
+            .collect(Collectors.toMap(RecruitmentPart::getId, RecruitmentPart::getPart, (a, b) -> a));
 
         return selectedRecruitmentPartIds.stream()
-                .map(partById::get)
-                .filter(java.util.Objects::nonNull)
-                .collect(Collectors.toSet());
+            .map(partById::get)
+            .filter(java.util.Objects::nonNull)
+            .collect(Collectors.toSet());
     }
 
     private static boolean isPartSection(String targetKey) {
@@ -2296,14 +2296,14 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     private void logRequiredMissing(
-            String where,
-            Long recruitmentId,
-            Long formResponseId,
-            Long formId,
-            Object extra
+        String where,
+        Long recruitmentId,
+        Long formResponseId,
+        Long formId,
+        Object extra
     ) {
         log.warn("[REQUIRED_MISSING] where={}, recruitmentId={}, formResponseId={}, formId={}, extra={}",
-                where, recruitmentId, formResponseId, formId, extra);
+            where, recruitmentId, formResponseId, formId, extra);
     }
 
     private Map<String, Object> normalizeInterviewTimeTableToHHmm(Map<String, Object> tt) {
@@ -2356,9 +2356,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     private void validateInterviewWindowCoversTimeTable(
-            Instant interviewStartAt,
-            Instant interviewEndAt,
-            RecruitmentDraftInfo.InterviewTimeTableInfo tt
+        Instant interviewStartAt,
+        Instant interviewEndAt,
+        RecruitmentDraftInfo.InterviewTimeTableInfo tt
     ) {
         if (interviewStartAt == null || interviewEndAt == null) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_REQUIRED);
@@ -2390,8 +2390,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         if (!coversStart || !coversEnd) {
             throw new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_COVER_TIMETABLE
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_COVER_TIMETABLE
             );
         }
     }
@@ -2401,21 +2401,21 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
         validateTimeTableStructureCommon(
-                tt.dateRange() == null ? null : tt.dateRange().start(),
-                tt.dateRange() == null ? null : tt.dateRange().end(),
-                tt.timeRange() == null ? null : tt.timeRange().start(),
-                tt.timeRange() == null ? null : tt.timeRange().end(),
-                tt.slotMinutes(),
-                tt.enabledByDate() == null ? List.of() : tt.enabledByDate().stream()
-                        .map(e -> new EnabledTimesByDatePayload(
-                                e.date(),
-                                e.times() == null ? List.of()
-                                        : e.times().stream()
-                                                .filter(java.util.Objects::nonNull)
-                                                .map(x -> x.format(DateTimeFormatter.ofPattern("HH:mm")))
-                                                .toList()
-                        ))
-                        .toList()
+            tt.dateRange() == null ? null : tt.dateRange().start(),
+            tt.dateRange() == null ? null : tt.dateRange().end(),
+            tt.timeRange() == null ? null : tt.timeRange().start(),
+            tt.timeRange() == null ? null : tt.timeRange().end(),
+            tt.slotMinutes(),
+            tt.enabledByDate() == null ? List.of() : tt.enabledByDate().stream()
+                .map(e -> new EnabledTimesByDatePayload(
+                    e.date(),
+                    e.times() == null ? List.of()
+                        : e.times().stream()
+                            .filter(java.util.Objects::nonNull)
+                            .map(x -> x.format(DateTimeFormatter.ofPattern("HH:mm")))
+                            .toList()
+                ))
+                .toList()
         );
     }
 
@@ -2424,24 +2424,24 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             seeInvalidTimeTable();
         }
         List<EnabledTimesByDatePayload> enabled = tt.enabledByDate() == null ? List.of()
-                : tt.enabledByDate().stream()
-                        .map(e -> new EnabledTimesByDatePayload(
-                                e.date(),
-                                e.times() == null ? List.of()
-                                        : e.times().stream()
-                                                .filter(java.util.Objects::nonNull)
-                                                .map(t -> t.format(DateTimeFormatter.ofPattern("HH:mm")))
-                                                .toList()
-                        ))
-                        .toList();
+            : tt.enabledByDate().stream()
+                .map(e -> new EnabledTimesByDatePayload(
+                    e.date(),
+                    e.times() == null ? List.of()
+                        : e.times().stream()
+                            .filter(java.util.Objects::nonNull)
+                            .map(t -> t.format(DateTimeFormatter.ofPattern("HH:mm")))
+                            .toList()
+                ))
+                .toList();
 
         validateTimeTableStructureCommon(
-                tt.dateRange() == null ? null : tt.dateRange().start(),
-                tt.dateRange() == null ? null : tt.dateRange().end(),
-                tt.timeRange() == null ? null : tt.timeRange().start(),
-                tt.timeRange() == null ? null : tt.timeRange().end(),
-                tt.slotMinutes(),
-                enabled
+            tt.dateRange() == null ? null : tt.dateRange().start(),
+            tt.dateRange() == null ? null : tt.dateRange().end(),
+            tt.timeRange() == null ? null : tt.timeRange().start(),
+            tt.timeRange() == null ? null : tt.timeRange().end(),
+            tt.slotMinutes(),
+            enabled
         );
     }
 
@@ -2450,12 +2450,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     private void validateTimeTableStructureCommon(
-            LocalDate startDate,
-            LocalDate endDate,
-            LocalTime startTime,
-            LocalTime endTime,
-            Integer slotMinutes,
-            List<EnabledTimesByDatePayload> enabledByDate
+        LocalDate startDate,
+        LocalDate endDate,
+        LocalTime startTime,
+        LocalTime endTime,
+        Integer slotMinutes,
+        List<EnabledTimesByDatePayload> enabledByDate
     ) {
         if (startDate == null || endDate == null || startTime == null || endTime == null) {
             seeInvalidTimeTable();

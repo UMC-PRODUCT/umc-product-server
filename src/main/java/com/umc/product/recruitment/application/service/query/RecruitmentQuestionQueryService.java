@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class RecruitmentQuestionQueryService implements GetInterviewSheetQuestionsUseCase,
-        GetInterviewSheetPartsUseCase {
+    GetInterviewSheetPartsUseCase {
 
     @Override
     public GetInterviewSheetQuestionsInfo get(GetInterviewSheetQuestionsQuery query) {

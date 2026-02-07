@@ -4,7 +4,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEv
 import java.time.Instant;
 
 public record GetMyDocumentEvaluationResponse(
-        MyDocumentEvaluationResponse myEvaluation
+    MyDocumentEvaluationResponse myEvaluation
 ) {
 
     public static GetMyDocumentEvaluationResponse from(GetMyDocumentEvaluationInfo info) {
@@ -13,25 +13,25 @@ public record GetMyDocumentEvaluationResponse(
         }
         var e = info.myEvaluation();
         return new GetMyDocumentEvaluationResponse(
-                new MyDocumentEvaluationResponse(
-                        e.applicationId(),
-                        e.evaluationId(),
-                        e.score(),
-                        e.comments(),
-                        e.submitted(),
-                        e.savedAt()
-                )
+            new MyDocumentEvaluationResponse(
+                e.applicationId(),
+                e.evaluationId(),
+                e.score(),
+                e.comments(),
+                e.submitted(),
+                e.savedAt()
+            )
         );
     }
 
 
     public record MyDocumentEvaluationResponse(
-            Long applicationId,
-            Long evaluationId,
-            Integer score,
-            String comments,
-            boolean submitted,
-            Instant savedAt
+        Long applicationId,
+        Long evaluationId,
+        Integer score,
+        String comments,
+        boolean submitted,
+        Instant savedAt
     ) {
     }
 }

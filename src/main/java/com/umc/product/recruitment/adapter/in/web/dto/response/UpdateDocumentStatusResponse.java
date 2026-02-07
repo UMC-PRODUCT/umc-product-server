@@ -5,17 +5,17 @@ import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import java.time.Instant;
 
 public record UpdateDocumentStatusResponse(
-        Long applicationId,
-        ApplicationStatus applicationStatus,
-        Double averageScore,
-        Instant updatedAt
+    Long applicationId,
+    ApplicationStatus applicationStatus,
+    Double averageScore,
+    Instant updatedAt
 ) {
     public static UpdateDocumentStatusResponse from(UpdateDocumentStatusInfo info) {
         return new UpdateDocumentStatusResponse(
-                info.applicationId(),
-                info.applicationStatus(),
-                info.averageScore(),
-                info.updatedAt()
+            info.applicationId(),
+            info.applicationStatus(),
+            info.averageScore(),
+            info.updatedAt()
         );
     }
 }

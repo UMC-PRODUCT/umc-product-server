@@ -7,18 +7,18 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record RecruitmentListInfo(
-        List<RecruitmentSummary> recruitments
+    List<RecruitmentSummary> recruitments
 ) {
     public record RecruitmentSummary(
-            Long recruitmentId,
-            String recruitmentName,
-            LocalDate startDate,
-            LocalDate endDate,
-            int applicantCount,
-            RecruitmentStatus status,
-            RecruitmentPhase phase,
-            boolean editable,
-            Instant updatedAt
+        Long recruitmentId,
+        String recruitmentName,
+        LocalDate startDate,
+        LocalDate endDate,
+        int applicantCount,
+        RecruitmentStatus status,
+        RecruitmentPhase phase,
+        boolean editable,
+        Instant updatedAt
     ) {
     }
 }

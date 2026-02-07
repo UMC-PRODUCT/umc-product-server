@@ -9,35 +9,35 @@ import java.util.List;
 import java.util.Set;
 
 public record RecruitmentApplicationFormInfo(
-        Long recruitmentId,
-        Long formId,
-        String status,
-        String recruitmentFormTitle,
-        String noticeTitle,
-        String noticeContent,
-        FormDefinitionInfo formDefinition,
-        RecruitmentFormDefinitionInfo recruitmentFormDefinition,
-        InterviewTimeTableInfo interviewTimeTableInfo,
-        PreferredPartInfo preferredPartInfo
+    Long recruitmentId,
+    Long formId,
+    String status,
+    String recruitmentFormTitle,
+    String noticeTitle,
+    String noticeContent,
+    FormDefinitionInfo formDefinition,
+    RecruitmentFormDefinitionInfo recruitmentFormDefinition,
+    InterviewTimeTableInfo interviewTimeTableInfo,
+    PreferredPartInfo preferredPartInfo
 ) {
     public record PreferredPartInfo(
-            Integer maxSelectCount,
-            List<PreferredPartOptionInfo> options
+        Integer maxSelectCount,
+        List<PreferredPartOptionInfo> options
     ) {
         public record PreferredPartOptionInfo(
-                Long recruitmentPartId,
-                String label,
-                String value
+            Long recruitmentPartId,
+            String label,
+            String value
         ) {
         }
     }
 
     public record InterviewTimeTableInfo(
-            DateRangeInfo dateRange,
-            TimeRangeInfo timeRange, // applicant view용: enabled 전체 min/max로 계산된 값
-            Integer slotMinutes,
-            List<TimesByDateInfo> enabledByDate,
-            List<TimesByDateInfo> disabledByDate
+        DateRangeInfo dateRange,
+        TimeRangeInfo timeRange, // applicant view용: enabled 전체 min/max로 계산된 값
+        Integer slotMinutes,
+        List<TimesByDateInfo> enabledByDate,
+        List<TimesByDateInfo> disabledByDate
     ) {
         public record DateRangeInfo(LocalDate start, LocalDate end) {
         }
@@ -68,23 +68,23 @@ public record RecruitmentApplicationFormInfo(
 //    }
 
     public static RecruitmentApplicationFormInfo from(
-            Recruitment recruitment,
-            FormDefinitionInfo formDefinition,
-            RecruitmentFormDefinitionInfo recruitmentFormDefinition,
-            InterviewTimeTableInfo interviewTimeTableInfo,
-            PreferredPartInfo preferredPartInfo
+        Recruitment recruitment,
+        FormDefinitionInfo formDefinition,
+        RecruitmentFormDefinitionInfo recruitmentFormDefinition,
+        InterviewTimeTableInfo interviewTimeTableInfo,
+        PreferredPartInfo preferredPartInfo
     ) {
         return new RecruitmentApplicationFormInfo(
-                recruitment.getId(),
-                recruitment.getFormId(),
-                recruitment.getStatus() == null ? null : recruitment.getStatus().name(),
-                recruitment.getTitle(),
-                recruitment.getNoticeTitle(),
-                recruitment.getNoticeContent(),
-                formDefinition,
-                recruitmentFormDefinition,
-                interviewTimeTableInfo,
-                preferredPartInfo
+            recruitment.getId(),
+            recruitment.getFormId(),
+            recruitment.getStatus() == null ? null : recruitment.getStatus().name(),
+            recruitment.getTitle(),
+            recruitment.getNoticeTitle(),
+            recruitment.getNoticeContent(),
+            formDefinition,
+            recruitmentFormDefinition,
+            interviewTimeTableInfo,
+            preferredPartInfo
         );
     }
 
@@ -94,19 +94,19 @@ public record RecruitmentApplicationFormInfo(
         }
 
         RecruitmentFormDefinitionInfo filtered =
-                recruitmentFormDefinition.filterForApplicantOpenParts(openParts);
+            recruitmentFormDefinition.filterForApplicantOpenParts(openParts);
 
         return new RecruitmentApplicationFormInfo(
-                recruitmentId,
-                formId,
-                status,
-                recruitmentFormTitle,
-                noticeTitle,
-                noticeContent,
-                formDefinition,
-                filtered,
-                interviewTimeTableInfo,
-                preferredPartInfo
+            recruitmentId,
+            formId,
+            status,
+            recruitmentFormTitle,
+            noticeTitle,
+            noticeContent,
+            formDefinition,
+            filtered,
+            interviewTimeTableInfo,
+            preferredPartInfo
         );
     }
 }

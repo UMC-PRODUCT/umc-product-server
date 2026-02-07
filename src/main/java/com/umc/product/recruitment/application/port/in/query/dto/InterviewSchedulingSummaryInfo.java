@@ -4,11 +4,11 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record InterviewSchedulingSummaryInfo(
-        ProgressInfo progress,
-        List<LocalDate> dateOptions,
-        List<PartOptionInfo> partOptions,
-        RulesInfo rules,
-        ContextInfo context
+    ProgressInfo progress,
+    List<LocalDate> dateOptions,
+    List<PartOptionInfo> partOptions,
+    RulesInfo rules,
+    ContextInfo context
 ) {
     public record ProgressInfo(String scope, String part, int total, int scheduled) {
     }

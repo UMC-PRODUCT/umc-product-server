@@ -20,9 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class RecruitmentInterviewSchedulingQueryService implements GetInterviewSchedulingSummaryUseCase,
-        GetInterviewSchedulingSlotsUseCase,
-        GetInterviewSchedulingApplicantsUseCase,
-        GetInterviewSchedulingAssignmentsUseCase {
+    GetInterviewSchedulingSlotsUseCase,
+    GetInterviewSchedulingApplicantsUseCase,
+    GetInterviewSchedulingAssignmentsUseCase {
 
     @Override
     public InterviewSchedulingSummaryInfo get(GetInterviewSchedulingSummaryQuery query) {

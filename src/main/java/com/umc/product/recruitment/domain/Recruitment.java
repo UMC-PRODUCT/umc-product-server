@@ -75,10 +75,10 @@ public class Recruitment extends BaseEntity {
 
 
     public static Recruitment createDraft(
-            Long schoolId,
-            Long gisuId,
-            Long formId,
-            String title
+        Long schoolId,
+        Long gisuId,
+        Long formId,
+        String title
     ) {
         validateDraftContext(schoolId, gisuId, formId);
 
