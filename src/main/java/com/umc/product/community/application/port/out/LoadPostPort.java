@@ -15,7 +15,7 @@ public interface LoadPostPort {
 
     List<Post> findByCategory(Category category);
 
-    List<Post> findByRegion(String region);
-
     Page<PostSearchData> searchByKeyword(String keyword, Pageable pageable);
+
+    Long findAuthorIdByPostId(Long postId);  // 게시글 작성자 ID 조회
 }

@@ -1,5 +1,7 @@
 package com.umc.product.community.application.service;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.community.application.port.in.PostInfo;
 import com.umc.product.community.application.port.in.post.query.GetPostDetailUseCase;
 import com.umc.product.community.application.port.in.post.query.GetPostListUseCase;
@@ -14,6 +16,8 @@ import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.MemberProfileInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,13 +32,17 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
 
     private final LoadPostPort loadPostPort;
     private final LoadCommentPort loadCommentPort;
+    private final GetChallengerUseCase getChallengerUseCase;
+    private final GetMemberUseCase getMemberUseCase;
 
     @Override
     public PostInfo getPostDetail(Long postId) {
         Post post = loadPostPort.findById(postId)
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
-        return PostInfo.from(post);
+        Long authorId = loadPostPort.findAuthorIdByPostId(postId);
+        String authorName = getAuthorName(authorId);
+        return PostInfo.from(post, authorId, authorName);
     }
 
     @Override
@@ -42,7 +50,9 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         Post post = loadPostPort.findById(postId)
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
-        PostInfo postInfo = PostInfo.from(post);
+        Long authorId = loadPostPort.findAuthorIdByPostId(postId);
+        String authorName = getAuthorName(authorId);
+        PostInfo postInfo = PostInfo.from(post, authorId, authorName);
         int commentCount = loadCommentPort.countByPostId(postId);
 
         return PostDetailInfo.of(postInfo, commentCount);
@@ -52,7 +62,12 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
     public Page<PostInfo> getPostList(PostSearchQuery query, Pageable pageable) {
         Page<Post> posts = loadPostPort.findAllByQuery(query, pageable);
 
-        return posts.map(PostInfo::from);
+        // N+1 문제 있음 - 추후 최적화 필요
+        return posts.map(post -> {
+            Long authorId = loadPostPort.findAuthorIdByPostId(post.getPostId().id());
+            String authorName = getAuthorName(authorId);
+            return PostInfo.from(post, authorId, authorName);
+        });
     }
 
     @Override
@@ -60,5 +75,11 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         Page<PostSearchData> searchDataPage = loadPostPort.searchByKeyword(keyword, pageable);
 
         return searchDataPage.map(PostSearchData::toResult);
+    }
+
+    private String getAuthorName(Long challengerId) {
+        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        MemberProfileInfo profileInfo = getMemberUseCase.getProfile(challengerInfo.memberId());
+        return profileInfo.name();
     }
 }
