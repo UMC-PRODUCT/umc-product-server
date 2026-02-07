@@ -19,6 +19,9 @@ import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberProfileInfo;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -62,10 +65,49 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
     public Page<PostInfo> getPostList(PostSearchQuery query, Pageable pageable) {
         Page<Post> posts = loadPostPort.findAllByQuery(query, pageable);
 
-        // N+1 문제 있음 - 추후 최적화 필요
+        // 게시글이 없으면 빈 페이지 반환
+        if (posts.isEmpty()) {
+            return posts.map(post -> PostInfo.from(post, null, null));
+        }
+
+        // 1. 게시글 ID 목록 추출
+        List<Long> postIds = posts.stream()
+                .map(post -> post.getPostId().id())
+                .toList();
+
+        // 2. 게시글 ID -> 작성자 챌린저 ID 매핑 (1 query)
+        Map<Long, Long> postIdToAuthorId = loadPostPort.findAuthorIdsByPostIds(postIds);
+
+        // 3. 고유한 챌린저 ID 목록 추출
+        Set<Long> challengerIds = Set.copyOf(postIdToAuthorId.values());
+
+        // 4. 챌린저 ID -> 챌린저 정보 매핑 (1 query)
+        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getChallengerPublicInfoByIds(challengerIds);
+
+        // 5. 멤버 ID 목록 추출
+        Set<Long> memberIds = challengerInfoMap.values().stream()
+                .map(ChallengerInfo::memberId)
+                .collect(Collectors.toSet());
+
+        // 6. 멤버 ID -> 멤버 프로필 매핑 (1 query)
+        Map<Long, MemberProfileInfo> memberProfileMap = getMemberUseCase.getProfiles(memberIds);
+
+        // 7. 챌린저 ID -> 작성자 이름 매핑
+        Map<Long, String> authorNameMap = challengerInfoMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> {
+                            Long memberId = entry.getValue().memberId();
+                            MemberProfileInfo profile = memberProfileMap.get(memberId);
+                            return profile != null ? profile.name() : "알 수 없음";
+                        }
+                ));
+
+        // 8. PostInfo로 변환
         return posts.map(post -> {
-            Long authorId = loadPostPort.findAuthorIdByPostId(post.getPostId().id());
-            String authorName = getAuthorName(authorId);
+            Long postId = post.getPostId().id();
+            Long authorId = postIdToAuthorId.get(postId);
+            String authorName = authorId != null ? authorNameMap.get(authorId) : "알 수 없음";
             return PostInfo.from(post, authorId, authorName);
         });
     }

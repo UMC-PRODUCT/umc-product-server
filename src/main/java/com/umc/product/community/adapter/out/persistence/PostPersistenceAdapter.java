@@ -8,6 +8,7 @@ import com.umc.product.community.application.port.out.SavePostPort;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -95,5 +96,10 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
         return postRepository.findById(postId)
                 .map(PostJpaEntity::getAuthorChallengerId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+    }
+
+    @Override
+    public Map<Long, Long> findAuthorIdsByPostIds(List<Long> postIds) {
+        return postRepository.findAuthorIdsMapByPostIds(postIds);
     }
 }
