@@ -45,12 +45,12 @@ public class RecruitmentSchedule extends BaseEntity {
 
     public static RecruitmentSchedule createDraft(Long recruitmentId, RecruitmentScheduleType type) {
         return RecruitmentSchedule.builder()
-                .recruitmentId(recruitmentId)
-                .type(type)
-                .startsAt(null)
-                .endsAt(null)
-                .note(null)
-                .build();
+            .recruitmentId(recruitmentId)
+            .type(type)
+            .startsAt(null)
+            .endsAt(null)
+            .note(null)
+            .build();
     }
 
     public void changePeriod(Instant startsAt, Instant endsAt) {
@@ -83,32 +83,32 @@ public class RecruitmentSchedule extends BaseEntity {
     }
 
     public static RecruitmentSchedule create(
-            Long recruitmentId,
-            RecruitmentScheduleType type,
-            Instant startsAt,
-            Instant endsAt
+        Long recruitmentId,
+        RecruitmentScheduleType type,
+        Instant startsAt,
+        Instant endsAt
     ) {
         return RecruitmentSchedule.builder()
-                .recruitmentId(recruitmentId)
-                .type(type)
-                .startsAt(startsAt)
-                .endsAt(endsAt)
-                .note(null)
-                .build();
+            .recruitmentId(recruitmentId)
+            .type(type)
+            .startsAt(startsAt)
+            .endsAt(endsAt)
+            .note(null)
+            .build();
     }
 
     public static RecruitmentSchedule createAt(
-            Long recruitmentId,
-            RecruitmentScheduleType type,
-            Instant at
+        Long recruitmentId,
+        RecruitmentScheduleType type,
+        Instant at
     ) {
         return RecruitmentSchedule.builder()
-                .recruitmentId(recruitmentId)
-                .type(type)
-                .startsAt(at)
-                .endsAt(null)
-                .note(null)
-                .build();
+            .recruitmentId(recruitmentId)
+            .type(type)
+            .startsAt(at)
+            .endsAt(null)
+            .note(null)
+            .build();
     }
 
 }

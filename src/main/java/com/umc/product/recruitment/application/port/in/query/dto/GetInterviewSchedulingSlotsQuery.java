@@ -4,9 +4,9 @@ import com.umc.product.recruitment.application.port.in.PartOption;
 import java.time.LocalDate;
 
 public record GetInterviewSchedulingSlotsQuery(
-        Long recruitmentId,
-        LocalDate date,
-        PartOption part,
-        Long requesterId
+    Long recruitmentId,
+    LocalDate date,
+    PartOption part,
+    Long requesterId
 ) {
 }

@@ -47,4 +47,9 @@ public class GisuQueryService implements GetGisuUseCase {
     public Long getActiveGisuId() {
         return loadGisuPort.findActiveGisu().getId();
     }
+
+    @Override
+    public GisuInfo getActiveGisu() {
+        return GisuInfo.from(loadGisuPort.findActiveGisu());
+    }
 }

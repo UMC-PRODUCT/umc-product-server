@@ -4,9 +4,9 @@ import com.umc.product.recruitment.domain.enums.PartKey;
 import java.util.List;
 
 public record ReorderInterviewSheetQuestionCommand(
-        Long recruitmentId,
-        PartKey partKey,
-        List<Long> orderedQuestionIds,
-        Long requesterMemberId
+    Long recruitmentId,
+    PartKey partKey,
+    List<Long> orderedQuestionIds,
+    Long requesterMemberId
 ) {
 }

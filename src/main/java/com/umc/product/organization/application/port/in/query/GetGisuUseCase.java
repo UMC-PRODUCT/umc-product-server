@@ -17,4 +17,6 @@ public interface GetGisuUseCase {
     GisuInfo getById(Long gisuId);
 
     Long getActiveGisuId();
+
+    GisuInfo getActiveGisu();
 }

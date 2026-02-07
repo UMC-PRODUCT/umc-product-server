@@ -4,19 +4,19 @@ import com.umc.product.recruitment.application.port.in.command.dto.PublishRecrui
 import java.time.Instant;
 
 public record PublishRecruitmentResponse(
-        Long recruitmentId,
-        Long formId,
-        String status,
-        Instant publishedAt
+    Long recruitmentId,
+    Long formId,
+    String status,
+    Instant publishedAt
 ) {
     public static PublishRecruitmentResponse from(
-            PublishRecruitmentInfo info
+        PublishRecruitmentInfo info
     ) {
         return new PublishRecruitmentResponse(
-                info.recruitmentId(),
-                info.formId(),
-                info.status(),
-                info.publishedAt()
+            info.recruitmentId(),
+            info.formId(),
+            info.status(),
+            info.publishedAt()
         );
     }
 }

@@ -53,4 +53,35 @@ public class Evaluation extends BaseEntity {
     private EvaluationStatus status = EvaluationStatus.SUBMITTED;
     // Document Evaluation에만 임시저장 로직이 있으므로, 기본값을 SUBMITTED로 설정
     // Document Evaluation 임시저장 시에만 status를 DRAFT로 생성
+
+    // ========================================================================
+    // Factory Methods
+    // ========================================================================
+
+    public static Evaluation createDocumentEvaluation(
+        Application application,
+        Long evaluatorUserId,
+        Integer score,
+        String comments,
+        EvaluationStatus status
+    ) {
+        return Evaluation.builder()
+            .application(application)
+            .stage(EvaluationStage.DOCUMENT)
+            .evaluatorUserId(evaluatorUserId)
+            .score(score)
+            .comments(comments)
+            .status(status)
+            .build();
+    }
+
+    // ========================================================================
+    // Domain Methods
+    // ========================================================================
+
+    public void update(Integer score, String comments, EvaluationStatus status) {
+        this.score = score;
+        this.comments = comments;
+        this.status = status;
+    }
 }

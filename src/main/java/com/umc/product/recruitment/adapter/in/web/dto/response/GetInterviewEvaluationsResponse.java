@@ -4,27 +4,27 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewEva
 import java.util.List;
 
 public record GetInterviewEvaluationsResponse(
-        Double avgScore,
-        List<InterviewEvaluationResponse> interviewEvaluationSummaries
+    Double avgScore,
+    List<InterviewEvaluationResponse> interviewEvaluationSummaries
 ) {
     public static GetInterviewEvaluationsResponse from(GetInterviewEvaluationsInfo info) {
         return new GetInterviewEvaluationsResponse(
-                info.avgScore(),
-                info.items().stream().map(InterviewEvaluationResponse::from).toList()
+            info.avgScore(),
+            info.items().stream().map(InterviewEvaluationResponse::from).toList()
         );
     }
 
     public record InterviewEvaluationResponse(
-            Evaluator evaluator,
-            Integer score,
-            String comments
+        Evaluator evaluator,
+        Integer score,
+        String comments
     ) {
         public static InterviewEvaluationResponse from(
-                GetInterviewEvaluationsInfo.GetInterviewEvaluationInfo i) {
+            GetInterviewEvaluationsInfo.GetInterviewEvaluationInfo i) {
             return new InterviewEvaluationResponse(
-                    new Evaluator(i.evaluator().memberId(), i.evaluator().nickname(), i.evaluator().name()),
-                    i.score(),
-                    i.comments()
+                new Evaluator(i.evaluator().memberId(), i.evaluator().nickname(), i.evaluator().name()),
+                i.score(),
+                i.comments()
             );
         }
     }

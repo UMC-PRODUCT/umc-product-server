@@ -11,55 +11,55 @@ import org.springframework.data.repository.query.Param;
 
 public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> {
     @Query(value = """
-            select exists (
-                select 1
-                from recruitment r
-                join recruitment_schedule s
-                  on s.recruitment_id = r.id
-                where r.school_id = :schoolId
-                  and r.status = 'PUBLISHED'
-                  and r.id <> :excludeRecruitmentId
-                  and s.type = 'FINAL_RESULT_AT'
-                  and s.starts_at > :now
-            )
-            """, nativeQuery = true)
+        select exists (
+            select 1
+            from recruitment r
+            join recruitment_schedule s
+              on s.recruitment_id = r.id
+            where r.school_id = :schoolId
+              and r.status = 'PUBLISHED'
+              and r.id <> :excludeRecruitmentId
+              and s.type = 'FINAL_RESULT_AT'
+              and s.starts_at > :now
+        )
+        """, nativeQuery = true)
     boolean existsOtherOngoingPublishedRecruitment(
-            @Param("schoolId") Long schoolId,
-            @Param("excludeRecruitmentId") Long excludeRecruitmentId,
-            @Param("now") Instant now
+        @Param("schoolId") Long schoolId,
+        @Param("excludeRecruitmentId") Long excludeRecruitmentId,
+        @Param("now") Instant now
     );
 
     List<Recruitment> findByStatus(RecruitmentStatus status);
 
     @Query(value = """
-            select r.id
-            from recruitment r
-            join recruitment_schedule s
-              on s.recruitment_id = r.id
-            where r.school_id = :schoolId
-              and r.gisu_id = :gisuId
-              and r.status = 'PUBLISHED'
-              and s.type = 'FINAL_RESULT_AT'
-              and s.starts_at >= :now
-            order by s.starts_at desc
-            limit 1
-            """, nativeQuery = true)
+        select r.id
+        from recruitment r
+        join recruitment_schedule s
+          on s.recruitment_id = r.id
+        where r.school_id = :schoolId
+          and r.gisu_id = :gisuId
+          and r.status = 'PUBLISHED'
+          and s.type = 'FINAL_RESULT_AT'
+          and s.starts_at >= :now
+        order by s.starts_at desc
+        limit 1
+        """, nativeQuery = true)
     Optional<Long> findActiveRecruitmentId(
-            @Param("schoolId") Long schoolId,
-            @Param("gisuId") Long gisuId,
-            @Param("now") Instant now
+        @Param("schoolId") Long schoolId,
+        @Param("gisuId") Long gisuId,
+        @Param("now") Instant now
     );
 
     Optional<Recruitment> findByFormId(Long formId);
 
     @Query("""
-              select r.id
-              from Recruitment r
-              where r.schoolId = :schoolId
-                and r.gisuId = :gisuId
-                and r.status = com.umc.product.recruitment.domain.enums.RecruitmentStatus.PUBLISHED
-              order by r.updatedAt desc
-            """)
+          select r.id
+          from Recruitment r
+          where r.schoolId = :schoolId
+            and r.gisuId = :gisuId
+            and r.status = com.umc.product.recruitment.domain.enums.RecruitmentStatus.PUBLISHED
+          order by r.updatedAt desc
+        """)
     List<Long> findLatestPublishedId(Long schoolId, Long gisuId);
 
     List<Recruitment> findBySchoolIdAndStatus(Long schoolId, RecruitmentStatus status);

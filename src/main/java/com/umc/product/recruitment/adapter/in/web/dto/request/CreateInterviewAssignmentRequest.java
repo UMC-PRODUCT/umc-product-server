@@ -4,8 +4,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 public record CreateInterviewAssignmentRequest(
-        @NotNull Long applicationId,
-        @Valid @NotNull To to
+    @NotNull Long applicationId,
+    @Valid @NotNull To to
 ) {
     public record To(@NotNull Long slotId) {
     }

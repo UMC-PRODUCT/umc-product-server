@@ -39,7 +39,12 @@ public enum AuthenticationErrorCode implements BaseCode {
     INVALID_OAUTH_TOKEN(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0011", "유효하지 않은 OAuth 토큰입니다."),
     OAUTH_ALREADY_LINKED(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0012", "이미 다른 계정에 연동된 OAuth 계정입니다."),
     OAUTH_PROVIDER_ALREADY_LINKED(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0013",
-        "해당 계정에 이미 연동된 OAuth 제공자입니다. 기존에 연결된 계정을 해제하고 다시 시도해주세요.");
+        "해당 계정에 이미 연동된 OAuth 제공자입니다. 기존에 연결된 계정을 해제하고 다시 시도해주세요."),
+    MEMBER_OAUTH_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTHENTICATION-0014", "해당하는 Member OAuth가 존재하지 않습니다."),
+    NOT_VALID_MEMBER(HttpStatus.FORBIDDEN, "AUTHENTICATION-0015", "해당 작업을 할 권한이 없는 사용자입니다."),
+    OAUTH_CANNOT_UNLINK_LAST_PROVIDER(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0016",
+        "게정과 연동된 유일한 OAuth는 연동 해제할 수 없습니다. 회원 탈퇴를 이용해주세요."),
+    ;
 
     private final HttpStatus httpStatus;
     private final String code;

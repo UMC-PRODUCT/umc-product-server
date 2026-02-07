@@ -4,7 +4,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import jakarta.validation.constraints.NotBlank;
 
 public record UpdateFinalStatusRequest(
-        @NotBlank EvaluationDecision decision,
-        ChallengerPart selectedPart
+    @NotBlank EvaluationDecision decision,
+    ChallengerPart selectedPart
 ) {
 }

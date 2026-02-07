@@ -5,21 +5,21 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record InterviewSchedulingSummaryResponse(
-        Progress progress,
-        List<LocalDate> dateOptions,
-        List<PartOptionResponse> partOptions,
-        Rules rules,
-        Context context
+    Progress progress,
+    List<LocalDate> dateOptions,
+    List<PartOptionResponse> partOptions,
+    Rules rules,
+    Context context
 ) {
     public static InterviewSchedulingSummaryResponse from(InterviewSchedulingSummaryInfo info) {
         return new InterviewSchedulingSummaryResponse(
-                new Progress(info.progress().scope(), info.progress().part(), info.progress().total(),
-                        info.progress().scheduled()),
-                info.dateOptions(),
-                info.partOptions().stream().map(p -> new PartOptionResponse(p.part(), p.label(), p.done())).toList(),
-                new Rules(info.rules().slotMinutes(),
-                        new TimeRange(info.rules().timeRange().start(), info.rules().timeRange().end())),
-                new Context(info.context().date(), info.context().part())
+            new Progress(info.progress().scope(), info.progress().part(), info.progress().total(),
+                info.progress().scheduled()),
+            info.dateOptions(),
+            info.partOptions().stream().map(p -> new PartOptionResponse(p.part(), p.label(), p.done())).toList(),
+            new Rules(info.rules().slotMinutes(),
+                new TimeRange(info.rules().timeRange().start(), info.rules().timeRange().end())),
+            new Context(info.context().date(), info.context().part())
         );
     }
 

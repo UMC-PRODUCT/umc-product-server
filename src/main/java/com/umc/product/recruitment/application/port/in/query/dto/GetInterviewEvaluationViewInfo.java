@@ -4,16 +4,16 @@ import java.time.Instant;
 import java.util.List;
 
 public record GetInterviewEvaluationViewInfo(
-        Long assignmentId,
-        Long applicationId,
-        ApplicationInfo application,
-        InterviewQuestionSheetInfo questions,
-        LiveEvaluationListInfo liveEvaluations,
-        MyInterviewEvaluationInfo myEvaluation // 없으면 null
+    Long assignmentId,
+    Long applicationId,
+    ApplicationInfo application,
+    InterviewQuestionSheetInfo questions,
+    LiveEvaluationListInfo liveEvaluations,
+    MyInterviewEvaluationInfo myEvaluation // 없으면 null
 ) {
     public record ApplicationInfo(
-            Applicant applicant,
-            List<AppliedPart> appliedParts
+        Applicant applicant,
+        List<AppliedPart> appliedParts
     ) {
     }
 
@@ -24,10 +24,10 @@ public record GetInterviewEvaluationViewInfo(
     }
 
     public record InterviewQuestionSheetInfo(
-            List<InterviewQuestionInfo> common,
-            List<InterviewQuestionInfo> firstChoice,
-            List<InterviewQuestionInfo> secondChoice,
-            List<LiveQuestionInfo> live
+        List<InterviewQuestionInfo> common,
+        List<InterviewQuestionInfo> firstChoice,
+        List<InterviewQuestionInfo> secondChoice,
+        List<LiveQuestionInfo> live
     ) {
     }
 
@@ -35,11 +35,11 @@ public record GetInterviewEvaluationViewInfo(
     }
 
     public record LiveQuestionInfo(
-            Long liveQuestionId,
-            Integer orderNo,
-            String text,
-            CreatedBy createdBy,
-            Boolean canEdit
+        Long liveQuestionId,
+        Integer orderNo,
+        String text,
+        CreatedBy createdBy,
+        Boolean canEdit
     ) {
     }
 
@@ -47,15 +47,15 @@ public record GetInterviewEvaluationViewInfo(
     }
 
     public record LiveEvaluationListInfo(
-            Double avgScore,
-            List<LiveEvaluationItem> items
+        Double avgScore,
+        List<LiveEvaluationItem> items
     ) {
     }
 
     public record LiveEvaluationItem(
-            Evaluator evaluator,
-            Integer score,
-            String comments
+        Evaluator evaluator,
+        Integer score,
+        String comments
     ) {
     }
 
@@ -63,10 +63,10 @@ public record GetInterviewEvaluationViewInfo(
     }
 
     public record MyInterviewEvaluationInfo(
-            Long evaluationId,
-            Integer score,
-            String comments,
-            Instant submittedAt
+        Long evaluationId,
+        Integer score,
+        String comments,
+        Instant submittedAt
     ) {
     }
 }

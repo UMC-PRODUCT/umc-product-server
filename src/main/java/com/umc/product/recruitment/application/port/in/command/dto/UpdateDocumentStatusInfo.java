@@ -4,9 +4,9 @@ import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import java.time.Instant;
 
 public record UpdateDocumentStatusInfo(
-        Long applicationId,
-        ApplicationStatus applicationStatus,
-        Double averageScore,
-        Instant updatedAt
+    Long applicationId,
+    ApplicationStatus applicationStatus,
+    Double averageScore,
+    Instant updatedAt
 ) {
 }

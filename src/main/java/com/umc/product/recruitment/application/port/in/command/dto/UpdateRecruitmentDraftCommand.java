@@ -7,31 +7,31 @@ import java.time.LocalTime;
 import java.util.List;
 
 public record UpdateRecruitmentDraftCommand(
-        Long recruitmentId,
-        Long requesterMemberId,
-        String title,
-        List<ChallengerPart> recruitmentParts,
-        Integer maxPreferredPartCount,
-        ScheduleCommand schedule,
-        String noticeContent
+    Long recruitmentId,
+    Long requesterMemberId,
+    String title,
+    List<ChallengerPart> recruitmentParts,
+    Integer maxPreferredPartCount,
+    ScheduleCommand schedule,
+    String noticeContent
 ) {
 
     public record ScheduleCommand(
-            Instant applyStartAt,
-            Instant applyEndAt,
-            Instant docResultAt,
-            Instant interviewStartAt,
-            Instant interviewEndAt,
-            Instant finalResultAt,
-            InterviewTimeTableCommand interviewTimeTable
+        Instant applyStartAt,
+        Instant applyEndAt,
+        Instant docResultAt,
+        Instant interviewStartAt,
+        Instant interviewEndAt,
+        Instant finalResultAt,
+        InterviewTimeTableCommand interviewTimeTable
     ) {
     }
 
     public record InterviewTimeTableCommand(
-            DateRangeCommand dateRange,
-            TimeRangeCommand timeRange,
-            Integer slotMinutes,
-            List<EnabledTimesByDateCommand> enabledByDate
+        DateRangeCommand dateRange,
+        TimeRangeCommand timeRange,
+        Integer slotMinutes,
+        List<EnabledTimesByDateCommand> enabledByDate
     ) {
     }
 
@@ -42,8 +42,8 @@ public record UpdateRecruitmentDraftCommand(
     }
 
     public record EnabledTimesByDateCommand(
-            LocalDate date,
-            List<LocalTime> times
+        LocalDate date,
+        List<LocalTime> times
     ) {
     }
 

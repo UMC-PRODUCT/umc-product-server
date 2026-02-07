@@ -4,9 +4,9 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.List;
 
 public record RecruitmentNoticeInfo(
-        Long recruitmentId,
-        String title,
-        String content,
-        List<ChallengerPart> parts
+    Long recruitmentId,
+    String title,
+    String content,
+    List<ChallengerPart> parts
 ) {
 }

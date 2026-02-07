@@ -8,27 +8,27 @@ import java.time.LocalTime;
 import java.util.List;
 
 public record GetInterviewAssignmentsInfo(
-        Instant serverNow,
-        LocalDate selectedDate,
-        PartOption selectedPart,
-        List<InterviewAssignmentSlotInfo> interviewAssignmentSlots
+    Instant serverNow,
+    LocalDate selectedDate,
+    PartOption selectedPart,
+    List<InterviewAssignmentSlotInfo> interviewAssignmentSlots
 ) {
     public record InterviewAssignmentSlotInfo(
-            Long assignmentId,
-            SlotInfo slot,
-            Long applicationId,
-            ApplicantInfo applicant,
-            List<AppliedPartInfo> appliedParts,
-            Double documentScore,
-            EvaluationProgressStatus evaluationProgressStatus
+        Long assignmentId,
+        SlotInfo slot,
+        Long applicationId,
+        ApplicantInfo applicant,
+        List<AppliedPartInfo> appliedParts,
+        Double documentScore,
+        EvaluationProgressStatus evaluationProgressStatus
     ) {
     }
 
     public record SlotInfo(
-            Long slotId,
-            LocalDate date,
-            LocalTime start,
-            LocalTime end
+        Long slotId,
+        LocalDate date,
+        LocalTime start,
+        LocalTime end
     ) {
     }
 

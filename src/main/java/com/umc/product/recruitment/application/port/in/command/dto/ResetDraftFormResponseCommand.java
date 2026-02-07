@@ -1,7 +1,7 @@
 package com.umc.product.recruitment.application.port.in.command.dto;
 
 public record ResetDraftFormResponseCommand(
-        Long recruitmentId,
-        Long memberId
+    Long recruitmentId,
+    Long memberId
 ) {
 }

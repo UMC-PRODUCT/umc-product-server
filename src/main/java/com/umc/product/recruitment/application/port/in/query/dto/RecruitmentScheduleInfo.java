@@ -5,8 +5,8 @@ import java.time.Instant;
 import java.util.List;
 
 public record RecruitmentScheduleInfo(
-        Long recruitmentId,
-        List<ScheduleItem> schedules
+    Long recruitmentId,
+    List<ScheduleItem> schedules
 ) {
     public enum ScheduleKind {
         WINDOW,
@@ -14,10 +14,10 @@ public record RecruitmentScheduleInfo(
     }
 
     public record ScheduleItem(
-            RecruitmentScheduleType type,
-            ScheduleKind kind,
-            Instant startsAt,
-            Instant endsAt
+        RecruitmentScheduleType type,
+        ScheduleKind kind,
+        Instant startsAt,
+        Instant endsAt
     ) {
     }
 }

@@ -4,7 +4,7 @@ import com.umc.product.recruitment.domain.enums.PartKey;
 import java.util.List;
 
 public record ReorderInterviewSheetQuestionResult(
-        PartKey partKey,
-        List<Long> orderedQuestionIds
+    PartKey partKey,
+    List<Long> orderedQuestionIds
 ) {
 }

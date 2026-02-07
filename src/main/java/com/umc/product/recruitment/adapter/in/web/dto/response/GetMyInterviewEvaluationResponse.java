@@ -4,7 +4,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetMyInterviewE
 import java.time.Instant;
 
 public record GetMyInterviewEvaluationResponse(
-        MyInterviewEvaluationResponse myEvaluation
+    MyInterviewEvaluationResponse myEvaluation
 ) {
     public static GetMyInterviewEvaluationResponse from(GetMyInterviewEvaluationInfo info) {
         if (info == null || info.myEvaluation() == null) {
@@ -12,15 +12,15 @@ public record GetMyInterviewEvaluationResponse(
         }
         var e = info.myEvaluation();
         return new GetMyInterviewEvaluationResponse(
-                new MyInterviewEvaluationResponse(e.evaluationId(), e.score(), e.comments(), e.submittedAt())
+            new MyInterviewEvaluationResponse(e.evaluationId(), e.score(), e.comments(), e.submittedAt())
         );
     }
 
     public record MyInterviewEvaluationResponse(
-            Long evaluationId,
-            Integer score,
-            String comments,
-            Instant submittedAt
+        Long evaluationId,
+        Integer score,
+        String comments,
+        Instant submittedAt
     ) {
     }
 }

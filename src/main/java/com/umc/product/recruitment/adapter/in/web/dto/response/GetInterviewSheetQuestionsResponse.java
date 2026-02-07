@@ -5,15 +5,15 @@ import com.umc.product.recruitment.domain.enums.PartKey;
 import java.util.List;
 
 public record GetInterviewSheetQuestionsResponse(
-        PartInfo part,
-        List<InterviewQuestionResponse> questions
+    PartInfo part,
+    List<InterviewQuestionResponse> questions
 ) {
     public static GetInterviewSheetQuestionsResponse from(GetInterviewSheetQuestionsInfo info) {
         return new GetInterviewSheetQuestionsResponse(
-                new PartInfo(info.partKey(), info.partKey().getLabel(), info.questionCount()),
-                info.questions().stream()
-                        .map(q -> new InterviewQuestionResponse(q.questionId(), q.orderNo(), q.questionText()))
-                        .toList()
+            new PartInfo(info.partKey(), info.partKey().getLabel(), info.questionCount()),
+            info.questions().stream()
+                .map(q -> new InterviewQuestionResponse(q.questionId(), q.orderNo(), q.questionText()))
+                .toList()
         );
     }
 

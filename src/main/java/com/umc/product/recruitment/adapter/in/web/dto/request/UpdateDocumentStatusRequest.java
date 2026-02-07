@@ -1,6 +1,6 @@
 package com.umc.product.recruitment.adapter.in.web.dto.request;
 
 public record UpdateDocumentStatusRequest(
-        EvaluationDecision decision
+    EvaluationDecision decision
 ) {
 }

@@ -17,9 +17,9 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class RecruitmentQuestionService implements CreateInterviewSheetQuestionUseCase,
-        UpdateInterviewSheetQuestionUseCase,
-        DeleteInterviewSheetQuestionUseCase,
-        ReorderInterviewSheetQuestionUseCase {
+    UpdateInterviewSheetQuestionUseCase,
+    DeleteInterviewSheetQuestionUseCase,
+    ReorderInterviewSheetQuestionUseCase {
 
     @Override
     public CreateInterviewSheetQuestionResult create(CreateInterviewSheetQuestionCommand command) {

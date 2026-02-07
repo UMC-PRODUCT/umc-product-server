@@ -6,32 +6,32 @@ import java.time.Instant;
 import java.util.List;
 
 public record RecruitmentPartListInfo(
-        Long recruitmentId,
-        String title,
-        DatePeriod recruitmentPeriod,
-        DatePeriod activityPeriod,
-        String description,
-        List<RecruitmentPartSummary> parts,
-        MyApplicationInfo myApplication
+    Long recruitmentId,
+    String title,
+    DatePeriod recruitmentPeriod,
+    DatePeriod activityPeriod,
+    String description,
+    List<RecruitmentPartSummary> parts,
+    MyApplicationInfo myApplication
 ) {
 
     public record DatePeriod(
-            Instant startsAt,
-            Instant endsAt
+        Instant startsAt,
+        Instant endsAt
     ) {
     }
 
     public record RecruitmentPartSummary(
-            Long recruitmentPartId,
-            ChallengerPart part,
-            RecruitmentPartStatus status
+        Long recruitmentPartId,
+        ChallengerPart part,
+        RecruitmentPartStatus status
     ) {
     }
 
     public record MyApplicationInfo(
-            MyApplicationStatus status,
-            Long draftFormResponseId, // status=DRAFT 일 때만 세팅
-            Long applicationId        // status=SUBMITTED 일 때만 세팅
+        MyApplicationStatus status,
+        Long draftFormResponseId, // status=DRAFT 일 때만 세팅
+        Long applicationId        // status=SUBMITTED 일 때만 세팅
     ) {
         public static MyApplicationInfo none() {
             return new MyApplicationInfo(MyApplicationStatus.NONE, null, null);

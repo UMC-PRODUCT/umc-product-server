@@ -9,8 +9,6 @@ public record PostInfo(
         String title,
         String content,
         Category category,
-        String region,
-        boolean anonymous,
         LocalDateTime meetAt,
         String location,
         Integer maxParticipants
@@ -26,8 +24,6 @@ public record PostInfo(
                     post.getTitle(),
                     post.getContent(),
                     post.getCategory(),
-                    post.getRegion(),
-                    post.isAnonymous(),
                     info.meetAt(),
                     info.location(),
                     info.maxParticipants()
@@ -40,8 +36,6 @@ public record PostInfo(
                 post.getTitle(),
                 post.getContent(),
                 post.getCategory(),
-                post.getRegion(),
-                post.isAnonymous(),
                 null,
                 null,
                 null

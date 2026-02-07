@@ -24,11 +24,11 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class RecruitmentInterviewEvaluationQueryService implements GetInterviewEvaluationViewUseCase,
-        GetMyInterviewEvaluationUseCase,
-        GetInterviewEvaluationSummaryUseCase,
-        GetLiveQuestionsUseCase,
-        GetInterviewAssignmentsUseCase,
-        GetInterviewOptionsUseCase {
+    GetMyInterviewEvaluationUseCase,
+    GetInterviewEvaluationSummaryUseCase,
+    GetLiveQuestionsUseCase,
+    GetInterviewAssignmentsUseCase,
+    GetInterviewOptionsUseCase {
     @Override
     public GetInterviewEvaluationViewInfo get(GetInterviewEvaluationViewQuery query) {
         // InterviewQuetsionSheet에서 사용자의 1, 2지망에 해당하는 파트의 사전 질문을 조회해와야 합니다.
