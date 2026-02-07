@@ -22,7 +22,8 @@ public record AvailableAttendanceInfo(
     // ==== AttendanceRecord 정보 ====
     Long recordId,              // null이면 아직 출석 안함
     AttendanceStatus status,
-    String statusDisplay
+    String statusDisplay,
+    Boolean locationVerified    // 출석 시점의 위치 인증 여부 (출석 전이면 null)
 ) {
     /**
      * 출석 기록이 없는 경우 (아직 출석 안함) - 출석부는 있지만 해당 챌린저가 아직 출석 체크 안함
@@ -37,7 +38,8 @@ public record AvailableAttendanceInfo(
             sheet.getId(),
             null,
             AttendanceStatus.PENDING,
-            "출석 전"
+            "출석 전",
+            null  // 출석 전이므로 null
         );
     }
 
@@ -54,7 +56,8 @@ public record AvailableAttendanceInfo(
             sheet.getId(),
             record.getId(),
             record.getStatus(),
-            resolveStatusDisplay(record.getStatus())
+            resolveStatusDisplay(record.getStatus()),
+            record.isChecked() ? record.isLocationVerified() : null  // 출석한 시점의 위치 인증 여부
         );
     }
 

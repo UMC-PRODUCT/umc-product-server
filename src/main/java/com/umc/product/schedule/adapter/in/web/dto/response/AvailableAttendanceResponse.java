@@ -31,6 +31,9 @@ public record AvailableAttendanceResponse(
     String status,
 
     @Schema(description = "출석 상태 표시", example = "출석 전")
-    String statusDisplay
+    String statusDisplay,
+
+    @Schema(description = "위치 인증 여부 (출석 전이면 null, 출석 후에는 출석 시점의 값)", example = "true")
+    Boolean locationVerified
 ) {
 }
