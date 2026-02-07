@@ -1,6 +1,7 @@
 package com.umc.product.organization.application.port.in.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.organization.application.port.in.query.dto.GisuNameInfo;
@@ -164,6 +165,31 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
 
         // then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void 활성화된_기수를_조회한다() {
+        // given
+        manageGisuPort.save(createGisu(7L, false));
+        Gisu activeGisu = manageGisuPort.save(createGisu(8L, true));
+
+        // when
+        GisuInfo result = getGisuUseCase.getActiveGisu();
+
+        // then
+        assertThat(result.gisuId()).isEqualTo(activeGisu.getId());
+        assertThat(result.generation()).isEqualTo(8L);
+        assertThat(result.isActive()).isTrue();
+    }
+
+    @Test
+    void 활성화된_기수가_없으면_예외가_발생한다() {
+        // given
+        manageGisuPort.save(createGisu(7L, false));
+
+        // when & then
+        assertThatThrownBy(() -> getGisuUseCase.getActiveGisu())
+                .isInstanceOf(com.umc.product.global.exception.BusinessException.class);
     }
 
     private Gisu createGisu(Long generation, boolean isActive) {

@@ -5,15 +5,17 @@ import com.umc.product.recruitment.application.port.out.LoadApplicationPartPrefe
 import com.umc.product.recruitment.application.port.out.SaveApplicationPartPreferencePort;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class ApplicationPartPreferencePersistenceAdapter implements LoadApplicationPartPreferencePort,
-        SaveApplicationPartPreferencePort {
+    SaveApplicationPartPreferencePort {
 
     private final ApplicationPartPreferenceJpaRepository applicationPartPreferenceJpaRepository;
+    private final ApplicationQueryRepository applicationQueryRepository;
 
     @Override
     public List<ApplicationPartPreference> findAllByApplicationIdOrderByPriorityAsc(Long applicationId) {
@@ -21,6 +23,11 @@ public class ApplicationPartPreferencePersistenceAdapter implements LoadApplicat
             return List.of();
         }
         return applicationPartPreferenceJpaRepository.findAllByApplicationIdOrderByPriorityAsc(applicationId);
+    }
+
+    @Override
+    public List<ApplicationPartPreference> findAllByApplicationIdsOrderByPriorityAsc(Set<Long> applicationIds) {
+        return applicationQueryRepository.findPartPreferencesByApplicationIds(applicationIds);
     }
 
     @Override

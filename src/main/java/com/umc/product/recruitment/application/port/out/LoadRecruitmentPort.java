@@ -22,9 +22,9 @@ public interface LoadRecruitmentPort {
     RecruitmentApplicationFormInfo findApplicationFormInfoById(Long recruitmentId);
 
     boolean existsOtherOngoingPublishedRecruitment(
-            Long schoolId,
-            Long excludeRecruitmentId,
-            Instant now
+        Long schoolId,
+        Long excludeRecruitmentId,
+        Instant now
     );
 
     List<ChallengerPart> findPartsByRecruitmentId(Long recruitmentId);
@@ -32,12 +32,12 @@ public interface LoadRecruitmentPort {
     List<RecruitmentSchedule> findSchedulesByRecruitmentId(Long recruitmentId);
 
     List<RecruitmentListInfo.RecruitmentSummary> findRecruitmentSummaries(
-            Long schoolId,
-            RecruitmentListStatus status
+        Long schoolId,
+        RecruitmentListStatus status
     );
 
     List<RecruitmentListInfo.RecruitmentSummary> findDraftRecruitmentSummaries(
-            Long schoolId
+        Long schoolId
     );
 
     Optional<Long> findActiveRecruitmentId(Long schoolId, Long gisuId, Instant now);
@@ -45,8 +45,8 @@ public interface LoadRecruitmentPort {
     Optional<Recruitment> findByFormId(Long formId);
 
     RecruitmentApplicationFormInfo findApplicationFormInfoForApplicantById(
-            Long recruitmentId,
-            RecruitmentApplicationFormInfo.PreferredPartInfo preferredPartInfo
+        Long recruitmentId,
+        RecruitmentApplicationFormInfo.PreferredPartInfo preferredPartInfo
     );
 
     List<Long> findActiveRecruitmentIds(Long schoolId, Long gisuId, Instant now);

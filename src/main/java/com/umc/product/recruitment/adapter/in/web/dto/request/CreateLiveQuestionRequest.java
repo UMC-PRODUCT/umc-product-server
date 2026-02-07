@@ -4,8 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record CreateLiveQuestionRequest(
-        @NotBlank
-        @Size(max = 238)
-        String text
+    @NotBlank
+    @Size(max = 238)
+    String text
 ) {
 }

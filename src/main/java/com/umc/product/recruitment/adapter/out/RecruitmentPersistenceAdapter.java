@@ -80,33 +80,33 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     @Override
     public RecruitmentDraftInfo findDraftInfoById(Long recruitmentId) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         List<ChallengerPart> parts =
-                recruitmentPartRepository.findByRecruitmentIdAndStatus(recruitmentId, RecruitmentPartStatus.OPEN)
-                        .stream()
-                        .map(RecruitmentPart::getPart)
-                        .toList();
+            recruitmentPartRepository.findByRecruitmentIdAndStatus(recruitmentId, RecruitmentPartStatus.OPEN)
+                .stream()
+                .map(RecruitmentPart::getPart)
+                .toList();
 
         List<RecruitmentSchedule> schedules =
-                recruitmentScheduleRepository.findByRecruitmentId(recruitmentId);
+            recruitmentScheduleRepository.findByRecruitmentId(recruitmentId);
 
         ScheduleInfo scheduleInfo = buildScheduleInfo(
-                schedules,
-                recruitment.getInterviewTimeTable()
+            schedules,
+            recruitment.getInterviewTimeTable()
         );
 
         return RecruitmentDraftInfo.from(
-                recruitment,
-                parts,
-                scheduleInfo
+            recruitment,
+            parts,
+            scheduleInfo
         );
     }
 
     private RecruitmentDraftInfo.ScheduleInfo buildScheduleInfo(
-            List<RecruitmentSchedule> schedules,
-            Map<String, Object> interviewTimeTable
+        List<RecruitmentSchedule> schedules,
+        Map<String, Object> interviewTimeTable
     ) {
 
         Instant applyStart = null, applyEnd = null;
@@ -136,21 +136,21 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         }
 
         RecruitmentDraftInfo.InterviewTimeTableInfo interviewTimeTableInfo =
-                parseInterviewTimeTable(interviewTimeTable);
+            parseInterviewTimeTable(interviewTimeTable);
 
         return new RecruitmentDraftInfo.ScheduleInfo(
-                applyStart,
-                applyEnd,
-                docResult,
-                interviewStart,
-                interviewEnd,
-                finalResult,
-                interviewTimeTableInfo
+            applyStart,
+            applyEnd,
+            docResult,
+            interviewStart,
+            interviewEnd,
+            finalResult,
+            interviewTimeTableInfo
         );
     }
 
     private RecruitmentDraftInfo.InterviewTimeTableInfo parseInterviewTimeTable(
-            Map<String, Object> interviewTimeTable) {
+        Map<String, Object> interviewTimeTable) {
         if (interviewTimeTable == null) {
             return null;
         }
@@ -159,19 +159,19 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
             Enabled raw = objectMapper.convertValue(interviewTimeTable, Enabled.class);
 
             List<RecruitmentDraftInfo.TimesByDateInfo> disabledByDate =
-                    InterviewTimeTableDisabledCalculator.calculateDisabled(
-                            raw.dateRange(),
-                            raw.timeRange(),
-                            raw.slotMinutes(),
-                            raw.enabledByDate()
-                    );
-
-            return new RecruitmentDraftInfo.InterviewTimeTableInfo(
+                InterviewTimeTableDisabledCalculator.calculateDisabled(
                     raw.dateRange(),
                     raw.timeRange(),
                     raw.slotMinutes(),
-                    raw.enabledByDate(),
-                    disabledByDate
+                    raw.enabledByDate()
+                );
+
+            return new RecruitmentDraftInfo.InterviewTimeTableInfo(
+                raw.dateRange(),
+                raw.timeRange(),
+                raw.slotMinutes(),
+                raw.enabledByDate(),
+                disabledByDate
             );
         } catch (Exception e) {
             throw new IllegalStateException("Invalid interviewTimeTable", e);
@@ -179,18 +179,18 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     }
 
     private record Enabled(
-            RecruitmentDraftInfo.DateRangeInfo dateRange,
-            RecruitmentDraftInfo.TimeRangeInfo timeRange,
-            Integer slotMinutes,
-            List<RecruitmentDraftInfo.TimesByDateInfo> enabledByDate
+        RecruitmentDraftInfo.DateRangeInfo dateRange,
+        RecruitmentDraftInfo.TimeRangeInfo timeRange,
+        Integer slotMinutes,
+        List<RecruitmentDraftInfo.TimesByDateInfo> enabledByDate
     ) {
     }
 
     @Override
     public RecruitmentApplicationFormInfo findApplicationFormInfoById(Long recruitmentId) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         Long formId = recruitment.getFormId();
 
@@ -202,12 +202,12 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         RecruitmentFormDefinitionInfo recruitmentDef = RecruitmentFormDefinitionInfo.from(formDefinitionInfo);
 
         List<RecruitmentPart> parts =
-                recruitmentPartRepository.findByRecruitmentId(recruitmentId);
+            recruitmentPartRepository.findByRecruitmentId(recruitmentId);
 
         var preferredPartInfo = buildPreferredPartInfo(recruitment, parts);
 
         return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo, recruitmentDef, null,
-                preferredPartInfo);
+            preferredPartInfo);
     }
 
     @Override
@@ -217,7 +217,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         }
 
         Form form = formJpaRepository.findById(formId)
-                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
 
         for (UpsertRecruitmentFormQuestionsCommand.Item item : items) {
             FormSection section = findOrCreateSection(form, item.target());
@@ -229,59 +229,59 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     }
 
     private FormSection findOrCreateSection(
-            Form form,
-            UpsertRecruitmentFormQuestionsCommand.Target target
+        Form form,
+        UpsertRecruitmentFormQuestionsCommand.Target target
     ) {
         if (target.kind() == UpsertRecruitmentFormQuestionsCommand.Target.Kind.COMMON_PAGE) {
 
             Integer pageNo = target.pageNo();
 
             return formSectionJpaRepository
-                    .findByFormIdAndTypeAndOrderNo(
-                            form.getId(),
-                            FormSectionType.DEFAULT,
-                            pageNo
-                    )
-                    .orElseGet(() -> {
-                        FormSection section = FormSection.builder()
-                                .form(form)
-                                .type(FormSectionType.DEFAULT)
-                                .title("Page " + pageNo)
-                                .description(null)
-                                .orderNo(pageNo)
-                                .targetKey(null)
-                                .build();
+                .findByFormIdAndTypeAndOrderNo(
+                    form.getId(),
+                    FormSectionType.DEFAULT,
+                    pageNo
+                )
+                .orElseGet(() -> {
+                    FormSection section = FormSection.builder()
+                        .form(form)
+                        .type(FormSectionType.DEFAULT)
+                        .title("Page " + pageNo)
+                        .description(null)
+                        .orderNo(pageNo)
+                        .targetKey(null)
+                        .build();
 
-                        return formSectionJpaRepository.save(section);
-                    });
+                    return formSectionJpaRepository.save(section);
+                });
         }
 
         // PART
         String targetKey = "PART:" + target.part().name();
 
         return formSectionJpaRepository
-                .findByFormIdAndTypeAndTargetKey(
-                        form.getId(),
-                        FormSectionType.CUSTOM,
-                        targetKey
-                )
-                .orElseGet(() -> {
-                    FormSection section = FormSection.builder()
-                            .form(form)
-                            .type(FormSectionType.CUSTOM)
-                            .title(target.part().name())
-                            .description(null)
-                            .orderNo(null)
-                            .targetKey(targetKey)
-                            .build();
+            .findByFormIdAndTypeAndTargetKey(
+                form.getId(),
+                FormSectionType.CUSTOM,
+                targetKey
+            )
+            .orElseGet(() -> {
+                FormSection section = FormSection.builder()
+                    .form(form)
+                    .type(FormSectionType.CUSTOM)
+                    .title(target.part().name())
+                    .description(null)
+                    .orderNo(null)
+                    .targetKey(targetKey)
+                    .build();
 
-                    return formSectionJpaRepository.save(section);
-                });
+                return formSectionJpaRepository.save(section);
+            });
     }
 
     private void upsertOptions(
-            Question question,
-            List<UpsertRecruitmentFormQuestionsCommand.OptionInfo> options
+        Question question,
+        List<UpsertRecruitmentFormQuestionsCommand.OptionInfo> options
     ) {
         for (UpsertRecruitmentFormQuestionsCommand.OptionInfo o : options) {
 
@@ -290,15 +290,15 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
             // 수정
             if (o.optionId() != null) {
                 option = questionOptionJpaRepository.findById(o.optionId())
-                        .orElseThrow(() -> new IllegalStateException(
-                                "Option not found. id=" + o.optionId()));
+                    .orElseThrow(() -> new IllegalStateException(
+                        "Option not found. id=" + o.optionId()));
             }
             // 생성
             else {
                 option = QuestionOption.builder()
-                        .question(question)
-                        .isOther(Boolean.TRUE.equals(o.isOther()))
-                        .build();
+                    .question(question)
+                    .isOther(Boolean.TRUE.equals(o.isOther()))
+                    .build();
 
                 question.getOptions().add(option);
             }
@@ -324,12 +324,12 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         if (req.questionId() == null) {
             // 생성
             question = Question.builder()
-                    .questionText(
-                            req.questionText() == null ? "" : req.questionText()) // nullable 허용이면 "" 대신 기본값 정책 정해야 함
-                    .type(req.type() == null ? QuestionType.SHORT_TEXT : req.type())    // nullable 허용이면 기본값 정책 필요
-                    .isRequired(req.required() != null && req.required())
-                    .orderNo(req.orderNo() == null ? 0 : req.orderNo())
-                    .build();
+                .questionText(
+                    req.questionText() == null ? "" : req.questionText()) // nullable 허용이면 "" 대신 기본값 정책 정해야 함
+                .type(req.type() == null ? QuestionType.SHORT_TEXT : req.type())    // nullable 허용이면 기본값 정책 필요
+                .isRequired(req.required() != null && req.required())
+                .orderNo(req.orderNo() == null ? 0 : req.orderNo())
+                .build();
 
             section.addQuestion(question);
             questionJpaRepository.save(question); // 도메인참조 하지 않도록 수정
@@ -339,7 +339,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
         // 수정
         question = questionJpaRepository.findById(req.questionId())
-                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
 
         if (!question.getFormSection().getId().equals(section.getId())) {
             question.getFormSection().getQuestions().remove(question);
@@ -364,23 +364,23 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
     @Override
     public boolean existsOtherOngoingPublishedRecruitment(
-            Long schoolId,
-            Long excludeRecruitmentId,
-            Instant now
+        Long schoolId,
+        Long excludeRecruitmentId,
+        Instant now
     ) {
         return recruitmentRepository.existsOtherOngoingPublishedRecruitment(
-                schoolId,
-                excludeRecruitmentId,
-                now
+            schoolId,
+            excludeRecruitmentId,
+            now
         );
     }
 
     @Override
     public List<ChallengerPart> findPartsByRecruitmentId(Long recruitmentId) {
         return recruitmentPartRepository.findByRecruitmentId(recruitmentId)
-                .stream()
-                .map(RecruitmentPart::getPart)
-                .toList();
+            .stream()
+            .map(RecruitmentPart::getPart)
+            .toList();
     }
 
     @Override
@@ -390,12 +390,12 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
     @Override
     public List<RecruitmentListInfo.RecruitmentSummary> findRecruitmentSummaries(
-            Long schoolId,
-            RecruitmentListStatus status
+        Long schoolId,
+        RecruitmentListStatus status
     ) {
 
         List<Recruitment> recruitments = recruitmentRepository.findBySchoolIdAndStatus(schoolId,
-                RecruitmentStatus.PUBLISHED);
+            RecruitmentStatus.PUBLISHED);
 
         if (recruitments.isEmpty()) {
             return List.of();
@@ -408,62 +408,62 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         Map<Long, RecruitmentSchedule> docResultByRid = toScheduleMap(ids, RecruitmentScheduleType.DOC_RESULT_AT);
         Map<Long, RecruitmentSchedule> interviewByRid = toScheduleMap(ids, RecruitmentScheduleType.INTERVIEW_WINDOW);
         Map<Long, RecruitmentSchedule> finalReviewByRid = toScheduleMap(ids,
-                RecruitmentScheduleType.FINAL_REVIEW_WINDOW);
+            RecruitmentScheduleType.FINAL_REVIEW_WINDOW);
         Map<Long, RecruitmentSchedule> finalResultByRid = toScheduleMap(ids, RecruitmentScheduleType.FINAL_RESULT_AT);
 
         Instant now = Instant.now();
         var zone = ZoneId.of("Asia/Seoul");
 
         return recruitments.stream()
-                .map(r -> {
-                    Long rid = r.getId();
+            .map(r -> {
+                Long rid = r.getId();
 
-                    RecruitmentSchedule apply = applyByRid.get(rid);
-                    RecruitmentSchedule docReview = docReviewByRid.get(rid);
-                    RecruitmentSchedule docResult = docResultByRid.get(rid);
-                    RecruitmentSchedule interview = interviewByRid.get(rid);
-                    RecruitmentSchedule finalReview = finalReviewByRid.get(rid);
-                    RecruitmentSchedule finalResult = finalResultByRid.get(rid);
+                RecruitmentSchedule apply = applyByRid.get(rid);
+                RecruitmentSchedule docReview = docReviewByRid.get(rid);
+                RecruitmentSchedule docResult = docResultByRid.get(rid);
+                RecruitmentSchedule interview = interviewByRid.get(rid);
+                RecruitmentSchedule finalReview = finalReviewByRid.get(rid);
+                RecruitmentSchedule finalResult = finalResultByRid.get(rid);
 
-                    RecruitmentPhase phase = resolvePhase(now, apply, docReview, docResult, interview, finalReview,
-                            finalResult);
+                RecruitmentPhase phase = resolvePhase(now, apply, docReview, docResult, interview, finalReview,
+                    finalResult);
 
-                    if (!matchesListStatus(status, phase)) {
-                        return null;
-                    }
+                if (!matchesListStatus(status, phase)) {
+                    return null;
+                }
 
-                    LocalDate startDate = (apply == null || apply.getStartsAt() == null)
-                            ? null
-                            : apply.getStartsAt().atZone(zone).toLocalDate();
+                LocalDate startDate = (apply == null || apply.getStartsAt() == null)
+                    ? null
+                    : apply.getStartsAt().atZone(zone).toLocalDate();
 
-                    LocalDate endDate = (finalResult == null || finalResult.getStartsAt() == null)
-                            ? null
-                            : finalResult.getStartsAt().atZone(zone).toLocalDate();
+                LocalDate endDate = (finalResult == null || finalResult.getStartsAt() == null)
+                    ? null
+                    : finalResult.getStartsAt().atZone(zone).toLocalDate();
 
-                    int applicantCount = (int) applicationRepository.countByRecruitmentId(rid);
+                int applicantCount = (int) applicationRepository.countByRecruitmentId(rid);
 
-                    boolean editable = isEditablePublished(phase); // 권한 제외 1차 로직
-                    // todo: 권한 도입 시 해당 editable을 덮는 수정 권한 체크 로직 추가
+                boolean editable = isEditablePublished(phase); // 권한 제외 1차 로직
+                // todo: 권한 도입 시 해당 editable을 덮는 수정 권한 체크 로직 추가
 
-                    return new RecruitmentListInfo.RecruitmentSummary(
-                            rid,
-                            r.getTitle(),
-                            startDate,
-                            endDate,
-                            applicantCount,
-                            r.getStatus(),
-                            phase,
-                            editable,
-                            r.getUpdatedAt()
-                    );
-                })
-                .filter(x -> x != null)
-                .toList();
+                return new RecruitmentListInfo.RecruitmentSummary(
+                    rid,
+                    r.getTitle(),
+                    startDate,
+                    endDate,
+                    applicantCount,
+                    r.getStatus(),
+                    phase,
+                    editable,
+                    r.getUpdatedAt()
+                );
+            })
+            .filter(x -> x != null)
+            .toList();
     }
 
     @Override
     public List<RecruitmentListInfo.RecruitmentSummary> findDraftRecruitmentSummaries(
-            Long schoolId
+        Long schoolId
     ) {
 
         List<Recruitment> drafts = recruitmentRepository.findBySchoolIdAndStatus(schoolId, RecruitmentStatus.DRAFT);
@@ -478,49 +478,49 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         Map<Long, RecruitmentSchedule> docResultByRid = toScheduleMap(ids, RecruitmentScheduleType.DOC_RESULT_AT);
         Map<Long, RecruitmentSchedule> interviewByRid = toScheduleMap(ids, RecruitmentScheduleType.INTERVIEW_WINDOW);
         Map<Long, RecruitmentSchedule> finalReviewByRid = toScheduleMap(ids,
-                RecruitmentScheduleType.FINAL_REVIEW_WINDOW);
+            RecruitmentScheduleType.FINAL_REVIEW_WINDOW);
         Map<Long, RecruitmentSchedule> finalResultByRid = toScheduleMap(ids, RecruitmentScheduleType.FINAL_RESULT_AT);
 
         Instant now = Instant.now();
         ZoneId zone = ZoneId.of("Asia/Seoul");
 
         return drafts.stream()
-                .map(r -> {
-                    Long rid = r.getId();
+            .map(r -> {
+                Long rid = r.getId();
 
-                    RecruitmentSchedule apply = applyByRid.get(rid);
-                    RecruitmentSchedule docReview = docReviewByRid.get(rid);
-                    RecruitmentSchedule docResult = docResultByRid.get(rid);
-                    RecruitmentSchedule interview = interviewByRid.get(rid);
-                    RecruitmentSchedule finalReview = finalReviewByRid.get(rid);
-                    RecruitmentSchedule finalResult = finalResultByRid.get(rid);
+                RecruitmentSchedule apply = applyByRid.get(rid);
+                RecruitmentSchedule docReview = docReviewByRid.get(rid);
+                RecruitmentSchedule docResult = docResultByRid.get(rid);
+                RecruitmentSchedule interview = interviewByRid.get(rid);
+                RecruitmentSchedule finalReview = finalReviewByRid.get(rid);
+                RecruitmentSchedule finalResult = finalResultByRid.get(rid);
 
-                    RecruitmentPhase phase = resolvePhase(now, apply, docReview, docResult, interview, finalReview,
-                            finalResult);
+                RecruitmentPhase phase = resolvePhase(now, apply, docReview, docResult, interview, finalReview,
+                    finalResult);
 
-                    LocalDate startDate = (apply == null || apply.getStartsAt() == null)
-                            ? null
-                            : apply.getStartsAt().atZone(zone).toLocalDate();
+                LocalDate startDate = (apply == null || apply.getStartsAt() == null)
+                    ? null
+                    : apply.getStartsAt().atZone(zone).toLocalDate();
 
-                    LocalDate endDate = (finalResult == null || finalResult.getStartsAt() == null)
-                            ? null
-                            : finalResult.getStartsAt().atZone(zone).toLocalDate();
+                LocalDate endDate = (finalResult == null || finalResult.getStartsAt() == null)
+                    ? null
+                    : finalResult.getStartsAt().atZone(zone).toLocalDate();
 
-                    int applicantCount = 0;
+                int applicantCount = 0;
 
-                    return new RecruitmentListInfo.RecruitmentSummary(
-                            rid,
-                            r.getTitle(),
-                            startDate,
-                            endDate,
-                            0,
-                            r.getStatus(), // DRAFT
-                            null,
-                            true,
-                            r.getUpdatedAt()
-                    );
-                })
-                .toList();
+                return new RecruitmentListInfo.RecruitmentSummary(
+                    rid,
+                    r.getTitle(),
+                    startDate,
+                    endDate,
+                    0,
+                    r.getStatus(), // DRAFT
+                    null,
+                    true,
+                    r.getUpdatedAt()
+                );
+            })
+            .toList();
     }
 
     @Override
@@ -537,8 +537,8 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         return switch (status) {
             case UPCOMING -> phase == RecruitmentPhase.BEFORE_APPLY;
             case ONGOING -> phase != RecruitmentPhase.BEFORE_APPLY
-                    && phase != RecruitmentPhase.FINAL_RESULT_PUBLISHED
-                    && phase != RecruitmentPhase.CLOSED;
+                && phase != RecruitmentPhase.FINAL_RESULT_PUBLISHED
+                && phase != RecruitmentPhase.CLOSED;
             case CLOSED -> phase == RecruitmentPhase.FINAL_RESULT_PUBLISHED || phase == RecruitmentPhase.CLOSED;
             case DRAFT -> false;
         };
@@ -546,12 +546,12 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
     @Override
     public RecruitmentApplicationFormInfo findApplicationFormInfoForApplicantById(
-            Long recruitmentId,
-            RecruitmentApplicationFormInfo.PreferredPartInfo preferredPartInfo
+        Long recruitmentId,
+        RecruitmentApplicationFormInfo.PreferredPartInfo preferredPartInfo
     ) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
@@ -562,10 +562,10 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         RecruitmentFormDefinitionInfo recruitmentDef = RecruitmentFormDefinitionInfo.from(formDefinitionInfo);
 
         InterviewTimeTableInfo applicantTimeTable = parseInterviewTimeTableForApplicant(
-                recruitment.getInterviewTimeTable());
+            recruitment.getInterviewTimeTable());
 
         return RecruitmentApplicationFormInfo.from(recruitment, formDefinitionInfo, recruitmentDef, applicantTimeTable,
-                preferredPartInfo);
+            preferredPartInfo);
     }
 
     @Override
@@ -576,14 +576,14 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     @Override
     public RecruitmentPublishedInfo.ScheduleInfo findPublishedScheduleInfoByRecruitmentId(Long recruitmentId) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
-                .orElseThrow(
-                        () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         List<RecruitmentSchedule> schedules =
-                recruitmentScheduleRepository.findByRecruitmentId(recruitmentId);
+            recruitmentScheduleRepository.findByRecruitmentId(recruitmentId);
 
         RecruitmentPublishedInfo.InterviewTimeTableInfo timeTable =
-                parseInterviewTimeTableForPublished(recruitment.getInterviewTimeTable());
+            parseInterviewTimeTableForPublished(recruitment.getInterviewTimeTable());
 
         return toPublishedScheduleInfo(schedules, timeTable);
     }
@@ -593,11 +593,11 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     findScheduleMapByRecruitmentId(Long recruitmentId) {
 
         return recruitmentScheduleRepository.findByRecruitmentId(recruitmentId)
-                .stream()
-                .collect(Collectors.toMap(
-                        RecruitmentSchedule::getType,
-                        Function.identity()
-                ));
+            .stream()
+            .collect(Collectors.toMap(
+                RecruitmentSchedule::getType,
+                Function.identity()
+            ));
     }
 
     private InterviewTimeTableInfo parseInterviewTimeTableForApplicant(Map<String, Object> interviewTimeTable) {
@@ -612,10 +612,10 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
             RecruitmentDraftInfo.TimeRangeInfo tr = raw.timeRange();
             Integer slotMinutes = raw.slotMinutes();
             List<RecruitmentDraftInfo.TimesByDateInfo> enabled =
-                    raw.enabledByDate() == null ? List.of() : raw.enabledByDate();
+                raw.enabledByDate() == null ? List.of() : raw.enabledByDate();
 
             InterviewTimeTableDisabledCalculator.Normalized normalized =
-                    InterviewTimeTableDisabledCalculator.normalizeForApplicant(dr, tr, slotMinutes, enabled);
+                InterviewTimeTableDisabledCalculator.normalizeForApplicant(dr, tr, slotMinutes, enabled);
 
             return toQueryInterviewTimeTableInfo(normalized);
 
@@ -630,43 +630,43 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         }
 
         InterviewTimeTableInfo.DateRangeInfo dateRange =
-                (n.dateRange() == null) ? null
-                        : new InterviewTimeTableInfo.DateRangeInfo(n.dateRange().start(), n.dateRange().end());
+            (n.dateRange() == null) ? null
+                : new InterviewTimeTableInfo.DateRangeInfo(n.dateRange().start(), n.dateRange().end());
 
         InterviewTimeTableInfo.TimeRangeInfo timeRange =
-                (n.timeRange() == null) ? null
-                        : new InterviewTimeTableInfo.TimeRangeInfo(n.timeRange().start(), n.timeRange().end());
+            (n.timeRange() == null) ? null
+                : new InterviewTimeTableInfo.TimeRangeInfo(n.timeRange().start(), n.timeRange().end());
 
         List<InterviewTimeTableInfo.TimesByDateInfo> enabled =
-                (n.enabledByDate() == null) ? null
-                        : n.enabledByDate().stream()
-                                .map(x -> new InterviewTimeTableInfo.TimesByDateInfo(x.date(), x.times()))
-                                .toList();
+            (n.enabledByDate() == null) ? null
+                : n.enabledByDate().stream()
+                    .map(x -> new InterviewTimeTableInfo.TimesByDateInfo(x.date(), x.times()))
+                    .toList();
 
         List<InterviewTimeTableInfo.TimesByDateInfo> disabled =
-                (n.disabledByDate() == null) ? null
-                        : n.disabledByDate().stream()
-                                .map(x -> new InterviewTimeTableInfo.TimesByDateInfo(x.date(), x.times()))
-                                .toList();
+            (n.disabledByDate() == null) ? null
+                : n.disabledByDate().stream()
+                    .map(x -> new InterviewTimeTableInfo.TimesByDateInfo(x.date(), x.times()))
+                    .toList();
 
         return new InterviewTimeTableInfo(
-                dateRange,
-                timeRange,
-                n.slotMinutes(),
-                enabled,
-                disabled
+            dateRange,
+            timeRange,
+            n.slotMinutes(),
+            enabled,
+            disabled
         );
     }
 
 
     private RecruitmentPhase resolvePhase(
-            Instant now,
-            RecruitmentSchedule apply,
-            RecruitmentSchedule docReview,
-            RecruitmentSchedule docResult,
-            RecruitmentSchedule interview,
-            RecruitmentSchedule finalReview,
-            RecruitmentSchedule finalResult
+        Instant now,
+        RecruitmentSchedule apply,
+        RecruitmentSchedule docReview,
+        RecruitmentSchedule docResult,
+        RecruitmentSchedule interview,
+        RecruitmentSchedule finalReview,
+        RecruitmentSchedule finalResult
     ) {
         Instant applyStart = apply == null ? null : apply.getStartsAt();
         Instant applyEnd = apply == null ? null : apply.getEndsAt();
@@ -725,35 +725,35 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
     private Map<Long, RecruitmentSchedule> toScheduleMap(List<Long> ids, RecruitmentScheduleType type) {
         return recruitmentScheduleRepository.findByRecruitmentIdInAndType(ids, type)
-                .stream()
-                .collect(Collectors.toMap(
-                        RecruitmentSchedule::getRecruitmentId,
-                        s -> s,
-                        (a, b) -> a
-                ));
+            .stream()
+            .collect(Collectors.toMap(
+                RecruitmentSchedule::getRecruitmentId,
+                s -> s,
+                (a, b) -> a
+            ));
     }
 
     private RecruitmentApplicationFormInfo.PreferredPartInfo buildPreferredPartInfo(
-            Recruitment recruitment,
-            List<RecruitmentPart> parts
+        Recruitment recruitment,
+        List<RecruitmentPart> parts
     ) {
         if (recruitment == null || parts == null) {
             return null;
         }
 
         int max = recruitment.getMaxPreferredPartCount() != null
-                ? recruitment.getMaxPreferredPartCount()
-                : 1;
+            ? recruitment.getMaxPreferredPartCount()
+            : 1;
 
         List<RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo> options =
-                parts.stream()
-                        .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
-                        .map(p -> new RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo(
-                                p.getId(),
-                                p.getPart().name(),
-                                p.getPart().name()
-                        ))
-                        .toList();
+            parts.stream()
+                .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+                .map(p -> new RecruitmentApplicationFormInfo.PreferredPartInfo.PreferredPartOptionInfo(
+                    p.getId(),
+                    p.getPart().name(),
+                    p.getPart().name()
+                ))
+                .toList();
 
         if (options.isEmpty()) {
             return null;
@@ -770,12 +770,12 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     }
 
     private RecruitmentPublishedInfo.ScheduleInfo toPublishedScheduleInfo(
-            List<RecruitmentSchedule> schedules,
-            RecruitmentPublishedInfo.InterviewTimeTableInfo interviewTimeTable
+        List<RecruitmentSchedule> schedules,
+        RecruitmentPublishedInfo.InterviewTimeTableInfo interviewTimeTable
     ) {
         Map<RecruitmentScheduleType, RecruitmentSchedule> map =
-                (schedules == null ? List.<RecruitmentSchedule>of() : schedules).stream()
-                        .collect(Collectors.toMap(RecruitmentSchedule::getType, Function.identity(), (a, b) -> a));
+            (schedules == null ? List.<RecruitmentSchedule>of() : schedules).stream()
+                .collect(Collectors.toMap(RecruitmentSchedule::getType, Function.identity(), (a, b) -> a));
 
         RecruitmentSchedule apply = map.get(RecruitmentScheduleType.APPLY_WINDOW);
         RecruitmentSchedule interview = map.get(RecruitmentScheduleType.INTERVIEW_WINDOW);
@@ -783,18 +783,18 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         RecruitmentSchedule finalResult = map.get(RecruitmentScheduleType.FINAL_RESULT_AT);
 
         return new RecruitmentPublishedInfo.ScheduleInfo(
-                apply == null ? null : apply.getStartsAt(),
-                apply == null ? null : apply.getEndsAt(),
-                docResult == null ? null : docResult.getStartsAt(),
-                interview == null ? null : interview.getStartsAt(),
-                interview == null ? null : interview.getEndsAt(),
-                finalResult == null ? null : finalResult.getStartsAt(),
-                interviewTimeTable
+            apply == null ? null : apply.getStartsAt(),
+            apply == null ? null : apply.getEndsAt(),
+            docResult == null ? null : docResult.getStartsAt(),
+            interview == null ? null : interview.getStartsAt(),
+            interview == null ? null : interview.getEndsAt(),
+            finalResult == null ? null : finalResult.getStartsAt(),
+            interviewTimeTable
         );
     }
 
     private RecruitmentPublishedInfo.InterviewTimeTableInfo parseInterviewTimeTableForPublished(
-            Map<String, Object> interviewTimeTable
+        Map<String, Object> interviewTimeTable
     ) {
         if (interviewTimeTable == null) {
             return null;
@@ -804,12 +804,12 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
             Enabled raw = objectMapper.convertValue(interviewTimeTable, Enabled.class);
 
             List<RecruitmentDraftInfo.TimesByDateInfo> disabledByDate =
-                    InterviewTimeTableDisabledCalculator.calculateDisabled(
-                            raw.dateRange(),
-                            raw.timeRange(),
-                            raw.slotMinutes(),
-                            raw.enabledByDate()
-                    );
+                InterviewTimeTableDisabledCalculator.calculateDisabled(
+                    raw.dateRange(),
+                    raw.timeRange(),
+                    raw.slotMinutes(),
+                    raw.enabledByDate()
+                );
 
             return toPublishedInterviewTimeTableInfo(raw, disabledByDate);
 
@@ -819,39 +819,39 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     }
 
     private RecruitmentPublishedInfo.InterviewTimeTableInfo toPublishedInterviewTimeTableInfo(
-            Enabled raw,
-            List<RecruitmentDraftInfo.TimesByDateInfo> disabledByDate
+        Enabled raw,
+        List<RecruitmentDraftInfo.TimesByDateInfo> disabledByDate
     ) {
         if (raw == null) {
             return null;
         }
 
         RecruitmentPublishedInfo.DateRangeInfo dateRange =
-                (raw.dateRange() == null) ? null
-                        : new RecruitmentPublishedInfo.DateRangeInfo(raw.dateRange().start(), raw.dateRange().end());
+            (raw.dateRange() == null) ? null
+                : new RecruitmentPublishedInfo.DateRangeInfo(raw.dateRange().start(), raw.dateRange().end());
 
         RecruitmentPublishedInfo.TimeRangeInfo timeRange =
-                (raw.timeRange() == null) ? null
-                        : new RecruitmentPublishedInfo.TimeRangeInfo(raw.timeRange().start(), raw.timeRange().end());
+            (raw.timeRange() == null) ? null
+                : new RecruitmentPublishedInfo.TimeRangeInfo(raw.timeRange().start(), raw.timeRange().end());
 
         List<RecruitmentPublishedInfo.TimesByDateInfo> enabled =
-                (raw.enabledByDate() == null) ? List.of()
-                        : raw.enabledByDate().stream()
-                                .map(x -> new RecruitmentPublishedInfo.TimesByDateInfo(x.date(), x.times()))
-                                .toList();
+            (raw.enabledByDate() == null) ? List.of()
+                : raw.enabledByDate().stream()
+                    .map(x -> new RecruitmentPublishedInfo.TimesByDateInfo(x.date(), x.times()))
+                    .toList();
 
         List<RecruitmentPublishedInfo.TimesByDateInfo> disabled =
-                (disabledByDate == null) ? List.of()
-                        : disabledByDate.stream()
-                                .map(x -> new RecruitmentPublishedInfo.TimesByDateInfo(x.date(), x.times()))
-                                .toList();
+            (disabledByDate == null) ? List.of()
+                : disabledByDate.stream()
+                    .map(x -> new RecruitmentPublishedInfo.TimesByDateInfo(x.date(), x.times()))
+                    .toList();
 
         return new RecruitmentPublishedInfo.InterviewTimeTableInfo(
-                dateRange,
-                timeRange,
-                raw.slotMinutes(),
-                enabled,
-                disabled
+            dateRange,
+            timeRange,
+            raw.slotMinutes(),
+            enabled,
+            disabled
         );
     }
 

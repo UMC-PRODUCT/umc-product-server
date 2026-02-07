@@ -10,38 +10,38 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public record RecruitmentDraftResponse(
-        Long recruitmentId,
-        String status,
-        Long formId,
+    Long recruitmentId,
+    String status,
+    Long formId,
 
-        String title,
-        List<ChallengerPart> recruitmentParts,
-        Integer maxPreferredPartCount,
+    String title,
+    List<ChallengerPart> recruitmentParts,
+    Integer maxPreferredPartCount,
 
-        RecruitmentDraftScheduleResponse schedule,
+    RecruitmentDraftScheduleResponse schedule,
 
-        String noticeContent,
+    String noticeContent,
 
-        Instant createdAt,
-        Instant updatedAt
+    Instant createdAt,
+    Instant updatedAt
 ) {
     public record RecruitmentDraftScheduleResponse(
-            LocalDate applyStartAt,
-            LocalDate applyEndAt,
-            LocalDate docResultAt,
-            LocalDate interviewStartAt,
-            LocalDate interviewEndAt,
-            LocalDate finalResultAt,
-            RecruitmentDraftInterviewTimeTableResponse interviewTimeTable
+        LocalDate applyStartAt,
+        LocalDate applyEndAt,
+        LocalDate docResultAt,
+        LocalDate interviewStartAt,
+        LocalDate interviewEndAt,
+        LocalDate finalResultAt,
+        RecruitmentDraftInterviewTimeTableResponse interviewTimeTable
     ) {
     }
 
     public record RecruitmentDraftInterviewTimeTableResponse(
-            DateRangeResponse dateRange,
-            TimeRangeResponse timeRange,
-            Integer slotMinutes,
-            List<TimesByDateResponse> enabledByDate,
-            List<TimesByDateResponse> disabledByDate
+        DateRangeResponse dateRange,
+        TimeRangeResponse timeRange,
+        Integer slotMinutes,
+        List<TimesByDateResponse> enabledByDate,
+        List<TimesByDateResponse> disabledByDate
     ) {
     }
 
@@ -52,23 +52,23 @@ public record RecruitmentDraftResponse(
     }
 
     public record TimesByDateResponse(
-            LocalDate date,
-            List<String> times
+        LocalDate date,
+        List<String> times
     ) {
     }
 
     public static RecruitmentDraftResponse from(RecruitmentDraftInfo info) {
         return new RecruitmentDraftResponse(
-                info.recruitmentId(),
-                info.status(),
-                info.formId(),
-                info.title(),
-                info.recruitmentParts(),
-                info.maxPreferredPartCount(),
-                toSchedule(info.schedule()),
-                info.noticeContent(),
-                info.createdAt(),
-                info.updatedAt()
+            info.recruitmentId(),
+            info.status(),
+            info.formId(),
+            info.title(),
+            info.recruitmentParts(),
+            info.maxPreferredPartCount(),
+            toSchedule(info.schedule()),
+            info.noticeContent(),
+            info.createdAt(),
+            info.updatedAt()
         );
     }
 
@@ -78,13 +78,13 @@ public record RecruitmentDraftResponse(
         }
 
         return new RecruitmentDraftScheduleResponse(
-                toKstDate(s.applyStartAt()),
-                toKstDate(s.applyEndAt()),
-                toKstDate(s.docResultAt()),
-                toKstDate(s.interviewStartAt()),
-                toKstDate(s.interviewEndAt()),
-                toKstDate(s.finalResultAt()),
-                toInterviewTimeTable(s.interviewTimeTable())
+            toKstDate(s.applyStartAt()),
+            toKstDate(s.applyEndAt()),
+            toKstDate(s.docResultAt()),
+            toKstDate(s.interviewStartAt()),
+            toKstDate(s.interviewEndAt()),
+            toKstDate(s.finalResultAt()),
+            toInterviewTimeTable(s.interviewTimeTable())
         );
     }
 
@@ -96,29 +96,29 @@ public record RecruitmentDraftResponse(
     }
 
     private static RecruitmentDraftInterviewTimeTableResponse toInterviewTimeTable(
-            RecruitmentDraftInfo.InterviewTimeTableInfo t) {
+        RecruitmentDraftInfo.InterviewTimeTableInfo t) {
         if (t == null) {
             return null;
         }
 
         return new RecruitmentDraftInterviewTimeTableResponse(
-                new DateRangeResponse(t.dateRange().start(), t.dateRange().end()),
-                new TimeRangeResponse(formatTime(t.timeRange().start()), formatTime(t.timeRange().end())),
-                t.slotMinutes(),
-                t.enabledByDate() == null ? null : t.enabledByDate().stream()
-                        .map(x -> new TimesByDateResponse(
-                                x.date(),
-                                x.times() == null ? List.of()
-                                        : x.times().stream().map(RecruitmentDraftResponse::formatTime).toList()
-                        ))
-                        .toList(),
-                t.disabledByDate() == null ? null : t.disabledByDate().stream()
-                        .map(x -> new TimesByDateResponse(
-                                x.date(),
-                                x.times() == null ? List.of()
-                                        : x.times().stream().map(RecruitmentDraftResponse::formatTime).toList()
-                        ))
-                        .toList()
+            new DateRangeResponse(t.dateRange().start(), t.dateRange().end()),
+            new TimeRangeResponse(formatTime(t.timeRange().start()), formatTime(t.timeRange().end())),
+            t.slotMinutes(),
+            t.enabledByDate() == null ? null : t.enabledByDate().stream()
+                .map(x -> new TimesByDateResponse(
+                    x.date(),
+                    x.times() == null ? List.of()
+                        : x.times().stream().map(RecruitmentDraftResponse::formatTime).toList()
+                ))
+                .toList(),
+            t.disabledByDate() == null ? null : t.disabledByDate().stream()
+                .map(x -> new TimesByDateResponse(
+                    x.date(),
+                    x.times() == null ? List.of()
+                        : x.times().stream().map(RecruitmentDraftResponse::formatTime).toList()
+                ))
+                .toList()
         );
     }
 

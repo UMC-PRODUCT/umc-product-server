@@ -1,5 +1,7 @@
 package com.umc.product.authentication.domain;
 
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import jakarta.persistence.Column;
@@ -44,5 +46,18 @@ public class MemberOAuth extends BaseEntity {
         this.memberId = memberId;
         this.provider = provider;
         this.providerId = providerId;
+    }
+
+    /**
+     * Member ID가 일치하는지 검증하는 도메인 로직
+     */
+    public boolean validateMember(Long memberId) {
+        return this.memberId.equals(memberId);
+    }
+
+    public void throwIfNotValidMember(Long memberId) {
+        if (!validateMember(memberId)) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.NOT_VALID_MEMBER);
+        }
     }
 }

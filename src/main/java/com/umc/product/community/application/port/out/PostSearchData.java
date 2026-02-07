@@ -10,8 +10,6 @@ public record PostSearchData(
         String title,
         String content,
         Category category,
-        String region,
-        boolean anonymous,
         int likeCount,
         Instant createdAt,
         MatchType matchType,
@@ -24,8 +22,6 @@ public record PostSearchData(
                 title,
                 content,
                 category,
-                region,
-                anonymous,
                 likeCount,
                 createdAt,
                 matchType

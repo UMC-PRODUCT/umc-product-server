@@ -5,7 +5,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record GetInterviewOptionsInfo(
-        List<LocalDate> dates,
-        List<PartOption> parts
+    List<LocalDate> dates,
+    List<PartOption> parts
 ) {
 }

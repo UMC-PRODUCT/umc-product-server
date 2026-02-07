@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 public record ReorderInterviewSheetQuestionRequest(
-        @NotNull PartKey partKey,
-        @NotNull List<Long> orderedQuestionIds
+    @NotNull PartKey partKey,
+    @NotNull List<Long> orderedQuestionIds
 ) {
 }

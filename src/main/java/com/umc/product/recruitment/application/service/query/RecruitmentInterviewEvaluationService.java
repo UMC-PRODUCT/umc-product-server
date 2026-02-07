@@ -19,9 +19,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewEvaluationUseCase,
-        CreateLiveQuestionUseCase,
-        UpdateLiveQuestionUseCase,
-        DeleteLiveQuestionUseCase {
+    CreateLiveQuestionUseCase,
+    UpdateLiveQuestionUseCase,
+    DeleteLiveQuestionUseCase {
 
     @Override
     public GetMyInterviewEvaluationInfo upsert(UpsertMyInterviewEvaluationCommand command) {

@@ -5,23 +5,23 @@ import com.umc.product.recruitment.application.port.in.query.dto.InterviewSchedu
 import java.util.List;
 
 public record InterviewSchedulingAssignmentsResponse(
-        List<InterviewAssignmentResponse> assignments
+    List<InterviewAssignmentResponse> assignments
 ) {
     public static InterviewSchedulingAssignmentsResponse from(
-            InterviewSchedulingAssignmentsInfo info
+        InterviewSchedulingAssignmentsInfo info
     ) {
         return new InterviewSchedulingAssignmentsResponse(
-                info.assignments().stream()
-                        .map(i -> new InterviewAssignmentResponse(
-                                i.assignmentId(),
-                                i.applicationId(),
-                                i.nickname(),
-                                i.name(),
-                                toPreferredPart(i.firstPart()),
-                                toPreferredPart(i.secondPart()),
-                                i.documentScore()
-                        ))
-                        .toList()
+            info.assignments().stream()
+                .map(i -> new InterviewAssignmentResponse(
+                    i.assignmentId(),
+                    i.applicationId(),
+                    i.nickname(),
+                    i.name(),
+                    toPreferredPart(i.firstPart()),
+                    toPreferredPart(i.secondPart()),
+                    i.documentScore()
+                ))
+                .toList()
         );
     }
 
@@ -33,13 +33,13 @@ public record InterviewSchedulingAssignmentsResponse(
     }
 
     public record InterviewAssignmentResponse(
-            Long assignmentId,
-            Long applicationId,
-            String nickname,
-            String name,
-            PreferredPartResponse firstPart,
-            PreferredPartResponse secondPart,
-            double documentScore
+        Long assignmentId,
+        Long applicationId,
+        String nickname,
+        String name,
+        PreferredPartResponse firstPart,
+        PreferredPartResponse secondPart,
+        double documentScore
     ) {
     }
 

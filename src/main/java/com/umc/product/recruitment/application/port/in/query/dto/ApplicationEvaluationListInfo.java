@@ -4,17 +4,17 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record ApplicationEvaluationListInfo(
-        Long recruitmentId,
-        Long applicationId,
-        BigDecimal avgDocScore,
-        List<DocEvaluationSummary> docEvaluationSummaries
+    Long recruitmentId,
+    Long applicationId,
+    BigDecimal avgDocScore,
+    List<DocEvaluationSummary> docEvaluationSummaries
 ) {
     public record DocEvaluationSummary(
-            Long evaluationId,
-            String evaluatorName,
-            String evaluatorNickname,
-            Integer score,
-            String comments
+        Long evaluationId,
+        String evaluatorName,
+        String evaluatorNickname,
+        Integer score,
+        String comments
     ) {
     }
 }

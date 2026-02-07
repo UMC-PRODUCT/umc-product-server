@@ -16,10 +16,10 @@ public record RecruitmentListResponse(List<RecruitmentSummaryResponse> recruitme
 
     public static RecruitmentListResponse from(RecruitmentListInfo info) {
         return new RecruitmentListResponse(info.recruitments().stream()
-                .map(r -> new RecruitmentSummaryResponse(r.recruitmentId(), r.recruitmentName(), r.startDate(),
-                        r.endDate(), r.applicantCount(), r.status().name(),
-                        r.status().isDraft() ? null : (r.phase() == null ? null : r.phase().name()),
-                        toListBadge(r.status(), r.phase()), r.editable(), r.updatedAt())).toList());
+            .map(r -> new RecruitmentSummaryResponse(r.recruitmentId(), r.recruitmentName(), r.startDate(),
+                r.endDate(), r.applicantCount(), r.status().name(),
+                r.status().isDraft() ? null : (r.phase() == null ? null : r.phase().name()),
+                toListBadge(r.status(), r.phase()), r.editable(), r.updatedAt())).toList());
     }
 
     private static String toListBadge(RecruitmentStatus status, RecruitmentPhase phase) {

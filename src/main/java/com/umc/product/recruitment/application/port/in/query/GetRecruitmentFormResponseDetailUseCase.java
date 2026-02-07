@@ -10,6 +10,6 @@ public interface GetRecruitmentFormResponseDetailUseCase {
      * - DRAFT / SUBMITTED 모두 조회 가능 - memberId 기준 권한 검증 - recruitmentId ↔ formResponseId 연관성 검증
      */
     RecruitmentFormResponseDetailInfo get(
-            GetRecruitmentFormResponseDetailQuery query
+        GetRecruitmentFormResponseDetailQuery query
     );
 }

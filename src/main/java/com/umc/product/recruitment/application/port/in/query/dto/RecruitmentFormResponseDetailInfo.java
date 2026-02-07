@@ -6,11 +6,11 @@ import java.time.Instant;
 import java.util.List;
 
 public record RecruitmentFormResponseDetailInfo(
-        Long formId,
-        Long formResponseId,
-        FormResponseStatus status,   // DRAFT / SUBMITTED
-        Instant lastSavedAt,
-        Instant submittedAt,
-        List<AnswerInfo> answers
+    Long formId,
+    Long formResponseId,
+    FormResponseStatus status,   // DRAFT / SUBMITTED
+    Instant lastSavedAt,
+    Instant submittedAt,
+    List<AnswerInfo> answers
 ) {
 }

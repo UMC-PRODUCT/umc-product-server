@@ -4,22 +4,22 @@ import com.umc.product.recruitment.application.port.in.command.dto.PublishRecrui
 import jakarta.validation.Valid;
 
 public record PublishRecruitmentRequest(
-        @Valid UpdateRecruitmentDraftRequest recruitmentDraft,
-        @Valid UpsertRecruitmentFormQuestionsRequest applicationFormQuestions
+    @Valid UpdateRecruitmentDraftRequest recruitmentDraft,
+    @Valid UpsertRecruitmentFormQuestionsRequest applicationFormQuestions
 ) {
     public static PublishRecruitmentRequest empty() {
         return new PublishRecruitmentRequest(null, null);
     }
 
     public PublishRecruitmentCommand toCommand(
-            Long recruitmentId,
-            Long memberId
+        Long recruitmentId,
+        Long memberId
     ) {
         return new PublishRecruitmentCommand(
-                recruitmentId,
-                memberId,
-                recruitmentDraft == null ? null : recruitmentDraft.toCommand(recruitmentId, memberId),
-                applicationFormQuestions == null ? null : applicationFormQuestions.toCommand(recruitmentId)
+            recruitmentId,
+            memberId,
+            recruitmentDraft == null ? null : recruitmentDraft.toCommand(recruitmentId, memberId),
+            applicationFormQuestions == null ? null : applicationFormQuestions.toCommand(recruitmentId)
         );
     }
 }

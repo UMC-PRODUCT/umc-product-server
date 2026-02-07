@@ -1,0 +1,16 @@
+package com.umc.product.organization.adapter.in.web.dto.response;
+
+import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "활성화된 기수 응답")
+public record ActiveGisuResponse(
+        @Schema(description = "기수 ID", example = "1")
+        Long gisuId,
+        @Schema(description = "기수 번호", example = "8")
+        Long generation
+) {
+    public static ActiveGisuResponse from(GisuInfo info) {
+        return new ActiveGisuResponse(info.gisuId(), info.generation());
+    }
+}
