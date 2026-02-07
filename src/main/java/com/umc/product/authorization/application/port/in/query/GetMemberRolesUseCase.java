@@ -10,13 +10,16 @@ import java.util.List;
  */
 public interface GetMemberRolesUseCase {
 
+    List<ChallengerRoleInfo> getRoles(Long memberId);
+
+
     /**
      * 사용자의 모든 역할 타입을 조회
      *
      * @param memberId 사용자 ID
      * @return 역할 타입 리스트 (중복 제거됨)
      */
-    List<ChallengerRoleType> getRoles(Long memberId);
+    List<ChallengerRoleType> getRoleTypes(Long memberId);
 
     /**
      * 특정 역할을 가지고 있는지 확인

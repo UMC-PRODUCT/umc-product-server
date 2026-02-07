@@ -1,5 +1,6 @@
 package com.umc.product.authorization.application.service.query;
 
+import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
 import com.umc.product.authorization.application.port.in.query.GetMemberRolesUseCase;
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
 import com.umc.product.authorization.domain.ChallengerRole;
@@ -28,7 +29,14 @@ public class MemberRolesQueryService implements GetMemberRolesUseCase {
     private final LoadChallengerRolePort loadChallengerRolePort;
 
     @Override
-    public List<ChallengerRoleType> getRoles(Long memberId) {
+    public List<ChallengerRoleInfo> getRoles(Long memberId) {
+        return loadChallengerRolePort.findByMemberId(memberId).stream()
+            .map(ChallengerRoleInfo::fromEntity)
+            .toList();
+    }
+
+    @Override
+    public List<ChallengerRoleType> getRoleTypes(Long memberId) {
         List<ChallengerRole> roles = loadChallengerRolePort.findByMemberId(memberId);
 
         // 중복 제거하여 반환
