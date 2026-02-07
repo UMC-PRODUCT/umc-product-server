@@ -14,13 +14,16 @@ import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationEvaluationListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationListUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetDocumentSelectionListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyDocumentEvaluationUseCase;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationDetailInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationEvaluationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationEvaluationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationListQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetDocumentSelectionApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEvaluationInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEvaluationQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormDefinitionInfo;
@@ -59,7 +62,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class RecruitmentDocumentEvaluationQueryService implements GetApplicationDetailUseCase,
     GetApplicationListUseCase,
     GetApplicationEvaluationListUseCase,
-    GetMyDocumentEvaluationUseCase {
+    GetMyDocumentEvaluationUseCase,
+    GetDocumentSelectionListUseCase {
 
     private final LoadApplicationListPort loadApplicationListPort;
     private final LoadApplicationPartPreferencePort loadApplicationPartPreferencePort;
@@ -256,5 +260,10 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
                 )
             ))
             .orElse(new GetMyDocumentEvaluationInfo(null));
+    }
+
+    @Override
+    public DocumentSelectionApplicationListInfo get(GetDocumentSelectionApplicationListQuery query) {
+        return null;
     }
 }
