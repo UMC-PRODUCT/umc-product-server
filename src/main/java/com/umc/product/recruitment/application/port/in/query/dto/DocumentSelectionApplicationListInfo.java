@@ -53,7 +53,9 @@ public record DocumentSelectionApplicationListInfo(
         int page,
         int size,
         int totalPages,
-        long totalElements
+        long totalElements,
+        boolean hasNext,
+        boolean hasPrevious
     ) {
     }
 }

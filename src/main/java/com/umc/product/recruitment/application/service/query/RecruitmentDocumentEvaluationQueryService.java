@@ -6,11 +6,14 @@ import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberErrorCode;
+import com.umc.product.recruitment.adapter.in.web.dto.request.EvaluationDecision;
 import com.umc.product.recruitment.adapter.in.web.mapper.AnswerInfoMapper;
 import com.umc.product.recruitment.adapter.in.web.mapper.ApplicationDetailMapper;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.application.port.in.PartOption;
+import com.umc.product.recruitment.application.port.in.SortOption;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationEvaluationListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationListUseCase;
@@ -34,6 +37,8 @@ import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.Recruitment;
+import com.umc.product.recruitment.domain.enums.ApplicationStatus;
+import com.umc.product.recruitment.domain.enums.PartKey;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
@@ -264,6 +269,117 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
 
     @Override
     public DocumentSelectionApplicationListInfo get(GetDocumentSelectionApplicationListQuery query) {
-        return null;
+        // todo: 운영진 권한 및 학교 체크
+        // todo: 서류 평가 기간 검증
+
+        Long recruitmentId = query.recruitmentId();
+        PartOption part = query.part();
+        SortOption sort = query.sort();
+
+        Pageable pageable = PageRequest.of(query.page(), query.size());
+
+        // summary
+        DocumentSelectionApplicationListInfo.Summary summary =
+            loadApplicationListPort.getDocumentSelectionSummary(recruitmentId, part.name());
+
+        // 페이지 단위 목록 조회
+        Page<DocumentSelectionListItemProjection> page = loadApplicationListPort.searchDocumentSelections(
+            recruitmentId,
+            part.name(),
+            sort.name(),
+            pageable
+        );
+
+        // 대상 applicationIds
+        Set<Long> applicationIds = page.getContent().stream()
+            .map(DocumentSelectionListItemProjection::applicationId)
+            .collect(Collectors.toSet());
+
+        // 비어있으면 빈 리스트 리턴
+        if (applicationIds.isEmpty()) {
+            return new DocumentSelectionApplicationListInfo(
+                summary,
+                sort.name(),
+                List.of(),
+                new DocumentSelectionApplicationListInfo.PaginationInfo(
+                    page.getNumber(),
+                    page.getSize(),
+                    page.getTotalPages(),
+                    page.getTotalElements(),
+                    page.hasNext(),
+                    page.hasPrevious()
+                )
+            );
+        }
+
+        // appliedParts (priority 순)
+        Map<Long, List<ApplicationPartPreference>> prefMap =
+            loadApplicationPartPreferencePort.findAllByApplicationIdsOrderByPriorityAsc(applicationIds)
+                .stream()
+                .collect(Collectors.groupingBy(pref -> pref.getApplication().getId()));
+
+        // avg docScore 일괄 로드
+        Map<Long, BigDecimal> avgDocScoreMap =
+            loadApplicationListPort.calculateAvgDocScoreByApplicationIds(applicationIds);
+
+        // 응답 item 매핑
+        List<DocumentSelectionApplicationListInfo.DocumentSelectionApplicationInfo> items =
+            page.getContent().stream()
+                .map(p -> toInfoItem(p, prefMap, avgDocScoreMap))
+                .toList();
+
+        // pagination
+        DocumentSelectionApplicationListInfo.PaginationInfo pagination =
+            new DocumentSelectionApplicationListInfo.PaginationInfo(
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalPages(),
+                page.getTotalElements(),
+                page.hasNext(),
+                page.hasPrevious()
+            );
+
+        return new DocumentSelectionApplicationListInfo(
+            summary,
+            sort.name(),
+            items,
+            pagination
+        );
+    }
+
+    private DocumentSelectionApplicationListInfo.DocumentSelectionApplicationInfo toInfoItem(
+        DocumentSelectionListItemProjection p,
+        Map<Long, List<ApplicationPartPreference>> prefMap,
+        Map<Long, BigDecimal> avgDocScoreMap
+    ) {
+        Long applicationId = p.applicationId();
+
+        // appliedParts
+        List<ApplicationPartPreference> prefs = prefMap.getOrDefault(applicationId, List.of());
+        List<DocumentSelectionApplicationListInfo.AppliedPartInfo> appliedParts = prefs.stream()
+            .map(pref -> new DocumentSelectionApplicationListInfo.AppliedPartInfo(
+                pref.getPriority(),
+                PartKey.valueOf(pref.getRecruitmentPart().getPart().name())
+            ))
+            .toList();
+
+        // documentScore
+        BigDecimal avg = avgDocScoreMap.get(applicationId);
+        Double documentScore = (avg == null) ? null : avg.doubleValue();
+
+        // documentResult decision
+        EvaluationDecision decision =
+            (p.status() == ApplicationStatus.DOC_PASSED) ? EvaluationDecision.PASS : EvaluationDecision.WAIT;
+
+        return new DocumentSelectionApplicationListInfo.DocumentSelectionApplicationInfo(
+            applicationId,
+            new DocumentSelectionApplicationListInfo.ApplicantInfo(
+                p.nickname(),
+                p.name()
+            ),
+            appliedParts,
+            documentScore,
+            new DocumentSelectionApplicationListInfo.DocumentResult(decision.name())
+        );
     }
 }

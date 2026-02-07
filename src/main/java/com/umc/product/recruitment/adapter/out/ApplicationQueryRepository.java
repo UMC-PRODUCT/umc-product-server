@@ -8,22 +8,36 @@ import static com.umc.product.recruitment.domain.QRecruitment.recruitment;
 import static com.umc.product.recruitment.domain.QRecruitmentPart.recruitmentPart;
 import static com.umc.product.survey.domain.QFormResponse.formResponse;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.CaseBuilder;
+import com.querydsl.core.types.dsl.DateTimeExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
+import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo.ByPart;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
+import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.enums.EvaluationStatus;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -234,6 +248,148 @@ public class ApplicationQueryRepository {
         return Optional.ofNullable(result);
     }
 
+    /**
+     * 서류 선발 리스트 조회 (페이지네이션, 파트 필터, 정렬)
+     * <p>
+     * - APPLIED / DOC_PASSED만 포함 - part 필터: 1지망(priority=1) 기준
+     */
+    public Page<DocumentSelectionListItemProjection> searchDocumentSelections(
+        Long recruitmentId,
+        String part,
+        String sort,
+        Pageable pageable
+    ) {
+        List<DocumentSelectionListItemProjection> content = queryFactory
+            .select(Projections.constructor(DocumentSelectionListItemProjection.class,
+                application.id,
+                member.name,
+                member.nickname,
+                application.status
+            ))
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .where(
+                belongsToRecruitment(recruitmentId),
+                documentSelectionStatus(),
+                firstPriorityPartMatches(part)
+            )
+            .orderBy(documentSelectionOrderBy(sort))
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory
+            .select(application.count())
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .where(
+                belongsToRecruitment(recruitmentId),
+                documentSelectionStatus(),
+                firstPriorityPartMatches(part)
+            );
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    /**
+     * 서류 선발 요약 조회 - totalCount: (APPLIED + DOC_PASSED) (part 필터 적용) - selectedCount: DOC_PASSED (part 필터 적용) - byPart:
+     * 1지망 기준 파트별 total/selected
+     */
+    public DocumentSelectionApplicationListInfo.Summary getDocumentSelectionSummary(Long recruitmentId, String part) {
+        // total
+        Long total = queryFactory
+            .select(application.count())
+            .from(application)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                documentSelectionStatus(),
+                firstPriorityPartMatches(part)
+            )
+            .fetchOne();
+
+        // selected (DOC_PASSED)
+        Long selected = queryFactory
+            .select(application.count())
+            .from(application)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                application.status.eq(ApplicationStatus.DOC_PASSED),
+                firstPriorityPartMatches(part)
+            )
+            .fetchOne();
+
+        // byPart (1지망 priority=0 기준 group by)
+        NumberExpression<Long> selectedCaseSum = new CaseBuilder()
+            .when(application.status.eq(ApplicationStatus.DOC_PASSED)).then(1L)
+            .otherwise(0L)
+            .sum();
+
+        List<Tuple> byPartRows = queryFactory
+            .select(
+                recruitmentPart.part,               // ChallengerPart
+                application.id.count(),             // total
+                selectedCaseSum                     // selected
+            )
+            .from(applicationPartPreference)
+            .join(applicationPartPreference.application, application)
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                documentSelectionStatus(),
+                applicationPartPreference.priority.eq(1),
+                firstPriorityPartMatches(part)
+            )
+            .groupBy(recruitmentPart.part)
+            .fetch();
+
+        Map<String, ByPart> byPartMap =
+            byPartRows.stream().collect(Collectors.toMap(
+                t -> t.get(recruitmentPart.part).name(),
+                t -> new DocumentSelectionApplicationListInfo.ByPart(
+                    t.get(application.id.count()),
+                    t.get(selectedCaseSum)
+                )
+            ));
+
+        return new DocumentSelectionApplicationListInfo.Summary(
+            total != null ? total : 0L,
+            selected != null ? selected : 0L,
+            byPartMap
+        );
+    }
+
+    /**
+     * 여러 applicationId에 대한 서류 평가 평균 점수 배치 조회 (SUBMITTED만) - 반환: applicationId -> avgScore(소수 1자리 반올림)
+     */
+    public Map<Long, BigDecimal> calculateAvgDocScoreByApplicationIds(Set<Long> applicationIds) {
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Tuple> rows = queryFactory
+            .select(
+                evaluation.application.id,
+                evaluation.score.avg()
+            )
+            .from(evaluation)
+            .where(
+                evaluation.application.id.in(applicationIds),
+                evaluation.stage.eq(EvaluationStage.DOCUMENT),
+                evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                evaluation.score.isNotNull()
+            )
+            .groupBy(evaluation.application.id)
+            .fetch();
+
+        return rows.stream().collect(Collectors.toMap(
+            t -> t.get(evaluation.application.id),
+            t -> {
+                Double avg = t.get(evaluation.score.avg());
+                return avg == null ? null : BigDecimal.valueOf(avg).setScale(1, RoundingMode.HALF_UP);
+            }
+        ));
+    }
+
     // ========================================================================
     // Private 헬퍼 메서드
     // ========================================================================
@@ -309,4 +465,93 @@ public class ApplicationQueryRepository {
         // 3. application.formResponseId가 위 서브쿼리에 포함되는지 확인
         return application.formResponseId.in(formResponseIds);
     }
+
+    private BooleanExpression documentSelectionStatus() {
+        return application.status.in(ApplicationStatus.APPLIED, ApplicationStatus.DOC_PASSED);
+    }
+
+    /**
+     * part 필터: 1지망(priority=0) 기준 - ALL이면 null (필터 없음)
+     */
+    private BooleanExpression firstPriorityPartMatches(String part) {
+        if (!StringUtils.hasText(part) || "ALL".equalsIgnoreCase(part)) {
+            return null;
+        }
+
+        ChallengerPart challengerPart;
+        try {
+            challengerPart = ChallengerPart.valueOf(part.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid part parameter: {}", part);
+            return null;
+        }
+
+        return JPAExpressions
+            .selectOne()
+            .from(applicationPartPreference)
+            .join(recruitmentPart).on(recruitmentPart.id.eq(applicationPartPreference.recruitmentPart.id))
+            .where(
+                applicationPartPreference.application.id.eq(application.id),
+                applicationPartPreference.priority.eq(1),
+                recruitmentPart.part.eq(challengerPart)
+            )
+            .exists();
+    }
+
+    /**
+     * 정렬 - SCORE_DESC/SCORE_ASC: application.docScore 기준 (null은 뒤로) - EVALUATED_AT_ASC: 제출된 서류평가 updatedAt의 max 기준 오름차순
+     * (null은 뒤로)
+     */
+    private com.querydsl.core.types.OrderSpecifier<?>[] documentSelectionOrderBy(String sort) {
+        String s = (sort == null) ? "SCORE_DESC" : sort;
+
+        NumberExpression<Double> avgDocScore =
+            Expressions.numberTemplate(
+                Double.class,
+                "({0})",
+                JPAExpressions
+                    .select(evaluation.score.avg())
+                    .from(evaluation)
+                    .where(
+                        evaluation.application.id.eq(application.id),
+                        evaluation.stage.eq(EvaluationStage.DOCUMENT),
+                        evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                        evaluation.score.isNotNull()
+                    )
+            );
+
+        DateTimeExpression<Instant> evaluatedAtMax =
+            Expressions.dateTimeTemplate(
+                Instant.class,
+                "({0})",
+                JPAExpressions
+                    .select(evaluation.updatedAt.max())
+                    .from(evaluation)
+                    .where(
+                        evaluation.application.id.eq(application.id),
+                        evaluation.stage.eq(EvaluationStage.DOCUMENT),
+                        evaluation.status.eq(EvaluationStatus.SUBMITTED)
+                    )
+            );
+
+        return switch (s) {
+            case "SCORE_ASC" -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                avgDocScore.asc().nullsLast(),
+                application.id.asc()
+            };
+            case "EVALUATED_AT_ASC" -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                evaluatedAtMax.asc().nullsLast(),
+                application.id.asc()
+            };
+            case "SCORE_DESC" -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                avgDocScore.desc().nullsLast(),
+                application.id.asc()
+            };
+            default -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                avgDocScore.desc().nullsLast(),
+                application.id.asc()
+            };
+        };
+    }
+
 }

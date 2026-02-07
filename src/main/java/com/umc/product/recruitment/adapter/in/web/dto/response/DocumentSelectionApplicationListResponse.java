@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.adapter.in.web.dto.response;
 
+import com.umc.product.global.response.PageResponse;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo.ByPart;
 import java.util.List;
@@ -8,8 +9,7 @@ import java.util.Map;
 public record DocumentSelectionApplicationListResponse(
     DocumentSelectionSummary summary,
     String sort,
-    List<DocumentSelectionApplicationResponse> documentSelectionApplications,
-    PaginationResponse pagination
+    PageResponse<DocumentSelectionApplicationResponse> documentSelectionApplications
 ) {
     public static DocumentSelectionApplicationListResponse from(DocumentSelectionApplicationListInfo info) {
         return new DocumentSelectionApplicationListResponse(
@@ -19,14 +19,16 @@ public record DocumentSelectionApplicationListResponse(
                 info.summary().byPart()
             ),
             info.sort(),
-            info.documentSelectionApplications().stream()
-                .map(DocumentSelectionApplicationResponse::from)
-                .toList(),
-            new PaginationResponse(
+            new PageResponse<>(
+                info.documentSelectionApplications().stream()
+                    .map(DocumentSelectionApplicationResponse::from)
+                    .toList(),
                 info.pagination().page(),
                 info.pagination().size(),
+                info.pagination().totalElements(),
                 info.pagination().totalPages(),
-                info.pagination().totalElements()
+                info.pagination().hasNext(),
+                info.pagination().hasPrevious()
             )
         );
     }
@@ -73,13 +75,5 @@ public record DocumentSelectionApplicationListResponse(
     }
 
     public record PartResponse(String key, String label) {
-    }
-
-    public record PaginationResponse(
-        int page,
-        int size,
-        int totalPages,
-        long totalElements
-    ) {
     }
 }
