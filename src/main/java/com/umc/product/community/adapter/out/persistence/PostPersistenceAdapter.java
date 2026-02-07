@@ -4,6 +4,7 @@ import com.umc.product.community.application.port.in.post.TogglePostLikeUseCase.
 import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
 import com.umc.product.community.application.port.out.LoadPostPort;
 import com.umc.product.community.application.port.out.PostSearchData;
+import com.umc.product.community.application.port.out.PostWithAuthor;
 import com.umc.product.community.application.port.out.SavePostPort;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
@@ -69,6 +70,12 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     public Optional<Post> findById(Long postId) {
         return postRepository.findById(postId)
                 .map(PostJpaEntity::toDomain);
+    }
+
+    @Override
+    public Optional<PostWithAuthor> findByIdWithAuthor(Long postId) {
+        return postRepository.findById(postId)
+                .map(entity -> new PostWithAuthor(entity.toDomain(), entity.getAuthorChallengerId()));
     }
 
     @Override

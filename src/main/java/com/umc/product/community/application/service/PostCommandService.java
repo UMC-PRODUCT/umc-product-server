@@ -1,7 +1,5 @@
 package com.umc.product.community.application.service;
 
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.community.application.port.in.PostInfo;
 import com.umc.product.community.application.port.in.post.CreatePostUseCase;
 import com.umc.product.community.application.port.in.post.DeletePostUseCase;
@@ -11,14 +9,13 @@ import com.umc.product.community.application.port.in.post.command.CreateLightnin
 import com.umc.product.community.application.port.in.post.command.CreatePostCommand;
 import com.umc.product.community.application.port.in.post.command.UpdatePostCommand;
 import com.umc.product.community.application.port.out.LoadPostPort;
+import com.umc.product.community.application.port.out.PostWithAuthor;
 import com.umc.product.community.application.port.out.SavePostPort;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.Post.LightningInfo;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
-import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,8 +28,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
 
     private final LoadPostPort loadPostPort;
     private final SavePostPort savePostPort;
-    private final GetChallengerUseCase getChallengerUseCase;
-    private final GetMemberUseCase getMemberUseCase;
+    private final AuthorInfoProvider authorInfoProvider;
 
     @Override
     public PostInfo createPost(CreatePostCommand command) {
@@ -43,7 +39,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         );
 
         Post savedPost = savePostPort.save(post, command.authorChallengerId());
-        String authorName = getAuthorName(command.authorChallengerId());
+        String authorName = authorInfoProvider.getAuthorName(command.authorChallengerId());
         return PostInfo.from(savedPost, command.authorChallengerId(), authorName);
     }
 
@@ -63,15 +59,16 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         );
 
         Post savedPost = savePostPort.save(post, command.authorChallengerId());
-        String authorName = getAuthorName(command.authorChallengerId());
+        String authorName = authorInfoProvider.getAuthorName(command.authorChallengerId());
         return PostInfo.from(savedPost, command.authorChallengerId(), authorName);
     }
 
     @Override
     public PostInfo updatePost(UpdatePostCommand command) {
-        Post post = loadPostPort.findById(command.postId())
+        PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(command.postId())
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
+        Post post = postWithAuthor.post();
         post.update(
                 command.title(),
                 command.content(),
@@ -79,9 +76,8 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         );
 
         Post savedPost = savePostPort.save(post);
-        Long authorId = loadPostPort.findAuthorIdByPostId(command.postId());
-        String authorName = getAuthorName(authorId);
-        return PostInfo.from(savedPost, authorId, authorName);
+        String authorName = authorInfoProvider.getAuthorName(postWithAuthor.authorChallengerId());
+        return PostInfo.from(savedPost, postWithAuthor.authorChallengerId(), authorName);
     }
 
     @Override
@@ -98,11 +94,5 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
         return savePostPort.toggleLike(postId, challengerId);
-    }
-
-    private String getAuthorName(Long challengerId) {
-        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-        MemberProfileInfo profileInfo = getMemberUseCase.getProfile(challengerInfo.memberId());
-        return profileInfo.name();
     }
 }

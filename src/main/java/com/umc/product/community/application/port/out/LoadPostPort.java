@@ -14,6 +14,11 @@ public interface LoadPostPort {
 
     Optional<Post> findById(Long postId);
 
+    /**
+     * Post와 작성자 ID를 함께 조회 (중복 조회 방지)
+     */
+    Optional<PostWithAuthor> findByIdWithAuthor(Long postId);
+
     List<Post> findByCategory(Category category);
 
     Page<PostSearchData> searchByKeyword(String keyword, Pageable pageable);

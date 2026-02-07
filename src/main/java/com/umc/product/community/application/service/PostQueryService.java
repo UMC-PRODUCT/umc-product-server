@@ -12,6 +12,7 @@ import com.umc.product.community.application.port.in.post.query.SearchPostUseCas
 import com.umc.product.community.application.port.out.LoadCommentPort;
 import com.umc.product.community.application.port.out.LoadPostPort;
 import com.umc.product.community.application.port.out.PostSearchData;
+import com.umc.product.community.application.port.out.PostWithAuthor;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.global.exception.BusinessException;
@@ -37,25 +38,24 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
     private final LoadCommentPort loadCommentPort;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
+    private final AuthorInfoProvider authorInfoProvider;
 
     @Override
     public PostInfo getPostDetail(Long postId) {
-        Post post = loadPostPort.findById(postId)
+        PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(postId)
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
-        Long authorId = loadPostPort.findAuthorIdByPostId(postId);
-        String authorName = getAuthorName(authorId);
-        return PostInfo.from(post, authorId, authorName);
+        String authorName = authorInfoProvider.getAuthorName(postWithAuthor.authorChallengerId());
+        return PostInfo.from(postWithAuthor.post(), postWithAuthor.authorChallengerId(), authorName);
     }
 
     @Override
     public PostDetailInfo getPostDetail(Long postId, Long challengerId) {
-        Post post = loadPostPort.findById(postId)
+        PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(postId)
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
-        Long authorId = loadPostPort.findAuthorIdByPostId(postId);
-        String authorName = getAuthorName(authorId);
-        PostInfo postInfo = PostInfo.from(post, authorId, authorName);
+        String authorName = authorInfoProvider.getAuthorName(postWithAuthor.authorChallengerId());
+        PostInfo postInfo = PostInfo.from(postWithAuthor.post(), postWithAuthor.authorChallengerId(), authorName);
         int commentCount = loadCommentPort.countByPostId(postId);
 
         return PostDetailInfo.of(postInfo, commentCount);
@@ -117,11 +117,5 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         Page<PostSearchData> searchDataPage = loadPostPort.searchByKeyword(keyword, pageable);
 
         return searchDataPage.map(PostSearchData::toResult);
-    }
-
-    private String getAuthorName(Long challengerId) {
-        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-        MemberProfileInfo profileInfo = getMemberUseCase.getProfile(challengerInfo.memberId());
-        return profileInfo.name();
     }
 }
