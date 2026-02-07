@@ -72,6 +72,9 @@ public class PostJpaEntity extends BaseEntity {
         this.maxParticipants = maxParticipants;
     }
 
+    private static final String DEFAULT_REGION = "";
+    private static final boolean DEFAULT_ANONYMOUS = false;
+
     public static PostJpaEntity from(Post post) {
         LocalDateTime meetAt = null;
         String location = null;
@@ -88,8 +91,8 @@ public class PostJpaEntity extends BaseEntity {
                 post.getTitle(),
                 post.getContent(),
                 post.getCategory(),
-                post.getRegion(),
-                post.isAnonymous(),
+                DEFAULT_REGION,
+                DEFAULT_ANONYMOUS,
                 meetAt,
                 location,
                 maxParticipants
@@ -121,11 +124,10 @@ public class PostJpaEntity extends BaseEntity {
         );
     }
 
-    public void update(String title, String content, Category category, String region) {
+    public void update(String title, String content, Category category) {
         this.title = title;
         this.content = content;
         this.category = category;
-        this.region = region;
     }
 
     public boolean toggleLike(Long challengerId) {

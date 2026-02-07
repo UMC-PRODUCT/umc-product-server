@@ -10,8 +10,6 @@ public record PostSearchResponse(
         String title,
         String contentPreview,
         Category category,
-        String region,
-        boolean anonymous,
         int likeCount,
         Instant createdAt,
         MatchType matchType
@@ -23,8 +21,6 @@ public record PostSearchResponse(
                 result.title(),
                 result.contentPreview(),
                 result.category(),
-                result.region(),
-                result.anonymous(),
                 result.likeCount(),
                 result.createdAt(),
                 result.matchType()
