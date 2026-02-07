@@ -3,7 +3,6 @@ package com.umc.product.schedule.adapter.in.web.dto.response;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
-
 @Schema(description = "출석부 응답")
 public record AttendanceSheetResponse(
     @Schema(description = "출석부 ID", example = "1")
@@ -12,10 +11,10 @@ public record AttendanceSheetResponse(
     @Schema(description = "일정 ID", example = "1")
     Long scheduleId,
 
-    @Schema(description = "출석 시작 시간", example = "2026-03-16T10:00:00")
+    @Schema(description = "출석 시작 시간", example = "2026-03-16T01:00:00Z")
     Instant startTime,
 
-    @Schema(description = "출석 종료 시간", example = "2026-03-16T12:00:00")
+    @Schema(description = "출석 종료 시간", example = "2026-03-16T03:00:00Z")
     Instant endTime,
 
     @Schema(description = "지각 기준 시간(분)", example = "10")

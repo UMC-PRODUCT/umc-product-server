@@ -60,8 +60,8 @@ public record CreateScheduleRequest(
     public CreateScheduleCommand toCommand(Long authorMemberId) {
         return CreateScheduleCommand.of(
             name,
-            startsAt.atZone(KST).toInstant(),
-            endsAt.atZone(KST).toInstant(),
+            startsAt,
+            endsAt,
             isAllDay,
             locationName,
             GeometryUtils.createPoint(latitude, longitude),

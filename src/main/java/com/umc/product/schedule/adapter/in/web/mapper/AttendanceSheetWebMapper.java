@@ -13,8 +13,8 @@ public class AttendanceSheetWebMapper {
         return new AttendanceSheetResponse(
             info.id() != null ? info.id().id() : null,
             info.scheduleId(),
-            info.window().getStartTime().atZone(KST).toLocalDateTime(),
-            info.window().getEndTime().atZone(KST).toLocalDateTime(),
+            info.window().getStartTime(),
+            info.window().getEndTime(),
             info.window().getLateThresholdMinutes(),
             info.requiresApproval(),
             info.active()

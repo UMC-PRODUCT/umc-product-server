@@ -8,11 +8,11 @@ import com.umc.product.schedule.application.port.in.command.dto.UpdateAttendance
 import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record UpdateAttendanceSheetRequest(
-    LocalDateTime startTime,
-    LocalDateTime endTime,
+    Instant startTime,
+    Instant endTime,
     Integer lateThresholdMinutes,
     boolean requiresApproval
 ) {
@@ -32,8 +32,8 @@ public record UpdateAttendanceSheetRequest(
 
     public UpdateAttendanceSheetCommand toCommand(Long sheetId) {
         AttendanceWindow window = AttendanceWindow.from(
-            startTime.atZone(KST).toInstant(),
-            endTime.atZone(KST).toInstant(),
+            startTime,
+            endTime,
             lateThresholdMinutes
         );
         return new UpdateAttendanceSheetCommand(new AttendanceSheetId(sheetId), window, requiresApproval);

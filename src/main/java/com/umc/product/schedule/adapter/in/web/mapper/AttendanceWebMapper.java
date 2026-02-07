@@ -75,7 +75,7 @@ public class AttendanceWebMapper {
             info.schoolName(),
             info.status().name(),
             info.reason(),
-            info.requestedAt() != null ? info.requestedAt().atZone(KST).toLocalDateTime() : null
+            info.requestedAt()
         );
     }
 

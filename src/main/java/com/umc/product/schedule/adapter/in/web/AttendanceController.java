@@ -18,6 +18,8 @@ import com.umc.product.schedule.application.port.in.query.GetAvailableAttendance
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetPendingAttendancesUseCase;
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/attendances")
 @RequiredArgsConstructor
+@Tag(name = "Attendance", description = "출석 관리 API")
 public class AttendanceController implements AttendanceControllerApi {
 
     private final CheckAttendanceUseCase checkAttendanceUseCase;
@@ -46,11 +49,24 @@ public class AttendanceController implements AttendanceControllerApi {
 
     @Override
     @PostMapping("/check")
+    @Operation(summary = "일반 출석 체크", description = "위치 인증이 완료된 경우 출석 체크를 진행합니다")
     public Long checkAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @RequestBody CheckAttendanceRequest request
+        @Valid @RequestBody CheckAttendanceRequest request
     ) {
         return checkAttendanceUseCase.check(request.toCommand(memberPrincipal.getMemberId())).id();
+    }
+
+    @PostMapping("/submit-reason")
+    @Operation(
+        summary = "사유 제출 출석",
+        description = "위치 인증이 어려운 경우 사유를 제출하여 출석 체크를 요청합니다. 관리자 승인을 거쳐 인정결석으로 처리됩니다."
+    )
+    public Long submitReason(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Valid @RequestBody SubmitReasonRequest request
+    ) {
+        return submitReasonUseCase.submitReason(request.toCommand(memberPrincipal.getMemberId())).id();
     }
 
     @Override

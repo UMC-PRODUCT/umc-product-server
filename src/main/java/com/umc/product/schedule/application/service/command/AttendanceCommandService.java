@@ -74,6 +74,33 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
     }
 
     @Override
+    public AttendanceRecordId submitReason(SubmitReasonCommand command) {
+        // 출석부 조회 및 검증
+        AttendanceSheet sheet = loadAttendanceSheetPort.findById(command.attendanceSheetId())
+            .orElseThrow(
+                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+
+        // 출석부 활성 상태 검증
+        if (!sheet.isActive()) {
+            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_INACTIVE);
+        }
+
+        // 기존 출석 기록 조회
+        AttendanceRecord record = loadAttendanceRecordPort
+            .findBySheetIdAndMemberId(command.attendanceSheetId(), command.memberId())
+            .orElseThrow(
+                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
+
+        // 사유 제출 처리 (EXCUSED_PENDING 상태로 전환)
+        record.submitReasonBeforeCheck(command.reason(), command.submittedAt());
+
+        // 저장
+        AttendanceRecord savedRecord = saveAttendanceRecordPort.save(record);
+
+        return savedRecord.getAttendanceRecordId();
+    }
+
+    @Override
     public void approve(AttendanceRecordId recordId, Long confirmerId) {
         // 출석 기록 조회
         AttendanceRecord record = loadAttendanceRecordPort.findById(recordId.id())
