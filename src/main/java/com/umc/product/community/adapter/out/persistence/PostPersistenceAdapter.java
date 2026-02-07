@@ -24,7 +24,7 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
 
     @Override
     public Post save(Post post) {
-        // ID가 있으면 UPDATE, 없으면 INSERT
+        // UPDATE용 (authorChallengerId 필요 없음)
         if (post.getPostId() != null) {
             PostJpaEntity entity = postRepository.findById(post.getPostId().id())
                     .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
@@ -32,7 +32,17 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
             return entity.toDomain();
         }
 
-        PostJpaEntity entity = PostJpaEntity.from(post);
+        throw new IllegalArgumentException("새 게시글 생성 시에는 save(Post post, Long authorChallengerId)를 사용하세요.");
+    }
+
+    @Override
+    public Post save(Post post, Long authorChallengerId) {
+        // CREATE용 (authorChallengerId 포함)
+        if (post.getPostId() != null) {
+            throw new IllegalArgumentException("이미 ID가 있는 게시글은 save(Post post)를 사용하세요.");
+        }
+
+        PostJpaEntity entity = PostJpaEntity.from(post, authorChallengerId);
         PostJpaEntity saved = postRepository.save(entity);
         return saved.toDomain();
     }
@@ -68,13 +78,6 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     }
 
     @Override
-    public List<Post> findByRegion(String region) {
-        return postRepository.findByRegion(region).stream()
-                .map(PostJpaEntity::toDomain)
-                .toList();
-    }
-
-    @Override
     public LikeResult toggleLike(Long postId, Long challengerId) {
         PostJpaEntity entity = postRepository.findById(postId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
@@ -85,5 +88,12 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     @Override
     public Page<PostSearchData> searchByKeyword(String keyword, Pageable pageable) {
         return postQueryRepository.searchByKeyword(keyword, pageable);
+    }
+
+    @Override
+    public Long findAuthorIdByPostId(Long postId) {
+        return postRepository.findById(postId)
+                .map(PostJpaEntity::getAuthorChallengerId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
     }
 }
