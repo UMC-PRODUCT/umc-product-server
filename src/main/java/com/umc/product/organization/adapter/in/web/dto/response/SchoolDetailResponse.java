@@ -24,6 +24,15 @@ public record SchoolDetailResponse(
         @Schema(description = "로고 이미지 URL")
         String logoImageLink,
 
+        @Schema(description = "카카오톡 링크")
+        String kakaoLink,
+
+        @Schema(description = "인스타그램 링크")
+        String instagramLink,
+
+        @Schema(description = "유튜브 링크")
+        String youtubeLink,
+
         @Schema(description = "생성일", example = "2024-03-01T00:00:00Z")
         Instant createdAt,
 
@@ -38,6 +47,9 @@ public record SchoolDetailResponse(
                 info.schoolId(),
                 info.remark(),
                 info.logoImageUrl(),
+                info.kakaoLink(),
+                info.instagramLink(),
+                info.youtubeLink(),
                 info.createdAt(),
                 info.updatedAt()
         );
