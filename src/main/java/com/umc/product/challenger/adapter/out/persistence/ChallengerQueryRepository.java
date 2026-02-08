@@ -12,6 +12,8 @@ import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.QChallenger;
 import com.umc.product.challenger.domain.QChallengerPoint;
 import com.umc.product.challenger.domain.enums.PointType;
+import com.umc.product.challenger.domain.exception.ChallengerDomainException;
+import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.domain.QMember;
 import com.umc.product.organization.domain.QChapterSchool;
@@ -178,7 +180,7 @@ public class ChallengerQueryRepository {
             .fetchOne();
 
         if (cursorRow == null) {
-            return null;
+            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CURSOR_ID);
         }
 
         Integer cursorPartOrder = cursorRow.get(partOrder(c));

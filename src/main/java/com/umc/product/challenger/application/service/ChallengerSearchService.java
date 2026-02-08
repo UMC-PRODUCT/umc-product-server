@@ -66,9 +66,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
                 .map(challenger -> toItemInfo(challenger, memberProfiles, pointSums, roleTypes))
                 .toList();
 
-        Long nextCursor = hasNext && !result.isEmpty()
-                ? result.get(result.size() - 1).getId()
-                : null;
+        Long nextCursor = hasNext ? result.get(result.size() - 1).getId() : null;
 
         return new SearchChallengerCursorResult(items, nextCursor, hasNext, partCounts);
     }

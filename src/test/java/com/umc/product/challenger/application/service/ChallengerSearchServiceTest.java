@@ -251,6 +251,18 @@ class ChallengerSearchServiceTest {
         }
 
         @Test
+        void 유효하지_않은_커서_ID가_전달되면_예외가_발생한다() {
+            // given
+            given(searchChallengerPort.cursorSearch(any(), any(), anyInt()))
+                    .willThrow(new ChallengerDomainException(
+                            com.umc.product.challenger.domain.exception.ChallengerErrorCode.INVALID_CURSOR_ID));
+
+            // when & then
+            assertThatThrownBy(() -> challengerSearchService.cursorSearch(defaultQuery, 9999L, 4))
+                    .isInstanceOf(ChallengerDomainException.class);
+        }
+
+        @Test
         void 마지막_페이지에서_size보다_적은_결과가_반환되면_hasNext는_false이다() {
             // given
             int size = 4;
