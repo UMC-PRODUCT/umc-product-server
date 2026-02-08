@@ -9,11 +9,14 @@ public record PostInfo(
         String title,
         String content,
         Category category,
+        Long authorId,
+        String authorName,
         LocalDateTime meetAt,
         String location,
-        Integer maxParticipants
+        Integer maxParticipants,
+        String openChatUrl
 ) {
-    public static PostInfo from(Post post) {
+    public static PostInfo from(Post post, Long authorId, String authorName) {
         Long postId = post.getPostId() != null ? post.getPostId().id() : null;
 
         // 번개글인 경우
@@ -24,9 +27,12 @@ public record PostInfo(
                     post.getTitle(),
                     post.getContent(),
                     post.getCategory(),
+                    authorId,
+                    authorName,
                     info.meetAt(),
                     info.location(),
-                    info.maxParticipants()
+                    info.maxParticipants(),
+                    info.openChatUrl()
             );
         }
 
@@ -36,6 +42,9 @@ public record PostInfo(
                 post.getTitle(),
                 post.getContent(),
                 post.getCategory(),
+                authorId,
+                authorName,
+                null,
                 null,
                 null,
                 null

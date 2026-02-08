@@ -95,4 +95,22 @@ public class School extends BaseEntity {
     public void unassignFromGisu(Long gisuId) {
         this.chapterSchools.removeIf(cs -> cs.getChapter().getGisu().getId().equals(gisuId));
     }
+
+    public void updateKakaoLink(String kakaoLink) {
+        if (StringUtils.hasText(kakaoLink)) {
+            this.kakaoLink = kakaoLink;
+        }
+    }
+
+    public void updateInstagramLink(String instagramLink) {
+        if (StringUtils.hasText(instagramLink)) {
+            this.instagramLink = instagramLink;
+        }
+    }
+
+    public void updateYoutubeLink(String youtubeLink) {
+        if (StringUtils.hasText(youtubeLink)) {
+            this.youtubeLink = youtubeLink;
+        }
+    }
 }

@@ -35,14 +35,20 @@ public class PostController {
 
     @PostMapping
     @Operation(summary = "일반 게시글 생성", description = "일반 게시글을 생성합니다. 번개글은 별도 API를 사용하세요.")
-    public PostResponse createPost(@RequestBody CreatePostRequest request) {
-        return PostResponse.from(createPostUseCase.createPost(request.toCommand()));
+    public PostResponse createPost(
+            @RequestBody CreatePostRequest request,
+            @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
+    ) {
+        return PostResponse.from(createPostUseCase.createPost(request.toCommand(challengerId)));
     }
 
     @PostMapping("/lightning")
     @Operation(summary = "번개글 생성", description = "번개 모임 게시글을 생성합니다.")
-    public PostResponse createLightningPost(@RequestBody CreateLightningRequest request) {
-        return PostResponse.from(createPostUseCase.createLightningPost(request.toCommand()));
+    public PostResponse createLightningPost(
+            @RequestBody CreateLightningRequest request,
+            @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
+    ) {
+        return PostResponse.from(createPostUseCase.createLightningPost(request.toCommand(challengerId)));
     }
 
     @PatchMapping("/{postId}")

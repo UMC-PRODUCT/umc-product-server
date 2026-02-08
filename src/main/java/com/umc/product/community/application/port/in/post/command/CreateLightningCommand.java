@@ -7,6 +7,8 @@ public record CreateLightningCommand(
         String content,
         LocalDateTime meetAt,
         String location,
-        Integer maxParticipants
+        Integer maxParticipants,
+        String openChatUrl,
+        Long authorChallengerId
 ) {
 }

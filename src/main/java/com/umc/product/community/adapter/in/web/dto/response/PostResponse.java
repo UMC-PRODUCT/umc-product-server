@@ -19,6 +19,12 @@ public record PostResponse(
         @Schema(description = "카테고리", example = "FREE")
         Category category,
 
+        @Schema(description = "작성자 ID", example = "123")
+        Long authorId,
+
+        @Schema(description = "작성자 이름", example = "홍길동")
+        String authorName,
+
         @Schema(description = "번개 정보 (번개글인 경우)")
         LightningInfoResponse lightningInfo
 ) {
@@ -29,7 +35,8 @@ public record PostResponse(
             lightningInfoResponse = new LightningInfoResponse(
                     info.meetAt(),
                     info.location(),
-                    info.maxParticipants()
+                    info.maxParticipants(),
+                    info.openChatUrl()
             );
         }
 
@@ -38,6 +45,8 @@ public record PostResponse(
                 info.title(),
                 info.content(),
                 info.category(),
+                info.authorId(),
+                info.authorName(),
                 lightningInfoResponse
         );
     }
@@ -51,7 +60,10 @@ public record PostResponse(
             String location,
 
             @Schema(description = "최대 참가자 수", example = "5")
-            Integer maxParticipants
+            Integer maxParticipants,
+
+            @Schema(description = "오픈 채팅 링크", example = "https://open.kakao.com/o/sxxxxxx")
+            String openChatUrl
     ) {
     }
 }

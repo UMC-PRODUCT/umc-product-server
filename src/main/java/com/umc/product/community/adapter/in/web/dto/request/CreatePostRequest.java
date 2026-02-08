@@ -32,7 +32,7 @@ public record CreatePostRequest(
         }
     }
 
-    public CreatePostCommand toCommand() {
-        return new CreatePostCommand(title, content, category);
+    public CreatePostCommand toCommand(Long authorChallengerId) {
+        return new CreatePostCommand(title, content, category, authorChallengerId);
     }
 }

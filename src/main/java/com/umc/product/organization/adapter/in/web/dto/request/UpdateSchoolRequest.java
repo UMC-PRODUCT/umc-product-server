@@ -15,9 +15,18 @@ public record UpdateSchoolRequest(
         String remark,
 
         @Schema(description = "로고 이미지 파일 ID (수정할 경우만 입력)", example = "abc123-def456")
-        String logoImageId
+        String logoImageId,
+
+        @Schema(description = "카카오톡 링크 (수정할 경우만 입력)", example = "https://open.kakao.com/o/example")
+        String kakaoLink,
+
+        @Schema(description = "인스타그램 링크 (수정할 경우만 입력)", example = "https://instagram.com/example")
+        String instagramLink,
+
+        @Schema(description = "유튜브 링크 (수정할 경우만 입력)", example = "https://youtube.com/@example")
+        String youtubeLink
 ) {
     public UpdateSchoolCommand toCommand() {
-        return new UpdateSchoolCommand(schoolName, chapterId, remark, logoImageId);
+        return new UpdateSchoolCommand(schoolName, chapterId, remark, logoImageId, kakaoLink, instagramLink, youtubeLink);
     }
 }

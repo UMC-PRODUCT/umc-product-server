@@ -9,6 +9,9 @@ public record SchoolDetailInfo(
         Long schoolId,
         String remark,
         String logoImageUrl,
+        String kakaoLink,
+        String instagramLink,
+        String youtubeLink,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -19,6 +22,9 @@ public record SchoolDetailInfo(
         Long schoolId,
         String remark,
         String logoImageId,
+        String kakaoLink,
+        String instagramLink,
+        String youtubeLink,
         Instant createdAt,
         Instant updatedAt
     ) {
@@ -30,6 +36,9 @@ public record SchoolDetailInfo(
                 schoolId,
                 remark,
                 logoImageUrl,
+                kakaoLink,
+                instagramLink,
+                youtubeLink,
                 createdAt,
                 updatedAt
             );
