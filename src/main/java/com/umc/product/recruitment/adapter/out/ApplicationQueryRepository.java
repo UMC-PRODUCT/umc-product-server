@@ -8,6 +8,7 @@ import static com.umc.product.recruitment.domain.QRecruitment.recruitment;
 import static com.umc.product.recruitment.domain.QRecruitmentPart.recruitmentPart;
 import static com.umc.product.survey.domain.QFormResponse.formResponse;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
@@ -24,8 +25,13 @@ import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.enums.EvaluationStatus;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -234,6 +240,39 @@ public class ApplicationQueryRepository {
             .fetchOne();
 
         return Optional.ofNullable(result);
+    }
+
+    public Map<Long, Double> findAvgDocumentScoresByApplicationIds(Set<Long> applicationIds) {
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // (applicationId, avgScore)
+        java.util.List<Tuple> rows = queryFactory
+            .select(evaluation.application.id, evaluation.score.avg())
+            .from(evaluation)
+            .where(
+                evaluation.application.id.in(applicationIds),
+                evaluation.stage.eq(EvaluationStage.DOCUMENT),
+                evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                evaluation.score.isNotNull()
+            )
+            .groupBy(evaluation.application.id)
+            .fetch();
+
+        return rows.stream()
+            .collect(Collectors.toMap(
+                t -> t.get(evaluation.application.id),
+                t -> {
+                    Double avg = t.get(evaluation.score.avg());
+                    if (avg == null) {
+                        return null;
+                    }
+                    return BigDecimal.valueOf(avg)
+                        .setScale(1, RoundingMode.HALF_UP)
+                        .doubleValue();
+                }
+            ));
     }
 
     // ========================================================================

@@ -4,7 +4,9 @@ import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponse
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.domain.Application;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface LoadApplicationPort {
     Optional<Application> findByRecruitmentIdAndApplicantId(Long recruitmentId, Long memberId);
@@ -29,4 +31,6 @@ public interface LoadApplicationPort {
         Long recruitmentId,
         PartOption part
     );
+
+    Map<Long, Double> findAvgDocumentScoresByApplicationIds(Set<Long> applicationIds);
 }

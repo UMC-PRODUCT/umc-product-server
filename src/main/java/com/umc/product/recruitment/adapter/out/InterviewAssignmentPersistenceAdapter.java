@@ -1,9 +1,11 @@
 package com.umc.product.recruitment.adapter.out;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAssignmentRow;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -45,5 +47,15 @@ public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssig
             throw new IllegalArgumentException("ALL/null is not allowed here");
         }
         return ChallengerPart.valueOf(part.name());
+    }
+
+    @Override
+    public List<InterviewSchedulingAssignmentRow> findAssignmentRowsByRecruitmentIdAndSlotId(
+        Long recruitmentId,
+        Long slotId,
+        PartOption part
+    ) {
+        return interviewAssignmentQueryRepository.findAssignmentRowsByRecruitmentIdAndSlotId(recruitmentId, slotId,
+            part);
     }
 }

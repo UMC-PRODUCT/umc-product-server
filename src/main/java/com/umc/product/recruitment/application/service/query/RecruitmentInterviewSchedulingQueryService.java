@@ -4,6 +4,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
+import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAssignmentRow;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewSchedulingApplicantsUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewSchedulingAssignmentsUseCase;
@@ -258,9 +259,58 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
     @Override
     public InterviewSchedulingAssignmentsInfo get(GetInterviewSchedulingAssignmentsQuery query) {
         // todo: 운영진 권한 검증 필요
-        // 해당 날짜에 면접이 배정된 지원자들의 면접 시간표를 반환
+        Long recruitmentId = query.recruitmentId();
+        Long slotId = query.slotId();
+        PartOption requestedPart = (query.part() != null) ? query.part() : PartOption.ALL;
 
-        return null;
+        // slot이 recruitment에 속하는지 검증
+        InterviewSlot slot = loadInterviewSlotPort.findById(slotId)
+            .orElseThrow(() -> new BusinessException(
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND
+            ));
+
+        if (!slot.getRecruitment().getId().equals(recruitmentId)) {
+            throw new BusinessException(
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT
+            );
+        }
+
+        // 해당 슬롯에 배정된 assignment 목록 조회 (배정 순서대로)
+        //    - 여기서는 docScore 제외한 정보만 가져옴
+        //    - part도 ChallengerPart로 가져와서 서비스에서 매핑
+        List<InterviewSchedulingAssignmentRow> rows =
+            loadInterviewAssignmentPort.findAssignmentRowsByRecruitmentIdAndSlotId(
+                recruitmentId,
+                slotId,
+                requestedPart
+            );
+
+        if (rows.isEmpty()) {
+            return new InterviewSchedulingAssignmentsInfo(List.of());
+        }
+
+        Set<Long> applicationIds = rows.stream()
+            .map(InterviewSchedulingAssignmentRow::applicationId)
+            .collect(java.util.stream.Collectors.toSet());
+
+        Map<Long, Double> docScoreByApplicationId =
+            loadApplicationPort.findAvgDocumentScoresByApplicationIds(applicationIds);
+
+        List<InterviewSchedulingAssignmentsInfo.InterviewAssignmentInfo> result = rows.stream()
+            .map(r -> new InterviewSchedulingAssignmentsInfo.InterviewAssignmentInfo(
+                r.assignmentId(),
+                r.applicationId(),
+                r.nickname(),
+                r.name(),
+                toPartOption(r.firstPart()),
+                toPartOption(r.secondPart()),
+                docScoreByApplicationId.get(r.applicationId())
+            ))
+            .toList();
+
+        return new InterviewSchedulingAssignmentsInfo(result);
     }
 
     private InterviewSchedulingSummaryInfo.ProgressInfo buildProgressAll(Long recruitmentId) {
@@ -413,6 +463,13 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         }
 
         return false;
+    }
+
+    private PartOption toPartOption(com.umc.product.common.domain.enums.ChallengerPart part) {
+        if (part == null) {
+            return null;
+        }
+        return PartOption.valueOf(part.name());
     }
 
 }

@@ -12,7 +12,9 @@ import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
 import com.umc.product.recruitment.domain.Application;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -133,6 +135,11 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
         return applicationQueryRepository.findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
             recruitmentId, part
         );
+    }
+
+    @Override
+    public Map<Long, Double> findAvgDocumentScoresByApplicationIds(Set<Long> applicationIds) {
+        return applicationQueryRepository.findAvgDocumentScoresByApplicationIds(applicationIds);
     }
 
     private ChallengerPart toChallengerPart(PartOption part) {
