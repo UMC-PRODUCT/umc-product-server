@@ -83,30 +83,10 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
 
     @Override
     public UpdateLiveQuestionResult update(UpdateLiveQuestionCommand command) {
-        // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
-        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(command.assignmentId())
-            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
+        InterviewLiveQuestion question = validateAndGetQuestion(command.recruitmentId(), command.assignmentId(),
+            command.liveQuestionId(), command.memberId());
 
-        if (!assignment.getRecruitment().getId().equals(command.recruitmentId())) {
-            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
-        }
-
-        // 2. InterviewLiveQuestion 조회
-        InterviewLiveQuestion question = loadInterviewLiveQuestionPort.findById(command.liveQuestionId())
-            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_LIVE_QUESTION_NOT_FOUND));
-
-        // 3. 검증: 질문이 해당 assignment의 application에 속하는지
-        if (!question.getApplication().getId().equals(assignment.getApplication().getId())) {
-            throw new RecruitmentDomainException(
-                RecruitmentErrorCode.INTERVIEW_LIVE_QUESTION_NOT_BELONGS_TO_ASSIGNMENT);
-        }
-
-        // 4. 검증 : 작성자와 수정자의 일치 여부
-        if (!question.getAuthorMemberId().equals(command.memberId())) {
-            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_LIVE_QUESTION_NOT_EDITABLE);
-        }
-
-        // 5. 질문 내용 update
+        // 질문 내용 update
         question.changeContent(command.text());
 
         return new UpdateLiveQuestionResult(
@@ -117,16 +97,27 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
 
     @Override
     public void delete(DeleteLiveQuestionCommand command) {
+        InterviewLiveQuestion question = validateAndGetQuestion(command.recruitmentId(), command.assignmentId(),
+            command.liveQuestionId(), command.memberId());
+
+        // 질문 삭제
+        saveInterviewLiveQuestionPort.deleteById(question.getId());
+    }
+
+    // 즉석 질문 수정, 삭제를 위한 검증 private method
+    private InterviewLiveQuestion validateAndGetQuestion(Long recruitmentId, Long assignmentId, Long liveQuestionId,
+                                                         Long memberId) {
+
         // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
-        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(command.assignmentId())
+        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(assignmentId)
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
 
-        if (!assignment.getRecruitment().getId().equals(command.recruitmentId())) {
+        if (!assignment.getRecruitment().getId().equals(recruitmentId)) {
             throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
         }
 
-        // 2. InterviewLiveQuestion 조회
-        InterviewLiveQuestion question = loadInterviewLiveQuestionPort.findById(command.liveQuestionId())
+        // 2. 검증 : InterviewLiveQuestion 존재
+        InterviewLiveQuestion question = loadInterviewLiveQuestionPort.findById(liveQuestionId)
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_LIVE_QUESTION_NOT_FOUND));
 
         // 3. 검증: 질문이 해당 assignment의 application에 속하는지
@@ -135,12 +126,12 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
                 RecruitmentErrorCode.INTERVIEW_LIVE_QUESTION_NOT_BELONGS_TO_ASSIGNMENT);
         }
 
-        // 4. 검증 : 작성자와 삭제자의 일치 여부
-        if (!question.getAuthorMemberId().equals(command.memberId())) {
+        // 4. 검증 : 작성자와 요청자의 일치 여부
+        if (!question.getAuthorMemberId().equals(memberId)) {
             throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_LIVE_QUESTION_NOT_EDITABLE);
         }
 
-        // 5. 삭제
-        saveInterviewLiveQuestionPort.deleteById(question.getId());
+        return question;
     }
+
 }
