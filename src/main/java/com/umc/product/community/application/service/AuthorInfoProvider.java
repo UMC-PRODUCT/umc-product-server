@@ -3,7 +3,7 @@ package com.umc.product.community.application.service;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +26,7 @@ public class AuthorInfoProvider {
      */
     public String getAuthorName(Long challengerId) {
         ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-        MemberProfileInfo profileInfo = getMemberUseCase.getProfile(challengerInfo.memberId());
-        return profileInfo.name();
+        MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
+        return memberInfo.name();
     }
 }
