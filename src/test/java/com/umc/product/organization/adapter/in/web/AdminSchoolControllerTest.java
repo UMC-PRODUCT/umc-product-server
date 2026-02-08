@@ -24,8 +24,11 @@ public class AdminSchoolControllerTest extends DocumentationTest {
     @Test
     void 총괄_신규학교를_추가한다() throws Exception {
         // given when
-        CreateSchoolRequest request = CreateSchoolRequest.builder().schoolName("중앙대학교").chapterId(3L)
-                .remark("중앙대는 멋집니다.").logoImageId("file-123").build();
+        CreateSchoolRequest request = CreateSchoolRequest.builder().schoolName("중앙대학교")
+                .remark("중앙대는 멋집니다.").logoImageId("file-123")
+                .kakaoLink("https://open.kakao.com/o/example")
+                .instagramLink("https://instagram.com/example")
+                .youtubeLink("https://youtube.com/@example").build();
 
         // then
         ResultActions result = mockMvc.perform(
@@ -34,9 +37,11 @@ public class AdminSchoolControllerTest extends DocumentationTest {
 
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(
                 requestFields(fieldWithPath("schoolName").type(JsonFieldType.STRING).description("학교 이름"),
-                        fieldWithPath("chapterId").type(JsonFieldType.STRING).description("소속 지부 ID"),
                         fieldWithPath("remark").type(JsonFieldType.STRING).description("비고"),
-                        fieldWithPath("logoImageId").optional().type(JsonFieldType.STRING).description("로고 이미지 파일 ID"))));
+                        fieldWithPath("logoImageId").optional().type(JsonFieldType.STRING).description("로고 이미지 파일 ID"),
+                        fieldWithPath("kakaoLink").optional().type(JsonFieldType.STRING).description("카카오톡 링크"),
+                        fieldWithPath("instagramLink").optional().type(JsonFieldType.STRING).description("인스타그램 링크"),
+                        fieldWithPath("youtubeLink").optional().type(JsonFieldType.STRING).description("유튜브 링크"))));
 
     }
 
@@ -45,7 +50,7 @@ public class AdminSchoolControllerTest extends DocumentationTest {
         // given // when
         Long schoolId = 1L;
 
-        CreateSchoolRequest request = CreateSchoolRequest.builder().schoolName("동국대학교").chapterId(3L)
+        CreateSchoolRequest request = CreateSchoolRequest.builder().schoolName("동국대학교")
                 .remark("신승호 라면이 맛있습니다.").logoImageId("file-456").build();
 
         ResultActions result = mockMvc.perform(
@@ -57,10 +62,11 @@ public class AdminSchoolControllerTest extends DocumentationTest {
                 .andDo(restDocsHandler.document(pathParameters(parameterWithName("schoolId").description("학교 ID")),
                         requestFields(
                                 fieldWithPath("schoolName").optional().type(JsonFieldType.STRING).description("학교 이름"),
-                                fieldWithPath("chapterId").optional().type(JsonFieldType.STRING)
-                                        .description("소속 지부 ID"),
                                 fieldWithPath("remark").optional().type(JsonFieldType.STRING).description("비고"),
-                                fieldWithPath("logoImageId").optional().type(JsonFieldType.STRING).description("로고 이미지 파일 ID"))));
+                                fieldWithPath("logoImageId").optional().type(JsonFieldType.STRING).description("로고 이미지 파일 ID"),
+                                fieldWithPath("kakaoLink").optional().type(JsonFieldType.STRING).description("카카오톡 링크"),
+                                fieldWithPath("instagramLink").optional().type(JsonFieldType.STRING).description("인스타그램 링크"),
+                                fieldWithPath("youtubeLink").optional().type(JsonFieldType.STRING).description("유튜브 링크"))));
 
     }
 

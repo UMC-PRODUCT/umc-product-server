@@ -4,7 +4,6 @@ import com.umc.product.organization.application.port.in.command.dto.CreateSchool
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
@@ -15,18 +14,23 @@ public record CreateSchoolRequest(
         @NotBlank @Size(min = 2, max = 50, message = "학교명은 2~50자")
         String schoolName,
 
-        @Schema(description = "지부 ID", example = "1")
-        @Positive(message = "chapterId는 양수여야 합니다")
-        Long chapterId,
-
         @Schema(description = "비고", example = "관악캠퍼스", maxLength = 200)
         @NotNull @Size(max = 200, message = "비고는 200자 이내")
         String remark,
 
         @Schema(description = "로고 이미지 파일 ID (presigned URL 업로드 후 전달)", example = "abc123-def456")
-        String logoImageId
+        String logoImageId,
+
+        @Schema(description = "카카오톡 링크", example = "https://open.kakao.com/o/example")
+        String kakaoLink,
+
+        @Schema(description = "인스타그램 링크", example = "https://instagram.com/example")
+        String instagramLink,
+
+        @Schema(description = "유튜브 링크", example = "https://youtube.com/@example")
+        String youtubeLink
 ) {
     public CreateSchoolCommand toCommand() {
-        return new CreateSchoolCommand(schoolName, chapterId, remark, logoImageId);
+        return new CreateSchoolCommand(schoolName, remark, logoImageId, kakaoLink, instagramLink, youtubeLink);
     }
 }
