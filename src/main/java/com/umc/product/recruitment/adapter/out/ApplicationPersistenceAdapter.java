@@ -148,4 +148,24 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
         }
         return ChallengerPart.valueOf(part.name());
     }
+
+    @Override
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRecruitment(
+        Long recruitmentId
+    ) {
+        return applicationQueryRepository
+            .findDocPassedApplicationIdsWithFormResponseIdsByRecruitment(recruitmentId);
+    }
+
+    @Override
+    public List<ApplicationIdWithFormResponseId>
+    findDocPassedApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+        Long recruitmentId,
+        PartOption partOption
+    ) {
+        return applicationQueryRepository
+            .findDocPassedApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(recruitmentId,
+                partOption);
+    }
+
 }

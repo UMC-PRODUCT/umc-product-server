@@ -33,4 +33,12 @@ public interface LoadApplicationPort {
     );
 
     Map<Long, Double> findAvgDocumentScoresByApplicationIds(Set<Long> applicationIds);
+
+    List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRecruitment(
+        Long recruitmentId);
+
+    List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+        Long recruitmentId,
+        PartOption partOption
+    );
 }

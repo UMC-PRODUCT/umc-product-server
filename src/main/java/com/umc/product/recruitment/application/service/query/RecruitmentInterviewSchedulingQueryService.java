@@ -3,6 +3,7 @@ package com.umc.product.recruitment.application.service.query;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.recruitment.adapter.out.ApplicationQueryRepository;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAssignmentRow;
 import com.umc.product.recruitment.application.port.in.PartOption;
@@ -59,6 +60,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
     private final LoadRecruitmentPartPort loadRecruitmentPartPort;
     private final LoadInterviewSlotPort loadInterviewSlotPort;
     private final LoadSingleAnswerPort loadSingleAnswerPort;
+    private final ApplicationQueryRepository applicationQueryRepository;
 
     @Override
     public InterviewSchedulingSummaryInfo get(GetInterviewSchedulingSummaryQuery query) {
@@ -247,13 +249,147 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
 
     @Override
     public InterviewSchedulingApplicantsInfo get(GetInterviewSchedulingApplicantsQuery query) {
+        Long recruitmentId = query.recruitmentId();
+        Long slotId = query.slotId();
+        PartOption requestedPart = (query.part() != null) ? query.part() : PartOption.ALL;
+        String keyword = query.keyword();
+
+        // slot 검증
+        InterviewSlot slot = loadInterviewSlotPort.findById(slotId)
+            .orElseThrow(() -> new BusinessException(
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND
+            ));
+
+        if (!slot.getRecruitment().getId().equals(recruitmentId)) {
+            throw new BusinessException(
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT
+            );
+        }
+
+        // slot time (KST)
+        ZoneId KST = ZoneId.of("Asia/Seoul");
+        String slotDate = slot.getStartsAt().atZone(KST).toLocalDate().toString();
+        String slotStartHHmm = slot.getStartsAt().atZone(KST).toLocalTime()
+            .format(DateTimeFormatter.ofPattern("HH:mm"));
+        String slotEndHHmm = slot.getEndsAt().atZone(KST).toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"));
+
+        // DOC_PASSED 지원자(appId, formResponseId) 조회 (part 1지망 필터 적용)
+        List<ApplicationIdWithFormResponseId> apps = (requestedPart == PartOption.ALL)
+            ? loadApplicationPort.findDocPassedApplicationIdsWithFormResponseIdsByRecruitment(recruitmentId)
+            : loadApplicationPort.findDocPassedApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+                recruitmentId, requestedPart
+            );
+
+        if (apps.isEmpty()) {
+            return new InterviewSchedulingApplicantsInfo(List.of(), List.of());
+        }
+
+        Map<Long, Long> formResponseIdByAppId = apps.stream()
+            .collect(java.util.stream.Collectors.toMap(
+                ApplicationIdWithFormResponseId::applicationId,
+                ApplicationIdWithFormResponseId::formResponseId
+            ));
+
+        List<Long> formResponseIds = apps.stream()
+            .map(ApplicationIdWithFormResponseId::formResponseId)
+            .distinct()
+            .toList();
+
+        // scheduleValue 로드 후, 이 slot에 투표한 지원자만 추림
+        Map<Long, Map<String, Object>> scheduleValueByFormResponseId =
+            loadSingleAnswerPort.findScheduleValuesByFormResponseIds(formResponseIds);
+
+        Set<Long> votedAppIds = formResponseIdByAppId.entrySet().stream()
+            .filter(e -> {
+                Long appId = e.getKey();
+                Long frId = e.getValue();
+                Map<String, Object> scheduleValue = scheduleValueByFormResponseId.get(frId);
+                if (scheduleValue == null || scheduleValue.isEmpty()) {
+                    return false;
+                }
+                return isVoted(scheduleValue, slotDate, slotStartHHmm);
+            })
+            .map(Map.Entry::getKey)
+            .collect(java.util.stream.Collectors.toSet());
+
+        if (votedAppIds.isEmpty()) {
+            return new InterviewSchedulingApplicantsInfo(List.of(), List.of());
+        }
+
+        // 배정 여부로 분리 (현재 slot 배정자는 alreadyScheduled에 포함시키지 않음: repo에서 slot != slotId)
+        Set<Long> assignedAppIds = loadInterviewAssignmentPort.findAssignedApplicationIdsByRecruitmentId(recruitmentId);
+
+        Set<Long> availableAppIds = votedAppIds.stream()
+            .filter(appId -> !assignedAppIds.contains(appId))
+            .collect(java.util.stream.Collectors.toSet());
+
+        Set<Long> alreadyScheduledAppIds = votedAppIds.stream()
+            .filter(assignedAppIds::contains)
+            .collect(java.util.stream.Collectors.toSet());
+
+        // docScore 평균 (둘 합친 appIds 기준)
+        Set<Long> targetAppIds = new java.util.HashSet<Long>();
+        targetAppIds.addAll(availableAppIds);
+        targetAppIds.addAll(alreadyScheduledAppIds);
+
+        Map<Long, Double> docScoreByApplicationId =
+            loadApplicationPort.findAvgDocumentScoresByApplicationIds(targetAppIds);
+
+        // rows 조회 (keyword 적용)
+        List<com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAvailableApplicantRow> availableRows =
+            java.util.Collections.emptyList();
+        if (!availableAppIds.isEmpty()) {
+            availableRows = applicationQueryRepository.findAvailableRows(
+                recruitmentId, availableAppIds, requestedPart, keyword
+            );
+        }
+
+        List<com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAlreadyScheduledApplicantRow> alreadyRows =
+            java.util.Collections.emptyList();
+        if (!alreadyScheduledAppIds.isEmpty()) {
+            alreadyRows = applicationQueryRepository.findAlreadyScheduledRows(
+                recruitmentId, slotId, alreadyScheduledAppIds, requestedPart, keyword
+            );
+        }
+
+        // Info 매핑
+        List<InterviewSchedulingApplicantsInfo.AvailableApplicantInfo> available = availableRows.stream()
+            .map(r -> new InterviewSchedulingApplicantsInfo.AvailableApplicantInfo(
+                r.applicationId(),
+                r.nickname(),
+                r.name(),
+                toPartOption(r.firstPart()),
+                toPartOption(r.secondPart()),
+                docScoreByApplicationId.get(r.applicationId())
+            ))
+            .toList();
+
+        List<InterviewSchedulingApplicantsInfo.AlreadyScheduledApplicantInfo> alreadyScheduled = alreadyRows.stream()
+            .map(r -> new InterviewSchedulingApplicantsInfo.AlreadyScheduledApplicantInfo(
+                r.applicationId(),
+                r.assignmentId(),
+                r.nickname(),
+                r.name(),
+                toPartOption(r.firstPart()),
+                toPartOption(r.secondPart()),
+                docScoreByApplicationId.get(r.applicationId()),
+                new InterviewSchedulingApplicantsInfo.AlreadyScheduledApplicantInfo.ScheduledSlotInfo(
+                    r.slotStartsAt().atZone(KST).toLocalDate().toString(),
+                    r.slotStartsAt().atZone(KST).toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")),
+                    r.slotEndsAt().atZone(KST).toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"))
+                )
+            ))
+            .toList();
+
+        return new InterviewSchedulingApplicantsInfo(available, alreadyScheduled);
+
         // todo: 운영진 권한 검증 필요
         // 해당 시간 면접 가능 지원자 목록은, recruitment.form.formSection.question 중 'SCHEDULE' 타입의 질문에 대한 singleAnswer의 json 값을 파싱해서 계산 필요
         // singleAnswer의 값은
         // {"selected": [{"date": "2026-01-23", "times": ["09:00", "09:30", "10:00"]}, {"date": "2026-01-24", "times": ["09:00", "09:30", "10:00"]}]}
         // 위 형식으로 되어있으며, 이 중 date와 times를 보고 해당 날짜에 가능한 시간대를 파악할 수 있습니다.
-
-        return null;
     }
 
     @Override
