@@ -1,7 +1,9 @@
 package com.umc.product.recruitment.application.service.command;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewAssignmentsUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewEvaluationSummaryUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewEvaluationViewUseCase;
@@ -25,14 +27,22 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetMyInterviewE
 import com.umc.product.recruitment.application.port.out.LoadEvaluationPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewLiveQuestionPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.Evaluation;
 import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.recruitment.domain.InterviewLiveQuestion;
+import com.umc.product.recruitment.domain.RecruitmentPart;
+import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
+import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -55,6 +65,8 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     private final LoadInterviewAssignmentPort loadInterviewAssignmentPort;
     private final LoadInterviewLiveQuestionPort loadInterviewLiveQuestionPort;
     private final LoadEvaluationPort loadEvaluationPort;
+    private final LoadRecruitmentSchedulePort loadRecruitmentSchedulePort;
+    private final LoadRecruitmentPartPort loadRecruitmentPartPort;
     private final GetMemberUseCase getMemberUseCase;
 
     @Override
@@ -185,7 +197,43 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
     @Override
     public GetInterviewOptionsInfo get(GetInterviewOptionsQuery query) {
-        return null;
+        // 1. INTERVIEW_WINDOW 일정 조회
+        RecruitmentSchedule interviewSchedule = loadRecruitmentSchedulePort.findByRecruitmentIdAndType(
+            query.recruitmentId(),
+            RecruitmentScheduleType.INTERVIEW_WINDOW
+        );
+
+        // 2. 날짜 리스트 생성 (start ~ end)
+        List<LocalDate> dates = new ArrayList<>();
+        if (interviewSchedule != null && interviewSchedule.getStartsAt() != null
+            && interviewSchedule.getEndsAt() != null) {
+            LocalDate startDate = interviewSchedule.getStartsAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
+            LocalDate endDate = interviewSchedule.getEndsAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
+
+            LocalDate current = startDate;
+            while (!current.isAfter(endDate)) {
+                dates.add(current);
+                current = current.plusDays(1);
+            }
+        }
+
+        // 3. ALL + OPEN 상태인 파트 목록
+        List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
+
+        List<PartOption> parts = new ArrayList<>();
+        parts.add(PartOption.ALL);  // ALL 먼저 추가
+
+        recruitmentParts.stream()
+            .filter(RecruitmentPart::isOpen)
+            .sorted(Comparator.comparingInt(a -> a.getPart().getSortOrder()))
+            .map(rp -> toPartOption(rp.getPart()))
+            .forEach(parts::add);
+
+        return new GetInterviewOptionsInfo(dates, parts);
+    }
+
+    private PartOption toPartOption(ChallengerPart challengerPart) {
+        return PartOption.valueOf(challengerPart.name());
     }
 
     // InterviewAssignment 조회 및 검증
