@@ -48,12 +48,7 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
     @Override
     public GetMyInterviewEvaluationInfo upsert(UpsertMyInterviewEvaluationCommand command) {
         // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
-        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(command.assignmentId())
-            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
-
-        if (!assignment.getRecruitment().getId().equals(command.recruitmentId())) {
-            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
-        }
+        InterviewAssignment assignment = getValidatedAssignment(command.assignmentId(), command.recruitmentId());
 
         // 2. Application 가져오기
         Application application = assignment.getApplication();
@@ -93,12 +88,7 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
     @Override
     public CreateLiveQuestionResult create(CreateLiveQuestionCommand command) {
         // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
-        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(command.assignmentId())
-            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
-
-        if (!assignment.getRecruitment().getId().equals(command.recruitmentId())) {
-            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
-        }
+        InterviewAssignment assignment = getValidatedAssignment(command.assignmentId(), command.recruitmentId());
 
         // 2. Application 가져오기 (assignment → application)
         Application application = assignment.getApplication();
@@ -153,14 +143,8 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
     // 즉석 질문 수정, 삭제를 위한 검증 private method
     private InterviewLiveQuestion validateAndGetQuestion(Long recruitmentId, Long assignmentId, Long liveQuestionId,
                                                          Long memberId) {
-
         // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
-        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(assignmentId)
-            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
-
-        if (!assignment.getRecruitment().getId().equals(recruitmentId)) {
-            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
-        }
+        InterviewAssignment assignment = getValidatedAssignment(assignmentId, recruitmentId);
 
         // 2. 검증 : InterviewLiveQuestion 존재
         InterviewLiveQuestion question = loadInterviewLiveQuestionPort.findById(liveQuestionId)
@@ -180,4 +164,15 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
         return question;
     }
 
+    // InterviewAssignment 조회 및 검증
+    private InterviewAssignment getValidatedAssignment(Long assignmentId, Long recruitmentId) {
+        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(assignmentId)
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
+
+        if (!assignment.getRecruitment().getId().equals(recruitmentId)) {
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
+        }
+
+        return assignment;
+    }
 }

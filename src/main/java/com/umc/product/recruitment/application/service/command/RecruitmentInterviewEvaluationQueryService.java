@@ -67,12 +67,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     @Override
     public GetMyInterviewEvaluationInfo get(GetMyInterviewEvaluationQuery query) {
         // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
-        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(query.assignmentId())
-            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
-
-        if (!assignment.getRecruitment().getId().equals(query.recruitmentId())) {
-            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
-        }
+        InterviewAssignment assignment = getValidatedAssignment(query.assignmentId(), query.recruitmentId());
 
         // 2. Application 가져오기
         Application application = assignment.getApplication();
@@ -95,12 +90,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     @Override
     public GetInterviewEvaluationsInfo get(GetInterviewEvaluationSummaryQuery query) {
         // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
-        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(query.assignmentId())
-            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
-
-        if (!assignment.getRecruitment().getId().equals(query.recruitmentId())) {
-            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
-        }
+        InterviewAssignment assignment = getValidatedAssignment(query.assignmentId(), query.recruitmentId());
 
         // 2. Application 가져오기
         Application application = assignment.getApplication();
@@ -152,12 +142,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     @Override
     public GetLiveQuestionsInfo get(GetLiveQuestionsQuery query) {
         // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
-        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(query.assignmentId())
-            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
-
-        if (!assignment.getRecruitment().getId().equals(query.recruitmentId())) {
-            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
-        }
+        InterviewAssignment assignment = getValidatedAssignment(query.assignmentId(), query.recruitmentId());
 
         // 2. application의 live questions 조회
         Long applicationId = assignment.getApplication().getId();
@@ -201,5 +186,17 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     @Override
     public GetInterviewOptionsInfo get(GetInterviewOptionsQuery query) {
         return null;
+    }
+
+    // InterviewAssignment 조회 및 검증
+    private InterviewAssignment getValidatedAssignment(Long assignmentId, Long recruitmentId) {
+        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(assignmentId)
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
+
+        if (!assignment.getRecruitment().getId().equals(recruitmentId)) {
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
+        }
+
+        return assignment;
     }
 }
