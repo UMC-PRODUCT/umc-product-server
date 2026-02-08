@@ -22,10 +22,13 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetLiveQuestion
 import com.umc.product.recruitment.application.port.in.query.dto.GetLiveQuestionsQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyInterviewEvaluationInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyInterviewEvaluationQuery;
+import com.umc.product.recruitment.application.port.out.LoadEvaluationPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewLiveQuestionPort;
+import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.recruitment.domain.InterviewLiveQuestion;
+import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import java.util.ArrayList;
@@ -49,6 +52,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
     private final LoadInterviewAssignmentPort loadInterviewAssignmentPort;
     private final LoadInterviewLiveQuestionPort loadInterviewLiveQuestionPort;
+    private final LoadEvaluationPort loadEvaluationPort;
     private final GetMemberUseCase getMemberUseCase;
 
     @Override
@@ -60,7 +64,30 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
     @Override
     public GetMyInterviewEvaluationInfo get(GetMyInterviewEvaluationQuery query) {
-        return null;
+        // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
+        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(query.assignmentId())
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
+
+        if (!assignment.getRecruitment().getId().equals(query.recruitmentId())) {
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
+        }
+
+        // 2. Application 가져오기
+        Application application = assignment.getApplication();
+
+        // 3. 내 면접 평가 조회
+        return loadEvaluationPort.findByApplicationIdAndEvaluatorUserIdAndStage(
+            application.getId(),
+            query.memberId(),
+            EvaluationStage.INTERVIEW
+        ).map(evaluation -> new GetMyInterviewEvaluationInfo(
+            new GetMyInterviewEvaluationInfo.MyInterviewEvaluationInfo(
+                evaluation.getId(),
+                evaluation.getScore(),
+                evaluation.getComments(),
+                evaluation.getUpdatedAt()
+            )
+        )).orElse(new GetMyInterviewEvaluationInfo(null));
     }
 
     @Override
