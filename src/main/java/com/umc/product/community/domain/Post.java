@@ -38,10 +38,8 @@ public class Post {
         if (category == Category.LIGHTNING) {
             throw new IllegalArgumentException("번개 게시글은 createLightning()을 사용하세요");
         }
-        if (authorChallengerId == null) {
-            throw new IllegalArgumentException("작성자 ID는 필수입니다");
-        }
         validateCommonFields(title, content);
+        validateAuthorChallengerId(authorChallengerId);
         return new Post(null, title, content, category, authorChallengerId, null, 0, false);
     }
 
@@ -49,10 +47,8 @@ public class Post {
         if (info == null) {
             throw new IllegalArgumentException("번개 게시글은 추가 정보가 필수입니다.");
         }
-        if (authorChallengerId == null) {
-            throw new IllegalArgumentException("작성자 ID는 필수입니다");
-        }
         validateCommonFields(title, content);
+        validateAuthorChallengerId(authorChallengerId);
         return new Post(null, title, content, Category.LIGHTNING, authorChallengerId, info, 0, false);
     }
 
@@ -78,6 +74,12 @@ public class Post {
         }
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("내용은 필수입니다.");
+        }
+    }
+
+    private static void validateAuthorChallengerId(Long authorChallengerId) {
+        if (authorChallengerId == null) {
+            throw new IllegalArgumentException("작성자 ID는 필수입니다");
         }
     }
 
