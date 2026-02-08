@@ -49,6 +49,9 @@ public class SchoolService implements ManageSchoolUseCase {
         school.updateName(command.schoolName());
         school.updateRemark(command.remark());
         school.updateLogoImageId(command.logoImageId());
+        school.updateKakaoLink(command.kakaoLink());
+        school.updateInstagramLink(command.instagramLink());
+        school.updateYoutubeLink(command.youtubeLink());
 
         if (command.chapterId() != null) {
             Chapter chapter = loadChapterPort.findById(command.chapterId());

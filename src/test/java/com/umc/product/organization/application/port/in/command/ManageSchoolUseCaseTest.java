@@ -83,7 +83,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         // given
         School school = manageSchoolPort.save(School.create("한성대", "비고"));
 
-        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대", null, "수정된 비고", null);
+        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대", null, "수정된 비고", null, null, null, null);
 
         // when
         manageSchoolUseCase.updateSchool(school.getId(), command);
@@ -103,7 +103,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
 
         School school = manageSchoolPort.save(School.create("한성대", "비고"));
 
-        UpdateSchoolCommand command = new UpdateSchoolCommand("한성대", leoChapter.getId(), "비고", null);
+        UpdateSchoolCommand command = new UpdateSchoolCommand("한성대", leoChapter.getId(), "비고", null, null, null, null);
 
         // when
         manageSchoolUseCase.updateSchool(school.getId(), command);
@@ -117,7 +117,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 존재하지_않는_학교를_수정하면_예외가_발생한다() {
         // given
-        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대", null, "비고", null);
+        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대", null, "비고", null, null, null, null);
 
         // when & then
         assertThatThrownBy(() -> manageSchoolUseCase.updateSchool(999L, command))
