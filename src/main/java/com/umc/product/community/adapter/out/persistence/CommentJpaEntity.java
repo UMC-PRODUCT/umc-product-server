@@ -61,6 +61,7 @@ public class CommentJpaEntity extends BaseEntity {
         );
     }
 
+
     public Comment toDomain() {
         return toDomain(null);
     }

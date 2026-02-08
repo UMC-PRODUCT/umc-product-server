@@ -112,6 +112,7 @@ public class PostJpaEntity extends BaseEntity {
         );
     }
 
+
     public Post toDomain() {
         return toDomain(null);
     }
@@ -129,8 +130,7 @@ public class PostJpaEntity extends BaseEntity {
                 title,
                 content,
                 category,
-                region,
-                anonymous,
+                authorChallengerId,
                 lightningInfo,
                 getLikeCount(),
                 liked
