@@ -41,6 +41,12 @@ public class InterviewQuestionSheetPersistenceAdapter implements SaveInterviewQu
     }
 
     @Override
+    public List<InterviewQuestionSheet> findByRecruitmentIdAndPartKeyOrderByOrderNo(Long recruitmentId,
+                                                                                    PartKey partKey) {
+        return interviewQuestionSheetRepository.findByRecruitmentIdAndPartKeyOrderByOrderNoAsc(recruitmentId, partKey);
+    }
+
+    @Override
     public Optional<InterviewQuestionSheet> findById(Long interviewQuestionSheetId) {
         return interviewQuestionSheetRepository.findById(interviewQuestionSheetId);
     }

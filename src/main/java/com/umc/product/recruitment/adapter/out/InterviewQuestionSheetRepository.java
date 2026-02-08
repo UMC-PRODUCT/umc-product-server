@@ -12,4 +12,6 @@ public interface InterviewQuestionSheetRepository extends JpaRepository<Intervie
                                                                                       PartKey partKey);
 
     List<InterviewQuestionSheet> findByRecruitmentAndPartKey(Recruitment recruitment, PartKey partKey);
+
+    List<InterviewQuestionSheet> findByRecruitmentIdAndPartKeyOrderByOrderNoAsc(Long recruitmentId, PartKey partKey);
 }

@@ -13,6 +13,8 @@ public interface LoadInterviewQuestionSheetPort {
 
     List<InterviewQuestionSheet> findByRecruitmentAndPartKey(Recruitment recruitment, PartKey partKey);
 
+    List<InterviewQuestionSheet> findByRecruitmentIdAndPartKeyOrderByOrderNo(Long recruitmentId, PartKey partKey);
+
     Optional<InterviewQuestionSheet> findById(Long interviewQuestionSheetId);
 
 }

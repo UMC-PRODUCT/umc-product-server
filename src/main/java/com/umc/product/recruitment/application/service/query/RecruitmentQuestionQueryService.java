@@ -6,11 +6,17 @@ import com.umc.product.recruitment.application.port.in.query.GetInterviewSheetQu
 import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewSheetPartsInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewSheetPartsQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewSheetQuestionsInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewSheetQuestionsInfo.InterviewQuestionInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewSheetQuestionsQuery;
+import com.umc.product.recruitment.application.port.out.LoadInterviewQuestionSheetPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
+import com.umc.product.recruitment.domain.InterviewQuestionSheet;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.enums.PartKey;
 import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
+import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
+import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -25,11 +31,29 @@ public class RecruitmentQuestionQueryService implements GetInterviewSheetQuestio
     GetInterviewSheetPartsUseCase {
 
     private final LoadRecruitmentPartPort loadRecruitmentPartPort;
+    private final LoadInterviewQuestionSheetPort loadInterviewQuestionSheetPort;
+    private final LoadRecruitmentPort loadRecruitmentPort;
 
     @Override
     public GetInterviewSheetQuestionsInfo get(GetInterviewSheetQuestionsQuery query) {
-        // partKey가 null이면 common으로 처리
-        return null;
+
+        // 1. 검증 : Recruitment 존재
+        if (!loadRecruitmentPort.existsById(query.recruitmentId())) {
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND);
+        }
+
+        // 2. 질문 파트 (null이면 COMMON)
+        PartKey partKey = query.partKeyOrDefault();
+
+        // 3. 질문 순서대로 질문 조회
+        List<InterviewQuestionSheet> questions = loadInterviewQuestionSheetPort
+            .findByRecruitmentIdAndPartKeyOrderByOrderNo(query.recruitmentId(), partKey);
+
+        List<InterviewQuestionInfo> questionInfos = questions.stream()
+            .map(q -> new InterviewQuestionInfo(q.getId(), q.getOrderNo(), q.getContent()))
+            .toList();
+
+        return new GetInterviewSheetQuestionsInfo(partKey, questionInfos.size(), questionInfos);
     }
 
     @Override
