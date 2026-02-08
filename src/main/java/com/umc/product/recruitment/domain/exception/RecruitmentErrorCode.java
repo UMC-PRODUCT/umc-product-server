@@ -109,6 +109,9 @@ public enum RecruitmentErrorCode implements BaseCode {
     INTERVIEW_SHEET_QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "RECRUITMENT-0057", "해당 질문을 찾을 수 없습니다."),
     INTERVIEW_SHEET_QUESTION_NOT_BELONGS_TO_RECRUITMENT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0058",
         "해당 질문은 이 모집에 속하지 않습니다."),
+    INTERVIEW_ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "RECRUITMENT-0059", "면접 배정을 찾을 수 없습니다."),
+    INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0060",
+        "해당 면접 배정은 이 모집에 속하지 않습니다."),
     ;
 
     private final HttpStatus httpStatus;
