@@ -4,6 +4,7 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CheckAttendanceRequest;
+import com.umc.product.schedule.adapter.in.web.dto.request.SubmitReasonRequest;
 import com.umc.product.schedule.adapter.in.web.dto.response.AttendanceRecordResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.AvailableAttendanceResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.MyAttendanceHistoryResponse;
@@ -11,11 +12,13 @@ import com.umc.product.schedule.adapter.in.web.dto.response.PendingAttendanceRes
 import com.umc.product.schedule.adapter.in.web.mapper.AttendanceWebMapper;
 import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
+import com.umc.product.schedule.application.port.in.command.SubmitReasonUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAttendanceRecordUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetPendingAttendancesUseCase;
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class AttendanceController implements AttendanceControllerApi {
 
     private final CheckAttendanceUseCase checkAttendanceUseCase;
+    private final SubmitReasonUseCase submitReasonUseCase;
     private final ApproveAttendanceUseCase approveAttendanceUseCase;
     private final GetAttendanceRecordUseCase getAttendanceRecordUseCase;
     private final GetAvailableAttendancesUseCase getAvailableAttendancesUseCase;
@@ -47,6 +51,15 @@ public class AttendanceController implements AttendanceControllerApi {
         @RequestBody CheckAttendanceRequest request
     ) {
         return checkAttendanceUseCase.check(request.toCommand(memberPrincipal.getMemberId())).id();
+    }
+
+    @Override
+    @PostMapping("/reason")
+    public Long submitReasonAttendance(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Valid @RequestBody SubmitReasonRequest request
+    ) {
+        return submitReasonUseCase.submitReason(request.toCommand(memberPrincipal.getMemberId())).id();
     }
 
     @Override

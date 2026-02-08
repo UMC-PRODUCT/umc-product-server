@@ -126,14 +126,32 @@ public class AttendanceRecord extends BaseEntity {
 
     /**
      * 관리자가 PENDING 상태의 출석을 거절함. 상태는 무조건 ABSENT로 바뀜
+     * <p>
+     * 재시도 정책:
+     * - PRESENT_PENDING, LATE_PENDING (일반 출석): 거절 후 재시도 가능 (checkedAt 초기화)
+     * - EXCUSED_PENDING (사유 제출): 거절 후 재시도 불가 (checkedAt 유지)
      */
     public void reject(Long confirmerId) {
         validatePendingStatus();
         validateConfirmerId(confirmerId);
 
+        // 일반 출석 체크는 재시도 허용 (단순 오류 가능성)
+        boolean isRegularAttendance = (status == AttendanceStatus.PRESENT_PENDING
+                                    || status == AttendanceStatus.LATE_PENDING);
+
         this.status = AttendanceStatus.ABSENT;
         this.confirmedBy = confirmerId;
         this.confirmedAt = LocalDateTime.now();
+
+        // 일반 출석 거절 시 재시도를 위해 체크 데이터 초기화
+        if (isRegularAttendance) {
+            this.checkedAt = null;
+            this.latitude = null;
+            this.longitude = null;
+            this.locationVerified = false;
+            // memo는 유지 (관리자가 거절 사유를 남길 수 있음)
+        }
+        // 사유 제출(EXCUSED_PENDING)은 재시도 불가 - checkedAt 유지
     }
 
     /**
