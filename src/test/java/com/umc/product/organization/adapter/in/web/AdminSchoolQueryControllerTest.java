@@ -101,7 +101,7 @@ class AdminSchoolQueryControllerTest extends DocumentationTest {
         Instant createdAt = Instant.parse("2026-01-01T00:00:00Z");
         Instant updatedAt = Instant.parse("2026-01-04T00:00:00Z");
 
-        SchoolDetailInfo schoolDetailInfo = new SchoolDetailInfo(3L, "Ain 지부", "중앙대학교", 1L, "비고", "logo-file-123", createdAt, updatedAt);
+        SchoolDetailInfo schoolDetailInfo = new SchoolDetailInfo(3L, "Ain 지부", "중앙대학교", 1L, "비고", "logo-file-123", "https://open.kakao.com/o/example", "https://instagram.com/example", "https://youtube.com/@example", createdAt, updatedAt);
         FileInfo fileInfo = new FileInfo("logo-file-123", "동국대학교 로고", FileCategory.SCHOOL_LOGO, null, null, "https://storage.example.com/school-logo/logo.png", null, null, null);
         given(getSchoolUseCase.getSchoolDetail(schoolId)).willReturn(schoolDetailInfo);
         given(getFileUseCase.getById("logo-file-123")).willReturn(fileInfo);
@@ -119,6 +119,9 @@ class AdminSchoolQueryControllerTest extends DocumentationTest {
                                 fieldWithPath("result.schoolId").type(JsonFieldType.STRING).description("학교 ID"),
                                 fieldWithPath("result.remark").type(JsonFieldType.STRING).description("비고"),
                                 fieldWithPath("result.logoImageLink").type(JsonFieldType.STRING).description("로고 이미지 URL").optional(),
+                                fieldWithPath("result.kakaoLink").optional().type(JsonFieldType.STRING).description("카카오톡 링크"),
+                                fieldWithPath("result.instagramLink").optional().type(JsonFieldType.STRING).description("인스타그램 링크"),
+                                fieldWithPath("result.youtubeLink").optional().type(JsonFieldType.STRING).description("유튜브 링크"),
                                 fieldWithPath("result.createdAt").type(JsonFieldType.STRING).description("생성일자"),
                                 fieldWithPath("result.updatedAt").type(JsonFieldType.STRING).description("수정일자"))));
     }

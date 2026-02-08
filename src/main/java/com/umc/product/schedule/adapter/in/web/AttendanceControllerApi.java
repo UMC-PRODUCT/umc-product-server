@@ -3,6 +3,7 @@ package com.umc.product.schedule.adapter.in.web;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.schedule.adapter.in.web.dto.request.CheckAttendanceRequest;
+import com.umc.product.schedule.adapter.in.web.dto.request.SubmitReasonRequest;
 import com.umc.product.schedule.adapter.in.web.dto.response.AttendanceRecordResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.AvailableAttendanceResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.MyAttendanceHistoryResponse;
@@ -19,6 +20,15 @@ public interface AttendanceControllerApi {
     Long checkAttendance(
         @Parameter(hidden = true) MemberPrincipal memberPrincipal,
         CheckAttendanceRequest request
+    );
+
+    @Operation(
+        summary = "사유 제출 출석",
+        description = "현장 도착 불가 시 사유를 제출하여 인정결석을 요청합니다. 관리자 승인 후 EXCUSED로 확정됩니다."
+    )
+    Long submitReasonAttendance(
+        @Parameter(hidden = true) MemberPrincipal memberPrincipal,
+        SubmitReasonRequest request
     );
 
     @Operation(summary = "출석 가능한 일정 조회", description = "현재 출석 가능한 일정 목록을 조회합니다")

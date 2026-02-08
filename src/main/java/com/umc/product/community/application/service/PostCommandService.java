@@ -9,6 +9,7 @@ import com.umc.product.community.application.port.in.post.command.CreateLightnin
 import com.umc.product.community.application.port.in.post.command.CreatePostCommand;
 import com.umc.product.community.application.port.in.post.command.UpdatePostCommand;
 import com.umc.product.community.application.port.out.LoadPostPort;
+import com.umc.product.community.application.port.out.PostWithAuthor;
 import com.umc.product.community.application.port.out.SavePostPort;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.Post.LightningInfo;
@@ -27,6 +28,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
 
     private final LoadPostPort loadPostPort;
     private final SavePostPort savePostPort;
+    private final AuthorInfoProvider authorInfoProvider;
 
     @Override
     public PostInfo createPost(CreatePostCommand command) {
@@ -36,8 +38,9 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
                 command.category()
         );
 
-        Post savedPost = savePostPort.save(post);
-        return PostInfo.from(savedPost);
+        Post savedPost = savePostPort.save(post, command.authorChallengerId());
+        String authorName = authorInfoProvider.getAuthorName(command.authorChallengerId());
+        return PostInfo.from(savedPost, command.authorChallengerId(), authorName);
     }
 
     @Override
@@ -45,7 +48,8 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         LightningInfo lightningInfo = new LightningInfo(
                 command.meetAt(),
                 command.location(),
-                command.maxParticipants()
+                command.maxParticipants(),
+                command.openChatUrl()
         );
 
         Post post = Post.createLightning(
@@ -54,15 +58,17 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
                 lightningInfo
         );
 
-        Post savedPost = savePostPort.save(post);
-        return PostInfo.from(savedPost);
+        Post savedPost = savePostPort.save(post, command.authorChallengerId());
+        String authorName = authorInfoProvider.getAuthorName(command.authorChallengerId());
+        return PostInfo.from(savedPost, command.authorChallengerId(), authorName);
     }
 
     @Override
     public PostInfo updatePost(UpdatePostCommand command) {
-        Post post = loadPostPort.findById(command.postId())
+        PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(command.postId())
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
+        Post post = postWithAuthor.post();
         post.update(
                 command.title(),
                 command.content(),
@@ -70,7 +76,8 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         );
 
         Post savedPost = savePostPort.save(post);
-        return PostInfo.from(savedPost);
+        String authorName = authorInfoProvider.getAuthorName(postWithAuthor.authorChallengerId());
+        return PostInfo.from(savedPost, postWithAuthor.authorChallengerId(), authorName);
     }
 
     @Override

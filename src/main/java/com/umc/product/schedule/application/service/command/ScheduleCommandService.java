@@ -7,6 +7,8 @@ import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCas
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCommand;
+import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleLocationCommand;
+import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleLocationInfo;
 import com.umc.product.schedule.application.port.out.DeleteAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.DeleteAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
@@ -62,8 +64,8 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
-        AttendanceSheet attendanceSheet = loadAttendanceSheetPort.findByScheduleId(command.scheduleId())
-            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+        // 출석부가 있으면 조회 (없어도 일정 수정 가능)
+        var attendanceSheetOpt = loadAttendanceSheetPort.findByScheduleId(command.scheduleId());
 
         // 변경 전 기존 일정 시작 시간
         LocalDateTime oldStartsAt = schedule.getStartsAt();
@@ -80,16 +82,29 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             command.location()
         );
 
-        // 일정 시간이 변경되었으면, 그 차이만큼 출석부 시간대 이동
-        if (command.startsAt() != null) {
+        // 출석부가 있고 일정 시간이 변경되었으면, 그 차이만큼 출석부 시간대 이동
+        if (command.startsAt() != null && attendanceSheetOpt.isPresent()) {
             Duration diff = Duration.between(oldStartsAt, command.startsAt());
-            
+
             if (!diff.isZero()) {
-                attendanceSheet.shiftWindow(diff);
+                attendanceSheetOpt.get().shiftWindow(diff);
             }
         }
 
         saveSchedulePort.save(schedule);
+    }
+
+    // 일정 출석체크 위치 수정
+    @Override
+    public UpdateScheduleLocationInfo updateLocation(UpdateScheduleLocationCommand command) {
+        Schedule schedule = loadSchedulePort.findById(command.scheduleId())
+            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+
+        schedule.updateLocation(command.locationName(), command.location());
+
+        saveSchedulePort.save(schedule);
+
+        return UpdateScheduleLocationInfo.of(schedule.getId(), schedule.getLocationName(), schedule.getLocation());
     }
 
     // 일정 삭제

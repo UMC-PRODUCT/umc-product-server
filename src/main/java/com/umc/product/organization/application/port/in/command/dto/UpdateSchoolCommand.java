@@ -4,7 +4,10 @@ public record UpdateSchoolCommand(
         String schoolName,
         Long chapterId,
         String remark,
-        String logoImageId
+        String logoImageId,
+        String kakaoLink,
+        String instagramLink,
+        String youtubeLink
 ) {
 
 }

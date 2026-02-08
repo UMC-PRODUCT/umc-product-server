@@ -4,7 +4,9 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleWithAttendanceRequest;
+import com.umc.product.schedule.adapter.in.web.dto.request.UpdateScheduleLocationRequest;
 import com.umc.product.schedule.adapter.in.web.dto.request.UpdateScheduleRequest;
+import com.umc.product.schedule.adapter.in.web.dto.response.UpdateScheduleLocationResponse;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleWithAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
@@ -58,7 +60,7 @@ public class ScheduleController implements ScheduleControllerApi {
     @PatchMapping("/{scheduleId}")
     public void updateSchedule(
         @PathVariable Long scheduleId,
-        @RequestBody UpdateScheduleRequest request
+        @Valid @RequestBody UpdateScheduleRequest request
     ) {
         updateScheduleUseCase.update(request.toCommand(scheduleId));
     }
@@ -67,5 +69,16 @@ public class ScheduleController implements ScheduleControllerApi {
     @DeleteMapping("/{scheduleId}/with-attendance")
     public void deleteScheduleWithAttendance(@PathVariable Long scheduleId) {
         deleteScheduleWithAttendanceUseCase.delete(scheduleId);
+    }
+
+    @Override
+    @PatchMapping("/{scheduleId}/location")
+    public UpdateScheduleLocationResponse updateScheduleLocation(
+        @PathVariable Long scheduleId,
+        @Valid @RequestBody UpdateScheduleLocationRequest request
+    ) {
+        return UpdateScheduleLocationResponse.from(
+            updateScheduleUseCase.updateLocation(request.toCommand(scheduleId))
+        );
     }
 }

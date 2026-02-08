@@ -53,6 +53,13 @@ public class AttendanceRecord extends BaseEntity {
 
     private LocalDateTime confirmedAt;
 
+    private Double latitude;
+
+    private Double longitude;
+
+    @Column(nullable = false)
+    private boolean locationVerified;
+
     @Builder
     private AttendanceRecord(
         Long attendanceSheetId,
@@ -75,7 +82,13 @@ public class AttendanceRecord extends BaseEntity {
     /**
      * 출석 체크 처리. 한 번만 호출 가능하며, 이미 체크된 기록에 재호출하면 예외 발생. newStatus는 AttendanceSheet.determineStatusByTime()이 시간 기반으로 결정
      */
-    public void checkIn(AttendanceStatus newStatus, LocalDateTime checkedAt) {
+    public void checkIn(
+        AttendanceStatus newStatus,
+        LocalDateTime checkedAt,
+        Double latitude,
+        Double longitude,
+        boolean locationVerified
+    ) {
         if (this.checkedAt != null) {
             throw new IllegalStateException("이미 출석 체크가 완료되었습니다");
         }
@@ -88,6 +101,9 @@ public class AttendanceRecord extends BaseEntity {
 
         this.status = newStatus;
         this.checkedAt = checkedAt;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.locationVerified = locationVerified;
     }
 
     /**
@@ -110,14 +126,32 @@ public class AttendanceRecord extends BaseEntity {
 
     /**
      * 관리자가 PENDING 상태의 출석을 거절함. 상태는 무조건 ABSENT로 바뀜
+     * <p>
+     * 재시도 정책:
+     * - PRESENT_PENDING, LATE_PENDING (일반 출석): 거절 후 재시도 가능 (checkedAt 초기화)
+     * - EXCUSED_PENDING (사유 제출): 거절 후 재시도 불가 (checkedAt 유지)
      */
     public void reject(Long confirmerId) {
         validatePendingStatus();
         validateConfirmerId(confirmerId);
 
+        // 일반 출석 체크는 재시도 허용 (단순 오류 가능성)
+        boolean isRegularAttendance = (status == AttendanceStatus.PRESENT_PENDING
+                                    || status == AttendanceStatus.LATE_PENDING);
+
         this.status = AttendanceStatus.ABSENT;
         this.confirmedBy = confirmerId;
         this.confirmedAt = LocalDateTime.now();
+
+        // 일반 출석 거절 시 재시도를 위해 체크 데이터 초기화
+        if (isRegularAttendance) {
+            this.checkedAt = null;
+            this.latitude = null;
+            this.longitude = null;
+            this.locationVerified = false;
+            // memo는 유지 (관리자가 거절 사유를 남길 수 있음)
+        }
+        // 사유 제출(EXCUSED_PENDING)은 재시도 불가 - checkedAt 유지
     }
 
     /**
@@ -133,6 +167,27 @@ public class AttendanceRecord extends BaseEntity {
 
         this.status = AttendanceStatus.EXCUSED_PENDING;
         this.memo = memo;
+    }
+
+    /**
+     * 출석 체크 전에 사유를 제출하는 메서드 (사유 작성 출석)
+     * 위치 인증은 실패로 간주됨
+     */
+    public void submitReasonBeforeCheck(String reason, LocalDateTime submittedAt) {
+        if (this.checkedAt != null) {
+            throw new IllegalStateException("출석 체크 전 상태에서만 사유를 제출할 수 있습니다");
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("사유는 필수입니다");
+        }
+        if (submittedAt == null) {
+            throw new IllegalArgumentException("제출 시각은 필수입니다");
+        }
+
+        this.status = AttendanceStatus.EXCUSED_PENDING;
+        this.memo = reason;
+        this.checkedAt = submittedAt;
+        this.locationVerified = false;  // 사유 작성 = 위치 인증 실패
     }
 
     /**

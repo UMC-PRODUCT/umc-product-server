@@ -11,7 +11,6 @@ import com.umc.product.organization.application.port.out.query.LoadChapterPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.Chapter;
-import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.School;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,14 +33,11 @@ public class SchoolService implements ManageSchoolUseCase {
 
         School newSchool = School.create(command.schoolName(), command.remark());
         newSchool.updateLogoImageId(command.logoImageId());
+        newSchool.updateKakaoLink(command.kakaoLink());
+        newSchool.updateInstagramLink(command.instagramLink());
+        newSchool.updateYoutubeLink(command.youtubeLink());
+
         School savedSchool = manageSchoolPort.save(newSchool);
-
-        if (command.chapterId() != null) {
-            Chapter chapter = loadChapterPort.findById(command.chapterId());
-
-            ChapterSchool chapterSchool = ChapterSchool.create(chapter, savedSchool);
-            manageChapterSchoolPort.save(chapterSchool);
-        }
 
         return savedSchool.getId();
     }
@@ -53,6 +49,9 @@ public class SchoolService implements ManageSchoolUseCase {
         school.updateName(command.schoolName());
         school.updateRemark(command.remark());
         school.updateLogoImageId(command.logoImageId());
+        school.updateKakaoLink(command.kakaoLink());
+        school.updateInstagramLink(command.instagramLink());
+        school.updateYoutubeLink(command.youtubeLink());
 
         if (command.chapterId() != null) {
             Chapter chapter = loadChapterPort.findById(command.chapterId());

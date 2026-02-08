@@ -22,7 +22,7 @@ public class Post {
     @Getter
     private Category category;
 
-    // DB 호환성을 위해 유지 제거가능
+    // DB 호환성을 위해 유지 (API에는 노출되지 않음)
     private final String region;
     private final boolean anonymous;
 
@@ -114,7 +114,8 @@ public class Post {
     public record LightningInfo(
         LocalDateTime meetAt,
         String location,
-        Integer maxParticipants
+        Integer maxParticipants,
+        String openChatUrl
     ) {
         public LightningInfo {
             if (meetAt == null || meetAt.isBefore(LocalDateTime.now())) {
@@ -125,6 +126,9 @@ public class Post {
             }
             if (maxParticipants <= 0) {
                 throw new IllegalArgumentException("최대 참가자는 1명 이상이어야 합니다.");
+            }
+            if (openChatUrl == null || openChatUrl.isBlank()) {
+                throw new IllegalArgumentException("오픈 채팅 링크는 필수입니다.");
             }
         }
     }
