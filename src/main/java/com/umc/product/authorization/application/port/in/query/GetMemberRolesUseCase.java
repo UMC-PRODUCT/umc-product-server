@@ -2,6 +2,8 @@ package com.umc.product.authorization.application.port.in.query;
 
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 사용자의 역할 정보를 조회하는 UseCase
@@ -165,4 +167,12 @@ public interface GetMemberRolesUseCase {
      * @return 해당 기수에서 중앙 멤버면 true
      */
     boolean isCentralMemberInGisu(Long memberId, Long gisuId);
+
+    /**
+     * 여러 챌린저의 역할 타입을 일괄 조회
+     *
+     * @param challengerIds 챌린저 ID 목록
+     * @return 챌린저 ID → 역할 타입 리스트
+     */
+    Map<Long, List<ChallengerRoleType>> getRoleTypesByChallengerIds(Set<Long> challengerIds);
 }
