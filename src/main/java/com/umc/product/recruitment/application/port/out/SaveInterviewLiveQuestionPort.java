@@ -5,4 +5,6 @@ import com.umc.product.recruitment.domain.InterviewLiveQuestion;
 public interface SaveInterviewLiveQuestionPort {
 
     InterviewLiveQuestion save(InterviewLiveQuestion interviewLiveQuestion);
+
+    void deleteById(Long questionId);
 }

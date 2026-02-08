@@ -30,4 +30,9 @@ public class InterviewLiveQuestionPersistenceAdapter implements LoadInterviewLiv
     public InterviewLiveQuestion save(InterviewLiveQuestion interviewLiveQuestion) {
         return interviewLiveQuestionRepository.save(interviewLiveQuestion);
     }
+
+    @Override
+    public void deleteById(Long questionId) {
+        interviewLiveQuestionRepository.deleteById(questionId);
+    }
 }
