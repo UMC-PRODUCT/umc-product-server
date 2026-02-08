@@ -113,19 +113,11 @@ public class ChallengerController {
     }
 
     @Deprecated
-    @Operation(summary = "챌린저 검색 (Offset 기반)", deprecated = true,
-            description = "Deprecated: cursor 기반 API(/search/cursor)를 사용해주세요.")
+    @Operation(summary = "챌린저 검색", deprecated = true,
+            description = "Deprecated: cursor와 offset을 분리하기 위해 엔드포인트를 변경합니다. 해당 API는 사용하지 않습니다.")
     @GetMapping("search")
-    SearchChallengerResponse searchChallenger(
-            @ParameterObject Pageable pageable,
-            @ParameterObject SearchChallengerRequest searchRequest
-    ) {
-        return SearchChallengerResponse.from(
-                searchChallengerUseCase.search(
-                        searchRequest.toQuery(),
-                        pageable
-                )
-        );
+    SearchChallengerResponse searchChallenger() {
+        throw new UnsupportedOperationException("이 API는 더 이상 지원되지 않습니다. cursor와 offset 기반 검색을 위한 별도의 엔드포인트를 사용하세요.");
     }
 
     @Operation(summary = "챌린저 검색 (Cursor 기반)")
@@ -139,6 +131,20 @@ public class ChallengerController {
                         searchRequest.cursor(),
                         searchRequest.getSize()
                 )
+        );
+    }
+
+    @Operation(summary = "챌린저 검색 (Offset 기반)")
+    @GetMapping("search/offset")
+    SearchChallengerResponse searchChallenger(
+        @ParameterObject Pageable pageable,
+        @ParameterObject SearchChallengerRequest searchRequest
+    ) {
+        return SearchChallengerResponse.from(
+            searchChallengerUseCase.search(
+                searchRequest.toQuery(),
+                pageable
+            )
         );
     }
 
