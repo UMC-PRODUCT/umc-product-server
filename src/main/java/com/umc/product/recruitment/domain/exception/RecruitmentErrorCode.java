@@ -112,6 +112,10 @@ public enum RecruitmentErrorCode implements BaseCode {
     INTERVIEW_ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "RECRUITMENT-0059", "면접 배정을 찾을 수 없습니다."),
     INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0060",
         "해당 면접 배정은 이 모집에 속하지 않습니다."),
+    INTERVIEW_LIVE_QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "RECRUITMENT-0055", "해당하는 즉석 질문을 찾을 수 없습니다."),
+    INTERVIEW_LIVE_QUESTION_NOT_BELONGS_TO_ASSIGNMENT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0056",
+        "해당 질문은 이 면접 배정에 속하지 않습니다."),
+    INTERVIEW_LIVE_QUESTION_NOT_EDITABLE(HttpStatus.FORBIDDEN, "RECRUITMENT-0057", "본인이 작성한 질문만 수정할 수 있습니다."),
     ;
 
     private final HttpStatus httpStatus;
