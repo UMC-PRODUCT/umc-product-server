@@ -11,7 +11,6 @@ import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
-import com.umc.product.notification.application.port.in.ManageFcmTopicUseCase;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.notification.application.port.in.dto.TopicNotificationCommand;
@@ -35,8 +34,6 @@ public class FcmService implements ManageFcmUseCase {
     private final LoadMemberPort loadMemberPort;
     private final LoadFcmPort loadFcmPort;
     private final SaveFcmPort saveFcmPort;
-    private final ManageFcmTopicUseCase manageFcmTopicUseCase;
-
 
     @Override
     @Transactional
@@ -129,47 +126,6 @@ public class FcmService implements ManageFcmUseCase {
         } catch (FirebaseMessagingException e) {
             log.error("토픽 메시지 전송 실패 topic={}", command.topic(), e);
             throw new FcmDomainException(FcmErrorCode.TOPIC_SEND_FAILED);
-        }
-    }
-
-    @Override
-    @Transactional
-    public void refreshTokenAndSubscriptions(Long userId, FcmRegistrationRequest request) {
-        // 1. 이전 토큰으로 토픽 구독 해제 (실패해도 계속 진행)
-        FcmToken existingToken = loadFcmPort.findByMemberId(userId);
-        String oldTokenValue = existingToken != null ? existingToken.getFcmToken() : null;
-
-        try {
-            manageFcmTopicUseCase.unsubscribeAllTopicsByMemberId(userId);
-        } catch (Exception e) {
-            log.warn("토큰 갱신 중 이전 토픽 구독 해제 실패 userId={}, 계속 진행합니다.", userId, e);
-        }
-
-        // 2. 토큰 등록/업데이트
-        registerFcmToken(userId, request);
-
-        // 3. 새 토큰으로 토픽 재구독
-        try {
-            manageFcmTopicUseCase.subscribeAllTopicsByMemberId(userId);
-        } catch (Exception e) {
-            log.error("토큰 갱신 후 토픽 재구독 실패 userId={}, 보상 로직을 실행합니다.", userId, e);
-            compensateTokenAndSubscriptions(userId, oldTokenValue);
-            throw new FcmDomainException(FcmErrorCode.TOPIC_SUBSCRIBE_FAILED);
-        }
-    }
-
-    private void compensateTokenAndSubscriptions(Long userId, String oldTokenValue) {
-        try {
-            if (oldTokenValue != null) {
-                FcmToken token = loadFcmPort.findByMemberId(userId);
-                if (token != null) {
-                    token.updateToken(oldTokenValue);
-                }
-                manageFcmTopicUseCase.subscribeAllTopicsByMemberId(userId);
-                log.info("보상 로직 완료: 이전 토큰으로 복구 및 재구독 userId={}", userId);
-            }
-        } catch (Exception compensationEx) {
-            log.error("보상 로직도 실패 userId={}, 수동 확인이 필요합니다.", userId, compensationEx);
         }
     }
 
