@@ -23,6 +23,8 @@ import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.notice.dto.NoticeTargetPattern;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
+import com.umc.product.notification.application.port.in.dto.TopicNotificationCommand;
+import com.umc.product.notification.domain.FcmTopicName;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
@@ -89,16 +91,22 @@ public class NoticeService implements ManageNoticeUseCase {
         );
 
         /**
-         * 공지 알림 전송
+         * 공지 알림 전송 (토픽 기반)
+         * NoticeTargetInfo에서 토픽 이름을 도출하여 해당 토픽으로 메시지를 발행합니다.
          */
         if (savedNotice.isNotificationRequired()) {
-            List<Long> targetIds = resolveTargetChallengerIds(command.targetInfo());
-            for (Long targetId : targetIds) {
-                manageFcmUseCase.sendMessageByToken(new NotificationCommand(
-                    targetId,
-                    NOTICE_TITLE_PREFIX + savedNotice.getTitle(),
-                    NOTICE_BODY_SUFFIX
-                ));
+            List<String> topics = FcmTopicName.resolveTopics(
+                    command.targetInfo().targetGisuId(),
+                    command.targetInfo().targetChapterId(),
+                    command.targetInfo().targetSchoolId(),
+                    command.targetInfo().targetParts()
+            );
+
+            String title = NOTICE_TITLE_PREFIX + savedNotice.getTitle();
+            for (String topic : topics) {
+                manageFcmUseCase.sendMessageByTopic(
+                        new TopicNotificationCommand(topic, title, NOTICE_BODY_SUFFIX)
+                );
             }
             savedNotice.markAsNotified(Instant.now());
         }
