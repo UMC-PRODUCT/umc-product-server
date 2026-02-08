@@ -10,7 +10,7 @@ public record InterviewSchedulingSummaryInfo(
     RulesInfo rules,
     ContextInfo context
 ) {
-    public record ProgressInfo(String scope, String part, int total, int scheduled) {
+    public record ProgressInfo(String scope, String part, long total, long scheduled) {
     }
 
     public record PartOptionInfo(String part, String label, boolean done) {

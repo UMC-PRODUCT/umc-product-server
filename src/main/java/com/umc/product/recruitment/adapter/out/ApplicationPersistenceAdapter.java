@@ -1,8 +1,10 @@
 package com.umc.product.recruitment.adapter.out;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
+import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
@@ -103,5 +105,23 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
     public Optional<MyDocumentEvaluationProjection> findMyDocumentEvaluation(Long applicationId,
                                                                              Long evaluatorMemberId) {
         return applicationQueryRepository.findMyDocumentEvaluation(applicationId, evaluatorMemberId);
+    }
+
+    @Override
+    public long countByRecruitmentId(Long recruitmentId) {
+        return applicationQueryRepository.countByRecruitmentId(recruitmentId);
+    }
+
+    @Override
+    public long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, PartOption part) {
+        ChallengerPart challengerPart = toChallengerPart(part);
+        return applicationQueryRepository.countByRecruitmentIdAndFirstPreferredPart(recruitmentId, challengerPart);
+    }
+    
+    private ChallengerPart toChallengerPart(PartOption part) {
+        if (part == null || part == PartOption.ALL) {
+            throw new IllegalArgumentException("ALL/null is not allowed here");
+        }
+        return ChallengerPart.valueOf(part.name());
     }
 }

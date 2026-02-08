@@ -1,5 +1,9 @@
 package com.umc.product.recruitment.application.service.query;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewSchedulingApplicantsUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewSchedulingAssignmentsUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewSchedulingSlotsUseCase;
@@ -12,6 +16,23 @@ import com.umc.product.recruitment.application.port.in.query.dto.InterviewSchedu
 import com.umc.product.recruitment.application.port.in.query.dto.InterviewSchedulingAssignmentsInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.InterviewSchedulingSlotsInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.InterviewSchedulingSummaryInfo;
+import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
+import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
+import com.umc.product.recruitment.domain.Recruitment;
+import com.umc.product.recruitment.domain.RecruitmentSchedule;
+import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
+import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,13 +45,76 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
     GetInterviewSchedulingApplicantsUseCase,
     GetInterviewSchedulingAssignmentsUseCase {
 
+    private final LoadRecruitmentSchedulePort loadRecruitmentSchedulePort;
+    private final LoadRecruitmentPort loadRecruitmentPort;
+    private final LoadApplicationPort loadApplicationPort;
+    private final LoadInterviewAssignmentPort loadInterviewAssignmentPort;
+    private final LoadRecruitmentPartPort loadRecruitmentPartPort;
+
     @Override
     public InterviewSchedulingSummaryInfo get(GetInterviewSchedulingSummaryQuery query) {
-        // todo: 운영진 권한 검증 필요
-        // partOptions: 드롭다운용 파트. done은 해당 날짜 기준으로, ‘해당 파트를 1지망으로 희망하는 지원자들의 면접 시간이 모두 배정되었을 경우’를 의미함
-        // rules.timeRange: 운영진이 해당 날짜에 가능한 slot의 시작 시간부터 마지막 시간까지를 의미함
-        //      timeRange.end는 마지막 슬롯의 시작 시간이 아닌 종료 시간이라고 생각해주세요!
-        return null;
+        Long recruitmentId = query.recruitmentId();
+        PartOption requestedPart = (query.part() != null) ? query.part() : PartOption.ALL;
+
+        // interview window 로드 (dateOptions / default date)
+        // TODO: LoadRecruitmentSchedulePort 반환 타입을 Optional로 변경 검토
+        //       (현재는 nullable 반환을 가정하고 null 체크로 처리)
+        RecruitmentSchedule window = loadRecruitmentSchedulePort
+            .findByRecruitmentIdAndType(recruitmentId, RecruitmentScheduleType.INTERVIEW_WINDOW);
+
+        if (window == null) {
+            throw new BusinessException(
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_FOUND
+            );
+        }
+
+        if (window.getStartsAt() == null || window.getEndsAt() == null) {
+            throw new BusinessException(
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.INTERVIEW_WINDOW_NOT_SET
+            );
+        }
+
+        LocalDate windowStart = toKstLocalDate(window.getStartsAt());
+        LocalDate windowEnd = toKstLocalDate(window.getEndsAt());
+
+        // date 기본값
+        LocalDate contextDate = (query.date() != null) ? query.date() : windowStart;
+
+        // dateOptions
+        List<LocalDate> dateOptions = datesBetweenInclusive(windowStart, windowEnd);
+
+        // rules: recruitment.interviewTimeTable에서 추출
+        Recruitment recruitment = loadRecruitmentPort.findById(recruitmentId)
+            .orElseThrow(() -> new BusinessException(
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
+            ));
+
+        RulesParsed rulesParsed = parseRulesFromTimeTable(recruitment.getInterviewTimeTable());
+
+        // progress
+        InterviewSchedulingSummaryInfo.ProgressInfo progress =
+            (requestedPart == PartOption.ALL)
+                ? buildProgressAll(recruitmentId)
+                : buildProgressPart(recruitmentId, requestedPart);
+
+        // partOptions (done은 contextDate 기준)
+        List<InterviewSchedulingSummaryInfo.PartOptionInfo> partOptions =
+            buildPartOptions(recruitmentId, contextDate);
+
+        // context
+        InterviewSchedulingSummaryInfo.ContextInfo context =
+            new InterviewSchedulingSummaryInfo.ContextInfo(contextDate.toString(), requestedPart.name());
+
+        // assemble
+        InterviewSchedulingSummaryInfo.RulesInfo rules = new InterviewSchedulingSummaryInfo.RulesInfo(
+            rulesParsed.slotMinutes(),
+            new InterviewSchedulingSummaryInfo.TimeRangeInfo(rulesParsed.startHHmm(), rulesParsed.endHHmm())
+        );
+
+        return new InterviewSchedulingSummaryInfo(progress, dateOptions, partOptions, rules, context);
     }
 
     @Override
@@ -62,4 +146,106 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         return null;
     }
 
+    private InterviewSchedulingSummaryInfo.ProgressInfo buildProgressAll(Long recruitmentId) {
+        long total = loadApplicationPort.countByRecruitmentId(recruitmentId);
+        long scheduled = loadInterviewAssignmentPort.countByRecruitmentId(recruitmentId);
+        return new InterviewSchedulingSummaryInfo.ProgressInfo("ALL", "ALL", total, scheduled);
+    }
+
+    private InterviewSchedulingSummaryInfo.ProgressInfo buildProgressPart(Long recruitmentId, PartOption part) {
+        long total = loadApplicationPort.countByRecruitmentIdAndFirstPreferredPart(recruitmentId, part);
+        long scheduled = loadInterviewAssignmentPort.countByRecruitmentIdAndFirstPreferredPart(recruitmentId, part);
+        return new InterviewSchedulingSummaryInfo.ProgressInfo("PART", part.name(), total, scheduled);
+    }
+
+    private List<InterviewSchedulingSummaryInfo.PartOptionInfo> buildPartOptions(Long recruitmentId, LocalDate date) {
+        List<InterviewSchedulingSummaryInfo.PartOptionInfo> result = new ArrayList<>();
+
+        // ALL은 항상 포함
+        result.add(new InterviewSchedulingSummaryInfo.PartOptionInfo(
+            PartOption.ALL.getCode(),
+            PartOption.ALL.getLabel(),
+            false // TODO: ALL done 정책 확정 필요. 현재는 체크 미노출
+        ));
+
+        // OPEN 파트만 포함
+        List<ChallengerPart> openParts = loadRecruitmentPartPort.findOpenPartsByRecruitmentId(recruitmentId);
+
+        for (ChallengerPart cp : openParts) {
+            PartOption p = PartOption.valueOf(cp.name());
+            long total = loadApplicationPort.countByRecruitmentIdAndFirstPreferredPart(recruitmentId, p);
+            long scheduledOnDate = loadInterviewAssignmentPort
+                .countByRecruitmentIdAndDateAndFirstPreferredPart(recruitmentId, date, p);
+
+            boolean done = (total > 0) && (scheduledOnDate >= total);
+
+            result.add(new InterviewSchedulingSummaryInfo.PartOptionInfo(
+                p.getCode(),
+                p.getLabel(),
+                done
+            ));
+        }
+
+        return result;
+    }
+
+    private LocalDate toKstLocalDate(Instant instant) {
+        return instant.atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
+    }
+
+    private List<LocalDate> datesBetweenInclusive(LocalDate start, LocalDate end) {
+        if (end.isBefore(start)) {
+            // end < start일 경우, start 날짜만 반환
+            return List.of(start);
+        }
+        List<LocalDate> dates = new ArrayList<>();
+        for (LocalDate d = start; !d.isAfter(end); d = d.plusDays(1)) {
+            dates.add(d);
+        }
+        return dates;
+    }
+
+    /**
+     * timetable 예: { "timeRange": {"start":"09:00:00","end":"23:00:00"}, "slotMinutes": 30, ... }
+     */
+    @SuppressWarnings("unchecked")
+    private RulesParsed parseRulesFromTimeTable(Map<String, Object> timeTable) {
+        if (timeTable == null || timeTable.isEmpty()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+
+        Object slotMinutesRaw = timeTable.get("slotMinutes");
+        int slotMinutes = parseSlotMinutes(slotMinutesRaw);
+
+        Map<String, Object> timeRange = (Map<String, Object>) timeTable.get("timeRange");
+        if (timeRange == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+
+        LocalTime start = LocalTime.parse(String.valueOf(timeRange.get("start")));
+        LocalTime end = LocalTime.parse(String.valueOf(timeRange.get("end")));
+
+        return new RulesParsed(slotMinutes, start.format(DateTimeFormatter.ofPattern("HH:mm")),
+            end.format(DateTimeFormatter.ofPattern("HH:mm")));
+    }
+
+    private int parseSlotMinutes(Object raw) {
+        if (raw == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+        try {
+            if (raw instanceof Number n) {
+                return n.intValue();
+            }
+            if (raw instanceof String s) {
+                return Integer.parseInt(s.trim());
+            }
+            throw new NumberFormatException();
+        } catch (NumberFormatException e) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        }
+    }
+
+    private record RulesParsed(int slotMinutes, String startHHmm, String endHHmm) {
+    }
 }

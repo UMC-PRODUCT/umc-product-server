@@ -101,7 +101,8 @@ public enum RecruitmentErrorCode implements BaseCode {
     APPLICATION_NOT_BELONGS_TO_RECRUITMENT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0051",
         "해당 지원서는 이 모집에 속하지 않습니다."),
     APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "RECRUITMENT-0052", "해당 타입에 해당하는 모집 일정을 찾을 수 없습니다."),
-    ;
+    INTERVIEW_WINDOW_NOT_SET(HttpStatus.BAD_REQUEST, "RECRUITMENT-0053",
+        "면접 일정이 설정되지 않은 모집입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

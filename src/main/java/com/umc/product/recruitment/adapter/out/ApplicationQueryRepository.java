@@ -309,4 +309,29 @@ public class ApplicationQueryRepository {
         // 3. application.formResponseId가 위 서브쿼리에 포함되는지 확인
         return application.formResponseId.in(formResponseIds);
     }
+
+    public long countByRecruitmentId(Long recruitmentId) {
+        return queryFactory
+            .select(application.count())
+            .from(application)
+            .where(belongsToRecruitment(recruitmentId))
+            .fetchOne();
+    }
+
+    public long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, ChallengerPart part) {
+        Long count = queryFactory
+            .select(application.countDistinct())
+            .from(application)
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                recruitmentPart.part.eq(part)
+            )
+            .fetchOne();
+        return count != null ? count : 0L;
+    }
 }

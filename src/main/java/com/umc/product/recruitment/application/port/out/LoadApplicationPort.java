@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.application.port.out;
 
+import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.domain.Application;
 import java.util.List;
 import java.util.Optional;
@@ -16,4 +17,8 @@ public interface LoadApplicationPort {
     Optional<Application> findByRecruitmentIdAndApplicantMemberId(Long recruitmentId, Long applicantMemberId);
 
     List<Application> findAllByApplicantMemberId(Long applicantMemberId);
+
+    long countByRecruitmentId(Long recruitmentId);
+
+    long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, PartOption part);
 }
