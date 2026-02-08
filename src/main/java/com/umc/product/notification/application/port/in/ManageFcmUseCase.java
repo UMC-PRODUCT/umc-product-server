@@ -17,4 +17,6 @@ public interface ManageFcmUseCase {
 
     void sendMessageByTopic(TopicNotificationCommand command);
 
+    void refreshTokenAndSubscriptions(Long userId, FcmRegistrationRequest request);
+
 }
