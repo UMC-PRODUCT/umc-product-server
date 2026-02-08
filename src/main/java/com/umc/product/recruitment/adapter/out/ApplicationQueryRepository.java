@@ -11,7 +11,6 @@ import static com.umc.product.survey.domain.QFormResponse.formResponse;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.DateTimeExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -25,7 +24,6 @@ import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProj
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
-import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo.ByPart;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
@@ -318,43 +316,9 @@ public class ApplicationQueryRepository {
             )
             .fetchOne();
 
-        // byPart (1지망 priority=0 기준 group by)
-        NumberExpression<Long> selectedCaseSum = new CaseBuilder()
-            .when(application.status.eq(ApplicationStatus.DOC_PASSED)).then(1L)
-            .otherwise(0L)
-            .sum();
-
-        List<Tuple> byPartRows = queryFactory
-            .select(
-                recruitmentPart.part,               // ChallengerPart
-                application.id.count(),             // total
-                selectedCaseSum                     // selected
-            )
-            .from(applicationPartPreference)
-            .join(applicationPartPreference.application, application)
-            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
-            .where(
-                belongsToRecruitment(recruitmentId),
-                documentSelectionStatus(),
-                applicationPartPreference.priority.eq(1),
-                firstPriorityPartMatches(part)
-            )
-            .groupBy(recruitmentPart.part)
-            .fetch();
-
-        Map<String, ByPart> byPartMap =
-            byPartRows.stream().collect(Collectors.toMap(
-                t -> t.get(recruitmentPart.part).name(),
-                t -> new DocumentSelectionApplicationListInfo.ByPart(
-                    t.get(application.id.count()),
-                    t.get(selectedCaseSum)
-                )
-            ));
-
         return new DocumentSelectionApplicationListInfo.Summary(
             total != null ? total : 0L,
-            selected != null ? selected : 0L,
-            byPartMap
+            selected != null ? selected : 0L
         );
     }
 

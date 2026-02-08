@@ -2,65 +2,61 @@ package com.umc.product.recruitment.adapter.in.web.dto.response;
 
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
-import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo.ByPart;
 import java.util.List;
-import java.util.Map;
 
 public record DocumentSelectionApplicationListResponse(
-    DocumentSelectionSummary summary,
-    String sort,
-    PageResponse<DocumentSelectionApplicationResponse> documentSelectionApplications
+        DocumentSelectionSummary summary,
+        String sort,
+        PageResponse<DocumentSelectionApplicationResponse> documentSelectionApplications
 ) {
     public static DocumentSelectionApplicationListResponse from(DocumentSelectionApplicationListInfo info) {
         return new DocumentSelectionApplicationListResponse(
-            new DocumentSelectionSummary(
-                info.summary().totalCount(),
-                info.summary().selectedCount(),
-                info.summary().byPart()
-            ),
-            info.sort(),
-            new PageResponse<>(
-                info.documentSelectionApplications().stream()
-                    .map(DocumentSelectionApplicationResponse::from)
-                    .toList(),
-                info.pagination().page(),
-                info.pagination().size(),
-                info.pagination().totalElements(),
-                info.pagination().totalPages(),
-                info.pagination().hasNext(),
-                info.pagination().hasPrevious()
-            )
+                new DocumentSelectionSummary(
+                        info.summary().totalCount(),
+                        info.summary().selectedCount()
+                ),
+                info.sort(),
+                new PageResponse<>(
+                        info.documentSelectionApplications().stream()
+                                .map(DocumentSelectionApplicationResponse::from)
+                                .toList(),
+                        info.pagination().page(),
+                        info.pagination().size(),
+                        info.pagination().totalElements(),
+                        info.pagination().totalPages(),
+                        info.pagination().hasNext(),
+                        info.pagination().hasPrevious()
+                )
         );
     }
 
     public record DocumentSelectionSummary(
-        long totalCount,
-        long selectedCount,
-        Map<String, ByPart> byPart
+            long totalCount,
+            long selectedCount
     ) {
     }
 
     public record DocumentSelectionApplicationResponse(
-        Long applicationId,
-        ApplicantResponse applicant,
-        List<AppliedPartResponse> appliedParts,
-        Double documentScore,
-        DocumentResult documentResult
+            Long applicationId,
+            ApplicantResponse applicant,
+            List<AppliedPartResponse> appliedParts,
+            Double documentScore,
+            DocumentResult documentResult
     ) {
         public static DocumentSelectionApplicationResponse from(
-            DocumentSelectionApplicationListInfo.DocumentSelectionApplicationInfo info
+                DocumentSelectionApplicationListInfo.DocumentSelectionApplicationInfo info
         ) {
             return new DocumentSelectionApplicationResponse(
-                info.applicationId(),
-                new ApplicantResponse(info.applicant().nickname(), info.applicant().name()),
-                info.appliedParts().stream()
-                    .map(p -> new AppliedPartResponse(
-                        p.priority(),
-                        new PartResponse(p.part().name(), p.part().getLabel())
-                    ))
-                    .toList(),
-                info.documentScore(),
-                new DocumentResult(info.documentResult().decision())
+                    info.applicationId(),
+                    new ApplicantResponse(info.applicant().nickname(), info.applicant().name()),
+                    info.appliedParts().stream()
+                            .map(p -> new AppliedPartResponse(
+                                    p.priority(),
+                                    new PartResponse(p.part().name(), p.part().getLabel())
+                            ))
+                            .toList(),
+                    info.documentScore(),
+                    new DocumentResult(info.documentResult().decision())
             );
         }
     }

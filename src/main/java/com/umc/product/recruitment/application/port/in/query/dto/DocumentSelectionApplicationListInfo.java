@@ -2,7 +2,6 @@ package com.umc.product.recruitment.application.port.in.query.dto;
 
 import com.umc.product.recruitment.domain.enums.PartKey;
 import java.util.List;
-import java.util.Map;
 
 public record DocumentSelectionApplicationListInfo(
     Summary summary,
@@ -12,8 +11,7 @@ public record DocumentSelectionApplicationListInfo(
 ) {
     public record Summary(
         long totalCount,
-        long selectedCount,
-        Map<String, ByPart> byPart
+        long selectedCount
     ) {
     }
 
