@@ -1,6 +1,7 @@
 package com.umc.product.recruitment.adapter.out;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
@@ -117,7 +118,23 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
         ChallengerPart challengerPart = toChallengerPart(part);
         return applicationQueryRepository.countByRecruitmentIdAndFirstPreferredPart(recruitmentId, challengerPart);
     }
-    
+
+    @Override
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitment(
+        Long recruitmentId) {
+        return applicationQueryRepository.findApplicationIdsWithFormResponseIdsByRecruitment(recruitmentId);
+    }
+
+    @Override
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+        Long recruitmentId,
+        PartOption part
+    ) {
+        return applicationQueryRepository.findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+            recruitmentId, part
+        );
+    }
+
     private ChallengerPart toChallengerPart(PartOption part) {
         if (part == null || part == PartOption.ALL) {
             throw new IllegalArgumentException("ALL/null is not allowed here");

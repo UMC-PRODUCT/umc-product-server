@@ -15,9 +15,11 @@ import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
+import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.enums.EvaluationStatus;
@@ -333,5 +335,41 @@ public class ApplicationQueryRepository {
             )
             .fetchOne();
         return count != null ? count : 0L;
+    }
+
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitment(
+        Long recruitmentId) {
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .where(belongsToRecruitment(recruitmentId))
+            .fetch();
+    }
+
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+        Long recruitmentId,
+        PartOption partOption
+    ) {
+        ChallengerPart part = ChallengerPart.valueOf(partOption.name());
+
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                recruitmentPart.part.eq(part)
+            )
+            .fetch();
     }
 }

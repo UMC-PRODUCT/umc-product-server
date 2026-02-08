@@ -11,6 +11,9 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -70,5 +73,16 @@ public class InterviewAssignmentQueryRepository {
                 interviewSlot.startsAt.lt(end)
             )
             .fetchOne();
+    }
+
+    public Set<Long> findAssignedApplicationIdsByRecruitmentId(Long recruitmentId) {
+        return queryFactory
+            .select(interviewAssignment.application.id)
+            .from(interviewAssignment)
+            .where(interviewAssignment.recruitment.id.eq(recruitmentId))
+            .fetch()
+            .stream()
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
     }
 }

@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.application.port.out;
 
+import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.domain.Application;
 import java.util.List;
@@ -21,4 +22,11 @@ public interface LoadApplicationPort {
     long countByRecruitmentId(Long recruitmentId);
 
     long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, PartOption part);
+
+    List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitment(Long recruitmentId);
+
+    List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+        Long recruitmentId,
+        PartOption part
+    );
 }

@@ -4,6 +4,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import java.time.LocalDate;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -32,6 +33,11 @@ public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssig
         return interviewAssignmentQueryRepository.countByRecruitmentIdAndDateAndFirstPreferredPart(
             recruitmentId, date, challengerPart
         );
+    }
+
+    @Override
+    public Set<Long> findAssignedApplicationIdsByRecruitmentId(Long recruitmentId) {
+        return interviewAssignmentQueryRepository.findAssignedApplicationIdsByRecruitmentId(recruitmentId);
     }
 
     private ChallengerPart toChallengerPart(PartOption part) {

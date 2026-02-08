@@ -1,8 +1,10 @@
 package com.umc.product.survey.application.port.out;
 
-import com.umc.product.survey.domain.SingleAnswer;
 import java.util.List;
+import java.util.Map;
 
 public interface LoadSingleAnswerPort {
-    List<SingleAnswer> findByFormResponseId(Long formResponseId);
+    //List<SingleAnswer> findByFormResponseId(Long formResponseId);
+
+    Map<Long, Map<String, Object>> findScheduleValuesByFormResponseIds(List<Long> formResponseIds);
 }
