@@ -435,7 +435,7 @@ public class ApplicationQueryRepository {
     }
 
     /**
-     * part 필터: 1지망(priority=0) 기준 - ALL이면 null (필터 없음)
+     * part 필터: 1지망(priority=1) 기준 - ALL이면 null (필터 없음)
      */
     private BooleanExpression firstPriorityPartMatches(String part) {
         if (!StringUtils.hasText(part) || "ALL".equalsIgnoreCase(part)) {
