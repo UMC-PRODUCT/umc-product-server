@@ -6,13 +6,14 @@ import com.umc.product.challenger.adapter.in.web.dto.request.DeleteChallengerPoi
 import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPartRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPointRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.GrantChallengerPointRequest;
+import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerCursorRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
+import com.umc.product.challenger.adapter.in.web.dto.response.CursorSearchChallengerResponse;
 import com.umc.product.challenger.adapter.in.web.dto.response.SearchChallengerResponse;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
 import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerCommand;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.SearchChallengerQuery;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.global.constant.SwaggerTag.Constants;
@@ -111,7 +112,9 @@ public class ChallengerController {
         );
     }
 
-    @Operation(summary = "챌린저 검색 (챌린저 ID, 닉네임, 기수별)")
+    @Deprecated
+    @Operation(summary = "챌린저 검색 (Offset 기반)", deprecated = true,
+            description = "Deprecated: cursor 기반 API(/search/cursor)를 사용해주세요.")
     @GetMapping("search")
     SearchChallengerResponse searchChallenger(
             @ParameterObject Pageable pageable,
@@ -121,6 +124,20 @@ public class ChallengerController {
                 searchChallengerUseCase.search(
                         searchRequest.toQuery(),
                         pageable
+                )
+        );
+    }
+
+    @Operation(summary = "챌린저 검색 (Cursor 기반)")
+    @GetMapping("search/cursor")
+    CursorSearchChallengerResponse cursorSearchChallenger(
+            @ParameterObject SearchChallengerCursorRequest searchRequest
+    ) {
+        return CursorSearchChallengerResponse.from(
+                searchChallengerUseCase.cursorSearch(
+                        searchRequest.toQuery(),
+                        searchRequest.cursor(),
+                        searchRequest.getSize()
                 )
         );
     }

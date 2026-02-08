@@ -1,8 +1,9 @@
 package com.umc.product.challenger.adapter.in.web.dto.response;
 
-import com.umc.product.challenger.application.port.in.query.SearchChallengerResult;
+import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerResult;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerItemInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.global.response.PageResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +27,8 @@ public record SearchChallengerResponse(
             String name,
             String nickname,
             Double pointSum,
-            String profileImageLink
+            String profileImageLink,
+            List<ChallengerRoleType> roleTypes
     ) {
         public static SearchChallengerItemResponse from(SearchChallengerItemInfo info) {
             return new SearchChallengerItemResponse(
@@ -37,7 +39,8 @@ public record SearchChallengerResponse(
                     info.name(),
                     info.nickname(),
                     info.pointSum(),
-                    info.profileImageLink()
+                    info.profileImageLink(),
+                    info.roleTypes()
             );
         }
     }

@@ -18,6 +18,7 @@ public enum ChallengerErrorCode implements BaseCode {
     CHALLENGER_POINT_NOT_FOUND(HttpStatus.NOT_FOUND, "CHALLENGER-0007", "상벌점 기록을 찾을 수 없습니다."),
     BAD_CHALLENGER_UPDATE_REQUEST(HttpStatus.NOT_FOUND, "CHALLENGER-0008", "잘못된 챌린저 업데이트 요청입니다."),
     NOT_ALLOWED_AUTHOR(HttpStatus.BAD_REQUEST, "CHALLENGER-0009", "활성 또는 수료 상태의 사용자만 일정 생성이 가능합니다."),
+    MEMBER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHALLENGER-0010", "챌린저에 연결된 멤버 프로필을 찾을 수 없습니다."),
     ;
 
     private final HttpStatus httpStatus;
