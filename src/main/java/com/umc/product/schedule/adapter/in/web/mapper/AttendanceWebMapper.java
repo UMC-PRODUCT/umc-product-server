@@ -37,7 +37,8 @@ public class AttendanceWebMapper {
             info.sheetId(),
             info.recordId(),
             info.status().name(),
-            info.statusDisplay()
+            info.statusDisplay(),
+            info.locationVerified()  // 출석 시점의 위치 인증 여부
         );
     }
 
