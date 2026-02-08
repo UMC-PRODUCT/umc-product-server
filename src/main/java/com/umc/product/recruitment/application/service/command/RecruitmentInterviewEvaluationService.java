@@ -14,12 +14,16 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpdateLiveQue
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateLiveQuestionResult;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertMyInterviewEvaluationCommand;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyInterviewEvaluationInfo;
+import com.umc.product.recruitment.application.port.out.LoadEvaluationPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewLiveQuestionPort;
+import com.umc.product.recruitment.application.port.out.SaveEvaluationPort;
 import com.umc.product.recruitment.application.port.out.SaveInterviewLiveQuestionPort;
 import com.umc.product.recruitment.domain.Application;
+import com.umc.product.recruitment.domain.Evaluation;
 import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.recruitment.domain.InterviewLiveQuestion;
+import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -37,11 +41,53 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
     private final LoadInterviewAssignmentPort loadInterviewAssignmentPort;
     private final LoadInterviewLiveQuestionPort loadInterviewLiveQuestionPort;
     private final SaveInterviewLiveQuestionPort saveInterviewLiveQuestionPort;
+    private final LoadEvaluationPort loadEvaluationPort;
+    private final SaveEvaluationPort saveEvaluationPort;
     private final GetMemberUseCase getMemberUseCase;
 
     @Override
     public GetMyInterviewEvaluationInfo upsert(UpsertMyInterviewEvaluationCommand command) {
-        return null;
+        // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
+        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(command.assignmentId())
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
+
+        if (!assignment.getRecruitment().getId().equals(command.recruitmentId())) {
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
+        }
+
+        // 2. Application 가져오기
+        Application application = assignment.getApplication();
+
+        // 3. 기존 평가 조회 (upsert 판별)
+        Evaluation evaluation = loadEvaluationPort.findByApplicationIdAndEvaluatorUserIdAndStage(
+            application.getId(),
+            command.evaluatorMemberId(),
+            EvaluationStage.INTERVIEW
+        ).orElse(null);
+
+        // 4. Upsert : 없으면 생성, 있으면 업데이트
+        if (evaluation == null) {
+            evaluation = Evaluation.createInterviewEvaluation(
+                application,
+                command.evaluatorMemberId(),
+                command.score(),
+                command.comments()
+            );
+        } else {
+            evaluation.updateScoreAndComments(command.score(), command.comments());
+        }
+
+        // 5. 평가 저장
+        Evaluation saved = saveEvaluationPort.save(evaluation);
+
+        return new GetMyInterviewEvaluationInfo(
+            new GetMyInterviewEvaluationInfo.MyInterviewEvaluationInfo(
+                saved.getId(),
+                saved.getScore(),
+                saved.getComments(),
+                saved.getUpdatedAt()
+            )
+        );
     }
 
     @Override
