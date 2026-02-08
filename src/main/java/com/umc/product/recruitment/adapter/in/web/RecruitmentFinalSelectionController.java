@@ -28,14 +28,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/recruitments/{recruitmentId}")
+@RequestMapping("/api/v1/recruitments/{recruitmentId}/applications")
 @Tag(name = SwaggerTag.Constants.FINAL_SELECTION)
 public class RecruitmentFinalSelectionController {
 
     private final UpdateFinalStatusUseCase updateFinalStatusUseCase;
     private final GetFinalSelectionListUseCase getFinalSelectionListUseCase;
 
-    @PatchMapping("/applications/{applicationId}/final-status")
+    @PatchMapping("/{applicationId}/final-status")
     @Operation(
         summary = "최종 선발 단건 합격/합격 취소",
         description = """
