@@ -107,6 +107,8 @@ public enum RecruitmentErrorCode implements BaseCode {
     INTERVIEW_SLOT_NOT_IN_RECRUITMENT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0055", "해당 면접 슬롯이 해당 모집 소속이 아닙니다."),
     INTERVIEW_ASSIGNMENT_ONLY_DOC_PASSED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0056", "서류에 합격한 지원서만 면접 시간을 할당할 수 있습니다."),
     INTERVIEW_ASSIGNMENT_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "RECRUITMENT-0057", "이미 면접 시간이 할당된 서류입니다."),
+    INTERVIEW_ASSIGNMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "RECRUITMENT-0058", "해당 면접 할당이 존재하지 않습니다."),
+    INTERVIEW_ASSIGNMENT_NOT_IN_RECRUITMENT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0059", "해당 면접 할당이 해당 모집 소속이 아닙니다."),
     ;
 
     private final HttpStatus httpStatus;

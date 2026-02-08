@@ -8,6 +8,7 @@ import com.umc.product.recruitment.application.port.out.SaveInterviewAssignmentP
 import com.umc.product.recruitment.domain.InterviewAssignment;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -70,5 +71,15 @@ public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssig
     @Override
     public InterviewAssignment save(InterviewAssignment assignment) {
         return interviewAssignmentJpaRepository.save(assignment);
+    }
+
+    @Override
+    public Optional<InterviewAssignment> findById(Long assignmentId) {
+        return interviewAssignmentJpaRepository.findById(assignmentId);
+    }
+
+    @Override
+    public void delete(InterviewAssignment assignment) {
+        interviewAssignmentJpaRepository.delete(assignment);
     }
 }

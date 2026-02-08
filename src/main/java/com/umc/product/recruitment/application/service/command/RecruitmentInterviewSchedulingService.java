@@ -102,8 +102,42 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
     @Override
     public DeleteInterviewAssignmentResult delete(DeleteInterviewAssignmentCommand command) {
         // todo: 운영진 권한 검증 필요
-        // 할당 해제 시 interview assignment 삭제 로직 필요
-        return null;
+        InterviewAssignment assignment =
+            loadInterviewAssignmentPort.findById(command.assignmentId())
+                .orElseThrow(() -> new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND
+                ));
+
+        if (!assignment.getRecruitment().getId().equals(command.recruitmentId())) {
+            throw new BusinessException(
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_IN_RECRUITMENT
+            );
+        }
+
+        Long applicationId = assignment.getApplication().getId();
+
+        // 삭제
+        saveInterviewAssignmentPort.delete(assignment);
+
+        // summary 재계산
+        var date = command.date(); // null 가능
+        var part = command.part() == null ? PartOption.ALL : command.part();
+
+        var summary = getInterviewSchedulingSummaryUseCase.get(
+            new GetInterviewSchedulingSummaryQuery(
+                command.recruitmentId(),
+                date,
+                part,
+                command.requesterId()
+            )
+        );
+
+        return new DeleteInterviewAssignmentResult(
+            new DeleteInterviewAssignmentResult.UnassignedInfo(applicationId),
+            summary
+        );
     }
 
 }

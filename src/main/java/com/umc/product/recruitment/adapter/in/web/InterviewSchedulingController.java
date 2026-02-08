@@ -177,10 +177,12 @@ public class InterviewSchedulingController {
     public DeleteInterviewAssignmentResponse unassign(
         @PathVariable Long recruitmentId,
         @PathVariable Long assignmentId,
+        @RequestParam(required = false) LocalDate date,
+        @RequestParam(required = false) PartOption part,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         var result = deleteInterviewAssignmentUseCase.delete(
-            new DeleteInterviewAssignmentCommand(recruitmentId, assignmentId, memberPrincipal.getMemberId())
+            new DeleteInterviewAssignmentCommand(recruitmentId, assignmentId, date, part, memberPrincipal.getMemberId())
         );
         return DeleteInterviewAssignmentResponse.from(result);
     }

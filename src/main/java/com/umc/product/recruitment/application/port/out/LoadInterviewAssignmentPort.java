@@ -2,8 +2,10 @@ package com.umc.product.recruitment.application.port.out;
 
 import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAssignmentRow;
 import com.umc.product.recruitment.application.port.in.PartOption;
+import com.umc.product.recruitment.domain.InterviewAssignment;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface LoadInterviewAssignmentPort {
@@ -23,4 +25,6 @@ public interface LoadInterviewAssignmentPort {
     );
 
     boolean existsByRecruitmentIdAndApplicationId(Long recruitmentId, Long applicationId);
+
+    Optional<InterviewAssignment> findById(Long assignmentId);
 }
