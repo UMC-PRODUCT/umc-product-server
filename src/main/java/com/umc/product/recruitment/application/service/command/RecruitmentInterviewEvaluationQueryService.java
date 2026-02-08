@@ -26,6 +26,7 @@ import com.umc.product.recruitment.application.port.out.LoadEvaluationPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewLiveQuestionPort;
 import com.umc.product.recruitment.domain.Application;
+import com.umc.product.recruitment.domain.Evaluation;
 import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.recruitment.domain.InterviewLiveQuestion;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
@@ -34,6 +35,7 @@ import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -92,7 +94,59 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
     @Override
     public GetInterviewEvaluationsInfo get(GetInterviewEvaluationSummaryQuery query) {
-        return null;
+        // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
+        InterviewAssignment assignment = loadInterviewAssignmentPort.findById(query.assignmentId())
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
+
+        if (!assignment.getRecruitment().getId().equals(query.recruitmentId())) {
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
+        }
+
+        // 2. Application 가져오기
+        Application application = assignment.getApplication();
+
+        // 3. Application에 해당하는 Evaluation 리스트 가져오기
+        List<Evaluation> evaluations = loadEvaluationPort.findByApplicationIdAndStage(
+            application.getId(),
+            EvaluationStage.INTERVIEW
+        );
+
+        if (evaluations.isEmpty()) {
+            return new GetInterviewEvaluationsInfo(null, List.of());
+        }
+
+        // 4. 평가자 ID 목록 추출 & 일괄 조회
+        Set<Long> evaluatorMemberIds = evaluations.stream()
+            .map(Evaluation::getEvaluatorUserId)
+            .collect(Collectors.toSet());
+
+        Map<Long, MemberProfileInfo> profileMap = getMemberUseCase.getProfiles(evaluatorMemberIds);
+
+        // 5. 평균 점수 계산
+        Double avgScore = evaluations.stream()
+            .map(Evaluation::getScore)
+            .filter(Objects::nonNull)
+            .mapToInt(Integer::intValue)
+            .average()
+            .orElse(0.0);
+
+        // 6. 평가 리스트 생성
+        List<GetInterviewEvaluationsInfo.GetInterviewEvaluationInfo> items = evaluations.stream()
+            .map(evaluation -> {
+                MemberProfileInfo evaluator = profileMap.get(evaluation.getEvaluatorUserId());
+                return new GetInterviewEvaluationsInfo.GetInterviewEvaluationInfo(
+                    new GetInterviewEvaluationsInfo.Evaluator(
+                        evaluator.id(),
+                        evaluator.nickname(),
+                        evaluator.name()
+                    ),
+                    evaluation.getScore(),
+                    evaluation.getComments()
+                );
+            })
+            .toList();
+
+        return new GetInterviewEvaluationsInfo(avgScore, items);
     }
 
     @Override
