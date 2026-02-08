@@ -129,7 +129,7 @@ public class InterviewSchedulingController {
     public InterviewSchedulingAssignmentsResponse getAssignments(
         @PathVariable Long recruitmentId,
         @RequestParam @NotNull Long slotId,
-        @RequestParam(required = false) String part,
+        @RequestParam(required = false) PartOption part,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         var info = getInterviewSchedulingAssignmentsUseCase.get(
