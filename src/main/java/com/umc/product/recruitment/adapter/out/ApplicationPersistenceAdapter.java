@@ -1,15 +1,19 @@
 package com.umc.product.recruitment.adapter.out;
 
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
+import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
 import com.umc.product.recruitment.domain.Application;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -104,4 +108,30 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
                                                                              Long evaluatorMemberId) {
         return applicationQueryRepository.findMyDocumentEvaluation(applicationId, evaluatorMemberId);
     }
+
+    @Override
+    public Optional<Application> getByRecruitmentIdAndApplicationId(Long recruitmentId, Long applicationId) {
+        return applicationRepository.findByRecruitmentIdAndId(recruitmentId, applicationId);
+    }
+
+    @Override
+    public Page<DocumentSelectionListItemProjection> searchDocumentSelections(
+        Long recruitmentId,
+        String part,
+        String sort,
+        Pageable pageable
+    ) {
+        return applicationQueryRepository.searchDocumentSelections(recruitmentId, part, sort, pageable);
+    }
+
+    @Override
+    public DocumentSelectionApplicationListInfo.Summary getDocumentSelectionSummary(Long recruitmentId, String part) {
+        return applicationQueryRepository.getDocumentSelectionSummary(recruitmentId, part);
+    }
+
+    @Override
+    public Map<Long, BigDecimal> calculateAvgDocScoreByApplicationIds(Set<Long> applicationIds) {
+        return applicationQueryRepository.calculateAvgDocScoreByApplicationIds(applicationIds);
+    }
+
 }

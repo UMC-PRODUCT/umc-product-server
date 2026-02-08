@@ -2,18 +2,16 @@ package com.umc.product.recruitment.application.port.in.query.dto;
 
 import com.umc.product.recruitment.domain.enums.PartKey;
 import java.util.List;
-import java.util.Map;
 
-public record FinalSelectionApplicationListInfo(
+public record DocumentSelectionApplicationListInfo(
     Summary summary,
     String sort, // "SCORE_DESC" / "SCORE_ASC" / "EVALUATED_AT_ASC"
-    List<FinalSelectionApplicationInfo> finalSelectionApplications,
+    List<DocumentSelectionApplicationInfo> documentSelectionApplications,
     PaginationInfo pagination
 ) {
     public record Summary(
         long totalCount,
-        long selectedCount,
-        Map<String, ByPart> byPart
+        long selectedCount
     ) {
     }
 
@@ -23,14 +21,12 @@ public record FinalSelectionApplicationListInfo(
     ) {
     }
 
-    public record FinalSelectionApplicationInfo(
+    public record DocumentSelectionApplicationInfo(
         Long applicationId,
         ApplicantInfo applicant,
         List<AppliedPartInfo> appliedParts,
         Double documentScore,
-        Double interviewScore,
-        Double finalScore,
-        Selection selection
+        DocumentResult documentResult
     ) {
     }
 
@@ -46,9 +42,8 @@ public record FinalSelectionApplicationListInfo(
     ) {
     }
 
-    public record Selection(
-        String status,
-        PartKey part
+    public record DocumentResult(
+        String decision // PASS | WAIT
     ) {
     }
 
@@ -56,7 +51,9 @@ public record FinalSelectionApplicationListInfo(
         int page,
         int size,
         int totalPages,
-        long totalElements
+        long totalElements,
+        boolean hasNext,
+        boolean hasPrevious
     ) {
     }
 }

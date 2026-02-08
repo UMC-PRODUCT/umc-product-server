@@ -33,4 +33,9 @@ public class ApplicationPartPreferencePersistenceAdapter implements LoadApplicat
     public void saveAll(List<ApplicationPartPreference> partPreferences) {
         applicationPartPreferenceJpaRepository.saveAll(partPreferences);
     }
+
+    @Override
+    public List<ApplicationPartPreference> findByApplicationId(Long applicationId) {
+        return applicationPartPreferenceJpaRepository.findByApplicationId(applicationId);
+    }
 }
