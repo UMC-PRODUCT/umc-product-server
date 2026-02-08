@@ -3,6 +3,7 @@ package com.umc.product.recruitment.adapter.out;
 import com.umc.product.recruitment.application.port.out.LoadInterviewLiveQuestionPort;
 import com.umc.product.recruitment.application.port.out.SaveInterviewLiveQuestionPort;
 import com.umc.product.recruitment.domain.InterviewLiveQuestion;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,11 @@ public class InterviewLiveQuestionPersistenceAdapter implements LoadInterviewLiv
     @Override
     public int countByApplicationId(Long applicationId) {
         return interviewLiveQuestionRepository.countByApplicationId(applicationId);
+    }
+
+    @Override
+    public List<InterviewLiveQuestion> findByApplicationIdOrderByIdAsc(Long applicationId) {
+        return interviewLiveQuestionRepository.findByApplicationIdOrderByIdAsc(applicationId);
     }
 
     @Override
