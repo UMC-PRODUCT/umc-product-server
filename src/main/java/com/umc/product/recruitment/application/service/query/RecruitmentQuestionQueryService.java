@@ -70,7 +70,14 @@ public class RecruitmentQuestionQueryService implements GetInterviewSheetQuestio
         parts.stream()
             .map(RecruitmentPart::getPart)
             .sorted(Comparator.comparingInt(ChallengerPart::getSortOrder)) // 정렬
-            .map(challengerPart -> PartKey.valueOf(challengerPart.name()))
+            .map(challengerPart -> {
+                try {
+                    return PartKey.valueOf(challengerPart.name());
+                } catch (IllegalArgumentException e) {
+                    return null;
+                }
+            })
+            .filter(java.util.Objects::nonNull)
             .forEach(partKeys::add);
 
         return new GetInterviewSheetPartsInfo(partKeys);
