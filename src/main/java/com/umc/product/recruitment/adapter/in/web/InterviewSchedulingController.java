@@ -148,12 +148,16 @@ public class InterviewSchedulingController {
     )
     public CreateInterviewAssignmentResponse assign(
         @PathVariable Long recruitmentId,
+        @RequestParam(required = false) LocalDate date,
+        @RequestParam(required = false, defaultValue = "ALL") PartOption part,
         @RequestBody @Valid CreateInterviewAssignmentRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         var result = createInterviewAssignmentUseCase.create(
             new CreateInterviewAssignmentCommand(
                 recruitmentId,
+                date,
+                part,
                 request.applicationId(),
                 request.to().slotId(),
                 memberPrincipal.getMemberId()

@@ -249,6 +249,8 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
 
     @Override
     public InterviewSchedulingApplicantsInfo get(GetInterviewSchedulingApplicantsQuery query) {
+        // todo: 운영진 권한 검증 필요
+
         Long recruitmentId = query.recruitmentId();
         Long slotId = query.slotId();
         PartOption requestedPart = (query.part() != null) ? query.part() : PartOption.ALL;
@@ -385,11 +387,6 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
 
         return new InterviewSchedulingApplicantsInfo(available, alreadyScheduled);
 
-        // todo: 운영진 권한 검증 필요
-        // 해당 시간 면접 가능 지원자 목록은, recruitment.form.formSection.question 중 'SCHEDULE' 타입의 질문에 대한 singleAnswer의 json 값을 파싱해서 계산 필요
-        // singleAnswer의 값은
-        // {"selected": [{"date": "2026-01-23", "times": ["09:00", "09:30", "10:00"]}, {"date": "2026-01-24", "times": ["09:00", "09:30", "10:00"]}]}
-        // 위 형식으로 되어있으며, 이 중 date와 times를 보고 해당 날짜에 가능한 시간대를 파악할 수 있습니다.
     }
 
     @Override
