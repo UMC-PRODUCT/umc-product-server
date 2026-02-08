@@ -13,6 +13,7 @@ import com.umc.product.schedule.application.port.out.SaveAttendanceRecordPort;
 import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
 import com.umc.product.schedule.domain.AttendanceSheet;
+import com.umc.product.schedule.domain.ScheduleConstants;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -122,7 +123,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         // 사유 제출 (출석 체크 전 상태에서만 가능, 위치 인증은 실패로 처리됨)
         record.submitReasonBeforeCheck(
             command.reason(),
-            java.time.LocalDateTime.ofInstant(command.submittedAt(), java.time.ZoneId.systemDefault())
+            java.time.LocalDateTime.ofInstant(command.submittedAt(), ScheduleConstants.KST)
         );
 
         // 저장
