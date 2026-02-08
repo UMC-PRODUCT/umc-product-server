@@ -11,6 +11,8 @@ import com.umc.product.notification.domain.FcmToken;
 import com.umc.product.notification.domain.FcmTopicName;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
+import com.umc.product.organization.exception.OrganizationDomainException;
+import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -86,29 +88,23 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
 
     /**
      * 챌린저 정보를 기반으로 구독해야 할 토픽 목록을 생성
+     * 챌린저는 반드시 기수/학교/지부/파트 정보가 모두 존재해야 한다.
      */
     private List<String> resolveTopicsForChallenger(ChallengerInfo challenger) {
         MemberInfo memberInfo = getMemberUseCase.getById(challenger.memberId());
-        Long chapterId = resolveChapterId(challenger.gisuId(), memberInfo.schoolId());
+
+        if (memberInfo.schoolId() == null) {
+            throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_NOT_FOUND);
+        }
+
+        ChapterInfo chapter = getChapterUseCase.byGisuAndSchool(
+                challenger.gisuId(), memberInfo.schoolId());
 
         return FcmTopicName.allTopicsFor(
             challenger.gisuId(),
             challenger.part(),
             memberInfo.schoolId(),
-            chapterId
+            chapter.id()
         );
-    }
-
-    private Long resolveChapterId(Long gisuId, Long schoolId) {
-        if (schoolId == null) {
-            return null;
-        }
-        try {
-            ChapterInfo chapter = getChapterUseCase.byGisuAndSchool(gisuId, schoolId);
-            return chapter.id();
-        } catch (Exception e) {
-            log.warn("지부 정보 조회 실패 gisuId={}, schoolId={}", gisuId, schoolId);
-            return null;
-        }
     }
 }
