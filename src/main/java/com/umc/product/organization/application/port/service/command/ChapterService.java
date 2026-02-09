@@ -6,6 +6,7 @@ import com.umc.product.organization.application.port.in.command.ManageChapterUse
 import com.umc.product.organization.application.port.in.command.dto.CreateChapterCommand;
 import com.umc.product.organization.application.port.out.command.ManageChapterPort;
 import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
+import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.Chapter;
@@ -28,6 +29,7 @@ public class ChapterService implements ManageChapterUseCase {
 
     private final LoadGisuPort loadGisuPort;
     private final LoadSchoolPort loadSchoolPort;
+    private final LoadChapterSchoolPort loadChapterSchoolPort;
     private final ManageChapterPort manageChapterPort;
     private final ManageChapterSchoolPort manageChapterSchoolPort;
 
@@ -44,6 +46,7 @@ public class ChapterService implements ManageChapterUseCase {
         if (!command.schoolIds().isEmpty()) {
             List<School> schools = loadSchoolPort.findAllByIds(command.schoolIds());
             validateAllSchoolsExist(command.schoolIds(), schools);
+            validateSchoolsNotAssignedInGisu(command.schoolIds(), command.gisuId());
 
             for (School school : schools) {
                 ChapterSchool chapterSchool = ChapterSchool.create(savedChapter, school);
@@ -62,6 +65,20 @@ public class ChapterService implements ManageChapterUseCase {
 
         if (!foundSet.containsAll(requestedSet)) {
             throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.SCHOOL_NOT_FOUND);
+        }
+    }
+
+    private void validateSchoolsNotAssignedInGisu(List<Long> schoolIds, Long gisuId) {
+        Set<Long> requestedSet = new HashSet<>(schoolIds);
+
+        Set<Long> alreadyAssignedSchoolIds = loadChapterSchoolPort.findByGisuId(gisuId).stream()
+                .map(cs -> cs.getSchool().getId())
+                .collect(Collectors.toSet());
+
+        requestedSet.retainAll(alreadyAssignedSchoolIds);
+
+        if (!requestedSet.isEmpty()) {
+            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.SCHOOL_ALREADY_ASSIGNED_TO_CHAPTER);
         }
     }
 }
