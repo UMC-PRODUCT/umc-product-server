@@ -28,10 +28,9 @@ import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAlreadyScheduledApplicantRow;
 import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAvailableApplicantRow;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
-import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.PartOption;
+import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
-import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import com.umc.product.recruitment.domain.QApplicationPartPreference;
 import com.umc.product.recruitment.domain.QRecruitmentPart;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
@@ -40,7 +39,6 @@ import com.umc.product.recruitment.domain.enums.EvaluationStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
-import java.math.RoundingMode;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -271,8 +269,8 @@ public class ApplicationQueryRepository {
         List<DocumentSelectionListItemProjection> content = queryFactory
             .select(Projections.constructor(DocumentSelectionListItemProjection.class,
                 application.id,
-                member.name,
                 member.nickname,
+                member.name,
                 application.status
             ))
             .from(application)
