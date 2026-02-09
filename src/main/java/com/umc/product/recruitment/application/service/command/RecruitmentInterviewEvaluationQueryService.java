@@ -40,7 +40,6 @@ import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.Evaluation;
 import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.recruitment.domain.InterviewLiveQuestion;
-import com.umc.product.recruitment.domain.InterviewQuestionSheet;
 import com.umc.product.recruitment.domain.InterviewSlot;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
@@ -132,171 +131,6 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
         );
     }
 
-    private GetInterviewEvaluationViewInfo.ApplicationInfo buildApplicationInfo(
-        MemberProfileInfo applicantProfile,
-        List<ApplicationPartPreference> preferences
-    ) {
-        GetInterviewEvaluationViewInfo.Applicant applicant = new GetInterviewEvaluationViewInfo.Applicant(
-            applicantProfile.nickname(),
-            applicantProfile.name()
-        );
-
-        List<GetInterviewEvaluationViewInfo.AppliedPart> appliedParts = preferences.stream()
-            .map(pref -> {
-                ChallengerPart part = pref.getRecruitmentPart().getPart();
-                return new GetInterviewEvaluationViewInfo.AppliedPart(
-                    pref.getPriority(),
-                    part.name(),
-                    part.getDisplayName()
-                );
-            })
-            .toList();
-
-        return new GetInterviewEvaluationViewInfo.ApplicationInfo(applicant, appliedParts);
-    }
-
-    private GetInterviewEvaluationViewInfo.InterviewQuestionSheetInfo buildQuestionsInfo(
-        Long recruitmentId,
-        Long applicationId,
-        List<ApplicationPartPreference> preferences,
-        Long memberId
-    ) {
-        // 공통 질문
-        List<InterviewQuestionSheet> commonQuestions = loadInterviewQuestionSheetPort
-            .findByRecruitmentIdAndPartKeyOrderByOrderNoAsc(recruitmentId, PartKey.COMMON);
-
-        List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> common = commonQuestions.stream()
-            .map(q -> new GetInterviewEvaluationViewInfo.InterviewQuestionInfo(
-                q.getId(), q.getOrderNo(), q.getContent()
-            ))
-            .toList();
-
-        // 1지망 파트 질문
-        List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> firstChoice = List.of();
-        ApplicationPartPreference firstPref = preferences.stream()
-            .filter(p -> p.getPriority() == 1)
-            .findFirst()
-            .orElse(null);
-
-        if (firstPref != null) {
-            PartKey firstPartKey = toPartKey(firstPref.getRecruitmentPart().getPart());
-            List<InterviewQuestionSheet> firstQuestions = loadInterviewQuestionSheetPort
-                .findByRecruitmentIdAndPartKeyOrderByOrderNoAsc(recruitmentId, firstPartKey);
-
-            firstChoice = firstQuestions.stream()
-                .map(q -> new GetInterviewEvaluationViewInfo.InterviewQuestionInfo(
-                    q.getId(), q.getOrderNo(), q.getContent()
-                ))
-                .toList();
-        }
-
-        // 2지망 파트 질문
-        List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> secondChoice = List.of();
-        ApplicationPartPreference secondPref = preferences.stream()
-            .filter(p -> p.getPriority() == 2)
-            .findFirst()
-            .orElse(null);
-
-        if (secondPref != null) {
-            PartKey secondPartKey = toPartKey(secondPref.getRecruitmentPart().getPart());
-            List<InterviewQuestionSheet> secondQuestions = loadInterviewQuestionSheetPort
-                .findByRecruitmentIdAndPartKeyOrderByOrderNoAsc(recruitmentId, secondPartKey);
-
-            secondChoice = secondQuestions.stream()
-                .map(q -> new GetInterviewEvaluationViewInfo.InterviewQuestionInfo(
-                    q.getId(), q.getOrderNo(), q.getContent()
-                ))
-                .toList();
-        }
-
-        // 즉석 질문 (live questions)
-        List<InterviewLiveQuestion> liveQuestions = loadInterviewLiveQuestionPort
-            .findByApplicationIdOrderByIdAsc(applicationId);
-
-        Set<Long> authorMemberIds = liveQuestions.stream()
-            .map(InterviewLiveQuestion::getAuthorMemberId)
-            .collect(Collectors.toSet());
-
-        Map<Long, MemberProfileInfo> authorProfileMap = authorMemberIds.isEmpty()
-            ? Map.of()
-            : getMemberUseCase.getProfiles(authorMemberIds);
-
-        List<GetInterviewEvaluationViewInfo.LiveQuestionInfo> live = new ArrayList<>();
-        for (int i = 0; i < liveQuestions.size(); i++) {
-            InterviewLiveQuestion q = liveQuestions.get(i);
-            MemberProfileInfo author = authorProfileMap.get(q.getAuthorMemberId());
-
-            live.add(new GetInterviewEvaluationViewInfo.LiveQuestionInfo(
-                q.getId(),
-                i + 1,
-                q.getContent(),
-                new GetInterviewEvaluationViewInfo.CreatedBy(
-                    author.id(), author.nickname(), author.name()
-                ),
-                q.getAuthorMemberId().equals(memberId)
-            ));
-        }
-
-        return new GetInterviewEvaluationViewInfo.InterviewQuestionSheetInfo(
-            common, firstChoice, secondChoice, live
-        );
-    }
-
-    private GetInterviewEvaluationViewInfo.LiveEvaluationListInfo buildLiveEvaluationsInfo(Long applicationId) {
-        List<Evaluation> evaluations = loadEvaluationPort.findByApplicationIdAndStage(
-            applicationId, EvaluationStage.INTERVIEW
-        );
-
-        if (evaluations.isEmpty()) {
-            return new GetInterviewEvaluationViewInfo.LiveEvaluationListInfo(null, List.of());
-        }
-
-        // 평가자 프로필 일괄 조회
-        Set<Long> evaluatorIds = evaluations.stream()
-            .map(Evaluation::getEvaluatorUserId)
-            .collect(Collectors.toSet());
-
-        Map<Long, MemberProfileInfo> evaluatorProfileMap = getMemberUseCase.getProfiles(evaluatorIds);
-
-        // 평균 점수 계산
-        Double avgScore = evaluations.stream()
-            .map(Evaluation::getScore)
-            .filter(Objects::nonNull)
-            .mapToInt(Integer::intValue)
-            .average()
-            .orElse(0.0);
-
-        // 평가 리스트 생성
-        List<GetInterviewEvaluationViewInfo.LiveEvaluationItem> items = evaluations.stream()
-            .map(e -> {
-                MemberProfileInfo evaluator = evaluatorProfileMap.get(e.getEvaluatorUserId());
-                return new GetInterviewEvaluationViewInfo.LiveEvaluationItem(
-                    new GetInterviewEvaluationViewInfo.Evaluator(
-                        evaluator.id(), evaluator.nickname(), evaluator.name()
-                    ),
-                    e.getScore(),
-                    e.getComments()
-                );
-            })
-            .toList();
-
-        return new GetInterviewEvaluationViewInfo.LiveEvaluationListInfo(avgScore, items);
-    }
-
-    private GetInterviewEvaluationViewInfo.MyInterviewEvaluationInfo buildMyEvaluationInfo(
-        Long applicationId, Long memberId
-    ) {
-        return loadEvaluationPort.findByApplicationIdAndEvaluatorUserIdAndStage(
-            applicationId, memberId, EvaluationStage.INTERVIEW
-        ).map(e -> new GetInterviewEvaluationViewInfo.MyInterviewEvaluationInfo(
-            e.getId(), e.getScore(), e.getComments(), e.getUpdatedAt()
-        )).orElse(null);
-    }
-
-    private PartKey toPartKey(ChallengerPart challengerPart) {
-        return PartKey.valueOf(challengerPart.name());
-    }
-
     @Override
     public GetMyInterviewEvaluationInfo get(GetMyInterviewEvaluationQuery query) {
         // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
@@ -322,13 +156,9 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
     @Override
     public GetInterviewEvaluationsInfo get(GetInterviewEvaluationSummaryQuery query) {
-        // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
         InterviewAssignment assignment = getValidatedAssignment(query.assignmentId(), query.recruitmentId());
-
-        // 2. Application 가져오기
         Application application = assignment.getApplication();
 
-        // 3. Application에 해당하는 Evaluation 리스트 가져오기
         List<Evaluation> evaluations = loadEvaluationPort.findByApplicationIdAndStage(
             application.getId(),
             EvaluationStage.INTERVIEW
@@ -338,22 +168,9 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             return new GetInterviewEvaluationsInfo(null, List.of());
         }
 
-        // 4. 평가자 ID 목록 추출 & 일괄 조회
-        Set<Long> evaluatorMemberIds = evaluations.stream()
-            .map(Evaluation::getEvaluatorUserId)
-            .collect(Collectors.toSet());
+        Map<Long, MemberProfileInfo> profileMap = getEvaluatorProfileMap(evaluations);
+        Double avgScore = calculateAverageScore(evaluations);
 
-        Map<Long, MemberProfileInfo> profileMap = getMemberUseCase.getProfiles(evaluatorMemberIds);
-
-        // 5. 평균 점수 계산
-        Double avgScore = evaluations.stream()
-            .map(Evaluation::getScore)
-            .filter(Objects::nonNull)
-            .mapToInt(Integer::intValue)
-            .average()
-            .orElse(0.0);
-
-        // 6. 평가 리스트 생성
         List<GetInterviewEvaluationsInfo.GetInterviewEvaluationInfo> items = evaluations.stream()
             .map(evaluation -> {
                 MemberProfileInfo evaluator = profileMap.get(evaluation.getEvaluatorUserId());
@@ -606,5 +423,180 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             return EvaluationProgressStatus.WAITING;
         }
         return hasEvaluation ? EvaluationProgressStatus.DONE : EvaluationProgressStatus.IN_PROGRESS;
+    }
+
+    private GetInterviewEvaluationViewInfo.ApplicationInfo buildApplicationInfo(
+        MemberProfileInfo applicantProfile,
+        List<ApplicationPartPreference> preferences
+    ) {
+        GetInterviewEvaluationViewInfo.Applicant applicant = new GetInterviewEvaluationViewInfo.Applicant(
+            applicantProfile.nickname(),
+            applicantProfile.name()
+        );
+
+        List<GetInterviewEvaluationViewInfo.AppliedPart> appliedParts = preferences.stream()
+            .map(pref -> {
+                ChallengerPart part = pref.getRecruitmentPart().getPart();
+                return new GetInterviewEvaluationViewInfo.AppliedPart(
+                    pref.getPriority(),
+                    part.name(),
+                    part.getDisplayName()
+                );
+            })
+            .toList();
+
+        return new GetInterviewEvaluationViewInfo.ApplicationInfo(applicant, appliedParts);
+    }
+
+    private GetInterviewEvaluationViewInfo.InterviewQuestionSheetInfo buildQuestionsInfo(
+        Long recruitmentId,
+        Long applicationId,
+        List<ApplicationPartPreference> preferences,
+        Long memberId
+    ) {
+        // 공통 질문
+        List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> common =
+            getQuestionsByPartKey(recruitmentId, PartKey.COMMON);
+
+        // 1지망 파트 질문
+        List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> firstChoice =
+            getQuestionsForPriority(recruitmentId, preferences, 1);
+
+        // 2지망 파트 질문
+        List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> secondChoice =
+            getQuestionsForPriority(recruitmentId, preferences, 2);
+
+        // 즉석 질문 (live questions)
+        List<GetInterviewEvaluationViewInfo.LiveQuestionInfo> live =
+            buildLiveQuestionInfoList(applicationId, memberId);
+
+        return new GetInterviewEvaluationViewInfo.InterviewQuestionSheetInfo(
+            common, firstChoice, secondChoice, live
+        );
+    }
+
+    private List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> getQuestionsByPartKey(
+        Long recruitmentId, PartKey partKey
+    ) {
+        return loadInterviewQuestionSheetPort
+            .findByRecruitmentIdAndPartKeyOrderByOrderNoAsc(recruitmentId, partKey)
+            .stream()
+            .map(q -> new GetInterviewEvaluationViewInfo.InterviewQuestionInfo(
+                q.getId(), q.getOrderNo(), q.getContent()
+            ))
+            .toList();
+    }
+
+    private List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> getQuestionsForPriority(
+        Long recruitmentId, List<ApplicationPartPreference> preferences, int priority
+    ) {
+        return findPreferenceByPriority(preferences, priority)
+            .map(pref -> {
+                PartKey partKey = toPartKey(pref.getRecruitmentPart().getPart());
+                return getQuestionsByPartKey(recruitmentId, partKey);
+            })
+            .orElse(List.of());
+    }
+
+    private java.util.Optional<ApplicationPartPreference> findPreferenceByPriority(
+        List<ApplicationPartPreference> preferences, int priority
+    ) {
+        return preferences.stream()
+            .filter(p -> p.getPriority() == priority)
+            .findFirst();
+    }
+
+    private List<GetInterviewEvaluationViewInfo.LiveQuestionInfo> buildLiveQuestionInfoList(
+        Long applicationId, Long memberId
+    ) {
+        List<InterviewLiveQuestion> liveQuestions = loadInterviewLiveQuestionPort
+            .findByApplicationIdOrderByIdAsc(applicationId);
+
+        if (liveQuestions.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> authorMemberIds = liveQuestions.stream()
+            .map(InterviewLiveQuestion::getAuthorMemberId)
+            .collect(Collectors.toSet());
+
+        Map<Long, MemberProfileInfo> authorProfileMap = getMemberUseCase.getProfiles(authorMemberIds);
+
+        List<GetInterviewEvaluationViewInfo.LiveQuestionInfo> result = new ArrayList<>();
+        for (int i = 0; i < liveQuestions.size(); i++) {
+            InterviewLiveQuestion q = liveQuestions.get(i);
+            MemberProfileInfo author = authorProfileMap.get(q.getAuthorMemberId());
+
+            result.add(new GetInterviewEvaluationViewInfo.LiveQuestionInfo(
+                q.getId(),
+                i + 1,
+                q.getContent(),
+                new GetInterviewEvaluationViewInfo.CreatedBy(
+                    author.id(), author.nickname(), author.name()
+                ),
+                q.getAuthorMemberId().equals(memberId)
+            ));
+        }
+
+        return result;
+    }
+
+    private GetInterviewEvaluationViewInfo.LiveEvaluationListInfo buildLiveEvaluationsInfo(Long applicationId) {
+        List<Evaluation> evaluations = loadEvaluationPort.findByApplicationIdAndStage(
+            applicationId, EvaluationStage.INTERVIEW
+        );
+
+        if (evaluations.isEmpty()) {
+            return new GetInterviewEvaluationViewInfo.LiveEvaluationListInfo(null, List.of());
+        }
+
+        Map<Long, MemberProfileInfo> evaluatorProfileMap = getEvaluatorProfileMap(evaluations);
+        Double avgScore = calculateAverageScore(evaluations);
+
+        List<GetInterviewEvaluationViewInfo.LiveEvaluationItem> items = evaluations.stream()
+            .map(e -> {
+                MemberProfileInfo evaluator = evaluatorProfileMap.get(e.getEvaluatorUserId());
+                return new GetInterviewEvaluationViewInfo.LiveEvaluationItem(
+                    new GetInterviewEvaluationViewInfo.Evaluator(
+                        evaluator.id(), evaluator.nickname(), evaluator.name()
+                    ),
+                    e.getScore(),
+                    e.getComments()
+                );
+            })
+            .toList();
+
+        return new GetInterviewEvaluationViewInfo.LiveEvaluationListInfo(avgScore, items);
+    }
+
+    private Double calculateAverageScore(List<Evaluation> evaluations) {
+        return evaluations.stream()
+            .map(Evaluation::getScore)
+            .filter(Objects::nonNull)
+            .mapToInt(Integer::intValue)
+            .average()
+            .orElse(0.0);
+    }
+
+    private Map<Long, MemberProfileInfo> getEvaluatorProfileMap(List<Evaluation> evaluations) {
+        Set<Long> evaluatorIds = evaluations.stream()
+            .map(Evaluation::getEvaluatorUserId)
+            .collect(Collectors.toSet());
+
+        return getMemberUseCase.getProfiles(evaluatorIds);
+    }
+
+    private GetInterviewEvaluationViewInfo.MyInterviewEvaluationInfo buildMyEvaluationInfo(
+        Long applicationId, Long memberId
+    ) {
+        return loadEvaluationPort.findByApplicationIdAndEvaluatorUserIdAndStage(
+            applicationId, memberId, EvaluationStage.INTERVIEW
+        ).map(e -> new GetInterviewEvaluationViewInfo.MyInterviewEvaluationInfo(
+            e.getId(), e.getScore(), e.getComments(), e.getUpdatedAt()
+        )).orElse(null);
+    }
+
+    private PartKey toPartKey(ChallengerPart challengerPart) {
+        return PartKey.valueOf(challengerPart.name());
     }
 }
