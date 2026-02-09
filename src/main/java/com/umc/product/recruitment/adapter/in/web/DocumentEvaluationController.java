@@ -66,7 +66,7 @@ public class DocumentEvaluationController {
     )
     public ApplicationListResponse getEvaluationList(
         @PathVariable Long recruitmentId,
-        @RequestParam(required = false) String part,
+        @RequestParam(required = false) PartOption part,
         @RequestParam(required = false) String keyword,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size,
