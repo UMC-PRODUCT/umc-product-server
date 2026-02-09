@@ -68,6 +68,10 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:${jwtVersion}")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:${jwtVersion}")
 
+    // PEM
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.78.1")
+    implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
+    
     // --- Encryption  ---
     implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
 

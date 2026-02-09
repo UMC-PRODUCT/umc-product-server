@@ -1,5 +1,6 @@
 package com.umc.product.authentication.adapter.in.web;
 
+import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.adapter.in.web.dto.request.AppleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.CompleteEmailVerificationRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.GoogleLoginRequest;
@@ -15,10 +16,10 @@ import com.umc.product.authentication.application.port.in.command.OAuthAuthentic
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.ValidateEmailVerificationSessionCommand;
+import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
 import com.umc.product.authentication.domain.enums.OAuth2ResultCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.constant.SwaggerTag.Constants;
-import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,6 +38,7 @@ public class AuthenticationController implements AuthenticationControllerInterfa
 
     private final ManageAuthenticationUseCase manageAuthenticationUseCase;
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
+    private final VerifyOAuthTokenPort verifyOAuthTokenPort;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
@@ -63,7 +65,16 @@ public class AuthenticationController implements AuthenticationControllerInterfa
     public OAuthLoginResponse appleOAuthLogin(
         @RequestBody AppleLoginRequest request
     ) {
-        throw new NotImplementedException();
+        if (request.idToken() != null) {
+            return processAccessTokenLogin(OAuthProvider.APPLE, request.idToken());
+        }
+
+        // Authorization Code 방식
+        OAuth2Attributes attrs = verifyOAuthTokenPort.verifyAppleAuthorizationCode(
+            request.authorizationCode()
+        );
+        OAuthTokenLoginResult result = oAuthAuthenticationUseCase.loginWithOAuth2Attributes(attrs);
+        return buildLoginResponse(OAuthProvider.APPLE, result);
     }
 
     @Override
