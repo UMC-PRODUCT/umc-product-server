@@ -57,6 +57,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -487,6 +488,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .toList();
     }
 
+    // 지망별 질문 조회 로직
     private List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> getQuestionsForPriority(
         Long recruitmentId, List<ApplicationPartPreference> preferences, int priority
     ) {
@@ -498,7 +500,8 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .orElse(List.of());
     }
 
-    private java.util.Optional<ApplicationPartPreference> findPreferenceByPriority(
+    // 지망 순위로 preference 찾기
+    private Optional<ApplicationPartPreference> findPreferenceByPriority(
         List<ApplicationPartPreference> preferences, int priority
     ) {
         return preferences.stream()
@@ -569,6 +572,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
         return new GetInterviewEvaluationViewInfo.LiveEvaluationListInfo(avgScore, items);
     }
 
+    // 평균 점수 계산 로직
     private Double calculateAverageScore(List<Evaluation> evaluations) {
         return evaluations.stream()
             .map(Evaluation::getScore)
@@ -578,6 +582,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .orElse(0.0);
     }
 
+    // 평가자 프로필 조회 로직
     private Map<Long, MemberProfileInfo> getEvaluatorProfileMap(List<Evaluation> evaluations) {
         Set<Long> evaluatorIds = evaluations.stream()
             .map(Evaluation::getEvaluatorUserId)
