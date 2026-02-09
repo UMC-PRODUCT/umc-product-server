@@ -215,9 +215,7 @@ class GetMemberUseCaseTest {
             schoolId,
             null,         // remark
             null,         // logoImageUrl
-            null,         // kakaoLink
-            null,         // instagramLink
-            null,         // youtubeLink
+            List.of(),  // links
             Instant.now(),
             Instant.now()
         );

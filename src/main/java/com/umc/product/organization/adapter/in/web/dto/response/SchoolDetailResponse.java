@@ -1,8 +1,10 @@
 package com.umc.product.organization.adapter.in.web.dto.response;
 
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
+import com.umc.product.organization.domain.SchoolLinkType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import java.util.List;
 
 @Schema(description = "학교 상세 정보")
 public record SchoolDetailResponse(
@@ -24,14 +26,8 @@ public record SchoolDetailResponse(
         @Schema(description = "로고 이미지 URL")
         String logoImageLink,
 
-        @Schema(description = "카카오톡 링크")
-        String kakaoLink,
-
-        @Schema(description = "인스타그램 링크")
-        String instagramLink,
-
-        @Schema(description = "유튜브 링크")
-        String youtubeLink,
+        @Schema(description = "학교 링크 목록")
+        List<SchoolLinkItem> links,
 
         @Schema(description = "생성일", example = "2024-03-01T00:00:00Z")
         Instant createdAt,
@@ -39,7 +35,20 @@ public record SchoolDetailResponse(
         @Schema(description = "수정일", example = "2024-03-15T00:00:00Z")
         Instant updatedAt
 ) {
+    public record SchoolLinkItem(
+            String title,
+            SchoolLinkType type,
+            String url
+    ) {
+    }
+
     public static SchoolDetailResponse of(SchoolDetailInfo info) {
+        List<SchoolLinkItem> linkItems = info.links() != null
+                ? info.links().stream()
+                    .map(link -> new SchoolLinkItem(link.title(), link.type(), link.url()))
+                    .toList()
+                : List.of();
+
         return new SchoolDetailResponse(
                 info.chapterId(),
                 info.chapterName(),
@@ -47,9 +56,7 @@ public record SchoolDetailResponse(
                 info.schoolId(),
                 info.remark(),
                 info.logoImageUrl(),
-                info.kakaoLink(),
-                info.instagramLink(),
-                info.youtubeLink(),
+                linkItems,
                 info.createdAt(),
                 info.updatedAt()
         );

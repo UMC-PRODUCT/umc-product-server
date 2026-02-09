@@ -23,4 +23,6 @@ public interface ChapterJpaRepository extends Repository<Chapter, Long> {
     List<Chapter> findAll();
 
     List<Chapter> findByGisuId(Long gisuId);
+
+    void delete(Chapter chapter);
 }

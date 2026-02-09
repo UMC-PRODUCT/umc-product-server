@@ -45,4 +45,8 @@ public class ChapterPersistenceAdapter implements LoadChapterPort, ManageChapter
         return chapterJpaRepository.save(chapter);
     }
 
+    @Override
+    public void delete(Chapter chapter) {
+        chapterJpaRepository.delete(chapter);
+    }
 }

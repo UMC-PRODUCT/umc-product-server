@@ -43,7 +43,9 @@ public class SchoolQueryRepository {
                         chapter.id,      // 활성 기수에 속하지 않으면 null
                         chapter.name,    // 활성 기수에 속하지 않으면 null
                         school.createdAt,
-                        chapter.id.isNotNull()  // 활성 기수의 ChapterSchool 존재 여부
+                        chapter.id.isNotNull(),  // 활성 기수의 ChapterSchool 존재 여부
+                        school.remark,
+                        school.logoImageId       // 서비스 레이어에서 URL로 변환
                 ))
                 .from(school)
                 .leftJoin(chapterSchool).on(
@@ -99,9 +101,6 @@ public class SchoolQueryRepository {
                         school.id,
                         school.remark,
                         school.logoImageId,
-                        school.kakaoLink,
-                        school.instagramLink,
-                        school.youtubeLink,
                         school.createdAt,
                         school.updatedAt
                 ))
