@@ -3,7 +3,6 @@ package com.umc.product.organization.adapter.in.web.dto.request;
 import com.umc.product.organization.application.port.in.command.dto.CreateSchoolCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
 
@@ -15,7 +14,7 @@ public record CreateSchoolRequest(
         String schoolName,
 
         @Schema(description = "비고", example = "관악캠퍼스", maxLength = 200)
-        @NotNull @Size(max = 200, message = "비고는 200자 이내")
+        @Size(max = 200, message = "비고는 200자 이내")
         String remark,
 
         @Schema(description = "로고 이미지 파일 ID (presigned URL 업로드 후 전달)", example = "abc123-def456")
