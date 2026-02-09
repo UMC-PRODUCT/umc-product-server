@@ -2,8 +2,6 @@ package com.umc.product.authentication.adapter.out.external;
 
 import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
-import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
-import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +19,7 @@ public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort {
 
     private final GoogleTokenVerifier googleTokenVerifier;
     private final KakaoTokenVerifier kakaoTokenVerifier;
+    private final AppleTokenVerifier appleTokenVerifier;
 
     @Override
     public OAuth2Attributes verify(OAuthProvider provider, String token) {
@@ -29,9 +28,13 @@ public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort {
         return switch (provider) {
             case GOOGLE -> googleTokenVerifier.verifyAccessToken(token);
             case KAKAO -> kakaoTokenVerifier.verifyAccessToken(token);
-            case APPLE -> throw new AuthenticationDomainException(
-                AuthenticationErrorCode.OAUTH_PROVIDER_NOT_FOUND
-            ); // TODO: Apple 구현 필요
+            case APPLE -> appleTokenVerifier.verifyIdToken(token);
         };
+    }
+
+    @Override
+    public OAuth2Attributes verifyAppleAuthorizationCode(String authorizationCode) {
+        log.info("Apple Authorization Code 교환 시작");
+        return appleTokenVerifier.verifyAuthorizationCode(authorizationCode);
     }
 }

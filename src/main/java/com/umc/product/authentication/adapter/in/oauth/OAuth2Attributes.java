@@ -3,7 +3,6 @@ package com.umc.product.authentication.adapter.in.oauth;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import com.umc.product.global.exception.NotImplementedException;
 import java.util.Map;
 import lombok.Builder;
 import lombok.Getter;
@@ -34,6 +33,7 @@ public class OAuth2Attributes {
         return switch (registrationId.toLowerCase()) {
             case "google" -> ofGoogle(attributes);
             case "kakao" -> ofKakao(attributes);
+            case "apple" -> ofApple(attributes);
             default -> throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_PROVIDER_NOT_FOUND);
         };
     }
@@ -71,10 +71,13 @@ public class OAuth2Attributes {
 
     // 애플에서 제공하는 방식에 맞게 파싱
     private static OAuth2Attributes ofApple(
-        String userNameAttributeName,
         Map<String, Object> attributes
     ) {
-        // TODO: Apple OAuth2 구현 필요
-        throw new NotImplementedException();
+        return OAuth2Attributes.builder()
+            .provider(OAuthProvider.APPLE)
+            .providerId((String) attributes.get("sub"))
+            .email((String) attributes.get("email"))
+            .attributes(attributes)
+            .build();
     }
 }

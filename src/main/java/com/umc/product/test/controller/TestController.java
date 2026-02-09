@@ -1,5 +1,6 @@
 package com.umc.product.test.controller;
 
+import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -31,6 +32,13 @@ public class TestController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final GetChallengerUseCase getChallengerUseCase;
+    private final AppleTokenVerifier appleTokenVerifier;
+
+    @Public
+    @GetMapping("apple-client-secret")
+    String getAppleClientSecret() {
+        return appleTokenVerifier.generateClientSecret();
+    }
 
     @GetMapping("permission/notice-read")
     @CheckAccess(

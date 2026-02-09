@@ -132,6 +132,13 @@ public class AuthenticationController implements AuthenticationControllerInterfa
             new AccessTokenLoginCommand(provider, token)
         );
 
+        return buildLoginResponse(provider, result);
+    }
+
+    /**
+     * OAuthTokenLoginResult를 기반으로 OAuthLoginResponse를 생성합니다.
+     */
+    private OAuthLoginResponse buildLoginResponse(OAuthProvider provider, OAuthTokenLoginResult result) {
         if (result.isExistingMember()) {
             // 기존 회원: JWT 발급
             String accessToken = jwtTokenProvider.createAccessToken(
