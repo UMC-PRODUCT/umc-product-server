@@ -48,7 +48,7 @@ public enum FileCategory {
     /**
      * PDF 포트폴리오 파일; Web에서 지원서 작성 시 활용합니다.
      */
-    PORTFOLIO("portfolio", 20 * 1024 * 1024, new String[]{"pdf"}),
+    PORTFOLIO("portfolio", 200 * 1024 * 1024, new String[]{"pdf"}),
 
     /**
      * 기타
