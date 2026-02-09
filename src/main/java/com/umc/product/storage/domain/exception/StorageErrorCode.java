@@ -26,7 +26,11 @@ public enum StorageErrorCode implements BaseCode {
 
     // CDN 에러
     CDN_SIGNING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0010", "CDN Signed URL 생성에 실패했습니다."),
-    NO_ENV_KEYS(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0011", "CDN이 활성화되어 있지만 관련 환경변수가 설정되어 있지 않습니다. 관리자에게 문의하세요.");
+    NO_ENV_KEYS(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0011", "CDN이 활성화되어 있지만 관련 환경변수가 설정되어 있지 않습니다. 관리자에게 문의하세요."),
+    INVALID_SPRING_PROFILE(HttpStatus.INTERNAL_SERVER_ERROR, "STORAGE-0012",
+        "올바르지 않은 서버 실행 환경입니다. 관리자에게 문의하세요."),
+    ;
+
 
     private final HttpStatus httpStatus;
     private final String code;

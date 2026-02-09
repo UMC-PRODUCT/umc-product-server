@@ -213,6 +213,19 @@ app:
     frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT_URL}
 
 storage:
+  provider: s3
+
+  s3:
+    bucket-name: ${S3_BUCKET_NAME}
+    region: ${S3_REGION:ap-northeast-2}
+    access-key-id: ${S3_ACCESS_KEY_ID}
+    secret-access-key: ${S3_SECRET_ACCESS_KEY}
+    cloudfront:
+      enabled: false
+      private-key: ${CDN_PRIVATE_KEY}
+      distribution-domain: https://cdn.example.com
+      key-pair-id: ${CDN_KEY_PAIR_ID}
+
   gcs:
     project-id: ${GCS_PROJECT_ID}
     bucket-name: ${GCS_BUCKET_NAME}
