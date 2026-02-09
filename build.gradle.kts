@@ -54,12 +54,14 @@ dependencies {
     // --- Spring Boot Starters (버전 생략: Boot가 관리) ---
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+
     //    implementation("org.springframework.boot:spring-boot-starter-websocket") // 필요한 경우 그 때 추가
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-oauth2-client")  // OAuth2 Client
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:${jwtVersion}")
@@ -104,6 +106,7 @@ dependencies {
     // --- Cloud Service ---
     implementation(platform("software.amazon.awssdk:bom:${awsVersion}"))
     implementation("software.amazon.awssdk:s3")
+    implementation("software.amazon.awssdk:cloudfront")  // CloudFront Signed URL
     implementation("com.google.cloud:google-cloud-storage")
 
     // --- Email ---
