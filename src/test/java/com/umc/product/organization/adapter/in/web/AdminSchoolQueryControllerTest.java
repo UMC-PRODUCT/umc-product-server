@@ -34,9 +34,9 @@ class AdminSchoolQueryControllerTest extends DocumentationTest {
         int size = 10;
 
         List<SchoolListItemInfo> items = List.of(
-                new SchoolListItemInfo(1L, "서울대학교", 1L, "Ain 지부", toInstant(2025, 12, 31), true),
-                new SchoolListItemInfo(2L, "연세대학교", 1L, "Ain 지부", toInstant(2025, 12, 29), true),
-                new SchoolListItemInfo(3L, "고려대학교", null, null, toInstant(2025, 12, 30), false)
+                new SchoolListItemInfo(1L, "서울대학교", 1L, "Ain 지부", toInstant(2025, 12, 31), true, "비고1", "https://storage.example.com/logo1.png"),
+                new SchoolListItemInfo(2L, "연세대학교", 1L, "Ain 지부", toInstant(2025, 12, 29), true, "비고2", "https://storage.example.com/logo2.png"),
+                new SchoolListItemInfo(3L, "고려대학교", null, null, toInstant(2025, 12, 30), false, null, null)
         );
 
         Page<SchoolListItemInfo> pageResult = new PageImpl<>(
@@ -82,6 +82,10 @@ class AdminSchoolQueryControllerTest extends DocumentationTest {
                                         .description("등록일"),
                                 fieldWithPath("result.content[].isActive").type(JsonFieldType.BOOLEAN)
                                         .description("활성 상태"),
+                                fieldWithPath("result.content[].remark").type(JsonFieldType.STRING)
+                                        .description("비고").optional(),
+                                fieldWithPath("result.content[].logoImageUrl").type(JsonFieldType.STRING)
+                                        .description("학교 로고 이미지 URL").optional(),
                                 fieldWithPath("result.page").type(JsonFieldType.STRING)
                                         .description("현재 페이지 번호 (0부터 시작)"),
                                 fieldWithPath("result.size").type(JsonFieldType.STRING).description("페이지 당 조회 수"),
