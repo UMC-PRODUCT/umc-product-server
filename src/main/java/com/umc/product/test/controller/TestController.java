@@ -1,10 +1,12 @@
 package com.umc.product.test.controller;
 
+import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -31,6 +33,13 @@ public class TestController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final GetChallengerUseCase getChallengerUseCase;
+    private final AppleTokenVerifier appleTokenVerifier;
+
+    @Public
+    @GetMapping("apple-client-secret")
+    String getAppleClientSecret() {
+        return appleTokenVerifier.generateClientSecret();
+    }
 
     @GetMapping("permission/notice-read")
     @CheckAccess(
@@ -65,23 +74,31 @@ public class TestController {
     @Operation(summary = "AccessToken 발급")
     @Public
     @GetMapping("/token/access/{memberId}")
-    public ApiResponse<String> getAccessToken(@PathVariable Long memberId) {
-        return ApiResponse.onSuccess(jwtTokenProvider.createAccessToken(memberId, null));
+    public String getAccessToken(@PathVariable Long memberId) {
+        return jwtTokenProvider.createAccessToken(memberId, null);
     }
 
     @Operation(summary = "RefreshToken 발급")
     @Public
     @GetMapping("/token/refresh/{memberId}")
-    public ApiResponse<String> getRefreshToken(@PathVariable Long memberId) {
-        return ApiResponse.onSuccess(jwtTokenProvider.createRefreshToken(memberId));
+    public String getRefreshToken(@PathVariable Long memberId) {
+        return jwtTokenProvider.createRefreshToken(memberId);
     }
 
-    @Operation(summary = "EmailVerification Token 발급")
+    @Operation(summary = "EmailVerificationToken 발급")
     @Public
     @GetMapping("/token/email/{email}")
-    public ApiResponse<String> getEmailVerification(@PathVariable String email) {
-        return ApiResponse.onSuccess(jwtTokenProvider.createEmailVerificationToken(email));
+    public String getEmailVerification(@PathVariable String email) {
+        return jwtTokenProvider.createEmailVerificationToken(email);
     }
+
+    @Operation(summary = "oAuthVerificationToken 발급")
+    @Public
+    @GetMapping("/token/oauth")
+    public String getOAuthVerificationToken(OAuthProvider provider, String providerId, String email) {
+        return jwtTokenProvider.createOAuthVerificationToken(email, provider, providerId);
+    }
+
 
     @Operation(summary = "헬스 체크 API")
     @Public

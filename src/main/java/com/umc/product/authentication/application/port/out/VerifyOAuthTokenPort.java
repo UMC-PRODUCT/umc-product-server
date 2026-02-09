@@ -18,4 +18,13 @@ public interface VerifyOAuthTokenPort {
      * @throws com.umc.product.authentication.domain.exception.AuthenticationDomainException 토큰 검증 실패 시
      */
     OAuth2Attributes verify(OAuthProvider provider, String token);
+
+    /**
+     * Apple Authorization Code를 교환하여 사용자 정보를 추출합니다.
+     *
+     * @param authorizationCode Apple에서 발급받은 authorization code
+     * @return OAuth2Attributes
+     * @throws com.umc.product.authentication.domain.exception.AuthenticationDomainException 코드 교환 또는 토큰 검증 실패 시
+     */
+    OAuth2Attributes verifyAppleAuthorizationCode(String authorizationCode);
 }

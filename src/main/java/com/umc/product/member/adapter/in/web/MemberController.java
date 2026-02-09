@@ -69,8 +69,13 @@ public class MemberController {
 
         Long createdMemberId = manageMemberUseCase.registerMember(command);
 
+        String accessToken = jwtTokenProvider.createAccessToken(createdMemberId, null);
+        String refreshToken = jwtTokenProvider.createRefreshToken(createdMemberId);
+
         return RegisterResponse.builder()
             .memberId(createdMemberId)
+            .accessToken(accessToken)
+            .refreshToken(refreshToken)
             .build();
     }
 
