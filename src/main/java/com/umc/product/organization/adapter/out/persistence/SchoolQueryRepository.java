@@ -101,9 +101,6 @@ public class SchoolQueryRepository {
                         school.id,
                         school.remark,
                         school.logoImageId,
-                        school.kakaoLink,
-                        school.instagramLink,
-                        school.youtubeLink,
                         school.createdAt,
                         school.updatedAt
                 ))

@@ -11,6 +11,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.umc.product.organization.adapter.in.web.dto.request.CreateSchoolRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.DeleteSchoolsRequest;
+import com.umc.product.organization.adapter.in.web.dto.request.SchoolLinkRequest;
+import com.umc.product.organization.domain.SchoolLinkType;
 import com.umc.product.support.DocumentationTest;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -26,9 +28,11 @@ public class AdminSchoolControllerTest extends DocumentationTest {
         // given when
         CreateSchoolRequest request = CreateSchoolRequest.builder().schoolName("중앙대학교")
                 .remark("중앙대는 멋집니다.").logoImageId("file-123")
-                .kakaoLink("https://open.kakao.com/o/example")
-                .instagramLink("https://instagram.com/example")
-                .youtubeLink("https://youtube.com/@example").build();
+                .links(List.of(
+                        new SchoolLinkRequest("카카오톡 오픈채팅", SchoolLinkType.KAKAO, "https://open.kakao.com/o/example"),
+                        new SchoolLinkRequest("인스타그램", SchoolLinkType.INSTAGRAM, "https://instagram.com/example"),
+                        new SchoolLinkRequest("유튜브 채널", SchoolLinkType.YOUTUBE, "https://youtube.com/@example")
+                )).build();
 
         // then
         ResultActions result = mockMvc.perform(
@@ -39,9 +43,10 @@ public class AdminSchoolControllerTest extends DocumentationTest {
                 requestFields(fieldWithPath("schoolName").type(JsonFieldType.STRING).description("학교 이름"),
                         fieldWithPath("remark").type(JsonFieldType.STRING).description("비고"),
                         fieldWithPath("logoImageId").optional().type(JsonFieldType.STRING).description("로고 이미지 파일 ID"),
-                        fieldWithPath("kakaoLink").optional().type(JsonFieldType.STRING).description("카카오톡 링크"),
-                        fieldWithPath("instagramLink").optional().type(JsonFieldType.STRING).description("인스타그램 링크"),
-                        fieldWithPath("youtubeLink").optional().type(JsonFieldType.STRING).description("유튜브 링크"))));
+                        fieldWithPath("links").optional().type(JsonFieldType.ARRAY).description("학교 링크 목록"),
+                        fieldWithPath("links[].title").type(JsonFieldType.STRING).description("링크 제목"),
+                        fieldWithPath("links[].type").type(JsonFieldType.STRING).description("링크 타입 (KAKAO, INSTAGRAM, YOUTUBE)"),
+                        fieldWithPath("links[].url").type(JsonFieldType.STRING).description("링크 URL"))));
 
     }
 
@@ -64,9 +69,10 @@ public class AdminSchoolControllerTest extends DocumentationTest {
                                 fieldWithPath("schoolName").optional().type(JsonFieldType.STRING).description("학교 이름"),
                                 fieldWithPath("remark").optional().type(JsonFieldType.STRING).description("비고"),
                                 fieldWithPath("logoImageId").optional().type(JsonFieldType.STRING).description("로고 이미지 파일 ID"),
-                                fieldWithPath("kakaoLink").optional().type(JsonFieldType.STRING).description("카카오톡 링크"),
-                                fieldWithPath("instagramLink").optional().type(JsonFieldType.STRING).description("인스타그램 링크"),
-                                fieldWithPath("youtubeLink").optional().type(JsonFieldType.STRING).description("유튜브 링크"))));
+                                fieldWithPath("links").optional().type(JsonFieldType.ARRAY).description("학교 링크 목록 (전달 시 전체 교체)"),
+                                fieldWithPath("links[].title").optional().type(JsonFieldType.STRING).description("링크 제목"),
+                                fieldWithPath("links[].type").optional().type(JsonFieldType.STRING).description("링크 타입 (KAKAO, INSTAGRAM, YOUTUBE)"),
+                                fieldWithPath("links[].url").optional().type(JsonFieldType.STRING).description("링크 URL"))));
 
     }
 

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.organization.application.port.in.command.dto.AssignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.CreateSchoolCommand;
+import com.umc.product.organization.application.port.in.command.dto.SchoolLinkCommand;
 import com.umc.product.organization.application.port.in.command.dto.UnassignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateSchoolCommand;
 import com.umc.product.organization.application.port.out.command.ManageChapterPort;
@@ -17,6 +18,7 @@ import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
+import com.umc.product.organization.domain.SchoolLinkType;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.Instant;
 import java.util.List;
@@ -46,7 +48,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 학교를_등록한다() {
         // given
-        CreateSchoolCommand command = new CreateSchoolCommand("한성대", "비고", null, null, null, null);
+        CreateSchoolCommand command = new CreateSchoolCommand("한성대", "비고", null, List.of());
 
         // when
         Long schoolId = manageSchoolUseCase.register(command);
@@ -60,12 +62,12 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 외부링크와_함께_학교를_등록한다() {
         // given
-        CreateSchoolCommand command = new CreateSchoolCommand(
-                "한성대", "비고", null,
-                "https://open.kakao.com/o/example",
-                "https://instagram.com/example",
-                "https://youtube.com/@example"
+        List<SchoolLinkCommand> links = List.of(
+                new SchoolLinkCommand("카카오톡", SchoolLinkType.KAKAO, "https://open.kakao.com/o/example"),
+                new SchoolLinkCommand("인스타그램", SchoolLinkType.INSTAGRAM, "https://instagram.com/example"),
+                new SchoolLinkCommand("유튜브", SchoolLinkType.YOUTUBE, "https://youtube.com/@example")
         );
+        CreateSchoolCommand command = new CreateSchoolCommand("한성대", "비고", null, links);
 
         // when
         Long schoolId = manageSchoolUseCase.register(command);
@@ -73,9 +75,10 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         // then
         School savedSchool = loadSchoolPort.findSchoolDetailById(schoolId);
         assertThat(savedSchool.getName()).isEqualTo("한성대");
-        assertThat(savedSchool.getKakaoLink()).isEqualTo("https://open.kakao.com/o/example");
-        assertThat(savedSchool.getInstagramLink()).isEqualTo("https://instagram.com/example");
-        assertThat(savedSchool.getYoutubeLink()).isEqualTo("https://youtube.com/@example");
+        assertThat(savedSchool.getSchoolLinks()).hasSize(3);
+        assertThat(savedSchool.getSchoolLinks())
+                .extracting(link -> link.getType())
+                .containsExactlyInAnyOrder(SchoolLinkType.KAKAO, SchoolLinkType.INSTAGRAM, SchoolLinkType.YOUTUBE);
     }
 
     @Test
@@ -83,7 +86,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         // given
         School school = manageSchoolPort.save(School.create("한성대", "비고"));
 
-        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대", null, "수정된 비고", null, null, null, null);
+        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대", null, "수정된 비고", null, null);
 
         // when
         manageSchoolUseCase.updateSchool(school.getId(), command);
@@ -103,7 +106,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
 
         School school = manageSchoolPort.save(School.create("한성대", "비고"));
 
-        UpdateSchoolCommand command = new UpdateSchoolCommand("한성대", leoChapter.getId(), "비고", null, null, null, null);
+        UpdateSchoolCommand command = new UpdateSchoolCommand("한성대", leoChapter.getId(), "비고", null, null);
 
         // when
         manageSchoolUseCase.updateSchool(school.getId(), command);
@@ -117,7 +120,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 존재하지_않는_학교를_수정하면_예외가_발생한다() {
         // given
-        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대", null, "비고", null, null, null, null);
+        UpdateSchoolCommand command = new UpdateSchoolCommand("동국대", null, "비고", null, null);
 
         // when & then
         assertThatThrownBy(() -> manageSchoolUseCase.updateSchool(999L, command))
