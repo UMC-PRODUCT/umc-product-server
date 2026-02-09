@@ -7,6 +7,9 @@ import com.umc.product.storage.application.port.out.StoragePort;
 import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +38,20 @@ public class FileQueryService implements GetFileUseCase {
         );
 
         return FileInfo.of(metadata, fileLink);
+    }
+
+    @Override
+    public Map<String, String> getFileLinks(List<String> fileIds) {
+        List<FileMetadata> metadataList = loadFileMetadataPort.findByFileIds(fileIds);
+
+        return metadataList.stream()
+                .collect(Collectors.toMap(
+                        FileMetadata::getId,
+                        metadata -> storagePort.generateAccessUrl(
+                                metadata.getStorageKey(),
+                                ACCESS_URL_DURATION_MINUTES
+                        )
+                ));
     }
 
     @Override
