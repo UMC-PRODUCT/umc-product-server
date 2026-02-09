@@ -1,4 +1,4 @@
-package com.umc.product.recruitment.application.service.command;
+package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -279,7 +279,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
                 .toList();
         }
 
-        // 5. 지원자 프로필 일괄 조회
+        // 5. 지원자 프로필 일괄 조회 (N+1 방지)
         Set<Long> applicantMemberIds = partFiltered.stream()
             .map(a -> a.getApplication().getApplicantMemberId())
             .collect(Collectors.toSet());
@@ -289,18 +289,15 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             : getMemberUseCase.getProfiles(applicantMemberIds);
 
         // 6. 평가 상태 확인을 위해 현재 사용자의 면접 평가 조회
-        Set<Long> evaluatedApplicationIds = partFiltered.stream()
+        Set<Long> applicationIdsToCheck = partFiltered.stream()
             .map(a -> a.getApplication().getId())
-            .filter
-                (appId -> loadEvaluationPort.findByApplicationIdAndEvaluatorUserIdAndStage
-                        (
-                            appId,
-                            query.memberId(),
-                            EvaluationStage.INTERVIEW
-                        )
-                    .isPresent()
-                )
             .collect(Collectors.toSet());
+
+        Set<Long> evaluatedApplicationIds = applicationIdsToCheck.isEmpty()
+            ? Set.of()
+            : loadEvaluationPort.findApplicationIdsWithEvaluations(
+                applicationIdsToCheck, query.memberId(), EvaluationStage.INTERVIEW
+            );
 
         // 7. 응답 생성
         List<InterviewAssignmentSlotInfo> items = partFiltered.stream()
