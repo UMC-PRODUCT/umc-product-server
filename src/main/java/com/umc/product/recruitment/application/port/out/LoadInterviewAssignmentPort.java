@@ -27,4 +27,6 @@ public interface LoadInterviewAssignmentPort {
     boolean existsByRecruitmentIdAndApplicationId(Long recruitmentId, Long applicationId);
 
     Optional<InterviewAssignment> findById(Long assignmentId);
+
+    List<InterviewAssignment> findByRecruitmentIdWithSlotAndApplication(Long recruitmentId);
 }

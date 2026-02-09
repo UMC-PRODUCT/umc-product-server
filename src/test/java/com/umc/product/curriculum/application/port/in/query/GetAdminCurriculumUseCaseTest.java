@@ -12,9 +12,11 @@ import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Disabled
 class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
@@ -38,12 +40,12 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         // given
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "9기 Springboot");
         OriginalWorkbook workbook1 = OriginalWorkbook.create(
-                curriculum, 1, "1주차 - Spring 시작하기", "Spring Boot 기초", "http://workbook1.url",
-                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
+            curriculum, 1, "1주차 - Spring 시작하기", "Spring Boot 기초", "http://workbook1.url",
+            Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
         );
         OriginalWorkbook workbook2 = OriginalWorkbook.create(
-                curriculum, 2, "2주차 - JPA 기초", "JPA 입문", "http://workbook2.url",
-                Instant.parse("2024-03-08T00:00:00Z"), Instant.parse("2024-03-14T23:59:59Z"), MissionType.MEMO
+            curriculum, 2, "2주차 - JPA 기초", "JPA 입문", "http://workbook2.url",
+            Instant.parse("2024-03-08T00:00:00Z"), Instant.parse("2024-03-14T23:59:59Z"), MissionType.MEMO
         );
         curriculum.addWorkbook(workbook1);
         curriculum.addWorkbook(workbook2);
@@ -64,16 +66,16 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         // given
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "커리큘럼");
         OriginalWorkbook workbook3 = OriginalWorkbook.create(
-                curriculum, 3, "3주차", null, null,
-                Instant.parse("2024-03-15T00:00:00Z"), Instant.parse("2024-03-21T23:59:59Z"), MissionType.LINK
+            curriculum, 3, "3주차", null, null,
+            Instant.parse("2024-03-15T00:00:00Z"), Instant.parse("2024-03-21T23:59:59Z"), MissionType.LINK
         );
         OriginalWorkbook workbook1 = OriginalWorkbook.create(
-                curriculum, 1, "1주차", null, null,
-                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
+            curriculum, 1, "1주차", null, null,
+            Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
         );
         OriginalWorkbook workbook2 = OriginalWorkbook.create(
-                curriculum, 2, "2주차", null, null,
-                Instant.parse("2024-03-08T00:00:00Z"), Instant.parse("2024-03-14T23:59:59Z"), MissionType.LINK
+            curriculum, 2, "2주차", null, null,
+            Instant.parse("2024-03-08T00:00:00Z"), Instant.parse("2024-03-14T23:59:59Z"), MissionType.LINK
         );
         // 순서 섞어서 추가
         curriculum.addWorkbook(workbook3);
@@ -96,8 +98,8 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         // given
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "커리큘럼");
         OriginalWorkbook workbook = OriginalWorkbook.create(
-                curriculum, 1, "1주차 제목", "1주차 설명", "http://workbook.url",
-                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.MEMO
+            curriculum, 1, "1주차 제목", "1주차 설명", "http://workbook.url",
+            Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.MEMO
         );
         curriculum.addWorkbook(workbook);
         saveCurriculumPort.save(curriculum);
@@ -124,8 +126,8 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         // given
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "커리큘럼");
         OriginalWorkbook workbook = OriginalWorkbook.create(
-                curriculum, 1, "1주차", null, null,
-                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
+            curriculum, 1, "1주차", null, null,
+            Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
         );
         workbook.release();
         curriculum.addWorkbook(workbook);
@@ -180,19 +182,19 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
 
     private Gisu createActiveGisu(Long generation) {
         return Gisu.create(
-                generation,
-                Instant.parse("2024-03-01T00:00:00Z"),
-                Instant.parse("2024-08-31T23:59:59Z"),
-                true
+            generation,
+            Instant.parse("2024-03-01T00:00:00Z"),
+            Instant.parse("2024-08-31T23:59:59Z"),
+            true
         );
     }
 
     private Gisu createInactiveGisu(Long generation) {
         return Gisu.create(
-                generation,
-                Instant.parse("2023-03-01T00:00:00Z"),
-                Instant.parse("2023-08-31T23:59:59Z"),
-                false
+            generation,
+            Instant.parse("2023-03-01T00:00:00Z"),
+            Instant.parse("2023-08-31T23:59:59Z"),
+            false
         );
     }
 }

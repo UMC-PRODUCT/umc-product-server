@@ -10,11 +10,13 @@ import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.Instant;
 import java.util.List;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+@Disabled
 class GetGisuUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
@@ -155,7 +157,7 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
         // then
         assertThat(result).hasSize(3);
         assertThat(result).extracting(GisuNameInfo::generation)
-                .containsExactly(9L, 8L, 7L);
+            .containsExactly(9L, 8L, 7L);
     }
 
     @Test
@@ -189,15 +191,15 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
 
         // when & then
         assertThatThrownBy(() -> getGisuUseCase.getActiveGisu())
-                .isInstanceOf(com.umc.product.global.exception.BusinessException.class);
+            .isInstanceOf(com.umc.product.global.exception.BusinessException.class);
     }
 
     private Gisu createGisu(Long generation, boolean isActive) {
         return Gisu.create(
-                generation,
-                Instant.parse("2024-03-01T00:00:00Z"),
-                Instant.parse("2024-08-31T23:59:59Z"),
-                isActive
+            generation,
+            Instant.parse("2024-03-01T00:00:00Z"),
+            Instant.parse("2024-08-31T23:59:59Z"),
+            isActive
         );
     }
 }

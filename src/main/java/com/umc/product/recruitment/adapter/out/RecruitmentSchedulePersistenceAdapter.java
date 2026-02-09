@@ -1,11 +1,10 @@
 package com.umc.product.recruitment.adapter.out;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentSchedulePort;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
+import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -35,8 +34,7 @@ public class RecruitmentSchedulePersistenceAdapter implements SaveRecruitmentSch
     @Override
     public RecruitmentSchedule findByRecruitmentIdAndType(Long recruitmentId, RecruitmentScheduleType type) {
         return recruitmentScheduleRepository.findByRecruitmentIdAndType(recruitmentId, type)
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_FOUND));
     }
 
     @Override
