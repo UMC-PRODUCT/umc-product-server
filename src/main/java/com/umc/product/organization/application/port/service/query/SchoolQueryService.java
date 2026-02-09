@@ -12,6 +12,8 @@ import com.umc.product.organization.domain.School;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +30,25 @@ public class SchoolQueryService implements GetSchoolUseCase {
 
     @Override
     public Page<SchoolListItemInfo> getSchools(SchoolSearchCondition condition, Pageable pageable) {
-        return loadSchoolPort.findSchools(condition, pageable);
+        Page<SchoolListItemInfo> page = loadSchoolPort.findSchools(condition, pageable);
+
+        List<String> logoImageIds = page.getContent().stream()
+                .map(SchoolListItemInfo::logoImageUrl)
+                .filter(Objects::nonNull)
+                .toList();
+
+        if (logoImageIds.isEmpty()) {
+            return page;
+        }
+
+        Map<String, String> fileLinks = getFileUseCase.getFileLinks(logoImageIds);
+
+        return page.map(info -> {
+            if (info.logoImageUrl() == null) {
+                return info;
+            }
+            return info.withLogoImageUrl(fileLinks.get(info.logoImageUrl()));
+        });
     }
 
     @Override

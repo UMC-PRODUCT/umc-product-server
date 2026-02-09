@@ -22,12 +22,19 @@ public record SchoolListItemResponse(
         Instant createdAt,
 
         @Schema(description = "활성 여부 (현재 기수 활동 중)", example = "true")
-        boolean isActive
+        boolean isActive,
+
+        @Schema(description = "비고")
+        String remark,
+
+        @Schema(description = "학교 로고 이미지 URL")
+        String logoImageUrl
 ) {
 
     public static SchoolListItemResponse of(SchoolListItemInfo summary) {
         return new SchoolListItemResponse(summary.schoolId(), summary.schoolName(), summary.chapterId(),
-                summary.chapterName(), summary.createdAt(), summary.isActive());
+                summary.chapterName(), summary.createdAt(), summary.isActive(),
+                summary.remark(), summary.logoImageUrl());
     }
 }
 
