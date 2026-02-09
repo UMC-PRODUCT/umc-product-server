@@ -11,6 +11,10 @@ import com.umc.product.recruitment.application.port.in.query.GetInterviewOptions
 import com.umc.product.recruitment.application.port.in.query.GetLiveQuestionsUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyInterviewEvaluationUseCase;
 import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewAssignmentsInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewAssignmentsInfo.ApplicantInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewAssignmentsInfo.AppliedPartInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewAssignmentsInfo.InterviewAssignmentSlotInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewAssignmentsInfo.SlotInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewAssignmentsQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewEvaluationSummaryQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewEvaluationViewInfo;
@@ -24,21 +28,26 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetLiveQuestion
 import com.umc.product.recruitment.application.port.in.query.dto.GetLiveQuestionsQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyInterviewEvaluationInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyInterviewEvaluationQuery;
+import com.umc.product.recruitment.application.port.out.LoadApplicationPartPreferencePort;
 import com.umc.product.recruitment.application.port.out.LoadEvaluationPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewLiveQuestionPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.domain.Application;
+import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.Evaluation;
 import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.recruitment.domain.InterviewLiveQuestion;
+import com.umc.product.recruitment.domain.InterviewSlot;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
+import com.umc.product.recruitment.domain.enums.EvaluationProgressStatus;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -62,11 +71,14 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     GetInterviewAssignmentsUseCase,
     GetInterviewOptionsUseCase {
 
+    private static final ZoneId SEOUL_ZONE = ZoneId.of("Asia/Seoul");
+
     private final LoadInterviewAssignmentPort loadInterviewAssignmentPort;
     private final LoadInterviewLiveQuestionPort loadInterviewLiveQuestionPort;
     private final LoadEvaluationPort loadEvaluationPort;
     private final LoadRecruitmentSchedulePort loadRecruitmentSchedulePort;
     private final LoadRecruitmentPartPort loadRecruitmentPartPort;
+    private final LoadApplicationPartPreferencePort loadApplicationPartPreferencePort;
     private final GetMemberUseCase getMemberUseCase;
 
     @Override
@@ -192,7 +204,136 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
     @Override
     public GetInterviewAssignmentsInfo get(GetInterviewAssignmentsQuery query) {
-        return null;
+        Instant now = Instant.now();
+
+        // 1. 모든 InterviewAssignment 조회 (Slot, Application fetch join)
+        List<InterviewAssignment> allAssignments = loadInterviewAssignmentPort
+            .findByRecruitmentIdWithSlotAndApplication(query.recruitmentId());
+
+        // 2. 날짜 필터링 (드롭박스에서 선택된 날짜와 동일한 것만)
+        List<InterviewAssignment> dateFiltered = allAssignments;
+        if (query.date() != null) {
+            dateFiltered = allAssignments.stream()
+                .filter(a -> {
+                    LocalDate slotDate = a.getSlot().getStartsAt().atZone(SEOUL_ZONE).toLocalDate();
+                    return slotDate.equals(query.date());
+                })
+                .toList();
+        }
+
+        // 3. 파트 선호도 일괄 조회 (N+1 방지)
+        Set<Long> applicationIds = dateFiltered.stream()
+            .map(a -> a.getApplication().getId())
+            .collect(Collectors.toSet());
+
+        List<ApplicationPartPreference> allPreferences = applicationIds.isEmpty()
+            ? List.of()
+            : loadApplicationPartPreferencePort.findAllByApplicationIdsOrderByPriorityAsc(applicationIds);
+
+        // applicationId -> List<ApplicationPartPreference> 매핑
+        Map<Long, List<ApplicationPartPreference>> preferenceMap = allPreferences.stream()
+            .collect(Collectors.groupingBy(p -> p.getApplication().getId()));
+
+        // 4. 파트 필터링 (1지망 기준)
+        List<InterviewAssignment> partFiltered = dateFiltered;
+        if (query.part() != null && query.part() != PartOption.ALL) {
+            ChallengerPart targetPart = ChallengerPart.valueOf(query.part().name());
+            partFiltered = dateFiltered.stream()
+                .filter(a -> {
+                    List<ApplicationPartPreference> prefs = preferenceMap.get(a.getApplication().getId());
+                    if (prefs == null || prefs.isEmpty()) {
+                        return false;
+                    }
+                    // 1지망(priority == 1) 확인
+                    return prefs.stream()
+                        .filter(p -> p.getPriority() == 1)
+                        .anyMatch(p -> p.getRecruitmentPart().getPart() == targetPart);
+                })
+                .toList();
+        }
+
+        // 5. 지원자 프로필 일괄 조회
+        Set<Long> applicantMemberIds = partFiltered.stream()
+            .map(a -> a.getApplication().getApplicantMemberId())
+            .collect(Collectors.toSet());
+
+        Map<Long, MemberProfileInfo> profileMap = applicantMemberIds.isEmpty()
+            ? Map.of()
+            : getMemberUseCase.getProfiles(applicantMemberIds);
+
+        // 6. 평가 상태 확인을 위해 현재 사용자의 면접 평가 조회
+        Set<Long> evaluatedApplicationIds = partFiltered.stream()
+            .map(a -> a.getApplication().getId())
+            .filter
+                (appId -> loadEvaluationPort.findByApplicationIdAndEvaluatorUserIdAndStage
+                        (
+                            appId,
+                            query.memberId(),
+                            EvaluationStage.INTERVIEW
+                        )
+                    .isPresent()
+                )
+            .collect(Collectors.toSet());
+
+        // 7. 응답 생성
+        List<InterviewAssignmentSlotInfo> items = partFiltered.stream()
+            .map(assignment -> {
+                Application app = assignment.getApplication();
+                InterviewSlot slot = assignment.getSlot();
+                MemberProfileInfo applicant = profileMap.get(app.getApplicantMemberId());
+                List<ApplicationPartPreference> prefs = preferenceMap.getOrDefault(app.getId(), List.of());
+
+                // SlotInfo 생성
+                SlotInfo slotInfo = new SlotInfo(
+                    slot.getId(),
+                    slot.getStartsAt().atZone(SEOUL_ZONE).toLocalDate(),
+                    slot.getStartsAt().atZone(SEOUL_ZONE).toLocalTime(),
+                    slot.getEndsAt().atZone(SEOUL_ZONE).toLocalTime()
+                );
+
+                // ApplicantInfo 생성
+                ApplicantInfo applicantInfo = new ApplicantInfo(
+                    applicant != null ? applicant.nickname() : null,
+                    applicant != null ? applicant.name() : null
+                );
+
+                // AppliedPartInfo 리스트 생성
+                List<AppliedPartInfo> appliedParts = prefs.stream()
+                    .map(p -> new AppliedPartInfo(
+                        p.getPriority(),
+                        p.getRecruitmentPart().getPart().name(),
+                        p.getRecruitmentPart().getPart().getDisplayName()
+                    ))
+                    .toList();
+
+                // 서류 점수
+                Double docScore = app.getDocScore() != null
+                    ? app.getDocScore().doubleValue()
+                    : null;
+
+                // 평가 진행 상태 결정
+                EvaluationProgressStatus status = determineEvaluationStatus(
+                    slot.getStartsAt(), now, evaluatedApplicationIds.contains(app.getId())
+                );
+
+                return new InterviewAssignmentSlotInfo(
+                    assignment.getId(),
+                    slotInfo,
+                    app.getId(),
+                    applicantInfo,
+                    appliedParts,
+                    docScore,
+                    status
+                );
+            })
+            .toList();
+
+        return new GetInterviewAssignmentsInfo(
+            now,
+            query.date(),
+            query.part(),
+            items
+        );
     }
 
     @Override
@@ -207,8 +348,8 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
         List<LocalDate> dates = new ArrayList<>();
         if (interviewSchedule != null && interviewSchedule.getStartsAt() != null
             && interviewSchedule.getEndsAt() != null) {
-            LocalDate startDate = interviewSchedule.getStartsAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
-            LocalDate endDate = interviewSchedule.getEndsAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
+            LocalDate startDate = interviewSchedule.getStartsAt().atZone(SEOUL_ZONE).toLocalDate();
+            LocalDate endDate = interviewSchedule.getEndsAt().atZone(SEOUL_ZONE).toLocalDate();
 
             LocalDate current = startDate;
             while (!current.isAfter(endDate)) {
@@ -246,5 +387,15 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
         }
 
         return assignment;
+    }
+
+    // 평가 상태 결정
+    private EvaluationProgressStatus determineEvaluationStatus(
+        Instant interviewStartsAt, Instant now, boolean hasEvaluation
+    ) {
+        if (now.isBefore(interviewStartsAt)) {
+            return EvaluationProgressStatus.WAITING;
+        }
+        return hasEvaluation ? EvaluationProgressStatus.DONE : EvaluationProgressStatus.IN_PROGRESS;
     }
 }
