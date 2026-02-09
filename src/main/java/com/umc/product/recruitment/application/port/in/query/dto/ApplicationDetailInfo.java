@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.application.port.in.query.dto;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
 import java.util.List;
@@ -19,6 +20,13 @@ public record ApplicationDetailInfo(
 
     public record PageInfo(
         Integer pageNo,
+        List<QuestionInfo> questions,
+        List<PartQuestionGroupInfo> partQuestions
+    ) {
+    }
+
+    public record PartQuestionGroupInfo(
+        ChallengerPart part,
         List<QuestionInfo> questions
     ) {
     }

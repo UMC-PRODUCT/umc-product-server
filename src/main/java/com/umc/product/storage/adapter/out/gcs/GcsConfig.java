@@ -6,11 +6,13 @@ import com.google.cloud.storage.StorageOptions;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@ConditionalOnProperty(name = "storage.provider", havingValue = "gcs")
 @EnableConfigurationProperties(GcsStorageProperties.class)
 public class GcsConfig {
 

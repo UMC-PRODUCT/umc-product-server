@@ -22,9 +22,8 @@ public class Post {
     @Getter
     private Category category;
 
-    // DB 호환성을 위해 유지 (API에는 노출되지 않음)
-    private final String region;
-    private final boolean anonymous;
+    @Getter
+    private final Long authorChallengerId;
 
     @Getter
     private final LightningInfo lightningInfo;
@@ -35,28 +34,27 @@ public class Post {
     @Getter
     private final boolean liked;
 
-    private static final String DEFAULT_REGION = "";
-    private static final boolean DEFAULT_ANONYMOUS = false;
-
-    public static Post createPost(String title, String content, Category category) {
+    public static Post createPost(String title, String content, Category category, Long authorChallengerId) {
         if (category == Category.LIGHTNING) {
             throw new IllegalArgumentException("번개 게시글은 createLightning()을 사용하세요");
         }
         validateCommonFields(title, content);
-        return new Post(null, title, content, category, DEFAULT_REGION, DEFAULT_ANONYMOUS, null, 0, false);
+        validateAuthorChallengerId(authorChallengerId);
+        return new Post(null, title, content, category, authorChallengerId, null, 0, false);
     }
 
-    public static Post createLightning(String title, String content, LightningInfo info) {
+    public static Post createLightning(String title, String content, LightningInfo info, Long authorChallengerId) {
         if (info == null) {
             throw new IllegalArgumentException("번개 게시글은 추가 정보가 필수입니다.");
         }
         validateCommonFields(title, content);
-        return new Post(null, title, content, Category.LIGHTNING, DEFAULT_REGION, DEFAULT_ANONYMOUS, info, 0, false);
+        validateAuthorChallengerId(authorChallengerId);
+        return new Post(null, title, content, Category.LIGHTNING, authorChallengerId, info, 0, false);
     }
 
-    public static Post reconstruct(PostId postId, String title, String content, Category category, String region,
-                                   boolean anonymous, LightningInfo lightningInfo, int likeCount, boolean liked) {
-        return new Post(postId, title, content, category, region, anonymous, lightningInfo, likeCount, liked);
+    public static Post reconstruct(PostId postId, String title, String content, Category category, Long authorChallengerId,
+                                   LightningInfo lightningInfo, int likeCount, boolean liked) {
+        return new Post(postId, title, content, category, authorChallengerId, lightningInfo, likeCount, liked);
     }
 
     public boolean isLightning() {
@@ -76,6 +74,12 @@ public class Post {
         }
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("내용은 필수입니다.");
+        }
+    }
+
+    private static void validateAuthorChallengerId(Long authorChallengerId) {
+        if (authorChallengerId == null) {
+            throw new IllegalArgumentException("작성자 ID는 필수입니다");
         }
     }
 

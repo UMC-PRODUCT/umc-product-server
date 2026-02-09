@@ -20,6 +20,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -31,6 +32,7 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(name = "storage.provider", havingValue = "gcs")
 @RequiredArgsConstructor
 public class GcsStorageAdapter implements StoragePort {
 

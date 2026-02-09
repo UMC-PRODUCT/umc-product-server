@@ -7,11 +7,13 @@ import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.challenger.application.port.in.query.SearchChallengerQuery;
+import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.QChallenger;
 import com.umc.product.challenger.domain.QChallengerPoint;
 import com.umc.product.challenger.domain.enums.PointType;
+import com.umc.product.challenger.domain.exception.ChallengerDomainException;
+import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.domain.QMember;
 import com.umc.product.organization.domain.QChapterSchool;
@@ -32,11 +34,11 @@ public class ChallengerQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public Page<Challenger> search(SearchChallengerQuery query, Pageable pageable) {
+    public Page<Challenger> pagingSearch(SearchChallengerQuery query, Pageable pageable) {
         QChallenger challenger = QChallenger.challenger;
         QMember member = QMember.member;
 
-        BooleanBuilder condition = buildSearchCondition(query, challenger, member);
+        BooleanBuilder condition = buildOffsetSearchCondition(query, challenger, member);
 
         List<Challenger> content = queryFactory
                 .selectFrom(challenger)
@@ -57,11 +59,33 @@ public class ChallengerQueryRepository {
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
+    public List<Challenger> cursorSearch(SearchChallengerQuery query, Long cursor, int size) {
+        QChallenger challenger = QChallenger.challenger;
+        QMember member = QMember.member;
+
+        BooleanBuilder condition = buildOffsetSearchCondition(query, challenger, member);
+
+        if (cursor != null) {
+            condition.and(buildCursorSearchCondition(cursor, challenger, member));
+        }
+
+        return queryFactory
+                .selectFrom(challenger)
+                .join(member).on(challenger.memberId.eq(member.id))
+                .where(condition)
+                .orderBy(partOrder(challenger).asc(), challenger.gisuId.desc(), member.name.asc(), challenger.id.asc())
+                .limit(size + 1)
+                .fetch();
+    }
+
+    /**
+     * 파트별 챌린저 수
+     */
     public Map<ChallengerPart, Long> countByPart(SearchChallengerQuery query) {
         QChallenger challenger = QChallenger.challenger;
         QMember member = QMember.member;
 
-        BooleanBuilder condition = buildSearchCondition(query, challenger, member);
+        BooleanBuilder condition = buildOffsetSearchCondition(query, challenger, member);
 
         List<Tuple> tuples = queryFactory
                 .select(challenger.part, challenger.count())
@@ -79,6 +103,9 @@ public class ChallengerQueryRepository {
                 ));
     }
 
+    /**
+     * 챌린저별 포인트 합계
+     */
     public Map<Long, Double> sumPointsByChallengerIds(Set<Long> challengerIds) {
         if (challengerIds == null || challengerIds.isEmpty()) {
             return Map.of();
@@ -109,6 +136,8 @@ public class ChallengerQueryRepository {
                 ));
     }
 
+
+    // ========== private methods ==========
     private NumberExpression<Integer> partOrder(QChallenger challenger) {
         return new CaseBuilder()
                 .when(challenger.part.eq(ChallengerPart.PLAN)).then(ChallengerPart.PLAN.getSortOrder())
@@ -121,7 +150,7 @@ public class ChallengerQueryRepository {
                 .otherwise(999);
     }
 
-    private BooleanBuilder buildSearchCondition(
+    private BooleanBuilder buildOffsetSearchCondition(
             SearchChallengerQuery query,
             QChallenger challenger,
             QMember member
@@ -136,6 +165,42 @@ public class ChallengerQueryRepository {
         builder.and(gisuIdEq(query.gisuId(), challenger));
 
         return builder;
+    }
+
+    private BooleanExpression buildCursorSearchCondition(Long cursorId, QChallenger challenger, QMember member) {
+        QChallenger c = new QChallenger("cursorC");
+        QMember m = new QMember("cursorM");
+
+        // 커서 챌린저의 정렬 키 값 조회
+        Tuple cursorRow = queryFactory
+            .select(partOrder(c), c.gisuId, m.name, c.id)
+            .from(c)
+            .join(m).on(c.memberId.eq(m.id))
+            .where(c.id.eq(cursorId))
+            .fetchOne();
+
+        if (cursorRow == null) {
+            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CURSOR_ID);
+        }
+
+        Integer cursorPartOrder = cursorRow.get(partOrder(c));
+        Long cursorGisuId = cursorRow.get(c.gisuId);
+        String cursorName = cursorRow.get(m.name);
+        Long cursorIdVal = cursorRow.get(c.id);
+
+        NumberExpression<Integer> currentPartOrder = partOrder(challenger);
+
+        // keyset pagination: 정렬 순서(partOrder ASC, gisuId DESC, name ASC, id ASC) 기반
+        return currentPartOrder.gt(cursorPartOrder)
+            .or(currentPartOrder.eq(cursorPartOrder)
+                .and(challenger.gisuId.lt(cursorGisuId)))
+            .or(currentPartOrder.eq(cursorPartOrder)
+                .and(challenger.gisuId.eq(cursorGisuId))
+                .and(member.name.gt(cursorName)))
+            .or(currentPartOrder.eq(cursorPartOrder)
+                .and(challenger.gisuId.eq(cursorGisuId))
+                .and(member.name.eq(cursorName))
+                .and(challenger.id.gt(cursorIdVal)));
     }
 
     private BooleanExpression challengerIdEq(Long challengerId, QChallenger challenger) {

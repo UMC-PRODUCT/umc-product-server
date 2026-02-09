@@ -65,4 +65,11 @@ public class Application extends BaseEntity {
             .build();
     }
 
+    public void acceptDocument() {
+        this.status = ApplicationStatus.DOC_PASSED;
+    }
+
+    public void cancelDocumentAccept() {
+        this.status = ApplicationStatus.APPLIED;
+    }
 }

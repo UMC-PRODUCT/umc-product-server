@@ -3,9 +3,11 @@ package com.umc.product.recruitment.adapter.out;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
 import com.umc.product.recruitment.application.port.in.PartOption;
+import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
@@ -109,6 +111,32 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
                                                                              Long evaluatorMemberId) {
         return applicationQueryRepository.findMyDocumentEvaluation(applicationId, evaluatorMemberId);
     }
+
+    @Override
+    public Optional<Application> getByRecruitmentIdAndApplicationId(Long recruitmentId, Long applicationId) {
+        return applicationRepository.findByRecruitmentIdAndId(recruitmentId, applicationId);
+    }
+
+    @Override
+    public Page<DocumentSelectionListItemProjection> searchDocumentSelections(
+        Long recruitmentId,
+        String part,
+        String sort,
+        Pageable pageable
+    ) {
+        return applicationQueryRepository.searchDocumentSelections(recruitmentId, part, sort, pageable);
+    }
+
+    @Override
+    public DocumentSelectionApplicationListInfo.Summary getDocumentSelectionSummary(Long recruitmentId, String part) {
+        return applicationQueryRepository.getDocumentSelectionSummary(recruitmentId, part);
+    }
+
+    @Override
+    public Map<Long, BigDecimal> calculateAvgDocScoreByApplicationIds(Set<Long> applicationIds) {
+        return applicationQueryRepository.calculateAvgDocScoreByApplicationIds(applicationIds);
+    }
+
 
     @Override
     public long countByRecruitmentId(Long recruitmentId) {

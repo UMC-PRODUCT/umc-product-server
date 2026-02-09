@@ -39,7 +39,7 @@ public interface NoticeQueryApi {
         @Parameter(description = "필터에 맞게! 공지를 조회하는 사람의 정보를 넣어주세요."
             + "전체조회 : gisuId만 넣기 / 지부별 조회 : gisuId + chapterId 넣기 / "
             + "학교별 조회 : + schoolId 넣기 / 파트별 조회 : + ChallengerPart 넣기", required = false)
-        @RequestParam(required = false) NoticeClassification classification,
+        @ModelAttribute @Valid NoticeClassification classification,
 
         @Parameter(description = "페이징 정보 (page, size, sort)")
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
@@ -63,7 +63,7 @@ public interface NoticeQueryApi {
         @Parameter(description = "필터에 맞게! 공지를 조회하는 사람의 정보를 넣어주세요."
             + "전체조회 : gisuId만 넣기 / 지부별 조회 : gisuId + chapterId 넣기 / "
             + "학교별 조회 : + schoolId 넣기 / 파트별 조회 : + ChallengerPart 넣기", required = false)
-        @RequestParam(required = false) NoticeClassification classification,
+        @ModelAttribute @Valid NoticeClassification classification,
 
         @Parameter(description = "페이징 정보")
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)

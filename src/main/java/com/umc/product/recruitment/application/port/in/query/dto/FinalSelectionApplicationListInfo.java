@@ -6,6 +6,7 @@ import java.util.Map;
 
 public record FinalSelectionApplicationListInfo(
     Summary summary,
+    String sort, // "SCORE_DESC" / "SCORE_ASC" / "EVALUATED_AT_ASC"
     List<FinalSelectionApplicationInfo> finalSelectionApplications,
     PaginationInfo pagination
 ) {

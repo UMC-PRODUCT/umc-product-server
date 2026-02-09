@@ -2,6 +2,8 @@ package com.umc.product.organization.adapter.in.web.dto.request;
 
 import com.umc.product.organization.application.port.in.command.dto.UpdateSchoolCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import java.util.List;
 
 @Schema(description = "학교 수정 요청")
 public record UpdateSchoolRequest(
@@ -17,16 +19,17 @@ public record UpdateSchoolRequest(
         @Schema(description = "로고 이미지 파일 ID (수정할 경우만 입력)", example = "abc123-def456")
         String logoImageId,
 
-        @Schema(description = "카카오톡 링크 (수정할 경우만 입력)", example = "https://open.kakao.com/o/example")
-        String kakaoLink,
-
-        @Schema(description = "인스타그램 링크 (수정할 경우만 입력)", example = "https://instagram.com/example")
-        String instagramLink,
-
-        @Schema(description = "유튜브 링크 (수정할 경우만 입력)", example = "https://youtube.com/@example")
-        String youtubeLink
+        @Schema(description = "학교 링크 목록 (전달 시 전체 교체)")
+        @Valid
+        List<SchoolLinkRequest> links
 ) {
     public UpdateSchoolCommand toCommand() {
-        return new UpdateSchoolCommand(schoolName, chapterId, remark, logoImageId, kakaoLink, instagramLink, youtubeLink);
+        return new UpdateSchoolCommand(
+                schoolName,
+                chapterId,
+                remark,
+                logoImageId,
+                links != null ? links.stream().map(SchoolLinkRequest::toCommand).toList() : null
+        );
     }
 }

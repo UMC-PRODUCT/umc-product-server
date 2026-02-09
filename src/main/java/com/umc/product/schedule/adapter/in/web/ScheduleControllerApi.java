@@ -5,6 +5,7 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleWithAttendanceRequest;
+import com.umc.product.schedule.adapter.in.web.dto.request.CreateStudyGroupScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.dto.request.UpdateScheduleLocationRequest;
 import com.umc.product.schedule.adapter.in.web.dto.request.UpdateScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.dto.response.UpdateScheduleLocationResponse;
@@ -38,6 +39,12 @@ public interface ScheduleControllerApi {
     @Operation(summary = "일정 + 출석부 통합 삭제", description = "일정과 연결된 출석부를 함께 삭제합니다")
     void deleteScheduleWithAttendance(
         @Parameter(description = "일정 ID") @PathVariable Long scheduleId
+    );
+
+    @Operation(summary = "스터디 그룹 일정 생성", description = "스터디 그룹 일정을 생성하고 그룹 멤버 전원을 출석 대상으로 등록합니다")
+    Long createStudyGroupSchedule(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Valid @RequestBody CreateStudyGroupScheduleRequest request
     );
 
     @Operation(summary = "일정 출석체크 위치 변경", description = "일정의 출석체크 위치를 변경합니다.")

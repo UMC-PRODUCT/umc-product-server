@@ -35,7 +35,8 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         Post post = Post.createPost(
                 command.title(),
                 command.content(),
-                command.category()
+                command.category(),
+                command.authorChallengerId()
         );
 
         Post savedPost = savePostPort.save(post, command.authorChallengerId());
@@ -55,7 +56,8 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         Post post = Post.createLightning(
                 command.title(),
                 command.content(),
-                lightningInfo
+                lightningInfo,
+                command.authorChallengerId()
         );
 
         Post savedPost = savePostPort.save(post, command.authorChallengerId());

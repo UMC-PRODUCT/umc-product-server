@@ -11,4 +11,6 @@ public interface LoadApplicationPartPreferencePort {
      * 여러 Application의 파트 선호도를 한 번에 조회
      */
     List<ApplicationPartPreference> findAllByApplicationIdsOrderByPriorityAsc(Set<Long> applicationIds);
+
+    List<ApplicationPartPreference> findByApplicationId(Long applicationId);
 }

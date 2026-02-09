@@ -21,6 +21,8 @@ public interface LoadApplicationPort {
 
     List<Application> findAllByApplicantMemberId(Long applicantMemberId);
 
+    Optional<Application> getByRecruitmentIdAndApplicationId(Long recruitmentId, Long applicationId);
+
     long countByRecruitmentId(Long recruitmentId);
 
     long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, PartOption part);

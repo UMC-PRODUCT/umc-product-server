@@ -15,6 +15,7 @@ public class RecruitmentPartPersistenceAdapter implements SaveRecruitmentPartPor
 
     private final RecruitmentPartRepository recruitmentPartRepository;
 
+    // ================ SaveRecruitmentPartPort ================
     @Override
     public List<RecruitmentPart> saveAll(List<RecruitmentPart> parts) {
         if (parts == null || parts.isEmpty()) {
@@ -28,9 +29,15 @@ public class RecruitmentPartPersistenceAdapter implements SaveRecruitmentPartPor
         recruitmentPartRepository.deleteAllByRecruitmentId(recruitmentId);
     }
 
+    // ================ LoadRecruitmentPartPort ================
     @Override
     public List<RecruitmentPart> findByRecruitmentId(Long recruitmentId) {
         return recruitmentPartRepository.findByRecruitmentId(recruitmentId);
+    }
+
+    @Override
+    public List<RecruitmentPart> findByRecruitmentIdAndStatus(Long recruitmentId, RecruitmentPartStatus status) {
+        return recruitmentPartRepository.findByRecruitmentIdAndStatus(recruitmentId, status);
     }
 
     @Override

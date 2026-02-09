@@ -18,7 +18,7 @@ import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,8 +89,15 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
                 .map(ChallengerInfo::memberId)
                 .collect(Collectors.toSet());
 
-        // 6. 멤버 ID -> 멤버 프로필 매핑 (1 query)
-        Map<Long, MemberProfileInfo> memberProfileMap = getMemberUseCase.getProfiles(memberIds);
+        // 6. 멤버 ID -> 멤버 이름 매핑 (1 query, 학교 정보 조회 없이 이름만)
+        Map<Long, String> memberNameMap = memberIds.stream()
+                .collect(Collectors.toMap(
+                        memberId -> memberId,
+                        memberId -> {
+                            MemberInfo memberInfo = getMemberUseCase.getById(memberId);
+                            return memberInfo.name();
+                        }
+                ));
 
         // 7. 챌린저 ID -> 작성자 이름 매핑
         Map<Long, String> authorNameMap = challengerInfoMap.entrySet().stream()
@@ -98,8 +105,8 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
                         Map.Entry::getKey,
                         entry -> {
                             Long memberId = entry.getValue().memberId();
-                            MemberProfileInfo profile = memberProfileMap.get(memberId);
-                            return profile != null ? profile.name() : "알 수 없음";
+                            String name = memberNameMap.get(memberId);
+                            return name != null ? name : "알 수 없음";
                         }
                 ));
 
