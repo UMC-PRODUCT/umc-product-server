@@ -48,7 +48,7 @@ public class NoticeQueryController implements NoticeQueryApi {
      */
     @GetMapping
     public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(
-        @ModelAttribute @Valid NoticeClassification classification,
+        @ModelAttribute NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
         Pageable pageable) {
 
@@ -64,7 +64,7 @@ public class NoticeQueryController implements NoticeQueryApi {
     @GetMapping("/search")
     public ApiResponse<PageResponse<GetNoticeSummaryResponse>> searchNotices(
         @RequestParam String keyword,
-        @ModelAttribute @Valid NoticeClassification classification,
+        @ModelAttribute NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
         Pageable pageable) {
 
