@@ -97,6 +97,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -1172,13 +1173,14 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                         recruitment.getId(),
                         formResponse.getId(),
                         formId,
-                        java.util.Map.of(
+                        logMap(
                             "sectionTargetKey", targetKey,
                             "questionId", qid,
                             "questionType", q.type(),
                             "questionText", q.questionText(),
                             "answeredQuestionIds", answeredQuestionIds
-                        ));
+                        )
+                    );
                     throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
                 }
 
@@ -1230,7 +1232,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 recruitment.getId(),
                 formResponse.getId(),
                 recruitment.getFormId(),
-                java.util.Map.of(
+                logMap(
                     "maxPreferredPartCount", recruitment.getMaxPreferredPartCount(),
                     "preferredValue", v
                 )
@@ -1247,7 +1249,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 recruitment.getId(),
                 formResponse.getId(),
                 recruitment.getFormId(),
-                java.util.Map.of(
+                logMap(
                     "maxPreferredPartCount", max,
                     "selectedSize", selectedRecruitmentPartIds.size(),
                     "preferredValue", v
@@ -1281,92 +1283,105 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     @SuppressWarnings("unchecked")
     private void validateScheduleAnswerIfNeeded(Recruitment recruitment, FormResponse formResponse) {
 
-        Map<String, Object> tt = recruitment.getInterviewTimeTable();
-        if (tt == null || tt.isEmpty()) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_NOT_SET);
-        }
-
-        var scheduleAnswerOpt = formResponse.getAnswers().stream()
-            .filter(a -> a.getAnsweredAsType() == QuestionType.SCHEDULE)
-            .findFirst();
-
-        if (scheduleAnswerOpt.isEmpty()) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
-        }
-
-        Map<String, Object> value = scheduleAnswerOpt.get().getValue();
-        if (value == null) {
-            value = Map.of();
-        }
-
-        List<Map<String, Object>> selected =
-            (List<Map<String, Object>>) value.getOrDefault("selected", List.of());
-
-        if (selected.isEmpty()) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
-        }
-
-        Map<String, Object> dateRange = (Map<String, Object>) tt.get("dateRange");
-        Map<String, Object> timeRange = (Map<String, Object>) tt.get("timeRange");
-
-        if (dateRange == null || timeRange == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_NOT_SET);
-        }
-
-        LocalDate startDate = parseDate(requireString(dateRange, "start"));
-        LocalDate endDate = parseDate(requireString(dateRange, "end"));
-
-        LocalTime startTime = parseTimeFlexible(requireString(timeRange, "start"));
-        LocalTime endTime = parseTimeFlexible(requireString(timeRange, "end"));
-
-        List<Map<String, Object>> enabledByDate =
-            (List<Map<String, Object>>) tt.getOrDefault("enabledByDate", List.of());
-
-        Map<LocalDate, java.util.Set<String>> allowed = new java.util.HashMap<>();
-        for (Map<String, Object> e : enabledByDate) {
-            LocalDate d = parseDate(requireString(e, "date"));
-            List<String> times = (List<String>) e.getOrDefault("times", List.of());
-
-            java.util.Set<String> normalized = new java.util.HashSet<>();
-            for (String t : times) {
-                normalized.add(normalizeToHHmm(t));
-            }
-            allowed.put(d, normalized);
-        }
-
-        for (Map<String, Object> s : selected) {
-            LocalDate d = parseDate(String.valueOf(s.get("date")));
-
-            if (d.isBefore(startDate) || d.isAfter(endDate)) {
-                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_OUT_OF_RANGE);
+        try {
+            Map<String, Object> tt = recruitment.getInterviewTimeTable();
+            if (tt == null || tt.isEmpty()) {
+                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_NOT_SET);
             }
 
-            List<String> times = (List<String>) s.getOrDefault("times", List.of());
-            if (times.isEmpty()) {
+            var scheduleAnswerOpt = formResponse.getAnswers().stream()
+                .filter(a -> a.getAnsweredAsType() == QuestionType.SCHEDULE)
+                .findFirst();
+
+            if (scheduleAnswerOpt.isEmpty()) {
                 throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
             }
 
-            java.util.Set<String> allowedTimes = allowed.get(d);
-            if (allowedTimes == null || allowedTimes.isEmpty()) {
-                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_SLOT);
+            Map<String, Object> value = scheduleAnswerOpt.get().getValue();
+            if (value == null) {
+                value = Map.of();
             }
 
-            for (String raw : times) {
-                String hhmm = normalizeToHHmm(raw);
-                LocalTime t = parseTimeFlexible(raw);
+            List<Map<String, Object>> selected =
+                safeListOfMap(value.getOrDefault("selected", List.of()));
 
-                if (t.isBefore(startTime) || !t.isBefore(endTime)) {
-                    throw new BusinessException(
-                        Domain.RECRUITMENT,
-                        RecruitmentErrorCode.INTERVIEW_PREFERENCE_OUT_OF_RANGE
-                    );
+            if (selected.isEmpty()) {
+                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
+            }
+
+            Map<String, Object> dateRange = safeMap(tt.get("dateRange"));
+            Map<String, Object> timeRange = safeMap(tt.get("timeRange"));
+
+            if (dateRange == null || timeRange == null) {
+                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_NOT_SET);
+            }
+
+            LocalDate startDate = parseDate(requireString(dateRange, "start"));
+            LocalDate endDate = parseDate(requireString(dateRange, "end"));
+
+            LocalTime startTime = parseTimeFlexible(requireString(timeRange, "start"));
+            LocalTime endTime = parseTimeFlexible(requireString(timeRange, "end"));
+
+            List<Map<String, Object>> enabledByDate =
+                safeListOfMap(tt.getOrDefault("enabledByDate", List.of()));
+
+            Map<LocalDate, java.util.Set<String>> allowed = new java.util.HashMap<>();
+            for (Map<String, Object> e : enabledByDate) {
+                LocalDate d = parseDate(requireString(e, "date"));
+                List<String> times = safeStringList(e.getOrDefault("times", List.of()));
+
+                java.util.Set<String> normalized = new java.util.HashSet<>();
+                for (String t : times) {
+                    normalized.add(normalizeToHHmm(t));
+                }
+                allowed.put(d, normalized);
+            }
+
+            for (Map<String, Object> s : selected) {
+                LocalDate d = parseDate(String.valueOf(s.get("date")));
+
+                if (d.isBefore(startDate) || d.isAfter(endDate)) {
+                    throw new BusinessException(Domain.RECRUITMENT,
+                        RecruitmentErrorCode.INTERVIEW_PREFERENCE_OUT_OF_RANGE);
                 }
 
-                if (!allowedTimes.contains(hhmm)) {
+                List<String> times = safeStringList(s.getOrDefault("times", List.of()));
+                if (times.isEmpty()) {
+                    throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
+                }
+                java.util.Set<String> allowedTimes = allowed.get(d);
+                if (allowedTimes == null || allowedTimes.isEmpty()) {
                     throw new BusinessException(Domain.RECRUITMENT,
                         RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_SLOT);
                 }
+
+                for (String raw : times) {
+                    String hhmm = normalizeToHHmm(raw);
+                    LocalTime t = parseTimeFlexible(raw);
+
+                    if (t.isBefore(startTime) || !t.isBefore(endTime)) {
+                        throw new BusinessException(
+                            Domain.RECRUITMENT,
+                            RecruitmentErrorCode.INTERVIEW_PREFERENCE_OUT_OF_RANGE
+                        );
+                    }
+
+                    if (!allowedTimes.contains(hhmm)) {
+                        throw new BusinessException(
+                            Domain.RECRUITMENT,
+                            RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_SLOT
+                        );
+                    }
+                }
             }
+        } catch (BusinessException e) {
+            throw e;
+        } catch (ClassCastException | IllegalArgumentException e) {
+            // payload 구조가 예상과 다를 때 500 방지
+            throw new BusinessException(
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_FORMAT
+            );
         }
     }
 
@@ -1462,7 +1477,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 recruitment.getId(),
                 formResponse.getId(),
                 recruitment.getFormId(),
-                java.util.Map.of(
+                logMap(
                     "maxPreferredPartCount", recruitment.getMaxPreferredPartCount(),
                     "answersCount", formResponse.getAnswers() == null ? 0 : formResponse.getAnswers().size()
                 )
@@ -1508,7 +1523,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 recruitment.getId(),
                 formResponse.getId(),
                 recruitment.getFormId(),
-                java.util.Map.of(
+                logMap(
                     "selectedRecruitmentPartIds", selectedRecruitmentPartIds,
                     "openPartIds", partById.keySet()
                 )
@@ -2677,4 +2692,80 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
     }
 
+    private Map<String, Object> logMap(Object... kv) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        if (kv == null || kv.length == 0) {
+            return m;
+        }
+        for (int i = 0; i + 1 < kv.length; i += 2) {
+            Object k = kv[i];
+            Object v = kv[i + 1];
+            if (k == null) {
+                continue;
+            }
+            String key = String.valueOf(k);
+            if (key.isBlank()) {
+                continue;
+            }
+            if (v == null) {
+                continue; // null value는 skip (NPE 방지 + 로그 노이즈 감소)
+            }
+            m.put(key, v);
+        }
+        return m;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> safeMap(Object raw) {
+        if (raw == null) {
+            return null;
+        }
+        if (raw instanceof Map<?, ?> mm) {
+            Map<String, Object> out = new HashMap<>();
+            mm.forEach((k, v) -> out.put(String.valueOf(k), v));
+            return out;
+        }
+        throw new ClassCastException("Expected Map but got: " + raw.getClass());
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> safeListOfMap(Object raw) {
+        if (raw == null) {
+            return List.of();
+        }
+        if (!(raw instanceof List<?> list)) {
+            throw new ClassCastException("Expected List but got: " + raw.getClass());
+        }
+        List<Map<String, Object>> out = new ArrayList<>(list.size());
+        for (Object it : list) {
+            if (it == null) {
+                continue;
+            }
+            if (!(it instanceof Map<?, ?> mm)) {
+                throw new ClassCastException("Expected Map element but got: " + it.getClass());
+            }
+            Map<String, Object> m = new HashMap<>();
+            mm.forEach((k, v) -> m.put(String.valueOf(k), v));
+            out.add(m);
+        }
+        return out;
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<String> safeStringList(Object raw) {
+        if (raw == null) {
+            return List.of();
+        }
+        if (!(raw instanceof List<?> list)) {
+            throw new ClassCastException("Expected List but got: " + raw.getClass());
+        }
+        List<String> out = new ArrayList<>(list.size());
+        for (Object it : list) {
+            if (it == null) {
+                continue;
+            }
+            out.add(String.valueOf(it));
+        }
+        return out;
+    }
 }
