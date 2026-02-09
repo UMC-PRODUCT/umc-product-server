@@ -9,4 +9,6 @@ public interface ManageChapterSchoolPort {
     ChapterSchool save(ChapterSchool chapterSchool);
 
     void deleteAllBySchoolIds(List<Long> schoolIds);
+
+    void deleteAllByChapterId(Long chapterId);
 }

@@ -60,6 +60,14 @@ public class ChapterService implements ManageChapterUseCase {
         return savedChapter.getId();
     }
 
+    @Override
+    public void delete(Long chapterId) {
+        Chapter chapter = loadChapterPort.findById(chapterId);
+
+        manageChapterSchoolPort.deleteAllByChapterId(chapterId);
+        manageChapterPort.delete(chapter);
+    }
+
     private void validateAllSchoolsExist(List<Long> requestedIds, List<School> foundSchools) {
         Set<Long> requestedSet = new HashSet<>(requestedIds);
         Set<Long> foundSet = foundSchools.stream()
