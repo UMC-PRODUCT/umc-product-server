@@ -2,6 +2,9 @@ package com.umc.product.organization.application.port.in.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
 
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
@@ -17,6 +20,11 @@ import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
+import com.umc.product.storage.application.port.out.SaveFileMetadataPort;
+import com.umc.product.storage.application.port.out.StoragePort;
+import com.umc.product.storage.domain.FileMetadata;
+import com.umc.product.storage.domain.enums.FileCategory;
+import com.umc.product.storage.domain.enums.StorageProvider;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.Instant;
 import java.util.List;
@@ -24,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class GetSchoolUseCaseTest extends UseCaseTestSupport {
 
@@ -41,6 +50,12 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
     private ManageChapterSchoolPort manageChapterSchoolPort;
+
+    @Autowired
+    private SaveFileMetadataPort saveFileMetadataPort;
+
+    @MockitoBean
+    private StoragePort storagePort;
 
     @Test
     void 조건_없이_전체_학교_목록을_조회한다() {
@@ -370,6 +385,112 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
         // when & then
         assertThatThrownBy(() -> getSchoolUseCase.getSchoolDetail(999L))
                 .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void 학교_목록_조회_시_로고_이미지_URL이_반환된다() {
+        // given
+        FileMetadata fileMetadata1 = saveTestFile("logo-file-1", "logo1.png");
+        FileMetadata fileMetadata2 = saveTestFile("logo-file-2", "logo2.png");
+
+        School school1 = School.create("한성대", "비고1");
+        school1.updateLogoImageId(fileMetadata1.getId());
+        manageSchoolPort.save(school1);
+
+        School school2 = School.create("동국대", "비고2");
+        school2.updateLogoImageId(fileMetadata2.getId());
+        manageSchoolPort.save(school2);
+
+        given(storagePort.generateAccessUrl("school-logo/logo-file-1.png", 60))
+                .willReturn("https://cdn.example.com/logo1-signed-url");
+        given(storagePort.generateAccessUrl("school-logo/logo-file-2.png", 60))
+                .willReturn("https://cdn.example.com/logo2-signed-url");
+
+        SchoolSearchCondition condition = new SchoolSearchCondition(null, null);
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        // when
+        Page<SchoolListItemInfo> result = getSchoolUseCase.getSchools(condition, pageRequest);
+
+        // then
+        assertThat(result.getContent()).hasSize(2);
+
+        SchoolListItemInfo school1Info = result.getContent().stream()
+                .filter(s -> s.schoolName().equals("한성대"))
+                .findFirst()
+                .orElseThrow();
+        SchoolListItemInfo school2Info = result.getContent().stream()
+                .filter(s -> s.schoolName().equals("동국대"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(school1Info.logoImageUrl()).isEqualTo("https://cdn.example.com/logo1-signed-url");
+        assertThat(school2Info.logoImageUrl()).isEqualTo("https://cdn.example.com/logo2-signed-url");
+    }
+
+    @Test
+    void 로고_이미지가_없는_학교는_logoImageUrl이_null이다() {
+        // given
+        manageSchoolPort.save(School.create("한성대", "비고"));
+
+        SchoolSearchCondition condition = new SchoolSearchCondition(null, null);
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        // when
+        Page<SchoolListItemInfo> result = getSchoolUseCase.getSchools(condition, pageRequest);
+
+        // then
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).logoImageUrl()).isNull();
+    }
+
+    @Test
+    void 로고_이미지가_있는_학교와_없는_학교가_섞여있을_때_올바르게_반환된다() {
+        // given
+        FileMetadata fileMetadata = saveTestFile("logo-file-2", "logo2.png");
+
+        School schoolWithLogo = School.create("한성대", "비고1");
+        schoolWithLogo.updateLogoImageId(fileMetadata.getId());
+        manageSchoolPort.save(schoolWithLogo);
+
+        manageSchoolPort.save(School.create("동국대", "비고2"));
+
+        given(storagePort.generateAccessUrl(anyString(), anyLong()))
+                .willReturn("https://cdn.example.com/signed-url");
+
+        SchoolSearchCondition condition = new SchoolSearchCondition(null, null);
+        PageRequest pageRequest = PageRequest.of(0, 10);
+
+        // when
+        Page<SchoolListItemInfo> result = getSchoolUseCase.getSchools(condition, pageRequest);
+
+        // then
+        SchoolListItemInfo withLogo = result.getContent().stream()
+                .filter(s -> s.schoolName().equals("한성대"))
+                .findFirst()
+                .orElseThrow();
+        SchoolListItemInfo withoutLogo = result.getContent().stream()
+                .filter(s -> s.schoolName().equals("동국대"))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(withLogo.logoImageUrl()).isEqualTo("https://cdn.example.com/signed-url");
+        assertThat(withoutLogo.logoImageUrl()).isNull();
+    }
+
+    private FileMetadata saveTestFile(String fileId, String fileName) {
+        FileMetadata metadata = FileMetadata.builder()
+                .fileId(fileId)
+                .originalFileName(fileName)
+                .category(FileCategory.SCHOOL_LOGO)
+                .contentType("image/png")
+                .fileSize(1024L)
+                .storageProvider(StorageProvider.GOOGLE_CLOUD_STORAGE)
+                .storageKey("school-logo/" + fileId + ".png")
+                .uploadedMemberId(1L)
+                .build();
+
+        return saveFileMetadataPort.save(metadata);
     }
 
     private Gisu createGisu(Long generation) {
