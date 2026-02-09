@@ -45,6 +45,7 @@ public enum OrganizationErrorCode implements BaseCode {
     STUDY_GROUP_MEMBER_DUPLICATED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0026", "스터디 그룹 멤버 ID에 중복이 있습니다."),
     NO_SUCH_CHAPTER_SCHOOL(HttpStatus.NOT_FOUND, "ORGANIZATION-0027", "요청하신 학교와 지부와 일치하는 정보가 없습니다.."),
     SCHOOL_ALREADY_ASSIGNED_TO_CHAPTER(HttpStatus.CONFLICT, "ORGANIZATION-0029", "해당 기수에서 이미 다른 지부에 배정된 학교가 포함되어 있습니다."),
+    CHAPTER_NAME_DUPLICATED(HttpStatus.CONFLICT, "ORGANIZATION-0030", "해당 기수에 동일한 이름의 지부가 이미 존재합니다."),
     ;
 
     private final HttpStatus httpStatus;

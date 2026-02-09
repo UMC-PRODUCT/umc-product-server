@@ -6,6 +6,7 @@ import com.umc.product.organization.application.port.in.command.ManageChapterUse
 import com.umc.product.organization.application.port.in.command.dto.CreateChapterCommand;
 import com.umc.product.organization.application.port.out.command.ManageChapterPort;
 import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
+import com.umc.product.organization.application.port.out.query.LoadChapterPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ChapterService implements ManageChapterUseCase {
 
     private final LoadGisuPort loadGisuPort;
+    private final LoadChapterPort loadChapterPort;
     private final LoadSchoolPort loadSchoolPort;
     private final LoadChapterSchoolPort loadChapterSchoolPort;
     private final ManageChapterPort manageChapterPort;
@@ -36,6 +38,7 @@ public class ChapterService implements ManageChapterUseCase {
     @Override
     public Long create(CreateChapterCommand command) {
         Gisu gisu = loadGisuPort.findById(command.gisuId());
+        validateChapterNameNotDuplicated(command.gisuId(), command.name());
 
         Chapter chapter = Chapter.builder()
                 .gisu(gisu)
@@ -65,6 +68,15 @@ public class ChapterService implements ManageChapterUseCase {
 
         if (!foundSet.containsAll(requestedSet)) {
             throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.SCHOOL_NOT_FOUND);
+        }
+    }
+
+    private void validateChapterNameNotDuplicated(Long gisuId, String name) {
+        boolean duplicated = loadChapterPort.findByGisuId(gisuId).stream()
+                .anyMatch(chapter -> chapter.getName().equals(name));
+
+        if (duplicated) {
+            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.CHAPTER_NAME_DUPLICATED);
         }
     }
 
