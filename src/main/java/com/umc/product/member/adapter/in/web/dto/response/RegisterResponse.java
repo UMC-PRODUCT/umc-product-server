@@ -4,6 +4,8 @@ import lombok.Builder;
 
 @Builder
 public record RegisterResponse(
-        Long memberId
+    Long memberId,
+    String accessToken,
+    String refreshToken
 ) {
 }
