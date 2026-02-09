@@ -52,6 +52,7 @@ import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPartPreferencePort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
+import com.umc.product.recruitment.application.port.out.SaveInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.SaveInterviewSlotPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPort;
@@ -148,6 +149,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final LoadQuestionOptionPort loadQuestionOptionPort;
     private final LoadInterviewSlotPort loadInterviewSlotPort;
     private final SaveInterviewSlotPort saveInterviewSlotPort;
+    private final SaveInterviewAssignmentPort saveInterviewAssignmentPort;
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
@@ -530,6 +532,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         saveRecruitmentPartPort.deleteAllByRecruitmentId(recruitmentId);
         saveRecruitmentSchedulePort.deleteAllByRecruitmentId(recruitmentId);
+
+        saveInterviewAssignmentPort.deleteAllByRecruitmentId(recruitmentId);
+        saveInterviewSlotPort.deleteAllByRecruitmentId(recruitmentId);
 
         saveRecruitmentPort.deleteById(recruitmentId);
 
@@ -2549,8 +2554,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         int slotMinutes = parseSlotMinutes(timeTable.get("slotMinutes"));
         if (slotMinutes <= 0) {
             throw new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID
             );
         }
 
@@ -2574,14 +2579,14 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 }
 
                 List<LocalTime> times = timesList.stream()
-                        .filter(java.util.Objects::nonNull)
-                        .map(String::valueOf)
-                        .map(String::trim)
-                        .filter(s -> !s.isBlank())
-                        .map(LocalTime::parse)
-                        .distinct()
-                        .sorted()
-                        .toList();
+                    .filter(java.util.Objects::nonNull)
+                    .map(String::valueOf)
+                    .map(String::trim)
+                    .filter(s -> !s.isBlank())
+                    .map(LocalTime::parse)
+                    .distinct()
+                    .sorted()
+                    .toList();
 
                 if (times.isEmpty()) {
                     // 해당 날짜 enabled 0개 -> continue
@@ -2591,9 +2596,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 // 같은 날짜가 여러 번 들어오면 merge (중복 제거 + 정렬 유지)
                 enabledByDate.merge(date, times, (a, b) -> {
                     return java.util.stream.Stream.concat(a.stream(), b.stream())
-                            .distinct()
-                            .sorted()
-                            .toList();
+                        .distinct()
+                        .sorted()
+                        .toList();
                 });
             }
         }
@@ -2632,20 +2637,20 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private InterviewSlot buildSlot(Recruitment recruitment, LocalDate date, LocalTime startTime, int slotMinutes) {
         Instant startsAt = ZonedDateTime.of(date, startTime, ZoneId.of("Asia/Seoul")).toInstant();
         Instant endsAt = ZonedDateTime.of(date, startTime.plusMinutes(slotMinutes), ZoneId.of("Asia/Seoul"))
-                .toInstant();
+            .toInstant();
 
         return InterviewSlot.builder()
-                .recruitment(recruitment)
-                .startsAt(startsAt)
-                .endsAt(endsAt)
-                .build();
+            .recruitment(recruitment)
+            .startsAt(startsAt)
+            .endsAt(endsAt)
+            .build();
     }
 
     private int parseSlotMinutes(Object raw) {
         if (raw == null) {
             throw new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID
             );
         }
 
@@ -2666,8 +2671,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         } catch (NumberFormatException e) {
             throw new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID
             );
         }
     }

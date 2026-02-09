@@ -7,4 +7,5 @@ public interface InterviewSlotJpaRepository extends JpaRepository<InterviewSlot,
 
     boolean existsByRecruitment_Id(Long recruitmentId);
 
+    void deleteAllByRecruitmentId(Long recruitmentId);
 }
