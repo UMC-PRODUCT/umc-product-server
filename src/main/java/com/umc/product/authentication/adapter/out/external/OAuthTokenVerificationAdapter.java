@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort {
 
-    private final GoogleIdTokenVerifier googleIdTokenVerifier;
+    private final GoogleTokenVerifier googleTokenVerifier;
     private final KakaoTokenVerifier kakaoTokenVerifier;
 
     @Override
@@ -27,7 +27,7 @@ public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort {
         log.info("OAuth 토큰 검증 시작: provider={}", provider);
 
         return switch (provider) {
-            case GOOGLE -> googleIdTokenVerifier.verifyAccessToken(token);
+            case GOOGLE -> googleTokenVerifier.verifyAccessToken(token);
             case KAKAO -> kakaoTokenVerifier.verifyAccessToken(token);
             case APPLE -> throw new AuthenticationDomainException(
                 AuthenticationErrorCode.OAUTH_PROVIDER_NOT_FOUND
