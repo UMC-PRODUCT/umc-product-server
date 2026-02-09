@@ -600,6 +600,11 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
             ));
     }
 
+    @Override
+    public boolean existsById(Long recruitmentId) {
+        return recruitmentRepository.existsById(recruitmentId);
+    }
+
     private InterviewTimeTableInfo parseInterviewTimeTableForApplicant(Map<String, Object> interviewTimeTable) {
         if (interviewTimeTable == null) {
             return null;
