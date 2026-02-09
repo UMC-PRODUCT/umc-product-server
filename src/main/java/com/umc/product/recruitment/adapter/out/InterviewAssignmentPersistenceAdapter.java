@@ -17,7 +17,6 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssignmentPort, SaveInterviewAssignmentPort {
 
-    private final InterviewAssignmentRepository interviewAssignmentRepository;
     private final InterviewAssignmentQueryRepository interviewAssignmentQueryRepository;
     private final InterviewAssignmentJpaRepository interviewAssignmentJpaRepository;
 
@@ -77,7 +76,6 @@ public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssig
     // ============ LoadInterviewAssignmentPort ============
     @Override
     public Optional<InterviewAssignment> findById(Long assignmentId) {
-        return interviewAssignmentRepository.findById(assignmentId);
         return interviewAssignmentJpaRepository.findById(assignmentId);
     }
 
