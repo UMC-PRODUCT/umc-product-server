@@ -4,4 +4,6 @@ import com.umc.product.organization.application.port.in.command.dto.CreateChapte
 
 public interface ManageChapterUseCase {
     Long create(CreateChapterCommand command);
+
+    void delete(Long chapterId);
 }

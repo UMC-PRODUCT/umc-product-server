@@ -10,6 +10,8 @@ public interface ApplicationPartPreferenceJpaRepository extends JpaRepository<Ap
 
     List<ApplicationPartPreference> findAllByApplicationIdOrderByPriorityAsc(Long applicationId);
 
+    List<ApplicationPartPreference> findByApplicationId(Long applicationId);
+
     @Query("""
                 select (count(appPref) > 0)
                 from ApplicationPartPreference appPref

@@ -22,10 +22,15 @@ public enum ScheduleErrorCode implements BaseCode {
     // 시간 범위
     INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "SCHEDULE-0006", "시작 시간은 종료 시간보다 이전이어야 합니다"),
     INVALID_LATE_THRESHOLD(HttpStatus.BAD_REQUEST, "SCHEDULE-0007", "지각 인정 시간이 유효하지 않습니다"),
+    OUTSIDE_ATTENDANCE_WINDOW(HttpStatus.BAD_REQUEST, "SCHEDULE-0008", "출석 가능한 시간이 아닙니다"),
 
     // 일정 생성 관련
     TAG_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0010", "태그는 최소 1개 이상 선택해야 합니다"),
     GISU_ID_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0011", "기수 ID는 필수입니다"),
+
+    // 참여자 관련
+    PARTICIPANT_NOT_REGISTERED(HttpStatus.FORBIDDEN, "SCHEDULE-0012", "출석 대상자 명단에 등록되지 않았습니다. 관리자에게 문의하세요."),
+    CANNOT_UPDATE_STARTED_ATTENDANCE(HttpStatus.BAD_REQUEST, "SCHEDULE-0013", "이미 출석이 시작되었습니다. 출석 시작 전에만 명단을 수정할 수 있습니다."),
     ;
     //별도 추가 예정
     private final HttpStatus httpStatus;

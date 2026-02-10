@@ -73,6 +73,14 @@ public class Application extends BaseEntity {
             .build();
     }
 
+    public void acceptDocument() {
+        this.status = ApplicationStatus.DOC_PASSED;
+    }
+
+    public void cancelDocumentAccept() {
+        this.status = ApplicationStatus.APPLIED;
+    }
+
     public void acceptFinal(ChallengerPart selectedPart) {
         if (selectedPart == null) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.FINAL_SELECTED_PART_REQUIRED);

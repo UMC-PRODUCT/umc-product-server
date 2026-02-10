@@ -20,7 +20,10 @@ public record CreateLightningRequest(
         String location,
 
         @Schema(description = "최대 참가자 수", example = "5")
-        Integer maxParticipants
+        Integer maxParticipants,
+
+        @Schema(description = "오픈 채팅 링크", example = "https://open.kakao.com/o/sxxxxxx")
+        String openChatUrl
 ) {
     public CreateLightningRequest {
         Objects.requireNonNull(title, "제목은 필수입니다");
@@ -28,6 +31,7 @@ public record CreateLightningRequest(
         Objects.requireNonNull(meetAt, "모임 시간은 필수입니다");
         Objects.requireNonNull(location, "모임 장소는 필수입니다");
         Objects.requireNonNull(maxParticipants, "최대 참가자 수는 필수입니다");
+        Objects.requireNonNull(openChatUrl, "오픈 채팅 링크는 필수입니다");
 
         if (title.isBlank()) {
             throw new IllegalArgumentException("제목은 비어있을 수 없습니다");
@@ -38,6 +42,9 @@ public record CreateLightningRequest(
         if (location.isBlank()) {
             throw new IllegalArgumentException("모임 장소는 비어있을 수 없습니다");
         }
+        if (openChatUrl.isBlank()) {
+            throw new IllegalArgumentException("오픈 채팅 링크는 비어있을 수 없습니다");
+        }
         if (meetAt.isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("모임 시간은 현재 이후여야 합니다");
         }
@@ -46,7 +53,7 @@ public record CreateLightningRequest(
         }
     }
 
-    public CreateLightningCommand toCommand() {
-        return new CreateLightningCommand(title, content, meetAt, location, maxParticipants);
+    public CreateLightningCommand toCommand(Long authorChallengerId) {
+        return new CreateLightningCommand(title, content, meetAt, location, maxParticipants, openChatUrl, authorChallengerId);
     }
 }

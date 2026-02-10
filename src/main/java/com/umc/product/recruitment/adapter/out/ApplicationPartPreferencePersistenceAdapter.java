@@ -36,6 +36,11 @@ public class ApplicationPartPreferencePersistenceAdapter implements LoadApplicat
     }
 
     @Override
+    public List<ApplicationPartPreference> findByApplicationId(Long applicationId) {
+        return applicationPartPreferenceJpaRepository.findByApplicationId(applicationId);
+    }
+
+    @Override
     public boolean existsPreferredOpenPart(Long applicationId, ChallengerPart part) {
         return applicationPartPreferenceJpaRepository
                 .existsPreferredOpenPart(applicationId, part);

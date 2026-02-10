@@ -75,6 +75,22 @@ public class Evaluation extends BaseEntity {
             .build();
     }
 
+    public static Evaluation createInterviewEvaluation(
+        Application application,
+        Long evaluatorUserId,
+        Integer score,
+        String comments
+    ) {
+        return Evaluation.builder()
+            .application(application)
+            .stage(EvaluationStage.INTERVIEW)
+            .evaluatorUserId(evaluatorUserId)
+            .score(score)
+            .comments(comments)
+            .status(EvaluationStatus.SUBMITTED)
+            .build();
+    }
+
     // ========================================================================
     // Domain Methods
     // ========================================================================
@@ -83,5 +99,10 @@ public class Evaluation extends BaseEntity {
         this.score = score;
         this.comments = comments;
         this.status = status;
+    }
+
+    public void updateScoreAndComments(Integer score, String comments) {
+        this.score = score;
+        this.comments = comments;
     }
 }

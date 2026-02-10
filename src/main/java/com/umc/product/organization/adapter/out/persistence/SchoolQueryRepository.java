@@ -31,47 +31,49 @@ public class SchoolQueryRepository {
     public Page<SchoolListItemInfo> getSchools(SchoolSearchCondition condition, Pageable pageable) {
         // 활성 기수의 chapter id 서브쿼리
         JPQLQuery<Long> activeChapterIds = JPAExpressions
-                .select(chapter.id)
-                .from(chapter)
-                .join(chapter.gisu, gisu)
-                .where(gisu.isActive.isTrue());
+            .select(chapter.id)
+            .from(chapter)
+            .join(chapter.gisu, gisu)
+            .where(gisu.isActive.isTrue());
 
         List<SchoolListItemInfo> content = queryFactory
-                .select(Projections.constructor(SchoolListItemInfo.class,
-                        school.id,
-                        school.name,
-                        chapter.id,      // 활성 기수에 속하지 않으면 null
-                        chapter.name,    // 활성 기수에 속하지 않으면 null
-                        school.createdAt,
-                        chapter.id.isNotNull()  // 활성 기수의 ChapterSchool 존재 여부
-                ))
-                .from(school)
-                .leftJoin(chapterSchool).on(
-                        chapterSchool.school.eq(school)
-                                .and(chapterSchool.chapter.id.in(activeChapterIds))
-                )
-                .leftJoin(chapterSchool.chapter, chapter)
-                .where(
-                        keywordContains(condition.keyword()),
-                        chapterIdEq(condition.chapterId())
-                )
-                .orderBy(school.createdAt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+            .select(Projections.constructor(SchoolListItemInfo.class,
+                school.id,
+                school.name,
+                chapter.id,      // 활성 기수에 속하지 않으면 null
+                chapter.name,    // 활성 기수에 속하지 않으면 null
+                school.createdAt,
+                chapter.id.isNotNull(),  // 활성 기수의 ChapterSchool 존재 여부
+                school.remark,
+                school.logoImageId       // 서비스 레이어에서 URL로 변환
+            ))
+            .from(school)
+            .leftJoin(chapterSchool).on(
+                chapterSchool.school.eq(school)
+                    .and(chapterSchool.chapter.id.in(activeChapterIds))
+            )
+            .leftJoin(chapterSchool.chapter, chapter)
+            .where(
+                keywordContains(condition.keyword()),
+                chapterIdEq(condition.chapterId())
+            )
+            .orderBy(school.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
         JPAQuery<Long> countQuery = queryFactory
-                .select(school.count())
-                .from(school)
-                .leftJoin(chapterSchool).on(
-                        chapterSchool.school.eq(school)
-                                .and(chapterSchool.chapter.id.in(activeChapterIds))
-                )
-                .leftJoin(chapterSchool.chapter, chapter)
-                .where(
-                        keywordContains(condition.keyword()),
-                        chapterIdEq(condition.chapterId())
-                );
+            .select(school.count())
+            .from(school)
+            .leftJoin(chapterSchool).on(
+                chapterSchool.school.eq(school)
+                    .and(chapterSchool.chapter.id.in(activeChapterIds))
+            )
+            .leftJoin(chapterSchool.chapter, chapter)
+            .where(
+                keywordContains(condition.keyword()),
+                chapterIdEq(condition.chapterId())
+            );
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
@@ -84,31 +86,36 @@ public class SchoolQueryRepository {
         return chapterId != null ? chapter.id.eq(chapterId) : null;
     }
 
+    /**
+     * 학교 상세 정보를 반환합니다.
+     */
     public SchoolDetailInfo.SchoolInfo getSchoolDetail(Long schoolId) {
         JPQLQuery<Long> activeChapterIds = JPAExpressions
-                .select(chapter.id)
-                .from(chapter)
-                .join(chapter.gisu, gisu)
-                .where(gisu.isActive.isTrue());
+            .select(chapter.id)
+            .from(chapter)
+            .join(chapter.gisu, gisu)
+            .where(gisu.isActive.isTrue());
 
         return queryFactory
-                .select(Projections.constructor(SchoolDetailInfo.SchoolInfo.class,
-                        chapter.id,
-                        chapter.name,
-                        school.name,
-                        school.id,
-                        school.remark,
-                        school.logoImageId,
-                        school.createdAt,
-                        school.updatedAt
-                ))
-                .from(school)
-                .leftJoin(chapterSchool).on(
-                        chapterSchool.school.eq(school)
-                                .and(chapterSchool.chapter.id.in(activeChapterIds))
-                )
-                .leftJoin(chapterSchool.chapter, chapter)
-                .where(school.id.eq(schoolId))
-                .fetchOne();
+            .select(Projections.constructor(SchoolDetailInfo.SchoolInfo.class,
+                chapter.id,
+                chapter.name,
+                school.name,
+                school.id,
+                school.remark,
+                school.logoImageId,
+                school.createdAt,
+                school.updatedAt
+            ))
+            .from(school)
+            .leftJoin(chapterSchool).on(
+                chapterSchool.school.eq(school)
+                    .and(chapterSchool.chapter.id.in(activeChapterIds))
+            )
+            .leftJoin(chapterSchool.chapter, chapter)
+            .where(school.id.eq(schoolId))
+            .fetchFirst();
+        // TODO: fetchFirst로 임시로 해결은 해두었으나, 같은 기수 (활성 기수) 내에 학교가 중복된 지부에 속하는 경우 오류가 발생함.
+        // 해당 경우를 고려해서 학교를 지부에 배정할 때 검증하는 로직을 추가할 필요성이 있음.
     }
 }

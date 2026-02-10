@@ -43,6 +43,10 @@ public class PostJpaEntity extends BaseEntity {
     private Category category;
 
     @Column(nullable = false)
+    private Long authorChallengerId;
+
+    // DB 호환성을 위해 유지 (API에는 노출되지 않음)
+    @Column(nullable = false)
     private String region;
 
     @Column(nullable = false)
@@ -55,49 +59,59 @@ public class PostJpaEntity extends BaseEntity {
 
     private Integer maxParticipants;
 
+    private String openChatUrl;
+
     @ElementCollection
     @CollectionTable(name = "post_like", joinColumns = @JoinColumn(name = "post_id"))
     @Column(name = "challenger_id")
     private Set<Long> likedChallengerIds = new HashSet<>();
 
-    private PostJpaEntity(String title, String content, Category category, String region,
-                          boolean anonymous, LocalDateTime meetAt, String location, Integer maxParticipants) {
+    private PostJpaEntity(String title, String content, Category category, Long authorChallengerId,
+                          String region, boolean anonymous, LocalDateTime meetAt, String location,
+                          Integer maxParticipants, String openChatUrl) {
         this.title = title;
         this.content = content;
         this.category = category;
+        this.authorChallengerId = authorChallengerId;
         this.region = region;
         this.anonymous = anonymous;
         this.meetAt = meetAt;
         this.location = location;
         this.maxParticipants = maxParticipants;
+        this.openChatUrl = openChatUrl;
     }
 
     private static final String DEFAULT_REGION = "";
     private static final boolean DEFAULT_ANONYMOUS = false;
 
-    public static PostJpaEntity from(Post post) {
+    public static PostJpaEntity from(Post post, Long authorChallengerId) {
         LocalDateTime meetAt = null;
         String location = null;
         Integer maxParticipants = null;
+        String openChatUrl = null;
 
         if (post.isLightning() && post.getLightningInfo() != null) {
             Post.LightningInfo info = post.getLightningInfo();
             meetAt = info.meetAt();
             location = info.location();
             maxParticipants = info.maxParticipants();
+            openChatUrl = info.openChatUrl();
         }
 
         return new PostJpaEntity(
                 post.getTitle(),
                 post.getContent(),
                 post.getCategory(),
+                authorChallengerId,
                 DEFAULT_REGION,
                 DEFAULT_ANONYMOUS,
                 meetAt,
                 location,
-                maxParticipants
+                maxParticipants,
+                openChatUrl
         );
     }
+
 
     public Post toDomain() {
         return toDomain(null);
@@ -106,7 +120,7 @@ public class PostJpaEntity extends BaseEntity {
     public Post toDomain(Long viewerChallengerId) {
         Post.LightningInfo lightningInfo = null;
         if (category == Category.LIGHTNING && meetAt != null) {
-            lightningInfo = new Post.LightningInfo(meetAt, location, maxParticipants);
+            lightningInfo = new Post.LightningInfo(meetAt, location, maxParticipants, openChatUrl);
         }
 
         boolean liked = viewerChallengerId != null && isLikedBy(viewerChallengerId);
@@ -116,8 +130,7 @@ public class PostJpaEntity extends BaseEntity {
                 title,
                 content,
                 category,
-                region,
-                anonymous,
+                authorChallengerId,
                 lightningInfo,
                 getLikeCount(),
                 liked

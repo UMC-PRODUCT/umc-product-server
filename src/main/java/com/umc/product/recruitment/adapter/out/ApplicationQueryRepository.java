@@ -4,26 +4,47 @@ import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.recruitment.domain.QApplication.application;
 import static com.umc.product.recruitment.domain.QApplicationPartPreference.applicationPartPreference;
 import static com.umc.product.recruitment.domain.QEvaluation.evaluation;
+import static com.umc.product.recruitment.domain.QInterviewAssignment.interviewAssignment;
+import static com.umc.product.recruitment.domain.QInterviewSlot.interviewSlot;
 import static com.umc.product.recruitment.domain.QRecruitment.recruitment;
 import static com.umc.product.recruitment.domain.QRecruitmentPart.recruitmentPart;
 import static com.umc.product.survey.domain.QFormResponse.formResponse;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.DateTimeExpression;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAlreadyScheduledApplicantRow;
+import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAvailableApplicantRow;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
+import com.umc.product.recruitment.application.port.in.PartOption;
+import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
+import com.umc.product.recruitment.domain.QApplicationPartPreference;
+import com.umc.product.recruitment.domain.QRecruitmentPart;
+import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.enums.EvaluationStatus;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -234,6 +255,291 @@ public class ApplicationQueryRepository {
         return Optional.ofNullable(result);
     }
 
+    /**
+     * 서류 선발 리스트 조회 (페이지네이션, 파트 필터, 정렬)
+     * <p>
+     * - APPLIED / DOC_PASSED만 포함 - part 필터: 1지망(priority=1) 기준
+     */
+    public Page<DocumentSelectionListItemProjection> searchDocumentSelections(
+        Long recruitmentId,
+        String part,
+        String sort,
+        Pageable pageable
+    ) {
+        List<DocumentSelectionListItemProjection> content = queryFactory
+            .select(Projections.constructor(DocumentSelectionListItemProjection.class,
+                application.id,
+                member.nickname,
+                member.name,
+                application.status
+            ))
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .where(
+                belongsToRecruitment(recruitmentId),
+                documentSelectionStatus(),
+                firstPriorityPartMatches(part)
+            )
+            .orderBy(documentSelectionOrderBy(sort))
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory
+            .select(application.count())
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .where(
+                belongsToRecruitment(recruitmentId),
+                documentSelectionStatus(),
+                firstPriorityPartMatches(part)
+            );
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    /**
+     * 서류 선발 요약 조회 - totalCount: (APPLIED + DOC_PASSED) (part 필터 적용) - selectedCount: DOC_PASSED (part 필터 적용) - byPart:
+     * 1지망 기준 파트별 total/selected
+     */
+    public DocumentSelectionApplicationListInfo.Summary getDocumentSelectionSummary(Long recruitmentId, String part) {
+        // total
+        Long total = queryFactory
+            .select(application.count())
+            .from(application)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                documentSelectionStatus(),
+                firstPriorityPartMatches(part)
+            )
+            .fetchOne();
+
+        // selected (DOC_PASSED)
+        Long selected = queryFactory
+            .select(application.count())
+            .from(application)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                application.status.eq(ApplicationStatus.DOC_PASSED),
+                firstPriorityPartMatches(part)
+            )
+            .fetchOne();
+
+        return new DocumentSelectionApplicationListInfo.Summary(
+            total != null ? total : 0L,
+            selected != null ? selected : 0L
+        );
+    }
+
+    /**
+     * 여러 applicationId에 대한 서류 평가 평균 점수 배치 조회 (SUBMITTED만) - 반환: applicationId -> avgScore(소수 1자리 반올림)
+     */
+    public Map<Long, BigDecimal> calculateAvgDocScoreByApplicationIds(Set<Long> applicationIds) {
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Tuple> rows = queryFactory
+            .select(
+                evaluation.application.id,
+                evaluation.score.avg()
+            )
+            .from(evaluation)
+            .where(
+                evaluation.application.id.in(applicationIds),
+                evaluation.stage.eq(EvaluationStage.DOCUMENT),
+                evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                evaluation.score.isNotNull()
+            )
+            .groupBy(evaluation.application.id)
+            .fetch();
+
+        return rows.stream().collect(Collectors.toMap(
+            t -> t.get(evaluation.application.id),
+            t -> {
+                Double avg = t.get(evaluation.score.avg());
+                return avg == null ? null : BigDecimal.valueOf(avg).setScale(1, RoundingMode.HALF_UP);
+            }
+        ));
+    }
+
+    public Map<Long, Double> findAvgDocumentScoresByApplicationIds(Set<Long> applicationIds) {
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // (applicationId, avgScore)
+        java.util.List<Tuple> rows = queryFactory
+            .select(evaluation.application.id, evaluation.score.avg())
+            .from(evaluation)
+            .where(
+                evaluation.application.id.in(applicationIds),
+                evaluation.stage.eq(EvaluationStage.DOCUMENT),
+                evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                evaluation.score.isNotNull()
+            )
+            .groupBy(evaluation.application.id)
+            .fetch();
+
+        return rows.stream()
+            .collect(Collectors.toMap(
+                t -> t.get(evaluation.application.id),
+                t -> {
+                    Double avg = t.get(evaluation.score.avg());
+                    if (avg == null) {
+                        return null;
+                    }
+                    return BigDecimal.valueOf(avg)
+                        .setScale(1, RoundingMode.HALF_UP)
+                        .doubleValue();
+                }
+            ));
+    }
+
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRecruitment(
+        Long recruitmentId
+    ) {
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                application.status.eq(ApplicationStatus.DOC_PASSED)
+            )
+            .fetch();
+    }
+
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+        Long recruitmentId,
+        PartOption partOption
+    ) {
+        ChallengerPart part = ChallengerPart.valueOf(partOption.name());
+
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                application.status.eq(ApplicationStatus.DOC_PASSED),
+                recruitmentPart.part.eq(part)
+            )
+            .fetch();
+    }
+
+    public List<InterviewSchedulingAvailableApplicantRow> findAvailableRows(
+        Long recruitmentId,
+        Set<Long> availableAppIds,
+        PartOption requestedPart,
+        String keyword
+    ) {
+        if (availableAppIds == null || availableAppIds.isEmpty()) {
+            return List.of();
+        }
+
+        QApplicationPartPreference pref1 = new QApplicationPartPreference("pref1");
+        QApplicationPartPreference pref2 = new QApplicationPartPreference("pref2");
+        QRecruitmentPart rp1 = new QRecruitmentPart("rp1");
+        QRecruitmentPart rp2 = new QRecruitmentPart("rp2");
+
+        ChallengerPart filterPart = toFilterPart(requestedPart);
+
+        return queryFactory
+            .select(Projections.constructor(
+                InterviewSchedulingAvailableApplicantRow.class,
+                application.id,
+                member.nickname,
+                member.name,
+                rp1.part,
+                rp2.part
+            ))
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+
+            .leftJoin(pref1).on(pref1.application.eq(application), pref1.priority.eq(1))
+            .leftJoin(pref1.recruitmentPart, rp1)
+
+            .leftJoin(pref2).on(pref2.application.eq(application), pref2.priority.eq(2))
+            .leftJoin(pref2.recruitmentPart, rp2)
+
+            .where(
+                application.id.in(availableAppIds),
+                keywordContains(keyword),
+                filterPart == null ? null : rp1.part.eq(filterPart)
+            )
+            .orderBy(application.createdAt.asc())
+            .fetch();
+    }
+
+    public List<InterviewSchedulingAlreadyScheduledApplicantRow> findAlreadyScheduledRows(
+        Long recruitmentId,
+        Long slotId,
+        Set<Long> alreadyScheduledAppIds,
+        PartOption requestedPart,
+        String keyword
+    ) {
+        if (alreadyScheduledAppIds == null || alreadyScheduledAppIds.isEmpty()) {
+            return List.of();
+        }
+
+        QApplicationPartPreference pref1 = new QApplicationPartPreference("pref1");
+        QApplicationPartPreference pref2 = new QApplicationPartPreference("pref2");
+        QRecruitmentPart rp1 = new QRecruitmentPart("rp1");
+        QRecruitmentPart rp2 = new QRecruitmentPart("rp2");
+
+        ChallengerPart filterPart = toFilterPart(requestedPart);
+
+        return queryFactory
+            .select(Projections.constructor(
+                InterviewSchedulingAlreadyScheduledApplicantRow.class,
+                interviewAssignment.application.id,
+                interviewAssignment.id,
+                member.nickname,
+                member.name,
+                rp1.part,
+                rp2.part,
+                interviewSlot.startsAt,
+                interviewSlot.endsAt
+            ))
+            .from(interviewAssignment)
+            .join(interviewAssignment.slot, interviewSlot)
+            .join(interviewAssignment.application, application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+
+            .leftJoin(pref1).on(pref1.application.eq(application), pref1.priority.eq(1))
+            .leftJoin(pref1.recruitmentPart, rp1)
+
+            .leftJoin(pref2).on(pref2.application.eq(application), pref2.priority.eq(2))
+            .leftJoin(pref2.recruitmentPart, rp2)
+
+            .where(
+                interviewAssignment.recruitment.id.eq(recruitmentId),
+                interviewAssignment.slot.id.ne(slotId), // "다른 슬롯"만
+                interviewAssignment.application.id.in(alreadyScheduledAppIds),
+                keywordContains(keyword),
+                filterPart == null ? null : rp1.part.eq(filterPart)
+            )
+            .orderBy(interviewAssignment.createdAt.asc())
+            .fetch();
+    }
+
+    private ChallengerPart toFilterPart(PartOption requestedPart) {
+        if (requestedPart == null || requestedPart == PartOption.ALL) {
+            return null;
+        }
+        return ChallengerPart.valueOf(requestedPart.name());
+    }
+
     // ========================================================================
     // Private 헬퍼 메서드
     // ========================================================================
@@ -308,5 +614,155 @@ public class ApplicationQueryRepository {
 
         // 3. application.formResponseId가 위 서브쿼리에 포함되는지 확인
         return application.formResponseId.in(formResponseIds);
+    }
+
+    private BooleanExpression documentSelectionStatus() {
+        return application.status.in(ApplicationStatus.APPLIED, ApplicationStatus.DOC_PASSED);
+    }
+
+    /**
+     * part 필터: 1지망(priority=1) 기준 - ALL이면 null (필터 없음)
+     */
+    private BooleanExpression firstPriorityPartMatches(String part) {
+        if (!StringUtils.hasText(part) || "ALL".equalsIgnoreCase(part)) {
+            return null;
+        }
+
+        ChallengerPart challengerPart;
+        try {
+            challengerPart = ChallengerPart.valueOf(part.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid part parameter: {}", part);
+            return null;
+        }
+
+        return JPAExpressions
+            .selectOne()
+            .from(applicationPartPreference)
+            .join(recruitmentPart).on(recruitmentPart.id.eq(applicationPartPreference.recruitmentPart.id))
+            .where(
+                applicationPartPreference.application.id.eq(application.id),
+                applicationPartPreference.priority.eq(1),
+                recruitmentPart.part.eq(challengerPart)
+            )
+            .exists();
+    }
+
+    /**
+     * 정렬 - SCORE_DESC/SCORE_ASC: application.docScore 기준 (null은 뒤로) - EVALUATED_AT_ASC: 제출된 서류평가 updatedAt의 max 기준 오름차순
+     * (null은 뒤로)
+     */
+    private com.querydsl.core.types.OrderSpecifier<?>[] documentSelectionOrderBy(String sort) {
+        String s = (sort == null) ? "SCORE_DESC" : sort;
+
+        NumberExpression<Double> avgDocScore =
+            Expressions.numberTemplate(
+                Double.class,
+                "({0})",
+                JPAExpressions
+                    .select(evaluation.score.avg())
+                    .from(evaluation)
+                    .where(
+                        evaluation.application.id.eq(application.id),
+                        evaluation.stage.eq(EvaluationStage.DOCUMENT),
+                        evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                        evaluation.score.isNotNull()
+                    )
+            );
+
+        DateTimeExpression<Instant> evaluatedAtMax =
+            Expressions.dateTimeTemplate(
+                Instant.class,
+                "({0})",
+                JPAExpressions
+                    .select(evaluation.updatedAt.max())
+                    .from(evaluation)
+                    .where(
+                        evaluation.application.id.eq(application.id),
+                        evaluation.stage.eq(EvaluationStage.DOCUMENT),
+                        evaluation.status.eq(EvaluationStatus.SUBMITTED)
+                    )
+            );
+
+        return switch (s) {
+            case "SCORE_ASC" -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                avgDocScore.asc().nullsLast(),
+                application.id.asc()
+            };
+            case "EVALUATED_AT_ASC" -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                evaluatedAtMax.asc().nullsLast(),
+                application.id.asc()
+            };
+            case "SCORE_DESC" -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                avgDocScore.desc().nullsLast(),
+                application.id.asc()
+            };
+            default -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                avgDocScore.desc().nullsLast(),
+                application.id.asc()
+            };
+        };
+    }
+
+
+    public long countByRecruitmentId(Long recruitmentId) {
+        return queryFactory
+            .select(application.count())
+            .from(application)
+            .where(belongsToRecruitment(recruitmentId))
+            .fetchOne();
+    }
+
+    public long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, ChallengerPart part) {
+        Long count = queryFactory
+            .select(application.countDistinct())
+            .from(application)
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                recruitmentPart.part.eq(part)
+            )
+            .fetchOne();
+        return count != null ? count : 0L;
+    }
+
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitment(
+        Long recruitmentId) {
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .where(belongsToRecruitment(recruitmentId))
+            .fetch();
+    }
+
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+        Long recruitmentId,
+        PartOption partOption
+    ) {
+        ChallengerPart part = ChallengerPart.valueOf(partOption.name());
+
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                recruitmentPart.part.eq(part)
+            )
+            .fetch();
     }
 }

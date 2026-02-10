@@ -37,7 +37,8 @@ public class AttendanceWebMapper {
             info.sheetId(),
             info.recordId(),
             info.status().name(),
-            info.statusDisplay()
+            info.statusDisplay(),
+            info.locationVerified()  // 출석 시점의 위치 인증 여부
         );
     }
 
@@ -51,8 +52,8 @@ public class AttendanceWebMapper {
             info.attendanceId(),
             info.scheduleId(),
             info.scheduleName(),
-            info.weekDisplay(),
-            info.dateDisplay(),
+            info.tags().stream().map(ScheduleTag::name).toList(),
+            info.time(),
             info.status().name(),
             info.statusDisplay()
         );

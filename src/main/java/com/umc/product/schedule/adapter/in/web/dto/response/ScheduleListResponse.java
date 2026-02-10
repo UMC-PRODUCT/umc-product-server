@@ -15,7 +15,7 @@ public record ScheduleListResponse(
 
 //        String type,
 
-    @Schema(description = "일정 상태", example = "UPCOMING")
+    @Schema(description = "일정 상태 (진행 중, 종료됨)", example = "진행 중")
     String status,
 
     @Schema(description = "날짜", example = "2026.03.16 (토)")

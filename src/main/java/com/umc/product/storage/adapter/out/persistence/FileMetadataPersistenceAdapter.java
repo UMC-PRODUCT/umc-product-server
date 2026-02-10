@@ -3,6 +3,7 @@ package com.umc.product.storage.adapter.out.persistence;
 import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
 import com.umc.product.storage.application.port.out.SaveFileMetadataPort;
 import com.umc.product.storage.domain.FileMetadata;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,6 +17,11 @@ public class FileMetadataPersistenceAdapter implements LoadFileMetadataPort, Sav
     @Override
     public Optional<FileMetadata> findByFileId(String fileId) {
         return fileMetadataRepository.findById(fileId);
+    }
+
+    @Override
+    public List<FileMetadata> findByFileIds(List<String> fileIds) {
+        return fileMetadataRepository.findByIdIn(fileIds);
     }
 
     @Override

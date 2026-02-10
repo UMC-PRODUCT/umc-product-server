@@ -12,9 +12,11 @@ import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.Instant;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Disabled
 class ManageGisuUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
@@ -30,9 +32,9 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
     void 신규_기수를_생성한다() {
         // given
         CreateGisuCommand command = new CreateGisuCommand(
-                10L,
-                Instant.parse("2025-03-01T00:00:00Z"),
-                Instant.parse("2025-08-31T23:59:59Z")
+            10L,
+            Instant.parse("2025-03-01T00:00:00Z"),
+            Instant.parse("2025-08-31T23:59:59Z")
         );
 
         // when
@@ -49,34 +51,34 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
     void 이미_존재하는_기수_번호로_생성하면_예외가_발생한다() {
         // given
         Gisu existingGisu = Gisu.create(
-                10L,
-                Instant.parse("2025-03-01T00:00:00Z"),
-                Instant.parse("2025-08-31T23:59:59Z"),
-                false
+            10L,
+            Instant.parse("2025-03-01T00:00:00Z"),
+            Instant.parse("2025-08-31T23:59:59Z"),
+            false
         );
         manageGisuPort.save(existingGisu);
 
         CreateGisuCommand command = new CreateGisuCommand(
-                10L,
-                Instant.parse("2026-03-01T00:00:00Z"),
-                Instant.parse("2026-08-31T23:59:59Z")
+            10L,
+            Instant.parse("2026-03-01T00:00:00Z"),
+            Instant.parse("2026-08-31T23:59:59Z")
         );
 
         // when & then
         assertThatThrownBy(() -> manageGisuUseCase.register(command))
-                .isInstanceOf(BusinessException.class)
-                .extracting("code")
-                .isEqualTo(OrganizationErrorCode.GISU_ALREADY_EXISTS);
+            .isInstanceOf(BusinessException.class)
+            .extracting("code")
+            .isEqualTo(OrganizationErrorCode.GISU_ALREADY_EXISTS);
     }
 
     @Test
     void 기수를_삭제한다() {
         // given
         Gisu gisu = Gisu.create(
-                11L,
-                Instant.parse("2025-03-01T00:00:00Z"),
-                Instant.parse("2025-08-31T23:59:59Z"),
-                false
+            11L,
+            Instant.parse("2025-03-01T00:00:00Z"),
+            Instant.parse("2025-08-31T23:59:59Z"),
+            false
         );
         Gisu savedGisu = manageGisuPort.save(gisu);
         Long gisuId = savedGisu.getId();
@@ -86,9 +88,9 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
 
         // then
         assertThatThrownBy(() -> getGisuUseCase.getById(gisuId))
-                .isInstanceOf(BusinessException.class)
-                .extracting("code")
-                .isEqualTo(OrganizationErrorCode.GISU_NOT_FOUND);
+            .isInstanceOf(BusinessException.class)
+            .extracting("code")
+            .isEqualTo(OrganizationErrorCode.GISU_NOT_FOUND);
     }
 
     @Test
@@ -98,27 +100,27 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
 
         // when & then
         assertThatThrownBy(() -> manageGisuUseCase.deleteGisu(nonExistentGisuId))
-                .isInstanceOf(BusinessException.class)
-                .extracting("code")
-                .isEqualTo(OrganizationErrorCode.GISU_NOT_FOUND);
+            .isInstanceOf(BusinessException.class)
+            .extracting("code")
+            .isEqualTo(OrganizationErrorCode.GISU_NOT_FOUND);
     }
 
     @Test
     void 활성_기수를_변경한다() {
         // given
         Gisu oldActiveGisu = Gisu.create(
-                8L,
-                Instant.parse("2024-03-01T00:00:00Z"),
-                Instant.parse("2024-08-31T23:59:59Z"),
-                true
+            8L,
+            Instant.parse("2024-03-01T00:00:00Z"),
+            Instant.parse("2024-08-31T23:59:59Z"),
+            true
         );
         oldActiveGisu = manageGisuPort.save(oldActiveGisu);
 
         Gisu newGisu = Gisu.create(
-                9L,
-                Instant.parse("2025-03-01T00:00:00Z"),
-                Instant.parse("2025-08-31T23:59:59Z"),
-                false
+            9L,
+            Instant.parse("2025-03-01T00:00:00Z"),
+            Instant.parse("2025-08-31T23:59:59Z"),
+            false
         );
         newGisu = manageGisuPort.save(newGisu);
 

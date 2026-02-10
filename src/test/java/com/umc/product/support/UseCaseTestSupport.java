@@ -22,6 +22,7 @@ public abstract class UseCaseTestSupport {
     @MockitoBean
     protected JwtTokenProvider jwtTokenProvider;
 
+    // TODO: 제거 예정
     @MockitoBean
     protected GetChallengerUseCase getChallengerUseCase;
 

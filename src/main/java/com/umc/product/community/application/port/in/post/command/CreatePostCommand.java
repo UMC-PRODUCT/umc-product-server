@@ -5,6 +5,7 @@ import com.umc.product.community.domain.enums.Category;
 public record CreatePostCommand(
         String title,
         String content,
-        Category category
+        Category category,
+        Long authorChallengerId
 ) {
 }

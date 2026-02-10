@@ -54,4 +54,6 @@ public interface LoadRecruitmentPort {
     RecruitmentPublishedInfo.ScheduleInfo findPublishedScheduleInfoByRecruitmentId(Long recruitmentId);
 
     Map<RecruitmentScheduleType, RecruitmentSchedule> findScheduleMapByRecruitmentId(Long recruitmentId);
+
+    boolean existsById(Long recruitmentId);
 }

@@ -12,12 +12,17 @@ import com.umc.product.authentication.application.port.in.command.OAuthAuthentic
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
+import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
+import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.application.service.MemberService;
 import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.exception.MemberDomainException;
+import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
@@ -26,8 +31,10 @@ import com.umc.product.terms.application.port.in.query.GetTermsUseCase;
 import com.umc.product.terms.domain.exception.TermsDomainException;
 import com.umc.product.terms.domain.exception.TermsErrorCode;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -39,6 +46,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 class ManageMemberUseCaseTest {
 
     @Mock
+    LoadMemberPort loadMemberPort;
+
+    @Mock
     SaveMemberPort saveMemberPort;
 
     @Mock
@@ -46,6 +56,9 @@ class ManageMemberUseCaseTest {
 
     @Mock
     LoadFileMetadataPort loadFileMetadataPort;
+
+    @Mock
+    GetFileUseCase getFileUseCase;
 
     @Mock
     OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
@@ -212,6 +225,86 @@ class ManageMemberUseCaseTest {
 
         // then
         assertThat(memberId).isEqualTo(1L);
+    }
+
+    @Nested
+    @DisplayName("updateMember")
+    class UpdateMember {
+
+        @Test
+        void 프로필_수정_성공() {
+            // given
+            Member member = createMember(1L);
+            given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
+            given(getFileUseCase.existsById("new_image_id")).willReturn(true);
+
+            UpdateMemberCommand command = UpdateMemberCommand.forProfileUpdate(1L, "new_image_id");
+
+            // when
+            memberService.updateMember(command);
+
+            // then
+            assertThat(member.getProfileImageId()).isEqualTo("new_image_id");
+        }
+
+        @Test
+        void 존재하지_않는_회원이면_예외() {
+            // given
+            given(loadMemberPort.findById(999L)).willReturn(Optional.empty());
+
+            UpdateMemberCommand command = UpdateMemberCommand.forProfileUpdate(999L, "new_image_id");
+
+            // when & then
+            assertThatThrownBy(() -> memberService.updateMember(command))
+                .isInstanceOf(MemberDomainException.class)
+                .extracting("code")
+                .isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
+        }
+
+        @Test
+        void 존재하지_않는_프로필_이미지_ID면_예외() {
+            // given
+            Member member = createMember(1L);
+            given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
+            given(getFileUseCase.existsById("invalid_image_id")).willReturn(false);
+
+            UpdateMemberCommand command = UpdateMemberCommand.forProfileUpdate(1L, "invalid_image_id");
+
+            // when & then
+            assertThatThrownBy(() -> memberService.updateMember(command))
+                .isInstanceOf(StorageException.class)
+                .extracting("code")
+                .isEqualTo(StorageErrorCode.FILE_NOT_FOUND);
+        }
+
+        @Test
+        void 프로필_이미지_ID가_null이면_검증_스킵() {
+            // given
+            Member member = createMember(1L);
+            given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
+
+            UpdateMemberCommand command = UpdateMemberCommand.forProfileUpdate(1L, null);
+
+            // when
+            memberService.updateMember(command);
+
+            // then
+            then(getFileUseCase).should(never()).existsById(any());
+        }
+    }
+
+    // ── 헬퍼 메서드 ──
+
+    private Member createMember(Long id) {
+        Member member = Member.builder()
+            .name("홍길동")
+            .nickname("길동")
+            .email("test@example.com")
+            .schoolId(1L)
+            .profileImageId("old_image_id")
+            .build();
+        ReflectionTestUtils.setField(member, "id", id);
+        return member;
     }
 
     private RegisterMemberCommand createCommand(Long schoolId, String profileImageId, List<TermConsents> termConsents) {

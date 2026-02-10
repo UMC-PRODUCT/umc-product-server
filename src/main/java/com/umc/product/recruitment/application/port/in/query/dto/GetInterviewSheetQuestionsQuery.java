@@ -7,4 +7,8 @@ public record GetInterviewSheetQuestionsQuery(
     PartKey partKey,
     Long requesterMemberId
 ) {
+
+    public PartKey partKeyOrDefault() {
+        return partKey != null ? partKey : PartKey.COMMON;
+    }
 }

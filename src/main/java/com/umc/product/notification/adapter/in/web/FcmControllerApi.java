@@ -17,7 +17,8 @@ public interface FcmControllerApi {
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "토큰 등록 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "MEMBER-0001: 사용자를 찾을 수 없습니다.")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "MEMBER-0001: 사용자를 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "FCM-0004: FCM 토픽 구독에 실패했습니다.")
     })
     void registerFcmToken(
             @Parameter(description = "사용자 ID", required = true) Long userId,

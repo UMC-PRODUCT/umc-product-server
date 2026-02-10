@@ -28,14 +28,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/recruitments/{recruitmentId}")
+@RequestMapping("/api/v1/recruitments/{recruitmentId}/applications")
 @Tag(name = SwaggerTag.Constants.FINAL_SELECTION)
 public class RecruitmentFinalSelectionController {
 
     private final UpdateFinalStatusUseCase updateFinalStatusUseCase;
     private final GetFinalSelectionListUseCase getFinalSelectionListUseCase;
 
-    @PatchMapping("/applications/{applicationId}/final-status")
+    @PatchMapping("/{applicationId}/final-status")
     @Operation(
         summary = "최종 선발 단건 합격/합격 취소",
         description = """
@@ -64,9 +64,9 @@ public class RecruitmentFinalSelectionController {
 
     @GetMapping("/final-selections")
     @Operation(
-        summary = "최종 선발 리스트 조회",
+        summary = "최종 선발 대상 리스트 조회",
         description = """
-            최종 선발(선정/미선정) 리스트를 조회합니다.
+            최종 선발(PASS/WAIT) 대상 리스트를 조회합니다.
             part 필터 및 정렬(sort)을 지원합니다.
             """
     )

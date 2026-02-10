@@ -10,6 +10,7 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -268,6 +269,19 @@ public class MemberRolesQueryService implements GetMemberRolesUseCase {
         return roles.stream()
             .map(ChallengerRole::getChallengerRoleType)
             .anyMatch(ChallengerRoleType::isCentralCore);
+    }
+
+    @Override
+    public Map<Long, List<ChallengerRoleType>> getRoleTypesByChallengerIds(Set<Long> challengerIds) {
+        if (challengerIds == null || challengerIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return loadChallengerRolePort.findByChallengerIdIn(challengerIds).stream()
+            .collect(Collectors.groupingBy(
+                ChallengerRole::getChallengerId,
+                Collectors.mapping(ChallengerRole::getChallengerRoleType, Collectors.toList())
+            ));
     }
 
     @Override

@@ -23,7 +23,7 @@ public record InterviewSchedulingSummaryResponse(
         );
     }
 
-    public record Progress(String scope, String part, int total, int scheduled) {
+    public record Progress(String scope, String part, long total, long scheduled) {
     }
 
     public record PartOptionResponse(String part, String label, boolean done) {

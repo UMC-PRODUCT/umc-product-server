@@ -33,6 +33,11 @@ public class ChapterSchoolPersistenceAdapter implements LoadChapterSchoolPort, M
     }
 
     @Override
+    public void deleteAllByChapterId(Long chapterId) {
+        chapterSchoolJpaRepository.deleteAllByChapterId(chapterId);
+    }
+
+    @Override
     public ChapterSchool findByChapterIdAndSchoolId(Long chapterId, Long schoolId) {
         return chapterSchoolQueryRepository
                 .findByChapterIdAndSchoolId(chapterId, schoolId)

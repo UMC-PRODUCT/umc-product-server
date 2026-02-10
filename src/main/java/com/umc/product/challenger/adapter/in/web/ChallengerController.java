@@ -6,18 +6,21 @@ import com.umc.product.challenger.adapter.in.web.dto.request.DeleteChallengerPoi
 import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPartRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPointRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.GrantChallengerPointRequest;
+import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerCursorRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
+import com.umc.product.challenger.adapter.in.web.dto.response.CursorSearchChallengerResponse;
 import com.umc.product.challenger.adapter.in.web.dto.response.SearchChallengerResponse;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
 import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerCommand;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.SearchChallengerQuery;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -45,14 +48,17 @@ public class ChallengerController {
     private final GetChallengerUseCase getChallengerUseCase;
     private final ManageChallengerUseCase manageChallengerUseCase;
     private final SearchChallengerUseCase searchChallengerUseCase;
+    private final GetMemberUseCase getMemberUseCase;
 
     @Operation(summary = "챌린저 정보 조회")
     @GetMapping("{challengerId}")
     ChallengerInfoResponse getChallengerInfo(
-            @PathVariable Long challengerId
+        @PathVariable Long challengerId
     ) {
-        ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-        return ChallengerInfoResponse.from(info);
+        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
+
+        return ChallengerInfoResponse.from(challengerInfo, memberInfo);
     }
 
     @Operation(summary = "[주의] 챌린저 삭제 (Hard Delete)")
@@ -65,8 +71,8 @@ public class ChallengerController {
     @Operation(summary = "챌린저 비활성화 (제명/탈부 처리)")
     @PostMapping("{challengerId}/deactivate")
     void deactivateChallenger(
-            @PathVariable Long challengerId,
-            @RequestBody DeactivateChallengerRequest request
+        @PathVariable Long challengerId,
+        @RequestBody DeactivateChallengerRequest request
     ) {
         manageChallengerUseCase.deactivateChallenger(request.toCommand(challengerId));
     }
@@ -74,9 +80,9 @@ public class ChallengerController {
     @Operation(summary = "챌린저 파트 변경")
     @PatchMapping("{challengerId}/part")
     ChallengerInfoResponse editChallengerInfo(
-            @CurrentMember MemberPrincipal memberPrincipal,
-            @PathVariable Long challengerId,
-            @RequestBody EditChallengerPartRequest request
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long challengerId,
+        @RequestBody EditChallengerPartRequest request
     ) {
         manageChallengerUseCase.updateChallenger(request.toCommand(challengerId, memberPrincipal.getMemberId()));
         ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
@@ -86,8 +92,8 @@ public class ChallengerController {
     @Operation(summary = "챌린저 상벌점 부여")
     @PostMapping("{challengerId}/points")
     ChallengerInfoResponse grantChallengerPoints(
-            @PathVariable Long challengerId,
-            @RequestBody GrantChallengerPointRequest request
+        @PathVariable Long challengerId,
+        @RequestBody GrantChallengerPointRequest request
     ) {
         manageChallengerUseCase.grantChallengerPoint(request.toCommand(challengerId));
         ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
@@ -97,8 +103,8 @@ public class ChallengerController {
     @Operation(summary = "챌린저 상벌점 사유 수정")
     @PatchMapping("points/{challengerPointId}")
     void editChallengerPoints(
-            @PathVariable Long challengerPointId,
-            @RequestBody EditChallengerPointRequest request
+        @PathVariable Long challengerPointId,
+        @RequestBody EditChallengerPointRequest request
     ) {
         manageChallengerUseCase.updateChallengerPoint(request.toCommand(challengerPointId));
     }
@@ -107,21 +113,43 @@ public class ChallengerController {
     @DeleteMapping("points/{challengerPointId}")
     void deleteChallengerPoint(@PathVariable Long challengerPointId) {
         manageChallengerUseCase.deleteChallengerPoint(
-                new DeleteChallengerPointRequest().toCommand(challengerPointId)
+            new DeleteChallengerPointRequest().toCommand(challengerPointId)
         );
     }
 
-    @Operation(summary = "챌린저 검색 (챌린저 ID, 닉네임, 기수별)")
+    @Deprecated
+    @Operation(summary = "챌린저 검색", deprecated = true,
+        description = "Deprecated: cursor와 offset을 분리하기 위해 엔드포인트를 변경합니다. 해당 API는 사용하지 않습니다.")
     @GetMapping("search")
+    SearchChallengerResponse searchChallenger() {
+        throw new UnsupportedOperationException("이 API는 더 이상 지원되지 않습니다. cursor와 offset 기반 검색을 위한 별도의 엔드포인트를 사용하세요.");
+    }
+
+    @Operation(summary = "챌린저 검색 (Cursor 기반)")
+    @GetMapping("search/cursor")
+    CursorSearchChallengerResponse cursorSearchChallenger(
+        @ParameterObject SearchChallengerCursorRequest searchRequest
+    ) {
+        return CursorSearchChallengerResponse.from(
+            searchChallengerUseCase.cursorSearch(
+                searchRequest.toQuery(),
+                searchRequest.cursor(),
+                searchRequest.getSize()
+            )
+        );
+    }
+
+    @Operation(summary = "챌린저 검색 (Offset 기반)")
+    @GetMapping("search/offset")
     SearchChallengerResponse searchChallenger(
-            @ParameterObject Pageable pageable,
-            @ParameterObject SearchChallengerRequest searchRequest
+        @ParameterObject Pageable pageable,
+        @ParameterObject SearchChallengerRequest searchRequest
     ) {
         return SearchChallengerResponse.from(
-                searchChallengerUseCase.search(
-                        searchRequest.toQuery(),
-                        pageable
-                )
+            searchChallengerUseCase.search(
+                searchRequest.toQuery(),
+                pageable
+            )
         );
     }
 
@@ -136,14 +164,14 @@ public class ChallengerController {
     @Operation(summary = "챌린저 Bulk 생성")
     @PostMapping("bulk")
     List<ChallengerInfoResponse> bulkCreateChallenger(
-            @RequestBody List<CreateChallengerInfoRequest> requests
+        @RequestBody List<CreateChallengerInfoRequest> requests
     ) {
         return requests.stream()
-                .map(request -> {
-                    Long challengerId = manageChallengerUseCase.createChallenger(request.toCommand());
-                    ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-                    return ChallengerInfoResponse.from(info);
-                })
-                .toList();
+            .map(request -> {
+                Long challengerId = manageChallengerUseCase.createChallenger(request.toCommand());
+                ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+                return ChallengerInfoResponse.from(info);
+            })
+            .toList();
     }
 }

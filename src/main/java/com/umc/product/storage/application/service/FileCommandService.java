@@ -42,47 +42,47 @@ public class FileCommandService implements ManageFileUseCase {
 
         // 스토리지 키 생성
         String storageKey = storagePort.generateStorageKey(
-                command.category(),
-                fileId,
-                extension
+            command.category(),
+            fileId,
+            extension
         );
 
         // 메타데이터 저장
         FileMetadata metadata = FileMetadata.builder()
-                .fileId(fileId)
-                .originalFileName(command.fileName())
-                .category(command.category())
-                .contentType(command.contentType())
-                .fileSize(command.fileSize())
-                .storageProvider(StorageProvider.GOOGLE_CLOUD_STORAGE)
-                .storageKey(storageKey)
-                .uploadedMemberId(command.uploadedBy())
-                .build();
+            .fileId(fileId)
+            .originalFileName(command.fileName())
+            .category(command.category())
+            .contentType(command.contentType())
+            .fileSize(command.fileSize())
+            .storageProvider(StorageProvider.AWS_S3)
+            .storageKey(storageKey)
+            .uploadedMemberId(command.uploadedBy())
+            .build();
 
         saveFileMetadataPort.save(metadata);
 
         // Signed URL 생성
         FileUploadInfo uploadInfo = storagePort.generateUploadUrl(
-                storageKey,
-                command.contentType(),
-                UPLOAD_URL_DURATION_MINUTES
+            storageKey,
+            command.contentType(),
+            UPLOAD_URL_DURATION_MINUTES
         );
 
         log.info("파일 업로드 URL 생성 완료: fileId={}, category={}", fileId, command.category());
 
         return new FileUploadInfo(
-                fileId,
-                uploadInfo.uploadUrl(),
-                uploadInfo.uploadMethod(),
-                uploadInfo.headers(),
-                uploadInfo.expiresAt()
+            fileId,
+            uploadInfo.uploadUrl(),
+            uploadInfo.uploadMethod(),
+            uploadInfo.headers(),
+            uploadInfo.expiresAt()
         );
     }
 
     @Override
     public void confirmUpload(String fileId) {
         FileMetadata metadata = loadFileMetadataPort.findByFileId(fileId)
-                .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
+            .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
 
         if (metadata.isUploaded()) {
             throw new StorageException(StorageErrorCode.FILE_ALREADY_UPLOADED);
@@ -102,7 +102,7 @@ public class FileCommandService implements ManageFileUseCase {
     @Override
     public void deleteFile(String fileId) {
         FileMetadata metadata = loadFileMetadataPort.findByFileId(fileId)
-                .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
+            .orElseThrow(() -> new StorageException(StorageErrorCode.FILE_NOT_FOUND));
 
         // 스토리지에서 파일 삭제
         storagePort.delete(metadata.getStorageKey());

@@ -13,5 +13,7 @@ public interface LoadApplicationPartPreferencePort {
      */
     List<ApplicationPartPreference> findAllByApplicationIdsOrderByPriorityAsc(Set<Long> applicationIds);
 
+    List<ApplicationPartPreference> findByApplicationId(Long applicationId);
+
     boolean existsPreferredOpenPart(Long applicationId, ChallengerPart part);
 }

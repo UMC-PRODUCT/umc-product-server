@@ -1,8 +1,11 @@
 package com.umc.product.recruitment.application.service.command;
 
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.application.port.in.command.UpdateMyDocumentEvaluationUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateDocumentStatusCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateDocumentStatusInfo;
+import com.umc.product.recruitment.application.port.in.command.dto.UpdateDocumentStatusInfo.DocumentResult;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateMyDocumentEvaluationCommand;
 import com.umc.product.recruitment.application.port.in.query.UpdateDocumentStatusUseCase;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEvaluationInfo;
@@ -10,6 +13,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEv
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.LoadEvaluationPort;
+import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
 import com.umc.product.recruitment.application.port.out.SaveEvaluationPort;
 import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.Evaluation;
@@ -31,6 +35,7 @@ public class RecruitmentDocumentEvaluationService implements UpdateMyDocumentEva
     private final LoadApplicationPort loadApplicationPort;
     private final LoadEvaluationPort loadEvaluationPort;
     private final SaveEvaluationPort saveEvaluationPort;
+    private final SaveApplicationPort saveApplicationPort;
 
     @Override
     public GetMyDocumentEvaluationInfo update(UpdateMyDocumentEvaluationCommand command) {
@@ -89,7 +94,25 @@ public class RecruitmentDocumentEvaluationService implements UpdateMyDocumentEva
 
     @Override
     public UpdateDocumentStatusInfo update(UpdateDocumentStatusCommand command) {
-        // todo: 평가 기간, 운영진 권한 검증 필요
-        return null;
+        Application application = loadApplicationPort.getByRecruitmentIdAndApplicationId(
+            command.recruitmentId(),
+            command.applicationId()
+        ).orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
+
+        // todo: 운영진 권한 및 학교 체크
+        // todo: 서류 평가 기간 검증
+
+        switch (command.decision()) {
+            case PASS -> application.acceptDocument();
+            case WAIT -> application.cancelDocumentAccept();
+        }
+
+        saveApplicationPort.save(application);
+
+        return new UpdateDocumentStatusInfo(
+            application.getId(),
+            new DocumentResult(command.decision().name())
+        );
     }
+
 }

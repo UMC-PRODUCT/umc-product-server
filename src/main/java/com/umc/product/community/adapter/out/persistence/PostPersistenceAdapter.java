@@ -4,10 +4,12 @@ import com.umc.product.community.application.port.in.post.TogglePostLikeUseCase.
 import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
 import com.umc.product.community.application.port.out.LoadPostPort;
 import com.umc.product.community.application.port.out.PostSearchData;
+import com.umc.product.community.application.port.out.PostWithAuthor;
 import com.umc.product.community.application.port.out.SavePostPort;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -24,7 +26,7 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
 
     @Override
     public Post save(Post post) {
-        // ID가 있으면 UPDATE, 없으면 INSERT
+        // UPDATE용 (authorChallengerId 필요 없음)
         if (post.getPostId() != null) {
             PostJpaEntity entity = postRepository.findById(post.getPostId().id())
                     .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
@@ -32,7 +34,17 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
             return entity.toDomain();
         }
 
-        PostJpaEntity entity = PostJpaEntity.from(post);
+        throw new IllegalArgumentException("새 게시글 생성 시에는 save(Post post, Long authorChallengerId)를 사용하세요.");
+    }
+
+    @Override
+    public Post save(Post post, Long authorChallengerId) {
+        // CREATE용 (authorChallengerId 포함)
+        if (post.getPostId() != null) {
+            throw new IllegalArgumentException("이미 ID가 있는 게시글은 save(Post post)를 사용하세요.");
+        }
+
+        PostJpaEntity entity = PostJpaEntity.from(post, authorChallengerId);
         PostJpaEntity saved = postRepository.save(entity);
         return saved.toDomain();
     }
@@ -61,15 +73,14 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     }
 
     @Override
-    public List<Post> findByCategory(Category category) {
-        return postRepository.findByCategory(category).stream()
-                .map(PostJpaEntity::toDomain)
-                .toList();
+    public Optional<PostWithAuthor> findByIdWithAuthor(Long postId) {
+        return postRepository.findById(postId)
+                .map(entity -> new PostWithAuthor(entity.toDomain(), entity.getAuthorChallengerId()));
     }
 
     @Override
-    public List<Post> findByRegion(String region) {
-        return postRepository.findByRegion(region).stream()
+    public List<Post> findByCategory(Category category) {
+        return postRepository.findByCategory(category).stream()
                 .map(PostJpaEntity::toDomain)
                 .toList();
     }
@@ -85,5 +96,17 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     @Override
     public Page<PostSearchData> searchByKeyword(String keyword, Pageable pageable) {
         return postQueryRepository.searchByKeyword(keyword, pageable);
+    }
+
+    @Override
+    public Long findAuthorIdByPostId(Long postId) {
+        return postRepository.findById(postId)
+                .map(PostJpaEntity::getAuthorChallengerId)
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+    }
+
+    @Override
+    public Map<Long, Long> findAuthorIdsByPostIds(List<Long> postIds) {
+        return postRepository.findAuthorIdsMapByPostIds(postIds);
     }
 }

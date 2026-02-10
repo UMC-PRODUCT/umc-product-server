@@ -3,6 +3,7 @@ package com.umc.product.organization.application.port.service.command;
 import com.umc.product.organization.application.port.in.command.ManageSchoolUseCase;
 import com.umc.product.organization.application.port.in.command.dto.AssignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.CreateSchoolCommand;
+import com.umc.product.organization.application.port.in.command.dto.SchoolLinkCommand;
 import com.umc.product.organization.application.port.in.command.dto.UnassignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateSchoolCommand;
 import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
@@ -11,8 +12,8 @@ import com.umc.product.organization.application.port.out.query.LoadChapterPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.Chapter;
-import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.School;
+import com.umc.product.organization.domain.SchoolLink;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -34,14 +35,15 @@ public class SchoolService implements ManageSchoolUseCase {
 
         School newSchool = School.create(command.schoolName(), command.remark());
         newSchool.updateLogoImageId(command.logoImageId());
-        School savedSchool = manageSchoolPort.save(newSchool);
 
-        if (command.chapterId() != null) {
-            Chapter chapter = loadChapterPort.findById(command.chapterId());
-
-            ChapterSchool chapterSchool = ChapterSchool.create(chapter, savedSchool);
-            manageChapterSchoolPort.save(chapterSchool);
+        if (command.links() != null && !command.links().isEmpty()) {
+            List<SchoolLink> links = command.links().stream()
+                    .map(linkCommand -> linkCommand.toEntity(newSchool))
+                    .toList();
+            newSchool.updateLinks(links);
         }
+
+        School savedSchool = manageSchoolPort.save(newSchool);
 
         return savedSchool.getId();
     }
@@ -53,6 +55,13 @@ public class SchoolService implements ManageSchoolUseCase {
         school.updateName(command.schoolName());
         school.updateRemark(command.remark());
         school.updateLogoImageId(command.logoImageId());
+
+        if (command.links() != null) {
+            List<SchoolLink> newLinks = command.links().stream()
+                    .map(linkCommand -> linkCommand.toEntity(school))
+                    .toList();
+            school.updateLinks(newLinks);
+        }
 
         if (command.chapterId() != null) {
             Chapter chapter = loadChapterPort.findById(command.chapterId());

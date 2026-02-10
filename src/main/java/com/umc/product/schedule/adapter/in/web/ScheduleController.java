@@ -4,9 +4,13 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleWithAttendanceRequest;
+import com.umc.product.schedule.adapter.in.web.dto.request.CreateStudyGroupScheduleRequest;
+import com.umc.product.schedule.adapter.in.web.dto.request.UpdateScheduleLocationRequest;
 import com.umc.product.schedule.adapter.in.web.dto.request.UpdateScheduleRequest;
+import com.umc.product.schedule.adapter.in.web.dto.response.UpdateScheduleLocationResponse;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleWithAttendanceUseCase;
+import com.umc.product.schedule.application.port.in.command.CreateStudyGroupScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleWithAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
@@ -28,6 +32,7 @@ public class ScheduleController implements ScheduleControllerApi {
 
     private final CreateScheduleUseCase createScheduleUseCase;
     private final CreateScheduleWithAttendanceUseCase createScheduleWithAttendanceUseCase;
+    private final CreateStudyGroupScheduleUseCase   createStudyGroupScheduleUseCase;
     private final UpdateScheduleUseCase updateScheduleUseCase;
     private final DeleteScheduleUseCase deleteScheduleUseCase;
     private final DeleteScheduleWithAttendanceUseCase deleteScheduleWithAttendanceUseCase;
@@ -55,10 +60,21 @@ public class ScheduleController implements ScheduleControllerApi {
     }
 
     @Override
+    @PostMapping("/study-group")
+    public Long createStudyGroupSchedule(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Valid @RequestBody CreateStudyGroupScheduleRequest request
+    ) {
+        return createStudyGroupScheduleUseCase.create(
+            request.toCommand(memberPrincipal.getMemberId())
+        );
+    }
+
+    @Override
     @PatchMapping("/{scheduleId}")
     public void updateSchedule(
         @PathVariable Long scheduleId,
-        @RequestBody UpdateScheduleRequest request
+        @Valid @RequestBody UpdateScheduleRequest request
     ) {
         updateScheduleUseCase.update(request.toCommand(scheduleId));
     }
@@ -67,5 +83,16 @@ public class ScheduleController implements ScheduleControllerApi {
     @DeleteMapping("/{scheduleId}/with-attendance")
     public void deleteScheduleWithAttendance(@PathVariable Long scheduleId) {
         deleteScheduleWithAttendanceUseCase.delete(scheduleId);
+    }
+
+    @Override
+    @PatchMapping("/{scheduleId}/location")
+    public UpdateScheduleLocationResponse updateScheduleLocation(
+        @PathVariable Long scheduleId,
+        @Valid @RequestBody UpdateScheduleLocationRequest request
+    ) {
+        return UpdateScheduleLocationResponse.from(
+            updateScheduleUseCase.updateLocation(request.toCommand(scheduleId))
+        );
     }
 }

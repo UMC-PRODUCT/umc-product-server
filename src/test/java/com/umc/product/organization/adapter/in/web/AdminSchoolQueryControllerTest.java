@@ -13,6 +13,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
+import com.umc.product.organization.domain.SchoolLinkType;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.support.DocumentationTest;
@@ -34,9 +35,9 @@ class AdminSchoolQueryControllerTest extends DocumentationTest {
         int size = 10;
 
         List<SchoolListItemInfo> items = List.of(
-                new SchoolListItemInfo(1L, "서울대학교", 1L, "Ain 지부", toInstant(2025, 12, 31), true),
-                new SchoolListItemInfo(2L, "연세대학교", 1L, "Ain 지부", toInstant(2025, 12, 29), true),
-                new SchoolListItemInfo(3L, "고려대학교", null, null, toInstant(2025, 12, 30), false)
+                new SchoolListItemInfo(1L, "서울대학교", 1L, "Ain 지부", toInstant(2025, 12, 31), true, "비고1", "https://storage.example.com/logo1.png"),
+                new SchoolListItemInfo(2L, "연세대학교", 1L, "Ain 지부", toInstant(2025, 12, 29), true, "비고2", "https://storage.example.com/logo2.png"),
+                new SchoolListItemInfo(3L, "고려대학교", null, null, toInstant(2025, 12, 30), false, null, null)
         );
 
         Page<SchoolListItemInfo> pageResult = new PageImpl<>(
@@ -82,6 +83,10 @@ class AdminSchoolQueryControllerTest extends DocumentationTest {
                                         .description("등록일"),
                                 fieldWithPath("result.content[].isActive").type(JsonFieldType.BOOLEAN)
                                         .description("활성 상태"),
+                                fieldWithPath("result.content[].remark").type(JsonFieldType.STRING)
+                                        .description("비고").optional(),
+                                fieldWithPath("result.content[].logoImageUrl").type(JsonFieldType.STRING)
+                                        .description("학교 로고 이미지 URL").optional(),
                                 fieldWithPath("result.page").type(JsonFieldType.STRING)
                                         .description("현재 페이지 번호 (0부터 시작)"),
                                 fieldWithPath("result.size").type(JsonFieldType.STRING).description("페이지 당 조회 수"),
@@ -101,7 +106,13 @@ class AdminSchoolQueryControllerTest extends DocumentationTest {
         Instant createdAt = Instant.parse("2026-01-01T00:00:00Z");
         Instant updatedAt = Instant.parse("2026-01-04T00:00:00Z");
 
-        SchoolDetailInfo schoolDetailInfo = new SchoolDetailInfo(3L, "Ain 지부", "중앙대학교", 1L, "비고", "logo-file-123", createdAt, updatedAt);
+        List<SchoolDetailInfo.SchoolLinkItem> links = List.of(
+                new SchoolDetailInfo.SchoolLinkItem("카카오톡 오픈채팅", SchoolLinkType.KAKAO, "https://open.kakao.com/o/example"),
+                new SchoolDetailInfo.SchoolLinkItem("인스타그램", SchoolLinkType.INSTAGRAM, "https://instagram.com/example"),
+                new SchoolDetailInfo.SchoolLinkItem("유튜브 채널", SchoolLinkType.YOUTUBE, "https://youtube.com/@example")
+        );
+
+        SchoolDetailInfo schoolDetailInfo = new SchoolDetailInfo(3L, "Ain 지부", "중앙대학교", 1L, "비고", "logo-file-123", links, createdAt, updatedAt);
         FileInfo fileInfo = new FileInfo("logo-file-123", "동국대학교 로고", FileCategory.SCHOOL_LOGO, null, null, "https://storage.example.com/school-logo/logo.png", null, null, null);
         given(getSchoolUseCase.getSchoolDetail(schoolId)).willReturn(schoolDetailInfo);
         given(getFileUseCase.getById("logo-file-123")).willReturn(fileInfo);
@@ -119,6 +130,10 @@ class AdminSchoolQueryControllerTest extends DocumentationTest {
                                 fieldWithPath("result.schoolId").type(JsonFieldType.STRING).description("학교 ID"),
                                 fieldWithPath("result.remark").type(JsonFieldType.STRING).description("비고"),
                                 fieldWithPath("result.logoImageLink").type(JsonFieldType.STRING).description("로고 이미지 URL").optional(),
+                                fieldWithPath("result.links").type(JsonFieldType.ARRAY).description("학교 링크 목록"),
+                                fieldWithPath("result.links[].title").type(JsonFieldType.STRING).description("링크 제목"),
+                                fieldWithPath("result.links[].type").type(JsonFieldType.STRING).description("링크 타입 (KAKAO, INSTAGRAM, YOUTUBE)"),
+                                fieldWithPath("result.links[].url").type(JsonFieldType.STRING).description("링크 URL"),
                                 fieldWithPath("result.createdAt").type(JsonFieldType.STRING).description("생성일자"),
                                 fieldWithPath("result.updatedAt").type(JsonFieldType.STRING).description("수정일자"))));
     }

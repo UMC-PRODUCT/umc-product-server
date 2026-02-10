@@ -264,6 +264,7 @@ public record RecruitmentApplicationFormResponse(
 
     public record QuestionResponse(
         Long questionId,
+        Integer orderNo,
         QuestionType type,
         String questionText,
         boolean required,
@@ -281,6 +282,7 @@ public record RecruitmentApplicationFormResponse(
             if (q.type() == QuestionType.PREFERRED_PART) {
                 return new QuestionResponse(
                     q.questionId(),
+                    q.orderNo(),
                     q.type(),
                     q.questionText(),
                     q.isRequired(),
@@ -305,6 +307,7 @@ public record RecruitmentApplicationFormResponse(
 
             return new QuestionResponse(
                 q.questionId(),
+                q.orderNo(),
                 q.type(),
                 q.questionText(),
                 q.isRequired(),
@@ -329,16 +332,18 @@ public record RecruitmentApplicationFormResponse(
 
     public record OptionResponse(
         Long optionId,
+        Integer orderNo,
         String content,
         boolean isOther
     ) {
         public static OptionResponse from(FormDefinitionInfo.QuestionOptionInfo o) {
-            return new OptionResponse(o.optionId(), o.content(), o.isOther());
+            return new OptionResponse(o.optionId(), o.orderNo(), o.content(), o.isOther());
         }
     }
 
     public record ScheduleQuestionResponse(
         Long questionId,
+        Integer orderNo,
         QuestionType type,
         String questionText,
         boolean required,
@@ -347,6 +352,7 @@ public record RecruitmentApplicationFormResponse(
         public static ScheduleQuestionResponse from(QuestionResponse base, InterviewTimeTablePayloadResponse schedule) {
             return new ScheduleQuestionResponse(
                 base.questionId(),
+                base.orderNo(),
                 base.type(),
                 base.questionText(),
                 base.required(),

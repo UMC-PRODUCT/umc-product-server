@@ -71,10 +71,12 @@ public class Schedule extends BaseEntity {
     @Column(columnDefinition = "geometry(Point, 4326)")
     private Point location;
 
+    private Long studyGroupId;
+
     @Builder
     private Schedule(String name, String description, Set<ScheduleTag> tags,
                      Long authorChallengerId, LocalDateTime startsAt, LocalDateTime endsAt,
-                     boolean isAllDay, String locationName, Point location) {
+                     boolean isAllDay, String locationName, Point location, Long studyGroupId) {
         this.name = name;
         this.description = description;
 
@@ -94,6 +96,7 @@ public class Schedule extends BaseEntity {
         this.isAllDay = isAllDay;
         this.locationName = locationName;
         this.location = location;
+        this.studyGroupId = studyGroupId;
     }
 
     public boolean isInProgress(LocalDateTime referenceTime) {
@@ -147,6 +150,18 @@ public class Schedule extends BaseEntity {
         updateTime(startsAt, endsAt, isAllDay);
     }
 
+    public void updateLocation(
+        String locationName,
+        Point location
+    ) {
+        if (locationName != null) {
+            this.locationName = locationName;
+        }
+        if (location != null) {
+            this.location = location;
+        }
+    }
+
     private void updateTime(LocalDateTime newStartsAt, LocalDateTime newEndsAt, Boolean newIsAllDay) {
         // 변경할 값이 없으면 기존 값 유지
         boolean effectiveIsAllDay = (newIsAllDay != null) ? newIsAllDay : this.isAllDay;
@@ -172,5 +187,9 @@ public class Schedule extends BaseEntity {
 
     public boolean hasTag(ScheduleTag tag) {
         return this.tags.contains(tag);
+    }
+
+    public void assignStudyGroup(Long studyGroupId) {
+        this.studyGroupId = studyGroupId;
     }
 }

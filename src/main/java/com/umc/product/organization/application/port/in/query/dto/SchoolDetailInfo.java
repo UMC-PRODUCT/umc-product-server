@@ -1,6 +1,8 @@
 package com.umc.product.organization.application.port.in.query.dto;
 
+import com.umc.product.organization.domain.SchoolLinkType;
 import java.time.Instant;
+import java.util.List;
 
 public record SchoolDetailInfo(
         Long chapterId,
@@ -9,9 +11,17 @@ public record SchoolDetailInfo(
         Long schoolId,
         String remark,
         String logoImageUrl,
+        List<SchoolLinkItem> links,
         Instant createdAt,
         Instant updatedAt
 ) {
+    public record SchoolLinkItem(
+            String title,
+            SchoolLinkType type,
+            String url
+    ) {
+    }
+
     public record SchoolInfo(
         Long chapterId,
         String chapterName,
@@ -22,7 +32,7 @@ public record SchoolDetailInfo(
         Instant createdAt,
         Instant updatedAt
     ) {
-        public SchoolDetailInfo toDetailInfo(String logoImageUrl) {
+        public SchoolDetailInfo toDetailInfo(String logoImageUrl, List<SchoolLinkItem> links) {
             return new SchoolDetailInfo(
                 chapterId,
                 chapterName,
@@ -30,6 +40,7 @@ public record SchoolDetailInfo(
                 schoolId,
                 remark,
                 logoImageUrl,
+                links,
                 createdAt,
                 updatedAt
             );

@@ -8,21 +8,27 @@ import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateMyDocumentEv
 import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicationDetailResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicationEvaluationsResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicationListResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.DocumentSelectionApplicationListResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.GetMyDocumentEvaluationResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateDocumentStatusResponse;
+import com.umc.product.recruitment.application.port.in.PartOption;
+import com.umc.product.recruitment.application.port.in.SortOption;
 import com.umc.product.recruitment.application.port.in.command.UpdateMyDocumentEvaluationUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateDocumentStatusCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateMyDocumentEvaluationCommand;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationEvaluationListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationListUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetDocumentSelectionListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyDocumentEvaluationUseCase;
 import com.umc.product.recruitment.application.port.in.query.UpdateDocumentStatusUseCase;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationEvaluationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationEvaluationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationListQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetDocumentSelectionApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEvaluationQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -48,6 +54,7 @@ public class DocumentEvaluationController {
     private final GetMyDocumentEvaluationUseCase getMyDocumentEvaluationUseCase;
     private final UpdateMyDocumentEvaluationUseCase updateMyDocumentEvaluationUseCase;
     private final UpdateDocumentStatusUseCase updateDocumentStatusUseCase;
+    private final GetDocumentSelectionListUseCase getDocumentSelectionListUseCase;
 
     @GetMapping("/document-evaluations")
     @Operation(
@@ -59,7 +66,7 @@ public class DocumentEvaluationController {
     )
     public ApplicationListResponse getEvaluationList(
         @PathVariable Long recruitmentId,
-        @RequestParam(required = false) String part,
+        @RequestParam(required = false) PartOption part,
         @RequestParam(required = false) String keyword,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size,
@@ -191,4 +198,35 @@ public class DocumentEvaluationController {
         );
         return UpdateDocumentStatusResponse.from(result);
     }
+
+    @GetMapping("/document-selections")
+    @Operation(
+        summary = "서류 선발 대상 리스트 조회",
+        description = """
+            서류 선발(PASS/WAIT) 대상 리스트를 조회합니다.
+            part 필터 및 정렬(sort)을 지원합니다.
+            """
+    )
+    public DocumentSelectionApplicationListResponse getDocumentSelections(
+        @PathVariable Long recruitmentId,
+        @RequestParam(required = false, defaultValue = "ALL") PartOption part,
+        @RequestParam(required = false, defaultValue = "SCORE_DESC") SortOption sort,
+        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "20") int size,
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        DocumentSelectionApplicationListInfo info = getDocumentSelectionListUseCase.get(
+            new GetDocumentSelectionApplicationListQuery(
+                recruitmentId,
+                part,
+                sort,
+                page,
+                size,
+                memberPrincipal.getMemberId()
+            )
+        );
+        return DocumentSelectionApplicationListResponse.from(info);
+    }
+
+
 }

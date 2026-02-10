@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.domain;
 
+import com.umc.product.common.BaseEntity;
 import com.umc.product.recruitment.domain.enums.PartKey;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -13,6 +14,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -20,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class InterviewQuestionSheet {
+public class InterviewQuestionSheet extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +41,14 @@ public class InterviewQuestionSheet {
 
     @Column(name = "content", nullable = false, length = 300)
     private String content;
+
+    @Builder
+    public InterviewQuestionSheet(Recruitment recruitment, PartKey partKey, Integer orderNo, String content) {
+        this.recruitment = recruitment;
+        this.partKey = partKey;
+        this.orderNo = orderNo;
+        this.content = content;
+    }
 
     public void changeContent(String content) {
         this.content = normalize(content);
