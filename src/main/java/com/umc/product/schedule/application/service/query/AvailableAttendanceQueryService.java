@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AvailableAttendanceQueryService implements GetAvailableAttendancesUseCase {
+
+    private static final Set<AttendanceStatus> COMPLETED_STATUSES = Set.of(
+        AttendanceStatus.LATE,
+        AttendanceStatus.LATE_PENDING,
+        AttendanceStatus.ABSENT,
+        AttendanceStatus.EXCUSED,
+        AttendanceStatus.EXCUSED_PENDING
+    );
 
     private final LoadSchedulePort loadSchedulePort;
     private final LoadAttendanceSheetPort loadAttendanceSheetPort;
@@ -95,10 +104,6 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
     }
 
     private boolean isAttendanceProcessCompleted(AttendanceStatus status) {
-        return status == AttendanceStatus.LATE
-            || status == AttendanceStatus.LATE_PENDING
-            || status == AttendanceStatus.ABSENT
-            || status == AttendanceStatus.EXCUSED
-            || status == AttendanceStatus.EXCUSED_PENDING;
+        return COMPLETED_STATUSES.contains(status);
     }
 }
