@@ -90,10 +90,12 @@ public class AttendanceSheet extends BaseEntity {
         LocalDateTime scheduleEndsAt,
         boolean requiresApproval
     ) {
-        AttendanceWindow window = AttendanceWindow.from(
-            scheduleStartsAt,
-            scheduleEndsAt,
-            DEFAULT_LATE_THRESHOLD_MINUTES
+        // 출석 인정 시간: 시작 10분 전 ~ 시작 후 10분 (총 20분)
+        AttendanceWindow window = AttendanceWindow.of(
+            scheduleStartsAt,   // 기준 시간
+            10,                 // 10분 전부터
+            10,                 // 10분 후까지
+            0                   // lateThreshold 미사용 (윈도우 내는 모두 출석)
         );
 
         return AttendanceSheet.builder()
@@ -106,21 +108,20 @@ public class AttendanceSheet extends BaseEntity {
 
     /**
      * 체크 시간이 출석 가능 시간대(window) 안에 있는지 확인.
+     * <p>
+     * active 상태와 무관하게 시간대만 체크합니다.
+     * active는 삭제 대신 비활성화 용도로만 사용됩니다.
      */
     public boolean isWithinTimeWindow(LocalDateTime checkTime) {
-        if (!active) {
-            throw new IllegalStateException("비활성화된 출석부입니다");
-        }
         return window.contains(checkTime);
     }
 
     /**
      * 체크 시간과 승인 정책(requiresApproval)을 기반으로 출석 상태를 결정한다. 실제 판정 로직은 AttendanceWindow.determineStatus()에 위임.
+     * <p>
+     * active 상태와 무관하게 시간대만 체크합니다.
      */
     public AttendanceStatus determineStatusByTime(LocalDateTime checkTime) {
-        if (!active) {
-            throw new IllegalStateException("비활성화된 출석부입니다");
-        }
         return window.determineStatus(checkTime, requiresApproval);
     }
 

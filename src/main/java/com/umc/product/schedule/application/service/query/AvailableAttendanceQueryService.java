@@ -8,6 +8,7 @@ import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -66,20 +67,38 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
         // 결과 생성
         LocalDateTime now = LocalDateTime.now();
         return activeSheets.stream()
-            .filter(sheet -> {
-                Schedule schedule = scheduleMap.get(sheet.getScheduleId());
-                return schedule != null && !schedule.isEnded(now);
-            })
             .map(sheet -> {
                 Schedule schedule = scheduleMap.get(sheet.getScheduleId());
                 AttendanceRecord record = recordBySheetId.get(sheet.getId());
+
+                // 필터링: 출석 가능한 것만
+                // 1. 일정 없거나 세션 종료되면 제외
+                if (schedule == null || schedule.isEnded(now)) {
+                    return null;
+                }
+
+                // 2. 출석 프로세스 완료된 것 제외 (나의 출석 현황으로 이동)
+                // 포함: PENDING (출석 전), PRESENT/PRESENT_PENDING (출석 완료)
+                // 제외: LATE/LATE_PENDING (지각), ABSENT (결석), EXCUSED/EXCUSED_PENDING (인정결석)
+                if (record != null && isAttendanceProcessCompleted(record.getStatus())) {
+                    return null;
+                }
 
                 if (record != null) {
                     return AvailableAttendanceInfo.of(schedule, sheet, record);
                 }
                 return AvailableAttendanceInfo.of(schedule, sheet);
             })
+            .filter(info -> info != null)
             .sorted(Comparator.comparing(AvailableAttendanceInfo::startTime))
             .toList();
+    }
+
+    private boolean isAttendanceProcessCompleted(AttendanceStatus status) {
+        return status == AttendanceStatus.LATE
+            || status == AttendanceStatus.LATE_PENDING
+            || status == AttendanceStatus.ABSENT
+            || status == AttendanceStatus.EXCUSED
+            || status == AttendanceStatus.EXCUSED_PENDING;
     }
 }
