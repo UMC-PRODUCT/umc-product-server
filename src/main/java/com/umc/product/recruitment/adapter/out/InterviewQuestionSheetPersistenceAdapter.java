@@ -7,6 +7,7 @@ import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.enums.PartKey;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -16,17 +17,7 @@ public class InterviewQuestionSheetPersistenceAdapter implements SaveInterviewQu
     LoadInterviewQuestionSheetPort {
 
     private final InterviewQuestionSheetRepository interviewQuestionSheetRepository;
-
-    // ================ SaveInterviewQuestionSheetPort ================
-    @Override
-    public InterviewQuestionSheet save(InterviewQuestionSheet interviewQuestionSheet) {
-        return interviewQuestionSheetRepository.save(interviewQuestionSheet);
-    }
-
-    @Override
-    public void deleteById(Long interviewQuestionSheetId) {
-        interviewQuestionSheetRepository.deleteById(interviewQuestionSheetId);
-    }
+    private final InterviewQuestionSheetQueryRepository interviewQuestionSheetQueryRepository;
 
     // ================ LoadInterviewQuestionSheetPort ================
     @Override
@@ -49,5 +40,32 @@ public class InterviewQuestionSheetPersistenceAdapter implements SaveInterviewQu
     @Override
     public Optional<InterviewQuestionSheet> findById(Long interviewQuestionSheetId) {
         return interviewQuestionSheetRepository.findById(interviewQuestionSheetId);
+    }
+
+    @Override
+    public List<InterviewQuestionSheet> findByRecruitmentIdAndPartKeyOrderByOrderNoAsc(
+        Long recruitmentId, PartKey partKey
+    ) {
+        return interviewQuestionSheetRepository.findByRecruitmentIdAndPartKeyOrderByOrderNoAsc(recruitmentId, partKey);
+    }
+
+    @Override
+    public List<InterviewQuestionSheet> findByRecruitmentIdAndPartKeysOrderByOrderNoAsc(
+        Long recruitmentId, Set<PartKey> partKeys
+    ) {
+        return interviewQuestionSheetQueryRepository.findByRecruitmentIdAndPartKeysOrderByOrderNoAsc(
+            recruitmentId, partKeys
+        );
+    }
+
+    // ================ SaveInterviewQuestionSheetPort ================
+    @Override
+    public InterviewQuestionSheet save(InterviewQuestionSheet interviewQuestionSheet) {
+        return interviewQuestionSheetRepository.save(interviewQuestionSheet);
+    }
+
+    @Override
+    public void deleteById(Long interviewQuestionSheetId) {
+        interviewQuestionSheetRepository.deleteById(interviewQuestionSheetId);
     }
 }

@@ -129,7 +129,7 @@ public class InterviewSchedulingController {
     public InterviewSchedulingAssignmentsResponse getAssignments(
         @PathVariable Long recruitmentId,
         @RequestParam @NotNull Long slotId,
-        @RequestParam(required = false) String part,
+        @RequestParam(required = false) PartOption part,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         var info = getInterviewSchedulingAssignmentsUseCase.get(
@@ -148,12 +148,16 @@ public class InterviewSchedulingController {
     )
     public CreateInterviewAssignmentResponse assign(
         @PathVariable Long recruitmentId,
+        @RequestParam(required = false) LocalDate date,
+        @RequestParam(required = false, defaultValue = "ALL") PartOption part,
         @RequestBody @Valid CreateInterviewAssignmentRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         var result = createInterviewAssignmentUseCase.create(
             new CreateInterviewAssignmentCommand(
                 recruitmentId,
+                date,
+                part,
                 request.applicationId(),
                 request.to().slotId(),
                 memberPrincipal.getMemberId()
@@ -173,10 +177,12 @@ public class InterviewSchedulingController {
     public DeleteInterviewAssignmentResponse unassign(
         @PathVariable Long recruitmentId,
         @PathVariable Long assignmentId,
+        @RequestParam(required = false) LocalDate date,
+        @RequestParam(required = false) PartOption part,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         var result = deleteInterviewAssignmentUseCase.delete(
-            new DeleteInterviewAssignmentCommand(recruitmentId, assignmentId, memberPrincipal.getMemberId())
+            new DeleteInterviewAssignmentCommand(recruitmentId, assignmentId, date, part, memberPrincipal.getMemberId())
         );
         return DeleteInterviewAssignmentResponse.from(result);
     }

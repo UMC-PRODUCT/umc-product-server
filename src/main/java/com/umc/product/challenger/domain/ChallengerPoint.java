@@ -57,4 +57,12 @@ public class ChallengerPoint {
     public void updateDescription(String newDescription) {
         this.description = newDescription;
     }
+
+    public Double getPointValue() {
+        return switch (type) {
+            case BEST_WORKBOOK -> -0.5;
+            case WARNING -> 0.0;
+            case OUT -> 1.0;
+        };
+    }
 }

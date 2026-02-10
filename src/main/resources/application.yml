@@ -210,6 +210,11 @@ app:
     username: ${SWAGGER_AUTH_USERNAME:username}
     password: ${SWAGGER_AUTH_PASSWORD:password}
   oauth2:
+    apple:
+      client-id: ${APPLE_CLIENT_ID}
+      team-id: ${APPLE_TEAM_ID}
+      key-id: ${APPLE_KEY_ID}
+      private-key: ${APPLE_PRIVATE_KEY}
     frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT_URL}
 
 storage:

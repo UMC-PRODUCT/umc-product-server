@@ -39,7 +39,7 @@ public record InterviewSchedulingAssignmentsResponse(
         String name,
         PreferredPartResponse firstPart,
         PreferredPartResponse secondPart,
-        double documentScore
+        Double documentScore
     ) {
     }
 

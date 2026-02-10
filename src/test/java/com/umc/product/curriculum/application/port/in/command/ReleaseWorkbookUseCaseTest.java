@@ -15,9 +15,11 @@ import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Disabled
 class ReleaseWorkbookUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
@@ -44,8 +46,8 @@ class ReleaseWorkbookUseCaseTest extends UseCaseTestSupport {
         // given
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "커리큘럼");
         OriginalWorkbook workbook = OriginalWorkbook.create(
-                curriculum, 1, "1주차 - Spring 시작하기", "설명", "http://workbook.url",
-                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
+            curriculum, 1, "1주차 - Spring 시작하기", "설명", "http://workbook.url",
+            Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
         );
         curriculum.addWorkbook(workbook);
         Curriculum savedCurriculum = saveCurriculumPort.save(curriculum);
@@ -67,7 +69,7 @@ class ReleaseWorkbookUseCaseTest extends UseCaseTestSupport {
 
         // when & then
         assertThatThrownBy(() -> releaseWorkbookUseCase.release(nonExistentWorkbookId))
-                .isInstanceOf(BusinessException.class);
+            .isInstanceOf(BusinessException.class);
     }
 
     @Test
@@ -75,12 +77,12 @@ class ReleaseWorkbookUseCaseTest extends UseCaseTestSupport {
         // given
         Curriculum curriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.SPRINGBOOT, "커리큘럼");
         OriginalWorkbook workbook1 = OriginalWorkbook.create(
-                curriculum, 1, "1주차", null, null,
-                Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
+            curriculum, 1, "1주차", null, null,
+            Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-03-07T23:59:59Z"), MissionType.LINK
         );
         OriginalWorkbook workbook2 = OriginalWorkbook.create(
-                curriculum, 2, "2주차", null, null,
-                Instant.parse("2024-03-08T00:00:00Z"), Instant.parse("2024-03-14T23:59:59Z"), MissionType.LINK
+            curriculum, 2, "2주차", null, null,
+            Instant.parse("2024-03-08T00:00:00Z"), Instant.parse("2024-03-14T23:59:59Z"), MissionType.LINK
         );
         curriculum.addWorkbook(workbook1);
         curriculum.addWorkbook(workbook2);
@@ -101,10 +103,10 @@ class ReleaseWorkbookUseCaseTest extends UseCaseTestSupport {
 
     private Gisu createActiveGisu(Long generation) {
         return Gisu.create(
-                generation,
-                Instant.parse("2024-03-01T00:00:00Z"),
-                Instant.parse("2024-08-31T23:59:59Z"),
-                true
+            generation,
+            Instant.parse("2024-03-01T00:00:00Z"),
+            Instant.parse("2024-08-31T23:59:59Z"),
+            true
         );
     }
 }

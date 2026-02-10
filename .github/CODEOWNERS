@@ -1,3 +1,20 @@
 .github @kyeoungwoon
 docker @kyeoungwoon
 .gitignore @kyeoungwoon
+
+src/main/java/com/umc/product/authentication/* @kyeoungwoon
+src/main/java/com/umc/product/authorization/* @kyeoungwoon
+src/main/java/com/umc/product/challenger/* @kyeoungwoon
+src/main/java/com/umc/product/common/* @kyeoungwoon
+src/main/java/com/umc/product/community/* @sopp1313
+src/main/java/com/umc/product/curriculum/* @wlgusqkr
+src/main/java/com/umc/product/global/* @kyeoungwoon
+src/main/java/com/umc/product/member/* @kyeoungwoon
+src/main/java/com/umc/product/notice/* @kanghana1
+src/main/java/com/umc/product/notification/* @wlgusqkr @kanghana1
+src/main/java/com/umc/product/organization/* @wlgusqkr
+src/main/java/com/umc/product/recruitment/* @galllee
+src/main/java/com/umc/product/schedule/* @sopp1313 @ParkSenn
+src/main/java/com/umc/product/storage/* @kyeoungwoon
+src/main/java/com/umc/product/survey/* @galllee
+src/main/java/com/umc/product/terms/* @kyeoungwoon

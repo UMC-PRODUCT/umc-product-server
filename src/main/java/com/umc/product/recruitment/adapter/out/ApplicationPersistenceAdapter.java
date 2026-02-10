@@ -1,9 +1,12 @@
 package com.umc.product.recruitment.adapter.out;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
+import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
@@ -132,6 +135,65 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
     @Override
     public Map<Long, BigDecimal> calculateAvgDocScoreByApplicationIds(Set<Long> applicationIds) {
         return applicationQueryRepository.calculateAvgDocScoreByApplicationIds(applicationIds);
+    }
+
+
+    @Override
+    public long countByRecruitmentId(Long recruitmentId) {
+        return applicationQueryRepository.countByRecruitmentId(recruitmentId);
+    }
+
+    @Override
+    public long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, PartOption part) {
+        ChallengerPart challengerPart = toChallengerPart(part);
+        return applicationQueryRepository.countByRecruitmentIdAndFirstPreferredPart(recruitmentId, challengerPart);
+    }
+
+    @Override
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitment(
+        Long recruitmentId) {
+        return applicationQueryRepository.findApplicationIdsWithFormResponseIdsByRecruitment(recruitmentId);
+    }
+
+    @Override
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+        Long recruitmentId,
+        PartOption part
+    ) {
+        return applicationQueryRepository.findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+            recruitmentId, part
+        );
+    }
+
+    @Override
+    public Map<Long, Double> findAvgDocumentScoresByApplicationIds(Set<Long> applicationIds) {
+        return applicationQueryRepository.findAvgDocumentScoresByApplicationIds(applicationIds);
+    }
+
+    private ChallengerPart toChallengerPart(PartOption part) {
+        if (part == null || part == PartOption.ALL) {
+            throw new IllegalArgumentException("ALL/null is not allowed here");
+        }
+        return ChallengerPart.valueOf(part.name());
+    }
+
+    @Override
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRecruitment(
+        Long recruitmentId
+    ) {
+        return applicationQueryRepository
+            .findDocPassedApplicationIdsWithFormResponseIdsByRecruitment(recruitmentId);
+    }
+
+    @Override
+    public List<ApplicationIdWithFormResponseId>
+    findDocPassedApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+        Long recruitmentId,
+        PartOption partOption
+    ) {
+        return applicationQueryRepository
+            .findDocPassedApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(recruitmentId,
+                partOption);
     }
 
 }

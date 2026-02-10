@@ -5,6 +5,7 @@ import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.enums.PartKey;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface LoadInterviewQuestionSheetPort {
 
@@ -17,4 +18,8 @@ public interface LoadInterviewQuestionSheetPort {
 
     Optional<InterviewQuestionSheet> findById(Long interviewQuestionSheetId);
 
+    List<InterviewQuestionSheet> findByRecruitmentIdAndPartKeyOrderByOrderNoAsc(Long recruitmentId, PartKey partKey);
+
+    List<InterviewQuestionSheet> findByRecruitmentIdAndPartKeysOrderByOrderNoAsc(Long recruitmentId,
+                                                                                 Set<PartKey> partKeys);
 }

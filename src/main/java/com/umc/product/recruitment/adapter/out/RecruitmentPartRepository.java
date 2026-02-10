@@ -11,4 +11,6 @@ public interface RecruitmentPartRepository extends JpaRepository<RecruitmentPart
     void deleteAllByRecruitmentId(Long recruitmentId);
 
     List<RecruitmentPart> findByRecruitmentIdAndStatus(Long recruitmentId, RecruitmentPartStatus status);
+
+    List<RecruitmentPart> findAllByRecruitmentIdAndStatus(Long recruitmentId, RecruitmentPartStatus status);
 }

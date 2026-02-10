@@ -1,8 +1,12 @@
 package com.umc.product.recruitment.application.port.out;
 
+import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
+import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.domain.Application;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public interface LoadApplicationPort {
     Optional<Application> findByRecruitmentIdAndApplicantId(Long recruitmentId, Long memberId);
@@ -18,4 +22,25 @@ public interface LoadApplicationPort {
     List<Application> findAllByApplicantMemberId(Long applicantMemberId);
 
     Optional<Application> getByRecruitmentIdAndApplicationId(Long recruitmentId, Long applicationId);
+
+    long countByRecruitmentId(Long recruitmentId);
+
+    long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, PartOption part);
+
+    List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitment(Long recruitmentId);
+
+    List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+        Long recruitmentId,
+        PartOption part
+    );
+
+    Map<Long, Double> findAvgDocumentScoresByApplicationIds(Set<Long> applicationIds);
+
+    List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRecruitment(
+        Long recruitmentId);
+
+    List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+        Long recruitmentId,
+        PartOption partOption
+    );
 }

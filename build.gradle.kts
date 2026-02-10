@@ -67,8 +67,9 @@ dependencies {
     implementation("io.jsonwebtoken:jjwt-api:${jwtVersion}")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:${jwtVersion}")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:${jwtVersion}")
-
+    
     // --- Encryption  ---
+    implementation("org.bouncycastle:bcpkix-jdk18on:1.78.1")
     implementation("org.bouncycastle:bcprov-jdk18on:1.78.1")
 
     // --- QueryDSL ---

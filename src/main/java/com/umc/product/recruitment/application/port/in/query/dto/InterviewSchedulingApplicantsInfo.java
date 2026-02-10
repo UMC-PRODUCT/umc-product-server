@@ -13,7 +13,7 @@ public record InterviewSchedulingApplicantsInfo(
         String name,
         PartOption firstPart,
         PartOption secondPart,
-        double documentScore
+        Double documentScore
     ) {
     }
 
