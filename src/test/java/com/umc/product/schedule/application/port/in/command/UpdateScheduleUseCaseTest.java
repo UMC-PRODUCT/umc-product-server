@@ -83,7 +83,8 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
             "수정된 장소",
             newLocation,
             "수정된 설명",
-            Set.of(ScheduleTag.NETWORKING, ScheduleTag.AFTER_PARTY)
+            Set.of(ScheduleTag.NETWORKING, ScheduleTag.AFTER_PARTY),
+            null
         );
 
         // when
@@ -122,7 +123,8 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
             null,             // 변경 안 함 (기존 장소 유지)
             null,             // 변경 안 함 (기존 위도, 경도 유지)
             "부분 수정된 설명", // 변경할 값
-            null              // 변경 안 함 (기존 태그 유지)
+            null,             // 변경 안 함 (기존 태그 유지)
+            null              // 변경 안 함 (참가자 유지)
         );
 
         // when
@@ -162,7 +164,8 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
             null,       // 장소 이름 유지
             null,       // 장소 위도,경도 유지
             null,
-            null
+            null,
+            null        // 참가자 유지
         );
 
         // when
@@ -184,7 +187,7 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         // 모든 필드를 null로 전송
         UpdateScheduleCommand command = UpdateScheduleCommand.of(
             schedule.getId(),
-            null, null, null, null, null, null, null, null
+            null, null, null, null, null, null, null, null, null
         );
 
         // when
@@ -216,7 +219,8 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
             null,
             null,
             null,
-            Set.of(ScheduleTag.HACKATHON)
+            Set.of(ScheduleTag.HACKATHON),
+            null
         );
 
         // when
@@ -244,7 +248,8 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
             "장소",
             null,
             "설명",
-            Set.of(ScheduleTag.GENERAL)
+            Set.of(ScheduleTag.GENERAL),
+            null
         );
 
         // when & then
@@ -264,7 +269,8 @@ class UpdateScheduleUseCaseTest extends UseCaseTestSupport {
         UpdateScheduleCommand command = UpdateScheduleCommand.of(
             schedule.getId(),
             null, null, null, null, null, null, null,
-            Collections.emptySet() // 빈 태그 리스트 전달
+            Collections.emptySet(), // 빈 태그 리스트 전달
+            null
         );
 
         // when & then

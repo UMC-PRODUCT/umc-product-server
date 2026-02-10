@@ -1,6 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 
 @Schema(description = "내 출석 이력 응답")
 public record MyAttendanceHistoryResponse(
@@ -13,11 +14,11 @@ public record MyAttendanceHistoryResponse(
     @Schema(description = "일정명", example = "9기 OT")
     String scheduleName,
 
-    @Schema(description = "주차 표시", example = "1주차")
-    String weekDisplay,
+    @Schema(description = "일정 태그", example = "[\"SEMINAR\", \"ALL\"]")
+    List<String> tag,
 
-    @Schema(description = "날짜 표시", example = "03.16 (토)")
-    String dateDisplay,
+    @Schema(description = "시간 표시", example = "14:30")
+    String time,
 
     @Schema(description = "출석 상태", example = "PRESENT")
     String status,

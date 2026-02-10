@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Set;
 
 @Schema(description = "일정 수정 요청 (변경할 필드만 보내주세요)")
@@ -43,7 +44,10 @@ public record UpdateScheduleRequest(
 
     @Schema(description = "태그 목록 (null이면 기존 태그 유지)", example = "[\"STUDY\", \"PROJECT\"]")
     @Size(min = 1, message = "태그를 수정하려면 최소 1개 이상 선택해야 합니다")
-    Set<ScheduleTag> tags
+    Set<ScheduleTag> tags,
+
+    @Schema(description = "참여자 멤버 ID 목록 (null이면 기존 명단 유지)", example = "[1, 2, 3]")
+    List<Long> participantMemberIds
 ) {
     public UpdateScheduleCommand toCommand(Long scheduleId) {
         return UpdateScheduleCommand.of(
@@ -55,7 +59,8 @@ public record UpdateScheduleRequest(
             locationName,
             GeometryUtils.createPoint(latitude, longitude),
             description,
-            tags
+            tags,
+            participantMemberIds
         );
     }
 }
