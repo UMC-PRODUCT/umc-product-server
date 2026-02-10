@@ -85,7 +85,7 @@ public class Application extends BaseEntity {
         this.status = ApplicationStatus.APPLIED;
     }
 
-    public void acceptFinal(ChallengerPart selectedPart) {
+    public void passFinal(ChallengerPart selectedPart) {
         if (selectedPart == null) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.FINAL_SELECTED_PART_REQUIRED);
         }
@@ -93,7 +93,12 @@ public class Application extends BaseEntity {
         this.selectedPart = selectedPart;
     }
 
-    public void cancelFinalAccept() {
+    public void failFinal() {
+        this.status = ApplicationStatus.FINAL_REJECTED;
+        this.selectedPart = null;
+    }
+
+    public void resetFinalDecision() {
         // 최종 합격 취소 시 결정 전 상태로 돌아감
         this.status = ApplicationStatus.DOC_PASSED;
         this.selectedPart = null;

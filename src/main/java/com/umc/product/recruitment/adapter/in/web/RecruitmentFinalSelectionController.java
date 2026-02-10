@@ -37,11 +37,14 @@ public class RecruitmentFinalSelectionController {
 
     @PatchMapping("/{applicationId}/final-status")
     @Operation(
-        summary = "최종 선발 단건 합격/합격 취소",
+        summary = "최종 선발 단건 합격/불합격/결정 취소",
         description = """
-            특정 지원서의 최종 합격 상태를 변경합니다.
-            - 합격 처리: status=PASS, selectedPart 필수
-            - 합격 취소: status=WAIT, selectedPart 미전송 또는 null
+            특정 지원서의 최종 선발 결과를 변경합니다.
+
+            - 프론트 요청/응답 enum: PASS / FAIL / WAIT(결정 취소)
+            - 합격 처리(PASS): status=FINAL_ACCEPTED, selectedPart 필수
+            - 불합격 처리(FAIL): FINAL_REJECTED
+            - 결정 취소(WAIT): FINAL_ACCEPTED | FINAL_REJECTED -> DOC_PASSED
             """
     )
     public UpdateFinalStatusResponse updateFinalStatus(

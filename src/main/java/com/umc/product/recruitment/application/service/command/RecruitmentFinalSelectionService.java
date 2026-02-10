@@ -28,8 +28,8 @@ public class RecruitmentFinalSelectionService implements UpdateFinalStatusUseCas
     @Transactional
     public UpdateFinalStatusResult update(UpdateFinalStatusCommand command) {
         Application application = loadApplicationPort.getByRecruitmentIdAndApplicationId(
-                command.recruitmentId(),
-                command.applicationId()
+            command.recruitmentId(),
+            command.applicationId()
         ).orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
 
         // todo: 운영진 권한 및 학교 체크
@@ -39,27 +39,30 @@ public class RecruitmentFinalSelectionService implements UpdateFinalStatusUseCas
                 ChallengerPart selectedPart = command.selectedPart();
 
                 if (selectedPart != null && !loadApplicationPartPreferencePort.existsPreferredOpenPart(
-                        application.getId(),
-                        selectedPart
+                    application.getId(),
+                    selectedPart
                 )) {
                     throw new BusinessException(Domain.RECRUITMENT,
-                            RecruitmentErrorCode.FINAL_SELECTED_PART_NOT_PREFERRED);
+                        RecruitmentErrorCode.FINAL_SELECTED_PART_NOT_PREFERRED);
                 }
-                application.acceptFinal(selectedPart);
+                application.passFinal(selectedPart);
+            }
+            case FAIL -> {
+                application.failFinal();
             }
             case WAIT -> {
-                application.cancelFinalAccept();
+                application.resetFinalDecision();
             }
         }
 
         saveApplicationPort.save(application);
 
         return new UpdateFinalStatusResult(
-                application.getId(),
-                new UpdateFinalStatusResult.FinalResult(
-                        command.evaluationDecision().name(),
-                        toPartKey(application.getSelectedPart())
-                )
+            application.getId(),
+            new UpdateFinalStatusResult.FinalResult(
+                command.evaluationDecision().name(),
+                toPartKey(application.getSelectedPart())
+            )
         );
     }
 
