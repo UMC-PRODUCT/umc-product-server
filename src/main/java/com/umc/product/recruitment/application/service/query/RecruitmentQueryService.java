@@ -496,24 +496,42 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     }
 
     private Integer calculateDDay(Instant now, RecruitmentSchedule window, ApplicationProgressStep step) {
-        if (window == null) {
+        if (window == null || step == null) {
+            log.warn("[RecruitmentDashboard] dDay skipped - window/step is null");
             return null;
         }
 
         ZoneId KST = ZoneId.of("Asia/Seoul");
         LocalDate today = now.atZone(KST).toLocalDate();
 
-        Instant targetInstant =
-            (step == ApplicationProgressStep.RECRUITMENT_UPCOMING)
-                ? window.getStartsAt()
-                : window.getEndsAt();
+        // 모집(지원 모집 카드): D-
+        if (step == ApplicationProgressStep.RECRUITMENT_UPCOMING || step == ApplicationProgressStep.APPLY_OPEN) {
+            Instant targetInstant =
+                (step == ApplicationProgressStep.RECRUITMENT_UPCOMING)
+                    ? window.getStartsAt()
+                    : window.getEndsAt();
 
-        if (targetInstant == null) {
+            if (targetInstant == null) {
+                log.warn("[RecruitmentDashboard] dDay skipped - 기준Instant is null (type={}, step={})", window.getType(),
+                    step);
+                return null;
+            }
+
+            LocalDate targetDate = targetInstant.atZone(KST).toLocalDate();
+            return (int) ChronoUnit.DAYS.between(today, targetDate);
+        }
+
+        // 나머지(서류/면접/최종): D+
+        Instant startAt = window.getStartsAt();
+        if (startAt == null) {
+            log.warn("[RecruitmentDashboard] dDay skipped - startAt is null (type={}, step={})", window.getType(),
+                step);
             return null;
         }
 
-        LocalDate targetDate = targetInstant.atZone(KST).toLocalDate();
-        return (int) ChronoUnit.DAYS.between(today, targetDate); // today->target
+        LocalDate startDate = startAt.atZone(KST).toLocalDate();
+        // 진행일: today - startDate + 1  => 시작일이 D+1
+        return (int) ChronoUnit.DAYS.between(startDate, today) + 1;
     }
 
 
