@@ -1,13 +1,13 @@
 package com.umc.product.recruitment.adapter.in.web.dto.response;
 
+import com.umc.product.global.response.PageResponse;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationListForAdminInfo;
+import com.umc.product.recruitment.domain.enums.PartKey;
 import java.util.List;
 
 public record ApplicationListForAdminResponse(
     Filters filters,
-    long applicantCount,
-    PaginationResponse pagination,
-    List<ApplicationForAdminResponse> applications
+    PageResponse<ApplicationForAdminResponse> applications
 ) {
     public static ApplicationListForAdminResponse from(ApplicationListForAdminInfo info) {
         return new ApplicationListForAdminResponse(
@@ -17,14 +17,17 @@ public record ApplicationListForAdminResponse(
                 info.filters().part(),
                 info.filters().keyword()
             ),
-            info.applicantCount(),
-            new PaginationResponse(
+            new PageResponse<>(
+                info.applications().stream()
+                    .map(ApplicationForAdminResponse::from)
+                    .toList(),
                 info.pagination().page(),
                 info.pagination().size(),
+                info.pagination().totalElements(),
                 info.pagination().totalPages(),
-                info.pagination().totalElements()
-            ),
-            info.applications().stream().map(ApplicationForAdminResponse::from).toList()
+                info.pagination().hasNext(),
+                info.pagination().hasPrevious()
+            )
         );
     }
 
@@ -36,21 +39,11 @@ public record ApplicationListForAdminResponse(
     ) {
     }
 
-    public record PaginationResponse(
-        int page,
-        int size,
-        int totalPages,
-        long totalElements
-    ) {
-    }
-
     public record ApplicationForAdminResponse(
         Long applicationId,
         ApplicantInfo applicant,
         SchoolInfo school,
         List<AppliedPartInfo> appliedParts,
-        EvaluationInfo documentEvaluation,
-        EvaluationInfo interviewEvaluation,
         FinalResultInfo finalResult
     ) {
         public static ApplicationForAdminResponse from(
@@ -60,13 +53,9 @@ public record ApplicationListForAdminResponse(
                 new ApplicantInfo(application.applicant().nickname(), application.applicant().name()),
                 new SchoolInfo(application.school().schoolId(), application.school().name()),
                 application.appliedParts().stream()
-                    .map(p -> new AppliedPartInfo(p.priority(), p.key(), p.label()))
+                    .map(p -> new AppliedPartInfo(p.priority(), PartResponse.from(p.part())))
                     .toList(),
-                new EvaluationInfo(application.documentEvaluation().status(),
-                    application.documentEvaluation().score()),
-                new EvaluationInfo(application.interviewEvaluation().status(),
-                    application.interviewEvaluation().score()),
-                new FinalResultInfo(application.finalResult().status(), application.finalResult().selectedPart())
+                FinalResultInfo.from(application.finalResult())
             );
         }
     }
@@ -77,12 +66,24 @@ public record ApplicationListForAdminResponse(
     public record SchoolInfo(Long schoolId, String name) {
     }
 
-    public record AppliedPartInfo(int priority, String key, String label) {
+    public record AppliedPartInfo(int priority, PartResponse part) {
     }
 
-    public record EvaluationInfo(String status, Integer score) {
+    public record FinalResultInfo(String status, PartResponse selectedPart) {
+        public static FinalResultInfo from(ApplicationListForAdminInfo.FinalResult r) {
+            return new FinalResultInfo(
+                r.status(),
+                PartResponse.from(r.selectedPart()) // null이면 null 반환
+            );
+        }
     }
 
-    public record FinalResultInfo(String status, String selectedPart) {
+    public record PartResponse(String key, String label) {
+        public static PartResponse from(PartKey partKey) {
+            if (partKey == null) {
+                return null;
+            }
+            return new PartResponse(partKey.name(), partKey.getLabel());
+        }
     }
 }

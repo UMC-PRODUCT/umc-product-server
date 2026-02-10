@@ -12,14 +12,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/recruitments/{recruitmentId}")
+@RequestMapping("/api/v1/recruitments")
 @Tag(name = SwaggerTag.Constants.RECRUITMENT_ADMIN)
 public class RecruitmentAdminApplicationController {
 
@@ -35,7 +34,6 @@ public class RecruitmentAdminApplicationController {
             """
     )
     public ApplicationListForAdminResponse getAdminApplications(
-        @PathVariable Long recruitmentId,
         @RequestParam(required = false) Long chapterId,
         @RequestParam(required = false) Long schoolId,
         @RequestParam(required = false, defaultValue = "ALL") PartOption part,
@@ -46,7 +44,6 @@ public class RecruitmentAdminApplicationController {
     ) {
         ApplicationListForAdminInfo info = getApplicationListForAdminUseCase.get(
             new GetApplicationListForAdminQuery(
-                recruitmentId,
                 chapterId,
                 schoolId,
                 part,
