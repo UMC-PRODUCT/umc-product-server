@@ -4,6 +4,7 @@ import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import org.locationtech.jts.geom.Point;
@@ -20,7 +21,8 @@ public record UpdateScheduleCommand(
     String locationName,
     Point location,
     String description,
-    Set<ScheduleTag> tags
+    Set<ScheduleTag> tags,
+    List<Long> participantMemberIds
 ) {
     public UpdateScheduleCommand {
         Objects.requireNonNull(scheduleId, "scheduleId must not be null");
@@ -39,7 +41,8 @@ public record UpdateScheduleCommand(
         String locationName,
         Point location,
         String description,
-        Set<ScheduleTag> tags
+        Set<ScheduleTag> tags,
+        List<Long> participantMemberIds
     ) {
         return new UpdateScheduleCommand(
             scheduleId,
@@ -50,7 +53,8 @@ public record UpdateScheduleCommand(
             locationName,
             location,
             description,
-            tags
+            tags,
+            participantMemberIds
         );
     }
 }
