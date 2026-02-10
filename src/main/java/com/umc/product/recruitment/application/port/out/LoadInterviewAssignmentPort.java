@@ -29,4 +29,6 @@ public interface LoadInterviewAssignmentPort {
     Optional<InterviewAssignment> findById(Long assignmentId);
 
     List<InterviewAssignment> findByRecruitmentIdWithSlotAndApplication(Long recruitmentId);
+
+    List<InterviewAssignment> findBySlotIds(List<Long> slotIds);
 }

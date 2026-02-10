@@ -88,4 +88,12 @@ public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssig
     public void delete(InterviewAssignment assignment) {
         interviewAssignmentJpaRepository.delete(assignment);
     }
+
+    @Override
+    public List<InterviewAssignment> findBySlotIds(List<Long> slotIds) {
+        if (slotIds == null || slotIds.isEmpty()) {
+            return List.of();
+        }
+        return interviewAssignmentJpaRepository.findAllBySlotIdsFetchJoin(slotIds);
+    }
 }
