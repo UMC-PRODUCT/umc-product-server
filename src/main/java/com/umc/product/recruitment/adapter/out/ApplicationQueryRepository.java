@@ -258,7 +258,7 @@ public class ApplicationQueryRepository {
     /**
      * 서류 선발 리스트 조회 (페이지네이션, 파트 필터, 정렬)
      * <p>
-     * - APPLIED / DOC_PASSED만 포함 - part 필터: 1지망(priority=1) 기준
+     * - APPLIED / DOC_PASSED / DOC_FAILED만 포함 - part 필터: 1지망(priority=1) 기준
      */
     public Page<DocumentSelectionListItemProjection> searchDocumentSelections(
         Long recruitmentId,
@@ -299,8 +299,8 @@ public class ApplicationQueryRepository {
     }
 
     /**
-     * 서류 선발 요약 조회 - totalCount: (APPLIED + DOC_PASSED) (part 필터 적용) - selectedCount: DOC_PASSED (part 필터 적용) - byPart:
-     * 1지망 기준 파트별 total/selected
+     * 서류 선발 요약 조회 - totalCount: (APPLIED + DOC_PASSED + DOC_FAILED) (part 필터 적용) - selectedCount: DOC_PASSED (part 필터
+     * 적용) - byPart: 1지망 기준 파트별 total/selected
      */
     public DocumentSelectionApplicationListInfo.Summary getDocumentSelectionSummary(Long recruitmentId, String part) {
         // total
@@ -617,7 +617,10 @@ public class ApplicationQueryRepository {
     }
 
     private BooleanExpression documentSelectionStatus() {
-        return application.status.in(ApplicationStatus.APPLIED, ApplicationStatus.DOC_PASSED);
+        return application.status.in(
+            ApplicationStatus.APPLIED,
+            ApplicationStatus.DOC_PASSED,
+            ApplicationStatus.DOC_FAILED);
     }
 
     /**

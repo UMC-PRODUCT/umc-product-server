@@ -37,7 +37,6 @@ import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.Recruitment;
-import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import com.umc.product.recruitment.domain.enums.PartKey;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
@@ -55,12 +54,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -328,7 +329,7 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
         // 응답 item 매핑
         List<DocumentSelectionApplicationListInfo.DocumentSelectionApplicationInfo> items =
             page.getContent().stream()
-                .map(p -> toInfoItem(p, prefMap, avgDocScoreMap))
+                .map(p -> toDocumentSelectionApplicationInfoItem(p, prefMap, avgDocScoreMap))
                 .toList();
 
         // pagination
@@ -350,7 +351,7 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
         );
     }
 
-    private DocumentSelectionApplicationListInfo.DocumentSelectionApplicationInfo toInfoItem(
+    private DocumentSelectionApplicationListInfo.DocumentSelectionApplicationInfo toDocumentSelectionApplicationInfoItem(
         DocumentSelectionListItemProjection p,
         Map<Long, List<ApplicationPartPreference>> prefMap,
         Map<Long, BigDecimal> avgDocScoreMap
@@ -371,8 +372,15 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
         Double documentScore = (avg == null) ? null : avg.doubleValue();
 
         // documentResult decision
-        EvaluationDecision decision =
-            (p.status() == ApplicationStatus.DOC_PASSED) ? EvaluationDecision.PASS : EvaluationDecision.WAIT;
+        EvaluationDecision decision = switch (p.status()) {
+            case DOC_PASSED -> EvaluationDecision.PASS;
+            case DOC_FAILED -> EvaluationDecision.FAIL;
+            case APPLIED -> EvaluationDecision.WAIT;
+            default -> {
+                log.error("[DocumentSelection] unexpected status. appId={}, status={}", applicationId, p.status());
+                yield EvaluationDecision.WAIT;
+            }
+        };
 
         return new DocumentSelectionApplicationListInfo.DocumentSelectionApplicationInfo(
             applicationId,

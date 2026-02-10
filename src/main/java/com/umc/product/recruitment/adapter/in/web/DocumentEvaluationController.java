@@ -206,7 +206,7 @@ public class DocumentEvaluationController {
     @Operation(
         summary = "서류 선발 대상 리스트 조회",
         description = """
-            서류 선발(PASS/WAIT) 대상 리스트를 조회합니다.
+            서류 선발(PASS/FAIL/WAIT) 대상 리스트를 조회합니다.
             part 필터 및 정렬(sort)을 지원합니다.
             """
     )
