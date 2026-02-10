@@ -1,6 +1,9 @@
 package com.umc.product.recruitment.adapter.out;
 
 import static com.umc.product.member.domain.QMember.member;
+import static com.umc.product.organization.domain.QChapter.chapter;
+import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
+import static com.umc.product.organization.domain.QSchool.school;
 import static com.umc.product.recruitment.domain.QApplication.application;
 import static com.umc.product.recruitment.domain.QApplicationPartPreference.applicationPartPreference;
 import static com.umc.product.recruitment.domain.QEvaluation.evaluation;
@@ -21,6 +24,7 @@ import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.recruitment.adapter.out.dto.AdminApplicationRow;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
@@ -949,4 +953,118 @@ public class ApplicationQueryRepository {
         };
     }
 
+    public Page<AdminApplicationRow> searchAdminApplications(
+        Long chapterId,
+        Long schoolId,
+        String part,
+        String keyword,
+        Pageable pageable
+    ) {
+        List<AdminApplicationRow> content = queryFactory
+            .select(Projections.constructor(
+                AdminApplicationRow.class,
+                application.id,
+                application.applicantMemberId,
+                member.nickname,
+                member.name,
+                member.email,              // 이메일 검색용
+                school.id,
+                school.name,
+                application.status,
+                application.selectedPart   // ChallengerPart (FINAL_ACCEPTED일 때만 존재)
+            ))
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .leftJoin(school).on(school.id.eq(member.schoolId)) // member가 schoolId만 들고 있음
+            .where(
+                belongsToRecruitments(chapterId, schoolId), // recruitment 기준 필터
+                keywordContainsForAdmin(keyword),           // name/nickname/email
+                partMatches(part)                           // 1~2지망 포함 exists
+            )
+            .orderBy(
+                application.createdAt.asc(),
+                application.id.asc()
+            )
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory
+            .select(application.count())
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .where(
+                belongsToRecruitments(chapterId, schoolId),
+                keywordContainsForAdmin(keyword),
+                partMatches(part)
+            );
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    private BooleanExpression belongsToRecruitments(Long chapterId, Long schoolId) {
+        // 둘 다 null이면 전체(필터 없음)
+        if (chapterId == null && schoolId == null) {
+            return null;
+        }
+
+        // 조건에 맞는 recruitment.id들
+        JPQLQuery<Long> recruitmentIds = JPAExpressions
+            .select(recruitment.id)
+            .from(recruitment)
+            .where(
+                schoolId == null ? null : recruitment.schoolId.eq(schoolId),
+                chapterId == null ? null : belongsToChapter(chapterId),
+                recruitment.formId.isNotNull()
+            );
+
+        // 해당 recruitment들의 formId
+        JPQLQuery<Long> formIds = formIdsForRecruitments(recruitmentIds);
+
+        // 해당 form들에 대한 formResponse.id
+        JPQLQuery<Long> formResponseIds = JPAExpressions
+            .select(formResponse.id)
+            .from(formResponse)
+            .where(formResponse.form.id.in(formIds));
+
+        return application.formResponseId.in(formResponseIds);
+    }
+
+    /**
+     * chapterId 필터: recruitment.schoolId + recruitment.gisuId에 대해, ChapterSchool(school_id) - Chapter(chapter_id,
+     * gisu_id)가 매칭되는지 존재 여부로 판별
+     */
+    private BooleanExpression belongsToChapter(Long chapterId) {
+        return JPAExpressions
+            .selectOne()
+            .from(chapterSchool)
+            .join(chapterSchool.chapter, chapter)
+            .where(
+                chapter.id.eq(chapterId),
+                // chapterSchool.school.id 와 recruitment.schoolId 매칭
+                chapterSchool.school.id.eq(recruitment.schoolId),
+                // chapter.gisu.id 와 recruitment.gisuId 매칭 (기수별 지부-학교 배정 구분)
+                chapter.gisu.id.eq(recruitment.gisuId)
+            )
+            .exists();
+    }
+
+    /**
+     * "recruitmentId 집합 -> formId" 집합을 뽑는 서브쿼리 현재(1:1): recruitment.formId 향후(1:N): 이 함수만 수정
+     */
+    private JPQLQuery<Long> formIdsForRecruitments(JPQLQuery<Long> recruitmentIds) {
+        return JPAExpressions
+            .select(recruitment.formId)
+            .from(recruitment)
+            .where(recruitment.id.in(recruitmentIds));
+    }
+
+    private BooleanExpression keywordContainsForAdmin(String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            return null;
+        }
+        return member.name.containsIgnoreCase(keyword)
+            .or(member.nickname.containsIgnoreCase(keyword))
+            .or(member.email.containsIgnoreCase(keyword));
+    }
 }

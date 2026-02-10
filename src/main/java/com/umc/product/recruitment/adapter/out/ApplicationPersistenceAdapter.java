@@ -1,6 +1,7 @@
 package com.umc.product.recruitment.adapter.out;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.recruitment.adapter.out.dto.AdminApplicationRow;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
@@ -213,5 +214,18 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
     @Override
     public Map<Long, BigDecimal> calculateAvgInterviewScoreByApplicationIds(Set<Long> applicationIds) {
         return applicationQueryRepository.calculateAvgInterviewScoreByApplicationIds(applicationIds);
+    }
+
+    @Override
+    public Page<AdminApplicationRow> searchAdminApplications(
+        Long chapterId,
+        Long schoolId,
+        String part,
+        String keyword,
+        Pageable pageable
+    ) {
+        return applicationQueryRepository.searchAdminApplications(
+            chapterId, schoolId, part, keyword, pageable
+        );
     }
 }

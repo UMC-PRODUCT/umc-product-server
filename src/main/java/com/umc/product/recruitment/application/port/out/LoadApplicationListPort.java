@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.application.port.out;
 
+import com.umc.product.recruitment.adapter.out.dto.AdminApplicationRow;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
@@ -76,4 +77,11 @@ public interface LoadApplicationListPort {
 
     Map<Long, BigDecimal> calculateAvgInterviewScoreByApplicationIds(Set<Long> applicationIds);
 
+    Page<AdminApplicationRow> searchAdminApplications(
+        Long chapterId,
+        Long schoolId,
+        String part,
+        String keyword,
+        Pageable pageable
+    );
 }
