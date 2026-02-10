@@ -6,4 +6,6 @@ public interface SaveInterviewAssignmentPort {
     InterviewAssignment save(InterviewAssignment assignment);
 
     void delete(InterviewAssignment assignment);
+
+    void deleteAllByRecruitmentId(Long recruitmentId);
 }

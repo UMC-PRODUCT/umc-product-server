@@ -5,4 +5,6 @@ import java.util.List;
 
 public interface SaveInterviewSlotPort {
     void saveAll(List<InterviewSlot> slots);
+
+    void deleteAllByRecruitmentId(Long recruitmentId);
 }
