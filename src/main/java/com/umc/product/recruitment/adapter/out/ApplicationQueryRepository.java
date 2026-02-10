@@ -25,11 +25,13 @@ import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponse
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.FinalSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAlreadyScheduledApplicantRow;
 import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAvailableApplicantRow;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.FinalSelectionApplicationListInfo;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.QApplicationPartPreference;
 import com.umc.product.recruitment.domain.QRecruitmentPart;
@@ -533,6 +535,99 @@ public class ApplicationQueryRepository {
             .fetch();
     }
 
+    public Map<Long, BigDecimal> calculateAvgInterviewScoreByApplicationIds(Set<Long> applicationIds) {
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Tuple> rows = queryFactory
+            .select(evaluation.application.id, evaluation.score.avg())
+            .from(evaluation)
+            .where(
+                evaluation.application.id.in(applicationIds),
+                evaluation.stage.eq(EvaluationStage.INTERVIEW),
+                evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                evaluation.score.isNotNull()
+            )
+            .groupBy(evaluation.application.id)
+            .fetch();
+
+        return rows.stream().collect(Collectors.toMap(
+            t -> t.get(evaluation.application.id),
+            t -> {
+                Double avg = t.get(evaluation.score.avg());
+                return avg == null ? null : BigDecimal.valueOf(avg).setScale(1, RoundingMode.HALF_UP);
+            }
+        ));
+    }
+
+    public FinalSelectionApplicationListInfo.Summary getFinalSelectionSummary(Long recruitmentId, String part) {
+        Long total = queryFactory
+            .select(application.count())
+            .from(application)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                finalSelectionStatus(),
+                firstPriorityPartMatches(part)
+            )
+            .fetchOne();
+
+        Long selected = queryFactory
+            .select(application.count())
+            .from(application)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                application.status.eq(ApplicationStatus.FINAL_ACCEPTED),
+                firstPriorityPartMatches(part)
+            )
+            .fetchOne();
+
+        return new FinalSelectionApplicationListInfo.Summary(
+            total != null ? total : 0L,
+            selected != null ? selected : 0L
+        );
+    }
+
+
+    public Page<FinalSelectionListItemProjection> searchFinalSelections(
+        Long recruitmentId,
+        String part,
+        String sort,
+        Pageable pageable
+    ) {
+        List<FinalSelectionListItemProjection> content = queryFactory
+            .select(Projections.constructor(FinalSelectionListItemProjection.class,
+                application.id,
+                member.nickname,
+                member.name,
+                application.status,
+                application.selectedPart
+            ))
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .where(
+                belongsToRecruitment(recruitmentId),
+                finalSelectionStatus(),
+                firstPriorityPartMatches(part)
+            )
+            .orderBy(finalSelectionOrderBy(sort))
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory
+            .select(application.count())
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .where(
+                belongsToRecruitment(recruitmentId),
+                finalSelectionStatus(),
+                firstPriorityPartMatches(part)
+            );
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
     private ChallengerPart toFilterPart(PartOption requestedPart) {
         if (requestedPart == null || requestedPart == PartOption.ALL) {
             return null;
@@ -768,4 +863,90 @@ public class ApplicationQueryRepository {
             )
             .fetch();
     }
+
+    private BooleanExpression finalSelectionStatus() {
+        return application.status.in(
+            ApplicationStatus.DOC_PASSED,
+            ApplicationStatus.FINAL_ACCEPTED,
+            ApplicationStatus.FINAL_REJECTED
+        );
+    }
+
+    /**
+     * 정렬 - SCORE_DESC/SCORE_ASC: (서류평균 + 면접평균)/2 기준 (null은 뒤로) - EVALUATED_AT_ASC: 제출된 면접평가 updatedAt의 max 기준 오름차순
+     * (null은 뒤로)
+     */
+    private com.querydsl.core.types.OrderSpecifier<?>[] finalSelectionOrderBy(String sort) {
+        String s = (sort == null) ? "SCORE_DESC" : sort;
+
+        // avg doc
+        NumberExpression<Double> avgDocScore =
+            Expressions.numberTemplate(
+                Double.class,
+                "({0})",
+                JPAExpressions
+                    .select(evaluation.score.avg())
+                    .from(evaluation)
+                    .where(
+                        evaluation.application.id.eq(application.id),
+                        evaluation.stage.eq(EvaluationStage.DOCUMENT),
+                        evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                        evaluation.score.isNotNull()
+                    )
+            );
+
+        // avg interview
+        NumberExpression<Double> avgInterviewScore =
+            Expressions.numberTemplate(
+                Double.class,
+                "({0})",
+                JPAExpressions
+                    .select(evaluation.score.avg())
+                    .from(evaluation)
+                    .where(
+                        evaluation.application.id.eq(application.id),
+                        evaluation.stage.eq(EvaluationStage.INTERVIEW),
+                        evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                        evaluation.score.isNotNull()
+                    )
+            );
+
+        // final = (doc + interview) / 2
+        NumberExpression<Double> finalScore =
+            avgDocScore.add(avgInterviewScore).divide(2.0);
+
+        DateTimeExpression<Instant> interviewEvaluatedAtMax =
+            Expressions.dateTimeTemplate(
+                Instant.class,
+                "({0})",
+                JPAExpressions
+                    .select(evaluation.updatedAt.max())
+                    .from(evaluation)
+                    .where(
+                        evaluation.application.id.eq(application.id),
+                        evaluation.stage.eq(EvaluationStage.INTERVIEW),
+                        evaluation.status.eq(EvaluationStatus.SUBMITTED)
+                    )
+            );
+
+        return switch (s) {
+            case "SCORE_ASC" -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                finalScore.asc().nullsLast(),
+                application.id.asc()
+            };
+            case "EVALUATED_AT_ASC" -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                interviewEvaluatedAtMax.asc().nullsLast(),
+                application.id.asc()
+            };
+            case "SCORE_DESC" -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                finalScore.desc().nullsLast(),
+                application.id.asc()
+            };
+            default -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                finalScore.desc().nullsLast(),
+                application.id.asc()
+            };
+        };
+    }
+
 }

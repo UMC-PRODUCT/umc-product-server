@@ -5,9 +5,11 @@ import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponse
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.FinalSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.FinalSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
@@ -196,4 +198,20 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
                 partOption);
     }
 
+    @Override
+    public FinalSelectionApplicationListInfo.Summary getFinalSelectionSummary(Long recruitmentId, String part) {
+        return applicationQueryRepository.getFinalSelectionSummary(recruitmentId, part);
+    }
+
+    @Override
+    public Page<FinalSelectionListItemProjection> searchFinalSelections(
+        Long recruitmentId, String part, String sort, Pageable pageable
+    ) {
+        return applicationQueryRepository.searchFinalSelections(recruitmentId, part, sort, pageable);
+    }
+
+    @Override
+    public Map<Long, BigDecimal> calculateAvgInterviewScoreByApplicationIds(Set<Long> applicationIds) {
+        return applicationQueryRepository.calculateAvgInterviewScoreByApplicationIds(applicationIds);
+    }
 }

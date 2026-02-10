@@ -3,8 +3,10 @@ package com.umc.product.recruitment.application.port.out;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.FinalSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.FinalSelectionApplicationListInfo;
 import com.umc.product.recruitment.domain.Application;
 import java.math.BigDecimal;
 import java.util.List;
@@ -65,4 +67,13 @@ public interface LoadApplicationListPort {
     );
 
     Map<Long, BigDecimal> calculateAvgDocScoreByApplicationIds(Set<Long> applicationIds);
+
+    FinalSelectionApplicationListInfo.Summary getFinalSelectionSummary(Long recruitmentId, String part);
+
+    Page<FinalSelectionListItemProjection> searchFinalSelections(
+        Long recruitmentId, String part, String sort, Pageable pageable
+    );
+
+    Map<Long, BigDecimal> calculateAvgInterviewScoreByApplicationIds(Set<Long> applicationIds);
+
 }

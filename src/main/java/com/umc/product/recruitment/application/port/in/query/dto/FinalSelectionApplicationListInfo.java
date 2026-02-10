@@ -2,7 +2,6 @@ package com.umc.product.recruitment.application.port.in.query.dto;
 
 import com.umc.product.recruitment.domain.enums.PartKey;
 import java.util.List;
-import java.util.Map;
 
 public record FinalSelectionApplicationListInfo(
     Summary summary,
@@ -12,14 +11,7 @@ public record FinalSelectionApplicationListInfo(
 ) {
     public record Summary(
         long totalCount,
-        long selectedCount,
-        Map<String, ByPart> byPart
-    ) {
-    }
-
-    public record ByPart(
-        long total,
-        long selected
+        long selectedCount
     ) {
     }
 
@@ -47,8 +39,8 @@ public record FinalSelectionApplicationListInfo(
     }
 
     public record Selection(
-        String status,
-        PartKey part
+        String status, // PASS | FAIL | WAIT
+        PartKey part   // PASS일 때만 있을 수 있음 (nullable)
     ) {
     }
 
@@ -56,7 +48,9 @@ public record FinalSelectionApplicationListInfo(
         int page,
         int size,
         int totalPages,
-        long totalElements
+        long totalElements,
+        boolean hasNext,
+        boolean hasPrevious
     ) {
     }
 }
