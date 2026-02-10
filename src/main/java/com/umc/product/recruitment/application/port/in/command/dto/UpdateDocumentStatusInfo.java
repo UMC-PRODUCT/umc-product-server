@@ -5,7 +5,7 @@ public record UpdateDocumentStatusInfo(
     DocumentResult documentResult
 ) {
     public record DocumentResult(
-        String decision // PASS | WAIT
+        String decision // PASS | FAIL | WAIT
     ) {
     }
 }

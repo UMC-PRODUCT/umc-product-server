@@ -116,13 +116,17 @@ public enum RecruitmentErrorCode implements BaseCode {
     INTERVIEW_LIVE_QUESTION_NOT_BELONGS_TO_ASSIGNMENT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0062",
         "해당 질문은 이 면접 배정에 속하지 않습니다."),
     INTERVIEW_LIVE_QUESTION_NOT_EDITABLE(HttpStatus.FORBIDDEN, "RECRUITMENT-0063", "본인이 작성한 질문만 수정하거나 삭제할 수 있습니다."),
-    INTERVIEW_WINDOW_NOT_SET(HttpStatus.BAD_REQUEST, "RECRUITMENT-0053",
+    INTERVIEW_WINDOW_NOT_SET(HttpStatus.BAD_REQUEST, "RECRUITMENT-0064",
         "면접 일정이 설정되지 않은 모집입니다."),
-    INTERVIEW_SLOT_NOT_FOUND(HttpStatus.NOT_FOUND, "RECRUITMENT-0054", "해당 면접 슬롯이 존재하지 않습니다."),
-    INTERVIEW_SLOT_NOT_IN_RECRUITMENT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0055", "해당 면접 슬롯이 해당 모집 소속이 아닙니다."),
-    INTERVIEW_ASSIGNMENT_ONLY_DOC_PASSED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0056", "서류에 합격한 지원서만 면접 시간을 할당할 수 있습니다."),
-    INTERVIEW_ASSIGNMENT_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "RECRUITMENT-0057", "이미 면접 시간이 할당된 서류입니다."),
-    INTERVIEW_ASSIGNMENT_NOT_IN_RECRUITMENT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0059", "해당 면접 할당이 해당 모집 소속이 아닙니다."),
+    INTERVIEW_SLOT_NOT_FOUND(HttpStatus.NOT_FOUND, "RECRUITMENT-0065", "해당 면접 슬롯이 존재하지 않습니다."),
+    INTERVIEW_SLOT_NOT_IN_RECRUITMENT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0066", "해당 면접 슬롯이 해당 모집 소속이 아닙니다."),
+    INTERVIEW_ASSIGNMENT_ONLY_DOC_PASSED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0067", "서류에 합격한 지원서만 면접 시간을 할당할 수 있습니다."),
+    INTERVIEW_ASSIGNMENT_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "RECRUITMENT-0068", "이미 면접 시간이 할당된 서류입니다."),
+    INTERVIEW_ASSIGNMENT_NOT_IN_RECRUITMENT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0069", "해당 면접 할당이 해당 모집 소속이 아닙니다."),
+    FINAL_SELECTED_PART_REQUIRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0070",
+        "최종 합격 처리 시 선택 파트(selectedPart)는 필수입니다."),
+    FINAL_SELECTED_PART_NOT_PREFERRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0071",
+        "최종 합격 처리 시 선택 파트(selectedPart)는 지원자가 선택한 지원 파트(preferred) 중 하나여야 합니다."),
     ;
 
     private final HttpStatus httpStatus;

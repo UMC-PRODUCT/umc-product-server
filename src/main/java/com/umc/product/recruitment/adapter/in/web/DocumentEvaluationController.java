@@ -176,10 +176,13 @@ public class DocumentEvaluationController {
     @Operation(
         summary = "지원서 합격/불합격 처리하기 (서류 결과)",
         description = """
-            특정 지원서(appilcation)의 상태를 변경합니다.
+            특정 지원서(application)의 서류 결과를 서류 합격/불합격으로 변경합니다.
+            - 프론트 요청/응답용 enum은 PASS / FAIL / WAIT(결정 취소)으로 통일합니다.
+
+            - 상태 변경: APPLIED -> DOC_PASSED / DOC_FAILED
+            - 재결정 허용: DOC_PASSED <-> DOC_FAILED
+            - 결정 취소(WAIT): DOC_PASSED | DOC_FAILED -> APPLIED
             서류 평가 기간, 권한을 검증합니다.
-            (APPLIED -> DOC_PASSED / DOC_FAILED)
-            아직 UI 확정 전이라, 요청/응답 필드가 추후 변경될 수 있습니다.
             """
     )
     public UpdateDocumentStatusResponse updateDocumentStatus(
@@ -203,7 +206,7 @@ public class DocumentEvaluationController {
     @Operation(
         summary = "서류 선발 대상 리스트 조회",
         description = """
-            서류 선발(PASS/WAIT) 대상 리스트를 조회합니다.
+            서류 선발(PASS/FAIL/WAIT) 대상 리스트를 조회합니다.
             part 필터 및 정렬(sort)을 지원합니다.
             """
     )

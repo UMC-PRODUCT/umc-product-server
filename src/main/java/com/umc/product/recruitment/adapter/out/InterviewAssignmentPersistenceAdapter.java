@@ -95,4 +95,12 @@ public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssig
     public void deleteAllByRecruitmentId(Long recruitmentId) {
         interviewAssignmentJpaRepository.deleteAllByRecruitmentId(recruitmentId);
     }
+
+    @Override
+    public List<InterviewAssignment> findBySlotIds(List<Long> slotIds) {
+        if (slotIds == null || slotIds.isEmpty()) {
+            return List.of();
+        }
+        return interviewAssignmentJpaRepository.findAllBySlotIdsFetchJoin(slotIds);
+    }
 }

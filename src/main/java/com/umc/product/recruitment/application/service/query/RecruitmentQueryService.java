@@ -10,6 +10,8 @@ import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import com.umc.product.recruitment.adapter.in.web.mapper.AnswerInfoMapper;
+import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
+import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentPublishedInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
@@ -43,20 +45,30 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentS
 import com.umc.product.recruitment.application.port.in.query.dto.MyApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentDashboardInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentDashboardInfo.ScheduleSummaryInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentFormResponseDetailInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentNoticeInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentPartListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentScheduleInfo;
+import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPartPreferencePort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
+import com.umc.product.recruitment.application.port.out.LoadEvaluationPort;
+import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
+import com.umc.product.recruitment.application.port.out.LoadInterviewSlotPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.domain.Application;
+import com.umc.product.recruitment.domain.InterviewAssignment;
+import com.umc.product.recruitment.domain.InterviewSlot;
 import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
+import com.umc.product.recruitment.domain.enums.EvalPhaseStatus;
+import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
@@ -71,18 +83,22 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
+@Slf4j
 public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, GetRecruitmentNoticeUseCase,
     GetRecruitmentApplicationFormUseCase,
     GetRecruitmentFormResponseDetailUseCase,
@@ -104,6 +120,11 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     private final LoadGisuPort loadGisuPort;
     private final GetFileUseCase getFileUseCase;
     private final AnswerInfoMapper answerInfoMapper;
+    private final LoadRecruitmentSchedulePort loadRecruitmentSchedulePort;
+    private final LoadInterviewSlotPort loadInterviewSlotPort;
+    private final LoadInterviewAssignmentPort loadInterviewAssignmentPort;
+    private final LoadEvaluationPort loadEvaluationPort;
+    private final LoadApplicationListPort loadApplicationListPort;
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
@@ -304,9 +325,741 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     }
 
     @Override
-    public RecruitmentDashboardInfo get(Long recruitmentId) {
-        return null;
+    public RecruitmentDashboardInfo get(Long recruitmentId, Long memberId) {
+
+        Instant now = Instant.now();
+
+        // 대시보드에 필요한 스케줄들 로드
+        DashboardSchedules schedules = loadDashboardSchedules(recruitmentId);
+
+        // 일정 요약 (phaseTitle, dDay, 기간, 오늘 면접예정자)
+        RecruitmentDashboardInfo.ScheduleSummaryInfo scheduleSummary =
+            buildScheduleSummary(recruitmentId, now, schedules);
+
+        // 진행 단계 (currentStep/steps + noticeType/noticeDate)
+        RecruitmentDashboardInfo.ProgressInfo progress =
+            buildProgress(now, schedules);
+
+        // 지원 현황 (총 지원자 + 파트별 지원자)
+        RecruitmentDashboardInfo.ApplicationStatusInfo applicationStatus =
+            buildApplicationStatus(recruitmentId);
+
+        // 평가 현황 (서류/면접 진행률 + 파트별 진행 현황)
+        //    - 내 진행률 기준으로 계산
+        RecruitmentDashboardInfo.EvaluationStatusInfo evaluationStatus =
+            buildEvaluationStatus(memberId, recruitmentId, now, progress);
+
+        return new RecruitmentDashboardInfo(
+            recruitmentId,
+            scheduleSummary,
+            progress,
+            applicationStatus,
+            evaluationStatus
+        );
     }
+
+    // 운영진 대시보드용 private 함수
+    private DashboardSchedules loadDashboardSchedules(Long recruitmentId) {
+        List<RecruitmentSchedule> schedules = loadRecruitmentSchedulePort.findByRecruitmentId(recruitmentId);
+        if (schedules == null || schedules.isEmpty()) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_FOUND);
+        }
+
+        Map<RecruitmentScheduleType, RecruitmentSchedule> byType = schedules.stream()
+            .collect(java.util.stream.Collectors.toMap(
+                RecruitmentSchedule::getType,
+                s -> s,
+                (a, b) -> a
+            ));
+
+        RecruitmentSchedule applyWindow = require(byType, RecruitmentScheduleType.APPLY_WINDOW);
+        RecruitmentSchedule docReviewWindow = require(byType, RecruitmentScheduleType.DOC_REVIEW_WINDOW);
+        RecruitmentSchedule docResultAt = require(byType, RecruitmentScheduleType.DOC_RESULT_AT);
+        RecruitmentSchedule interviewWindow = require(byType, RecruitmentScheduleType.INTERVIEW_WINDOW);
+        RecruitmentSchedule finalReviewWindow = require(byType, RecruitmentScheduleType.FINAL_REVIEW_WINDOW);
+        RecruitmentSchedule finalResultAt = require(byType, RecruitmentScheduleType.FINAL_RESULT_AT);
+
+        return new DashboardSchedules(
+            applyWindow,
+            docReviewWindow,
+            docResultAt,
+            interviewWindow,
+            finalReviewWindow,
+            finalResultAt
+        );
+    }
+
+    private RecruitmentSchedule require(
+        java.util.Map<RecruitmentScheduleType, RecruitmentSchedule> byType,
+        RecruitmentScheduleType type
+    ) {
+        RecruitmentSchedule s = byType.get(type);
+        if (s == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_FOUND);
+        }
+        return s;
+    }
+
+
+    private RecruitmentDashboardInfo.ScheduleSummaryInfo buildScheduleSummary(
+        Long recruitmentId,
+        Instant now,
+        DashboardSchedules schedules
+    ) {
+
+        ApplicationProgressStep step = computeCurrentStepForAdmin(
+            now,
+            schedules.applyWindow(),
+            schedules.docReviewWindow(),
+            pickAt(schedules.docResultAt()),
+            schedules.interviewWindow(),
+            schedules.finalReviewWindow(),
+            pickAt(schedules.finalResultAt())
+        );
+
+        RecruitmentSchedule activeWindow = pickActiveWindow(now, schedules);
+
+        if (activeWindow == null) {
+            return new ScheduleSummaryInfo(
+                null,
+                null,
+                null,
+                List.of()
+            );
+        }
+
+        String phaseTitle = switch (step) {
+            case RECRUITMENT_UPCOMING, APPLY_OPEN -> schedules.applyWindow().getType().title(); // "지원 모집"
+            case DOC_REVIEWING, DOC_RESULT_PUBLISHED -> schedules.docReviewWindow().getType().title(); // "서류 평가"
+            case INTERVIEW_WAITING -> schedules.interviewWindow().getType().title(); // "면접 진행"
+            default ->
+                schedules.finalReviewWindow().getType().title(); // "최종 평가" (FINAL_REVIEWING, FINAL_RESULT_PUBLISHED 포함)
+        };
+
+        RecruitmentDashboardInfo.DateRangeInfo dateRange = toDateRange(activeWindow);
+        Integer dDay = calculateDDay(now, activeWindow, step);
+
+        List<RecruitmentDashboardInfo.TodayInterviewInfo> todayInterviews =
+            (activeWindow.getType() == RecruitmentScheduleType.INTERVIEW_WINDOW)
+                ? fetchTodayInterviews(recruitmentId, now)
+                : List.of();
+
+        return new RecruitmentDashboardInfo.ScheduleSummaryInfo(
+            phaseTitle,
+            dDay,
+            dateRange,
+            todayInterviews
+        );
+    }
+
+    private RecruitmentSchedule pickActiveWindow(Instant now, DashboardSchedules schedules) {
+        ApplicationProgressStep step = computeCurrentStepForAdmin(
+            now,
+            schedules.applyWindow(),
+            schedules.docReviewWindow(),
+            pickAt(schedules.docResultAt()),
+            schedules.interviewWindow(),
+            schedules.finalReviewWindow(),
+            pickAt(schedules.finalResultAt())
+        );
+
+        return switch (step) {
+            case RECRUITMENT_UPCOMING, APPLY_OPEN -> schedules.applyWindow();
+            case DOC_REVIEWING, DOC_RESULT_PUBLISHED -> schedules.docReviewWindow();
+            case INTERVIEW_WAITING -> schedules.interviewWindow();
+            case FINAL_REVIEWING, FINAL_RESULT_PUBLISHED -> schedules.finalReviewWindow();
+            default -> schedules.applyWindow();
+        };
+    }
+
+    private RecruitmentDashboardInfo.DateRangeInfo toDateRange(RecruitmentSchedule window) {
+        if (window == null) {
+            log.warn("[RecruitmentDashboard] dateRange skipped - schedule window is null");
+            return null;
+        }
+
+        if (window.getStartsAt() == null || window.getEndsAt() == null) {
+            log.warn(
+                "[RecruitmentDashboard] dateRange skipped - window period not set (recruitmentId={}, type={}, startsAt={}, endsAt={})",
+                window.getRecruitmentId(),
+                window.getType(),
+                window.getStartsAt(),
+                window.getEndsAt()
+            );
+            return null;
+        }
+
+        LocalDate start = toKstLocalDate(window.getStartsAt());
+        LocalDate end = toKstLocalDate(window.getEndsAt());
+
+        return new RecruitmentDashboardInfo.DateRangeInfo(start, end);
+    }
+
+    private Integer calculateDDay(Instant now, RecruitmentSchedule window, ApplicationProgressStep step) {
+        if (window == null || step == null) {
+            log.warn("[RecruitmentDashboard] dDay skipped - window/step is null");
+            return null;
+        }
+
+        ZoneId KST = ZoneId.of("Asia/Seoul");
+        LocalDate today = now.atZone(KST).toLocalDate();
+
+        // 모집(지원 모집 카드): D-
+        if (step == ApplicationProgressStep.RECRUITMENT_UPCOMING || step == ApplicationProgressStep.APPLY_OPEN) {
+            Instant targetInstant =
+                (step == ApplicationProgressStep.RECRUITMENT_UPCOMING)
+                    ? window.getStartsAt()
+                    : window.getEndsAt();
+
+            if (targetInstant == null) {
+                log.warn("[RecruitmentDashboard] dDay skipped - 기준Instant is null (type={}, step={})", window.getType(),
+                    step);
+                return null;
+            }
+
+            LocalDate targetDate = targetInstant.atZone(KST).toLocalDate();
+            return (int) ChronoUnit.DAYS.between(today, targetDate);
+        }
+
+        // 나머지(서류/면접/최종): D+
+        Instant startAt = window.getStartsAt();
+        if (startAt == null) {
+            log.warn("[RecruitmentDashboard] dDay skipped - startAt is null (type={}, step={})", window.getType(),
+                step);
+            return null;
+        }
+
+        LocalDate startDate = startAt.atZone(KST).toLocalDate();
+        // 진행일: today - startDate + 1  => 시작일이 D+1
+        return (int) ChronoUnit.DAYS.between(startDate, today) + 1;
+    }
+
+
+    private List<RecruitmentDashboardInfo.TodayInterviewInfo> fetchTodayInterviews(Long recruitmentId, Instant now) {
+        ZoneId KST = ZoneId.of("Asia/Seoul");
+
+        LocalDate todayKst = now.atZone(KST).toLocalDate();
+        Instant dayStart = todayKst.atStartOfDay(KST).toInstant();
+        Instant dayEnd = todayKst.plusDays(1).atStartOfDay(KST).toInstant();
+
+        // 오늘 슬롯 조회
+        List<InterviewSlot> slots = loadInterviewSlotPort
+            .findByRecruitmentIdAndStartsAtBetween(recruitmentId, dayStart, dayEnd);
+
+        if (slots == null || slots.isEmpty()) {
+            log.info(
+                "[RecruitmentDashboard] no interview slots today (recruitmentId={}, date={})",
+                recruitmentId,
+                todayKst
+            );
+            return List.of();
+        }
+
+        // slotId -> slot 매핑 (시간 변환용)
+        Map<Long, InterviewSlot> slotById = slots.stream()
+            .collect(Collectors.toMap(
+                InterviewSlot::getId,
+                s -> s,
+                (a, b) -> a
+            ));
+
+        List<Long> slotIds = slots.stream().map(InterviewSlot::getId).toList();
+
+        // 슬롯들에 배정된 assignment 조회
+        List<InterviewAssignment> assignments = loadInterviewAssignmentPort.findBySlotIds(slotIds);
+        if (assignments == null || assignments.isEmpty()) {
+            log.info(
+                "[RecruitmentDashboard] interview slots exist but no assignments (recruitmentId={}, date={}, slotCount={})",
+                recruitmentId,
+                todayKst,
+                slots.size()
+            );
+            return List.of();
+        }
+
+        // assignment -> (application -> member) 매핑해서 TodayInterviewInfo 생성
+        // n+1: 배치로 전환
+        List<RecruitmentDashboardInfo.TodayInterviewInfo> result = new ArrayList<>();
+
+        for (InterviewAssignment a : assignments) {
+            var appOpt = loadApplicationPort.findById(a.getApplication().getId());
+            if (appOpt.isEmpty()) {
+                log.warn(
+                    "[RecruitmentDashboard] application not found for interview assignment (assignmentId={})",
+                    a.getId()
+                );
+                continue;
+            }
+
+            var memberOpt = loadMemberPort.findById(appOpt.get().getApplicantMemberId());
+            if (memberOpt.isEmpty()) {
+                log.warn(
+                    "[RecruitmentDashboard] member not found for application (applicationId={})",
+                    appOpt.get().getId()
+                );
+                continue;
+            }
+
+            LocalTime interviewTime = a.getSlot().getStartsAt()
+                .atZone(KST)
+                .toLocalTime();
+
+            result.add(new RecruitmentDashboardInfo.TodayInterviewInfo(
+                interviewTime,
+                memberOpt.get().getNickname(),
+                memberOpt.get().getName()
+            ));
+        }
+
+        // 시간순 정렬
+        result.sort(Comparator.comparing(RecruitmentDashboardInfo.TodayInterviewInfo::interviewTime));
+        return result;
+    }
+
+
+    private RecruitmentDashboardInfo.ProgressInfo buildProgress(
+        Instant now,
+        DashboardSchedules schedules
+    ) {
+        RecruitmentSchedule applyWindow = schedules.applyWindow();
+        RecruitmentSchedule docReviewWindow = schedules.docReviewWindow();
+        RecruitmentSchedule docResultAt = schedules.docResultAt();
+        RecruitmentSchedule interviewWindow = schedules.interviewWindow();
+        RecruitmentSchedule finalReviewWindow = schedules.finalReviewWindow();
+        RecruitmentSchedule finalResultAt = schedules.finalResultAt();
+
+        Instant applyStart = (applyWindow == null) ? null : applyWindow.getStartsAt();
+        Instant applyEnd = (applyWindow == null) ? null : applyWindow.getEndsAt();
+
+        Instant docResultInstant = pickAt(docResultAt);
+        Instant interviewStart = (interviewWindow == null) ? null : interviewWindow.getStartsAt();
+        Instant interviewEnd = (interviewWindow == null) ? null : interviewWindow.getEndsAt();
+
+        Instant finalResultInstant = pickAt(finalResultAt);
+
+        ApplicationProgressStep currentStep = computeCurrentStepForAdmin(
+            now,
+            applyWindow,
+            docReviewWindow,
+            docResultInstant,
+            interviewWindow,
+            finalReviewWindow,
+            finalResultInstant
+        );
+
+        // 스텝퍼(6단계) - step key는 지원자 대시보드 컴포넌트 재사용: ApplicationProgressStep
+        List<RecruitmentDashboardInfo.ProgressStepInfo> steps = List.of(
+            toStepForAdminDashboard(ApplicationProgressStep.APPLY_OPEN, "지원 모집", currentStep),
+            toStepForAdminDashboard(ApplicationProgressStep.DOC_REVIEWING, "서류 평가", currentStep),
+            toStepForAdminDashboard(ApplicationProgressStep.DOC_RESULT_PUBLISHED, "서류 결과 발표", currentStep),
+            toStepForAdminDashboard(ApplicationProgressStep.INTERVIEW_WAITING, "면접 진행", currentStep),
+            toStepForAdminDashboard(ApplicationProgressStep.FINAL_REVIEWING, "최종 평가", currentStep),
+            toStepForAdminDashboard(ApplicationProgressStep.FINAL_RESULT_PUBLISHED, "최종 결과 발표", currentStep)
+        );
+
+        // 하단 문구 타입/날짜
+        NoticeComputedForAdminDashboard notice = computeNoticeForAdmin(
+            now,
+            currentStep,
+            applyStart,
+            applyEnd,
+            docResultInstant,
+            finalResultInstant
+        );
+
+        return new RecruitmentDashboardInfo.ProgressInfo(
+            currentStep.name(),
+            steps,
+            notice.noticeType(),
+            notice.noticeDate()
+        );
+    }
+
+    private ApplicationProgressStep computeCurrentStepForAdmin(
+        Instant now,
+        RecruitmentSchedule applyWindow,
+        RecruitmentSchedule docReviewWindow,
+        Instant docResultAt,
+        RecruitmentSchedule interviewWindow,
+        RecruitmentSchedule finalReviewWindow,
+        Instant finalResultAt
+    ) {
+        Instant applyStart = (applyWindow == null) ? null : applyWindow.getStartsAt();
+
+        // 0) 모집 시작 전
+        if (applyStart != null && now.isBefore(applyStart)) {
+            return ApplicationProgressStep.RECRUITMENT_UPCOMING;
+        }
+
+        // 1) 지원 기간 중
+        if (isNowInWindow(now, applyWindow)) {
+            return ApplicationProgressStep.APPLY_OPEN;
+        }
+
+        // 2) 서류 평가 중
+        if (isNowInWindow(now, docReviewWindow)) {
+            return ApplicationProgressStep.DOC_REVIEWING;
+        }
+        if (docResultAt != null && now.isBefore(docResultAt)) {
+            return ApplicationProgressStep.DOC_REVIEWING;
+        }
+
+        // 3) 서류 결과 발표 이후 ~ 면접 시작 전
+        Instant interviewStart = (interviewWindow == null) ? null : interviewWindow.getStartsAt();
+        if (docResultAt != null && !now.isBefore(docResultAt)) {
+            if (interviewStart == null || now.isBefore(interviewStart)) {
+                return ApplicationProgressStep.DOC_RESULT_PUBLISHED;
+            }
+        }
+
+        // 4) 면접 진행
+        if (isNowInWindow(now, interviewWindow)) {
+            return ApplicationProgressStep.INTERVIEW_WAITING;
+        }
+
+        // 5) 최종 평가 중
+        if (isNowInWindow(now, finalReviewWindow)) {
+            return ApplicationProgressStep.FINAL_REVIEWING;
+        }
+        Instant interviewEnd = (interviewWindow == null) ? null : interviewWindow.getEndsAt();
+        if (finalResultAt != null) {
+            if (interviewEnd != null && now.isAfter(interviewEnd) && now.isBefore(finalResultAt)) {
+                return ApplicationProgressStep.FINAL_REVIEWING;
+            }
+        }
+
+        // 6) 최종 결과 발표 이후
+        if (finalResultAt != null && !now.isBefore(finalResultAt)) {
+            return ApplicationProgressStep.FINAL_RESULT_PUBLISHED;
+        }
+
+        return ApplicationProgressStep.RECRUITMENT_UPCOMING;
+    }
+
+    private RecruitmentDashboardInfo.ProgressStepInfo toStepForAdminDashboard(
+        ApplicationProgressStep step,
+        String label,
+        ApplicationProgressStep currentStep
+    ) {
+
+        if (currentStep == ApplicationProgressStep.RECRUITMENT_UPCOMING) {
+            return new RecruitmentDashboardInfo.ProgressStepInfo(
+                step.name(),
+                label,
+                false, // done
+                false  // active
+            );
+        }
+
+        int stepOrder = orderOf(step);
+        int currentOrder = orderOf(currentStep);
+
+        boolean active = step == currentStep;
+        boolean done = stepOrder < currentOrder;
+
+        return new RecruitmentDashboardInfo.ProgressStepInfo(step.name(), label, done, active);
+    }
+
+    private int orderOf(ApplicationProgressStep step) {
+        if (step == null) {
+            return 0;
+        }
+
+        return switch (step) {
+            case RECRUITMENT_UPCOMING -> 1; // 모집 시작 전
+            case APPLY_OPEN -> 2;           // 지원 기간 중
+            case DOC_REVIEWING -> 3;
+            case DOC_RESULT_PUBLISHED -> 4;
+            case INTERVIEW_WAITING -> 5;
+            case FINAL_REVIEWING -> 6;
+            case FINAL_RESULT_PUBLISHED -> 7;
+            default -> 0;
+        };
+    }
+
+
+    private static record NoticeComputedForAdminDashboard(
+        ApplicationProgressNoticeType noticeType,
+        LocalDate noticeDate
+    ) {
+        static NoticeComputedForAdminDashboard ofDate(ApplicationProgressNoticeType type, Instant utcInstant) {
+            if (type == null || utcInstant == null) {
+                return new NoticeComputedForAdminDashboard(null, null);
+            }
+            return new NoticeComputedForAdminDashboard(type, LocalDate.ofInstant(utcInstant, ZoneId.of("Asia/Seoul")));
+        }
+    }
+
+    private NoticeComputedForAdminDashboard computeNoticeForAdmin(
+        Instant now,
+        ApplicationProgressStep step,
+        Instant applyStart,
+        Instant applyEnd,
+        Instant docResultAt,
+        Instant finalResultAt
+    ) {
+        if (step == ApplicationProgressStep.FINAL_RESULT_PUBLISHED) {
+            return new NoticeComputedForAdminDashboard(null, null);
+        }
+
+        // 모집 시작 전: 시작 예정일
+        if (step == ApplicationProgressStep.RECRUITMENT_UPCOMING) {
+            return NoticeComputedForAdminDashboard.ofDate(ApplicationProgressNoticeType.APPLY_START_ANNOUNCE,
+                applyStart);
+        }
+
+        // 지원 기간 중: 마감 예정일
+        if (step == ApplicationProgressStep.APPLY_OPEN) {
+            return NoticeComputedForAdminDashboard.ofDate(ApplicationProgressNoticeType.APPLY_DEADLINE, applyEnd);
+        }
+
+        if (step == ApplicationProgressStep.DOC_REVIEWING) {
+            return NoticeComputedForAdminDashboard.ofDate(ApplicationProgressNoticeType.DOC_RESULT_ANNOUNCE,
+                docResultAt);
+        }
+
+        return NoticeComputedForAdminDashboard.ofDate(ApplicationProgressNoticeType.FINAL_RESULT_ANNOUNCE,
+            finalResultAt);
+    }
+
+    private Instant pickAt(RecruitmentSchedule atSchedule) {
+        return (atSchedule == null) ? null : atSchedule.getStartsAt();
+    }
+
+    private RecruitmentDashboardInfo.ApplicationStatusInfo buildApplicationStatus(Long recruitmentId) {
+        long totalApplicantsLong = loadApplicationPort.countByRecruitmentId(recruitmentId);
+        int totalApplicants = safeToInt(totalApplicantsLong);
+
+        List<ChallengerPart> openParts = loadRecruitmentPartPort.findOpenPartsByRecruitmentId(recruitmentId);
+        if (openParts == null) {
+            log.warn("[RecruitmentDashboard] openParts is null. recruitmentId={}", recruitmentId);
+            openParts = List.of();
+        }
+
+        List<RecruitmentDashboardInfo.PartApplicantCountInfo> partCounts = openParts.stream()
+            .map(part -> {
+                long countLong = loadApplicationPort.countByRecruitmentIdAndFirstPreferredPart(
+                    recruitmentId,
+                    PartOption.valueOf(part.name())
+                );
+                return new RecruitmentDashboardInfo.PartApplicantCountInfo(part, safeToInt(countLong));
+            })
+            .toList();
+
+        return new RecruitmentDashboardInfo.ApplicationStatusInfo(totalApplicants, partCounts);
+    }
+
+    private int safeToInt(long v) {
+        if (v <= 0L) {
+            return 0;
+        }
+        if (v > Integer.MAX_VALUE) {
+            log.warn("[RecruitmentDashboard] count overflow. value={}", v);
+            return Integer.MAX_VALUE;
+        }
+        return (int) v;
+    }
+
+    private RecruitmentDashboardInfo.EvaluationStatusInfo buildEvaluationStatus(
+        Long evaluatorUserId,
+        Long recruitmentId,
+        Instant now,
+        RecruitmentDashboardInfo.ProgressInfo progress
+    ) {
+        if (evaluatorUserId == null) {
+            log.warn("[RecruitmentDashboard] evaluatorUserId is null. recruitmentId={}", recruitmentId);
+            // 안전하게 0/0 내려줌
+            RecruitmentDashboardInfo.EvaluationProgressInfo zero =
+                new RecruitmentDashboardInfo.EvaluationProgressInfo(0, 0, 0);
+            return new RecruitmentDashboardInfo.EvaluationStatusInfo(zero, zero, List.of());
+        }
+
+        // 0) 모집의 전체 지원서 id들 (모수)
+        List<ApplicationIdWithFormResponseId> allApps =
+            loadApplicationPort.findApplicationIdsWithFormResponseIdsByRecruitment(recruitmentId);
+
+        if (allApps == null) {
+            log.warn("[RecruitmentDashboard] allApps is null. recruitmentId={}", recruitmentId);
+            allApps = List.of();
+        }
+
+        Set<Long> allApplicationIds = allApps.stream()
+            .map(ApplicationIdWithFormResponseId::applicationId)
+            .filter(java.util.Objects::nonNull)
+            .collect(java.util.stream.Collectors.toSet());
+
+        // 1) 서류 평가 진행률
+        Set<Long> docCompletedAppIds = loadEvaluationPort.findApplicationIdsWithEvaluations(
+            allApplicationIds,
+            evaluatorUserId,
+            EvaluationStage.DOCUMENT
+        );
+        if (docCompletedAppIds == null) {
+            log.warn("[RecruitmentDashboard] docCompletedAppIds is null. recruitmentId={}, evaluatorUserId={}",
+                recruitmentId, evaluatorUserId);
+            docCompletedAppIds = Set.of();
+        }
+
+        RecruitmentDashboardInfo.EvaluationProgressInfo documentEvaluation =
+            toProgressInfo(allApplicationIds.size(), docCompletedAppIds.size());
+
+        // 2) 면접 평가 진행률: "면접 대상"만 모수로 잡기 (DOC_PASSED 이상만)
+        final List<Application> appEntities =
+            java.util.Optional.ofNullable(loadApplicationListPort.findByRecruitmentId(recruitmentId))
+                .orElseGet(List::of);
+
+        Set<Long> interviewTargetIds = appEntities.stream()
+            .filter(a -> a != null && a.getId() != null && isInterviewTarget(a.getStatus()))
+            .map(Application::getId)
+            .collect(java.util.stream.Collectors.toSet());
+
+        Set<Long> interviewCompletedAppIds = loadEvaluationPort.findApplicationIdsWithEvaluations(
+            interviewTargetIds,
+            evaluatorUserId,
+            EvaluationStage.INTERVIEW
+        );
+        if (interviewCompletedAppIds == null) {
+            log.warn("[RecruitmentDashboard] interviewCompletedAppIds is null. recruitmentId={}, evaluatorUserId={}",
+                recruitmentId, evaluatorUserId);
+            interviewCompletedAppIds = Set.of();
+        }
+
+        RecruitmentDashboardInfo.EvaluationProgressInfo interviewEvaluation =
+            toProgressInfo(interviewTargetIds.size(), interviewCompletedAppIds.size());
+
+        // 3) 파트별 진행현황 (OPEN 파트 기준, 1지망 모수)
+        List<ChallengerPart> openParts = loadRecruitmentPartPort.findOpenPartsByRecruitmentId(recruitmentId);
+        if (openParts == null) {
+            log.warn("[RecruitmentDashboard] openParts is null. recruitmentId={}", recruitmentId);
+            openParts = List.of();
+        }
+
+        List<RecruitmentDashboardInfo.PartEvaluationStatusInfo> partStatuses = openParts.stream()
+            .map(part -> {
+                // 1지망이 해당 part인 application ids
+                List<ApplicationIdWithFormResponseId> partApps =
+                    loadApplicationPort.findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+                        recruitmentId,
+                        PartOption.valueOf(part.name())
+                    );
+
+                if (partApps == null) {
+                    log.warn("[RecruitmentDashboard] partApps is null. recruitmentId={}, part={}", recruitmentId, part);
+                    partApps = List.of();
+                }
+
+                Set<Long> partAppIds = partApps.stream()
+                    .map(ApplicationIdWithFormResponseId::applicationId)
+                    .filter(java.util.Objects::nonNull)
+                    .collect(java.util.stream.Collectors.toSet());
+
+                // doc completed in this part
+                Set<Long> partDocCompleted = loadEvaluationPort.findApplicationIdsWithEvaluations(
+                    partAppIds,
+                    evaluatorUserId,
+                    EvaluationStage.DOCUMENT
+                );
+                if (partDocCompleted == null) {
+                    log.warn(
+                        "[RecruitmentDashboard] partDocCompleted is null. recruitmentId={}, part={}, evaluatorUserId={}",
+                        recruitmentId, part, evaluatorUserId);
+                    partDocCompleted = Set.of();
+                }
+
+                // interview targets in this part (DOC_PASSED 이상만)
+                Set<Long> partInterviewTargets = appEntities.stream()
+                    .filter(a -> a != null && a.getId() != null)
+                    .filter(a -> partAppIds.contains(a.getId()))
+                    .filter(a -> isInterviewTarget(a.getStatus()))
+                    .map(Application::getId)
+                    .collect(java.util.stream.Collectors.toSet());
+
+                Set<Long> partInterviewCompleted = loadEvaluationPort.findApplicationIdsWithEvaluations(
+                    partInterviewTargets,
+                    evaluatorUserId,
+                    EvaluationStage.INTERVIEW
+                );
+                if (partInterviewCompleted == null) {
+                    log.warn(
+                        "[RecruitmentDashboard] partInterviewCompleted is null. recruitmentId={}, part={}, evaluatorUserId={}",
+                        recruitmentId, part, evaluatorUserId);
+                    partInterviewCompleted = Set.of();
+                }
+
+                EvalPhaseStatus docStatus = toPhaseStatus(partAppIds.size(), partDocCompleted.size());
+                EvalPhaseStatus interviewStatus = toPhaseStatus(partInterviewTargets.size(),
+                    partInterviewCompleted.size());
+
+                return new RecruitmentDashboardInfo.PartEvaluationStatusInfo(part, docStatus, interviewStatus);
+            })
+            .toList();
+
+        return new RecruitmentDashboardInfo.EvaluationStatusInfo(
+            documentEvaluation,
+            interviewEvaluation,
+            partStatuses
+        );
+    }
+
+    /**
+     * 면접 평가 "모수"로 잡을 지원서 상태 판별 - DOC_PASSED 이상만 면접/최종 트랙
+     */
+    private boolean isInterviewTarget(ApplicationStatus status) {
+        if (status == null) {
+            return false;
+        }
+
+        return switch (status) {
+            case DOC_PASSED,
+                 INTERVIEW_SCHEDULED,
+                 INTERVIEW_PASSED,
+                 INTERVIEW_FAILED,
+                 FINAL_ACCEPTED,
+                 FINAL_REJECTED -> true;
+            default -> false;
+        };
+    }
+
+    private RecruitmentDashboardInfo.EvaluationProgressInfo toProgressInfo(int total, int completed) {
+        int safeTotal = Math.max(total, 0);
+        int safeCompleted = Math.max(completed, 0);
+
+        int rate = (safeTotal == 0) ? 0 : (safeCompleted * 100 / safeTotal);
+
+        return new RecruitmentDashboardInfo.EvaluationProgressInfo(rate, safeCompleted, safeTotal);
+    }
+
+    private EvalPhaseStatus toPhaseStatus(int total, int completed) {
+        int t = Math.max(total, 0);
+        int c = Math.max(completed, 0);
+
+        if (t == 0) {
+            return EvalPhaseStatus.NOT_STARTED;
+        }
+        if (c <= 0) {
+            return EvalPhaseStatus.NOT_STARTED;
+        }
+        if (c >= t) {
+            return EvalPhaseStatus.COMPLETED;
+        }
+        return EvalPhaseStatus.IN_PROGRESS;
+    }
+
+    private LocalDate toKstLocalDate(Instant instant) {
+        return instant.atZone(ZoneId.of("Asia/Seoul")).toLocalDate();
+    }
+
+    private record DashboardSchedules(
+        RecruitmentSchedule applyWindow,
+        RecruitmentSchedule docReviewWindow,
+        RecruitmentSchedule docResultAt,
+        RecruitmentSchedule interviewWindow,
+        RecruitmentSchedule finalReviewWindow,
+        RecruitmentSchedule finalResultAt
+    ) {
+    }
+
+    // 운영진 대시보드용 private 메소드 종료
 
     @Override
     public MyApplicationListInfo get(GetMyApplicationListQuery query) {
@@ -915,13 +1668,6 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         return !now.isBefore(s.getStartsAt()) && now.isBefore(s.getEndsAt());
     }
 
-    private Instant pickAt(RecruitmentSchedule s) {
-        if (s == null) {
-            return null;
-        }
-        return (s.getStartsAt() != null) ? s.getStartsAt() : s.getEndsAt();
-    }
-
     private int compareInstantDesc(Instant a, Instant b) {
         if (a == null && b == null) {
             return 0;
@@ -961,6 +1707,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
             case INTERVIEW_WAITING -> 4;
             case FINAL_REVIEWING -> 5;
             case FINAL_RESULT_PUBLISHED -> 6;
+            default -> 0;
         };
     }
 
