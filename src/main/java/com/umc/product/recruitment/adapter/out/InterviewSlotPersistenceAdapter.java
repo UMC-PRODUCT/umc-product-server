@@ -3,7 +3,9 @@ package com.umc.product.recruitment.adapter.out;
 import com.umc.product.recruitment.application.port.out.LoadInterviewSlotPort;
 import com.umc.product.recruitment.application.port.out.SaveInterviewSlotPort;
 import com.umc.product.recruitment.domain.InterviewSlot;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,4 +28,20 @@ public class InterviewSlotPersistenceAdapter implements LoadInterviewSlotPort, S
         interviewSlotJpaRepository.saveAll(slots);
     }
 
+    @Override
+    public List<InterviewSlot> findByRecruitmentIdAndStartsAtBetween(
+        Long recruitmentId,
+        Instant startsAtInclusive,
+        Instant startsAtExclusive
+    ) {
+        return interviewSlotJpaRepository
+            .findByRecruitmentIdAndStartsAtGreaterThanEqualAndStartsAtLessThanOrderByStartsAtAsc(
+                recruitmentId, startsAtInclusive, startsAtExclusive
+            );
+    }
+
+    @Override
+    public Optional<InterviewSlot> findById(Long slotId) {
+        return interviewSlotJpaRepository.findById(slotId);
+    }
 }

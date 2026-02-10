@@ -1,5 +1,6 @@
 package com.umc.product.recruitment.adapter.out;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.SaveRecruitmentPartPort;
 import com.umc.product.recruitment.domain.RecruitmentPart;
@@ -37,5 +38,15 @@ public class RecruitmentPartPersistenceAdapter implements SaveRecruitmentPartPor
     @Override
     public List<RecruitmentPart> findByRecruitmentIdAndStatus(Long recruitmentId, RecruitmentPartStatus status) {
         return recruitmentPartRepository.findByRecruitmentIdAndStatus(recruitmentId, status);
+    }
+
+    @Override
+    public List<ChallengerPart> findOpenPartsByRecruitmentId(Long recruitmentId) {
+        return recruitmentPartRepository
+            .findAllByRecruitmentIdAndStatus(recruitmentId, RecruitmentPartStatus.OPEN)
+            .stream()
+            .map(rp -> rp.getPart())
+            .distinct()
+            .toList();
     }
 }

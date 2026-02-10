@@ -4,6 +4,8 @@ import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.recruitment.domain.QApplication.application;
 import static com.umc.product.recruitment.domain.QApplicationPartPreference.applicationPartPreference;
 import static com.umc.product.recruitment.domain.QEvaluation.evaluation;
+import static com.umc.product.recruitment.domain.QInterviewAssignment.interviewAssignment;
+import static com.umc.product.recruitment.domain.QInterviewSlot.interviewSlot;
 import static com.umc.product.recruitment.domain.QRecruitment.recruitment;
 import static com.umc.product.recruitment.domain.QRecruitmentPart.recruitmentPart;
 import static com.umc.product.survey.domain.QFormResponse.formResponse;
@@ -19,18 +21,25 @@ import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAlreadyScheduledApplicantRow;
+import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAvailableApplicantRow;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
+import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
+import com.umc.product.recruitment.domain.QApplicationPartPreference;
+import com.umc.product.recruitment.domain.QRecruitmentPart;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.enums.EvaluationStatus;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -260,8 +269,8 @@ public class ApplicationQueryRepository {
         List<DocumentSelectionListItemProjection> content = queryFactory
             .select(Projections.constructor(DocumentSelectionListItemProjection.class,
                 application.id,
-                member.name,
                 member.nickname,
+                member.name,
                 application.status
             ))
             .from(application)
@@ -352,6 +361,183 @@ public class ApplicationQueryRepository {
                 return avg == null ? null : BigDecimal.valueOf(avg).setScale(1, RoundingMode.HALF_UP);
             }
         ));
+    }
+
+    public Map<Long, Double> findAvgDocumentScoresByApplicationIds(Set<Long> applicationIds) {
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        // (applicationId, avgScore)
+        java.util.List<Tuple> rows = queryFactory
+            .select(evaluation.application.id, evaluation.score.avg())
+            .from(evaluation)
+            .where(
+                evaluation.application.id.in(applicationIds),
+                evaluation.stage.eq(EvaluationStage.DOCUMENT),
+                evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                evaluation.score.isNotNull()
+            )
+            .groupBy(evaluation.application.id)
+            .fetch();
+
+        return rows.stream()
+            .collect(Collectors.toMap(
+                t -> t.get(evaluation.application.id),
+                t -> {
+                    Double avg = t.get(evaluation.score.avg());
+                    if (avg == null) {
+                        return null;
+                    }
+                    return BigDecimal.valueOf(avg)
+                        .setScale(1, RoundingMode.HALF_UP)
+                        .doubleValue();
+                }
+            ));
+    }
+
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRecruitment(
+        Long recruitmentId
+    ) {
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                application.status.eq(ApplicationStatus.DOC_PASSED)
+            )
+            .fetch();
+    }
+
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+        Long recruitmentId,
+        PartOption partOption
+    ) {
+        ChallengerPart part = ChallengerPart.valueOf(partOption.name());
+
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                application.status.eq(ApplicationStatus.DOC_PASSED),
+                recruitmentPart.part.eq(part)
+            )
+            .fetch();
+    }
+
+    public List<InterviewSchedulingAvailableApplicantRow> findAvailableRows(
+        Long recruitmentId,
+        Set<Long> availableAppIds,
+        PartOption requestedPart,
+        String keyword
+    ) {
+        if (availableAppIds == null || availableAppIds.isEmpty()) {
+            return List.of();
+        }
+
+        QApplicationPartPreference pref1 = new QApplicationPartPreference("pref1");
+        QApplicationPartPreference pref2 = new QApplicationPartPreference("pref2");
+        QRecruitmentPart rp1 = new QRecruitmentPart("rp1");
+        QRecruitmentPart rp2 = new QRecruitmentPart("rp2");
+
+        ChallengerPart filterPart = toFilterPart(requestedPart);
+
+        return queryFactory
+            .select(Projections.constructor(
+                InterviewSchedulingAvailableApplicantRow.class,
+                application.id,
+                member.nickname,
+                member.name,
+                rp1.part,
+                rp2.part
+            ))
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+
+            .leftJoin(pref1).on(pref1.application.eq(application), pref1.priority.eq(1))
+            .leftJoin(pref1.recruitmentPart, rp1)
+
+            .leftJoin(pref2).on(pref2.application.eq(application), pref2.priority.eq(2))
+            .leftJoin(pref2.recruitmentPart, rp2)
+
+            .where(
+                application.id.in(availableAppIds),
+                keywordContains(keyword),
+                filterPart == null ? null : rp1.part.eq(filterPart)
+            )
+            .orderBy(application.createdAt.asc())
+            .fetch();
+    }
+
+    public List<InterviewSchedulingAlreadyScheduledApplicantRow> findAlreadyScheduledRows(
+        Long recruitmentId,
+        Long slotId,
+        Set<Long> alreadyScheduledAppIds,
+        PartOption requestedPart,
+        String keyword
+    ) {
+        if (alreadyScheduledAppIds == null || alreadyScheduledAppIds.isEmpty()) {
+            return List.of();
+        }
+
+        QApplicationPartPreference pref1 = new QApplicationPartPreference("pref1");
+        QApplicationPartPreference pref2 = new QApplicationPartPreference("pref2");
+        QRecruitmentPart rp1 = new QRecruitmentPart("rp1");
+        QRecruitmentPart rp2 = new QRecruitmentPart("rp2");
+
+        ChallengerPart filterPart = toFilterPart(requestedPart);
+
+        return queryFactory
+            .select(Projections.constructor(
+                InterviewSchedulingAlreadyScheduledApplicantRow.class,
+                interviewAssignment.application.id,
+                interviewAssignment.id,
+                member.nickname,
+                member.name,
+                rp1.part,
+                rp2.part,
+                interviewSlot.startsAt,
+                interviewSlot.endsAt
+            ))
+            .from(interviewAssignment)
+            .join(interviewAssignment.slot, interviewSlot)
+            .join(interviewAssignment.application, application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+
+            .leftJoin(pref1).on(pref1.application.eq(application), pref1.priority.eq(1))
+            .leftJoin(pref1.recruitmentPart, rp1)
+
+            .leftJoin(pref2).on(pref2.application.eq(application), pref2.priority.eq(2))
+            .leftJoin(pref2.recruitmentPart, rp2)
+
+            .where(
+                interviewAssignment.recruitment.id.eq(recruitmentId),
+                interviewAssignment.slot.id.ne(slotId), // "다른 슬롯"만
+                interviewAssignment.application.id.in(alreadyScheduledAppIds),
+                keywordContains(keyword),
+                filterPart == null ? null : rp1.part.eq(filterPart)
+            )
+            .orderBy(interviewAssignment.createdAt.asc())
+            .fetch();
+    }
+
+    private ChallengerPart toFilterPart(PartOption requestedPart) {
+        if (requestedPart == null || requestedPart == PartOption.ALL) {
+            return null;
+        }
+        return ChallengerPart.valueOf(requestedPart.name());
     }
 
     // ========================================================================
@@ -518,4 +704,65 @@ public class ApplicationQueryRepository {
         };
     }
 
+
+    public long countByRecruitmentId(Long recruitmentId) {
+        return queryFactory
+            .select(application.count())
+            .from(application)
+            .where(belongsToRecruitment(recruitmentId))
+            .fetchOne();
+    }
+
+    public long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, ChallengerPart part) {
+        Long count = queryFactory
+            .select(application.countDistinct())
+            .from(application)
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                recruitmentPart.part.eq(part)
+            )
+            .fetchOne();
+        return count != null ? count : 0L;
+    }
+
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitment(
+        Long recruitmentId) {
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .where(belongsToRecruitment(recruitmentId))
+            .fetch();
+    }
+
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+        Long recruitmentId,
+        PartOption partOption
+    ) {
+        ChallengerPart part = ChallengerPart.valueOf(partOption.name());
+
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                recruitmentPart.part.eq(part)
+            )
+            .fetch();
+    }
 }

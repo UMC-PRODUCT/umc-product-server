@@ -38,4 +38,11 @@ public class InterviewAssignment extends BaseEntity {
     @JoinColumn(name = "slot_id", nullable = false)
     private InterviewSlot slot;
 
+    public static InterviewAssignment create(Recruitment recruitment, Application application, InterviewSlot slot) {
+        return InterviewAssignment.builder()
+            .recruitment(recruitment)
+            .application(application)
+            .slot(slot)
+            .build();
+    }
 }

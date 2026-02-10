@@ -132,7 +132,10 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
 
         Long recruitmentId = query.recruitmentId();
         String keyword = query.keyword();
-        String part = query.part();
+
+        PartOption requestedPart = (query.part() != null) ? query.part() : PartOption.ALL;
+        String part = requestedPart.getCode();
+
         Long evaluatorId = query.requesterMemberId();
         Pageable pageable = PageRequest.of(query.page(), query.size());
 
