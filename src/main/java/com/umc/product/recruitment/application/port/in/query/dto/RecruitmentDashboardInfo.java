@@ -1,6 +1,7 @@
 package com.umc.product.recruitment.application.port.in.query.dto;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.recruitment.domain.enums.EvalPhaseStatus;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -16,15 +17,14 @@ public record RecruitmentDashboardInfo(
         String phaseTitle,
         Integer dDay,
         DateRangeInfo dateRange,
-        TodayInterviewInfo todayInterview
+        List<TodayInterviewInfo> todayInterviews
     ) {
     }
 
     public record TodayInterviewInfo(
         LocalTime interviewTime,
         String nickName,
-        String name,
-        String message
+        String name
     ) {
     }
 
@@ -34,7 +34,8 @@ public record RecruitmentDashboardInfo(
     public record ProgressInfo(
         String currentStep,
         List<ProgressStepInfo> steps,
-        LocalDate documentResultAnnounceAt
+        ApplicationProgressNoticeType noticeType,
+        LocalDate noticeDate
     ) {
     }
 
@@ -74,8 +75,8 @@ public record RecruitmentDashboardInfo(
 
     public record PartEvaluationStatusInfo(
         ChallengerPart part,
-        String documentStatusText,
-        String interviewStatusText
+        EvalPhaseStatus documentStatus,
+        EvalPhaseStatus interviewStatus
     ) {
     }
 }

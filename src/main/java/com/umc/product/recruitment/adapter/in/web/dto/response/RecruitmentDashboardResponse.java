@@ -1,7 +1,9 @@
 package com.umc.product.recruitment.adapter.in.web.dto.response;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.recruitment.application.port.in.query.dto.ApplicationProgressNoticeType;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentDashboardInfo;
+import com.umc.product.recruitment.domain.enums.EvalPhaseStatus;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -27,14 +29,14 @@ public record RecruitmentDashboardResponse(
         String phaseTitle,
         Integer dDay,
         DateRangeResponse dateRange,
-        TodayInterviewResponse todayInterview
+        List<TodayInterviewResponse> todayInterviews
     ) {
         public static ScheduleSummaryResponse from(RecruitmentDashboardInfo.ScheduleSummaryInfo info) {
             return new ScheduleSummaryResponse(
                 info.phaseTitle(),
                 info.dDay(),
                 DateRangeResponse.from(info.dateRange()),
-                TodayInterviewResponse.from(info.todayInterview())
+                info.todayInterviews().stream().map(TodayInterviewResponse::from).toList()
             );
         }
     }
@@ -42,15 +44,13 @@ public record RecruitmentDashboardResponse(
     public record TodayInterviewResponse(
         LocalTime interviewTime,
         String nickName,
-        String name,
-        String message // "면접 진행 기간이 아닙니다."
+        String name
     ) {
         public static TodayInterviewResponse from(RecruitmentDashboardInfo.TodayInterviewInfo info) {
             return new TodayInterviewResponse(
                 info.interviewTime(),
                 info.nickName(),
-                info.name(),
-                info.message()
+                info.name()
             );
         }
     }
@@ -62,15 +62,17 @@ public record RecruitmentDashboardResponse(
     }
 
     public record ProgressResponse(
-        String currentStep, // "DOCUMENT_REVIEW" ...
-        List<ProgressStepResponse> steps, // ["10기 모집","서류 평가",...]
-        LocalDate resultAnnounceAt
+        String currentStep,
+        List<ProgressStepResponse> steps,
+        ApplicationProgressNoticeType noticeType,
+        LocalDate noticeDate
     ) {
         public static ProgressResponse from(RecruitmentDashboardInfo.ProgressInfo info) {
             return new ProgressResponse(
                 info.currentStep(),
                 info.steps().stream().map(ProgressStepResponse::from).toList(),
-                info.documentResultAnnounceAt()
+                info.noticeType(),
+                info.noticeDate()
             );
         }
     }
@@ -133,14 +135,14 @@ public record RecruitmentDashboardResponse(
 
     public record PartEvaluationStatusResponse(
         ChallengerPart part,
-        String documentStatusText, // 예: "서류 평가 완료", "서류 평가 진행 중"
-        String interviewStatusText // 예: "면접 평가 전", "면접 평가 진행 중", "면접 평가 완료"
+        EvalPhaseStatus documentStatus,
+        EvalPhaseStatus interviewStatus
     ) {
         public static PartEvaluationStatusResponse from(RecruitmentDashboardInfo.PartEvaluationStatusInfo info) {
             return new PartEvaluationStatusResponse(
                 info.part(),
-                info.documentStatusText(),
-                info.interviewStatusText()
+                info.documentStatus(),
+                info.interviewStatus()
             );
         }
     }
