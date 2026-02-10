@@ -91,11 +91,12 @@ public class AttendanceSheet extends BaseEntity {
         boolean requiresApproval
     ) {
         // 출석 인정 시간: 시작 10분 전 ~ 시작 후 10분 (총 20분)
+        // lateThreshold = 20분으로 설정하여 윈도우 내 모든 시간을 출석으로 처리
         AttendanceWindow window = AttendanceWindow.of(
             scheduleStartsAt,   // 기준 시간
             10,                 // 10분 전부터
             10,                 // 10분 후까지
-            0                   // lateThreshold 미사용 (윈도우 내는 모두 출석)
+            20                  // 윈도우 전체 길이 (윈도우 내는 모두 출석)
         );
 
         return AttendanceSheet.builder()
