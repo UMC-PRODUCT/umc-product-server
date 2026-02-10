@@ -36,14 +36,16 @@ public class MemberQueryService implements GetMemberUseCase {
     public MemberInfo getById(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
             .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
-        return MemberInfo.from(member);
-    }
 
-    @Override
-    public MemberInfo getByEmail(String email) {
-        Member member = loadMemberPort.findByEmail(email)
-            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
-        return MemberInfo.from(member);
+        String schoolName = getSchoolUseCase.getSchoolDetail(member.getSchoolId()).schoolName();
+
+        String profileImageId = member.getProfileImageId();
+        String profileImageLink =
+            profileImageId == null
+                ? null
+                : getFileUseCase.getById(member.getProfileImageId()).fileLink();
+
+        return MemberInfo.from(member, schoolName, profileImageLink);
     }
 
     @Override

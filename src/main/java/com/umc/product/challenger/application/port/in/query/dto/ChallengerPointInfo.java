@@ -1,6 +1,8 @@
 package com.umc.product.challenger.application.port.in.query.dto;
 
+import com.umc.product.challenger.domain.ChallengerPoint;
 import com.umc.product.challenger.domain.enums.PointType;
+import lombok.Builder;
 
 /**
  * 챌린저에게 부여된 상벌점에 대한 정보를 나타냅니다.
@@ -11,10 +13,20 @@ import com.umc.product.challenger.domain.enums.PointType;
  * @param pointType   상벌점 유형
  * @param description 상벌점에 대한 설명
  */
+@Builder
 public record ChallengerPointInfo(
-        Long id,
-        PointType pointType,
-        Double point,
-        String description
+    Long id,
+    PointType pointType,
+    Double point,
+    String description
 ) {
+    public static ChallengerPointInfo from(ChallengerPoint challengerPoint) {
+
+        return ChallengerPointInfo.builder()
+            .id(challengerPoint.getId())
+            .pointType(challengerPoint.getType())
+            .point(challengerPoint.getPointValue())
+            .description(challengerPoint.getDescription())
+            .build();
+    }
 }

@@ -1,5 +1,6 @@
 package com.umc.product.challenger.application.service;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerPointUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
@@ -22,11 +23,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class ChallengerQueryService implements GetChallengerUseCase {
 
     private final LoadChallengerPort loadChallengerPort;
+    private final GetChallengerPointUseCase getChallengerPointUseCase;
 
     @Override
     public ChallengerInfo getChallengerPublicInfo(Long challengerId) {
         Challenger challenger = loadChallengerPort.getById(challengerId);
-        return ChallengerInfo.from(challenger);
+
+        return ChallengerInfo.from(challenger, getChallengerPointUseCase.getListByChallengerId(challengerId));
     }
 
     @Override
