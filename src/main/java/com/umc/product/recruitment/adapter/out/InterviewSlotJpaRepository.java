@@ -15,4 +15,5 @@ public interface InterviewSlotJpaRepository extends JpaRepository<InterviewSlot,
         Instant endExclusive
     );
 
+    void deleteAllByRecruitmentId(Long recruitmentId);
 }

@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface InterviewAssignmentJpaRepository extends JpaRepository<InterviewAssignment, Long> {
     boolean existsByRecruitment_IdAndApplication_Id(Long recruitmentId, Long applicationId);
+    void deleteAllByRecruitmentId(Long recruitmentId);
 
     @Query("""
             select distinct ia

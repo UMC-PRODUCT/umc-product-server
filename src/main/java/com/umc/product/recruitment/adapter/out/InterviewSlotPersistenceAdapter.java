@@ -4,6 +4,7 @@ import com.umc.product.recruitment.application.port.out.LoadInterviewSlotPort;
 import com.umc.product.recruitment.application.port.out.SaveInterviewSlotPort;
 import com.umc.product.recruitment.domain.InterviewSlot;
 import java.time.Instant;
+import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Transactional
 public class InterviewSlotPersistenceAdapter implements LoadInterviewSlotPort, SaveInterviewSlotPort {
 
     private final InterviewSlotJpaRepository interviewSlotJpaRepository;
@@ -44,4 +46,10 @@ public class InterviewSlotPersistenceAdapter implements LoadInterviewSlotPort, S
     public Optional<InterviewSlot> findById(Long slotId) {
         return interviewSlotJpaRepository.findById(slotId);
     }
+
+    @Override
+    public void deleteAllByRecruitmentId(Long recruitmentId) {
+        interviewSlotJpaRepository.deleteAllByRecruitmentId(recruitmentId);
+    }
+
 }
