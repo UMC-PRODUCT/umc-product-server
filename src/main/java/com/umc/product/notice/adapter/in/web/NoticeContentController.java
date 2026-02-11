@@ -37,7 +37,7 @@ public class NoticeContentController implements NoticeContentApi {
     // 공지사항에 이미지 추가
     @PostMapping("/{noticeId}/images")
     public ApiResponse<AddNoticeImagesResponse> addNoticeImages(
-        @PathVariable Long noticeId,
+        @PathVariable("noticeId") Long noticeId,
         @RequestBody @Valid AddNoticeImagesRequest request) {
 
         List<Long> imageIds = manageNoticeContentUseCase.addImages(request.toCommand(), noticeId);
@@ -48,7 +48,7 @@ public class NoticeContentController implements NoticeContentApi {
     // 공지사항에 링크 추가
     @PostMapping("/{noticeId}/links")
     public ApiResponse<AddNoticeLinksResponse> addNoticeLinks(
-        @PathVariable Long noticeId,
+        @PathVariable("noticeId") Long noticeId,
         @RequestBody @Valid AddNoticeLinksRequest request) {
 
         List<Long> linkIds = manageNoticeContentUseCase.addLinks(request.toCommand(), noticeId);
@@ -59,7 +59,7 @@ public class NoticeContentController implements NoticeContentApi {
     // 공지사항에 투표 추가
     @PostMapping("/{noticeId}/votes")
     public ApiResponse<AddNoticeVotesResponse> addNoticeVotes(
-        @PathVariable Long noticeId,
+        @PathVariable("noticeId") Long noticeId,
         @RequestBody @Valid AddNoticeVotesRequest request) {
 
         List<Long> voteIds = manageNoticeContentUseCase.addVotes(request.toCommand(), noticeId);
@@ -70,7 +70,7 @@ public class NoticeContentController implements NoticeContentApi {
     // 공지사항 이미지 전체 수정
     @PatchMapping("/{noticeId}/images")
     public void replaceNoticeImages(
-        @PathVariable Long noticeId,
+        @PathVariable("noticeId") Long noticeId,
         @RequestBody @Valid ReplaceNoticeImagesRequest request) {
 
         manageNoticeContentUseCase.replaceImages(request.toCommand(), noticeId);
@@ -79,7 +79,7 @@ public class NoticeContentController implements NoticeContentApi {
     // 공지사항 링크 전체 수정
     @PatchMapping("/{noticeId}/links")
     public void replaceNoticeLinks(
-        @PathVariable Long noticeId,
+        @PathVariable("noticeId") Long noticeId,
         @RequestBody @Valid ReplaceNoticeLinksRequest request) {
 
         manageNoticeContentUseCase.replaceLinks(request.toCommand(), noticeId);
@@ -88,7 +88,7 @@ public class NoticeContentController implements NoticeContentApi {
     // 공지사항 투표 전체 수정
     @PatchMapping("/{noticeId}/votes")
     public void replaceNoticeVotes(
-        @PathVariable Long noticeId,
+        @PathVariable("noticeId") Long noticeId,
         @RequestBody @Valid ReplaceNoticeVotesRequest request) {
 
         manageNoticeContentUseCase.replaceVotes(request.toCommand(), noticeId);
