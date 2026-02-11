@@ -163,8 +163,9 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         // 모집에 속한 applicationId + formResponseId 조회 (formResponse 경유)
         // projection: (applicationId, formResponseId)
         List<ApplicationIdWithFormResponseId> apps = (requestedPart == PartOption.ALL)
-            ? loadApplicationPort.findApplicationIdsWithFormResponseIdsByRecruitment(recruitmentId)
-            : loadApplicationPort.findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(recruitmentId,
+            ? loadApplicationPort.findDocPassedApplicationIdsWithFormResponseIdsByRecruitment(recruitmentId)
+            : loadApplicationPort.findDocPassedApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
+                recruitmentId,
                 requestedPart);
 
         if (apps.isEmpty()) {
