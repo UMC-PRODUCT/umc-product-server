@@ -33,7 +33,7 @@ public interface NoticeContentApi {
     );
 
     @Operation(
-        summary = "첫 공지 생성 시 공지사항 이미지를 추가하는 API입니다. 공지사항 링크 추가"
+        summary = "첫 공지 생성 시 공지사항 링크를 추가하는 API입니다. "
     )
     ApiResponse<AddNoticeLinksResponse> addNoticeLinks(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
@@ -43,7 +43,7 @@ public interface NoticeContentApi {
     );
 
     @Operation(
-        summary = "첫 공지 생성 시 공지사항 이미지를 추가하는 API입니다. 공지사항 투표 추가",
+        summary = "첫 공지 생성 시 공지사항 투표를 추가하는 API입니다.",
         description = "투표 생성 API로 먼저 투표를 생성한 뒤, 받은 투표 ID를 전달하세요."
     )
     ApiResponse<AddNoticeVotesResponse> addNoticeVotes(
