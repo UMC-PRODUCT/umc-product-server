@@ -2,6 +2,7 @@ package com.umc.product.challenger.application.port.in.query.dto;
 
 import com.umc.product.challenger.domain.ChallengerPoint;
 import com.umc.product.challenger.domain.enums.PointType;
+import java.time.Instant;
 import lombok.Builder;
 
 /**
@@ -18,7 +19,8 @@ public record ChallengerPointInfo(
     Long id,
     PointType pointType,
     Double point,
-    String description
+    String description,
+    Instant createdAt
 ) {
     public static ChallengerPointInfo from(ChallengerPoint challengerPoint) {
 
@@ -27,6 +29,7 @@ public record ChallengerPointInfo(
             .pointType(challengerPoint.getType())
             .point(challengerPoint.getPointValue())
             .description(challengerPoint.getDescription())
+            .createdAt(challengerPoint.getCreatedAt())
             .build();
     }
 }

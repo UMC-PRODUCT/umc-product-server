@@ -5,10 +5,13 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointI
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import java.util.List;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Builder
 public record ChallengerInfoResponse(
     Long challengerId,
     Long memberId,
@@ -52,10 +55,10 @@ public record ChallengerInfoResponse(
         );
     }
 
-    /**
-     * ChallengerInfo와 Member 정보로부터 ChallengerInfoResponse 생성
-     */
+    @Deprecated
     public static ChallengerInfoResponse from(ChallengerInfo info, MemberInfo memberInfo) {
+        log.error("잘못된 기수 정보를 전달하고 있습니다.");
+
         return new ChallengerInfoResponse(
             info.challengerId(),
             info.memberId(),
@@ -71,5 +74,24 @@ public record ChallengerInfoResponse(
             memberInfo.profileImageLink(),
             memberInfo.status()
         );
+    }
+
+    public static ChallengerInfoResponse from(ChallengerInfo info, MemberInfo memberInfo, GisuInfo gisuInfo) {
+        return ChallengerInfoResponse.builder()
+            .challengerId(info.challengerId())
+            .memberId(info.memberId())
+            .gisu(gisuInfo.generation())
+            .part(info.part())
+            .challengerPoints(info.challengerPoints())
+
+            // Member 정보
+            .name(memberInfo.name())
+            .nickname(memberInfo.nickname())
+            .email(memberInfo.email())
+            .schoolId(memberInfo.schoolId())
+            .schoolName(memberInfo.schoolName())
+            .profileImageLink(memberInfo.profileImageLink())
+            .status(memberInfo.status())
+            .build();
     }
 }
