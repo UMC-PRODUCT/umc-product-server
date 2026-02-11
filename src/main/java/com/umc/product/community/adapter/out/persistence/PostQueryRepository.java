@@ -187,8 +187,8 @@ public class PostQueryRepository {
                 .select(commentJpaEntity.postId)
                 .from(commentJpaEntity)
                 .where(commentJpaEntity.challengerId.eq(challengerId))
-                .orderBy(commentJpaEntity.createdAt.desc())
                 .groupBy(commentJpaEntity.postId)
+                .orderBy(commentJpaEntity.createdAt.max().desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
