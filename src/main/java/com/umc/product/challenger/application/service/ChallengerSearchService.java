@@ -131,6 +131,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
                 challenger.getPart(),
                 profile.name(),
                 profile.nickname(),
+                profile.schoolName(),
                 pointSums.getOrDefault(challenger.getId(), 0.0),
                 profile.profileImageLink(),
                 roleTypes.getOrDefault(challenger.getId(), List.of())
