@@ -107,6 +107,32 @@ public class Post {
         this.category = category;
     }
 
+    public Post updateLightning(String title, String content, LightningInfo newLightningInfo) {
+        if (!isLightning()) {
+            throw new IllegalStateException("번개 게시글이 아닙니다.");
+        }
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException("제목은 필수입니다.");
+        }
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("내용은 필수입니다.");
+        }
+        if (newLightningInfo == null) {
+            throw new IllegalArgumentException("번개 정보는 필수입니다.");
+        }
+
+        return Post.builder()
+                .postId(this.postId)
+                .title(title)
+                .content(content)
+                .category(Category.LIGHTNING)
+                .authorChallengerId(this.authorChallengerId)
+                .lightningInfo(newLightningInfo)
+                .likeCount(this.likeCount)
+                .liked(this.liked)
+                .build();
+    }
+
     public record PostId(Long id) {
         public PostId {
             if (id <= 0) {

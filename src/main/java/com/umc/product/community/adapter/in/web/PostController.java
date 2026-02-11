@@ -2,12 +2,14 @@ package com.umc.product.community.adapter.in.web;
 
 import com.umc.product.community.adapter.in.web.dto.request.CreateLightningRequest;
 import com.umc.product.community.adapter.in.web.dto.request.CreatePostRequest;
+import com.umc.product.community.adapter.in.web.dto.request.UpdateLightningRequest;
 import com.umc.product.community.adapter.in.web.dto.request.UpdatePostRequest;
 import com.umc.product.community.adapter.in.web.dto.response.LikeResponse;
 import com.umc.product.community.adapter.in.web.dto.response.PostResponse;
 import com.umc.product.community.application.port.in.post.CreatePostUseCase;
 import com.umc.product.community.application.port.in.post.DeletePostUseCase;
 import com.umc.product.community.application.port.in.post.TogglePostLikeUseCase;
+import com.umc.product.community.application.port.in.post.UpdateLightningUseCase;
 import com.umc.product.community.application.port.in.post.UpdatePostUseCase;
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,6 +32,7 @@ public class PostController {
 
     private final CreatePostUseCase createPostUseCase;
     private final UpdatePostUseCase updatePostUseCase;
+    private final UpdateLightningUseCase updateLightningUseCase;
     private final DeletePostUseCase deletePostUseCase;
     private final TogglePostLikeUseCase togglePostLikeUseCase;
 
@@ -52,12 +55,21 @@ public class PostController {
     }
 
     @PatchMapping("/{postId}")
-    @Operation(summary = "게시글 수정", description = "게시글의 제목과 내용을 수정합니다.")
+    @Operation(summary = "일반 게시글 수정", description = "일반 게시글의 제목, 내용, 카테고리를 수정합니다.")
     public PostResponse updatePost(
             @PathVariable Long postId,
             @RequestBody UpdatePostRequest request
     ) {
         return PostResponse.from(updatePostUseCase.updatePost(request.toCommand(postId)));
+    }
+
+    @PatchMapping("/{postId}/lightning")
+    @Operation(summary = "번개글 수정", description = "번개 게시글의 제목, 내용, 모임 정보를 수정합니다.")
+    public PostResponse updateLightningPost(
+            @PathVariable Long postId,
+            @RequestBody UpdateLightningRequest request
+    ) {
+        return PostResponse.from(updateLightningUseCase.updateLightning(request.toCommand(postId)));
     }
 
     @DeleteMapping("/{postId}")
