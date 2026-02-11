@@ -45,17 +45,24 @@ public class FileQueryService implements GetFileUseCase {
         List<FileMetadata> metadataList = loadFileMetadataPort.findByFileIds(fileIds);
 
         return metadataList.stream()
-                .collect(Collectors.toMap(
-                        FileMetadata::getId,
-                        metadata -> storagePort.generateAccessUrl(
-                                metadata.getStorageKey(),
-                                ACCESS_URL_DURATION_MINUTES
-                        )
-                ));
+            .collect(Collectors.toMap(
+                FileMetadata::getId,
+                metadata -> storagePort.generateAccessUrl(
+                    metadata.getStorageKey(),
+                    ACCESS_URL_DURATION_MINUTES
+                )
+            ));
     }
 
     @Override
     public boolean existsById(String fileId) {
         return loadFileMetadataPort.existsByFileId(fileId);
+    }
+
+    @Override
+    public void throwIfNotExists(String fileId) {
+        if (!existsById(fileId)) {
+            throw new StorageException(StorageErrorCode.FILE_NOT_FOUND);
+        }
     }
 }
