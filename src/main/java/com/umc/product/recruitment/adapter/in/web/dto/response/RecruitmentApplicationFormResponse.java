@@ -134,9 +134,9 @@ public record RecruitmentApplicationFormResponse(
                 .findFirst()
                 .orElse(null);
 
-//            List<FormDefinitionInfo.QuestionInfo> normalCommon = commonQs.stream()
-//                .filter(q -> q.type() != QuestionType.SCHEDULE)
-//                .toList();
+            List<FormDefinitionInfo.QuestionInfo> normalCommon = commonQs.stream()
+                .filter(q -> q.type() != QuestionType.SCHEDULE)
+                .toList();
 
             // 스케줄
             ScheduleQuestionResponse schedule = (scheduleQ == null)
@@ -146,7 +146,7 @@ public record RecruitmentApplicationFormResponse(
 
             result.add(new FormPageResponse(
                 pageNo,
-                commonQs.stream().map(q -> QuestionResponse.from(q, preferredPartInfo)).toList(),
+                normalCommon.stream().map(q -> QuestionResponse.from(q, preferredPartInfo)).toList(),
                 schedule,
                 null
             ));
@@ -221,13 +221,13 @@ public record RecruitmentApplicationFormResponse(
                 .map(q -> ScheduleQuestionResponse.from(q, schedulePayload))
                 .orElse(null);
 
-//            List<QuestionResponse> normalQuestions = ordered.stream()
-//                .filter(q -> q.type != QuestionType.SCHEDULE)
-//                .toList();
+            List<QuestionResponse> normalQuestions = ordered.stream()
+                .filter(q -> q.type != QuestionType.SCHEDULE)
+                .toList();
 
             Integer page = section.orderNo() == null ? -1 : section.orderNo();
-            return new FormPageResponse(page, ordered, schedule, null);
-//            return new FormPageResponse(page, normalQuestions, schedule, null);
+
+            return new FormPageResponse(page, normalQuestions, schedule, null);
         }
 
         public static FormPageResponse from(FormDefinitionInfo.FormSectionInfo section) {
@@ -247,19 +247,18 @@ public record RecruitmentApplicationFormResponse(
                 .orElse(null);
 
             // SCHEDULE 질문은 일반 questions에서 제거(중복 방지)
-//            List<QuestionResponse> normalQuestions = ordered.stream()
-//                .filter(q -> q.type != QuestionType.SCHEDULE)
-//                .toList();
+            List<QuestionResponse> normalQuestions = ordered.stream()
+                .filter(q -> q.type != QuestionType.SCHEDULE)
+                .toList();
 
             int page = section.orderNo() == null ? -1 : section.orderNo(); // 임시로 part면 orderNo 안내려주는 방식으로 구현
 
-//            return new FormPageResponse(
-//                page,
-//                normalQuestions,
-//                schedule,
-//                null // partQuestions: 실 구현 시 추가
-//            );
-            return new FormPageResponse(page, ordered, schedule, null);
+            return new FormPageResponse(
+                page,
+                normalQuestions,
+                schedule,
+                null // partQuestions: 실 구현 시 추가
+            );
         }
     }
 
