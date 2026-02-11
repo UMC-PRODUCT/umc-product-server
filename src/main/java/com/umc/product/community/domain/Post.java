@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+//정보
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
 public class Post {
@@ -52,7 +53,8 @@ public class Post {
         return new Post(null, title, content, Category.LIGHTNING, authorChallengerId, info, 0, false);
     }
 
-    public static Post reconstruct(PostId postId, String title, String content, Category category, Long authorChallengerId,
+    public static Post reconstruct(PostId postId, String title, String content, Category category,
+                                   Long authorChallengerId,
                                    LightningInfo lightningInfo, int likeCount, boolean liked) {
         return new Post(postId, title, content, category, authorChallengerId, lightningInfo, likeCount, liked);
     }
