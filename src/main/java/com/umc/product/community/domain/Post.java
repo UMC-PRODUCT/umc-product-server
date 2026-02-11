@@ -1,6 +1,7 @@
 package com.umc.product.community.domain;
 
 import com.umc.product.community.domain.enums.Category;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -34,13 +35,16 @@ public class Post {
     @Getter
     private final boolean liked;
 
+    @Getter
+    private final Instant createdAt;
+
     public static Post createPost(String title, String content, Category category, Long authorChallengerId) {
         if (category == Category.LIGHTNING) {
             throw new IllegalArgumentException("번개 게시글은 createLightning()을 사용하세요");
         }
         validateCommonFields(title, content);
         validateAuthorChallengerId(authorChallengerId);
-        return new Post(null, title, content, category, authorChallengerId, null, 0, false);
+        return new Post(null, title, content, category, authorChallengerId, null, 0, false, null);
     }
 
     public static Post createLightning(String title, String content, LightningInfo info, Long authorChallengerId) {
@@ -49,12 +53,12 @@ public class Post {
         }
         validateCommonFields(title, content);
         validateAuthorChallengerId(authorChallengerId);
-        return new Post(null, title, content, Category.LIGHTNING, authorChallengerId, info, 0, false);
+        return new Post(null, title, content, Category.LIGHTNING, authorChallengerId, info, 0, false, null);
     }
 
     public static Post reconstruct(PostId postId, String title, String content, Category category, Long authorChallengerId,
-                                   LightningInfo lightningInfo, int likeCount, boolean liked) {
-        return new Post(postId, title, content, category, authorChallengerId, lightningInfo, likeCount, liked);
+                                   LightningInfo lightningInfo, int likeCount, boolean liked, Instant createdAt) {
+        return new Post(postId, title, content, category, authorChallengerId, lightningInfo, likeCount, liked, createdAt);
     }
 
     public boolean isLightning() {
@@ -130,6 +134,7 @@ public class Post {
                 .lightningInfo(newLightningInfo)
                 .likeCount(this.likeCount)
                 .liked(this.liked)
+                .createdAt(this.createdAt)
                 .build();
     }
 

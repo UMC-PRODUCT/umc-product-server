@@ -11,6 +11,7 @@ import com.umc.product.community.application.port.in.post.query.PostSearchResult
 import com.umc.product.community.application.port.in.post.query.SearchPostUseCase;
 import com.umc.product.community.application.port.out.LoadCommentPort;
 import com.umc.product.community.application.port.out.LoadPostPort;
+import com.umc.product.community.application.port.out.LoadScrapPort;
 import com.umc.product.community.application.port.out.PostSearchData;
 import com.umc.product.community.application.port.out.PostWithAuthor;
 import com.umc.product.community.domain.Post;
@@ -36,6 +37,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
 
     private final LoadPostPort loadPostPort;
     private final LoadCommentPort loadCommentPort;
+    private final LoadScrapPort loadScrapPort;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final AuthorInfoProvider authorInfoProvider;
@@ -51,14 +53,21 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
 
     @Override
     public PostDetailInfo getPostDetail(Long postId, Long challengerId) {
-        PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(postId)
+        PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(postId, challengerId)
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
         String authorName = authorInfoProvider.getAuthorName(postWithAuthor.authorChallengerId());
         PostInfo postInfo = PostInfo.from(postWithAuthor.post(), postWithAuthor.authorChallengerId(), authorName);
         int commentCount = loadCommentPort.countByPostId(postId);
 
-        return PostDetailInfo.of(postInfo, commentCount);
+        // 작성자 파트 정보 조회
+        ChallengerInfo authorChallengerInfo = getChallengerUseCase.getChallengerPublicInfo(postWithAuthor.authorChallengerId());
+
+        // 스크랩 정보 조회
+        boolean isScrapped = loadScrapPort.existsByPostIdAndChallengerId(postId, challengerId);
+        int scrapCount = loadScrapPort.countByPostId(postId);
+
+        return PostDetailInfo.of(postInfo, commentCount, authorChallengerInfo.part(), isScrapped, scrapCount);
     }
 
     @Override

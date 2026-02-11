@@ -2,6 +2,7 @@ package com.umc.product.community.application.port.in;
 
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 public record PostInfo(
@@ -14,7 +15,10 @@ public record PostInfo(
         LocalDateTime meetAt,
         String location,
         Integer maxParticipants,
-        String openChatUrl
+        String openChatUrl,
+        Instant createdAt,
+        int likeCount,
+        boolean isLiked
 ) {
     public static PostInfo from(Post post, Long authorId, String authorName) {
         Long postId = post.getPostId() != null ? post.getPostId().id() : null;
@@ -32,7 +36,10 @@ public record PostInfo(
                     info.meetAt(),
                     info.location(),
                     info.maxParticipants(),
-                    info.openChatUrl()
+                    info.openChatUrl(),
+                    post.getCreatedAt(),
+                    post.getLikeCount(),
+                    post.isLiked()
             );
         }
 
@@ -47,7 +54,10 @@ public record PostInfo(
                 null,
                 null,
                 null,
-                null
+                null,
+                post.getCreatedAt(),
+                post.getLikeCount(),
+                post.isLiked()
         );
     }
 }
