@@ -18,7 +18,9 @@ public interface NoticeApi {
 
     @Operation(
         summary = "공지사항 생성",
-        description = "새로운 공지사항을 생성합니다."
+        description = "새로운 공지사항을 생성합니다. targetInfo로 대상 범위(기수/지부/학교/파트)를 지정하고, "
+            + "shouldNotify=true로 설정하면 대상자에게 즉시 푸시 알림이 발송됩니다. "
+            + "이미지/링크/투표는 공지 생성 후 별도 API로 추가해야 합니다."
     )
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -31,7 +33,6 @@ public interface NoticeApi {
         )
     })
     ApiResponse<CreateNoticeResponse> createNotice(
-        @Parameter(description = "공지사항 생성 정보", required = true)
         @RequestBody @Valid CreateNoticeRequest request,
 
         @Parameter(hidden = true)
@@ -92,7 +93,9 @@ public interface NoticeApi {
 
     @Operation(
         summary = "공지사항 리마인더 발송",
-        description = "공지사항을 읽지 않은 사용자에게 리마인더 알림을 발송합니다."
+        description = "공지를 읽지 않은 사용자에게 푸시 알림을 재발송합니다. "
+            + "읽음 현황 API(GET /notices/{noticeId}/status)에서 UNREAD 사용자 목록을 먼저 조회한 뒤, "
+            + "리마인드할 챌린저 ID들을 targetIds로 전달하세요."
     )
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -109,10 +112,9 @@ public interface NoticeApi {
         )
     })
     void sendNoticeReminder(
-        @Parameter(description = "공지사항 ID", required = true)
+        @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
 
-        @Parameter(description = "리마인더 발송 정보", required = true)
         @RequestBody @Valid SendNoticeReminderRequest request,
 
         @Parameter(hidden = true)
