@@ -26,7 +26,10 @@ import com.umc.product.organization.application.port.in.command.dto.AssignSchool
 import com.umc.product.organization.application.port.in.command.dto.CreateChapterCommand;
 import com.umc.product.organization.application.port.in.command.dto.CreateGisuCommand;
 import com.umc.product.organization.application.port.in.command.dto.CreateSchoolCommand;
+import com.umc.product.terms.application.port.in.command.ManageTermsUseCase;
+import com.umc.product.terms.application.port.in.command.dto.CreateTermCommand;
 import com.umc.product.terms.application.port.in.query.GetTermsUseCase;
+import com.umc.product.terms.domain.enums.TermsType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDateTime;
@@ -65,12 +68,30 @@ public class TestController {
     private final ManageSchoolUseCase manageSchoolUseCase;
     private final ManageChallengerUseCase manageChallengerUseCase;
     private final ManageMemberUseCase manageMemberUseCase;
+    private final ManageTermsUseCase manageTermsUseCase;
+
     private final GetTermsUseCase getTermsUseCase;
 
     @GetMapping("dummy/data")
     @Transactional
     void createDummyData() {
         Faker faker = new Faker(Locale.KOREAN);
+
+        manageTermsUseCase.createTerms(
+            CreateTermCommand.builder()
+                .link("https://makeus-challenge.notion.site/300b57f4596b803f8c94dd4f4fb71960?source=copy_link")
+                .type(TermsType.PRIVACY)
+                .required(true)
+                .build()
+        );
+
+        manageTermsUseCase.createTerms(
+            CreateTermCommand.builder()
+                .link("https://makeus-challenge.notion.site/300b57f4596b8018a2dfd38784478715?source=copy_link")
+                .type(TermsType.SERVICE)
+                .required(true)
+                .build()
+        );
 
         // 기수를 3개 생성한다 - 한 개는 Active, 나머지는 Inactive 한거로
         List<CreateGisuCommand> gisuCommands = List.of(
@@ -117,7 +138,7 @@ public class TestController {
         }
 
         // 학교를 생성한다
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 5; i++) {
             createdSchool.add(
                 manageSchoolUseCase.register(
                     CreateSchoolCommand.builder()
@@ -165,7 +186,7 @@ public class TestController {
 
         for (Long schoolId : createdSchool) {
             List<RegisterMemberCommand> memberCommands = new ArrayList<>();
-            for (int i = 0; i < 500; i++) {
+            for (int i = 0; i < 50; i++) {
                 memberCommands.add(
                     RegisterMemberCommand.builder()
                         .provider(OAuthProvider.GOOGLE)
