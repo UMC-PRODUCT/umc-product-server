@@ -147,8 +147,7 @@ public class NoticeContentControllerTest extends DocumentationTest {
                 responseFields(
                     fieldWithPath("success").type(JsonFieldType.BOOLEAN).description("성공 여부"),
                     fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
-                    fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
-                    fieldWithPath("result.imageIds").type(JsonFieldType.ARRAY).description("교체된 이미지 파일 ID 목록")
+                    fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
                 )
             ));
     }
@@ -177,8 +176,7 @@ public class NoticeContentControllerTest extends DocumentationTest {
                 responseFields(
                     fieldWithPath("success").type(JsonFieldType.BOOLEAN).description("성공 여부"),
                     fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
-                    fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
-                    fieldWithPath("result.links").type(JsonFieldType.ARRAY).description("교체된 링크 URL 목록")
+                    fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
                 )
             ));
     }
@@ -207,8 +205,7 @@ public class NoticeContentControllerTest extends DocumentationTest {
                 responseFields(
                     fieldWithPath("success").type(JsonFieldType.BOOLEAN).description("성공 여부"),
                     fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
-                    fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
-                    fieldWithPath("result.voteIds").type(JsonFieldType.ARRAY).description("교체된 투표 ID 목록")
+                    fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지")
                 )
             ));
     }

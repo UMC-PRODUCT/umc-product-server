@@ -81,14 +81,14 @@ public class TestController {
     @Operation(summary = "RefreshToken 발급")
     @Public
     @GetMapping("/token/refresh/{memberId}")
-    public String getRefreshToken(@PathVariable Long memberId) {
+    public String getRefreshToken(@PathVariable("memberId") Long memberId) {
         return jwtTokenProvider.createRefreshToken(memberId);
     }
 
     @Operation(summary = "EmailVerificationToken 발급")
     @Public
     @GetMapping("/token/email/{email}")
-    public String getEmailVerification(@PathVariable String email) {
+    public String getEmailVerification(@PathVariable("email") String email) {
         return jwtTokenProvider.createEmailVerificationToken(email);
     }
 
