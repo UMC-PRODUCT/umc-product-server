@@ -56,7 +56,7 @@ class FcmTopicServiceTest {
 
     private MemberInfo memberInfo(Long memberId, Long schoolId) {
         return new MemberInfo(memberId, "강하나", "와나", "test@umc.com",
-                schoolId, null, MemberStatus.ACTIVE);
+                schoolId, "한양대학교ERICA", "profile-img-id", "https://example.com/profile.jpg", MemberStatus.ACTIVE);
     }
 
     private FcmToken fcmToken(Long memberId, String token) {
