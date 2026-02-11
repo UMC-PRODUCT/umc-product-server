@@ -146,7 +146,6 @@ dependencies {
 
 tasks.withType<JavaCompile>().configureEach {
     options.generatedSourceOutputDirectory.set(querydslDir)
-    options.compilerArgs.add("-parameters")
 }
 
 tasks.clean {
