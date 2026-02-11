@@ -1,6 +1,7 @@
 package com.umc.product.notice.adapter.in.web.dto.request;
 
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeLinksCommand;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
