@@ -50,6 +50,7 @@ public class NoticeQueryController implements NoticeQueryApi {
     public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(
         @ParameterObject NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
+        @ParameterObject
         Pageable pageable) {
 
         Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(classification,
@@ -66,6 +67,7 @@ public class NoticeQueryController implements NoticeQueryApi {
         @RequestParam String keyword,
         @ParameterObject NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
+        @ParameterObject
         Pageable pageable) {
 
         Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(keyword, classification, pageable);
