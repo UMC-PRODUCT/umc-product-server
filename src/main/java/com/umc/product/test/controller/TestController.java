@@ -74,7 +74,7 @@ public class TestController {
     @Operation(summary = "AccessToken 발급")
     @Public
     @GetMapping("/token/access/{memberId}")
-    public String getAccessToken(@PathVariable Long memberId) {
+    public String getAccessToken(@PathVariable("memberId") Long memberId) {
         return jwtTokenProvider.createAccessToken(memberId, null);
     }
 

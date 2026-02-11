@@ -61,7 +61,7 @@ public class NoticeController implements NoticeApi {
         permission = PermissionType.DELETE
     )
     public void deleteNotice(
-        @PathVariable Long noticeId,
+        @PathVariable("noticeId") Long noticeId,
         @CurrentMember MemberPrincipal memberPrincipal) {
 
         Long memberId = memberPrincipal.getMemberId();
@@ -73,7 +73,7 @@ public class NoticeController implements NoticeApi {
      */
     @PatchMapping("/{noticeId}")
     public void updateNotice(
-        @PathVariable Long noticeId,
+        @PathVariable("noticeId") Long noticeId,
         @RequestBody @Valid UpdateNoticeRequest request,
         @CurrentMember MemberPrincipal memberPrincipal) {
 
@@ -89,7 +89,7 @@ public class NoticeController implements NoticeApi {
      */
     @PostMapping("/{noticeId}/reminders")
     public void sendNoticeReminder(
-        @PathVariable Long noticeId,
+        @PathVariable("noticeId") Long noticeId,
         @RequestBody @Valid SendNoticeReminderRequest request,
         @CurrentMember MemberPrincipal memberPrincipal) {
 
@@ -107,7 +107,7 @@ public class NoticeController implements NoticeApi {
         permission = PermissionType.READ
     )
     public ApiResponse<Void> recordNoticeRead(
-        @PathVariable Long noticeId,
+        @PathVariable("noticeId") Long noticeId,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         manageNoticeReadUseCase.recordRead(noticeId, memberPrincipal.getMemberId());

@@ -82,7 +82,7 @@ public class NoticeQueryController implements NoticeQueryApi {
         permission = PermissionType.READ
     )
     @GetMapping("/{noticeId}")
-    public ApiResponse<GetNoticeDetailResponse> getNotice(@PathVariable Long noticeId) {
+    public ApiResponse<GetNoticeDetailResponse> getNotice(@PathVariable("noticeId") Long noticeId) {
 
         NoticeInfo noticeDetail = getNoticeUseCase.getNoticeDetail(noticeId);
         return ApiResponse.onSuccess(GetNoticeDetailResponse.from(noticeDetail));
@@ -97,7 +97,7 @@ public class NoticeQueryController implements NoticeQueryApi {
         permission = PermissionType.MANAGE
     )
     @GetMapping("/{noticeId}/read-statics")
-    public ApiResponse<GetNoticeStaticsResponse> getNoticeReadStatics(@PathVariable Long noticeId) {
+    public ApiResponse<GetNoticeStaticsResponse> getNoticeReadStatics(@PathVariable("noticeId") Long noticeId) {
 
         NoticeReadStatusSummary statistics = getNoticeUseCase.getReadStatistics(noticeId);
         return ApiResponse.onSuccess(GetNoticeStaticsResponse.from(statistics));
@@ -113,7 +113,7 @@ public class NoticeQueryController implements NoticeQueryApi {
     )
     @GetMapping("/{noticeId}/read-status")
     public ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus(
-        @PathVariable Long noticeId,
+        @PathVariable("noticeId") Long noticeId,
         @ParameterObject @Valid GetNoticeStatusRequest request) {
 
         NoticeReadStatusResult result = getNoticeUseCase.getReadStatus(request.toQuery(noticeId));
