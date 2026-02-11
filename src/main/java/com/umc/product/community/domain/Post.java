@@ -1,12 +1,14 @@
 package com.umc.product.community.domain;
 
 import com.umc.product.community.domain.enums.Category;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+//해당 부분 공유
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder(access = AccessLevel.PRIVATE)
 public class Post {
@@ -26,7 +28,7 @@ public class Post {
     private final Long authorChallengerId;
 
     @Getter
-    private final LightningInfo lightningInfo;
+    private LightningInfo lightningInfo;
 
     @Getter
     private final int likeCount;
@@ -34,13 +36,16 @@ public class Post {
     @Getter
     private final boolean liked;
 
+    @Getter
+    private final Instant createdAt;
+
     public static Post createPost(String title, String content, Category category, Long authorChallengerId) {
         if (category == Category.LIGHTNING) {
             throw new IllegalArgumentException("번개 게시글은 createLightning()을 사용하세요");
         }
         validateCommonFields(title, content);
         validateAuthorChallengerId(authorChallengerId);
-        return new Post(null, title, content, category, authorChallengerId, null, 0, false);
+        return new Post(null, title, content, category, authorChallengerId, null, 0, false, null);
     }
 
     public static Post createLightning(String title, String content, LightningInfo info, Long authorChallengerId) {
@@ -49,12 +54,14 @@ public class Post {
         }
         validateCommonFields(title, content);
         validateAuthorChallengerId(authorChallengerId);
-        return new Post(null, title, content, Category.LIGHTNING, authorChallengerId, info, 0, false);
+        return new Post(null, title, content, Category.LIGHTNING, authorChallengerId, info, 0, false, null);
     }
 
-    public static Post reconstruct(PostId postId, String title, String content, Category category, Long authorChallengerId,
-                                   LightningInfo lightningInfo, int likeCount, boolean liked) {
-        return new Post(postId, title, content, category, authorChallengerId, lightningInfo, likeCount, liked);
+    public static Post reconstruct(PostId postId, String title, String content, Category category,
+                                   Long authorChallengerId,
+                                   LightningInfo lightningInfo, int likeCount, boolean liked, Instant createdAt) {
+        return new Post(postId, title, content, category, authorChallengerId, lightningInfo, likeCount, liked,
+            createdAt);
     }
 
     public boolean isLightning() {
@@ -84,12 +91,7 @@ public class Post {
     }
 
     public void update(String title, String content, Category category) {
-        if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("제목은 필수입니다.");
-        }
-        if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("내용은 필수입니다.");
-        }
+        validateCommonFields(title, content);
         if (category == null) {
             throw new IllegalArgumentException("카테고리는 필수입니다.");
         }
@@ -105,6 +107,20 @@ public class Post {
         this.title = title;
         this.content = content;
         this.category = category;
+    }
+
+    public void updateLightning(String title, String content, LightningInfo newLightningInfo) {
+        if (!isLightning()) {
+            throw new IllegalStateException("번개 게시글이 아닙니다.");
+        }
+        validateCommonFields(title, content);
+        if (newLightningInfo == null) {
+            throw new IllegalArgumentException("번개 정보는 필수입니다.");
+        }
+
+        this.title = title;
+        this.content = content;
+        this.lightningInfo = newLightningInfo;
     }
 
     public record PostId(Long id) {

@@ -1,7 +1,9 @@
 package com.umc.product.community.application.port.in.post.query;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.application.port.in.PostInfo;
 import com.umc.product.community.domain.enums.Category;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 public record PostDetailInfo(
@@ -15,9 +17,16 @@ public record PostDetailInfo(
         String location,
         Integer maxParticipants,
         String openChatUrl,
-        int commentCount
+        int commentCount,
+        Instant createdAt,
+        int likeCount,
+        ChallengerPart userPart,
+        boolean isLiked,
+        boolean isScrapped,
+        int scraps
 ) {
-    public static PostDetailInfo of(PostInfo postInfo, int commentCount) {
+    public static PostDetailInfo of(PostInfo postInfo, int commentCount, ChallengerPart authorPart,
+                                     boolean isScrapped, int scraps) {
         return new PostDetailInfo(
                 postInfo.postId(),
                 postInfo.title(),
@@ -29,7 +38,13 @@ public record PostDetailInfo(
                 postInfo.location(),
                 postInfo.maxParticipants(),
                 postInfo.openChatUrl(),
-                commentCount
+                commentCount,
+                postInfo.createdAt(),
+                postInfo.likeCount(),
+                authorPart,
+                postInfo.isLiked(),
+                isScrapped,
+                scraps
         );
     }
 }
