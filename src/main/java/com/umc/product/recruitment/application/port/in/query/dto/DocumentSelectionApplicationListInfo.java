@@ -43,7 +43,7 @@ public record DocumentSelectionApplicationListInfo(
     }
 
     public record DocumentResult(
-        String decision // PASS | WAIT
+        String decision // PASS | FAIL | WAIT
     ) {
     }
 

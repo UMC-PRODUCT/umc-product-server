@@ -1,6 +1,7 @@
 package com.umc.product.recruitment.application.port.in.query.dto;
 
 public enum ApplicationProgressNoticeType {
+    APPLY_START_ANNOUNCE, // 모집 시작 예정일 (지원 기간 시작일)
     APPLY_DEADLINE, // 지원 마감 예정일
     DOC_RESULT_ANNOUNCE, // 서류 합불 발표 예정일
     FINAL_RESULT_ANNOUNCE, // 최종 합불 발표 예정일

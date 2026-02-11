@@ -1,10 +1,10 @@
 package com.umc.product.recruitment.application.port.in.query.dto;
 
+import com.umc.product.recruitment.domain.enums.PartKey;
 import java.util.List;
 
 public record ApplicationListForAdminInfo(
     Filters filters,
-    long applicantCount,
     PaginationInfo pagination,
     List<ApplicationForAdminInfo> applications
 ) {
@@ -19,8 +19,10 @@ public record ApplicationListForAdminInfo(
     public record PaginationInfo(
         int page,
         int size,
+        long totalElements,
         int totalPages,
-        long totalElements
+        boolean hasNext,
+        boolean hasPrevious
     ) {
     }
 
@@ -29,8 +31,6 @@ public record ApplicationListForAdminInfo(
         Applicant applicant,
         School school,
         List<AppliedPart> appliedParts,
-        Evaluation documentEvaluation,
-        Evaluation interviewEvaluation,
         FinalResult finalResult
     ) {
     }
@@ -49,8 +49,7 @@ public record ApplicationListForAdminInfo(
 
     public record AppliedPart(
         int priority,
-        String key,
-        String label
+        PartKey part
     ) {
     }
 
@@ -61,8 +60,8 @@ public record ApplicationListForAdminInfo(
     }
 
     public record FinalResult(
-        String status,      // WAITING | PASSED | FAILED
-        String selectedPart // PASSED일 때만 존재, 아니면 null
+        String status,      // PASS | FAIL | WAIT
+        PartKey selectedPart // PASS일 때만 존재, 아니면 null
     ) {
     }
 }

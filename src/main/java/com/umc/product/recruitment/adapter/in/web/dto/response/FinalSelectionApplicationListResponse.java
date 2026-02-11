@@ -1,36 +1,38 @@
 package com.umc.product.recruitment.adapter.in.web.dto.response;
 
+import com.umc.product.global.response.PageResponse;
 import com.umc.product.recruitment.application.port.in.query.dto.FinalSelectionApplicationListInfo;
-import com.umc.product.recruitment.application.port.in.query.dto.FinalSelectionApplicationListInfo.ByPart;
 import java.util.List;
-import java.util.Map;
 
 public record FinalSelectionApplicationListResponse(
     FinalSelectionSummary summary,
-    List<FinalSelectionApplicationResponse> finalSelectionApplications,
-    PaginationResponse pagination
+    String sort,
+    PageResponse<FinalSelectionApplicationResponse> finalSelectionApplications
 ) {
     public static FinalSelectionApplicationListResponse from(FinalSelectionApplicationListInfo info) {
         return new FinalSelectionApplicationListResponse(
             new FinalSelectionSummary(
                 info.summary().totalCount(),
-                info.summary().selectedCount(),
-                info.summary().byPart()
+                info.summary().selectedCount()
             ),
-            info.finalSelectionApplications().stream().map(FinalSelectionApplicationResponse::from).toList(),
-            new PaginationResponse(
+            info.sort(),
+            new PageResponse<>(
+                info.finalSelectionApplications().stream()
+                    .map(FinalSelectionApplicationResponse::from)
+                    .toList(),
                 info.pagination().page(),
                 info.pagination().size(),
+                info.pagination().totalElements(),
                 info.pagination().totalPages(),
-                info.pagination().totalElements()
+                info.pagination().hasNext(),
+                info.pagination().hasPrevious()
             )
         );
     }
 
     public record FinalSelectionSummary(
         long totalCount,
-        long selectedCount,
-        Map<String, ByPart> byPart
+        long selectedCount
     ) {
     }
 
@@ -45,6 +47,13 @@ public record FinalSelectionApplicationListResponse(
     ) {
         public static FinalSelectionApplicationResponse from(
             FinalSelectionApplicationListInfo.FinalSelectionApplicationInfo info) {
+
+            FinalSelectionApplicationListInfo.Selection sel = info.selection();
+
+            PartResponse selectedPart = (sel.part() == null)
+                ? null
+                : new PartResponse(sel.part().name(), sel.part().getLabel());
+
             return new FinalSelectionApplicationResponse(
                 info.applicationId(),
                 new ApplicantResponse(info.applicant().nickname(), info.applicant().name()),
@@ -57,12 +66,7 @@ public record FinalSelectionApplicationListResponse(
                 info.documentScore(),
                 info.interviewScore(),
                 info.finalScore(),
-                new Selection(info.selection().status(),
-                    new PartResponse(
-                        info.selection().part().name(),
-                        info.selection().part().getLabel()
-                    )
-                )
+                new Selection(sel.status(), selectedPart)
             );
         }
     }
@@ -77,13 +81,5 @@ public record FinalSelectionApplicationListResponse(
     }
 
     public record PartResponse(String key, String label) {
-    }
-
-    public record PaginationResponse(
-        int page,
-        int size,
-        int totalPages,
-        long totalElements
-    ) {
     }
 }

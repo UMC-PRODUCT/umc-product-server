@@ -6,21 +6,54 @@ import com.umc.product.recruitment.domain.enums.EvaluationProgressStatus;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public record GetInterviewAssignmentsResponse(
     Instant serverNow,
     LocalDate selectedDate,
     PartOption selectedPart,
-    List<InterviewAssignmentSlotResponse> interviewAssignmentSlots
+    List<InterviewAssignmentTimeGroupResponse> interviewAssignmentTimeGroups
 ) {
     public static GetInterviewAssignmentsResponse from(GetInterviewAssignmentsInfo info) {
+
+        List<InterviewAssignmentSlotResponse> slots = info.interviewAssignmentSlots().stream()
+            .map(InterviewAssignmentSlotResponse::from)
+            .toList();
+
+        Map<LocalTime, List<InterviewAssignmentSlotResponse>> grouped = slots.stream()
+            .collect(Collectors.groupingBy(
+                r -> r.slot().start().withMinute(0).withSecond(0).withNano(0),
+                TreeMap::new, // 시간 오름차순 정렬 유지
+                Collectors.toList()
+            ));
+
+        List<InterviewAssignmentTimeGroupResponse> groups = grouped.entrySet().stream()
+            .map(e -> new InterviewAssignmentTimeGroupResponse(
+                e.getKey(),
+                e.getKey().plusHours(1),
+                e.getValue().stream()
+                    .sorted(Comparator.comparing(r -> r.slot().start()))
+                    .toList()
+            ))
+            .toList();
+
         return new GetInterviewAssignmentsResponse(
             info.serverNow(),
             info.selectedDate(),
             info.selectedPart(),
-            info.interviewAssignmentSlots().stream().map(InterviewAssignmentSlotResponse::from).toList()
+            groups
         );
+    }
+
+    public record InterviewAssignmentTimeGroupResponse(
+        LocalTime start,
+        LocalTime end,
+        List<InterviewAssignmentSlotResponse> interviewAssignmentSlots
+    ) {
     }
 
     public record InterviewAssignmentSlotResponse(

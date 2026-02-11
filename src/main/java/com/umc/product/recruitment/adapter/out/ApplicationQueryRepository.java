@@ -1,6 +1,9 @@
 package com.umc.product.recruitment.adapter.out;
 
 import static com.umc.product.member.domain.QMember.member;
+import static com.umc.product.organization.domain.QChapter.chapter;
+import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
+import static com.umc.product.organization.domain.QSchool.school;
 import static com.umc.product.recruitment.domain.QApplication.application;
 import static com.umc.product.recruitment.domain.QApplicationPartPreference.applicationPartPreference;
 import static com.umc.product.recruitment.domain.QEvaluation.evaluation;
@@ -21,15 +24,18 @@ import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.recruitment.adapter.out.dto.AdminApplicationRow;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.FinalSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAlreadyScheduledApplicantRow;
 import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAvailableApplicantRow;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.FinalSelectionApplicationListInfo;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.QApplicationPartPreference;
 import com.umc.product.recruitment.domain.QRecruitmentPart;
@@ -258,7 +264,7 @@ public class ApplicationQueryRepository {
     /**
      * 서류 선발 리스트 조회 (페이지네이션, 파트 필터, 정렬)
      * <p>
-     * - APPLIED / DOC_PASSED만 포함 - part 필터: 1지망(priority=1) 기준
+     * - APPLIED / DOC_PASSED / DOC_FAILED만 포함 - part 필터: 1지망(priority=1) 기준
      */
     public Page<DocumentSelectionListItemProjection> searchDocumentSelections(
         Long recruitmentId,
@@ -299,8 +305,8 @@ public class ApplicationQueryRepository {
     }
 
     /**
-     * 서류 선발 요약 조회 - totalCount: (APPLIED + DOC_PASSED) (part 필터 적용) - selectedCount: DOC_PASSED (part 필터 적용) - byPart:
-     * 1지망 기준 파트별 total/selected
+     * 서류 선발 요약 조회 - totalCount: (APPLIED + DOC_PASSED + DOC_FAILED) (part 필터 적용) - selectedCount: DOC_PASSED (part 필터
+     * 적용) - byPart: 1지망 기준 파트별 total/selected
      */
     public DocumentSelectionApplicationListInfo.Summary getDocumentSelectionSummary(Long recruitmentId, String part) {
         // total
@@ -533,6 +539,99 @@ public class ApplicationQueryRepository {
             .fetch();
     }
 
+    public Map<Long, BigDecimal> calculateAvgInterviewScoreByApplicationIds(Set<Long> applicationIds) {
+        if (applicationIds == null || applicationIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Tuple> rows = queryFactory
+            .select(evaluation.application.id, evaluation.score.avg())
+            .from(evaluation)
+            .where(
+                evaluation.application.id.in(applicationIds),
+                evaluation.stage.eq(EvaluationStage.INTERVIEW),
+                evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                evaluation.score.isNotNull()
+            )
+            .groupBy(evaluation.application.id)
+            .fetch();
+
+        return rows.stream().collect(Collectors.toMap(
+            t -> t.get(evaluation.application.id),
+            t -> {
+                Double avg = t.get(evaluation.score.avg());
+                return avg == null ? null : BigDecimal.valueOf(avg).setScale(1, RoundingMode.HALF_UP);
+            }
+        ));
+    }
+
+    public FinalSelectionApplicationListInfo.Summary getFinalSelectionSummary(Long recruitmentId, String part) {
+        Long total = queryFactory
+            .select(application.count())
+            .from(application)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                finalSelectionStatus(),
+                firstPriorityPartMatches(part)
+            )
+            .fetchOne();
+
+        Long selected = queryFactory
+            .select(application.count())
+            .from(application)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                application.status.eq(ApplicationStatus.FINAL_ACCEPTED),
+                firstPriorityPartMatches(part)
+            )
+            .fetchOne();
+
+        return new FinalSelectionApplicationListInfo.Summary(
+            total != null ? total : 0L,
+            selected != null ? selected : 0L
+        );
+    }
+
+
+    public Page<FinalSelectionListItemProjection> searchFinalSelections(
+        Long recruitmentId,
+        String part,
+        String sort,
+        Pageable pageable
+    ) {
+        List<FinalSelectionListItemProjection> content = queryFactory
+            .select(Projections.constructor(FinalSelectionListItemProjection.class,
+                application.id,
+                member.nickname,
+                member.name,
+                application.status,
+                application.selectedPart
+            ))
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .where(
+                belongsToRecruitment(recruitmentId),
+                finalSelectionStatus(),
+                firstPriorityPartMatches(part)
+            )
+            .orderBy(finalSelectionOrderBy(sort))
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory
+            .select(application.count())
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .where(
+                belongsToRecruitment(recruitmentId),
+                finalSelectionStatus(),
+                firstPriorityPartMatches(part)
+            );
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
     private ChallengerPart toFilterPart(PartOption requestedPart) {
         if (requestedPart == null || requestedPart == PartOption.ALL) {
             return null;
@@ -617,7 +716,10 @@ public class ApplicationQueryRepository {
     }
 
     private BooleanExpression documentSelectionStatus() {
-        return application.status.in(ApplicationStatus.APPLIED, ApplicationStatus.DOC_PASSED);
+        return application.status.in(
+            ApplicationStatus.APPLIED,
+            ApplicationStatus.DOC_PASSED,
+            ApplicationStatus.DOC_FAILED);
     }
 
     /**
@@ -764,5 +866,205 @@ public class ApplicationQueryRepository {
                 recruitmentPart.part.eq(part)
             )
             .fetch();
+    }
+
+    private BooleanExpression finalSelectionStatus() {
+        return application.status.in(
+            ApplicationStatus.DOC_PASSED,
+            ApplicationStatus.FINAL_ACCEPTED,
+            ApplicationStatus.FINAL_REJECTED
+        );
+    }
+
+    /**
+     * 정렬 - SCORE_DESC/SCORE_ASC: (서류평균 + 면접평균)/2 기준 (null은 뒤로) - EVALUATED_AT_ASC: 제출된 면접평가 updatedAt의 max 기준 오름차순
+     * (null은 뒤로)
+     */
+    private com.querydsl.core.types.OrderSpecifier<?>[] finalSelectionOrderBy(String sort) {
+        String s = (sort == null) ? "SCORE_DESC" : sort;
+
+        // avg doc
+        NumberExpression<Double> avgDocScore =
+            Expressions.numberTemplate(
+                Double.class,
+                "({0})",
+                JPAExpressions
+                    .select(evaluation.score.avg())
+                    .from(evaluation)
+                    .where(
+                        evaluation.application.id.eq(application.id),
+                        evaluation.stage.eq(EvaluationStage.DOCUMENT),
+                        evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                        evaluation.score.isNotNull()
+                    )
+            );
+
+        // avg interview
+        NumberExpression<Double> avgInterviewScore =
+            Expressions.numberTemplate(
+                Double.class,
+                "({0})",
+                JPAExpressions
+                    .select(evaluation.score.avg())
+                    .from(evaluation)
+                    .where(
+                        evaluation.application.id.eq(application.id),
+                        evaluation.stage.eq(EvaluationStage.INTERVIEW),
+                        evaluation.status.eq(EvaluationStatus.SUBMITTED),
+                        evaluation.score.isNotNull()
+                    )
+            );
+
+        // final = (doc + interview) / 2
+        NumberExpression<Double> finalScore =
+            avgDocScore.add(avgInterviewScore).divide(2.0);
+
+        DateTimeExpression<Instant> interviewEvaluatedAtMax =
+            Expressions.dateTimeTemplate(
+                Instant.class,
+                "({0})",
+                JPAExpressions
+                    .select(evaluation.updatedAt.max())
+                    .from(evaluation)
+                    .where(
+                        evaluation.application.id.eq(application.id),
+                        evaluation.stage.eq(EvaluationStage.INTERVIEW),
+                        evaluation.status.eq(EvaluationStatus.SUBMITTED)
+                    )
+            );
+
+        return switch (s) {
+            case "SCORE_ASC" -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                finalScore.asc().nullsLast(),
+                application.id.asc()
+            };
+            case "EVALUATED_AT_ASC" -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                interviewEvaluatedAtMax.asc().nullsLast(),
+                application.id.asc()
+            };
+            case "SCORE_DESC" -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                finalScore.desc().nullsLast(),
+                application.id.asc()
+            };
+            default -> new com.querydsl.core.types.OrderSpecifier<?>[]{
+                finalScore.desc().nullsLast(),
+                application.id.asc()
+            };
+        };
+    }
+
+    public Page<AdminApplicationRow> searchAdminApplications(
+        Long chapterId,
+        Long schoolId,
+        String part,
+        String keyword,
+        Pageable pageable
+    ) {
+        List<AdminApplicationRow> content = queryFactory
+            .select(Projections.constructor(
+                AdminApplicationRow.class,
+                application.id,
+                application.applicantMemberId,
+                member.nickname,
+                member.name,
+                member.email,              // 이메일 검색용
+                school.id,
+                school.name,
+                application.status,
+                application.selectedPart   // ChallengerPart (FINAL_ACCEPTED일 때만 존재)
+            ))
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .leftJoin(school).on(school.id.eq(member.schoolId)) // member가 schoolId만 들고 있음
+            .where(
+                belongsToRecruitments(chapterId, schoolId), // recruitment 기준 필터
+                keywordContainsForAdmin(keyword),           // name/nickname/email
+                partMatches(part)                           // 1~2지망 포함 exists
+            )
+            .orderBy(
+                application.createdAt.asc(),
+                application.id.asc()
+            )
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        JPAQuery<Long> countQuery = queryFactory
+            .select(application.count())
+            .from(application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .where(
+                belongsToRecruitments(chapterId, schoolId),
+                keywordContainsForAdmin(keyword),
+                partMatches(part)
+            );
+
+        return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    private BooleanExpression belongsToRecruitments(Long chapterId, Long schoolId) {
+        // 둘 다 null이면 전체(필터 없음)
+        if (chapterId == null && schoolId == null) {
+            return null;
+        }
+
+        // 조건에 맞는 recruitment.id들
+        JPQLQuery<Long> recruitmentIds = JPAExpressions
+            .select(recruitment.id)
+            .from(recruitment)
+            .where(
+                schoolId == null ? null : recruitment.schoolId.eq(schoolId),
+                chapterId == null ? null : belongsToChapter(chapterId),
+                recruitment.formId.isNotNull()
+            );
+
+        // 해당 recruitment들의 formId
+        JPQLQuery<Long> formIds = formIdsForRecruitments(recruitmentIds);
+
+        // 해당 form들에 대한 formResponse.id
+        JPQLQuery<Long> formResponseIds = JPAExpressions
+            .select(formResponse.id)
+            .from(formResponse)
+            .where(formResponse.form.id.in(formIds));
+
+        return application.formResponseId.in(formResponseIds);
+    }
+
+    /**
+     * chapterId 필터: recruitment.schoolId + recruitment.gisuId에 대해, ChapterSchool(school_id) - Chapter(chapter_id,
+     * gisu_id)가 매칭되는지 존재 여부로 판별
+     */
+    private BooleanExpression belongsToChapter(Long chapterId) {
+        return JPAExpressions
+            .selectOne()
+            .from(chapterSchool)
+            .join(chapterSchool.chapter, chapter)
+            .where(
+                chapter.id.eq(chapterId),
+                // chapterSchool.school.id 와 recruitment.schoolId 매칭
+                chapterSchool.school.id.eq(recruitment.schoolId),
+                // chapter.gisu.id 와 recruitment.gisuId 매칭 (기수별 지부-학교 배정 구분)
+                chapter.gisu.id.eq(recruitment.gisuId)
+            )
+            .exists();
+    }
+
+    /**
+     * "recruitmentId 집합 -> formId" 집합을 뽑는 서브쿼리 현재(1:1): recruitment.formId 향후(1:N): 이 함수만 수정
+     */
+    private JPQLQuery<Long> formIdsForRecruitments(JPQLQuery<Long> recruitmentIds) {
+        return JPAExpressions
+            .select(recruitment.formId)
+            .from(recruitment)
+            .where(recruitment.id.in(recruitmentIds));
+    }
+
+    private BooleanExpression keywordContainsForAdmin(String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            return null;
+        }
+        return member.name.containsIgnoreCase(keyword)
+            .or(member.nickname.containsIgnoreCase(keyword))
+            .or(member.email.containsIgnoreCase(keyword));
     }
 }

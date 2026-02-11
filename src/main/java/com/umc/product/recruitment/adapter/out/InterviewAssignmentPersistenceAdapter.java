@@ -10,11 +10,13 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Transactional
 public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssignmentPort, SaveInterviewAssignmentPort {
 
     private final InterviewAssignmentQueryRepository interviewAssignmentQueryRepository;
@@ -87,5 +89,18 @@ public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssig
     @Override
     public void delete(InterviewAssignment assignment) {
         interviewAssignmentJpaRepository.delete(assignment);
+    }
+
+    @Override
+    public void deleteAllByRecruitmentId(Long recruitmentId) {
+        interviewAssignmentJpaRepository.deleteAllByRecruitmentId(recruitmentId);
+    }
+
+    @Override
+    public List<InterviewAssignment> findBySlotIds(List<Long> slotIds) {
+        if (slotIds == null || slotIds.isEmpty()) {
+            return List.of();
+        }
+        return interviewAssignmentJpaRepository.findAllBySlotIdsFetchJoin(slotIds);
     }
 }

@@ -472,8 +472,10 @@ public class RecruitmentController {
 
     @GetMapping("/{recruitmentId}/dashboard")
     @Operation(summary = "대시보드 지원현황 조회(운영진 홈)", description = "일정 요약/진행 단계/지원 현황/평가 현황을 한 번에 조회합니다.")
-    public RecruitmentDashboardResponse getDashboard(@PathVariable Long recruitmentId) {
-        RecruitmentDashboardInfo info = getRecruitmentDashboardUseCase.get(recruitmentId);
+    public RecruitmentDashboardResponse getDashboard(@PathVariable Long recruitmentId,
+                                                     @CurrentMember MemberPrincipal memberPrincipal) {
+        RecruitmentDashboardInfo info = getRecruitmentDashboardUseCase.get(recruitmentId,
+            memberPrincipal.getMemberId());
         return RecruitmentDashboardResponse.from(info);
     }
 

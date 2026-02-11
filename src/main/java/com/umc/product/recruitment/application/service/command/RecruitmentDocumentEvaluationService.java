@@ -103,8 +103,9 @@ public class RecruitmentDocumentEvaluationService implements UpdateMyDocumentEva
         // todo: 서류 평가 기간 검증
 
         switch (command.decision()) {
-            case PASS -> application.acceptDocument();
-            case WAIT -> application.cancelDocumentAccept();
+            case PASS -> application.passDocument();
+            case FAIL -> application.failDocument();
+            case WAIT -> application.resetDocumentDecision();
         }
 
         saveApplicationPort.save(application);

@@ -4,6 +4,7 @@ import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.List;
 import lombok.Builder;
+import lombok.extern.slf4j.Slf4j;
 
 
 /**
@@ -18,21 +19,34 @@ import lombok.Builder;
  * @param challengerPoints 챌린저 상벌점 현황
  */
 @Builder
+@Slf4j
 public record ChallengerInfo(
-        Long challengerId,
-        Long memberId,
-        Long gisuId,
-        ChallengerPart part,
-        List<ChallengerPointInfo> challengerPoints
+    Long challengerId,
+    Long memberId,
+    Long gisuId,
+    ChallengerPart part,
+    List<ChallengerPointInfo> challengerPoints
 ) {
-
+    @Deprecated
     public static ChallengerInfo from(Challenger challenger) {
+        log.error("챌린저 상벌점을 포함하지 않는 생성자를 사용하고 있습니다.");
+        
         return ChallengerInfo.builder()
-                .challengerId(challenger.getId())
-                .memberId(challenger.getMemberId())
-                .gisuId(challenger.getGisuId())
-                .part(challenger.getPart())
-                .build();
+            .challengerId(challenger.getId())
+            .memberId(challenger.getMemberId())
+            .gisuId(challenger.getGisuId())
+            .part(challenger.getPart())
+            .build();
 
+    }
+
+    public static ChallengerInfo from(Challenger challenger, List<ChallengerPointInfo> challengerPoints) {
+        return ChallengerInfo.builder()
+            .challengerId(challenger.getId())
+            .memberId(challenger.getMemberId())
+            .gisuId(challenger.getGisuId())
+            .part(challenger.getPart())
+            .challengerPoints(challengerPoints)
+            .build();
     }
 }

@@ -1,13 +1,16 @@
 package com.umc.product.recruitment.adapter.out;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.recruitment.adapter.out.dto.AdminApplicationRow;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.DocumentSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.EvaluationListItemProjection;
+import com.umc.product.recruitment.adapter.out.dto.FinalSelectionListItemProjection;
 import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjection;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.FinalSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
@@ -196,4 +199,33 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
                 partOption);
     }
 
+    @Override
+    public FinalSelectionApplicationListInfo.Summary getFinalSelectionSummary(Long recruitmentId, String part) {
+        return applicationQueryRepository.getFinalSelectionSummary(recruitmentId, part);
+    }
+
+    @Override
+    public Page<FinalSelectionListItemProjection> searchFinalSelections(
+        Long recruitmentId, String part, String sort, Pageable pageable
+    ) {
+        return applicationQueryRepository.searchFinalSelections(recruitmentId, part, sort, pageable);
+    }
+
+    @Override
+    public Map<Long, BigDecimal> calculateAvgInterviewScoreByApplicationIds(Set<Long> applicationIds) {
+        return applicationQueryRepository.calculateAvgInterviewScoreByApplicationIds(applicationIds);
+    }
+
+    @Override
+    public Page<AdminApplicationRow> searchAdminApplications(
+        Long chapterId,
+        Long schoolId,
+        String part,
+        String keyword,
+        Pageable pageable
+    ) {
+        return applicationQueryRepository.searchAdminApplications(
+            chapterId, schoolId, part, keyword, pageable
+        );
+    }
 }
