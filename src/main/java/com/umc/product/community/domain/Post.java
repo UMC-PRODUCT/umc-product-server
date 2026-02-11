@@ -88,12 +88,7 @@ public class Post {
     }
 
     public void update(String title, String content, Category category) {
-        if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("제목은 필수입니다.");
-        }
-        if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("내용은 필수입니다.");
-        }
+        validateCommonFields(title, content);
         if (category == null) {
             throw new IllegalArgumentException("카테고리는 필수입니다.");
         }
@@ -115,12 +110,7 @@ public class Post {
         if (!isLightning()) {
             throw new IllegalStateException("번개 게시글이 아닙니다.");
         }
-        if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("제목은 필수입니다.");
-        }
-        if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("내용은 필수입니다.");
-        }
+        validateCommonFields(title, content);
         if (newLightningInfo == null) {
             throw new IllegalArgumentException("번개 정보는 필수입니다.");
         }
