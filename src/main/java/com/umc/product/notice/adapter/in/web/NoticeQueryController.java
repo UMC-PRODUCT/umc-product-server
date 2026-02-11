@@ -22,13 +22,13 @@ import com.umc.product.notice.dto.NoticeClassification;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -48,7 +48,7 @@ public class NoticeQueryController implements NoticeQueryApi {
      */
     @GetMapping
     public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(
-        @ModelAttribute NoticeClassification classification,
+        @ParameterObject NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
         Pageable pageable) {
 
@@ -64,7 +64,7 @@ public class NoticeQueryController implements NoticeQueryApi {
     @GetMapping("/search")
     public ApiResponse<PageResponse<GetNoticeSummaryResponse>> searchNotices(
         @RequestParam String keyword,
-        @ModelAttribute NoticeClassification classification,
+        @ParameterObject NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
         Pageable pageable) {
 
@@ -114,7 +114,7 @@ public class NoticeQueryController implements NoticeQueryApi {
     @GetMapping("/{noticeId}/read-status")
     public ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus(
         @PathVariable Long noticeId,
-        @ModelAttribute @Valid GetNoticeStatusRequest request) {
+        @ParameterObject @Valid GetNoticeStatusRequest request) {
 
         NoticeReadStatusResult result = getNoticeUseCase.getReadStatus(request.toQuery(noticeId));
         CursorResponse<GetNoticeReadStatusResponse> response = CursorResponse.of(
