@@ -94,7 +94,7 @@ public class NoticeQueryController implements NoticeQueryApi {
     @CheckAccess(
         resourceType = ResourceType.NOTICE,
         resourceId = "#noticeId",
-        permission = PermissionType.MANAGE
+        permission = PermissionType.CHECK
     )
     @GetMapping("/{noticeId}/read-statics")
     public ApiResponse<GetNoticeStaticsResponse> getNoticeReadStatics(@PathVariable("noticeId") Long noticeId) {
@@ -109,7 +109,7 @@ public class NoticeQueryController implements NoticeQueryApi {
     @CheckAccess(
         resourceType = ResourceType.NOTICE,
         resourceId = "#noticeId",
-        permission = PermissionType.MANAGE
+        permission = PermissionType.CHECK
     )
     @GetMapping("/{noticeId}/read-status")
     public ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus(
