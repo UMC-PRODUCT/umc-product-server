@@ -1,6 +1,8 @@
 package com.umc.product.community.adapter.out.persistence;
 
 import static com.umc.product.community.adapter.out.persistence.QPostJpaEntity.postJpaEntity;
+import static com.umc.product.community.adapter.out.persistence.QCommentJpaEntity.commentJpaEntity;
+import static com.umc.product.community.adapter.out.persistence.QScrapJpaEntity.scrapJpaEntity;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
@@ -149,5 +151,119 @@ public class PostQueryRepository {
             return 50;
         }
         return 10;
+    }
+
+    /**
+     * 챌린저가 작성한 게시글 목록 조회
+     */
+    public Page<Post> findByAuthorChallengerId(Long challengerId, Pageable pageable) {
+        List<PostJpaEntity> results = queryFactory
+                .selectFrom(postJpaEntity)
+                .where(postJpaEntity.authorChallengerId.eq(challengerId))
+                .orderBy(postJpaEntity.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long totalCount = queryFactory
+                .select(postJpaEntity.count())
+                .from(postJpaEntity)
+                .where(postJpaEntity.authorChallengerId.eq(challengerId))
+                .fetchOne();
+
+        List<Post> posts = results.stream()
+                .map(PostJpaEntity::toDomain)
+                .toList();
+
+        return new PageImpl<>(posts, pageable, totalCount != null ? totalCount : 0);
+    }
+
+    /**
+     * 챌린저가 댓글을 단 게시글 목록 조회 (중복 제거, 최신 댓글 순)
+     */
+    public Page<Post> findCommentedPostsByChallengerId(Long challengerId, Pageable pageable) {
+        // 1. 댓글을 단 게시글 ID 목록 조회 (최신 댓글 순, 중복 제거)
+        List<Long> postIds = queryFactory
+                .select(commentJpaEntity.postId)
+                .from(commentJpaEntity)
+                .where(commentJpaEntity.challengerId.eq(challengerId))
+                .orderBy(commentJpaEntity.createdAt.desc())
+                .groupBy(commentJpaEntity.postId)
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        if (postIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // 2. 게시글 조회
+        List<PostJpaEntity> results = queryFactory
+                .selectFrom(postJpaEntity)
+                .where(postJpaEntity.id.in(postIds))
+                .fetch();
+
+        // 3. postIds 순서대로 정렬 (최신 댓글 순서 유지)
+        List<Post> posts = postIds.stream()
+                .map(postId -> results.stream()
+                        .filter(entity -> entity.getId().equals(postId))
+                        .findFirst()
+                        .map(PostJpaEntity::toDomain)
+                        .orElse(null))
+                .filter(post -> post != null)
+                .toList();
+
+        // 4. 전체 개수 조회
+        Long totalCount = queryFactory
+                .select(commentJpaEntity.postId.countDistinct())
+                .from(commentJpaEntity)
+                .where(commentJpaEntity.challengerId.eq(challengerId))
+                .fetchOne();
+
+        return new PageImpl<>(posts, pageable, totalCount != null ? totalCount : 0);
+    }
+
+    /**
+     * 챌린저가 스크랩한 게시글 목록 조회 (최신 스크랩 순)
+     */
+    public Page<Post> findScrappedPostsByChallengerId(Long challengerId, Pageable pageable) {
+        // 1. 스크랩한 게시글 ID 목록 조회 (최신 스크랩 순)
+        List<Long> postIds = queryFactory
+                .select(scrapJpaEntity.postId)
+                .from(scrapJpaEntity)
+                .where(scrapJpaEntity.challengerId.eq(challengerId))
+                .orderBy(scrapJpaEntity.createdAt.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        if (postIds.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        // 2. 게시글 조회
+        List<PostJpaEntity> results = queryFactory
+                .selectFrom(postJpaEntity)
+                .where(postJpaEntity.id.in(postIds))
+                .fetch();
+
+        // 3. postIds 순서대로 정렬 (최신 스크랩 순서 유지)
+        List<Post> posts = postIds.stream()
+                .map(postId -> results.stream()
+                        .filter(entity -> entity.getId().equals(postId))
+                        .findFirst()
+                        .map(PostJpaEntity::toDomain)
+                        .orElse(null))
+                .filter(post -> post != null)
+                .toList();
+
+        // 4. 전체 개수 조회
+        Long totalCount = queryFactory
+                .select(scrapJpaEntity.count())
+                .from(scrapJpaEntity)
+                .where(scrapJpaEntity.challengerId.eq(challengerId))
+                .fetchOne();
+
+        return new PageImpl<>(posts, pageable, totalCount != null ? totalCount : 0);
     }
 }

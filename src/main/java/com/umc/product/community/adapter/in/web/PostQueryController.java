@@ -2,8 +2,12 @@ package com.umc.product.community.adapter.in.web;
 
 import com.umc.product.community.adapter.in.web.dto.response.PostResponse;
 import com.umc.product.community.adapter.in.web.dto.response.PostSearchResponse;
+import com.umc.product.community.application.port.in.PostInfo;
+import com.umc.product.community.application.port.in.post.query.GetCommentedPostsUseCase;
+import com.umc.product.community.application.port.in.post.query.GetMyPostsUseCase;
 import com.umc.product.community.application.port.in.post.query.GetPostDetailUseCase;
 import com.umc.product.community.application.port.in.post.query.GetPostListUseCase;
+import com.umc.product.community.application.port.in.post.query.GetScrappedPostsUseCase;
 import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
 import com.umc.product.community.application.port.in.post.query.PostSearchResult;
 import com.umc.product.community.application.port.in.post.query.SearchPostUseCase;
@@ -34,6 +38,9 @@ public class PostQueryController {
     private final GetPostDetailUseCase getPostDetailUseCase;
     private final GetPostListUseCase getPostListUseCase;
     private final SearchPostUseCase searchPostUseCase;
+    private final GetMyPostsUseCase getMyPostsUseCase;
+    private final GetCommentedPostsUseCase getCommentedPostsUseCase;
+    private final GetScrappedPostsUseCase getScrappedPostsUseCase;
 
     @GetMapping("/{postId}")
     @Operation(summary = "게시글 상세 조회", description = "게시글 상세 정보를 조회합니다.")
@@ -72,6 +79,54 @@ public class PostQueryController {
     ) {
         Page<PostSearchResult> results = searchPostUseCase.search(keyword, pageable);
         PageResponse<PostSearchResponse> response = PageResponse.of(results, PostSearchResponse::from);
+
+        return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping("/my")
+    @Operation(summary = "내가 쓴 글 조회", description = "챌린저가 작성한 게시글 목록을 조회합니다. (최신순 정렬)")
+    public ApiResponse<PageResponse<PostResponse>> getMyPosts(
+            @RequestParam
+            @Parameter(description = "챌린저 ID", example = "1")
+            Long challengerId,  // TODO: @CurrentUser로 변경 필요
+            @PageableDefault(size = 20)
+            @Parameter(description = "페이지네이션 (page, size)")
+            Pageable pageable
+    ) {
+        Page<PostInfo> posts = getMyPostsUseCase.getMyPosts(challengerId, pageable);
+        PageResponse<PostResponse> response = PageResponse.of(posts, PostResponse::from);
+
+        return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping("/commented")
+    @Operation(summary = "댓글 단 글 조회", description = "챌린저가 댓글을 단 게시글 목록을 조회합니다. (최신 댓글 순)")
+    public ApiResponse<PageResponse<PostResponse>> getCommentedPosts(
+            @RequestParam
+            @Parameter(description = "챌린저 ID", example = "1")
+            Long challengerId,  // TODO: @CurrentUser로 변경 필요
+            @PageableDefault(size = 20)
+            @Parameter(description = "페이지네이션 (page, size)")
+            Pageable pageable
+    ) {
+        Page<PostInfo> posts = getCommentedPostsUseCase.getCommentedPosts(challengerId, pageable);
+        PageResponse<PostResponse> response = PageResponse.of(posts, PostResponse::from);
+
+        return ApiResponse.onSuccess(response);
+    }
+
+    @GetMapping("/scrapped")
+    @Operation(summary = "스크랩한 글 조회", description = "챌린저가 스크랩한 게시글 목록을 조회합니다. (최신 스크랩 순)")
+    public ApiResponse<PageResponse<PostResponse>> getScrappedPosts(
+            @RequestParam
+            @Parameter(description = "챌린저 ID", example = "1")
+            Long challengerId,  // TODO: @CurrentUser로 변경 필요
+            @PageableDefault(size = 20)
+            @Parameter(description = "페이지네이션 (page, size)")
+            Pageable pageable
+    ) {
+        Page<PostInfo> posts = getScrappedPostsUseCase.getScrappedPosts(challengerId, pageable);
+        PageResponse<PostResponse> response = PageResponse.of(posts, PostResponse::from);
 
         return ApiResponse.onSuccess(response);
     }

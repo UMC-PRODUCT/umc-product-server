@@ -109,4 +109,19 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     public Map<Long, Long> findAuthorIdsByPostIds(List<Long> postIds) {
         return postRepository.findAuthorIdsMapByPostIds(postIds);
     }
+
+    @Override
+    public Page<Post> findByAuthorChallengerId(Long challengerId, Pageable pageable) {
+        return postQueryRepository.findByAuthorChallengerId(challengerId, pageable);
+    }
+
+    @Override
+    public Page<Post> findCommentedPostsByChallengerId(Long challengerId, Pageable pageable) {
+        return postQueryRepository.findCommentedPostsByChallengerId(challengerId, pageable);
+    }
+
+    @Override
+    public Page<Post> findScrappedPostsByChallengerId(Long challengerId, Pageable pageable) {
+        return postQueryRepository.findScrappedPostsByChallengerId(challengerId, pageable);
+    }
 }

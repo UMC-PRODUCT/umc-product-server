@@ -26,4 +26,19 @@ public interface LoadPostPort {
     Long findAuthorIdByPostId(Long postId);  // 게시글 작성자 ID 조회 (단건)
 
     Map<Long, Long> findAuthorIdsByPostIds(List<Long> postIds);  // 게시글 작성자 ID 일괄 조회 (postId -> authorChallengerId)
+
+    /**
+     * 챌린저가 작성한 게시글 목록 조회
+     */
+    Page<Post> findByAuthorChallengerId(Long challengerId, Pageable pageable);
+
+    /**
+     * 챌린저가 댓글을 단 게시글 목록 조회
+     */
+    Page<Post> findCommentedPostsByChallengerId(Long challengerId, Pageable pageable);
+
+    /**
+     * 챌린저가 스크랩한 게시글 목록 조회
+     */
+    Page<Post> findScrappedPostsByChallengerId(Long challengerId, Pageable pageable);
 }
