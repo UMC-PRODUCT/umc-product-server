@@ -98,13 +98,13 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
                 command.openChatUrl()
         );
 
-        Post updatedPost = post.updateLightning(
+        post.updateLightning(
                 command.title(),
                 command.content(),
                 lightningInfo
         );
 
-        Post savedPost = savePostPort.save(updatedPost);
+        Post savedPost = savePostPort.save(post);
         String authorName = authorInfoProvider.getAuthorName(postWithAuthor.authorChallengerId());
         return PostInfo.from(savedPost, postWithAuthor.authorChallengerId(), authorName);
     }

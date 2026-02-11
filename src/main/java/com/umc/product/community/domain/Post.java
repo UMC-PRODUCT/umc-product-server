@@ -27,7 +27,7 @@ public class Post {
     private final Long authorChallengerId;
 
     @Getter
-    private final LightningInfo lightningInfo;
+    private LightningInfo lightningInfo;
 
     @Getter
     private final int likeCount;
@@ -111,7 +111,7 @@ public class Post {
         this.category = category;
     }
 
-    public Post updateLightning(String title, String content, LightningInfo newLightningInfo) {
+    public void updateLightning(String title, String content, LightningInfo newLightningInfo) {
         if (!isLightning()) {
             throw new IllegalStateException("번개 게시글이 아닙니다.");
         }
@@ -125,17 +125,9 @@ public class Post {
             throw new IllegalArgumentException("번개 정보는 필수입니다.");
         }
 
-        return Post.builder()
-                .postId(this.postId)
-                .title(title)
-                .content(content)
-                .category(Category.LIGHTNING)
-                .authorChallengerId(this.authorChallengerId)
-                .lightningInfo(newLightningInfo)
-                .likeCount(this.likeCount)
-                .liked(this.liked)
-                .createdAt(this.createdAt)
-                .build();
+        this.title = title;
+        this.content = content;
+        this.lightningInfo = newLightningInfo;
     }
 
     public record PostId(Long id) {
