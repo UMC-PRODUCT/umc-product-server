@@ -12,4 +12,8 @@ public interface MemberOAuthRepository extends JpaRepository<MemberOAuth, Long> 
     List<MemberOAuth> findAllByMemberId(Long memberId);
 
     Optional<MemberOAuth> findByMemberIdAndProvider(Long memberId, OAuthProvider provider);
+
+    List<MemberOAuth> findAllByProviderAndProviderIdIn(OAuthProvider provider, List<String> providerIds);
+
+    List<MemberOAuth> findAllByMemberIdInAndProvider(List<Long> memberIds, OAuthProvider provider);
 }

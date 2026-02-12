@@ -26,6 +26,7 @@ public record SearchChallengerResponse(
             ChallengerPart part,
             String name,
             String nickname,
+            String schoolName,
             Double pointSum,
             String profileImageLink,
             List<ChallengerRoleType> roleTypes
@@ -38,6 +39,7 @@ public record SearchChallengerResponse(
                     info.part(),
                     info.name(),
                     info.nickname(),
+                    info.schoolName(),
                     info.pointSum(),
                     info.profileImageLink(),
                     info.roleTypes()

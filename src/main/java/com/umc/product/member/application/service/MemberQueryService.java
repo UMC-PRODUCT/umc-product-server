@@ -43,7 +43,8 @@ public class MemberQueryService implements GetMemberUseCase {
         String profileImageLink =
             profileImageId == null
                 ? null
-                : getFileUseCase.getById(member.getProfileImageId()).fileLink();
+                // profileImageId가 존재하는 경우 접근 가능한 링크를 반환하도록 함
+                : getFileUseCase.getById(profileImageId).fileLink();
 
         return MemberInfo.from(member, schoolName, profileImageLink);
     }

@@ -1,5 +1,6 @@
 package com.umc.product.community.adapter.in.web.dto.response;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.application.port.in.post.query.PostDetailInfo;
 import com.umc.product.community.domain.enums.Category;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -29,7 +30,25 @@ public record PostDetailResponse(
         LightningInfoResponse lightningInfo,
 
         @Schema(description = "댓글 수", example = "5")
-        int commentCount
+        int commentCount,
+
+        @Schema(description = "작성 시간", example = "2026-02-11T10:30:00Z")
+        String writeTime,
+
+        @Schema(description = "좋아요 수", example = "10")
+        int likes,
+
+        @Schema(description = "작성자 파트", example = "SPRINGBOOT")
+        ChallengerPart userPart,
+
+        @Schema(description = "좋아요 클릭 여부", example = "true")
+        boolean isLiked,
+
+        @Schema(description = "스크랩 클릭 여부", example = "false")
+        boolean isScrapped,
+
+        @Schema(description = "스크랩 수", example = "3")
+        int scraps
 ) {
     public static PostDetailResponse from(PostDetailInfo info) {
         LightningInfoResponse lightningInfoResponse = null;
@@ -43,6 +62,8 @@ public record PostDetailResponse(
             );
         }
 
+        String writeTime = info.createdAt() != null ? info.createdAt().toString() : null;
+
         return new PostDetailResponse(
                 info.postId(),
                 info.title(),
@@ -51,7 +72,13 @@ public record PostDetailResponse(
                 info.authorId(),
                 info.authorName(),
                 lightningInfoResponse,
-                info.commentCount()
+                info.commentCount(),
+                writeTime,
+                info.likeCount(),
+                info.userPart(),
+                info.isLiked(),
+                info.isScrapped(),
+                info.scraps()
         );
     }
 

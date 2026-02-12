@@ -21,6 +21,8 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -49,16 +51,45 @@ public class ChallengerController {
     private final ManageChallengerUseCase manageChallengerUseCase;
     private final SearchChallengerUseCase searchChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
+    private final GetGisuUseCase getGisuUseCase;
+
+    @Operation(summary = "특정 회원의 모든 챌린저 정보 조회")
+    @GetMapping("member/{memberId}")
+    List<ChallengerInfoResponse> getChallengerInfos(@PathVariable Long memberId) {
+        List<ChallengerInfo> challengerInfos = getChallengerUseCase.getMemberChallengerList(memberId);
+
+        MemberInfo memberInfo = getMemberUseCase.getById(memberId);
+
+        return challengerInfos.stream()
+            .map(info -> {
+                GisuInfo gisuInfo = getGisuUseCase.getById(info.gisuId());
+                return ChallengerInfoResponse.from(info, memberInfo, gisuInfo);
+            })
+            .toList();
+    }
+
+    @Operation(summary = "내 챌린저 기록 조회")
+    @GetMapping("member/me")
+    List<ChallengerInfoResponse> getMyChallengerInfos(@CurrentMember MemberPrincipal memberPrincipal) {
+        List<ChallengerInfo> challengerInfos = getChallengerUseCase.getMemberChallengerList(
+            memberPrincipal.getMemberId());
+
+        MemberInfo memberInfo = getMemberUseCase.getById(memberPrincipal.getMemberId());
+
+        return challengerInfos.stream()
+            .map(info -> {
+                GisuInfo gisuInfo = getGisuUseCase.getById(info.gisuId());
+                return ChallengerInfoResponse.from(info, memberInfo, gisuInfo);
+            })
+            .toList();
+    }
 
     @Operation(summary = "챌린저 정보 조회")
     @GetMapping("{challengerId}")
     ChallengerInfoResponse getChallengerInfo(
         @PathVariable Long challengerId
     ) {
-        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-        MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
-
-        return ChallengerInfoResponse.from(challengerInfo, memberInfo);
+        return getChallengerInfoResponse(challengerId);
     }
 
     @Operation(summary = "[주의] 챌린저 삭제 (Hard Delete)")
@@ -85,8 +116,8 @@ public class ChallengerController {
         @RequestBody EditChallengerPartRequest request
     ) {
         manageChallengerUseCase.updateChallenger(request.toCommand(challengerId, memberPrincipal.getMemberId()));
-        ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-        return ChallengerInfoResponse.from(info);
+
+        return getChallengerInfoResponse(challengerId);
     }
 
     @Operation(summary = "챌린저 상벌점 부여")
@@ -96,8 +127,8 @@ public class ChallengerController {
         @RequestBody GrantChallengerPointRequest request
     ) {
         manageChallengerUseCase.grantChallengerPoint(request.toCommand(challengerId));
-        ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-        return ChallengerInfoResponse.from(info);
+
+        return getChallengerInfoResponse(challengerId);
     }
 
     @Operation(summary = "챌린저 상벌점 사유 수정")
@@ -153,12 +184,12 @@ public class ChallengerController {
         );
     }
 
-    @Operation(summary = "챌린저 생성 (합격 처리와 통합 필요)")
+    @Operation(summary = "챌린저 생성")
     @PostMapping
     ChallengerInfoResponse createChallenger(@RequestBody CreateChallengerInfoRequest request) {
         Long challengerId = manageChallengerUseCase.createChallenger(request.toCommand());
-        ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-        return ChallengerInfoResponse.from(info);
+
+        return getChallengerInfoResponse(challengerId);
     }
 
     @Operation(summary = "챌린저 Bulk 생성")
@@ -173,5 +204,18 @@ public class ChallengerController {
                 return ChallengerInfoResponse.from(info);
             })
             .toList();
+    }
+
+    // Private Methods
+
+    /**
+     * 챌린저 ID를 기반으로 회원 및 기수 정보를 포함하여 응답 객체를 생성해주는 헬퍼 메소드
+     */
+    private ChallengerInfoResponse getChallengerInfoResponse(Long challengerId) {
+        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
+        GisuInfo gisuInfo = getGisuUseCase.getById(challengerInfo.gisuId());
+
+        return ChallengerInfoResponse.from(challengerInfo, memberInfo, gisuInfo);
     }
 }

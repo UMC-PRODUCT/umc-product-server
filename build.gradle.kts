@@ -63,6 +63,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
+    // Mock Data
+    implementation("net.datafaker:datafaker:2.5.4")
+
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:${jwtVersion}")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:${jwtVersion}")

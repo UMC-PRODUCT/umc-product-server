@@ -158,7 +158,7 @@ public class ChallengerQueryRepository {
         BooleanBuilder builder = new BooleanBuilder();
 
         builder.and(challengerIdEq(query.challengerId(), challenger));
-        builder.and(nicknameOrNameContains(query.nickname(), member));
+        builder.and(nicknameOrNameContains(query.nickname(), query.name(), member));
         builder.and(schoolIdEq(query.schoolId(), member));
         builder.and(chapterIdExists(query.chapterId(), member));
         builder.and(partEq(query.part(), challenger));
@@ -215,12 +215,19 @@ public class ChallengerQueryRepository {
         return part != null ? challenger.part.eq(part) : null;
     }
 
-    private BooleanExpression nicknameOrNameContains(String value, QMember member) {
-        if (value == null || value.isBlank()) {
-            return null;
+    private BooleanExpression nicknameOrNameContains(String nickname, String name, QMember member) {
+        BooleanExpression nicknameCondition = (nickname != null && !nickname.isBlank())
+                ? member.nickname.containsIgnoreCase(nickname) : null;
+        BooleanExpression nameCondition = (name != null && !name.isBlank())
+                ? member.name.containsIgnoreCase(name) : null;
+
+        if (nicknameCondition != null && nameCondition != null) {
+            return nicknameCondition.or(nameCondition);
         }
-        return member.nickname.containsIgnoreCase(value)
-                .or(member.name.containsIgnoreCase(value));
+        if (nicknameCondition != null) {
+            return nicknameCondition;
+        }
+        return nameCondition;
     }
 
     private BooleanExpression schoolIdEq(Long schoolId, QMember member) {

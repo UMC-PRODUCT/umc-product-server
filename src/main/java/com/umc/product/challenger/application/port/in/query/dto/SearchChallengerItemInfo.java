@@ -11,6 +11,7 @@ public record SearchChallengerItemInfo(
         ChallengerPart part,
         String name,
         String nickname,
+        String schoolName,
         Double pointSum,
         String profileImageLink,
         List<ChallengerRoleType> roleTypes

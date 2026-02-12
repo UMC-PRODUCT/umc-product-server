@@ -11,7 +11,7 @@ import java.util.List;
 @Schema(description = "회원가입 요청")
 public record RegisterMemberRequest(
 
-    @Schema(description = "OAuth 인증 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    @Schema(description = "OAuth 인증 토큰", example = "YOUR_JWT_TOKEN")
     @NotBlank(message = "OAuth 인증 토큰은 필수입니다")
     String oAuthVerificationToken,
 
@@ -26,7 +26,7 @@ public record RegisterMemberRequest(
     @Pattern(regexp = "^[가-힣]+$", message = "한글만 입력 가능합니다")
     String nickname,
 
-    @Schema(description = "이메일 인증 토큰", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...")
+    @Schema(description = "이메일 인증 토큰", example = "YOUR_JWT_TOKEN")
     @NotBlank(message = "이메일 인증 토큰은 필수입니다")
     String emailVerificationToken,
 

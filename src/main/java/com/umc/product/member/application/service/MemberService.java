@@ -14,16 +14,13 @@ import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
-import com.umc.product.organization.exception.OrganizationDomainException;
-import com.umc.product.organization.exception.OrganizationErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
-import com.umc.product.storage.domain.exception.StorageErrorCode;
-import com.umc.product.storage.domain.exception.StorageException;
 import com.umc.product.terms.application.port.in.command.ManageTermsAgreementUseCase;
 import com.umc.product.terms.application.port.in.query.GetTermsUseCase;
 import com.umc.product.terms.domain.exception.TermsDomainException;
 import com.umc.product.terms.domain.exception.TermsErrorCode;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +34,7 @@ public class MemberService implements ManageMemberUseCase {
     private final LoadMemberPort loadMemberPort;
     private final SaveMemberPort saveMemberPort;
     private final LoadSchoolPort loadSchoolPort;
-    private final LoadFileMetadataPort loadFileMetadataPort;
+
     private final GetFileUseCase getFileUseCase;
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
     private final ManageTermsAgreementUseCase manageTermsAgreementUseCase;
@@ -47,17 +44,8 @@ public class MemberService implements ManageMemberUseCase {
     @Override
     @Transactional
     public Long registerMember(RegisterMemberCommand command) {
-        // 학교 ID 존재 검증
-        if (!loadSchoolPort.existsById(command.schoolId())) {
-            throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_NOT_FOUND);
-        }
-
-        // ProfileImageId 존재 검증 (선택적 필드이므로 null이 아닐 때만 검증)
-        if (command.profileImageId() != null && !loadFileMetadataPort.existsByFileId(command.profileImageId())) {
-            throw new StorageException(StorageErrorCode.FILE_NOT_FOUND);
-        }
-
-        // 필수 동의 약관에 전부 동의했는지 확인
+        validateSchoolExists(command.schoolId());
+        validateProfileImageExists(command.profileImageId());
         validateMandatoryTermsAgreed(command);
 
         Member savedMember = saveMemberPort.save(command.toEntity());
@@ -79,6 +67,48 @@ public class MemberService implements ManageMemberUseCase {
         );
 
         return savedMember.getId();
+    }
+
+    @Override
+    @Transactional
+    public List<Long> registerMembers(List<RegisterMemberCommand> commands) {
+        commands.forEach(command -> {
+            validateSchoolExists(command.schoolId());
+            validateProfileImageExists(command.profileImageId());
+            validateMandatoryTermsAgreed(command);
+        });
+
+        List<Member> savedMembers = saveMemberPort.saveAll(commands.stream()
+            .map(RegisterMemberCommand::toEntity)
+            .toList()
+        );
+
+        // OAuth 계정 정보 벌크 저장
+        List<LinkOAuthCommand> oAuthCommands = new ArrayList<>();
+        for (int i = 0; i < savedMembers.size(); i++) {
+            Member savedMember = savedMembers.get(i);
+            RegisterMemberCommand command = commands.get(i);
+
+            oAuthCommands.add(
+                LinkOAuthCommand.builder()
+                    .memberId(savedMember.getId())
+                    .provider(command.provider())
+                    .providerId(command.providerId())
+                    .build()
+            );
+
+            // 약관 동의 정보 저장
+            command.termConsents().forEach(termConsent ->
+                manageTermsAgreementUseCase.createTermConsent(
+                    termConsent.toCommand(savedMember.getId())
+                )
+            );
+        }
+        oAuthAuthenticationUseCase.linkOAuthBulk(oAuthCommands);
+
+        return savedMembers.stream()
+            .map(Member::getId)
+            .toList();
     }
 
     @Override
@@ -114,9 +144,16 @@ public class MemberService implements ManageMemberUseCase {
             () -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
+    /**
+     * 사진 ID가 주어진 경우 해당 파일이 존재하는지 확인
+     */
     private void validateProfileImageExists(String profileImageId) {
-        if (profileImageId != null && !getFileUseCase.existsById(profileImageId)) {
-            throw new StorageException(StorageErrorCode.FILE_NOT_FOUND);
+        if (profileImageId != null) {
+            getFileUseCase.throwIfNotExists(profileImageId);
         }
+    }
+
+    private void validateSchoolExists(Long schoolId) {
+        loadSchoolPort.throwIfNotExists(schoolId);
     }
 }

@@ -5,6 +5,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 
 public record SearchChallengerRequest(
         Long challengerId,
+        String name,
         String nickname,
         Long schoolId,
         Long chapterId,
@@ -16,6 +17,7 @@ public record SearchChallengerRequest(
     public SearchChallengerQuery toQuery() {
         return new SearchChallengerQuery(
                 challengerId,
+                name,
                 nickname,
                 schoolId,
                 chapterId,

@@ -36,7 +36,7 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort 
     @Override
     public List<Member> findByIdIn(Set<Long> ids) {
         return StreamSupport.stream(memberJpaRepository.findAllById(ids).spliterator(), false)
-                .toList();
+            .toList();
     }
 
     @Override
@@ -57,6 +57,11 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort 
     @Override
     public Member save(Member member) {
         return memberJpaRepository.save(member);
+    }
+
+    @Override
+    public List<Member> saveAll(List<Member> members) {
+        return memberJpaRepository.saveAll(members);
     }
 
     @Override
