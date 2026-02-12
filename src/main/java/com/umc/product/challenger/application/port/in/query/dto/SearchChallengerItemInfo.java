@@ -8,6 +8,7 @@ public record SearchChallengerItemInfo(
         Long challengerId,
         Long memberId,
         Long gisuId,
+        Long generation,
         ChallengerPart part,
         String name,
         String nickname,

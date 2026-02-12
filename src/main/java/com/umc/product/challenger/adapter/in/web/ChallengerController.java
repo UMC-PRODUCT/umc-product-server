@@ -5,11 +5,13 @@ import com.umc.product.challenger.adapter.in.web.dto.request.DeactivateChallenge
 import com.umc.product.challenger.adapter.in.web.dto.request.DeleteChallengerPointRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPartRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPointRequest;
+import com.umc.product.challenger.adapter.in.web.dto.request.GlobalSearchChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.GrantChallengerPointRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerCursorRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.SearchChallengerRequest;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.challenger.adapter.in.web.dto.response.CursorSearchChallengerResponse;
+import com.umc.product.challenger.adapter.in.web.dto.response.GlobalSearchChallengerResponse;
 import com.umc.product.challenger.adapter.in.web.dto.response.SearchChallengerResponse;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
 import com.umc.product.challenger.application.port.in.command.dto.DeleteChallengerCommand;
@@ -183,6 +185,23 @@ public class ChallengerController {
             )
         );
     }
+
+    @Operation(summary = "챌린저 전체 검색 (Cursor 기반, 일정 생성용)",
+        description = "전체 챌린저를 대상으로 이름 또는 닉네임을 이용해 챌린저를 검색합니다.")
+    @GetMapping("search/global")
+    GlobalSearchChallengerResponse globalSearchChallenger(
+        @ParameterObject GlobalSearchChallengerRequest searchRequest
+    ) {
+        return GlobalSearchChallengerResponse.from(
+            searchChallengerUseCase.globalCursorSearch(
+                searchRequest.toQuery(),
+                searchRequest.cursor(),
+                searchRequest.getSize()
+            )
+        );
+    }
+
+
 
     @Operation(summary = "챌린저 생성")
     @PostMapping

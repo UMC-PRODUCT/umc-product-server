@@ -8,6 +8,7 @@ import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +29,11 @@ public class GisuPersistenceAdapter implements ManageGisuPort, LoadGisuPort {
     public Gisu findById(Long gisuId) {
         return gisuJpaRepository.findById(gisuId).orElseThrow(
                 () -> new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.GISU_NOT_FOUND));
+    }
+
+    @Override
+    public List<Gisu> findByIds(Set<Long> gisuIds) {
+        return gisuJpaRepository.findByIdIn(gisuIds);
     }
 
     @Override

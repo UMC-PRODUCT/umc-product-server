@@ -1,5 +1,7 @@
 package com.umc.product.challenger.application.service;
 
+import com.umc.product.challenger.application.port.in.query.dto.GlobalSearchChallengerCursorResult;
+import com.umc.product.challenger.application.port.in.query.dto.GlobalSearchChallengerItemInfo;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerCursorResult;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerResult;
@@ -14,6 +16,8 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +38,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
     private final SearchChallengerPort searchChallengerPort;
     private final GetMemberUseCase getMemberUseCase;
     private final GetMemberRolesUseCase getMemberRolesUseCase;
+    private final GetGisuUseCase getGisuUseCase;
 
     @Override
     public SearchChallengerResult search(SearchChallengerQuery query, Pageable pageable) {
@@ -42,9 +47,10 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         Map<Long, Double> pointSums = buildPointSums(challengers);
         Map<Long, MemberProfileInfo> memberProfiles = loadMemberProfiles(challengers);
         Map<Long, List<ChallengerRoleType>> roleTypes = loadRoleTypes(challengers.getContent());
+        Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(challengers.getContent());
 
         Page<SearchChallengerItemInfo> items = challengers.map(challenger ->
-                toItemInfo(challenger, memberProfiles, pointSums, roleTypes)
+                toItemInfo(challenger, memberProfiles, pointSums, roleTypes, gisuGenerationMap)
         );
 
         return new SearchChallengerResult(items, partCounts);
@@ -61,14 +67,34 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         Map<Long, Double> pointSums = buildPointSums(result);
         Map<Long, MemberProfileInfo> memberProfiles = loadMemberProfiles(result);
         Map<Long, List<ChallengerRoleType>> roleTypes = loadRoleTypes(result);
+        Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(result);
 
         List<SearchChallengerItemInfo> items = result.stream()
-                .map(challenger -> toItemInfo(challenger, memberProfiles, pointSums, roleTypes))
+                .map(challenger -> toItemInfo(challenger, memberProfiles, pointSums, roleTypes, gisuGenerationMap))
                 .toList();
 
         Long nextCursor = hasNext ? result.get(result.size() - 1).getId() : null;
 
         return new SearchChallengerCursorResult(items, nextCursor, hasNext, partCounts);
+    }
+
+    @Override
+    public GlobalSearchChallengerCursorResult globalCursorSearch(SearchChallengerQuery query, Long cursor, int size) {
+        List<Challenger> challengers = searchChallengerPort.cursorSearch(query, cursor, size);
+
+        boolean hasNext = challengers.size() > size;
+        List<Challenger> result = hasNext ? challengers.subList(0, size) : challengers;
+
+        Map<Long, MemberProfileInfo> memberProfiles = loadMemberProfiles(result);
+        Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(result);
+
+        List<GlobalSearchChallengerItemInfo> items = result.stream()
+                .map(challenger -> toGlobalItemInfo(challenger, memberProfiles, gisuGenerationMap))
+                .toList();
+
+        Long nextCursor = hasNext ? result.get(result.size() - 1).getId() : null;
+
+        return new GlobalSearchChallengerCursorResult(items, nextCursor, hasNext);
     }
 
     /**
@@ -118,7 +144,8 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
             Challenger challenger,
             Map<Long, MemberProfileInfo> memberProfiles,
             Map<Long, Double> pointSums,
-            Map<Long, List<ChallengerRoleType>> roleTypes
+            Map<Long, List<ChallengerRoleType>> roleTypes,
+            Map<Long, Long> gisuGenerationMap
     ) {
         MemberProfileInfo profile = memberProfiles.get(challenger.getMemberId());
         if (profile == null) {
@@ -128,6 +155,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
                 challenger.getId(),
                 challenger.getMemberId(),
                 challenger.getGisuId(),
+                gisuGenerationMap.getOrDefault(challenger.getGisuId(), null),
                 challenger.getPart(),
                 profile.name(),
                 profile.nickname(),
@@ -149,5 +177,37 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         }
 
         return getMemberUseCase.getProfiles(memberIds);
+    }
+
+    private Map<Long, Long> loadGisuGenerationMap(List<Challenger> challengers) {
+        Set<Long> gisuIds = challengers.stream()
+                .map(Challenger::getGisuId)
+                .collect(Collectors.toSet());
+
+        if (gisuIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return getGisuUseCase.getByIds(gisuIds).stream()
+                .collect(Collectors.toMap(GisuInfo::gisuId, GisuInfo::generation));
+    }
+
+    private GlobalSearchChallengerItemInfo toGlobalItemInfo(
+            Challenger challenger,
+            Map<Long, MemberProfileInfo> memberProfiles,
+            Map<Long, Long> gisuGenerationMap
+    ) {
+        MemberProfileInfo profile = memberProfiles.get(challenger.getMemberId());
+        if (profile == null) {
+            throw new ChallengerDomainException(ChallengerErrorCode.MEMBER_PROFILE_NOT_FOUND);
+        }
+        return new GlobalSearchChallengerItemInfo(
+                challenger.getId(),
+                profile.nickname(),
+                profile.name(),
+                profile.schoolName(),
+                gisuGenerationMap.getOrDefault(challenger.getGisuId(), null),
+                profile.profileImageLink()
+        );
     }
 }
