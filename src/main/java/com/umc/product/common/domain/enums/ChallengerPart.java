@@ -16,4 +16,8 @@ public enum ChallengerPart {
 
     private final String displayName;
     private final int sortOrder;
+
+    public static ChallengerPart random() {
+        return values()[(int) (Math.random() * values().length)];
+    }
 }

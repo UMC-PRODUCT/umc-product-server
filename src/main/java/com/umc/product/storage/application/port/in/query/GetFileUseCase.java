@@ -37,4 +37,6 @@ public interface GetFileUseCase {
      * @return 존재 여부
      */
     boolean existsById(String fileId);
+
+    void throwIfNotExists(String fileId);
 }

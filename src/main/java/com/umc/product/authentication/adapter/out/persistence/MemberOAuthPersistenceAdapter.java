@@ -38,8 +38,23 @@ public class MemberOAuthPersistenceAdapter implements LoadMemberOAuthPort, SaveM
     }
 
     @Override
+    public List<MemberOAuth> findAllByProviderAndProviderIdIn(OAuthProvider provider, List<String> providerIds) {
+        return memberOAuthRepository.findAllByProviderAndProviderIdIn(provider, providerIds);
+    }
+
+    @Override
+    public List<MemberOAuth> findAllByMemberIdInAndProvider(List<Long> memberIds, OAuthProvider provider) {
+        return memberOAuthRepository.findAllByMemberIdInAndProvider(memberIds, provider);
+    }
+
+    @Override
     public MemberOAuth save(MemberOAuth memberOAuth) {
         return memberOAuthRepository.save(memberOAuth);
+    }
+
+    @Override
+    public List<MemberOAuth> saveAll(List<MemberOAuth> memberOAuths) {
+        return memberOAuthRepository.saveAll(memberOAuths);
     }
 
     @Override

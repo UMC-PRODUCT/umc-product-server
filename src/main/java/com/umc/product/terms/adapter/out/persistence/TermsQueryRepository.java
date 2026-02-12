@@ -21,23 +21,22 @@ public class TermsQueryRepository {
      */
     public Optional<Terms> findActiveByType(TermsType type) {
         return Optional.ofNullable(
-                queryFactory.selectFrom(terms)
-                        .where(
-                                terms.type.eq(type),
-                                terms.active.isTrue()
-                        )
-                        .orderBy(terms.effectiveDate.desc())
-                        .fetchFirst()
+            queryFactory.selectFrom(terms)
+                .where(
+                    terms.type.eq(type),
+                    terms.active.isTrue()
+                )
+                .fetchFirst()
         );
     }
 
     public List<Terms> findAllActiveRequired() {
         return queryFactory.selectDistinct(terms)
-                .from(terms)
-                .where(
-                        terms.active.eq(true),
-                        terms.required.eq(true)
-                )
-                .fetch();
+            .from(terms)
+            .where(
+                terms.active.eq(true),
+                terms.required.eq(true)
+            )
+            .fetch();
     }
 }
