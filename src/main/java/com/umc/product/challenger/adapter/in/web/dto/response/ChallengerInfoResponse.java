@@ -87,7 +87,7 @@ public record ChallengerInfoResponse(
             // Member 정보
             .name(memberInfo.name())
             .nickname(memberInfo.nickname())
-            .email(memberInfo.email())
+            .email(null) // 이메일은 보안 상 제거하도록 함
             .schoolId(memberInfo.schoolId())
             .schoolName(memberInfo.schoolName())
             .profileImageLink(memberInfo.profileImageLink())
