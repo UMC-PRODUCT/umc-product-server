@@ -47,9 +47,10 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         Map<Long, Double> pointSums = buildPointSums(challengers);
         Map<Long, MemberProfileInfo> memberProfiles = loadMemberProfiles(challengers);
         Map<Long, List<ChallengerRoleType>> roleTypes = loadRoleTypes(challengers.getContent());
+        Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(challengers.getContent());
 
         Page<SearchChallengerItemInfo> items = challengers.map(challenger ->
-                toItemInfo(challenger, memberProfiles, pointSums, roleTypes)
+                toItemInfo(challenger, memberProfiles, pointSums, roleTypes, gisuGenerationMap)
         );
 
         return new SearchChallengerResult(items, partCounts);
@@ -66,9 +67,10 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         Map<Long, Double> pointSums = buildPointSums(result);
         Map<Long, MemberProfileInfo> memberProfiles = loadMemberProfiles(result);
         Map<Long, List<ChallengerRoleType>> roleTypes = loadRoleTypes(result);
+        Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(result);
 
         List<SearchChallengerItemInfo> items = result.stream()
-                .map(challenger -> toItemInfo(challenger, memberProfiles, pointSums, roleTypes))
+                .map(challenger -> toItemInfo(challenger, memberProfiles, pointSums, roleTypes, gisuGenerationMap))
                 .toList();
 
         Long nextCursor = hasNext ? result.get(result.size() - 1).getId() : null;
@@ -142,7 +144,8 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
             Challenger challenger,
             Map<Long, MemberProfileInfo> memberProfiles,
             Map<Long, Double> pointSums,
-            Map<Long, List<ChallengerRoleType>> roleTypes
+            Map<Long, List<ChallengerRoleType>> roleTypes,
+            Map<Long, Long> gisuGenerationMap
     ) {
         MemberProfileInfo profile = memberProfiles.get(challenger.getMemberId());
         if (profile == null) {
@@ -152,6 +155,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
                 challenger.getId(),
                 challenger.getMemberId(),
                 challenger.getGisuId(),
+                gisuGenerationMap.getOrDefault(challenger.getGisuId(), null),
                 challenger.getPart(),
                 profile.name(),
                 profile.nickname(),
@@ -178,7 +182,6 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
     private Map<Long, Long> loadGisuGenerationMap(List<Challenger> challengers) {
         Set<Long> gisuIds = challengers.stream()
                 .map(Challenger::getGisuId)
-                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
         if (gisuIds.isEmpty()) {

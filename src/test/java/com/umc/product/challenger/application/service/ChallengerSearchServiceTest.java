@@ -62,10 +62,15 @@ class ChallengerSearchServiceTest {
 
     private List<Challenger> sixChallengers;
     private Map<Long, MemberProfileInfo> sixProfiles;
+    private List<GisuInfo> defaultGisuInfos;
 
     @BeforeEach
     void setUp() {
         defaultQuery = new SearchChallengerQuery(null, null, null, null, null, null, 1L);
+        defaultGisuInfos = List.of(
+                new GisuInfo(1L, 7L, Instant.now(), Instant.now(), true),
+                new GisuInfo(2L, 8L, Instant.now(), Instant.now(), false)
+        );
 
         sixChallengers = List.of(
                 createChallenger(1L, 10L, ChallengerPart.PLAN, 1L),
@@ -104,6 +109,7 @@ class ChallengerSearchServiceTest {
             given(searchChallengerPort.sumPointsByChallengerIds(anySet())).willReturn(Map.of());
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
             given(getMemberRolesUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getGisuUseCase.getList()).willReturn(defaultGisuInfos);
 
             // when
             SearchChallengerCursorResult result = challengerSearchService.cursorSearch(defaultQuery, null, size);
@@ -128,6 +134,7 @@ class ChallengerSearchServiceTest {
             given(searchChallengerPort.sumPointsByChallengerIds(anySet())).willReturn(Map.of());
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
             given(getMemberRolesUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getGisuUseCase.getList()).willReturn(defaultGisuInfos);
 
             // when
             SearchChallengerCursorResult result = challengerSearchService.cursorSearch(defaultQuery, null, size);
@@ -169,6 +176,7 @@ class ChallengerSearchServiceTest {
                     5L, List.of(ChallengerRoleType.CHAPTER_PRESIDENT)
                     // 2, 4, 6번은 역할 없음
             ));
+            given(getGisuUseCase.getList()).willReturn(defaultGisuInfos);
 
             // when
             SearchChallengerCursorResult result = challengerSearchService.cursorSearch(defaultQuery, null, size);
@@ -202,6 +210,7 @@ class ChallengerSearchServiceTest {
             ));
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
             given(getMemberRolesUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getGisuUseCase.getList()).willReturn(defaultGisuInfos);
 
             // when
             SearchChallengerCursorResult result = challengerSearchService.cursorSearch(defaultQuery, null, size);
@@ -250,6 +259,7 @@ class ChallengerSearchServiceTest {
             given(searchChallengerPort.sumPointsByChallengerIds(anySet())).willReturn(Map.of());
             given(getMemberUseCase.getProfiles(anySet())).willReturn(Map.of()); // 프로필 없음
             given(getMemberRolesUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getGisuUseCase.getList()).willReturn(defaultGisuInfos);
 
             // when & then
             assertThatThrownBy(() -> challengerSearchService.cursorSearch(defaultQuery, null, size))
@@ -280,6 +290,7 @@ class ChallengerSearchServiceTest {
             given(searchChallengerPort.sumPointsByChallengerIds(anySet())).willReturn(Map.of());
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
             given(getMemberRolesUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getGisuUseCase.getList()).willReturn(defaultGisuInfos);
 
             // when
             SearchChallengerCursorResult result = challengerSearchService.cursorSearch(defaultQuery, 4L, size);
@@ -312,6 +323,7 @@ class ChallengerSearchServiceTest {
                     1L, List.of(ChallengerRoleType.CENTRAL_PRESIDENT),
                     3L, List.of(ChallengerRoleType.SCHOOL_PRESIDENT)
             ));
+            given(getGisuUseCase.getList()).willReturn(defaultGisuInfos);
 
             // when
             SearchChallengerResult result = challengerSearchService.search(defaultQuery, pageable);
@@ -332,15 +344,10 @@ class ChallengerSearchServiceTest {
     class GlobalCursorSearchTest {
 
         private SearchChallengerQuery globalQuery;
-        private List<GisuInfo> gisuInfos;
 
         @BeforeEach
         void setUp() {
             globalQuery = new SearchChallengerQuery(null, "홍", null, null, null, null, null);
-            gisuInfos = List.of(
-                    new GisuInfo(1L, 7L, Instant.now(), Instant.now(), true),
-                    new GisuInfo(2L, 8L, Instant.now(), Instant.now(), false)
-            );
         }
 
         @Test
@@ -351,7 +358,7 @@ class ChallengerSearchServiceTest {
 
             given(searchChallengerPort.cursorSearch(any(), any(), anyInt())).willReturn(firstPage);
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
-            given(getGisuUseCase.getList()).willReturn(gisuInfos);
+            given(getGisuUseCase.getList()).willReturn(defaultGisuInfos);
 
             // when
             GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null, size);
@@ -370,7 +377,7 @@ class ChallengerSearchServiceTest {
 
             given(searchChallengerPort.cursorSearch(any(), any(), anyInt())).willReturn(withExtra);
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
-            given(getGisuUseCase.getList()).willReturn(gisuInfos);
+            given(getGisuUseCase.getList()).willReturn(defaultGisuInfos);
 
             // when
             GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null, size);
@@ -402,7 +409,7 @@ class ChallengerSearchServiceTest {
             int size = 6;
             given(searchChallengerPort.cursorSearch(any(), any(), anyInt())).willReturn(sixChallengers);
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
-            given(getGisuUseCase.getList()).willReturn(gisuInfos);
+            given(getGisuUseCase.getList()).willReturn(defaultGisuInfos);
 
             // when
             GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null, size);
@@ -414,7 +421,7 @@ class ChallengerSearchServiceTest {
             assertThat(first.challengerId()).isEqualTo(1L);
             assertThat(first.name()).isEqualTo("홍길동");
             assertThat(first.nickname()).isEqualTo("hong");
-            assertThat(first.schoolName()).isEqualTo("한양대학교ERIcA");
+            assertThat(first.schoolName()).isEqualTo("한양대학교ERICA");
             assertThat(first.generation()).isEqualTo(7L);
             assertThat(first.profileImageLink()).isNull();
         }
@@ -425,7 +432,7 @@ class ChallengerSearchServiceTest {
             int size = 6;
             given(searchChallengerPort.cursorSearch(any(), any(), anyInt())).willReturn(sixChallengers);
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
-            given(getGisuUseCase.getList()).willReturn(gisuInfos);
+            given(getGisuUseCase.getList()).willReturn(defaultGisuInfos);
 
             // when
             GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null, size);
@@ -446,7 +453,7 @@ class ChallengerSearchServiceTest {
             // given
             given(searchChallengerPort.cursorSearch(any(), any(), anyInt())).willReturn(sixChallengers);
             given(getMemberUseCase.getProfiles(anySet())).willReturn(Map.of());
-            given(getGisuUseCase.getList()).willReturn(gisuInfos);
+            given(getGisuUseCase.getList()).willReturn(defaultGisuInfos);
 
             // when & then
             assertThatThrownBy(() -> challengerSearchService.globalCursorSearch(globalQuery, null, 6))
@@ -461,7 +468,7 @@ class ChallengerSearchServiceTest {
 
             given(searchChallengerPort.cursorSearch(any(), any(), anyInt())).willReturn(lastPage);
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
-            given(getGisuUseCase.getList()).willReturn(gisuInfos);
+            given(getGisuUseCase.getList()).willReturn(defaultGisuInfos);
 
             // when
             GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, 4L, size);
