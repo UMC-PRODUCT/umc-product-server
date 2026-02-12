@@ -5,17 +5,15 @@ import lombok.Builder;
 
 @Builder
 public record TermsResponse(
-        Long id,
-        String title,
-        String content,
-        boolean isMandatory
+    Long id,
+    String link,
+    boolean isMandatory
 ) {
     public static TermsResponse from(TermsInfo termsInfo) {
         return TermsResponse.builder()
-                .id(termsInfo.id())
-                .title(termsInfo.title())
-                .content(termsInfo.content())
-                .isMandatory(termsInfo.isMandatory())
-                .build();
+            .id(termsInfo.id())
+            .link(termsInfo.link())
+            .isMandatory(termsInfo.isMandatory())
+            .build();
     }
 }

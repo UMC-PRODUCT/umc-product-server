@@ -41,25 +41,18 @@ public class TermsAgreementQueryService implements GetTermsAgreementUseCase {
 
         // Map<타입, 약관객체> 형태로 변환 (중복 발생 시 최근 거 선택)
         Map<TermsType, Terms> termsMap = activeTermsList.stream()
-                .collect(Collectors.toMap(Terms::getType, terms -> terms, (oldValue, newValue) -> newValue));
+            .collect(Collectors.toMap(Terms::getType, terms -> terms, (oldValue, newValue) -> newValue));
 
         // 동의 내역을 순회하며 Map에서 데이터를 꺼내 TermsInfo 만들기
         return consents.stream()
-                .map(consent -> {
-                    Terms terms = termsMap.get(consent.getTermType());
-                    if (terms == null) {
-                        throw new TermsDomainException(TermsErrorCode.TERMS_NOT_FOUND);
-                    }
+            .map(consent -> {
+                Terms terms = termsMap.get(consent.getTermType());
+                if (terms == null) {
+                    throw new TermsDomainException(TermsErrorCode.TERMS_NOT_FOUND);
+                }
 
-                    return new TermsInfo(
-                            terms.getId(),
-                            terms.getTitle(),
-                            terms.getContent(),
-                            terms.isRequired(),
-                            terms.getType(),
-                            terms.getEffectiveDate()
-                    );
-                })
-                .toList();
+                return TermsInfo.from(terms);
+            })
+            .toList();
     }
 }

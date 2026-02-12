@@ -1,6 +1,7 @@
 package com.umc.product.challenger.domain;
 
 import com.umc.product.challenger.domain.enums.PointType;
+import com.umc.product.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -22,7 +23,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "challenger_point")
-public class ChallengerPoint {
+public class ChallengerPoint extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

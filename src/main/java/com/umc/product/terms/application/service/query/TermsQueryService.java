@@ -27,16 +27,9 @@ public class TermsQueryService implements GetTermsUseCase {
         }
 
         Terms terms = loadTermsPort.findActiveByType(type)
-                .orElseThrow(() -> new TermsDomainException(TermsErrorCode.TERMS_NOT_FOUND));
+            .orElseThrow(() -> new TermsDomainException(TermsErrorCode.TERMS_NOT_FOUND));
 
-        return new TermsInfo(
-                terms.getId(),
-                terms.getTitle(),
-                terms.getContent(),
-                terms.isRequired(),
-                terms.getType(),
-                terms.getEffectiveDate()
-        );
+        return TermsInfo.from(terms);
     }
 
     @Override
@@ -46,22 +39,15 @@ public class TermsQueryService implements GetTermsUseCase {
         }
 
         Terms terms = loadTermsPort.findById(termsId)
-                .orElseThrow(() -> new TermsDomainException(TermsErrorCode.TERMS_NOT_FOUND));
+            .orElseThrow(() -> new TermsDomainException(TermsErrorCode.TERMS_NOT_FOUND));
 
-        return new TermsInfo(
-                terms.getId(),
-                terms.getTitle(),
-                terms.getContent(),
-                terms.isRequired(),
-                terms.getType(),
-                terms.getEffectiveDate()
-        );
+        return TermsInfo.from(terms);
     }
 
     @Override
     public Set<Long> getRequiredTermIds() {
         return loadTermsPort.findAllActiveRequired().stream()
-                .map(Terms::getId)
-                .collect(Collectors.toSet());
+            .map(Terms::getId)
+            .collect(Collectors.toSet());
     }
 }

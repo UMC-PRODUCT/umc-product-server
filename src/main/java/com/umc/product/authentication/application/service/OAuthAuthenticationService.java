@@ -12,7 +12,10 @@ import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
 import com.umc.product.authentication.domain.MemberOAuth;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.OAuthProvider;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -95,14 +98,56 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
 
         // 2. 해당 회원이 이미 같은 provider로 연동했는지 확인 (선택적)
         // 일단 나중에 적용하기 위해서 주석 처리
-//        loadMemberOAuthPort.findByMemberIdAndProvider(command.memberId(), command.provider())
-//            .ifPresent(existing -> {
-//                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_PROVIDER_ALREADY_LINKED);
-//            });
+        loadMemberOAuthPort.findByMemberIdAndProvider(command.memberId(), command.provider())
+            .ifPresent(existing -> {
+                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_PROVIDER_ALREADY_LINKED);
+            });
 
         MemberOAuth created = saveMemberOAuthPort.save(LinkOAuthCommand.toEntity(command));
 
         return created.getId();
+    }
+
+    @Override
+    public List<Long> linkOAuthBulk(List<LinkOAuthCommand> commands) {
+        // provider별로 그룹핑하여 벌크 검증
+        Map<OAuthProvider, List<LinkOAuthCommand>> commandsByProvider = commands.stream()
+            .collect(Collectors.groupingBy(LinkOAuthCommand::provider));
+
+        commandsByProvider.forEach((provider, providerCommands) -> {
+            // 1. 동일한 OAuth 계정이 이미 연동되어 있는지 벌크 확인
+            List<String> providerIds = providerCommands.stream()
+                .map(LinkOAuthCommand::providerId)
+                .toList();
+
+            List<MemberOAuth> alreadyLinked =
+                loadMemberOAuthPort.findAllByProviderAndProviderIdIn(provider, providerIds);
+            if (!alreadyLinked.isEmpty()) {
+                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_ALREADY_LINKED);
+            }
+
+            // 2. 해당 회원이 이미 같은 provider로 연동했는지 벌크 확인
+            List<Long> memberIds = providerCommands.stream()
+                .map(LinkOAuthCommand::memberId)
+                .toList();
+
+            List<MemberOAuth> alreadyLinkedByMember =
+                loadMemberOAuthPort.findAllByMemberIdInAndProvider(memberIds, provider);
+            if (!alreadyLinkedByMember.isEmpty()) {
+                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_PROVIDER_ALREADY_LINKED);
+            }
+        });
+
+        // 3. 벌크 저장
+        List<MemberOAuth> entities = commands.stream()
+            .map(LinkOAuthCommand::toEntity)
+            .toList();
+
+        List<MemberOAuth> saved = saveMemberOAuthPort.saveAll(entities);
+
+        return saved.stream()
+            .map(MemberOAuth::getId)
+            .toList();
     }
 
     @Override
