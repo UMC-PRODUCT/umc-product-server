@@ -5,6 +5,7 @@ import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.organization.application.port.in.query.dto.GisuNameInfo;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +42,13 @@ public class GisuQueryService implements GetGisuUseCase {
     @Override
     public GisuInfo getById(Long gisuId) {
         return GisuInfo.from(loadGisuPort.findById(gisuId));
+    }
+
+    @Override
+    public List<GisuInfo> getByIds(Set<Long> gisuIds) {
+        return loadGisuPort.findByIds(gisuIds).stream()
+                .map(GisuInfo::from)
+                .toList();
     }
 
     @Override

@@ -8,7 +8,7 @@ public record SearchChallengerCursorRequest(
         @Parameter(description = "이전 페이지의 마지막 챌린저 ID. 첫 페이지 조회 시 null")
         Long cursor,
 
-        @Parameter(description = "한 페이지에 조회할 항목 수. 기본값 20")
+        @Parameter(description = "한 페이지에 조회할 항목 수. 기본값 20, 최대 50")
         Integer size,
 
         @Parameter(description = "특정 챌린저 ID로 정확히 검색")
@@ -33,6 +33,7 @@ public record SearchChallengerCursorRequest(
         Long gisuId
 ) {
     private static final int DEFAULT_SIZE = 20;
+    private static final int MAX_SIZE = 50;
 
     public SearchChallengerQuery toQuery() {
         return new SearchChallengerQuery(
@@ -47,6 +48,9 @@ public record SearchChallengerCursorRequest(
     }
 
     public int getSize() {
-        return size != null && size > 0 ? size : DEFAULT_SIZE;
+        if (size == null || size <= 0) {
+            return DEFAULT_SIZE;
+        }
+        return Math.min(size, MAX_SIZE);
     }
 }

@@ -188,8 +188,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
             return Map.of();
         }
 
-        return getGisuUseCase.getList().stream()
-                .filter(gisu -> gisuIds.contains(gisu.gisuId()))
+        return getGisuUseCase.getByIds(gisuIds).stream()
                 .collect(Collectors.toMap(GisuInfo::gisuId, GisuInfo::generation));
     }
 
