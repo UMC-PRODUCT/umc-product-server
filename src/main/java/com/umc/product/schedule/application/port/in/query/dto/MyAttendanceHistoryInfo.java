@@ -14,7 +14,8 @@ public record MyAttendanceHistoryInfo(
     String scheduleName,
     LocalDateTime scheduledAt,
     List<ScheduleTag> tags,
-    String time,              // "14:30"
+    String startTime,         // "14:30"
+    String endTime,           // "16:00"
     AttendanceStatus status,
     String statusDisplay      // "출석", "지각", "결석"
 ) {
@@ -28,6 +29,7 @@ public record MyAttendanceHistoryInfo(
             schedule.getStartsAt(),
             schedule.getTags().stream().toList(),
             schedule.getStartsAt().format(TIME_FORMATTER),
+            schedule.getEndsAt().format(TIME_FORMATTER),
             record.getStatus(),
             record.getStatusDisplay()
         );
