@@ -17,8 +17,14 @@ public record MyAttendanceHistoryResponse(
     @Schema(description = "일정 태그", example = "[\"SEMINAR\", \"ALL\"]")
     List<String> tag,
 
-    @Schema(description = "시간 표시", example = "14:30")
-    String time,
+    @Schema(description = "일정 날짜", example = "2024-01-15")
+    String scheduledDate,
+
+    @Schema(description = "시작 시간", example = "14:30")
+    String startTime,
+
+    @Schema(description = "종료 시간", example = "16:00")
+    String endTime,
 
     @Schema(description = "출석 상태", example = "PRESENT")
     String status,
