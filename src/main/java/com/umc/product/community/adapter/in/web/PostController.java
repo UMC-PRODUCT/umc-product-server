@@ -87,7 +87,7 @@ public class PostController {
             @PathVariable Long postId,
             @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
     ) {
-        return LikeResponse.from(togglePostLikeUseCase.toggle(postId, challengerId));
+        return LikeResponse.from(togglePostLikeUseCase.toggleLike(postId, challengerId));
     }
 
     @PostMapping("/{postId}/scrap")
@@ -96,7 +96,7 @@ public class PostController {
             @PathVariable Long postId,
             @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
     ) {
-        return ScrapResponse.from(toggleScrapUseCase.toggle(postId, challengerId));
+        return ScrapResponse.from(toggleScrapUseCase.toggleScrap(postId, challengerId));
     }
 }
 

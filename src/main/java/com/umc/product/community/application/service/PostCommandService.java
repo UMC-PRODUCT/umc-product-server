@@ -140,6 +140,9 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         // 스크랩 토글
         boolean scrapped = saveScrapPort.toggleScrap(postId, challengerId);
 
-        return new ScrapResult(scrapped);
+        // 스크랩 개수 조회
+        int scrapCount = loadScrapPort.countByPostId(postId);
+
+        return new ScrapResult(scrapped, scrapCount);
     }
 }

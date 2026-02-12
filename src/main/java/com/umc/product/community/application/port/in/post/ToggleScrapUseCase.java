@@ -10,8 +10,6 @@ public interface ToggleScrapUseCase {
      */
     ScrapResult toggleScrap(Long postId, Long challengerId);
 
-    ScrapResult toggle(Long postId, Long challengerId);
-
     record ScrapResult(
             boolean scrapped,
             int scrapCount
