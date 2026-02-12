@@ -46,7 +46,7 @@ public class PostController {
             @RequestBody CreatePostRequest request,
             @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
     ) {
-        return ApiResponse.success(PostResponse.from(createPostUseCase.createPost(request.toCommand(challengerId))));
+        return ApiResponse.onSuccess(PostResponse.from(createPostUseCase.createPost(request.toCommand(challengerId))));
     }
 
     @PostMapping("/lightning")
@@ -55,7 +55,7 @@ public class PostController {
             @RequestBody CreateLightningRequest request,
             @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
     ) {
-        return ApiResponse.success(PostResponse.from(createPostUseCase.createLightningPost(request.toCommand(challengerId))));
+        return ApiResponse.onSuccess(PostResponse.from(createPostUseCase.createLightningPost(request.toCommand(challengerId))));
     }
 
     @PatchMapping("/{postId}")
@@ -64,7 +64,7 @@ public class PostController {
             @PathVariable Long postId,
             @RequestBody UpdatePostRequest request
     ) {
-        return ApiResponse.success(PostResponse.from(updatePostUseCase.updatePost(request.toCommand(postId))));
+        return ApiResponse.onSuccess(PostResponse.from(updatePostUseCase.updatePost(request.toCommand(postId))));
     }
 
     @PatchMapping("/{postId}/lightning")
@@ -73,14 +73,14 @@ public class PostController {
             @PathVariable Long postId,
             @RequestBody UpdateLightningRequest request
     ) {
-        return ApiResponse.success(PostResponse.from(updateLightningUseCase.updateLightning(request.toCommand(postId))));
+        return ApiResponse.onSuccess(PostResponse.from(updateLightningUseCase.updateLightning(request.toCommand(postId))));
     }
 
     @DeleteMapping("/{postId}")
     @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다.")
     public ApiResponse<Void> deletePost(@PathVariable Long postId) {
         deletePostUseCase.deletePost(postId);
-        return ApiResponse.success(null);
+        return ApiResponse.onSuccess(null);
     }
 
     @PostMapping("/{postId}/like")
@@ -89,7 +89,7 @@ public class PostController {
             @PathVariable Long postId,
             @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
     ) {
-        return ApiResponse.success(LikeResponse.from(togglePostLikeUseCase.toggleLike(postId, challengerId)));
+        return ApiResponse.onSuccess(LikeResponse.from(togglePostLikeUseCase.toggleLike(postId, challengerId)));
     }
 
     @PostMapping("/{postId}/scrap")
@@ -98,7 +98,7 @@ public class PostController {
             @PathVariable Long postId,
             @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
     ) {
-        return ApiResponse.success(ScrapResponse.from(toggleScrapUseCase.toggleScrap(postId, challengerId)));
+        return ApiResponse.onSuccess(ScrapResponse.from(toggleScrapUseCase.toggleScrap(postId, challengerId)));
     }
 }
 
