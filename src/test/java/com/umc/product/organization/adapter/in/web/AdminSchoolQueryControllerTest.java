@@ -112,7 +112,7 @@ class AdminSchoolQueryControllerTest extends DocumentationTest {
                 new SchoolDetailInfo.SchoolLinkItem("유튜브 채널", SchoolLinkType.YOUTUBE, "https://youtube.com/@example")
         );
 
-        SchoolDetailInfo schoolDetailInfo = new SchoolDetailInfo(3L, "Ain 지부", "중앙대학교", 1L, "비고", "logo-file-123", links, createdAt, updatedAt);
+        SchoolDetailInfo schoolDetailInfo = new SchoolDetailInfo(3L, "Ain 지부", "중앙대학교", 1L, "비고", "logo-file-123", links, true, createdAt, updatedAt);
         FileInfo fileInfo = new FileInfo("logo-file-123", "동국대학교 로고", FileCategory.SCHOOL_LOGO, null, null, "https://storage.example.com/school-logo/logo.png", null, null, null);
         given(getSchoolUseCase.getSchoolDetail(schoolId)).willReturn(schoolDetailInfo);
         given(getFileUseCase.getById("logo-file-123")).willReturn(fileInfo);
@@ -128,6 +128,7 @@ class AdminSchoolQueryControllerTest extends DocumentationTest {
                                 fieldWithPath("result.chapterName").type(JsonFieldType.STRING).description("지부 이름"),
                                 fieldWithPath("result.schoolName").type(JsonFieldType.STRING).description("학교 이름"),
                                 fieldWithPath("result.schoolId").type(JsonFieldType.STRING).description("학교 ID"),
+                                fieldWithPath("result.isActive").type(JsonFieldType.BOOLEAN).description("학교 활성상태"),
                                 fieldWithPath("result.remark").type(JsonFieldType.STRING).description("비고"),
                                 fieldWithPath("result.logoImageLink").type(JsonFieldType.STRING).description("로고 이미지 URL").optional(),
                                 fieldWithPath("result.links").type(JsonFieldType.ARRAY).description("학교 링크 목록"),
