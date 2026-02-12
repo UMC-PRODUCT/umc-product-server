@@ -59,7 +59,7 @@ class ChallengerSearchServiceTest {
 
     @BeforeEach
     void setUp() {
-        defaultQuery = new SearchChallengerQuery(null, null, null, null, null, 1L);
+        defaultQuery = new SearchChallengerQuery(null, null, null, null, null, null, 1L);
 
         sixChallengers = List.of(
                 createChallenger(1L, 10L, ChallengerPart.PLAN, 1L),

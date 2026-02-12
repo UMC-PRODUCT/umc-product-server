@@ -79,6 +79,12 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     }
 
     @Override
+    public Optional<PostWithAuthor> findByIdWithAuthor(Long postId, Long viewerChallengerId) {
+        return postRepository.findById(postId)
+                .map(entity -> new PostWithAuthor(entity.toDomain(viewerChallengerId), entity.getAuthorChallengerId()));
+    }
+
+    @Override
     public List<Post> findByCategory(Category category) {
         return postRepository.findByCategory(category).stream()
                 .map(PostJpaEntity::toDomain)

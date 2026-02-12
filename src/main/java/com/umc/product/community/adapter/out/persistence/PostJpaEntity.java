@@ -133,7 +133,8 @@ public class PostJpaEntity extends BaseEntity {
                 authorChallengerId,
                 lightningInfo,
                 getLikeCount(),
-                liked
+                liked,
+                getCreatedAt()
         );
     }
 

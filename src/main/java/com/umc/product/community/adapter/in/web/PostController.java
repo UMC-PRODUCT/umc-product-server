@@ -58,7 +58,7 @@ public class PostController {
     }
 
     @PatchMapping("/{postId}")
-    @Operation(summary = "일반 게시글 수정", description = "일반 게시글의 제목과 내용을 수정합니다.")
+    @Operation(summary = "일반 게시글 수정", description = "일반 게시글의 제목, 내용, 카테고리를 수정합니다.")
     public PostResponse updatePost(
             @PathVariable Long postId,
             @RequestBody UpdatePostRequest request
@@ -66,8 +66,8 @@ public class PostController {
         return PostResponse.from(updatePostUseCase.updatePost(request.toCommand(postId)));
     }
 
-    @PatchMapping("/lightning/{postId}")
-    @Operation(summary = "번개글 수정", description = "번개 게시글의 제목, 내용, 번개 정보를 수정합니다.")
+    @PatchMapping("/{postId}/lightning")
+    @Operation(summary = "번개글 수정", description = "번개 게시글의 제목, 내용, 모임 정보를 수정합니다.")
     public PostResponse updateLightningPost(
             @PathVariable Long postId,
             @RequestBody UpdateLightningRequest request
@@ -87,7 +87,7 @@ public class PostController {
             @PathVariable Long postId,
             @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
     ) {
-        return LikeResponse.from(togglePostLikeUseCase.toggleLike(postId, challengerId));
+        return LikeResponse.from(togglePostLikeUseCase.toggle(postId, challengerId));
     }
 
     @PostMapping("/{postId}/scrap")
@@ -96,7 +96,7 @@ public class PostController {
             @PathVariable Long postId,
             @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
     ) {
-        return ScrapResponse.from(toggleScrapUseCase.toggleScrap(postId, challengerId));
+        return ScrapResponse.from(toggleScrapUseCase.toggle(postId, challengerId));
     }
 }
 

@@ -13,6 +13,8 @@ public interface ScrapRepository extends JpaRepository<ScrapJpaEntity, Long> {
 
     boolean existsByPostIdAndChallengerId(Long postId, Long challengerId);
 
+    int countByPostId(Long postId);
+
     void deleteByPostIdAndChallengerId(Long postId, Long challengerId);
 
     @Query("SELECT s.postId FROM ScrapJpaEntity s WHERE s.challengerId = :challengerId ORDER BY s.createdAt DESC")

@@ -1,8 +1,5 @@
 package com.umc.product.community.application.port.in.post;
 
-/**
- * 게시글 스크랩 토글 UseCase
- */
 public interface ToggleScrapUseCase {
     /**
      * 게시글 스크랩 토글
@@ -13,6 +10,11 @@ public interface ToggleScrapUseCase {
      */
     ScrapResult toggleScrap(Long postId, Long challengerId);
 
-    record ScrapResult(boolean scrapped) {
+    ScrapResult toggle(Long postId, Long challengerId);
+
+    record ScrapResult(
+            boolean scrapped,
+            int scrapCount
+    ) {
     }
 }

@@ -4,6 +4,7 @@ import com.umc.product.community.application.port.in.PostInfo;
 import com.umc.product.community.application.port.in.post.CreatePostUseCase;
 import com.umc.product.community.application.port.in.post.DeletePostUseCase;
 import com.umc.product.community.application.port.in.post.TogglePostLikeUseCase;
+import com.umc.product.community.application.port.in.post.UpdateLightningUseCase;
 import com.umc.product.community.application.port.in.post.ToggleScrapUseCase;
 import com.umc.product.community.application.port.in.post.UpdateLightningUseCase;
 import com.umc.product.community.application.port.in.post.UpdatePostUseCase;

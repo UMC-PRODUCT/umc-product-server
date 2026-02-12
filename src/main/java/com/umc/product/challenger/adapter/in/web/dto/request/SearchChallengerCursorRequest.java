@@ -14,6 +14,9 @@ public record SearchChallengerCursorRequest(
         @Parameter(description = "특정 챌린저 ID로 정확히 검색")
         Long challengerId,
 
+        @Parameter(description = "이름으로 부분 검색")
+        String name,
+
         @Parameter(description = "닉네임으로 부분 검색")
         String nickname,
 
@@ -34,6 +37,7 @@ public record SearchChallengerCursorRequest(
     public SearchChallengerQuery toQuery() {
         return new SearchChallengerQuery(
                 challengerId,
+                name,
                 nickname,
                 schoolId,
                 chapterId,

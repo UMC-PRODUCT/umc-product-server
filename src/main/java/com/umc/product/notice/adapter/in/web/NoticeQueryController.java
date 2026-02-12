@@ -50,6 +50,7 @@ public class NoticeQueryController implements NoticeQueryApi {
     public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(
         @ParameterObject NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
+        @ParameterObject
         Pageable pageable) {
 
         Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(classification,
@@ -66,6 +67,7 @@ public class NoticeQueryController implements NoticeQueryApi {
         @RequestParam String keyword,
         @ParameterObject NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
+        @ParameterObject
         Pageable pageable) {
 
         Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(keyword, classification, pageable);
@@ -82,7 +84,7 @@ public class NoticeQueryController implements NoticeQueryApi {
         permission = PermissionType.READ
     )
     @GetMapping("/{noticeId}")
-    public ApiResponse<GetNoticeDetailResponse> getNotice(@PathVariable Long noticeId) {
+    public ApiResponse<GetNoticeDetailResponse> getNotice(@PathVariable("noticeId") Long noticeId) {
 
         NoticeInfo noticeDetail = getNoticeUseCase.getNoticeDetail(noticeId);
         return ApiResponse.onSuccess(GetNoticeDetailResponse.from(noticeDetail));
@@ -94,10 +96,10 @@ public class NoticeQueryController implements NoticeQueryApi {
     @CheckAccess(
         resourceType = ResourceType.NOTICE,
         resourceId = "#noticeId",
-        permission = PermissionType.MANAGE
+        permission = PermissionType.CHECK
     )
     @GetMapping("/{noticeId}/read-statics")
-    public ApiResponse<GetNoticeStaticsResponse> getNoticeReadStatics(@PathVariable Long noticeId) {
+    public ApiResponse<GetNoticeStaticsResponse> getNoticeReadStatics(@PathVariable("noticeId") Long noticeId) {
 
         NoticeReadStatusSummary statistics = getNoticeUseCase.getReadStatistics(noticeId);
         return ApiResponse.onSuccess(GetNoticeStaticsResponse.from(statistics));
@@ -109,11 +111,11 @@ public class NoticeQueryController implements NoticeQueryApi {
     @CheckAccess(
         resourceType = ResourceType.NOTICE,
         resourceId = "#noticeId",
-        permission = PermissionType.MANAGE
+        permission = PermissionType.CHECK
     )
     @GetMapping("/{noticeId}/read-status")
     public ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus(
-        @PathVariable Long noticeId,
+        @PathVariable("noticeId") Long noticeId,
         @ParameterObject @Valid GetNoticeStatusRequest request) {
 
         NoticeReadStatusResult result = getNoticeUseCase.getReadStatus(request.toQuery(noticeId));

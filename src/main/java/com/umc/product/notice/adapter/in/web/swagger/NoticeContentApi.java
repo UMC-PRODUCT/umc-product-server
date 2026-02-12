@@ -10,9 +10,6 @@ import com.umc.product.notice.adapter.in.web.dto.request.ReplaceNoticeVotesReque
 import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeImagesResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeLinksResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeVotesResponse;
-import com.umc.product.notice.adapter.in.web.dto.response.command.ReplaceNoticeImagesResponse;
-import com.umc.product.notice.adapter.in.web.dto.response.command.ReplaceNoticeLinksResponse;
-import com.umc.product.notice.adapter.in.web.dto.response.command.ReplaceNoticeVotesResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.validation.Valid;
@@ -57,7 +54,7 @@ public interface NoticeContentApi {
         summary = "공지사항 이미지 전체 수정",
         description = "요청받은 새 목록으로 교체합니다. 빈 배열([])을 보내면 모든 이미지가 삭제됩니다."
     )
-    ApiResponse<ReplaceNoticeImagesResponse> replaceNoticeImages(
+    void replaceNoticeImages(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
 
@@ -68,7 +65,7 @@ public interface NoticeContentApi {
         summary = "공지사항 링크 전체 수정",
         description = "요청받은 새 목록으로 교체합니다. 빈 배열([])을 보내면 모든 링크가 삭제됩니다."
     )
-    ApiResponse<ReplaceNoticeLinksResponse> replaceNoticeLinks(
+    void replaceNoticeLinks(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
 
@@ -79,7 +76,7 @@ public interface NoticeContentApi {
         summary = "공지사항 투표 전체 수정",
         description = "요청받은 새 목록으로 교체합니다. 빈 배열([])을 보내면 모든 투표가 삭제됩니다."
     )
-    ApiResponse<ReplaceNoticeVotesResponse> replaceNoticeVotes(
+    void replaceNoticeVotes(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
 

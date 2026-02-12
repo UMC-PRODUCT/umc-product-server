@@ -1,6 +1,8 @@
 package com.umc.product.community.adapter.out.persistence;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.community.domain.Scrap;
+import com.umc.product.community.domain.Scrap.ScrapId;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -36,7 +38,16 @@ public class ScrapJpaEntity extends BaseEntity {
         this.challengerId = challengerId;
     }
 
+    public static ScrapJpaEntity from(Scrap scrap) {
+        return new ScrapJpaEntity(scrap.getPostId(), scrap.getChallengerId());
+    }
+
+    public Scrap toDomain() {
+        return Scrap.reconstruct(new ScrapId(id), postId, challengerId);
+    }
+
     public static ScrapJpaEntity of(Long postId, Long challengerId) {
         return new ScrapJpaEntity(postId, challengerId);
     }
 }
+

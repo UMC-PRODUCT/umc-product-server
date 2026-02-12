@@ -19,6 +19,11 @@ public interface LoadPostPort {
      */
     Optional<PostWithAuthor> findByIdWithAuthor(Long postId);
 
+    /**
+     * Post와 작성자 ID를 함께 조회 (viewerChallengerId 포함, 좋아요 여부 확인용)
+     */
+    Optional<PostWithAuthor> findByIdWithAuthor(Long postId, Long viewerChallengerId);
+
     List<Post> findByCategory(Category category);
 
     Page<PostSearchData> searchByKeyword(String keyword, Pageable pageable);

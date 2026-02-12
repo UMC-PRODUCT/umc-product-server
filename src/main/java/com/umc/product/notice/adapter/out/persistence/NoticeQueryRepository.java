@@ -264,7 +264,10 @@ public class NoticeQueryRepository {
     }
 
     private BooleanExpression targetPartIsEmpty(QNoticeTarget target) {
-        return target.targetChallengerPart.isEmpty();
+        return Expressions.numberTemplate(Integer.class,
+            "coalesce(cardinality({0}), 0)",
+            target.targetChallengerPart
+        ).eq(0);
     }
 
     private BooleanExpression targetPartContainsOrEmpty(QNoticeTarget target, ChallengerPart part) {
