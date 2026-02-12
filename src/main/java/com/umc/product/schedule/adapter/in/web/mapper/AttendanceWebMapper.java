@@ -53,7 +53,9 @@ public class AttendanceWebMapper {
             info.scheduleId(),
             info.scheduleName(),
             info.tags().stream().map(ScheduleTag::name).toList(),
-            info.time(),
+            info.scheduledDate(),
+            info.startTime(),
+            info.endTime(),
             info.status().name(),
             info.statusDisplay()
         );

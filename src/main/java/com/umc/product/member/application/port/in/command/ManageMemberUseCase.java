@@ -3,6 +3,7 @@ package com.umc.product.member.application.port.in.command;
 import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
+import java.util.List;
 
 public interface ManageMemberUseCase {
     /**
@@ -11,6 +12,8 @@ public interface ManageMemberUseCase {
      * register complete라고 보시면 됩니다.
      */
     Long registerMember(RegisterMemberCommand command);
+
+    List<Long> registerMembers(List<RegisterMemberCommand> commands);
 
     /**
      * 회원의 정보를 수정하거나, 상태를 변경하는 등의 업데이트 작업을 수행합니다.

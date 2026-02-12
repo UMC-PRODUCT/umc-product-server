@@ -22,7 +22,7 @@ public class ScrapCommandService implements ToggleScrapUseCase {
     private final SaveScrapPort saveScrapPort;
 
     @Override
-    public ScrapResult toggle(Long postId, Long challengerId) {
+    public ScrapResult toggleScrap(Long postId, Long challengerId) {
         // 게시글 존재 확인
         loadPostPort.findById(postId)
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));

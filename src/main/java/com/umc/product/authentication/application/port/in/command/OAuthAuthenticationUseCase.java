@@ -5,6 +5,7 @@ import com.umc.product.authentication.application.port.in.command.dto.AccessToke
 import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
+import java.util.List;
 
 public interface OAuthAuthenticationUseCase {
     /**
@@ -24,6 +25,8 @@ public interface OAuthAuthenticationUseCase {
      * member에 새로운 OAuth 계정을 연동합니다.
      */
     Long linkOAuth(LinkOAuthCommand command);
+
+    List<Long> linkOAuthBulk(List<LinkOAuthCommand> commands);
 
     /**
      * member에 연동된 OAuth 계정을 해제합니다.

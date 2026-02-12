@@ -20,19 +20,15 @@ public class TermsCommandService implements ManageTermsUseCase {
     @Override
     public Long createTerms(CreateTermCommand command) {
         // 새로 생성하려는 약관과 동일한 타입의 기존 활성 약관을 찾아 비활성화 처리
+        // active = false로 변경
         loadTermsPort.findActiveByType(command.type())
-                .ifPresent(existingTerms -> {
-                    existingTerms.deactivate(); // active = false로 변경
-                });
+            .ifPresent(Terms::deactivate);
 
         Terms terms = Terms.builder()
-                .type(command.type())
-                .title(command.title())
-                .content(command.content())
-                .version(command.version())
-                .required(command.required())
-                .effectiveDate(command.effectiveDate())
-                .build();
+            .type(command.type())
+            .link(command.link())
+            .required(command.required())
+            .build();
 
         return saveTermsPort.save(terms).getId();
     }

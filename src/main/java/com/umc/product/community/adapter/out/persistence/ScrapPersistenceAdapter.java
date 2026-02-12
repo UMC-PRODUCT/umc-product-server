@@ -49,4 +49,21 @@ public class ScrapPersistenceAdapter implements LoadScrapPort, SaveScrapPort {
     public void deleteByPostIdAndChallengerId(Long postId, Long challengerId) {
         scrapRepository.deleteByPostIdAndChallengerId(postId, challengerId);
     }
+
+    @Override
+    @Transactional
+    public boolean toggleScrap(Long postId, Long challengerId) {
+        Optional<ScrapJpaEntity> existing = scrapRepository.findByPostIdAndChallengerId(postId, challengerId);
+
+        if (existing.isPresent()) {
+            // 스크랩 취소
+            scrapRepository.delete(existing.get());
+            return false;
+        } else {
+            // 스크랩 추가
+            ScrapJpaEntity scrap = ScrapJpaEntity.of(postId, challengerId);
+            scrapRepository.save(scrap);
+            return true;
+        }
+    }
 }

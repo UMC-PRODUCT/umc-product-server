@@ -11,7 +11,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,13 +31,7 @@ public class Terms extends BaseEntity {
     private TermsType type;  // SERVICE, PRIVACY, MARKETING, EVENT, etc.
 
     @Column(nullable = false)
-    private String title;
-
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String content;
-
-    @Column(nullable = false)
-    private String version;  // "1.0", "2.0", etc.
+    private String link;
 
     @Column(nullable = false)
     private boolean required;  // 필수 동의 여부
@@ -46,19 +39,12 @@ public class Terms extends BaseEntity {
     @Column(nullable = false)
     private boolean active;  // 현재 활성화된 약관인지
 
-    @Column(nullable = false)
-    private Instant effectiveDate;  // 시행일
-
     @Builder
-    private Terms(TermsType type, String title, String content,
-                  String version, boolean required, Instant effectiveDate) {
+    private Terms(TermsType type, String link, boolean required) {
         this.type = type;
-        this.title = title;
-        this.content = content;
-        this.version = version;
+        this.link = link;
         this.required = required;
         this.active = true;
-        this.effectiveDate = effectiveDate;
     }
 
     public void deactivate() {

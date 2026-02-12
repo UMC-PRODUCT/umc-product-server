@@ -118,7 +118,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
     }
 
     @Override
-    public LikeResult toggle(Long postId, Long challengerId) {
+    public LikeResult toggleLike(Long postId, Long challengerId) {
         loadPostPort.findById(postId)
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
