@@ -23,6 +23,8 @@ public enum SurveyErrorCode implements BaseCode {
     OPTION_NOT_IN_QUESTION(HttpStatus.BAD_REQUEST, "SURVEY-0013", "선택지가 해당 질문의 선택지에 포함되지 않습니다."),
     OPTION_TEXT_REQUIRED(HttpStatus.BAD_REQUEST, "SURVEY-0014", "'기타' 선택지의 텍스트는 필수입니다."),
     INVALID_FORM_ACTIVE_PERIOD(HttpStatus.BAD_REQUEST, "SURVEY-0015", "폼의 응답 가능 기간이 올바르지 않습니다."),
+    INVALID_VOTE_OPTION_COUNT(HttpStatus.BAD_REQUEST, "SURVEY-0016", "투표 항목은 2개 이상 5개 이하여야 합니다."),
+    INVALID_VOTE_OPTION_CONTENT(HttpStatus.BAD_REQUEST, "SURVEY-0017", "투표 항목에 빈 값이 포함될 수 없습니다."),
     ;
 
     private final HttpStatus httpStatus;
