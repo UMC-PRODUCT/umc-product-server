@@ -23,10 +23,10 @@ public record PostDetailInfo(
         ChallengerPart userPart,
         boolean isLiked,
         boolean isScrapped,
-        int scraps
+        int scrapCount
 ) {
     public static PostDetailInfo of(PostInfo postInfo, int commentCount, ChallengerPart authorPart,
-                                     boolean isScrapped, int scraps) {
+                                     boolean isScrapped, int scrapCount) {
         return new PostDetailInfo(
                 postInfo.postId(),
                 postInfo.title(),
@@ -44,7 +44,7 @@ public record PostDetailInfo(
                 authorPart,
                 postInfo.isLiked(),
                 isScrapped,
-                scraps
+                scrapCount
         );
     }
 }

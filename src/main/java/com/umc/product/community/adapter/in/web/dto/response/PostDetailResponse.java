@@ -36,7 +36,7 @@ public record PostDetailResponse(
         String writeTime,
 
         @Schema(description = "좋아요 수", example = "10")
-        int likes,
+        int likeCount,
 
         @Schema(description = "작성자 파트", example = "SPRINGBOOT")
         ChallengerPart userPart,
@@ -48,7 +48,7 @@ public record PostDetailResponse(
         boolean isScrapped,
 
         @Schema(description = "스크랩 수", example = "3")
-        int scraps
+        int scrapCount
 ) {
     public static PostDetailResponse from(PostDetailInfo info) {
         LightningInfoResponse lightningInfoResponse = null;
@@ -78,7 +78,7 @@ public record PostDetailResponse(
                 info.userPart(),
                 info.isLiked(),
                 info.isScrapped(),
-                info.scraps()
+                info.scrapCount()
         );
     }
 
