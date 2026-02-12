@@ -14,7 +14,6 @@ import com.umc.product.community.application.port.in.post.ToggleScrapUseCase;
 import com.umc.product.community.application.port.in.post.UpdateLightningUseCase;
 import com.umc.product.community.application.port.in.post.UpdatePostUseCase;
 import com.umc.product.global.constant.SwaggerTag.Constants;
-import com.umc.product.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -42,63 +41,62 @@ public class PostController {
 
     @PostMapping
     @Operation(summary = "일반 게시글 생성", description = "일반 게시글을 생성합니다. 번개글은 별도 API를 사용하세요.")
-    public ApiResponse<PostResponse> createPost(
+    public PostResponse createPost(
             @RequestBody CreatePostRequest request,
             @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
     ) {
-        return ApiResponse.onSuccess(PostResponse.from(createPostUseCase.createPost(request.toCommand(challengerId))));
+        return PostResponse.from(createPostUseCase.createPost(request.toCommand(challengerId)));
     }
 
     @PostMapping("/lightning")
     @Operation(summary = "번개글 생성", description = "번개 모임 게시글을 생성합니다.")
-    public ApiResponse<PostResponse> createLightningPost(
+    public PostResponse createLightningPost(
             @RequestBody CreateLightningRequest request,
             @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
     ) {
-        return ApiResponse.onSuccess(PostResponse.from(createPostUseCase.createLightningPost(request.toCommand(challengerId))));
+        return PostResponse.from(createPostUseCase.createLightningPost(request.toCommand(challengerId)));
     }
 
     @PatchMapping("/{postId}")
     @Operation(summary = "일반 게시글 수정", description = "일반 게시글의 제목, 내용, 카테고리를 수정합니다.")
-    public ApiResponse<PostResponse> updatePost(
+    public PostResponse updatePost(
             @PathVariable Long postId,
             @RequestBody UpdatePostRequest request
     ) {
-        return ApiResponse.onSuccess(PostResponse.from(updatePostUseCase.updatePost(request.toCommand(postId))));
+        return PostResponse.from(updatePostUseCase.updatePost(request.toCommand(postId)));
     }
 
     @PatchMapping("/{postId}/lightning")
     @Operation(summary = "번개글 수정", description = "번개 게시글의 제목, 내용, 모임 정보를 수정합니다.")
-    public ApiResponse<PostResponse> updateLightningPost(
+    public PostResponse updateLightningPost(
             @PathVariable Long postId,
             @RequestBody UpdateLightningRequest request
     ) {
-        return ApiResponse.onSuccess(PostResponse.from(updateLightningUseCase.updateLightning(request.toCommand(postId))));
+        return PostResponse.from(updateLightningUseCase.updateLightning(request.toCommand(postId)));
     }
 
     @DeleteMapping("/{postId}")
     @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다.")
-    public ApiResponse<Void> deletePost(@PathVariable Long postId) {
+    public void deletePost(@PathVariable Long postId) {
         deletePostUseCase.deletePost(postId);
-        return ApiResponse.onSuccess(null);
     }
 
     @PostMapping("/{postId}/like")
     @Operation(summary = "게시글 좋아요 토글", description = "게시글 좋아요를 토글합니다. 이미 좋아요한 경우 취소됩니다.")
-    public ApiResponse<LikeResponse> toggleLike(
+    public LikeResponse toggleLike(
             @PathVariable Long postId,
             @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
     ) {
-        return ApiResponse.onSuccess(LikeResponse.from(togglePostLikeUseCase.toggleLike(postId, challengerId)));
+        return LikeResponse.from(togglePostLikeUseCase.toggleLike(postId, challengerId));
     }
 
     @PostMapping("/{postId}/scrap")
     @Operation(summary = "게시글 스크랩 토글", description = "게시글 스크랩을 토글합니다. 이미 스크랩한 경우 취소됩니다.")
-    public ApiResponse<ScrapResponse> toggleScrap(
+    public ScrapResponse toggleScrap(
             @PathVariable Long postId,
             @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
     ) {
-        return ApiResponse.onSuccess(ScrapResponse.from(toggleScrapUseCase.toggleScrap(postId, challengerId)));
+        return ScrapResponse.from(toggleScrapUseCase.toggleScrap(postId, challengerId));
     }
 }
 
