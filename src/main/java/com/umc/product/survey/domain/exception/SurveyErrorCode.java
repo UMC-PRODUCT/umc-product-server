@@ -21,7 +21,9 @@ public enum SurveyErrorCode implements BaseCode {
     INVALID_ANSWER_FORMAT(HttpStatus.BAD_REQUEST, "SURVEY-0011", "응답 형식이 올바르지 않습니다."),
     OTHER_OPTION_DUPLICATED(HttpStatus.BAD_REQUEST, "SURVEY-0012", "'기타' 선택지가 중복되었습니다."),
     OPTION_NOT_IN_QUESTION(HttpStatus.BAD_REQUEST, "SURVEY-0013", "선택지가 해당 질문의 선택지에 포함되지 않습니다."),
-    OPTION_TEXT_REQUIRED(HttpStatus.BAD_REQUEST, "SURVEY-0014", "'기타' 선택지의 텍스트는 필수입니다.");
+    OPTION_TEXT_REQUIRED(HttpStatus.BAD_REQUEST, "SURVEY-0014", "'기타' 선택지의 텍스트는 필수입니다."),
+    INVALID_FORM_ACTIVE_PERIOD(HttpStatus.BAD_REQUEST, "SURVEY-0015", "폼의 응답 가능 기간이 올바르지 않습니다."),
+    ;
 
     private final HttpStatus httpStatus;
     private final String code;
