@@ -11,7 +11,6 @@ import com.umc.product.terms.application.port.out.SaveTermsPort;
 import com.umc.product.terms.application.service.command.TermsCommandService;
 import com.umc.product.terms.domain.Terms;
 import com.umc.product.terms.domain.enums.TermsType;
-import java.time.Instant;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,13 +35,10 @@ class ManageTermsUseCaseTest {
     void 필수_약관을_생성한다() {
         // given
         CreateTermCommand command = CreateTermCommand.builder()
-                .type(TermsType.SERVICE)
-                .title("서비스 이용약관")
-                .content("서비스 이용약관 내용입니다.")
-                .version("1.0")
-                .required(true)
-                .effectiveDate(Instant.now())
-                .build();
+            .type(TermsType.SERVICE)
+            .link("https://example.com/terms/service")
+            .required(true)
+            .build();
 
         given(loadTermsPort.findActiveByType(TermsType.SERVICE)).willReturn(Optional.empty());
         given(saveTermsPort.save(any(Terms.class))).willAnswer(invocation -> {
@@ -63,13 +59,10 @@ class ManageTermsUseCaseTest {
     void 선택_약관을_생성한다() {
         // given
         CreateTermCommand command = CreateTermCommand.builder()
-                .type(TermsType.MARKETING)
-                .title("마케팅 정보 수신 동의")
-                .content("마케팅 정보 수신 동의 내용입니다.")
-                .version("1.0")
-                .required(false)
-                .effectiveDate(Instant.now())
-                .build();
+            .type(TermsType.MARKETING)
+            .link("https://example.com/terms/marketing")
+            .required(false)
+            .build();
 
         given(loadTermsPort.findActiveByType(TermsType.MARKETING)).willReturn(Optional.empty());
         given(saveTermsPort.save(any(Terms.class))).willAnswer(invocation -> {

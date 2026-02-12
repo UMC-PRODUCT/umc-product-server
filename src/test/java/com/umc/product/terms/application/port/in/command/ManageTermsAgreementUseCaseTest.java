@@ -56,10 +56,10 @@ class ManageTermsAgreementUseCaseTest {
         given(loadTermsConsentPort.existsByMemberIdAndTermType(100L, TermsType.SERVICE)).willReturn(false);
 
         CreateTermConsentCommand command = CreateTermConsentCommand.builder()
-                .memberId(100L)
-                .termId(1L)
-                .isAgreed(true)
-                .build();
+            .memberId(100L)
+            .termId(1L)
+            .isAgreed(true)
+            .build();
 
         // when
         sut.createTermConsent(command);
@@ -85,16 +85,16 @@ class ManageTermsAgreementUseCaseTest {
         given(loadTermsConsentPort.existsByMemberIdAndTermType(100L, TermsType.SERVICE)).willReturn(true);
 
         CreateTermConsentCommand command = CreateTermConsentCommand.builder()
-                .memberId(100L)
-                .termId(1L)
-                .isAgreed(true)
-                .build();
+            .memberId(100L)
+            .termId(1L)
+            .isAgreed(true)
+            .build();
 
         // when & then
         assertThatThrownBy(() -> sut.createTermConsent(command))
-                .isInstanceOf(TermsDomainException.class)
-                .extracting("code")
-                .isEqualTo(TermsErrorCode.TERMS_CONSENT_ALREADY_EXISTS);
+            .isInstanceOf(TermsDomainException.class)
+            .extracting("code")
+            .isEqualTo(TermsErrorCode.TERMS_CONSENT_ALREADY_EXISTS);
 
         then(saveTermsConsentPort).should(never()).save(any());
         then(saveTermsConsentLogPort).should(never()).save(any());
@@ -107,20 +107,20 @@ class ManageTermsAgreementUseCaseTest {
         // given
         Terms terms = createTerms(TermsType.MARKETING);
         TermsConsent existingConsent = TermsConsent.builder()
-                .memberId(100L)
-                .termType(TermsType.MARKETING)
-                .agreedAt(Instant.now())
-                .build();
+            .memberId(100L)
+            .termType(TermsType.MARKETING)
+            .agreedAt(Instant.now())
+            .build();
 
         given(loadTermsPort.findById(2L)).willReturn(Optional.of(terms));
         given(loadTermsConsentPort.findByMemberIdAndTermType(100L, TermsType.MARKETING))
-                .willReturn(Optional.of(existingConsent));
+            .willReturn(Optional.of(existingConsent));
 
         CreateTermConsentCommand command = CreateTermConsentCommand.builder()
-                .memberId(100L)
-                .termId(2L)
-                .isAgreed(false)
-                .build();
+            .memberId(100L)
+            .termId(2L)
+            .isAgreed(false)
+            .build();
 
         // when
         sut.createTermConsent(command);
@@ -144,19 +144,19 @@ class ManageTermsAgreementUseCaseTest {
         Terms terms = createTerms(TermsType.MARKETING);
         given(loadTermsPort.findById(2L)).willReturn(Optional.of(terms));
         given(loadTermsConsentPort.findByMemberIdAndTermType(100L, TermsType.MARKETING))
-                .willReturn(Optional.empty());
+            .willReturn(Optional.empty());
 
         CreateTermConsentCommand command = CreateTermConsentCommand.builder()
-                .memberId(100L)
-                .termId(2L)
-                .isAgreed(false)
-                .build();
+            .memberId(100L)
+            .termId(2L)
+            .isAgreed(false)
+            .build();
 
         // when & then
         assertThatThrownBy(() -> sut.createTermConsent(command))
-                .isInstanceOf(TermsDomainException.class)
-                .extracting("code")
-                .isEqualTo(TermsErrorCode.TERMS_CONSENT_NOT_FOUND);
+            .isInstanceOf(TermsDomainException.class)
+            .extracting("code")
+            .isEqualTo(TermsErrorCode.TERMS_CONSENT_NOT_FOUND);
 
         then(saveTermsConsentPort).should(never()).delete(any());
         then(saveTermsConsentLogPort).should(never()).save(any());
@@ -170,16 +170,16 @@ class ManageTermsAgreementUseCaseTest {
         given(loadTermsPort.findById(999L)).willReturn(Optional.empty());
 
         CreateTermConsentCommand command = CreateTermConsentCommand.builder()
-                .memberId(100L)
-                .termId(999L)
-                .isAgreed(true)
-                .build();
+            .memberId(100L)
+            .termId(999L)
+            .isAgreed(true)
+            .build();
 
         // when & then
         assertThatThrownBy(() -> sut.createTermConsent(command))
-                .isInstanceOf(TermsDomainException.class)
-                .extracting("code")
-                .isEqualTo(TermsErrorCode.TERMS_NOT_FOUND);
+            .isInstanceOf(TermsDomainException.class)
+            .extracting("code")
+            .isEqualTo(TermsErrorCode.TERMS_NOT_FOUND);
 
         then(saveTermsConsentPort).should(never()).save(any());
         then(saveTermsConsentLogPort).should(never()).save(any());
@@ -187,12 +187,9 @@ class ManageTermsAgreementUseCaseTest {
 
     private Terms createTerms(TermsType type) {
         return Terms.builder()
-                .type(type)
-                .title(type.name() + " 약관")
-                .content(type.name() + " 약관 내용")
-                .version("1.0")
-                .required(type == TermsType.SERVICE || type == TermsType.PRIVACY)
-                .effectiveDate(Instant.now())
-                .build();
+            .type(type)
+            .link("http://example.com/terms")
+            .required(type == TermsType.SERVICE || type == TermsType.PRIVACY)
+            .build();
     }
 }

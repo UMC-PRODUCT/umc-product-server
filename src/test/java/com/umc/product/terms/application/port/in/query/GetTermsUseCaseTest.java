@@ -11,7 +11,6 @@ import com.umc.product.terms.domain.Terms;
 import com.umc.product.terms.domain.enums.TermsType;
 import com.umc.product.terms.domain.exception.TermsDomainException;
 import com.umc.product.terms.domain.exception.TermsErrorCode;
-import java.time.Instant;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,7 +37,7 @@ class GetTermsUseCaseTest {
         TermsInfo result = sut.getTermsByType(TermsType.SERVICE);
 
         // then
-        assertThat(result.title()).isEqualTo("서비스 이용약관");
+//        assertThat(result.title()).isEqualTo("서비스 이용약관");
         assertThat(result.type()).isEqualTo(TermsType.SERVICE);
         assertThat(result.isMandatory()).isTrue();
     }
@@ -47,9 +46,9 @@ class GetTermsUseCaseTest {
     void 타입이_null이면_예외() {
         // when & then
         assertThatThrownBy(() -> sut.getTermsByType(null))
-                .isInstanceOf(TermsDomainException.class)
-                .extracting("code")
-                .isEqualTo(TermsErrorCode.TERMS_TYPE_REQUIRED);
+            .isInstanceOf(TermsDomainException.class)
+            .extracting("code")
+            .isEqualTo(TermsErrorCode.TERMS_TYPE_REQUIRED);
     }
 
     @Test
@@ -59,9 +58,9 @@ class GetTermsUseCaseTest {
 
         // when & then
         assertThatThrownBy(() -> sut.getTermsByType(TermsType.SERVICE))
-                .isInstanceOf(TermsDomainException.class)
-                .extracting("code")
-                .isEqualTo(TermsErrorCode.TERMS_NOT_FOUND);
+            .isInstanceOf(TermsDomainException.class)
+            .extracting("code")
+            .isEqualTo(TermsErrorCode.TERMS_NOT_FOUND);
     }
 
     @Test
@@ -74,7 +73,7 @@ class GetTermsUseCaseTest {
         TermsInfo result = sut.getTermsById(1L);
 
         // then
-        assertThat(result.title()).isEqualTo("개인정보 처리방침");
+//        assertThat(result.title()).isEqualTo("개인정보 처리방침");
         assertThat(result.type()).isEqualTo(TermsType.PRIVACY);
     }
 
@@ -82,9 +81,9 @@ class GetTermsUseCaseTest {
     void ID가_null이면_예외() {
         // when & then
         assertThatThrownBy(() -> sut.getTermsById(null))
-                .isInstanceOf(TermsDomainException.class)
-                .extracting("code")
-                .isEqualTo(TermsErrorCode.TERM_ID_REQUIRED);
+            .isInstanceOf(TermsDomainException.class)
+            .extracting("code")
+            .isEqualTo(TermsErrorCode.TERM_ID_REQUIRED);
     }
 
     @Test
@@ -94,19 +93,16 @@ class GetTermsUseCaseTest {
 
         // when & then
         assertThatThrownBy(() -> sut.getTermsById(999L))
-                .isInstanceOf(TermsDomainException.class)
-                .extracting("code")
-                .isEqualTo(TermsErrorCode.TERMS_NOT_FOUND);
+            .isInstanceOf(TermsDomainException.class)
+            .extracting("code")
+            .isEqualTo(TermsErrorCode.TERMS_NOT_FOUND);
     }
 
     private Terms createTerms(TermsType type, String title, boolean required) {
         return Terms.builder()
-                .type(type)
-                .title(title)
-                .content(title + " 내용")
-                .version("1.0")
-                .required(required)
-                .effectiveDate(Instant.now())
-                .build();
+            .type(type)
+            .link("http://example.com/terms/" + type.name().toLowerCase())
+            .required(required)
+            .build();
     }
 }
