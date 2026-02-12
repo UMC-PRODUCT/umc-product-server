@@ -5,18 +5,14 @@ import com.umc.product.community.application.port.in.post.CreatePostUseCase;
 import com.umc.product.community.application.port.in.post.DeletePostUseCase;
 import com.umc.product.community.application.port.in.post.TogglePostLikeUseCase;
 import com.umc.product.community.application.port.in.post.UpdateLightningUseCase;
-import com.umc.product.community.application.port.in.post.ToggleScrapUseCase;
-import com.umc.product.community.application.port.in.post.UpdateLightningUseCase;
 import com.umc.product.community.application.port.in.post.UpdatePostUseCase;
 import com.umc.product.community.application.port.in.post.command.CreateLightningCommand;
 import com.umc.product.community.application.port.in.post.command.CreatePostCommand;
 import com.umc.product.community.application.port.in.post.command.UpdateLightningCommand;
 import com.umc.product.community.application.port.in.post.command.UpdatePostCommand;
 import com.umc.product.community.application.port.out.LoadPostPort;
-import com.umc.product.community.application.port.out.LoadScrapPort;
 import com.umc.product.community.application.port.out.PostWithAuthor;
 import com.umc.product.community.application.port.out.SavePostPort;
-import com.umc.product.community.application.port.out.SaveScrapPort;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.Post.LightningInfo;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
@@ -30,12 +26,10 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional
 public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase, UpdateLightningUseCase,
-        DeletePostUseCase, TogglePostLikeUseCase, ToggleScrapUseCase {
+        DeletePostUseCase, TogglePostLikeUseCase {
 
     private final LoadPostPort loadPostPort;
     private final SavePostPort savePostPort;
-    private final LoadScrapPort loadScrapPort;
-    private final SaveScrapPort saveScrapPort;
     private final AuthorInfoProvider authorInfoProvider;
 
     @Override
@@ -129,20 +123,5 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
         return savePostPort.toggleLike(postId, challengerId);
-    }
-
-    @Override
-    public ScrapResult toggleScrap(Long postId, Long challengerId) {
-        // 게시글 존재 확인
-        loadPostPort.findById(postId)
-                .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
-
-        // 스크랩 토글
-        boolean scrapped = saveScrapPort.toggleScrap(postId, challengerId);
-
-        // 스크랩 개수 조회
-        int scrapCount = loadScrapPort.countByPostId(postId);
-
-        return new ScrapResult(scrapped, scrapCount);
     }
 }
