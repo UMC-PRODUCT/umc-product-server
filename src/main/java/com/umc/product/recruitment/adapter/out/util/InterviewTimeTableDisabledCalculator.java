@@ -10,6 +10,11 @@ import java.util.Objects;
 
 public final class InterviewTimeTableDisabledCalculator {
 
+    /**
+     * UI 시간표는 항상 30분 grid로 요청 slotMinutes는 InterviewSlot 생성에만 사용.
+     */
+    private static final int TIME_GRID_MINUTES = 30;
+
     private InterviewTimeTableDisabledCalculator() {
     }
 
@@ -34,7 +39,7 @@ public final class InterviewTimeTableDisabledCalculator {
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
             final LocalDate targetDate = date;
 
-            final List<LocalTime> all = generateSlots(timeRange.start(), timeRange.end(), slotMinutes);
+            final List<LocalTime> all = generateSlots(timeRange.start(), timeRange.end(), TIME_GRID_MINUTES);
 
             final List<LocalTime> enabled =
                 enabledByDate == null ? List.of()
@@ -55,12 +60,17 @@ public final class InterviewTimeTableDisabledCalculator {
     }
 
     /**
-     * enabledByDate만으로 timeRange/slotMinutes를 정규화해서 disabled 계산 - slotMinutes가 0/없으면 enabled 목록에서 최소 간격 추론 (불가하면
-     * default 30) - timeRange가 없으면 enabled 전체에서 min~max(+slotMinutes)로 계산
+     * Applicant 뷰에서는 시간표를 항상 30분 그리드 기준으로 정규화한다.
+     * <p>
+     * - slotMinutes는 InterviewSlot 생성(면접 진행 시간)용이며, UI 시간표(disabled 계산)에는 사용하지 않는다.
+     * <p>
+     * - timeRange가 없으면 enabled 전체에서 min ~ max(+30분) 기준으로 계산한다.
+     * <p>
+     * - disabled는 30분 단위 그리드에서 (전체 시간 - enabled) 방식으로 계산한다.
      */
     public static Normalized normalizeForApplicant(
-        RecruitmentDraftInfo.DateRangeInfo dateRange, // 또는 query용 DateRangeInfo로 맞춰도 됨
-        RecruitmentDraftInfo.TimeRangeInfo timeRange, // 없을 수 있음
+        RecruitmentDraftInfo.DateRangeInfo dateRange,
+        RecruitmentDraftInfo.TimeRangeInfo timeRange,
         Integer slotMinutes,
         List<RecruitmentDraftInfo.TimesByDateInfo> enabledByDate
     ) {
@@ -85,8 +95,8 @@ public final class InterviewTimeTableDisabledCalculator {
                         min = t;
                     }
 
-                    // end는 "exclusive"로 맞추기 위해 slotMinutes 더한 값 기준으로 max 잡기
-                    LocalTime endCandidate = t.plusMinutes(slotMinutes);
+                    // end는 "exclusive"로 맞추기 위해 TIME_GRID_MINUTES 더한 값 기준으로 max 잡기
+                    LocalTime endCandidate = t.plusMinutes(TIME_GRID_MINUTES);
                     if (maxExclusive == null || endCandidate.isAfter(maxExclusive)) {
                         maxExclusive = endCandidate;
                     }
@@ -115,6 +125,7 @@ public final class InterviewTimeTableDisabledCalculator {
     ) {
     }
 
+    // 미사용: 현재 프론트 정책 그리드 30분 단위 고정
     private static int inferSlotMinutes(List<TimesByDateInfo> enabledByDate, int defaultMinutes) {
         // enabled 중 아무 날짜나 2개 이상 있는 times를 찾아서 최소 간격 추론
         for (TimesByDateInfo e : enabledByDate) {
