@@ -12,6 +12,7 @@ public record SchoolDetailInfo(
         String remark,
         String logoImageUrl,
         List<SchoolLinkItem> links,
+        boolean isActive,
         Instant createdAt,
         Instant updatedAt
 ) {
@@ -29,6 +30,7 @@ public record SchoolDetailInfo(
         Long schoolId,
         String remark,
         String logoImageId,
+        boolean isActive,
         Instant createdAt,
         Instant updatedAt
     ) {
@@ -41,6 +43,7 @@ public record SchoolDetailInfo(
                 remark,
                 logoImageUrl,
                 links,
+                isActive,
                 createdAt,
                 updatedAt
             );

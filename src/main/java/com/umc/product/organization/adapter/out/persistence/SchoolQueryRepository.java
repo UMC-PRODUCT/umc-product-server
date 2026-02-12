@@ -29,12 +29,7 @@ public class SchoolQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     public Page<SchoolListItemInfo> getSchools(SchoolSearchCondition condition, Pageable pageable) {
-        // 활성 기수의 chapter id 서브쿼리
-        JPQLQuery<Long> activeChapterIds = JPAExpressions
-            .select(chapter.id)
-            .from(chapter)
-            .join(chapter.gisu, gisu)
-            .where(gisu.isActive.isTrue());
+        JPQLQuery<Long> activeChapterIds = activeChapterIdSubQuery();
 
         List<SchoolListItemInfo> content = queryFactory
             .select(Projections.constructor(SchoolListItemInfo.class,
@@ -86,15 +81,19 @@ public class SchoolQueryRepository {
         return chapterId != null ? chapter.id.eq(chapterId) : null;
     }
 
-    /**
-     * 학교 상세 정보를 반환합니다.
-     */
-    public SchoolDetailInfo.SchoolInfo getSchoolDetail(Long schoolId) {
-        JPQLQuery<Long> activeChapterIds = JPAExpressions
+    private JPQLQuery<Long> activeChapterIdSubQuery() {
+        return JPAExpressions
             .select(chapter.id)
             .from(chapter)
             .join(chapter.gisu, gisu)
             .where(gisu.isActive.isTrue());
+    }
+
+    /**
+     * 학교 상세 정보를 반환합니다.
+     */
+    public SchoolDetailInfo.SchoolInfo getSchoolDetail(Long schoolId) {
+        JPQLQuery<Long> activeChapterIds = activeChapterIdSubQuery();
 
         return queryFactory
             .select(Projections.constructor(SchoolDetailInfo.SchoolInfo.class,
@@ -104,6 +103,7 @@ public class SchoolQueryRepository {
                 school.id,
                 school.remark,
                 school.logoImageId,
+                chapter.id.isNotNull(),
                 school.createdAt,
                 school.updatedAt
             ))
