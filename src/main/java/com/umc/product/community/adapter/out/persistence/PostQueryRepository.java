@@ -182,43 +182,32 @@ public class PostQueryRepository {
      * 챌린저가 댓글을 단 게시글 목록 조회 (중복 제거, 최신 댓글 순)
      */
     public Page<Post> findCommentedPostsByChallengerId(Long challengerId, Pageable pageable) {
-        // 1. 댓글을 단 게시글 ID 목록 조회 (최신 댓글 순, 중복 제거)
-        List<Long> postIds = queryFactory
-                .select(commentJpaEntity.postId)
-                .from(commentJpaEntity)
+        // 1. JOIN과 GROUP BY를 사용하여 단일 쿼리로 조회 (DB에서 정렬)
+        List<PostJpaEntity> results = queryFactory
+                .selectFrom(postJpaEntity)
+                .innerJoin(commentJpaEntity)
+                .on(postJpaEntity.id.eq(commentJpaEntity.postId))
                 .where(commentJpaEntity.challengerId.eq(challengerId))
-                .groupBy(commentJpaEntity.postId)
+                .groupBy(postJpaEntity.id)
                 .orderBy(commentJpaEntity.createdAt.max().desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        if (postIds.isEmpty()) {
+        if (results.isEmpty()) {
             return Page.empty(pageable);
         }
 
-        // 2. 게시글 조회
-        List<PostJpaEntity> results = queryFactory
-                .selectFrom(postJpaEntity)
-                .where(postJpaEntity.id.in(postIds))
-                .fetch();
-
-        // 3. postIds 순서대로 정렬 (최신 댓글 순서 유지)
-        List<Post> posts = postIds.stream()
-                .map(postId -> results.stream()
-                        .filter(entity -> entity.getId().equals(postId))
-                        .findFirst()
-                        .map(PostJpaEntity::toDomain)
-                        .orElse(null))
-                .filter(post -> post != null)
-                .toList();
-
-        // 4. 전체 개수 조회
+        // 2. 전체 개수 조회
         Long totalCount = queryFactory
                 .select(commentJpaEntity.postId.countDistinct())
                 .from(commentJpaEntity)
                 .where(commentJpaEntity.challengerId.eq(challengerId))
                 .fetchOne();
+
+        List<Post> posts = results.stream()
+                .map(PostJpaEntity::toDomain)
+                .toList();
 
         return new PageImpl<>(posts, pageable, totalCount != null ? totalCount : 0);
     }
@@ -227,42 +216,31 @@ public class PostQueryRepository {
      * 챌린저가 스크랩한 게시글 목록 조회 (최신 스크랩 순)
      */
     public Page<Post> findScrappedPostsByChallengerId(Long challengerId, Pageable pageable) {
-        // 1. 스크랩한 게시글 ID 목록 조회 (최신 스크랩 순)
-        List<Long> postIds = queryFactory
-                .select(scrapJpaEntity.postId)
-                .from(scrapJpaEntity)
+        // 1. JOIN을 사용하여 단일 쿼리로 조회 (DB에서 정렬)
+        List<PostJpaEntity> results = queryFactory
+                .selectFrom(postJpaEntity)
+                .innerJoin(scrapJpaEntity)
+                .on(postJpaEntity.id.eq(scrapJpaEntity.postId))
                 .where(scrapJpaEntity.challengerId.eq(challengerId))
                 .orderBy(scrapJpaEntity.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
 
-        if (postIds.isEmpty()) {
+        if (results.isEmpty()) {
             return Page.empty(pageable);
         }
 
-        // 2. 게시글 조회
-        List<PostJpaEntity> results = queryFactory
-                .selectFrom(postJpaEntity)
-                .where(postJpaEntity.id.in(postIds))
-                .fetch();
-
-        // 3. postIds 순서대로 정렬 (최신 스크랩 순서 유지)
-        List<Post> posts = postIds.stream()
-                .map(postId -> results.stream()
-                        .filter(entity -> entity.getId().equals(postId))
-                        .findFirst()
-                        .map(PostJpaEntity::toDomain)
-                        .orElse(null))
-                .filter(post -> post != null)
-                .toList();
-
-        // 4. 전체 개수 조회
+        // 2. 전체 개수 조회
         Long totalCount = queryFactory
                 .select(scrapJpaEntity.count())
                 .from(scrapJpaEntity)
                 .where(scrapJpaEntity.challengerId.eq(challengerId))
                 .fetchOne();
+
+        List<Post> posts = results.stream()
+                .map(PostJpaEntity::toDomain)
+                .toList();
 
         return new PageImpl<>(posts, pageable, totalCount != null ? totalCount : 0);
     }
