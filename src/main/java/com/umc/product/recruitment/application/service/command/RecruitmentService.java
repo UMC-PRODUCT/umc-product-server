@@ -46,6 +46,7 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruit
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
+import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewSlotPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
@@ -151,6 +152,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final LoadInterviewSlotPort loadInterviewSlotPort;
     private final SaveInterviewSlotPort saveInterviewSlotPort;
     private final SaveInterviewAssignmentPort saveInterviewAssignmentPort;
+    private final LoadInterviewAssignmentPort loadInterviewAssignmentPort;
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
@@ -810,7 +812,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         latest.publish(now);
         saveRecruitmentPort.save(latest);
 
-        createInterviewSlotsOnPublish(latest);
+        createInterviewSlots(latest, true);
 
         Form form = loadFormPort.findById(latest.getFormId())
             .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
@@ -1024,6 +1026,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             ResolvedRecruitmentSchedule.merge(existing, command.schedule());
         validateOrdering(resolved);
 
+        Integer newSlotMinutes = command.slotMinutes();
+
         // upsert schedules
         upsertSchedule(recruitmentId, existing, RecruitmentScheduleType.APPLY_WINDOW,
             resolved.applyStartAt(), resolved.applyEndAt());
@@ -1040,6 +1044,28 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         upsertReviewWindowsPublished(recruitmentId, existing, resolved);
 
         saveRecruitmentSchedulePort.saveAll(existing.values().stream().toList());
+
+        if (newSlotMinutes != null) {
+            if (newSlotMinutes <= 0) {
+                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            }
+
+            // assignment 1개라도 있으면 slotMinutes 수정 불가
+            if (loadInterviewAssignmentPort.countByRecruitmentId(recruitmentId) > 0) {
+                throw new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.INTERVIEW_TIMETABLE_SLOT_MINUTES_UPDATE_FORBIDDEN
+                );
+            }
+
+            // 도메인에 slotMinutes만 업데이트
+            recruitment.changeInterviewTimeTableSlotMinutes(newSlotMinutes);
+
+            saveRecruitmentPort.save(recruitment);
+
+            saveInterviewSlotPort.deleteAllByRecruitmentId(recruitmentId);
+            createInterviewSlots(recruitment, true);
+        }
 
         List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(recruitmentId);
         List<ChallengerPart> parts = recruitmentParts.stream()
@@ -2536,7 +2562,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     @SuppressWarnings("unchecked")
-    private void createInterviewSlotsOnPublish(Recruitment recruitment) {
+    private void createInterviewSlots(Recruitment recruitment, boolean skipIfExists) {
         if (recruitment == null) {
             return;
         }
@@ -2548,8 +2574,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             return;
         }
 
-        // 이미 슬롯 있으면 재생성 안함
-        if (loadInterviewSlotPort.existsByRecruitmentId(recruitmentId)) {
+        // 최초 생성 시: 이미 슬롯 있으면 재생성 안함
+        if (skipIfExists && loadInterviewSlotPort.existsByRecruitmentId(recruitmentId)) {
             return;
         }
 

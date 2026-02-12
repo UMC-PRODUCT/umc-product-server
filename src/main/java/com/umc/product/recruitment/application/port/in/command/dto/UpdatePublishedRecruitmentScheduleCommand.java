@@ -5,7 +5,8 @@ import java.time.Instant;
 public record UpdatePublishedRecruitmentScheduleCommand(
     Long memberId,
     Long recruitmentId,
-    SchedulePatch schedule
+    SchedulePatch schedule,
+    Integer slotMinutes
 ) {
     public record SchedulePatch(
         Instant applyStartAt,

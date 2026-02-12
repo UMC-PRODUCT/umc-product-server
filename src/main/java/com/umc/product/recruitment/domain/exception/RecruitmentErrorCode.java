@@ -127,6 +127,8 @@ public enum RecruitmentErrorCode implements BaseCode {
         "최종 합격 처리 시 선택 파트(selectedPart)는 필수입니다."),
     FINAL_SELECTED_PART_NOT_PREFERRED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0071",
         "최종 합격 처리 시 선택 파트(selectedPart)는 지원자가 선택한 지원 파트(preferred) 중 하나여야 합니다."),
+    INTERVIEW_TIMETABLE_SLOT_MINUTES_UPDATE_FORBIDDEN(HttpStatus.NOT_FOUND, "RECRUITMENT-0072",
+        "이미 할당된 면접이 있는 모집은 slotMinutes를 수정할 수 없습니다."),
     ;
 
     private final HttpStatus httpStatus;
