@@ -117,12 +117,16 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
                         }
                 ));
 
-        // 8. PostInfo로 변환
+        // 8. 댓글 수 일괄 조회 (1 query)
+        Map<Long, Integer> commentCountMap = loadCommentPort.countByPostIds(postIds);
+
+        // 9. PostInfo로 변환
         return posts.map(post -> {
             Long postId = post.getPostId().id();
             Long authorId = postIdToAuthorId.get(postId);
             String authorName = authorId != null ? authorNameMap.get(authorId) : "알 수 없음";
-            return PostInfo.from(post, authorId, authorName);
+            int commentCount = commentCountMap.getOrDefault(postId, 0);
+            return PostInfo.from(post, authorId, authorName, commentCount);
         });
     }
 
@@ -205,12 +209,16 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
                         }
                 ));
 
-        // 8. PostInfo로 변환
+        // 8. 댓글 수 일괄 조회 (1 query)
+        Map<Long, Integer> commentCountMap = loadCommentPort.countByPostIds(postIds);
+
+        // 9. PostInfo로 변환
         return posts.map(post -> {
             Long postId = post.getPostId().id();
             Long authorId = postIdToAuthorId.get(postId);
             String authorName = authorId != null ? authorNameMap.get(authorId) : "알 수 없음";
-            return PostInfo.from(post, authorId, authorName);
+            int commentCount = commentCountMap.getOrDefault(postId, 0);
+            return PostInfo.from(post, authorId, authorName, commentCount);
         });
     }
 }

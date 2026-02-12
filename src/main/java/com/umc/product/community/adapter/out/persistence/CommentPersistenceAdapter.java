@@ -4,7 +4,11 @@ import com.umc.product.community.application.port.in.post.ToggleCommentLikeUseCa
 import com.umc.product.community.application.port.out.LoadCommentPort;
 import com.umc.product.community.application.port.out.SaveCommentPort;
 import com.umc.product.community.domain.Comment;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +35,20 @@ public class CommentPersistenceAdapter implements LoadCommentPort, SaveCommentPo
     @Override
     public int countByPostId(Long postId) {
         return commentRepository.countByPostId(postId);
+    }
+
+    @Override
+    public Map<Long, Integer> countByPostIds(List<Long> postIds) {
+        if (postIds == null || postIds.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        List<Object[]> results = commentRepository.countByPostIdIn(postIds);
+        return results.stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],           // postId
+                        row -> ((Number) row[1]).intValue()  // count
+                ));
     }
 
     @Override

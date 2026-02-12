@@ -29,6 +29,9 @@ public record PostResponse(
         @Schema(description = "작성일시", example = "2026-02-13T10:30:00Z")
         Instant createdAt,
 
+        @Schema(description = "댓글 수", example = "5")
+        int commentCount,
+
         @Schema(description = "좋아요 수", example = "42")
         int likeCount,
 
@@ -58,6 +61,7 @@ public record PostResponse(
                 info.authorId(),
                 info.authorName(),
                 info.createdAt(),
+                info.commentCount(),
                 info.likeCount(),
                 info.isLiked(),
                 lightningInfoResponse
