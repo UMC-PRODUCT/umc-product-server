@@ -1,5 +1,7 @@
 package com.umc.product.community.adapter.in.web;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.community.adapter.in.web.dto.request.CreateLightningRequest;
 import com.umc.product.community.adapter.in.web.dto.request.CreatePostRequest;
 import com.umc.product.community.adapter.in.web.dto.request.UpdateLightningRequest;
@@ -14,6 +16,8 @@ import com.umc.product.community.application.port.in.post.ToggleScrapUseCase;
 import com.umc.product.community.application.port.in.post.UpdateLightningUseCase;
 import com.umc.product.community.application.port.in.post.UpdatePostUseCase;
 import com.umc.product.global.constant.SwaggerTag.Constants;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +27,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -38,23 +41,28 @@ public class PostController {
     private final DeletePostUseCase deletePostUseCase;
     private final TogglePostLikeUseCase togglePostLikeUseCase;
     private final ToggleScrapUseCase toggleScrapUseCase;
+    private final GetChallengerUseCase getChallengerUseCase;
 
     @PostMapping
     @Operation(summary = "일반 게시글 생성", description = "일반 게시글을 생성합니다. 번개글은 별도 API를 사용하세요.")
     public PostResponse createPost(
             @RequestBody CreatePostRequest request,
-            @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
+            @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        return PostResponse.from(createPostUseCase.createPost(request.toCommand(challengerId)));
+        Long memberId = memberPrincipal.getMemberId();
+        ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
+        return PostResponse.from(createPostUseCase.createPost(request.toCommand(challenger.challengerId())));
     }
 
     @PostMapping("/lightning")
     @Operation(summary = "번개글 생성", description = "번개 모임 게시글을 생성합니다.")
     public PostResponse createLightningPost(
             @RequestBody CreateLightningRequest request,
-            @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
+            @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        return PostResponse.from(createPostUseCase.createLightningPost(request.toCommand(challengerId)));
+        Long memberId = memberPrincipal.getMemberId();
+        ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
+        return PostResponse.from(createPostUseCase.createLightningPost(request.toCommand(challenger.challengerId())));
     }
 
     @PatchMapping("/{postId}")
@@ -85,18 +93,22 @@ public class PostController {
     @Operation(summary = "게시글 좋아요 토글", description = "게시글 좋아요를 토글합니다. 이미 좋아요한 경우 취소됩니다.")
     public LikeResponse toggleLike(
             @PathVariable Long postId,
-            @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
+            @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        return LikeResponse.from(togglePostLikeUseCase.toggleLike(postId, challengerId));
+        Long memberId = memberPrincipal.getMemberId();
+        ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
+        return LikeResponse.from(togglePostLikeUseCase.toggleLike(postId, challenger.challengerId()));
     }
 
     @PostMapping("/{postId}/scrap")
     @Operation(summary = "게시글 스크랩 토글", description = "게시글 스크랩을 토글합니다. 이미 스크랩한 경우 취소됩니다.")
     public ScrapResponse toggleScrap(
             @PathVariable Long postId,
-            @RequestParam Long challengerId  // TODO: @CurrentUser로 변경 필요
+            @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        return ScrapResponse.from(toggleScrapUseCase.toggleScrap(postId, challengerId));
+        Long memberId = memberPrincipal.getMemberId();
+        ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
+        return ScrapResponse.from(toggleScrapUseCase.toggleScrap(postId, challenger.challengerId()));
     }
 }
 
