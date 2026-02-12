@@ -9,12 +9,16 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "scrap")
+@Table(
+        name = "scrap",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"post_id", "challenger_id"})
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ScrapJpaEntity extends BaseEntity {
@@ -23,10 +27,10 @@ public class ScrapJpaEntity extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "post_id", nullable = false)
     private Long postId;
 
-    @Column(nullable = false)
+    @Column(name = "challenger_id", nullable = false)
     private Long challengerId;
 
     private ScrapJpaEntity(Long postId, Long challengerId) {
@@ -41,4 +45,9 @@ public class ScrapJpaEntity extends BaseEntity {
     public Scrap toDomain() {
         return Scrap.reconstruct(new ScrapId(id), postId, challengerId);
     }
+
+    public static ScrapJpaEntity of(Long postId, Long challengerId) {
+        return new ScrapJpaEntity(postId, challengerId);
+    }
 }
+
