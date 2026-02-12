@@ -9,7 +9,8 @@ public record UpdatePublishedRecruitmentScheduleRequest(
     Instant docResultAt,
     Instant interviewStartAt,
     Instant interviewEndAt,
-    Instant finalResultAt
+    Instant finalResultAt,
+    Integer slotMinutes
 ) {
     public UpdatePublishedRecruitmentScheduleCommand toCommand(Long recruitmentId, Long memberId) {
         return new UpdatePublishedRecruitmentScheduleCommand(
@@ -22,7 +23,8 @@ public record UpdatePublishedRecruitmentScheduleRequest(
                 interviewStartAt,
                 interviewEndAt,
                 finalResultAt
-            )
+            ),
+            slotMinutes
         );
     }
 }

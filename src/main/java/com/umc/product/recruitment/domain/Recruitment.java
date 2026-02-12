@@ -13,6 +13,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Map;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -166,4 +167,19 @@ public class Recruitment extends BaseEntity {
             this.publishedAt = now;
         }
     }
+
+    public void changeInterviewTimeTableSlotMinutes(int slotMinutes) {
+        if (slotMinutes <= 0) {
+            throw new IllegalArgumentException("slotMinutes must be positive");
+        }
+
+        Map<String, Object> tt = this.interviewTimeTable;
+        if (tt == null) {
+            tt = new HashMap<>();
+        }
+
+        tt.put("slotMinutes", slotMinutes);
+        this.interviewTimeTable = tt;
+    }
+
 }

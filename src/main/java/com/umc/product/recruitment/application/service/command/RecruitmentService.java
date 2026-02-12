@@ -46,6 +46,7 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruit
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
+import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewSlotPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
@@ -151,6 +152,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final LoadInterviewSlotPort loadInterviewSlotPort;
     private final SaveInterviewSlotPort saveInterviewSlotPort;
     private final SaveInterviewAssignmentPort saveInterviewAssignmentPort;
+    private final LoadInterviewAssignmentPort loadInterviewAssignmentPort;
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
@@ -810,7 +812,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         latest.publish(now);
         saveRecruitmentPort.save(latest);
 
-        createInterviewSlotsOnPublish(latest);
+        createInterviewSlots(latest, true);
 
         Form form = loadFormPort.findById(latest.getFormId())
             .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
@@ -1024,6 +1026,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             ResolvedRecruitmentSchedule.merge(existing, command.schedule());
         validateOrdering(resolved);
 
+        Integer newSlotMinutes = command.slotMinutes();
+
         // upsert schedules
         upsertSchedule(recruitmentId, existing, RecruitmentScheduleType.APPLY_WINDOW,
             resolved.applyStartAt(), resolved.applyEndAt());
@@ -1040,6 +1044,32 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         upsertReviewWindowsPublished(recruitmentId, existing, resolved);
 
         saveRecruitmentSchedulePort.saveAll(existing.values().stream().toList());
+
+        if (newSlotMinutes != null) {
+            if (newSlotMinutes <= 0) {
+                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            }
+
+            if (newSlotMinutes < 5) {
+                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.SLOT_MINUTES_TOO_SMALL);
+            }
+
+            // assignment 1개라도 있으면 slotMinutes 수정 불가
+            if (loadInterviewAssignmentPort.countByRecruitmentId(recruitmentId) > 0) {
+                throw new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.INTERVIEW_TIMETABLE_SLOT_MINUTES_UPDATE_FORBIDDEN
+                );
+            }
+
+            // 도메인에 slotMinutes만 업데이트
+            recruitment.changeInterviewTimeTableSlotMinutes(newSlotMinutes);
+
+            saveRecruitmentPort.save(recruitment);
+
+            saveInterviewSlotPort.deleteAllByRecruitmentId(recruitmentId);
+            createInterviewSlots(recruitment, false);
+        }
 
         List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(recruitmentId);
         List<ChallengerPart> parts = recruitmentParts.stream()
@@ -2536,7 +2566,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     @SuppressWarnings("unchecked")
-    private void createInterviewSlotsOnPublish(Recruitment recruitment) {
+    private void createInterviewSlots(Recruitment recruitment, boolean skipIfExists) {
         if (recruitment == null) {
             return;
         }
@@ -2548,8 +2578,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             return;
         }
 
-        // 이미 슬롯 있으면 재생성 안함
-        if (loadInterviewSlotPort.existsByRecruitmentId(recruitmentId)) {
+        // 최초 생성 시: 이미 슬롯 있으면 재생성 안함
+        if (skipIfExists && loadInterviewSlotPort.existsByRecruitmentId(recruitmentId)) {
             return;
         }
 
@@ -2572,6 +2602,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 Domain.RECRUITMENT,
                 RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID
             );
+        }
+
+        if (slotMinutes < 5) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.SLOT_MINUTES_TOO_SMALL);
         }
 
         Map<LocalDate, List<LocalTime>> enabledByDate = new HashMap<>();
@@ -2633,12 +2667,44 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 continue;
             }
 
-            for (LocalTime t : enabledTimes) {
-                // timeRange 밖은 skip
-                if (t.isBefore(startTime) || t.plusMinutes(slotMinutes).isAfter(endTime)) {
+//            for (LocalTime t : enabledTimes) {
+//                // timeRange 밖은 skip
+//                if (t.isBefore(startTime) || t.plusMinutes(slotMinutes).isAfter(endTime)) {
+//                    continue;
+//                }
+//                slots.add(buildSlot(recruitment, d, t, slotMinutes));
+//            }
+            int i = 0;
+            while (i < enabledTimes.size()) {
+
+                LocalTime runStart = enabledTimes.get(i);
+                LocalTime runLast = runStart;
+
+                // 연속된 30분 블록 묶기
+                while (i + 1 < enabledTimes.size()
+                    && enabledTimes.get(i + 1).equals(runLast.plusMinutes(30))) {
+                    i++;
+                    runLast = enabledTimes.get(i);
+                }
+
+                // run -> window 계산 (enabled 기준)
+                LocalTime windowStart = runStart;
+                LocalTime windowEnd = runLast.plusMinutes(30);
+
+                // window 안에 slotMinutes 하나도 못 넣으면 skip
+                if (windowStart.plusMinutes(slotMinutes).isAfter(windowEnd)) {
+                    i++;
                     continue;
                 }
-                slots.add(buildSlot(recruitment, d, t, slotMinutes));
+
+                // window를 slotMinutes로 슬라이스
+                LocalTime t = windowStart;
+                while (!t.plusMinutes(slotMinutes).isAfter(windowEnd)) {
+                    slots.add(buildSlot(recruitment, d, t, slotMinutes));
+                    t = t.plusMinutes(slotMinutes);
+                }
+
+                i++;
             }
         }
 
