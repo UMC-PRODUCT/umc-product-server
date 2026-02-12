@@ -1050,6 +1050,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
             }
 
+            if (newSlotMinutes < 5) {
+                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.SLOT_MINUTES_TOO_SMALL);
+            }
+
             // assignment 1개라도 있으면 slotMinutes 수정 불가
             if (loadInterviewAssignmentPort.countByRecruitmentId(recruitmentId) > 0) {
                 throw new BusinessException(
@@ -1064,7 +1068,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             saveRecruitmentPort.save(recruitment);
 
             saveInterviewSlotPort.deleteAllByRecruitmentId(recruitmentId);
-            createInterviewSlots(recruitment, true);
+            createInterviewSlots(recruitment, false);
         }
 
         List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(recruitmentId);
@@ -2600,6 +2604,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             );
         }
 
+        if (slotMinutes < 5) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.SLOT_MINUTES_TOO_SMALL);
+        }
+
         Map<LocalDate, List<LocalTime>> enabledByDate = new HashMap<>();
         Object enabledRaw = timeTable.get("enabledByDate");
         if (enabledRaw instanceof List<?> enabledList) {
@@ -2659,12 +2667,44 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 continue;
             }
 
-            for (LocalTime t : enabledTimes) {
-                // timeRange 밖은 skip
-                if (t.isBefore(startTime) || t.plusMinutes(slotMinutes).isAfter(endTime)) {
+//            for (LocalTime t : enabledTimes) {
+//                // timeRange 밖은 skip
+//                if (t.isBefore(startTime) || t.plusMinutes(slotMinutes).isAfter(endTime)) {
+//                    continue;
+//                }
+//                slots.add(buildSlot(recruitment, d, t, slotMinutes));
+//            }
+            int i = 0;
+            while (i < enabledTimes.size()) {
+
+                LocalTime runStart = enabledTimes.get(i);
+                LocalTime runLast = runStart;
+
+                // 연속된 30분 블록 묶기
+                while (i + 1 < enabledTimes.size()
+                    && enabledTimes.get(i + 1).equals(runLast.plusMinutes(30))) {
+                    i++;
+                    runLast = enabledTimes.get(i);
+                }
+
+                // run -> window 계산 (enabled 기준)
+                LocalTime windowStart = runStart;
+                LocalTime windowEnd = runLast.plusMinutes(30);
+
+                // window 안에 slotMinutes 하나도 못 넣으면 skip
+                if (windowStart.plusMinutes(slotMinutes).isAfter(windowEnd)) {
+                    i++;
                     continue;
                 }
-                slots.add(buildSlot(recruitment, d, t, slotMinutes));
+
+                // window를 slotMinutes로 슬라이스
+                LocalTime t = windowStart;
+                while (!t.plusMinutes(slotMinutes).isAfter(windowEnd)) {
+                    slots.add(buildSlot(recruitment, d, t, slotMinutes));
+                    t = t.plusMinutes(slotMinutes);
+                }
+
+                i++;
             }
         }
 
