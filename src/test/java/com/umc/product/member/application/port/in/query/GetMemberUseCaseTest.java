@@ -220,6 +220,7 @@ class GetMemberUseCaseTest {
             null,         // remark
             null,         // logoImageUrl
             List.of(),  // links
+            true,         // isActive
             Instant.now(),
             Instant.now()
         );

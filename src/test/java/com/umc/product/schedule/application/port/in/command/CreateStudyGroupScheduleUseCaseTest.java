@@ -41,7 +41,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-@Disabled
 // TODO: UseCaseTestSupport에서 GetChallengerUseCase 제거하고 개선예정
 class CreateStudyGroupScheduleUseCaseTest extends UseCaseTestSupport {
 

@@ -22,11 +22,9 @@ import com.umc.product.organization.domain.SchoolLinkType;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.Instant;
 import java.util.List;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Disabled
 class ManageSchoolUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
@@ -97,6 +95,36 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         School updatedSchool = loadSchoolPort.findById(school.getId());
         assertThat(updatedSchool.getName()).isEqualTo("동국대");
         assertThat(updatedSchool.getRemark()).isEqualTo("수정된 비고");
+    }
+
+    @Test
+    void 학교_수정_시_링크도_함께_수정한다() {
+        // given
+        School school = manageSchoolPort.save(School.create("한성대", "비고"));
+
+        List<SchoolLinkCommand> initialLinks = List.of(
+            new SchoolLinkCommand("카카오톡", SchoolLinkType.KAKAO, "https://open.kakao.com/o/old")
+        );
+        manageSchoolUseCase.updateSchool(school.getId(),
+            new UpdateSchoolCommand("한성대", null, "비고", null, initialLinks));
+
+        // when - 링크를 새로운 링크로 교체
+        List<SchoolLinkCommand> updatedLinks = List.of(
+            new SchoolLinkCommand("인스타그램", SchoolLinkType.INSTAGRAM, "https://instagram.com/new"),
+            new SchoolLinkCommand("유튜브", SchoolLinkType.YOUTUBE, "https://youtube.com/@new")
+        );
+        UpdateSchoolCommand command = new UpdateSchoolCommand("한성대", null, "비고", null, updatedLinks);
+        manageSchoolUseCase.updateSchool(school.getId(), command);
+
+        // then
+        School updatedSchool = loadSchoolPort.findSchoolDetailById(school.getId());
+        assertThat(updatedSchool.getSchoolLinks()).hasSize(2);
+        assertThat(updatedSchool.getSchoolLinks())
+            .extracting(link -> link.getType())
+            .containsExactlyInAnyOrder(SchoolLinkType.INSTAGRAM, SchoolLinkType.YOUTUBE);
+        assertThat(updatedSchool.getSchoolLinks())
+            .extracting(link -> link.getUrl())
+            .containsExactlyInAnyOrder("https://instagram.com/new", "https://youtube.com/@new");
     }
 
     @Test
