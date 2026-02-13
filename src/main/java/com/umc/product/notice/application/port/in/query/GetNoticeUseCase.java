@@ -27,7 +27,7 @@ public interface GetNoticeUseCase {
      * 공지 세부조회 -> 이때 조회수를 증가시켜야 함
      * @return 해당 공지의 세부 내용 조회
      */
-    NoticeInfo getNoticeDetail(Long noticeId);
+    NoticeInfo getNoticeDetail(Long noticeId, Long memberId);
 
     /*
      * 공지 열람 현황 상세 조회

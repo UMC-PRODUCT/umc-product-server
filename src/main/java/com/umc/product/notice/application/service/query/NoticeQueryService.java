@@ -14,8 +14,8 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusInfo
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
-import com.umc.product.notice.application.port.in.query.dto.NoticeVoteInfo;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
+import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
@@ -71,13 +71,13 @@ public class NoticeQueryService implements GetNoticeUseCase {
     }
 
     @Override
-    public NoticeInfo getNoticeDetail(Long noticeId) {
+    public NoticeInfo getNoticeDetail(Long noticeId, Long memberId) {
         // 권한 검증은 컨트롤러에서 @CheckAccess 사용
         // Notice, NoticeContent 조회
         Notice notice = findById(noticeId);
         List<NoticeImageInfo> imageInfos = getNoticeContentUseCase.findImageByNoticeId(noticeId);
         List<NoticeLinkInfo> linkInfos = getNoticeContentUseCase.findLinkByNoticeId(noticeId);
-        NoticeVoteInfo voteInfo = getNoticeContentUseCase.findVoteByNoticeId(noticeId);
+        VoteInfo voteInfo = getNoticeContentUseCase.findVoteByNoticeId(noticeId, memberId);
 
         // NoticeTargetInfo 조회
         NoticeTarget target = loadNoticeTargetPort.findByNoticeId(noticeId).orElse(null);

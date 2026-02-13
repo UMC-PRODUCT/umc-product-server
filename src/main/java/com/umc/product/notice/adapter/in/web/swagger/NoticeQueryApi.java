@@ -9,6 +9,8 @@ import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeReadSta
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeStaticsResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeSummaryResponse;
 import com.umc.product.notice.dto.NoticeClassification;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -81,7 +83,8 @@ public interface NoticeQueryApi {
     })
     ApiResponse<GetNoticeDetailResponse> getNotice(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
-        @PathVariable Long noticeId
+        @PathVariable Long noticeId,
+        @CurrentMember MemberPrincipal memberPrincipal
     );
 
     @Operation(

@@ -129,8 +129,8 @@ public class NoticeContentControllerTest extends DocumentationTest {
                     fieldWithPath("success").type(JsonFieldType.BOOLEAN).description("성공 여부"),
                     fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
                     fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
-                    fieldWithPath("result.noticeVoteId").type(JsonFieldType.NUMBER).description("생성된 공지 투표 ID"),
-                    fieldWithPath("result.voteId").type(JsonFieldType.NUMBER).description("생성된 투표 ID")
+                    fieldWithPath("result.noticeVoteId").type(JsonFieldType.STRING).description("생성된 공지 투표 ID"),
+                    fieldWithPath("result.voteId").type(JsonFieldType.STRING).description("생성된 투표 ID")
                 )
             ));
     }

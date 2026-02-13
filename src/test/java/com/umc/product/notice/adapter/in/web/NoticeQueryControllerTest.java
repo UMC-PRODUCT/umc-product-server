@@ -18,10 +18,14 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusInfo
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
-import com.umc.product.notice.application.port.in.query.dto.NoticeVoteInfo;
 import com.umc.product.notice.dto.NoticeTargetInfo;
+import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
+import com.umc.product.survey.application.port.in.query.dto.VoteInfo.VoteOptionInfo;
+import com.umc.product.survey.domain.enums.FormOpenStatus;
 import com.umc.product.support.DocumentationTest;
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
@@ -158,15 +162,22 @@ public class NoticeQueryControllerTest extends DocumentationTest {
         // given
         Long noticeId = 1L;
         NoticeTargetInfo targetInfo = new NoticeTargetInfo(1L, 2L, 3L, List.of(ChallengerPart.WEB));
+        VoteInfo voteInfo = new VoteInfo(
+            100L, "투표 제목", false, false, FormOpenStatus.OPEN,
+            Instant.now(), Instant.now().plusSeconds(86400),
+            LocalDate.now(), LocalDate.now().plusDays(1),
+            5, List.of(new VoteOptionInfo(1L, "옵션1", 3, BigDecimal.valueOf(60))),
+            List.of(1L)
+        );
         NoticeInfo noticeInfo = new NoticeInfo(
             1L, "공지 제목", "공지 상세 내용", 10L,
-            new NoticeVoteInfo(1L, 100L),
+            voteInfo,
             List.of(new NoticeImageInfo(1L, "https://example.com/image.png", 1)),
             List.of(new NoticeLinkInfo(1L, "https://example.com", 1)),
             targetInfo, 42, Instant.now()
         );
 
-        given(getNoticeUseCase.getNoticeDetail(noticeId)).willReturn(noticeInfo);
+        given(getNoticeUseCase.getNoticeDetail(noticeId, TEST_MEMBER_ID)).willReturn(noticeInfo);
 
         // when
         ResultActions result = mockMvc.perform(
@@ -186,10 +197,23 @@ public class NoticeQueryControllerTest extends DocumentationTest {
                     fieldWithPath("result.title").type(JsonFieldType.STRING).description("공지 제목"),
                     fieldWithPath("result.content").type(JsonFieldType.STRING).description("공지 내용"),
                     fieldWithPath("result.authorChallengerId").type(JsonFieldType.STRING).description("작성자 챌린저 ID"),
-                    fieldWithPath("result.votes").type(JsonFieldType.ARRAY).description("투표 목록"),
-                    fieldWithPath("result.votes[].noticeVoteId").type(JsonFieldType.STRING).description("공지-투표 연결 ID"),
-                    fieldWithPath("result.votes[].voteId").type(JsonFieldType.STRING).description("투표 ID"),
-                    fieldWithPath("result.votes[].displayOrder").type(JsonFieldType.STRING).description("표시 순서"),
+                    fieldWithPath("result.vote").type(JsonFieldType.OBJECT).description("투표 정보"),
+                    fieldWithPath("result.vote.voteId").type(JsonFieldType.STRING).description("투표 ID"),
+                    fieldWithPath("result.vote.title").type(JsonFieldType.STRING).description("투표 제목"),
+                    fieldWithPath("result.vote.isAnonymous").type(JsonFieldType.BOOLEAN).description("익명 투표 여부"),
+                    fieldWithPath("result.vote.allowMultipleChoice").type(JsonFieldType.BOOLEAN).description("복수 선택 허용 여부"),
+                    fieldWithPath("result.vote.status").type(JsonFieldType.STRING).description("투표 상태 (NOT_STARTED, OPEN, CLOSED)"),
+                    fieldWithPath("result.vote.startsAt").type(JsonFieldType.STRING).description("투표 시작 시각"),
+                    fieldWithPath("result.vote.endsAtExclusive").type(JsonFieldType.STRING).description("투표 종료 시각"),
+                    fieldWithPath("result.vote.startDateKst").type(JsonFieldType.STRING).description("투표 시작일 (KST)"),
+                    fieldWithPath("result.vote.endDateKst").type(JsonFieldType.STRING).description("투표 종료일 (KST)"),
+                    fieldWithPath("result.vote.totalParticipants").type(JsonFieldType.STRING).description("총 참여자 수"),
+                    fieldWithPath("result.vote.options").type(JsonFieldType.ARRAY).description("투표 옵션 목록"),
+                    fieldWithPath("result.vote.options[].optionId").type(JsonFieldType.STRING).description("옵션 ID"),
+                    fieldWithPath("result.vote.options[].content").type(JsonFieldType.STRING).description("옵션 내용"),
+                    fieldWithPath("result.vote.options[].voteCount").type(JsonFieldType.STRING).description("투표 수"),
+                    fieldWithPath("result.vote.options[].voteRate").type(JsonFieldType.STRING).description("투표 비율"),
+                    fieldWithPath("result.vote.mySelectedOptionIds").type(JsonFieldType.ARRAY).description("내가 선택한 옵션 ID 목록"),
                     fieldWithPath("result.images").type(JsonFieldType.ARRAY).description("이미지 목록"),
                     fieldWithPath("result.images[].id").type(JsonFieldType.STRING).description("이미지 ID"),
                     fieldWithPath("result.images[].url").type(JsonFieldType.STRING).description("이미지 URL"),

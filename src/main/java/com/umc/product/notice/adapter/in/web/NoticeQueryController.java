@@ -19,6 +19,8 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResu
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.dto.NoticeClassification;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -80,13 +82,15 @@ public class NoticeQueryController implements NoticeQueryApi {
      */
     @CheckAccess(
         resourceType = ResourceType.NOTICE,
-        resourceId = "#noticeId", // SpEL 표현식 - 공부하세요!!
+        resourceId = "#noticeId",
         permission = PermissionType.READ
     )
     @GetMapping("/{noticeId}")
-    public ApiResponse<GetNoticeDetailResponse> getNotice(@PathVariable("noticeId") Long noticeId) {
+    public ApiResponse<GetNoticeDetailResponse> getNotice(
+        @PathVariable("noticeId") Long noticeId,
+        @CurrentMember MemberPrincipal memberPrincipal) {
 
-        NoticeInfo noticeDetail = getNoticeUseCase.getNoticeDetail(noticeId);
+        NoticeInfo noticeDetail = getNoticeUseCase.getNoticeDetail(noticeId, memberPrincipal.getMemberId());
         return ApiResponse.onSuccess(GetNoticeDetailResponse.from(noticeDetail));
     }
 
