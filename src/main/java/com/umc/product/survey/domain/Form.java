@@ -57,10 +57,10 @@ public class Form extends BaseEntity {
     @Column(name = "is_anonymous", nullable = false)
     private boolean isAnonymous;
 
+    // 시작일 00:00(KST) ~ 마감일 23:59(KST) = (마감일+1) 00:00(KST) exclusive
     @Column(name = "starts_at")
     private Instant startsAt;
 
-    // 투표 마감일 포함 여부: 기획 문의 상태
     @Column(name = "ends_at_exclusive")
     private Instant endsAtExclusive;
 
