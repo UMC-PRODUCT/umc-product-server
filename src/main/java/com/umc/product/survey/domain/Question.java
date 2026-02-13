@@ -81,4 +81,24 @@ public class Question extends BaseEntity {
     public void changeOrderNo(Integer orderNo) {
         this.orderNo = orderNo;
     }
+
+    public static Question create(
+        String questionText,
+        QuestionType type,
+        boolean isRequired,
+        int orderNo
+    ) {
+        Question q = new Question();
+        q.questionText = questionText;
+        q.type = type;
+        q.isRequired = isRequired;
+        q.orderNo = orderNo;
+        return q;
+    }
+
+    public void addOption(QuestionOption option) {
+        this.options.add(option);
+        option.assignTo(this);
+    }
+
 }

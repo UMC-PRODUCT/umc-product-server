@@ -53,4 +53,17 @@ public class QuestionOption extends BaseEntity {
     public void changeIsOther(boolean isOther) {
         this.isOther = isOther;
     }
+
+    public static QuestionOption create(String content, int orderNo, boolean isOther) {
+        QuestionOption questionOption = new QuestionOption();
+        questionOption.content = content;
+        questionOption.orderNo = orderNo;
+        questionOption.isOther = isOther;
+        return questionOption;
+    }
+
+    public void assignTo(Question question) {
+        this.question = question;
+    }
+
 }

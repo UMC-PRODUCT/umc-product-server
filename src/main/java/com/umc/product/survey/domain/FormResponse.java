@@ -83,4 +83,29 @@ public class FormResponse extends BaseEntity {
         this.lastSavedAt = now;
     }
 
+    public static FormResponse createVoteResponse(
+        Form form,
+        Long respondentMemberId,
+        Question question,
+        List<Long> selectedOptionIds,
+        Instant now
+    ) {
+        FormResponse fr = new FormResponse();
+        fr.form = form;
+        fr.respondentMemberId = respondentMemberId;
+
+        // 투표는 즉시 제출로 처리
+        fr.status = FormResponseStatus.SUBMITTED;
+        fr.submittedAt = now;
+
+        fr.lastSavedAt = now;
+
+        // answers 구성 (SingleAnswer 구조에 맞게 구현 필요)
+        // 예: 객관식(옵션 선택) 1문항에 대해 optionIds를 담는 형태
+        fr.answers = new ArrayList<>();
+        fr.answers.add(SingleAnswer.createVoteAnswer(fr, question, selectedOptionIds));
+
+        return fr;
+    }
+
 }

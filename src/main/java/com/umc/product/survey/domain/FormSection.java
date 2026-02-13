@@ -65,4 +65,21 @@ public class FormSection extends BaseEntity {
         this.questions.add(question);
         question.assignTo(this);
     }
+
+    public static FormSection create(
+        Form form,
+        FormSectionType type,
+        String targetKey,
+        String title,
+        int orderNo
+    ) {
+        return FormSection.builder()
+            .form(form)
+            .type(type)
+            .targetKey(targetKey)
+            .title(title)
+            .orderNo(orderNo)
+            .build();
+    }
+
 }
