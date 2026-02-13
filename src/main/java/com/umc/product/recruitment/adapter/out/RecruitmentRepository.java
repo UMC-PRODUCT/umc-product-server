@@ -63,4 +63,6 @@ public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> 
     List<Long> findLatestPublishedId(Long schoolId, Long gisuId);
 
     List<Recruitment> findBySchoolIdAndStatus(Long schoolId, RecruitmentStatus status);
+
+    List<Recruitment> findAllBySchoolIdAndGisuIdAndStatus(Long schoolId, Long gisuId, RecruitmentStatus status);
 }

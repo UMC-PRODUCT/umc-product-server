@@ -7,6 +7,7 @@ import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -40,5 +41,11 @@ public class RecruitmentSchedulePersistenceAdapter implements SaveRecruitmentSch
     @Override
     public void deleteAllByRecruitmentId(Long recruitmentId) {
         recruitmentScheduleRepository.deleteAllByRecruitmentId(recruitmentId);
+    }
+
+    @Override
+    public Optional<RecruitmentSchedule> findOptionalByRecruitmentIdAndType(Long recruitmentId,
+                                                                            RecruitmentScheduleType type) {
+        return recruitmentScheduleRepository.findByRecruitmentIdAndType(recruitmentId, type);
     }
 }
