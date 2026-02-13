@@ -73,6 +73,7 @@ public class SchoolService implements ManageSchoolUseCase {
     @Override
     public void deleteSchools(List<Long> schoolIds) {
         manageChapterSchoolPort.deleteAllBySchoolIds(schoolIds);
+        manageSchoolPort.deleteAllLinksBySchoolIds(schoolIds);
         manageSchoolPort.deleteAllByIds(schoolIds);
     }
 

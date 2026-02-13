@@ -9,4 +9,6 @@ public interface ManageSchoolPort {
     School save(School school);
 
     void deleteAllByIds(List<Long> schoolIds);
+
+    void deleteAllLinksBySchoolIds(List<Long> schoolIds);
 }

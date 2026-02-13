@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPort {
 
     private final SchoolJpaRepository schoolJpaRepository;
+    private final SchoolLinkJpaRepository schoolLinkJpaRepository;
     private final SchoolQueryRepository schoolQueryRepository;
 
     @Override
@@ -30,6 +31,11 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
     @Override
     public void deleteAllByIds(List<Long> schoolIds) {
         schoolJpaRepository.deleteAllByIdIn(schoolIds);
+    }
+
+    @Override
+    public void deleteAllLinksBySchoolIds(List<Long> schoolIds) {
+        schoolLinkJpaRepository.deleteAllBySchoolIdIn(schoolIds);
     }
 
     @Override
