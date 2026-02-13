@@ -228,4 +228,16 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
             chapterId, schoolId, part, keyword, pageable
         );
     }
+
+    @Override
+    public long countDocPassedByRecruitmentId(Long recruitmentId) {
+        return applicationQueryRepository.countDocPassedByRecruitmentId(recruitmentId);
+    }
+
+    @Override
+    public long countDocPassedByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, PartOption part) {
+        ChallengerPart challengerPart = toChallengerPart(part);
+        return applicationQueryRepository.countDocPassedByRecruitmentIdAndFirstPreferredPart(recruitmentId,
+            challengerPart);
+    }
 }
