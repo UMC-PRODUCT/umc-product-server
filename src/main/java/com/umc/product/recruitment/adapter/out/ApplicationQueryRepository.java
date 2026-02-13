@@ -375,8 +375,10 @@ public class ApplicationQueryRepository {
         }
 
         // (applicationId, avgScore)
-        java.util.List<Tuple> rows = queryFactory
-            .select(evaluation.application.id, evaluation.score.avg())
+        NumberExpression<Double> avgExpression = evaluation.score.avg();
+
+        List<Tuple> rows = queryFactory
+            .select(evaluation.application.id, avgExpression)
             .from(evaluation)
             .where(
                 evaluation.application.id.in(applicationIds),
@@ -391,7 +393,7 @@ public class ApplicationQueryRepository {
             .collect(Collectors.toMap(
                 t -> t.get(evaluation.application.id),
                 t -> {
-                    Double avg = t.get(evaluation.score.avg());
+                    Double avg = t.get(avgExpression);
                     if (avg == null) {
                         return null;
                     }
@@ -1031,7 +1033,7 @@ public class ApplicationQueryRepository {
             .fetchOne();
         return count != null ? count : 0L;
     }
-    
+
     private BooleanExpression belongsToRecruitments(Long chapterId, Long schoolId) {
         // 둘 다 null이면 전체(필터 없음)
         if (chapterId == null && schoolId == null) {
