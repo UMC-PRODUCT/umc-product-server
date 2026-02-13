@@ -2,7 +2,9 @@ package com.umc.product.challenger.adapter.in.web.dto.request;
 
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import io.swagger.v3.oas.annotations.Parameter;
+import java.util.List;
 
 public record SearchChallengerCursorRequest(
         @Parameter(description = "이전 페이지의 마지막 챌린저 ID. 첫 페이지 조회 시 null")
@@ -43,7 +45,8 @@ public record SearchChallengerCursorRequest(
                 schoolId,
                 chapterId,
                 part,
-                gisuId
+                gisuId,
+                List.of(ChallengerStatus.ACTIVE)
         );
     }
 
