@@ -14,7 +14,7 @@ public record NoticeInfo(
     String title,
     String content,
     Long authorChallengerId,
-    List<NoticeVoteInfo> votes,
+    NoticeVoteInfo vote,
     List<NoticeImageInfo> images,
     List<NoticeLinkInfo> links,
     // 수신 대상

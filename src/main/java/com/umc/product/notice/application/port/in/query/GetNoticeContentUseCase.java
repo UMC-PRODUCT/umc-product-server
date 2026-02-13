@@ -9,7 +9,7 @@ import java.util.List;
 public interface GetNoticeContentUseCase {
     List<NoticeLinkInfo> findLinkByNoticeId(Long noticeId);
 
-    List<NoticeVoteInfo> findVoteByNoticeId(Long noticeId);
+    NoticeVoteInfo findVoteByNoticeId(Long noticeId);
 
     List<NoticeImageInfo> findImageByNoticeId(Long noticeId);
 }

@@ -10,6 +10,7 @@ import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinks
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
+import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
 import com.umc.product.notice.application.port.out.SaveNoticeImagePort;
 import com.umc.product.notice.application.port.out.SaveNoticeLinkPort;
 import com.umc.product.notice.application.port.out.SaveNoticeVotePort;
@@ -20,6 +21,8 @@ import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
+import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
+import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @RequiredArgsConstructor
 public class NoticeContentService implements ManageNoticeContentUseCase {
+    private final LoadNoticeVotePort loadNoticeVotePort;
     private final LoadNoticeLinkPort loadNoticeLinkPort;
     private final LoadNoticeImagePort loadNoticeImagePort;
     private final SaveNoticeVotePort saveNoticeVotePort;
@@ -40,6 +44,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     private final LoadNoticePort loadNoticePort;
 
     private final CreateVoteUseCase createVoteUseCase;
+    private final DeleteVoteUseCase deleteVoteUseCase;
 
     @Override
     public AddNoticeVoteResult addVote(AddNoticeVoteCommand command, Long noticeId) {
@@ -103,9 +108,12 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
 
     @Override
-    public void removeContentsByNoticeId(Long noticeId) {
+    public void removeContentsByNoticeId(Long noticeId, Long memberId) {
         saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
         saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
+
+        NoticeVote vote = loadNoticeVotePort.findVotesByNoticeId(noticeId);
+        deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
         saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
     }
 

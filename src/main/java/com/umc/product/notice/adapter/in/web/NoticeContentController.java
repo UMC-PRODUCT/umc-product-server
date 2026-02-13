@@ -14,6 +14,7 @@ import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeLinks
 import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeVoteResponse;
 import com.umc.product.notice.adapter.in.web.swagger.NoticeContentApi;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
+import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteResult;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -64,7 +65,7 @@ public class NoticeContentController implements NoticeContentApi {
         @RequestBody @Valid AddNoticeVoteRequest request,
         @CurrentMember MemberPrincipal memberPrincipal) {
 
-        var result = manageNoticeContentUseCase.addVote(
+        AddNoticeVoteResult result = manageNoticeContentUseCase.addVote(
             request.toCommand(memberPrincipal.getMemberId()), noticeId);
 
         return ApiResponse.onSuccess(AddNoticeVoteResponse.from(result));

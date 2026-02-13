@@ -160,7 +160,7 @@ public class NoticeQueryControllerTest extends DocumentationTest {
         NoticeTargetInfo targetInfo = new NoticeTargetInfo(1L, 2L, 3L, List.of(ChallengerPart.WEB));
         NoticeInfo noticeInfo = new NoticeInfo(
             1L, "공지 제목", "공지 상세 내용", 10L,
-            List.of(new NoticeVoteInfo(1L, 100L)),
+            new NoticeVoteInfo(1L, 100L),
             List.of(new NoticeImageInfo(1L, "https://example.com/image.png", 1)),
             List.of(new NoticeLinkInfo(1L, "https://example.com", 1)),
             targetInfo, 42, Instant.now()

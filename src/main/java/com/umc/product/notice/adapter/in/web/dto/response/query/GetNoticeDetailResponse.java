@@ -20,7 +20,7 @@ public record GetNoticeDetailResponse(
     Long authorChallengerId, // TODO: 작성자에 대한 정보를 바로 주는 것이 나아보임
 
     // 공지사항 부가 내용들
-    List<NoticeVoteInfo> votes,
+    NoticeVoteInfo vote,
     List<NoticeImageInfo> images,
     List<NoticeLinkInfo> links,
 
@@ -39,7 +39,7 @@ public record GetNoticeDetailResponse(
             .title(noticeInfo.title())
             .content(noticeInfo.content())
             .authorChallengerId(noticeInfo.authorChallengerId())
-            .votes(noticeInfo.votes())
+            .vote(noticeInfo.vote())
             .images(noticeInfo.images())
             .links(noticeInfo.links())
             .targetInfo(noticeInfo.targetInfo())

@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface NoticeVoteJpaRepository extends JpaRepository<NoticeVote, Long> {
 
-    List<NoticeVote> findByNoticeId(Long noticeId);
+    NoticeVote findByNoticeId(Long noticeId);
 
     boolean existsByNoticeId(Long noticeId);
 

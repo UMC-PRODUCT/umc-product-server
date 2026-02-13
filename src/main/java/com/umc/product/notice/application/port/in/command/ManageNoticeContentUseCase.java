@@ -31,7 +31,7 @@ public interface ManageNoticeContentUseCase {
      */
     List<Long> addLinks(AddNoticeLinksCommand command, Long noticeId);
 
-    void removeContentsByNoticeId(Long noticeId);
+    void removeContentsByNoticeId(Long noticeId, Long memberId);
 
     void replaceImages(ReplaceNoticeImagesCommand command, Long noticeId);
 

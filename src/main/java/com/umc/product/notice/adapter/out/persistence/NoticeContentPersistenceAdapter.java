@@ -85,7 +85,7 @@ public class NoticeContentPersistenceAdapter implements
     }
 
     @Override
-    public List<NoticeVote> findVotesByNoticeId(Long noticeId) {
+    public NoticeVote findVotesByNoticeId(Long noticeId) {
         return voteJpaRepository.findByNoticeId(noticeId);
     }
 
@@ -139,10 +139,6 @@ public class NoticeContentPersistenceAdapter implements
         return voteJpaRepository.save(noticeVote);
     }
 
-    @Override
-    public List<NoticeVote> saveAllVotes(List<NoticeVote> noticeVotes) {
-        return voteJpaRepository.saveAll(noticeVotes);
-    }
 
     @Override
     public void deleteVote(NoticeVote noticeVote) {

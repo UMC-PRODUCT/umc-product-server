@@ -77,7 +77,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Notice notice = findById(noticeId);
         List<NoticeImageInfo> imageInfos = getNoticeContentUseCase.findImageByNoticeId(noticeId);
         List<NoticeLinkInfo> linkInfos = getNoticeContentUseCase.findLinkByNoticeId(noticeId);
-        List<NoticeVoteInfo> voteInfos = getNoticeContentUseCase.findVoteByNoticeId(noticeId);
+        NoticeVoteInfo voteInfo = getNoticeContentUseCase.findVoteByNoticeId(noticeId);
 
         // NoticeTargetInfo 조회
         NoticeTarget target = loadNoticeTargetPort.findByNoticeId(noticeId).orElse(null);
@@ -90,7 +90,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             notice.getTitle(),
             notice.getContent(),
             notice.getAuthorChallengerId(),
-            voteInfos,
+            voteInfo,
             imageInfos,
             linkInfos,
             targetInfo,

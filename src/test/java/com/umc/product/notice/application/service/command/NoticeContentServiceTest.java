@@ -17,6 +17,7 @@ import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinks
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
+import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
 import com.umc.product.notice.application.port.out.SaveNoticeImagePort;
 import com.umc.product.notice.application.port.out.SaveNoticeLinkPort;
 import com.umc.product.notice.application.port.out.SaveNoticeVotePort;
@@ -26,6 +27,7 @@ import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
+import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -41,6 +43,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class NoticeContentServiceTest {
 
+    @Mock LoadNoticeVotePort loadNoticeVotePort;
     @Mock LoadNoticeLinkPort loadNoticeLinkPort;
     @Mock LoadNoticeImagePort loadNoticeImagePort;
     @Mock SaveNoticeVotePort saveNoticeVotePort;
@@ -48,6 +51,7 @@ class NoticeContentServiceTest {
     @Mock SaveNoticeLinkPort saveNoticeLinkPort;
     @Mock LoadNoticePort loadNoticePort;
     @Mock CreateVoteUseCase createVoteUseCase;
+    @Mock DeleteVoteUseCase deleteVoteUseCase;
 
     @InjectMocks NoticeContentService sut;
 
@@ -233,12 +237,21 @@ class NoticeContentServiceTest {
 
         @Test
         void 공지사항의_모든_콘텐츠를_삭제한다() {
+            // given
+            Notice notice = createNotice();
+            NoticeVote noticeVote = NoticeVote.create(10L, notice);
+            ReflectionTestUtils.setField(noticeVote, "id", 1L);
+
+            given(loadNoticeVotePort.findVotesByNoticeId(NOTICE_ID))
+                .willReturn(noticeVote);
+
             // when
-            sut.removeContentsByNoticeId(NOTICE_ID);
+            sut.removeContentsByNoticeId(NOTICE_ID, 1L);
 
             // then
             then(saveNoticeImagePort).should().deleteAllImagesByNoticeId(NOTICE_ID);
             then(saveNoticeLinkPort).should().deleteAllLinksByNoticeId(NOTICE_ID);
+            then(deleteVoteUseCase).should().delete(any());
             then(saveNoticeVotePort).should().deleteAllVotesByNoticeId(NOTICE_ID);
         }
     }

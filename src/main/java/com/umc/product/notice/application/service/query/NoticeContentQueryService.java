@@ -43,14 +43,12 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
     }
 
     @Override
-    public List<NoticeVoteInfo> findVoteByNoticeId(Long noticeId) {
-        List<NoticeVote> votes = loadNoticeVotePort.findVotesByNoticeId(noticeId);
-        return votes.stream()
-            .map(vote -> new NoticeVoteInfo(
-                vote.getId(),
-                vote.getVoteId()
-            ))
-            .toList();
+    public NoticeVoteInfo findVoteByNoticeId(Long noticeId) {
+        NoticeVote vote = loadNoticeVotePort.findVotesByNoticeId(noticeId);
+        return new NoticeVoteInfo(
+            vote.getId(),
+            vote.getVoteId()
+        );
     }
 
     @Override
