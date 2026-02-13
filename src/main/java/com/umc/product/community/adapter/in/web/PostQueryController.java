@@ -1,5 +1,8 @@
 package com.umc.product.community.adapter.in.web;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
+import com.umc.product.community.adapter.in.web.dto.response.PostDetailResponse;
 import com.umc.product.community.adapter.in.web.dto.response.PostResponse;
 import com.umc.product.community.adapter.in.web.dto.response.PostSearchResponse;
 import com.umc.product.community.application.port.in.PostInfo;
@@ -13,8 +16,9 @@ import com.umc.product.community.application.port.in.post.query.PostSearchResult
 import com.umc.product.community.application.port.in.post.query.SearchPostUseCase;
 import com.umc.product.community.domain.enums.Category;
 import com.umc.product.global.constant.SwaggerTag.Constants;
-import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.PageResponse;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,16 +45,22 @@ public class PostQueryController {
     private final GetMyPostsUseCase getMyPostsUseCase;
     private final GetCommentedPostsUseCase getCommentedPostsUseCase;
     private final GetScrappedPostsUseCase getScrappedPostsUseCase;
+    private final GetChallengerUseCase getChallengerUseCase;
 
     @GetMapping("/{postId}")
-    @Operation(summary = "게시글 상세 조회", description = "게시글 상세 정보를 조회합니다.")
-    public PostResponse getPostDetail(@PathVariable Long postId) {
-        return PostResponse.from(getPostDetailUseCase.getPostDetail(postId));
+    @Operation(summary = "게시글 상세 조회", description = "게시글 상세 정보를 조회합니다. (댓글 수, 좋아요/스크랩 여부 포함)")
+    public PostDetailResponse getPostDetail(
+            @PathVariable Long postId,
+            @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        Long memberId = memberPrincipal.getMemberId();
+        ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
+        return PostDetailResponse.from(getPostDetailUseCase.getPostDetail(postId, challenger.challengerId()));
     }
 
     @GetMapping
     @Operation(summary = "게시글 목록 조회", description = "카테고리별로 게시글 목록을 조회합니다. (최신순 정렬)")
-    public ApiResponse<PageResponse<PostResponse>> getPostList(
+    public PageResponse<PostResponse> getPostList(
             @RequestParam(required = false)
             @Parameter(description = "카테고리 (LIGHTNING: 번개, QUESTION: 질문, FREE: 자유). 미지정시 전체 조회")
             Category category,
@@ -59,17 +69,15 @@ public class PostQueryController {
             Pageable pageable
     ) {
         PostSearchQuery query = new PostSearchQuery(category);
-        PageResponse<PostResponse> response = PageResponse.of(
+        return PageResponse.of(
                 getPostListUseCase.getPostList(query, pageable),
                 PostResponse::from
         );
-
-        return ApiResponse.onSuccess(response);
     }
 
     @GetMapping("/search")
     @Operation(summary = "게시글 검색", description = "제목과 본문에서 키워드를 검색합니다. 관련도순(제목 시작 > 제목 포함 > 본문 포함)으로 정렬됩니다.")
-    public ApiResponse<PageResponse<PostSearchResponse>> search(
+    public PageResponse<PostSearchResponse> search(
             @RequestParam
             @Parameter(description = "검색 키워드", example = "스터디")
             String keyword,
@@ -78,56 +86,48 @@ public class PostQueryController {
             Pageable pageable
     ) {
         Page<PostSearchResult> results = searchPostUseCase.search(keyword, pageable);
-        PageResponse<PostSearchResponse> response = PageResponse.of(results, PostSearchResponse::from);
-
-        return ApiResponse.onSuccess(response);
+        return PageResponse.of(results, PostSearchResponse::from);
     }
 
     @GetMapping("/my")
     @Operation(summary = "내가 쓴 글 조회", description = "챌린저가 작성한 게시글 목록을 조회합니다. (최신순 정렬)")
-    public ApiResponse<PageResponse<PostResponse>> getMyPosts(
-            @RequestParam
-            @Parameter(description = "챌린저 ID", example = "1")
-            Long challengerId,  // TODO: @CurrentUser로 변경 필요
+    public PageResponse<PostResponse> getMyPosts(
+            @CurrentMember MemberPrincipal memberPrincipal,
             @PageableDefault(size = 20)
             @Parameter(description = "페이지네이션 (page, size)")
             Pageable pageable
     ) {
-        Page<PostInfo> posts = getMyPostsUseCase.getMyPosts(challengerId, pageable);
-        PageResponse<PostResponse> response = PageResponse.of(posts, PostResponse::from);
-
-        return ApiResponse.onSuccess(response);
+        Long memberId = memberPrincipal.getMemberId();
+        ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
+        Page<PostInfo> posts = getMyPostsUseCase.getMyPosts(challenger.challengerId(), pageable);
+        return PageResponse.of(posts, PostResponse::from);
     }
 
     @GetMapping("/commented")
     @Operation(summary = "댓글 단 글 조회", description = "챌린저가 댓글을 단 게시글 목록을 조회합니다. (최신 댓글 순)")
-    public ApiResponse<PageResponse<PostResponse>> getCommentedPosts(
-            @RequestParam
-            @Parameter(description = "챌린저 ID", example = "1")
-            Long challengerId,  // TODO: @CurrentUser로 변경 필요
+    public PageResponse<PostResponse> getCommentedPosts(
+            @CurrentMember MemberPrincipal memberPrincipal,
             @PageableDefault(size = 20)
             @Parameter(description = "페이지네이션 (page, size)")
             Pageable pageable
     ) {
-        Page<PostInfo> posts = getCommentedPostsUseCase.getCommentedPosts(challengerId, pageable);
-        PageResponse<PostResponse> response = PageResponse.of(posts, PostResponse::from);
-
-        return ApiResponse.onSuccess(response);
+        Long memberId = memberPrincipal.getMemberId();
+        ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
+        Page<PostInfo> posts = getCommentedPostsUseCase.getCommentedPosts(challenger.challengerId(), pageable);
+        return PageResponse.of(posts, PostResponse::from);
     }
 
     @GetMapping("/scrapped")
     @Operation(summary = "스크랩한 글 조회", description = "챌린저가 스크랩한 게시글 목록을 조회합니다. (최신 스크랩 순)")
-    public ApiResponse<PageResponse<PostResponse>> getScrappedPosts(
-            @RequestParam
-            @Parameter(description = "챌린저 ID", example = "1")
-            Long challengerId,  // TODO: @CurrentUser로 변경 필요
+    public PageResponse<PostResponse> getScrappedPosts(
+            @CurrentMember MemberPrincipal memberPrincipal,
             @PageableDefault(size = 20)
             @Parameter(description = "페이지네이션 (page, size)")
             Pageable pageable
     ) {
-        Page<PostInfo> posts = getScrappedPostsUseCase.getScrappedPosts(challengerId, pageable);
-        PageResponse<PostResponse> response = PageResponse.of(posts, PostResponse::from);
-
-        return ApiResponse.onSuccess(response);
+        Long memberId = memberPrincipal.getMemberId();
+        ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
+        Page<PostInfo> posts = getScrappedPostsUseCase.getScrappedPosts(challenger.challengerId(), pageable);
+        return PageResponse.of(posts, PostResponse::from);
     }
 }

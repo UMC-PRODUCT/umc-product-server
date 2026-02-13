@@ -4,6 +4,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.application.port.in.post.query.PostDetailInfo;
 import com.umc.product.community.domain.enums.Category;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Schema(description = "게시글 상세 응답")
@@ -26,6 +27,9 @@ public record PostDetailResponse(
         @Schema(description = "작성자 이름", example = "홍길동")
         String authorName,
 
+        @Schema(description = "작성자 파트", example = "SPRINGBOOT")
+        ChallengerPart userPart,
+
         @Schema(description = "번개 정보 (번개글인 경우)")
         LightningInfoResponse lightningInfo,
 
@@ -33,22 +37,19 @@ public record PostDetailResponse(
         int commentCount,
 
         @Schema(description = "작성 시간", example = "2026-02-11T10:30:00Z")
-        String writeTime,
+        Instant writeTime,
 
         @Schema(description = "좋아요 수", example = "10")
-        int likes,
-
-        @Schema(description = "작성자 파트", example = "SPRINGBOOT")
-        ChallengerPart userPart,
+        int likeCount,
 
         @Schema(description = "좋아요 클릭 여부", example = "true")
         boolean isLiked,
 
-        @Schema(description = "스크랩 클릭 여부", example = "false")
-        boolean isScrapped,
-
         @Schema(description = "스크랩 수", example = "3")
-        int scraps
+        int scrapCount,
+
+        @Schema(description = "스크랩 클릭 여부", example = "false")
+        boolean isScrapped
 ) {
     public static PostDetailResponse from(PostDetailInfo info) {
         LightningInfoResponse lightningInfoResponse = null;
@@ -62,8 +63,6 @@ public record PostDetailResponse(
             );
         }
 
-        String writeTime = info.createdAt() != null ? info.createdAt().toString() : null;
-
         return new PostDetailResponse(
                 info.postId(),
                 info.title(),
@@ -71,14 +70,14 @@ public record PostDetailResponse(
                 info.category(),
                 info.authorId(),
                 info.authorName(),
+                info.userPart(),
                 lightningInfoResponse,
                 info.commentCount(),
-                writeTime,
+                info.createdAt(),
                 info.likeCount(),
-                info.userPart(),
                 info.isLiked(),
-                info.isScrapped(),
-                info.scraps()
+                info.scrapCount(),
+                info.isScrapped()
         );
     }
 

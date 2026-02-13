@@ -1,14 +1,27 @@
 package com.umc.product.community.adapter.in.web.dto.response;
 
 import com.umc.product.community.application.port.in.post.CommentInfo;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
+@Schema(description = "댓글 응답")
 public record CommentResponse(
+        @Schema(description = "댓글 ID", example = "1")
         Long commentId,
+
+        @Schema(description = "게시글 ID", example = "5")
         Long postId,
+
+        @Schema(description = "작성자 챌린저 ID", example = "10")
         Long challengerId,
+
+        @Schema(description = "작성자 이름", example = "홍길동")
         String challengerName,
+
+        @Schema(description = "댓글 내용", example = "좋은 글 감사합니다!")
         String content,
+
+        @Schema(description = "작성일시", example = "2026-02-13T10:30:00Z")
         Instant createdAt
 ) {
     public static CommentResponse from(CommentInfo info) {

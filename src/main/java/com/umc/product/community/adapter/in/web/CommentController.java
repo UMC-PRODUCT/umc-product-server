@@ -1,5 +1,7 @@
 package com.umc.product.community.adapter.in.web;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.community.adapter.in.web.dto.request.CreateCommentRequest;
 import com.umc.product.community.adapter.in.web.dto.response.CommentResponse;
 import com.umc.product.community.adapter.in.web.dto.response.LikeResponse;
@@ -8,6 +10,8 @@ import com.umc.product.community.application.port.in.post.DeleteCommentUseCase;
 import com.umc.product.community.application.port.in.post.ToggleCommentLikeUseCase;
 import com.umc.product.community.application.port.in.post.query.GetCommentListUseCase;
 import com.umc.product.global.constant.SwaggerTag.Constants;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -18,7 +22,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -31,16 +34,19 @@ public class CommentController {
     private final DeleteCommentUseCase deleteCommentUseCase;
     private final GetCommentListUseCase getCommentListUseCase;
     private final ToggleCommentLikeUseCase toggleCommentLikeUseCase;
+    private final GetChallengerUseCase getChallengerUseCase;
 
     @PostMapping
     @Operation(summary = "댓글 작성", description = "게시글에 댓글을 작성합니다.")
     public CommentResponse createComment(
             @PathVariable Long postId,
-            @RequestParam Long challengerId,
+            @CurrentMember MemberPrincipal memberPrincipal,
             @RequestBody CreateCommentRequest request
     ) {
+        Long memberId = memberPrincipal.getMemberId();
+        ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
         return CommentResponse.from(
-                createCommentUseCase.create(request.toCommand(postId, challengerId))
+                createCommentUseCase.create(request.toCommand(postId, challenger.challengerId()))
         );
     }
 
@@ -57,9 +63,11 @@ public class CommentController {
     public void deleteComment(
             @PathVariable Long postId,
             @PathVariable Long commentId,
-            @RequestParam Long challengerId
+            @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        deleteCommentUseCase.delete(commentId, challengerId);
+        Long memberId = memberPrincipal.getMemberId();
+        ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
+        deleteCommentUseCase.delete(commentId, challenger.challengerId());
     }
 
     @PostMapping("/{commentId}/like")
@@ -67,8 +75,10 @@ public class CommentController {
     public LikeResponse toggleCommentLike(
             @PathVariable Long postId,
             @PathVariable Long commentId,
-            @RequestParam Long challengerId
+            @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        return LikeResponse.from(toggleCommentLikeUseCase.toggle(commentId, challengerId));
+        Long memberId = memberPrincipal.getMemberId();
+        ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
+        return LikeResponse.from(toggleCommentLikeUseCase.toggle(commentId, challenger.challengerId()));
     }
 }

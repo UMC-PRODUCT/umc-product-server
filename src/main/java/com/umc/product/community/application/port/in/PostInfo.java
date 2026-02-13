@@ -17,10 +17,15 @@ public record PostInfo(
         Integer maxParticipants,
         String openChatUrl,
         Instant createdAt,
+        int commentCount,
         int likeCount,
         boolean isLiked
 ) {
     public static PostInfo from(Post post, Long authorId, String authorName) {
+        return from(post, authorId, authorName, 0);
+    }
+
+    public static PostInfo from(Post post, Long authorId, String authorName, int commentCount) {
         Long postId = post.getPostId() != null ? post.getPostId().id() : null;
 
         // 번개글인 경우
@@ -38,6 +43,7 @@ public record PostInfo(
                     info.maxParticipants(),
                     info.openChatUrl(),
                     post.getCreatedAt(),
+                    commentCount,
                     post.getLikeCount(),
                     post.isLiked()
             );
@@ -56,6 +62,7 @@ public record PostInfo(
                 null,
                 null,
                 post.getCreatedAt(),
+                commentCount,
                 post.getLikeCount(),
                 post.isLiked()
         );
