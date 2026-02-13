@@ -2,6 +2,7 @@ package com.umc.product.authorization.application.port.out;
 
 import com.umc.product.authorization.domain.ChallengerRole;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -33,4 +34,14 @@ public interface LoadChallengerRolePort {
      * @return Role 리스트
      */
     List<ChallengerRole> findByChallengerIdIn(Set<Long> challengerIds);
+
+    /**
+     * ID로 ChallengerRole 조회
+     */
+    Optional<ChallengerRole> findById(Long id);
+
+    /**
+     * ID로 ChallengerRole 조회 - 없으면 예외
+     */
+    ChallengerRole getById(Long id);
 }

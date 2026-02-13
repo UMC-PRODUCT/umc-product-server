@@ -1,8 +1,12 @@
 package com.umc.product.authorization.adapter.out.persistence;
 
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
+import com.umc.product.authorization.application.port.out.SaveChallengerRolePort;
 import com.umc.product.authorization.domain.ChallengerRole;
+import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
+import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -12,7 +16,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-public class ChallengerRoleAdapter implements LoadChallengerRolePort {
+public class ChallengerRoleAdapter implements LoadChallengerRolePort, SaveChallengerRolePort {
 
     private final ChallengerRoleJpaRepository jpaRepository;
     private final ChallengerRoleQueryRepository queryRepository;
@@ -30,5 +34,31 @@ public class ChallengerRoleAdapter implements LoadChallengerRolePort {
     @Override
     public List<ChallengerRole> findByChallengerIdIn(Set<Long> challengerIds) {
         return jpaRepository.findByChallengerIdIn(challengerIds);
+    }
+
+    @Override
+    public Optional<ChallengerRole> findById(Long id) {
+        return jpaRepository.findById(id);
+    }
+
+    @Override
+    public ChallengerRole getById(Long id) {
+        return jpaRepository.findById(id)
+            .orElseThrow(() -> new AuthorizationDomainException(AuthorizationErrorCode.INVALID_PERMISSION));
+    }
+
+    @Override
+    public ChallengerRole save(ChallengerRole challengerRole) {
+        return jpaRepository.save(challengerRole);
+    }
+
+    @Override
+    public List<ChallengerRole> saveAll(List<ChallengerRole> challengerRoles) {
+        return jpaRepository.saveAll(challengerRoles);
+    }
+
+    @Override
+    public void delete(ChallengerRole challengerRole) {
+        jpaRepository.delete(challengerRole);
     }
 }

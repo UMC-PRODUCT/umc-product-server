@@ -90,4 +90,20 @@ public class ChallengerRole {
             .gisuId(gisuId)
             .build();
     }
+
+    /**
+     * ChallengerRole의 역할 타입, 조직 ID, 담당 파트를 수정합니다.
+     */
+    public void update(ChallengerRoleType roleType, Long organizationId, ChallengerPart responsiblePart) {
+        OrganizationType orgType = roleType.organizationType();
+
+        if (orgType != OrganizationType.CENTRAL && organizationId == null) {
+            throw new IllegalArgumentException(roleType + " 역할은 organizationId가 필수입니다.");
+        }
+
+        this.challengerRoleType = roleType;
+        this.organizationType = orgType;
+        this.organizationId = organizationId;
+        this.responsiblePart = responsiblePart;
+    }
 }
