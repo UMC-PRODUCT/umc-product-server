@@ -27,7 +27,11 @@ public record AvailableAttendanceResponse(
     @Schema(description = "출석 기록 ID", example = "1")
     Long recordId,
 
-    @Schema(description = "출석 상태", example = "PENDING")
+    @Schema(
+        description = "출석 상태",
+        example = "PENDING",
+        allowableValues = {"PENDING", "PRESENT", "PRESENT_PENDING", "LATE", "LATE_PENDING"}
+    )
     String status,
 
     @Schema(description = "출석 상태 표시", example = "출석 전")

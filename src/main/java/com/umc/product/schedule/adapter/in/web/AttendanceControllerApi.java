@@ -36,7 +36,22 @@ public interface AttendanceControllerApi {
         @Parameter(hidden = true) MemberPrincipal memberPrincipal
     );
 
-    @Operation(summary = "내 출석 이력 조회", description = "현재 활성 기수의 출석 이력을 조회합니다")
+    @Operation(
+        summary = "내 출석 이력 조회",
+        description = """
+            현재 활성 기수의 출석 이력을 조회합니다.
+
+            ⚠️ 확정된 상태만 반환됩니다:
+            - PRESENT: 출석 (인정결석 승인 시 포함)
+            - LATE: 지각
+            - ABSENT: 결석 (인정결석 거부 시 포함)
+
+            제외되는 상태:
+            - PENDING: 출석 전 (아직 체크 안함)
+            - *_PENDING: 승인 대기 중 (관리자 승인 전)
+            - EXCUSED: 표시 안 됨 (승인 시 PRESENT, 거부 시 ABSENT로 처리)
+            """
+    )
     List<MyAttendanceHistoryResponse> getMyAttendanceHistory(
         @Parameter(hidden = true) MemberPrincipal memberPrincipal
     );

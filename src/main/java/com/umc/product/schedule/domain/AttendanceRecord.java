@@ -107,7 +107,7 @@ public class AttendanceRecord extends BaseEntity {
     }
 
     /**
-     * 관리자가 PENDING 상태의 출석을 승인한다. PRESENT_PENDING → PRESENT, LATE_PENDING → LATE, EXCUSED_PENDING → EXCUSED로 전이. 승인자 ID와
+     * 관리자가 PENDING 상태의 출석을 승인한다. PRESENT_PENDING → PRESENT, LATE_PENDING → LATE, EXCUSED_PENDING → PRESENT로 전이. 승인자 ID와
      * 승인 시각이 함께 기록된다.
      */
     public void approve(Long confirmerId) {
@@ -117,7 +117,7 @@ public class AttendanceRecord extends BaseEntity {
         this.status = switch (status) {
             case PRESENT_PENDING -> AttendanceStatus.PRESENT;
             case LATE_PENDING -> AttendanceStatus.LATE;
-            case EXCUSED_PENDING -> AttendanceStatus.EXCUSED;
+            case EXCUSED_PENDING -> AttendanceStatus.PRESENT;  // ✅ 인정 시 출석으로 처리
             default -> throw new IllegalStateException("승인 가능한 상태가 아닙니다: " + status);
         };
         this.confirmedBy = confirmerId;
@@ -261,10 +261,9 @@ public class AttendanceRecord extends BaseEntity {
 
     public String getStatusDisplay() {
         return switch (status) {
-            case PRESENT -> "출석";
+            case PRESENT, EXCUSED -> "출석";  // 인정결석도 출석으로 표시
             case LATE -> "지각";
             case ABSENT -> "결석";
-            case EXCUSED -> "인정";
             case PENDING, PRESENT_PENDING, LATE_PENDING, EXCUSED_PENDING -> "대기";
         };
     }
