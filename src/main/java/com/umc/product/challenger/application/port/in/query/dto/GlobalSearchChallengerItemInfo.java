@@ -1,11 +1,14 @@
 package com.umc.product.challenger.application.port.in.query.dto;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
+
 public record GlobalSearchChallengerItemInfo(
-        Long challengerId,
+        Long memberId,
         String nickname,
         String name,
         String schoolName,
-        Long generation,
+        Long gisu,
+        ChallengerPart part,
         String profileImageLink
 ) {
 }

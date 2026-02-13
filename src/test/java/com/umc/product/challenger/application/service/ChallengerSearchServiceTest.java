@@ -387,7 +387,7 @@ class ChallengerSearchServiceTest {
             assertThat(result.content()).hasSize(4);
             assertThat(result.hasNext()).isTrue();
             assertThat(result.nextCursor()).isEqualTo(4L);
-            assertThat(result.content()).noneMatch(item -> item.challengerId().equals(5L));
+            assertThat(result.content()).noneMatch(item -> item.memberId().equals(14L));
         }
 
         @Test
@@ -419,11 +419,12 @@ class ChallengerSearchServiceTest {
             assertThat(result.content()).hasSize(6);
 
             var first = result.content().get(0);
-            assertThat(first.challengerId()).isEqualTo(1L);
+            assertThat(first.memberId()).isEqualTo(10L);
             assertThat(first.name()).isEqualTo("홍길동");
             assertThat(first.nickname()).isEqualTo("hong");
             assertThat(first.schoolName()).isEqualTo("한양대학교ERICA");
-            assertThat(first.generation()).isEqualTo(7L);
+            assertThat(first.gisu()).isEqualTo(7L);
+            assertThat(first.part()).isEqualTo(ChallengerPart.PLAN);
             assertThat(first.profileImageLink()).isNull();
         }
 
@@ -439,14 +440,14 @@ class ChallengerSearchServiceTest {
             GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null, size);
 
             // then
-            // gisuId=1 → generation=7
-            assertThat(result.content().get(0).generation()).isEqualTo(7L);
-            assertThat(result.content().get(1).generation()).isEqualTo(7L);
-            assertThat(result.content().get(2).generation()).isEqualTo(7L);
-            // gisuId=2 → generation=8
-            assertThat(result.content().get(3).generation()).isEqualTo(8L);
-            assertThat(result.content().get(4).generation()).isEqualTo(8L);
-            assertThat(result.content().get(5).generation()).isEqualTo(8L);
+            // gisuId=1 → gisu=7
+            assertThat(result.content().get(0).gisu()).isEqualTo(7L);
+            assertThat(result.content().get(1).gisu()).isEqualTo(7L);
+            assertThat(result.content().get(2).gisu()).isEqualTo(7L);
+            // gisuId=2 → gisu=8
+            assertThat(result.content().get(3).gisu()).isEqualTo(8L);
+            assertThat(result.content().get(4).gisu()).isEqualTo(8L);
+            assertThat(result.content().get(5).gisu()).isEqualTo(8L);
         }
 
         @Test
@@ -478,8 +479,8 @@ class ChallengerSearchServiceTest {
             assertThat(result.content()).hasSize(2);
             assertThat(result.hasNext()).isFalse();
             assertThat(result.nextCursor()).isNull();
-            assertThat(result.content().get(0).challengerId()).isEqualTo(5L);
-            assertThat(result.content().get(1).challengerId()).isEqualTo(6L);
+            assertThat(result.content().get(0).memberId()).isEqualTo(14L);
+            assertThat(result.content().get(1).memberId()).isEqualTo(15L);
         }
     }
 

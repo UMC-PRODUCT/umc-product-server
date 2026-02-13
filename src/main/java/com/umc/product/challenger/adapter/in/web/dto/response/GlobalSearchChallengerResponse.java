@@ -2,6 +2,7 @@ package com.umc.product.challenger.adapter.in.web.dto.response;
 
 import com.umc.product.challenger.application.port.in.query.dto.GlobalSearchChallengerCursorResult;
 import com.umc.product.challenger.application.port.in.query.dto.GlobalSearchChallengerItemInfo;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.response.CursorResponse;
 
 public record GlobalSearchChallengerResponse(
@@ -18,20 +19,22 @@ public record GlobalSearchChallengerResponse(
     }
 
     public record GlobalSearchChallengerItemResponse(
-            Long challengerId,
+            Long memberId,
             String nickname,
             String name,
             String schoolName,
-            Long generation,
+            Long gisu,
+            ChallengerPart part,
             String profileImageLink
     ) {
         public static GlobalSearchChallengerItemResponse from(GlobalSearchChallengerItemInfo info) {
             return new GlobalSearchChallengerItemResponse(
-                    info.challengerId(),
+                    info.memberId(),
                     info.nickname(),
                     info.name(),
                     info.schoolName(),
-                    info.generation(),
+                    info.gisu(),
+                    info.part(),
                     info.profileImageLink()
             );
         }
