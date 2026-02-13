@@ -13,7 +13,6 @@ import com.umc.product.storage.application.port.in.command.dto.FileUploadInfo;
 import com.umc.product.storage.application.port.in.command.dto.PrepareFileUploadCommand;
 import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
 import com.umc.product.storage.application.port.out.SaveFileMetadataPort;
-import com.umc.product.storage.application.port.out.StoragePort;
 import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
@@ -23,7 +22,6 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -41,8 +39,6 @@ class FileCommandServiceTest extends UseCaseTestSupport {
     @Autowired
     private SaveFileMetadataPort saveFileMetadataPort;
 
-    @MockitoBean
-    private StoragePort storagePort;
 
     @Test
     void 파일_업로드_URL을_생성한다() {

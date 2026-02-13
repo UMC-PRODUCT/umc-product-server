@@ -10,7 +10,6 @@ import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
 import com.umc.product.storage.application.port.out.SaveFileMetadataPort;
-import com.umc.product.storage.application.port.out.StoragePort;
 import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
@@ -18,7 +17,6 @@ import com.umc.product.storage.domain.exception.StorageException;
 import com.umc.product.support.UseCaseTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -37,9 +35,6 @@ class FileQueryServiceTest extends UseCaseTestSupport {
 
     @Autowired
     private LoadFileMetadataPort loadFileMetadataPort;
-
-    @MockitoBean
-    private StoragePort storagePort;
 
 
     @Test
