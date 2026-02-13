@@ -1,16 +1,13 @@
 package com.umc.product.test.controller;
 
 import com.google.common.collect.Lists;
-import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.GrantChallengerPointCommand;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.domain.enums.PointType;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.constant.SwaggerTag.Constants;
-import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
@@ -39,7 +36,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.datafaker.Faker;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -49,12 +46,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = Constants.TEST)
 @Slf4j
 @RestController
-@RequestMapping("/test/dummy-create")
-public class DummyCreateController {
-
-    private final JwtTokenProvider jwtTokenProvider;
-    private final GetChallengerUseCase getChallengerUseCase;
-    private final AppleTokenVerifier appleTokenVerifier;
+@RequestMapping("/test/mock-data")
+public class MockDataController {
 
     private final ManageGisuUseCase manageGisuUseCase;
     private final ManageChapterUseCase manageChapterUseCase;
@@ -74,18 +67,29 @@ public class DummyCreateController {
     Map<Long, List<Long>> gisuToChaptersMap = new HashMap<>();
     Map<Long, List<Long>> schoolToMembersMap = new HashMap<>();
 
-    @GetMapping("alls")
+    @PostMapping("all")
     void createDummyData() {
+        log.info("[MOCK DATA] 약관 Mock Data를 생성합니다.");
         createTerms();
+
+        log.info("[MOCK DATA] 기수 Mock Data를 생성합니다.");
         createGisu();
+
+        log.info("[MOCK DATA] 학교 Mock Data를 생성합니다.");
         createSchools();
-        for (Long schoolId : createdSchool) {
-            log.info("Created School ID: {}", schoolId);
-            createChaptersInGisu(schoolId, 3);
+
+        log.info("[MOCK DATA] 학교-지부 관계 Mock Data를 생성합니다.");
+        for (Long gisuId : createdGisu) {
+            createChaptersInGisu(gisuId, 3);
         }
 
+        log.info("[MOCK DATA] 회원 Mock Data를 생성합니다.");
         createMembers(200);
+
+        log.info("[MOCK DATA] 챌린저 기록 Mock Data를 생성합니다.");
         createChallengerRecordToMembers();
+
+        log.info("[MOCK DATA] 챌린저 상벌점 기록 Mock Data를 생성합니다.");
         grantChallengerPointRandom();
     }
 
