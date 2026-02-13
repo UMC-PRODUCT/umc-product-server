@@ -3,7 +3,10 @@ package com.umc.product.survey.application.service;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
+import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateVoteCommand;
+import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
+import com.umc.product.survey.application.port.out.LoadFormPort;
 import com.umc.product.survey.application.port.out.SaveFormPort;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.enums.QuestionType;
@@ -18,30 +21,31 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Transactional
 @RequiredArgsConstructor
-public class VoteService implements CreateVoteUseCase {
+public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase {
 
     private final SaveFormPort saveFormPort;
+    private final LoadFormPort loadFormPort;
 
     @Override
     public Long create(CreateVoteCommand command) {
         validate(command);
 
         QuestionType qType = command.allowMultipleChoice()
-                ? QuestionType.CHECKBOX
-                : QuestionType.RADIO;
+            ? QuestionType.CHECKBOX
+            : QuestionType.RADIO;
 
         Form form = Form.createPublished(
-                command.createdMemberId(),
-                command.title()
+            command.createdMemberId(),
+            command.title()
         );
 
         form.setVotePolicy(command.isAnonymous(), command.startsAt(), command.endsAtExclusive());
 
         // 섹션/질문/옵션 조립
         form.appendSingleQuestion(
-                command.title(), // 투표 제목 그대로 questionText로 사용
-                qType,
-                command.options()
+            command.title(), // 투표 제목 그대로 questionText로 사용
+            qType,
+            command.options()
         );
 
         return saveFormPort.save(form).getId();
@@ -58,5 +62,15 @@ public class VoteService implements CreateVoteUseCase {
         if (options.stream().anyMatch(s -> s == null || s.trim().isEmpty())) {
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_OPTION_CONTENT);
         }
+    }
+
+    @Override
+    public void delete(DeleteVoteCommand cmd) {
+        Form form = loadFormPort.findById(cmd.voteId())
+            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+
+        // todo: 권한 검증 추가
+
+        saveFormPort.deleteById(form.getId());
     }
 }
