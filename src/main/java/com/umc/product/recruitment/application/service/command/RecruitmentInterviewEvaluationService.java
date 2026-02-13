@@ -26,6 +26,7 @@ import com.umc.product.recruitment.domain.InterviewLiveQuestion;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,6 +50,8 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
     public GetMyInterviewEvaluationInfo upsert(UpsertMyInterviewEvaluationCommand command) {
         // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
         InterviewAssignment assignment = getValidatedAssignment(command.assignmentId(), command.recruitmentId());
+
+        validateInterviewEvaluationTime(assignment);
 
         // 2. Application 가져오기
         Application application = assignment.getApplication();
@@ -175,4 +178,19 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
 
         return assignment;
     }
+
+    private void validateInterviewEvaluationTime(InterviewAssignment assignment) {
+        Instant now = Instant.now();
+
+        Instant interviewStartsAt = assignment.getSlot().getStartsAt();
+        if (interviewStartsAt == null) {
+            throw new RecruitmentDomainException(RecruitmentErrorCode.SLOT_STARTS_AT_NOT_SET);
+        }
+
+        // 면접 시작 전이면 차단
+        if (now.isBefore(interviewStartsAt)) {
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_EVALUATION_NOT_STARTED);
+        }
+    }
+
 }

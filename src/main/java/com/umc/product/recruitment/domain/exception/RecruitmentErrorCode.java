@@ -130,6 +130,8 @@ public enum RecruitmentErrorCode implements BaseCode {
     INTERVIEW_TIMETABLE_SLOT_MINUTES_UPDATE_FORBIDDEN(HttpStatus.NOT_FOUND, "RECRUITMENT-0072",
         "이미 할당된 면접이 있는 모집은 slotMinutes를 수정할 수 없습니다."),
     SLOT_MINUTES_TOO_SMALL(HttpStatus.BAD_REQUEST, "RECRUITMENT-0072", "면접 시간이 너무 짧습니다."),
+    SLOT_STARTS_AT_NOT_SET(HttpStatus.BAD_REQUEST, "RECRUITMENT-0073", "면접 슬롯의 시작 시간이 설정되지 않았습니다."),
+    INTERVIEW_EVALUATION_NOT_STARTED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0074", "면접 시작 전에는 평가를 제출할 수 없습니다."),
     ;
 
     private final HttpStatus httpStatus;
