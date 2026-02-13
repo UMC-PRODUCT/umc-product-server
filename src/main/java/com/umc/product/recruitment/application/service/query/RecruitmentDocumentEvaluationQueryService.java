@@ -437,19 +437,11 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
         return new DocumentEvaluationRecruitmentListInfo(items);
     }
 
-    private boolean isBeforeDocResult(Long recruitmentId, java.time.Instant now) {
-        // DOC_RESULT_AT 조회
-        var docResult = loadRecruitmentSchedulePort.findByRecruitmentIdAndType(
-            recruitmentId, RecruitmentScheduleType.DOC_RESULT_AT
-        );
-
-        if (docResult == null || docResult.getStartsAt() == null) {
-            // 결과발표 일정이 없으면 일단 목록에 포함
-            return true;
-        }
-
-        // "결과 발표 전까지만"
-        return now.isBefore(docResult.getStartsAt());
+    private boolean isBeforeDocResult(Long recruitmentId, Instant now) {
+        return loadRecruitmentSchedulePort
+            .findOptionalByRecruitmentIdAndType(recruitmentId, RecruitmentScheduleType.DOC_RESULT_AT)
+            .map(s -> s.getStartsAt() == null || now.isBefore(s.getStartsAt()))
+            .orElse(true);
     }
 
     private DocumentEvaluationRecruitmentListInfo.DocumentEvaluationRecruitmentInfo toDocumentEvaluationRecruitmentInfo(
@@ -461,9 +453,11 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
         Long rootRecruitmentId = recruitmentId;
 
         // 서류 평가 기간 (DOC_REVIEW_WINDOW)
-        var docReview = loadRecruitmentSchedulePort.findByRecruitmentIdAndType(
-            recruitmentId, RecruitmentScheduleType.DOC_REVIEW_WINDOW
-        );
+        var docReview = loadRecruitmentSchedulePort
+            .findOptionalByRecruitmentIdAndType(
+                recruitmentId, RecruitmentScheduleType.DOC_REVIEW_WINDOW
+            )
+            .orElse(null);
 
         Instant docReviewStartAt = (docReview == null) ? null : docReview.getStartsAt();
         Instant docReviewEndAt = (docReview == null) ? null : docReview.getEndsAt();

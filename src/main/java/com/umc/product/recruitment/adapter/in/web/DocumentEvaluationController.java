@@ -3,7 +3,6 @@ package com.umc.product.recruitment.adapter.in.web;
 import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
-import com.umc.product.recruitment.adapter.in.web.dto.DocumentEvaluationRecruitmentListResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateDocumentStatusRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateMyDocumentEvaluationRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicationDetailResponse;
@@ -20,18 +19,15 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpdateMyDocum
 import com.umc.product.recruitment.application.port.in.query.GetApplicationDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationEvaluationListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationListUseCase;
-import com.umc.product.recruitment.application.port.in.query.GetDocumentEvaluationRecruitmentListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetDocumentSelectionListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyDocumentEvaluationUseCase;
 import com.umc.product.recruitment.application.port.in.query.UpdateDocumentStatusUseCase;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationEvaluationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationListInfo;
-import com.umc.product.recruitment.application.port.in.query.dto.DocumentEvaluationRecruitmentListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationEvaluationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationListQuery;
-import com.umc.product.recruitment.application.port.in.query.dto.GetDocumentEvaluationRecruitmentListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetDocumentSelectionApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEvaluationQuery;
 import io.swagger.v3.oas.annotations.Operation;
@@ -59,7 +55,6 @@ public class DocumentEvaluationController {
     private final UpdateMyDocumentEvaluationUseCase updateMyDocumentEvaluationUseCase;
     private final UpdateDocumentStatusUseCase updateDocumentStatusUseCase;
     private final GetDocumentSelectionListUseCase getDocumentSelectionListUseCase;
-    private final GetDocumentEvaluationRecruitmentListUseCase getDocumentEvaluationRecruitmentListUseCase;
 
     @GetMapping("/document-evaluations")
     @Operation(
@@ -235,24 +230,4 @@ public class DocumentEvaluationController {
         );
         return DocumentSelectionApplicationListResponse.from(info);
     }
-
-    @GetMapping("")
-    @Operation(
-        summary = "서류 평가 가능한 모집 목록 조회",
-        description = """
-            운영진이 서류 평가를 진행(수정)할 수 있는 모집 목록을 조회합니다.
-            서류 결과 발표(DOC_RESULT_AT) 이전 단계의 모집만 노출합니다.
-            """
-    )
-    public DocumentEvaluationRecruitmentListResponse getRecruitments(
-        @CurrentMember MemberPrincipal memberPrincipal
-    ) {
-        DocumentEvaluationRecruitmentListInfo info =
-            getDocumentEvaluationRecruitmentListUseCase.get(
-                new GetDocumentEvaluationRecruitmentListQuery(memberPrincipal.getMemberId())
-            );
-
-        return DocumentEvaluationRecruitmentListResponse.from(info);
-    }
-
 }
