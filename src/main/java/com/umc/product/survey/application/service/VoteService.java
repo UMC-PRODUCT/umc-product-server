@@ -12,11 +12,13 @@ import com.umc.product.survey.application.port.out.LoadFormPort;
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.application.port.out.SaveFormPort;
 import com.umc.product.survey.application.port.out.SaveFormResponsePort;
+import com.umc.product.survey.application.port.out.SaveSingleAnswerPort;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.enums.FormOpenStatus;
+import com.umc.product.survey.domain.enums.FormResponseStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
@@ -43,6 +45,7 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final LoadFormResponsePort loadFormResponsePort;
     private final SaveFormResponsePort saveFormResponsePort;
+    private final SaveSingleAnswerPort saveSingleAnswerPort;
 
     @Override
     public Long create(CreateVoteCommand command) {
@@ -112,6 +115,12 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
             .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
 
         // todo: 권한 검증 추가
+
+        FormResponseStatus st = FormResponseStatus.SUBMITTED;
+
+        List<Long> responseIds = loadFormResponsePort.findIdsByFormIdAndStatus(form.getId(), st);
+        saveSingleAnswerPort.deleteAllByFormResponseIds(responseIds);
+        saveFormResponsePort.deleteByFormIdAndStatus(form.getId(), st);
 
         saveFormPort.deleteById(form.getId());
     }

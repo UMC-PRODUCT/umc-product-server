@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -71,5 +72,16 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
     @Override
     public boolean existsByFormIdAndMemberId(Long formId, Long memberId) {
         return formResponseJpaRepository.existsByForm_IdAndRespondentMemberId(formId, memberId);
+    }
+
+    @Override
+    @Transactional
+    public int deleteByFormIdAndStatus(Long formId, FormResponseStatus status) {
+        return formResponseJpaRepository.deleteByFormIdAndStatus(formId, status);
+    }
+
+    @Override
+    public List<Long> findIdsByFormIdAndStatus(Long formId, FormResponseStatus status) {
+        return formResponseJpaRepository.findIdsByFormIdAndStatus(formId, status);
     }
 }

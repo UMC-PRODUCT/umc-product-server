@@ -1,6 +1,7 @@
 package com.umc.product.survey.application.port.out;
 
 import com.umc.product.survey.domain.FormResponse;
+import com.umc.product.survey.domain.enums.FormResponseStatus;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,4 +16,6 @@ public interface LoadFormResponsePort {
     List<Long> findDraftIdsByFormId(Long formId);
 
     boolean existsByFormIdAndMemberId(Long formId, Long memberId);
+
+    List<Long> findIdsByFormIdAndStatus(Long formId, FormResponseStatus status);
 }
