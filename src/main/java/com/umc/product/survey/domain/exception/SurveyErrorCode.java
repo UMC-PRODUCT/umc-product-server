@@ -25,6 +25,9 @@ public enum SurveyErrorCode implements BaseCode {
     INVALID_FORM_ACTIVE_PERIOD(HttpStatus.BAD_REQUEST, "SURVEY-0015", "폼의 응답 가능 기간이 올바르지 않습니다."),
     INVALID_VOTE_OPTION_COUNT(HttpStatus.BAD_REQUEST, "SURVEY-0016", "투표 항목은 2개 이상 5개 이하여야 합니다."),
     INVALID_VOTE_OPTION_CONTENT(HttpStatus.BAD_REQUEST, "SURVEY-0017", "투표 항목에 빈 값이 포함될 수 없습니다."),
+    INVALID_VOTE_START_DATE(HttpStatus.BAD_REQUEST, "SURVEY-0018", "투표 시작일은 오늘부터 선택 가능합니다."),
+    INVALID_VOTE_END_DATE(HttpStatus.BAD_REQUEST, "SURVEY-0019", "투표 마감일은 시작일 하루 뒤부터 선택 가능합니다."),
+
     ;
 
     private final HttpStatus httpStatus;

@@ -11,6 +11,10 @@ import com.umc.product.survey.application.port.out.SaveFormPort;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +29,7 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase {
 
     private final SaveFormPort saveFormPort;
     private final LoadFormPort loadFormPort;
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     @Override
     public Long create(CreateVoteCommand command) {
@@ -56,11 +61,35 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase {
         if (options == null || options.size() < 2 || options.size() > 5) {
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_OPTION_COUNT);
         }
-        if (cmd.startsAt() != null && cmd.endsAtExclusive() != null && !cmd.endsAtExclusive().isAfter(cmd.startsAt())) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_FORM_ACTIVE_PERIOD);
-        }
         if (options.stream().anyMatch(s -> s == null || s.trim().isEmpty())) {
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_OPTION_CONTENT);
+        }
+
+        Instant startsAt = cmd.startsAt();
+        Instant endsAtExclusive = cmd.endsAtExclusive();
+
+        if (startsAt == null || endsAtExclusive == null) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_FORM_ACTIVE_PERIOD);
+        }
+
+        // 기본 기간 검증: end > start
+        if (!endsAtExclusive.isAfter(startsAt)) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_FORM_ACTIVE_PERIOD);
+        }
+
+        // 시작일: 오늘부터 선택 가능 (KST 기준 오늘 00:00 이상)
+        Instant todayStartKst = LocalDate.now(KST).atStartOfDay(KST).toInstant();
+        if (startsAt.isBefore(todayStartKst)) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_START_DATE);
+        }
+
+        // 마감일: 시작일 하루 뒤부터 선택 가능
+        // startsAt = startDate 00:00(KST)
+        // endsAtExclusive = (endDate + 1) 00:00(KST)
+        // endDate >= startDate + 1  <=>  endsAtExclusive >= startsAt + 2 days
+        Instant minEndsAtExclusive = startsAt.plus(2, ChronoUnit.DAYS);
+        if (endsAtExclusive.isBefore(minEndsAtExclusive)) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_END_DATE);
         }
     }
 
