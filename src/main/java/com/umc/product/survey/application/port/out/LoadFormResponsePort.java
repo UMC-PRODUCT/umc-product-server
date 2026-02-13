@@ -18,4 +18,8 @@ public interface LoadFormResponsePort {
     boolean existsByFormIdAndMemberId(Long formId, Long memberId);
 
     List<Long> findIdsByFormIdAndStatus(Long formId, FormResponseStatus status);
+
+    int countSubmittedByFormId(Long formId);
+
+    List<Long> findMySelectedOptionIds(Long formId, Long memberId);
 }

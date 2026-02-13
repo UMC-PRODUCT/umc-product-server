@@ -12,9 +12,13 @@ import com.umc.product.survey.application.port.in.command.SubmitVoteResponseUseC
 import com.umc.product.survey.application.port.in.command.dto.CreateVoteCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
 import com.umc.product.survey.application.port.in.command.dto.SubmitVoteResponseCommand;
+import com.umc.product.survey.application.port.in.query.GetVoteDetailUseCase;
+import com.umc.product.survey.application.port.in.query.dto.GetVoteDetailsQuery;
+import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,6 +34,7 @@ public class VoteController {
     private final CreateVoteUseCase createVoteUseCase;
     private final DeleteVoteUseCase deleteVoteUseCase;
     private final SubmitVoteResponseUseCase submitVoteResponseUseCase;
+    private final GetVoteDetailUseCase getVoteDetailUseCase;
 
     @PostMapping
     public CreateVoteResponse createVote(
@@ -61,5 +66,16 @@ public class VoteController {
     ) {
         SubmitVoteResponseCommand command = request.toCommand(voteId, memberPrincipal.getMemberId());
         submitVoteResponseUseCase.submit(command);
+    }
+
+    @Deprecated
+    @GetMapping("/{voteId}")
+    public VoteInfo getVoteDetail(
+        @PathVariable Long voteId,
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        return getVoteDetailUseCase.get(
+            new GetVoteDetailsQuery(voteId, memberPrincipal.getMemberId())
+        );
     }
 }

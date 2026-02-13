@@ -40,4 +40,13 @@ public interface FormResponseJpaRepository extends JpaRepository<FormResponse, L
                                         @Param("status") FormResponseStatus status);
 
     boolean existsByForm_IdAndRespondentMemberId(Long formId, Long respondentMemberId);
+
+    @Query("""
+            select count(fr)
+            from FormResponse fr
+            where fr.form.id = :formId
+              and fr.status = :status
+        """)
+    int countByFormIdAndStatus(@Param("formId") Long formId,
+                               @Param("status") FormResponseStatus status);
 }
