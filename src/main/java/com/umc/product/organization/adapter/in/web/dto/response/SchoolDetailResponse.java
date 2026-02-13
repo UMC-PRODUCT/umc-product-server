@@ -29,6 +29,9 @@ public record SchoolDetailResponse(
         @Schema(description = "학교 링크 목록")
         List<SchoolLinkItem> links,
 
+        @Schema(description = "활성 기수 배정 여부", example = "true")
+        boolean isActive,
+
         @Schema(description = "생성일", example = "2024-03-01T00:00:00Z")
         Instant createdAt,
 
@@ -57,6 +60,7 @@ public record SchoolDetailResponse(
                 info.remark(),
                 info.logoImageUrl(),
                 linkItems,
+                info.isActive(),
                 info.createdAt(),
                 info.updatedAt()
         );

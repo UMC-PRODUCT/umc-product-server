@@ -21,7 +21,6 @@ import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
 import com.umc.product.storage.application.port.out.SaveFileMetadataPort;
-import com.umc.product.storage.application.port.out.StoragePort;
 import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
@@ -32,7 +31,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class GetSchoolUseCaseTest extends UseCaseTestSupport {
 
@@ -54,8 +52,6 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
     @Autowired
     private SaveFileMetadataPort saveFileMetadataPort;
 
-    @MockitoBean
-    private StoragePort storagePort;
 
     @Test
     void 조건_없이_전체_학교_목록을_조회한다() {

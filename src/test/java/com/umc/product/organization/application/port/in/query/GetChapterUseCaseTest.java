@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Disabled
 class GetChapterUseCaseTest extends UseCaseTestSupport {
 
     @Autowired

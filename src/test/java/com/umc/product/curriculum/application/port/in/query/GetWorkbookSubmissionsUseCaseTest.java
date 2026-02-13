@@ -39,7 +39,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Disabled
 class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
 
     @Autowired

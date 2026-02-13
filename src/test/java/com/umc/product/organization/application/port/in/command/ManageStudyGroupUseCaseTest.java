@@ -28,7 +28,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
-@Disabled
 @Transactional
 class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
 

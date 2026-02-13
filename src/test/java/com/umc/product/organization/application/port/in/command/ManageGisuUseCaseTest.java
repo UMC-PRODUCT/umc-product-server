@@ -12,11 +12,9 @@ import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.Instant;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@Disabled
 class ManageGisuUseCaseTest extends UseCaseTestSupport {
 
     @Autowired

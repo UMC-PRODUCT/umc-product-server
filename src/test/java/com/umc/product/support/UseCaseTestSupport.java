@@ -4,6 +4,7 @@ import com.google.cloud.storage.Storage;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.storage.application.port.out.StoragePort;
 import com.umc.product.support.isolation.DatabaseIsolation;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
@@ -31,4 +32,7 @@ public abstract class UseCaseTestSupport {
 
     @MockitoBean
     protected Storage googleCloudStorage;
+
+    @MockitoBean
+    protected StoragePort storagePort;
 }
