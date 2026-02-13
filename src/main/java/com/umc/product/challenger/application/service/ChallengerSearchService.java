@@ -202,11 +202,12 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
             throw new ChallengerDomainException(ChallengerErrorCode.MEMBER_PROFILE_NOT_FOUND);
         }
         return new GlobalSearchChallengerItemInfo(
-                challenger.getId(),
+                challenger.getMemberId(),
                 profile.nickname(),
                 profile.name(),
                 profile.schoolName(),
                 gisuGenerationMap.getOrDefault(challenger.getGisuId(), null),
+                challenger.getPart(),
                 profile.profileImageLink()
         );
     }
