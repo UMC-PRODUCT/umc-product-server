@@ -52,21 +52,21 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
         validate(command);
 
         QuestionType qType = command.allowMultipleChoice()
-            ? QuestionType.CHECKBOX
-            : QuestionType.RADIO;
+                ? QuestionType.CHECKBOX
+                : QuestionType.RADIO;
 
         Form form = Form.createPublished(
-            command.createdMemberId(),
-            command.title()
+                command.createdMemberId(),
+                command.title()
         );
 
         form.setVotePolicy(command.isAnonymous(), command.startsAt(), command.endsAtExclusive());
 
         // 섹션/질문/옵션 조립
         form.appendSingleQuestion(
-            command.title(), // 투표 제목 그대로 questionText로 사용
-            qType,
-            command.options()
+                command.title(), // 투표 제목 그대로 questionText로 사용
+                qType,
+                command.options()
         );
 
         return saveFormPort.save(form).getId();
@@ -112,15 +112,22 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
     @Override
     public void delete(DeleteVoteCommand cmd) {
         Form form = loadFormPort.findById(cmd.voteId())
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
 
         // todo: 권한 검증 추가
 
-        FormResponseStatus st = FormResponseStatus.SUBMITTED;
+        List<Long> draftIds = loadFormResponsePort.findDraftIdsByFormId(form.getId());
+        if (draftIds != null && !draftIds.isEmpty()) {
+            saveSingleAnswerPort.deleteAllByFormResponseIds(draftIds);
+            saveFormResponsePort.deleteAllByIds(draftIds);
+        }
 
+        FormResponseStatus st = FormResponseStatus.SUBMITTED;
         List<Long> responseIds = loadFormResponsePort.findIdsByFormIdAndStatus(form.getId(), st);
-        saveSingleAnswerPort.deleteAllByFormResponseIds(responseIds);
-        saveFormResponsePort.deleteByFormIdAndStatus(form.getId(), st);
+        if (responseIds != null && !responseIds.isEmpty()) {
+            saveSingleAnswerPort.deleteAllByFormResponseIds(responseIds);
+            saveFormResponsePort.deleteByFormIdAndStatus(form.getId(), st);
+        }
 
         saveFormPort.deleteById(form.getId());
     }
@@ -130,7 +137,7 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
         Instant now = Instant.now();
 
         Form form = loadFormPort.findById(cmd.voteId())
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
 
         // 1) 기간 체크
         FormOpenStatus openStatus = form.getOpenStatus(now);
@@ -180,11 +187,11 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
 
         // 6) 응답 저장
         FormResponse formResponse = FormResponse.createVoteResponse(
-            form,
-            cmd.memberId(),
-            question,
-            uniqueOptionIds.stream().toList(),
-            now
+                form,
+                cmd.memberId(),
+                question,
+                uniqueOptionIds.stream().toList(),
+                now
         );
 
         saveFormResponsePort.save(formResponse);
