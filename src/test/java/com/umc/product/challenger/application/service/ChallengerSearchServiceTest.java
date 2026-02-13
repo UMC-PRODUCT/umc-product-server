@@ -18,6 +18,7 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberProfileInfo;
@@ -66,7 +67,7 @@ class ChallengerSearchServiceTest {
 
     @BeforeEach
     void setUp() {
-        defaultQuery = new SearchChallengerQuery(null, null, null, null, null, null, 1L);
+        defaultQuery = new SearchChallengerQuery(null, null, null, null, null, null, 1L, List.of(ChallengerStatus.ACTIVE));
         defaultGisuInfos = List.of(
                 new GisuInfo(1L, 7L, Instant.now(), Instant.now(), true),
                 new GisuInfo(2L, 8L, Instant.now(), Instant.now(), false)
@@ -347,7 +348,7 @@ class ChallengerSearchServiceTest {
 
         @BeforeEach
         void setUp() {
-            globalQuery = new SearchChallengerQuery(null, "홍", null, null, null, null, null);
+            globalQuery = new SearchChallengerQuery(null, "홍", null, null, null, null, null, List.of(ChallengerStatus.ACTIVE, ChallengerStatus.GRADUATED));
         }
 
         @Test

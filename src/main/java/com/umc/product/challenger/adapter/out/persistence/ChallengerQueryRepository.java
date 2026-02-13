@@ -15,6 +15,7 @@ import com.umc.product.challenger.domain.enums.PointType;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.member.domain.QMember;
 import com.umc.product.organization.domain.QChapterSchool;
 import java.util.List;
@@ -163,6 +164,7 @@ public class ChallengerQueryRepository {
         builder.and(chapterIdExists(query.chapterId(), member));
         builder.and(partEq(query.part(), challenger));
         builder.and(gisuIdEq(query.gisuId(), challenger));
+        builder.and(statusIn(query.statuses(), challenger));
 
         return builder;
     }
@@ -232,6 +234,10 @@ public class ChallengerQueryRepository {
 
     private BooleanExpression schoolIdEq(Long schoolId, QMember member) {
         return schoolId != null ? member.schoolId.eq(schoolId) : null;
+    }
+
+    private BooleanExpression statusIn(List<ChallengerStatus> statuses, QChallenger challenger) {
+        return (statuses != null && !statuses.isEmpty()) ? challenger.status.in(statuses) : null;
     }
 
     private BooleanExpression chapterIdExists(Long chapterId, QMember member) {
