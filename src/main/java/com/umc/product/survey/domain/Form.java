@@ -96,13 +96,6 @@ public class Form extends BaseEntity {
         this.endsAtExclusive = endsAtExclusive;
     }
 
-    public boolean isOpen(Instant now) {
-        if (startsAt == null || endsAtExclusive == null) {
-            return true; // 기간 미설정이면 열려있다고 간주
-        }
-        return !now.isBefore(startsAt) && now.isBefore(endsAtExclusive);
-    }
-
     public FormOpenStatus getOpenStatus(Instant now) {
         if (startsAt != null && now.isBefore(startsAt)) {
             return FormOpenStatus.NOT_STARTED;
