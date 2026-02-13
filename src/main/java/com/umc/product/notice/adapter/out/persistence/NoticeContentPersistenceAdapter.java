@@ -95,16 +95,6 @@ public class NoticeContentPersistenceAdapter implements
     }
 
     @Override
-    public int findNextVoteDisplayOrder(Long noticeId) {
-        return contentsQueryRepository.findNextVoteDisplayOrder(noticeId);
-    }
-
-    @Override
-    public int countVoteByNoticeId(Long noticeId) {
-        return voteJpaRepository.countByNotice_Id(noticeId);
-    }
-
-    @Override
     public NoticeImage saveImage(NoticeImage noticeImage) {
         return imageJpaRepository.save(noticeImage);
     }

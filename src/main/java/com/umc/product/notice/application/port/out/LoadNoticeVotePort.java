@@ -10,8 +10,4 @@ public interface LoadNoticeVotePort {
     List<NoticeVote> findVotesByNoticeId(Long noticeId);
 
     boolean existsVoteByNoticeId(Long noticeId);
-
-    int findNextVoteDisplayOrder(Long noticeId);
-
-    int countVoteByNoticeId(Long noticeId);
 }

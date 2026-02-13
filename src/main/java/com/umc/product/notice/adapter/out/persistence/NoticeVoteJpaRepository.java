@@ -13,8 +13,6 @@ public interface NoticeVoteJpaRepository extends JpaRepository<NoticeVote, Long>
 
     boolean existsByNoticeId(Long noticeId);
 
-    int countByNotice_Id(Long noticeId);
-
     @Modifying
     @Query("DELETE FROM NoticeVote nv WHERE nv.notice.id = :noticeId")
     void deleteAllByNoticeId(@Param("noticeId") Long noticeId);

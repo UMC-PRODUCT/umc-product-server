@@ -46,11 +46,9 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
     public List<NoticeVoteInfo> findVoteByNoticeId(Long noticeId) {
         List<NoticeVote> votes = loadNoticeVotePort.findVotesByNoticeId(noticeId);
         return votes.stream()
-            .sorted(Comparator.comparing(NoticeVote::getDisplayOrder))
             .map(vote -> new NoticeVoteInfo(
                 vote.getId(),
-                vote.getVoteId(),
-                vote.getDisplayOrder()
+                vote.getVoteId()
             ))
             .toList();
     }
