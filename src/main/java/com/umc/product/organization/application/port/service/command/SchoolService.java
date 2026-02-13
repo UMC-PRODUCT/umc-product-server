@@ -3,7 +3,6 @@ package com.umc.product.organization.application.port.service.command;
 import com.umc.product.organization.application.port.in.command.ManageSchoolUseCase;
 import com.umc.product.organization.application.port.in.command.dto.AssignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.CreateSchoolCommand;
-import com.umc.product.organization.application.port.in.command.dto.SchoolLinkCommand;
 import com.umc.product.organization.application.port.in.command.dto.UnassignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateSchoolCommand;
 import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
@@ -72,10 +71,16 @@ public class SchoolService implements ManageSchoolUseCase {
 
     @Override
     public void deleteSchools(List<Long> schoolIds) {
+
+
+        if (schoolIds == null || schoolIds.isEmpty()) {
+            return;
+        }
+
         manageChapterSchoolPort.deleteAllBySchoolIds(schoolIds);
         manageSchoolPort.deleteAllLinksBySchoolIds(schoolIds);
         manageSchoolPort.deleteAllByIds(schoolIds);
-    }
+    } q q
 
     @Override
     public void assignToChapter(AssignSchoolCommand command) {
