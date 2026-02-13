@@ -80,7 +80,7 @@ public class SchoolService implements ManageSchoolUseCase {
         manageChapterSchoolPort.deleteAllBySchoolIds(schoolIds);
         manageSchoolPort.deleteAllLinksBySchoolIds(schoolIds);
         manageSchoolPort.deleteAllByIds(schoolIds);
-    } q q
+    }
 
     @Override
     public void assignToChapter(AssignSchoolCommand command) {
