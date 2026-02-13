@@ -4,18 +4,29 @@ import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
 import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
+import com.umc.product.survey.application.port.in.command.SubmitVoteResponseUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateVoteCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
+import com.umc.product.survey.application.port.in.command.dto.SubmitVoteResponseCommand;
 import com.umc.product.survey.application.port.out.LoadFormPort;
+import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.application.port.out.SaveFormPort;
+import com.umc.product.survey.application.port.out.SaveFormResponsePort;
 import com.umc.product.survey.domain.Form;
+import com.umc.product.survey.domain.FormResponse;
+import com.umc.product.survey.domain.Question;
+import com.umc.product.survey.domain.QuestionOption;
+import com.umc.product.survey.domain.enums.FormOpenStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,11 +36,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Transactional
 @RequiredArgsConstructor
-public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase {
+public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, SubmitVoteResponseUseCase {
 
     private final SaveFormPort saveFormPort;
     private final LoadFormPort loadFormPort;
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+    private final LoadFormResponsePort loadFormResponsePort;
+    private final SaveFormResponsePort saveFormResponsePort;
 
     @Override
     public Long create(CreateVoteCommand command) {
@@ -101,5 +114,82 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase {
         // todo: 권한 검증 추가
 
         saveFormPort.deleteById(form.getId());
+    }
+
+    @Override
+    public void submit(SubmitVoteResponseCommand cmd) {
+        Instant now = Instant.now();
+
+        Form form = loadFormPort.findById(cmd.voteId())
+            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+
+        // 1) 기간 체크
+        FormOpenStatus openStatus = form.getOpenStatus(now);
+        if (openStatus == FormOpenStatus.NOT_STARTED) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.VOTE_NOT_STARTED);
+        }
+        if (openStatus == FormOpenStatus.CLOSED) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.VOTE_CLOSED);
+        }
+
+        // 2) 중복 투표 체크
+        if (loadFormResponsePort.existsByFormIdAndMemberId(form.getId(), cmd.memberId())) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.VOTE_ALREADY_RESPONDED);
+        }
+
+        // 3) 투표 구조에서 Question 1개 꺼내기
+        Question question = extractSingleQuestion(form);
+
+        // 4) 선택 검증
+        List<Long> optionIds = cmd.optionIds();
+        if (optionIds == null || optionIds.isEmpty()) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_SELECTION);
+        }
+
+        // 중복 제거
+        Set<Long> uniqueOptionIds = new LinkedHashSet<>(optionIds);
+
+        if (question.getType() == QuestionType.RADIO) {
+            if (uniqueOptionIds.size() != 1) {
+                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_SELECTION);
+            }
+        } else if (question.getType() == QuestionType.CHECKBOX) {
+            // 추가 검증 x
+        } else {
+            // 투표 질문은 RADIO/CHECKBOX만 와야 함
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
+        }
+
+        // 5) optionIds가 이 question의 옵션인지 검증
+        Set<Long> allowedOptionIds = new HashSet<>();
+        for (QuestionOption opt : question.getOptions()) {
+            allowedOptionIds.add(opt.getId());
+        }
+        if (!allowedOptionIds.containsAll(new HashSet<>(uniqueOptionIds))) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_SELECTION);
+        }
+
+        // 6) 응답 저장
+        FormResponse formResponse = FormResponse.createVoteResponse(
+            form,
+            cmd.memberId(),
+            question,
+            uniqueOptionIds.stream().toList(),
+            now
+        );
+
+        saveFormResponsePort.save(formResponse);
+    }
+
+    private Question extractSingleQuestion(Form form) {
+        if (form.getSections().isEmpty()) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
+        }
+        // 섹션 1개 전제
+        var section = form.getSections().iterator().next();
+        if (section.getQuestions().isEmpty()) {
+            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
+        }
+        return section.getQuestions().iterator().next();
     }
 }

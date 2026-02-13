@@ -27,8 +27,12 @@ public enum SurveyErrorCode implements BaseCode {
     INVALID_VOTE_OPTION_CONTENT(HttpStatus.BAD_REQUEST, "SURVEY-0017", "투표 항목에 빈 값이 포함될 수 없습니다."),
     INVALID_VOTE_START_DATE(HttpStatus.BAD_REQUEST, "SURVEY-0018", "투표 시작일은 오늘부터 선택 가능합니다."),
     INVALID_VOTE_END_DATE(HttpStatus.BAD_REQUEST, "SURVEY-0019", "투표 마감일은 시작일 하루 뒤부터 선택 가능합니다."),
-
-    ;
+    VOTE_NOT_STARTED(HttpStatus.BAD_REQUEST, "SURVEY-0020", "아직 투표 기간이 아닙니다."),
+    VOTE_CLOSED(HttpStatus.BAD_REQUEST, "SURVEY-0021", "이미 종료된 투표입니다."),
+    VOTE_ALREADY_RESPONDED(HttpStatus.BAD_REQUEST, "SURVEY-0022", "이미 답변한 투표입니다."),
+    INVALID_VOTE_SELECTION(HttpStatus.BAD_REQUEST, "SURVEY-0023", "선택이 올바르지 않습니다."),
+    INVALID_VOTE_QUESTION_TYPE(HttpStatus.BAD_REQUEST, "SURVEY-0024", "투표의 질문 타입이 올바르지 않습니다."),
+    INVALID_VOTE_FORM_STRUCTURE(HttpStatus.BAD_REQUEST, "SURVEY-0025", "투표의 질문 형식이 올바르지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

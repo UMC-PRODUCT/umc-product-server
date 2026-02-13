@@ -13,4 +13,6 @@ public interface LoadFormResponsePort {
     List<FormResponse> findAllDraftByRespondentMemberId(Long respondentMemberId);
 
     List<Long> findDraftIdsByFormId(Long formId);
+
+    boolean existsByFormIdAndMemberId(Long formId, Long memberId);
 }

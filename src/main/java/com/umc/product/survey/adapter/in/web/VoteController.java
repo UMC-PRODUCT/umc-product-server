@@ -4,11 +4,14 @@ import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.survey.adapter.in.web.dto.request.CreateVoteRequest;
+import com.umc.product.survey.adapter.in.web.dto.request.SubmitVoteResponseRequest;
 import com.umc.product.survey.adapter.in.web.dto.response.CreateVoteResponse;
 import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
 import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
+import com.umc.product.survey.application.port.in.command.SubmitVoteResponseUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateVoteCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
+import com.umc.product.survey.application.port.in.command.dto.SubmitVoteResponseCommand;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -26,6 +29,7 @@ public class VoteController {
 
     private final CreateVoteUseCase createVoteUseCase;
     private final DeleteVoteUseCase deleteVoteUseCase;
+    private final SubmitVoteResponseUseCase submitVoteResponseUseCase;
 
     @PostMapping
     public CreateVoteResponse createVote(
@@ -47,5 +51,15 @@ public class VoteController {
     ) {
         DeleteVoteCommand command = new DeleteVoteCommand(voteId, memberPrincipal.getMemberId());
         deleteVoteUseCase.delete(command);
+    }
+
+    @PostMapping("/{voteId}/responses")
+    public void submit(
+        @PathVariable Long voteId,
+        @RequestBody SubmitVoteResponseRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        SubmitVoteResponseCommand command = request.toCommand(voteId, memberPrincipal.getMemberId());
+        submitVoteResponseUseCase.submit(command);
     }
 }

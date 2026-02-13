@@ -1,7 +1,10 @@
 package com.umc.product.survey.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.survey.domain.enums.QuestionType;
+import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,6 +16,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import java.util.List;
 import java.util.Map;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -51,10 +55,10 @@ public class SingleAnswer extends BaseEntity {
     private Map<String, Object> value;
 
     public static SingleAnswer create(
-            FormResponse formResponse,
-            Question question,
-            QuestionType answeredAsType,
-            Map<String, Object> value
+        FormResponse formResponse,
+        Question question,
+        QuestionType answeredAsType,
+        Map<String, Object> value
     ) {
         SingleAnswer a = new SingleAnswer();
         a.formResponse = formResponse;
@@ -67,6 +71,36 @@ public class SingleAnswer extends BaseEntity {
     public void change(QuestionType answeredAsType, Map<String, Object> value) {
         this.answeredAsType = answeredAsType;
         this.value = (value == null) ? Map.of() : value;
+    }
+
+    public static SingleAnswer createVoteAnswer(
+        FormResponse formResponse,
+        Question question,
+        List<Long> selectedOptionIds
+    ) {
+        QuestionType t = question.getType();
+
+        if (t == QuestionType.RADIO || t == QuestionType.DROPDOWN) {
+            Long selectedOptionId = selectedOptionIds.get(0);
+            return SingleAnswer.create(
+                formResponse,
+                question,
+                t,
+                Map.of("selectedOptionId", selectedOptionId)
+            );
+        }
+
+        if (t == QuestionType.CHECKBOX) {
+            return SingleAnswer.create(
+                formResponse,
+                question,
+                t,
+                Map.of("selectedOptionIds", selectedOptionIds)
+            );
+        }
+
+        // 여기 도달 시 구조이상
+        throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
     }
 }
 

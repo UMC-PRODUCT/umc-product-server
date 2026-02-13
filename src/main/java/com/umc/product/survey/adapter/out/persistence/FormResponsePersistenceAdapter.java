@@ -25,7 +25,7 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
     @Override
     public Optional<FormResponse> findDraftByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId) {
         return formResponseJpaRepository.findFirstByForm_IdAndRespondentMemberIdAndStatusOrderByIdDesc(
-                formId, respondentMemberId, FormResponseStatus.DRAFT
+            formId, respondentMemberId, FormResponseStatus.DRAFT
         );
     }
 
@@ -42,7 +42,7 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
     @Override
     public List<FormResponse> findAllDraftByRespondentMemberId(Long respondentMemberId) {
         return formResponseJpaRepository.findByRespondentMemberIdAndStatus(
-                respondentMemberId, FormResponseStatus.DRAFT
+            respondentMemberId, FormResponseStatus.DRAFT
         );
     }
 
@@ -66,5 +66,10 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
     @Override
     public void deleteAllByIds(List<Long> ids) {
         formResponseJpaRepository.deleteAllByIdInBatch(ids);
+    }
+
+    @Override
+    public boolean existsByFormIdAndMemberId(Long formId, Long memberId) {
+        return formResponseJpaRepository.existsByForm_IdAndRespondentMemberId(formId, memberId);
     }
 }
