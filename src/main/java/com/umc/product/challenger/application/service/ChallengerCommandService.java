@@ -18,7 +18,12 @@ import com.umc.product.challenger.domain.ChallengerPoint;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerStatus;
+import com.umc.product.common.domain.exception.CommonException;
+import com.umc.product.global.exception.constant.CommonErrorCode;
+import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional
 public class ChallengerCommandService implements ManageChallengerUseCase {
+
+    private final Environment environment;
 
     private final LoadChallengerPort loadChallengerPort;
     private final SaveChallengerPort saveChallengerPort;
@@ -36,18 +43,41 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
     public Long createChallenger(CreateChallengerCommand command) {
         // 동일 기수에 이미 등록된 챌린저인지 확인
         loadChallengerPort.findByMemberIdAndGisuId(command.memberId(), command.gisuId())
-                .ifPresent(challenger -> {
-                    throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_ALREADY_EXISTS);
-                });
+            .ifPresent(challenger -> {
+                throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_ALREADY_EXISTS);
+            });
 
         Challenger challenger = new Challenger(
-                command.memberId(),
-                command.part(),
-                command.gisuId()
+            command.memberId(),
+            command.part(),
+            command.gisuId()
         );
 
         Challenger savedChallenger = saveChallengerPort.save(challenger);
         return savedChallenger.getId();
+    }
+
+    /**
+     * 대량의 챌린저를 한 번에 생성합니다.
+     * <p>
+     * 더미 데이터 생성 용으로 검증을 따로 진행하지 않으니 프로덕션에서 사용하고자 한다면 반드시 검증을 추가한 후 사용해주세요.
+     */
+    @Override
+    public List<Long> createChallengerBulk(List<CreateChallengerCommand> commands) {
+        // TODO: Dev 환경에서만 사용할 것, Prod에서 사용하고자 하는 경우 반드시 검증 로직을 추가하세요.
+        validateEnvIsNotProduction();
+
+        List<Challenger> challengers = commands.stream()
+            .map(command -> new Challenger(
+                command.memberId(),
+                command.part(),
+                command.gisuId()
+            ))
+            .toList();
+
+        return saveChallengerPort.saveAll(challengers).stream()
+            .map(Challenger::getId)
+            .toList();
     }
 
     @Override
@@ -65,9 +95,9 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
 
         if (command.newStatus() != null) {
             challenger.changeStatus(
-                    command.newStatus(),
-                    command.modifiedBy(),
-                    command.reason()
+                command.newStatus(),
+                command.modifiedBy(),
+                command.reason()
             );
         }
 
@@ -96,13 +126,44 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
         challenger.validateChallengerStatus();
 
         ChallengerPoint point = ChallengerPoint.create(
-                challenger,
-                command.pointType(),
-                command.description()
+            challenger,
+            command.pointType(),
+            command.description()
         );
 
         challenger.addPoint(point);
         saveChallengerPort.save(challenger);
+    }
+
+    @Override
+    public void grantChallengerPointBulk(List<GrantChallengerPointCommand> commands) {
+        validateEnvIsNotProduction();
+
+        List<Challenger> challengers = loadChallengerPort.findByIdIn(
+            commands.stream()
+                .map(GrantChallengerPointCommand::challengerId)
+                .collect(Collectors.toSet())
+        );
+
+        for (Challenger challenger : challengers) {
+            List<GrantChallengerPointCommand> challengerCommands = commands.stream()
+                .filter(cmd -> cmd.challengerId().equals(challenger.getId()))
+                .toList();
+
+            challenger.validateChallengerStatus();
+
+            for (GrantChallengerPointCommand command : challengerCommands) {
+                ChallengerPoint point = ChallengerPoint.create(
+                    challenger,
+                    command.pointType(),
+                    command.description()
+                );
+
+                challenger.addPoint(point);
+            }
+        }
+
+        saveChallengerPort.saveAll(challengers);
     }
 
     @Override
@@ -125,4 +186,9 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
         };
     }
 
+    private void validateEnvIsNotProduction() {
+        if (List.of(environment.getActiveProfiles()).contains("prod")) {
+            throw new CommonException(CommonErrorCode.INVALID_ENV);
+        }
+    }
 }

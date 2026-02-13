@@ -7,6 +7,7 @@ import com.umc.product.challenger.application.port.in.command.dto.DeleteChalleng
 import com.umc.product.challenger.application.port.in.command.dto.GrantChallengerPointCommand;
 import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerCommand;
 import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerPointCommand;
+import java.util.List;
 
 public interface ManageChallengerUseCase {
 
@@ -16,6 +17,8 @@ public interface ManageChallengerUseCase {
      * 새로운 챌린저 정보를 생성합니다.
      */
     Long createChallenger(CreateChallengerCommand command);
+
+    List<Long> createChallengerBulk(List<CreateChallengerCommand> commands);
 
     /**
      * 챌린저의 정보를 수정합니다.
@@ -42,6 +45,8 @@ public interface ManageChallengerUseCase {
      * 상벌점에 대한 사유도 함께 기록이 가능합니다.
      */
     void grantChallengerPoint(GrantChallengerPointCommand command);
+
+    void grantChallengerPointBulk(List<GrantChallengerPointCommand> commands);
 
     /**
      * 챌린저에게 부여한 상벌점에 대한 사유를 수정할 수 있습니다. 삭제의 경우 별도 기능을 이용하세요.

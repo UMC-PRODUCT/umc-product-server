@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -90,6 +89,11 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     @Override
     public Challenger save(Challenger challenger) {
         return repository.save(challenger);
+    }
+
+    @Override
+    public List<Challenger> saveAll(List<Challenger> challengers) {
+        return repository.saveAll(challengers);
     }
 
     @Override
