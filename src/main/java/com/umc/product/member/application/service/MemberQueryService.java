@@ -34,11 +34,14 @@ public class MemberQueryService implements GetMemberUseCase {
 
     @Override
     public MemberInfo getById(Long memberId) {
+        // 회원
         Member member = loadMemberPort.findById(memberId)
             .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
+        // 학교명 채워넣기
         String schoolName = getSchoolUseCase.getSchoolDetail(member.getSchoolId()).schoolName();
 
+        // 프로필 이미지 링크 채워넣기
         String profileImageId = member.getProfileImageId();
         String profileImageLink =
             profileImageId == null
@@ -46,7 +49,10 @@ public class MemberQueryService implements GetMemberUseCase {
                 // profileImageId가 존재하는 경우 접근 가능한 링크를 반환하도록 함
                 : getFileUseCase.getById(profileImageId).fileLink();
 
-        return MemberInfo.from(member, schoolName, profileImageLink);
+        // 역할 채워넣기
+        List<ChallengerRoleInfo> roles = getMemberRolesUseCase.getRoles(memberId);
+
+        return MemberInfo.from(member, schoolName, profileImageLink, roles);
     }
 
     @Override
