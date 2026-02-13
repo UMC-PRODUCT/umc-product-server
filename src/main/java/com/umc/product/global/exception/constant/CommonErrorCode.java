@@ -22,7 +22,7 @@ public enum CommonErrorCode implements BaseCode {
 
     // COMMON: 일반 상태 코드
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON-0001",
-            "알 수 없는 오류입니다. 관리자에게 문의해주세요."),
+        "알 수 없는 오류입니다. 관리자에게 문의해주세요."),
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "COMMON-400", "잘못된 요청입니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "COMMON-401", "인증이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "COMMON-403", "허용되지 않는 요청입니다."),
@@ -32,6 +32,9 @@ public enum CommonErrorCode implements BaseCode {
     // SECURITY: Spring Security에서 발생하는 에러
     SECURITY_NOT_GIVEN(HttpStatus.UNAUTHORIZED, "SECURITY-0001", "인증 정보가 전달되지 않았습니다."),
     SECURITY_FORBIDDEN(HttpStatus.FORBIDDEN, "SECURITY-0002", "권한이 부족합니다."),
+
+    // ENVIRONMENT: SpringBoot 실행환경 관련 에러
+    INVALID_ENV(HttpStatus.BAD_REQUEST, "ENV-0001", "현재 실행 환경에서는 사용할 수 없는 기능입니다."),
     ;
 
     private final HttpStatus httpStatus;
