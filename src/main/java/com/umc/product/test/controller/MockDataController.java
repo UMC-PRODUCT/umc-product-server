@@ -58,7 +58,7 @@ public class MockDataController {
 
     private final GetTermsUseCase getTermsUseCase;
 
-    private final Faker faker = new Faker(Locale.KOREAN);
+    private static final Faker faker = new Faker(Locale.KOREAN);
 
     List<Long> createdGisu = new ArrayList<>();
     List<Long> createdSchool = new ArrayList<>();
@@ -150,9 +150,6 @@ public class MockDataController {
 
     /**
      * 학교를 먼저 생성하고 진행해야 합니다.
-     *
-     * @param gisuId
-     * @param numberOfChapters
      */
     private void createChaptersInGisu(Long gisuId, int numberOfChapters) {
         // 각 챕터당 할당할 학교 수 계산
@@ -264,7 +261,7 @@ public class MockDataController {
      * 생성한 챌린저 중 일부에게 임의로 ChallengerRole을 부여합니다.
      */
     private void createChallengerRoleRandom() {
-
+        // TODO: 챌린저 역할을 랜덤으로 부여하는 로직 추가
     }
 
     /**

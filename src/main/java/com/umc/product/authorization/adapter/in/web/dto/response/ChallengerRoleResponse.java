@@ -1,4 +1,4 @@
-package com.umc.product.authorization.adapter.in.web.dto.request;
+package com.umc.product.authorization.adapter.in.web.dto.response;
 
 import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;

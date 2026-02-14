@@ -1,7 +1,7 @@
 package com.umc.product.authorization.adapter.in.web;
 
-import com.umc.product.authorization.adapter.in.web.dto.request.ChallengerRoleResponse;
 import com.umc.product.authorization.adapter.in.web.dto.request.CreateChallengerRoleRequest;
+import com.umc.product.authorization.adapter.in.web.dto.response.ChallengerRoleResponse;
 import com.umc.product.authorization.adapter.in.web.dto.response.CreateChallengerRoleResponse;
 import com.umc.product.authorization.application.port.in.command.ManageChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.command.dto.CreateChallengerRoleCommand;

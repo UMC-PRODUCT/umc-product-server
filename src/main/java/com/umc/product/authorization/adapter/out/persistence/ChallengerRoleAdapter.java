@@ -44,7 +44,7 @@ public class ChallengerRoleAdapter implements LoadChallengerRolePort, SaveChalle
     @Override
     public ChallengerRole getById(Long id) {
         return jpaRepository.findById(id)
-            .orElseThrow(() -> new AuthorizationDomainException(AuthorizationErrorCode.INVALID_PERMISSION));
+            .orElseThrow(() -> new AuthorizationDomainException(AuthorizationErrorCode.CHALLENGER_ROLE_NOT_FOUND));
     }
 
     @Override
