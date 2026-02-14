@@ -7,7 +7,7 @@ import java.util.Optional;
 public interface LoadNoticeVotePort {
     Optional<NoticeVote> findVoteById(Long id);
 
-    NoticeVote findVotesByNoticeId(Long noticeId);
+    Optional<NoticeVote> findVoteByNoticeId(Long noticeId);
 
     boolean existsVoteByNoticeId(Long noticeId);
 }

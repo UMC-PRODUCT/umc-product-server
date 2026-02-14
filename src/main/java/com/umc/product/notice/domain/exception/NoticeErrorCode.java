@@ -29,6 +29,7 @@ public enum NoticeErrorCode implements BaseCode {
     NOTICE_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTICE-CONTENTS-0005", "공지사항 이미지를 찾을 수 없습니다."),
     NOTICE_LINK_NOT_FOUND(HttpStatus.NOT_FOUND, "NOTICE-CONTENTS-0006", "공지사항 링크를 찾을 수 없습니다."),
     IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0007", "공지사항 이미지는 최대 10장까지 등록할 수 있습니다."),
+    VOTE_ALREADY_EXISTS(HttpStatus.CONFLICT, "NOTICE-CONTENTS-0008", "해당 공지사항에 이미 투표가 존재합니다."),
 
 
     NOT_IMPLEMENTED_YET(HttpStatus.NOT_IMPLEMENTED, "NOTICE-9999", "아직 구현되지 않은 기능입니다.");

@@ -50,6 +50,10 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     public AddNoticeVoteResult addVote(AddNoticeVoteCommand command, Long noticeId) {
         Notice notice = findNoticeById(noticeId);
 
+        if (loadNoticeVotePort.existsVoteByNoticeId(noticeId)) {
+            throw new NoticeDomainException(NoticeErrorCode.VOTE_ALREADY_EXISTS);
+        }
+
         Long voteId = createVoteUseCase.create(command.toCreateVoteCommand());
 
         NoticeVote noticeVote = NoticeVote.create(voteId, notice);
@@ -112,9 +116,11 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
         saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
 
-        NoticeVote vote = loadNoticeVotePort.findVotesByNoticeId(noticeId);
-        deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
-        saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
+        loadNoticeVotePort.findVoteByNoticeId(noticeId)
+            .ifPresent(vote -> {
+                deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
+                saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
+            });
     }
 
     @Override

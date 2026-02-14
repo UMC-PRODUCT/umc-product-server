@@ -9,6 +9,8 @@ import com.umc.product.notice.application.port.out.SaveNoticeVotePort;
 import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
+import com.umc.product.notice.domain.exception.NoticeDomainException;
+import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -85,7 +87,7 @@ public class NoticeContentPersistenceAdapter implements
     }
 
     @Override
-    public NoticeVote findVotesByNoticeId(Long noticeId) {
+    public Optional<NoticeVote> findVoteByNoticeId(Long noticeId) {
         return voteJpaRepository.findByNoticeId(noticeId);
     }
 

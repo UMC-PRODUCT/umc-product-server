@@ -10,6 +10,8 @@ import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
 import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
+import com.umc.product.notice.domain.exception.NoticeDomainException;
+import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.survey.application.port.in.query.GetVoteDetailUseCase;
 import com.umc.product.survey.application.port.in.query.dto.GetVoteDetailsQuery;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
@@ -47,7 +49,8 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
 
     @Override
     public VoteInfo findVoteByNoticeId(Long noticeId, Long memberId) {
-        NoticeVote vote = loadNoticeVotePort.findVotesByNoticeId(noticeId);
+        NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
+            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
         return getVoteDetailUseCase.get(new GetVoteDetailsQuery(vote.getVoteId(), memberId));
     }
 

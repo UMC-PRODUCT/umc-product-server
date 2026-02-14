@@ -213,6 +213,7 @@ class NoticeContentServiceTest {
             );
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+            given(loadNoticeVotePort.existsVoteByNoticeId(NOTICE_ID)).willReturn(false);
             given(createVoteUseCase.create(any())).willReturn(10L);
             given(saveNoticeVotePort.saveVote(any())).willAnswer(inv -> {
                 NoticeVote vote = inv.getArgument(0);
@@ -229,6 +230,25 @@ class NoticeContentServiceTest {
             then(createVoteUseCase).should().create(any());
             then(saveNoticeVotePort).should().saveVote(any(NoticeVote.class));
         }
+
+        @Test
+        void 이미_투표가_존재하면_예외가_발생한다() {
+            // given
+            Notice notice = createNotice();
+            var command = new AddNoticeVoteCommand(
+                1L, "점심 메뉴 투표", true, false,
+                Instant.now(), Instant.now().plusSeconds(86400 * 2),
+                List.of("한식", "중식", "일식")
+            );
+
+            given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+            given(loadNoticeVotePort.existsVoteByNoticeId(NOTICE_ID)).willReturn(true);
+
+            // when & then
+            assertThatThrownBy(() -> sut.addVote(command, NOTICE_ID))
+                .isInstanceOf(NoticeDomainException.class);
+            then(createVoteUseCase).should(never()).create(any());
+        }
     }
 
     @Nested
@@ -242,8 +262,8 @@ class NoticeContentServiceTest {
             NoticeVote noticeVote = NoticeVote.create(10L, notice);
             ReflectionTestUtils.setField(noticeVote, "id", 1L);
 
-            given(loadNoticeVotePort.findVotesByNoticeId(NOTICE_ID))
-                .willReturn(noticeVote);
+            given(loadNoticeVotePort.findVoteByNoticeId(NOTICE_ID))
+                .willReturn(Optional.of(noticeVote));
 
             // when
             sut.removeContentsByNoticeId(NOTICE_ID, 1L);
@@ -253,6 +273,22 @@ class NoticeContentServiceTest {
             then(saveNoticeLinkPort).should().deleteAllLinksByNoticeId(NOTICE_ID);
             then(deleteVoteUseCase).should().delete(any());
             then(saveNoticeVotePort).should().deleteAllVotesByNoticeId(NOTICE_ID);
+        }
+
+        @Test
+        void 투표가_없는_공지사항의_콘텐츠를_삭제한다() {
+            // given
+            given(loadNoticeVotePort.findVoteByNoticeId(NOTICE_ID))
+                .willReturn(Optional.empty());
+
+            // when
+            sut.removeContentsByNoticeId(NOTICE_ID, 1L);
+
+            // then
+            then(saveNoticeImagePort).should().deleteAllImagesByNoticeId(NOTICE_ID);
+            then(saveNoticeLinkPort).should().deleteAllLinksByNoticeId(NOTICE_ID);
+            then(deleteVoteUseCase).should(never()).delete(any());
+            then(saveNoticeVotePort).should(never()).deleteAllVotesByNoticeId(anyLong());
         }
     }
 
