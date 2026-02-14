@@ -18,6 +18,9 @@ public record CommentResponse(
         @Schema(description = "작성자 이름", example = "홍길동")
         String challengerName,
 
+        @Schema(description = "작성자 프로필 이미지", example = "https://example.com/profile.jpg")
+        String challengerProfileImage,
+
         @Schema(description = "댓글 내용", example = "좋은 글 감사합니다!")
         String content,
 
@@ -30,6 +33,7 @@ public record CommentResponse(
                 info.postId(),
                 info.challengerId(),
                 info.challengerName(),
+                info.challengerProfileImage(),
                 info.content(),
                 info.createdAt()
         );
