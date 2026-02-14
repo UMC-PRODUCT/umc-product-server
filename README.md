@@ -10,7 +10,7 @@
 
 <img alt="banner" width="1000" src="https://github.com/user-attachments/assets/d8ffb7f6-6bc0-4aca-a0db-0e6133d6794c" />
 
-## 👥 프로덕트팀 구성원
+## 👬 프로덕트팀 구성원
 
 ### 1st Founders
 
@@ -23,6 +23,6 @@
 | <img src="https://github.com/user-attachments/assets/fc77cc7f-98e9-4588-82f6-9477eea1404c" width="100" height="100"> |    중앙대학교    |  스읍  | 이예은 | App | Member |    [@sopp1313](https://github.com/sopp1313)    |
 | <img src="https://github.com/user-attachments/assets/6d29af10-ab2f-4f7b-8b66-c1a743b9a63f" width="100" height="100"> |    동국대학교    |  갈래  | 김민서 | Web | Member |     [@galllee](https://github.com/galllee)     |
 
-## 🛠️ Tech Stack
+## 🛠️ 기술 스택
 
 <img width="1000" alt="tech-stack" src="https://github.com/user-attachments/assets/06bde591-1ec5-441d-b609-1ecea42e5433" />
