@@ -86,7 +86,12 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
                     return null;
                 }
 
-                // 2. 출석 프로세스 완료된 것 제외 (나의 출석 현황으로 이동)
+                // 2. 출석 시간대(AttendanceWindow) 체크 - 현재 출석 가능한 시간대인지 확인
+                if (!sheet.isWithinTimeWindow(now)) {
+                    return null;
+                }
+
+                // 3. 출석 프로세스 완료된 것 제외 (나의 출석 현황으로 이동)
                 // 포함: PENDING (출석 전), PRESENT/PRESENT_PENDING (출석 완료)
                 // 제외: LATE/LATE_PENDING (지각), ABSENT (결석), EXCUSED/EXCUSED_PENDING (인정결석)
                 if (record != null && isAttendanceProcessCompleted(record.getStatus())) {

@@ -57,7 +57,12 @@ public class AttendanceWebMapper {
             info.startTime(),
             info.endTime(),
             info.status().name(),
-            info.statusDisplay()
+            info.statusDisplay(),
+            info.sheetId(),
+            info.locationName(),
+            info.locationVerified(),
+            info.memo(),
+            info.checkedAt()
         );
     }
 

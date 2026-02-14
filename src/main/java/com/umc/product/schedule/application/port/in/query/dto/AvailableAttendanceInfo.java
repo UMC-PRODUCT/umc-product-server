@@ -65,7 +65,7 @@ public record AvailableAttendanceInfo(
         return switch (status) {
             case PENDING -> "출석 전";
             case PRESENT_PENDING, LATE_PENDING, EXCUSED_PENDING -> "승인 대기";
-            case PRESENT, LATE, EXCUSED -> "출석 완료";
+            case PRESENT, LATE, EXCUSED -> "출석 완료";  // 인정결석도 출석으로 표시
             case ABSENT -> "결석";
         };
     }

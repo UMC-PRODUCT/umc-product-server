@@ -8,6 +8,7 @@ import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -28,11 +29,23 @@ import org.springframework.transaction.annotation.Transactional;
  * 3. 일정 정보와 결합하여 최신순 반환
  * <p>
  * N+1 방지를 위해 ID 목록을 추출하여 일괄 조회
+ * <p>
+ * ⚠️ 확정된 상태만 반환: PRESENT, LATE, ABSENT (3개만!)
+ * - PENDING (출석 전) 제외
+ * - *_PENDING (승인 대기) 제외
+ * - EXCUSED 제외 - 승인 시 PRESENT, 거부 시 ABSENT로 처리됨
  */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseCase {
+
+    private static final Set<AttendanceStatus> CONFIRMED_STATUSES = Set.of(
+        AttendanceStatus.PRESENT,
+        AttendanceStatus.LATE,
+        AttendanceStatus.ABSENT
+        // EXCUSED 제외 - 승인 시 PRESENT, 거부 시 ABSENT로 처리됨
+    );
 
     private final LoadSchedulePort loadSchedulePort;
     private final LoadAttendanceSheetPort loadAttendanceSheetPort;
@@ -54,8 +67,10 @@ public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseC
             .collect(Collectors.toMap(AttendanceSheet::getId, Function.identity()));
 
         // 2. 해당 멤버의 출석 기록 중 해당 기수 출석부에 속한 것만 필터링
+        // ⚠️ 확정된 상태만 포함 (PENDING, *_PENDING 제외)
         List<AttendanceRecord> records = loadAttendanceRecordPort.findByMemberId(memberId).stream()
             .filter(record -> sheetIds.contains(record.getAttendanceSheetId()))
+            .filter(record -> CONFIRMED_STATUSES.contains(record.getStatus()))
             .toList();
 
         if (records.isEmpty()) {
@@ -84,7 +99,7 @@ public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseC
                     return null;
                 }
 
-                return MyAttendanceHistoryInfo.of(schedule, record);
+                return MyAttendanceHistoryInfo.of(schedule, sheet, record);
             })
             .filter(Objects::nonNull)
             .sorted(Comparator.comparing(MyAttendanceHistoryInfo::scheduledAt).reversed())
