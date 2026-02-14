@@ -42,7 +42,7 @@ public class ChallengerRoleController {
             .build();
     }
 
-    @GetMapping("{challengerRoleId")
+    @GetMapping("{challengerRoleId}")
     ChallengerRoleResponse getChallengerRole(
         @PathVariable Long challengerRoleId
     ) {
@@ -53,7 +53,7 @@ public class ChallengerRoleController {
         );
     }
 
-    @DeleteMapping("{challengerRoleId")
+    @DeleteMapping("{challengerRoleId}")
     void deleteChallengerRole(
         @PathVariable Long challengerRoleId
     ) {
