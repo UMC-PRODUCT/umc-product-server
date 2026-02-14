@@ -130,7 +130,7 @@ class AdminSchoolQueryControllerTest extends DocumentationTest {
                                 fieldWithPath("result.schoolId").type(JsonFieldType.STRING).description("학교 ID"),
                                 fieldWithPath("result.isActive").type(JsonFieldType.BOOLEAN).description("학교 활성상태"),
                                 fieldWithPath("result.remark").type(JsonFieldType.STRING).description("비고"),
-                                fieldWithPath("result.logoImageLink").type(JsonFieldType.STRING).description("로고 이미지 URL").optional(),
+                                fieldWithPath("result.logoImageUrl").type(JsonFieldType.STRING).description("로고 이미지 URL").optional(),
                                 fieldWithPath("result.links").type(JsonFieldType.ARRAY).description("학교 링크 목록"),
                                 fieldWithPath("result.links[].title").type(JsonFieldType.STRING).description("링크 제목"),
                                 fieldWithPath("result.links[].type").type(JsonFieldType.STRING).description("링크 타입 (KAKAO, INSTAGRAM, YOUTUBE)"),
