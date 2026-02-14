@@ -20,6 +20,7 @@ public enum ChallengerErrorCode implements BaseCode {
     NOT_ALLOWED_AUTHOR(HttpStatus.BAD_REQUEST, "CHALLENGER-0009", "활성 또는 수료 상태의 사용자만 일정 생성이 가능합니다."),
     MEMBER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHALLENGER-0010", "챌린저에 연결된 멤버 프로필을 찾을 수 없습니다."),
     INVALID_CURSOR_ID(HttpStatus.BAD_REQUEST, "CHALLENGER-0011", "유효하지 않은 커서 ID입니다."),
+    USED_CHALLENGER_RECORD_CODE(HttpStatus.BAD_REQUEST, "CHALLENGER-0011", "이미 사용된 챌린저 기록 추가용 코드입니다."),
     ;
 
     private final HttpStatus httpStatus;
