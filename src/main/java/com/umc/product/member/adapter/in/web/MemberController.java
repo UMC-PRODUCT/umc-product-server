@@ -1,6 +1,8 @@
 package com.umc.product.member.adapter.in.web;
 
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
+import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
@@ -16,9 +18,13 @@ import com.umc.product.member.application.port.in.command.dto.RegisterMemberComm
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -36,6 +42,8 @@ public class MemberController {
     private final JwtTokenProvider jwtTokenProvider;
     private final ManageMemberUseCase manageMemberUseCase;
     private final GetMemberUseCase getMemberUseCase;
+    private final GetChallengerUseCase getChallengerUseCase;
+    private final GetGisuUseCase getGisuUseCase;
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
 
     // 로그인은 OAuth를 통해서만 진행됨!!
@@ -81,8 +89,20 @@ public class MemberController {
     @Operation(summary = "내 프로필 조회")
     @GetMapping("me")
     MemberInfoResponse getMyProfile(@CurrentMember MemberPrincipal memberPrincipal) {
-        MemberProfileInfo info = getMemberUseCase.getProfile(memberPrincipal.getMemberId());
-        return MemberInfoResponse.from(info);
+        Long memberId = memberPrincipal.getMemberId();
+        MemberInfo memberInfo = getMemberUseCase.getById(memberId);
+
+        // 회원이 챌린저로 활동한 기록 채워넣기
+        List<ChallengerInfoResponse> challengerInfoResponses =
+            getChallengerUseCase.getMemberChallengerList(memberId)
+                .stream()
+                .map(info -> {
+                    GisuInfo gisuInfo = getGisuUseCase.getById(info.gisuId());
+                    return ChallengerInfoResponse.from(info, memberInfo, gisuInfo);
+                })
+                .toList();
+
+        return MemberInfoResponse.from(memberInfo, challengerInfoResponses);
     }
 
     @Operation(summary = "회원 정보 수정")

@@ -10,7 +10,9 @@ import java.util.Set;
  * <p>
  * Notice, Curriculum 등 다른 도메인에서 사용자의 역할을 확인할 때 사용합니다.
  */
-public interface GetMemberRolesUseCase {
+public interface GetChallengerRoleUseCase {
+
+    ChallengerRoleInfo byId(Long challengerRoleId);
 
     List<ChallengerRoleInfo> getRoles(Long memberId);
 

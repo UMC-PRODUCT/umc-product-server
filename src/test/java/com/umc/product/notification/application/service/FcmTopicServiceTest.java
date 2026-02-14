@@ -1,7 +1,6 @@
 package com.umc.product.notification.application.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -35,28 +34,43 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class FcmTopicServiceTest {
 
-    @Mock ManageFcmUseCase manageFcmUseCase;
-    @Mock LoadFcmPort loadFcmPort;
-    @Mock GetChallengerUseCase getChallengerUseCase;
-    @Mock GetMemberUseCase getMemberUseCase;
-    @Mock GetChapterUseCase getChapterUseCase;
+    @Mock
+    ManageFcmUseCase manageFcmUseCase;
+    @Mock
+    LoadFcmPort loadFcmPort;
+    @Mock
+    GetChallengerUseCase getChallengerUseCase;
+    @Mock
+    GetMemberUseCase getMemberUseCase;
+    @Mock
+    GetChapterUseCase getChapterUseCase;
 
-    @InjectMocks FcmTopicService sut;
+    @InjectMocks
+    FcmTopicService sut;
 
     // -- test fixtures --
 
     private ChallengerInfo challengerInfo(Long challengerId, Long memberId, Long gisuId, ChallengerPart part) {
         return ChallengerInfo.builder()
-                .challengerId(challengerId)
-                .memberId(memberId)
-                .gisuId(gisuId)
-                .part(part)
-                .build();
+            .challengerId(challengerId)
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .part(part)
+            .build();
     }
 
     private MemberInfo memberInfo(Long memberId, Long schoolId) {
-        return new MemberInfo(memberId, "강하나", "와나", "test@umc.com",
-                schoolId, "한양대학교ERICA", "profile-img-id", "https://example.com/profile.jpg", MemberStatus.ACTIVE);
+        return MemberInfo.builder()
+            .id(memberId)
+            .name("강하나")
+            .nickname("바보")
+            .email("umcproduct@hyu.ac.kr")
+            .schoolId(schoolId)
+            .schoolName("한양대학교 ERICA")
+            .profileImageId("wanna-profile-image-id")
+            .profileImageLink("https://wana-babo.com")
+            .status(MemberStatus.ACTIVE)
+            .build();
     }
 
     private FcmToken fcmToken(Long memberId, String token) {
@@ -88,14 +102,14 @@ class FcmTopicServiceTest {
             given(getMemberUseCase.getById(100L)).willReturn(member);
 
             given(getChapterUseCase.byGisuAndSchool(9L, 5L))
-                    .willReturn(new ChapterInfo(3L, "cassiopeia"));
+                .willReturn(new ChapterInfo(3L, "cassiopeia"));
 
             // when
             sut.subscribeTopics(challengerId);
 
             // then: 기수, 기수+파트, 학교, 학교+파트, 지부, 지부+파트 = 6회
             then(manageFcmUseCase).should(times(6))
-                    .subscribeToTopic(eq(List.of("test-fcm-token")), anyString());
+                .subscribeToTopic(eq(List.of("test-fcm-token")), anyString());
         }
 
         @Test
@@ -145,7 +159,7 @@ class FcmTopicServiceTest {
 
             // when & then
             assertThatThrownBy(() -> sut.subscribeTopics(challengerId))
-                    .isInstanceOf(OrganizationDomainException.class);
+                .isInstanceOf(OrganizationDomainException.class);
             then(manageFcmUseCase).should(never()).subscribeToTopic(anyList(), anyString());
         }
 
@@ -163,12 +177,12 @@ class FcmTopicServiceTest {
             given(getMemberUseCase.getById(100L)).willReturn(member);
 
             given(getChapterUseCase.byGisuAndSchool(9L, 5L))
-                    .willThrow(new OrganizationDomainException(
-                            com.umc.product.organization.exception.OrganizationErrorCode.CHAPTER_NOT_FOUND));
+                .willThrow(new OrganizationDomainException(
+                    com.umc.product.organization.exception.OrganizationErrorCode.CHAPTER_NOT_FOUND));
 
             // when & then
             assertThatThrownBy(() -> sut.subscribeTopics(challengerId))
-                    .isInstanceOf(OrganizationDomainException.class);
+                .isInstanceOf(OrganizationDomainException.class);
             then(manageFcmUseCase).should(never()).subscribeToTopic(anyList(), anyString());
         }
     }
@@ -190,14 +204,14 @@ class FcmTopicServiceTest {
             given(getMemberUseCase.getById(100L)).willReturn(member);
 
             given(getChapterUseCase.byGisuAndSchool(9L, 5L))
-                    .willReturn(new ChapterInfo(3L, "cassiopeia"));
+                .willReturn(new ChapterInfo(3L, "cassiopeia"));
 
             // when
             sut.unsubscribeTopics(challengerId);
 
             // then
             then(manageFcmUseCase).should(times(6))
-                    .unsubscribeFromTopic(eq(List.of("test-fcm-token")), anyString());
+                .unsubscribeFromTopic(eq(List.of("test-fcm-token")), anyString());
         }
 
         @Test
@@ -226,7 +240,7 @@ class FcmTopicServiceTest {
             ChallengerInfo c1 = challengerInfo(1L, memberId, 9L, ChallengerPart.SPRINGBOOT);
             ChallengerInfo c2 = challengerInfo(2L, memberId, 8L, ChallengerPart.WEB);
             given(getChallengerUseCase.getMemberChallengerList(memberId))
-                    .willReturn(List.of(c1, c2));
+                .willReturn(List.of(c1, c2));
 
             // 각 챌린저에 대한 stub
             given(getChallengerUseCase.getChallengerPublicInfo(1L)).willReturn(c1);
@@ -239,23 +253,23 @@ class FcmTopicServiceTest {
             given(getMemberUseCase.getById(memberId)).willReturn(member);
 
             given(getChapterUseCase.byGisuAndSchool(9L, 5L))
-                    .willReturn(new ChapterInfo(3L, "cassiopeia"));
+                .willReturn(new ChapterInfo(3L, "cassiopeia"));
             given(getChapterUseCase.byGisuAndSchool(8L, 5L))
-                    .willReturn(new ChapterInfo(4L, "cassiopeia"));
+                .willReturn(new ChapterInfo(4L, "cassiopeia"));
 
             // when
             sut.subscribeAllTopicsByMemberId(memberId);
 
             // then: 각 챌린저당 6개 × 2명 = 12회
             then(manageFcmUseCase).should(times(12))
-                    .subscribeToTopic(anyList(), anyString());
+                .subscribeToTopic(anyList(), anyString());
         }
 
         @Test
         void 챌린저가_없으면_아무것도_호출하지_않는다() {
             // given
             given(getChallengerUseCase.getMemberChallengerList(100L))
-                    .willReturn(List.of());
+                .willReturn(List.of());
 
             // when
             sut.subscribeAllTopicsByMemberId(100L);
@@ -274,7 +288,7 @@ class FcmTopicServiceTest {
             Long memberId = 100L;
             ChallengerInfo c1 = challengerInfo(1L, memberId, 9L, ChallengerPart.SPRINGBOOT);
             given(getChallengerUseCase.getMemberChallengerList(memberId))
-                    .willReturn(List.of(c1));
+                .willReturn(List.of(c1));
 
             given(getChallengerUseCase.getChallengerPublicInfo(1L)).willReturn(c1);
 
@@ -285,14 +299,14 @@ class FcmTopicServiceTest {
             given(getMemberUseCase.getById(memberId)).willReturn(member);
 
             given(getChapterUseCase.byGisuAndSchool(9L, 5L))
-                    .willReturn(new ChapterInfo(3L, "cassiopeia"));
+                .willReturn(new ChapterInfo(3L, "cassiopeia"));
 
             // when
             sut.unsubscribeAllTopicsByMemberId(memberId);
 
             // then
             then(manageFcmUseCase).should(times(6))
-                    .unsubscribeFromTopic(anyList(), anyString());
+                .unsubscribeFromTopic(anyList(), anyString());
         }
     }
 }

@@ -22,6 +22,7 @@ public enum AuthorizationErrorCode implements BaseCode {
         "권한 평가를 위한 리소스 ID 타입이 잘못 전달되었습니다. 관리자에게 문의하세요."),
     INVALID_RESOURCE_PERMISSION_GIVEN(HttpStatus.INTERNAL_SERVER_ERROR, "AUTHORIZATION-0009",
         "잘못된 권한 평가 요청입니다. 관리자에게 문의하세요."),
+    CHALLENGER_ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "AUTHORIZATION-0010", "해당하는 역할을 찾을 수 없습니다."),
     ;
 
     private final HttpStatus httpStatus;

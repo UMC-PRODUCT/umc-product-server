@@ -1,7 +1,7 @@
 package com.umc.product.member.application.service;
 
 import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
-import com.umc.product.authorization.application.port.in.query.GetMemberRolesUseCase;
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.member.application.port.in.query.MemberProfileInfo;
@@ -30,15 +30,18 @@ public class MemberQueryService implements GetMemberUseCase {
 
     private final GetSchoolUseCase getSchoolUseCase;
     private final GetFileUseCase getFileUseCase;
-    private final GetMemberRolesUseCase getMemberRolesUseCase;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @Override
     public MemberInfo getById(Long memberId) {
+        // 회원
         Member member = loadMemberPort.findById(memberId)
             .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
+        // 학교명 채워넣기
         String schoolName = getSchoolUseCase.getSchoolDetail(member.getSchoolId()).schoolName();
 
+        // 프로필 이미지 링크 채워넣기
         String profileImageId = member.getProfileImageId();
         String profileImageLink =
             profileImageId == null
@@ -46,7 +49,10 @@ public class MemberQueryService implements GetMemberUseCase {
                 // profileImageId가 존재하는 경우 접근 가능한 링크를 반환하도록 함
                 : getFileUseCase.getById(profileImageId).fileLink();
 
-        return MemberInfo.from(member, schoolName, profileImageLink);
+        // 역할 채워넣기
+        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.getRoles(memberId);
+
+        return MemberInfo.from(member, schoolName, profileImageLink, roles);
     }
 
     @Override
@@ -68,7 +74,7 @@ public class MemberQueryService implements GetMemberUseCase {
             profileImageLink = fileInfo.fileLink();
         }
 
-        List<ChallengerRoleInfo> roles = getMemberRolesUseCase.getRoles(memberId);
+        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.getRoles(memberId);
 
         return MemberProfileInfo.from(memberInfo, schoolName, profileImageLink, roles);
     }
