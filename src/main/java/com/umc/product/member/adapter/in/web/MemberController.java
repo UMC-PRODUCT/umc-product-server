@@ -32,6 +32,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -89,6 +90,26 @@ public class MemberController {
             .accessToken(accessToken)
             .refreshToken(refreshToken)
             .build();
+    }
+
+    @Operation(summary = "memberId로 회원 정보 조회")
+    @GetMapping("profile/{memberId}")
+    MemberInfoResponse getMemberProfile(
+        @PathVariable Long memberId
+    ) {
+        // TODO: 총괄단만 가능하도록 권한을 부여하여야 함.
+        MemberInfo memberInfo = getMemberUseCase.getById(memberId);
+
+        List<ChallengerInfoResponse> challengerInfoResponses =
+            getChallengerUseCase.getMemberChallengerList(memberId)
+                .stream()
+                .map(info -> {
+                    GisuInfo gisuInfo = getGisuUseCase.getById(info.gisuId());
+                    return ChallengerInfoResponse.from(info, memberInfo, gisuInfo);
+                })
+                .toList();
+
+        return MemberInfoResponse.from(memberInfo, challengerInfoResponses);
     }
 
     @Operation(summary = "내 프로필 조회")
