@@ -44,7 +44,7 @@ public class CheckResourcePermissionService implements ResourcePermissionUseCase
 
         for (PermissionType permissionType : resourceType.getSupportedPermissions()) {
             ResourcePermission permission = resourceId != null
-                ? ResourcePermission.of(resourceType, String.valueOf(resourceId), permissionType)
+                ? ResourcePermission.of(resourceType, resourceId, permissionType)
                 : ResourcePermission.ofType(resourceType, permissionType);
 
             boolean hasAccess = checkPermissionUseCase.check(memberId, permission);

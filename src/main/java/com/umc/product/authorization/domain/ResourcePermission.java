@@ -37,6 +37,13 @@ public record ResourcePermission(
         return new ResourcePermission(resourceType, resourceId, permission);
     }
 
+    /**
+     * 특정 리소스에 대한 권한 (Long ID)
+     */
+    public static ResourcePermission of(ResourceType resourceType, Long resourceId, PermissionType permission) {
+        return new ResourcePermission(resourceType, resourceId.toString(), permission);
+    }
+
     public Long getResourceIdAsLong() {
         if (resourceId == null) {
             return null;
