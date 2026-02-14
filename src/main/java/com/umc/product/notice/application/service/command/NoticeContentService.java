@@ -3,10 +3,10 @@ package com.umc.product.notice.application.service.command;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeLinksCommand;
-import com.umc.product.notice.application.port.in.command.dto.AddNoticeVotesCommand;
+import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteCommand;
+import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteResult;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
-import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeVotesCommand;
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
@@ -20,6 +20,9 @@ import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
+import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
+import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
+import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
@@ -38,27 +41,25 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     private final SaveNoticeVotePort saveNoticeVotePort;
     private final SaveNoticeImagePort saveNoticeImagePort;
     private final SaveNoticeLinkPort saveNoticeLinkPort;
-
     private final LoadNoticePort loadNoticePort;
 
+    private final CreateVoteUseCase createVoteUseCase;
+    private final DeleteVoteUseCase deleteVoteUseCase;
+
     @Override
-    public List<Long> addVotes(AddNoticeVotesCommand command, Long noticeId) {
+    public AddNoticeVoteResult addVote(AddNoticeVoteCommand command, Long noticeId) {
         Notice notice = findNoticeById(noticeId);
 
-        if (command.voteIds() == null || command.voteIds().isEmpty()) {
-            throw new NoticeDomainException(NoticeErrorCode.VOTE_IDS_REQUIRED);
+        if (loadNoticeVotePort.existsVoteByNoticeId(noticeId)) {
+            throw new NoticeDomainException(NoticeErrorCode.VOTE_ALREADY_EXISTS);
         }
 
-        AtomicInteger order = new AtomicInteger(loadNoticeVotePort.findNextVoteDisplayOrder(noticeId));
-        List<NoticeVote> votes = command.voteIds().stream()
-            .map(voteId -> NoticeVote.create(voteId, notice, order.getAndIncrement()))
-            .toList();
+        Long voteId = createVoteUseCase.create(command.toCreateVoteCommand());
 
-        List<NoticeVote> savedVotes = saveNoticeVotePort.saveAllVotes(votes);
+        NoticeVote noticeVote = NoticeVote.create(voteId, notice);
+        NoticeVote savedVote = saveNoticeVotePort.saveVote(noticeVote);
 
-        return savedVotes.stream()
-            .map(NoticeVote::getId)
-            .toList();
+        return new AddNoticeVoteResult(savedVote.getId(), voteId);
     }
 
     @Override
@@ -111,31 +112,15 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
 
     @Override
-    public void removeContentsByNoticeId(Long noticeId) {
+    public void removeContentsByNoticeId(Long noticeId, Long memberId) {
         saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
         saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
-        saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
-    }
 
-    @Override
-    public void replaceVotes(ReplaceNoticeVotesCommand command, Long noticeId) {
-        if (command.voteIds() == null) {
-            return;
-        }
-
-        Notice notice = findNoticeById(noticeId);
-        saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
-
-        if (command.voteIds().isEmpty()) {
-            return;
-        }
-
-        AtomicInteger order = new AtomicInteger(0);
-        List<NoticeVote> votes = command.voteIds().stream()
-            .map(voteId -> NoticeVote.create(voteId, notice, order.getAndIncrement()))
-            .toList();
-
-        saveNoticeVotePort.saveAllVotes(votes);
+        loadNoticeVotePort.findVoteByNoticeId(noticeId)
+            .ifPresent(vote -> {
+                deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
+                saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
+            });
     }
 
     @Override

@@ -63,7 +63,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
 
         // DELETE는 작성자 본인만 가능함.
         else if (resourcePermission.permission() == PermissionType.DELETE) {
-            NoticeInfo noticeInfo = getNoticeUseCase.getNoticeDetail(resourcePermission.getResourceIdAsLong());
+            NoticeInfo noticeInfo = getNoticeUseCase.getNoticeDetail(resourcePermission.getResourceIdAsLong(), subjectAttributes.memberId());
             Long authorMemberId = getChallengerUseCase.getChallengerPublicInfo(noticeInfo.authorChallengerId())
                 .memberId();
 

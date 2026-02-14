@@ -32,21 +32,16 @@ public class NoticeVote extends BaseEntity {
     @Column(name = "vote_id", nullable = false)
     private Long voteId;
 
-    @Column(name = "display_order", nullable = false)
-    private Integer displayOrder;
-
     @Builder
-    private NoticeVote(Notice notice, Long voteId, Integer displayOrder) {
+    private NoticeVote(Notice notice, Long voteId) {
         this.notice = notice;
         this.voteId = voteId;
-        this.displayOrder = displayOrder;
     }
 
-    public static NoticeVote create(Long voteId, Notice notice, int displayOrder) {
+    public static NoticeVote create(Long voteId, Notice notice) {
         return NoticeVote.builder()
             .voteId(voteId)
             .notice(notice)
-            .displayOrder(displayOrder)
             .build();
     }
 }

@@ -4,13 +4,17 @@ package com.umc.product.notice.application.service.query;
 import com.umc.product.notice.application.port.in.query.GetNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.query.dto.NoticeImageInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeLinkInfo;
-import com.umc.product.notice.application.port.in.query.dto.NoticeVoteInfo;
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
 import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
+import com.umc.product.notice.domain.exception.NoticeDomainException;
+import com.umc.product.notice.domain.exception.NoticeErrorCode;
+import com.umc.product.survey.application.port.in.query.GetVoteDetailUseCase;
+import com.umc.product.survey.application.port.in.query.dto.GetVoteDetailsQuery;
+import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 import java.util.Comparator;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +31,7 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
     private final LoadNoticeVotePort loadNoticeVotePort;
     private final LoadNoticeImagePort loadNoticeImagePort;
     private final LoadNoticeLinkPort loadNoticeLinkPort;
+    private final GetVoteDetailUseCase getVoteDetailUseCase;
 
     @Override
     public List<NoticeLinkInfo> findLinkByNoticeId(Long noticeId) {
@@ -43,16 +48,10 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
     }
 
     @Override
-    public List<NoticeVoteInfo> findVoteByNoticeId(Long noticeId) {
-        List<NoticeVote> votes = loadNoticeVotePort.findVotesByNoticeId(noticeId);
-        return votes.stream()
-            .sorted(Comparator.comparing(NoticeVote::getDisplayOrder))
-            .map(vote -> new NoticeVoteInfo(
-                vote.getId(),
-                vote.getVoteId(),
-                vote.getDisplayOrder()
-            ))
-            .toList();
+    public VoteInfo findVoteByNoticeId(Long noticeId, Long memberId) {
+        NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
+            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
+        return getVoteDetailUseCase.get(new GetVoteDetailsQuery(vote.getVoteId(), memberId));
     }
 
     @Override

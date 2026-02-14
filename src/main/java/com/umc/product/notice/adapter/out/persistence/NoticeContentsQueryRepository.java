@@ -3,7 +3,7 @@ package com.umc.product.notice.adapter.out.persistence;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.notice.domain.QNoticeImage;
 import com.umc.product.notice.domain.QNoticeLink;
-import com.umc.product.notice.domain.QNoticeVote;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -12,18 +12,6 @@ import org.springframework.stereotype.Repository;
 public class NoticeContentsQueryRepository {
 
     private final JPAQueryFactory queryFactory;
-
-    public int findNextVoteDisplayOrder(Long noticeId) {
-        QNoticeVote vote = QNoticeVote.noticeVote;
-
-        Integer maxOrder = queryFactory
-            .select(vote.displayOrder.max())
-            .from(vote)
-            .where(vote.notice.id.eq(noticeId))
-            .fetchOne();
-
-        return maxOrder == null ? 0 : maxOrder + 1;
-    }
 
     public int findNextLinkDisplayOrder(Long noticeId) {
         QNoticeLink link = QNoticeLink.noticeLink;

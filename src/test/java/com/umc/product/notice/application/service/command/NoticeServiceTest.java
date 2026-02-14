@@ -236,7 +236,7 @@ class NoticeServiceTest {
             sut.deleteNotice(command);
 
             // then
-            then(manageNoticeContentUseCase).should().removeContentsByNoticeId(NOTICE_ID);
+            then(manageNoticeContentUseCase).should().removeContentsByNoticeId(NOTICE_ID, MEMBER_ID);
             then(saveNoticePort).should().delete(notice);
         }
 

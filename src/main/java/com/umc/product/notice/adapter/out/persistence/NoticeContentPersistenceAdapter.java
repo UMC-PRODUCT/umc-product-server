@@ -9,6 +9,8 @@ import com.umc.product.notice.application.port.out.SaveNoticeVotePort;
 import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
+import com.umc.product.notice.domain.exception.NoticeDomainException;
+import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -85,23 +87,13 @@ public class NoticeContentPersistenceAdapter implements
     }
 
     @Override
-    public List<NoticeVote> findVotesByNoticeId(Long noticeId) {
+    public Optional<NoticeVote> findVoteByNoticeId(Long noticeId) {
         return voteJpaRepository.findByNoticeId(noticeId);
     }
 
     @Override
     public boolean existsVoteByNoticeId(Long noticeId) {
         return voteJpaRepository.existsByNoticeId(noticeId);
-    }
-
-    @Override
-    public int findNextVoteDisplayOrder(Long noticeId) {
-        return contentsQueryRepository.findNextVoteDisplayOrder(noticeId);
-    }
-
-    @Override
-    public int countVoteByNoticeId(Long noticeId) {
-        return voteJpaRepository.countByNotice_Id(noticeId);
     }
 
     @Override
@@ -149,10 +141,6 @@ public class NoticeContentPersistenceAdapter implements
         return voteJpaRepository.save(noticeVote);
     }
 
-    @Override
-    public List<NoticeVote> saveAllVotes(List<NoticeVote> noticeVotes) {
-        return voteJpaRepository.saveAll(noticeVotes);
-    }
 
     @Override
     public void deleteVote(NoticeVote noticeVote) {

@@ -2,17 +2,19 @@ package com.umc.product.notice.adapter.in.web;
 
 import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeImagesRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeLinksRequest;
-import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeVotesRequest;
+import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeVoteRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.ReplaceNoticeImagesRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.ReplaceNoticeLinksRequest;
-import com.umc.product.notice.adapter.in.web.dto.request.ReplaceNoticeVotesRequest;
 import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeImagesResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeLinksResponse;
-import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeVotesResponse;
+import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeVoteResponse;
 import com.umc.product.notice.adapter.in.web.swagger.NoticeContentApi;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
+import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteResult;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -58,13 +60,15 @@ public class NoticeContentController implements NoticeContentApi {
 
     // 공지사항에 투표 추가
     @PostMapping("/{noticeId}/votes")
-    public ApiResponse<AddNoticeVotesResponse> addNoticeVotes(
+    public ApiResponse<AddNoticeVoteResponse> addNoticeVote(
         @PathVariable("noticeId") Long noticeId,
-        @RequestBody @Valid AddNoticeVotesRequest request) {
+        @RequestBody @Valid AddNoticeVoteRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal) {
 
-        List<Long> voteIds = manageNoticeContentUseCase.addVotes(request.toCommand(), noticeId);
+        AddNoticeVoteResult result = manageNoticeContentUseCase.addVote(
+            request.toCommand(memberPrincipal.getMemberId()), noticeId);
 
-        return ApiResponse.onSuccess(new AddNoticeVotesResponse(voteIds));
+        return ApiResponse.onSuccess(AddNoticeVoteResponse.from(result));
     }
 
     // 공지사항 이미지 전체 수정
@@ -83,15 +87,6 @@ public class NoticeContentController implements NoticeContentApi {
         @RequestBody @Valid ReplaceNoticeLinksRequest request) {
 
         manageNoticeContentUseCase.replaceLinks(request.toCommand(), noticeId);
-    }
-
-    // 공지사항 투표 전체 수정
-    @PatchMapping("/{noticeId}/votes")
-    public void replaceNoticeVotes(
-        @PathVariable("noticeId") Long noticeId,
-        @RequestBody @Valid ReplaceNoticeVotesRequest request) {
-
-        manageNoticeContentUseCase.replaceVotes(request.toCommand(), noticeId);
     }
 
 }

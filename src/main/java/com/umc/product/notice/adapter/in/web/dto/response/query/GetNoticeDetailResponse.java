@@ -3,8 +3,8 @@ package com.umc.product.notice.adapter.in.web.dto.response.query;
 import com.umc.product.notice.application.port.in.query.dto.NoticeImageInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeLinkInfo;
-import com.umc.product.notice.application.port.in.query.dto.NoticeVoteInfo;
 import com.umc.product.notice.dto.NoticeTargetInfo;
+import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 import java.time.Instant;
 import java.util.List;
 import lombok.Builder;
@@ -17,10 +17,10 @@ public record GetNoticeDetailResponse(
     Long id,
     String title,
     String content,
-    Long authorChallengerId, // TODO: 작성자에 대한 정보를 바로 주는 것이 나아보임
+    Long authorChallengerId,
 
     // 공지사항 부가 내용들
-    List<NoticeVoteInfo> votes,
+    VoteInfo vote,
     List<NoticeImageInfo> images,
     List<NoticeLinkInfo> links,
 
@@ -39,7 +39,7 @@ public record GetNoticeDetailResponse(
             .title(noticeInfo.title())
             .content(noticeInfo.content())
             .authorChallengerId(noticeInfo.authorChallengerId())
-            .votes(noticeInfo.votes())
+            .vote(noticeInfo.vote())
             .images(noticeInfo.images())
             .links(noticeInfo.links())
             .targetInfo(noticeInfo.targetInfo())

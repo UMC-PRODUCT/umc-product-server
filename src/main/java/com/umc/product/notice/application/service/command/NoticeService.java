@@ -150,7 +150,7 @@ public class NoticeService implements ManageNoticeUseCase {
         /*
          * 관련 이미지, 투표, 링크 등도 모두 삭제
          */
-        manageNoticeContentUseCase.removeContentsByNoticeId(notice.getId());
+        manageNoticeContentUseCase.removeContentsByNoticeId(notice.getId(), command.memberId());
 
         saveNoticePort.delete(notice);
     }

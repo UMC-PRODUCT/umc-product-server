@@ -10,10 +10,10 @@ import static org.mockito.Mockito.never;
 
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeLinksCommand;
-import com.umc.product.notice.application.port.in.command.dto.AddNoticeVotesCommand;
+import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteCommand;
+import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteResult;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
-import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeVotesCommand;
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
@@ -26,6 +26,9 @@ import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
+import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
+import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -47,6 +50,8 @@ class NoticeContentServiceTest {
     @Mock SaveNoticeImagePort saveNoticeImagePort;
     @Mock SaveNoticeLinkPort saveNoticeLinkPort;
     @Mock LoadNoticePort loadNoticePort;
+    @Mock CreateVoteUseCase createVoteUseCase;
+    @Mock DeleteVoteUseCase deleteVoteUseCase;
 
     @InjectMocks NoticeContentService sut;
 
@@ -194,43 +199,55 @@ class NoticeContentServiceTest {
     }
 
     @Nested
-    @DisplayName("addVotes")
-    class AddVotesTest {
+    @DisplayName("addVote")
+    class AddVoteTest {
 
         @Test
         void 공지사항에_투표를_추가한다() {
             // given
             Notice notice = createNotice();
-            var command = new AddNoticeVotesCommand(List.of(1L, 2L));
+            var command = new AddNoticeVoteCommand(
+                1L, "점심 메뉴 투표", true, false,
+                Instant.now(), Instant.now().plusSeconds(86400 * 2),
+                List.of("한식", "중식", "일식")
+            );
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
-            given(loadNoticeVotePort.findNextVoteDisplayOrder(NOTICE_ID)).willReturn(0);
-            given(saveNoticeVotePort.saveAllVotes(any())).willAnswer(inv -> {
-                List<NoticeVote> votes = inv.getArgument(0);
-                for (int i = 0; i < votes.size(); i++) {
-                    ReflectionTestUtils.setField(votes.get(i), "id", (long) (i + 1));
-                }
-                return votes;
+            given(loadNoticeVotePort.existsVoteByNoticeId(NOTICE_ID)).willReturn(false);
+            given(createVoteUseCase.create(any())).willReturn(10L);
+            given(saveNoticeVotePort.saveVote(any())).willAnswer(inv -> {
+                NoticeVote vote = inv.getArgument(0);
+                ReflectionTestUtils.setField(vote, "id", 1L);
+                return vote;
             });
 
             // when
-            List<Long> result = sut.addVotes(command, NOTICE_ID);
+            AddNoticeVoteResult result = sut.addVote(command, NOTICE_ID);
 
             // then
-            assertThat(result).hasSize(2);
+            assertThat(result.noticeVoteId()).isEqualTo(1L);
+            assertThat(result.voteId()).isEqualTo(10L);
+            then(createVoteUseCase).should().create(any());
+            then(saveNoticeVotePort).should().saveVote(any(NoticeVote.class));
         }
 
         @Test
-        void 투표_ID_목록이_비어있으면_예외가_발생한다() {
+        void 이미_투표가_존재하면_예외가_발생한다() {
             // given
             Notice notice = createNotice();
-            var command = new AddNoticeVotesCommand(List.of());
+            var command = new AddNoticeVoteCommand(
+                1L, "점심 메뉴 투표", true, false,
+                Instant.now(), Instant.now().plusSeconds(86400 * 2),
+                List.of("한식", "중식", "일식")
+            );
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+            given(loadNoticeVotePort.existsVoteByNoticeId(NOTICE_ID)).willReturn(true);
 
             // when & then
-            assertThatThrownBy(() -> sut.addVotes(command, NOTICE_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+            assertThatThrownBy(() -> sut.addVote(command, NOTICE_ID))
+                .isInstanceOf(NoticeDomainException.class);
+            then(createVoteUseCase).should(never()).create(any());
         }
     }
 
@@ -240,13 +257,38 @@ class NoticeContentServiceTest {
 
         @Test
         void 공지사항의_모든_콘텐츠를_삭제한다() {
+            // given
+            Notice notice = createNotice();
+            NoticeVote noticeVote = NoticeVote.create(10L, notice);
+            ReflectionTestUtils.setField(noticeVote, "id", 1L);
+
+            given(loadNoticeVotePort.findVoteByNoticeId(NOTICE_ID))
+                .willReturn(Optional.of(noticeVote));
+
             // when
-            sut.removeContentsByNoticeId(NOTICE_ID);
+            sut.removeContentsByNoticeId(NOTICE_ID, 1L);
 
             // then
             then(saveNoticeImagePort).should().deleteAllImagesByNoticeId(NOTICE_ID);
             then(saveNoticeLinkPort).should().deleteAllLinksByNoticeId(NOTICE_ID);
+            then(deleteVoteUseCase).should().delete(any());
             then(saveNoticeVotePort).should().deleteAllVotesByNoticeId(NOTICE_ID);
+        }
+
+        @Test
+        void 투표가_없는_공지사항의_콘텐츠를_삭제한다() {
+            // given
+            given(loadNoticeVotePort.findVoteByNoticeId(NOTICE_ID))
+                .willReturn(Optional.empty());
+
+            // when
+            sut.removeContentsByNoticeId(NOTICE_ID, 1L);
+
+            // then
+            then(saveNoticeImagePort).should().deleteAllImagesByNoticeId(NOTICE_ID);
+            then(saveNoticeLinkPort).should().deleteAllLinksByNoticeId(NOTICE_ID);
+            then(deleteVoteUseCase).should(never()).delete(any());
+            then(saveNoticeVotePort).should(never()).deleteAllVotesByNoticeId(anyLong());
         }
     }
 
@@ -345,39 +387,6 @@ class NoticeContentServiceTest {
     }
 
     @Nested
-    @DisplayName("replaceVotes")
-    class ReplaceVotesTest {
-
-        @Test
-        void 공지사항_투표를_전체_교체한다() {
-            // given
-            Notice notice = createNotice();
-            var command = new ReplaceNoticeVotesCommand(List.of(10L, 20L));
-
-            given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
-
-            // when
-            sut.replaceVotes(command, NOTICE_ID);
-
-            // then
-            then(saveNoticeVotePort).should().deleteAllVotesByNoticeId(NOTICE_ID);
-            then(saveNoticeVotePort).should().saveAllVotes(any());
-        }
-
-        @Test
-        void 교체할_투표_목록이_null이면_아무_작업도_하지_않는다() {
-            // given
-            var command = new ReplaceNoticeVotesCommand(null);
-
-            // when
-            sut.replaceVotes(command, NOTICE_ID);
-
-            // then
-            then(saveNoticeVotePort).should(never()).deleteAllVotesByNoticeId(anyLong());
-        }
-    }
-
-    @Nested
     @DisplayName("존재하지 않는 공지사항")
     class NotFoundTest {
 
@@ -406,11 +415,15 @@ class NoticeContentServiceTest {
         @Test
         void 존재하지_않는_공지사항에_투표_추가_시_예외가_발생한다() {
             // given
-            var command = new AddNoticeVotesCommand(List.of(1L));
+            var command = new AddNoticeVoteCommand(
+                1L, "투표", true, false,
+                Instant.now(), Instant.now().plusSeconds(86400 * 2),
+                List.of("옵션1", "옵션2")
+            );
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> sut.addVotes(command, NOTICE_ID))
+            assertThatThrownBy(() -> sut.addVote(command, NOTICE_ID))
                     .isInstanceOf(NoticeDomainException.class);
         }
     }
