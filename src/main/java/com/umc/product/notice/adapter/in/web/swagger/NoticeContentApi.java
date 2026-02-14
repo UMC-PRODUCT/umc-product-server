@@ -90,8 +90,7 @@ public interface NoticeContentApi {
     void deleteNoticeVote(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
-
-        MemberPrincipal memberPrincipal
+        @CurrentMember MemberPrincipal memberPrincipal
     );
 
 }

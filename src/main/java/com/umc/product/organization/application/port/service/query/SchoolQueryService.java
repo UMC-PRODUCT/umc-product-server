@@ -63,10 +63,10 @@ public class SchoolQueryService implements GetSchoolUseCase {
 
         SchoolDetailInfo.SchoolInfo schoolInfo = loadSchoolPort.findSchoolDetailByIdWithActiveChapter(schoolId);
 
-        String logoImageLink = null;
+        String logoImageUrl = null;
         if (schoolInfo.logoImageId() != null) {
             FileInfo fileInfo = getFileUseCase.getById(schoolInfo.logoImageId());
-            logoImageLink = fileInfo.fileLink();
+            logoImageUrl = fileInfo.fileLink();
         }
 
         School school = loadSchoolPort.findById(schoolId);
@@ -74,7 +74,7 @@ public class SchoolQueryService implements GetSchoolUseCase {
                 .map(link -> new SchoolDetailInfo.SchoolLinkItem(link.getTitle(), link.getType(), link.getUrl()))
                 .toList();
 
-        return schoolInfo.toDetailInfo(logoImageLink, links);
+        return schoolInfo.toDetailInfo(logoImageUrl, links);
 
     }
 

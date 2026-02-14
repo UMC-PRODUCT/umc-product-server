@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
@@ -24,12 +25,17 @@ import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
 import com.umc.product.notice.application.port.out.SaveNoticeImagePort;
 import com.umc.product.notice.application.port.out.SaveNoticeLinkPort;
 import com.umc.product.notice.application.port.out.SaveNoticeVotePort;
+import com.umc.product.notice.application.service.NoticeAuthorValidator;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
+<<<<<<< HEAD
 import com.umc.product.notice.dto.NoticeTargetInfo;
+=======
+import com.umc.product.notice.domain.exception.NoticeErrorCode;
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
 import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
 import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
 import java.time.Instant;
@@ -56,17 +62,25 @@ class NoticeContentServiceTest {
     @Mock LoadNoticePort loadNoticePort;
     @Mock CreateVoteUseCase createVoteUseCase;
     @Mock DeleteVoteUseCase deleteVoteUseCase;
+<<<<<<< HEAD
     @Mock GetNoticeTargetUseCase getNoticeTargetUseCase;
     @Mock GetChallengerUseCase getChallengerUseCase;
+=======
+    @Mock NoticeAuthorValidator noticeAuthorValidator;
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
 
     @InjectMocks NoticeContentService sut;
 
     private static final Long NOTICE_ID = 100L;
     private static final Long AUTHOR_MEMBER_ID = 1L;
     private static final Long AUTHOR_CHALLENGER_ID = 10L;
+<<<<<<< HEAD
     private static final Long GISU_ID = 9L;
     private static final Long OTHER_MEMBER_ID = 999L;
     private static final Long OTHER_CHALLENGER_ID = 99L;
+=======
+    private static final Long OTHER_MEMBER_ID = 999L;
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
 
     private Notice createNotice() {
         Notice notice = Notice.create("테스트 공지", "테스트 내용", AUTHOR_CHALLENGER_ID, false);
@@ -74,11 +88,17 @@ class NoticeContentServiceTest {
         return notice;
     }
 
+<<<<<<< HEAD
     private void stubValidateAuthor(Long memberId, Long challengerId) {
         given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID))
             .willReturn(new NoticeTargetInfo(GISU_ID, null, null, List.of()));
         given(getChallengerUseCase.getActiveByMemberIdAndGisuId(memberId, GISU_ID))
             .willReturn(new ChallengerInfo(challengerId, memberId, GISU_ID, null, null));
+=======
+    private void stubValidateAuthorFail(Notice notice, Long memberId) {
+        willThrow(new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH))
+            .given(noticeAuthorValidator).validate(notice, memberId);
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
     }
 
     @Nested
@@ -92,7 +112,11 @@ class NoticeContentServiceTest {
             var command = new AddNoticeImagesCommand(List.of("img1", "img2"));
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
+=======
+
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
             given(loadNoticeImagePort.countImageByNoticeId(NOTICE_ID)).willReturn(0);
             given(loadNoticeImagePort.findNextImageDisplayOrder(NOTICE_ID)).willReturn(0);
             given(saveNoticeImagePort.saveAllImages(any())).willAnswer(inv -> {
@@ -118,7 +142,11 @@ class NoticeContentServiceTest {
             var command = new AddNoticeImagesCommand(List.of("img1", "img2", "img3"));
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
+=======
+
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
             given(loadNoticeImagePort.countImageByNoticeId(NOTICE_ID)).willReturn(8);
 
             // when & then
@@ -135,6 +163,7 @@ class NoticeContentServiceTest {
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
 
+
             // when & then
             assertThatThrownBy(() -> sut.addImages(command, NOTICE_ID, AUTHOR_MEMBER_ID))
                     .isInstanceOf(NoticeDomainException.class);
@@ -149,6 +178,7 @@ class NoticeContentServiceTest {
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
 
+
             // when & then
             assertThatThrownBy(() -> sut.addImages(command, NOTICE_ID, AUTHOR_MEMBER_ID))
                     .isInstanceOf(NoticeDomainException.class);
@@ -161,7 +191,11 @@ class NoticeContentServiceTest {
             var command = new AddNoticeImagesCommand(List.of("img1", "img2"));
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
+=======
+
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
             given(loadNoticeImagePort.countImageByNoticeId(NOTICE_ID)).willReturn(8);
             given(loadNoticeImagePort.findNextImageDisplayOrder(NOTICE_ID)).willReturn(8);
             given(saveNoticeImagePort.saveAllImages(any())).willAnswer(inv -> {
@@ -186,7 +220,11 @@ class NoticeContentServiceTest {
             var command = new AddNoticeImagesCommand(List.of("img1"));
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(OTHER_MEMBER_ID, OTHER_CHALLENGER_ID);
+=======
+            stubValidateAuthorFail(notice, OTHER_MEMBER_ID);
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
 
             // when & then
             assertThatThrownBy(() -> sut.addImages(command, NOTICE_ID, OTHER_MEMBER_ID))
@@ -205,7 +243,11 @@ class NoticeContentServiceTest {
             var command = new AddNoticeLinksCommand(List.of("https://example.com", "https://test.com"));
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
+=======
+
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
             given(loadNoticeLinkPort.findNextLinkDisplayOrder(NOTICE_ID)).willReturn(0);
             given(saveNoticeLinkPort.saveAllLinks(any())).willAnswer(inv -> {
                 List<NoticeLink> links = inv.getArgument(0);
@@ -231,6 +273,7 @@ class NoticeContentServiceTest {
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
 
+
             // when & then
             assertThatThrownBy(() -> sut.addLinks(command, NOTICE_ID, AUTHOR_MEMBER_ID))
                     .isInstanceOf(NoticeDomainException.class);
@@ -243,7 +286,11 @@ class NoticeContentServiceTest {
             var command = new AddNoticeLinksCommand(List.of("https://example.com"));
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(OTHER_MEMBER_ID, OTHER_CHALLENGER_ID);
+=======
+            stubValidateAuthorFail(notice, OTHER_MEMBER_ID);
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
 
             // when & then
             assertThatThrownBy(() -> sut.addLinks(command, NOTICE_ID, OTHER_MEMBER_ID))
@@ -266,7 +313,11 @@ class NoticeContentServiceTest {
             );
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
+=======
+
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
             given(loadNoticeVotePort.existsVoteByNoticeId(NOTICE_ID)).willReturn(false);
             given(createVoteUseCase.create(any())).willReturn(10L);
             given(saveNoticeVotePort.saveVote(any())).willAnswer(inv -> {
@@ -296,7 +347,11 @@ class NoticeContentServiceTest {
             );
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
+=======
+
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
             given(loadNoticeVotePort.existsVoteByNoticeId(NOTICE_ID)).willReturn(true);
 
             // when & then
@@ -316,7 +371,11 @@ class NoticeContentServiceTest {
             );
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(OTHER_MEMBER_ID, OTHER_CHALLENGER_ID);
+=======
+            stubValidateAuthorFail(notice, OTHER_MEMBER_ID);
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
 
             // when & then
             assertThatThrownBy(() -> sut.addVote(command, NOTICE_ID))
@@ -337,7 +396,11 @@ class NoticeContentServiceTest {
             ReflectionTestUtils.setField(noticeVote, "id", 1L);
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
+=======
+
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
             given(loadNoticeVotePort.findVoteByNoticeId(NOTICE_ID))
                 .willReturn(Optional.of(noticeVote));
 
@@ -354,7 +417,11 @@ class NoticeContentServiceTest {
             // given
             Notice notice = createNotice();
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
+=======
+
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
             given(loadNoticeVotePort.findVoteByNoticeId(NOTICE_ID))
                 .willReturn(Optional.empty());
 
@@ -369,7 +436,11 @@ class NoticeContentServiceTest {
             // given
             Notice notice = createNotice();
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(OTHER_MEMBER_ID, OTHER_CHALLENGER_ID);
+=======
+            stubValidateAuthorFail(notice, OTHER_MEMBER_ID);
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
 
             // when & then
             assertThatThrownBy(() -> sut.deleteVote(NOTICE_ID, OTHER_MEMBER_ID))
@@ -432,6 +503,7 @@ class NoticeContentServiceTest {
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
 
+
             // when
             sut.replaceImages(command, NOTICE_ID, AUTHOR_MEMBER_ID);
 
@@ -461,6 +533,7 @@ class NoticeContentServiceTest {
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
 
+
             // when
             sut.replaceImages(command, NOTICE_ID, AUTHOR_MEMBER_ID);
 
@@ -488,7 +561,11 @@ class NoticeContentServiceTest {
             var command = new ReplaceNoticeImagesCommand(List.of("newImg1"));
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(OTHER_MEMBER_ID, OTHER_CHALLENGER_ID);
+=======
+            stubValidateAuthorFail(notice, OTHER_MEMBER_ID);
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
 
             // when & then
             assertThatThrownBy(() -> sut.replaceImages(command, NOTICE_ID, OTHER_MEMBER_ID))
@@ -508,6 +585,7 @@ class NoticeContentServiceTest {
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
             stubValidateAuthor(AUTHOR_MEMBER_ID, AUTHOR_CHALLENGER_ID);
+
 
             // when
             sut.replaceLinks(command, NOTICE_ID, AUTHOR_MEMBER_ID);
@@ -536,7 +614,11 @@ class NoticeContentServiceTest {
             var command = new ReplaceNoticeLinksCommand(List.of("https://new1.com"));
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+<<<<<<< HEAD
             stubValidateAuthor(OTHER_MEMBER_ID, OTHER_CHALLENGER_ID);
+=======
+            stubValidateAuthorFail(notice, OTHER_MEMBER_ID);
+>>>>>>> 044a564ce2abd34f5e1f4718698f5a7f30c0cf0c
 
             // when & then
             assertThatThrownBy(() -> sut.replaceLinks(command, NOTICE_ID, OTHER_MEMBER_ID))
