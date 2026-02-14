@@ -34,6 +34,7 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -164,6 +165,9 @@ public class MemberController {
         return MemberInfoResponse.from(info);
     }
 
+    // TODO: 총괄이 임의로 계정을 삭제시키려면 memberId로 삭제하는 API도 필요할 것 같음
+    
+    @DeleteMapping
     public MemberInfo deleteMember(@CurrentMember MemberPrincipal memberPrincipal) {
         Long memberId = memberPrincipal.getMemberId();
 
