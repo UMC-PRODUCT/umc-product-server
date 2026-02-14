@@ -100,7 +100,7 @@ public class NoticeContentController implements NoticeContentApi {
 
     @DeleteMapping("/{noticeId}/vote")
     public void deleteNoticeVote(@PathVariable("noticeId") Long noticeId,
-                                 MemberPrincipal memberPrincipal) {
+                                 @CurrentMember MemberPrincipal memberPrincipal) {
 
         manageNoticeContentUseCase.deleteVote(noticeId, memberPrincipal.getMemberId());
     }
