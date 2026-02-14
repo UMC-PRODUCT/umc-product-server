@@ -31,26 +31,16 @@ public record MyAttendanceHistoryInfo(
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
+    /**
+     * AttendanceSheet 없이 생성 (sheet 정보가 불필요한 경우)
+     */
     public static MyAttendanceHistoryInfo of(Schedule schedule, AttendanceRecord record) {
-        return new MyAttendanceHistoryInfo(
-            record.getId(),
-            schedule.getId(),
-            schedule.getName(),
-            schedule.getStartsAt(),
-            schedule.getTags().stream().toList(),
-            schedule.getStartsAt().format(DATE_FORMATTER),
-            schedule.getStartsAt().format(TIME_FORMATTER),
-            schedule.getEndsAt().format(TIME_FORMATTER),
-            record.getStatus(),
-            record.getStatusDisplay(),
-            null,  // sheetId는 AttendanceSheet가 필요
-            schedule.getLocationName(),
-            record.isChecked() ? record.isLocationVerified() : null,
-            record.getMemo(),
-            record.getCheckedAt()
-        );
+        return of(schedule, null, record);
     }
 
+    /**
+     * 전체 정보로 생성 (sheet는 nullable)
+     */
     public static MyAttendanceHistoryInfo of(Schedule schedule, AttendanceSheet sheet, AttendanceRecord record) {
         return new MyAttendanceHistoryInfo(
             record.getId(),
@@ -63,7 +53,7 @@ public record MyAttendanceHistoryInfo(
             schedule.getEndsAt().format(TIME_FORMATTER),
             record.getStatus(),
             record.getStatusDisplay(),
-            sheet.getId(),
+            sheet != null ? sheet.getId() : null,  // null-safe
             schedule.getLocationName(),
             record.isChecked() ? record.isLocationVerified() : null,
             record.getMemo(),
