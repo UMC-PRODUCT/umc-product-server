@@ -103,10 +103,15 @@ class ChallengerSearchServiceTest {
     }
 
     private MemberProfileInfo createProfile(Long id, String name, String nickname) {
-        return new MemberProfileInfo(
-            id, name, nickname, name + "@test.com",
-            1L, "한양대학교ERICA", null, MemberStatus.ACTIVE, null
-        );
+        return MemberProfileInfo.builder()
+            .id(id)
+            .name(name)
+            .nickname(nickname)
+            .email("umcproduct@hyu.ac.kr")
+            .schoolId(1L)
+            .schoolName("한양대학교 ERICA")
+            .status(MemberStatus.ACTIVE)
+            .build();
     }
 
     @Nested
@@ -445,7 +450,7 @@ class ChallengerSearchServiceTest {
             assertThat(first.memberId()).isEqualTo(10L);
             assertThat(first.name()).isEqualTo("홍길동");
             assertThat(first.nickname()).isEqualTo("hong");
-            assertThat(first.schoolName()).isEqualTo("한양대학교ERICA");
+            assertThat(first.schoolName()).isEqualTo("한양대학교 ERICA");
             assertThat(first.gisu()).isEqualTo(7L);
             assertThat(first.part()).isEqualTo(ChallengerPart.PLAN);
             assertThat(first.profileImageLink()).isNull();
