@@ -1,12 +1,14 @@
 # UMC PRODUCT TEAM SERVER
 
-UMC Product Team이 제작하는 웹사이트 및 iOS, Android 애플리케이션에서 공용으로 사용되는 백엔드 서버입니다.
+> UMC 공식 프로덕트팀이 제작하는 웹사이트 및 iOS, Android 애플리케이션에서 공용으로 사용되는 백엔드 서버입니다.
 
 [![codecov](https://codecov.io/gh/UMC-PRODUCT/umc-product-server/graph/badge.svg?token=0GUPQZQ40J)](https://codecov.io/gh/UMC-PRODUCT/umc-product-server)
 ![GitHub Actions](https://github.com/UMC-PRODUCT/umc-product-server/actions/workflows/ci.yml/badge.svg)
 ![GitHub Actions](https://github.com/UMC-PRODUCT/umc-product-server/actions/workflows/cd.yml/badge.svg)
 ![Version](https://img.shields.io/github/v/release/UMC-PRODUCT/umc-product-server)
 ![License](https://img.shields.io/github/license/UMC-PRODUCT/umc-product-server)
+
+<img alt="banner" width="1000" src="https://github.com/user-attachments/assets/d8ffb7f6-6bc0-4aca-a0db-0e6133d6794c" />
 
 ## 👥 프로덕트팀 구성원
 
@@ -21,12 +23,4 @@ UMC Product Team이 제작하는 웹사이트 및 iOS, Android 애플리케이�
 
 ## 🛠️ Tech Stack
 
-| Category            | Technology                                           |
-|---------------------|------------------------------------------------------|
-| **Backend**         | Spring Boot 3.5.9, Java 21, JDK 21 Amazon Corretto   |
-| **Database**        | PostgreSQL 18.x + Flyway Migration                   |
-| **Version Control** | Git Flow + Semantic Versioning (`v0.0.0` ~ `v1.0.0`) |
-| **ORM/Query**       | JPA + QueryDSL                                       |
-
-## 🌐 Branch Strategy (Git Flow)
-
+<img width="1000" alt="tech-stack" src="https://github.com/user-attachments/assets/06bde591-1ec5-441d-b609-1ecea42e5433" />
