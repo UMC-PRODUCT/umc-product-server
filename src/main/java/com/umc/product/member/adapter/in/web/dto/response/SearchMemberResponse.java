@@ -30,7 +30,7 @@ public record SearchMemberResponse(
         String profileImageLink,
         Long challengerId,
         Long gisuId,
-        Long generation,
+        Long gisu,
         ChallengerPart part,
         List<ChallengerRoleType> roleTypes
     ) {
@@ -45,7 +45,7 @@ public record SearchMemberResponse(
                 info.profileImageLink(),
                 info.challengerId(),
                 info.gisuId(),
-                info.generation(),
+                info.gisu(),
                 info.part(),
                 info.roleTypes()
             );

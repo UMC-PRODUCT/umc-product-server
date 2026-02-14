@@ -14,7 +14,7 @@ public record SearchMemberItemInfo(
     String profileImageLink,
     Long challengerId,
     Long gisuId,
-    Long generation,
+    Long gisu,
     ChallengerPart part,
     List<ChallengerRoleType> roleTypes
 ) {
