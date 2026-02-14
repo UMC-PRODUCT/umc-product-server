@@ -13,7 +13,6 @@ import com.umc.product.notice.application.port.in.command.dto.CreateNoticeComman
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
-import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
@@ -21,6 +20,7 @@ import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
+import com.umc.product.notice.application.service.NoticeAuthorValidator;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.notice.dto.NoticeTargetPattern;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
@@ -56,11 +56,11 @@ public class NoticeService implements ManageNoticeUseCase {
     // 도메인 외부 UseCase
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
-    private final GetNoticeTargetUseCase getNoticeTargetUseCase;
     private final ManageFcmUseCase manageFcmUseCase;
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChapterUseCase getChapterUseCase;
+    private final NoticeAuthorValidator noticeAuthorValidator;
 
     @Override
     public Long createNotice(CreateNoticeCommand command) {
@@ -117,21 +117,7 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void updateNoticeTitleOrContent(UpdateNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-        NoticeTargetInfo targets = getNoticeTargetUseCase.findByNoticeId(command.noticeId());
-
-        /**
-         * 작성자 일치 여부 검증 (이 메서드로 ACTIVE 상태인 챌린저만 올 수 있으므로 별도 상태 검증은 불필요)
-         */
-        boolean isAuthor = notice.isAuthorChallenger(
-            getChallengerUseCase.getActiveByMemberIdAndGisuId(
-                command.memberId(),
-                targets.targetGisuId()
-            ).challengerId()
-        );
-
-        if (!isAuthor) {
-            throw new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH);
-        }
+        noticeAuthorValidator.validate(notice, command.memberId());
 
         /**
          * 제목/내용만 수정
@@ -146,6 +132,7 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void deleteNotice(DeleteNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
+        noticeAuthorValidator.validate(notice, command.memberId());
 
         /*
          * 관련 이미지, 투표, 링크 등도 모두 삭제
@@ -223,4 +210,5 @@ public class NoticeService implements ManageNoticeUseCase {
 
         return targetIds;
     }
+
 }

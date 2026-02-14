@@ -20,6 +20,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,9 +41,11 @@ public class NoticeContentController implements NoticeContentApi {
     @PostMapping("/{noticeId}/images")
     public ApiResponse<AddNoticeImagesResponse> addNoticeImages(
         @PathVariable("noticeId") Long noticeId,
-        @RequestBody @Valid AddNoticeImagesRequest request) {
+        @RequestBody @Valid AddNoticeImagesRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal) {
 
-        List<Long> imageIds = manageNoticeContentUseCase.addImages(request.toCommand(), noticeId);
+        List<Long> imageIds = manageNoticeContentUseCase.addImages(
+            request.toCommand(), noticeId, memberPrincipal.getMemberId());
 
         return ApiResponse.onSuccess(new AddNoticeImagesResponse(imageIds));
     }
@@ -51,9 +54,11 @@ public class NoticeContentController implements NoticeContentApi {
     @PostMapping("/{noticeId}/links")
     public ApiResponse<AddNoticeLinksResponse> addNoticeLinks(
         @PathVariable("noticeId") Long noticeId,
-        @RequestBody @Valid AddNoticeLinksRequest request) {
+        @RequestBody @Valid AddNoticeLinksRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal) {
 
-        List<Long> linkIds = manageNoticeContentUseCase.addLinks(request.toCommand(), noticeId);
+        List<Long> linkIds = manageNoticeContentUseCase.addLinks(
+            request.toCommand(), noticeId, memberPrincipal.getMemberId());
 
         return ApiResponse.onSuccess(new AddNoticeLinksResponse(linkIds));
     }
@@ -75,18 +80,29 @@ public class NoticeContentController implements NoticeContentApi {
     @PatchMapping("/{noticeId}/images")
     public void replaceNoticeImages(
         @PathVariable("noticeId") Long noticeId,
-        @RequestBody @Valid ReplaceNoticeImagesRequest request) {
+        @RequestBody @Valid ReplaceNoticeImagesRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal) {
 
-        manageNoticeContentUseCase.replaceImages(request.toCommand(), noticeId);
+        manageNoticeContentUseCase.replaceImages(
+            request.toCommand(), noticeId, memberPrincipal.getMemberId());
     }
 
     // 공지사항 링크 전체 수정
     @PatchMapping("/{noticeId}/links")
     public void replaceNoticeLinks(
         @PathVariable("noticeId") Long noticeId,
-        @RequestBody @Valid ReplaceNoticeLinksRequest request) {
+        @RequestBody @Valid ReplaceNoticeLinksRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal) {
 
-        manageNoticeContentUseCase.replaceLinks(request.toCommand(), noticeId);
+        manageNoticeContentUseCase.replaceLinks(
+            request.toCommand(), noticeId, memberPrincipal.getMemberId());
+    }
+
+    @DeleteMapping("/{noticeId}/vote")
+    public void deleteNoticeVote(@PathVariable("noticeId") Long noticeId,
+                                 @CurrentMember MemberPrincipal memberPrincipal) {
+
+        manageNoticeContentUseCase.deleteVote(noticeId, memberPrincipal.getMemberId());
     }
 
 }

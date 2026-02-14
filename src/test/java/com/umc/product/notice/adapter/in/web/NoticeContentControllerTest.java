@@ -1,6 +1,7 @@
 package com.umc.product.notice.adapter.in.web;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.patch;
@@ -34,7 +35,7 @@ public class NoticeContentControllerTest extends DocumentationTest {
         Long noticeId = 1L;
         AddNoticeImagesRequest request = new AddNoticeImagesRequest(List.of("file-123", "file-456"));
 
-        given(manageNoticeContentUseCase.addImages(any(), eq(noticeId))).willReturn(List.of(1L, 2L));
+        given(manageNoticeContentUseCase.addImages(any(), eq(noticeId), anyLong())).willReturn(List.of(1L, 2L));
 
         // when
         ResultActions result = mockMvc.perform(
@@ -66,7 +67,7 @@ public class NoticeContentControllerTest extends DocumentationTest {
         Long noticeId = 1L;
         AddNoticeLinksRequest request = new AddNoticeLinksRequest(List.of("https://example.com", "https://umc.com"));
 
-        given(manageNoticeContentUseCase.addLinks(any(), eq(noticeId))).willReturn(List.of(1L, 2L));
+        given(manageNoticeContentUseCase.addLinks(any(), eq(noticeId), anyLong())).willReturn(List.of(1L, 2L));
 
         // when
         ResultActions result = mockMvc.perform(

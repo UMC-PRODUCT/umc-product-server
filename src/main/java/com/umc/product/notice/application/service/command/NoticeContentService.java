@@ -7,6 +7,7 @@ import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteComma
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteResult;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
+import com.umc.product.notice.application.service.NoticeAuthorValidator;
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
@@ -45,10 +46,12 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
     private final CreateVoteUseCase createVoteUseCase;
     private final DeleteVoteUseCase deleteVoteUseCase;
+    private final NoticeAuthorValidator noticeAuthorValidator;
 
     @Override
     public AddNoticeVoteResult addVote(AddNoticeVoteCommand command, Long noticeId) {
         Notice notice = findNoticeById(noticeId);
+        noticeAuthorValidator.validate(notice, command.createdMemberId());
 
         if (loadNoticeVotePort.existsVoteByNoticeId(noticeId)) {
             throw new NoticeDomainException(NoticeErrorCode.VOTE_ALREADY_EXISTS);
@@ -63,8 +66,9 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     }
 
     @Override
-    public List<Long> addImages(AddNoticeImagesCommand command, Long noticeId) {
+    public List<Long> addImages(AddNoticeImagesCommand command, Long noticeId, Long memberId) {
         Notice notice = findNoticeById(noticeId);
+        noticeAuthorValidator.validate(notice, memberId);
 
         if (command.imageIds() == null || command.imageIds().isEmpty()) {
             throw new NoticeDomainException(NoticeErrorCode.IMAGE_URLS_REQUIRED);
@@ -92,8 +96,9 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     }
 
     @Override
-    public List<Long> addLinks(AddNoticeLinksCommand command, Long noticeId) {
+    public List<Long> addLinks(AddNoticeLinksCommand command, Long noticeId, Long memberId) {
         Notice notice = findNoticeById(noticeId);
+        noticeAuthorValidator.validate(notice, memberId);
 
         if (command.links() == null || command.links().isEmpty()) {
             throw new NoticeDomainException(NoticeErrorCode.LINK_URLS_REQUIRED);
@@ -110,6 +115,17 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
             .toList();
     }
 
+    @Override
+    public void deleteVote(Long noticeId, Long memberId) {
+        Notice notice = findNoticeById(noticeId);
+        noticeAuthorValidator.validate(notice, memberId);
+
+        NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
+            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
+
+        deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
+        saveNoticeVotePort.deleteVote(vote);
+    }
 
     @Override
     public void removeContentsByNoticeId(Long noticeId, Long memberId) {
@@ -124,7 +140,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     }
 
     @Override
-    public void replaceImages(ReplaceNoticeImagesCommand command, Long noticeId) {
+    public void replaceImages(ReplaceNoticeImagesCommand command, Long noticeId, Long memberId) {
         if (command.imageIds() == null) {
             return;
         }
@@ -134,6 +150,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         }
 
         Notice notice = findNoticeById(noticeId);
+        noticeAuthorValidator.validate(notice, memberId);
         saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
 
         if (command.imageIds().isEmpty()) {
@@ -149,12 +166,13 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     }
 
     @Override
-    public void replaceLinks(ReplaceNoticeLinksCommand command, Long noticeId) {
+    public void replaceLinks(ReplaceNoticeLinksCommand command, Long noticeId, Long memberId) {
         if (command.links() == null) {
             return;
         }
 
         Notice notice = findNoticeById(noticeId);
+        noticeAuthorValidator.validate(notice, memberId);
         saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
 
         if (command.links().isEmpty()) {
@@ -173,4 +191,5 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         return loadNoticePort.findNoticeById(noticeId)
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
+
 }

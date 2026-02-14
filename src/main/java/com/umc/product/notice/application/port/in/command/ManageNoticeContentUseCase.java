@@ -23,17 +23,19 @@ public interface ManageNoticeContentUseCase {
      * 공지에 이미지 추가
      * @return 생성된 NoticeImage의 id 리스트
      */
-    List<Long> addImages(AddNoticeImagesCommand command, Long noticeId);
+    List<Long> addImages(AddNoticeImagesCommand command, Long noticeId, Long memberId);
 
     /*
      * 공지에 링크 추가
      * @return 생성된 NoticeLink의 id 리스트
      */
-    List<Long> addLinks(AddNoticeLinksCommand command, Long noticeId);
+    List<Long> addLinks(AddNoticeLinksCommand command, Long noticeId, Long memberId);
+
+    void deleteVote(Long noticeId, Long memberId);
 
     void removeContentsByNoticeId(Long noticeId, Long memberId);
 
-    void replaceImages(ReplaceNoticeImagesCommand command, Long noticeId);
+    void replaceImages(ReplaceNoticeImagesCommand command, Long noticeId, Long memberId);
 
-    void replaceLinks(ReplaceNoticeLinksCommand command, Long noticeId);
+    void replaceLinks(ReplaceNoticeLinksCommand command, Long noticeId, Long memberId);
 }
