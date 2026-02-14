@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,7 +34,8 @@ public class ChallengerRoleController {
     private final GetGisuUseCase getGisuUseCase;
 
     @PostMapping
-    CreateChallengerRoleResponse createChallengerRole(CreateChallengerRoleRequest request) {
+    public CreateChallengerRoleResponse createChallengerRole(
+        @RequestBody CreateChallengerRoleRequest request) {
         Long createdId =
             manageChallengerRoleUseCase.createChallengerRole(CreateChallengerRoleCommand.from(request));
 
@@ -43,7 +45,7 @@ public class ChallengerRoleController {
     }
 
     @GetMapping("{challengerRoleId}")
-    ChallengerRoleResponse getChallengerRole(
+    public ChallengerRoleResponse getChallengerRole(
         @PathVariable Long challengerRoleId
     ) {
         ChallengerRoleInfo challengerRoleInfo = getChallengerRoleUseCase.byId(challengerRoleId);
@@ -54,7 +56,7 @@ public class ChallengerRoleController {
     }
 
     @DeleteMapping("{challengerRoleId}")
-    void deleteChallengerRole(
+    public void deleteChallengerRole(
         @PathVariable Long challengerRoleId
     ) {
         manageChallengerRoleUseCase.deleteChallengerRole(
