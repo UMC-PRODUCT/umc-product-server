@@ -448,13 +448,13 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
     }
 
     private InterviewSchedulingSummaryInfo.ProgressInfo buildProgressAll(Long recruitmentId) {
-        long total = loadApplicationPort.countByRecruitmentId(recruitmentId);
+        long total = loadApplicationPort.countDocPassedByRecruitmentId(recruitmentId);
         long scheduled = loadInterviewAssignmentPort.countByRecruitmentId(recruitmentId);
         return new InterviewSchedulingSummaryInfo.ProgressInfo("ALL", "ALL", total, scheduled);
     }
 
     private InterviewSchedulingSummaryInfo.ProgressInfo buildProgressPart(Long recruitmentId, PartOption part) {
-        long total = loadApplicationPort.countByRecruitmentIdAndFirstPreferredPart(recruitmentId, part);
+        long total = loadApplicationPort.countDocPassedByRecruitmentIdAndFirstPreferredPart(recruitmentId, part);
         long scheduled = loadInterviewAssignmentPort.countByRecruitmentIdAndFirstPreferredPart(recruitmentId, part);
         return new InterviewSchedulingSummaryInfo.ProgressInfo("PART", part.name(), total, scheduled);
     }

@@ -2,10 +2,19 @@ package com.umc.product.member.application.port.in.query;
 
 import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.MemberStatus;
+import com.umc.product.member.domain.Member;
 import java.util.List;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Member Profile Info DTO
+ *
+ * @deprecated use {@link MemberInfo} instead, referring to Issue #391
+ */
 @Slf4j
+@Builder
+@Deprecated
 public record MemberProfileInfo(
     Long id,
     String name,
@@ -13,6 +22,7 @@ public record MemberProfileInfo(
     String email,
     Long schoolId,
     String schoolName,
+    String profileImageId,
     String profileImageLink,
     MemberStatus status,
     List<ChallengerRoleInfo> roles
@@ -31,10 +41,28 @@ public record MemberProfileInfo(
             memberInfo.email(),
             memberInfo.schoolId(),
             schoolName,
+            null,
             profileImageLink,
             memberInfo.status(),
             null
         );
+    }
+
+    public static MemberProfileInfo from(
+        Member member, String schoolName, String profileImageLink, List<ChallengerRoleInfo> roles
+    ) {
+        return MemberProfileInfo.builder()
+            .id(member.getId())
+            .name(member.getName())
+            .nickname(member.getNickname())
+            .email(member.getEmail())
+            .schoolId(member.getSchoolId())
+            .schoolName(schoolName)
+            .profileImageId(member.getProfileImageId())
+            .profileImageLink(profileImageLink)
+            .status(member.getStatus())
+            .roles(roles)
+            .build();
     }
 
     public static MemberProfileInfo from(
@@ -47,10 +75,10 @@ public record MemberProfileInfo(
             memberInfo.email(),
             memberInfo.schoolId(),
             schoolName,
+            null,
             profileImageLink,
             memberInfo.status(),
             roles
         );
     }
-
 }

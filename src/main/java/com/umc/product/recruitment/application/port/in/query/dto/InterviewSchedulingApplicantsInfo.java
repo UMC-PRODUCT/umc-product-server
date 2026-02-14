@@ -24,7 +24,7 @@ public record InterviewSchedulingApplicantsInfo(
         String name,
         PartOption firstPart,
         PartOption secondPart,
-        double documentScore,
+        Double documentScore,
         ScheduledSlotInfo scheduledSlot
     ) {
         public record ScheduledSlotInfo(String date, String start, String end) {

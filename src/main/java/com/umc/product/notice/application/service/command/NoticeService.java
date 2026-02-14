@@ -1,10 +1,12 @@
 package com.umc.product.notice.application.service.command;
 
-import com.umc.product.authorization.application.port.in.query.GetMemberRolesUseCase;
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
@@ -25,8 +27,6 @@ import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.notification.application.port.in.dto.TopicNotificationCommand;
 import com.umc.product.notification.domain.FcmTopicName;
-import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class NoticeService implements ManageNoticeUseCase {
 
     // 도메인 외부 UseCase
     private final GetChallengerUseCase getChallengerUseCase;
-    private final GetMemberRolesUseCase getMemberRolesUseCase;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetNoticeTargetUseCase getNoticeTargetUseCase;
     private final ManageFcmUseCase manageFcmUseCase;
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
@@ -96,16 +96,16 @@ public class NoticeService implements ManageNoticeUseCase {
          */
         if (savedNotice.isNotificationRequired()) {
             List<String> topics = FcmTopicName.resolveTopics(
-                    command.targetInfo().targetGisuId(),
-                    command.targetInfo().targetChapterId(),
-                    command.targetInfo().targetSchoolId(),
-                    command.targetInfo().targetParts()
+                command.targetInfo().targetGisuId(),
+                command.targetInfo().targetChapterId(),
+                command.targetInfo().targetSchoolId(),
+                command.targetInfo().targetParts()
             );
 
             String title = NOTICE_TITLE_PREFIX + savedNotice.getTitle();
             for (String topic : topics) {
                 manageFcmUseCase.sendMessageByTopic(
-                        new TopicNotificationCommand(topic, title, NOTICE_BODY_SUFFIX)
+                    new TopicNotificationCommand(topic, title, NOTICE_BODY_SUFFIX)
                 );
             }
             savedNotice.markAsNotified(Instant.now());
@@ -188,13 +188,14 @@ public class NoticeService implements ManageNoticeUseCase {
      */
     private boolean validateNoticeWritePermission(NoticeTargetInfo noticeTargetInfo, Long authorMemberId) {
         NoticeTargetPattern pattern = NoticeTargetPattern.from(noticeTargetInfo);
-        return pattern.validatePermission(noticeTargetInfo, authorMemberId, getMemberRolesUseCase);
+        return pattern.validatePermission(noticeTargetInfo, authorMemberId, getChallengerRoleUseCase);
     }
 
     /**
      * NoticeTargetInfo에 매칭되는 챌린저 ID 목록을 조회합니다. (알림 전송용)
-     *
+     * <p>
      * TODO: 헥사고날 관점 상 추후 리팩토링 필요
+     *
      * @return 대상 챌린저 ID 리스트
      */
     private List<Long> resolveTargetChallengerIds(NoticeTargetInfo targetInfo) {

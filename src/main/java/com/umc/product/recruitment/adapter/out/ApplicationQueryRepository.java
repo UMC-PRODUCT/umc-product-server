@@ -375,8 +375,10 @@ public class ApplicationQueryRepository {
         }
 
         // (applicationId, avgScore)
-        java.util.List<Tuple> rows = queryFactory
-            .select(evaluation.application.id, evaluation.score.avg())
+        NumberExpression<Double> avgExpression = evaluation.score.avg();
+
+        List<Tuple> rows = queryFactory
+            .select(evaluation.application.id, avgExpression)
             .from(evaluation)
             .where(
                 evaluation.application.id.in(applicationIds),
@@ -391,7 +393,7 @@ public class ApplicationQueryRepository {
             .collect(Collectors.toMap(
                 t -> t.get(evaluation.application.id),
                 t -> {
-                    Double avg = t.get(evaluation.score.avg());
+                    Double avg = t.get(avgExpression);
                     if (avg == null) {
                         return null;
                     }
@@ -1000,6 +1002,36 @@ public class ApplicationQueryRepository {
             );
 
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
+    }
+
+    public long countDocPassedByRecruitmentId(Long recruitmentId) {
+        Long count = queryFactory
+            .select(application.count())
+            .from(application)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                application.status.eq(ApplicationStatus.DOC_PASSED)
+            )
+            .fetchOne();
+        return count != null ? count : 0L;
+    }
+
+    public long countDocPassedByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, ChallengerPart part) {
+        Long count = queryFactory
+            .select(application.countDistinct())
+            .from(application)
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitment(recruitmentId),
+                application.status.eq(ApplicationStatus.DOC_PASSED),
+                recruitmentPart.part.eq(part)
+            )
+            .fetchOne();
+        return count != null ? count : 0L;
     }
 
     private BooleanExpression belongsToRecruitments(Long chapterId, Long schoolId) {

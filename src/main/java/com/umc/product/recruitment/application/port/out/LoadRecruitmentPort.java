@@ -56,4 +56,7 @@ public interface LoadRecruitmentPort {
     Map<RecruitmentScheduleType, RecruitmentSchedule> findScheduleMapByRecruitmentId(Long recruitmentId);
 
     boolean existsById(Long recruitmentId);
+
+    List<Recruitment> findAllPublishedBySchoolIdAndGisuId(Long schoolId, Long gisuId);
+
 }

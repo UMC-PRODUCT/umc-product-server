@@ -24,6 +24,8 @@ import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
+
 
 class ManageSchoolUseCaseTest extends UseCaseTestSupport {
 
@@ -60,6 +62,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     }
 
     @Test
+    @Transactional
     void 외부링크와_함께_학교를_등록한다() {
         // given
         List<SchoolLinkCommand> links = List.of(
@@ -82,6 +85,65 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     }
 
     @Test
+    @Transactional
+    void 같은_타입의_링크를_여러개_등록할_수_있다() {
+        // given
+        List<SchoolLinkCommand> links = List.of(
+            new SchoolLinkCommand("메인 인스타", SchoolLinkType.INSTAGRAM, "https://instagram.com/main"),
+            new SchoolLinkCommand("서브 인스타", SchoolLinkType.INSTAGRAM, "https://instagram.com/sub")
+        );
+        CreateSchoolCommand command = new CreateSchoolCommand("한성대", "비고", null, links);
+
+        // when
+        Long schoolId = manageSchoolUseCase.register(command);
+
+        // then
+        School savedSchool = loadSchoolPort.findSchoolDetailById(schoolId);
+        assertThat(savedSchool.getSchoolLinks()).hasSize(2);
+        assertThat(savedSchool.getSchoolLinks())
+            .extracting(link -> link.getType())
+            .containsOnly(SchoolLinkType.INSTAGRAM);
+        assertThat(savedSchool.getSchoolLinks())
+            .extracting(link -> link.getUrl())
+            .containsExactlyInAnyOrder("https://instagram.com/main", "https://instagram.com/sub");
+    }
+
+    @Test
+    @Transactional
+    void 같은_타입의_링크가_등록된_상태에서_수정할_수_있다() {
+        // given
+        List<SchoolLinkCommand> initialLinks = List.of(
+            new SchoolLinkCommand("메인 인스타", SchoolLinkType.INSTAGRAM, "https://instagram.com/main"),
+            new SchoolLinkCommand("서브 인스타", SchoolLinkType.INSTAGRAM, "https://instagram.com/sub")
+        );
+        CreateSchoolCommand createCommand = new CreateSchoolCommand("한성대", "비고", null, initialLinks);
+        Long schoolId = manageSchoolUseCase.register(createCommand);
+
+        // when - 같은 타입 링크를 다른 URL로 교체
+        List<SchoolLinkCommand> updatedLinks = List.of(
+            new SchoolLinkCommand("새 인스타1", SchoolLinkType.INSTAGRAM, "https://instagram.com/new1"),
+            new SchoolLinkCommand("새 인스타2", SchoolLinkType.INSTAGRAM, "https://instagram.com/new2"),
+            new SchoolLinkCommand("카카오톡", SchoolLinkType.KAKAO, "https://open.kakao.com/o/example")
+        );
+        UpdateSchoolCommand updateCommand = new UpdateSchoolCommand("한성대", null, "비고", null, updatedLinks);
+        manageSchoolUseCase.updateSchool(schoolId, updateCommand);
+
+        // then
+        School updatedSchool = loadSchoolPort.findSchoolDetailById(schoolId);
+        assertThat(updatedSchool.getSchoolLinks()).hasSize(3);
+        assertThat(updatedSchool.getSchoolLinks())
+            .extracting(link -> link.getType())
+            .containsExactlyInAnyOrder(SchoolLinkType.INSTAGRAM, SchoolLinkType.INSTAGRAM, SchoolLinkType.KAKAO);
+        assertThat(updatedSchool.getSchoolLinks())
+            .extracting(link -> link.getUrl())
+            .containsExactlyInAnyOrder(
+                "https://instagram.com/new1",
+                "https://instagram.com/new2",
+                "https://open.kakao.com/o/example"
+            );
+    }
+
+    @Test
     void 학교_이름과_비고를_수정한다() {
         // given
         School school = manageSchoolPort.save(School.create("한성대", "비고"));
@@ -98,6 +160,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     }
 
     @Test
+    @Transactional
     void 학교_수정_시_링크도_함께_수정한다() {
         // given
         School school = manageSchoolPort.save(School.create("한성대", "비고"));

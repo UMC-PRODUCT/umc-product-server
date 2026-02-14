@@ -605,6 +605,15 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         return recruitmentRepository.existsById(recruitmentId);
     }
 
+    @Override
+    public List<Recruitment> findAllPublishedBySchoolIdAndGisuId(Long schoolId, Long gisuId) {
+        return recruitmentRepository.findAllBySchoolIdAndGisuIdAndStatus(
+            schoolId,
+            gisuId,
+            RecruitmentStatus.PUBLISHED
+        );
+    }
+
     private InterviewTimeTableInfo parseInterviewTimeTableForApplicant(Map<String, Object> interviewTimeTable) {
         if (interviewTimeTable == null) {
             return null;

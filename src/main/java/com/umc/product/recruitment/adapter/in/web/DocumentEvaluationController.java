@@ -230,6 +230,4 @@ public class DocumentEvaluationController {
         );
         return DocumentSelectionApplicationListResponse.from(info);
     }
-
-
 }
