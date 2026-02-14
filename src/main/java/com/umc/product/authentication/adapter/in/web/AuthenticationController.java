@@ -19,10 +19,8 @@ import com.umc.product.authentication.application.port.in.command.dto.ValidateEm
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
 import com.umc.product.authentication.domain.enums.OAuth2ResultCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,7 +31,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-@Tag(name = Constants.AUTH)
 public class AuthenticationController implements AuthenticationControllerInterface {
 
     private final ManageAuthenticationUseCase manageAuthenticationUseCase;

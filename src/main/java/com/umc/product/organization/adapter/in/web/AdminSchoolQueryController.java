@@ -8,6 +8,7 @@ import com.umc.product.organization.adapter.in.web.dto.response.SchoolListItemRe
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolNameListResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolPageResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.UnassignedSchoolListResponse;
+import com.umc.product.organization.adapter.in.web.swagger.AdminSchoolQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
@@ -34,8 +35,8 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
     public SchoolPageResponse getSchools(@ModelAttribute SchoolListRequest request, Pageable pageable) {
         // Swagger를 위한 SchoolPageResponse 매핑
         PageResponse<SchoolListItemResponse> pageResponse = PageResponse.of(
-                getSchoolUseCase.getSchools(request.toCondition(), pageable),
-                SchoolListItemResponse::of
+            getSchoolUseCase.getSchools(request.toCondition(), pageable),
+            SchoolListItemResponse::of
         );
         return SchoolPageResponse.from(pageResponse);
     }

@@ -7,7 +7,6 @@ import com.umc.product.challenger.application.port.in.command.dto.GrantChallenge
 import com.umc.product.challenger.domain.enums.PointType;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
@@ -43,7 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Public
 @RequiredArgsConstructor
 @Profile("local | dev")
-@Tag(name = Constants.TEST)
+@Tag(name = "Test | 더미 데이터", description = "잘못 쓰면 DB 날라갑니다")
 @Slf4j
 @RestController
 @RequestMapping("/test/mock-data")

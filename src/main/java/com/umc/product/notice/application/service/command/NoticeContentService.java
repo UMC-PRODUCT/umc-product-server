@@ -9,6 +9,7 @@ import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteResul
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
 import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
+import com.umc.product.notice.application.service.NoticeAuthorValidator;
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
@@ -50,11 +51,12 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     private final DeleteVoteUseCase deleteVoteUseCase;
     private final GetNoticeTargetUseCase getNoticeTargetUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
-
+    private final NoticeAuthorValidator noticeAuthorValidator;
     @Override
     public AddNoticeVoteResult addVote(AddNoticeVoteCommand command, Long noticeId) {
         Notice notice = findNoticeById(noticeId);
-        validateAuthor(notice, command.createdMemberId());
+        noticeAuthorValidator.validate(notice, command.createdMemberId());
+
 
         if (loadNoticeVotePort.existsVoteByNoticeId(noticeId)) {
             throw new NoticeDomainException(NoticeErrorCode.VOTE_ALREADY_EXISTS);
@@ -71,7 +73,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     @Override
     public List<Long> addImages(AddNoticeImagesCommand command, Long noticeId, Long memberId) {
         Notice notice = findNoticeById(noticeId);
-        validateAuthor(notice, memberId);
+        noticeAuthorValidator.validate(notice, memberId);
 
         if (command.imageIds() == null || command.imageIds().isEmpty()) {
             throw new NoticeDomainException(NoticeErrorCode.IMAGE_URLS_REQUIRED);
@@ -101,7 +103,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     @Override
     public List<Long> addLinks(AddNoticeLinksCommand command, Long noticeId, Long memberId) {
         Notice notice = findNoticeById(noticeId);
-        validateAuthor(notice, memberId);
+        noticeAuthorValidator.validate(notice, memberId);
 
         if (command.links() == null || command.links().isEmpty()) {
             throw new NoticeDomainException(NoticeErrorCode.LINK_URLS_REQUIRED);
@@ -121,7 +123,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     @Override
     public void deleteVote(Long noticeId, Long memberId) {
         Notice notice = findNoticeById(noticeId);
-        validateAuthor(notice, memberId);
+        noticeAuthorValidator.validate(notice, memberId);
 
         NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
@@ -153,7 +155,8 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         }
 
         Notice notice = findNoticeById(noticeId);
-        validateAuthor(notice, memberId);
+        noticeAuthorValidator.validate(notice, memberId);
+
         saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
 
         if (command.imageIds().isEmpty()) {
@@ -175,7 +178,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         }
 
         Notice notice = findNoticeById(noticeId);
-        validateAuthor(notice, memberId);
+        noticeAuthorValidator.validate(notice, memberId);
         saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
 
         if (command.links().isEmpty()) {
@@ -195,12 +198,4 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
     }
 
-    private void validateAuthor(Notice notice, Long memberId) {
-        NoticeTargetInfo targets = getNoticeTargetUseCase.findByNoticeId(notice.getId());
-        Long challengerId = getChallengerUseCase.getActiveByMemberIdAndGisuId(
-            memberId, targets.targetGisuId()
-        ).challengerId();
-
-        notice.validateAuthorChallenger(challengerId);
-    }
 }

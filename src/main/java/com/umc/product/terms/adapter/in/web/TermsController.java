@@ -1,6 +1,5 @@
 package com.umc.product.terms.adapter.in.web;
 
-import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.terms.adapter.in.web.dto.request.CreateTermRequest;
 import com.umc.product.terms.adapter.in.web.dto.response.TermsResponse;
@@ -22,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("api/v1/terms")
-@Tag(name = Constants.TERMS)
+@Tag(name = "Terms | 약관", description = "")
 public class TermsController {
 
     private final GetTermsUseCase getTermsUseCase;

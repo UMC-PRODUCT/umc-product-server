@@ -3,7 +3,6 @@ package com.umc.product.member.adapter.in.web;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.OAuthVerificationClaims;
@@ -11,8 +10,10 @@ import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberInfoRequest;
 import com.umc.product.member.adapter.in.web.dto.request.RegisterMemberRequest;
+import com.umc.product.member.adapter.in.web.dto.request.SearchMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
+import com.umc.product.member.adapter.in.web.dto.response.SearchMemberResponse;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
@@ -20,12 +21,15 @@ import com.umc.product.member.application.port.in.command.dto.UpdateMemberComman
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.member.application.port.in.query.SearchMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,12 +40,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/member")
 @RequiredArgsConstructor
-@Tag(name = SwaggerTag.Constants.MEMBER)
+@Tag(name = "Member | 회원", description = "")
 public class MemberController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final ManageMemberUseCase manageMemberUseCase;
     private final GetMemberUseCase getMemberUseCase;
+    private final SearchMemberUseCase searchMemberUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
@@ -105,6 +110,17 @@ public class MemberController {
         return MemberInfoResponse.from(memberInfo, challengerInfoResponses);
     }
 
+    @Operation(summary = "회원 검색", description = "이름, 닉네임, 이메일, 학교명으로 검색, 기수/파트/지부/학교별 필터링")
+    @GetMapping("search")
+    SearchMemberResponse searchMembers(
+        @ParameterObject Pageable pageable,
+        @ParameterObject SearchMemberRequest searchRequest
+    ) {
+        return SearchMemberResponse.from(
+            searchMemberUseCase.search(searchRequest.toQuery(), pageable)
+        );
+    }
+
     @Operation(summary = "회원 정보 수정")
     @PatchMapping
     MemberInfoResponse editMemberInfo(
@@ -119,5 +135,6 @@ public class MemberController {
         MemberProfileInfo info = getMemberUseCase.getProfile(memberPrincipal.getMemberId());
         return MemberInfoResponse.from(info);
     }
+
 
 }

@@ -130,10 +130,25 @@ springdoc:
   swagger-ui:
     path: /docs # Swagger 경로
     enabled: false # Swagger는 기본적으로 비활성화
-    operations-sorter: method # API 정렬 (method, alpha)
-    doc-expansion: none  # 모든 API를 접힌 상태로 표시
+
+    # 정렬 옵션
+    groups-order: DESC  # 그룹 정렬 (ASC/DESC)
+    tags-sorter: alpha  # 태그(컨트롤러) 정렬
+    operations-sorter: method  # API 메소드 정렬
+
+    # UI 설정
+    doc-expansion: none  # API 펼침 상태 (none/list/full)
+    disable-swagger-default-url: true  # petstore 기본 URL 비활성화
+    display-request-duration: true  # 요청 소요 시간 표시
+    display-operation-id: false  # operation ID 표시 여부
+
+    filter: true
     #    default-models-expand-depth: -1  # 스키마 모델도 접힌 상태로
-    # tag 정렬은 SwaggerTag에 명시된 대로 정렬할 것
+
+    # 기타
+    deep-linking: true  # URL 딥링킹 지원
+    show-extensions: true  # 확장 속성 표시
+    show-common-extensions: true  # 공통 확장 속성 표시
 
   api-docs:
     path: /docs-json # API 문서 경로

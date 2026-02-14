@@ -3,10 +3,11 @@ package com.umc.product.notice.adapter.in.web;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.response.PageResponse;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notice.adapter.in.web.dto.request.GetNoticeStatusRequest;
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeDetailResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeReadStatusResponse;
@@ -19,9 +20,6 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResu
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.dto.NoticeClassification;
-import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.global.security.annotation.CurrentMember;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
@@ -40,7 +38,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/notices")
 @RequiredArgsConstructor
-@Tag(name = Constants.NOTICE)
 public class NoticeQueryController implements NoticeQueryApi {
 
     private final GetNoticeUseCase getNoticeUseCase;
