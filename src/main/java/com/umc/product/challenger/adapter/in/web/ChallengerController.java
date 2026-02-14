@@ -18,7 +18,6 @@ import com.umc.product.challenger.application.port.in.command.dto.DeleteChalleng
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -46,7 +45,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/challenger")
 @RequiredArgsConstructor
-@Tag(name = Constants.CHALLENGER)
+@Tag(name = "Challenger | 챌린저", description = "챌린저 관련 API")
 public class ChallengerController {
 
     private final GetChallengerUseCase getChallengerUseCase;
@@ -200,7 +199,6 @@ public class ChallengerController {
             )
         );
     }
-
 
 
     @Operation(summary = "챌린저 생성")

@@ -2,6 +2,7 @@ package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateGisuRequest;
+import com.umc.product.organization.adapter.in.web.swagger.AdminGisuControllerApi;
 import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -11,8 +11,10 @@ import com.umc.product.authentication.adapter.in.web.dto.response.OAuthLoginResp
 import com.umc.product.authentication.adapter.in.web.dto.response.RenewAccessTokenResponse;
 import com.umc.product.authentication.adapter.in.web.dto.response.SendEmailVerificationResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.RequestBody;
 
+@Tag(name = "Authentication | 인증", description = "OAuth 로그인 및 JWT 토큰 관련")
 public interface AuthenticationControllerInterface {
     @Operation(summary = "Google 로그인",
         description = """

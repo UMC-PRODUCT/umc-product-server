@@ -3,7 +3,6 @@ package com.umc.product.member.adapter.in.web;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.OAuthVerificationClaims;
@@ -41,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/member")
 @RequiredArgsConstructor
-@Tag(name = SwaggerTag.Constants.MEMBER)
+@Tag(name = "Member | 회원", description = "")
 public class MemberController {
 
     private final JwtTokenProvider jwtTokenProvider;

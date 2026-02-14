@@ -1,6 +1,5 @@
 package com.umc.product.notice.adapter.in.web;
 
-import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -15,7 +14,6 @@ import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeVoteR
 import com.umc.product.notice.adapter.in.web.swagger.NoticeContentApi;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteResult;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +30,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/notices")
 @RequiredArgsConstructor
-@Tag(name = Constants.NOTICE)
 public class NoticeContentController implements NoticeContentApi {
 
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;

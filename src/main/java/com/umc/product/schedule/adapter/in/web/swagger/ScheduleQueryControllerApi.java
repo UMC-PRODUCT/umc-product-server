@@ -1,6 +1,5 @@
-package com.umc.product.schedule.adapter.in.web;
+package com.umc.product.schedule.adapter.in.web.swagger;
 
-import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.response.MyScheduleResponse;
@@ -13,7 +12,7 @@ import java.util.List;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Tag(name = Constants.SCHEDULE)
+@Tag(name = "Schedule | 일정 Query", description = "")
 public interface ScheduleQueryControllerApi {
 
     @Operation(summary = "일정 목록 조회", description = "출석 통계와 함께 일정 목록을 조회합니다")

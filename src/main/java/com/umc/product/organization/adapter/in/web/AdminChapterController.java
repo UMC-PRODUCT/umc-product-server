@@ -2,6 +2,7 @@ package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateChapterRequest;
+import com.umc.product.organization.adapter.in.web.swagger.AdminChapterControllerApi;
 import com.umc.product.organization.application.port.in.command.ManageChapterUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

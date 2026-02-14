@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "리소스 접근 권한 확인", description = "운영진 권한 관련 API")
+@Tag(name = "Authorization | 리소스 접근 권한 확인", description = "특정 리소스에 대한 접근 권한 여부 확인")
 @RestController
 @RequiredArgsConstructor
 @Slf4j

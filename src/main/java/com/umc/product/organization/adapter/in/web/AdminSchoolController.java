@@ -6,6 +6,7 @@ import com.umc.product.organization.adapter.in.web.dto.request.CreateSchoolReque
 import com.umc.product.organization.adapter.in.web.dto.request.DeleteSchoolsRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UnassignSchoolRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateSchoolRequest;
+import com.umc.product.organization.adapter.in.web.swagger.AdminSchoolControllerApi;
 import com.umc.product.organization.application.port.in.command.ManageSchoolUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

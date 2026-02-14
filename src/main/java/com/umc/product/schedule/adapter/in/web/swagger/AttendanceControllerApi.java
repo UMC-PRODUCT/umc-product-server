@@ -1,6 +1,5 @@
-package com.umc.product.schedule.adapter.in.web;
+package com.umc.product.schedule.adapter.in.web.swagger;
 
-import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.schedule.adapter.in.web.dto.request.CheckAttendanceRequest;
 import com.umc.product.schedule.adapter.in.web.dto.request.SubmitReasonRequest;
@@ -13,7 +12,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 
-@Tag(name = Constants.SCHEDULE)
+@Tag(name = "Schedule | 출석 체크", description = "")
 public interface AttendanceControllerApi {
 
     @Operation(summary = "출석 체크", description = "현재 시간 기준으로 출석 체크를 수행합니다")

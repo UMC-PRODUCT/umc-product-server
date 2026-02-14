@@ -6,6 +6,7 @@ import com.umc.product.schedule.adapter.in.web.dto.response.MyScheduleResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.ScheduleDetailResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.ScheduleListResponse;
 import com.umc.product.schedule.adapter.in.web.mapper.ScheduleWebMapper;
+import com.umc.product.schedule.adapter.in.web.swagger.ScheduleQueryControllerApi;
 import com.umc.product.schedule.application.port.in.query.GetMyScheduleUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleDetailUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleListUseCase;

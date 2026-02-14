@@ -8,6 +8,7 @@ import com.umc.product.schedule.adapter.in.web.dto.request.CreateStudyGroupSched
 import com.umc.product.schedule.adapter.in.web.dto.request.UpdateScheduleLocationRequest;
 import com.umc.product.schedule.adapter.in.web.dto.request.UpdateScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.dto.response.UpdateScheduleLocationResponse;
+import com.umc.product.schedule.adapter.in.web.swagger.ScheduleControllerApi;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleWithAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateStudyGroupScheduleUseCase;
@@ -32,7 +33,7 @@ public class ScheduleController implements ScheduleControllerApi {
 
     private final CreateScheduleUseCase createScheduleUseCase;
     private final CreateScheduleWithAttendanceUseCase createScheduleWithAttendanceUseCase;
-    private final CreateStudyGroupScheduleUseCase   createStudyGroupScheduleUseCase;
+    private final CreateStudyGroupScheduleUseCase createStudyGroupScheduleUseCase;
     private final UpdateScheduleUseCase updateScheduleUseCase;
     private final DeleteScheduleUseCase deleteScheduleUseCase;
     private final DeleteScheduleWithAttendanceUseCase deleteScheduleWithAttendanceUseCase;

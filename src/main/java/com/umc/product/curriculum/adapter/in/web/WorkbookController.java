@@ -1,6 +1,7 @@
 package com.umc.product.curriculum.adapter.in.web;
 
 import com.umc.product.curriculum.adapter.in.web.dto.request.SubmitWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.swagger.WorkbookControllerApi;
 import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,8 +21,8 @@ public class WorkbookController implements WorkbookControllerApi {
     @Override
     @PostMapping("/{challengerWorkbookId}/submissions")
     public void submitWorkbook(
-            @PathVariable Long challengerWorkbookId,
-            @Valid @RequestBody SubmitWorkbookRequest request) {
+        @PathVariable Long challengerWorkbookId,
+        @Valid @RequestBody SubmitWorkbookRequest request) {
         manageWorkbookUseCase.submit(request.toCommand(challengerWorkbookId));
     }
 }
