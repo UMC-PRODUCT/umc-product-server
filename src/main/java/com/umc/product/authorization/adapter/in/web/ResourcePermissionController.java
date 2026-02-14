@@ -33,7 +33,8 @@ public class ResourcePermissionController {
         @CurrentMember MemberPrincipal principal
         ) {
 
-        ResourcePermissionInfo permission = resourcePermissionUseCase.hasPermission(principal.getMemberId(), resourceType, resourceId);
+        ResourcePermissionInfo permission = resourcePermissionUseCase.hasPermission(principal.getMemberId(), resourceType,
+            resourceId);
         return ResourcePermissionResponse.from(permission);
     }
 }

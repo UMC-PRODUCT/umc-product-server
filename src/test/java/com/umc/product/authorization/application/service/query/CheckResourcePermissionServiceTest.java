@@ -39,13 +39,13 @@ class CheckResourcePermissionServiceTest {
             // NOTICE supports: READ, DELETE, CHECK
 
             given(checkPermissionUseCase.check(eq(MEMBER_ID),
-                eq(ResourcePermission.of(resourceType, RESOURCE_ID, PermissionType.READ))))
+                eq(ResourcePermission.of(resourceType, String.valueOf(RESOURCE_ID), PermissionType.READ))))
                 .willReturn(true);
             given(checkPermissionUseCase.check(eq(MEMBER_ID),
-                eq(ResourcePermission.of(resourceType, RESOURCE_ID, PermissionType.DELETE))))
+                eq(ResourcePermission.of(resourceType, String.valueOf(RESOURCE_ID), PermissionType.DELETE))))
                 .willReturn(false);
             given(checkPermissionUseCase.check(eq(MEMBER_ID),
-                eq(ResourcePermission.of(resourceType, RESOURCE_ID, PermissionType.CHECK))))
+                eq(ResourcePermission.of(resourceType, String.valueOf(RESOURCE_ID), PermissionType.CHECK))))
                 .willReturn(false);
 
             // when
@@ -85,7 +85,7 @@ class CheckResourcePermissionServiceTest {
                 .willReturn(true);
 
             // when
-            ResourcePermissionInfo result = sut.hasPermission(MEMBER_ID, resourceType, null);
+            ResourcePermissionInfo result = sut.hasPermission(MEMBER_ID, resourceType, (Long) null);
 
             // then
             assertThat(result.resourceId()).isNull();
