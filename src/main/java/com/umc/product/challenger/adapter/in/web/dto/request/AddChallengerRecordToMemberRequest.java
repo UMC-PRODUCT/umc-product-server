@@ -1,6 +1,6 @@
 package com.umc.product.challenger.adapter.in.web.dto.request;
 
-public record AddChallengerRecordRequest(
+public record AddChallengerRecordToMemberRequest(
     String code
 ) {
 }

@@ -31,19 +31,22 @@ public class ChallengerRecord extends BaseEntity {
     @Column(unique = true, nullable = false, length = 6)
     private String code;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, name = "part")
-    private ChallengerPart part;
+    @Column(nullable = false, name = "created_member_id")
+    private Long createdMemberId;
 
     @Column(nullable = false, name = "gisu_id")
     private Long gisuId;
 
-    @Column(nullable = false, name = "school_id")
-    private Long schoolId;
-
     @Column(nullable = false, name = "chapter_id")
     private Long chapterId;
 
+    @Column(nullable = false, name = "school_id")
+    private Long schoolId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name = "part")
+    private ChallengerPart part;
+    
     @Column(nullable = false, name = "is_used")
     private boolean isUsed;
 
@@ -53,10 +56,12 @@ public class ChallengerRecord extends BaseEntity {
     @Column(name = "used_at")
     private Instant usedAt;
 
-    public static ChallengerRecord create(Long gisuId, Long chapterId, Long schoolId, ChallengerPart part) {
+    public static ChallengerRecord create(Long createdMemberId, Long gisuId, Long chapterId, Long schoolId,
+                                          ChallengerPart part) {
         ChallengerRecord record = new ChallengerRecord();
 
         record.code = generateUniqueCode();
+        record.createdMemberId = createdMemberId;
         record.part = part;
         record.gisuId = gisuId;
         record.schoolId = schoolId;
