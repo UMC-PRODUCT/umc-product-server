@@ -52,6 +52,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     private final GetNoticeTargetUseCase getNoticeTargetUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final NoticeAuthorValidator noticeAuthorValidator;
+
     @Override
     public AddNoticeVoteResult addVote(AddNoticeVoteCommand command, Long noticeId) {
         Notice notice = findNoticeById(noticeId);
