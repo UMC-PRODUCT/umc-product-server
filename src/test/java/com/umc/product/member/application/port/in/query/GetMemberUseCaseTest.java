@@ -7,7 +7,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
-import com.umc.product.authorization.application.port.in.query.GetMemberRolesUseCase;
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.service.MemberQueryService;
 import com.umc.product.member.domain.Member;
@@ -43,7 +43,7 @@ class GetMemberUseCaseTest {
     GetFileUseCase getFileUseCase;
 
     @Mock
-    GetMemberRolesUseCase getMemberRolesUseCase;
+    GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @InjectMocks
     MemberQueryService memberQueryService;
@@ -96,7 +96,7 @@ class GetMemberUseCaseTest {
                 .willReturn(createSchoolDetailInfo(1L, "한양대학교ERICA"));
             given(getFileUseCase.getById("profile_img_1"))
                 .willReturn(createFileInfo("profile_img_1", "https://cdn.example.com/profile.jpg"));
-            given(getMemberRolesUseCase.getRoles(1L)).willReturn(List.of());
+            given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
             MemberProfileInfo result = memberQueryService.getProfile(1L);
@@ -117,7 +117,7 @@ class GetMemberUseCaseTest {
             given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
             given(getFileUseCase.getById("profile_img_1"))
                 .willReturn(createFileInfo("profile_img_1", "https://cdn.example.com/profile.jpg"));
-            given(getMemberRolesUseCase.getRoles(1L)).willReturn(List.of());
+            given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
             MemberProfileInfo result = memberQueryService.getProfile(1L);
@@ -135,7 +135,7 @@ class GetMemberUseCaseTest {
             given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
             given(getSchoolUseCase.getSchoolDetail(1L))
                 .willReturn(createSchoolDetailInfo(1L, "한양대학교ERICA"));
-            given(getMemberRolesUseCase.getRoles(1L)).willReturn(List.of());
+            given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
             MemberProfileInfo result = memberQueryService.getProfile(1L);
@@ -152,7 +152,7 @@ class GetMemberUseCaseTest {
             // given
             Member member = createMember(1L, null, null);
             given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
-            given(getMemberRolesUseCase.getRoles(1L)).willReturn(List.of());
+            given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
             MemberProfileInfo result = memberQueryService.getProfile(1L);
@@ -187,7 +187,7 @@ class GetMemberUseCaseTest {
             Member member = createMember(1L, 1L, null);
             given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
             given(getSchoolUseCase.getSchoolDetail(1L)).willReturn(null);
-            given(getMemberRolesUseCase.getRoles(1L)).willReturn(List.of());
+            given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
             MemberProfileInfo result = memberQueryService.getProfile(1L);

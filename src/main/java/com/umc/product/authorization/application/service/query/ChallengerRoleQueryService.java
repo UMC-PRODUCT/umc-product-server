@@ -1,7 +1,7 @@
 package com.umc.product.authorization.application.service.query;
 
 import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
-import com.umc.product.authorization.application.port.in.query.GetMemberRolesUseCase;
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
 import com.umc.product.authorization.domain.ChallengerRole;
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
@@ -25,9 +25,14 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 @Slf4j
-public class MemberRolesQueryService implements GetMemberRolesUseCase {
+public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
 
     private final LoadChallengerRolePort loadChallengerRolePort;
+
+    @Override
+    public ChallengerRoleInfo byId(Long challengerRoleId) {
+        return ChallengerRoleInfo.fromEntity(loadChallengerRolePort.getById(challengerRoleId));
+    }
 
     @Override
     public List<ChallengerRoleInfo> getRoles(Long memberId) {

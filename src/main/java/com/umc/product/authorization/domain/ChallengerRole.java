@@ -95,6 +95,7 @@ public class ChallengerRole {
      * ChallengerRole의 역할 타입, 조직 ID, 담당 파트를 수정합니다.
      */
     public void update(ChallengerRoleType roleType, Long organizationId, ChallengerPart responsiblePart) {
+        // 조직 유형은 생성하고자 하는 역할의 유형에 따라 자동으로 주어짐
         OrganizationType orgType = roleType.organizationType();
 
         if (orgType != OrganizationType.CENTRAL && organizationId == null) {

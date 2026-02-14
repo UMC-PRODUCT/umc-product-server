@@ -1,6 +1,6 @@
 package com.umc.product.notice.application.service;
 
-import com.umc.product.authorization.application.port.in.query.GetMemberRolesUseCase;
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourcePermission;
@@ -29,7 +29,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     private final GetNoticeTargetUseCase getNoticeTargetUseCase;
     private final GetNoticeUseCase getNoticeUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
-    private final GetMemberRolesUseCase getMemberRolesUseCase;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @Override
     public ResourceType supportedResourceType() {
@@ -82,29 +82,25 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     }
 
     /**
-     * 공지사항 관리 권한 확인 (수신 현황 조회 등)
-     * - 총괄/부총괄: 항상 허용
-     * - School 레벨 공지: 해당 학교 운영진
-     * - Chapter 레벨 공지: 해당 지부장
-     * - Gisu 레벨 공지: 중앙 멤버
+     * 공지사항 관리 권한 확인 (수신 현황 조회 등) - 총괄/부총괄: 항상 허용 - School 레벨 공지: 해당 학교 운영진 - Chapter 레벨 공지: 해당 지부장 - Gisu 레벨 공지: 중앙 멤버
      */
     private boolean canManageNotice(Long memberId, NoticeTargetInfo targetInfo) {
         // 총괄/부총괄은 항상 허용
-        if (getMemberRolesUseCase.isCentralCore(memberId)) {
+        if (getChallengerRoleUseCase.isCentralCore(memberId)) {
             return true;
         }
 
         // School 레벨 공지: 해당 학교 운영진
         if (targetInfo.targetSchoolId() != null) {
-            return getMemberRolesUseCase.isSchoolAdmin(memberId, targetInfo.targetSchoolId());
+            return getChallengerRoleUseCase.isSchoolAdmin(memberId, targetInfo.targetSchoolId());
         }
 
         // Chapter 레벨 공지: 해당 지부장
         if (targetInfo.targetChapterId() != null) {
-            return getMemberRolesUseCase.isChapterPresident(memberId, targetInfo.targetChapterId());
+            return getChallengerRoleUseCase.isChapterPresident(memberId, targetInfo.targetChapterId());
         }
 
         // Gisu 레벨 공지 (전체): 중앙 멤버
-        return getMemberRolesUseCase.isCentralMember(memberId);
+        return getChallengerRoleUseCase.isCentralMember(memberId);
     }
 }

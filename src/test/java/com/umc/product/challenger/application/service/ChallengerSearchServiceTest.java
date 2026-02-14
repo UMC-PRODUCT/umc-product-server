@@ -7,15 +7,14 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.BDDMockito.given;
 
-import com.umc.product.authorization.application.port.in.query.GetMemberRolesUseCase;
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.GlobalSearchChallengerCursorResult;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerCursorResult;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerResult;
-import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerItemInfo;
 import com.umc.product.challenger.application.port.out.SearchChallengerPort;
-import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.Challenger;
+import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
@@ -51,7 +50,7 @@ class ChallengerSearchServiceTest {
     GetMemberUseCase getMemberUseCase;
 
     @Mock
-    GetMemberRolesUseCase getMemberRolesUseCase;
+    GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @Mock
     GetGisuUseCase getGisuUseCase;
@@ -67,28 +66,46 @@ class ChallengerSearchServiceTest {
 
     @BeforeEach
     void setUp() {
-        defaultQuery = new SearchChallengerQuery(null, null, null, null, null, null, 1L, List.of(ChallengerStatus.ACTIVE));
+        defaultQuery = new SearchChallengerQuery(null, null, null, null, null, null, 1L,
+            List.of(ChallengerStatus.ACTIVE));
         defaultGisuInfos = List.of(
-                new GisuInfo(1L, 7L, Instant.now(), Instant.now(), true),
-                new GisuInfo(2L, 8L, Instant.now(), Instant.now(), false)
+            new GisuInfo(1L, 7L, Instant.now(), Instant.now(), true),
+            new GisuInfo(2L, 8L, Instant.now(), Instant.now(), false)
         );
 
         sixChallengers = List.of(
-                createChallenger(1L, 10L, ChallengerPart.PLAN, 1L),
-                createChallenger(2L, 11L, ChallengerPart.DESIGN, 1L),
-                createChallenger(3L, 12L, ChallengerPart.WEB, 1L),
-                createChallenger(4L, 13L, ChallengerPart.IOS, 2L),
-                createChallenger(5L, 14L, ChallengerPart.ANDROID, 2L),
-                createChallenger(6L, 15L, ChallengerPart.SPRINGBOOT, 2L)
+            createChallenger(1L, 10L, ChallengerPart.PLAN, 1L),
+            createChallenger(2L, 11L, ChallengerPart.DESIGN, 1L),
+            createChallenger(3L, 12L, ChallengerPart.WEB, 1L),
+            createChallenger(4L, 13L, ChallengerPart.IOS, 2L),
+            createChallenger(5L, 14L, ChallengerPart.ANDROID, 2L),
+            createChallenger(6L, 15L, ChallengerPart.SPRINGBOOT, 2L)
         );
 
         sixProfiles = Map.of(
-                10L, createProfile(10L, "홍길동", "hong"),
-                11L, createProfile(11L, "김철수", "kim"),
-                12L, createProfile(12L, "이영희", "lee"),
-                13L, createProfile(13L, "박민수", "park"),
-                14L, createProfile(14L, "최지은", "choi"),
-                15L, createProfile(15L, "정하나", "jung")
+            10L, createProfile(10L, "홍길동", "hong"),
+            11L, createProfile(11L, "김철수", "kim"),
+            12L, createProfile(12L, "이영희", "lee"),
+            13L, createProfile(13L, "박민수", "park"),
+            14L, createProfile(14L, "최지은", "choi"),
+            15L, createProfile(15L, "정하나", "jung")
+        );
+    }
+
+    private Challenger createChallenger(Long id, Long memberId, ChallengerPart part, Long gisuId) {
+        Challenger challenger = Challenger.builder()
+            .memberId(memberId)
+            .part(part)
+            .gisuId(gisuId)
+            .build();
+        ReflectionTestUtils.setField(challenger, "id", id);
+        return challenger;
+    }
+
+    private MemberProfileInfo createProfile(Long id, String name, String nickname) {
+        return new MemberProfileInfo(
+            id, name, nickname, name + "@test.com",
+            1L, "한양대학교ERICA", null, MemberStatus.ACTIVE, null
         );
     }
 
@@ -104,12 +121,12 @@ class ChallengerSearchServiceTest {
 
             given(searchChallengerPort.cursorSearch(any(), any(), anyInt())).willReturn(firstPage);
             given(searchChallengerPort.countByPart(any())).willReturn(Map.of(
-                    ChallengerPart.PLAN, 1L, ChallengerPart.DESIGN, 1L,
-                    ChallengerPart.WEB, 1L, ChallengerPart.IOS, 1L
+                ChallengerPart.PLAN, 1L, ChallengerPart.DESIGN, 1L,
+                ChallengerPart.WEB, 1L, ChallengerPart.IOS, 1L
             ));
             given(searchChallengerPort.sumPointsByChallengerIds(anySet())).willReturn(Map.of());
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
-            given(getMemberRolesUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
@@ -134,7 +151,7 @@ class ChallengerSearchServiceTest {
             given(searchChallengerPort.countByPart(any())).willReturn(Map.of());
             given(searchChallengerPort.sumPointsByChallengerIds(anySet())).willReturn(Map.of());
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
-            given(getMemberRolesUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
@@ -171,11 +188,11 @@ class ChallengerSearchServiceTest {
             given(searchChallengerPort.countByPart(any())).willReturn(Map.of());
             given(searchChallengerPort.sumPointsByChallengerIds(anySet())).willReturn(Map.of());
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
-            given(getMemberRolesUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of(
-                    1L, List.of(ChallengerRoleType.CENTRAL_PRESIDENT),
-                    3L, List.of(ChallengerRoleType.SCHOOL_PRESIDENT, ChallengerRoleType.SCHOOL_PART_LEADER),
-                    5L, List.of(ChallengerRoleType.CHAPTER_PRESIDENT)
-                    // 2, 4, 6번은 역할 없음
+            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of(
+                1L, List.of(ChallengerRoleType.CENTRAL_PRESIDENT),
+                3L, List.of(ChallengerRoleType.SCHOOL_PRESIDENT, ChallengerRoleType.SCHOOL_PART_LEADER),
+                5L, List.of(ChallengerRoleType.CHAPTER_PRESIDENT)
+                // 2, 4, 6번은 역할 없음
             ));
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
@@ -186,11 +203,12 @@ class ChallengerSearchServiceTest {
             assertThat(result.content()).hasSize(6);
             // 역할이 있는 챌린저
             assertThat(result.content().get(0).roleTypes())
-                    .containsExactly(ChallengerRoleType.CENTRAL_PRESIDENT);
+                .containsExactly(ChallengerRoleType.CENTRAL_PRESIDENT);
             assertThat(result.content().get(2).roleTypes())
-                    .containsExactlyInAnyOrder(ChallengerRoleType.SCHOOL_PRESIDENT, ChallengerRoleType.SCHOOL_PART_LEADER);
+                .containsExactlyInAnyOrder(ChallengerRoleType.SCHOOL_PRESIDENT,
+                    ChallengerRoleType.SCHOOL_PART_LEADER);
             assertThat(result.content().get(4).roleTypes())
-                    .containsExactly(ChallengerRoleType.CHAPTER_PRESIDENT);
+                .containsExactly(ChallengerRoleType.CHAPTER_PRESIDENT);
             // 역할이 없는 챌린저
             assertThat(result.content().get(1).roleTypes()).isEmpty();
             assertThat(result.content().get(3).roleTypes()).isEmpty();
@@ -204,13 +222,13 @@ class ChallengerSearchServiceTest {
             given(searchChallengerPort.cursorSearch(any(), any(), anyInt())).willReturn(sixChallengers);
             given(searchChallengerPort.countByPart(any())).willReturn(Map.of());
             given(searchChallengerPort.sumPointsByChallengerIds(anySet())).willReturn(Map.of(
-                    1L, 0.5,   // WARNING 1회
-                    3L, 1.5,   // WARNING 1회 + OUT 1회
-                    4L, 2.0    // OUT 2회
-                    // 2, 5, 6번은 상벌점 없음
+                1L, 0.5,   // WARNING 1회
+                3L, 1.5,   // WARNING 1회 + OUT 1회
+                4L, 2.0    // OUT 2회
+                // 2, 5, 6번은 상벌점 없음
             ));
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
-            given(getMemberRolesUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
@@ -230,10 +248,10 @@ class ChallengerSearchServiceTest {
             // given
             given(searchChallengerPort.cursorSearch(any(), any(), anyInt())).willReturn(List.of());
             given(searchChallengerPort.countByPart(any())).willReturn(Map.of(
-                    ChallengerPart.PLAN, 2L,
-                    ChallengerPart.WEB, 5L,
-                    ChallengerPart.IOS, 3L,
-                    ChallengerPart.SPRINGBOOT, 4L
+                ChallengerPart.PLAN, 2L,
+                ChallengerPart.WEB, 5L,
+                ChallengerPart.IOS, 3L,
+                ChallengerPart.SPRINGBOOT, 4L
             ));
 
             // when
@@ -259,24 +277,24 @@ class ChallengerSearchServiceTest {
             given(searchChallengerPort.countByPart(any())).willReturn(Map.of());
             given(searchChallengerPort.sumPointsByChallengerIds(anySet())).willReturn(Map.of());
             given(getMemberUseCase.getProfiles(anySet())).willReturn(Map.of()); // 프로필 없음
-            given(getMemberRolesUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when & then
             assertThatThrownBy(() -> challengerSearchService.cursorSearch(defaultQuery, null, size))
-                    .isInstanceOf(ChallengerDomainException.class);
+                .isInstanceOf(ChallengerDomainException.class);
         }
 
         @Test
         void 유효하지_않은_커서_ID가_전달되면_예외가_발생한다() {
             // given
             given(searchChallengerPort.cursorSearch(any(), any(), anyInt()))
-                    .willThrow(new ChallengerDomainException(
-                            com.umc.product.challenger.domain.exception.ChallengerErrorCode.INVALID_CURSOR_ID));
+                .willThrow(new ChallengerDomainException(
+                    com.umc.product.challenger.domain.exception.ChallengerErrorCode.INVALID_CURSOR_ID));
 
             // when & then
             assertThatThrownBy(() -> challengerSearchService.cursorSearch(defaultQuery, 9999L, 4))
-                    .isInstanceOf(ChallengerDomainException.class);
+                .isInstanceOf(ChallengerDomainException.class);
         }
 
         @Test
@@ -290,7 +308,7 @@ class ChallengerSearchServiceTest {
             given(searchChallengerPort.countByPart(any())).willReturn(Map.of());
             given(searchChallengerPort.sumPointsByChallengerIds(anySet())).willReturn(Map.of());
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
-            given(getMemberRolesUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
@@ -320,9 +338,9 @@ class ChallengerSearchServiceTest {
             given(searchChallengerPort.countByPart(any())).willReturn(Map.of());
             given(searchChallengerPort.sumPointsByChallengerIds(anySet())).willReturn(Map.of());
             given(getMemberUseCase.getProfiles(anySet())).willReturn(sixProfiles);
-            given(getMemberRolesUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of(
-                    1L, List.of(ChallengerRoleType.CENTRAL_PRESIDENT),
-                    3L, List.of(ChallengerRoleType.SCHOOL_PRESIDENT)
+            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of(
+                1L, List.of(ChallengerRoleType.CENTRAL_PRESIDENT),
+                3L, List.of(ChallengerRoleType.SCHOOL_PRESIDENT)
             ));
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
@@ -332,10 +350,10 @@ class ChallengerSearchServiceTest {
             // then
             assertThat(result.page().getContent()).hasSize(4);
             assertThat(result.page().getContent().get(0).roleTypes())
-                    .containsExactly(ChallengerRoleType.CENTRAL_PRESIDENT);
+                .containsExactly(ChallengerRoleType.CENTRAL_PRESIDENT);
             assertThat(result.page().getContent().get(1).roleTypes()).isEmpty();
             assertThat(result.page().getContent().get(2).roleTypes())
-                    .containsExactly(ChallengerRoleType.SCHOOL_PRESIDENT);
+                .containsExactly(ChallengerRoleType.SCHOOL_PRESIDENT);
             assertThat(result.page().getContent().get(3).roleTypes()).isEmpty();
         }
     }
@@ -348,7 +366,8 @@ class ChallengerSearchServiceTest {
 
         @BeforeEach
         void setUp() {
-            globalQuery = new SearchChallengerQuery(null, "홍", null, null, null, null, null, List.of(ChallengerStatus.ACTIVE, ChallengerStatus.GRADUATED));
+            globalQuery = new SearchChallengerQuery(null, "홍", null, null, null, null, null,
+                List.of(ChallengerStatus.ACTIVE, ChallengerStatus.GRADUATED));
         }
 
         @Test
@@ -362,7 +381,8 @@ class ChallengerSearchServiceTest {
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
-            GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null, size);
+            GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null,
+                size);
 
             // then
             assertThat(result.content()).hasSize(4);
@@ -381,7 +401,8 @@ class ChallengerSearchServiceTest {
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
-            GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null, size);
+            GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null,
+                size);
 
             // then
             assertThat(result.content()).hasSize(4);
@@ -396,7 +417,8 @@ class ChallengerSearchServiceTest {
             given(searchChallengerPort.cursorSearch(any(), any(), anyInt())).willReturn(List.of());
 
             // when
-            GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null, 4);
+            GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null,
+                4);
 
             // then
             assertThat(result.content()).isEmpty();
@@ -413,7 +435,8 @@ class ChallengerSearchServiceTest {
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
-            GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null, size);
+            GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null,
+                size);
 
             // then
             assertThat(result.content()).hasSize(6);
@@ -437,7 +460,8 @@ class ChallengerSearchServiceTest {
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
-            GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null, size);
+            GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, null,
+                size);
 
             // then
             // gisuId=1 → gisu=7
@@ -459,7 +483,7 @@ class ChallengerSearchServiceTest {
 
             // when & then
             assertThatThrownBy(() -> challengerSearchService.globalCursorSearch(globalQuery, null, 6))
-                    .isInstanceOf(ChallengerDomainException.class);
+                .isInstanceOf(ChallengerDomainException.class);
         }
 
         @Test
@@ -473,7 +497,8 @@ class ChallengerSearchServiceTest {
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
-            GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, 4L, size);
+            GlobalSearchChallengerCursorResult result = challengerSearchService.globalCursorSearch(globalQuery, 4L,
+                size);
 
             // then
             assertThat(result.content()).hasSize(2);
@@ -482,22 +507,5 @@ class ChallengerSearchServiceTest {
             assertThat(result.content().get(0).memberId()).isEqualTo(14L);
             assertThat(result.content().get(1).memberId()).isEqualTo(15L);
         }
-    }
-
-    private Challenger createChallenger(Long id, Long memberId, ChallengerPart part, Long gisuId) {
-        Challenger challenger = Challenger.builder()
-                .memberId(memberId)
-                .part(part)
-                .gisuId(gisuId)
-                .build();
-        ReflectionTestUtils.setField(challenger, "id", id);
-        return challenger;
-    }
-
-    private MemberProfileInfo createProfile(Long id, String name, String nickname) {
-        return new MemberProfileInfo(
-                id, name, nickname, name + "@test.com",
-                1L, "한양대학교ERICA", null, MemberStatus.ACTIVE, null
-        );
     }
 }

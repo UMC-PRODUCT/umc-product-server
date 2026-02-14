@@ -1,7 +1,7 @@
 package com.umc.product.member.application.service;
 
 import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
-import com.umc.product.authorization.application.port.in.query.GetMemberRolesUseCase;
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.member.application.port.in.query.MemberProfileInfo;
@@ -30,7 +30,7 @@ public class MemberQueryService implements GetMemberUseCase {
 
     private final GetSchoolUseCase getSchoolUseCase;
     private final GetFileUseCase getFileUseCase;
-    private final GetMemberRolesUseCase getMemberRolesUseCase;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @Override
     public MemberInfo getById(Long memberId) {
@@ -50,7 +50,7 @@ public class MemberQueryService implements GetMemberUseCase {
                 : getFileUseCase.getById(profileImageId).fileLink();
 
         // 역할 채워넣기
-        List<ChallengerRoleInfo> roles = getMemberRolesUseCase.getRoles(memberId);
+        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.getRoles(memberId);
 
         return MemberInfo.from(member, schoolName, profileImageLink, roles);
     }
@@ -74,7 +74,7 @@ public class MemberQueryService implements GetMemberUseCase {
             profileImageLink = fileInfo.fileLink();
         }
 
-        List<ChallengerRoleInfo> roles = getMemberRolesUseCase.getRoles(memberId);
+        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.getRoles(memberId);
 
         return MemberProfileInfo.from(memberInfo, schoolName, profileImageLink, roles);
     }
