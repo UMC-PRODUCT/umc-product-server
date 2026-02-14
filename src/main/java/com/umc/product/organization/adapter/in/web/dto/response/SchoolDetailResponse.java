@@ -24,7 +24,7 @@ public record SchoolDetailResponse(
         String remark,
 
         @Schema(description = "로고 이미지 URL")
-        String logoImageLink,
+        String logoImageUrl,
 
         @Schema(description = "학교 링크 목록")
         List<SchoolLinkItem> links,
