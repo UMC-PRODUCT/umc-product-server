@@ -11,6 +11,7 @@ import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -20,6 +21,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminGisuQueryController implements AdminGisuQueryControllerApi {
 
     private final GetGisuUseCase getGisuUseCase;
+
+    @Public
+    @GetMapping("/{gisuId}")
+    @Override
+    public GisuResponse getGisu(@PathVariable Long gisuId) {
+        return GisuResponse.from(getGisuUseCase.getById(gisuId));
+    }
 
     @Public
     @Override
