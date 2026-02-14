@@ -22,10 +22,9 @@ public interface SchoolJpaRepository extends Repository<School, Long> {
             "LEFT JOIN FETCH s.chapterSchools cs " +
             "LEFT JOIN FETCH cs.chapter c " +
             "LEFT JOIN FETCH c.gisu " +
-            "LEFT JOIN FETCH s.schoolLinks " +
             "WHERE s.id = :schoolId")
     Optional<School> findByIdWithDetails(@Param("schoolId") Long schoolId);
-    
+
     List<School> findAllByOrderByNameAsc();
 
     List<School> findAllByIdIn(List<Long> ids);

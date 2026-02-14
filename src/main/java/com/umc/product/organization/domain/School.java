@@ -1,9 +1,6 @@
 package com.umc.product.organization.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
-import com.umc.product.organization.exception.OrganizationErrorCode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,11 +8,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import org.hibernate.annotations.BatchSize;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,8 +38,9 @@ public class School extends BaseEntity {
     @Column(nullable = true)
     private String remark;
 
+    @BatchSize(size = 10)
     @OneToMany(mappedBy = "school", orphanRemoval = true, cascade = CascadeType.ALL)
-    private Set<SchoolLink> schoolLinks = new LinkedHashSet<>();
+    private List<SchoolLink> schoolLinks = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
     private School(String name, String remark, ArrayList<ChapterSchool> chapterSchools) {
@@ -97,20 +93,7 @@ public class School extends BaseEntity {
     }
 
     public void updateLinks(List<SchoolLink> newLinks) {
-        validateNoDuplicateTypes(newLinks);
         this.schoolLinks.clear();
         this.schoolLinks.addAll(newLinks);
-    }
-
-    private void validateNoDuplicateTypes(List<SchoolLink> links) {
-        Set<SchoolLinkType> types = new HashSet<>();
-        for (SchoolLink link : links) {
-            if (!types.add(link.getType())) {
-                throw new BusinessException(
-                        Domain.ORGANIZATION,
-                        OrganizationErrorCode.SCHOOL_LINK_TYPE_DUPLICATED
-                );
-            }
-        }
     }
 }
