@@ -9,10 +9,10 @@ import static com.umc.product.recruitment.domain.QRecruitmentPart.recruitmentPar
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAssignmentRow;
 import com.umc.product.recruitment.application.port.in.PartOption;
+import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.recruitment.domain.QApplicationPartPreference;
 import com.umc.product.recruitment.domain.QRecruitmentPart;
 import java.time.Instant;
@@ -159,4 +159,15 @@ public class InterviewAssignmentQueryRepository {
             .orderBy(interviewAssignment.createdAt.asc())
             .fetch();
     }
+
+    public boolean existsByApplicationId(Long applicationId) {
+        Integer result = queryFactory
+            .selectOne()
+            .from(interviewAssignment)
+            .where(interviewAssignment.application.id.eq(applicationId))
+            .fetchFirst();
+
+        return result != null;
+    }
+
 }

@@ -2,6 +2,7 @@ package com.umc.product.recruitment.application.service.command;
 
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.recruitment.adapter.in.web.dto.request.EvaluationDecision;
 import com.umc.product.recruitment.application.port.in.command.UpdateMyDocumentEvaluationUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateDocumentStatusCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateDocumentStatusInfo;
@@ -13,6 +14,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEv
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.LoadEvaluationPort;
+import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
 import com.umc.product.recruitment.application.port.out.SaveEvaluationPort;
 import com.umc.product.recruitment.domain.Application;
@@ -36,6 +38,7 @@ public class RecruitmentDocumentEvaluationService implements UpdateMyDocumentEva
     private final LoadEvaluationPort loadEvaluationPort;
     private final SaveEvaluationPort saveEvaluationPort;
     private final SaveApplicationPort saveApplicationPort;
+    private final LoadInterviewAssignmentPort loadInterviewAssignmentPort;
 
     @Override
     public GetMyDocumentEvaluationInfo update(UpdateMyDocumentEvaluationCommand command) {
@@ -101,6 +104,20 @@ public class RecruitmentDocumentEvaluationService implements UpdateMyDocumentEva
 
         // todo: 운영진 권한 및 학교 체크
         // todo: 서류 평가 기간 검증
+
+        if (command.decision() == EvaluationDecision.FAIL ||
+            command.decision() == EvaluationDecision.WAIT) {
+
+            boolean hasInterviewAssignment =
+                loadInterviewAssignmentPort.existsByApplicationId(application.getId());
+
+            if (hasInterviewAssignment) {
+                throw new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.INTERVIEW_ALREADY_ASSIGNED
+                );
+            }
+        }
 
         switch (command.decision()) {
             case PASS -> application.passDocument();

@@ -6,6 +6,7 @@ import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberErrorCode;
+import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.recruitment.adapter.in.web.dto.request.EvaluationDecision;
 import com.umc.product.recruitment.adapter.in.web.mapper.AnswerInfoMapper;
 import com.umc.product.recruitment.adapter.in.web.mapper.ApplicationDetailMapper;
@@ -17,15 +18,18 @@ import com.umc.product.recruitment.application.port.in.SortOption;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationEvaluationListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetApplicationListUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetDocumentEvaluationRecruitmentListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetDocumentSelectionListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyDocumentEvaluationUseCase;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationDetailInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationEvaluationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.DocumentEvaluationRecruitmentListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationEvaluationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationListQuery;
+import com.umc.product.recruitment.application.port.in.query.dto.GetDocumentEvaluationRecruitmentListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetDocumentSelectionApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEvaluationInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyDocumentEvaluationQuery;
@@ -33,11 +37,14 @@ import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentForm
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPartPreferencePort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.enums.PartKey;
+import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
@@ -49,6 +56,7 @@ import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.SingleAnswer;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,7 +77,8 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
     GetApplicationListUseCase,
     GetApplicationEvaluationListUseCase,
     GetMyDocumentEvaluationUseCase,
-    GetDocumentSelectionListUseCase {
+    GetDocumentSelectionListUseCase,
+    GetDocumentEvaluationRecruitmentListUseCase {
 
     private final LoadApplicationListPort loadApplicationListPort;
     private final LoadApplicationPartPreferencePort loadApplicationPartPreferencePort;
@@ -81,6 +90,13 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
     private final GetFileUseCase getFileUseCase;
     private final AnswerInfoMapper answerInfoMapper;
     private final ApplicationDetailMapper applicationDetailMapper;
+    private final LoadGisuPort loadGisuPort;
+    private final LoadRecruitmentSchedulePort loadRecruitmentSchedulePort;
+    private final LoadRecruitmentPartPort loadRecruitmentPartPort;
+
+    private Long resolveActiveGisuId() {
+        return loadGisuPort.findActiveGisu().getId();
+    }
 
     @Override
     public ApplicationDetailInfo get(GetApplicationDetailQuery query) {
@@ -393,4 +409,76 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
             new DocumentSelectionApplicationListInfo.DocumentResult(decision.name())
         );
     }
+
+    @Override
+    public DocumentEvaluationRecruitmentListInfo get(GetDocumentEvaluationRecruitmentListQuery query) {
+        // todo: 운영진 권한 검증 필요
+
+        Member requester = loadMemberPort.findById(query.memberId())
+            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+
+        Long schoolId = requester.getSchoolId();
+        if (schoolId == null) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND);
+        }
+
+        Long gisuId = resolveActiveGisuId();
+        // 1) 후보 recruitment 목록 조회 (PUBLISHED + schoolId + gisuId)
+        List<Recruitment> recruitments = loadRecruitmentPort.findAllPublishedBySchoolIdAndGisuId(schoolId, gisuId);
+
+        // 2) DOC_RESULT_AT 기준으로 "결과 발표 전"만 필터링
+        var now = Instant.now();
+
+        List<DocumentEvaluationRecruitmentListInfo.DocumentEvaluationRecruitmentInfo> items = recruitments.stream()
+            .filter(r -> isBeforeDocResult(r.getId(), now))
+            .map(r -> toDocumentEvaluationRecruitmentInfo(r))
+            .toList();
+
+        return new DocumentEvaluationRecruitmentListInfo(items);
+    }
+
+    private boolean isBeforeDocResult(Long recruitmentId, Instant now) {
+        return loadRecruitmentSchedulePort
+            .findOptionalByRecruitmentIdAndType(recruitmentId, RecruitmentScheduleType.DOC_RESULT_AT)
+            .map(s -> s.getStartsAt() == null || now.isBefore(s.getStartsAt()))
+            .orElse(true);
+    }
+
+    private DocumentEvaluationRecruitmentListInfo.DocumentEvaluationRecruitmentInfo toDocumentEvaluationRecruitmentInfo(
+        Recruitment recruitment
+    ) {
+        Long recruitmentId = recruitment.getId();
+
+        // todo: 추가모집 관련 변경사항 수정 시 recruitment에 rootRecruitmentId 추가 후 대체
+        Long rootRecruitmentId = recruitmentId;
+
+        // 서류 평가 기간 (DOC_REVIEW_WINDOW)
+        var docReview = loadRecruitmentSchedulePort
+            .findOptionalByRecruitmentIdAndType(
+                recruitmentId, RecruitmentScheduleType.DOC_REVIEW_WINDOW
+            )
+            .orElse(null);
+
+        Instant docReviewStartAt = (docReview == null) ? null : docReview.getStartsAt();
+        Instant docReviewEndAt = (docReview == null) ? null : docReview.getEndsAt();
+
+        // 지원자 수
+        long total = loadApplicationListPort.countTotalApplications(recruitmentId);
+
+        // open parts
+        List<PartKey> openParts = loadRecruitmentPartPort.findOpenPartsByRecruitmentId(recruitmentId).stream()
+            .map(challengerPart -> PartKey.valueOf(challengerPart.name()))
+            .toList();
+
+        return new DocumentEvaluationRecruitmentListInfo.DocumentEvaluationRecruitmentInfo(
+            recruitmentId,
+            rootRecruitmentId,
+            recruitment.getTitle(),
+            docReviewStartAt,
+            docReviewEndAt,
+            total,
+            openParts
+        );
+    }
+
 }

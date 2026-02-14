@@ -6,11 +6,11 @@ import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.SaveInterviewAssignmentPort;
 import com.umc.product.recruitment.domain.InterviewAssignment;
+import jakarta.transaction.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -102,5 +102,10 @@ public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssig
             return List.of();
         }
         return interviewAssignmentJpaRepository.findAllBySlotIdsFetchJoin(slotIds);
+    }
+
+    @Override
+    public boolean existsByApplicationId(Long applicationId) {
+        return interviewAssignmentQueryRepository.existsByApplicationId(applicationId);
     }
 }

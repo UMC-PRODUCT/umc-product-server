@@ -331,9 +331,20 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
                     .toList();
 
                 // 서류 점수
-                Double docScore = app.getDocScore() != null
-                    ? app.getDocScore().doubleValue()
-                    : null;
+                List<Evaluation> documentEvaluations =
+                    loadEvaluationPort.findByApplicationIdAndStage(
+                        app.getId(),
+                        EvaluationStage.DOCUMENT
+                    );
+
+                Double docScore = documentEvaluations.isEmpty()
+                    ? null
+                    : documentEvaluations.stream()
+                        .map(Evaluation::getScore)
+                        .filter(Objects::nonNull)
+                        .mapToInt(Integer::intValue)
+                        .average()
+                        .orElse(0.0);
 
                 // 평가 진행 상태 결정
                 EvaluationProgressStatus status = determineEvaluationStatus(
