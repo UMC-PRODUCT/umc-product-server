@@ -117,7 +117,7 @@ class NoticeContentServiceTest {
 
             // when & then
             assertThatThrownBy(() -> sut.addImages(command, NOTICE_ID, AUTHOR_MEMBER_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+                .isInstanceOf(NoticeDomainException.class);
         }
 
         @Test
@@ -131,7 +131,7 @@ class NoticeContentServiceTest {
 
             // when & then
             assertThatThrownBy(() -> sut.addImages(command, NOTICE_ID, AUTHOR_MEMBER_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+                .isInstanceOf(NoticeDomainException.class);
         }
 
         @Test
@@ -145,7 +145,7 @@ class NoticeContentServiceTest {
 
             // when & then
             assertThatThrownBy(() -> sut.addImages(command, NOTICE_ID, AUTHOR_MEMBER_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+                .isInstanceOf(NoticeDomainException.class);
         }
 
         @Test
@@ -184,7 +184,7 @@ class NoticeContentServiceTest {
 
             // when & then
             assertThatThrownBy(() -> sut.addImages(command, NOTICE_ID, OTHER_MEMBER_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+                .isInstanceOf(NoticeDomainException.class);
         }
     }
 
@@ -227,7 +227,7 @@ class NoticeContentServiceTest {
 
             // when & then
             assertThatThrownBy(() -> sut.addLinks(command, NOTICE_ID, AUTHOR_MEMBER_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+                .isInstanceOf(NoticeDomainException.class);
         }
 
         @Test
@@ -241,7 +241,7 @@ class NoticeContentServiceTest {
 
             // when & then
             assertThatThrownBy(() -> sut.addLinks(command, NOTICE_ID, OTHER_MEMBER_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+                .isInstanceOf(NoticeDomainException.class);
         }
     }
 
@@ -467,12 +467,12 @@ class NoticeContentServiceTest {
         void 교체할_이미지가_10개를_초과하면_예외가_발생한다() {
             // given
             List<String> tooManyImages = List.of(
-                    "i1", "i2", "i3", "i4", "i5", "i6", "i7", "i8", "i9", "i10", "i11");
+                "i1", "i2", "i3", "i4", "i5", "i6", "i7", "i8", "i9", "i10", "i11");
             var command = new ReplaceNoticeImagesCommand(tooManyImages);
 
             // when & then
             assertThatThrownBy(() -> sut.replaceImages(command, NOTICE_ID, AUTHOR_MEMBER_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+                .isInstanceOf(NoticeDomainException.class);
         }
 
         @Test
@@ -486,7 +486,7 @@ class NoticeContentServiceTest {
 
             // when & then
             assertThatThrownBy(() -> sut.replaceImages(command, NOTICE_ID, OTHER_MEMBER_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+                .isInstanceOf(NoticeDomainException.class);
         }
     }
 
@@ -534,7 +534,7 @@ class NoticeContentServiceTest {
 
             // when & then
             assertThatThrownBy(() -> sut.replaceLinks(command, NOTICE_ID, OTHER_MEMBER_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+                .isInstanceOf(NoticeDomainException.class);
         }
     }
 
@@ -550,7 +550,7 @@ class NoticeContentServiceTest {
 
             // when & then
             assertThatThrownBy(() -> sut.addImages(command, NOTICE_ID, AUTHOR_MEMBER_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+                .isInstanceOf(NoticeDomainException.class);
         }
 
         @Test
@@ -561,7 +561,7 @@ class NoticeContentServiceTest {
 
             // when & then
             assertThatThrownBy(() -> sut.addLinks(command, NOTICE_ID, AUTHOR_MEMBER_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+                .isInstanceOf(NoticeDomainException.class);
         }
 
         @Test
@@ -576,7 +576,7 @@ class NoticeContentServiceTest {
 
             // when & then
             assertThatThrownBy(() -> sut.addVote(command, NOTICE_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+                .isInstanceOf(NoticeDomainException.class);
         }
     }
 }

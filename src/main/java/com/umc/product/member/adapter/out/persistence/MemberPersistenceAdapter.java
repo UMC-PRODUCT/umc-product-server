@@ -1,18 +1,23 @@
 package com.umc.product.member.adapter.out.persistence;
 
+import com.umc.product.challenger.domain.Challenger;
+import com.umc.product.member.application.port.in.query.dto.SearchMemberQuery;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
+import com.umc.product.member.application.port.out.SearchMemberPort;
 import com.umc.product.member.domain.Member;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort {
+public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort, SearchMemberPort {
 
     private final MemberJpaRepository memberJpaRepository;
     private final MemberQueryRepository memberQueryRepository;
@@ -67,5 +72,10 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort 
     @Override
     public void delete(Member member) {
         memberJpaRepository.delete(member);
+    }
+
+    @Override
+    public Page<Challenger> search(SearchMemberQuery query, Pageable pageable) {
+        return memberQueryRepository.pagingSearch(query, pageable);
     }
 }
