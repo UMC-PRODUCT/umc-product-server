@@ -117,21 +117,7 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void updateNoticeTitleOrContent(UpdateNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-        NoticeTargetInfo targets = getNoticeTargetUseCase.findByNoticeId(command.noticeId());
-
-        /**
-         * 작성자 일치 여부 검증 (이 메서드로 ACTIVE 상태인 챌린저만 올 수 있으므로 별도 상태 검증은 불필요)
-         */
-        boolean isAuthor = notice.isAuthorChallenger(
-            getChallengerUseCase.getActiveByMemberIdAndGisuId(
-                command.memberId(),
-                targets.targetGisuId()
-            ).challengerId()
-        );
-
-        if (!isAuthor) {
-            throw new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH);
-        }
+        validateAuthor(notice, command.memberId());
 
         /**
          * 제목/내용만 수정
@@ -146,6 +132,7 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void deleteNotice(DeleteNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
+        validateAuthor(notice, command.memberId());
 
         /*
          * 관련 이미지, 투표, 링크 등도 모두 삭제
@@ -222,5 +209,14 @@ public class NoticeService implements ManageNoticeUseCase {
         }
 
         return targetIds;
+    }
+
+    private void validateAuthor(Notice notice, Long memberId) {
+        NoticeTargetInfo targets = getNoticeTargetUseCase.findByNoticeId(notice.getId());
+        Long challengerId = getChallengerUseCase.getActiveByMemberIdAndGisuId(
+            memberId, targets.targetGisuId()
+        ).challengerId();
+
+        notice.validateAuthorChallenger(challengerId);
     }
 }

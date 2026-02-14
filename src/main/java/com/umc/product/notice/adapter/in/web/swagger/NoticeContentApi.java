@@ -2,6 +2,7 @@ package com.umc.product.notice.adapter.in.web.swagger;
 
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeImagesRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeLinksRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeVoteRequest;
@@ -26,7 +27,9 @@ public interface NoticeContentApi {
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
 
-        @RequestBody @Valid AddNoticeImagesRequest request
+        @RequestBody @Valid AddNoticeImagesRequest request,
+
+        @CurrentMember MemberPrincipal memberPrincipal
     );
 
     @Operation(
@@ -36,7 +39,9 @@ public interface NoticeContentApi {
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
 
-        @RequestBody @Valid AddNoticeLinksRequest request
+        @RequestBody @Valid AddNoticeLinksRequest request,
+
+        @CurrentMember MemberPrincipal memberPrincipal
     );
 
     @Operation(
@@ -60,7 +65,9 @@ public interface NoticeContentApi {
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
 
-        @RequestBody @Valid ReplaceNoticeImagesRequest request
+        @RequestBody @Valid ReplaceNoticeImagesRequest request,
+
+        @CurrentMember MemberPrincipal memberPrincipal
     );
 
     @Operation(
@@ -71,7 +78,20 @@ public interface NoticeContentApi {
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
 
-        @RequestBody @Valid ReplaceNoticeLinksRequest request
+        @RequestBody @Valid ReplaceNoticeLinksRequest request,
+
+        @CurrentMember MemberPrincipal memberPrincipal
+    );
+
+    @Operation(
+        summary = "공지사항 투표 삭제",
+        description = "공지사항 수정시 필요한 경우 해당 공지에 연결된 투표를 삭제합니다. 공지사항과 투표의 연결도 함께 제거됩니다."
+    )
+    void deleteNoticeVote(
+        @Parameter(description = "공지사항 ID", required = true, example = "1")
+        @PathVariable Long noticeId,
+
+        MemberPrincipal memberPrincipal
     );
 
 }
