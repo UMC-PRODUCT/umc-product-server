@@ -26,6 +26,9 @@ public record PostResponse(
         @Schema(description = "작성자 이름", example = "홍길동")
         String authorName,
 
+        @Schema(description = "작성자 프로필 이미지", example = "https://example.com/profile.jpg")
+        String authorProfileImage,
+
         @Schema(description = "작성일시", example = "2026-02-13T10:30:00Z")
         Instant createdAt,
 
@@ -60,6 +63,7 @@ public record PostResponse(
                 info.category(),
                 info.authorId(),
                 info.authorName(),
+                info.authorProfileImage(),
                 info.createdAt(),
                 info.commentCount(),
                 info.likeCount(),

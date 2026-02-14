@@ -11,7 +11,7 @@ import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.MemberProfileInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,15 +56,8 @@ public class CommentQueryService implements GetCommentListUseCase {
                 .map(ChallengerInfo::memberId)
                 .collect(Collectors.toSet());
 
-        // 4. 멤버 ID -> 멤버 이름 매핑 (학교 정보 조회 없이 이름만)
-        Map<Long, String> memberNameMap = memberIds.stream()
-                .collect(Collectors.toMap(
-                        memberId -> memberId,
-                        memberId -> {
-                            MemberInfo memberInfo = getMemberUseCase.getById(memberId);
-                            return memberInfo.name();
-                        }
-                ));
+        // 4. 멤버 ID -> 멤버 프로필 매핑 (1 query, 일괄 조회로 N+1 해결)
+        var memberProfileMap = getMemberUseCase.getProfiles(memberIds);
 
         // 5. 챌린저 ID -> 작성자 이름 매핑
         Map<Long, String> authorNameMap = challengerInfoMap.entrySet().stream()
@@ -72,15 +65,31 @@ public class CommentQueryService implements GetCommentListUseCase {
                         Map.Entry::getKey,
                         entry -> {
                             Long memberId = entry.getValue().memberId();
-                            String name = memberNameMap.get(memberId);
-                            return name != null ? name : "알 수 없음";
+                            var memberProfile = memberProfileMap.get(memberId);
+                            return memberProfile != null ? memberProfile.name() : "알 수 없음";
+                        }
+                ));
+
+        // 6. 챌린저 ID -> 작성자 프로필 이미지 매핑
+        Map<Long, String> authorProfileImageMap = challengerInfoMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> {
+                            Long memberId = entry.getValue().memberId();
+                            var memberProfile = memberProfileMap.get(memberId);
+                            return memberProfile != null ? memberProfile.profileImageLink() : null;
                         }
                 ));
 
         return comments.stream()
                 .map(comment -> {
                     String authorName = authorNameMap.get(comment.getChallengerId());
-                    return CommentInfo.from(comment, authorName != null ? authorName : "알 수 없음");
+                    String authorProfileImage = authorProfileImageMap.get(comment.getChallengerId());
+                    return CommentInfo.from(
+                            comment,
+                            authorName != null ? authorName : "알 수 없음",
+                            authorProfileImage
+                    );
                 })
                 .toList();
     }

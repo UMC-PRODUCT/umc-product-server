@@ -12,6 +12,7 @@ public record PostInfo(
         Category category,
         Long authorId,
         String authorName,
+        String authorProfileImage,
         LocalDateTime meetAt,
         String location,
         Integer maxParticipants,
@@ -22,10 +23,14 @@ public record PostInfo(
         boolean isLiked
 ) {
     public static PostInfo from(Post post, Long authorId, String authorName) {
-        return from(post, authorId, authorName, 0);
+        return from(post, authorId, authorName, null, 0);
     }
 
     public static PostInfo from(Post post, Long authorId, String authorName, int commentCount) {
+        return from(post, authorId, authorName, null, commentCount);
+    }
+
+    public static PostInfo from(Post post, Long authorId, String authorName, String authorProfileImage, int commentCount) {
         Long postId = post.getPostId() != null ? post.getPostId().id() : null;
 
         // 번개글인 경우
@@ -38,6 +43,7 @@ public record PostInfo(
                     post.getCategory(),
                     authorId,
                     authorName,
+                    authorProfileImage,
                     info.meetAt(),
                     info.location(),
                     info.maxParticipants(),
@@ -57,6 +63,7 @@ public record PostInfo(
                 post.getCategory(),
                 authorId,
                 authorName,
+                authorProfileImage,
                 null,
                 null,
                 null,

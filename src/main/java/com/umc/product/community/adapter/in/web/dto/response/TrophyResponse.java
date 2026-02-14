@@ -8,11 +8,17 @@ public record TrophyResponse(
         @Schema(description = "상장 ID", example = "1")
         Long trophyId,
 
+        @Schema(description = "챌린저 ID", example = "123")
+        Long challengerId,
+
         @Schema(description = "주차", example = "3")
         Integer week,
 
         @Schema(description = "챌린저 이름", example = "홍길동")
         String challengerName,
+
+        @Schema(description = "챌린저 프로필 이미지", example = "https://example.com/profile.jpg")
+        String challengerProfileImage,
 
         @Schema(description = "학교명", example = "서울대학교")
         String school,
@@ -32,8 +38,10 @@ public record TrophyResponse(
     public static TrophyResponse from(TrophyInfo info) {
         return new TrophyResponse(
                 info.trophyId(),
+                info.challengerId(),
                 info.week(),
                 info.challengerName(),
+                info.challengerProfileImage(),
                 info.school(),
                 info.part(),
                 info.title(),
