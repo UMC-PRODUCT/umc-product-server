@@ -52,8 +52,17 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(postId)
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
-        String authorName = authorInfoProvider.getAuthorName(postWithAuthor.authorChallengerId());
-        return PostInfo.from(postWithAuthor.post(), postWithAuthor.authorChallengerId(), authorName);
+        Long authorChallengerId = postWithAuthor.authorChallengerId();
+
+        // 챌린저 정보 조회
+        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId);
+
+        // 멤버 프로필 조회 (이름과 프로필 이미지)
+        MemberProfileInfo memberProfile = getMemberUseCase.getProfile(challengerInfo.memberId());
+        String authorName = memberProfile.name();
+        String authorProfileImage = memberProfile.profileImageLink();
+
+        return PostInfo.from(postWithAuthor.post(), authorChallengerId, authorName, authorProfileImage, 0);
     }
 
     @Override
@@ -61,12 +70,18 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(postId, challengerId)
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
-        String authorName = authorInfoProvider.getAuthorName(postWithAuthor.authorChallengerId());
-        PostInfo postInfo = PostInfo.from(postWithAuthor.post(), postWithAuthor.authorChallengerId(), authorName);
-        int commentCount = loadCommentPort.countByPostId(postId);
+        Long authorChallengerId = postWithAuthor.authorChallengerId();
 
-        // 작성자 파트 정보 조회
-        ChallengerInfo authorChallengerInfo = getChallengerUseCase.getChallengerPublicInfo(postWithAuthor.authorChallengerId());
+        // 작성자 챌린저 정보 조회
+        ChallengerInfo authorChallengerInfo = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId);
+
+        // 작성자 멤버 프로필 조회 (이름과 프로필 이미지)
+        MemberProfileInfo memberProfile = getMemberUseCase.getProfile(authorChallengerInfo.memberId());
+        String authorName = memberProfile.name();
+        String authorProfileImage = memberProfile.profileImageLink();
+
+        int commentCount = loadCommentPort.countByPostId(postId);
+        PostInfo postInfo = PostInfo.from(postWithAuthor.post(), authorChallengerId, authorName, authorProfileImage, commentCount);
 
         // 스크랩 정보 조회
         boolean isScrapped = loadScrapPort.existsByPostIdAndChallengerId(postId, challengerId);
@@ -78,68 +93,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
     @Override
     public Page<PostInfo> getPostList(PostSearchQuery query, Pageable pageable) {
         Page<Post> posts = loadPostPort.findAllByQuery(query, pageable);
-
-        // 게시글이 없으면 빈 페이지 반환
-        if (posts.isEmpty()) {
-            return posts.map(post -> PostInfo.from(post, null, null));
-        }
-
-        // 1. 게시글 ID 목록 추출
-        List<Long> postIds = posts.stream()
-                .map(post -> post.getPostId().id())
-                .toList();
-
-        // 2. 게시글 ID -> 작성자 챌린저 ID 매핑 (1 query)
-        Map<Long, Long> postIdToAuthorId = loadPostPort.findAuthorIdsByPostIds(postIds);
-
-        // 3. 고유한 챌린저 ID 목록 추출
-        Set<Long> challengerIds = Set.copyOf(postIdToAuthorId.values());
-
-        // 4. 챌린저 ID -> 챌린저 정보 매핑 (1 query)
-        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getChallengerPublicInfoByIds(challengerIds);
-
-        // 5. 멤버 ID 목록 추출
-        Set<Long> memberIds = challengerInfoMap.values().stream()
-                .map(ChallengerInfo::memberId)
-                .collect(Collectors.toSet());
-
-        // 6. 멤버 ID -> 멤버 프로필 매핑 (1 query, 일괄 조회로 N+1 해결)
-        Map<Long, MemberProfileInfo> memberProfileMap = getMemberUseCase.getProfiles(memberIds);
-
-        // 7. 챌린저 ID -> 작성자 이름 매핑
-        Map<Long, String> authorNameMap = challengerInfoMap.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> {
-                            Long memberId = entry.getValue().memberId();
-                            MemberProfileInfo memberProfile = memberProfileMap.get(memberId);
-                            return memberProfile != null ? memberProfile.name() : "알 수 없음";
-                        }
-                ));
-
-        // 8. 챌린저 ID -> 작성자 프로필 이미지 매핑
-        Map<Long, String> authorProfileImageMap = challengerInfoMap.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> {
-                            Long memberId = entry.getValue().memberId();
-                            MemberProfileInfo memberProfile = memberProfileMap.get(memberId);
-                            return memberProfile != null ? memberProfile.profileImageLink() : null;
-                        }
-                ));
-
-        // 9. 댓글 수 일괄 조회 (1 query)
-        Map<Long, Integer> commentCountMap = loadCommentPort.countByPostIds(postIds);
-
-        // 10. PostInfo로 변환
-        return posts.map(post -> {
-            Long postId = post.getPostId().id();
-            Long authorId = postIdToAuthorId.get(postId);
-            String authorName = authorId != null ? authorNameMap.get(authorId) : "알 수 없음";
-            String authorProfileImage = authorId != null ? authorProfileImageMap.get(authorId) : null;
-            int commentCount = commentCountMap.getOrDefault(postId, 0);
-            return PostInfo.from(post, authorId, authorName, authorProfileImage, commentCount);
-        });
+        return convertToPostInfoPage(posts, pageable);
     }
 
     @Override
@@ -158,11 +112,16 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
             return Page.empty(pageable);
         }
 
-        // 작성자 이름 조회 (한 번만)
-        String authorName = authorInfoProvider.getAuthorName(challengerId);
+        // 작성자 챌린저 정보 조회 (한 번만)
+        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
 
-        // PostInfo로 변환
-        return posts.map(post -> PostInfo.from(post, challengerId, authorName));
+        // 작성자 멤버 프로필 조회 (이름과 프로필 이미지, 한 번만)
+        MemberProfileInfo memberProfile = getMemberUseCase.getProfile(challengerInfo.memberId());
+        String authorName = memberProfile.name();
+        String authorProfileImage = memberProfile.profileImageLink();
+
+        // PostInfo로 변환 (모든 게시글이 같은 작성자이므로 같은 프로필 이미지)
+        return posts.map(post -> PostInfo.from(post, challengerId, authorName, authorProfileImage, 0));
     }
 
     @Override
@@ -210,39 +169,37 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         // 6. 멤버 ID -> 멤버 프로필 매핑 (1 query, 일괄 조회로 N+1 해결)
         Map<Long, MemberProfileInfo> memberProfileMap = getMemberUseCase.getProfiles(memberIds);
 
-        // 7. 챌린저 ID -> 작성자 이름 매핑
-        Map<Long, String> authorNameMap = challengerInfoMap.entrySet().stream()
+        // 7. 챌린저 ID -> 작성자 정보 매핑 (이름 + 프로필 이미지, 한 번의 스트림 처리)
+        Map<Long, AuthorDetails> authorDetailsMap = challengerInfoMap.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> {
                             Long memberId = entry.getValue().memberId();
                             MemberProfileInfo memberProfile = memberProfileMap.get(memberId);
-                            return memberProfile != null ? memberProfile.name() : "알 수 없음";
+                            String name = memberProfile != null ? memberProfile.name() : "알 수 없음";
+                            String profileImage = memberProfile != null ? memberProfile.profileImageLink() : null;
+                            return new AuthorDetails(name, profileImage);
                         }
                 ));
 
-        // 8. 챌린저 ID -> 작성자 프로필 이미지 매핑
-        Map<Long, String> authorProfileImageMap = challengerInfoMap.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> {
-                            Long memberId = entry.getValue().memberId();
-                            MemberProfileInfo memberProfile = memberProfileMap.get(memberId);
-                            return memberProfile != null ? memberProfile.profileImageLink() : null;
-                        }
-                ));
-
-        // 9. 댓글 수 일괄 조회 (1 query)
+        // 8. 댓글 수 일괄 조회 (1 query)
         Map<Long, Integer> commentCountMap = loadCommentPort.countByPostIds(postIds);
 
-        // 10. PostInfo로 변환
+        // 9. PostInfo로 변환
         return posts.map(post -> {
             Long postId = post.getPostId().id();
             Long authorId = postIdToAuthorId.get(postId);
-            String authorName = authorId != null ? authorNameMap.get(authorId) : "알 수 없음";
-            String authorProfileImage = authorId != null ? authorProfileImageMap.get(authorId) : null;
+            AuthorDetails authorDetails = authorId != null ? authorDetailsMap.get(authorId) : null;
+            String authorName = authorDetails != null ? authorDetails.name() : "알 수 없음";
+            String authorProfileImage = authorDetails != null ? authorDetails.profileImage() : null;
             int commentCount = commentCountMap.getOrDefault(postId, 0);
             return PostInfo.from(post, authorId, authorName, authorProfileImage, commentCount);
         });
+    }
+
+    /**
+     * 작성자 정보를 담는 내부 record
+     */
+    private record AuthorDetails(String name, String profileImage) {
     }
 }
