@@ -117,16 +117,28 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
                         }
                 ));
 
-        // 8. 댓글 수 일괄 조회 (1 query)
+        // 8. 챌린저 ID -> 작성자 프로필 이미지 매핑
+        Map<Long, String> authorProfileImageMap = challengerInfoMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> {
+                            Long memberId = entry.getValue().memberId();
+                            MemberProfileInfo memberProfile = memberProfileMap.get(memberId);
+                            return memberProfile != null ? memberProfile.profileImageLink() : null;
+                        }
+                ));
+
+        // 9. 댓글 수 일괄 조회 (1 query)
         Map<Long, Integer> commentCountMap = loadCommentPort.countByPostIds(postIds);
 
-        // 9. PostInfo로 변환
+        // 10. PostInfo로 변환
         return posts.map(post -> {
             Long postId = post.getPostId().id();
             Long authorId = postIdToAuthorId.get(postId);
             String authorName = authorId != null ? authorNameMap.get(authorId) : "알 수 없음";
+            String authorProfileImage = authorId != null ? authorProfileImageMap.get(authorId) : null;
             int commentCount = commentCountMap.getOrDefault(postId, 0);
-            return PostInfo.from(post, authorId, authorName, commentCount);
+            return PostInfo.from(post, authorId, authorName, authorProfileImage, commentCount);
         });
     }
 
@@ -209,16 +221,28 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
                         }
                 ));
 
-        // 8. 댓글 수 일괄 조회 (1 query)
+        // 8. 챌린저 ID -> 작성자 프로필 이미지 매핑
+        Map<Long, String> authorProfileImageMap = challengerInfoMap.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> {
+                            Long memberId = entry.getValue().memberId();
+                            MemberProfileInfo memberProfile = memberProfileMap.get(memberId);
+                            return memberProfile != null ? memberProfile.profileImageLink() : null;
+                        }
+                ));
+
+        // 9. 댓글 수 일괄 조회 (1 query)
         Map<Long, Integer> commentCountMap = loadCommentPort.countByPostIds(postIds);
 
-        // 9. PostInfo로 변환
+        // 10. PostInfo로 변환
         return posts.map(post -> {
             Long postId = post.getPostId().id();
             Long authorId = postIdToAuthorId.get(postId);
             String authorName = authorId != null ? authorNameMap.get(authorId) : "알 수 없음";
+            String authorProfileImage = authorId != null ? authorProfileImageMap.get(authorId) : null;
             int commentCount = commentCountMap.getOrDefault(postId, 0);
-            return PostInfo.from(post, authorId, authorName, commentCount);
+            return PostInfo.from(post, authorId, authorName, authorProfileImage, commentCount);
         });
     }
 }
