@@ -1,6 +1,5 @@
 package com.umc.product.recruitment.adapter.in.web;
 
-import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.DocumentEvaluationRecruitmentListResponse;
@@ -17,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/recruitments")
 @RequiredArgsConstructor
-@Tag(name = SwaggerTag.Constants.DOC_EVALUATION)
+@Tag(name = "Recruitment | 서류 평가", description = "")
 public class DocumentEvaluationRecruitmentController {
 
     private final GetDocumentEvaluationRecruitmentListUseCase getDocumentEvaluationRecruitmentListUseCase;

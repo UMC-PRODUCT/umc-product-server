@@ -1,6 +1,5 @@
 package com.umc.product.recruitment.adapter.in.web;
 
-import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateInterviewSheetQuestionRequest;
@@ -41,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/recruitments/{recruitmentId}/interview-sheets")
 @RequiredArgsConstructor
-@Tag(name = Constants.INTERVIEW_QUESTION_SHEET)
+@Tag(name = "Recruitment | 면접 질문지 관리", description = "")
 public class InterviewQuestionSheetController {
 
 

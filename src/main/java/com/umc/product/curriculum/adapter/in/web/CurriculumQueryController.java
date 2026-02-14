@@ -3,6 +3,7 @@ package com.umc.product.curriculum.adapter.in.web;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumProgressResponse;
 import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumWeeksResponse;
+import com.umc.product.curriculum.adapter.in.web.swagger.CurriculumQueryControllerApi;
 import com.umc.product.curriculum.application.port.in.query.CurriculumProgressInfo;
 import com.umc.product.curriculum.application.port.in.query.CurriculumWeekInfo;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumProgressUseCase;

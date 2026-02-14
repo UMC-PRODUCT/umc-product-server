@@ -1,6 +1,5 @@
 package com.umc.product.recruitment.adapter.in.web;
 
-import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateRecruitmentRequest;
@@ -109,7 +108,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/recruitments")
 @RequiredArgsConstructor
-@Tag(name = SwaggerTag.Constants.RECRUITMENT)
+@Tag(name = "Recruitment | 모집", description = "")
 public class RecruitmentController {
 
     private final GetActiveRecruitmentUseCase getActiveRecruitmentUseCase;

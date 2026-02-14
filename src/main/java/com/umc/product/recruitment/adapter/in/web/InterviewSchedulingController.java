@@ -1,6 +1,5 @@
 package com.umc.product.recruitment.adapter.in.web;
 
-import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateInterviewAssignmentRequest;
@@ -41,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/recruitments/{recruitmentId}/interviews/scheduling")
 @RequiredArgsConstructor
-@Tag(name = SwaggerTag.Constants.INTERVIEW_SCHEDULING)
+@Tag(name = "Recruitment | 면접 스케쥴링 관리", description = "")
 public class InterviewSchedulingController {
 
     private final GetInterviewSchedulingSummaryUseCase getInterviewSchedulingSummaryUseCase;

@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "챌린저 역할 생성", description = "운영진 권한 관련 API")
+@Tag(name = "Authorization | 권한 CRUD", description = "운영진 권한 관련 API")
 @RestController
 @RequiredArgsConstructor
 @Slf4j

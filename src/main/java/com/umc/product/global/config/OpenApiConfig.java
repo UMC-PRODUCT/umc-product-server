@@ -1,7 +1,6 @@
 package com.umc.product.global.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.umc.product.global.constant.SwaggerTag;
 import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -9,11 +8,7 @@ import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
-import io.swagger.v3.oas.models.tags.Tag;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,7 +27,6 @@ public class OpenApiConfig {
         return new OpenAPI()
             .info(apiInfo())
             .servers(servers())
-            .tags(tags())  // Enum으로 관리하는 Tags
             .components(securityComponents())
             .addSecurityItem(securityRequirement());
     }
@@ -62,16 +56,6 @@ public class OpenApiConfig {
     public ModelResolver modelResolver(ObjectMapper objectMapper) {
         // Spring이 관리하는 ObjectMapper를 Swagger에 전달
         return new ModelResolver(objectMapper);
-    }
-
-    /**
-     * Enum으로 관리하는 Tags를 OpenAPI Tag로 변환
-     */
-    private List<Tag> tags() {
-        return Arrays.stream(SwaggerTag.values())
-            .sorted(Comparator.comparingInt(SwaggerTag::getOrder))  // order 순으로 정렬
-            .map(SwaggerTag::toTag)
-            .collect(Collectors.toList());
     }
 
     private Components securityComponents() {

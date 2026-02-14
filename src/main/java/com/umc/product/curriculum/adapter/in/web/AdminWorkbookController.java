@@ -3,6 +3,7 @@ package com.umc.product.curriculum.adapter.in.web;
 import com.umc.product.curriculum.adapter.in.web.dto.request.ReviewWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.dto.request.SelectBestWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.dto.response.WorkbookSubmissionDetailResponse;
+import com.umc.product.curriculum.adapter.in.web.swagger.AdminWorkbookControllerApi;
 import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.ReleaseWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;
@@ -37,25 +38,25 @@ public class AdminWorkbookController implements AdminWorkbookControllerApi {
     @Override
     @PostMapping("/challenger/{challengerWorkbookId}/review")
     public void reviewWorkbook(
-            @PathVariable Long challengerWorkbookId,
-            @Valid @RequestBody ReviewWorkbookRequest request) {
+        @PathVariable Long challengerWorkbookId,
+        @Valid @RequestBody ReviewWorkbookRequest request) {
         manageWorkbookUseCase.review(request.toCommand(challengerWorkbookId));
     }
 
     @Override
     @PatchMapping("/challenger/{challengerWorkbookId}/best")
     public void selectBestWorkbook(
-            @PathVariable Long challengerWorkbookId,
-            @Valid @RequestBody SelectBestWorkbookRequest request) {
+        @PathVariable Long challengerWorkbookId,
+        @Valid @RequestBody SelectBestWorkbookRequest request) {
         manageWorkbookUseCase.selectBest(request.toCommand(challengerWorkbookId));
     }
 
     @Override
     @GetMapping("/challenger/{challengerWorkbookId}/submissions")
     public WorkbookSubmissionDetailResponse getSubmissionDetail(
-            @PathVariable Long challengerWorkbookId) {
+        @PathVariable Long challengerWorkbookId) {
         return WorkbookSubmissionDetailResponse.from(
-                getWorkbookSubmissionsUseCase.getSubmissionDetail(challengerWorkbookId)
+            getWorkbookSubmissionsUseCase.getSubmissionDetail(challengerWorkbookId)
         );
     }
 }

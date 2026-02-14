@@ -8,6 +8,7 @@ import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameRe
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupPartsResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSchoolsResponse;
+import com.umc.product.organization.adapter.in.web.swagger.StudyGroupQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo.StudyGroupInfo;
 import java.util.List;
@@ -51,19 +52,19 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     @Override
     @GetMapping
     public CursorResponse<Summary> getStudyGroups(
-            @CurrentMember MemberPrincipal memberPrincipal,
-            @RequestParam(required = false) Long cursor,
-            @RequestParam(defaultValue = "20") int size) {
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @RequestParam(required = false) Long cursor,
+        @RequestParam(defaultValue = "20") int size) {
 
         List<StudyGroupInfo> content = getStudyGroupUseCase.getMyStudyGroups(
-                memberPrincipal.getMemberId(), cursor, size
+            memberPrincipal.getMemberId(), cursor, size
         );
 
         return CursorResponse.of(
-                content,
-                size,
-                StudyGroupInfo::groupId,
-                Summary::from
+            content,
+            size,
+            StudyGroupInfo::groupId,
+            Summary::from
         );
     }
 
@@ -73,9 +74,9 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     @Override
     @GetMapping("/names")
     public StudyGroupNameResponse getStudyGroupNames(
-            @CurrentMember MemberPrincipal memberPrincipal) {
+        @CurrentMember MemberPrincipal memberPrincipal) {
         return StudyGroupNameResponse.from(
-                getStudyGroupUseCase.getStudyGroupNames(memberPrincipal.getMemberId())
+            getStudyGroupUseCase.getStudyGroupNames(memberPrincipal.getMemberId())
         );
     }
 

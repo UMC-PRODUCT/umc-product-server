@@ -2,6 +2,7 @@ package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolLinkResponse;
+import com.umc.product.organization.adapter.in.web.swagger.SchoolQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -3,6 +3,7 @@ package com.umc.product.curriculum.adapter.in.web;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.dto.request.ManageCurriculumRequest;
 import com.umc.product.curriculum.adapter.in.web.dto.response.AdminCurriculumResponse;
+import com.umc.product.curriculum.adapter.in.web.swagger.AdminCurriculumControllerApi;
 import com.umc.product.curriculum.application.port.in.command.ManageCurriculumUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetAdminCurriculumUseCase;
 import com.umc.product.global.security.annotation.Public;
@@ -27,7 +28,7 @@ public class AdminCurriculumController implements AdminCurriculumControllerApi {
     @Override
     @GetMapping
     public AdminCurriculumResponse getCurriculum(
-            @RequestParam ChallengerPart part
+        @RequestParam ChallengerPart part
     ) {
         // TODO: user의 권한에 따라 막히게 구현 필요
         return AdminCurriculumResponse.from(getAdminCurriculumUseCase.getByActiveGisuAndPart(part));
@@ -37,7 +38,7 @@ public class AdminCurriculumController implements AdminCurriculumControllerApi {
     @Override
     @PutMapping
     public void manageCurriculum(
-            @Valid @RequestBody ManageCurriculumRequest request
+        @Valid @RequestBody ManageCurriculumRequest request
     ) {
         // TODO: user의 권한에 따라 막히게 구현 필요
         manageCurriculumUseCase.manage(request.toCommand());

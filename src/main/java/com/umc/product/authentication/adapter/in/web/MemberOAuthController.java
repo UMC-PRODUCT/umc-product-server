@@ -6,7 +6,6 @@ import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthC
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.query.GetOAuthListUseCase;
 import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
-import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.OAuthVerificationClaims;
@@ -26,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/member-oauth")
 @RequiredArgsConstructor
-@Tag(name = Constants.AUTH)
+@Tag(name = "Authentication | OAuth 연동", description = "Member에 OAuth 계정을 연동하거나 제거하는 API")
 public class MemberOAuthController {
 
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
