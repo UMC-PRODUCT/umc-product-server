@@ -1,6 +1,7 @@
 package com.umc.product.authorization.application.service.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
@@ -10,6 +11,7 @@ import com.umc.product.authorization.application.port.in.query.dto.ResourcePermi
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -95,8 +97,8 @@ class CheckResourcePermissionServiceTest {
         @Test
         void 리소스_타입이_지원하는_권한_개수만큼_결과를_반환한다() {
             // given
-            ResourceType resourceType = ResourceType.SCHEDULE;
-            // SCHEDULE supports: READ, WRITE, DELETE (3개)
+            ResourceType resourceType = ResourceType.NOTICE;
+            // NOTICE supports: READ, DELETE, CHECK (3개)
 
             given(checkPermissionUseCase.check(eq(MEMBER_ID), any(ResourcePermission.class)))
                 .willReturn(false);
@@ -106,6 +108,16 @@ class CheckResourcePermissionServiceTest {
 
             // then
             assertThat(result.permissions()).hasSize(resourceType.getSupportedPermissions().size());
+        }
+
+        @Test
+        void Evaluator가_구현되지_않은_리소스_타입이면_예외가_발생한다() {
+            // given
+            ResourceType resourceType = ResourceType.SCHEDULE;
+
+            // when & then
+            assertThatThrownBy(() -> sut.hasPermission(MEMBER_ID, resourceType, RESOURCE_ID))
+                .isInstanceOf(AuthorizationDomainException.class);
         }
     }
 }
