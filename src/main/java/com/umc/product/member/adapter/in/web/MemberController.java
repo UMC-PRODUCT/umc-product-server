@@ -1,6 +1,9 @@
 package com.umc.product.member.adapter.in.web;
 
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
+import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
+import com.umc.product.authentication.application.port.in.query.GetOAuthListUseCase;
+import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -15,6 +18,7 @@ import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
 import com.umc.product.member.adapter.in.web.dto.response.SearchMemberResponse;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
+import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
@@ -50,7 +54,10 @@ public class MemberController {
     private final SearchMemberUseCase searchMemberUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
+
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
+    private final GetOAuthListUseCase getOAuthListUseCase;
+
 
     // 로그인은 OAuth를 통해서만 진행됨!!
     @Public
@@ -157,5 +164,33 @@ public class MemberController {
         return MemberInfoResponse.from(info);
     }
 
+    public MemberInfo deleteMember(@CurrentMember MemberPrincipal memberPrincipal) {
+        Long memberId = memberPrincipal.getMemberId();
+
+        MemberInfo deletedMemberInfo = getMemberUseCase.getById(memberId);
+
+        List<MemberOAuthInfo> linkedOAuths = getOAuthListUseCase.getOAuthList(memberId);
+
+        // TODO: N+1 문제 해결 필요
+        for (MemberOAuthInfo oAuthInfo : linkedOAuths) {
+            oAuthAuthenticationUseCase.unlinkOAuth(
+                UnlinkOAuthCommand.builder()
+                    .memberId(memberId)
+                    .memberOAuthId(oAuthInfo.memberOAuthId())
+                    .build()
+            );
+        }
+
+        manageMemberUseCase.deleteMember(
+            DeleteMemberCommand
+                .builder()
+                .memberId(memberId)
+                .build()
+        );
+
+        // TODO: 회원 탈퇴 후에도 다른 도메인에서 정보를 조회했을 때 null-safe하게 동작할 수 있도록 변경 필요
+
+        return deletedMemberInfo;
+    }
 
 }
