@@ -19,8 +19,6 @@ import com.umc.product.member.application.port.in.command.dto.RegisterMemberComm
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -36,7 +34,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/member")
 @RequiredArgsConstructor
 @Tag(name = "Member | 회원 Command", description = "")
-public class MemberController {
+public class MemberCommandController {
+
+    private final MemberInfoResponseAssembler assembler;
 
     private final JwtTokenProvider jwtTokenProvider;
     private final ManageMemberUseCase manageMemberUseCase;
@@ -97,17 +97,16 @@ public class MemberController {
             request.profileImageId())
         );
 
-        MemberProfileInfo info = getMemberUseCase.getProfile(memberPrincipal.getMemberId());
-        return MemberInfoResponse.from(info);
+        return assembler.fromMemberId(memberPrincipal.getMemberId());
     }
 
     // TODO: 총괄이 임의로 계정을 삭제시키려면 memberId로 삭제하는 API도 필요할 것 같음
 
     @DeleteMapping
-    public MemberInfo deleteMember(@CurrentMember MemberPrincipal memberPrincipal) {
+    public MemberInfoResponse deleteMember(@CurrentMember MemberPrincipal memberPrincipal) {
         Long memberId = memberPrincipal.getMemberId();
 
-        MemberInfo deletedMemberInfo = getMemberUseCase.getById(memberId);
+        MemberInfoResponse deletedMemberInfoResponse = assembler.fromMemberId(memberId);
 
         List<MemberOAuthInfo> linkedOAuths = getOAuthListUseCase.getOAuthList(memberId);
 
@@ -130,7 +129,6 @@ public class MemberController {
 
         // TODO: 회원 탈퇴 후에도 다른 도메인에서 정보를 조회했을 때 null-safe하게 동작할 수 있도록 변경 필요
 
-        return deletedMemberInfo;
+        return deletedMemberInfoResponse;
     }
-
 }
