@@ -570,7 +570,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
     @Override
     public List<Long> findActiveRecruitmentIds(Long schoolId, Long gisuId, Instant now) {
-        return recruitmentRepository.findLatestPublishedId(schoolId, gisuId);
+        return recruitmentRepository.findActiveRecruitmentIds(schoolId, gisuId, now);
     }
 
     @Override
