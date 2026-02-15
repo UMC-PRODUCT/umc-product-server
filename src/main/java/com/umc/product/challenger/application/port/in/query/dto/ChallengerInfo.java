@@ -2,6 +2,7 @@ package com.umc.product.challenger.application.port.in.query.dto;
 
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import java.util.List;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +27,8 @@ public record ChallengerInfo(
     Long gisuId,
     ChallengerPart part,
     List<ChallengerPointInfo> challengerPoints,
-    Double totalPoints
+    Double totalPoints,
+    ChallengerStatus challengerStatus
 ) {
     @Deprecated(since = "2026-02-10", forRemoval = true)
     public static ChallengerInfo from(Challenger challenger) {
@@ -48,6 +50,7 @@ public record ChallengerInfo(
             .part(challenger.getPart())
             .challengerPoints(challengerPoints)
             .totalPoints(challenger.getTotalPoints())
+            .challengerStatus(challenger.getStatus())
             .build();
     }
 }
