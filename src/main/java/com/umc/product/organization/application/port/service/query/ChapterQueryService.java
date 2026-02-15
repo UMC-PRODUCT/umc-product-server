@@ -7,9 +7,6 @@ import com.umc.product.organization.application.port.out.query.LoadChapterPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
-import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
-import com.umc.product.organization.domain.Chapter;
-import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
@@ -58,9 +55,9 @@ public class ChapterQueryService implements GetChapterUseCase {
 
         // 거기서 지부 정보를 매핑해서 List 형태로 반환함
         return chapterSchools.stream()
-                .map(ChapterSchool::getChapter)
-                .map(ChapterInfo::from)
-                .toList();
+            .map(ChapterSchool::getChapter)
+            .map(ChapterInfo::from)
+            .toList();
     }
 
     @Override
@@ -70,13 +67,18 @@ public class ChapterQueryService implements GetChapterUseCase {
 
         // ChapterSchool에 Chapter와 chapters를 Mapping
         Map<Long, List<ChapterSchool>> chapterSchoolMap = chapterSchools.stream()
-                .collect(Collectors.groupingBy(cs -> cs.getChapter().getId()));
+            .collect(Collectors.groupingBy(cs -> cs.getChapter().getId()));
 
         return chapters.stream()
-                .map(chapter -> ChapterWithSchoolsInfo.from(
-                        chapter,
-                        chapterSchoolMap.getOrDefault(chapter.getId(), List.of())
-                ))
-                .toList();
+            .map(chapter -> ChapterWithSchoolsInfo.from(
+                chapter,
+                chapterSchoolMap.getOrDefault(chapter.getId(), List.of())
+            ))
+            .toList();
+    }
+
+    @Override
+    public ChapterInfo getChapterById(Long chapterId) {
+        return ChapterInfo.from(loadChapterPort.findById(chapterId));
     }
 }

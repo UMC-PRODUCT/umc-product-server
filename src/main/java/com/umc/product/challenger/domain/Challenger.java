@@ -53,10 +53,10 @@ public class Challenger extends BaseEntity {
     private Long modifiedBy;
 
     @OneToMany(
-            mappedBy = "challenger",
-            fetch = FetchType.LAZY,
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
+        mappedBy = "challenger",
+        fetch = FetchType.LAZY,
+        cascade = CascadeType.ALL,
+        orphanRemoval = true
     )
     private List<ChallengerPoint> challengerPoints = new ArrayList<>();
 
@@ -88,7 +88,7 @@ public class Challenger extends BaseEntity {
      */
     public void changeStatus(ChallengerStatus newStatus, Long modifiedBy, String reason) {
         validateChallengerStatus();
-        
+
         this.status = newStatus;
         this.modifiedBy = modifiedBy;
         this.modificationReason = reason;
@@ -99,5 +99,16 @@ public class Challenger extends BaseEntity {
      */
     public void addPoint(ChallengerPoint point) {
         this.challengerPoints.add(point);
+    }
+
+    /**
+     * 챌린저가 가진 총 상벌점의 합을 계산합니다.
+     * <p>
+     * {@link com.umc.product.challenger.application.port.out.SearchChallengerPort#sumPointsByChallengerIds} 참고하세요.
+     */
+    public Double getTotalPoints() {
+        return challengerPoints.stream()
+            .mapToDouble(ChallengerPoint::getPointValue)
+            .sum();
     }
 }
