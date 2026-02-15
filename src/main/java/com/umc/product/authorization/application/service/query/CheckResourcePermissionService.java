@@ -26,7 +26,10 @@ public class CheckResourcePermissionService implements ResourcePermissionUseCase
     // TODO: 향후 evaluator가 구현되는 리소스 타입이 늘어날 때마다 이 부분도 함께 업데이트 필요, 전부 구현되면 제거
     private static final Set<ResourceType> SUPPORTED_RESOURCE_TYPES = Set.of(
         ResourceType.NOTICE,
-        ResourceType.WORKBOOK_SUBMISSION
+        ResourceType.WORKBOOK_SUBMISSION,
+        ResourceType.SCHEDULE,
+        ResourceType.ATTENDANCE_SHEET,
+        ResourceType.ATTENDANCE_RECORD
     );
 
     private final CheckPermissionUseCase checkPermissionUseCase;
