@@ -9,6 +9,7 @@ public record PendingAttendanceInfo(
     Long memberId,
     String memberName,
     String nickname,
+    String profileImageId,
     String schoolName,
     AttendanceStatus status,
     String reason,
@@ -19,6 +20,7 @@ public record PendingAttendanceInfo(
         Long memberId,
         String memberName,
         String nickname,
+        String profileImageId,
         String schoolName
     ) {
         return new PendingAttendanceInfo(
@@ -26,6 +28,7 @@ public record PendingAttendanceInfo(
             memberId,
             memberName,
             nickname,
+            profileImageId,
             schoolName,
             record.getStatus(),
             record.getMemo(),

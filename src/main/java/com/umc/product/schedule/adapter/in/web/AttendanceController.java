@@ -1,6 +1,8 @@
 package com.umc.product.schedule.adapter.in.web;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CheckAttendanceRequest;
@@ -14,12 +16,13 @@ import com.umc.product.schedule.adapter.in.web.swagger.AttendanceControllerApi;
 import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.SubmitReasonUseCase;
+import com.umc.product.schedule.application.port.in.command.dto.CheckAttendanceResult;
 import com.umc.product.schedule.application.port.in.query.GetAttendanceRecordUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetPendingAttendancesUseCase;
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
-import jakarta.validation.Valid;
+import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,14 +54,26 @@ public class AttendanceController implements AttendanceControllerApi {
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody CheckAttendanceRequest request
     ) {
-        return checkAttendanceUseCase.check(request.toCommand(memberPrincipal.getMemberId())).id();
+        CheckAttendanceResult result = checkAttendanceUseCase.check(
+            request.toCommand(memberPrincipal.getMemberId())
+        );
+
+        // 실패 시 적절한 ErrorCode로 예외를
+        if (result.isFailure()) {
+            if (result.failureReason().contains("비활성화")) {
+                throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_INACTIVE);
+            }
+            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.OUTSIDE_ATTENDANCE_WINDOW);
+        }
+
+        return result.recordId();
     }
 
     @Override
     @PostMapping("/reason")
     public Long submitReasonAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @Valid @RequestBody SubmitReasonRequest request
+        @RequestBody SubmitReasonRequest request
     ) {
         return submitReasonUseCase.submitReason(request.toCommand(memberPrincipal.getMemberId())).id();
     }

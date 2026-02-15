@@ -6,6 +6,7 @@ import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUse
 import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.SubmitReasonUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CheckAttendanceCommand;
+import com.umc.product.schedule.application.port.in.command.dto.CheckAttendanceResult;
 import com.umc.product.schedule.application.port.in.command.dto.SubmitReasonCommand;
 import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
@@ -42,11 +43,16 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
     private final LoadSchedulePort loadSchedulePort;
 
     @Override
-    public AttendanceRecordId check(CheckAttendanceCommand command) {
+    public CheckAttendanceResult check(CheckAttendanceCommand command) {
         // 출석부 조회 및 검증
         AttendanceSheet sheet = loadAttendanceSheetPort.findById(command.attendanceSheetId())
             .orElseThrow(
                 () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+
+        // 출석부 활성화 여부 확인
+        if (!sheet.isActive()) {
+            return CheckAttendanceResult.failure("비활성화된 출석부입니다");
+        }
 
         // 일정 조회 (지각/결석 판별용)
         Schedule schedule = loadSchedulePort.findById(sheet.getScheduleId())
@@ -54,8 +60,14 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
                 () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
         LocalDateTime checkTime = command.checkedAt();
+        LocalDateTime windowStartTime = sheet.getWindow().getStartTime();
 
-        // 출석 가능 시간 검증
+        // 출석 가능 시간 범위 검증
+        // 0. 출석 시작 전 - 상태 변경 없이 막기
+        if (checkTime.isBefore(windowStartTime)) {
+            return CheckAttendanceResult.failure("아직 출석 시간이 아닙니다");
+        }
+
         // 1. 출석 인정 시간 (윈도우 내)
         if (sheet.isWithinTimeWindow(checkTime)) {
             // OK - 출석 처리
@@ -65,10 +77,8 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
                  && !checkTime.isAfter(schedule.getEndsAt())) {
             // OK - 지각 처리
         }
-        // 3. 세션 종료 후
-        else {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.OUTSIDE_ATTENDANCE_WINDOW);
-        }
+        // 3. 세션 종료 후 - 결석 처리
+        // (else 블록에서 결석으로 처리됨)
 
         // 기존 출석 기록 조회
         AttendanceRecord record = loadAttendanceRecordPort
@@ -91,7 +101,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         // 저장
         AttendanceRecord savedRecord = saveAttendanceRecordPort.save(record);
 
-        return savedRecord.getAttendanceRecordId();
+        return CheckAttendanceResult.success(savedRecord.getAttendanceRecordId().id());
     }
 
     private AttendanceStatus determineAttendanceStatus(AttendanceSheet sheet, Schedule schedule, LocalDateTime checkTime) {

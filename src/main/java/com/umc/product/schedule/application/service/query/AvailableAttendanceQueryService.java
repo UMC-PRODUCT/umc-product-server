@@ -36,8 +36,8 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
         AttendanceStatus.LATE,
         AttendanceStatus.LATE_PENDING,
         AttendanceStatus.ABSENT,
-        AttendanceStatus.EXCUSED,
-        AttendanceStatus.EXCUSED_PENDING
+        AttendanceStatus.EXCUSED
+        // EXCUSED_PENDING은 제외 - 사유 제출 후에도 승인 대기 상태를 확인할 수 있어야 함
     );
 
     private final LoadSchedulePort loadSchedulePort;
@@ -92,8 +92,8 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
                 }
 
                 // 3. 출석 프로세스 완료된 것 제외 (나의 출석 현황으로 이동)
-                // 포함: PENDING (출석 전), PRESENT/PRESENT_PENDING (출석 완료)
-                // 제외: LATE/LATE_PENDING (지각), ABSENT (결석), EXCUSED/EXCUSED_PENDING (인정결석)
+                // 포함: PENDING (출석 전), PRESENT/PRESENT_PENDING (출석 완료), EXCUSED_PENDING (사유 제출 승인 대기)
+                // 제외: LATE/LATE_PENDING (지각), ABSENT (결석), EXCUSED (인정결석 승인 완료)
                 if (record != null && isAttendanceProcessCompleted(record.getStatus())) {
                     return null;
                 }

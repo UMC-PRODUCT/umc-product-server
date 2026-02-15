@@ -17,6 +17,9 @@ public record PendingAttendanceResponse(
     @Schema(description = "닉네임", example = "길동이")
     String nickname,
 
+    @Schema(description = "프로필 이미지", example = "https://example.com/profile.jpg")
+    String profileImageLink,
+
     @Schema(description = "학교명", example = "중앙대학교")
     String schoolName,
 
