@@ -10,8 +10,9 @@ import com.umc.product.schedule.application.port.in.query.dto.MyAttendanceHistor
 import com.umc.product.schedule.application.port.in.query.dto.PendingAttendanceInfo;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -77,27 +78,38 @@ public class AttendanceWebMapper {
     }
 
     // 관리자용 승인 대기 목록
-    public PendingAttendanceResponse toPendingAttendanceResponse(PendingAttendanceInfo info) {
-        String profileImageLink = null;
-        if (info.profileImageId() != null) {
-            FileInfo fileInfo = getFileUseCase.getById(info.profileImageId());
-            profileImageLink = fileInfo.fileLink();
-        }
-
-        return new PendingAttendanceResponse(
-            info.attendanceId(),
-            info.memberId(),
-            info.memberName(),
-            info.nickname(),
-            profileImageLink,
-            info.schoolName(),
-            info.status().name(),
-            info.reason(),
-            info.requestedAt()
-        );
-    }
-
     public List<PendingAttendanceResponse> toPendingAttendanceResponses(List<PendingAttendanceInfo> infos) {
-        return infos.stream().map(this::toPendingAttendanceResponse).toList();
+        // N+1 문제 방지: 모든 profileImageId를 수집하여 한 번에 조회
+        List<String> profileImageIds = infos.stream()
+            .map(PendingAttendanceInfo::profileImageId)
+            .filter(id -> id != null)
+            .distinct()
+            .toList();
+
+        // 파일 ID -> 파일 링크 매핑을 한 번에 조회
+        Map<String, String> profileImageLinks = profileImageIds.isEmpty()
+            ? Map.of()
+            : getFileUseCase.getFileLinks(profileImageIds);
+
+        // 각 항목을 변환하면서 Map에서 파일 링크 조회
+        return infos.stream()
+            .map(info -> {
+                String profileImageLink = info.profileImageId() != null
+                    ? profileImageLinks.get(info.profileImageId())
+                    : null;
+
+                return new PendingAttendanceResponse(
+                    info.attendanceId(),
+                    info.memberId(),
+                    info.memberName(),
+                    info.nickname(),
+                    profileImageLink,
+                    info.schoolName(),
+                    info.status().name(),
+                    info.reason(),
+                    info.requestedAt()
+                );
+            })
+            .toList();
     }
 }
