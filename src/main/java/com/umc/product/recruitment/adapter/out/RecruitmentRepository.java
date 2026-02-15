@@ -65,4 +65,33 @@ public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> 
     List<Recruitment> findBySchoolIdAndStatus(Long schoolId, RecruitmentStatus status);
 
     List<Recruitment> findAllBySchoolIdAndGisuIdAndStatus(Long schoolId, Long gisuId, RecruitmentStatus status);
+
+    @Query("""
+            SELECT r.id
+            FROM Recruitment r
+            WHERE r.schoolId = :schoolId
+              AND r.gisuId = :gisuId
+              AND r.status = com.umc.product.recruitment.domain.enums.RecruitmentStatus.PUBLISHED
+              AND EXISTS (
+                  SELECT s1
+                  FROM RecruitmentSchedule s1
+                  WHERE s1.recruitmentId = r.id
+                    AND s1.type = 'APPLY_WINDOW'
+                    AND s1.startsAt <= :now
+              )
+              AND EXISTS (
+                  SELECT s2
+                  FROM RecruitmentSchedule s2
+                  WHERE s2.recruitmentId = r.id
+                    AND s2.type = 'FINAL_RESULT_AT'
+                    AND s2.startsAt >= :limit
+              )
+            ORDER BY r.updatedAt DESC
+        """)
+    List<Long> findActiveRecruitmentIds(
+        @Param("schoolId") Long schoolId,
+        @Param("gisuId") Long gisuId,
+        @Param("now") Instant now,
+        @Param("limit") Instant limit
+    );
 }

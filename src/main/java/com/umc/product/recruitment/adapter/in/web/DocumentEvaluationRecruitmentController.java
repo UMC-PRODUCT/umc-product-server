@@ -23,10 +23,12 @@ public class DocumentEvaluationRecruitmentController {
 
     @GetMapping("/document-evaluations")
     @Operation(
-        summary = "서류 평가 가능한 모집 목록 조회",
+        summary = "서류 평가 중 및 진행 중인 모집 목록 조회",
         description = """
-            운영진이 서류 평가를 진행(수정)할 수 있는 모집 목록을 조회합니다.
-            서류 결과 발표(DOC_RESULT_AT) 이전 단계의 모집만 노출합니다.
+            운영진이 서류 평가를 진행하거나 완료된 내역을 조회할 수 있는 모집 목록을 조회합니다.
+
+            최종 결과 발표(FINAL_RESULT) 이전 단계의 모집을 모두 노출하며,
+            서류 결과 발표(DOC_RESULT_AT) 시점을 기준으로 [평가 중]과 [평가 완료]로 구분하여 반환합니다.
             """
     )
     public DocumentEvaluationRecruitmentListResponse getRecruitments(
