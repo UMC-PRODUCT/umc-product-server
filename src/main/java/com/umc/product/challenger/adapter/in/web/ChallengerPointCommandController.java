@@ -5,13 +5,6 @@ import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPoint
 import com.umc.product.challenger.adapter.in.web.dto.request.GrantChallengerPointRequest;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
-import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -29,11 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Challenger | 챌린저 상벌점 Command", description = "베스트 워크북, 아웃, 경고 등")
 public class ChallengerPointCommandController {
 
-    private final GetChallengerUseCase getChallengerUseCase;
     private final ManageChallengerUseCase manageChallengerUseCase;
-    private final SearchChallengerUseCase searchChallengerUseCase;
-    private final GetMemberUseCase getMemberUseCase;
-    private final GetGisuUseCase getGisuUseCase;
+    private final ChallengerResponseAssembler assembler;
 
     @Operation(summary = "챌린저 상벌점 부여")
     @PostMapping("{challengerId}/points")
@@ -43,7 +33,7 @@ public class ChallengerPointCommandController {
     ) {
         manageChallengerUseCase.grantChallengerPoint(request.toCommand(challengerId));
 
-        return getChallengerInfoResponse(challengerId);
+        return assembler.fromChallengerId(challengerId);
     }
 
     @Operation(summary = "챌린저 상벌점 사유 수정")
@@ -61,18 +51,5 @@ public class ChallengerPointCommandController {
         manageChallengerUseCase.deleteChallengerPoint(
             new DeleteChallengerPointRequest().toCommand(challengerPointId)
         );
-    }
-
-    // Private Methods
-
-    /**
-     * 챌린저 ID를 기반으로 회원 및 기수 정보를 포함하여 응답 객체를 생성해주는 헬퍼 메소드
-     */
-    private ChallengerInfoResponse getChallengerInfoResponse(Long challengerId) {
-        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-        MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
-        GisuInfo gisuInfo = getGisuUseCase.getById(challengerInfo.gisuId());
-
-        return ChallengerInfoResponse.from(challengerInfo, memberInfo, gisuInfo);
     }
 }
