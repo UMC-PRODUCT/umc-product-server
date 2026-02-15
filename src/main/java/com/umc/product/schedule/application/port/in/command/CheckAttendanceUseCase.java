@@ -1,7 +1,6 @@
 package com.umc.product.schedule.application.port.in.command;
 
 import com.umc.product.schedule.application.port.in.command.dto.CheckAttendanceCommand;
-import com.umc.product.schedule.application.port.in.command.dto.CheckAttendanceResult;
 
 /**
  * 멤버가 출석 체크를 수행하는 UseCase.
@@ -15,7 +14,8 @@ public interface CheckAttendanceUseCase {
 
     /**
      * @param command 출석부 ID, 멤버 ID, 체크인 시각을 포함
-     * @return 출석 체크 처리 결과 (성공: recordId 포함, 실패: failureReason 포함)
+     * @return 생성된 출석 기록 ID
+     * @throws com.umc.product.global.exception.BusinessException 출석부가 비활성화 상태이거나 출석 시간이 아닌 경우
      */
-    CheckAttendanceResult check(CheckAttendanceCommand command);
+    Long check(CheckAttendanceCommand command);
 }

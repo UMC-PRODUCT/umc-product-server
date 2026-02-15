@@ -6,7 +6,6 @@ import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUse
 import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.SubmitReasonUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CheckAttendanceCommand;
-import com.umc.product.schedule.application.port.in.command.dto.CheckAttendanceResult;
 import com.umc.product.schedule.application.port.in.command.dto.SubmitReasonCommand;
 import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
@@ -43,7 +42,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
     private final LoadSchedulePort loadSchedulePort;
 
     @Override
-    public CheckAttendanceResult check(CheckAttendanceCommand command) {
+    public Long check(CheckAttendanceCommand command) {
         // 출석부 조회 및 검증
         AttendanceSheet sheet = loadAttendanceSheetPort.findById(command.attendanceSheetId())
             .orElseThrow(
@@ -51,7 +50,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
 
         // 출석부 활성화 여부 확인
         if (!sheet.isActive()) {
-            return CheckAttendanceResult.failure("비활성화된 출석부입니다");
+            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_INACTIVE);
         }
 
         // 일정 조회 (지각/결석 판별용)
@@ -65,7 +64,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         // 출석 가능 시간 범위 검증
         // 0. 출석 시작 전 - 상태 변경 없이 막기
         if (checkTime.isBefore(windowStartTime)) {
-            return CheckAttendanceResult.failure("아직 출석 시간이 아닙니다");
+            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.OUTSIDE_ATTENDANCE_WINDOW);
         }
 
         // 1. 출석 인정 시간 (윈도우 내)
@@ -101,7 +100,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         // 저장
         AttendanceRecord savedRecord = saveAttendanceRecordPort.save(record);
 
-        return CheckAttendanceResult.success(savedRecord.getAttendanceRecordId().id());
+        return savedRecord.getAttendanceRecordId().id();
     }
 
     private AttendanceStatus determineAttendanceStatus(AttendanceSheet sheet, Schedule schedule, LocalDateTime checkTime) {

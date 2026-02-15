@@ -16,7 +16,6 @@ import com.umc.product.schedule.adapter.in.web.swagger.AttendanceControllerApi;
 import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.SubmitReasonUseCase;
-import com.umc.product.schedule.application.port.in.command.dto.CheckAttendanceResult;
 import com.umc.product.schedule.application.port.in.query.GetAttendanceRecordUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
@@ -54,19 +53,7 @@ public class AttendanceController implements AttendanceControllerApi {
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody CheckAttendanceRequest request
     ) {
-        CheckAttendanceResult result = checkAttendanceUseCase.check(
-            request.toCommand(memberPrincipal.getMemberId())
-        );
-
-        // 실패 시 적절한 ErrorCode로 예외를
-        if (result.isFailure()) {
-            if (result.failureReason().contains("비활성화")) {
-                throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_INACTIVE);
-            }
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.OUTSIDE_ATTENDANCE_WINDOW);
-        }
-
-        return result.recordId();
+        return checkAttendanceUseCase.check(request.toCommand(memberPrincipal.getMemberId()));
     }
 
     @Override
