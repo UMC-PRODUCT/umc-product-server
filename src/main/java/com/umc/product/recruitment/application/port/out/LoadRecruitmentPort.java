@@ -49,7 +49,7 @@ public interface LoadRecruitmentPort {
         RecruitmentApplicationFormInfo.PreferredPartInfo preferredPartInfo
     );
 
-    List<Long> findActiveRecruitmentIds(Long schoolId, Long gisuId, Instant now);
+    List<Long> findActiveRecruitmentIds(Long schoolId, Long gisuId, Instant now, Instant limit);
 
     RecruitmentPublishedInfo.ScheduleInfo findPublishedScheduleInfoByRecruitmentId(Long recruitmentId);
 

@@ -142,10 +142,16 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
             (query.schoolId() != null) ? query.schoolId() : resolveSchoolId(query.requesterMemberId());
         Long resolvedGisuId = (query.gisuId() != null) ? query.gisuId() : resolveActiveGisuId();
 
+        Instant now = Instant.now();
+
+        // 최종 발표일(startsAt) 기준 24시간 전까지를 Active로 인정
+        Instant limit = now.minus(1, ChronoUnit.DAYS);
+
         List<Long> activeIds = loadRecruitmentPort.findActiveRecruitmentIds(
             resolvedSchoolId,
             resolvedGisuId,
-            Instant.now()
+            now,
+            limit
         );
 
         if (activeIds.isEmpty()) {

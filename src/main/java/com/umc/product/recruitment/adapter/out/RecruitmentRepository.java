@@ -84,13 +84,14 @@ public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> 
                   FROM RecruitmentSchedule s2
                   WHERE s2.recruitmentId = r.id
                     AND s2.type = 'FINAL_RESULT_AT'
-                    AND FUNCTION('DATE_ADD', s2.startsAt, 1, 'DAY') >= :now
+                    AND s2.startsAt >= :limit
               )
             ORDER BY r.updatedAt DESC
         """)
     List<Long> findActiveRecruitmentIds(
         @Param("schoolId") Long schoolId,
         @Param("gisuId") Long gisuId,
-        @Param("now") Instant now
+        @Param("now") Instant now,
+        @Param("limit") Instant limit
     );
 }
