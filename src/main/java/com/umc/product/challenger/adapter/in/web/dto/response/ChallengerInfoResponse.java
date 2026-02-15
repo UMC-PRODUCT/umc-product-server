@@ -8,6 +8,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import java.util.List;
 import lombok.Builder;
@@ -20,6 +21,8 @@ public record ChallengerInfoResponse(
     Long memberId,
     Long gisuId,
     Long gisu,
+    Long chapterId,
+    String chapterName,
     ChallengerPart part,
     ChallengerStatus challengerStatus,
     // TODO: 호환성을 위해 유지하는 것으로, 다음 마이너 버전 업데이트에 제거하도록 함
@@ -39,12 +42,18 @@ public record ChallengerInfoResponse(
     // TODO: 호환성을 위해 유지함, 추후 제거
     MemberStatus status
 ) {
-    public static ChallengerInfoResponse from(ChallengerInfo info, MemberInfo memberInfo, GisuInfo gisuInfo) {
+    public static ChallengerInfoResponse from(
+        ChallengerInfo info, MemberInfo memberInfo,
+        GisuInfo gisuInfo, ChapterInfo chapterInfo) {
         return ChallengerInfoResponse.builder()
             .challengerId(info.challengerId())
             .memberId(info.memberId())
+            // 기수
             .gisuId(gisuInfo.gisuId())
             .gisu(gisuInfo.generation())
+            // 지부
+            .chapterId(chapterInfo.id())
+            .chapterName(chapterInfo.name())
             .part(info.part())
             .challengerPoints(info.challengerPoints())
             .points(info.challengerPoints())
@@ -69,17 +78,24 @@ public record ChallengerInfoResponse(
      * @param roles 주어지는 roles는 해당 챌린저의 기수에 한해야 합니다. assert로 검증합니다.
      */
     public static ChallengerInfoResponse from(
-        ChallengerInfo info, MemberInfo memberInfo,
-        GisuInfo gisuInfo, List<ChallengerRoleInfo> roles) {
+        ChallengerInfo info, MemberInfo memberInfo, GisuInfo gisuInfo, ChapterInfo chapterInfo,
+        List<ChallengerRoleInfo> roles) {
         return ChallengerInfoResponse.builder()
             .challengerId(info.challengerId())
             .memberId(info.memberId())
+            // 기수
             .gisuId(gisuInfo.gisuId())
             .gisu(gisuInfo.generation())
+            // 지부
+            .chapterId(chapterInfo.id())
+            .chapterName(chapterInfo.name())
+            // 파트
             .part(info.part())
             .challengerStatus(info.challengerStatus())
+            // 상벌점
             .challengerPoints(info.challengerPoints())
             .points(info.challengerPoints())
+            // 역할 (권한)
             .roles(roles.stream()
                 .map(roleInfo -> {
                     // 보통은 이렇게 assert로 검증하기보다는, 서비스 레이어에서 미리 검증하는게 좋긴 합니다만...

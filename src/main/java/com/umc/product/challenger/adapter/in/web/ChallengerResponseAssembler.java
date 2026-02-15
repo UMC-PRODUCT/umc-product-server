@@ -5,7 +5,9 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -21,13 +23,15 @@ public class ChallengerResponseAssembler {
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetGisuUseCase getGisuUseCase;
+    private final GetChapterUseCase getChapterUseCase;
 
     public ChallengerInfoResponse fromChallengerId(Long challengerId) {
         ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
         MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
         GisuInfo gisuInfo = getGisuUseCase.getById(challengerInfo.gisuId());
+        ChapterInfo chapterInfo = getChapterUseCase.byGisuAndSchool(challengerInfo.gisuId(), memberInfo.schoolId());
 
-        return ChallengerInfoResponse.from(challengerInfo, memberInfo, gisuInfo);
+        return ChallengerInfoResponse.from(challengerInfo, memberInfo, gisuInfo, chapterInfo);
     }
 
     public List<ChallengerInfoResponse> fromMemberId(Long memberId) {
@@ -37,7 +41,10 @@ public class ChallengerResponseAssembler {
         return challengerInfos.stream()
             .map(challengerInfo -> {
                 GisuInfo gisuInfo = getGisuUseCase.getById(challengerInfo.gisuId());
-                return ChallengerInfoResponse.from(challengerInfo, memberInfo, gisuInfo);
+                ChapterInfo chapterInfo = getChapterUseCase.byGisuAndSchool(challengerInfo.gisuId(),
+                    memberInfo.schoolId());
+
+                return ChallengerInfoResponse.from(challengerInfo, memberInfo, gisuInfo, chapterInfo);
             })
             .toList();
     }
