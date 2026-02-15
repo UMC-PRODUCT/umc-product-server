@@ -4,6 +4,7 @@ import com.umc.product.authorization.domain.ChallengerRole;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import lombok.Builder;
 
 /**
@@ -18,9 +19,11 @@ public record ChallengerRoleInfo(
     OrganizationType organizationType,
     Long organizationId,
     ChallengerPart responsiblePart,
-    Long gisuId
+    Long gisuId,
+    Long gisu
 ) {
-    public static ChallengerRoleInfo fromEntity(ChallengerRole challengerRole) {
+    @Deprecated(since = "2026-02-16", forRemoval = true)
+    public static ChallengerRoleInfo from(ChallengerRole challengerRole) {
         return ChallengerRoleInfo.builder()
             .id(challengerRole.getId())
             .challengerId(challengerRole.getChallengerId())
@@ -29,6 +32,19 @@ public record ChallengerRoleInfo(
             .organizationId(challengerRole.getOrganizationId())
             .responsiblePart(challengerRole.getResponsiblePart())
             .gisuId(challengerRole.getGisuId())
+            .build();
+    }
+
+    public static ChallengerRoleInfo from(ChallengerRole challengerRole, GisuInfo gisuInfo) {
+        return ChallengerRoleInfo.builder()
+            .id(challengerRole.getId())
+            .challengerId(challengerRole.getChallengerId())
+            .roleType(challengerRole.getChallengerRoleType())
+            .organizationType(challengerRole.getOrganizationType())
+            .organizationId(challengerRole.getOrganizationId())
+            .responsiblePart(challengerRole.getResponsiblePart())
+            .gisuId(challengerRole.getGisuId())
+            .gisu(gisuInfo.generation())
             .build();
     }
 }
