@@ -22,9 +22,14 @@ public class SchedulePermissionHelper {
      * 일정 작성자 본인인지 확인
      */
     public boolean isAuthor(Long memberId, Schedule schedule) {
-        Long authorChallengerId = schedule.getAuthorChallengerId();
-        Long authorMemberId = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId).memberId();
+        return isAuthorByChallengerId(memberId, schedule.getAuthorChallengerId());
+    }
 
+    /**
+     * 일정 작성자 본인인지 확인 (authorChallengerId 기반)
+     */
+    public boolean isAuthorByChallengerId(Long memberId, Long authorChallengerId) {
+        Long authorMemberId = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId).memberId();
         return Objects.equals(memberId, authorMemberId);
     }
 
@@ -53,13 +58,20 @@ public class SchedulePermissionHelper {
      * 출석 관리 권한 확인: 해당 기수 중앙 총괄단 OR (일정 작성자 본인 AND 해당 기수 운영진)
      */
     public boolean canManageAttendance(Long memberId, Schedule schedule, Long gisuId) {
+        return canManageAttendanceByChallengerId(memberId, schedule.getAuthorChallengerId(), gisuId);
+    }
+
+    /**
+     * 출석 관리 권한 확인 (authorChallengerId 기반)
+     */
+    public boolean canManageAttendanceByChallengerId(Long memberId, Long authorChallengerId, Long gisuId) {
         // 해당 기수 중앙 총괄단이면 OK
         if (isCentralCoreInGisu(memberId, gisuId)) {
             return true;
         }
 
         // 일정 작성자 본인 AND 해당 기수 운영진이면 OK
-        return isAuthor(memberId, schedule) && isStaffInGisu(memberId, gisuId);
+        return isAuthorByChallengerId(memberId, authorChallengerId) && isStaffInGisu(memberId, gisuId);
     }
 
     /**

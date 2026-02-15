@@ -5,9 +5,7 @@ import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
-import com.umc.product.schedule.application.port.out.LoadSchedulePort;
-import com.umc.product.schedule.domain.AttendanceSheet;
-import com.umc.product.schedule.domain.Schedule;
+import com.umc.product.schedule.application.port.out.dto.AttendanceSheetPermissionContext;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +21,6 @@ import org.springframework.stereotype.Component;
 public class AttendanceSheetPermissionEvaluator implements ResourcePermissionEvaluator {
 
     private final LoadAttendanceSheetPort loadAttendanceSheetPort;
-    private final LoadSchedulePort loadSchedulePort;
     private final SchedulePermissionHelper permissionHelper;
 
     @Override
@@ -35,15 +32,13 @@ public class AttendanceSheetPermissionEvaluator implements ResourcePermissionEva
     public boolean evaluate(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
         Long sheetId = resourcePermission.getResourceIdAsLong();
 
-        AttendanceSheet sheet = loadAttendanceSheetPort.findById(sheetId)
+        // 단일 JOIN 쿼리로 sheet → schedule 정보 조회
+        AttendanceSheetPermissionContext context = loadAttendanceSheetPort.findPermissionContext(sheetId)
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
-        Schedule schedule = loadSchedulePort.findById(sheet.getScheduleId())
-            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
-
         return switch (resourcePermission.permission()) {
-            case APPROVE -> permissionHelper.canManageAttendance(
-                subjectAttributes.memberId(), schedule, sheet.getGisuId());
+            case APPROVE -> permissionHelper.canManageAttendanceByChallengerId(
+                subjectAttributes.memberId(), context.authorChallengerId(), context.gisuId());
             default -> false;
         };
     }
