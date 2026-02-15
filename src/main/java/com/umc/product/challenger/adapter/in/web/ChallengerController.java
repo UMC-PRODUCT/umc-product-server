@@ -217,8 +217,10 @@ public class ChallengerController {
         return requests.stream()
             .map(request -> {
                 Long challengerId = manageChallengerUseCase.createChallenger(request.toCommand());
-                ChallengerInfo info = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-                return ChallengerInfoResponse.from(info);
+                ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+                MemberInfo memberInfo = getMemberUseCase.getById(request.memberId());
+                GisuInfo gisuInfo = getGisuUseCase.getById(request.gisuId());
+                return ChallengerInfoResponse.from(challengerInfo, memberInfo, gisuInfo);
             })
             .toList();
     }
