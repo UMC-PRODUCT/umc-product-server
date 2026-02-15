@@ -35,14 +35,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
-@Disabled
 @Transactional
 public class AttendanceUseCaseTest extends UseCaseTestSupport {
 
@@ -155,10 +153,10 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            AttendanceRecordId recordId = checkAttendanceUseCase.check(command);
+            Long recordId = checkAttendanceUseCase.check(command);
 
             // then
-            AttendanceRecord record = loadAttendanceRecordPort.findById(recordId.id()).orElseThrow();
+            AttendanceRecord record = loadAttendanceRecordPort.findById(recordId).orElseThrow();
             assertThat(record.getStatus()).isEqualTo(AttendanceStatus.PRESENT);
             assertThat(record.getCheckedAt()).isEqualTo(checkTime);
         }
@@ -180,10 +178,10 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            AttendanceRecordId recordId = checkAttendanceUseCase.check(command);
+            Long recordId = checkAttendanceUseCase.check(command);
 
             // then
-            AttendanceRecord record = loadAttendanceRecordPort.findById(recordId.id()).orElseThrow();
+            AttendanceRecord record = loadAttendanceRecordPort.findById(recordId).orElseThrow();
             assertThat(record.getStatus()).isEqualTo(AttendanceStatus.LATE);
         }
 
@@ -192,12 +190,32 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
         void 비활성화된_출석부에_출석하면_예외가_발생한다() {
             // given
             attendanceSheet.deactivate();
-            loadAttendanceSheetPort.findById(attendanceSheet.getId());
+            saveAttendanceSheetPort.save(attendanceSheet);
 
             CheckAttendanceCommand command = new CheckAttendanceCommand(
                 attendanceSheet.getId(),
                 participantMember.getId(),
-                LocalDateTime.now(),
+                attendanceSheet.getWindow().getStartTime().plusMinutes(5),
+                37.5665,
+                126.9780,
+                true
+            );
+
+            // when & then
+            assertThatThrownBy(() -> checkAttendanceUseCase.check(command))
+                .isInstanceOf(BusinessException.class);
+        }
+
+        @Test
+        @DisplayName("출석 시작 전에 출석하면 예외가 발생한다")
+        void 출석_시작_전에_출석하면_예외가_발생한다() {
+            // given
+            LocalDateTime checkTime = attendanceSheet.getWindow().getStartTime().minusMinutes(10); // 출석 시작 전
+
+            CheckAttendanceCommand command = new CheckAttendanceCommand(
+                attendanceSheet.getId(),
+                participantMember.getId(),
+                checkTime,
                 37.5665,
                 126.9780,
                 true
@@ -219,6 +237,7 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
             // given
             // 먼저 출석 체크 (승인 필요 모드로 변경 필요)
             attendanceSheet.updateApprovalMode(true);
+            saveAttendanceSheetPort.save(attendanceSheet);
 
             LocalDateTime checkTime = attendanceSheet.getWindow().getStartTime().plusMinutes(5);
             CheckAttendanceCommand checkCommand = new CheckAttendanceCommand(
@@ -229,17 +248,17 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
                 126.9780,
                 true
             );
-            AttendanceRecordId recordId = checkAttendanceUseCase.check(checkCommand);
+            Long recordId = checkAttendanceUseCase.check(checkCommand);
 
             // 상태 확인 (PRESENT_PENDING)
-            AttendanceRecord pendingRecord = loadAttendanceRecordPort.findById(recordId.id()).orElseThrow();
+            AttendanceRecord pendingRecord = loadAttendanceRecordPort.findById(recordId).orElseThrow();
             assertThat(pendingRecord.getStatus()).isEqualTo(AttendanceStatus.PRESENT_PENDING);
 
             // when
-            approveAttendanceUseCase.approve(recordId, authorMember.getId());
+            approveAttendanceUseCase.approve(new AttendanceRecordId(recordId), authorMember.getId());
 
             // then
-            AttendanceRecord approvedRecord = loadAttendanceRecordPort.findById(recordId.id()).orElseThrow();
+            AttendanceRecord approvedRecord = loadAttendanceRecordPort.findById(recordId).orElseThrow();
             assertThat(approvedRecord.getStatus()).isEqualTo(AttendanceStatus.PRESENT);
             assertThat(approvedRecord.getConfirmedBy()).isEqualTo(authorMember.getId());
             assertThat(approvedRecord.getConfirmedAt()).isNotNull();
@@ -250,6 +269,7 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
         void 출석을_반려하면_ABSENT_상태가_된다() {
             // given
             attendanceSheet.updateApprovalMode(true);
+            saveAttendanceSheetPort.save(attendanceSheet);
 
             LocalDateTime checkTime = attendanceSheet.getWindow().getStartTime().plusMinutes(5);
             CheckAttendanceCommand checkCommand = new CheckAttendanceCommand(
@@ -260,13 +280,13 @@ public class AttendanceUseCaseTest extends UseCaseTestSupport {
                 126.9780,
                 true
             );
-            AttendanceRecordId recordId = checkAttendanceUseCase.check(checkCommand);
+            Long recordId = checkAttendanceUseCase.check(checkCommand);
 
             // when
-            approveAttendanceUseCase.reject(recordId, authorMember.getId());
+            approveAttendanceUseCase.reject(new AttendanceRecordId(recordId), authorMember.getId());
 
             // then
-            AttendanceRecord rejectedRecord = loadAttendanceRecordPort.findById(recordId.id()).orElseThrow();
+            AttendanceRecord rejectedRecord = loadAttendanceRecordPort.findById(recordId).orElseThrow();
             assertThat(rejectedRecord.getStatus()).isEqualTo(AttendanceStatus.ABSENT);
             assertThat(rejectedRecord.getConfirmedBy()).isEqualTo(authorMember.getId());
         }
