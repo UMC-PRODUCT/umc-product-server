@@ -155,11 +155,11 @@ public class AttendanceRecord extends BaseEntity {
     }
 
     /**
-     * 결석 상태(ABSENT)에서만 인정결석을 신청할 수 있음. EXCUSED_PENDING 상태로 바뀌며, 이후 관리자가 approve/reject 처리
+     * 결석/지각 상태에서 인정결석을 신청할 수 있음. EXCUSED_PENDING 상태로 바뀌며, 이후 관리자가 approve/reject 처리
      */
     public void requestExcuse(String memo) {
-        if (status != AttendanceStatus.ABSENT) {
-            throw new IllegalStateException("결석 상태만 인정결석을 신청할 수 있습니다");
+        if (status != AttendanceStatus.ABSENT && status != AttendanceStatus.LATE) {
+            throw new IllegalStateException("결석 또는 지각 상태에서만 인정결석을 신청할 수 있습니다. 현재 상태: " + status);
         }
         if (memo == null || memo.isBlank()) {
             throw new IllegalArgumentException("사유는 필수입니다");
@@ -172,10 +172,16 @@ public class AttendanceRecord extends BaseEntity {
     /**
      * 출석 체크 전에 사유를 제출하는 메서드 (사유 작성 출석)
      * 위치 인증은 실패로 간주됨
+     * <p>
+     * PENDING, LATE, ABSENT 상태에서 가능
      */
     public void submitReasonBeforeCheck(String reason, LocalDateTime submittedAt) {
-        if (this.checkedAt != null) {
-            throw new IllegalStateException("출석 체크 전 상태에서만 사유를 제출할 수 있습니다");
+        // 출석 전, 지각, 결석 상태에서만 사유 제출 가능
+        if (this.status != AttendanceStatus.PENDING &&
+            this.status != AttendanceStatus.LATE &&
+            this.status != AttendanceStatus.ABSENT) {
+            throw new IllegalStateException(
+                "출석 전, 지각, 결석 상태에서만 사유를 제출할 수 있습니다. 현재 상태: " + this.status);
         }
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("사유는 필수입니다");
@@ -184,10 +190,20 @@ public class AttendanceRecord extends BaseEntity {
             throw new IllegalArgumentException("제출 시각은 필수입니다");
         }
 
+        // 상태 변경
         this.status = AttendanceStatus.EXCUSED_PENDING;
         this.memo = reason;
-        this.checkedAt = submittedAt;
+
+        // PENDING 상태가 아닌 경우(LATE, ABSENT)는 이미 checkedAt이 있을 수 있음
+        if (this.checkedAt == null) {
+            this.checkedAt = submittedAt;
+        }
+
         this.locationVerified = false;  // 사유 작성 = 위치 인증 실패
+
+        // 기존 위치 정보 초기화 (혹시 있을 수 있는 불일치 데이터 정리)
+        this.latitude = null;
+        this.longitude = null;
     }
 
     /**
