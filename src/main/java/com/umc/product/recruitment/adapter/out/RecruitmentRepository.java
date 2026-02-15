@@ -84,7 +84,7 @@ public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> 
                   FROM RecruitmentSchedule s2
                   WHERE s2.recruitmentId = r.id
                     AND s2.type = 'FINAL_RESULT_AT'
-                    AND s2.startsAt >= :now
+                    AND FUNCTION('DATE_ADD', s2.startsAt, 1, 'DAY') >= :now
               )
             ORDER BY r.updatedAt DESC
         """)
