@@ -25,7 +25,8 @@ public record ChallengerInfo(
     Long memberId,
     Long gisuId,
     ChallengerPart part,
-    List<ChallengerPointInfo> challengerPoints
+    List<ChallengerPointInfo> challengerPoints,
+    Double totalPoints
 ) {
     @Deprecated(since = "2026-02-10", forRemoval = true)
     public static ChallengerInfo from(Challenger challenger) {
@@ -37,7 +38,6 @@ public record ChallengerInfo(
             .gisuId(challenger.getGisuId())
             .part(challenger.getPart())
             .build();
-
     }
 
     public static ChallengerInfo from(Challenger challenger, List<ChallengerPointInfo> challengerPoints) {
@@ -47,6 +47,7 @@ public record ChallengerInfo(
             .gisuId(challenger.getGisuId())
             .part(challenger.getPart())
             .challengerPoints(challengerPoints)
+            .totalPoints(challenger.getTotalPoints())
             .build();
     }
 }
