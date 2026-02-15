@@ -97,6 +97,10 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         return new GlobalSearchChallengerCursorResult(items, nextCursor, hasNext);
     }
 
+    // ============================================
+    // ========== Private Helper Methods ==========
+    // ============================================
+
     /**
      * 조회된 챌린저의 파트별 인원 수를 계산
      */
