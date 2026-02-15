@@ -74,6 +74,12 @@ public class Recruitment extends BaseEntity {
     @Column(name = "published_at")
     private Instant publishedAt;
 
+    @Column(name = "root_recruitment_id", nullable = false)
+    private Long rootRecruitmentId;
+
+    @Column(name = "parent_recruitment_id")
+    private Long parentRecruitmentId;
+
 
     public static Recruitment createDraft(
         Long schoolId,
