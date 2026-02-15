@@ -1,7 +1,9 @@
 package com.umc.product.challenger.application.service;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.challenger.application.port.in.query.GetChallengerPointUseCase;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.GlobalSearchChallengerCursorResult;
 import com.umc.product.challenger.application.port.in.query.dto.GlobalSearchChallengerItemInfo;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerCursorResult;
@@ -39,6 +41,8 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
     private final GetMemberUseCase getMemberUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetGisuUseCase getGisuUseCase;
+
+    private final GetChallengerPointUseCase getChallengerPointUseCase;
 
     /**
      * 현재는 사용하고 있지 않는 것으로 보입니다.
@@ -105,6 +109,31 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         Long nextCursor = hasNext ? result.get(result.size() - 1).getId() : null;
 
         return new GlobalSearchChallengerCursorResult(items, nextCursor, hasNext);
+    }
+
+    @Override
+    public Page<ChallengerInfo> searchV2(SearchChallengerQuery query, Pageable pageable) {
+        Page<Challenger> challengers = searchChallengerPort.search(query, pageable);
+
+        return challengers.map(
+            challenger -> ChallengerInfo.from(
+                challenger,
+                getChallengerPointUseCase.getListByChallengerId(
+                    challenger.getId())
+            )
+        );
+    }
+
+    @Override
+    public List<ChallengerInfo> searchV2(SearchChallengerQuery query, Long cursor, int size) {
+        List<Challenger> challengers = searchChallengerPort.cursorSearch(query, cursor, size);
+
+        return challengers.stream().map(challenger ->
+            ChallengerInfo.from(
+                challenger,
+                getChallengerPointUseCase.getListByChallengerId(challenger.getId())
+            )
+        ).toList();
     }
 
     // ============================================
