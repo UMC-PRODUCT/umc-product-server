@@ -1,5 +1,8 @@
 package com.umc.product.schedule.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -91,6 +94,11 @@ public class AttendanceController implements AttendanceControllerApi {
 
     @Override
     @GetMapping("/{recordId}")
+    @CheckAccess(
+        resourceType = ResourceType.ATTENDANCE_RECORD,
+        resourceId = "#recordId",
+        permission = PermissionType.READ
+    )
     public AttendanceRecordResponse getAttendanceRecord(
         @PathVariable Long recordId
     ) {
@@ -101,6 +109,11 @@ public class AttendanceController implements AttendanceControllerApi {
 
     @Override
     @GetMapping("/pending/{scheduleId}")
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.APPROVE
+    )
     public List<PendingAttendanceResponse> getPendingAttendances(
         @PathVariable Long scheduleId
     ) {
@@ -111,6 +124,11 @@ public class AttendanceController implements AttendanceControllerApi {
 
     @Override
     @PostMapping("/{recordId}/approve")
+    @CheckAccess(
+        resourceType = ResourceType.ATTENDANCE_RECORD,
+        resourceId = "#recordId",
+        permission = PermissionType.APPROVE
+    )
     public void approveAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long recordId
@@ -120,6 +138,11 @@ public class AttendanceController implements AttendanceControllerApi {
 
     @Override
     @PostMapping("/{recordId}/reject")
+    @CheckAccess(
+        resourceType = ResourceType.ATTENDANCE_RECORD,
+        resourceId = "#recordId",
+        permission = PermissionType.APPROVE
+    )
     public void rejectAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long recordId

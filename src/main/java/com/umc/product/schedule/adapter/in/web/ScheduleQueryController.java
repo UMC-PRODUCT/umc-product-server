@@ -1,5 +1,8 @@
 package com.umc.product.schedule.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.response.MyScheduleResponse;
@@ -32,6 +35,10 @@ public class ScheduleQueryController implements ScheduleQueryControllerApi {
 
     @Override
     @GetMapping
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        permission = PermissionType.READ
+    )
     public List<ScheduleListResponse> getScheduleList() {
         return mapper.toScheduleListResponses(getScheduleListUseCase.getAll());
     }

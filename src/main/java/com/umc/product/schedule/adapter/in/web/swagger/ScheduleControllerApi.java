@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Schedule | 일정", description = "")
 public interface ScheduleControllerApi {
-    @Operation(summary = "[삭제 예정, 연동 XX] 일정 단독 생성", description = "새로운 일정을 생성합니다")
+    @Operation(summary = "[삭제 예정, 연동 XX] 일정 단독 생성", description = "새로운 일정을 생성합니다", deprecated = true)
     void createSchedule(
         @CurrentMember MemberPrincipal memberPrincipal,
         @Valid @RequestBody CreateScheduleRequest request

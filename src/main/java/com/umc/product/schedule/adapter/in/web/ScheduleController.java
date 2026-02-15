@@ -1,5 +1,8 @@
 package com.umc.product.schedule.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleRequest;
@@ -62,6 +65,11 @@ public class ScheduleController implements ScheduleControllerApi {
 
     @Override
     @PostMapping("/study-group")
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.WRITE
+    )
     public Long createStudyGroupSchedule(
         @CurrentMember MemberPrincipal memberPrincipal,
         @Valid @RequestBody CreateStudyGroupScheduleRequest request
@@ -73,6 +81,11 @@ public class ScheduleController implements ScheduleControllerApi {
 
     @Override
     @PatchMapping("/{scheduleId}")
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.WRITE
+    )
     public void updateSchedule(
         @PathVariable Long scheduleId,
         @Valid @RequestBody UpdateScheduleRequest request
@@ -82,12 +95,22 @@ public class ScheduleController implements ScheduleControllerApi {
 
     @Override
     @DeleteMapping("/{scheduleId}/with-attendance")
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.DELETE
+    )
     public void deleteScheduleWithAttendance(@PathVariable Long scheduleId) {
         deleteScheduleWithAttendanceUseCase.delete(scheduleId);
     }
 
     @Override
     @PatchMapping("/{scheduleId}/location")
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.WRITE
+    )
     public UpdateScheduleLocationResponse updateScheduleLocation(
         @PathVariable Long scheduleId,
         @Valid @RequestBody UpdateScheduleLocationRequest request
