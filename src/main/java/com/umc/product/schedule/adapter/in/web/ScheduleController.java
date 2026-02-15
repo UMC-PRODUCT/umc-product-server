@@ -65,11 +65,6 @@ public class ScheduleController implements ScheduleControllerApi {
 
     @Override
     @PostMapping("/study-group")
-    @CheckAccess(
-        resourceType = ResourceType.SCHEDULE,
-        resourceId = "#scheduleId",
-        permission = PermissionType.WRITE
-    )
     public Long createStudyGroupSchedule(
         @CurrentMember MemberPrincipal memberPrincipal,
         @Valid @RequestBody CreateStudyGroupScheduleRequest request
