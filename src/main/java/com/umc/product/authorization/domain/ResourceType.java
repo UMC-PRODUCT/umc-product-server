@@ -14,7 +14,7 @@ public enum ResourceType {
     CURRICULUM("curriculum", "커리큘럼",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
     SCHEDULE("schedule", "일정",
-        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE, PermissionType.APPROVE)),
     NOTICE("notice", "공지사항",
         // WRITE는 Service 단에서 처리함
         Set.of(PermissionType.READ, PermissionType.DELETE, PermissionType.CHECK)),
@@ -22,6 +22,10 @@ public enum ResourceType {
         Set.of(PermissionType.WRITE, PermissionType.DELETE)),
     WORKBOOK_SUBMISSION("workbook_submission", "워크북 제출 현황",
         Set.of(PermissionType.READ)),
+    ATTENDANCE_SHEET("attendance_sheet", "출석부",
+        Set.of(PermissionType.APPROVE)),
+    ATTENDANCE_RECORD("attendance_record", "출석 기록",
+        Set.of(PermissionType.READ, PermissionType.APPROVE)),
     ;
 
     private final String code;
