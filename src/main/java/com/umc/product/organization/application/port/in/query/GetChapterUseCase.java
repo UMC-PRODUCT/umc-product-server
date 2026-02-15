@@ -16,4 +16,6 @@ public interface GetChapterUseCase {
     List<ChapterInfo> getChaptersBySchool(Long schoolId);
 
     List<ChapterWithSchoolsInfo> getChaptersWithSchoolsByGisuId(Long gisuId);
+
+    ChapterInfo getChapterById(Long chapterId);
 }
