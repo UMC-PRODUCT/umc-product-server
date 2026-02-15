@@ -54,7 +54,7 @@ public class Post {
         }
         validateCommonFields(title, content);
         validateAuthorChallengerId(authorChallengerId);
-        info.validateMeetAtIsFuture(); // 생성 시에만 미래 시간 검증
+        // 시간 검증은 Service 레이어에서 수행
         return new Post(null, title, content, Category.LIGHTNING, authorChallengerId, info, 0, false, null);
     }
 
@@ -118,7 +118,7 @@ public class Post {
         if (newLightningInfo == null) {
             throw new IllegalArgumentException("번개 정보는 필수입니다.");
         }
-        newLightningInfo.validateMeetAtIsFuture(); // 수정 시에만 미래 시간 검증
+        // 시간 검증은 Service 레이어에서 수행
 
         this.title = title;
         this.content = content;
@@ -156,10 +156,13 @@ public class Post {
         }
 
         /**
-         * 모임 시간이 현재 이후인지 검증 (생성/수정 시에만 호출)
+         * 모임 시간이 현재 이후인지 검증 (Service 레이어에서 호출)
+         *
+         * @param now 비교할 현재 시간 (테스트 용이성을 위해 외부에서 주입)
+         * @throws IllegalArgumentException 모임 시간이 현재 이전인 경우
          */
-        public void validateMeetAtIsFuture() {
-            if (meetAt.isBefore(LocalDateTime.now())) {
+        public void validateMeetAtIsFuture(LocalDateTime now) {
+            if (meetAt.isBefore(now)) {
                 throw new IllegalArgumentException("모임 시간은 현재 이후여야 합니다.");
             }
         }
