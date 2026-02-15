@@ -24,14 +24,6 @@ public class ChallengerSearchController {
 
     private final SearchChallengerUseCase searchChallengerUseCase;
 
-    @Deprecated
-    @Operation(summary = "챌린저 검색", deprecated = true,
-        description = "Deprecated: cursor와 offset을 분리하기 위해 엔드포인트를 변경합니다. 해당 API는 사용하지 않습니다.")
-    @GetMapping("search")
-    SearchChallengerResponse searchChallenger() {
-        throw new UnsupportedOperationException("이 API는 더 이상 지원되지 않습니다. cursor와 offset 기반 검색을 위한 별도의 엔드포인트를 사용하세요.");
-    }
-
     @Operation(summary = "챌린저 검색 (Cursor 기반)")
     @GetMapping("search/cursor")
     CursorSearchChallengerResponse cursorSearchChallenger(
@@ -61,8 +53,13 @@ public class ChallengerSearchController {
     }
 
     @Operation(summary = "챌린저 전체 검색 (Cursor 기반, 일정 생성용)",
-        description = "전체 챌린저를 대상으로 이름 또는 닉네임을 이용해 챌린저를 검색합니다.")
+        description = """
+            `search/cursor` 및 `search/offset` API를 사용해주세요.
+
+            전체 챌린저를 대상으로 이름 또는 닉네임을 이용해 챌린저를 검색합니다.
+            """)
     @GetMapping("search/global")
+    @Deprecated(since = "2026-02-16", forRemoval = true)
     GlobalSearchChallengerResponse globalSearchChallenger(
         @ParameterObject GlobalSearchChallengerRequest searchRequest
     ) {
