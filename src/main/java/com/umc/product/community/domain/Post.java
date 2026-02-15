@@ -138,13 +138,15 @@ public class Post {
         String openChatUrl
     ) {
         public LightningInfo {
-            if (meetAt == null || meetAt.isBefore(LocalDateTime.now())) {
-                throw new IllegalArgumentException("모임 시간은 현재 이후여야 합니다.");
+            // Entity 조회 시에도 생성자가 호출되므로, 비즈니스 로직 검증(미래 시간 체크)은 하지 않음
+            // 비즈니스 로직 검증은 Request DTO에서 수행
+            if (meetAt == null) {
+                throw new IllegalArgumentException("모임 시간은 필수입니다.");
             }
             if (location == null || location.isBlank()) {
                 throw new IllegalArgumentException("모임 장소는 필수입니다.");
             }
-            if (maxParticipants <= 0) {
+            if (maxParticipants == null || maxParticipants <= 0) {
                 throw new IllegalArgumentException("최대 참가자는 1명 이상이어야 합니다.");
             }
             if (openChatUrl == null || openChatUrl.isBlank()) {
