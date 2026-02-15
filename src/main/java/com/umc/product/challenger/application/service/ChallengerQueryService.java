@@ -4,6 +4,7 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerPointUs
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
@@ -36,22 +37,25 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     public ChallengerInfo getByMemberIdAndGisuId(Long memberId, Long gisuId) {
         Challenger challenger = loadChallengerPort.findByMemberIdAndGisuId(memberId, gisuId)
             .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_FOUND));
-        return ChallengerInfo.from(challenger);
+
+        return getChallengerInfoFromChallenger(challenger);
     }
 
     @Override
     public ChallengerInfo getActiveByMemberIdAndGisuId(Long memberId, Long gisuId) {
         Challenger challenger = loadChallengerPort.findByMemberIdAndGisuId(memberId, gisuId)
             .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_FOUND));
+
         challenger.validateChallengerStatus();
-        return ChallengerInfo.from(challenger);
+
+        return getChallengerInfoFromChallenger(challenger);
     }
 
     @Override
     public List<ChallengerInfo> getMemberChallengerList(Long memberId) {
         List<Challenger> challengers = loadChallengerPort.findByMemberId(memberId);
         return challengers.stream()
-            .map(ChallengerInfo::from)
+            .map(this::getChallengerInfoFromChallenger)
             .toList();
     }
 
@@ -73,14 +77,21 @@ public class ChallengerQueryService implements GetChallengerUseCase {
         return loadChallengerPort.findByIdIn(challengerIds).stream()
             .collect(Collectors.toMap(
                 Challenger::getId,
-                ChallengerInfo::from
+                this::getChallengerInfoFromChallenger
             ));
     }
 
     @Override
     public List<ChallengerInfo> getByGisuId(Long gisuId) {
         return loadChallengerPort.findByGisuId(gisuId).stream()
-            .map(ChallengerInfo::from)
+            .map(this::getChallengerInfoFromChallenger)
             .toList();
+    }
+
+    private ChallengerInfo getChallengerInfoFromChallenger(Challenger challenger) {
+        List<ChallengerPointInfo> challengerPointInfos =
+            getChallengerPointUseCase.getListByChallengerId(challenger.getId());
+
+        return ChallengerInfo.from(challenger, challengerPointInfos);
     }
 }

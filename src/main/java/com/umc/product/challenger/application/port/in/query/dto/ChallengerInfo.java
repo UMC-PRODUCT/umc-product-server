@@ -27,7 +27,7 @@ public record ChallengerInfo(
     ChallengerPart part,
     List<ChallengerPointInfo> challengerPoints
 ) {
-    @Deprecated
+    @Deprecated(since = "2026-02-10", forRemoval = true)
     public static ChallengerInfo from(Challenger challenger) {
         log.error("챌린저 상벌점을 포함하지 않는 생성자를 사용하고 있습니다.");
 
@@ -40,7 +40,6 @@ public record ChallengerInfo(
 
     }
 
-    @Deprecated
     public static ChallengerInfo from(Challenger challenger, List<ChallengerPointInfo> challengerPoints) {
         return ChallengerInfo.builder()
             .challengerId(challenger.getId())
