@@ -54,6 +54,7 @@ public class Post {
         }
         validateCommonFields(title, content);
         validateAuthorChallengerId(authorChallengerId);
+        info.validateMeetAtIsFuture(); // 생성 시에만 미래 시간 검증
         return new Post(null, title, content, Category.LIGHTNING, authorChallengerId, info, 0, false, null);
     }
 
@@ -117,6 +118,7 @@ public class Post {
         if (newLightningInfo == null) {
             throw new IllegalArgumentException("번개 정보는 필수입니다.");
         }
+        newLightningInfo.validateMeetAtIsFuture(); // 수정 시에만 미래 시간 검증
 
         this.title = title;
         this.content = content;
@@ -138,17 +140,27 @@ public class Post {
         String openChatUrl
     ) {
         public LightningInfo {
-            if (meetAt == null || meetAt.isBefore(LocalDateTime.now())) {
-                throw new IllegalArgumentException("모임 시간은 현재 이후여야 합니다.");
+            // 필수 필드만 검증 (시간 검증은 제거 - 조회 시에도 객체 생성이 필요하므로)
+            if (meetAt == null) {
+                throw new IllegalArgumentException("모임 시간은 필수입니다.");
             }
             if (location == null || location.isBlank()) {
                 throw new IllegalArgumentException("모임 장소는 필수입니다.");
             }
-            if (maxParticipants <= 0) {
+            if (maxParticipants == null || maxParticipants <= 0) {
                 throw new IllegalArgumentException("최대 참가자는 1명 이상이어야 합니다.");
             }
             if (openChatUrl == null || openChatUrl.isBlank()) {
                 throw new IllegalArgumentException("오픈 채팅 링크는 필수입니다.");
+            }
+        }
+
+        /**
+         * 모임 시간이 현재 이후인지 검증 (생성/수정 시에만 호출)
+         */
+        public void validateMeetAtIsFuture() {
+            if (meetAt.isBefore(LocalDateTime.now())) {
+                throw new IllegalArgumentException("모임 시간은 현재 이후여야 합니다.");
             }
         }
     }
