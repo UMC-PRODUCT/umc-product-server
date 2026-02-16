@@ -1,9 +1,7 @@
 package com.umc.product.member.adapter.in.web;
 
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
-import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.query.GetOAuthListUseCase;
-import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.OAuthVerificationClaims;
@@ -21,10 +19,10 @@ import com.umc.product.member.application.port.in.command.dto.UpdateMemberComman
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -103,22 +101,21 @@ public class MemberCommandController {
     // TODO: 총괄이 임의로 계정을 삭제시키려면 memberId로 삭제하는 API도 필요할 것 같음
 
     @DeleteMapping
+    @Operation(summary = "회원 탈퇴")
     public MemberInfoResponse deleteMember(@CurrentMember MemberPrincipal memberPrincipal) {
-        Long memberId = memberPrincipal.getMemberId();
+        return deleteMemberById(memberPrincipal.getMemberId());
+    }
 
+    @Operation(summary = "관리자 권한으로 회원 게정 삭제 (Hard Delete)", description = "SUPER_ADMIN 권한이 필요합니다. (적용 전)")
+    @DeleteMapping("{memberId}")
+    public MemberInfoResponse deleteMember(@PathVariable Long memberId) {
+        // TODO: SUPER_ADMIN 권한 필요
+
+        return deleteMemberById(memberId);
+    }
+
+    private MemberInfoResponse deleteMemberById(Long memberId) {
         MemberInfoResponse deletedMemberInfoResponse = assembler.fromMemberId(memberId);
-
-        List<MemberOAuthInfo> linkedOAuths = getOAuthListUseCase.getOAuthList(memberId);
-
-        // TODO: N+1 문제 해결 필요
-        for (MemberOAuthInfo oAuthInfo : linkedOAuths) {
-            oAuthAuthenticationUseCase.unlinkOAuth(
-                UnlinkOAuthCommand.builder()
-                    .memberId(memberId)
-                    .memberOAuthId(oAuthInfo.memberOAuthId())
-                    .build()
-            );
-        }
 
         manageMemberUseCase.deleteMember(
             DeleteMemberCommand
