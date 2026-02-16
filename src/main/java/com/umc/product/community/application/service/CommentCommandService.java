@@ -24,6 +24,7 @@ public class CommentCommandService implements CreateCommentUseCase, DeleteCommen
     private final LoadPostPort loadPostPort;
     private final LoadCommentPort loadCommentPort;
     private final SaveCommentPort saveCommentPort;
+    private final AuthorInfoProvider authorInfoProvider;
 
     @Override
     public CommentInfo create(CreateCommentCommand command) {
@@ -39,8 +40,8 @@ public class CommentCommandService implements CreateCommentUseCase, DeleteCommen
 
         Comment savedComment = saveCommentPort.save(comment);
 
-        // TODO: challengerName은 Challenger/Member 도메인에서 조회 필요
-        return CommentInfo.from(savedComment, null);
+        String challengerName = authorInfoProvider.getAuthorName(command.challengerId());
+        return CommentInfo.from(savedComment, challengerName);
     }
 
     @Override
