@@ -16,6 +16,7 @@ import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCa
 import com.umc.product.schedule.application.port.in.command.SubmitReasonUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAttendanceRecordUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
+import com.umc.product.schedule.application.port.in.query.GetChallengerAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetPendingAttendancesUseCase;
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
@@ -40,6 +41,7 @@ public class AttendanceController implements AttendanceControllerApi {
     private final GetAttendanceRecordUseCase getAttendanceRecordUseCase;
     private final GetAvailableAttendancesUseCase getAvailableAttendancesUseCase;
     private final GetMyAttendanceHistoryUseCase getMyAttendanceHistoryUseCase;
+    private final GetChallengerAttendanceHistoryUseCase getChallengerAttendanceHistoryUseCase;
     private final GetPendingAttendancesUseCase getPendingAttendancesUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
 
@@ -86,6 +88,16 @@ public class AttendanceController implements AttendanceControllerApi {
 
         return mapper.toMyAttendanceHistoryResponses(
             getMyAttendanceHistoryUseCase.getHistory(memberId, gisuId)
+        );
+    }
+
+    @Override
+    @GetMapping("/challenger/{challengerId}/history")
+    public List<MyAttendanceHistoryResponse> getChallengerAttendanceHistory(
+        @PathVariable Long challengerId
+    ) {
+        return mapper.toMyAttendanceHistoryResponses(
+            getChallengerAttendanceHistoryUseCase.getHistoryByChallengerId(challengerId)
         );
     }
 
