@@ -36,6 +36,7 @@ public class AttendanceRecordQueryRepository {
                 member.id,
                 member.name,
                 member.nickname,
+                member.profileImageId,
                 school.name,
                 attendanceRecord.status,
                 attendanceRecord.memo,

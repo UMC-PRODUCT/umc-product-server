@@ -33,11 +33,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class AvailableAttendanceQueryService implements GetAvailableAttendancesUseCase {
 
     private static final Set<AttendanceStatus> COMPLETED_STATUSES = Set.of(
-        AttendanceStatus.LATE,
-        AttendanceStatus.LATE_PENDING,
-        AttendanceStatus.ABSENT,
-        AttendanceStatus.EXCUSED,
-        AttendanceStatus.EXCUSED_PENDING
+        // 출석 시간대 내에서는 출석 완료(PRESENT)도 확인 가능
+        // 시간대가 지나면 isWithinTimeWindow()에서 걸러짐 → "나의 출석 현황"으로 이동
+        AttendanceStatus.LATE,     // 지각 확정 - 제외
+        AttendanceStatus.ABSENT,   // 결석 확정 - 제외
+        AttendanceStatus.EXCUSED   // 인정결석 확정 - 제외
+        // 포함되는 상태:
+        // - PENDING: 출석 전
+        // - PRESENT: 출석 완료 (시간대 내에서 확인 가능)
+        // - PRESENT_PENDING: 출석 승인 대기
+        // - LATE_PENDING: 지각 승인 대기
+        // - EXCUSED_PENDING: 사유 제출 승인 대기
     );
 
     private final LoadSchedulePort loadSchedulePort;
@@ -92,8 +98,8 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
                 }
 
                 // 3. 출석 프로세스 완료된 것 제외 (나의 출석 현황으로 이동)
-                // 포함: PENDING (출석 전), PRESENT/PRESENT_PENDING (출석 완료)
-                // 제외: LATE/LATE_PENDING (지각), ABSENT (결석), EXCUSED/EXCUSED_PENDING (인정결석)
+                // 포함: PENDING (출석 전), PRESENT/PRESENT_PENDING (출석 완료), EXCUSED_PENDING (사유 제출 승인 대기)
+                // 제외: LATE/LATE_PENDING (지각), ABSENT (결석), EXCUSED (인정결석 승인 완료)
                 if (record != null && isAttendanceProcessCompleted(record.getStatus())) {
                     return null;
                 }
