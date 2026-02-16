@@ -2,7 +2,9 @@ package com.umc.product.member.application.service;
 
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthCommand;
-import com.umc.product.global.exception.NotImplementedException;
+import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
+import com.umc.product.authentication.application.port.in.query.GetOAuthListUseCase;
+import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
@@ -37,6 +39,7 @@ public class MemberService implements ManageMemberUseCase {
 
     private final GetFileUseCase getFileUseCase;
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
+    private final GetOAuthListUseCase getOAuthListUseCase;
     private final ManageTermsAgreementUseCase manageTermsAgreementUseCase;
     private final GetTermsUseCase getTermsUseCase;
 
@@ -123,7 +126,25 @@ public class MemberService implements ManageMemberUseCase {
 
     @Override
     public void deleteMember(DeleteMemberCommand command) {
-        throw new NotImplementedException();
+        Long memberId = command.memberId();
+
+        Member memberToDelete = loadMemberPort.findById(memberId)
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+        List<MemberOAuthInfo> linkedOAuths = getOAuthListUseCase.getOAuthList(memberId);
+
+        // TODO: N+1 문제 해결 필요
+        for (MemberOAuthInfo oAuthInfo : linkedOAuths) {
+            oAuthAuthenticationUseCase.unlinkOAuth(
+                UnlinkOAuthCommand.builder()
+                    .memberId(memberId)
+                    .memberOAuthId(oAuthInfo.memberOAuthId())
+                    .bypassValidation(true)
+                    .build()
+            );
+        }
+
+        saveMemberPort.delete(memberToDelete);
     }
 
     private void validateMandatoryTermsAgreed(RegisterMemberCommand command) {
