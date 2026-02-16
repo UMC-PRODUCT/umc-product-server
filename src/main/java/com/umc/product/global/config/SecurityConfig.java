@@ -213,6 +213,7 @@ public class SecurityConfig {
                 "http://localhost:8080",
                 "http://localhost:3000", // FE Web Local
                 "https://umc.it.kr", // FE Web Production
+                "https://dev.umc.it.kr", // FE Web Development
                 "https://api.umc.it.kr", // BE Production
                 "https://dev.api.umc.it.kr" // BE Development
             ));
