@@ -8,6 +8,7 @@ import com.umc.product.authorization.domain.exception.AuthorizationDomainExcepti
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -29,15 +30,25 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
 
     private final LoadChallengerRolePort loadChallengerRolePort;
 
+    private final GetGisuUseCase getGisuUseCase;
+
+    private ChallengerRoleInfo getChallengerRoleInfoFromEntity(ChallengerRole role) {
+        return ChallengerRoleInfo.from(
+            role, getGisuUseCase.getById(role.getGisuId())
+        );
+    }
+
     @Override
     public ChallengerRoleInfo byId(Long challengerRoleId) {
-        return ChallengerRoleInfo.fromEntity(loadChallengerRolePort.getById(challengerRoleId));
+        return getChallengerRoleInfoFromEntity(
+            loadChallengerRolePort.getById(challengerRoleId)
+        );
     }
 
     @Override
     public List<ChallengerRoleInfo> getRoles(Long memberId) {
         return loadChallengerRolePort.findByMemberId(memberId).stream()
-            .map(ChallengerRoleInfo::fromEntity)
+            .map(this::getChallengerRoleInfoFromEntity)
             .toList();
     }
 

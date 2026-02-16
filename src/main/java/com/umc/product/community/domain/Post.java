@@ -54,6 +54,7 @@ public class Post {
         }
         validateCommonFields(title, content);
         validateAuthorChallengerId(authorChallengerId);
+        // 시간 검증은 Service 레이어에서 수행
         return new Post(null, title, content, Category.LIGHTNING, authorChallengerId, info, 0, false, null);
     }
 
@@ -117,6 +118,7 @@ public class Post {
         if (newLightningInfo == null) {
             throw new IllegalArgumentException("번개 정보는 필수입니다.");
         }
+        // 시간 검증은 Service 레이어에서 수행
 
         this.title = title;
         this.content = content;
@@ -138,8 +140,11 @@ public class Post {
         String openChatUrl
     ) {
         public LightningInfo {
+            // TODO: 주석 merge conflict로 모두 유지함. 예은이 수정해주세요
+          
             // Entity 조회 시에도 생성자가 호출되므로, 비즈니스 로직 검증(미래 시간 체크)은 하지 않음
             // 비즈니스 로직 검증은 Request DTO에서 수행
+            // 필수 필드만 검증 (시간 검증은 제거 - 조회 시에도 객체 생성이 필요하므로)
             if (meetAt == null) {
                 throw new IllegalArgumentException("모임 시간은 필수입니다.");
             }
@@ -151,6 +156,18 @@ public class Post {
             }
             if (openChatUrl == null || openChatUrl.isBlank()) {
                 throw new IllegalArgumentException("오픈 채팅 링크는 필수입니다.");
+            }
+        }
+
+        /**
+         * 모임 시간이 현재 이후인지 검증 (Service 레이어에서 호출)
+         *
+         * @param now 비교할 현재 시간 (테스트 용이성을 위해 외부에서 주입)
+         * @throws IllegalArgumentException 모임 시간이 현재 이전인 경우
+         */
+        public void validateMeetAtIsFuture(LocalDateTime now) {
+            if (meetAt.isBefore(now)) {
+                throw new IllegalArgumentException("모임 시간은 현재 이후여야 합니다.");
             }
         }
     }

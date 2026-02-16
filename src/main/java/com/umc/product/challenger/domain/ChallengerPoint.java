@@ -60,10 +60,6 @@ public class ChallengerPoint extends BaseEntity {
     }
 
     public Double getPointValue() {
-        return switch (type) {
-            case BEST_WORKBOOK -> -0.5;
-            case WARNING -> 0.0;
-            case OUT -> 1.0;
-        };
+        return type.getValue();
     }
 }

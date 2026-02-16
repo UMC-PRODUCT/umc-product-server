@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("local | dev")
 @RestController
 @RequestMapping("/test")
-@Tag(name = "Test | 일반 테스트", description = "개발 및 테스트 용 API 입니다. 잘못 호출했을 떄 Dev 서버가 어떻게 되어버릴지도 몰라요")
+@Tag(name = "00 Test | 일반 테스트", description = "개발 및 테스트 용 API 입니다. 잘못 호출했을 떄 Dev 서버가 어떻게 되어버릴지도 몰라요")
 @Slf4j
 @Public
 public class TestController {
@@ -73,21 +73,21 @@ public class TestController {
     @Operation(summary = "AccessToken 발급")
     @Public
     @GetMapping("/token/access/{memberId}")
-    public String getAccessToken(@PathVariable("memberId") Long memberId) {
+    public String getAccessToken(@PathVariable Long memberId) {
         return jwtTokenProvider.createAccessToken(memberId, null);
     }
 
     @Operation(summary = "RefreshToken 발급")
     @Public
     @GetMapping("/token/refresh/{memberId}")
-    public String getRefreshToken(@PathVariable("memberId") Long memberId) {
+    public String getRefreshToken(@PathVariable Long memberId) {
         return jwtTokenProvider.createRefreshToken(memberId);
     }
 
     @Operation(summary = "EmailVerificationToken 발급")
     @Public
     @GetMapping("/token/email/{email}")
-    public String getEmailVerification(@PathVariable("email") String email) {
+    public String getEmailVerification(@PathVariable String email) {
         return jwtTokenProvider.createEmailVerificationToken(email);
     }
 

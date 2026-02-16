@@ -2,6 +2,7 @@ package com.umc.product.challenger.application.port.in.query.dto;
 
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import java.util.List;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
@@ -25,9 +26,11 @@ public record ChallengerInfo(
     Long memberId,
     Long gisuId,
     ChallengerPart part,
-    List<ChallengerPointInfo> challengerPoints
+    List<ChallengerPointInfo> challengerPoints,
+    Double totalPoints,
+    ChallengerStatus challengerStatus
 ) {
-    @Deprecated
+    @Deprecated(since = "2026-02-10", forRemoval = true)
     public static ChallengerInfo from(Challenger challenger) {
         log.error("챌린저 상벌점을 포함하지 않는 생성자를 사용하고 있습니다.");
 
@@ -37,10 +40,8 @@ public record ChallengerInfo(
             .gisuId(challenger.getGisuId())
             .part(challenger.getPart())
             .build();
-
     }
 
-    @Deprecated
     public static ChallengerInfo from(Challenger challenger, List<ChallengerPointInfo> challengerPoints) {
         return ChallengerInfo.builder()
             .challengerId(challenger.getId())
@@ -48,6 +49,8 @@ public record ChallengerInfo(
             .gisuId(challenger.getGisuId())
             .part(challenger.getPart())
             .challengerPoints(challengerPoints)
+            .totalPoints(challenger.getTotalPoints())
+            .challengerStatus(challenger.getStatus())
             .build();
     }
 }
