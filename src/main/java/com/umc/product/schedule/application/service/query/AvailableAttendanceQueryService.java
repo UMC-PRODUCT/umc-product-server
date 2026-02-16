@@ -87,13 +87,14 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
                 AttendanceRecord record = recordBySheetId.get(sheet.getId());
 
                 // 필터링: 출석 가능한 것만
-                // 1. 일정 없거나 세션 종료되면 제외
-                if (schedule == null || schedule.isEnded(now)) {
+                // 1. 일정이 없으면 제외
+                if (schedule == null) {
                     return null;
                 }
 
-                // 2. 출석 시간대(AttendanceWindow) 체크 - 현재 출석 가능한 시간대인지 확인
-                if (!sheet.isWithinTimeWindow(now)) {
+                // 2. 출석 시간대가 종료되었으면 제외 (나의 출석 현황으로 이동)
+                // ⭐ 출석 시간 전에는 조회 가능 (미리 확인), 시간대 종료 후에만 제외
+                if (now.isAfter(sheet.getWindow().getEndTime())) {
                     return null;
                 }
 
