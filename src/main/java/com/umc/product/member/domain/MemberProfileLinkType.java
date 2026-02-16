@@ -5,5 +5,5 @@ public enum MemberProfileLinkType {
     INSTAGRAM,
     GITHUB,
     BLOG,
-    PERSONAL
+    PERSONAL,
 }

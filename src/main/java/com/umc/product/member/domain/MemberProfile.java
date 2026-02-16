@@ -1,7 +1,6 @@
 package com.umc.product.member.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.member.application.port.in.command.dto.UpsertMemberProfileCommand.LinkTypeAndLink;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
