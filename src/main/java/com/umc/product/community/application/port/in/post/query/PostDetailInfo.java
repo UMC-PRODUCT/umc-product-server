@@ -13,6 +13,8 @@ public record PostDetailInfo(
         Category category,
         Long authorId,
         String authorName,
+        String authorProfileImage,
+        ChallengerPart userPart,
         LocalDateTime meetAt,
         String location,
         Integer maxParticipants,
@@ -20,8 +22,8 @@ public record PostDetailInfo(
         int commentCount,
         Instant createdAt,
         int likeCount,
-        ChallengerPart userPart,
         boolean isLiked,
+        boolean isAuthor,
         boolean isScrapped,
         int scrapCount
 ) {
@@ -34,6 +36,8 @@ public record PostDetailInfo(
                 postInfo.category(),
                 postInfo.authorId(),
                 postInfo.authorName(),
+                postInfo.authorProfileImage(),
+                authorPart,
                 postInfo.meetAt(),
                 postInfo.location(),
                 postInfo.maxParticipants(),
@@ -41,8 +45,8 @@ public record PostDetailInfo(
                 commentCount,
                 postInfo.createdAt(),
                 postInfo.likeCount(),
-                authorPart,
                 postInfo.isLiked(),
+                postInfo.isAuthor(),
                 isScrapped,
                 scrapCount
         );

@@ -62,7 +62,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         String authorName = memberProfile.name();
         String authorProfileImage = memberProfile.profileImageLink();
 
-        return PostInfo.from(postWithAuthor.post(), authorChallengerId, authorName, authorProfileImage, 0);
+        return PostInfo.from(postWithAuthor.post(), authorChallengerId, authorName, authorProfileImage, challengerInfo.part(), 0);
     }
 
     @Override
@@ -80,8 +80,11 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         String authorName = memberProfile.name();
         String authorProfileImage = memberProfile.profileImageLink();
 
+        // 본인 작성 글 여부 확인
+        boolean isAuthor = authorChallengerId.equals(challengerId);
+
         int commentCount = loadCommentPort.countByPostId(postId);
-        PostInfo postInfo = PostInfo.from(postWithAuthor.post(), authorChallengerId, authorName, authorProfileImage, commentCount);
+        PostInfo postInfo = PostInfo.from(postWithAuthor.post(), authorChallengerId, authorName, authorProfileImage, authorChallengerInfo.part(), commentCount, isAuthor);
 
         // 스크랩 정보 조회
         boolean isScrapped = loadScrapPort.existsByPostIdAndChallengerId(postId, challengerId);
@@ -93,7 +96,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
     @Override
     public Page<PostInfo> getPostList(PostSearchQuery query, Pageable pageable) {
         Page<Post> posts = loadPostPort.findAllByQuery(query, pageable);
-        return convertToPostInfoPage(posts, pageable);
+        return convertToPostInfoPage(posts, null, pageable);
     }
 
     @Override
@@ -120,28 +123,31 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         String authorName = memberProfile.name();
         String authorProfileImage = memberProfile.profileImageLink();
 
-        // PostInfo로 변환 (모든 게시글이 같은 작성자이므로 같은 프로필 이미지)
-        return posts.map(post -> PostInfo.from(post, challengerId, authorName, authorProfileImage, 0));
+        // PostInfo로 변환 (모든 게시글이 본인 글이므로 isAuthor = true)
+        return posts.map(post -> PostInfo.from(post, challengerId, authorName, authorProfileImage, challengerInfo.part(), 0, true));
     }
 
     @Override
     public Page<PostInfo> getCommentedPosts(Long challengerId, Pageable pageable) {
         Page<Post> posts = loadPostPort.findCommentedPostsByChallengerId(challengerId, pageable);
 
-        return convertToPostInfoPage(posts, pageable);
+        return convertToPostInfoPage(posts, challengerId, pageable);
     }
 
     @Override
     public Page<PostInfo> getScrappedPosts(Long challengerId, Pageable pageable) {
         Page<Post> posts = loadPostPort.findScrappedPostsByChallengerId(challengerId, pageable);
 
-        return convertToPostInfoPage(posts, pageable);
+        return convertToPostInfoPage(posts, challengerId, pageable);
     }
 
     /**
      * Post 페이지를 PostInfo 페이지로 변환 (작성자 정보 포함)
+     * @param posts 게시글 페이지
+     * @param currentChallengerId 현재 로그인한 사용자의 challengerId (비로그인 시 null)
+     * @param pageable 페이지 정보
      */
-    private Page<PostInfo> convertToPostInfoPage(Page<Post> posts, Pageable pageable) {
+    private Page<PostInfo> convertToPostInfoPage(Page<Post> posts, Long currentChallengerId, Pageable pageable) {
         // 게시글이 없으면 빈 페이지 반환
         if (posts.isEmpty()) {
             return Page.empty(pageable);
@@ -169,7 +175,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         // 6. 멤버 ID -> 멤버 프로필 매핑 (1 query, 일괄 조회로 N+1 해결)
         Map<Long, MemberProfileInfo> memberProfileMap = getMemberUseCase.getProfiles(memberIds);
 
-        // 7. 챌린저 ID -> 작성자 정보 매핑 (이름 + 프로필 이미지, 한 번의 스트림 처리)
+        // 7. 챌린저 ID -> 작성자 정보 매핑 (이름 + 프로필 이미지 + 파트, 한 번의 스트림 처리)
         Map<Long, AuthorDetails> authorDetailsMap = challengerInfoMap.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
@@ -178,7 +184,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
                             MemberProfileInfo memberProfile = memberProfileMap.get(memberId);
                             String name = memberProfile != null ? memberProfile.name() : "알 수 없음";
                             String profileImage = memberProfile != null ? memberProfile.profileImageLink() : null;
-                            return new AuthorDetails(name, profileImage);
+                            return new AuthorDetails(name, profileImage, entry.getValue().part());
                         }
                 ));
 
@@ -192,14 +198,17 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
             AuthorDetails authorDetails = authorId != null ? authorDetailsMap.get(authorId) : null;
             String authorName = authorDetails != null ? authorDetails.name() : "알 수 없음";
             String authorProfileImage = authorDetails != null ? authorDetails.profileImage() : null;
+            var authorPart = authorDetails != null ? authorDetails.part() : null;
             int commentCount = commentCountMap.getOrDefault(postId, 0);
-            return PostInfo.from(post, authorId, authorName, authorProfileImage, commentCount);
+            // 본인 작성 글 여부 확인
+            boolean isAuthor = currentChallengerId != null && authorId != null && authorId.equals(currentChallengerId);
+            return PostInfo.from(post, authorId, authorName, authorProfileImage, authorPart, commentCount, isAuthor);
         });
     }
 
     /**
      * 작성자 정보를 담는 내부 record
      */
-    private record AuthorDetails(String name, String profileImage) {
+    private record AuthorDetails(String name, String profileImage, com.umc.product.common.domain.enums.ChallengerPart part) {
     }
 }
