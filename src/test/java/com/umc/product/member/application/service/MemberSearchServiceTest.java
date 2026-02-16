@@ -62,8 +62,8 @@ class MemberSearchServiceTest {
     void setUp() {
         defaultQuery = new SearchMemberQuery(null, null, null, null, null);
         defaultGisuInfos = List.of(
-            new GisuInfo(1L, 7L, Instant.now(), Instant.now(), true),
-            new GisuInfo(2L, 8L, Instant.now(), Instant.now(), false)
+            new GisuInfo(1L, 7L, 7L, Instant.now(), Instant.now(), true),
+            new GisuInfo(2L, 8L, 8L, Instant.now(), Instant.now(), false)
         );
 
         sixChallengers = List.of(

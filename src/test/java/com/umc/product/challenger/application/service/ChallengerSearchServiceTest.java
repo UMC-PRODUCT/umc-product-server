@@ -69,8 +69,8 @@ class ChallengerSearchServiceTest {
         defaultQuery = new SearchChallengerQuery(null, null, null, null, null, null, 1L,
             List.of(ChallengerStatus.ACTIVE));
         defaultGisuInfos = List.of(
-            new GisuInfo(1L, 7L, Instant.now(), Instant.now(), true),
-            new GisuInfo(2L, 8L, Instant.now(), Instant.now(), false)
+            new GisuInfo(1L, 7L, 7L, Instant.now(), Instant.now(), true),
+            new GisuInfo(2L, 8L, 8L, Instant.now(), Instant.now(), false)
         );
 
         sixChallengers = List.of(
