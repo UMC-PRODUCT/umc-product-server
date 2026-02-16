@@ -52,20 +52,18 @@ public class Report extends BaseEntity {
         this.reason = reason;
     }
 
-    public static Report createPostReport(Long reporterId, Long postId, String reason) {
+    /**
+     * 신고 생성 팩토리 메서드
+     * @param reporterId 신고자 챌린저 ID
+     * @param targetType 신고 대상 타입 (POST, COMMENT)
+     * @param targetId 신고 대상 ID
+     * @param reason 신고 사유 (선택)
+     */
+    public static Report create(Long reporterId, ReportTargetType targetType, Long targetId, String reason) {
         return Report.builder()
                 .reporterId(reporterId)
-                .targetType(ReportTargetType.POST)
-                .targetId(postId)
-                .reason(reason)
-                .build();
-    }
-
-    public static Report createCommentReport(Long reporterId, Long commentId, String reason) {
-        return Report.builder()
-                .reporterId(reporterId)
-                .targetType(ReportTargetType.COMMENT)
-                .targetId(commentId)
+                .targetType(targetType)
+                .targetId(targetId)
                 .reason(reason)
                 .build();
     }

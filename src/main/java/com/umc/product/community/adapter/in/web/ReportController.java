@@ -1,7 +1,6 @@
 package com.umc.product.community.adapter.in.web;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.community.application.port.in.report.ReportCommentCommand;
 import com.umc.product.community.application.port.in.report.ReportCommentUseCase;
 import com.umc.product.community.application.port.in.report.ReportPostCommand;
@@ -35,10 +34,8 @@ public class ReportController {
             @PathVariable Long postId,
             @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        Long memberId = memberPrincipal.getMemberId();
-        ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
-
-        ReportPostCommand command = new ReportPostCommand(postId, challenger.challengerId());
+        Long reporterId = getReporterId(memberPrincipal);
+        ReportPostCommand command = new ReportPostCommand(postId, reporterId);
         reportPostUseCase.report(command);
     }
 
@@ -49,10 +46,18 @@ public class ReportController {
             @PathVariable Long commentId,
             @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        Long memberId = memberPrincipal.getMemberId();
-        ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
-
-        ReportCommentCommand command = new ReportCommentCommand(commentId, challenger.challengerId());
+        Long reporterId = getReporterId(memberPrincipal);
+        ReportCommentCommand command = new ReportCommentCommand(commentId, reporterId);
         reportCommentUseCase.report(command);
+    }
+
+    /**
+     * 현재 로그인한 사용자의 챌린저 ID를 조회합니다.
+     * @param memberPrincipal 현재 로그인한 사용자 정보
+     * @return 챌린저 ID
+     */
+    private Long getReporterId(MemberPrincipal memberPrincipal) {
+        Long memberId = memberPrincipal.getMemberId();
+        return getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId).challengerId();
     }
 }

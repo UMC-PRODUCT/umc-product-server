@@ -29,35 +29,39 @@ public class ReportCommandService implements ReportPostUseCase, ReportCommentUse
 
     @Override
     public void report(ReportPostCommand command) {
-        // 1. 게시글 존재 확인
+        // 게시글 존재 확인
         loadPostPort.findById(command.postId())
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
-        // 2. 중복 신고 확인
-        if (loadReportPort.existsByReporterIdAndTargetTypeAndTargetId(
-                command.reporterId(), ReportTargetType.POST, command.postId())) {
-            throw new BusinessException(Domain.COMMUNITY, CommunityErrorCode.REPORT_ALREADY_EXISTS);
-        }
-
-        // 3. 신고 생성 (사유 없음)
-        Report report = Report.createPostReport(command.reporterId(), command.postId(), null);
-        saveReportPort.save(report);
+        // 중복 신고 확인 및 저장
+        checkDuplicateAndSaveReport(command.reporterId(), ReportTargetType.POST, command.postId());
     }
 
     @Override
     public void report(ReportCommentCommand command) {
-        // 1. 댓글 존재 확인
+        // 댓글 존재 확인
         loadCommentPort.findById(command.commentId())
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.COMMENT_NOT_FOUND));
 
-        // 2. 중복 신고 확인
-        if (loadReportPort.existsByReporterIdAndTargetTypeAndTargetId(
-                command.reporterId(), ReportTargetType.COMMENT, command.commentId())) {
+        // 중복 신고 확인 및 저장
+        checkDuplicateAndSaveReport(command.reporterId(), ReportTargetType.COMMENT, command.commentId());
+    }
+
+    /**
+     * 중복 신고를 확인하고 신고를 생성합니다.
+     * @param reporterId 신고자 챌린저 ID
+     * @param targetType 신고 대상 타입
+     * @param targetId 신고 대상 ID
+     * @throws BusinessException 이미 신고한 경우
+     */
+    private void checkDuplicateAndSaveReport(Long reporterId, ReportTargetType targetType, Long targetId) {
+        // 중복 신고 확인
+        if (loadReportPort.existsByReporterIdAndTargetTypeAndTargetId(reporterId, targetType, targetId)) {
             throw new BusinessException(Domain.COMMUNITY, CommunityErrorCode.REPORT_ALREADY_EXISTS);
         }
 
-        // 3. 신고 생성 (사유 없음)
-        Report report = Report.createCommentReport(command.reporterId(), command.commentId(), null);
+        // 신고 생성 및 저장
+        Report report = Report.create(reporterId, targetType, targetId, null);
         saveReportPort.save(report);
     }
 }
