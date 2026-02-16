@@ -470,6 +470,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             )
         );
 
+        savedRecruitment.setRootToSelf();
+        saveRecruitmentPort.save(savedRecruitment);
+
         saveRecruitmentParts(savedRecruitment.getId(), command.parts());
 
         List<RecruitmentSchedule> schedules = new ArrayList<>();
