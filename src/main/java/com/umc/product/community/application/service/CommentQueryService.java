@@ -2,6 +2,7 @@ package com.umc.product.community.application.service;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.application.port.in.post.CommentInfo;
 import com.umc.product.community.application.port.in.post.query.GetCommentListUseCase;
 import com.umc.product.community.application.port.out.LoadCommentPort;
@@ -99,6 +100,6 @@ public class CommentQueryService implements GetCommentListUseCase {
     /**
      * 작성자 정보를 담는 내부 record
      */
-    private record AuthorDetails(String name, String profileImage, com.umc.product.common.domain.enums.ChallengerPart part) {
+    private record AuthorDetails(String name, String profileImage, ChallengerPart part) {
     }
 }
