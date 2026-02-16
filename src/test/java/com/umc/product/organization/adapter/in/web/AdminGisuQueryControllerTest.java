@@ -66,6 +66,7 @@ class AdminGisuQueryControllerTest extends DocumentationTest {
                     fieldWithPath("result.content").type(JsonFieldType.ARRAY).description("기수 목록"),
                     fieldWithPath("result.content[].gisuId").type(JsonFieldType.STRING).description("기수 ID"),
                     fieldWithPath("result.content[].generation").type(JsonFieldType.STRING).description("기수 번호"),
+                    fieldWithPath("result.content[].gisu").type(JsonFieldType.STRING).description("기수 번호"),
                     fieldWithPath("result.content[].startAt").type(JsonFieldType.STRING).description("기수 시작일시"),
                     fieldWithPath("result.content[].endAt").type(JsonFieldType.STRING).description("기수 종료일시"),
                     fieldWithPath("result.content[].isActive").type(JsonFieldType.BOOLEAN).description("현재 기수 여부"),
@@ -102,6 +103,7 @@ class AdminGisuQueryControllerTest extends DocumentationTest {
                     fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
                     fieldWithPath("result.gisuList").type(JsonFieldType.ARRAY).description("기수 목록"),
                     fieldWithPath("result.gisuList[].gisuId").type(JsonFieldType.STRING).description("기수 ID"),
+                    fieldWithPath("result.gisuList[].gisu").type(JsonFieldType.STRING).description("기수 번호"),
                     fieldWithPath("result.gisuList[].generation").type(JsonFieldType.STRING).description("기수 번호"),
                     fieldWithPath("result.gisuList[].isActive").type(JsonFieldType.BOOLEAN).description("활성 여부")
                 )
@@ -126,7 +128,8 @@ class AdminGisuQueryControllerTest extends DocumentationTest {
                     fieldWithPath("code").type(JsonFieldType.STRING).description("응답 코드"),
                     fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
                     fieldWithPath("result.gisuId").type(JsonFieldType.STRING).description("기수 ID"),
-                    fieldWithPath("result.generation").type(JsonFieldType.STRING).description("기수 번호")
+                    fieldWithPath("result.generation").type(JsonFieldType.STRING).description("기수 번호"),
+                    fieldWithPath("result.gisu").type(JsonFieldType.STRING).description("기수 번호")
                 )
             ));
     }
