@@ -49,6 +49,7 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 20)
     private MemberStatus status;
 
+    // MemberProfile은 Member에서 단방향으로 조회합니다. MemberProfile에서 역으로 올라오는 경우는 없도록 합니다.
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(
         name = "profile_id",
