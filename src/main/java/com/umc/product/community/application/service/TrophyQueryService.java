@@ -28,6 +28,7 @@ public class TrophyQueryService implements GetTrophyListUseCase {
 
     @Override
     public List<TrophyInfo> getTrophies(TrophySearchQuery query) {
+        // week 필터링은 DB에서 처리
         List<Trophy> trophies = loadTrophyPort.findAllByQuery(query);
 
         // 트로피가 없으면 빈 리스트 반환
@@ -51,7 +52,7 @@ public class TrophyQueryService implements GetTrophyListUseCase {
         // 4. 멤버 ID -> 멤버 프로필 매핑 (1 query, 학교명 포함)
         Map<Long, MemberInfo> memberProfileMap = getMemberUseCase.getProfiles(memberIds);
 
-        // 5. TrophyInfo로 변환
+        // 5. TrophyInfo로 변환 및 school/part 필터링
         return trophies.stream()
                 .map(trophy -> {
                     Long challengerId = trophy.getChallengerId().id();
@@ -68,6 +69,22 @@ public class TrophyQueryService implements GetTrophyListUseCase {
                     String part = challengerInfo.part() != null ? challengerInfo.part().name() : null;
 
                     return TrophyInfo.of(trophy, challengerName, challengerProfileImage, school, part);
+                })
+                // school 필터링 (애플리케이션 레벨)
+                .filter(trophyInfo -> {
+                    if (query.school() == null || query.school().isBlank()) {
+                        return true;
+                    }
+                    return trophyInfo.school() != null &&
+                           trophyInfo.school().equals(query.school());
+                })
+                // part 필터링 (애플리케이션 레벨)
+                .filter(trophyInfo -> {
+                    if (query.part() == null || query.part().isBlank()) {
+                        return true;
+                    }
+                    return trophyInfo.part() != null &&
+                           trophyInfo.part().equalsIgnoreCase(query.part());
                 })
                 .toList();
     }

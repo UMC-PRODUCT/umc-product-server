@@ -23,8 +23,8 @@ public class TrophyPersistenceAdapter implements LoadTrophyPort, SaveTrophyPort 
 
     @Override
     public List<Trophy> findAllByQuery(TrophySearchQuery query) {
-        // TODO: QueryDSL을 사용한 동적 쿼리 필요 (week, school, part 필터링)
-        // 현재는 week 기준으로만 조회
+        // week 필터링만 DB에서 처리 (성능 최적화)
+        // school, part 필터링은 TrophyQueryService에서 애플리케이션 레벨로 처리
         if (query.week() != null) {
             return trophyRepository.findByWeekOrderByIdDesc(query.week()).stream()
                     .map(TrophyJpaEntity::toDomain)
