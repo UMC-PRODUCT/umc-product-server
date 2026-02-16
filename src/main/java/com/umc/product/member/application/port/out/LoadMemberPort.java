@@ -8,6 +8,8 @@ import java.util.Set;
 public interface LoadMemberPort {
     Optional<Member> findById(Long id);
 
+    Optional<Member> findByIdForUpdate(Long id);
+
     Optional<Member> findByEmail(String email);
 
     Optional<Member> findByNickname(String nickname);

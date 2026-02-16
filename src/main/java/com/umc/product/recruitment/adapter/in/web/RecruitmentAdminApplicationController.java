@@ -1,6 +1,5 @@
 package com.umc.product.recruitment.adapter.in.web;
 
-import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicationListForAdminResponse;
@@ -19,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/recruitments")
-@Tag(name = SwaggerTag.Constants.RECRUITMENT_ADMIN)
+@Tag(name = "Recruitment | 모집 관리 (총괄 권한)", description = "")
 public class RecruitmentAdminApplicationController {
 
     private final GetApplicationListForAdminUseCase getApplicationListForAdminUseCase;

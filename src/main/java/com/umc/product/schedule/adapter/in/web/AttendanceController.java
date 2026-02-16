@@ -1,6 +1,11 @@
 package com.umc.product.schedule.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CheckAttendanceRequest;
@@ -10,15 +15,17 @@ import com.umc.product.schedule.adapter.in.web.dto.response.AvailableAttendanceR
 import com.umc.product.schedule.adapter.in.web.dto.response.MyAttendanceHistoryResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.PendingAttendanceResponse;
 import com.umc.product.schedule.adapter.in.web.mapper.AttendanceWebMapper;
+import com.umc.product.schedule.adapter.in.web.swagger.AttendanceControllerApi;
 import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.SubmitReasonUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAttendanceRecordUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
+import com.umc.product.schedule.application.port.in.query.GetChallengerAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetPendingAttendancesUseCase;
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
-import jakarta.validation.Valid;
+import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,6 +46,7 @@ public class AttendanceController implements AttendanceControllerApi {
     private final GetAttendanceRecordUseCase getAttendanceRecordUseCase;
     private final GetAvailableAttendancesUseCase getAvailableAttendancesUseCase;
     private final GetMyAttendanceHistoryUseCase getMyAttendanceHistoryUseCase;
+    private final GetChallengerAttendanceHistoryUseCase getChallengerAttendanceHistoryUseCase;
     private final GetPendingAttendancesUseCase getPendingAttendancesUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
 
@@ -50,14 +58,14 @@ public class AttendanceController implements AttendanceControllerApi {
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody CheckAttendanceRequest request
     ) {
-        return checkAttendanceUseCase.check(request.toCommand(memberPrincipal.getMemberId())).id();
+        return checkAttendanceUseCase.check(request.toCommand(memberPrincipal.getMemberId()));
     }
 
     @Override
     @PostMapping("/reason")
     public Long submitReasonAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @Valid @RequestBody SubmitReasonRequest request
+        @RequestBody SubmitReasonRequest request
     ) {
         return submitReasonUseCase.submitReason(request.toCommand(memberPrincipal.getMemberId())).id();
     }
@@ -89,7 +97,22 @@ public class AttendanceController implements AttendanceControllerApi {
     }
 
     @Override
+    @GetMapping("/challenger/{challengerId}/history")
+    public List<MyAttendanceHistoryResponse> getChallengerAttendanceHistory(
+        @PathVariable Long challengerId
+    ) {
+        return mapper.toMyAttendanceHistoryResponses(
+            getChallengerAttendanceHistoryUseCase.getHistoryByChallengerId(challengerId)
+        );
+    }
+
+    @Override
     @GetMapping("/{recordId}")
+    @CheckAccess(
+        resourceType = ResourceType.ATTENDANCE_RECORD,
+        resourceId = "#recordId",
+        permission = PermissionType.READ
+    )
     public AttendanceRecordResponse getAttendanceRecord(
         @PathVariable Long recordId
     ) {
@@ -100,6 +123,11 @@ public class AttendanceController implements AttendanceControllerApi {
 
     @Override
     @GetMapping("/pending/{scheduleId}")
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.APPROVE
+    )
     public List<PendingAttendanceResponse> getPendingAttendances(
         @PathVariable Long scheduleId
     ) {
@@ -110,6 +138,11 @@ public class AttendanceController implements AttendanceControllerApi {
 
     @Override
     @PostMapping("/{recordId}/approve")
+    @CheckAccess(
+        resourceType = ResourceType.ATTENDANCE_RECORD,
+        resourceId = "#recordId",
+        permission = PermissionType.APPROVE
+    )
     public void approveAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long recordId
@@ -119,6 +152,11 @@ public class AttendanceController implements AttendanceControllerApi {
 
     @Override
     @PostMapping("/{recordId}/reject")
+    @CheckAccess(
+        resourceType = ResourceType.ATTENDANCE_RECORD,
+        resourceId = "#recordId",
+        permission = PermissionType.APPROVE
+    )
     public void rejectAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long recordId

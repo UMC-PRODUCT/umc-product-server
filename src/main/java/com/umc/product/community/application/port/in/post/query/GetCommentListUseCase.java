@@ -5,4 +5,5 @@ import java.util.List;
 
 public interface GetCommentListUseCase {
     List<CommentInfo> getComments(Long postId);
+    List<CommentInfo> getComments(Long postId, Long challengerId);
 }

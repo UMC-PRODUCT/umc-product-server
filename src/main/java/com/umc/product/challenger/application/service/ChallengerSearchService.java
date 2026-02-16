@@ -1,7 +1,9 @@
 package com.umc.product.challenger.application.service;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.challenger.application.port.in.query.GetChallengerPointUseCase;
 import com.umc.product.challenger.application.port.in.query.SearchChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.GlobalSearchChallengerCursorResult;
 import com.umc.product.challenger.application.port.in.query.dto.GlobalSearchChallengerItemInfo;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerCursorResult;
@@ -15,7 +17,7 @@ import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import java.util.EnumMap;
@@ -40,13 +42,25 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetGisuUseCase getGisuUseCase;
 
+    private final GetChallengerPointUseCase getChallengerPointUseCase;
+
+    /**
+     * 현재는 사용하고 있지 않는 것으로 보입니다.
+     */
     @Override
     public SearchChallengerResult search(SearchChallengerQuery query, Pageable pageable) {
+        // 페이지네이션을 적용해서 조건에 따라 챌린저 검색
         Page<Challenger> challengers = searchChallengerPort.search(query, pageable);
+
+        // 검색된 챌린저의 파트별 인원 수 계산
         Map<ChallengerPart, Long> partCounts = buildPartCounts(query);
+        // 챌린저별 상벌점 합계 계산
         Map<Long, Double> pointSums = buildPointSums(challengers);
-        Map<Long, MemberProfileInfo> memberProfiles = loadMemberProfiles(challengers);
+        // 챌린저별 프로필 조회
+        Map<Long, MemberInfo> memberProfiles = loadMemberProfiles(challengers);
+        // 챌린저별 역할 조회
         Map<Long, List<ChallengerRoleType>> roleTypes = loadRoleTypes(challengers.getContent());
+        //
         Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(challengers.getContent());
 
         Page<SearchChallengerItemInfo> items = challengers.map(challenger ->
@@ -65,7 +79,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         List<Challenger> result = hasNext ? challengers.subList(0, size) : challengers;
 
         Map<Long, Double> pointSums = buildPointSums(result);
-        Map<Long, MemberProfileInfo> memberProfiles = loadMemberProfiles(result);
+        Map<Long, MemberInfo> memberProfiles = loadMemberProfiles(result);
         Map<Long, List<ChallengerRoleType>> roleTypes = loadRoleTypes(result);
         Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(result);
 
@@ -85,7 +99,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         boolean hasNext = challengers.size() > size;
         List<Challenger> result = hasNext ? challengers.subList(0, size) : challengers;
 
-        Map<Long, MemberProfileInfo> memberProfiles = loadMemberProfiles(result);
+        Map<Long, MemberInfo> memberProfiles = loadMemberProfiles(result);
         Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(result);
 
         List<GlobalSearchChallengerItemInfo> items = result.stream()
@@ -96,6 +110,35 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
 
         return new GlobalSearchChallengerCursorResult(items, nextCursor, hasNext);
     }
+
+    @Override
+    public Page<ChallengerInfo> searchV2(SearchChallengerQuery query, Pageable pageable) {
+        Page<Challenger> challengers = searchChallengerPort.search(query, pageable);
+
+        return challengers.map(
+            challenger -> ChallengerInfo.from(
+                challenger,
+                getChallengerPointUseCase.getListByChallengerId(
+                    challenger.getId())
+            )
+        );
+    }
+
+    @Override
+    public List<ChallengerInfo> searchV2(SearchChallengerQuery query, Long cursor, int size) {
+        List<Challenger> challengers = searchChallengerPort.cursorSearch(query, cursor, size);
+
+        return challengers.stream().map(challenger ->
+            ChallengerInfo.from(
+                challenger,
+                getChallengerPointUseCase.getListByChallengerId(challenger.getId())
+            )
+        ).toList();
+    }
+
+    // ============================================
+    // ========== Private Helper Methods ==========
+    // ============================================
 
     /**
      * 조회된 챌린저의 파트별 인원 수를 계산
@@ -110,12 +153,19 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
     }
 
     /**
+     * Overloading: Page 객체용
+     * <p>
      * 챌린저의 포인트 합계를 계산 (Warning: 0.5, Out: 1.0)
      */
     private Map<Long, Double> buildPointSums(Page<Challenger> challengers) {
         return buildPointSums(challengers.getContent());
     }
 
+    /**
+     * Overloading: List 용
+     * <p>
+     * 챌린저의 포인트 합계를 계산 (Warning: 0.5, Out: 1.0)
+     */
     private Map<Long, Double> buildPointSums(List<Challenger> challengers) {
         Set<Long> ids = challengers.stream()
             .map(Challenger::getId)
@@ -126,28 +176,66 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         return searchChallengerPort.sumPointsByChallengerIds(ids);
     }
 
-    private Map<Long, MemberProfileInfo> loadMemberProfiles(Page<Challenger> challengers) {
+    /**
+     * 챌린저 목록에서 회원 정보 Map 제작
+     */
+    private Map<Long, MemberInfo> loadMemberProfiles(Page<Challenger> challengers) {
         return loadMemberProfiles(challengers.getContent());
     }
 
+    private Map<Long, MemberInfo> loadMemberProfiles(List<Challenger> challengers) {
+        Set<Long> memberIds = challengers.stream()
+            .map(Challenger::getMemberId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        if (memberIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return getMemberUseCase.getProfiles(memberIds);
+    }
+
+    /**
+     * 챌린저 목록에서 챌린저 역할 유형 Map 제작
+     */
     private Map<Long, List<ChallengerRoleType>> loadRoleTypes(List<Challenger> challengers) {
         Set<Long> ids = challengers.stream()
             .map(Challenger::getId)
             .collect(Collectors.toSet());
+
         if (ids.isEmpty()) {
             return Map.of();
         }
+
         return getChallengerRoleUseCase.getRoleTypesByChallengerIds(ids);
     }
 
+    private Map<Long, Long> loadGisuGenerationMap(List<Challenger> challengers) {
+        Set<Long> gisuIds = challengers.stream()
+            .map(Challenger::getGisuId)
+            .collect(Collectors.toSet());
+
+        if (gisuIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return getGisuUseCase.getByIds(gisuIds).stream()
+            .collect(Collectors.toMap(GisuInfo::gisuId, GisuInfo::generation));
+    }
+
+    /**
+     * 챌린저 검색 결과를 단일 ItemInfo로 변환
+     */
     private SearchChallengerItemInfo toItemInfo(
         Challenger challenger,
-        Map<Long, MemberProfileInfo> memberProfiles,
+        Map<Long, MemberInfo> memberProfiles,
         Map<Long, Double> pointSums,
         Map<Long, List<ChallengerRoleType>> roleTypes,
         Map<Long, Long> gisuGenerationMap
     ) {
-        MemberProfileInfo profile = memberProfiles.get(challenger.getMemberId());
+        MemberInfo profile = memberProfiles.get(challenger.getMemberId());
+
         if (profile == null) {
             throw new ChallengerDomainException(ChallengerErrorCode.MEMBER_PROFILE_NOT_FOUND);
         }
@@ -166,41 +254,17 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         );
     }
 
-    private Map<Long, MemberProfileInfo> loadMemberProfiles(List<Challenger> challengers) {
-        Set<Long> memberIds = challengers.stream()
-            .map(Challenger::getMemberId)
-            .filter(Objects::nonNull)
-            .collect(Collectors.toSet());
-
-        if (memberIds.isEmpty()) {
-            return Map.of();
-        }
-
-        return getMemberUseCase.getProfiles(memberIds);
-    }
-
-    private Map<Long, Long> loadGisuGenerationMap(List<Challenger> challengers) {
-        Set<Long> gisuIds = challengers.stream()
-            .map(Challenger::getGisuId)
-            .collect(Collectors.toSet());
-
-        if (gisuIds.isEmpty()) {
-            return Map.of();
-        }
-
-        return getGisuUseCase.getByIds(gisuIds).stream()
-            .collect(Collectors.toMap(GisuInfo::gisuId, GisuInfo::generation));
-    }
-
     private GlobalSearchChallengerItemInfo toGlobalItemInfo(
         Challenger challenger,
-        Map<Long, MemberProfileInfo> memberProfiles,
+        Map<Long, MemberInfo> memberProfiles,
         Map<Long, Long> gisuGenerationMap
     ) {
-        MemberProfileInfo profile = memberProfiles.get(challenger.getMemberId());
+        MemberInfo profile = memberProfiles.get(challenger.getMemberId());
+
         if (profile == null) {
             throw new ChallengerDomainException(ChallengerErrorCode.MEMBER_PROFILE_NOT_FOUND);
         }
+
         return new GlobalSearchChallengerItemInfo(
             challenger.getMemberId(),
             profile.nickname(),

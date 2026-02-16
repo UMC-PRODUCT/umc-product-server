@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
@@ -19,12 +20,13 @@ import com.umc.product.notice.application.port.in.command.dto.CreateNoticeComman
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
-import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
+import com.umc.product.notice.application.service.NoticeAuthorValidator;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
+import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
@@ -56,8 +58,6 @@ class NoticeServiceTest {
     @Mock
     GetChallengerRoleUseCase getChallengerRoleUseCase;
     @Mock
-    GetNoticeTargetUseCase getNoticeTargetUseCase;
-    @Mock
     ManageFcmUseCase manageFcmUseCase;
     @Mock
     ManageNoticeContentUseCase manageNoticeContentUseCase;
@@ -65,6 +65,8 @@ class NoticeServiceTest {
     GetMemberUseCase getMemberUseCase;
     @Mock
     GetChapterUseCase getChapterUseCase;
+    @Mock
+    NoticeAuthorValidator noticeAuthorValidator;
 
     @InjectMocks
     NoticeService sut;
@@ -168,13 +170,9 @@ class NoticeServiceTest {
         void 공지사항_제목과_내용을_수정한다() {
             // given
             Notice notice = createNotice();
-            NoticeTargetInfo targetInfo = createTargetInfo();
             var command = new UpdateNoticeCommand(MEMBER_ID, NOTICE_ID, "수정된 제목", "수정된 내용");
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
-            given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID)).willReturn(targetInfo);
-            given(getChallengerUseCase.getActiveByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
-                .willReturn(createChallengerInfo());
 
             // when
             sut.updateNoticeTitleOrContent(command);
@@ -188,20 +186,11 @@ class NoticeServiceTest {
         void 작성자가_아니면_수정에_실패한다() {
             // given
             Notice notice = createNotice();
-            NoticeTargetInfo targetInfo = createTargetInfo();
             var command = new UpdateNoticeCommand(2L, NOTICE_ID, "수정된 제목", "수정된 내용");
 
-            ChallengerInfo otherChallenger = ChallengerInfo.builder()
-                .challengerId(999L)
-                .memberId(2L)
-                .gisuId(GISU_ID)
-                .part(ChallengerPart.SPRINGBOOT)
-                .build();
-
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
-            given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID)).willReturn(targetInfo);
-            given(getChallengerUseCase.getActiveByMemberIdAndGisuId(2L, GISU_ID))
-                .willReturn(otherChallenger);
+            willThrow(new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH))
+                .given(noticeAuthorValidator).validate(notice, 2L);
 
             // when & then
             assertThatThrownBy(() -> sut.updateNoticeTitleOrContent(command))

@@ -1,6 +1,5 @@
 package com.umc.product.recruitment.adapter.in.web;
 
-import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateLiveQuestionRequest;
@@ -59,7 +58,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/recruitments/{recruitmentId}/interviews")
 @RequiredArgsConstructor
-@Tag(name = SwaggerTag.Constants.INTERVIEW_EVALUATION)
+@Tag(name = "Recruitment | 면접 평가", description = "")
 public class InterviewEvaluationController {
 
     private final GetInterviewEvaluationViewUseCase getInterviewEvaluationViewUseCase;

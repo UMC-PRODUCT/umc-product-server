@@ -1,6 +1,5 @@
 package com.umc.product.survey.adapter.in.web;
 
-import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.survey.adapter.in.web.dto.request.CreateVoteRequest;
@@ -29,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/surveys/votes")
 @RequiredArgsConstructor
-@Tag(name = Constants.SURVEY)
+@Tag(name = "Survey | 설문", description = "")
 public class VoteController {
 
     private final CreateVoteUseCase createVoteUseCase;

@@ -1,5 +1,10 @@
 package com.umc.product.challenger.adapter.out.persistence;
 
+import static com.umc.product.challenger.domain.QChallenger.challenger;
+import static com.umc.product.challenger.domain.QChallengerPoint.challengerPoint;
+import static com.umc.product.member.domain.QMember.member;
+import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
+
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -17,7 +22,6 @@ import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.member.domain.QMember;
-import com.umc.product.organization.domain.QChapterSchool;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,33 +40,29 @@ public class ChallengerQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     public Page<Challenger> pagingSearch(SearchChallengerQuery query, Pageable pageable) {
-        QChallenger challenger = QChallenger.challenger;
-        QMember member = QMember.member;
 
         BooleanBuilder condition = buildOffsetSearchCondition(query, challenger, member);
 
         List<Challenger> content = queryFactory
-                .selectFrom(challenger)
-                .join(member).on(challenger.memberId.eq(member.id))
-                .where(condition)
-                .orderBy(partOrder(challenger).asc(), challenger.gisuId.desc(), member.name.asc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+            .selectFrom(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .where(condition)
+            .orderBy(partOrder(challenger).asc(), challenger.gisuId.desc(), member.name.asc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
         Long total = queryFactory
-                .select(challenger.count())
-                .from(challenger)
-                .join(member).on(challenger.memberId.eq(member.id))
-                .where(condition)
-                .fetchOne();
+            .select(challenger.count())
+            .from(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .where(condition)
+            .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
 
     public List<Challenger> cursorSearch(SearchChallengerQuery query, Long cursor, int size) {
-        QChallenger challenger = QChallenger.challenger;
-        QMember member = QMember.member;
 
         BooleanBuilder condition = buildOffsetSearchCondition(query, challenger, member);
 
@@ -71,90 +71,102 @@ public class ChallengerQueryRepository {
         }
 
         return queryFactory
-                .selectFrom(challenger)
-                .join(member).on(challenger.memberId.eq(member.id))
-                .where(condition)
-                .orderBy(partOrder(challenger).asc(), challenger.gisuId.desc(), member.name.asc(), challenger.id.asc())
-                .limit(size + 1)
-                .fetch();
+            .selectFrom(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .where(condition)
+            .orderBy(partOrder(challenger).asc(), challenger.gisuId.desc(), member.name.asc(), challenger.id.asc())
+            .limit(size + 1)
+            .fetch();
     }
 
     /**
      * 파트별 챌린저 수
      */
     public Map<ChallengerPart, Long> countByPart(SearchChallengerQuery query) {
-        QChallenger challenger = QChallenger.challenger;
-        QMember member = QMember.member;
 
         BooleanBuilder condition = buildOffsetSearchCondition(query, challenger, member);
 
         List<Tuple> tuples = queryFactory
-                .select(challenger.part, challenger.count())
-                .from(challenger)
-                .join(member).on(challenger.memberId.eq(member.id))
-                .where(condition)
-                .groupBy(challenger.part)
-                .fetch();
+            .select(challenger.part, challenger.count())
+            .from(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .where(condition)
+            .groupBy(challenger.part)
+            .fetch();
 
         return tuples.stream()
-                .filter(tuple -> tuple.get(challenger.part) != null)
-                .collect(Collectors.toMap(
-                        tuple -> Objects.requireNonNull(tuple.get(challenger.part)),
-                        tuple -> Objects.requireNonNull(tuple.get(challenger.count()))
-                ));
+            .filter(tuple -> tuple.get(challenger.part) != null)
+            .collect(Collectors.toMap(
+                tuple -> Objects.requireNonNull(tuple.get(challenger.part)),
+                tuple -> Objects.requireNonNull(tuple.get(challenger.count()))
+            ));
     }
+
 
     /**
      * 챌린저별 포인트 합계
+     * <p>
+     * {@link Challenger#getTotalPoints()}로 하는 방법도 있습니다. 참고하세요.
      */
     public Map<Long, Double> sumPointsByChallengerIds(Set<Long> challengerIds) {
         if (challengerIds == null || challengerIds.isEmpty()) {
             return Map.of();
         }
 
-        QChallengerPoint point = QChallengerPoint.challengerPoint;
-
-        NumberExpression<Double> pointValue = new CaseBuilder()
-                .when(point.type.eq(PointType.WARNING)).then(0.5)
-                .when(point.type.eq(PointType.OUT)).then(1.0)
-                .otherwise(0.0);
-
         List<Tuple> tuples = queryFactory
-                .select(point.challenger.id, pointValue.sum())
-                .from(point)
-                .where(point.challenger.id.in(challengerIds))
-                .groupBy(point.challenger.id)
-                .fetch();
+            .select(challengerPoint.challenger.id, pointValueExpression(challengerPoint).sum())
+            .from(challengerPoint)
+            .where(challengerPoint.challenger.id.in(challengerIds))
+            .groupBy(challengerPoint.challenger.id)
+            .fetch();
 
         return tuples.stream()
-                .filter(tuple -> tuple.get(point.challenger.id) != null)
-                .collect(Collectors.toMap(
-                        tuple -> Objects.requireNonNull(tuple.get(point.challenger.id)),
-                        tuple -> {
-                            Double value = tuple.get(pointValue.sum());
-                            return value != null ? value : 0.0;
-                        }
-                ));
+            .filter(tuple -> tuple.get(challengerPoint.challenger.id) != null)
+            .collect(Collectors.toMap(
+                tuple -> Objects.requireNonNull(tuple.get(challengerPoint.challenger.id)),
+                tuple -> {
+                    Double value = tuple.get(pointValueExpression(challengerPoint).sum());
+                    return value != null ? value : 0.0;
+                }
+            ));
     }
 
-
     // ========== private methods ==========
+
+    private NumberExpression<Double> pointValueExpression(QChallengerPoint point) {
+        CaseBuilder.Cases<Double, NumberExpression<Double>> caseBuilder = null;
+
+        // PointType enum의 모든 타입에 대해 case문을 추가
+        for (PointType type : PointType.values()) {
+            if (caseBuilder == null) {
+                caseBuilder = new CaseBuilder()
+                    .when(point.type.eq(type)).then(type.getValue());
+            } else {
+                caseBuilder = caseBuilder
+                    .when(point.type.eq(type)).then(type.getValue());
+            }
+        }
+
+        assert caseBuilder != null;
+        return caseBuilder.otherwise(0.0);
+    }
+
     private NumberExpression<Integer> partOrder(QChallenger challenger) {
         return new CaseBuilder()
-                .when(challenger.part.eq(ChallengerPart.PLAN)).then(ChallengerPart.PLAN.getSortOrder())
-                .when(challenger.part.eq(ChallengerPart.DESIGN)).then(ChallengerPart.DESIGN.getSortOrder())
-                .when(challenger.part.eq(ChallengerPart.WEB)).then(ChallengerPart.WEB.getSortOrder())
-                .when(challenger.part.eq(ChallengerPart.ANDROID)).then(ChallengerPart.ANDROID.getSortOrder())
-                .when(challenger.part.eq(ChallengerPart.IOS)).then(ChallengerPart.IOS.getSortOrder())
-                .when(challenger.part.eq(ChallengerPart.NODEJS)).then(ChallengerPart.NODEJS.getSortOrder())
-                .when(challenger.part.eq(ChallengerPart.SPRINGBOOT)).then(ChallengerPart.SPRINGBOOT.getSortOrder())
-                .otherwise(999);
+            .when(challenger.part.eq(ChallengerPart.PLAN)).then(ChallengerPart.PLAN.getSortOrder())
+            .when(challenger.part.eq(ChallengerPart.DESIGN)).then(ChallengerPart.DESIGN.getSortOrder())
+            .when(challenger.part.eq(ChallengerPart.WEB)).then(ChallengerPart.WEB.getSortOrder())
+            .when(challenger.part.eq(ChallengerPart.ANDROID)).then(ChallengerPart.ANDROID.getSortOrder())
+            .when(challenger.part.eq(ChallengerPart.IOS)).then(ChallengerPart.IOS.getSortOrder())
+            .when(challenger.part.eq(ChallengerPart.NODEJS)).then(ChallengerPart.NODEJS.getSortOrder())
+            .when(challenger.part.eq(ChallengerPart.SPRINGBOOT)).then(ChallengerPart.SPRINGBOOT.getSortOrder())
+            .otherwise(999);
     }
 
     private BooleanBuilder buildOffsetSearchCondition(
-            SearchChallengerQuery query,
-            QChallenger challenger,
-            QMember member
+        SearchChallengerQuery query,
+        QChallenger challenger,
+        QMember member
     ) {
         BooleanBuilder builder = new BooleanBuilder();
 
@@ -219,9 +231,9 @@ public class ChallengerQueryRepository {
 
     private BooleanExpression nicknameOrNameContains(String nickname, String name, QMember member) {
         BooleanExpression nicknameCondition = (nickname != null && !nickname.isBlank())
-                ? member.nickname.containsIgnoreCase(nickname) : null;
+            ? member.nickname.containsIgnoreCase(nickname) : null;
         BooleanExpression nameCondition = (name != null && !name.isBlank())
-                ? member.name.containsIgnoreCase(name) : null;
+            ? member.name.containsIgnoreCase(name) : null;
 
         if (nicknameCondition != null && nameCondition != null) {
             return nicknameCondition.or(nameCondition);
@@ -245,15 +257,13 @@ public class ChallengerQueryRepository {
             return null;
         }
 
-        QChapterSchool chapterSchool = QChapterSchool.chapterSchool;
-
         return JPAExpressions
-                .selectOne()
-                .from(chapterSchool)
-                .where(
-                        chapterSchool.school.id.eq(member.schoolId),
-                        chapterSchool.chapter.id.eq(chapterId)
-                )
-                .exists();
+            .selectOne()
+            .from(chapterSchool)
+            .where(
+                chapterSchool.school.id.eq(member.schoolId),
+                chapterSchool.chapter.id.eq(chapterId)
+            )
+            .exists();
     }
 }

@@ -43,7 +43,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
-@Disabled
 @Transactional
 public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
 
@@ -112,10 +111,10 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
         @Test
         @DisplayName("모든 일정을 조회할 수 있다")
         void 모든_일정을_조회할_수_있다() {
-            // given
+            // given - 진행 중인 일정 생성 (과거에 시작)
             LocalDateTime now = LocalDateTime.now();
-            createSchedule("일정1", now.plusHours(1), now.plusHours(2), List.of(participantMember.getId()));
-            createSchedule("일정2", now.plusHours(3), now.plusHours(4), List.of(participantMember.getId()));
+            createSchedule("일정1", now.minusHours(1), now.plusHours(1), List.of(participantMember.getId()));
+            createSchedule("일정2", now.minusHours(2), now.minusMinutes(30), List.of(participantMember.getId()));
 
             // when
             List<ScheduleWithStatsInfo> result = getScheduleListUseCase.getAll();
@@ -127,9 +126,9 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
         @Test
         @DisplayName("일정 목록에 출석 통계가 포함된다")
         void 일정_목록에_출석_통계가_포함된다() {
-            // given
+            // given - 진행 중인 일정 생성
             LocalDateTime now = LocalDateTime.now();
-            Long scheduleId = createSchedule("통계 테스트 일정", now.plusHours(1), now.plusHours(2),
+            Long scheduleId = createSchedule("통계 테스트 일정", now.minusHours(1), now.plusHours(1),
                 List.of(participantMember.getId()));
 
             // when
@@ -163,9 +162,9 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
         @Test
         @DisplayName("활성화된 출석부가 있는 일정을 조회할 수 있다")
         void 활성화된_출석부가_있는_일정을_조회할_수_있다() {
-            // given
+            // given - 현재 출석 가능한 시간대의 일정 생성 (시작 시간 30분 전부터 출석 가능)
             LocalDateTime now = LocalDateTime.now();
-            Long scheduleId = createSchedule("출석 가능 일정", now.plusHours(1), now.plusHours(2),
+            Long scheduleId = createSchedule("출석 가능 일정", now.plusMinutes(10), now.plusHours(1),
                 List.of(participantMember.getId()));
 
             // when
@@ -180,9 +179,9 @@ public class AttendanceQueryUseCaseTest extends UseCaseTestSupport {
         @Test
         @DisplayName("출석 기록이 없는 일정의 상태는 PENDING이다")
         void 출석_기록이_없는_일정의_상태는_PENDING이다() {
-            // given
+            // given - 현재 출석 가능한 시간대의 일정 생성
             LocalDateTime now = LocalDateTime.now();
-            createSchedule("미출석 일정", now.plusHours(1), now.plusHours(2),
+            createSchedule("미출석 일정", now.plusMinutes(10), now.plusHours(1),
                 List.of(participantMember.getId()));
 
             // when

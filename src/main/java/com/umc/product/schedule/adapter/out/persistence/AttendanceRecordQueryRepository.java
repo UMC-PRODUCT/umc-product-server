@@ -3,12 +3,16 @@ package com.umc.product.schedule.adapter.out.persistence;
 import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.organization.domain.QSchool.school;
 import static com.umc.product.schedule.domain.QAttendanceRecord.attendanceRecord;
+import static com.umc.product.schedule.domain.QAttendanceSheet.attendanceSheet;
+import static com.umc.product.schedule.domain.QSchedule.schedule;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.schedule.application.port.in.query.dto.PendingAttendanceInfo;
+import com.umc.product.schedule.application.port.out.dto.AttendanceRecordPermissionContext;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -32,6 +36,7 @@ public class AttendanceRecordQueryRepository {
                 member.id,
                 member.name,
                 member.nickname,
+                member.profileImageId,
                 school.name,
                 attendanceRecord.status,
                 attendanceRecord.memo,
@@ -45,5 +50,27 @@ public class AttendanceRecordQueryRepository {
                 attendanceRecord.status.in(APPROVAL_PENDING_STATUSES)
             )
             .fetch();
+    }
+
+    /**
+     * 권한 평가에 필요한 컨텍스트 정보 조회 (record → sheet → schedule JOIN)
+     */
+    public Optional<AttendanceRecordPermissionContext> findPermissionContext(Long recordId) {
+        AttendanceRecordPermissionContext result = queryFactory
+            .select(Projections.constructor(AttendanceRecordPermissionContext.class,
+                attendanceRecord.id,
+                attendanceRecord.memberId,
+                attendanceSheet.id,
+                attendanceSheet.gisuId,
+                schedule.id,
+                schedule.authorChallengerId
+            ))
+            .from(attendanceRecord)
+            .join(attendanceSheet).on(attendanceSheet.id.eq(attendanceRecord.attendanceSheetId))
+            .join(schedule).on(schedule.id.eq(attendanceSheet.scheduleId))
+            .where(attendanceRecord.id.eq(recordId))
+            .fetchOne();
+
+        return Optional.ofNullable(result);
     }
 }

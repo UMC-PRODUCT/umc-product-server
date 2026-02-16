@@ -1,5 +1,6 @@
 package com.umc.product.community.adapter.in.web.dto.response;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.application.port.in.PostInfo;
 import com.umc.product.community.domain.enums.Category;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,6 +27,12 @@ public record PostResponse(
         @Schema(description = "작성자 이름", example = "홍길동")
         String authorName,
 
+        @Schema(description = "작성자 프로필 이미지", example = "https://example.com/profile.jpg")
+        String authorProfileImage,
+
+        @Schema(description = "작성자 파트", example = "SPRINGBOOT")
+        ChallengerPart authorPart,
+
         @Schema(description = "작성일시", example = "2026-02-13T10:30:00Z")
         Instant createdAt,
 
@@ -37,6 +44,9 @@ public record PostResponse(
 
         @Schema(description = "좋아요 여부", example = "true")
         boolean isLiked,
+
+        @Schema(description = "본인 작성 글 여부", example = "true")
+        boolean isAuthor,
 
         @Schema(description = "번개 정보 (번개글인 경우)")
         LightningInfoResponse lightningInfo
@@ -60,10 +70,13 @@ public record PostResponse(
                 info.category(),
                 info.authorId(),
                 info.authorName(),
+                info.authorProfileImage(),
+                info.authorPart(),
                 info.createdAt(),
                 info.commentCount(),
                 info.likeCount(),
                 info.isLiked(),
+                info.isAuthor(),
                 lightningInfoResponse
         );
     }

@@ -1,6 +1,5 @@
 package com.umc.product.recruitment.adapter.in.web;
 
-import com.umc.product.global.constant.SwaggerTag;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateFinalStatusRequest;
@@ -29,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/recruitments/{recruitmentId}/applications")
-@Tag(name = SwaggerTag.Constants.FINAL_SELECTION)
+@Tag(name = "Recruitment | 최종 합격 관리", description = "")
 public class RecruitmentFinalSelectionController {
 
     private final UpdateFinalStatusUseCase updateFinalStatusUseCase;

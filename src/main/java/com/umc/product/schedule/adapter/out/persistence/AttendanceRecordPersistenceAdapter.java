@@ -4,6 +4,7 @@ import com.umc.product.schedule.application.port.in.query.dto.PendingAttendanceI
 import com.umc.product.schedule.application.port.out.DeleteAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.SaveAttendanceRecordPort;
+import com.umc.product.schedule.application.port.out.dto.AttendanceRecordPermissionContext;
 import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.util.List;
@@ -80,6 +81,11 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
     @Override
     public List<PendingAttendanceInfo> findPendingWithMemberInfo(Long sheetId) {
         return recordQueryRepository.findPendingWithMemberInfo(sheetId);
+    }
+
+    @Override
+    public Optional<AttendanceRecordPermissionContext> findPermissionContext(Long recordId) {
+        return recordQueryRepository.findPermissionContext(recordId);
     }
 
     // ========== DeleteAttendanceRecordPort ==========

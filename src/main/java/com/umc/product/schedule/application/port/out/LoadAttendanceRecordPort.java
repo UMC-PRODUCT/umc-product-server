@@ -1,6 +1,7 @@
 package com.umc.product.schedule.application.port.out;
 
 import com.umc.product.schedule.application.port.in.query.dto.PendingAttendanceInfo;
+import com.umc.product.schedule.application.port.out.dto.AttendanceRecordPermissionContext;
 import com.umc.product.schedule.domain.AttendanceRecord;
 import java.util.List;
 import java.util.Optional;
@@ -73,4 +74,12 @@ public interface LoadAttendanceRecordPort {
      * @return 멤버 정보가 포함된 승인 대기 출석 정보 목록
      */
     List<PendingAttendanceInfo> findPendingWithMemberInfo(Long sheetId);
+
+    /**
+     * 권한 평가에 필요한 컨텍스트 정보 조회 (record → sheet → schedule JOIN)
+     *
+     * @param recordId 출석 기록 ID
+     * @return 권한 평가 컨텍스트
+     */
+    Optional<AttendanceRecordPermissionContext> findPermissionContext(Long recordId);
 }

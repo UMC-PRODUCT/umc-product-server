@@ -3,7 +3,7 @@ package com.umc.product.notice.application.service.query;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.notice.application.port.in.query.GetNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.dto.GetNoticeStatusQuery;
@@ -15,19 +15,19 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResu
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
-import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.domain.NoticeTarget;
-import com.umc.product.notice.dto.NoticeClassification;
+import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
+import com.umc.product.notice.dto.NoticeClassification;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
+import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +65,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
     }
 
     @Override
-    public Page<NoticeSummary> searchNoticesByKeyword(String keyword, NoticeClassification classification, Pageable pageable) {
+    public Page<NoticeSummary> searchNoticesByKeyword(String keyword, NoticeClassification classification,
+                                                      Pageable pageable) {
         Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, classification, pageable);
         return toNoticeSummaryPage(notices);
     }
@@ -108,7 +109,9 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         // 조직 필터 적용
         List<ChallengerInfo> filteredByOrg = context.targetChallengers().stream()
-            .filter(challenger -> isOrganizationMatch(command, challenger, context.memberMap().get(challenger.memberId()), context.chapterCache()))
+            .filter(
+                challenger -> isOrganizationMatch(command, challenger, context.memberMap().get(challenger.memberId()),
+                    context.chapterCache()))
             .toList();
 
         if (filteredByOrg.isEmpty()) {
@@ -143,7 +146,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
             : pagedChallengers;
 
         List<NoticeReadStatusInfo> content = resultChallengers.stream()
-            .map(challenger -> toReadStatusInfo(challenger, context.memberMap().get(challenger.memberId()), context.chapterCache()))
+            .map(challenger -> toReadStatusInfo(challenger, context.memberMap().get(challenger.memberId()),
+                context.chapterCache()))
             .toList();
 
         Long nextCursorId = content.isEmpty() ? null : switch (command.status()) {
@@ -190,21 +194,19 @@ public class NoticeQueryService implements GetNoticeUseCase {
             return new TargetChallengerContext(List.of(), Map.of(), new HashMap<>());
         }
 
-        Map<Long, MemberProfileInfo> memberMap = getMemberUseCase.getProfiles(
+        Map<Long, MemberInfo> memberMap = getMemberUseCase.getProfiles(
             challengers.stream().map(ChallengerInfo::memberId).collect(Collectors.toSet())
         );
 
         Map<ChapterKey, ChapterInfo> chapterCache = new HashMap<>();
 
         List<ChallengerInfo> targetChallengers = challengers.stream()
-            .filter(challenger -> isTargetChallenger(targetInfo, challenger, memberMap.get(challenger.memberId()), chapterCache))
+            .filter(challenger -> isTargetChallenger(targetInfo, challenger, memberMap.get(challenger.memberId()),
+                chapterCache))
             .toList();
 
         return new TargetChallengerContext(targetChallengers, memberMap, chapterCache);
     }
-
-
-
 
     // ====== PRIVTE =====
 
@@ -230,7 +232,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Set<Long> memberIds = challengerMap.values().stream()
             .map(ChallengerInfo::memberId).collect(Collectors.toSet());
 
-        Map<Long, MemberProfileInfo> memberMap = getMemberUseCase.getProfiles(memberIds);
+        Map<Long, MemberInfo> memberMap = getMemberUseCase.getProfiles(memberIds);
 
         return new NoticeQueryData(targetMap, viewCountMap, challengerMap, memberMap);
     }
@@ -239,7 +241,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private NoticeSummary toNoticeSummary(Notice notice, NoticeQueryData data) {
         ChallengerInfo challengerInfo = data.challengerMap.get(notice.getAuthorChallengerId());
 
-        MemberProfileInfo memberInfo = challengerInfo != null
+        MemberInfo memberInfo = challengerInfo != null
             ? data.memberMap.get(challengerInfo.memberId()) : null;
 
         NoticeTarget target = data.targetMap.get(notice.getId());
@@ -263,12 +265,13 @@ public class NoticeQueryService implements GetNoticeUseCase {
     }
 
     // ChapterInfo 캐싱용 키
-    private record ChapterKey(Long gisuId, Long schoolId) {}
+    private record ChapterKey(Long gisuId, Long schoolId) {
+    }
 
     private boolean isTargetChallenger(
         NoticeTargetInfo targetInfo,
         ChallengerInfo challenger,
-        MemberProfileInfo memberInfo,
+        MemberInfo memberInfo,
         Map<ChapterKey, ChapterInfo> chapterCache
     ) {
         if (memberInfo == null) {
@@ -289,7 +292,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private boolean isOrganizationMatch(
         GetNoticeStatusQuery command,
         ChallengerInfo challenger,
-        MemberProfileInfo memberInfo,
+        MemberInfo memberInfo,
         Map<ChapterKey, ChapterInfo> chapterCache
     ) {
         if (command.filterType() == null || command.filterType() == NoticeReadStatusFilterType.ALL) {
@@ -322,7 +325,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
     private NoticeReadStatusInfo toReadStatusInfo(
         ChallengerInfo challenger,
-        MemberProfileInfo memberInfo,
+        MemberInfo memberInfo,
         Map<ChapterKey, ChapterInfo> chapterCache
     ) {
         ChapterInfo chapterInfo = memberInfo != null
@@ -371,21 +374,21 @@ public class NoticeQueryService implements GetNoticeUseCase {
         return 0;  // 커서를 찾지 못하면 처음부터
     }
 
-
-
     // =============== PRIVATE records ===============
 
     private record NoticeQueryData(
         Map<Long, NoticeTarget> targetMap,
         Map<Long, Long> viewCountMap,
         Map<Long, ChallengerInfo> challengerMap,
-        Map<Long, MemberProfileInfo> memberMap
-    ) {}
+        Map<Long, MemberInfo> memberMap
+    ) {
+    }
 
     private record TargetChallengerContext(
         List<ChallengerInfo> targetChallengers,
-        Map<Long, MemberProfileInfo> memberMap,
+        Map<Long, MemberInfo> memberMap,
         Map<ChapterKey, ChapterInfo> chapterCache
-    ) {}
+    ) {
+    }
 
 }

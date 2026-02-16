@@ -4,7 +4,6 @@ import com.umc.product.authorization.application.port.in.query.ChallengerRoleInf
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberDomainException;
@@ -56,31 +55,12 @@ public class MemberQueryService implements GetMemberUseCase {
     }
 
     @Override
-    public MemberProfileInfo getProfile(Long memberId) {
-        MemberInfo memberInfo = getById(memberId);
-
-        String schoolName = null;
-        if (memberInfo.schoolId() != null) {
-            SchoolDetailInfo schoolDetailInfo = getSchoolUseCase.getSchoolDetail(memberInfo.schoolId());
-
-            if (schoolDetailInfo != null) {
-                schoolName = schoolDetailInfo.schoolName();
-            }
-        }
-
-        String profileImageLink = null;
-        if (memberInfo.profileImageId() != null) {
-            FileInfo fileInfo = getFileUseCase.getById(memberInfo.profileImageId());
-            profileImageLink = fileInfo.fileLink();
-        }
-
-        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.getRoles(memberId);
-
-        return MemberProfileInfo.from(memberInfo, schoolName, profileImageLink, roles);
+    public MemberInfo getProfile(Long memberId) {
+        return getById(memberId);
     }
 
     @Override
-    public Map<Long, MemberProfileInfo> getProfiles(Set<Long> memberIds) {
+    public Map<Long, MemberInfo> getProfiles(Set<Long> memberIds) {
         if (memberIds == null || memberIds.isEmpty()) {
             return Map.of();
         }
@@ -89,13 +69,11 @@ public class MemberQueryService implements GetMemberUseCase {
 
         Map<Long, String> schoolNameCache = new HashMap<>();
         Map<String, String> profileLinkCache = new HashMap<>();
-        Map<Long, MemberProfileInfo> results = new HashMap<>(members.size());
+        Map<Long, MemberInfo> results = new HashMap<>(members.size());
 
         for (Member member : members) {
-            MemberInfo memberInfo = MemberInfo.from(member);
-
             String schoolName = null;
-            Long schoolId = memberInfo.schoolId();
+            Long schoolId = member.getSchoolId();
             if (schoolId != null) {
                 schoolName = schoolNameCache.computeIfAbsent(schoolId, id -> {
                     SchoolDetailInfo schoolDetailInfo = getSchoolUseCase.getSchoolDetail(id);
@@ -104,7 +82,7 @@ public class MemberQueryService implements GetMemberUseCase {
             }
 
             String profileImageLink = null;
-            String profileImageId = memberInfo.profileImageId();
+            String profileImageId = member.getProfileImageId();
             if (profileImageId != null) {
                 profileImageLink = profileLinkCache.computeIfAbsent(profileImageId, id -> {
                     FileInfo fileInfo = getFileUseCase.getById(id);
@@ -112,7 +90,7 @@ public class MemberQueryService implements GetMemberUseCase {
                 });
             }
 
-            results.put(memberInfo.id(), MemberProfileInfo.from(memberInfo, schoolName, profileImageLink));
+            results.put(member.getId(), MemberInfo.from(member, schoolName, profileImageLink, null));
         }
 
         return results;

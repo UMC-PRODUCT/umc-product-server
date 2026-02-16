@@ -99,7 +99,7 @@ class GetMemberUseCaseTest {
             given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
-            MemberProfileInfo result = memberQueryService.getProfile(1L);
+            MemberInfo result = memberQueryService.getProfile(1L);
 
             // then
             assertThat(result.name()).isEqualTo("홍길동");
@@ -120,7 +120,7 @@ class GetMemberUseCaseTest {
             given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
-            MemberProfileInfo result = memberQueryService.getProfile(1L);
+            MemberInfo result = memberQueryService.getProfile(1L);
 
             // then
             assertThat(result.schoolName()).isNull();
@@ -138,7 +138,7 @@ class GetMemberUseCaseTest {
             given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
-            MemberProfileInfo result = memberQueryService.getProfile(1L);
+            MemberInfo result = memberQueryService.getProfile(1L);
 
             // then
             assertThat(result.profileImageLink()).isNull();
@@ -155,7 +155,7 @@ class GetMemberUseCaseTest {
             given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
-            MemberProfileInfo result = memberQueryService.getProfile(1L);
+            MemberInfo result = memberQueryService.getProfile(1L);
 
             // then
             assertThat(result.schoolName()).isNull();
@@ -190,7 +190,7 @@ class GetMemberUseCaseTest {
             given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
-            MemberProfileInfo result = memberQueryService.getProfile(1L);
+            MemberInfo result = memberQueryService.getProfile(1L);
 
             // then
             assertThat(result.schoolName()).isNull();

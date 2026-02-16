@@ -1,5 +1,8 @@
 package com.umc.product.schedule.application.service.query;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.schedule.application.port.in.query.GetChallengerAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.dto.MyAttendanceHistoryInfo;
 import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
@@ -38,7 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseCase {
+public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseCase, GetChallengerAttendanceHistoryUseCase {
 
     private static final Set<AttendanceStatus> CONFIRMED_STATUSES = Set.of(
         AttendanceStatus.PRESENT,
@@ -50,6 +53,7 @@ public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseC
     private final LoadSchedulePort loadSchedulePort;
     private final LoadAttendanceSheetPort loadAttendanceSheetPort;
     private final LoadAttendanceRecordPort loadAttendanceRecordPort;
+    private final GetChallengerUseCase getChallengerUseCase;
 
     @Override
     public List<MyAttendanceHistoryInfo> getHistory(Long memberId, Long gisuId) {
@@ -104,5 +108,14 @@ public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseC
             .filter(Objects::nonNull)
             .sorted(Comparator.comparing(MyAttendanceHistoryInfo::scheduledAt).reversed())
             .toList();
+    }
+
+    @Override
+    public List<MyAttendanceHistoryInfo> getHistoryByChallengerId(Long challengerId) {
+        // 1. 챌린저 정보 조회
+        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+
+        // 2. memberId와 gisuId를 이용하여 기존 메서드 재사용
+        return getHistory(challengerInfo.memberId(), challengerInfo.gisuId());
     }
 }

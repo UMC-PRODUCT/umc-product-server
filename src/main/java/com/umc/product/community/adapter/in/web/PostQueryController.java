@@ -15,13 +15,13 @@ import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
 import com.umc.product.community.application.port.in.post.query.PostSearchResult;
 import com.umc.product.community.application.port.in.post.query.SearchPostUseCase;
 import com.umc.product.community.domain.enums.Category;
-import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.core.annotations.ParameterObject;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
-@Tag(name = Constants.COMMUNITY)
+@Tag(name = "Community | 게시글 Query", description = "")
 public class PostQueryController {
 
     private final GetPostDetailUseCase getPostDetailUseCase;
@@ -65,7 +65,7 @@ public class PostQueryController {
             @Parameter(description = "카테고리 (LIGHTNING: 번개, QUESTION: 질문, FREE: 자유). 미지정시 전체 조회")
             Category category,
             @PageableDefault(size = 20)
-            @Parameter(description = "페이지네이션 (page, size)")
+            @ParameterObject
             Pageable pageable
     ) {
         PostSearchQuery query = new PostSearchQuery(category);
@@ -82,7 +82,7 @@ public class PostQueryController {
             @Parameter(description = "검색 키워드", example = "스터디")
             String keyword,
             @PageableDefault(size = 20)
-            @Parameter(description = "페이지네이션 (page, size)")
+            @ParameterObject
             Pageable pageable
     ) {
         Page<PostSearchResult> results = searchPostUseCase.search(keyword, pageable);
@@ -94,7 +94,7 @@ public class PostQueryController {
     public PageResponse<PostResponse> getMyPosts(
             @CurrentMember MemberPrincipal memberPrincipal,
             @PageableDefault(size = 20)
-            @Parameter(description = "페이지네이션 (page, size)")
+            @ParameterObject
             Pageable pageable
     ) {
         Long memberId = memberPrincipal.getMemberId();
@@ -108,7 +108,7 @@ public class PostQueryController {
     public PageResponse<PostResponse> getCommentedPosts(
             @CurrentMember MemberPrincipal memberPrincipal,
             @PageableDefault(size = 20)
-            @Parameter(description = "페이지네이션 (page, size)")
+            @ParameterObject
             Pageable pageable
     ) {
         Long memberId = memberPrincipal.getMemberId();
@@ -122,7 +122,7 @@ public class PostQueryController {
     public PageResponse<PostResponse> getScrappedPosts(
             @CurrentMember MemberPrincipal memberPrincipal,
             @PageableDefault(size = 20)
-            @Parameter(description = "페이지네이션 (page, size)")
+            @ParameterObject
             Pageable pageable
     ) {
         Long memberId = memberPrincipal.getMemberId();

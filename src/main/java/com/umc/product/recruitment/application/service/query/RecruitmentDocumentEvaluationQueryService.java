@@ -25,6 +25,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.ApplicationDeta
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationEvaluationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentEvaluationRecruitmentListInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.DocumentEvaluationRecruitmentListInfo.DocumentEvaluationRecruitmentInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationDetailQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetApplicationEvaluationListQuery;
@@ -57,6 +58,7 @@ import com.umc.product.survey.domain.SingleAnswer;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -426,59 +428,69 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
         // 1) 후보 recruitment 목록 조회 (PUBLISHED + schoolId + gisuId)
         List<Recruitment> recruitments = loadRecruitmentPort.findAllPublishedBySchoolIdAndGisuId(schoolId, gisuId);
 
-        // 2) DOC_RESULT_AT 기준으로 "결과 발표 전"만 필터링
-        var now = Instant.now();
+        // 2) evaluatingList: DOC_RESULT_AT 기준으로 "결과 발표 전"만 필터링
+        //    completeList: DOC_RESULT_AT 이후, 최종 발표 전 핕터링
+        Instant now = Instant.now();
 
-        List<DocumentEvaluationRecruitmentListInfo.DocumentEvaluationRecruitmentInfo> items = recruitments.stream()
-            .filter(r -> isBeforeDocResult(r.getId(), now))
-            .map(r -> toDocumentEvaluationRecruitmentInfo(r))
-            .toList();
+        List<DocumentEvaluationRecruitmentInfo> evaluatingList = new ArrayList<>();
+        List<DocumentEvaluationRecruitmentInfo> completeList = new ArrayList<>();
 
-        return new DocumentEvaluationRecruitmentListInfo(items);
+        for (Recruitment recruitment : recruitments) {
+            Long recruitmentId = recruitment.getId();
+
+            // 1. 기준이 되는 날짜 조회 (서류 결과, 최종 결과)
+            var docResultSchedule = loadRecruitmentSchedulePort
+                .findOptionalByRecruitmentIdAndType(recruitmentId, RecruitmentScheduleType.DOC_RESULT_AT)
+                .orElse(null);
+
+            var finalResultSchedule = loadRecruitmentSchedulePort
+                .findOptionalByRecruitmentIdAndType(recruitmentId, RecruitmentScheduleType.FINAL_RESULT_AT)
+                .orElse(null);
+
+            // 2. 화면 표시용 (모집 시작일)
+            var appStartSchedule = loadRecruitmentSchedulePort
+                .findOptionalByRecruitmentIdAndType(recruitmentId, RecruitmentScheduleType.APPLY_WINDOW)
+                .orElse(null);
+
+            // 날짜 객체 추출 (null 안전 처리)
+            Instant docResultAt = (docResultSchedule != null) ? docResultSchedule.getStartsAt() : null;
+            Instant finalResultAt = (finalResultSchedule != null) ? finalResultSchedule.getStartsAt() : null;
+            Instant appStartAt = (appStartSchedule != null) ? appStartSchedule.getStartsAt() : null;
+
+            if (docResultAt == null) {
+                continue;
+            }
+
+            // todo: 추가모집 관련 변경사항 수정 시 recruitment에 rootRecruitmentId 추가 후 대체
+            DocumentEvaluationRecruitmentInfo info = new DocumentEvaluationRecruitmentInfo(
+                recruitmentId,
+                recruitmentId,
+                recruitment.getTitle(),
+                appStartAt,    // 모집 시작
+                finalResultAt, // 최종 발표
+                loadApplicationListPort.countTotalApplications(recruitmentId),
+                getOpenParts(recruitmentId) // 파트 조회
+            );
+
+            // Case 1: 서류 결과 발표 전 -> [평가 중]
+            if (now.isBefore(docResultAt)) {
+                evaluatingList.add(info);
+            }
+            // Case 2: 서류 결과 발표 후 ~ 최종 발표 전 -> [평가 완료]
+            else if (finalResultAt == null || now.isBefore(finalResultAt)) {
+                completeList.add(info);
+            }
+            // Case 3: 최종 발표 후 -> [목록 제외 (Hidden)]
+            else {
+            }
+        }
+
+        return new DocumentEvaluationRecruitmentListInfo(evaluatingList, completeList);
     }
 
-    private boolean isBeforeDocResult(Long recruitmentId, Instant now) {
-        return loadRecruitmentSchedulePort
-            .findOptionalByRecruitmentIdAndType(recruitmentId, RecruitmentScheduleType.DOC_RESULT_AT)
-            .map(s -> s.getStartsAt() == null || now.isBefore(s.getStartsAt()))
-            .orElse(true);
-    }
-
-    private DocumentEvaluationRecruitmentListInfo.DocumentEvaluationRecruitmentInfo toDocumentEvaluationRecruitmentInfo(
-        Recruitment recruitment
-    ) {
-        Long recruitmentId = recruitment.getId();
-
-        // todo: 추가모집 관련 변경사항 수정 시 recruitment에 rootRecruitmentId 추가 후 대체
-        Long rootRecruitmentId = recruitmentId;
-
-        // 서류 평가 기간 (DOC_REVIEW_WINDOW)
-        var docReview = loadRecruitmentSchedulePort
-            .findOptionalByRecruitmentIdAndType(
-                recruitmentId, RecruitmentScheduleType.DOC_REVIEW_WINDOW
-            )
-            .orElse(null);
-
-        Instant docReviewStartAt = (docReview == null) ? null : docReview.getStartsAt();
-        Instant docReviewEndAt = (docReview == null) ? null : docReview.getEndsAt();
-
-        // 지원자 수
-        long total = loadApplicationListPort.countTotalApplications(recruitmentId);
-
-        // open parts
-        List<PartKey> openParts = loadRecruitmentPartPort.findOpenPartsByRecruitmentId(recruitmentId).stream()
+    private List<PartKey> getOpenParts(Long recruitmentId) {
+        return loadRecruitmentPartPort.findOpenPartsByRecruitmentId(recruitmentId).stream()
             .map(challengerPart -> PartKey.valueOf(challengerPart.name()))
             .toList();
-
-        return new DocumentEvaluationRecruitmentListInfo.DocumentEvaluationRecruitmentInfo(
-            recruitmentId,
-            rootRecruitmentId,
-            recruitment.getTitle(),
-            docReviewStartAt,
-            docReviewEndAt,
-            total,
-            openParts
-        );
     }
-
 }

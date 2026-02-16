@@ -2,7 +2,7 @@ package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewAssignmentsUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewEvaluationSummaryUseCase;
@@ -100,7 +100,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .findAllByApplicationIdOrderByPriorityAsc(applicationId);
 
         // 4. 지원자 프로필 조회
-        MemberProfileInfo applicantProfile = getMemberUseCase.getProfile(application.getApplicantMemberId());
+        MemberInfo applicantProfile = getMemberUseCase.getProfile(application.getApplicantMemberId());
 
         // 5. ApplicationInfo 생성
         GetInterviewEvaluationViewInfo.ApplicationInfo applicationInfo = buildApplicationInfo(
@@ -169,12 +169,12 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             return new GetInterviewEvaluationsInfo(null, List.of());
         }
 
-        Map<Long, MemberProfileInfo> profileMap = getEvaluatorProfileMap(evaluations);
+        Map<Long, MemberInfo> profileMap = getEvaluatorProfileMap(evaluations);
         Double avgScore = calculateAverageScore(evaluations);
 
         List<GetInterviewEvaluationsInfo.GetInterviewEvaluationInfo> items = evaluations.stream()
             .map(evaluation -> {
-                MemberProfileInfo evaluator = profileMap.get(evaluation.getEvaluatorUserId());
+                MemberInfo evaluator = profileMap.get(evaluation.getEvaluatorUserId());
                 return new GetInterviewEvaluationsInfo.GetInterviewEvaluationInfo(
                     new GetInterviewEvaluationsInfo.Evaluator(
                         evaluator.id(),
@@ -209,13 +209,13 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .map(InterviewLiveQuestion::getAuthorMemberId)
             .collect(Collectors.toSet());
 
-        Map<Long, MemberProfileInfo> profileMap = getMemberUseCase.getProfiles(authorMemberIds);
+        Map<Long, MemberInfo> profileMap = getMemberUseCase.getProfiles(authorMemberIds);
 
         // 4. LiveQuestionInfo 리스트 생성
         List<LiveQuestionInfo> items = new ArrayList<>();
         for (int i = 0; i < questions.size(); i++) {
             InterviewLiveQuestion question = questions.get(i);
-            MemberProfileInfo author = profileMap.get(question.getAuthorMemberId());
+            MemberInfo author = profileMap.get(question.getAuthorMemberId());
 
             items.add(new LiveQuestionInfo(
                 question.getId(),
@@ -284,7 +284,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .map(a -> a.getApplication().getApplicantMemberId())
             .collect(Collectors.toSet());
 
-        Map<Long, MemberProfileInfo> profileMap = applicantMemberIds.isEmpty()
+        Map<Long, MemberInfo> profileMap = applicantMemberIds.isEmpty()
             ? Map.of()
             : getMemberUseCase.getProfiles(applicantMemberIds);
 
@@ -304,7 +304,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .map(assignment -> {
                 Application app = assignment.getApplication();
                 InterviewSlot slot = assignment.getSlot();
-                MemberProfileInfo applicant = profileMap.get(app.getApplicantMemberId());
+                MemberInfo applicant = profileMap.get(app.getApplicantMemberId());
                 List<ApplicationPartPreference> prefs = preferenceMap.getOrDefault(app.getId(), List.of());
 
                 // SlotInfo 생성
@@ -435,7 +435,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     }
 
     private GetInterviewEvaluationViewInfo.ApplicationInfo buildApplicationInfo(
-        MemberProfileInfo applicantProfile,
+        MemberInfo applicantProfile,
         List<ApplicationPartPreference> preferences
     ) {
         GetInterviewEvaluationViewInfo.Applicant applicant = new GetInterviewEvaluationViewInfo.Applicant(
@@ -531,12 +531,12 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .map(InterviewLiveQuestion::getAuthorMemberId)
             .collect(Collectors.toSet());
 
-        Map<Long, MemberProfileInfo> authorProfileMap = getMemberUseCase.getProfiles(authorMemberIds);
+        Map<Long, MemberInfo> authorProfileMap = getMemberUseCase.getProfiles(authorMemberIds);
 
         List<GetInterviewEvaluationViewInfo.LiveQuestionInfo> result = new ArrayList<>();
         for (int i = 0; i < liveQuestions.size(); i++) {
             InterviewLiveQuestion q = liveQuestions.get(i);
-            MemberProfileInfo author = authorProfileMap.get(q.getAuthorMemberId());
+            MemberInfo author = authorProfileMap.get(q.getAuthorMemberId());
 
             result.add(new GetInterviewEvaluationViewInfo.LiveQuestionInfo(
                 q.getId(),
@@ -561,12 +561,12 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             return new GetInterviewEvaluationViewInfo.LiveEvaluationListInfo(null, List.of());
         }
 
-        Map<Long, MemberProfileInfo> evaluatorProfileMap = getEvaluatorProfileMap(evaluations);
+        Map<Long, MemberInfo> evaluatorProfileMap = getEvaluatorProfileMap(evaluations);
         Double avgScore = calculateAverageScore(evaluations);
 
         List<GetInterviewEvaluationViewInfo.LiveEvaluationItem> items = evaluations.stream()
             .map(e -> {
-                MemberProfileInfo evaluator = evaluatorProfileMap.get(e.getEvaluatorUserId());
+                MemberInfo evaluator = evaluatorProfileMap.get(e.getEvaluatorUserId());
                 return new GetInterviewEvaluationViewInfo.LiveEvaluationItem(
                     new GetInterviewEvaluationViewInfo.Evaluator(
                         evaluator.id(), evaluator.nickname(), evaluator.name()
@@ -591,7 +591,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     }
 
     // 평가자 프로필 조회 로직
-    private Map<Long, MemberProfileInfo> getEvaluatorProfileMap(List<Evaluation> evaluations) {
+    private Map<Long, MemberInfo> getEvaluatorProfileMap(List<Evaluation> evaluations) {
         Set<Long> evaluatorIds = evaluations.stream()
             .map(Evaluation::getEvaluatorUserId)
             .collect(Collectors.toSet());

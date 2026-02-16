@@ -1,5 +1,6 @@
 package com.umc.product.schedule.application.port.out;
 
+import com.umc.product.schedule.application.port.out.dto.AttendanceSheetPermissionContext;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import java.util.List;
 import java.util.Optional;
@@ -69,4 +70,12 @@ public interface LoadAttendanceSheetPort {
      * @return 해당 기수의 활성 출석부 목록
      */
     List<AttendanceSheet> findActiveSheetsByGisuId(Long gisuId);
+
+    /**
+     * 권한 평가에 필요한 컨텍스트 정보 조회 (sheet → schedule JOIN)
+     *
+     * @param sheetId 출석부 ID
+     * @return 권한 평가 컨텍스트
+     */
+    Optional<AttendanceSheetPermissionContext> findPermissionContext(Long sheetId);
 }

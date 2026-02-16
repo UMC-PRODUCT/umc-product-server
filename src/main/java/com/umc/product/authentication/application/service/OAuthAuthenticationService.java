@@ -157,10 +157,13 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
 
         memberOAuth.throwIfNotValidMember(command.memberId());
 
-        // 회원에 연결된 OAuth 계정이 최소한 한 개는 있어야 함
-        List<MemberOAuth> linkedOAuth = loadMemberOAuthPort.findAllByMemberId(command.memberId());
-        if (linkedOAuth.size() <= 1) {
-            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_CANNOT_UNLINK_LAST_PROVIDER);
+        if (!command.bypassValidation()) {
+            // 회원에 연결된 OAuth 계정이 최소한 한 개는 있어야 함
+            List<MemberOAuth> linkedOAuth = loadMemberOAuthPort.findAllByMemberId(command.memberId());
+
+            if (linkedOAuth.size() <= 1) {
+                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_CANNOT_UNLINK_LAST_PROVIDER);
+            }
         }
 
         saveMemberOAuthPort.delete(memberOAuth);

@@ -13,10 +13,12 @@ import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeLinks
 import com.umc.product.notice.adapter.in.web.dto.response.command.AddNoticeVoteResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
+@Tag(name = "Notice | 공지사항 컨텐츠 Command", description = "")
 public interface NoticeContentApi {
 
     @Operation(
@@ -90,8 +92,7 @@ public interface NoticeContentApi {
     void deleteNoticeVote(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
-
-        MemberPrincipal memberPrincipal
+        @CurrentMember MemberPrincipal memberPrincipal
     );
 
 }

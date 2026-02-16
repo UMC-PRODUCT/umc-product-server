@@ -1,5 +1,8 @@
 package com.umc.product.schedule.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CreateScheduleRequest;
@@ -8,6 +11,7 @@ import com.umc.product.schedule.adapter.in.web.dto.request.CreateStudyGroupSched
 import com.umc.product.schedule.adapter.in.web.dto.request.UpdateScheduleLocationRequest;
 import com.umc.product.schedule.adapter.in.web.dto.request.UpdateScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.dto.response.UpdateScheduleLocationResponse;
+import com.umc.product.schedule.adapter.in.web.swagger.ScheduleControllerApi;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleWithAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateStudyGroupScheduleUseCase;
@@ -32,7 +36,7 @@ public class ScheduleController implements ScheduleControllerApi {
 
     private final CreateScheduleUseCase createScheduleUseCase;
     private final CreateScheduleWithAttendanceUseCase createScheduleWithAttendanceUseCase;
-    private final CreateStudyGroupScheduleUseCase   createStudyGroupScheduleUseCase;
+    private final CreateStudyGroupScheduleUseCase createStudyGroupScheduleUseCase;
     private final UpdateScheduleUseCase updateScheduleUseCase;
     private final DeleteScheduleUseCase deleteScheduleUseCase;
     private final DeleteScheduleWithAttendanceUseCase deleteScheduleWithAttendanceUseCase;
@@ -72,6 +76,11 @@ public class ScheduleController implements ScheduleControllerApi {
 
     @Override
     @PatchMapping("/{scheduleId}")
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.WRITE
+    )
     public void updateSchedule(
         @PathVariable Long scheduleId,
         @Valid @RequestBody UpdateScheduleRequest request
@@ -81,12 +90,22 @@ public class ScheduleController implements ScheduleControllerApi {
 
     @Override
     @DeleteMapping("/{scheduleId}/with-attendance")
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.DELETE
+    )
     public void deleteScheduleWithAttendance(@PathVariable Long scheduleId) {
         deleteScheduleWithAttendanceUseCase.delete(scheduleId);
     }
 
     @Override
     @PatchMapping("/{scheduleId}/location")
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.WRITE
+    )
     public UpdateScheduleLocationResponse updateScheduleLocation(
         @PathVariable Long scheduleId,
         @Valid @RequestBody UpdateScheduleLocationRequest request

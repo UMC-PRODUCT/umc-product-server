@@ -2,27 +2,18 @@ package com.umc.product.authentication.adapter.in.web;
 
 import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.adapter.in.web.dto.request.AppleLoginRequest;
-import com.umc.product.authentication.adapter.in.web.dto.request.CompleteEmailVerificationRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.GoogleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.KakaoLoginRequest;
-import com.umc.product.authentication.adapter.in.web.dto.request.RenewAccessTokenRequest;
-import com.umc.product.authentication.adapter.in.web.dto.request.SendEmailVerificationRequest;
-import com.umc.product.authentication.adapter.in.web.dto.response.CompleteEmailVerificationResponse;
 import com.umc.product.authentication.adapter.in.web.dto.response.OAuthLoginResponse;
-import com.umc.product.authentication.adapter.in.web.dto.response.RenewAccessTokenResponse;
-import com.umc.product.authentication.adapter.in.web.dto.response.SendEmailVerificationResponse;
-import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
+import com.umc.product.authentication.adapter.in.web.swagger.AuthenticationControllerInterface;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
-import com.umc.product.authentication.application.port.in.command.dto.ValidateEmailVerificationSessionCommand;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
 import com.umc.product.authentication.domain.enums.OAuth2ResultCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
-import com.umc.product.global.constant.SwaggerTag.Constants;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,10 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-@Tag(name = Constants.AUTH)
 public class AuthenticationController implements AuthenticationControllerInterface {
 
-    private final ManageAuthenticationUseCase manageAuthenticationUseCase;
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
     private final VerifyOAuthTokenPort verifyOAuthTokenPort;
     private final JwtTokenProvider jwtTokenProvider;
@@ -75,53 +64,6 @@ public class AuthenticationController implements AuthenticationControllerInterfa
         );
         OAuthTokenLoginResult result = oAuthAuthenticationUseCase.loginWithOAuth2Attributes(attrs);
         return buildLoginResponse(OAuthProvider.APPLE, result);
-    }
-
-    @Override
-    @PostMapping("email-verification/code")
-    @Public
-    public CompleteEmailVerificationResponse verifyEmailByCode(
-        @RequestBody CompleteEmailVerificationRequest request
-    ) {
-        String emailVerificationToken = manageAuthenticationUseCase
-            .validateEmailVerificationSession(
-                ValidateEmailVerificationSessionCommand
-                    .builder()
-                    .sessionId(request.emailVerificationId().toString())
-                    .code(request.verificationCode())
-                    .build()
-            );
-
-        return CompleteEmailVerificationResponse
-            .builder()
-            .emailVerificationToken(emailVerificationToken)
-            .build();
-    }
-
-    @Override
-    @PostMapping("email-verification")
-    @Public
-    public SendEmailVerificationResponse sendEmailVerification(
-        @RequestBody SendEmailVerificationRequest request
-    ) {
-        Long sessionId = manageAuthenticationUseCase.createEmailVerificationSession(request.email());
-
-        return SendEmailVerificationResponse
-            .builder()
-            .emailVerificationId(sessionId.toString())
-            .build();
-    }
-
-    @Override
-    @PostMapping("token/renew")
-    @Public
-    public RenewAccessTokenResponse renewAccessToken(
-        @RequestBody RenewAccessTokenRequest request
-    ) {
-        return RenewAccessTokenResponse.from(
-            manageAuthenticationUseCase.renewAccessToken(
-                request.toCommand()
-            ));
     }
 
     /**

@@ -7,37 +7,42 @@ import java.time.ZoneId;
 import java.util.List;
 
 public record DocumentEvaluationRecruitmentListResponse(
-    List<DocumentEvaluationRecruitmentResponse> recruitments
+    List<DocumentEvaluationRecruitmentResponse> evaluatingRecruitments, // 서류 평가 중
+    List<DocumentEvaluationRecruitmentResponse> completeRecruitments    // 서류 평가 완료
 ) {
     private static final ZoneId ZONE_ID = ZoneId.of("Asia/Seoul");
 
     public static DocumentEvaluationRecruitmentListResponse from(DocumentEvaluationRecruitmentListInfo info) {
-        List<DocumentEvaluationRecruitmentResponse> items = info.recruitments().stream()
+        List<DocumentEvaluationRecruitmentResponse> evaluatingItems = info.evaluatingRecruitments().stream()
             .map(DocumentEvaluationRecruitmentResponse::from)
             .toList();
 
-        return new DocumentEvaluationRecruitmentListResponse(items);
+        List<DocumentEvaluationRecruitmentResponse> completeItems = info.completeRecruitments().stream()
+            .map(DocumentEvaluationRecruitmentResponse::from)
+            .toList();
+
+        return new DocumentEvaluationRecruitmentListResponse(evaluatingItems, completeItems);
     }
 
     public record DocumentEvaluationRecruitmentResponse(
         Long recruitmentId,
         Long rootRecruitmentId,
         String title,
-        LocalDate docReviewStartDate,
-        LocalDate docReviewEndDate,
+        LocalDate recruitmentStartDate, // 전체 모집 시작일
+        LocalDate recruitmentEndDate,   // 최종 결과 발표일
         Long totalApplicantCount,
         List<PartResponse> openParts
     ) {
         public static DocumentEvaluationRecruitmentResponse from(
             DocumentEvaluationRecruitmentListInfo.DocumentEvaluationRecruitmentInfo i
         ) {
-            LocalDate startDate = (i.docReviewStartAt() == null)
+            LocalDate startDate = (i.recruitmentStartAt() == null)
                 ? null
-                : i.docReviewStartAt().atZone(ZONE_ID).toLocalDate();
+                : i.recruitmentStartAt().atZone(ZONE_ID).toLocalDate();
 
-            LocalDate endDate = (i.docReviewEndAt() == null)
+            LocalDate endDate = (i.recruitmentEndAt() == null)
                 ? null
-                : i.docReviewEndAt().atZone(ZONE_ID).toLocalDate();
+                : i.recruitmentEndAt().atZone(ZONE_ID).toLocalDate();
 
             List<PartResponse> parts = (i.openParts() == null)
                 ? List.of()

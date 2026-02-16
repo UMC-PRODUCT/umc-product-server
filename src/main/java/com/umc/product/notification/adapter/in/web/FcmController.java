@@ -2,6 +2,7 @@ package com.umc.product.notification.adapter.in.web;
 
 import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmTestSendRequest;
+import com.umc.product.notification.adapter.in.web.swagger.FcmControllerApi;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.RefreshFcmTokenUseCase;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +25,9 @@ public class FcmController implements FcmControllerApi {
     @Override
     @PostMapping("/{memberId}")
     public void registerFcmToken(
-            // TODO: 인증 적용 시 @PathVariable -> @AuthenticationPrincipal 변경 필요
-            @PathVariable("memberId") Long userId,
-            @RequestBody FcmRegistrationRequest request) {
+        // TODO: 인증 적용 시 @PathVariable -> @AuthenticationPrincipal 변경 필요
+        @PathVariable("memberId") Long userId,
+        @RequestBody FcmRegistrationRequest request) {
         refreshFcmTokenUseCase.refreshTokenAndSubscriptions(userId, request);
     }
 
