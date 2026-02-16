@@ -140,6 +140,10 @@ public class Post {
         String openChatUrl
     ) {
         public LightningInfo {
+            // TODO: 주석 merge conflict로 모두 유지함. 예은이 수정해주세요
+          
+            // Entity 조회 시에도 생성자가 호출되므로, 비즈니스 로직 검증(미래 시간 체크)은 하지 않음
+            // 비즈니스 로직 검증은 Request DTO에서 수행
             // 필수 필드만 검증 (시간 검증은 제거 - 조회 시에도 객체 생성이 필요하므로)
             if (meetAt == null) {
                 throw new IllegalArgumentException("모임 시간은 필수입니다.");
