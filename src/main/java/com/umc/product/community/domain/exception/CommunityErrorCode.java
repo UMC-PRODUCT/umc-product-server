@@ -26,7 +26,9 @@ public enum CommunityErrorCode implements BaseCode {
     INVALID_TROPHY_WEEK(HttpStatus.BAD_REQUEST, "COMMUNITY-0301", "상장 주차가 유효하지 않습니다."),
     INVALID_TROPHY_TITLE(HttpStatus.BAD_REQUEST, "COMMUNITY-0302", "상장 제목이 유효하지 않습니다."),
     INVALID_TROPHY_CONTENT(HttpStatus.BAD_REQUEST, "COMMUNITY-0303", "상장 내용이 유효하지 않습니다."),
-    INVALID_TROPHY_URL(HttpStatus.BAD_REQUEST, "COMMUNITY-0304", "상장 URL이 유효하지 않습니다.");
+    INVALID_TROPHY_URL(HttpStatus.BAD_REQUEST, "COMMUNITY-0304", "상장 URL이 유효하지 않습니다."),
+
+    REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "COMMUNITY-0401", "이미 신고한 게시글/댓글입니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
