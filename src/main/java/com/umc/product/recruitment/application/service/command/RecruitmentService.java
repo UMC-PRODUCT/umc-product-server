@@ -116,7 +116,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Transactional
 @RequiredArgsConstructor
-public class RecruitmentsService implements CreateRecruitmentDraftFormResponseUseCase,
+public class RecruitmentService implements CreateRecruitmentDraftFormResponseUseCase,
     UpsertRecruitmentFormResponseAnswersUseCase,
     DeleteRecruitmentFormResponseUseCase,
     SubmitRecruitmentApplicationUseCase,
