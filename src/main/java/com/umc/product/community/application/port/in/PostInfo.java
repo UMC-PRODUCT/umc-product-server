@@ -1,5 +1,6 @@
 package com.umc.product.community.application.port.in;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
 import java.time.Instant;
@@ -13,6 +14,7 @@ public record PostInfo(
         Long authorId,
         String authorName,
         String authorProfileImage,
+        ChallengerPart authorPart,
         LocalDateTime meetAt,
         String location,
         Integer maxParticipants,
@@ -20,17 +22,26 @@ public record PostInfo(
         Instant createdAt,
         int commentCount,
         int likeCount,
-        boolean isLiked
+        boolean isLiked,
+        boolean isAuthor
 ) {
     public static PostInfo from(Post post, Long authorId, String authorName) {
-        return from(post, authorId, authorName, null, 0);
+        return from(post, authorId, authorName, null, null, 0, false);
     }
 
     public static PostInfo from(Post post, Long authorId, String authorName, int commentCount) {
-        return from(post, authorId, authorName, null, commentCount);
+        return from(post, authorId, authorName, null, null, commentCount, false);
     }
 
     public static PostInfo from(Post post, Long authorId, String authorName, String authorProfileImage, int commentCount) {
+        return from(post, authorId, authorName, authorProfileImage, null, commentCount, false);
+    }
+
+    public static PostInfo from(Post post, Long authorId, String authorName, String authorProfileImage, ChallengerPart authorPart, int commentCount) {
+        return from(post, authorId, authorName, authorProfileImage, authorPart, commentCount, false);
+    }
+
+    public static PostInfo from(Post post, Long authorId, String authorName, String authorProfileImage, ChallengerPart authorPart, int commentCount, boolean isAuthor) {
         Long postId = post.getPostId() != null ? post.getPostId().id() : null;
 
         // 번개글인 경우
@@ -44,6 +55,7 @@ public record PostInfo(
                     authorId,
                     authorName,
                     authorProfileImage,
+                    authorPart,
                     info.meetAt(),
                     info.location(),
                     info.maxParticipants(),
@@ -51,7 +63,8 @@ public record PostInfo(
                     post.getCreatedAt(),
                     commentCount,
                     post.getLikeCount(),
-                    post.isLiked()
+                    post.isLiked(),
+                    isAuthor
             );
         }
 
@@ -64,6 +77,7 @@ public record PostInfo(
                 authorId,
                 authorName,
                 authorProfileImage,
+                authorPart,
                 null,
                 null,
                 null,
@@ -71,7 +85,8 @@ public record PostInfo(
                 post.getCreatedAt(),
                 commentCount,
                 post.getLikeCount(),
-                post.isLiked()
+                post.isLiked(),
+                isAuthor
         );
     }
 }

@@ -2,6 +2,7 @@ package com.umc.product.community.application.service;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.application.port.in.post.CommentInfo;
 import com.umc.product.community.application.port.in.post.query.GetCommentListUseCase;
 import com.umc.product.community.application.port.out.LoadCommentPort;
@@ -34,6 +35,11 @@ public class CommentQueryService implements GetCommentListUseCase {
 
     @Override
     public List<CommentInfo> getComments(Long postId) {
+        return getComments(postId, null);
+    }
+
+    @Override
+    public List<CommentInfo> getComments(Long postId, Long currentChallengerId) {
         loadPostPort.findById(postId)
                 .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
 
@@ -59,38 +65,41 @@ public class CommentQueryService implements GetCommentListUseCase {
         // 4. 멤버 ID -> 멤버 프로필 매핑 (1 query, 일괄 조회로 N+1 해결)
         var memberProfileMap = getMemberUseCase.getProfiles(memberIds);
 
-        // 5. 챌린저 ID -> 작성자 이름 매핑
-        Map<Long, String> authorNameMap = challengerInfoMap.entrySet().stream()
+        // 5. 챌린저 ID -> 작성자 정보 매핑 (이름 + 프로필 이미지 + 파트)
+        Map<Long, AuthorDetails> authorDetailsMap = challengerInfoMap.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> {
                             Long memberId = entry.getValue().memberId();
                             var memberProfile = memberProfileMap.get(memberId);
-                            return memberProfile != null ? memberProfile.name() : "알 수 없음";
-                        }
-                ));
-
-        // 6. 챌린저 ID -> 작성자 프로필 이미지 매핑
-        Map<Long, String> authorProfileImageMap = challengerInfoMap.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> {
-                            Long memberId = entry.getValue().memberId();
-                            var memberProfile = memberProfileMap.get(memberId);
-                            return memberProfile != null ? memberProfile.profileImageLink() : null;
+                            String name = memberProfile != null ? memberProfile.name() : "알 수 없음";
+                            String profileImage = memberProfile != null ? memberProfile.profileImageLink() : null;
+                            return new AuthorDetails(name, profileImage, entry.getValue().part());
                         }
                 ));
 
         return comments.stream()
                 .map(comment -> {
-                    String authorName = authorNameMap.get(comment.getChallengerId());
-                    String authorProfileImage = authorProfileImageMap.get(comment.getChallengerId());
+                    AuthorDetails authorDetails = authorDetailsMap.get(comment.getChallengerId());
+                    String authorName = authorDetails != null ? authorDetails.name() : "알 수 없음";
+                    String authorProfileImage = authorDetails != null ? authorDetails.profileImage() : null;
+                    var authorPart = authorDetails != null ? authorDetails.part() : null;
+                    // 본인 작성 댓글 여부 확인
+                    boolean isAuthor = currentChallengerId != null && comment.getChallengerId().equals(currentChallengerId);
                     return CommentInfo.from(
                             comment,
-                            authorName != null ? authorName : "알 수 없음",
-                            authorProfileImage
+                            authorName,
+                            authorProfileImage,
+                            authorPart,
+                            isAuthor
                     );
                 })
                 .toList();
+    }
+
+    /**
+     * 작성자 정보를 담는 내부 record
+     */
+    private record AuthorDetails(String name, String profileImage, ChallengerPart part) {
     }
 }

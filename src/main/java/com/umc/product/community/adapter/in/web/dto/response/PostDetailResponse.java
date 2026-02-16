@@ -27,8 +27,11 @@ public record PostDetailResponse(
         @Schema(description = "작성자 이름", example = "홍길동")
         String authorName,
 
+        @Schema(description = "작성자 프로필 이미지", example = "https://example.com/profile.jpg")
+        String authorProfileImage,
+
         @Schema(description = "작성자 파트", example = "SPRINGBOOT")
-        ChallengerPart userPart,
+        ChallengerPart authorPart,
 
         @Schema(description = "번개 정보 (번개글인 경우)")
         LightningInfoResponse lightningInfo,
@@ -44,6 +47,9 @@ public record PostDetailResponse(
 
         @Schema(description = "좋아요 클릭 여부", example = "true")
         boolean isLiked,
+
+        @Schema(description = "본인 작성 글 여부", example = "true")
+        boolean isAuthor,
 
         @Schema(description = "스크랩 수", example = "3")
         int scrapCount,
@@ -70,12 +76,14 @@ public record PostDetailResponse(
                 info.category(),
                 info.authorId(),
                 info.authorName(),
-                info.userPart(),
+                info.authorProfileImage(),
+                info.authorPart(),
                 lightningInfoResponse,
                 info.commentCount(),
                 info.createdAt(),
                 info.likeCount(),
                 info.isLiked(),
+                info.isAuthor(),
                 info.scrapCount(),
                 info.isScrapped()
         );
