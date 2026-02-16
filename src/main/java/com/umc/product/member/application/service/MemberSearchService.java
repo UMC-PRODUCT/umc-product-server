@@ -4,7 +4,7 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.member.application.port.in.query.SearchMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberItemInfo;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberQuery;
@@ -39,7 +39,7 @@ public class MemberSearchService implements SearchMemberUseCase {
         Page<Challenger> challengers = searchMemberPort.search(query, pageable);
 
         // 배치 데이터 로딩
-        Map<Long, MemberProfileInfo> memberProfiles = loadMemberProfiles(challengers.getContent());
+        Map<Long, MemberInfo> memberProfiles = loadMemberProfiles(challengers.getContent());
         Map<Long, List<ChallengerRoleType>> roleTypes = loadRoleTypes(challengers.getContent());
         Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(challengers.getContent());
 
@@ -54,11 +54,11 @@ public class MemberSearchService implements SearchMemberUseCase {
 
     private SearchMemberItemInfo toItemInfo(
         Challenger challenger,
-        Map<Long, MemberProfileInfo> memberProfiles,
+        Map<Long, MemberInfo> memberProfiles,
         Map<Long, List<ChallengerRoleType>> roleTypes,
         Map<Long, Long> gisuGenerationMap
     ) {
-        MemberProfileInfo profile = memberProfiles.get(challenger.getMemberId());
+        MemberInfo profile = memberProfiles.get(challenger.getMemberId());
 
         return new SearchMemberItemInfo(
             challenger.getMemberId(),
@@ -76,7 +76,7 @@ public class MemberSearchService implements SearchMemberUseCase {
         );
     }
 
-    private Map<Long, MemberProfileInfo> loadMemberProfiles(List<Challenger> challengers) {
+    private Map<Long, MemberInfo> loadMemberProfiles(List<Challenger> challengers) {
         Set<Long> memberIds = challengers.stream()
             .map(Challenger::getMemberId)
             .filter(Objects::nonNull)

@@ -24,7 +24,6 @@ import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,7 +58,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId);
 
         // 멤버 프로필 조회 (이름과 프로필 이미지)
-        MemberProfileInfo memberProfile = getMemberUseCase.getProfile(challengerInfo.memberId());
+        MemberInfo memberProfile = getMemberUseCase.getProfile(challengerInfo.memberId());
         String authorName = memberProfile.name();
         String authorProfileImage = memberProfile.profileImageLink();
 
@@ -77,7 +76,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         ChallengerInfo authorChallengerInfo = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId);
 
         // 작성자 멤버 프로필 조회 (이름과 프로필 이미지)
-        MemberProfileInfo memberProfile = getMemberUseCase.getProfile(authorChallengerInfo.memberId());
+        MemberInfo memberProfile = getMemberUseCase.getProfile(authorChallengerInfo.memberId());
         String authorName = memberProfile.name();
         String authorProfileImage = memberProfile.profileImageLink();
 
@@ -120,7 +119,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
 
         // 작성자 멤버 프로필 조회 (이름과 프로필 이미지, 한 번만)
-        MemberProfileInfo memberProfile = getMemberUseCase.getProfile(challengerInfo.memberId());
+        MemberInfo memberProfile = getMemberUseCase.getProfile(challengerInfo.memberId());
         String authorName = memberProfile.name();
         String authorProfileImage = memberProfile.profileImageLink();
 
@@ -174,7 +173,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
                 .collect(Collectors.toSet());
 
         // 6. 멤버 ID -> 멤버 프로필 매핑 (1 query, 일괄 조회로 N+1 해결)
-        Map<Long, MemberProfileInfo> memberProfileMap = getMemberUseCase.getProfiles(memberIds);
+        Map<Long, MemberInfo> memberProfileMap = getMemberUseCase.getProfiles(memberIds);
 
         // 7. 챌린저 ID -> 작성자 정보 매핑 (이름 + 프로필 이미지 + 파트, 한 번의 스트림 처리)
         Map<Long, AuthorDetails> authorDetailsMap = challengerInfoMap.entrySet().stream()
@@ -182,7 +181,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
                         Map.Entry::getKey,
                         entry -> {
                             Long memberId = entry.getValue().memberId();
-                            MemberProfileInfo memberProfile = memberProfileMap.get(memberId);
+                            MemberInfo memberProfile = memberProfileMap.get(memberId);
                             String name = memberProfile != null ? memberProfile.name() : "알 수 없음";
                             String profileImage = memberProfile != null ? memberProfile.profileImageLink() : null;
                             return new AuthorDetails(name, profileImage, entry.getValue().part());

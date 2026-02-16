@@ -8,9 +8,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -46,6 +49,14 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 20)
     private MemberStatus status;
 
+    // MemberProfile은 Member에서 단방향으로 조회합니다. MemberProfile에서 역으로 올라오는 경우는 없도록 합니다.
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+        name = "profile_id",
+        unique = true
+    )
+    private MemberProfile profile;
+
     @Builder
     private Member(String name, String nickname, String email, Long schoolId, String profileImageId) {
         this.name = name;
@@ -80,6 +91,15 @@ public class Member extends BaseEntity {
         if (this.status != MemberStatus.ACTIVE) {
             throw new MemberDomainException(MemberErrorCode.MEMBER_NOT_ACTIVE);
         }
+    }
+
+    public void assignProfile(MemberProfile profile) {
+        validateActive();
+        this.profile = profile;
+    }
+
+    public void removeProfile() {
+        this.profile = null;
     }
 
     // TODO: 탈퇴 및 휴면 처리에 대한 도메인 로직은 추후 추가

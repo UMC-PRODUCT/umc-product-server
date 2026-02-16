@@ -20,7 +20,7 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import java.time.Instant;
@@ -61,7 +61,7 @@ class ChallengerSearchServiceTest {
     private SearchChallengerQuery defaultQuery;
 
     private List<Challenger> sixChallengers;
-    private Map<Long, MemberProfileInfo> sixProfiles;
+    private Map<Long, MemberInfo> sixProfiles;
     private List<GisuInfo> defaultGisuInfos;
 
     @BeforeEach
@@ -69,8 +69,8 @@ class ChallengerSearchServiceTest {
         defaultQuery = new SearchChallengerQuery(null, null, null, null, null, null, 1L,
             List.of(ChallengerStatus.ACTIVE));
         defaultGisuInfos = List.of(
-            new GisuInfo(1L, 7L, Instant.now(), Instant.now(), true),
-            new GisuInfo(2L, 8L, Instant.now(), Instant.now(), false)
+            new GisuInfo(1L, 7L, 7L, Instant.now(), Instant.now(), true),
+            new GisuInfo(2L, 8L, 8L, Instant.now(), Instant.now(), false)
         );
 
         sixChallengers = List.of(
@@ -102,8 +102,8 @@ class ChallengerSearchServiceTest {
         return challenger;
     }
 
-    private MemberProfileInfo createProfile(Long id, String name, String nickname) {
-        return MemberProfileInfo.builder()
+    private MemberInfo createProfile(Long id, String name, String nickname) {
+        return MemberInfo.builder()
             .id(id)
             .name(name)
             .nickname(nickname)

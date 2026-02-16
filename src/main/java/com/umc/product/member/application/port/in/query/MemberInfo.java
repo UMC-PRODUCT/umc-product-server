@@ -9,8 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 회원에 대한 모든 정보를 담고 있는 DTO
- * <p>
- * {@link MemberProfileInfo} 를 대체합니다.
  */
 @Slf4j
 @Builder

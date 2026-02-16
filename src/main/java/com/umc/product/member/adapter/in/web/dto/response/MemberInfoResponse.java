@@ -4,7 +4,6 @@ import com.umc.product.authorization.application.port.in.query.ChallengerRoleInf
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.MemberInfo;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
 import java.util.List;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
@@ -31,24 +30,6 @@ public record MemberInfoResponse(
     List<ChallengerInfoResponse> challengerRecords
     // TODO: 활동 이력이나 각종 링크들 추가해야 함
 ) {
-    @Deprecated
-    public static MemberInfoResponse from(MemberProfileInfo info) {
-        log.error("MemberProfileInfo is Deprecated. Use MemberInfo to create MemberInfoResponse");
-
-        return new MemberInfoResponse(
-            info.id(),
-            info.name(),
-            info.nickname(),
-            info.email(),
-            info.schoolId(),
-            info.schoolName(),
-            info.profileImageLink(),
-            info.status(),
-            info.roles(),
-            null
-        );
-    }
-
     public static MemberInfoResponse from(MemberInfo info, List<ChallengerInfoResponse> challengerRecords) {
         return new MemberInfoResponse(
             info.id(),

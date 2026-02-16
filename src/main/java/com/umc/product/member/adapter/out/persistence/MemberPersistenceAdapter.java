@@ -28,6 +28,11 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     }
 
     @Override
+    public Optional<Member> findByIdForUpdate(Long id) {
+        return memberQueryRepository.findByIdForUpdate(id);
+    }
+
+    @Override
     public Optional<Member> findByEmail(String email) {
         return memberJpaRepository.findByEmail(email);
     }
