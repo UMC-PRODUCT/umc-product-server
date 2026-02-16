@@ -23,7 +23,7 @@ public record CommentResponse(
         String challengerProfileImage,
 
         @Schema(description = "작성자 파트", example = "SPRINGBOOT")
-        ChallengerPart userPart,
+        ChallengerPart challengerPart,
 
         @Schema(description = "댓글 내용", example = "좋은 글 감사합니다!")
         String content,
@@ -41,7 +41,7 @@ public record CommentResponse(
                 info.challengerId(),
                 info.challengerName(),
                 info.challengerProfileImage(),
-                info.challengerPart(), // CommentInfo는 challengerPart로 유지
+                info.challengerPart(),
                 info.content(),
                 info.createdAt(),
                 info.isAuthor()

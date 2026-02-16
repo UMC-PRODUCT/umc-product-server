@@ -31,7 +31,7 @@ public record PostDetailResponse(
         String authorProfileImage,
 
         @Schema(description = "작성자 파트", example = "SPRINGBOOT")
-        ChallengerPart userPart,
+        ChallengerPart authorPart,
 
         @Schema(description = "번개 정보 (번개글인 경우)")
         LightningInfoResponse lightningInfo,
@@ -77,7 +77,7 @@ public record PostDetailResponse(
                 info.authorId(),
                 info.authorName(),
                 info.authorProfileImage(),
-                info.userPart(),
+                info.authorPart(),
                 lightningInfoResponse,
                 info.commentCount(),
                 info.createdAt(),

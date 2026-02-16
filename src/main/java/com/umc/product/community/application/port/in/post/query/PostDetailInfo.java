@@ -14,7 +14,7 @@ public record PostDetailInfo(
         Long authorId,
         String authorName,
         String authorProfileImage,
-        ChallengerPart userPart,
+        ChallengerPart authorPart,
         LocalDateTime meetAt,
         String location,
         Integer maxParticipants,

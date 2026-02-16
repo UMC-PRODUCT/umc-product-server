@@ -31,7 +31,7 @@ public record PostResponse(
         String authorProfileImage,
 
         @Schema(description = "작성자 파트", example = "SPRINGBOOT")
-        ChallengerPart userPart,
+        ChallengerPart authorPart,
 
         @Schema(description = "작성일시", example = "2026-02-13T10:30:00Z")
         Instant createdAt,
@@ -71,7 +71,7 @@ public record PostResponse(
                 info.authorId(),
                 info.authorName(),
                 info.authorProfileImage(),
-                info.authorPart(), // PostInfo는 authorPart로 유지
+                info.authorPart(),
                 info.createdAt(),
                 info.commentCount(),
                 info.likeCount(),
