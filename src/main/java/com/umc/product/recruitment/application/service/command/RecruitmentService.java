@@ -553,8 +553,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     private void saveRecruitmentParts(Long recruitmentId, List<ChallengerPart> parts) {
-        // update에서도 이 메소드 사용 시
-        // saveRecruitmentPartPort.deleteAllByRecruitmentId(recruitmentId);
+        saveRecruitmentPartPort.deleteAllByRecruitmentId(recruitmentId);
 
         if (parts != null && !parts.isEmpty()) {
             List<RecruitmentPart> openParts = parts.stream()
@@ -629,6 +628,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_PUBLISHED);
         }
 
+        boolean isExtension = recruitment.getParentRecruitmentId() != null;
+
         if (command.title() != null) {
             recruitment.changeTitle(command.title());
         }
@@ -642,26 +643,17 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         if (command.schedule() != null) {
-            upsertSchedulesForDraft(recruitment, command.schedule());
+
+            // 추가 모집인 경우, 면접/발표 관련 요청 필드를 강제로 null처리하여 무시 처리
+            UpdateRecruitmentDraftCommand.ScheduleCommand effectiveSchedule = isExtension
+                ? filterScheduleForExtension(command.schedule())
+                : command.schedule();
+
+            upsertSchedulesForDraft(recruitment, effectiveSchedule, isExtension);
         }
 
         if (command.recruitmentParts() != null) {
-            saveRecruitmentPartPort.deleteAllByRecruitmentId(command.recruitmentId());
-
-            List<RecruitmentPart> openParts = command.recruitmentParts().stream()
-                .distinct()
-                .map(part -> RecruitmentPart.createOpen(command.recruitmentId(), part))
-                .toList();
-
-            List<RecruitmentPart> closedParts = java.util.Arrays.stream(
-                    com.umc.product.common.domain.enums.ChallengerPart.values())
-                .filter(part -> !command.recruitmentParts().contains(part))
-                .map(part -> RecruitmentPart.createClosed(command.recruitmentId(), part))
-                .toList();
-
-            List<RecruitmentPart> allParts = new java.util.ArrayList<>(openParts);
-            allParts.addAll(closedParts);
-            saveRecruitmentPartPort.saveAll(allParts);
+            saveRecruitmentParts(command.recruitmentId(), command.recruitmentParts());
         }
 
         saveRecruitmentPort.save(recruitment);
@@ -669,9 +661,27 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         return loadRecruitmentPort.findDraftInfoById(command.recruitmentId());
     }
 
+    /**
+     * 추가 모집 시 수정 불가능한 필드(면접/최종발표/시간표)를 null로 치환하는 헬퍼 메서드
+     */
+    private UpdateRecruitmentDraftCommand.ScheduleCommand filterScheduleForExtension(
+        UpdateRecruitmentDraftCommand.ScheduleCommand original
+    ) {
+        return new UpdateRecruitmentDraftCommand.ScheduleCommand(
+            original.applyStartAt(),
+            original.applyEndAt(),
+            original.docResultAt(),
+            null, // interviewStartAt 무시
+            null, // interviewEndAt 무시
+            null, // finalResultAt 무시
+            null  // interviewTimeTable 무시
+        );
+    }
+
 
     private void upsertSchedulesForDraft(Recruitment recruitment,
-                                         UpdateRecruitmentDraftCommand.ScheduleCommand schedule) {
+                                         UpdateRecruitmentDraftCommand.ScheduleCommand schedule,
+                                         boolean isExtension) {
 
         Long recruitmentId = recruitment.getId();
 
@@ -695,51 +705,29 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             null
         );
 
-        upsertSchedulePeriod(
-            recruitmentId,
-            RecruitmentScheduleType.INTERVIEW_WINDOW,
-            resolved.interviewStartAt(),
-            resolved.interviewEndAt()
-        );
+        // 면접/최종 발표 일정: 본모집일 때만 업데이트 (추가 모집은 패스)
+        if (!isExtension) {
+            upsertSchedulePeriod(
+                recruitmentId,
+                RecruitmentScheduleType.INTERVIEW_WINDOW,
+                resolved.interviewStartAt(),
+                resolved.interviewEndAt()
+            );
 
-        upsertSchedulePeriod(
-            recruitmentId,
-            RecruitmentScheduleType.FINAL_RESULT_AT,
-            resolved.finalResultAt(),
-            null
-        );
+            upsertSchedulePeriod(
+                recruitmentId,
+                RecruitmentScheduleType.FINAL_RESULT_AT,
+                resolved.finalResultAt(),
+                null
+            );
+        }
 
-        upsertReviewWindowsForDraftResolved(recruitmentId, resolved);
+        upsertReviewWindowsForDraftResolved(recruitmentId, resolved, isExtension);
 
-        if (schedule.interviewTimeTable() != null) {
+        if (!isExtension && schedule.interviewTimeTable() != null) {
             validateTimeTableStructure(schedule.interviewTimeTable());
             var enabledOnlyMap = toEnabledOnlyMap(schedule.interviewTimeTable());
             recruitment.changeInterviewTimeTable(enabledOnlyMap);
-        }
-    }
-
-    private void upsertReviewWindows(Long recruitmentId, UpdateRecruitmentDraftCommand.ScheduleCommand schedule) {
-
-        Instant docReviewStart = schedule.applyEndAt();
-        Instant docReviewEnd = schedule.docResultAt();
-        if (docReviewStart != null && docReviewEnd != null && docReviewStart.isBefore(docReviewEnd)) {
-            upsertSchedulePeriod(
-                recruitmentId,
-                RecruitmentScheduleType.DOC_REVIEW_WINDOW,
-                docReviewStart,
-                docReviewEnd
-            );
-        }
-
-        Instant finalReviewStart = schedule.interviewEndAt();
-        Instant finalReviewEnd = schedule.finalResultAt();
-        if (finalReviewStart != null && finalReviewEnd != null && finalReviewStart.isBefore(finalReviewEnd)) {
-            upsertSchedulePeriod(
-                recruitmentId,
-                RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
-                finalReviewStart,
-                finalReviewEnd
-            );
         }
     }
 
@@ -2319,16 +2307,21 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
     }
 
-    private void upsertReviewWindowsForDraftResolved(Long recruitmentId, ResolvedRecruitmentSchedule r) {
+    private void upsertReviewWindowsForDraftResolved(Long recruitmentId, ResolvedRecruitmentSchedule r,
+                                                     boolean isExtension) {
         if (r.applyEndAt() != null && r.docResultAt() != null && r.applyEndAt().isBefore(r.docResultAt())) {
             upsertSchedulePeriod(recruitmentId, RecruitmentScheduleType.DOC_REVIEW_WINDOW,
                 r.applyEndAt(), r.docResultAt());
         }
-        if (r.interviewEndAt() != null && r.finalResultAt() != null && r.interviewEndAt().isBefore(r.finalResultAt())) {
-            upsertSchedulePeriod(recruitmentId, RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
-                r.interviewEndAt(), r.finalResultAt());
-        }
 
+        // 면접 평가 기간: 본모집일 때만 갱신
+        if (!isExtension) {
+            if (r.interviewEndAt() != null && r.finalResultAt() != null && r.interviewEndAt()
+                .isBefore(r.finalResultAt())) {
+                upsertSchedulePeriod(recruitmentId, RecruitmentScheduleType.FINAL_REVIEW_WINDOW,
+                    r.interviewEndAt(), r.finalResultAt());
+            }
+        }
     }
 
     private void syncReviewWindowsOnPublish(Long recruitmentId, RecruitmentDraftInfo.ScheduleInfo s) {
