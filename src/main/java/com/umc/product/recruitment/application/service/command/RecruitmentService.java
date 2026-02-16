@@ -819,6 +819,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             .orElseThrow(
                 () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
+        boolean isExtension = recruitment.getParentRecruitmentId() != null;
+
         Member requester = loadMemberPort.findById(command.requesterMemberId())
             .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
 
@@ -840,6 +842,9 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         validatePublishable(finalDraft, finalFormInfo);
 
+        // 지망 개수 vs 오픈 파트 수 검증
+        validateMaxPreferredPartCount(recruitment.getId());
+
         RecruitmentDraftInfo syncedDraft = loadRecruitmentPort.findDraftInfoById(command.recruitmentId());
 
         var s = syncedDraft.schedule();
@@ -853,14 +858,25 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             );
         }
         syncReviewWindowsOnPublish(command.recruitmentId(), syncedDraft.schedule());
-        validateScheduleOrderOrThrow(syncedDraft.schedule());
+
+        // 추가모집 시 서류 발표일 < 면접 종료일로 검증 완화
+        validateScheduleOrderOrThrow(syncedDraft.schedule(), isExtension);
+
+        // 추가 모집 시 root와 면접/발표 일정 최종 검증
+        if (isExtension) {
+            validateExtensionScheduleIntegrity(recruitment);
+        }
 
         Instant now = Instant.now();
 
+        // 같은 root면 허용, 접수 기간 중복은 불가
         boolean hasOtherOngoing = loadRecruitmentPort.existsOtherOngoingPublishedRecruitment(
             recruitment.getSchoolId(),
             recruitment.getId(),
-            Instant.now()
+            recruitment.getEffectiveRootId(),
+            syncedDraft.schedule().applyStartAt(), // 접수 시작일
+            syncedDraft.schedule().applyEndAt(),   // 접수 종료일
+            now
         );
 
         if (hasOtherOngoing) {
@@ -873,7 +889,11 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         latest.publish(now);
         saveRecruitmentPort.save(latest);
 
-        createInterviewSlots(latest, true);
+        // 본모집일 때만 슬롯 생성
+        // 추가 모집은 이미 Root가 생성한 슬롯을 공유해서 사용
+        if (!isExtension) {
+            createInterviewSlots(latest, true);
+        }
 
         Form form = loadFormPort.findById(latest.getFormId())
             .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
@@ -890,6 +910,24 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             published.getStatus().name(),
             published.getPublishedAt()
         );
+    }
+
+    private void validateMaxPreferredPartCount(Long recruitmentId) {
+        // 현재 모집에서 OPEN 상태인 파트 리스트 조회
+        List<RecruitmentPart> openParts = loadRecruitmentPartPort.findByRecruitmentId(recruitmentId).stream()
+            .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
+            .toList();
+
+        Recruitment recruitment = loadRecruitmentPort.findById(recruitmentId)
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        // 지망 개수 설정이 오픈된 파트 수보다 많으면 발행 불가
+        if (recruitment.getMaxPreferredPartCount() > openParts.size()) {
+            throw new BusinessException(
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.MAX_PREFERRED_PART_EXCEEDS_OPEN_PARTS
+            );
+        }
     }
 
     private void validatePublishable(
@@ -919,8 +957,6 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         requireNonNull(s.interviewStartAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_INTERVIEW_START_REQUIRED);
         requireNonNull(s.interviewEndAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_INTERVIEW_END_REQUIRED);
         requireNonNull(s.finalResultAt(), RecruitmentErrorCode.RECRUITMENT_PUBLISH_FINAL_RESULT_REQUIRED);
-
-        validateScheduleOrderOrThrow(s);
 
         if (formInfo == null || formInfo.formDefinition() == null) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_VALIDATION_FAILED);
@@ -2350,7 +2386,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
     }
 
-    private void validateScheduleOrderOrThrow(RecruitmentDraftInfo.ScheduleInfo s) {
+    private void validateScheduleOrderOrThrow(RecruitmentDraftInfo.ScheduleInfo s, boolean isExtension) {
         // applyStart < applyEnd
         if (!s.applyStartAt().isBefore(s.applyEndAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
@@ -2361,11 +2397,22 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT,
                 RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
         }
-        // docResult <= interviewStart
-        if (s.interviewStartAt().isBefore(s.docResultAt())) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+
+        // docResult vs interview period
+        if (isExtension) {
+            // 추가 모집: 서류 발표 < 면접 종료 (면접이 끝나기 전까지만 발표하면 OK)
+            if (!s.docResultAt().isBefore(s.interviewEndAt())) {
+                throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+            }
+        } else {
+            // 본모집: 서류 발표 <= 면접 시작 (기존의 엄격한 순서)
+            if (s.interviewStartAt().isBefore(s.docResultAt())) {
+                throw new BusinessException(Domain.RECRUITMENT,
+                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+            }
         }
+
         // interviewStart < interviewEnd
         if (!s.interviewStartAt().isBefore(s.interviewEndAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
@@ -2375,6 +2422,34 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         if (s.finalResultAt().isBefore(s.interviewEndAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
                 RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+        }
+    }
+
+    private void validateExtensionScheduleIntegrity(Recruitment extension) {
+        Recruitment root = loadRecruitmentPort.findById(extension.getRootRecruitmentId())
+            .orElseThrow(
+                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.ROOT_RECRUITMENT_NOT_FOUND));
+
+        Map<RecruitmentScheduleType, RecruitmentSchedule> extSchedules = loadRecruitmentSchedulePort.findScheduleMapByRecruitmentId(
+            extension.getId());
+        Map<RecruitmentScheduleType, RecruitmentSchedule> rootSchedules = loadRecruitmentSchedulePort.findScheduleMapByRecruitmentId(
+            root.getId());
+
+        // 체크 리스트: 면접 기간, 최종 리뷰 기간, 최종 발표일 등 (서류 관련 제외)
+        checkScheduleMatch(extSchedules, rootSchedules, RecruitmentScheduleType.INTERVIEW_WINDOW);
+        checkScheduleMatch(extSchedules, rootSchedules, RecruitmentScheduleType.FINAL_REVIEW_WINDOW);
+        checkScheduleMatch(extSchedules, rootSchedules, RecruitmentScheduleType.FINAL_RESULT_AT);
+    }
+
+    private void checkScheduleMatch(Map<RecruitmentScheduleType, RecruitmentSchedule> ext,
+                                    Map<RecruitmentScheduleType, RecruitmentSchedule> root,
+                                    RecruitmentScheduleType type) {
+        RecruitmentSchedule extS = ext.get(type);
+        RecruitmentSchedule rootS = root.get(type);
+
+        if (extS == null || rootS == null || !extS.isSamePeriod(rootS)) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                RecruitmentErrorCode.EXTENSION_SCHEDULE_INCONSISTENT_WITH_ROOT);
         }
     }
 

@@ -366,11 +366,17 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     public boolean existsOtherOngoingPublishedRecruitment(
         Long schoolId,
         Long excludeRecruitmentId,
+        Long rootId,
+        Instant myApplyStart,
+        Instant myApplyEnd,
         Instant now
     ) {
         return recruitmentRepository.existsOtherOngoingPublishedRecruitment(
             schoolId,
             excludeRecruitmentId,
+            rootId,
+            myApplyStart,
+            myApplyEnd,
             now
         );
     }

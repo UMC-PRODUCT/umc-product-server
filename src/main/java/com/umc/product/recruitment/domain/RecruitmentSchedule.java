@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.time.Instant;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -124,4 +125,13 @@ public class RecruitmentSchedule extends BaseEntity {
             .build();
     }
 
+    public boolean isSamePeriod(RecruitmentSchedule other) {
+        if (other == null) {
+            return false;
+        }
+
+        // 시작 시간과 종료 시간이 모두 일치하는지 확인 (null 포함 비교)
+        return Objects.equals(this.startsAt, other.getStartsAt()) &&
+            Objects.equals(this.endsAt, other.getEndsAt());
+    }
 }
