@@ -24,7 +24,7 @@ public class MemberProfileCommandService implements ManageMemberProfileUseCase {
 
     @Override
     public void upsert(UpsertMemberProfileCommand command) {
-        Member member = loadMemberPort.findById(command.memberId())
+        Member member = loadMemberPort.findByIdForUpdate(command.memberId())
             .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         MemberProfile profile = member.getProfile();
@@ -41,7 +41,7 @@ public class MemberProfileCommandService implements ManageMemberProfileUseCase {
 
     @Override
     public void delete(Long memberId) {
-        Member member = loadMemberPort.findById(memberId)
+        Member member = loadMemberPort.findByIdForUpdate(memberId)
             .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         MemberProfile profile = member.getProfile();

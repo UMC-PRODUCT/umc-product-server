@@ -12,6 +12,7 @@ import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.QMember;
 import com.umc.product.organization.domain.QChapterSchool;
 import com.umc.product.organization.domain.QSchool;
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,15 @@ public class MemberQueryRepository {
         return queryFactory
                 .selectFrom(QMember.member)
                 .stream().count();
+    }
+
+    public Optional<Member> findByIdForUpdate(Long id) {
+        return Optional.ofNullable(queryFactory
+            .selectFrom(QMember.member)
+            .where(QMember.member.id.eq(id))
+            .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+            .fetchOne()
+        );
     }
 
     public Optional<Member> findByNickname(String nickname) {
