@@ -17,7 +17,7 @@ import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import java.util.EnumMap;
@@ -57,7 +57,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         // 챌린저별 상벌점 합계 계산
         Map<Long, Double> pointSums = buildPointSums(challengers);
         // 챌린저별 프로필 조회
-        Map<Long, MemberProfileInfo> memberProfiles = loadMemberProfiles(challengers);
+        Map<Long, MemberInfo> memberProfiles = loadMemberProfiles(challengers);
         // 챌린저별 역할 조회
         Map<Long, List<ChallengerRoleType>> roleTypes = loadRoleTypes(challengers.getContent());
         //
@@ -79,7 +79,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         List<Challenger> result = hasNext ? challengers.subList(0, size) : challengers;
 
         Map<Long, Double> pointSums = buildPointSums(result);
-        Map<Long, MemberProfileInfo> memberProfiles = loadMemberProfiles(result);
+        Map<Long, MemberInfo> memberProfiles = loadMemberProfiles(result);
         Map<Long, List<ChallengerRoleType>> roleTypes = loadRoleTypes(result);
         Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(result);
 
@@ -99,7 +99,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         boolean hasNext = challengers.size() > size;
         List<Challenger> result = hasNext ? challengers.subList(0, size) : challengers;
 
-        Map<Long, MemberProfileInfo> memberProfiles = loadMemberProfiles(result);
+        Map<Long, MemberInfo> memberProfiles = loadMemberProfiles(result);
         Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(result);
 
         List<GlobalSearchChallengerItemInfo> items = result.stream()
@@ -179,11 +179,11 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
     /**
      * 챌린저 목록에서 회원 정보 Map 제작
      */
-    private Map<Long, MemberProfileInfo> loadMemberProfiles(Page<Challenger> challengers) {
+    private Map<Long, MemberInfo> loadMemberProfiles(Page<Challenger> challengers) {
         return loadMemberProfiles(challengers.getContent());
     }
 
-    private Map<Long, MemberProfileInfo> loadMemberProfiles(List<Challenger> challengers) {
+    private Map<Long, MemberInfo> loadMemberProfiles(List<Challenger> challengers) {
         Set<Long> memberIds = challengers.stream()
             .map(Challenger::getMemberId)
             .filter(Objects::nonNull)
@@ -229,12 +229,12 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
      */
     private SearchChallengerItemInfo toItemInfo(
         Challenger challenger,
-        Map<Long, MemberProfileInfo> memberProfiles,
+        Map<Long, MemberInfo> memberProfiles,
         Map<Long, Double> pointSums,
         Map<Long, List<ChallengerRoleType>> roleTypes,
         Map<Long, Long> gisuGenerationMap
     ) {
-        MemberProfileInfo profile = memberProfiles.get(challenger.getMemberId());
+        MemberInfo profile = memberProfiles.get(challenger.getMemberId());
 
         if (profile == null) {
             throw new ChallengerDomainException(ChallengerErrorCode.MEMBER_PROFILE_NOT_FOUND);
@@ -256,10 +256,10 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
 
     private GlobalSearchChallengerItemInfo toGlobalItemInfo(
         Challenger challenger,
-        Map<Long, MemberProfileInfo> memberProfiles,
+        Map<Long, MemberInfo> memberProfiles,
         Map<Long, Long> gisuGenerationMap
     ) {
-        MemberProfileInfo profile = memberProfiles.get(challenger.getMemberId());
+        MemberInfo profile = memberProfiles.get(challenger.getMemberId());
 
         if (profile == null) {
             throw new ChallengerDomainException(ChallengerErrorCode.MEMBER_PROFILE_NOT_FOUND);
