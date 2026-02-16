@@ -156,7 +156,15 @@ public class Recruitment extends BaseEntity {
 
     // 5. Root ID 조회 편의 메서드 (Null 안전)
     public Long getEffectiveRootId() {
-        return (this.rootRecruitmentId != null) ? this.rootRecruitmentId : this.id;
+        if (this.rootRecruitmentId != null) {
+            return this.rootRecruitmentId;
+        }
+        // rootRecruitmentId가 없다면 자기 자신이 Root임을 의미함
+        return this.id;
+    }
+
+    public boolean isRoot() {
+        return this.parentRecruitmentId == null;
     }
 
     private static void validateDraftContext(Long schoolId, Long gisuId, Long formId) {
