@@ -53,18 +53,24 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
-        // 2. 검증 : partKey가 COMMON이 아니면 모집 중인 파트인지
-        validatePartKey(command.recruitmentId(), command.partKey());
+        Long rootId = recruitment.getEffectiveRootId();
+
+        // 2. 검증 : partKey가 COMMON이 아니면 모집 중인 파트인지 (root 기준)
+        validatePartKey(rootId, command.partKey());
+
+        Recruitment rootRecruitment = recruitment.isRoot() ? recruitment :
+            loadRecruitmentPort.findById(rootId)
+                .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.ROOT_RECRUITMENT_NOT_FOUND));
 
         // 3. orderNo 설정 (recruitment & partKey의 InterviewQuestion 중 max + 1)
         int orderNo = loadInterviewQuestionSheetPort
-            .findTopByRecruitmentAndPartKeyOrderByOrderNoDesc(recruitment, command.partKey())
+            .findTopByRecruitmentAndPartKeyOrderByOrderNoDesc(rootRecruitment, command.partKey())
             .map(InterviewQuestionSheet::getOrderNo)
             .orElse(0) + 1;
 
         // 4. InterviewQuestionSheet 저장
         InterviewQuestionSheet interviewQuestionSheet = saveInterviewQuestionSheetPort.save(
-            command.toEntity(recruitment, orderNo)
+            command.toEntity(rootRecruitment, orderNo)
         );
 
         return new CreateInterviewSheetQuestionResult(
@@ -82,7 +88,10 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SHEET_QUESTION_NOT_FOUND));
 
         // 2. 검증 : 해당 Recruitment의 질문인지
-        if (!question.getRecruitment().getId().equals(command.recruitmentId())) {
+        Recruitment requested = loadRecruitmentPort.findById(command.recruitmentId())
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        if (!question.getRecruitment().getEffectiveRootId().equals(requested.getEffectiveRootId())) {
             throw new RecruitmentDomainException(
                 RecruitmentErrorCode.INTERVIEW_SHEET_QUESTION_NOT_BELONGS_TO_RECRUITMENT);
         }
@@ -102,8 +111,11 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
         InterviewQuestionSheet question = loadInterviewQuestionSheetPort.findById(command.questionId())
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SHEET_QUESTION_NOT_FOUND));
 
+        Recruitment requested = loadRecruitmentPort.findById(command.recruitmentId())
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
         // 2. 검증 : 해당 Recruitment의 질문인지
-        if (!question.getRecruitment().getId().equals(command.recruitmentId())) {
+        if (!question.getRecruitment().getEffectiveRootId().equals(requested.getEffectiveRootId())) {
             throw new RecruitmentDomainException(
                 RecruitmentErrorCode.INTERVIEW_SHEET_QUESTION_NOT_BELONGS_TO_RECRUITMENT);
         }
@@ -115,12 +127,16 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
     @Override
     public ReorderInterviewSheetQuestionResult reorder(ReorderInterviewSheetQuestionCommand command) {
         // 1. 검증 : Recruitment 존재
-        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+        Recruitment requestedRecruitment = loadRecruitmentPort.findById(command.recruitmentId())
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        Recruitment rootRecruitment = requestedRecruitment.isRoot() ? requestedRecruitment :
+            loadRecruitmentPort.findById(requestedRecruitment.getEffectiveRootId())
+                .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.ROOT_RECRUITMENT_NOT_FOUND));
 
         // 2. 해당 파트 기존 질문들 조회
         List<InterviewQuestionSheet> existingQuestions = loadInterviewQuestionSheetPort
-            .findByRecruitmentAndPartKey(recruitment, command.partKey());
+            .findByRecruitmentAndPartKey(rootRecruitment, command.partKey());
 
         // 3. 검증 : 기존 질문 ID 목록과 요청된 ID 목록 일치하는지
         Set<Long> existingIds = existingQuestions.stream()

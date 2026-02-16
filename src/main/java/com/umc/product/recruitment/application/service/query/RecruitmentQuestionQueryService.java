@@ -12,6 +12,7 @@ import com.umc.product.recruitment.application.port.out.LoadInterviewQuestionShe
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.domain.InterviewQuestionSheet;
+import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.enums.PartKey;
 import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
@@ -37,17 +38,18 @@ public class RecruitmentQuestionQueryService implements GetInterviewSheetQuestio
     @Override
     public GetInterviewSheetQuestionsInfo get(GetInterviewSheetQuestionsQuery query) {
 
-        // 1. 검증 : Recruitment 존재
-        if (!loadRecruitmentPort.existsById(query.recruitmentId())) {
-            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND);
-        }
+        // 1. Recruitment 조회
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        Long rootId = recruitment.getEffectiveRootId();
 
         // 2. 질문 파트 (null이면 COMMON)
         PartKey partKey = query.partKeyOrDefault();
 
         // 3. 질문 순서대로 질문 조회
         List<InterviewQuestionSheet> questions = loadInterviewQuestionSheetPort
-            .findByRecruitmentIdAndPartKeyOrderByOrderNo(query.recruitmentId(), partKey);
+            .findByRecruitmentIdAndPartKeyOrderByOrderNo(rootId, partKey);
 
         List<InterviewQuestionInfo> questionInfos = questions.stream()
             .map(q -> new InterviewQuestionInfo(q.getId(), q.getOrderNo(), q.getContent()))
@@ -58,8 +60,13 @@ public class RecruitmentQuestionQueryService implements GetInterviewSheetQuestio
 
     @Override
     public GetInterviewSheetPartsInfo get(GetInterviewSheetPartsQuery query) {
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        Long rootId = recruitment.getEffectiveRootId();
+
         // 1. status가 OPEN인 모집 파트만 가져오기
-        List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentIdAndStatus(query.recruitmentId(),
+        List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentIdAndStatus(rootId,
             RecruitmentPartStatus.OPEN);
 
         // 2. COMMON 맨앞에 추가
