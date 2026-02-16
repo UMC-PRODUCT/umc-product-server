@@ -273,9 +273,9 @@ public class NoticeQueryRepository {
     private BooleanExpression targetPartContainsOrEmpty(QNoticeTarget target, ChallengerPart part) {
         return targetPartIsEmpty(target)
             .or(Expressions.booleanTemplate(
-                "{0} @> ARRAY[{1}]::varchar[]",
+                "array_contains({0}, {1})",
                 target.targetChallengerPart,
-                part.name()
+                part
             ));
     }
 
