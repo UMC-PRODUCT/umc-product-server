@@ -8,6 +8,7 @@ import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
+import com.umc.product.recruitment.application.port.in.command.CreateExtensionCommand;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormQuestionUseCase;
@@ -71,6 +72,7 @@ import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
+import com.umc.product.survey.application.port.in.command.CopyFormUseCase;
 import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
 import com.umc.product.survey.application.port.out.LoadFormPort;
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
@@ -153,6 +155,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private final SaveInterviewSlotPort saveInterviewSlotPort;
     private final SaveInterviewAssignmentPort saveInterviewAssignmentPort;
     private final LoadInterviewAssignmentPort loadInterviewAssignmentPort;
+    private final CopyFormUseCase copyFormUseCase;
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
@@ -467,29 +470,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             )
         );
 
-        if (command.parts() != null && !command.parts().isEmpty()) {
-            List<RecruitmentPart> openParts = command.parts().stream()
-                .distinct()
-                .map(part -> RecruitmentPart.createOpen(savedRecruitment.getId(), part))
-                .toList();
-
-            List<RecruitmentPart> closedParts = java.util.Arrays.stream(
-                    com.umc.product.common.domain.enums.ChallengerPart.values())
-                .filter(part -> !command.parts().contains(part))
-                .map(part -> RecruitmentPart.createClosed(savedRecruitment.getId(), part))
-                .toList();
-
-            List<RecruitmentPart> allParts = new java.util.ArrayList<>(openParts);
-            allParts.addAll(closedParts);
-            saveRecruitmentPartPort.saveAll(allParts);
-        } else {
-            List<RecruitmentPart> closedParts = java.util.Arrays.stream(
-                    com.umc.product.common.domain.enums.ChallengerPart.values())
-                .map(part -> RecruitmentPart.createClosed(savedRecruitment.getId(), part))
-                .toList();
-
-            saveRecruitmentPartPort.saveAll(closedParts);
-        }
+        saveRecruitmentParts(savedRecruitment.getId(), command.parts());
 
         List<RecruitmentSchedule> schedules = new ArrayList<>();
         schedules.add(RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.APPLY_WINDOW));
@@ -506,6 +487,95 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         saveRecruitmentSchedulePort.saveAll(schedules);
 
         return CreateRecruitmentInfo.of(savedRecruitment.getId(), savedForm.getId());
+    }
+
+    @Override
+    public CreateRecruitmentInfo createExtension(CreateExtensionCommand command) {
+        // 1. 기준 모집(Base) 조회
+        Recruitment baseRecruitment = loadRecruitmentPort.findById(command.baseRecruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        // 2. 지원서 폼 복제
+        Long newFormId = copyFormUseCase.copyForm(baseRecruitment.getFormId(), command.memberId(),
+            command.recruitmentName());
+
+        // 3. 도메인 메서드로 추가 모집 엔티티 생성 (부모/루트 ID 연결 및 기본 설정 복사)
+        Recruitment extensionRecruitment = Recruitment.createExtension(
+            baseRecruitment,
+            newFormId,
+            command.recruitmentName()
+        );
+        Recruitment savedRecruitment = saveRecruitmentPort.save(extensionRecruitment);
+
+        // 4. 모집 파트 설정
+        saveRecruitmentParts(savedRecruitment.getId(), command.parts());
+
+        // 5. 일정(Schedule) 생성 및 복제
+        List<RecruitmentSchedule> schedules = new ArrayList<>();
+
+        // apply window, doc review window, doc result at: Draft 상태로 생성)
+        schedules.add(RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.APPLY_WINDOW));
+        schedules.add(
+            RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.DOC_REVIEW_WINDOW));
+        schedules.add(RecruitmentSchedule.createDraft(savedRecruitment.getId(), RecruitmentScheduleType.DOC_RESULT_AT));
+
+        // 고정 일정: 기존 모집에서 복제 (면접 및 최종 결과 관련)
+        Map<RecruitmentScheduleType, RecruitmentSchedule> rootSchedules =
+            loadRecruitmentSchedulePort.findScheduleMapByRecruitmentId(baseRecruitment.getEffectiveRootId());
+
+        // 하나씩 복사해서 추가 (NPE 방지를 위해 null 체크 포함)
+        if (rootSchedules.containsKey(RecruitmentScheduleType.INTERVIEW_WINDOW)) {
+            schedules.add(RecruitmentSchedule.copyForExtension(
+                savedRecruitment.getId(),
+                rootSchedules.get(RecruitmentScheduleType.INTERVIEW_WINDOW)
+            ));
+        }
+
+        if (rootSchedules.containsKey(RecruitmentScheduleType.FINAL_REVIEW_WINDOW)) {
+            schedules.add(RecruitmentSchedule.copyForExtension(
+                savedRecruitment.getId(),
+                rootSchedules.get(RecruitmentScheduleType.FINAL_REVIEW_WINDOW)
+            ));
+        }
+
+        if (rootSchedules.containsKey(RecruitmentScheduleType.FINAL_RESULT_AT)) {
+            schedules.add(RecruitmentSchedule.copyForExtension(
+                savedRecruitment.getId(),
+                rootSchedules.get(RecruitmentScheduleType.FINAL_RESULT_AT)
+            ));
+        }
+        saveRecruitmentSchedulePort.saveAll(schedules);
+
+        return CreateRecruitmentInfo.of(savedRecruitment.getId(), newFormId);
+    }
+
+    private void saveRecruitmentParts(Long recruitmentId, List<ChallengerPart> parts) {
+        // update에서도 이 메소드 사용 시
+        // saveRecruitmentPartPort.deleteAllByRecruitmentId(recruitmentId);
+
+        if (parts != null && !parts.isEmpty()) {
+            List<RecruitmentPart> openParts = parts.stream()
+                .distinct()
+                .map(part -> RecruitmentPart.createOpen(recruitmentId, part))
+                .toList();
+
+            List<RecruitmentPart> closedParts = java.util.Arrays.stream(
+                    com.umc.product.common.domain.enums.ChallengerPart.values())
+                .filter(part -> !parts.contains(part))
+                .map(part -> RecruitmentPart.createClosed(recruitmentId, part))
+                .toList();
+
+            List<RecruitmentPart> allParts = new java.util.ArrayList<>(openParts);
+            allParts.addAll(closedParts);
+            saveRecruitmentPartPort.saveAll(allParts);
+        } else {
+            List<RecruitmentPart> closedParts = java.util.Arrays.stream(
+                    com.umc.product.common.domain.enums.ChallengerPart.values())
+                .map(part -> RecruitmentPart.createClosed(recruitmentId, part))
+                .toList();
+
+            saveRecruitmentPartPort.saveAll(closedParts);
+        }
     }
 
     @Override

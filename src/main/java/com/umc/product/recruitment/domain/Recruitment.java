@@ -149,8 +149,9 @@ public class Recruitment extends BaseEntity {
 
     // 데이터 동기화 로직 (면접 시간표 복사)
     public void syncRootData(Recruitment source) {
-        // 면접 시간표 구조 복사. 날짜 등은 RecruitmentSchedule에서 처리
+        // 면접 시간표, 희망 파트 최대 개수 복사. 날짜 등은 RecruitmentSchedule에서 처리
         this.interviewTimeTable = source.getInterviewTimeTable();
+        this.maxPreferredPartCount = source.getMaxPreferredPartCount();
     }
 
     // 5. Root ID 조회 편의 메서드 (Null 안전)

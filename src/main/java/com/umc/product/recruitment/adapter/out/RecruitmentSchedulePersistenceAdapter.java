@@ -7,7 +7,9 @@ import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -47,5 +49,14 @@ public class RecruitmentSchedulePersistenceAdapter implements SaveRecruitmentSch
     public Optional<RecruitmentSchedule> findOptionalByRecruitmentIdAndType(Long recruitmentId,
                                                                             RecruitmentScheduleType type) {
         return recruitmentScheduleRepository.findByRecruitmentIdAndType(recruitmentId, type);
+    }
+
+    @Override
+    public Map<RecruitmentScheduleType, RecruitmentSchedule> findScheduleMapByRecruitmentId(Long recruitmentId) {
+        return recruitmentScheduleRepository.findByRecruitmentId(recruitmentId).stream()
+            .collect(Collectors.toMap(
+                RecruitmentSchedule::getType, // Key: 일정 타입
+                schedule -> schedule          // Value: 일정 엔티티 객체
+            ));
     }
 }

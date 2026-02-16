@@ -2,6 +2,7 @@ package com.umc.product.recruitment.adapter.in.web;
 
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.recruitment.adapter.in.web.dto.request.CreateExtensionRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateRecruitmentRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.PublishRecruitmentRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.RecruitmentListStatusQuery;
@@ -27,6 +28,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentSchedu
 import com.umc.product.recruitment.adapter.in.web.dto.response.SubmitRecruitmentApplicationResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateRecruitmentInterviewPreferenceResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpsertRecruitmentFormResponseAnswersResponse;
+import com.umc.product.recruitment.application.port.in.command.CreateExtensionCommand;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormQuestionUseCase;
@@ -350,6 +352,29 @@ public class RecruitmentController {
         );
 
         CreateRecruitmentInfo info = createRecruitmentUseCase.create(command);
+
+        return CreateRecruitmentResponse.from(info);
+    }
+
+    @PostMapping("/{recruitmentId}/extensions")
+    @Operation(
+        summary = "추가 모집 최초 생성",
+        description = """
+            기존 모집(Base)을 기반으로 추가 모집을 생성합니다.
+            - 기존 모집의 면접 시간표 및 특정 일정(면접/최종발표 등)을 복제합니다.
+            - 기존 모집의 지원서 문항들을 복제하여 새로운 폼을 생성합니다.
+            - 추가 모집용 제목과 모집 파트를 새로 설정합니다.
+            """
+    )
+    public CreateRecruitmentResponse createExtension(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Parameter(description = "기준이 되는 기존 모집 ID") @PathVariable Long recruitmentId,
+        @RequestBody(required = false) CreateExtensionRequest request
+    ) {
+        CreateExtensionRequest req = (request == null) ? CreateExtensionRequest.empty() : request;
+
+        CreateExtensionCommand command = req.toCommand(recruitmentId, memberPrincipal.getMemberId());
+        CreateRecruitmentInfo info = createRecruitmentUseCase.createExtension(command);
 
         return CreateRecruitmentResponse.from(info);
     }
