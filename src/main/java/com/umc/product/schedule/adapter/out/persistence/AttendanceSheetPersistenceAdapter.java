@@ -3,6 +3,7 @@ package com.umc.product.schedule.adapter.out.persistence;
 import com.umc.product.schedule.application.port.out.DeleteAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.SaveAttendanceSheetPort;
+import com.umc.product.schedule.application.port.out.dto.AttendanceSheetPermissionContext;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,7 @@ public class AttendanceSheetPersistenceAdapter implements SaveAttendanceSheetPor
     DeleteAttendanceSheetPort {
 
     private final AttendanceSheetJpaRepository sheetJpaRepository;
+    private final AttendanceSheetQueryRepository sheetQueryRepository;
 
     // ========== SaveAttendanceSheetPort ==========
 
@@ -75,6 +77,11 @@ public class AttendanceSheetPersistenceAdapter implements SaveAttendanceSheetPor
             return List.of();
         }
         return sheetJpaRepository.findByGisuIdAndActiveTrue(gisuId);
+    }
+
+    @Override
+    public Optional<AttendanceSheetPermissionContext> findPermissionContext(Long sheetId) {
+        return sheetQueryRepository.findPermissionContext(sheetId);
     }
 
     // ========== DeleteAttendanceSheetPort ==========

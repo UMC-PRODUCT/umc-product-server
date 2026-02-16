@@ -23,9 +23,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class CheckResourcePermissionServiceTest {
 
-    @Mock CheckPermissionUseCase checkPermissionUseCase;
+    @Mock
+    CheckPermissionUseCase checkPermissionUseCase;
 
-    @InjectMocks CheckResourcePermissionService sut;
+    @InjectMocks
+    CheckResourcePermissionService sut;
 
     private static final Long MEMBER_ID = 1L;
     private static final Long RESOURCE_ID = 100L;
@@ -113,7 +115,7 @@ class CheckResourcePermissionServiceTest {
         @Test
         void Evaluator가_구현되지_않은_리소스_타입이면_예외가_발생한다() {
             // given
-            ResourceType resourceType = ResourceType.SCHEDULE;
+            ResourceType resourceType = ResourceType.CURRICULUM;
 
             // when & then
             assertThatThrownBy(() -> sut.hasPermission(MEMBER_ID, resourceType, RESOURCE_ID))

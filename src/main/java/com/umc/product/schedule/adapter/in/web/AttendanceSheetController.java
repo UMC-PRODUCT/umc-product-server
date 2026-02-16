@@ -1,5 +1,8 @@
 package com.umc.product.schedule.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.schedule.adapter.in.web.dto.request.UpdateAttendanceSheetRequest;
 import com.umc.product.schedule.adapter.in.web.swagger.AttendanceSheetControllerApi;
 import com.umc.product.schedule.application.port.in.command.UpdateAttendanceSheetUseCase;
@@ -22,6 +25,11 @@ public class AttendanceSheetController implements AttendanceSheetControllerApi {
 
     @Override
     @PatchMapping("/attendance-sheets/{sheetId}")
+    @CheckAccess(
+        resourceType = ResourceType.ATTENDANCE_SHEET,
+        resourceId = "#sheetId",
+        permission = PermissionType.APPROVE
+    )
     public void updateAttendanceSheet(
         @PathVariable Long sheetId,
         @RequestBody UpdateAttendanceSheetRequest request
@@ -31,12 +39,22 @@ public class AttendanceSheetController implements AttendanceSheetControllerApi {
 
     @Override
     @DeleteMapping("/attendance-sheets/{sheetId}")
+    @CheckAccess(
+        resourceType = ResourceType.ATTENDANCE_SHEET,
+        resourceId = "#sheetId",
+        permission = PermissionType.APPROVE
+    )
     public void deactivateAttendanceSheet(@PathVariable Long sheetId) {
         updateAttendanceSheetUseCase.deactivate(new AttendanceSheetId(sheetId));
     }
 
     @Override
     @PostMapping("/attendance-sheets/{sheetId}/activate")
+    @CheckAccess(
+        resourceType = ResourceType.ATTENDANCE_SHEET,
+        resourceId = "#sheetId",
+        permission = PermissionType.APPROVE
+    )
     public void activateAttendanceSheet(@PathVariable Long sheetId) {
         updateAttendanceSheetUseCase.activate(new AttendanceSheetId(sheetId));
     }
