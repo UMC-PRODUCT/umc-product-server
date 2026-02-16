@@ -22,4 +22,6 @@ public interface GetSchoolUseCase {
     SchoolLinkInfo getSchoolLink(Long schoolId);
 
     List<UnassignedSchoolInfo> getUnassignedSchools(Long gisuId);
+
+    List<SchoolDetailInfo> getSchoolListByGisuId(Long gisuId);
 }
