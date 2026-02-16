@@ -275,7 +275,7 @@ public class NoticeQueryRepository {
             .or(Expressions.booleanTemplate(
                 "array_contains({0}, {1})",
                 target.targetChallengerPart,
-                part.name()
+                part
             ));
     }
 
