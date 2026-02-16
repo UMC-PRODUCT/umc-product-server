@@ -45,8 +45,6 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruit
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormQuestionsCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
-import com.umc.product.recruitment.application.port.in.query.GetExtensionBaseRecruitmentsUseCase;
-import com.umc.product.recruitment.application.port.in.query.dto.ExtensionBaseRecruitmentsInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.RecruitmentApplicationFormInfo;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
@@ -129,8 +127,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     UpdateRecruitmentInterviewPreferenceUseCase,
     ResetRecruitmentDraftFormResponseUseCase,
     UpdatePublishedRecruitmentScheduleUseCase,
-    DeleteRecruitmentQuestionOptionUseCase,
-    GetExtensionBaseRecruitmentsUseCase {
+    DeleteRecruitmentQuestionOptionUseCase {
 
     private final SaveFormPort saveFormPort;
     private final SaveRecruitmentPort saveRecruitmentPort;
@@ -1212,52 +1209,6 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         saveQuestionOptionPort.deleteById(command.optionId());
 
         return loadRecruitmentPort.findApplicationFormInfoById(command.recruitmentId());
-    }
-
-    @Override
-    public ExtensionBaseRecruitmentsInfo getRecruitmentsForExtensionBase(Long schoolId) {
-        // 1. 현재 활성화된 기수(Active Gisu) 조회
-        Long gisuId = resolveActiveGisuId();
-
-        // 2. 해당 학교 + Active 기수의 발행된 모집 목록 조회
-        List<Recruitment> recruitments = loadRecruitmentPort.findAllPublishedBySchoolIdAndGisuId(
-            schoolId,
-            gisuId
-        );
-
-        // 3. 각 모집의 일정(서류시작, 최종발표)을 결합하여 Info로 변환
-        List<ExtensionBaseRecruitmentsInfo.ExtensionBaseRecruitmentInfo> items = recruitments.stream()
-            .map(this::toExtensionBaseRecruitmentInfo)
-            .filter(this::isValidBaseRecruitment)
-            .toList();
-
-        return new ExtensionBaseRecruitmentsInfo(items);
-    }
-
-    private boolean isValidBaseRecruitment(ExtensionBaseRecruitmentsInfo.ExtensionBaseRecruitmentInfo info) {
-        if (info.applyStartAt() == null || info.finalResultAt() == null) {
-            log.warn("[Recruitment] 추가 모집 기반 데이터 제외 - 필수 일정 누락: recruitmentId={}, title={}",
-                info.recruitmentId(), info.title());
-            return false;
-        }
-        return true;
-    }
-
-    private ExtensionBaseRecruitmentsInfo.ExtensionBaseRecruitmentInfo toExtensionBaseRecruitmentInfo(
-        Recruitment recruitment) {
-        // 모집에 연결된 전체 일정 Map 조회
-        var schedules = loadRecruitmentSchedulePort.findScheduleMapByRecruitmentId(recruitment.getId());
-
-        var applyWindow = schedules.get(RecruitmentScheduleType.APPLY_WINDOW);
-        var finalResult = schedules.get(RecruitmentScheduleType.FINAL_RESULT_AT);
-
-        return new ExtensionBaseRecruitmentsInfo.ExtensionBaseRecruitmentInfo(
-            recruitment.getId(),
-            recruitment.getTitle(),
-            recruitment.getParentRecruitmentId() == null, // 부모가 없으면 Root(본모집)
-            applyWindow != null ? applyWindow.getStartsAt() : null, // 서류 접수 시작 시점
-            finalResult != null ? finalResult.getStartsAt() : null // 최종 결과 발표 시점
-        );
     }
 
     private void validateApplyWindow(Recruitment recruitment) {
