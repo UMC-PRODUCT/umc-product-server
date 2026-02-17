@@ -242,4 +242,21 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
         return applicationQueryRepository.countDocPassedByRootIdAndFirstPreferredPart(rootId,
             challengerPart);
     }
+
+    @Override
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRootId(
+        Long rootId
+    ) {
+        return applicationQueryRepository.findDocPassedApplicationIdsWithFormResponseIdsByRootId(rootId);
+    }
+
+    @Override
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRootIdAndFirstPreferredPart(
+        Long rootId,
+        PartOption partOption
+    ) {
+        return applicationQueryRepository.findDocPassedApplicationIdsWithFormResponseIdsByRootIdAndFirstPreferredPart(
+            rootId, partOption
+        );
+    }
 }

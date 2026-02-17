@@ -1034,6 +1034,47 @@ public class ApplicationQueryRepository {
         return count != null ? count : 0L;
     }
 
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRootId(
+        Long rootId
+    ) {
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .where(
+                belongsToRecruitmentFamily(rootId),
+                application.status.eq(ApplicationStatus.DOC_PASSED)
+            )
+            .fetch();
+    }
+
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRootIdAndFirstPreferredPart(
+        Long rootId,
+        PartOption partOption
+    ) {
+        ChallengerPart part = ChallengerPart.valueOf(partOption.name());
+
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitmentFamily(rootId),
+                application.status.eq(ApplicationStatus.DOC_PASSED),
+                recruitmentPart.part.eq(part)
+            )
+            .fetch();
+    }
+
     private BooleanExpression belongsToRecruitments(Long chapterId, Long schoolId) {
         // 둘 다 null이면 전체(필터 없음)
         if (chapterId == null && schoolId == null) {

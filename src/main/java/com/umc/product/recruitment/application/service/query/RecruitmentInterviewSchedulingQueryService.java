@@ -143,12 +143,15 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
 
         // todo: 운영진 권한 검증 필요
 
-        Long recruitmentId = query.recruitmentId();
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
         PartOption requestedPart = (query.part() != null) ? query.part() : PartOption.ALL;
 
         // contextDate 기본값: interview window start
         RecruitmentSchedule window = loadRecruitmentSchedulePort
-            .findByRecruitmentIdAndType(recruitmentId, RecruitmentScheduleType.INTERVIEW_WINDOW);
+            .findByRecruitmentIdAndType(rootId, RecruitmentScheduleType.INTERVIEW_WINDOW);
         if (window == null || window.getStartsAt() == null || window.getEndsAt() == null) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_WINDOW_NOT_SET);
         }
@@ -160,8 +163,8 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         Instant dayStart = contextDate.atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
         Instant dayEnd = contextDate.plusDays(1).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
 
-        List<InterviewSlot> slots = loadInterviewSlotPort.findByRecruitmentIdAndStartsAtBetween(
-            recruitmentId, dayStart, dayEnd
+        List<InterviewSlot> slots = loadInterviewSlotPort.findByRootIdAndStartsAtBetween(
+            rootId, dayStart, dayEnd
         );
 
         // slot이 없으면 빈 응답
@@ -172,10 +175,9 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         // 모집에 속한 applicationId + formResponseId 조회 (formResponse 경유)
         // projection: (applicationId, formResponseId)
         List<ApplicationIdWithFormResponseId> apps = (requestedPart == PartOption.ALL)
-            ? loadApplicationPort.findDocPassedApplicationIdsWithFormResponseIdsByRecruitment(recruitmentId)
-            : loadApplicationPort.findDocPassedApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
-                recruitmentId,
-                requestedPart);
+            ? loadApplicationPort.findDocPassedApplicationIdsWithFormResponseIdsByRootId(rootId)
+            : loadApplicationPort.findDocPassedApplicationIdsWithFormResponseIdsByRootIdAndFirstPreferredPart(
+                rootId, requestedPart);
 
         if (apps.isEmpty()) {
             // 지원자가 없으면 availableCount=0, done 정책 처리
@@ -200,8 +202,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
             loadSingleAnswerPort.findScheduleValuesByFormResponseIds(formResponseIds);
 
         // assigned applicationId set (recruitment 전체 기준)
-        Set<Long> assignedAppIds = loadInterviewAssignmentPort.findAssignedApplicationIdsByRecruitmentId(
-            recruitmentId);
+        Set<Long> assignedAppIds = loadInterviewAssignmentPort.findAssignedApplicationIdsByRootId(rootId);
 
         // slot별 voters 집계 및 done 계산
         String dateStr = contextDate.toString();

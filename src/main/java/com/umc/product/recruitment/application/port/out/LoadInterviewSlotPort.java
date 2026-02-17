@@ -14,5 +14,11 @@ public interface LoadInterviewSlotPort {
         Instant startsAtExclusive
     );
 
+    List<InterviewSlot> findByRootIdAndStartsAtBetween(
+        Long rootId,
+        Instant startsAtInclusive,
+        Instant startsAtExclusive
+    );
+
     Optional<InterviewSlot> findById(Long slotId);
 }

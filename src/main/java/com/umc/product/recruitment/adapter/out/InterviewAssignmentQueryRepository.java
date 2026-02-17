@@ -180,4 +180,17 @@ public class InterviewAssignmentQueryRepository {
         return result != null;
     }
 
+    public Set<Long> findAssignedApplicationIdsByRootId(Long rootId) {
+        return queryFactory
+            .select(interviewAssignment.application.id)
+            .from(interviewAssignment)
+            .join(interviewAssignment.recruitment, recruitment)
+            .where(
+                recruitment.rootRecruitmentId.eq(rootId)
+            )
+            .fetch()
+            .stream()
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+    }
 }

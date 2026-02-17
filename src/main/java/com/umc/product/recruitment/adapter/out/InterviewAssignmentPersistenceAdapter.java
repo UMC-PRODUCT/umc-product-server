@@ -110,4 +110,9 @@ public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssig
     public boolean existsByApplicationId(Long applicationId) {
         return interviewAssignmentQueryRepository.existsByApplicationId(applicationId);
     }
+
+    @Override
+    public Set<Long> findAssignedApplicationIdsByRootId(Long rootId) {
+        return interviewAssignmentQueryRepository.findAssignedApplicationIdsByRootId(rootId);
+    }
 }

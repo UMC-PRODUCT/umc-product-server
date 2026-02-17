@@ -34,4 +34,6 @@ public interface LoadInterviewAssignmentPort {
 
     boolean existsByApplicationId(Long applicationId);
 
+    Set<Long> findAssignedApplicationIdsByRootId(Long rootId);
+
 }
