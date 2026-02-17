@@ -17,7 +17,7 @@ public enum ResourceType {
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE, PermissionType.APPROVE)),
     NOTICE("notice", "공지사항",
         // WRITE는 Service 단에서 처리함
-        Set.of(PermissionType.READ, PermissionType.DELETE, PermissionType.CHECK)),
+        Set.of(PermissionType.READ, PermissionType.EDIT, PermissionType.DELETE, PermissionType.CHECK)),
     CHAPTER("chapter", "지부",
         Set.of(PermissionType.WRITE, PermissionType.DELETE)),
     WORKBOOK_SUBMISSION("workbook_submission", "워크북 제출 현황",

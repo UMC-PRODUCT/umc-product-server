@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @RequiredArgsConstructor
 public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
+
     private final GetNoticeTargetUseCase getNoticeTargetUseCase;
     private final GetNoticeUseCase getNoticeUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
@@ -52,7 +53,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
 
         return switch (resourcePermission.permission()) {
             case READ -> canReadNotice(subjectAttributes, targetInfo);
-            case DELETE -> canDeleteNotice(subjectAttributes, resourcePermission);
+            case EDIT, DELETE -> canDeleteNotice(subjectAttributes, resourcePermission);
             // TODO: Check는 임시로 Manage랑 동일하게 적용, 하나야 수정해줘!
             case MANAGE, CHECK -> canManageNotice(subjectAttributes.memberId(), targetInfo);
             default -> throw new AuthorizationDomainException(AuthorizationErrorCode.PERMISSION_TYPE_NOT_IMPLEMENTED,
