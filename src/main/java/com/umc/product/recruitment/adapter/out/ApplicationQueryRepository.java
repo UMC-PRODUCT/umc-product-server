@@ -568,12 +568,12 @@ public class ApplicationQueryRepository {
         ));
     }
 
-    public FinalSelectionApplicationListInfo.Summary getFinalSelectionSummary(Long recruitmentId, String part) {
+    public FinalSelectionApplicationListInfo.Summary getFinalSelectionSummary(Long rootId, String part) {
         Long total = queryFactory
             .select(application.count())
             .from(application)
             .where(
-                belongsToRecruitment(recruitmentId),
+                belongsToRecruitmentFamily(rootId),
                 finalSelectionStatus(),
                 firstPriorityPartMatches(part)
             )
@@ -583,7 +583,7 @@ public class ApplicationQueryRepository {
             .select(application.count())
             .from(application)
             .where(
-                belongsToRecruitment(recruitmentId),
+                belongsToRecruitmentFamily(rootId),
                 application.status.eq(ApplicationStatus.FINAL_ACCEPTED),
                 firstPriorityPartMatches(part)
             )
@@ -597,7 +597,7 @@ public class ApplicationQueryRepository {
 
 
     public Page<FinalSelectionListItemProjection> searchFinalSelections(
-        Long recruitmentId,
+        Long rootId,
         String part,
         String sort,
         Pageable pageable
@@ -613,7 +613,7 @@ public class ApplicationQueryRepository {
             .from(application)
             .join(member).on(member.id.eq(application.applicantMemberId))
             .where(
-                belongsToRecruitment(recruitmentId),
+                belongsToRecruitmentFamily(rootId),
                 finalSelectionStatus(),
                 firstPriorityPartMatches(part)
             )
@@ -627,7 +627,7 @@ public class ApplicationQueryRepository {
             .from(application)
             .join(member).on(member.id.eq(application.applicantMemberId))
             .where(
-                belongsToRecruitment(recruitmentId),
+                belongsToRecruitmentFamily(rootId),
                 finalSelectionStatus(),
                 firstPriorityPartMatches(part)
             );

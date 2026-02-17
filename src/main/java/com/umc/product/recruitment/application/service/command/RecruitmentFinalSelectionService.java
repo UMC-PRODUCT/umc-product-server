@@ -8,8 +8,10 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpdateFinalSt
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateFinalStatusResult;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPartPreferencePort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
 import com.umc.product.recruitment.domain.Application;
+import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.enums.PartKey;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -23,14 +25,23 @@ public class RecruitmentFinalSelectionService implements UpdateFinalStatusUseCas
     private final LoadApplicationPort loadApplicationPort;
     private final SaveApplicationPort saveApplicationPort;
     private final LoadApplicationPartPreferencePort loadApplicationPartPreferencePort;
+    private final LoadRecruitmentPort loadRecruitmentPort;
 
     @Override
     @Transactional
     public UpdateFinalStatusResult update(UpdateFinalStatusCommand command) {
-        Application application = loadApplicationPort.getByRecruitmentIdAndApplicationId(
-            command.recruitmentId(),
-            command.applicationId()
-        ).orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
+
+        Recruitment currentRecruitment = loadRecruitmentPort.findById(command.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = currentRecruitment.getEffectiveRootId();
+
+        Application application = loadApplicationPort.findById(command.applicationId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
+
+        if (!application.getRecruitment().getEffectiveRootId().equals(rootId)) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
+        }
 
         // todo: 운영진 권한 및 학교 체크
 
