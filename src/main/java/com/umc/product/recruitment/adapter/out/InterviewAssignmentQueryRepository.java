@@ -256,4 +256,17 @@ public class InterviewAssignmentQueryRepository {
 
         return result != null;
     }
+
+    public List<InterviewAssignment> findByRootIdWithSlotAndApplication(Long rootId) {
+        return queryFactory
+            .selectFrom(interviewAssignment)
+            .join(interviewAssignment.recruitment, recruitment)
+            .join(interviewAssignment.slot, interviewSlot).fetchJoin()
+            .join(interviewAssignment.application, application).fetchJoin()
+            .where(
+                recruitment.rootRecruitmentId.eq(rootId)
+            )
+            .orderBy(interviewSlot.startsAt.asc())
+            .fetch();
+    }
 }

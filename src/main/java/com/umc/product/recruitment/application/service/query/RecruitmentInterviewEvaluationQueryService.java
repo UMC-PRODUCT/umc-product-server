@@ -95,6 +95,10 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
         // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
         InterviewAssignment assignment = getValidatedAssignment(query.assignmentId(), query.recruitmentId());
 
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
         // 2. Application & 지원자 정보 가져오기
         Application application = assignment.getApplication();
         Long applicationId = application.getId();
@@ -114,7 +118,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
         // 6. InterviewQuestionSheetInfo 생성 (공통 + 1지망 + 2지망 + 즉석질문)
         GetInterviewEvaluationViewInfo.InterviewQuestionSheetInfo questionsInfo = buildQuestionsInfo(
-            recruitmentId, applicationId, preferences, query.memberId()
+            rootId, applicationId, preferences, query.memberId()
         );
 
         // 7. LiveEvaluationListInfo 생성 (실시간 평가 현황)
@@ -238,9 +242,13 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     public GetInterviewAssignmentsInfo get(GetInterviewAssignmentsQuery query) {
         Instant now = Instant.now();
 
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
         // 1. 모든 InterviewAssignment 조회 (Slot, Application fetch join)
         List<InterviewAssignment> allAssignments = loadInterviewAssignmentPort
-            .findByRecruitmentIdWithSlotAndApplication(query.recruitmentId());
+            .findByRootIdWithSlotAndApplication(rootId);
 
         // 2. 날짜 필터링 (드롭박스에서 선택된 날짜와 동일한 것만)
         List<InterviewAssignment> dateFiltered = allAssignments;
@@ -378,9 +386,14 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
     @Override
     public GetInterviewOptionsInfo get(GetInterviewOptionsQuery query) {
+
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
         // 1. INTERVIEW_WINDOW 일정 조회
         RecruitmentSchedule interviewSchedule = loadRecruitmentSchedulePort.findByRecruitmentIdAndType(
-            query.recruitmentId(),
+            rootId,
             RecruitmentScheduleType.INTERVIEW_WINDOW
         );
 
@@ -399,7 +412,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
         }
 
         // 3. ALL + OPEN 상태인 파트 목록
-        List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
+        List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(rootId);
 
         List<PartOption> parts = new ArrayList<>();
         parts.add(PartOption.ALL);  // ALL 먼저 추가
@@ -408,6 +421,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .filter(RecruitmentPart::isOpen)
             .sorted(Comparator.comparingInt(a -> a.getPart().getSortOrder()))
             .map(rp -> toPartOption(rp.getPart()))
+            .distinct() // 여러 공고에 중복된 파트가 있을 수 있으므로 중복 제거
             .forEach(parts::add);
 
         return new GetInterviewOptionsInfo(dates, parts);
@@ -468,22 +482,22 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     }
 
     private GetInterviewEvaluationViewInfo.InterviewQuestionSheetInfo buildQuestionsInfo(
-        Long recruitmentId,
+        Long rootId,
         Long applicationId,
         List<ApplicationPartPreference> preferences,
         Long memberId
     ) {
         // 공통 질문
         List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> common =
-            getQuestionsByPartKey(recruitmentId, PartKey.COMMON);
+            getQuestionsByPartKey(rootId, PartKey.COMMON);
 
         // 1지망 파트 질문
         List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> firstChoice =
-            getQuestionsForPriority(recruitmentId, preferences, 1);
+            getQuestionsForPriority(rootId, preferences, 1);
 
         // 2지망 파트 질문
         List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> secondChoice =
-            getQuestionsForPriority(recruitmentId, preferences, 2);
+            getQuestionsForPriority(rootId, preferences, 2);
 
         // 즉석 질문 (live questions)
         List<GetInterviewEvaluationViewInfo.LiveQuestionInfo> live =
@@ -495,10 +509,10 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     }
 
     private List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> getQuestionsByPartKey(
-        Long recruitmentId, PartKey partKey
+        Long rootId, PartKey partKey
     ) {
         return loadInterviewQuestionSheetPort
-            .findByRecruitmentIdAndPartKeyOrderByOrderNoAsc(recruitmentId, partKey)
+            .findByRecruitmentIdAndPartKeyOrderByOrderNoAsc(rootId, partKey)
             .stream()
             .map(q -> new GetInterviewEvaluationViewInfo.InterviewQuestionInfo(
                 q.getId(), q.getOrderNo(), q.getContent()
@@ -508,12 +522,12 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
     // 지망별 질문 조회 로직
     private List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> getQuestionsForPriority(
-        Long recruitmentId, List<ApplicationPartPreference> preferences, int priority
+        Long rootId, List<ApplicationPartPreference> preferences, int priority
     ) {
         return findPreferenceByPriority(preferences, priority)
             .map(pref -> {
                 PartKey partKey = toPartKey(pref.getRecruitmentPart().getPart());
-                return getQuestionsByPartKey(recruitmentId, partKey);
+                return getQuestionsByPartKey(rootId, partKey);
             })
             .orElse(List.of());
     }
