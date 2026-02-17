@@ -4,6 +4,7 @@ import com.umc.product.authorization.application.port.in.query.ChallengerRoleInf
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.MemberProfileInfo;
 import java.util.List;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
@@ -27,21 +28,40 @@ public record MemberInfoResponse(
     String profileImageLink,
     MemberStatus status,
     List<ChallengerRoleInfo> roles, // TODO: 이거 그대로 써도 괜찮은거 맞나?
-    List<ChallengerInfoResponse> challengerRecords
+    List<ChallengerInfoResponse> challengerRecords,
+    MemberProfileInfo profileInfo
     // TODO: 활동 이력이나 각종 링크들 추가해야 함
 ) {
     public static MemberInfoResponse from(MemberInfo info, List<ChallengerInfoResponse> challengerRecords) {
-        return new MemberInfoResponse(
-            info.id(),
-            info.name(),
-            info.nickname(),
-            info.email(),
-            info.schoolId(),
-            info.schoolName(),
-            info.profileImageLink(),
-            info.status(),
-            info.roles(),
-            challengerRecords
-        );
+        return MemberInfoResponse.builder()
+            .id(info.id())
+            .name(info.name())
+            .nickname(info.nickname())
+            .email(info.email())
+            .schoolId(info.schoolId())
+            .schoolName(info.schoolName())
+            .profileImageLink(info.profileImageLink())
+            .status(info.status())
+            .roles(info.roles())
+            .challengerRecords(challengerRecords)
+            .build();
+    }
+
+    public static MemberInfoResponse from(
+        MemberInfo info, MemberProfileInfo profileInfo,
+        List<ChallengerInfoResponse> challengerRecords) {
+        return MemberInfoResponse.builder()
+            .id(info.id())
+            .name(info.name())
+            .nickname(info.nickname())
+            .email(info.email())
+            .schoolId(info.schoolId())
+            .schoolName(info.schoolName())
+            .profileImageLink(info.profileImageLink())
+            .status(info.status())
+            .roles(info.roles())
+            .challengerRecords(challengerRecords)
+            .profileInfo(profileInfo)
+            .build();
     }
 }

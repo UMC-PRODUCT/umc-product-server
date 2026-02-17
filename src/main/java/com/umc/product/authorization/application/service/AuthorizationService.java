@@ -69,7 +69,7 @@ public class AuthorizationService implements CheckPermissionUseCase {
 
         // 사용자가 활동한 모든 기수를 확인
         // 해당 기수마다 chapterId, challengerRoleId를 가져옴
-        MemberInfo memberInfo = getMemberUseCase.getById(memberId);
+        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(memberId);
 
         // 학교 ID는 회원정보에 저장되어 있음
         Long schoolId = memberInfo.schoolId();

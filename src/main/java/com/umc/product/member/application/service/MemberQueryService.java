@@ -32,7 +32,7 @@ public class MemberQueryService implements GetMemberUseCase {
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @Override
-    public MemberInfo getById(Long memberId) {
+    public MemberInfo getMemberInfoById(Long memberId) {
         // 회원
         Member member = loadMemberPort.findById(memberId)
             .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
@@ -55,7 +55,7 @@ public class MemberQueryService implements GetMemberUseCase {
     }
 
     @Override
-    public MemberInfo getProfile(Long memberId) {
+    public MemberInfo getById(Long memberId) {
         return getById(memberId);
     }
 

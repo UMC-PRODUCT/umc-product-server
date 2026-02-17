@@ -23,7 +23,7 @@ public class MemberInfoResponseAssembler {
     private final GetChapterUseCase getChapterUseCase;
 
     public MemberInfoResponse fromMemberId(Long memberId) {
-        MemberInfo memberInfo = getMemberUseCase.getById(memberId);
+        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(memberId);
 
         // TODO: member에서 challenger에 너무 깊게 들어온 기분인데 일단 너무 졸려서 그냥 냅둘께요
         List<ChallengerInfoResponse> challengerInfoResponses =

@@ -100,7 +100,7 @@ class FcmTopicServiceTest {
             given(loadFcmPort.findOptionalByMemberId(100L)).willReturn(Optional.of(token));
 
             MemberInfo member = memberInfo(100L, 5L);
-            given(getMemberUseCase.getById(100L)).willReturn(member);
+            given(getMemberUseCase.getMemberInfoById(100L)).willReturn(member);
 
             given(getChapterUseCase.byGisuAndSchool(9L, 5L))
                 .willReturn(new ChapterInfo(3L, "cassiopeia"));
@@ -156,7 +156,7 @@ class FcmTopicServiceTest {
             given(loadFcmPort.findOptionalByMemberId(100L)).willReturn(Optional.of(token));
 
             MemberInfo member = memberInfo(100L, null); // schoolId = null
-            given(getMemberUseCase.getById(100L)).willReturn(member);
+            given(getMemberUseCase.getMemberInfoById(100L)).willReturn(member);
 
             // when & then
             assertThatThrownBy(() -> sut.subscribeTopics(challengerId))
@@ -175,7 +175,7 @@ class FcmTopicServiceTest {
             given(loadFcmPort.findOptionalByMemberId(100L)).willReturn(Optional.of(token));
 
             MemberInfo member = memberInfo(100L, 5L);
-            given(getMemberUseCase.getById(100L)).willReturn(member);
+            given(getMemberUseCase.getMemberInfoById(100L)).willReturn(member);
 
             given(getChapterUseCase.byGisuAndSchool(9L, 5L))
                 .willThrow(new OrganizationDomainException(
@@ -202,7 +202,7 @@ class FcmTopicServiceTest {
             given(loadFcmPort.findOptionalByMemberId(100L)).willReturn(Optional.of(token));
 
             MemberInfo member = memberInfo(100L, 5L);
-            given(getMemberUseCase.getById(100L)).willReturn(member);
+            given(getMemberUseCase.getMemberInfoById(100L)).willReturn(member);
 
             given(getChapterUseCase.byGisuAndSchool(9L, 5L))
                 .willReturn(new ChapterInfo(3L, "cassiopeia"));
@@ -251,7 +251,7 @@ class FcmTopicServiceTest {
             given(loadFcmPort.findOptionalByMemberId(memberId)).willReturn(Optional.of(token));
 
             MemberInfo member = memberInfo(memberId, 5L);
-            given(getMemberUseCase.getById(memberId)).willReturn(member);
+            given(getMemberUseCase.getMemberInfoById(memberId)).willReturn(member);
 
             given(getChapterUseCase.byGisuAndSchool(9L, 5L))
                 .willReturn(new ChapterInfo(3L, "cassiopeia"));
@@ -297,7 +297,7 @@ class FcmTopicServiceTest {
             given(loadFcmPort.findOptionalByMemberId(memberId)).willReturn(Optional.of(token));
 
             MemberInfo member = memberInfo(memberId, 5L);
-            given(getMemberUseCase.getById(memberId)).willReturn(member);
+            given(getMemberUseCase.getMemberInfoById(memberId)).willReturn(member);
 
             given(getChapterUseCase.byGisuAndSchool(9L, 5L))
                 .willReturn(new ChapterInfo(3L, "cassiopeia"));
