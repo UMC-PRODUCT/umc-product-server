@@ -33,15 +33,14 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>
  * N+1 방지를 위해 ID 목록을 추출하여 일괄 조회
  * <p>
- * ⚠️ 확정된 상태만 반환: PRESENT, LATE, ABSENT (3개만!)
- * - PENDING (출석 전) 제외
- * - *_PENDING (승인 대기) 제외
- * - EXCUSED 제외 - 승인 시 PRESENT, 거부 시 ABSENT로 처리됨
+ * ⚠️ 확정된 상태만 반환: PRESENT, LATE, ABSENT (3개만!) - PENDING (출석 전) 제외 - *_PENDING (승인 대기) 제외 - EXCUSED 제외 - 승인 시 PRESENT,
+ * 거부 시 ABSENT로 처리됨
  */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseCase, GetChallengerAttendanceHistoryUseCase {
+public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseCase,
+    GetChallengerAttendanceHistoryUseCase {
 
     private static final Set<AttendanceStatus> CONFIRMED_STATUSES = Set.of(
         AttendanceStatus.PRESENT,

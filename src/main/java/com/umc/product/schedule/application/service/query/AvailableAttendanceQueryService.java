@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * <p>해당 기수의 활성 출석부 중 아직 종료되지 않은 일정만,
  * <p>해당 멤버의 기존 출석 기록이 있으면 함께 가져옴.
- * <p>시작 시간 오름차순.
+ * <p>시작 시간
  */
 @Service
 @RequiredArgsConstructor
