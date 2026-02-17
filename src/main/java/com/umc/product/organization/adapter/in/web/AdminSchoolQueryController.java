@@ -32,12 +32,14 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
     @Public
     @Override
     @GetMapping
+    @Deprecated(since = "0.3.0", forRemoval = true)
     public SchoolPageResponse getSchools(@ModelAttribute SchoolListRequest request, Pageable pageable) {
         // Swagger를 위한 SchoolPageResponse 매핑
         PageResponse<SchoolListItemResponse> pageResponse = PageResponse.of(
             getSchoolUseCase.getSchools(request.toCondition(), pageable),
             SchoolListItemResponse::of
         );
+
         return SchoolPageResponse.from(pageResponse);
     }
 

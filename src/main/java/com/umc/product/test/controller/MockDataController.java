@@ -42,7 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Public
 @RequiredArgsConstructor
 @Profile("local | dev")
-@Tag(name = "00 Test | 더미 데이터", description = "잘못 쓰면 DB 날라갑니다")
+@Tag(name = "001 Test | 더미 데이터", description = "잘못 쓰면 DB 날라갑니다")
 @Slf4j
 @RestController
 @RequestMapping("/test/mock-data")

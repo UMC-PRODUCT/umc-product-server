@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/storage")
 @RequiredArgsConstructor
 @Tag(name = "Storage | 파일 업로드 관련", description = "")
-public class FileController {
+public class StorageController {
 
     private final ManageFileUseCase manageFileUseCase;
     private final GetFileUseCase getFileUseCase;
@@ -66,6 +66,16 @@ public class FileController {
     }
 
     /**
+     * 파일을 삭제합니다.
+     */
+    @DeleteMapping("/{fileId}")
+    @Operation(summary = "파일 삭제")
+    public ApiResponse<Void> deleteFile(@PathVariable String fileId) {
+        manageFileUseCase.deleteFile(fileId);
+        return ApiResponse.onSuccess(null);
+    }
+
+    /**
      * 파일 정보 및 접근 URL을 조회합니다.
      */
     @Profile("local | dev")
@@ -79,15 +89,5 @@ public class FileController {
     public ApiResponse<FileResponse> getFile(@PathVariable String fileId) {
         FileInfo fileInfo = getFileUseCase.getById(fileId);
         return ApiResponse.onSuccess(FileResponse.from(fileInfo));
-    }
-
-    /**
-     * 파일을 삭제합니다.
-     */
-    @DeleteMapping("/{fileId}")
-    @Operation(summary = "파일 삭제")
-    public ApiResponse<Void> deleteFile(@PathVariable String fileId) {
-        manageFileUseCase.deleteFile(fileId);
-        return ApiResponse.onSuccess(null);
     }
 }

@@ -6,6 +6,7 @@ import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
 import java.io.StringReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
@@ -22,17 +23,16 @@ import org.bouncycastle.util.io.pem.PemReader;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.springframework.web.util.UriUtils;
 import software.amazon.awssdk.services.cloudfront.CloudFrontUtilities;
 import software.amazon.awssdk.services.cloudfront.model.CannedSignerRequest;
 import software.amazon.awssdk.services.cloudfront.url.SignedUrl;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 
@@ -98,14 +98,9 @@ public class S3StorageAdapter implements StoragePort {
 
     @Override
     public String generateAccessUrl(String storageKey, long durationMinutes) {
-        S3StorageProperties.CloudFront cloudfront = properties.cloudfront();
-
-        if (cloudfront != null && cloudfront.enabled()) {
-            return generateCloudFrontSignedUrl(storageKey, durationMinutes);
-        }
-
-        // CloudFront 미사용 시 S3 Presigned URL 반환
-        return generateS3PresignedUrl(storageKey, durationMinutes);
+        // TODO: private method들은 따로 accessUrl 생성하도록 FileCategory 단에서 public/private 구분해서 진행
+        // CloudFront 미사용 시 OAS 통한 직접 접근, Duration을 활용하지 않음
+        return generateCloudFrontUrl(storageKey);
     }
 
     @Override
@@ -138,24 +133,19 @@ public class S3StorageAdapter implements StoragePort {
         }
     }
 
-    private String generateS3PresignedUrl(String storageKey, long durationMinutes) {
-        try {
-            var getObjectRequest = GetObjectRequest.builder()
-                .bucket(properties.bucketName())
-                .key(storageKey)
-                .build();
+    // ==================== PRIVATE METHODS ====================
 
-            var presignRequest = GetObjectPresignRequest.builder()
-                .signatureDuration(Duration.ofMinutes(durationMinutes))
-                .getObjectRequest(getObjectRequest)
-                .build();
+    private String generateCloudFrontUrl(String storageKey) {
+        S3StorageProperties.CloudFront cloudfront = properties.cloudfront();
 
-            var presignedRequest = s3Presigner.presignGetObject(presignRequest);
-            return presignedRequest.url().toString();
-        } catch (Exception e) {
-            log.error("S3 다운로드 URL 생성 실패: storageKey={}", storageKey, e);
-            throw new StorageException(StorageErrorCode.STORAGE_URL_GENERATION_FAILED);
-        }
+        // URL 인코딩 (특수문자 처리)
+        String encodedKey = encodeStorageKey(storageKey);
+
+        // URL 구성: https://{distribution-domain}/{storageKey}
+        return String.format("https://%s/%s",
+            cloudfront.distributionDomain(),
+            encodedKey
+        );
     }
 
     /**
@@ -176,10 +166,10 @@ public class S3StorageAdapter implements StoragePort {
             String encodedKey = encodeStorageKey(storageKey);
 
             // URL 구성: https://{distribution-domain}/{storageKey}
-            String resourceUrl = String.format("https://%s/%s/%s",
+            String resourceUrl = String.format("https://%s/%s",
                 cloudfront.distributionDomain(),
-                parseSpringProfileToCloudFrontPath(),
-                encodedKey);
+                encodedKey
+            );
 
             // CloudFront 유틸리티를 사용하여 서명
             CloudFrontUtilities cloudFrontUtilities = CloudFrontUtilities.create();
@@ -228,10 +218,12 @@ public class S3StorageAdapter implements StoragePort {
         return keyFactory.generatePrivate(keySpec);
     }
 
+    /**
+     * URL Path에 사용할 수 있도록 인코딩
+     */
     private String encodeStorageKey(String storageKey) {
-        // 이미 인코딩되어 있지 않은 경우에만 인코딩
-        // CloudFront는 path 부분은 그대로 두고 쿼리 파라미터만 인코딩해야 함
-        return storageKey; // 또는 필요시 URLEncoder.encode() 사용
+
+        return UriUtils.encodePathSegment(storageKey, StandardCharsets.UTF_8); // 또는 필요시 URLEncoder.encode() 사용
     }
 
     private String parseSpringProfileToCloudFrontPath() {
