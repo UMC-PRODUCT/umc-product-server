@@ -1108,7 +1108,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
             apps = List.of();
         }
 
-        CurrentPicked currentPicked = pickCurrent(activeRecruitmentId, drafts, apps);
+        CurrentPicked currentPicked = pickCurrent(schoolId, activeGisuId, drafts, apps);
 
         MyApplicationListInfo.CurrentApplicationStatusInfo current =
             buildCurrentOrBeforeApply(activeRecruitmentId, currentPicked);
@@ -1123,43 +1123,37 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
      * 활성 모집 기준 current 선택 - activeRecruitmentId 없으면 current 없음 - 활성 모집 submitted 있으면 submitted 우선 - 없으면 활성 모집 draft 있으면
      * draft - 둘 다 없으면 current 없음 (=> 지금 열린 모집에 지원 안했으면 리스트에 없음)
      */
-    private CurrentPicked pickCurrent(Long activeRecruitmentId, List<FormResponse> drafts, List<Application> apps) {
-        if (activeRecruitmentId == null) {
-            return null;
-        }
+    private CurrentPicked pickCurrent(Long schoolId, Long activeGisuId, List<FormResponse> drafts,
+                                      List<Application> apps) {
 
-        // submitted 우선
-        Application activeApp = (apps == null ? List.<Application>of() : apps).stream()
+        // 1순위: 현재 기수의 제출된 지원서 중 가장 최신 것
+        Application currentApp = (apps == null ? List.<Application>of() : apps).stream()
             .filter(a -> a.getRecruitment() != null
-                && activeRecruitmentId.equals(a.getRecruitment().getId()))
-            .max(Comparator.comparing(
-                Application::getCreatedAt,
-                Comparator.nullsLast(Comparator.naturalOrder())
-            ))
+                && schoolId.equals(a.getRecruitment().getSchoolId())
+                && activeGisuId.equals(a.getRecruitment().getGisuId()))
+            .max(Comparator.comparing(Application::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())))
             .orElse(null);
 
-        if (activeApp != null) {
-            return CurrentPicked.submitted(activeApp.getRecruitment(), activeApp);
+        if (currentApp != null) {
+            return CurrentPicked.submitted(currentApp.getRecruitment(), currentApp);
         }
 
-        FormResponse activeDraft = (drafts == null ? List.<FormResponse>of() : drafts).stream()
-            .filter(fr -> isRecruitmentMatchedByFormId(activeRecruitmentId, fr))
-            .max(Comparator.comparing(
-                FormResponse::getUpdatedAt,
-                Comparator.nullsLast(Comparator.naturalOrder())
-            ))
+        // 2순위: 현재 기수의 임시저장 지원서 중 가장 최신 것
+        FormResponse currentDraft = (drafts == null ? List.<FormResponse>of() : drafts).stream()
+            .filter(fr -> {
+                Long formId = (fr.getForm() == null) ? null : fr.getForm().getId();
+                Recruitment r = (formId == null) ? null : loadRecruitmentPort.findByFormId(formId).orElse(null);
+                return r != null && schoolId.equals(r.getSchoolId()) && activeGisuId.equals(r.getGisuId());
+            })
+            .max(Comparator.comparing(FormResponse::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder())))
             .orElse(null);
 
-        if (activeDraft != null) {
-            Long formId = activeDraft.getForm() == null ? null : activeDraft.getForm().getId();
-            Recruitment r = (formId == null) ? null
-                : loadRecruitmentPort.findByFormId(formId).orElse(null);
-            if (r != null) {
-                return CurrentPicked.draft(r, activeDraft);
-            }
+        if (currentDraft != null) {
+            Recruitment r = loadRecruitmentPort.findByFormId(currentDraft.getForm().getId()).get();
+            return CurrentPicked.draft(r, currentDraft);
         }
 
-        return null;
+        return null; // 지원 기록이 없으면 null 반환 -> buildCurrentOrBeforeApply에서 activeId 기반으로 렌더링
     }
 
     /**
