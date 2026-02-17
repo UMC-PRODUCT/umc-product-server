@@ -36,6 +36,7 @@ import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjectio
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.FinalSelectionApplicationListInfo;
+import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.QApplicationPartPreference;
 import com.umc.product.recruitment.domain.QRecruitmentPart;
@@ -1091,6 +1092,75 @@ public class ApplicationQueryRepository {
             .fetchFirst();
 
         return result != null;
+    }
+
+    public long countByRootRecruitmentId(Long rootId) {
+        Long count = queryFactory
+            .select(application.count())
+            .from(application)
+            .where(belongsToRecruitmentFamily(rootId))
+            .fetchOne();
+        return count != null ? count : 0L;
+    }
+
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRootRecruitmentId(Long rootId) {
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .where(belongsToRecruitmentFamily(rootId))
+            .fetch();
+    }
+
+    public long countByRootIdAndFirstPreferredPart(Long rootId, ChallengerPart part) {
+        Long count = queryFactory
+            .select(application.countDistinct()) // 중복 방지를 위해 countDistinct 사용
+            .from(application)
+            // 1지망 파트 정보 조인
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitmentFamily(rootId),
+                recruitmentPart.part.eq(part)
+            )
+            .fetchOne();
+
+        return count != null ? count : 0L;
+    }
+
+    // 1. 가문 전체 Application Entity 조회
+    public List<Application> findAllByRootRecruitmentId(Long rootId) {
+        return queryFactory
+            .selectFrom(application)
+            .where(belongsToRecruitmentFamily(rootId))
+            .fetch();
+    }
+
+    // 2. 가문 전체 + 파트 필터링된 ID 목록 조회
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRootRecruitmentIdAndFirstPreferredPart(
+        Long rootId, ChallengerPart part
+    ) {
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitmentFamily(rootId),
+                recruitmentPart.part.eq(part)
+            )
+            .fetch();
     }
 
     private BooleanExpression belongsToRecruitments(Long chapterId, Long schoolId) {

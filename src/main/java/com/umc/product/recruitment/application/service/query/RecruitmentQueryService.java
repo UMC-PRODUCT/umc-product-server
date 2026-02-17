@@ -349,6 +349,11 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         Instant now = Instant.now();
 
+        // 현재 모집 공고 로드하여 rootId 확보
+        Recruitment recruitment = loadRecruitmentPort.findById(recruitmentId)
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
         // 대시보드에 필요한 스케줄들 로드
         DashboardSchedules schedules = loadDashboardSchedules(recruitmentId);
 
@@ -362,12 +367,12 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         // 지원 현황 (총 지원자 + 파트별 지원자)
         RecruitmentDashboardInfo.ApplicationStatusInfo applicationStatus =
-            buildApplicationStatus(recruitmentId);
+            buildApplicationStatus(rootId);
 
         // 평가 현황 (서류/면접 진행률 + 파트별 진행 현황)
         //    - 내 진행률 기준으로 계산
         RecruitmentDashboardInfo.EvaluationStatusInfo evaluationStatus =
-            buildEvaluationStatus(memberId, recruitmentId, now, progress);
+            buildEvaluationStatus(memberId, rootId, now, progress);
 
         return new RecruitmentDashboardInfo(
             recruitmentId,
@@ -846,20 +851,20 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         return (atSchedule == null) ? null : atSchedule.getStartsAt();
     }
 
-    private RecruitmentDashboardInfo.ApplicationStatusInfo buildApplicationStatus(Long recruitmentId) {
-        long totalApplicantsLong = loadApplicationPort.countByRecruitmentId(recruitmentId);
+    private RecruitmentDashboardInfo.ApplicationStatusInfo buildApplicationStatus(Long rootId) {
+        long totalApplicantsLong = loadApplicationPort.countByRootRecruitmentId(rootId);
         int totalApplicants = safeToInt(totalApplicantsLong);
 
-        List<ChallengerPart> openParts = loadRecruitmentPartPort.findOpenPartsByRecruitmentId(recruitmentId);
+        List<ChallengerPart> openParts = loadRecruitmentPartPort.findOpenPartsByRootId(rootId);
         if (openParts == null) {
-            log.warn("[RecruitmentDashboard] openParts is null. recruitmentId={}", recruitmentId);
+            log.warn("[RecruitmentDashboard] openParts is null for rootId={}", rootId);
             openParts = List.of();
         }
 
         List<RecruitmentDashboardInfo.PartApplicantCountInfo> partCounts = openParts.stream()
             .map(part -> {
-                long countLong = loadApplicationPort.countByRecruitmentIdAndFirstPreferredPart(
-                    recruitmentId,
+                long countLong = loadApplicationPort.countByRootIdAndFirstPreferredPart(
+                    rootId,
                     PartOption.valueOf(part.name())
                 );
                 return new RecruitmentDashboardInfo.PartApplicantCountInfo(part, safeToInt(countLong));
@@ -882,12 +887,12 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     private RecruitmentDashboardInfo.EvaluationStatusInfo buildEvaluationStatus(
         Long evaluatorUserId,
-        Long recruitmentId,
+        Long rootId,
         Instant now,
         RecruitmentDashboardInfo.ProgressInfo progress
     ) {
         if (evaluatorUserId == null) {
-            log.warn("[RecruitmentDashboard] evaluatorUserId is null. recruitmentId={}", recruitmentId);
+            log.warn("[RecruitmentDashboard] evaluatorUserId is null. recruitmentId={}", rootId);
             // 안전하게 0/0 내려줌
             RecruitmentDashboardInfo.EvaluationProgressInfo zero =
                 new RecruitmentDashboardInfo.EvaluationProgressInfo(0, 0, 0);
@@ -896,10 +901,10 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         // 0) 모집의 전체 지원서 id들 (모수)
         List<ApplicationIdWithFormResponseId> allApps =
-            loadApplicationPort.findApplicationIdsWithFormResponseIdsByRecruitment(recruitmentId);
+            loadApplicationPort.findApplicationIdsWithFormResponseIdsByRootRecruitmentId(rootId);
 
         if (allApps == null) {
-            log.warn("[RecruitmentDashboard] allApps is null. recruitmentId={}", recruitmentId);
+            log.warn("[RecruitmentDashboard] allApps is null. recruitmentId={}", rootId);
             allApps = List.of();
         }
 
@@ -916,7 +921,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         );
         if (docCompletedAppIds == null) {
             log.warn("[RecruitmentDashboard] docCompletedAppIds is null. recruitmentId={}, evaluatorUserId={}",
-                recruitmentId, evaluatorUserId);
+                rootId, evaluatorUserId);
             docCompletedAppIds = Set.of();
         }
 
@@ -925,7 +930,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         // 2) 면접 평가 진행률: "면접 대상"만 모수로 잡기 (DOC_PASSED 이상만)
         final List<Application> appEntities =
-            java.util.Optional.ofNullable(loadApplicationListPort.findByRecruitmentId(recruitmentId))
+            java.util.Optional.ofNullable(loadApplicationPort.findByRootRecruitmentId(rootId))
                 .orElseGet(List::of);
 
         Set<Long> interviewTargetIds = appEntities.stream()
@@ -940,7 +945,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         );
         if (interviewCompletedAppIds == null) {
             log.warn("[RecruitmentDashboard] interviewCompletedAppIds is null. recruitmentId={}, evaluatorUserId={}",
-                recruitmentId, evaluatorUserId);
+                rootId, evaluatorUserId);
             interviewCompletedAppIds = Set.of();
         }
 
@@ -948,9 +953,9 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
             toProgressInfo(interviewTargetIds.size(), interviewCompletedAppIds.size());
 
         // 3) 파트별 진행현황 (OPEN 파트 기준, 1지망 모수)
-        List<ChallengerPart> openParts = loadRecruitmentPartPort.findOpenPartsByRecruitmentId(recruitmentId);
+        List<ChallengerPart> openParts = loadRecruitmentPartPort.findOpenPartsByRootId(rootId);
         if (openParts == null) {
-            log.warn("[RecruitmentDashboard] openParts is null. recruitmentId={}", recruitmentId);
+            log.warn("[RecruitmentDashboard] openParts is null. recruitmentId={}", rootId);
             openParts = List.of();
         }
 
@@ -958,13 +963,13 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
             .map(part -> {
                 // 1지망이 해당 part인 application ids
                 List<ApplicationIdWithFormResponseId> partApps =
-                    loadApplicationPort.findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
-                        recruitmentId,
+                    loadApplicationPort.findApplicationIdsWithFormResponseIdsByRootRecruitmentIdAndFirstPreferredPart(
+                        rootId,
                         PartOption.valueOf(part.name())
                     );
 
                 if (partApps == null) {
-                    log.warn("[RecruitmentDashboard] partApps is null. recruitmentId={}, part={}", recruitmentId, part);
+                    log.warn("[RecruitmentDashboard] partApps is null. recruitmentId={}, part={}", rootId, part);
                     partApps = List.of();
                 }
 
@@ -982,7 +987,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
                 if (partDocCompleted == null) {
                     log.warn(
                         "[RecruitmentDashboard] partDocCompleted is null. recruitmentId={}, part={}, evaluatorUserId={}",
-                        recruitmentId, part, evaluatorUserId);
+                        rootId, part, evaluatorUserId);
                     partDocCompleted = Set.of();
                 }
 
@@ -1002,13 +1007,14 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
                 if (partInterviewCompleted == null) {
                     log.warn(
                         "[RecruitmentDashboard] partInterviewCompleted is null. recruitmentId={}, part={}, evaluatorUserId={}",
-                        recruitmentId, part, evaluatorUserId);
+                        rootId, part, evaluatorUserId);
                     partInterviewCompleted = Set.of();
                 }
 
-                EvalPhaseStatus docStatus = toPhaseStatus(partAppIds.size(), partDocCompleted.size());
+                EvalPhaseStatus docStatus = toPhaseStatus(partAppIds.size(),
+                    partDocCompleted == null ? 0 : partDocCompleted.size());
                 EvalPhaseStatus interviewStatus = toPhaseStatus(partInterviewTargets.size(),
-                    partInterviewCompleted.size());
+                    partInterviewCompleted == null ? 0 : partInterviewCompleted.size());
 
                 return new RecruitmentDashboardInfo.PartEvaluationStatusInfo(part, docStatus, interviewStatus);
             })

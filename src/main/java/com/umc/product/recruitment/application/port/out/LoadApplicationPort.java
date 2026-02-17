@@ -55,4 +55,16 @@ public interface LoadApplicationPort {
         Long rootId,
         PartOption partOption
     );
+
+    long countByRootRecruitmentId(Long rootId);
+
+    List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRootRecruitmentId(Long rootId);
+
+    long countByRootIdAndFirstPreferredPart(Long rootId, PartOption part);
+
+    List<Application> findByRootRecruitmentId(Long rootId);
+
+    List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRootRecruitmentIdAndFirstPreferredPart(
+        Long rootId, PartOption part
+    );
 }
