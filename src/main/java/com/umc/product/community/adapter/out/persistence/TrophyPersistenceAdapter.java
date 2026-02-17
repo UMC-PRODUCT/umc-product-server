@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 public class TrophyPersistenceAdapter implements LoadTrophyPort, SaveTrophyPort {
 
     private final TrophyRepository trophyRepository;
+    private final TrophyQueryRepository trophyQueryRepository;
 
     @Override
     public Optional<Trophy> findById(Long trophyId) {
@@ -23,14 +24,8 @@ public class TrophyPersistenceAdapter implements LoadTrophyPort, SaveTrophyPort 
 
     @Override
     public List<Trophy> findAllByQuery(TrophySearchQuery query) {
-        // TODO: QueryDSL을 사용한 동적 쿼리 필요 (week, school, part 필터링)
-        // 현재는 week 기준으로만 조회
-        if (query.week() != null) {
-            return trophyRepository.findByWeekOrderByIdDesc(query.week()).stream()
-                    .map(TrophyJpaEntity::toDomain)
-                    .toList();
-        }
-        return trophyRepository.findAll().stream()
+        // week, school, part 필터링을 모두 DB에서 처리 (성능 최적화)
+        return trophyQueryRepository.findAllByQuery(query).stream()
                 .map(TrophyJpaEntity::toDomain)
                 .toList();
     }

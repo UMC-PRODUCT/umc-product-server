@@ -28,6 +28,7 @@ public class TrophyQueryService implements GetTrophyListUseCase {
 
     @Override
     public List<TrophyInfo> getTrophies(TrophySearchQuery query) {
+        // week, school, part 필터링을 모두 DB에서 처리 (성능 최적화)
         List<Trophy> trophies = loadTrophyPort.findAllByQuery(query);
 
         // 트로피가 없으면 빈 리스트 반환
