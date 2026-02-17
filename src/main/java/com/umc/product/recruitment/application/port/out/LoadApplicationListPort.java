@@ -84,4 +84,6 @@ public interface LoadApplicationListPort {
         String keyword,
         Pageable pageable
     );
+
+    boolean isApplicationBelongsToRecruitmentFamily(Long applicationId, Long rootId);
 }

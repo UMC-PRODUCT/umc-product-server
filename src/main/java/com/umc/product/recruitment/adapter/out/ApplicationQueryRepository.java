@@ -1076,6 +1076,23 @@ public class ApplicationQueryRepository {
             .fetch();
     }
 
+    public boolean isApplicationBelongsToRecruitmentFamily(Long applicationId, Long rootId) {
+        if (applicationId == null || rootId == null) {
+            return false;
+        }
+
+        Integer result = queryFactory
+            .selectOne()
+            .from(application)
+            .where(
+                application.id.eq(applicationId),
+                belongsToRecruitmentFamily(rootId)
+            )
+            .fetchFirst();
+
+        return result != null;
+    }
+
     private BooleanExpression belongsToRecruitments(Long chapterId, Long schoolId) {
         // 둘 다 null이면 전체(필터 없음)
         if (chapterId == null && schoolId == null) {

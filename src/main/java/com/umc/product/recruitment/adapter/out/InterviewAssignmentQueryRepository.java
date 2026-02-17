@@ -238,4 +238,22 @@ public class InterviewAssignmentQueryRepository {
             .orderBy(interviewAssignment.createdAt.asc())
             .fetch();
     }
+
+    public boolean existsByRootIdAndApplicationId(Long rootId, Long applicationId) {
+        if (rootId == null || applicationId == null) {
+            return false;
+        }
+
+        Integer result = queryFactory
+            .selectOne()
+            .from(interviewAssignment)
+            .join(interviewAssignment.recruitment, recruitment)
+            .where(
+                recruitment.rootRecruitmentId.eq(rootId),
+                interviewAssignment.application.id.eq(applicationId)
+            )
+            .fetchFirst();
+
+        return result != null;
+    }
 }

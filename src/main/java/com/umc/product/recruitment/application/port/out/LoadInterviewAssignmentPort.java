@@ -41,4 +41,6 @@ public interface LoadInterviewAssignmentPort {
         Long slotId,
         PartOption part
     );
+
+    boolean existsByRootIdAndApplicationId(Long rootId, Long applicationId);
 }

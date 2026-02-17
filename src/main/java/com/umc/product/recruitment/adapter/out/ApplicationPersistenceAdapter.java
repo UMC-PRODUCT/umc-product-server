@@ -259,4 +259,9 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
             rootId, partOption
         );
     }
+
+    @Override
+    public boolean isApplicationBelongsToRecruitmentFamily(Long applicationId, Long rootId) {
+        return applicationQueryRepository.isApplicationBelongsToRecruitmentFamily(applicationId, rootId);
+    }
 }
