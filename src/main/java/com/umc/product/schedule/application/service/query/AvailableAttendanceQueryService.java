@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 현재 출석 체크 가능한 일정 목록을 조회
  *
- * <p>해당 기수의 활성 출석부 중 아직 종료되지 않은 일정만,
+ * <p>해당 기수의 활성 출석부 중, 출석 시작 10분 전부터 종료 시간까지의 일정만 조회
  * <p>해당 멤버의 기존 출석 기록이 있으면 함께 가져옴.
  * <p>시작 시간 오름차순.
  */
@@ -92,9 +92,12 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
                     return null;
                 }
 
-                // 2. 출석 시간대가 종료되었으면 제외 (나의 출석 현황으로 이동)
-                // ⭐ 출석 시간 전에는 조회 가능 (미리 확인), 시간대 종료 후에만 제외
-                if (now.isAfter(sheet.getWindow().getEndTime())) {
+                // 2. 출석 시간대 체크 - 시작 10분 전부터 종료 시간까지만 조회 가능
+                LocalDateTime windowStart = sheet.getWindow().getStartTime();
+                LocalDateTime windowEnd = sheet.getWindow().getEndTime();
+                LocalDateTime tenMinutesBeforeStart = windowStart.minusMinutes(10);
+
+                if (now.isBefore(tenMinutesBeforeStart) || now.isAfter(windowEnd)) {
                     return null;
                 }
 

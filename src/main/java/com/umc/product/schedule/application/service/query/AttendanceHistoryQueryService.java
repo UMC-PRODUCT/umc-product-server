@@ -33,10 +33,10 @@ import org.springframework.transaction.annotation.Transactional;
  * <p>
  * N+1 방지를 위해 ID 목록을 추출하여 일괄 조회
  * <p>
- * ⚠️ 확정된 상태만 반환: PRESENT, LATE, ABSENT (3개만!)
+ * ⚠️ 확정된 상태만 반환: PRESENT, LATE, ABSENT, EXCUSED
  * - PENDING (출석 전) 제외
  * - *_PENDING (승인 대기) 제외
- * - EXCUSED 제외 - 승인 시 PRESENT, 거부 시 ABSENT로 처리됨
+ * - EXCUSED 포함 - 관리자가 직접 상태 변경 시 사용 가능
  */
 @Service
 @RequiredArgsConstructor
@@ -46,8 +46,8 @@ public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseC
     private static final Set<AttendanceStatus> CONFIRMED_STATUSES = Set.of(
         AttendanceStatus.PRESENT,
         AttendanceStatus.LATE,
-        AttendanceStatus.ABSENT
-        // EXCUSED 제외 - 승인 시 PRESENT, 거부 시 ABSENT로 처리됨
+        AttendanceStatus.ABSENT,
+        AttendanceStatus.EXCUSED  // 관리자 직접 변경 시 사용 가능
     );
 
     private final LoadSchedulePort loadSchedulePort;
