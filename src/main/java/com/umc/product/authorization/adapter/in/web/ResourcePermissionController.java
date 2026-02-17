@@ -4,7 +4,6 @@ import com.umc.product.authorization.adapter.in.web.dto.response.ResourcePermiss
 import com.umc.product.authorization.application.port.in.query.ResourcePermissionUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ResourcePermissionInfo;
 import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,10 +30,14 @@ public class ResourcePermissionController {
         @RequestParam ResourceType resourceType,
         @RequestParam(required = false) Long resourceId,
         @CurrentMember MemberPrincipal principal
-        ) {
+    ) {
 
-        ResourcePermissionInfo permission = resourcePermissionUseCase.hasPermission(principal.getMemberId(), resourceType,
-            resourceId);
+        ResourcePermissionInfo permission = resourcePermissionUseCase.hasPermission(
+            principal.getMemberId(),
+            resourceType,
+            resourceId
+        );
+
         return ResourcePermissionResponse.from(permission);
     }
 }
