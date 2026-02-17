@@ -242,8 +242,8 @@ storage:
     secret-access-key: ${S3_SECRET_ACCESS_KEY}
     cloudfront:
       enabled: false
+      distribution-domain: cdn.umc.it.kr
       private-key: ${CDN_PRIVATE_KEY}
-      distribution-domain: https://cdn.example.com
       key-pair-id: ${CDN_KEY_PAIR_ID}
 
   gcs:
