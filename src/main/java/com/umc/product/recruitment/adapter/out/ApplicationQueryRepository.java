@@ -446,7 +446,7 @@ public class ApplicationQueryRepository {
     }
 
     public List<InterviewSchedulingAvailableApplicantRow> findAvailableRows(
-        Long recruitmentId,
+        Long rootId,
         Set<Long> availableAppIds,
         PartOption requestedPart,
         String keyword
@@ -482,6 +482,7 @@ public class ApplicationQueryRepository {
 
             .where(
                 application.id.in(availableAppIds),
+                belongsToRecruitmentFamily(rootId),
                 keywordContains(keyword),
                 filterPart == null ? null : rp1.part.eq(filterPart)
             )
@@ -490,7 +491,7 @@ public class ApplicationQueryRepository {
     }
 
     public List<InterviewSchedulingAlreadyScheduledApplicantRow> findAlreadyScheduledRows(
-        Long recruitmentId,
+        Long rootId,
         Long slotId,
         Set<Long> alreadyScheduledAppIds,
         PartOption requestedPart,
@@ -523,7 +524,7 @@ public class ApplicationQueryRepository {
             .join(interviewAssignment.slot, interviewSlot)
             .join(interviewAssignment.application, application)
             .join(member).on(member.id.eq(application.applicantMemberId))
-
+            .join(interviewAssignment.recruitment, recruitment)
             .leftJoin(pref1).on(pref1.application.eq(application), pref1.priority.eq(1))
             .leftJoin(pref1.recruitmentPart, rp1)
 
@@ -531,7 +532,7 @@ public class ApplicationQueryRepository {
             .leftJoin(pref2.recruitmentPart, rp2)
 
             .where(
-                interviewAssignment.recruitment.id.eq(recruitmentId),
+                recruitment.rootRecruitmentId.eq(rootId),
                 interviewAssignment.slot.id.ne(slotId), // "다른 슬롯"만
                 interviewAssignment.application.id.in(alreadyScheduledAppIds),
                 keywordContains(keyword),

@@ -262,7 +262,10 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
     public InterviewSchedulingApplicantsInfo get(GetInterviewSchedulingApplicantsQuery query) {
         // todo: 운영진 권한 검증 필요
 
-        Long recruitmentId = query.recruitmentId();
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
         Long slotId = query.slotId();
         PartOption requestedPart = (query.part() != null) ? query.part() : PartOption.ALL;
         String keyword = query.keyword();
@@ -274,7 +277,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
                 RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND
             ));
 
-        if (!slot.getRecruitment().getId().equals(recruitmentId)) {
+        if (!slot.getRecruitment().getEffectiveRootId().equals(rootId)) {
             throw new BusinessException(
                 Domain.RECRUITMENT,
                 RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT
@@ -290,10 +293,9 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
 
         // DOC_PASSED 지원자(appId, formResponseId) 조회 (part 1지망 필터 적용)
         List<ApplicationIdWithFormResponseId> apps = (requestedPart == PartOption.ALL)
-            ? loadApplicationPort.findDocPassedApplicationIdsWithFormResponseIdsByRecruitment(recruitmentId)
-            : loadApplicationPort.findDocPassedApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
-                recruitmentId, requestedPart
-            );
+            ? loadApplicationPort.findDocPassedApplicationIdsWithFormResponseIdsByRootId(rootId)
+            : loadApplicationPort.findDocPassedApplicationIdsWithFormResponseIdsByRootIdAndFirstPreferredPart(
+                rootId, requestedPart);
 
         if (apps.isEmpty()) {
             return new InterviewSchedulingApplicantsInfo(List.of(), List.of());
@@ -332,7 +334,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         }
 
         // 배정 여부로 분리 (현재 slot 배정자는 alreadyScheduled에 포함시키지 않음: repo에서 slot != slotId)
-        Set<Long> assignedAppIds = loadInterviewAssignmentPort.findAssignedApplicationIdsByRecruitmentId(recruitmentId);
+        Set<Long> assignedAppIds = loadInterviewAssignmentPort.findAssignedApplicationIdsByRootId(rootId);
 
         Set<Long> availableAppIds = votedAppIds.stream()
             .filter(appId -> !assignedAppIds.contains(appId))
@@ -352,20 +354,13 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
 
         // rows 조회 (keyword 적용)
         List<com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAvailableApplicantRow> availableRows =
-            java.util.Collections.emptyList();
-        if (!availableAppIds.isEmpty()) {
-            availableRows = applicationQueryRepository.findAvailableRows(
-                recruitmentId, availableAppIds, requestedPart, keyword
-            );
-        }
+            availableAppIds.isEmpty() ? List.of() :
+                applicationQueryRepository.findAvailableRows(rootId, availableAppIds, requestedPart, keyword);
 
         List<com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAlreadyScheduledApplicantRow> alreadyRows =
-            java.util.Collections.emptyList();
-        if (!alreadyScheduledAppIds.isEmpty()) {
-            alreadyRows = applicationQueryRepository.findAlreadyScheduledRows(
-                recruitmentId, slotId, alreadyScheduledAppIds, requestedPart, keyword
-            );
-        }
+            alreadyScheduledAppIds.isEmpty() ? List.of() :
+                applicationQueryRepository.findAlreadyScheduledRows(rootId, slotId, alreadyScheduledAppIds,
+                    requestedPart, keyword);
 
         // Info 매핑
         List<InterviewSchedulingApplicantsInfo.AvailableApplicantInfo> available = availableRows.stream()
