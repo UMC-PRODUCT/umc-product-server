@@ -145,27 +145,38 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
             (query.schoolId() != null) ? query.schoolId() : resolveSchoolId(query.requesterMemberId());
         Long resolvedGisuId = (query.gisuId() != null) ? query.gisuId() : resolveActiveGisuId();
 
-        Instant now = Instant.now();
+        List<Recruitment> recruitments = loadRecruitmentPort.findAllPublishedBySchoolIdAndGisuId(resolvedSchoolId,
+            resolvedGisuId);
 
-        // 최종 발표일(startsAt) 이후 24시간까지 Active로 인정
-        Instant limit = now.minus(1, ChronoUnit.DAYS);
-
-        List<Long> activeIds = loadRecruitmentPort.findActiveRecruitmentIds(
-            resolvedSchoolId,
-            resolvedGisuId,
-            now,
-            limit
-        );
-
-        if (activeIds.isEmpty()) {
+        if (recruitments.isEmpty()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND);
         }
 
-        if (activeIds.size() > 1) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.MULTIPLE_ACTIVE_RECRUITMENTS);
-        }
+        // 3. 각 모집의 '서류 모집(APPLY_WINDOW)' 일정 한꺼번에 조회
+        List<Long> recruitmentIds = recruitments.stream().map(Recruitment::getId).toList();
+        Map<Long, RecruitmentSchedule> applySchedules = loadRecruitmentSchedulePort.findScheduleMapByRecruitmentIdsAndType(
+            recruitmentIds, RecruitmentScheduleType.APPLY_WINDOW);
 
-        return new ActiveRecruitmentInfo(activeIds.get(0));
+        Instant now = Instant.now();
+
+        Recruitment activeOne = recruitments.stream()
+            .sorted(Comparator
+                // (1순위) 현재 지원 기간 내에 있는가?
+                .comparing((Recruitment r) -> isApplying(applySchedules.get(r.getId()), now)).reversed()
+                // (2순위) 생성일 기준 최신순
+                .thenComparing(Recruitment::getPublishedAt, Comparator.reverseOrder())
+            )
+            .findFirst()
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        return new ActiveRecruitmentInfo(activeOne.getId());
+    }
+
+    private boolean isApplying(RecruitmentSchedule schedule, Instant now) {
+        if (schedule == null || schedule.getStartsAt() == null || schedule.getEndsAt() == null) {
+            return false;
+        }
+        return !now.isBefore(schedule.getStartsAt()) && !now.isAfter(schedule.getEndsAt());
     }
 
     @Override

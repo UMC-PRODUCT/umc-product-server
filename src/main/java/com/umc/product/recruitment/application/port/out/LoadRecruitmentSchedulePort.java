@@ -15,4 +15,7 @@ public interface LoadRecruitmentSchedulePort {
     Optional<RecruitmentSchedule> findOptionalByRecruitmentIdAndType(Long recruitmentId, RecruitmentScheduleType type);
 
     Map<RecruitmentScheduleType, RecruitmentSchedule> findScheduleMapByRecruitmentId(Long recruitmentId);
+
+    Map<Long, RecruitmentSchedule> findScheduleMapByRecruitmentIdsAndType(List<Long> recruitmentIds,
+                                                                          RecruitmentScheduleType type);
 }

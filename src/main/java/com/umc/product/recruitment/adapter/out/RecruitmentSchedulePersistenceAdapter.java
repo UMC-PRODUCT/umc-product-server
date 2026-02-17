@@ -59,4 +59,16 @@ public class RecruitmentSchedulePersistenceAdapter implements SaveRecruitmentSch
                 schedule -> schedule          // Value: 일정 엔티티 객체
             ));
     }
+
+    @Override
+    public Map<Long, RecruitmentSchedule> findScheduleMapByRecruitmentIdsAndType(List<Long> recruitmentIds,
+                                                                                 RecruitmentScheduleType type) {
+        return recruitmentScheduleRepository.findByRecruitmentIdInAndType(recruitmentIds, type)
+            .stream()
+            .collect(Collectors.toMap(
+                RecruitmentSchedule::getRecruitmentId,
+                s -> s,
+                (a, b) -> a // 중복 시 첫 번째 것 선택
+            ));
+    }
 }
