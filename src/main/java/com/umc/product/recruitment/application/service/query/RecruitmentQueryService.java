@@ -1864,13 +1864,16 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     }
 
     @Override
-    public ExtensionBaseRecruitmentsInfo getRecruitmentsForExtensionBase(Long schoolId) {
+    public ExtensionBaseRecruitmentsInfo getRecruitmentsForExtensionBase(Long memberId) {
         // 1. 현재 활성화된 기수(Active Gisu) 조회
         Long gisuId = resolveActiveGisuId();
 
+        Member member = loadMemberPort.findById(memberId)
+            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+
         // 2. 해당 학교 + Active 기수의 발행된 모집 목록 조회
         List<Recruitment> recruitments = loadRecruitmentPort.findAllPublishedBySchoolIdAndGisuId(
-            schoolId,
+            member.getSchoolId(),
             gisuId
         );
 
