@@ -26,6 +26,8 @@ public enum ResourceType {
         Set.of(PermissionType.APPROVE)),
     ATTENDANCE_RECORD("attendance_record", "출석 기록",
         Set.of(PermissionType.READ, PermissionType.APPROVE)),
+    COMMUNITY_POST("community_post", "커뮤니티 게시글",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
     ;
 
     private final String code;
