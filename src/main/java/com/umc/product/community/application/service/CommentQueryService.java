@@ -8,10 +8,12 @@ import com.umc.product.community.application.port.in.post.query.GetCommentListUs
 import com.umc.product.community.application.port.out.LoadCommentPort;
 import com.umc.product.community.application.port.out.LoadPostPort;
 import com.umc.product.community.domain.Comment;
+import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -94,6 +96,29 @@ public class CommentQueryService implements GetCommentListUseCase {
                 );
             })
             .toList();
+    }
+
+    @Override
+    public CommentInfo getComment(Long commentId) {
+        // TODO: 이거 CommentInfo에 isAuthor 필드가 있으면 안 될 것 같다는 의견이긴 합니다. 예은이는 어떻게 생각하시나요? by 경운.
+
+        return loadCommentPort.findById(commentId)
+            .map(comment -> {
+                ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(comment.getChallengerId());
+                MemberInfo memberInfo = getMemberUseCase.getProfile(challengerInfo.memberId());
+
+                String authorName = memberInfo != null ? memberInfo.name() : "알 수 없음";
+                String authorProfileImage = memberInfo != null ? memberInfo.profileImageLink() : null;
+
+                return CommentInfo.from(
+                    comment,
+                    authorName,
+                    authorProfileImage,
+                    challengerInfo.part(),
+                    false // 단일 댓글 조회에서는 작성자 여부 판단이 어려움 (currentChallengerId가 없기 때문)
+                );
+            })
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.COMMENT_NOT_FOUND));
     }
 
     /**
