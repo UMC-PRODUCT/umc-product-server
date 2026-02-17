@@ -1152,7 +1152,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             }
 
             // assignment 1개라도 있으면 slotMinutes 수정 불가
-            if (loadInterviewAssignmentPort.countByRecruitmentId(recruitmentId) > 0) {
+            if (loadInterviewAssignmentPort.countByRootId(recruitmentId) > 0) {
                 throw new BusinessException(
                     Domain.RECRUITMENT,
                     RecruitmentErrorCode.INTERVIEW_TIMETABLE_SLOT_MINUTES_UPDATE_FORBIDDEN

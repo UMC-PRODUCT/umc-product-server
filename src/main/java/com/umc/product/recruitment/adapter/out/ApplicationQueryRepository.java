@@ -1004,19 +1004,19 @@ public class ApplicationQueryRepository {
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
-    public long countDocPassedByRecruitmentId(Long recruitmentId) {
+    public long countDocPassedByRootId(Long rootId) {
         Long count = queryFactory
             .select(application.count())
             .from(application)
             .where(
-                belongsToRecruitment(recruitmentId),
+                belongsToRecruitmentFamily(rootId),
                 application.status.eq(ApplicationStatus.DOC_PASSED)
             )
             .fetchOne();
         return count != null ? count : 0L;
     }
 
-    public long countDocPassedByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, ChallengerPart part) {
+    public long countDocPassedByRootIdAndFirstPreferredPart(Long rootId, ChallengerPart part) {
         Long count = queryFactory
             .select(application.countDistinct())
             .from(application)
@@ -1026,7 +1026,7 @@ public class ApplicationQueryRepository {
             )
             .join(applicationPartPreference.recruitmentPart, recruitmentPart)
             .where(
-                belongsToRecruitment(recruitmentId),
+                belongsToRecruitmentFamily(rootId),
                 application.status.eq(ApplicationStatus.DOC_PASSED),
                 recruitmentPart.part.eq(part)
             )
@@ -1059,6 +1059,27 @@ public class ApplicationQueryRepository {
             .from(formResponse)
             .where(formResponse.form.id.in(formIds));
 
+        return application.formResponseId.in(formResponseIds);
+    }
+
+    private BooleanExpression belongsToRecruitmentFamily(Long rootId) {
+        if (rootId == null) {
+            return null;
+        }
+
+        // 1. 해당 rootId를 공유하는 모든 모집(가족들)의 formId들을 추출
+        JPQLQuery<Long> familyFormIds = JPAExpressions
+            .select(recruitment.formId)
+            .from(recruitment)
+            .where(recruitment.rootRecruitmentId.eq(rootId));
+
+        // 2. 그 formId들에 작성된 모든 답변(FormResponse)의 ID들을 추출
+        JPQLQuery<Long> formResponseIds = JPAExpressions
+            .select(formResponse.id)
+            .from(formResponse)
+            .where(formResponse.form.id.in(familyFormIds));
+
+        // 3. 최종적으로 지원서가 이 답변들 중 하나를 참조하고 있는지 확인
         return application.formResponseId.in(formResponseIds);
     }
 

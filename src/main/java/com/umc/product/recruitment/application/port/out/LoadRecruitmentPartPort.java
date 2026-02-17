@@ -11,4 +11,6 @@ public interface LoadRecruitmentPartPort {
     List<RecruitmentPart> findByRecruitmentIdAndStatus(Long recruitmentId, RecruitmentPartStatus status);
 
     List<ChallengerPart> findOpenPartsByRecruitmentId(Long recruitmentId);
+
+    List<ChallengerPart> findOpenPartsByRootId(Long rootId);
 }

@@ -64,7 +64,22 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
 
     @Override
     public InterviewSchedulingSummaryInfo get(GetInterviewSchedulingSummaryQuery query) {
-        Long recruitmentId = query.recruitmentId();
+
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new BusinessException(
+                Domain.RECRUITMENT,
+                RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
+            ));
+
+        Long rootId = recruitment.getEffectiveRootId();
+
+        Recruitment rootRecruitment = recruitment.isRoot() ? recruitment :
+            loadRecruitmentPort.findById(rootId)
+                .orElseThrow(() -> new BusinessException(
+                    Domain.RECRUITMENT,
+                    RecruitmentErrorCode.ROOT_RECRUITMENT_NOT_FOUND
+                ));
+
         PartOption requestedPart = (query.part() != null) ? query.part() : PartOption.ALL;
 
         // todo: 운영진 권한 검증 필요
@@ -72,7 +87,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         // TODO: LoadRecruitmentSchedulePort 반환 타입을 Optional로 변경 검토
         //       (현재는 nullable 반환을 가정하고 null 체크로 처리)
         RecruitmentSchedule window = loadRecruitmentSchedulePort
-            .findByRecruitmentIdAndType(recruitmentId, RecruitmentScheduleType.INTERVIEW_WINDOW);
+            .findByRecruitmentIdAndType(rootId, RecruitmentScheduleType.INTERVIEW_WINDOW);
 
         if (window == null) {
             throw new BusinessException(
@@ -98,23 +113,17 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         List<LocalDate> dateOptions = datesBetweenInclusive(windowStart, windowEnd);
 
         // rules: recruitment.interviewTimeTable에서 추출
-        Recruitment recruitment = loadRecruitmentPort.findById(recruitmentId)
-            .orElseThrow(() -> new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
-            ));
-
-        RulesParsed rulesParsed = parseRulesFromTimeTable(recruitment.getInterviewTimeTable());
+        RulesParsed rulesParsed = parseRulesFromTimeTable(rootRecruitment.getInterviewTimeTable());
 
         // progress
         InterviewSchedulingSummaryInfo.ProgressInfo progress =
             (requestedPart == PartOption.ALL)
-                ? buildProgressAll(recruitmentId)
-                : buildProgressPart(recruitmentId, requestedPart);
+                ? buildProgressAll(rootId)
+                : buildProgressPart(rootId, requestedPart);
 
         // partOptions (done은 contextDate 기준)
         List<InterviewSchedulingSummaryInfo.PartOptionInfo> partOptions =
-            buildPartOptions(recruitmentId, contextDate);
+            buildPartOptions(rootId, contextDate);
 
         // context
         InterviewSchedulingSummaryInfo.ContextInfo context =
@@ -447,19 +456,22 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         return new InterviewSchedulingAssignmentsInfo(result);
     }
 
-    private InterviewSchedulingSummaryInfo.ProgressInfo buildProgressAll(Long recruitmentId) {
-        long total = loadApplicationPort.countDocPassedByRecruitmentId(recruitmentId);
-        long scheduled = loadInterviewAssignmentPort.countByRecruitmentId(recruitmentId);
+    // 본모집 + 모든 추가모집의 진행률 합산
+    private InterviewSchedulingSummaryInfo.ProgressInfo buildProgressAll(Long rootId) {
+        long total = loadApplicationPort.countDocPassedByRootId(rootId);
+        long scheduled = loadInterviewAssignmentPort.countByRootId(rootId);
+
         return new InterviewSchedulingSummaryInfo.ProgressInfo("ALL", "ALL", total, scheduled);
     }
 
-    private InterviewSchedulingSummaryInfo.ProgressInfo buildProgressPart(Long recruitmentId, PartOption part) {
-        long total = loadApplicationPort.countDocPassedByRecruitmentIdAndFirstPreferredPart(recruitmentId, part);
-        long scheduled = loadInterviewAssignmentPort.countByRecruitmentIdAndFirstPreferredPart(recruitmentId, part);
+    private InterviewSchedulingSummaryInfo.ProgressInfo buildProgressPart(Long rootId, PartOption part) {
+        long total = loadApplicationPort.countDocPassedByRootIdAndFirstPreferredPart(rootId, part);
+        long scheduled = loadInterviewAssignmentPort.countByRootIdAndFirstPreferredPart(rootId, part);
+
         return new InterviewSchedulingSummaryInfo.ProgressInfo("PART", part.name(), total, scheduled);
     }
 
-    private List<InterviewSchedulingSummaryInfo.PartOptionInfo> buildPartOptions(Long recruitmentId, LocalDate date) {
+    private List<InterviewSchedulingSummaryInfo.PartOptionInfo> buildPartOptions(Long rootId, LocalDate date) {
         List<InterviewSchedulingSummaryInfo.PartOptionInfo> result = new ArrayList<>();
 
         // ALL은 항상 포함
@@ -470,13 +482,13 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         ));
 
         // OPEN 파트만 포함
-        List<ChallengerPart> openParts = loadRecruitmentPartPort.findOpenPartsByRecruitmentId(recruitmentId);
+        List<ChallengerPart> openParts = loadRecruitmentPartPort.findOpenPartsByRootId(rootId);
 
         for (ChallengerPart cp : openParts) {
             PartOption p = PartOption.valueOf(cp.name());
-            long total = loadApplicationPort.countByRecruitmentIdAndFirstPreferredPart(recruitmentId, p);
+            long total = loadApplicationPort.countDocPassedByRootIdAndFirstPreferredPart(rootId, p);
             long scheduledOnDate = loadInterviewAssignmentPort
-                .countByRecruitmentIdAndDateAndFirstPreferredPart(recruitmentId, date, p);
+                .countByRootIdAndDateAndFirstPreferredPart(rootId, date, p);
 
             boolean done = (total > 0) && (scheduledOnDate >= total);
 

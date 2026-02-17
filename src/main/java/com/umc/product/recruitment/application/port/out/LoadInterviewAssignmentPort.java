@@ -10,11 +10,11 @@ import java.util.Set;
 
 public interface LoadInterviewAssignmentPort {
 
-    long countByRecruitmentId(Long recruitmentId);
+    long countByRootId(Long rootId);
 
-    long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, PartOption part);
+    long countByRootIdAndFirstPreferredPart(Long recruitmentId, PartOption part);
 
-    long countByRecruitmentIdAndDateAndFirstPreferredPart(Long recruitmentId, LocalDate date, PartOption part);
+    long countByRootIdAndDateAndFirstPreferredPart(Long rootId, LocalDate date, PartOption part);
 
     Set<Long> findAssignedApplicationIdsByRecruitmentId(Long recruitmentId);
 

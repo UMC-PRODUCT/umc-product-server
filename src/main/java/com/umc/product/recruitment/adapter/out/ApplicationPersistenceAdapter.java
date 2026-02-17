@@ -229,15 +229,17 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
         );
     }
 
+    // rootId로 수정
     @Override
-    public long countDocPassedByRecruitmentId(Long recruitmentId) {
-        return applicationQueryRepository.countDocPassedByRecruitmentId(recruitmentId);
+    public long countDocPassedByRootId(Long rootId) {
+        return applicationQueryRepository.countDocPassedByRootId(rootId);
     }
 
+    // rootId로 수정
     @Override
-    public long countDocPassedByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, PartOption part) {
+    public long countDocPassedByRootIdAndFirstPreferredPart(Long rootId, PartOption part) {
         ChallengerPart challengerPart = toChallengerPart(part);
-        return applicationQueryRepository.countDocPassedByRecruitmentIdAndFirstPreferredPart(recruitmentId,
+        return applicationQueryRepository.countDocPassedByRootIdAndFirstPreferredPart(rootId,
             challengerPart);
     }
 }

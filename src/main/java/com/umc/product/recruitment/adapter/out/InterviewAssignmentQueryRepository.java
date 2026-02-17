@@ -5,6 +5,7 @@ import static com.umc.product.recruitment.domain.QApplication.application;
 import static com.umc.product.recruitment.domain.QApplicationPartPreference.applicationPartPreference;
 import static com.umc.product.recruitment.domain.QInterviewAssignment.interviewAssignment;
 import static com.umc.product.recruitment.domain.QInterviewSlot.interviewSlot;
+import static com.umc.product.recruitment.domain.QRecruitment.recruitment;
 import static com.umc.product.recruitment.domain.QRecruitmentPart.recruitmentPart;
 
 import com.querydsl.core.types.Projections;
@@ -45,18 +46,23 @@ public class InterviewAssignmentQueryRepository {
             .fetch();
     }
 
-    public long countByRecruitmentId(Long recruitmentId) {
-        return queryFactory
+    public long countByRootId(Long rootId) {
+        Long count = queryFactory
             .select(interviewAssignment.count())
             .from(interviewAssignment)
-            .where(interviewAssignment.recruitment.id.eq(recruitmentId))
+            .join(interviewAssignment.recruitment, recruitment) // rootRecruitmentId 접근을 위해 조인
+            .where(
+                recruitment.rootRecruitmentId.eq(rootId) // 가족 전체 합산 조건
+            )
             .fetchOne();
+        return count != null ? count : 0L;
     }
 
-    public long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, ChallengerPart part) {
-        return queryFactory
+    public long countByRootIdAndFirstPreferredPart(Long rootId, ChallengerPart part) {
+        Long count = queryFactory
             .select(interviewAssignment.count())
             .from(interviewAssignment)
+            .join(interviewAssignment.recruitment, recruitment) // 가족 합산용 조인
             .join(interviewAssignment.application, application)
             .join(applicationPartPreference).on(
                 applicationPartPreference.application.eq(application),
@@ -64,23 +70,25 @@ public class InterviewAssignmentQueryRepository {
             )
             .join(applicationPartPreference.recruitmentPart, recruitmentPart)
             .where(
-                interviewAssignment.recruitment.id.eq(recruitmentId),
+                recruitment.rootRecruitmentId.eq(rootId), // 가족 전체 필터
                 recruitmentPart.part.eq(part)
             )
             .fetchOne();
+        return count != null ? count : 0L;
     }
 
-    public long countByRecruitmentIdAndDateAndFirstPreferredPart(
-        Long recruitmentId,
+    public long countByRootIdAndDateAndFirstPreferredPart(
+        Long rootId,
         LocalDate date,
         ChallengerPart part
     ) {
         Instant start = date.atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
         Instant end = date.plusDays(1).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
 
-        return queryFactory
+        Long count = queryFactory
             .select(interviewAssignment.count())
             .from(interviewAssignment)
+            .join(interviewAssignment.recruitment, recruitment)
             .join(interviewAssignment.slot, interviewSlot)
             .join(interviewAssignment.application, application)
             .join(applicationPartPreference).on(
@@ -89,12 +97,14 @@ public class InterviewAssignmentQueryRepository {
             )
             .join(applicationPartPreference.recruitmentPart, recruitmentPart)
             .where(
-                interviewAssignment.recruitment.id.eq(recruitmentId),
+                recruitment.rootRecruitmentId.eq(rootId),
                 recruitmentPart.part.eq(part),
                 interviewSlot.startsAt.goe(start),
                 interviewSlot.startsAt.lt(end)
             )
             .fetchOne();
+
+        return count != null ? count : 0L;
     }
 
     public Set<Long> findAssignedApplicationIdsByRecruitmentId(Long recruitmentId) {

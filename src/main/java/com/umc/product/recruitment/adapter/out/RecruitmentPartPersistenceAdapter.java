@@ -49,4 +49,14 @@ public class RecruitmentPartPersistenceAdapter implements SaveRecruitmentPartPor
             .distinct()
             .toList();
     }
+
+    @Override
+    public List<ChallengerPart> findOpenPartsByRootId(Long rootId) {
+        return recruitmentPartRepository
+            .findAllByRootIdAndStatus(rootId, RecruitmentPartStatus.OPEN)
+            .stream()
+            .map(RecruitmentPart::getPart)
+            .distinct()
+            .toList();
+    }
 }

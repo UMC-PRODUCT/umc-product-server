@@ -44,8 +44,8 @@ public interface LoadApplicationPort {
         PartOption partOption
     );
 
-    long countDocPassedByRecruitmentId(Long recruitmentId);
+    long countDocPassedByRootId(Long recruitmentId);
 
-    long countDocPassedByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, PartOption part);
+    long countDocPassedByRootIdAndFirstPreferredPart(Long recruitmentId, PartOption part);
 
 }

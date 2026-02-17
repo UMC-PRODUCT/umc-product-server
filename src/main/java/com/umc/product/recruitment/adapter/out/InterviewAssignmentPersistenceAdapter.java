@@ -22,24 +22,26 @@ public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssig
     private final InterviewAssignmentQueryRepository interviewAssignmentQueryRepository;
     private final InterviewAssignmentJpaRepository interviewAssignmentJpaRepository;
 
+    // root 기반으로 수정
     @Override
-    public long countByRecruitmentId(Long recruitmentId) {
-        return interviewAssignmentQueryRepository.countByRecruitmentId(recruitmentId);
+    public long countByRootId(Long recruitmentId) {
+        return interviewAssignmentQueryRepository.countByRootId(recruitmentId);
     }
 
+    // root 기반으로 수정
     @Override
-    public long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, PartOption part) {
+    public long countByRootIdAndFirstPreferredPart(Long recruitmentId, PartOption part) {
         ChallengerPart challengerPart = toChallengerPart(part);
-        return interviewAssignmentQueryRepository.countByRecruitmentIdAndFirstPreferredPart(
+        return interviewAssignmentQueryRepository.countByRootIdAndFirstPreferredPart(
             recruitmentId, challengerPart
         );
     }
 
     @Override
-    public long countByRecruitmentIdAndDateAndFirstPreferredPart(Long recruitmentId, LocalDate date, PartOption part) {
+    public long countByRootIdAndDateAndFirstPreferredPart(Long rootId, LocalDate date, PartOption part) {
         ChallengerPart challengerPart = toChallengerPart(part);
-        return interviewAssignmentQueryRepository.countByRecruitmentIdAndDateAndFirstPreferredPart(
-            recruitmentId, date, challengerPart
+        return interviewAssignmentQueryRepository.countByRootIdAndDateAndFirstPreferredPart(
+            rootId, date, challengerPart
         );
     }
 
