@@ -466,10 +466,9 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
                 continue;
             }
 
-            // todo: 추가모집 관련 변경사항 수정 시 recruitment에 rootRecruitmentId 추가 후 대체
             DocumentEvaluationRecruitmentInfo info = new DocumentEvaluationRecruitmentInfo(
                 recruitmentId,
-                recruitmentId,
+                recruitment.getEffectiveRootId(), // 본모집 ID(또는 자기자신 ID) 전달
                 recruitment.getTitle(),
                 appStartAt,    // 모집 시작
                 finalResultAt, // 최종 발표
