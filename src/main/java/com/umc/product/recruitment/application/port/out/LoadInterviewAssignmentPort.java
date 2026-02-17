@@ -36,4 +36,9 @@ public interface LoadInterviewAssignmentPort {
 
     Set<Long> findAssignedApplicationIdsByRootId(Long rootId);
 
+    List<InterviewSchedulingAssignmentRow> findAssignmentRowsByRootIdAndSlotId(
+        Long rootId,
+        Long slotId,
+        PartOption part
+    );
 }

@@ -193,4 +193,49 @@ public class InterviewAssignmentQueryRepository {
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
     }
+
+    public List<InterviewSchedulingAssignmentRow> findAssignmentRowsByRootIdAndSlotId(
+        Long rootId,
+        Long slotId,
+        PartOption requestedPart
+    ) {
+        QApplicationPartPreference pref1 = new QApplicationPartPreference("pref1");
+        QApplicationPartPreference pref2 = new QApplicationPartPreference("pref2");
+        QRecruitmentPart rp1 = new QRecruitmentPart("rp1");
+        QRecruitmentPart rp2 = new QRecruitmentPart("rp2");
+
+        ChallengerPart filterPart = null;
+        if (requestedPart != null && requestedPart != PartOption.ALL) {
+            filterPart = ChallengerPart.valueOf(requestedPart.name());
+        }
+
+        return queryFactory
+            .select(Projections.constructor(
+                InterviewSchedulingAssignmentRow.class,
+                interviewAssignment.id,
+                interviewAssignment.application.id,
+                member.nickname,
+                member.name,
+                rp1.part,
+                rp2.part
+            ))
+            .from(interviewAssignment)
+            .join(interviewAssignment.application, application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .join(interviewAssignment.recruitment, recruitment)
+
+            .leftJoin(pref1).on(pref1.application.eq(application), pref1.priority.eq(1))
+            .leftJoin(pref1.recruitmentPart, rp1)
+
+            .leftJoin(pref2).on(pref2.application.eq(application), pref2.priority.eq(2))
+            .leftJoin(pref2.recruitmentPart, rp2)
+
+            .where(
+                recruitment.rootRecruitmentId.eq(rootId),
+                interviewAssignment.slot.id.eq(slotId),
+                ObjectUtils.isEmpty(filterPart) ? null : rp1.part.eq(filterPart)
+            )
+            .orderBy(interviewAssignment.createdAt.asc())
+            .fetch();
+    }
 }

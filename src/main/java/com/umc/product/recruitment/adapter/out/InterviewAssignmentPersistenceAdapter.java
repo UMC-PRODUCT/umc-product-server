@@ -115,4 +115,17 @@ public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssig
     public Set<Long> findAssignedApplicationIdsByRootId(Long rootId) {
         return interviewAssignmentQueryRepository.findAssignedApplicationIdsByRootId(rootId);
     }
+
+    @Override
+    public List<InterviewSchedulingAssignmentRow> findAssignmentRowsByRootIdAndSlotId(
+        Long rootId,
+        Long slotId,
+        PartOption part
+    ) {
+        return interviewAssignmentQueryRepository.findAssignmentRowsByRootIdAndSlotId(
+            rootId,
+            slotId,
+            part
+        );
+    }
 }

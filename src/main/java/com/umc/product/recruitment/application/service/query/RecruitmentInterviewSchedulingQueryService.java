@@ -398,7 +398,10 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
     @Override
     public InterviewSchedulingAssignmentsInfo get(GetInterviewSchedulingAssignmentsQuery query) {
         // todo: 운영진 권한 검증 필요
-        Long recruitmentId = query.recruitmentId();
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
         Long slotId = query.slotId();
         PartOption requestedPart = (query.part() != null) ? query.part() : PartOption.ALL;
 
@@ -409,7 +412,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
                 RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND
             ));
 
-        if (!slot.getRecruitment().getId().equals(recruitmentId)) {
+        if (!slot.getRecruitment().getEffectiveRootId().equals(rootId)) {
             throw new BusinessException(
                 Domain.RECRUITMENT,
                 RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT
@@ -420,8 +423,8 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         //    - 여기서는 docScore 제외한 정보만 가져옴
         //    - part도 ChallengerPart로 가져와서 서비스에서 매핑
         List<InterviewSchedulingAssignmentRow> rows =
-            loadInterviewAssignmentPort.findAssignmentRowsByRecruitmentIdAndSlotId(
-                recruitmentId,
+            loadInterviewAssignmentPort.findAssignmentRowsByRootIdAndSlotId(
+                rootId,
                 slotId,
                 requestedPart
             );
