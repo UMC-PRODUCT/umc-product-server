@@ -5,4 +5,6 @@ import com.umc.product.recruitment.application.port.in.command.dto.CreateRecruit
 
 public interface CreateRecruitmentUseCase {
     CreateRecruitmentInfo create(CreateRecruitmentCommand command);
+
+    CreateRecruitmentInfo createExtension(CreateExtensionCommand command);
 }

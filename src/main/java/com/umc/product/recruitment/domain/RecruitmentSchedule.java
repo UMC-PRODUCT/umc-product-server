@@ -10,6 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import java.time.Instant;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -42,6 +43,19 @@ public class RecruitmentSchedule extends BaseEntity {
 
     @Column
     private String note; // 표시용 문구. 추후 UI 보고 필요 없다 판단되면 삭제
+
+    /**
+     * 추가 모집(Extension)을 위한 일정 복제 메서드
+     */
+    public static RecruitmentSchedule copyForExtension(Long newRecruitmentId, RecruitmentSchedule source) {
+        return RecruitmentSchedule.builder()
+            .recruitmentId(newRecruitmentId) // 새로운 추가 모집 ID 부여
+            .type(source.getType())          // 동일한 일정 타입 (예: 면접 진행)
+            .startsAt(source.getStartsAt())  // 기존의 시작 시간 복제
+            .endsAt(source.getEndsAt())      // 기존의 종료 시간 복제
+            .note(source.getNote())          // 비고 사항 복제
+            .build();
+    }
 
     public static RecruitmentSchedule createDraft(Long recruitmentId, RecruitmentScheduleType type) {
         return RecruitmentSchedule.builder()
@@ -111,4 +125,13 @@ public class RecruitmentSchedule extends BaseEntity {
             .build();
     }
 
+    public boolean isSamePeriod(RecruitmentSchedule other) {
+        if (other == null) {
+            return false;
+        }
+
+        // 시작 시간과 종료 시간이 모두 일치하는지 확인 (null 포함 비교)
+        return Objects.equals(this.startsAt, other.getStartsAt()) &&
+            Objects.equals(this.endsAt, other.getEndsAt());
+    }
 }

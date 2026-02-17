@@ -36,6 +36,7 @@ import com.umc.product.recruitment.adapter.out.dto.MyDocumentEvaluationProjectio
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.dto.DocumentSelectionApplicationListInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.FinalSelectionApplicationListInfo;
+import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.QApplicationPartPreference;
 import com.umc.product.recruitment.domain.QRecruitmentPart;
@@ -446,7 +447,7 @@ public class ApplicationQueryRepository {
     }
 
     public List<InterviewSchedulingAvailableApplicantRow> findAvailableRows(
-        Long recruitmentId,
+        Long rootId,
         Set<Long> availableAppIds,
         PartOption requestedPart,
         String keyword
@@ -482,6 +483,7 @@ public class ApplicationQueryRepository {
 
             .where(
                 application.id.in(availableAppIds),
+                belongsToRecruitmentFamily(rootId),
                 keywordContains(keyword),
                 filterPart == null ? null : rp1.part.eq(filterPart)
             )
@@ -490,7 +492,7 @@ public class ApplicationQueryRepository {
     }
 
     public List<InterviewSchedulingAlreadyScheduledApplicantRow> findAlreadyScheduledRows(
-        Long recruitmentId,
+        Long rootId,
         Long slotId,
         Set<Long> alreadyScheduledAppIds,
         PartOption requestedPart,
@@ -523,7 +525,7 @@ public class ApplicationQueryRepository {
             .join(interviewAssignment.slot, interviewSlot)
             .join(interviewAssignment.application, application)
             .join(member).on(member.id.eq(application.applicantMemberId))
-
+            .join(interviewAssignment.recruitment, recruitment)
             .leftJoin(pref1).on(pref1.application.eq(application), pref1.priority.eq(1))
             .leftJoin(pref1.recruitmentPart, rp1)
 
@@ -531,7 +533,7 @@ public class ApplicationQueryRepository {
             .leftJoin(pref2.recruitmentPart, rp2)
 
             .where(
-                interviewAssignment.recruitment.id.eq(recruitmentId),
+                recruitment.rootRecruitmentId.eq(rootId),
                 interviewAssignment.slot.id.ne(slotId), // "다른 슬롯"만
                 interviewAssignment.application.id.in(alreadyScheduledAppIds),
                 keywordContains(keyword),
@@ -567,12 +569,12 @@ public class ApplicationQueryRepository {
         ));
     }
 
-    public FinalSelectionApplicationListInfo.Summary getFinalSelectionSummary(Long recruitmentId, String part) {
+    public FinalSelectionApplicationListInfo.Summary getFinalSelectionSummary(Long rootId, String part) {
         Long total = queryFactory
             .select(application.count())
             .from(application)
             .where(
-                belongsToRecruitment(recruitmentId),
+                belongsToRecruitmentFamily(rootId),
                 finalSelectionStatus(),
                 firstPriorityPartMatches(part)
             )
@@ -582,7 +584,7 @@ public class ApplicationQueryRepository {
             .select(application.count())
             .from(application)
             .where(
-                belongsToRecruitment(recruitmentId),
+                belongsToRecruitmentFamily(rootId),
                 application.status.eq(ApplicationStatus.FINAL_ACCEPTED),
                 firstPriorityPartMatches(part)
             )
@@ -596,7 +598,7 @@ public class ApplicationQueryRepository {
 
 
     public Page<FinalSelectionListItemProjection> searchFinalSelections(
-        Long recruitmentId,
+        Long rootId,
         String part,
         String sort,
         Pageable pageable
@@ -612,7 +614,7 @@ public class ApplicationQueryRepository {
             .from(application)
             .join(member).on(member.id.eq(application.applicantMemberId))
             .where(
-                belongsToRecruitment(recruitmentId),
+                belongsToRecruitmentFamily(rootId),
                 finalSelectionStatus(),
                 firstPriorityPartMatches(part)
             )
@@ -626,7 +628,7 @@ public class ApplicationQueryRepository {
             .from(application)
             .join(member).on(member.id.eq(application.applicantMemberId))
             .where(
-                belongsToRecruitment(recruitmentId),
+                belongsToRecruitmentFamily(rootId),
                 finalSelectionStatus(),
                 firstPriorityPartMatches(part)
             );
@@ -1004,19 +1006,19 @@ public class ApplicationQueryRepository {
         return PageableExecutionUtils.getPage(content, pageable, countQuery::fetchOne);
     }
 
-    public long countDocPassedByRecruitmentId(Long recruitmentId) {
+    public long countDocPassedByRootId(Long rootId) {
         Long count = queryFactory
             .select(application.count())
             .from(application)
             .where(
-                belongsToRecruitment(recruitmentId),
+                belongsToRecruitmentFamily(rootId),
                 application.status.eq(ApplicationStatus.DOC_PASSED)
             )
             .fetchOne();
         return count != null ? count : 0L;
     }
 
-    public long countDocPassedByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, ChallengerPart part) {
+    public long countDocPassedByRootIdAndFirstPreferredPart(Long rootId, ChallengerPart part) {
         Long count = queryFactory
             .select(application.countDistinct())
             .from(application)
@@ -1026,12 +1028,139 @@ public class ApplicationQueryRepository {
             )
             .join(applicationPartPreference.recruitmentPart, recruitmentPart)
             .where(
-                belongsToRecruitment(recruitmentId),
+                belongsToRecruitmentFamily(rootId),
                 application.status.eq(ApplicationStatus.DOC_PASSED),
                 recruitmentPart.part.eq(part)
             )
             .fetchOne();
         return count != null ? count : 0L;
+    }
+
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRootId(
+        Long rootId
+    ) {
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .where(
+                belongsToRecruitmentFamily(rootId),
+                application.status.eq(ApplicationStatus.DOC_PASSED)
+            )
+            .fetch();
+    }
+
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRootIdAndFirstPreferredPart(
+        Long rootId,
+        PartOption partOption
+    ) {
+        ChallengerPart part = ChallengerPart.valueOf(partOption.name());
+
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitmentFamily(rootId),
+                application.status.eq(ApplicationStatus.DOC_PASSED),
+                recruitmentPart.part.eq(part)
+            )
+            .fetch();
+    }
+
+    public boolean isApplicationBelongsToRecruitmentFamily(Long applicationId, Long rootId) {
+        if (applicationId == null || rootId == null) {
+            return false;
+        }
+
+        Integer result = queryFactory
+            .selectOne()
+            .from(application)
+            .where(
+                application.id.eq(applicationId),
+                belongsToRecruitmentFamily(rootId)
+            )
+            .fetchFirst();
+
+        return result != null;
+    }
+
+    public long countByRootRecruitmentId(Long rootId) {
+        Long count = queryFactory
+            .select(application.count())
+            .from(application)
+            .where(belongsToRecruitmentFamily(rootId))
+            .fetchOne();
+        return count != null ? count : 0L;
+    }
+
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRootRecruitmentId(Long rootId) {
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .where(belongsToRecruitmentFamily(rootId))
+            .fetch();
+    }
+
+    public long countByRootIdAndFirstPreferredPart(Long rootId, ChallengerPart part) {
+        Long count = queryFactory
+            .select(application.countDistinct()) // 중복 방지를 위해 countDistinct 사용
+            .from(application)
+            // 1지망 파트 정보 조인
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitmentFamily(rootId),
+                recruitmentPart.part.eq(part)
+            )
+            .fetchOne();
+
+        return count != null ? count : 0L;
+    }
+
+    // 1. 가문 전체 Application Entity 조회
+    public List<Application> findAllByRootRecruitmentId(Long rootId) {
+        return queryFactory
+            .selectFrom(application)
+            .where(belongsToRecruitmentFamily(rootId))
+            .fetch();
+    }
+
+    // 2. 가문 전체 + 파트 필터링된 ID 목록 조회
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRootRecruitmentIdAndFirstPreferredPart(
+        Long rootId, ChallengerPart part
+    ) {
+        return queryFactory
+            .select(Projections.constructor(ApplicationIdWithFormResponseId.class,
+                application.id,
+                application.formResponseId
+            ))
+            .from(application)
+            .join(applicationPartPreference).on(
+                applicationPartPreference.application.eq(application),
+                applicationPartPreference.priority.eq(1)
+            )
+            .join(applicationPartPreference.recruitmentPart, recruitmentPart)
+            .where(
+                belongsToRecruitmentFamily(rootId),
+                recruitmentPart.part.eq(part)
+            )
+            .fetch();
     }
 
     private BooleanExpression belongsToRecruitments(Long chapterId, Long schoolId) {
@@ -1059,6 +1188,27 @@ public class ApplicationQueryRepository {
             .from(formResponse)
             .where(formResponse.form.id.in(formIds));
 
+        return application.formResponseId.in(formResponseIds);
+    }
+
+    private BooleanExpression belongsToRecruitmentFamily(Long rootId) {
+        if (rootId == null) {
+            return null;
+        }
+
+        // 1. 해당 rootId를 공유하는 모든 모집(가족들)의 formId들을 추출
+        JPQLQuery<Long> familyFormIds = JPAExpressions
+            .select(recruitment.formId)
+            .from(recruitment)
+            .where(recruitment.rootRecruitmentId.eq(rootId));
+
+        // 2. 그 formId들에 작성된 모든 답변(FormResponse)의 ID들을 추출
+        JPQLQuery<Long> formResponseIds = JPAExpressions
+            .select(formResponse.id)
+            .from(formResponse)
+            .where(formResponse.form.id.in(familyFormIds));
+
+        // 3. 최종적으로 지원서가 이 답변들 중 하나를 참조하고 있는지 확인
         return application.formResponseId.in(formResponseIds);
     }
 

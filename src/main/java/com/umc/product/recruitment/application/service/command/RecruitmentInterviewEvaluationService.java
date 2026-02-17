@@ -1,5 +1,7 @@
 package com.umc.product.recruitment.application.service.command;
 
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.recruitment.application.port.in.command.CreateLiveQuestionUseCase;
@@ -17,12 +19,14 @@ import com.umc.product.recruitment.application.port.in.query.dto.GetMyInterviewE
 import com.umc.product.recruitment.application.port.out.LoadEvaluationPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewLiveQuestionPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.SaveEvaluationPort;
 import com.umc.product.recruitment.application.port.out.SaveInterviewLiveQuestionPort;
 import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.Evaluation;
 import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.recruitment.domain.InterviewLiveQuestion;
+import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
@@ -45,6 +49,7 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
     private final LoadEvaluationPort loadEvaluationPort;
     private final SaveEvaluationPort saveEvaluationPort;
     private final GetMemberUseCase getMemberUseCase;
+    private final LoadRecruitmentPort loadRecruitmentPort;
 
     @Override
     public GetMyInterviewEvaluationInfo upsert(UpsertMyInterviewEvaluationCommand command) {
@@ -169,10 +174,15 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
 
     // InterviewAssignment 조회 및 검증
     private InterviewAssignment getValidatedAssignment(Long assignmentId, Long recruitmentId) {
+
+        Recruitment recruitment = loadRecruitmentPort.findById(recruitmentId)
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
         InterviewAssignment assignment = loadInterviewAssignmentPort.findById(assignmentId)
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
 
-        if (!assignment.getRecruitment().getId().equals(recruitmentId)) {
+        if (!assignment.getRecruitment().getEffectiveRootId().equals(rootId)) {
             throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
         }
 

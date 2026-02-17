@@ -15,6 +15,7 @@ import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentPublishedInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetExtensionBaseRecruitmentsUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyApplicationListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetPublishedRecruitmentDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
@@ -31,6 +32,7 @@ import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitme
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationEvaluationStatusCode;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationProgressNoticeType;
 import com.umc.product.recruitment.application.port.in.query.dto.ApplicationProgressStep;
+import com.umc.product.recruitment.application.port.in.query.dto.ExtensionBaseRecruitmentsInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetPublishedRecruitmentDetailQuery;
@@ -109,7 +111,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     GetRecruitmentDetailUseCase,
     GetRecruitmentPartListUseCase,
     GetRecruitmentDraftApplicationFormUseCase,
-    GetPublishedRecruitmentDetailUseCase {
+    GetPublishedRecruitmentDetailUseCase,
+    GetExtensionBaseRecruitmentsUseCase {
 
     private final LoadRecruitmentPort loadRecruitmentPort;
     private final LoadRecruitmentPartPort loadRecruitmentPartPort;
@@ -142,27 +145,38 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
             (query.schoolId() != null) ? query.schoolId() : resolveSchoolId(query.requesterMemberId());
         Long resolvedGisuId = (query.gisuId() != null) ? query.gisuId() : resolveActiveGisuId();
 
-        Instant now = Instant.now();
+        List<Recruitment> recruitments = loadRecruitmentPort.findAllPublishedBySchoolIdAndGisuId(resolvedSchoolId,
+            resolvedGisuId);
 
-        // 최종 발표일(startsAt) 이후 24시간까지 Active로 인정
-        Instant limit = now.minus(1, ChronoUnit.DAYS);
-
-        List<Long> activeIds = loadRecruitmentPort.findActiveRecruitmentIds(
-            resolvedSchoolId,
-            resolvedGisuId,
-            now,
-            limit
-        );
-
-        if (activeIds.isEmpty()) {
+        if (recruitments.isEmpty()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND);
         }
 
-        if (activeIds.size() > 1) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.MULTIPLE_ACTIVE_RECRUITMENTS);
-        }
+        // 3. 각 모집의 '서류 모집(APPLY_WINDOW)' 일정 한꺼번에 조회
+        List<Long> recruitmentIds = recruitments.stream().map(Recruitment::getId).toList();
+        Map<Long, RecruitmentSchedule> applySchedules = loadRecruitmentSchedulePort.findScheduleMapByRecruitmentIdsAndType(
+            recruitmentIds, RecruitmentScheduleType.APPLY_WINDOW);
 
-        return new ActiveRecruitmentInfo(activeIds.get(0));
+        Instant now = Instant.now();
+
+        Recruitment activeOne = recruitments.stream()
+            .sorted(Comparator
+                // (1순위) 현재 지원 기간 내에 있는가?
+                .comparing((Recruitment r) -> isApplying(applySchedules.get(r.getId()), now)).reversed()
+                // (2순위) 생성일 기준 최신순
+                .thenComparing(Recruitment::getPublishedAt, Comparator.reverseOrder())
+            )
+            .findFirst()
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        return new ActiveRecruitmentInfo(activeOne.getId());
+    }
+
+    private boolean isApplying(RecruitmentSchedule schedule, Instant now) {
+        if (schedule == null || schedule.getStartsAt() == null || schedule.getEndsAt() == null) {
+            return false;
+        }
+        return !now.isBefore(schedule.getStartsAt()) && !now.isAfter(schedule.getEndsAt());
     }
 
     @Override
@@ -335,6 +349,11 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         Instant now = Instant.now();
 
+        // 현재 모집 공고 로드하여 rootId 확보
+        Recruitment recruitment = loadRecruitmentPort.findById(recruitmentId)
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
         // 대시보드에 필요한 스케줄들 로드
         DashboardSchedules schedules = loadDashboardSchedules(recruitmentId);
 
@@ -348,12 +367,12 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         // 지원 현황 (총 지원자 + 파트별 지원자)
         RecruitmentDashboardInfo.ApplicationStatusInfo applicationStatus =
-            buildApplicationStatus(recruitmentId);
+            buildApplicationStatus(rootId);
 
         // 평가 현황 (서류/면접 진행률 + 파트별 진행 현황)
         //    - 내 진행률 기준으로 계산
         RecruitmentDashboardInfo.EvaluationStatusInfo evaluationStatus =
-            buildEvaluationStatus(memberId, recruitmentId, now, progress);
+            buildEvaluationStatus(memberId, rootId, now, progress);
 
         return new RecruitmentDashboardInfo(
             recruitmentId,
@@ -832,20 +851,20 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         return (atSchedule == null) ? null : atSchedule.getStartsAt();
     }
 
-    private RecruitmentDashboardInfo.ApplicationStatusInfo buildApplicationStatus(Long recruitmentId) {
-        long totalApplicantsLong = loadApplicationPort.countByRecruitmentId(recruitmentId);
+    private RecruitmentDashboardInfo.ApplicationStatusInfo buildApplicationStatus(Long rootId) {
+        long totalApplicantsLong = loadApplicationPort.countByRootRecruitmentId(rootId);
         int totalApplicants = safeToInt(totalApplicantsLong);
 
-        List<ChallengerPart> openParts = loadRecruitmentPartPort.findOpenPartsByRecruitmentId(recruitmentId);
+        List<ChallengerPart> openParts = loadRecruitmentPartPort.findOpenPartsByRootId(rootId);
         if (openParts == null) {
-            log.warn("[RecruitmentDashboard] openParts is null. recruitmentId={}", recruitmentId);
+            log.warn("[RecruitmentDashboard] openParts is null for rootId={}", rootId);
             openParts = List.of();
         }
 
         List<RecruitmentDashboardInfo.PartApplicantCountInfo> partCounts = openParts.stream()
             .map(part -> {
-                long countLong = loadApplicationPort.countByRecruitmentIdAndFirstPreferredPart(
-                    recruitmentId,
+                long countLong = loadApplicationPort.countByRootIdAndFirstPreferredPart(
+                    rootId,
                     PartOption.valueOf(part.name())
                 );
                 return new RecruitmentDashboardInfo.PartApplicantCountInfo(part, safeToInt(countLong));
@@ -868,12 +887,12 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     private RecruitmentDashboardInfo.EvaluationStatusInfo buildEvaluationStatus(
         Long evaluatorUserId,
-        Long recruitmentId,
+        Long rootId,
         Instant now,
         RecruitmentDashboardInfo.ProgressInfo progress
     ) {
         if (evaluatorUserId == null) {
-            log.warn("[RecruitmentDashboard] evaluatorUserId is null. recruitmentId={}", recruitmentId);
+            log.warn("[RecruitmentDashboard] evaluatorUserId is null. recruitmentId={}", rootId);
             // 안전하게 0/0 내려줌
             RecruitmentDashboardInfo.EvaluationProgressInfo zero =
                 new RecruitmentDashboardInfo.EvaluationProgressInfo(0, 0, 0);
@@ -882,10 +901,10 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         // 0) 모집의 전체 지원서 id들 (모수)
         List<ApplicationIdWithFormResponseId> allApps =
-            loadApplicationPort.findApplicationIdsWithFormResponseIdsByRecruitment(recruitmentId);
+            loadApplicationPort.findApplicationIdsWithFormResponseIdsByRootRecruitmentId(rootId);
 
         if (allApps == null) {
-            log.warn("[RecruitmentDashboard] allApps is null. recruitmentId={}", recruitmentId);
+            log.warn("[RecruitmentDashboard] allApps is null. recruitmentId={}", rootId);
             allApps = List.of();
         }
 
@@ -902,7 +921,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         );
         if (docCompletedAppIds == null) {
             log.warn("[RecruitmentDashboard] docCompletedAppIds is null. recruitmentId={}, evaluatorUserId={}",
-                recruitmentId, evaluatorUserId);
+                rootId, evaluatorUserId);
             docCompletedAppIds = Set.of();
         }
 
@@ -911,7 +930,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         // 2) 면접 평가 진행률: "면접 대상"만 모수로 잡기 (DOC_PASSED 이상만)
         final List<Application> appEntities =
-            java.util.Optional.ofNullable(loadApplicationListPort.findByRecruitmentId(recruitmentId))
+            java.util.Optional.ofNullable(loadApplicationPort.findByRootRecruitmentId(rootId))
                 .orElseGet(List::of);
 
         Set<Long> interviewTargetIds = appEntities.stream()
@@ -926,7 +945,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         );
         if (interviewCompletedAppIds == null) {
             log.warn("[RecruitmentDashboard] interviewCompletedAppIds is null. recruitmentId={}, evaluatorUserId={}",
-                recruitmentId, evaluatorUserId);
+                rootId, evaluatorUserId);
             interviewCompletedAppIds = Set.of();
         }
 
@@ -934,9 +953,9 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
             toProgressInfo(interviewTargetIds.size(), interviewCompletedAppIds.size());
 
         // 3) 파트별 진행현황 (OPEN 파트 기준, 1지망 모수)
-        List<ChallengerPart> openParts = loadRecruitmentPartPort.findOpenPartsByRecruitmentId(recruitmentId);
+        List<ChallengerPart> openParts = loadRecruitmentPartPort.findOpenPartsByRootId(rootId);
         if (openParts == null) {
-            log.warn("[RecruitmentDashboard] openParts is null. recruitmentId={}", recruitmentId);
+            log.warn("[RecruitmentDashboard] openParts is null. recruitmentId={}", rootId);
             openParts = List.of();
         }
 
@@ -944,13 +963,13 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
             .map(part -> {
                 // 1지망이 해당 part인 application ids
                 List<ApplicationIdWithFormResponseId> partApps =
-                    loadApplicationPort.findApplicationIdsWithFormResponseIdsByRecruitmentAndFirstPreferredPart(
-                        recruitmentId,
+                    loadApplicationPort.findApplicationIdsWithFormResponseIdsByRootRecruitmentIdAndFirstPreferredPart(
+                        rootId,
                         PartOption.valueOf(part.name())
                     );
 
                 if (partApps == null) {
-                    log.warn("[RecruitmentDashboard] partApps is null. recruitmentId={}, part={}", recruitmentId, part);
+                    log.warn("[RecruitmentDashboard] partApps is null. recruitmentId={}, part={}", rootId, part);
                     partApps = List.of();
                 }
 
@@ -968,7 +987,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
                 if (partDocCompleted == null) {
                     log.warn(
                         "[RecruitmentDashboard] partDocCompleted is null. recruitmentId={}, part={}, evaluatorUserId={}",
-                        recruitmentId, part, evaluatorUserId);
+                        rootId, part, evaluatorUserId);
                     partDocCompleted = Set.of();
                 }
 
@@ -988,13 +1007,14 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
                 if (partInterviewCompleted == null) {
                     log.warn(
                         "[RecruitmentDashboard] partInterviewCompleted is null. recruitmentId={}, part={}, evaluatorUserId={}",
-                        recruitmentId, part, evaluatorUserId);
+                        rootId, part, evaluatorUserId);
                     partInterviewCompleted = Set.of();
                 }
 
-                EvalPhaseStatus docStatus = toPhaseStatus(partAppIds.size(), partDocCompleted.size());
+                EvalPhaseStatus docStatus = toPhaseStatus(partAppIds.size(),
+                    partDocCompleted == null ? 0 : partDocCompleted.size());
                 EvalPhaseStatus interviewStatus = toPhaseStatus(partInterviewTargets.size(),
-                    partInterviewCompleted.size());
+                    partInterviewCompleted == null ? 0 : partInterviewCompleted.size());
 
                 return new RecruitmentDashboardInfo.PartEvaluationStatusInfo(part, docStatus, interviewStatus);
             })
@@ -1094,7 +1114,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
             apps = List.of();
         }
 
-        CurrentPicked currentPicked = pickCurrent(activeRecruitmentId, drafts, apps);
+        CurrentPicked currentPicked = pickCurrent(schoolId, activeGisuId, drafts, apps);
 
         MyApplicationListInfo.CurrentApplicationStatusInfo current =
             buildCurrentOrBeforeApply(activeRecruitmentId, currentPicked);
@@ -1109,43 +1129,37 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
      * 활성 모집 기준 current 선택 - activeRecruitmentId 없으면 current 없음 - 활성 모집 submitted 있으면 submitted 우선 - 없으면 활성 모집 draft 있으면
      * draft - 둘 다 없으면 current 없음 (=> 지금 열린 모집에 지원 안했으면 리스트에 없음)
      */
-    private CurrentPicked pickCurrent(Long activeRecruitmentId, List<FormResponse> drafts, List<Application> apps) {
-        if (activeRecruitmentId == null) {
-            return null;
-        }
+    private CurrentPicked pickCurrent(Long schoolId, Long activeGisuId, List<FormResponse> drafts,
+                                      List<Application> apps) {
 
-        // submitted 우선
-        Application activeApp = (apps == null ? List.<Application>of() : apps).stream()
+        // 1순위: 현재 기수의 제출된 지원서 중 가장 최신 것
+        Application currentApp = (apps == null ? List.<Application>of() : apps).stream()
             .filter(a -> a.getRecruitment() != null
-                && activeRecruitmentId.equals(a.getRecruitment().getId()))
-            .max(Comparator.comparing(
-                Application::getCreatedAt,
-                Comparator.nullsLast(Comparator.naturalOrder())
-            ))
+                && schoolId.equals(a.getRecruitment().getSchoolId())
+                && activeGisuId.equals(a.getRecruitment().getGisuId()))
+            .max(Comparator.comparing(Application::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())))
             .orElse(null);
 
-        if (activeApp != null) {
-            return CurrentPicked.submitted(activeApp.getRecruitment(), activeApp);
+        if (currentApp != null) {
+            return CurrentPicked.submitted(currentApp.getRecruitment(), currentApp);
         }
 
-        FormResponse activeDraft = (drafts == null ? List.<FormResponse>of() : drafts).stream()
-            .filter(fr -> isRecruitmentMatchedByFormId(activeRecruitmentId, fr))
-            .max(Comparator.comparing(
-                FormResponse::getUpdatedAt,
-                Comparator.nullsLast(Comparator.naturalOrder())
-            ))
+        // 2순위: 현재 기수의 임시저장 지원서 중 가장 최신 것
+        FormResponse currentDraft = (drafts == null ? List.<FormResponse>of() : drafts).stream()
+            .filter(fr -> {
+                Long formId = (fr.getForm() == null) ? null : fr.getForm().getId();
+                Recruitment r = (formId == null) ? null : loadRecruitmentPort.findByFormId(formId).orElse(null);
+                return r != null && schoolId.equals(r.getSchoolId()) && activeGisuId.equals(r.getGisuId());
+            })
+            .max(Comparator.comparing(FormResponse::getUpdatedAt, Comparator.nullsLast(Comparator.naturalOrder())))
             .orElse(null);
 
-        if (activeDraft != null) {
-            Long formId = activeDraft.getForm() == null ? null : activeDraft.getForm().getId();
-            Recruitment r = (formId == null) ? null
-                : loadRecruitmentPort.findByFormId(formId).orElse(null);
-            if (r != null) {
-                return CurrentPicked.draft(r, activeDraft);
-            }
+        if (currentDraft != null) {
+            Recruitment r = loadRecruitmentPort.findByFormId(currentDraft.getForm().getId()).get();
+            return CurrentPicked.draft(r, currentDraft);
         }
 
-        return null;
+        return null; // 지원 기록이 없으면 null 반환 -> buildCurrentOrBeforeApply에서 activeId 기반으로 렌더링
     }
 
     /**
@@ -1847,6 +1861,52 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
             loadRecruitmentPort.findPublishedScheduleInfoByRecruitmentId(query.recruitmentId());
 
         return RecruitmentPublishedInfo.from(recruitment, parts, scheduleInfo);
+    }
+
+    @Override
+    public ExtensionBaseRecruitmentsInfo getRecruitmentsForExtensionBase(Long schoolId) {
+        // 1. 현재 활성화된 기수(Active Gisu) 조회
+        Long gisuId = resolveActiveGisuId();
+
+        // 2. 해당 학교 + Active 기수의 발행된 모집 목록 조회
+        List<Recruitment> recruitments = loadRecruitmentPort.findAllPublishedBySchoolIdAndGisuId(
+            schoolId,
+            gisuId
+        );
+
+        // 3. 각 모집의 일정(서류시작, 최종발표)을 결합하여 Info로 변환
+        List<ExtensionBaseRecruitmentsInfo.ExtensionBaseRecruitmentInfo> items = recruitments.stream()
+            .map(this::toExtensionBaseRecruitmentInfo)
+            .filter(this::isValidBaseRecruitment)
+            .toList();
+
+        return new ExtensionBaseRecruitmentsInfo(items);
+    }
+
+    private boolean isValidBaseRecruitment(ExtensionBaseRecruitmentsInfo.ExtensionBaseRecruitmentInfo info) {
+        if (info.applyStartAt() == null || info.finalResultAt() == null) {
+            log.warn("[Recruitment] 추가 모집 기반 데이터 제외 - 필수 일정 누락: recruitmentId={}, title={}",
+                info.recruitmentId(), info.title());
+            return false;
+        }
+        return true;
+    }
+
+    private ExtensionBaseRecruitmentsInfo.ExtensionBaseRecruitmentInfo toExtensionBaseRecruitmentInfo(
+        Recruitment recruitment) {
+        // 모집에 연결된 전체 일정 Map 조회
+        var schedules = loadRecruitmentSchedulePort.findScheduleMapByRecruitmentId(recruitment.getId());
+
+        var applyWindow = schedules.get(RecruitmentScheduleType.APPLY_WINDOW);
+        var finalResult = schedules.get(RecruitmentScheduleType.FINAL_RESULT_AT);
+
+        return new ExtensionBaseRecruitmentsInfo.ExtensionBaseRecruitmentInfo(
+            recruitment.getId(),
+            recruitment.getTitle(),
+            recruitment.getParentRecruitmentId() == null, // 부모가 없으면 Root(본모집)
+            applyWindow != null ? applyWindow.getStartsAt() : null, // 서류 접수 시작 시점
+            finalResult != null ? finalResult.getStartsAt() : null // 최종 결과 발표 시점
+        );
     }
 
     private RecruitmentPartListInfo.DatePeriod extractDatePeriod(

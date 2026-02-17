@@ -1,5 +1,7 @@
 package com.umc.product.recruitment.application.service.query;
 
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.adapter.out.dto.FinalSelectionListItemProjection;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.SortOption;
@@ -8,8 +10,11 @@ import com.umc.product.recruitment.application.port.in.query.dto.FinalSelectionA
 import com.umc.product.recruitment.application.port.in.query.dto.GetFinalSelectionApplicationListQuery;
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPartPreferencePort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
+import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.enums.PartKey;
+import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -30,11 +35,16 @@ public class RecruitmentFinalSelectionQueryService implements GetFinalSelectionL
 
     private final LoadApplicationListPort loadApplicationListPort;
     private final LoadApplicationPartPreferencePort loadApplicationPartPreferencePort;
+    private final LoadRecruitmentPort loadRecruitmentPort;
 
     @Override
     public FinalSelectionApplicationListInfo get(GetFinalSelectionApplicationListQuery query) {
         // todo: 운영진 권한 및 학교 체크
         // todo: 최종 선발 기간/조건 검증
+
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
 
         Long recruitmentId = query.recruitmentId();
         PartOption part = query.part();
@@ -44,11 +54,11 @@ public class RecruitmentFinalSelectionQueryService implements GetFinalSelectionL
 
         // summary
         FinalSelectionApplicationListInfo.Summary summary =
-            loadApplicationListPort.getFinalSelectionSummary(recruitmentId, part.name());
+            loadApplicationListPort.getFinalSelectionSummary(rootId, query.part().name());
 
         // page 조회
         Page<FinalSelectionListItemProjection> page =
-            loadApplicationListPort.searchFinalSelections(recruitmentId, part.name(), sort.name(), pageable);
+            loadApplicationListPort.searchFinalSelections(rootId, part.name(), query.sort().name(), pageable);
 
         Set<Long> applicationIds = page.getContent().stream()
             .map(FinalSelectionListItemProjection::applicationId)

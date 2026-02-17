@@ -102,24 +102,29 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
 
     @Override
     public ApplicationDetailInfo get(GetApplicationDetailQuery query) {
-        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+        Recruitment currentRecruitment = loadRecruitmentPort.findById(query.recruitmentId())
             .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = currentRecruitment.getEffectiveRootId();
 
         // todo: 운영진 권한 검증
 
-        Application application = loadApplicationPort.getByRecruitmentIdAndApplicationId(
-            query.recruitmentId(),
-            query.applicationId()
-        ).orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
+        Application application = loadApplicationPort.findById(query.applicationId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
+
+        if (!application.getRecruitment().getEffectiveRootId().equals(rootId)) {
+            throw new BusinessException(Domain.RECRUITMENT,
+                RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
+        }
 
         Member applicant = loadMemberPort.findById(application.getApplicantMemberId())
             .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
 
-        Long formId = recruitment.getFormId();
+        Long formId = currentRecruitment.getFormId();
         if (formId == null) {
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
         }
         FormDefinitionInfo formDefinition = loadFormPort.loadFormDefinition(formId);
+
         RecruitmentFormDefinitionInfo recruitmentDef = RecruitmentFormDefinitionInfo.from(formDefinition);
 
         FormResponse formResponse = loadFormResponsePort.findById(application.getFormResponseId())
@@ -461,10 +466,9 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
                 continue;
             }
 
-            // todo: 추가모집 관련 변경사항 수정 시 recruitment에 rootRecruitmentId 추가 후 대체
             DocumentEvaluationRecruitmentInfo info = new DocumentEvaluationRecruitmentInfo(
                 recruitmentId,
-                recruitmentId,
+                recruitment.getEffectiveRootId(), // 본모집 ID(또는 자기자신 ID) 전달
                 recruitment.getTitle(),
                 appStartAt,    // 모집 시작
                 finalResultAt, // 최종 발표

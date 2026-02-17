@@ -15,17 +15,21 @@ import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewSlotPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.SaveInterviewAssignmentPort;
 import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.recruitment.domain.InterviewSlot;
+import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import jakarta.transaction.Transactional;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+@Transactional
 @Service
 @RequiredArgsConstructor
 public class RecruitmentInterviewSchedulingService implements CreateInterviewAssignmentUseCase,
@@ -41,26 +45,29 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
     private final LoadInterviewAssignmentPort loadInterviewAssignmentPort;
     private final GetInterviewSchedulingSummaryUseCase getInterviewSchedulingSummaryUseCase;
     private final SaveInterviewAssignmentPort saveInterviewAssignmentPort;
+    private final LoadRecruitmentPort loadRecruitmentPort;
 
     @Override
     public CreateInterviewAssignmentResult create(CreateInterviewAssignmentCommand command) {
         // todo: 운영진 권한 검증 필요
-        Long recruitmentId = command.recruitmentId();
-        Long applicationId = command.applicationId();
-        Long slotId = command.slotId();
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
 
-        InterviewSlot slot = loadInterviewSlotPort.findById(slotId)
+        Long applicationId = command.applicationId();
+
+        InterviewSlot slot = loadInterviewSlotPort.findById(command.slotId())
             .orElseThrow(
                 () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND));
 
-        if (!slot.getRecruitment().getId().equals(recruitmentId)) {
+        if (!slot.getRecruitment().getEffectiveRootId().equals(rootId)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT);
         }
 
-        Application application = loadApplicationPort.findById(applicationId)
+        Application application = loadApplicationPort.findById(command.applicationId())
             .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
 
-        if (!loadApplicationListPort.isApplicationBelongsToRecruitment(applicationId, recruitmentId)) {
+        if (!loadApplicationListPort.isApplicationBelongsToRecruitmentFamily(application.getId(), rootId)) {
             throw new BusinessException(Domain.RECRUITMENT,
                 RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
         }
@@ -69,7 +76,7 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_ONLY_DOC_PASSED);
         }
 
-        if (loadInterviewAssignmentPort.existsByRecruitmentIdAndApplicationId(recruitmentId, applicationId)) {
+        if (loadInterviewAssignmentPort.existsByRootIdAndApplicationId(rootId, application.getId())) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_ALREADY_EXISTS);
         }
 
@@ -82,7 +89,7 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
         var part = command.part() == null ? PartOption.ALL : command.part();
 
         var summary = getInterviewSchedulingSummaryUseCase.get(
-            new GetInterviewSchedulingSummaryQuery(recruitmentId, date, part, command.requesterId()));
+            new GetInterviewSchedulingSummaryQuery(command.recruitmentId(), date, part, command.requesterId()));
 
         return new CreateInterviewAssignmentResult(
             new CreateInterviewAssignmentResult.AssignedInfo(
@@ -109,7 +116,11 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
                     RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND
                 ));
 
-        if (!assignment.getRecruitment().getId().equals(command.recruitmentId())) {
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
+        if (!assignment.getRecruitment().getEffectiveRootId().equals(rootId)) {
             throw new BusinessException(
                 Domain.RECRUITMENT,
                 RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_IN_RECRUITMENT

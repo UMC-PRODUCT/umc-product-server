@@ -5,6 +5,7 @@ import static com.umc.product.recruitment.domain.QApplication.application;
 import static com.umc.product.recruitment.domain.QApplicationPartPreference.applicationPartPreference;
 import static com.umc.product.recruitment.domain.QInterviewAssignment.interviewAssignment;
 import static com.umc.product.recruitment.domain.QInterviewSlot.interviewSlot;
+import static com.umc.product.recruitment.domain.QRecruitment.recruitment;
 import static com.umc.product.recruitment.domain.QRecruitmentPart.recruitmentPart;
 
 import com.querydsl.core.types.Projections;
@@ -45,18 +46,23 @@ public class InterviewAssignmentQueryRepository {
             .fetch();
     }
 
-    public long countByRecruitmentId(Long recruitmentId) {
-        return queryFactory
+    public long countByRootId(Long rootId) {
+        Long count = queryFactory
             .select(interviewAssignment.count())
             .from(interviewAssignment)
-            .where(interviewAssignment.recruitment.id.eq(recruitmentId))
+            .join(interviewAssignment.recruitment, recruitment) // rootRecruitmentId 접근을 위해 조인
+            .where(
+                recruitment.rootRecruitmentId.eq(rootId) // 가족 전체 합산 조건
+            )
             .fetchOne();
+        return count != null ? count : 0L;
     }
 
-    public long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, ChallengerPart part) {
-        return queryFactory
+    public long countByRootIdAndFirstPreferredPart(Long rootId, ChallengerPart part) {
+        Long count = queryFactory
             .select(interviewAssignment.count())
             .from(interviewAssignment)
+            .join(interviewAssignment.recruitment, recruitment) // 가족 합산용 조인
             .join(interviewAssignment.application, application)
             .join(applicationPartPreference).on(
                 applicationPartPreference.application.eq(application),
@@ -64,23 +70,25 @@ public class InterviewAssignmentQueryRepository {
             )
             .join(applicationPartPreference.recruitmentPart, recruitmentPart)
             .where(
-                interviewAssignment.recruitment.id.eq(recruitmentId),
+                recruitment.rootRecruitmentId.eq(rootId), // 가족 전체 필터
                 recruitmentPart.part.eq(part)
             )
             .fetchOne();
+        return count != null ? count : 0L;
     }
 
-    public long countByRecruitmentIdAndDateAndFirstPreferredPart(
-        Long recruitmentId,
+    public long countByRootIdAndDateAndFirstPreferredPart(
+        Long rootId,
         LocalDate date,
         ChallengerPart part
     ) {
         Instant start = date.atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
         Instant end = date.plusDays(1).atStartOfDay(ZoneId.of("Asia/Seoul")).toInstant();
 
-        return queryFactory
+        Long count = queryFactory
             .select(interviewAssignment.count())
             .from(interviewAssignment)
+            .join(interviewAssignment.recruitment, recruitment)
             .join(interviewAssignment.slot, interviewSlot)
             .join(interviewAssignment.application, application)
             .join(applicationPartPreference).on(
@@ -89,12 +97,14 @@ public class InterviewAssignmentQueryRepository {
             )
             .join(applicationPartPreference.recruitmentPart, recruitmentPart)
             .where(
-                interviewAssignment.recruitment.id.eq(recruitmentId),
+                recruitment.rootRecruitmentId.eq(rootId),
                 recruitmentPart.part.eq(part),
                 interviewSlot.startsAt.goe(start),
                 interviewSlot.startsAt.lt(end)
             )
             .fetchOne();
+
+        return count != null ? count : 0L;
     }
 
     public Set<Long> findAssignedApplicationIdsByRecruitmentId(Long recruitmentId) {
@@ -170,4 +180,93 @@ public class InterviewAssignmentQueryRepository {
         return result != null;
     }
 
+    public Set<Long> findAssignedApplicationIdsByRootId(Long rootId) {
+        return queryFactory
+            .select(interviewAssignment.application.id)
+            .from(interviewAssignment)
+            .join(interviewAssignment.recruitment, recruitment)
+            .where(
+                recruitment.rootRecruitmentId.eq(rootId)
+            )
+            .fetch()
+            .stream()
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+    }
+
+    public List<InterviewSchedulingAssignmentRow> findAssignmentRowsByRootIdAndSlotId(
+        Long rootId,
+        Long slotId,
+        PartOption requestedPart
+    ) {
+        QApplicationPartPreference pref1 = new QApplicationPartPreference("pref1");
+        QApplicationPartPreference pref2 = new QApplicationPartPreference("pref2");
+        QRecruitmentPart rp1 = new QRecruitmentPart("rp1");
+        QRecruitmentPart rp2 = new QRecruitmentPart("rp2");
+
+        ChallengerPart filterPart = null;
+        if (requestedPart != null && requestedPart != PartOption.ALL) {
+            filterPart = ChallengerPart.valueOf(requestedPart.name());
+        }
+
+        return queryFactory
+            .select(Projections.constructor(
+                InterviewSchedulingAssignmentRow.class,
+                interviewAssignment.id,
+                interviewAssignment.application.id,
+                member.nickname,
+                member.name,
+                rp1.part,
+                rp2.part
+            ))
+            .from(interviewAssignment)
+            .join(interviewAssignment.application, application)
+            .join(member).on(member.id.eq(application.applicantMemberId))
+            .join(interviewAssignment.recruitment, recruitment)
+
+            .leftJoin(pref1).on(pref1.application.eq(application), pref1.priority.eq(1))
+            .leftJoin(pref1.recruitmentPart, rp1)
+
+            .leftJoin(pref2).on(pref2.application.eq(application), pref2.priority.eq(2))
+            .leftJoin(pref2.recruitmentPart, rp2)
+
+            .where(
+                recruitment.rootRecruitmentId.eq(rootId),
+                interviewAssignment.slot.id.eq(slotId),
+                ObjectUtils.isEmpty(filterPart) ? null : rp1.part.eq(filterPart)
+            )
+            .orderBy(interviewAssignment.createdAt.asc())
+            .fetch();
+    }
+
+    public boolean existsByRootIdAndApplicationId(Long rootId, Long applicationId) {
+        if (rootId == null || applicationId == null) {
+            return false;
+        }
+
+        Integer result = queryFactory
+            .selectOne()
+            .from(interviewAssignment)
+            .join(interviewAssignment.recruitment, recruitment)
+            .where(
+                recruitment.rootRecruitmentId.eq(rootId),
+                interviewAssignment.application.id.eq(applicationId)
+            )
+            .fetchFirst();
+
+        return result != null;
+    }
+
+    public List<InterviewAssignment> findByRootIdWithSlotAndApplication(Long rootId) {
+        return queryFactory
+            .selectFrom(interviewAssignment)
+            .join(interviewAssignment.recruitment, recruitment)
+            .join(interviewAssignment.slot, interviewSlot).fetchJoin()
+            .join(interviewAssignment.application, application).fetchJoin()
+            .where(
+                recruitment.rootRecruitmentId.eq(rootId)
+            )
+            .orderBy(interviewSlot.startsAt.asc())
+            .fetch();
+    }
 }

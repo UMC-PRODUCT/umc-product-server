@@ -22,24 +22,26 @@ public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssig
     private final InterviewAssignmentQueryRepository interviewAssignmentQueryRepository;
     private final InterviewAssignmentJpaRepository interviewAssignmentJpaRepository;
 
+    // root 기반으로 수정
     @Override
-    public long countByRecruitmentId(Long recruitmentId) {
-        return interviewAssignmentQueryRepository.countByRecruitmentId(recruitmentId);
+    public long countByRootId(Long recruitmentId) {
+        return interviewAssignmentQueryRepository.countByRootId(recruitmentId);
     }
 
+    // root 기반으로 수정
     @Override
-    public long countByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, PartOption part) {
+    public long countByRootIdAndFirstPreferredPart(Long recruitmentId, PartOption part) {
         ChallengerPart challengerPart = toChallengerPart(part);
-        return interviewAssignmentQueryRepository.countByRecruitmentIdAndFirstPreferredPart(
+        return interviewAssignmentQueryRepository.countByRootIdAndFirstPreferredPart(
             recruitmentId, challengerPart
         );
     }
 
     @Override
-    public long countByRecruitmentIdAndDateAndFirstPreferredPart(Long recruitmentId, LocalDate date, PartOption part) {
+    public long countByRootIdAndDateAndFirstPreferredPart(Long rootId, LocalDate date, PartOption part) {
         ChallengerPart challengerPart = toChallengerPart(part);
-        return interviewAssignmentQueryRepository.countByRecruitmentIdAndDateAndFirstPreferredPart(
-            recruitmentId, date, challengerPart
+        return interviewAssignmentQueryRepository.countByRootIdAndDateAndFirstPreferredPart(
+            rootId, date, challengerPart
         );
     }
 
@@ -107,5 +109,33 @@ public class InterviewAssignmentPersistenceAdapter implements LoadInterviewAssig
     @Override
     public boolean existsByApplicationId(Long applicationId) {
         return interviewAssignmentQueryRepository.existsByApplicationId(applicationId);
+    }
+
+    @Override
+    public Set<Long> findAssignedApplicationIdsByRootId(Long rootId) {
+        return interviewAssignmentQueryRepository.findAssignedApplicationIdsByRootId(rootId);
+    }
+
+    @Override
+    public List<InterviewSchedulingAssignmentRow> findAssignmentRowsByRootIdAndSlotId(
+        Long rootId,
+        Long slotId,
+        PartOption part
+    ) {
+        return interviewAssignmentQueryRepository.findAssignmentRowsByRootIdAndSlotId(
+            rootId,
+            slotId,
+            part
+        );
+    }
+
+    @Override
+    public boolean existsByRootIdAndApplicationId(Long rootId, Long applicationId) {
+        return interviewAssignmentQueryRepository.existsByRootIdAndApplicationId(rootId, applicationId);
+    }
+
+    @Override
+    public List<InterviewAssignment> findByRootIdWithSlotAndApplication(Long rootId) {
+        return interviewAssignmentQueryRepository.findByRootIdWithSlotAndApplication(rootId);
     }
 }

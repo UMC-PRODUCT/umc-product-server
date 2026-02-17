@@ -14,18 +14,41 @@ public interface RecruitmentRepository extends JpaRepository<Recruitment, Long> 
         select exists (
             select 1
             from recruitment r
-            join recruitment_schedule s
-              on s.recruitment_id = r.id
             where r.school_id = :schoolId
               and r.status = 'PUBLISHED'
               and r.id <> :excludeRecruitmentId
-              and s.type = 'FINAL_RESULT_AT'
-              and s.starts_at > :now
+              -- 1. 해당 모집이 "진행 중"인지 확인 (최종 발표일이 현재 이후)
+              and exists (
+                  select 1 from recruitment_schedule s_fin
+                  where s_fin.recruitment_id = r.id
+                    and s_fin.type = 'FINAL_RESULT_AT'
+                    and s_fin.starts_at > :now
+              )
+              -- 2. 충돌 조건 검사
+              and (
+                  -- (Case A) 뿌리(Root)가 아예 다른 모집인 경우 -> 무조건 충돌
+                  r.root_recruitment_id <> :rootId
+                  or
+                  -- (Case B) 같은 뿌리지만, 서류 접수 기간(APPLY_WINDOW)이 겹치는 경우 -> 충돌
+                  (
+                      r.root_recruitment_id = :rootId
+                      and exists (
+                          select 1 from recruitment_schedule s_app
+                          where s_app.recruitment_id = r.id
+                            and s_app.type = 'APPLY_WINDOW'
+                            and s_app.starts_at < :myApplyEnd
+                            and s_app.ends_at > :myApplyStart
+                      )
+                  )
+              )
         )
         """, nativeQuery = true)
     boolean existsOtherOngoingPublishedRecruitment(
         @Param("schoolId") Long schoolId,
         @Param("excludeRecruitmentId") Long excludeRecruitmentId,
+        @Param("rootId") Long rootId,
+        @Param("myApplyStart") Instant myApplyStart,
+        @Param("myApplyEnd") Instant myApplyEnd,
         @Param("now") Instant now
     );
 

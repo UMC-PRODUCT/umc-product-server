@@ -1,6 +1,8 @@
 package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.recruitment.application.port.in.PartOption;
@@ -34,6 +36,7 @@ import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentP
 import com.umc.product.recruitment.application.port.out.LoadInterviewLiveQuestionPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewQuestionSheetPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
@@ -41,6 +44,7 @@ import com.umc.product.recruitment.domain.Evaluation;
 import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.recruitment.domain.InterviewLiveQuestion;
 import com.umc.product.recruitment.domain.InterviewSlot;
+import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.EvaluationProgressStatus;
@@ -84,11 +88,16 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     private final LoadRecruitmentPartPort loadRecruitmentPartPort;
     private final LoadApplicationPartPreferencePort loadApplicationPartPreferencePort;
     private final GetMemberUseCase getMemberUseCase;
+    private final LoadRecruitmentPort loadRecruitmentPort;
 
     @Override
     public GetInterviewEvaluationViewInfo get(GetInterviewEvaluationViewQuery query) {
         // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
         InterviewAssignment assignment = getValidatedAssignment(query.assignmentId(), query.recruitmentId());
+
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
 
         // 2. Application & 지원자 정보 가져오기
         Application application = assignment.getApplication();
@@ -109,7 +118,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
         // 6. InterviewQuestionSheetInfo 생성 (공통 + 1지망 + 2지망 + 즉석질문)
         GetInterviewEvaluationViewInfo.InterviewQuestionSheetInfo questionsInfo = buildQuestionsInfo(
-            recruitmentId, applicationId, preferences, query.memberId()
+            rootId, applicationId, preferences, query.memberId()
         );
 
         // 7. LiveEvaluationListInfo 생성 (실시간 평가 현황)
@@ -233,9 +242,13 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     public GetInterviewAssignmentsInfo get(GetInterviewAssignmentsQuery query) {
         Instant now = Instant.now();
 
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
         // 1. 모든 InterviewAssignment 조회 (Slot, Application fetch join)
         List<InterviewAssignment> allAssignments = loadInterviewAssignmentPort
-            .findByRecruitmentIdWithSlotAndApplication(query.recruitmentId());
+            .findByRootIdWithSlotAndApplication(rootId);
 
         // 2. 날짜 필터링 (드롭박스에서 선택된 날짜와 동일한 것만)
         List<InterviewAssignment> dateFiltered = allAssignments;
@@ -373,9 +386,14 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
     @Override
     public GetInterviewOptionsInfo get(GetInterviewOptionsQuery query) {
+
+        Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
         // 1. INTERVIEW_WINDOW 일정 조회
         RecruitmentSchedule interviewSchedule = loadRecruitmentSchedulePort.findByRecruitmentIdAndType(
-            query.recruitmentId(),
+            rootId,
             RecruitmentScheduleType.INTERVIEW_WINDOW
         );
 
@@ -394,7 +412,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
         }
 
         // 3. ALL + OPEN 상태인 파트 목록
-        List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
+        List<RecruitmentPart> recruitmentParts = loadRecruitmentPartPort.findByRecruitmentId(rootId);
 
         List<PartOption> parts = new ArrayList<>();
         parts.add(PartOption.ALL);  // ALL 먼저 추가
@@ -403,6 +421,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .filter(RecruitmentPart::isOpen)
             .sorted(Comparator.comparingInt(a -> a.getPart().getSortOrder()))
             .map(rp -> toPartOption(rp.getPart()))
+            .distinct() // 여러 공고에 중복된 파트가 있을 수 있으므로 중복 제거
             .forEach(parts::add);
 
         return new GetInterviewOptionsInfo(dates, parts);
@@ -414,10 +433,15 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
     // InterviewAssignment 조회 및 검증
     private InterviewAssignment getValidatedAssignment(Long assignmentId, Long recruitmentId) {
+
+        Recruitment recruitment = loadRecruitmentPort.findById(recruitmentId)
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
         InterviewAssignment assignment = loadInterviewAssignmentPort.findById(assignmentId)
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
 
-        if (!assignment.getRecruitment().getId().equals(recruitmentId)) {
+        if (!assignment.getRecruitment().getEffectiveRootId().equals(rootId)) {
             throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
         }
 
@@ -458,22 +482,22 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     }
 
     private GetInterviewEvaluationViewInfo.InterviewQuestionSheetInfo buildQuestionsInfo(
-        Long recruitmentId,
+        Long rootId,
         Long applicationId,
         List<ApplicationPartPreference> preferences,
         Long memberId
     ) {
         // 공통 질문
         List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> common =
-            getQuestionsByPartKey(recruitmentId, PartKey.COMMON);
+            getQuestionsByPartKey(rootId, PartKey.COMMON);
 
         // 1지망 파트 질문
         List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> firstChoice =
-            getQuestionsForPriority(recruitmentId, preferences, 1);
+            getQuestionsForPriority(rootId, preferences, 1);
 
         // 2지망 파트 질문
         List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> secondChoice =
-            getQuestionsForPriority(recruitmentId, preferences, 2);
+            getQuestionsForPriority(rootId, preferences, 2);
 
         // 즉석 질문 (live questions)
         List<GetInterviewEvaluationViewInfo.LiveQuestionInfo> live =
@@ -485,10 +509,10 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     }
 
     private List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> getQuestionsByPartKey(
-        Long recruitmentId, PartKey partKey
+        Long rootId, PartKey partKey
     ) {
         return loadInterviewQuestionSheetPort
-            .findByRecruitmentIdAndPartKeyOrderByOrderNoAsc(recruitmentId, partKey)
+            .findByRecruitmentIdAndPartKeyOrderByOrderNoAsc(rootId, partKey)
             .stream()
             .map(q -> new GetInterviewEvaluationViewInfo.InterviewQuestionInfo(
                 q.getId(), q.getOrderNo(), q.getContent()
@@ -498,12 +522,12 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
     // 지망별 질문 조회 로직
     private List<GetInterviewEvaluationViewInfo.InterviewQuestionInfo> getQuestionsForPriority(
-        Long recruitmentId, List<ApplicationPartPreference> preferences, int priority
+        Long rootId, List<ApplicationPartPreference> preferences, int priority
     ) {
         return findPreferenceByPriority(preferences, priority)
             .map(pref -> {
                 PartKey partKey = toPartKey(pref.getRecruitmentPart().getPart());
-                return getQuestionsByPartKey(recruitmentId, partKey);
+                return getQuestionsByPartKey(rootId, partKey);
             })
             .orElse(List.of());
     }

@@ -2,6 +2,7 @@ package com.umc.product.recruitment.adapter.in.web;
 
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.recruitment.adapter.in.web.dto.request.CreateExtensionRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateRecruitmentRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.PublishRecruitmentRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.RecruitmentListStatusQuery;
@@ -12,6 +13,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentF
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormResponseAnswersRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.CreateRecruitmentResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.ExtensionBaseRecruitmentsResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.MyRecruitmentApplicationsResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.PublishRecruitmentResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentApplicationFormResponse;
@@ -27,6 +29,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentSchedu
 import com.umc.product.recruitment.adapter.in.web.dto.response.SubmitRecruitmentApplicationResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateRecruitmentInterviewPreferenceResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpsertRecruitmentFormResponseAnswersResponse;
+import com.umc.product.recruitment.application.port.in.command.CreateExtensionCommand;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteRecruitmentFormQuestionUseCase;
@@ -59,6 +62,7 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruit
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateRecruitmentInterviewPreferenceInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.UpsertRecruitmentFormResponseAnswersInfo;
 import com.umc.product.recruitment.application.port.in.query.GetActiveRecruitmentUseCase;
+import com.umc.product.recruitment.application.port.in.query.GetExtensionBaseRecruitmentsUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetMyApplicationListUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetPublishedRecruitmentDetailUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentApplicationFormUseCase;
@@ -72,6 +76,7 @@ import com.umc.product.recruitment.application.port.in.query.GetRecruitmentPartL
 import com.umc.product.recruitment.application.port.in.query.GetRecruitmentScheduleUseCase;
 import com.umc.product.recruitment.application.port.in.query.RecruitmentListStatus;
 import com.umc.product.recruitment.application.port.in.query.dto.ActiveRecruitmentInfo;
+import com.umc.product.recruitment.application.port.in.query.dto.ExtensionBaseRecruitmentsInfo;
 import com.umc.product.recruitment.application.port.in.query.dto.GetActiveRecruitmentQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetMyApplicationListQuery;
 import com.umc.product.recruitment.application.port.in.query.dto.GetRecruitmentApplicationFormQuery;
@@ -137,6 +142,7 @@ public class RecruitmentController {
     private final UpdatePublishedRecruitmentScheduleUseCase updatePublishedRecruitmentScheduleUseCase;
     private final GetPublishedRecruitmentDetailUseCase getPublishedRecruitmentDetailUseCase;
     private final DeleteRecruitmentQuestionOptionUseCase deleteRecruitmentQuestionOptionUseCase;
+    private final GetExtensionBaseRecruitmentsUseCase getExtensionBaseRecruitmentsUseCase;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "사용자 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (schoolId/gisuId 미지정 시 사용자 학교, active 기수 기반)")
@@ -350,6 +356,29 @@ public class RecruitmentController {
         );
 
         CreateRecruitmentInfo info = createRecruitmentUseCase.create(command);
+
+        return CreateRecruitmentResponse.from(info);
+    }
+
+    @PostMapping("/{recruitmentId}/extensions")
+    @Operation(
+        summary = "추가 모집 최초 생성",
+        description = """
+            기존 모집(Base)을 기반으로 추가 모집을 생성합니다.
+            - 기존 모집의 면접 시간표 및 특정 일정(면접/최종발표 등)을 복제합니다.
+            - 기존 모집의 지원서 문항들을 복제하여 새로운 폼을 생성합니다.
+            - 추가 모집용 제목과 모집 파트를 새로 설정합니다.
+            """
+    )
+    public CreateRecruitmentResponse createExtension(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Parameter(description = "기준이 되는 기존 모집 ID") @PathVariable Long recruitmentId,
+        @RequestBody(required = false) CreateExtensionRequest request
+    ) {
+        CreateExtensionRequest req = (request == null) ? CreateExtensionRequest.empty() : request;
+
+        CreateExtensionCommand command = req.toCommand(recruitmentId, memberPrincipal.getMemberId());
+        CreateRecruitmentInfo info = createRecruitmentUseCase.createExtension(command);
 
         return CreateRecruitmentResponse.from(info);
     }
@@ -655,5 +684,23 @@ public class RecruitmentController {
                 memberPrincipal.getMemberId())
         );
         return RecruitmentApplicationFormResponse.from(info);
+    }
+
+    @GetMapping("/extension-bases")
+    @Operation(
+        summary = "추가 모집 생성 가능 목록(기반 데이터) 조회",
+        description = """
+            새로운 추가 모집(Extension)을 생성할 때, 기반(Parent)으로 삼을 수 있는 모집 공고 목록을 조회합니다.
+            - 대상: 현재 사용자의 학교에 속하며, 현재 '활동 기수(Active Gisu)' 내에서 'PUBLISHED' 상태인 모든 모집 (최신순 정렬)
+            """
+    )
+    public ExtensionBaseRecruitmentsResponse getExtensionBases(
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        ExtensionBaseRecruitmentsInfo info = getExtensionBaseRecruitmentsUseCase.getRecruitmentsForExtensionBase(
+            memberPrincipal.getMemberId()
+        );
+
+        return ExtensionBaseRecruitmentsResponse.from(info);
     }
 }

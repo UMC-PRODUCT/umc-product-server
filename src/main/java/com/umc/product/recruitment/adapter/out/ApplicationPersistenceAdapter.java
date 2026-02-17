@@ -229,15 +229,71 @@ public class ApplicationPersistenceAdapter implements LoadApplicationPort, SaveA
         );
     }
 
+    // rootId로 수정
     @Override
-    public long countDocPassedByRecruitmentId(Long recruitmentId) {
-        return applicationQueryRepository.countDocPassedByRecruitmentId(recruitmentId);
+    public long countDocPassedByRootId(Long rootId) {
+        return applicationQueryRepository.countDocPassedByRootId(rootId);
+    }
+
+    // rootId로 수정
+    @Override
+    public long countDocPassedByRootIdAndFirstPreferredPart(Long rootId, PartOption part) {
+        ChallengerPart challengerPart = toChallengerPart(part);
+        return applicationQueryRepository.countDocPassedByRootIdAndFirstPreferredPart(rootId,
+            challengerPart);
     }
 
     @Override
-    public long countDocPassedByRecruitmentIdAndFirstPreferredPart(Long recruitmentId, PartOption part) {
-        ChallengerPart challengerPart = toChallengerPart(part);
-        return applicationQueryRepository.countDocPassedByRecruitmentIdAndFirstPreferredPart(recruitmentId,
-            challengerPart);
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRootId(
+        Long rootId
+    ) {
+        return applicationQueryRepository.findDocPassedApplicationIdsWithFormResponseIdsByRootId(rootId);
+    }
+
+    @Override
+    public List<ApplicationIdWithFormResponseId> findDocPassedApplicationIdsWithFormResponseIdsByRootIdAndFirstPreferredPart(
+        Long rootId,
+        PartOption partOption
+    ) {
+        return applicationQueryRepository.findDocPassedApplicationIdsWithFormResponseIdsByRootIdAndFirstPreferredPart(
+            rootId, partOption
+        );
+    }
+
+    @Override
+    public boolean isApplicationBelongsToRecruitmentFamily(Long applicationId, Long rootId) {
+        return applicationQueryRepository.isApplicationBelongsToRecruitmentFamily(applicationId, rootId);
+    }
+
+    @Override
+    public long countByRootRecruitmentId(Long rootId) {
+        return applicationQueryRepository.countByRootRecruitmentId(rootId);
+    }
+
+    @Override
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRootRecruitmentId(Long rootId) {
+        return applicationQueryRepository.findApplicationIdsWithFormResponseIdsByRootRecruitmentId(rootId);
+    }
+
+    @Override
+    public long countByRootIdAndFirstPreferredPart(Long rootId, PartOption part) {
+        // PartOption을 도메인 엔티티에서 사용하는 ChallengerPart로 변환 (기존 private 메서드 활용)
+        ChallengerPart challengerPart = ChallengerPart.valueOf(part.name());
+        return applicationQueryRepository.countByRootIdAndFirstPreferredPart(rootId, challengerPart);
+    }
+
+    @Override
+    public List<Application> findByRootRecruitmentId(Long rootId) {
+        return applicationQueryRepository.findAllByRootRecruitmentId(rootId);
+    }
+
+    @Override
+    public List<ApplicationIdWithFormResponseId> findApplicationIdsWithFormResponseIdsByRootRecruitmentIdAndFirstPreferredPart(
+        Long rootId, PartOption part
+    ) {
+        ChallengerPart challengerPart = ChallengerPart.valueOf(part.name());
+        return applicationQueryRepository.findApplicationIdsWithFormResponseIdsByRootRecruitmentIdAndFirstPreferredPart(
+            rootId, challengerPart
+        );
     }
 }

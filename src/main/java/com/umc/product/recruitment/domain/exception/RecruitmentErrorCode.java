@@ -133,6 +133,13 @@ public enum RecruitmentErrorCode implements BaseCode {
     SLOT_STARTS_AT_NOT_SET(HttpStatus.BAD_REQUEST, "RECRUITMENT-0073", "면접 슬롯의 시작 시간이 설정되지 않았습니다."),
     INTERVIEW_EVALUATION_NOT_STARTED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0074", "면접 시작 전에는 평가를 제출할 수 없습니다."),
     INTERVIEW_ALREADY_ASSIGNED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0075", "면접 배정이 존재하는 지원서는 서류 결과를 변경할 수 없습니다."),
+    BASE_RECRUITMENT_NOT_PUBLISHED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0076", "배포되지 않은 모집을 기반으로 추가 모집을 만들 수 없습니다."),
+    RECRUITMENT_ID_MISSING(HttpStatus.BAD_REQUEST, "RECRUITMENT-0077", "ID가 생성되지 않은 상태에서 Root를 설정할 수 없습니다."),
+    MAX_PREFERRED_PART_EXCEEDS_OPEN_PARTS(HttpStatus.BAD_REQUEST, "RECRUITMENT-0078",
+        "최대 희망 파트 개수가 현재 오픈된 파트 수보다 많습니다."),
+    ROOT_RECRUITMENT_NOT_FOUND(HttpStatus.BAD_REQUEST, "RECRUITMENT-0079", "기준 모집을 찾을 수 없습니다."),
+    EXTENSION_SCHEDULE_INCONSISTENT_WITH_ROOT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0080",
+        "추가 모집의 면접/최종 일정이 기준 모집과 다릅니다."),
     ;
 
     private final HttpStatus httpStatus;
