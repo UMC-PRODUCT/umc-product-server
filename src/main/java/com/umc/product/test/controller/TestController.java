@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RequiredArgsConstructor
@@ -70,11 +71,16 @@ public class TestController {
         );
     }
 
-    @Operation(summary = "AccessToken 발급")
     @Public
-    @GetMapping("/token/access/{memberId}")
-    public String getAccessToken(@PathVariable Long memberId) {
-        return jwtTokenProvider.createAccessToken(memberId, null);
+    @Operation(summary = "AccessToken 발급")
+    @GetMapping("/token/access")
+    public String getAccessToken(@RequestParam Long memberId,
+                                 @RequestParam(required = false) Long expirationInMinutes) {
+        return expirationInMinutes == null ?
+            // null이면 기본값
+            jwtTokenProvider.createAccessToken(memberId, null) :
+            // 받았으면 해당 시간으로 만료하기
+            jwtTokenProvider.createAccessToken(memberId, null, expirationInMinutes * 60);
     }
 
     @Operation(summary = "RefreshToken 발급")
