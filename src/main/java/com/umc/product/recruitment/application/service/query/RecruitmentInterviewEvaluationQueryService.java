@@ -1,6 +1,8 @@
 package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.recruitment.application.port.in.PartOption;
@@ -34,6 +36,7 @@ import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentP
 import com.umc.product.recruitment.application.port.out.LoadInterviewLiveQuestionPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewQuestionSheetPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
@@ -41,6 +44,7 @@ import com.umc.product.recruitment.domain.Evaluation;
 import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.recruitment.domain.InterviewLiveQuestion;
 import com.umc.product.recruitment.domain.InterviewSlot;
+import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.EvaluationProgressStatus;
@@ -84,6 +88,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     private final LoadRecruitmentPartPort loadRecruitmentPartPort;
     private final LoadApplicationPartPreferencePort loadApplicationPartPreferencePort;
     private final GetMemberUseCase getMemberUseCase;
+    private final LoadRecruitmentPort loadRecruitmentPort;
 
     @Override
     public GetInterviewEvaluationViewInfo get(GetInterviewEvaluationViewQuery query) {
@@ -414,10 +419,15 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
     // InterviewAssignment 조회 및 검증
     private InterviewAssignment getValidatedAssignment(Long assignmentId, Long recruitmentId) {
+
+        Recruitment recruitment = loadRecruitmentPort.findById(recruitmentId)
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+        Long rootId = recruitment.getEffectiveRootId();
+
         InterviewAssignment assignment = loadInterviewAssignmentPort.findById(assignmentId)
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
 
-        if (!assignment.getRecruitment().getId().equals(recruitmentId)) {
+        if (!assignment.getRecruitment().getEffectiveRootId().equals(rootId)) {
             throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_BELONGS_TO_RECRUITMENT);
         }
 
