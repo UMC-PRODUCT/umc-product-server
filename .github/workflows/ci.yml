@@ -150,11 +150,12 @@ jobs:
       - name: 🔧 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      #      - name: 🔐 Log in to Docker Hub
-      #        uses: docker/login-action@v3
-      #        with:
-      #          username: ${{ secrets.DOCKERHUB_USERNAME }}
-      #          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: 🔑 AWS 인증
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
 
       - name: 🔐 Log in to GHCR
         uses: docker/login-action@v3
@@ -163,23 +164,32 @@ jobs:
           username: ${{ github.actor }}  # 실제 푸시하는 사용자
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🐳 Build and Push Docker Image (GHCR)
+      - name: 🔐 Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 📋 ECR Registry 출력 설정
+        id: set-ecr
+        run: |
+          echo "ecr_registry=${{ steps.ecr-login.outputs.registry }}" >> $GITHUB_OUTPUT
+
+      - name: 🐳 Build and Push Docker Image To ECR
         uses: docker/build-push-action@v6
-        # tags에서 사용하는 부분, DockerHub가 아닌 GitHub Container Registry로 변경
-        #            ${{ secrets.DOCKERHUB_REPOSITORY_NAME }}:${{ steps.set-env.outputs.image_tag }}
-        #            ${{ secrets.DOCKERHUB_REPOSITORY_NAME }}:${{ steps.set-env.outputs.environment }}-latest
         with:
           context: .
           file: docker/app/dockerfile
-          push: ${{ github.event_name != 'pull_request' }} # PR의 경우 빌드까지만 하고 DockerHub에 푸시하지 않음
+          # PR의 경우 빌드까지만 하고 레지스트리 등에 푸시하지 않음
+          push: ${{ github.event_name != 'pull_request' }}
+          # 우선은 GHCR과 ECR 모두에 푸시하도록 설정함, CD를 기존 on-premise dev 환경 지원을 위해서 유지 예정
           tags: |
             ghcr.io/${{ steps.set-env.outputs.repo_owner }}/server:${{ steps.set-env.outputs.image_tag }}
             ghcr.io/${{ steps.set-env.outputs.repo_owner }}/server:${{ steps.set-env.outputs.lower_environment }}-latest
+
+            ${{ steps.ecr-login.outputs.registry }}/umc-product-server:${{ steps.set-env.outputs.image_tag }}
+            ${{ steps.ecr-login.outputs.registry }}/umc-product-server:${{ steps.set-env.outputs.lower_environment }}-latest
+
           platforms: linux/amd64,linux/arm64
           # 캐시는 추후 빌드 성능 최적화를 통해 개선, 현재는 네트워크 비용이 더 많이 들어서 비활성화 합니다.
-      #          cache-from: type=gha
-      #          #          cache-to: type=gha,mode=max
-      #          cache-to: type=gha,mode=min
 
       - name: 📝 PR Comment & Commit Status
         if: always()  # 성공/실패 모두 실행
