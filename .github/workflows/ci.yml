@@ -150,7 +150,7 @@ jobs:
       - name: 🔧 Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 🔑 AWS 인증
+      - name: 🔑 Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -179,12 +179,12 @@ jobs:
           context: .
           file: docker/app/dockerfile
           # PR의 경우 빌드까지만 하고 레지스트리 등에 푸시하지 않음
-          push: ${{ github.event_name != 'pull_request' }}
+          # push: ${{ github.event_name != 'pull_request' }}
+          push: true
           # 우선은 GHCR과 ECR 모두에 푸시하도록 설정함, CD를 기존 on-premise dev 환경 지원을 위해서 유지 예정
+          # ghcr.io/${{ steps.set-env.outputs.repo_owner }}/server:${{ steps.set-env.outputs.image_tag }}
+          # ghcr.io/${{ steps.set-env.outputs.repo_owner }}/server:${{ steps.set-env.outputs.lower_environment }}-latest
           tags: |
-            ghcr.io/${{ steps.set-env.outputs.repo_owner }}/server:${{ steps.set-env.outputs.image_tag }}
-            ghcr.io/${{ steps.set-env.outputs.repo_owner }}/server:${{ steps.set-env.outputs.lower_environment }}-latest
-
             ${{ steps.ecr-login.outputs.registry }}/umc-product-server:${{ steps.set-env.outputs.image_tag }}
             ${{ steps.ecr-login.outputs.registry }}/umc-product-server:${{ steps.set-env.outputs.lower_environment }}-latest
 
