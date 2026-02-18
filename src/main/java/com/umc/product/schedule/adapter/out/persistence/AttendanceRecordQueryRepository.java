@@ -33,6 +33,7 @@ public class AttendanceRecordQueryRepository {
         return queryFactory
             .select(Projections.constructor(PendingAttendanceInfo.class,
                 attendanceRecord.id,
+                schedule.id,
                 member.id,
                 member.name,
                 member.nickname,
@@ -43,12 +44,50 @@ public class AttendanceRecordQueryRepository {
                 attendanceRecord.checkedAt
             ))
             .from(attendanceRecord)
+            .join(attendanceSheet).on(attendanceSheet.id.eq(attendanceRecord.attendanceSheetId))
+            .join(schedule).on(schedule.id.eq(attendanceSheet.scheduleId))
             .join(member).on(member.id.eq(attendanceRecord.memberId))
             .leftJoin(school).on(school.id.eq(member.schoolId))
             .where(
                 attendanceRecord.attendanceSheetId.eq(sheetId),
                 attendanceRecord.status.in(APPROVAL_PENDING_STATUSES)
             )
+            .fetch();
+    }
+
+    /**
+     * 여러 출석부의 승인 대기 출석 기록을 멤버 정보와 함께 일괄 조회
+     * <p>
+     * N+1 방지를 위해 여러 출석부를 한 번에 조회. scheduleId를 함께 조회하여 그룹핑에 활용.
+     */
+    public List<PendingAttendanceInfo> findPendingWithMemberInfoBySheetIds(List<Long> sheetIds) {
+        if (sheetIds == null || sheetIds.isEmpty()) {
+            return List.of();
+        }
+
+        return queryFactory
+            .select(Projections.constructor(PendingAttendanceInfo.class,
+                attendanceRecord.id,
+                schedule.id,
+                member.id,
+                member.name,
+                member.nickname,
+                member.profileImageId,
+                school.name,
+                attendanceRecord.status,
+                attendanceRecord.memo,
+                attendanceRecord.checkedAt
+            ))
+            .from(attendanceRecord)
+            .join(attendanceSheet).on(attendanceSheet.id.eq(attendanceRecord.attendanceSheetId))
+            .join(schedule).on(schedule.id.eq(attendanceSheet.scheduleId))
+            .join(member).on(member.id.eq(attendanceRecord.memberId))
+            .leftJoin(school).on(school.id.eq(member.schoolId))
+            .where(
+                attendanceRecord.attendanceSheetId.in(sheetIds),
+                attendanceRecord.status.in(APPROVAL_PENDING_STATUSES)
+            )
+            .orderBy(attendanceRecord.checkedAt.desc())
             .fetch();
     }
 

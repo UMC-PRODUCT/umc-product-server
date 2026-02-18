@@ -4,10 +4,12 @@ import com.umc.product.schedule.adapter.in.web.dto.response.AttendanceRecordResp
 import com.umc.product.schedule.adapter.in.web.dto.response.AvailableAttendanceResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.MyAttendanceHistoryResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.PendingAttendanceResponse;
+import com.umc.product.schedule.adapter.in.web.dto.response.PendingAttendancesByScheduleResponse;
 import com.umc.product.schedule.application.port.in.query.dto.AttendanceRecordInfo;
 import com.umc.product.schedule.application.port.in.query.dto.AvailableAttendanceInfo;
 import com.umc.product.schedule.application.port.in.query.dto.MyAttendanceHistoryInfo;
 import com.umc.product.schedule.application.port.in.query.dto.PendingAttendanceInfo;
+import com.umc.product.schedule.application.port.in.query.dto.PendingAttendancesByScheduleInfo;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.util.List;
@@ -108,6 +110,56 @@ public class AttendanceWebMapper {
                     info.status().name(),
                     info.reason(),
                     info.requestedAt()
+                );
+            })
+            .toList();
+    }
+
+    // 관리자용 전체 승인 대기 목록 (일정별 그룹핑)
+    public List<PendingAttendancesByScheduleResponse> toPendingAttendancesByScheduleResponses(
+        List<PendingAttendancesByScheduleInfo> infos
+    ) {
+        // N+1 방지: 모든 승인 대기 정보에서 profileImageId 수집
+        List<String> allProfileImageIds = infos.stream()
+            .flatMap(scheduleInfo -> scheduleInfo.pendingAttendances().stream())
+            .map(PendingAttendanceInfo::profileImageId)
+            .filter(id -> id != null)
+            .distinct()
+            .toList();
+
+        // 파일 ID -> 파일 링크 매핑을 한 번에 조회
+        Map<String, String> profileImageLinks = allProfileImageIds.isEmpty()
+            ? Map.of()
+            : getFileUseCase.getFileLinks(allProfileImageIds);
+
+        // 각 일정별 그룹을 변환
+        return infos.stream()
+            .map(scheduleInfo -> {
+                // 각 일정의 승인 대기 목록 변환
+                List<PendingAttendanceResponse> pendingResponses = scheduleInfo.pendingAttendances().stream()
+                    .map(info -> {
+                        String profileImageLink = info.profileImageId() != null
+                            ? profileImageLinks.get(info.profileImageId())
+                            : null;
+
+                        return new PendingAttendanceResponse(
+                            info.attendanceId(),
+                            info.memberId(),
+                            info.memberName(),
+                            info.nickname(),
+                            profileImageLink,
+                            info.schoolName(),
+                            info.status().name(),
+                            info.reason(),
+                            info.requestedAt()
+                        );
+                    })
+                    .toList();
+
+                return new PendingAttendancesByScheduleResponse(
+                    scheduleInfo.scheduleId(),
+                    scheduleInfo.scheduleName(),
+                    pendingResponses
                 );
             })
             .toList();

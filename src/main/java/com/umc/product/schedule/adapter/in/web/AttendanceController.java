@@ -14,11 +14,13 @@ import com.umc.product.schedule.adapter.in.web.dto.response.AttendanceRecordResp
 import com.umc.product.schedule.adapter.in.web.dto.response.AvailableAttendanceResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.MyAttendanceHistoryResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.PendingAttendanceResponse;
+import com.umc.product.schedule.adapter.in.web.dto.response.PendingAttendancesByScheduleResponse;
 import com.umc.product.schedule.adapter.in.web.mapper.AttendanceWebMapper;
 import com.umc.product.schedule.adapter.in.web.swagger.AttendanceControllerApi;
 import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.SubmitReasonUseCase;
+import com.umc.product.schedule.application.port.in.query.GetAllPendingAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAttendanceRecordUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetChallengerAttendanceHistoryUseCase;
@@ -48,6 +50,7 @@ public class AttendanceController implements AttendanceControllerApi {
     private final GetMyAttendanceHistoryUseCase getMyAttendanceHistoryUseCase;
     private final GetChallengerAttendanceHistoryUseCase getChallengerAttendanceHistoryUseCase;
     private final GetPendingAttendancesUseCase getPendingAttendancesUseCase;
+    private final GetAllPendingAttendancesUseCase getAllPendingAttendancesUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
 
     private final AttendanceWebMapper mapper;
@@ -133,6 +136,19 @@ public class AttendanceController implements AttendanceControllerApi {
     ) {
         return mapper.toPendingAttendanceResponses(
             getPendingAttendancesUseCase.getPendingList(scheduleId)
+        );
+    }
+
+    @Override
+    @GetMapping("/pending")
+    public List<PendingAttendancesByScheduleResponse> getAllPendingAttendances(
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        Long memberId = memberPrincipal.getMemberId();
+        Long gisuId = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId).gisuId();
+
+        return mapper.toPendingAttendancesByScheduleResponses(
+            getAllPendingAttendancesUseCase.getAllPendingList(gisuId)
         );
     }
 
