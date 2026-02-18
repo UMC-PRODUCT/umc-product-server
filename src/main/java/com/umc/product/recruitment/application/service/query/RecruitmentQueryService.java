@@ -215,6 +215,8 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentId(query.recruitmentId());
 
+        List<RecruitmentSchedule> schedules = loadRecruitmentSchedulePort.findByRecruitmentId(query.recruitmentId());
+
         Set<ChallengerPart> openParts =
             parts.stream()
                 .filter(p -> p.getStatus() == RecruitmentPartStatus.OPEN)
@@ -245,7 +247,35 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         RecruitmentApplicationFormInfo raw =
             loadRecruitmentPort.findApplicationFormInfoForApplicantById(query.recruitmentId(), preferredPartInfo);
 
-        return raw.filterPartQuestions(openParts);
+        boolean canApply = checkCanApply(recruitment, schedules);
+
+        return raw.filterPartQuestions(openParts)
+            .withCanApply(canApply);
+    }
+
+    private boolean checkCanApply(Recruitment recruitment, List<RecruitmentSchedule> schedules) {
+        if (!recruitment.isPublished() && recruitment.getStatus() != RecruitmentStatus.PUBLISHED) {
+            return false;
+        }
+
+        Instant now = Instant.now(); // Instant 사용
+
+        return schedules.stream()
+            .filter(s -> s.getType() == RecruitmentScheduleType.APPLY_WINDOW)
+            .findFirst()
+            .map(schedule -> {
+                Instant start = schedule.getStartsAt();
+                Instant end = schedule.getEndsAt();
+
+                // 기간 설정이 안 되어 있으면 지원 불가
+                if (start == null || end == null) {
+                    return false;
+                }
+
+                // now >= start && now < end
+                return !now.isBefore(start) && now.isBefore(end);
+            })
+            .orElse(false); // 스케줄이 아예 없으면 false
     }
 
     @Override
