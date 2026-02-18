@@ -26,7 +26,9 @@ import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeClassification;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 import java.util.HashMap;
 import java.util.List;
@@ -52,8 +54,9 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private final LoadNoticePort loadNoticePort;
     private final LoadNoticeReadPort loadNoticeReadPort;
     private final LoadNoticeTargetPort loadNoticeTargetPort;
-    private final GetChapterUseCase getChapterUseCase;
 
+    private final GetChapterUseCase getChapterUseCase;
+    private final GetGisuUseCase getGisuUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetNoticeContentUseCase getNoticeContentUseCase;
@@ -189,7 +192,17 @@ public class NoticeQueryService implements GetNoticeUseCase {
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
         NoticeTargetInfo targetInfo = NoticeTargetInfo.from(target);
 
-        List<ChallengerInfo> challengers = getChallengerUseCase.getByGisuId(targetInfo.targetGisuId());
+        List<ChallengerInfo> challengers;
+        if (targetInfo.targetGisuId() != null) {
+            challengers = getChallengerUseCase.getByGisuId(targetInfo.targetGisuId());
+        } else {
+            // 모든 기수 챌린저 가져오기
+            challengers = getGisuUseCase.getList().stream()
+                .map(GisuInfo::gisuId)
+                .flatMap(gisuId -> getChallengerUseCase.getByGisuId(gisuId).stream())
+                .toList();
+        }
+
         if (challengers.isEmpty()) {
             return new TargetChallengerContext(List.of(), Map.of(), new HashMap<>());
         }
