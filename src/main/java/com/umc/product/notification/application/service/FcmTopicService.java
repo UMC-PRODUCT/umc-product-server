@@ -35,7 +35,8 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
     public void subscribeTopics(Long challengerId) {
         ChallengerInfo challenger = getChallengerUseCase.getChallengerPublicInfo(challengerId);
 
-        FcmToken fcmToken = loadFcmPort.findByMemberId(challenger.memberId());
+        FcmToken fcmToken = loadFcmPort.findOptionalByMemberId(challenger.memberId())
+                .orElse(null);
         if (fcmToken == null || fcmToken.getFcmToken().isBlank()) {
             log.warn("FCM 토큰이 없어 토픽 구독을 건너뜁니다. challengerId={}", challengerId);
             return;
@@ -55,7 +56,8 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
     public void unsubscribeTopics(Long challengerId) {
         ChallengerInfo challenger = getChallengerUseCase.getChallengerPublicInfo(challengerId);
 
-        FcmToken fcmToken = loadFcmPort.findByMemberId(challenger.memberId());
+        FcmToken fcmToken = loadFcmPort.findOptionalByMemberId(challenger.memberId())
+                .orElse(null);
         if (fcmToken == null || fcmToken.getFcmToken().isBlank()) {
             return;
         }
