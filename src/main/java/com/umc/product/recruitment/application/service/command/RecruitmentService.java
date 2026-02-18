@@ -999,8 +999,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     public RecruitmentApplicationFormInfo delete(DeleteRecruitmentFormQuestionCommand command) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-            .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        // 발행된 모집의 문항은 삭제 불가
+        recruitment.requireDraftEditable();
 
         // TODO: 권한 검증
 
@@ -1187,9 +1189,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             .orElseThrow(() -> new BusinessException(
                 Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
-        if (recruitment.getStatus() != RecruitmentStatus.DRAFT) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_PUBLISHED);
-        }
+        // 발행된 모집의 옵션은 삭제 불가
+        recruitment.requireDraftEditable();
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
