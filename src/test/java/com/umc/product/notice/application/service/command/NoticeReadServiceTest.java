@@ -7,7 +7,9 @@ import static org.mockito.Mockito.never;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
@@ -113,6 +115,31 @@ class NoticeReadServiceTest {
             // when & then
             Assertions.assertThatThrownBy(() -> sut.recordRead(NOTICE_ID, MEMBER_ID))
                     .isInstanceOf(NoticeDomainException.class);
+        }
+
+        @Test
+        void 전체_기수_공지_읽음_시_최근_챌린저로_기록한다() {
+            // given
+            Notice notice = createNotice();
+            NoticeTargetInfo allGisuTarget = new NoticeTargetInfo(null, null, null, List.of());
+
+            given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
+            given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID)).willReturn(allGisuTarget);
+            given(getChallengerUseCase.getLatestActiveChallengerByMemberId(MEMBER_ID))
+                    .willReturn(ChallengerInfoWithStatus.builder()
+                            .challengerId(CHALLENGER_ID)
+                            .memberId(MEMBER_ID)
+                            .gisuId(GISU_ID)
+                            .part(ChallengerPart.SPRINGBOOT)
+                            .status(ChallengerStatus.ACTIVE)
+                            .build());
+            given(loadNoticeReadPort.existsRead(NOTICE_ID, CHALLENGER_ID)).willReturn(false);
+
+            // when
+            sut.recordRead(NOTICE_ID, MEMBER_ID);
+
+            // then
+            then(saveNoticeReadPort).should().saveRead(any(NoticeRead.class));
         }
     }
 }

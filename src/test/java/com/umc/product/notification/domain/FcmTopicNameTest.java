@@ -13,6 +13,16 @@ class FcmTopicNameTest {
     class 개별_토픽_생성 {
 
         @Test
+        void 전체_대상_토픽() {
+            assertThat(FcmTopicName.all()).isEqualTo("all");
+        }
+
+        @Test
+        void 전체_기수_학교_토픽() {
+            assertThat(FcmTopicName.school(5L)).isEqualTo("school-5");
+        }
+
+        @Test
         void 기수_토픽() {
             assertThat(FcmTopicName.gisu(1L)).isEqualTo("gisu-1");
         }
@@ -52,13 +62,15 @@ class FcmTopicNameTest {
     class allTopicsFor {
 
         @Test
-        void 학교_지부_모두_있으면_6개_토픽_반환() {
+        void 학교_지부_모두_있으면_8개_토픽_반환() {
             List<String> topics = FcmTopicName.allTopicsFor(
                     1L, ChallengerPart.SPRINGBOOT, 5L, 3L);
 
             assertThat(topics).containsExactly(
+                    "all",
                     "gisu-1",
                     "gisu-1-part-SPRINGBOOT",
+                    "school-5",
                     "gisu-1-school-5",
                     "gisu-1-school-5-part-SPRINGBOOT",
                     "gisu-1-chapter-3",
@@ -67,24 +79,27 @@ class FcmTopicNameTest {
         }
 
         @Test
-        void 학교만_있고_지부가_없으면_4개_토픽_반환() {
+        void 학교만_있고_지부가_없으면_6개_토픽_반환() {
             List<String> topics = FcmTopicName.allTopicsFor(
                     2L, ChallengerPart.WEB, 10L, null);
 
             assertThat(topics).containsExactly(
+                    "all",
                     "gisu-2",
                     "gisu-2-part-WEB",
+                    "school-10",
                     "gisu-2-school-10",
                     "gisu-2-school-10-part-WEB"
             );
         }
 
         @Test
-        void 지부만_있고_학교가_없으면_4개_토픽_반환() {
+        void 지부만_있고_학교가_없으면_5개_토픽_반환() {
             List<String> topics = FcmTopicName.allTopicsFor(
                     1L, ChallengerPart.IOS, null, 7L);
 
             assertThat(topics).containsExactly(
+                    "all",
                     "gisu-1",
                     "gisu-1-part-IOS",
                     "gisu-1-chapter-7",
@@ -93,11 +108,12 @@ class FcmTopicNameTest {
         }
 
         @Test
-        void 학교_지부_모두_없으면_2개_토픽_반환() {
+        void 학교_지부_모두_없으면_3개_토픽_반환() {
             List<String> topics = FcmTopicName.allTopicsFor(
                     3L, ChallengerPart.DESIGN, null, null);
 
             assertThat(topics).containsExactly(
+                    "all",
                     "gisu-3",
                     "gisu-3-part-DESIGN"
             );
@@ -172,6 +188,20 @@ class FcmTopicNameTest {
                     1L, 3L, 5L, List.of(ChallengerPart.WEB));
 
             assertThat(topics).containsExactly("gisu-1-chapter-3-part-WEB");
+        }
+
+        @Test
+        void 기수가_null이면_전체_대상_토픽_반환() {
+            List<String> topics = FcmTopicName.resolveTopics(null, null, null, null);
+
+            assertThat(topics).containsExactly("all");
+        }
+
+        @Test
+        void 기수가_null이고_학교가_있으면_학교_토픽_반환() {
+            List<String> topics = FcmTopicName.resolveTopics(null, null, 5L, null);
+
+            assertThat(topics).containsExactly("school-5");
         }
     }
 }
