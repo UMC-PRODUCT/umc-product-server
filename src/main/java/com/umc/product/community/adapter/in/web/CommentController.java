@@ -5,10 +5,10 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWi
 import com.umc.product.community.adapter.in.web.dto.request.CreateCommentRequest;
 import com.umc.product.community.adapter.in.web.dto.response.CommentResponse;
 import com.umc.product.community.adapter.in.web.dto.response.LikeResponse;
-import com.umc.product.community.application.port.in.post.CreateCommentUseCase;
-import com.umc.product.community.application.port.in.post.DeleteCommentUseCase;
-import com.umc.product.community.application.port.in.post.ToggleCommentLikeUseCase;
-import com.umc.product.community.application.port.in.post.query.GetCommentListUseCase;
+import com.umc.product.community.application.port.in.command.comment.CreateCommentUseCase;
+import com.umc.product.community.application.port.in.command.comment.DeleteCommentUseCase;
+import com.umc.product.community.application.port.in.command.comment.ToggleCommentLikeUseCase;
+import com.umc.product.community.application.port.in.query.GetCommentListUseCase;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;

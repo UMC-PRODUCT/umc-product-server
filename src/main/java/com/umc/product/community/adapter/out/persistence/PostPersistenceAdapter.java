@@ -1,11 +1,11 @@
 package com.umc.product.community.adapter.out.persistence;
 
-import com.umc.product.community.application.port.in.post.TogglePostLikeUseCase.LikeResult;
-import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
-import com.umc.product.community.application.port.out.LoadPostPort;
-import com.umc.product.community.application.port.out.PostSearchData;
-import com.umc.product.community.application.port.out.PostWithAuthor;
-import com.umc.product.community.application.port.out.SavePostPort;
+import com.umc.product.community.application.port.in.command.post.TogglePostLikeUseCase.LikeResult;
+import com.umc.product.community.application.port.in.query.dto.PostSearchQuery;
+import com.umc.product.community.application.port.out.dto.PostSearchData;
+import com.umc.product.community.application.port.out.dto.PostWithAuthor;
+import com.umc.product.community.application.port.out.post.LoadPostPort;
+import com.umc.product.community.application.port.out.post.SavePostPort;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
 import java.util.List;
@@ -29,7 +29,7 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
         // UPDATE용 (authorChallengerId 필요 없음)
         if (post.getPostId() != null) {
             PostJpaEntity entity = postRepository.findById(post.getPostId().id())
-                    .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
             entity.update(post.getTitle(), post.getContent(), post.getCategory());
             return entity.toDomain();
         }
@@ -69,32 +69,32 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     @Override
     public Optional<Post> findById(Long postId) {
         return postRepository.findById(postId)
-                .map(PostJpaEntity::toDomain);
+            .map(PostJpaEntity::toDomain);
     }
 
     @Override
     public Optional<PostWithAuthor> findByIdWithAuthor(Long postId) {
         return postRepository.findById(postId)
-                .map(entity -> new PostWithAuthor(entity.toDomain(), entity.getAuthorChallengerId()));
+            .map(entity -> new PostWithAuthor(entity.toDomain(), entity.getAuthorChallengerId()));
     }
 
     @Override
     public Optional<PostWithAuthor> findByIdWithAuthor(Long postId, Long viewerChallengerId) {
         return postRepository.findById(postId)
-                .map(entity -> new PostWithAuthor(entity.toDomain(viewerChallengerId), entity.getAuthorChallengerId()));
+            .map(entity -> new PostWithAuthor(entity.toDomain(viewerChallengerId), entity.getAuthorChallengerId()));
     }
 
     @Override
     public List<Post> findByCategory(Category category) {
         return postRepository.findByCategory(category).stream()
-                .map(PostJpaEntity::toDomain)
-                .toList();
+            .map(PostJpaEntity::toDomain)
+            .toList();
     }
 
     @Override
     public LikeResult toggleLike(Long postId, Long challengerId) {
         PostJpaEntity entity = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
         boolean liked = entity.toggleLike(challengerId);
         return new LikeResult(liked, entity.getLikeCount());
     }
@@ -107,8 +107,8 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     @Override
     public Long findAuthorIdByPostId(Long postId) {
         return postRepository.findById(postId)
-                .map(PostJpaEntity::getAuthorChallengerId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+            .map(PostJpaEntity::getAuthorChallengerId)
+            .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
     }
 
     @Override

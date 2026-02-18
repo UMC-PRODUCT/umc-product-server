@@ -1,10 +1,10 @@
 package com.umc.product.community.adapter.in.web;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.community.application.port.in.report.ReportCommentCommand;
-import com.umc.product.community.application.port.in.report.ReportCommentUseCase;
-import com.umc.product.community.application.port.in.report.ReportPostCommand;
-import com.umc.product.community.application.port.in.report.ReportPostUseCase;
+import com.umc.product.community.application.port.in.command.report.ReportCommentUseCase;
+import com.umc.product.community.application.port.in.command.report.ReportPostUseCase;
+import com.umc.product.community.application.port.in.command.report.dto.ReportCommentCommand;
+import com.umc.product.community.application.port.in.command.report.dto.ReportPostCommand;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,8 +31,8 @@ public class ReportController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "게시글 신고", description = "게시글을 신고합니다. 중복 신고는 불가능합니다.")
     public void reportPost(
-            @PathVariable Long postId,
-            @CurrentMember MemberPrincipal memberPrincipal
+        @PathVariable Long postId,
+        @CurrentMember MemberPrincipal memberPrincipal
     ) {
         Long reporterId = getReporterId(memberPrincipal);
         ReportPostCommand command = new ReportPostCommand(postId, reporterId);
@@ -43,8 +43,8 @@ public class ReportController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "댓글 신고", description = "댓글을 신고합니다. 중복 신고는 불가능합니다.")
     public void reportComment(
-            @PathVariable Long commentId,
-            @CurrentMember MemberPrincipal memberPrincipal
+        @PathVariable Long commentId,
+        @CurrentMember MemberPrincipal memberPrincipal
     ) {
         Long reporterId = getReporterId(memberPrincipal);
         ReportCommentCommand command = new ReportCommentCommand(commentId, reporterId);
@@ -53,6 +53,7 @@ public class ReportController {
 
     /**
      * 현재 로그인한 사용자의 챌린저 ID를 조회합니다.
+     *
      * @param memberPrincipal 현재 로그인한 사용자 정보
      * @return 챌린저 ID
      */
