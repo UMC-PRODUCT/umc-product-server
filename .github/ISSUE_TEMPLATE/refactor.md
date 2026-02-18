@@ -1,6 +1,6 @@
 ---
-name: '✨ Refactor'
-about: Suggest an idea for this project
+name: '♻️ Refactor'
+about: 기존 코드를 개선해요
 title: '[Refactor] '
 labels: ':sparkles: Refactor'
 assignees: ''
