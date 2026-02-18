@@ -1,0 +1,17 @@
+---
+name: '✨ Refactor'
+about: Suggest an idea for this project
+title: '[Refactor] '
+labels: ':sparkles: Refactor'
+assignees: ''
+
+---
+
+## 개선하는 부분이 무엇인가요?
+
+> 육하원칙에 의거해서 무엇을, 왜, 어떻게 개선할 것인지 작성해주세요.
+
+(이 글을 지우고 작성해주세요)
+
+
+
