@@ -23,6 +23,7 @@ import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import java.lang.reflect.Constructor;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -96,7 +97,7 @@ class FcmTopicServiceTest {
             given(getChallengerUseCase.getChallengerPublicInfo(challengerId)).willReturn(challenger);
 
             FcmToken token = fcmToken(100L, "test-fcm-token");
-            given(loadFcmPort.findByMemberId(100L)).willReturn(token);
+            given(loadFcmPort.findOptionalByMemberId(100L)).willReturn(Optional.of(token));
 
             MemberInfo member = memberInfo(100L, 5L);
             given(getMemberUseCase.getById(100L)).willReturn(member);
@@ -118,7 +119,7 @@ class FcmTopicServiceTest {
             Long challengerId = 1L;
             ChallengerInfo challenger = challengerInfo(1L, 100L, 9L, ChallengerPart.SPRINGBOOT);
             given(getChallengerUseCase.getChallengerPublicInfo(challengerId)).willReturn(challenger);
-            given(loadFcmPort.findByMemberId(100L)).willReturn(null);
+            given(loadFcmPort.findOptionalByMemberId(100L)).willReturn(Optional.empty());
 
             // when
             sut.subscribeTopics(challengerId);
@@ -135,7 +136,7 @@ class FcmTopicServiceTest {
             given(getChallengerUseCase.getChallengerPublicInfo(challengerId)).willReturn(challenger);
 
             FcmToken token = fcmToken(100L, "");
-            given(loadFcmPort.findByMemberId(100L)).willReturn(token);
+            given(loadFcmPort.findOptionalByMemberId(100L)).willReturn(Optional.of(token));
 
             // when
             sut.subscribeTopics(challengerId);
@@ -152,7 +153,7 @@ class FcmTopicServiceTest {
             given(getChallengerUseCase.getChallengerPublicInfo(challengerId)).willReturn(challenger);
 
             FcmToken token = fcmToken(100L, "test-fcm-token");
-            given(loadFcmPort.findByMemberId(100L)).willReturn(token);
+            given(loadFcmPort.findOptionalByMemberId(100L)).willReturn(Optional.of(token));
 
             MemberInfo member = memberInfo(100L, null); // schoolId = null
             given(getMemberUseCase.getById(100L)).willReturn(member);
@@ -171,7 +172,7 @@ class FcmTopicServiceTest {
             given(getChallengerUseCase.getChallengerPublicInfo(challengerId)).willReturn(challenger);
 
             FcmToken token = fcmToken(100L, "test-fcm-token");
-            given(loadFcmPort.findByMemberId(100L)).willReturn(token);
+            given(loadFcmPort.findOptionalByMemberId(100L)).willReturn(Optional.of(token));
 
             MemberInfo member = memberInfo(100L, 5L);
             given(getMemberUseCase.getById(100L)).willReturn(member);
@@ -198,7 +199,7 @@ class FcmTopicServiceTest {
             given(getChallengerUseCase.getChallengerPublicInfo(challengerId)).willReturn(challenger);
 
             FcmToken token = fcmToken(100L, "test-fcm-token");
-            given(loadFcmPort.findByMemberId(100L)).willReturn(token);
+            given(loadFcmPort.findOptionalByMemberId(100L)).willReturn(Optional.of(token));
 
             MemberInfo member = memberInfo(100L, 5L);
             given(getMemberUseCase.getById(100L)).willReturn(member);
@@ -220,7 +221,7 @@ class FcmTopicServiceTest {
             Long challengerId = 1L;
             ChallengerInfo challenger = challengerInfo(1L, 100L, 9L, ChallengerPart.SPRINGBOOT);
             given(getChallengerUseCase.getChallengerPublicInfo(challengerId)).willReturn(challenger);
-            given(loadFcmPort.findByMemberId(100L)).willReturn(null);
+            given(loadFcmPort.findOptionalByMemberId(100L)).willReturn(Optional.empty());
 
             // when
             sut.unsubscribeTopics(challengerId);
@@ -247,7 +248,7 @@ class FcmTopicServiceTest {
             given(getChallengerUseCase.getChallengerPublicInfo(2L)).willReturn(c2);
 
             FcmToken token = fcmToken(memberId, "test-fcm-token");
-            given(loadFcmPort.findByMemberId(memberId)).willReturn(token);
+            given(loadFcmPort.findOptionalByMemberId(memberId)).willReturn(Optional.of(token));
 
             MemberInfo member = memberInfo(memberId, 5L);
             given(getMemberUseCase.getById(memberId)).willReturn(member);
@@ -293,7 +294,7 @@ class FcmTopicServiceTest {
             given(getChallengerUseCase.getChallengerPublicInfo(1L)).willReturn(c1);
 
             FcmToken token = fcmToken(memberId, "test-fcm-token");
-            given(loadFcmPort.findByMemberId(memberId)).willReturn(token);
+            given(loadFcmPort.findOptionalByMemberId(memberId)).willReturn(Optional.of(token));
 
             MemberInfo member = memberInfo(memberId, 5L);
             given(getMemberUseCase.getById(memberId)).willReturn(member);
