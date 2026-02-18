@@ -23,6 +23,11 @@ public interface ChallengerJpaRepository extends JpaRepository<Challenger, Long>
      */
     List<Challenger> findByGisuId(Long gisuId);
 
+    /**
+     * 여러 gisuId로 챌린저 목록 조회
+     */
+    List<Challenger> findByGisuIdIn(List<Long> gisuIds);
+
     Long countByIdIn(Set<Long> challengerIds);
 
     Optional<Challenger> findTopByMemberIdOrderByCreatedAtDesc(Long memberId);

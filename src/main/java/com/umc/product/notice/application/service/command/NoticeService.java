@@ -1,8 +1,6 @@
 package com.umc.product.notice.application.service.command;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -16,7 +14,6 @@ import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeComman
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
-import com.umc.product.notice.application.service.NoticeAuthorValidator;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
@@ -54,20 +51,14 @@ public class NoticeService implements ManageNoticeUseCase {
     private final LoadChallengerPort loadChallengerPort;
 
     // 도메인 외부 UseCase
-    private final GetChallengerUseCase getChallengerUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final ManageFcmUseCase manageFcmUseCase;
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChapterUseCase getChapterUseCase;
-    private final NoticeAuthorValidator noticeAuthorValidator;
 
     @Override
     public Long createNotice(CreateNoticeCommand command) {
-        ChallengerInfo challenger = getChallengerByMemberAndGisu(
-            command.memberId(),
-            command.targetInfo().targetGisuId());
-
         if (!validateNoticeWritePermission(command.targetInfo(), command.memberId())) {
             throw new NoticeDomainException(NoticeErrorCode.NO_WRITE_PERMISSION);
         }
@@ -75,7 +66,7 @@ public class NoticeService implements ManageNoticeUseCase {
         Notice notice = Notice.create(
             command.title(),
             command.content(),
-            challenger.challengerId(),
+            command.memberId(),
             command.shouldNotify()
         );
 
@@ -117,7 +108,7 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void updateNoticeTitleOrContent(UpdateNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-        noticeAuthorValidator.validate(notice, command.memberId());
+        notice.validateAuthorMember(command.memberId());
 
         /**
          * 제목/내용만 수정
@@ -132,8 +123,7 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void deleteNotice(DeleteNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-        noticeAuthorValidator.validate(notice, command.memberId());
-
+        notice.validateAuthorMember(command.memberId());
         /*
          * 관련 이미지, 투표, 링크 등도 모두 삭제
          */
@@ -154,13 +144,6 @@ public class NoticeService implements ManageNoticeUseCase {
     }
 
     // === PRIVATE METHODS ===
-
-    /**
-     * 회원ID와 기수ID로 챌린저 조회
-     */
-    private ChallengerInfo getChallengerByMemberAndGisu(Long memberId, Long gisuId) {
-        return getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId);
-    }
 
     /**
      * Notice ID로 Entity를 조회, 없으면 Exception 발생

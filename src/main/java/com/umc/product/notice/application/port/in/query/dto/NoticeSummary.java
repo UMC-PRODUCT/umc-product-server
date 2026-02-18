@@ -11,7 +11,7 @@ public record NoticeSummary(
     Integer viewCount,
     Instant createdAt,
     NoticeTargetInfo targetInfo,
-    Long authorChallengerId,
+    Long authorMemberId,
     String authorNickname,
     String authorName
 ) {

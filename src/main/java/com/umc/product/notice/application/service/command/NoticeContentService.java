@@ -1,6 +1,5 @@
 package com.umc.product.notice.application.service.command;
 
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeLinksCommand;
@@ -8,8 +7,6 @@ import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteComma
 import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteResult;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
 import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
-import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
-import com.umc.product.notice.application.service.NoticeAuthorValidator;
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
@@ -23,7 +20,6 @@ import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
 import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
 import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
@@ -49,15 +45,11 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
     private final CreateVoteUseCase createVoteUseCase;
     private final DeleteVoteUseCase deleteVoteUseCase;
-    private final GetNoticeTargetUseCase getNoticeTargetUseCase;
-    private final GetChallengerUseCase getChallengerUseCase;
-    private final NoticeAuthorValidator noticeAuthorValidator;
 
     @Override
     public AddNoticeVoteResult addVote(AddNoticeVoteCommand command, Long noticeId) {
         Notice notice = findNoticeById(noticeId);
-        noticeAuthorValidator.validate(notice, command.createdMemberId());
-
+        notice.validateAuthorMember(command.createdMemberId());
 
         if (loadNoticeVotePort.existsVoteByNoticeId(noticeId)) {
             throw new NoticeDomainException(NoticeErrorCode.VOTE_ALREADY_EXISTS);
@@ -74,7 +66,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     @Override
     public List<Long> addImages(AddNoticeImagesCommand command, Long noticeId, Long memberId) {
         Notice notice = findNoticeById(noticeId);
-        noticeAuthorValidator.validate(notice, memberId);
+        notice.validateAuthorMember(memberId);
 
         if (command.imageIds() == null || command.imageIds().isEmpty()) {
             throw new NoticeDomainException(NoticeErrorCode.IMAGE_URLS_REQUIRED);
@@ -104,7 +96,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     @Override
     public List<Long> addLinks(AddNoticeLinksCommand command, Long noticeId, Long memberId) {
         Notice notice = findNoticeById(noticeId);
-        noticeAuthorValidator.validate(notice, memberId);
+        notice.validateAuthorMember(memberId);
 
         if (command.links() == null || command.links().isEmpty()) {
             throw new NoticeDomainException(NoticeErrorCode.LINK_URLS_REQUIRED);
@@ -124,7 +116,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     @Override
     public void deleteVote(Long noticeId, Long memberId) {
         Notice notice = findNoticeById(noticeId);
-        noticeAuthorValidator.validate(notice, memberId);
+        notice.validateAuthorMember(memberId);
 
         NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
@@ -156,7 +148,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         }
 
         Notice notice = findNoticeById(noticeId);
-        noticeAuthorValidator.validate(notice, memberId);
+        notice.validateAuthorMember(memberId);
 
         saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
 
@@ -179,7 +171,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         }
 
         Notice notice = findNoticeById(noticeId);
-        noticeAuthorValidator.validate(notice, memberId);
+        notice.validateAuthorMember(memberId);
         saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
 
         if (command.links().isEmpty()) {

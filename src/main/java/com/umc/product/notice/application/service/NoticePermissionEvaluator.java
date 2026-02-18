@@ -8,7 +8,6 @@ import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.authorization.domain.SubjectAttributes.GisuChallengerInfo;
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
@@ -28,7 +27,6 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
 
     private final GetNoticeTargetUseCase getNoticeTargetUseCase;
     private final GetNoticeUseCase getNoticeUseCase;
-    private final GetChallengerUseCase getChallengerUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @Override
@@ -80,10 +78,8 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     private boolean canDeleteNotice(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
         NoticeInfo noticeInfo = getNoticeUseCase.getNoticeDetail(resourcePermission.getResourceIdAsLong(),
             subjectAttributes.memberId());
-        Long authorMemberId = getChallengerUseCase.getChallengerPublicInfo(noticeInfo.authorChallengerId())
-            .memberId();
 
-        return Objects.equals(subjectAttributes.memberId(), authorMemberId);
+        return Objects.equals(subjectAttributes.memberId(), noticeInfo.authorMemberId());
     }
 
     /**
