@@ -33,16 +33,25 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class NoticeQueryServiceTest {
 
-    @Mock LoadNoticePort loadNoticePort;
-    @Mock LoadNoticeReadPort loadNoticeReadPort;
-    @Mock LoadNoticeTargetPort loadNoticeTargetPort;
-    @Mock GetChapterUseCase getChapterUseCase;
-    @Mock GetGisuUseCase getGisuUseCase;
-    @Mock GetMemberUseCase getMemberUseCase;
-    @Mock GetChallengerUseCase getChallengerUseCase;
-    @Mock GetNoticeContentUseCase getNoticeContentUseCase;
+    @Mock
+    LoadNoticePort loadNoticePort;
+    @Mock
+    LoadNoticeReadPort loadNoticeReadPort;
+    @Mock
+    LoadNoticeTargetPort loadNoticeTargetPort;
+    @Mock
+    GetChapterUseCase getChapterUseCase;
+    @Mock
+    GetGisuUseCase getGisuUseCase;
+    @Mock
+    GetMemberUseCase getMemberUseCase;
+    @Mock
+    GetChallengerUseCase getChallengerUseCase;
+    @Mock
+    GetNoticeContentUseCase getNoticeContentUseCase;
 
-    @InjectMocks NoticeQueryService sut;
+    @InjectMocks
+    NoticeQueryService sut;
 
     private static final Long NOTICE_ID = 100L;
 
@@ -83,11 +92,9 @@ class NoticeQueryServiceTest {
 
             // 멤버1: 기수7, 기수8 둘 다 있음 → 기수8만 남아야 함
             // 멤버2: 기수7만 있음
-            given(getChallengerUseCase.getByGisuId(7L)).willReturn(List.of(
+            given(getChallengerUseCase.getByGisuIds(List.of(7L, 8L))).willReturn(List.of(
                 challenger(1L, 10L, 7L),
-                challenger(2L, 20L, 7L)
-            ));
-            given(getChallengerUseCase.getByGisuId(8L)).willReturn(List.of(
+                challenger(2L, 20L, 7L),
                 challenger(3L, 10L, 8L)
             ));
 

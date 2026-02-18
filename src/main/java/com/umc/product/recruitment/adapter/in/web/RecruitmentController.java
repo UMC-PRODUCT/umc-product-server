@@ -12,6 +12,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentI
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormQuestionsRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormResponseAnswersRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicantFormResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.CreateRecruitmentResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ExtensionBaseRecruitmentsResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.MyRecruitmentApplicationsResponse;
@@ -29,6 +30,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.response.RecruitmentSchedu
 import com.umc.product.recruitment.adapter.in.web.dto.response.SubmitRecruitmentApplicationResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpdateRecruitmentInterviewPreferenceResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.UpsertRecruitmentFormResponseAnswersResponse;
+import com.umc.product.recruitment.adapter.in.web.mapper.RecruitmentFormMapper;
 import com.umc.product.recruitment.application.port.in.command.CreateExtensionCommand;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentDraftFormResponseUseCase;
 import com.umc.product.recruitment.application.port.in.command.CreateRecruitmentUseCase;
@@ -143,6 +145,7 @@ public class RecruitmentController {
     private final GetPublishedRecruitmentDetailUseCase getPublishedRecruitmentDetailUseCase;
     private final DeleteRecruitmentQuestionOptionUseCase deleteRecruitmentQuestionOptionUseCase;
     private final GetExtensionBaseRecruitmentsUseCase getExtensionBaseRecruitmentsUseCase;
+    private final RecruitmentFormMapper recruitmentFormMapper;
 
     @GetMapping("/active-id")
     @Operation(summary = "현재 모집 중인 모집 ID 조회", description = "사용자 기준으로 현재 모집 중인 recruitmentId를 조회합니다. (schoolId/gisuId 미지정 시 사용자 학교, active 기수 기반)")
@@ -168,11 +171,16 @@ public class RecruitmentController {
 
     @GetMapping("/{recruitmentId}/application-form")
     @Operation(summary = "지원서 폼 정보 불러오기", description = "지원서 작성 페이지에서 사용할 폼 (질문 목록)을 조회합니다.")
-    public RecruitmentApplicationFormResponse getApplicationForm(
+    public ApplicantFormResponse getApplicationForm(
         @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
     ) {
         GetRecruitmentApplicationFormQuery query = new GetRecruitmentApplicationFormQuery(recruitmentId);
-        return RecruitmentApplicationFormResponse.from(getRecruitmentApplicationFormUseCase.get(query));
+        RecruitmentApplicationFormInfo info = getRecruitmentApplicationFormUseCase.get(query);
+
+        var pages = recruitmentFormMapper.mapToPages(info);
+
+        boolean canApply = Boolean.TRUE.equals(info.canApply());
+        return ApplicantFormResponse.from(info, canApply, pages);
     }
 
     @PostMapping("/{recruitmentId}/applications/draft")
@@ -458,7 +466,9 @@ public class RecruitmentController {
     ) {
         RecruitmentApplicationFormInfo info = upsertRecruitmentFormQuestionsUseCase.upsert(
             request.toCommand(recruitmentId));
-        return RecruitmentApplicationFormResponse.from(info);
+
+        var pages = recruitmentFormMapper.mapToPages(info);
+        return RecruitmentApplicationFormResponse.from(info, pages);
     }
 
     @PostMapping("/{recruitmentId}/publish")
@@ -574,7 +584,9 @@ public class RecruitmentController {
         );
 
         RecruitmentApplicationFormInfo info = deleteRecruitmentFormQuestionUseCase.delete(command);
-        return RecruitmentApplicationFormResponse.from(info);
+
+        var pages = recruitmentFormMapper.mapToPages(info);
+        return RecruitmentApplicationFormResponse.from(info, pages);
     }
 
     @GetMapping("/{recruitmentId}/application-form/draft")
@@ -593,9 +605,10 @@ public class RecruitmentController {
             recruitmentId,
             memberPrincipal.getMemberId()
         );
-        return RecruitmentApplicationFormResponse.from(
-            getRecruitmentDraftApplicationFormUseCase.get(query)
-        );
+        RecruitmentApplicationFormInfo info = getRecruitmentDraftApplicationFormUseCase.get(query);
+
+        var pages = recruitmentFormMapper.mapToPages(info);
+        return RecruitmentApplicationFormResponse.from(info, pages);
     }
 
     @PatchMapping("/{recruitmentId}/published")
@@ -683,7 +696,9 @@ public class RecruitmentController {
             new DeleteRecruitmentQuestionOptionCommand(recruitmentId, questionId, optionId,
                 memberPrincipal.getMemberId())
         );
-        return RecruitmentApplicationFormResponse.from(info);
+
+        var pages = recruitmentFormMapper.mapToPages(info);
+        return RecruitmentApplicationFormResponse.from(info, pages);
     }
 
     @GetMapping("/extension-bases")

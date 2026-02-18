@@ -11,7 +11,7 @@ public record RecruitmentDraftInfo(
     Long recruitmentId,
     String status,
     Long formId,
-
+    Boolean isRoot,
     String title,
     List<ChallengerPart> recruitmentParts,
     Integer maxPreferredPartCount,
@@ -64,6 +64,7 @@ public record RecruitmentDraftInfo(
             recruitment.getId(),
             recruitment.getStatus().name(),
             recruitment.getFormId(),
+            recruitment.isRoot(),
             recruitment.getTitle(),
             parts,
             recruitment.getMaxPreferredPartCount(),
