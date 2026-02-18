@@ -26,12 +26,16 @@ import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeClassification;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -52,8 +56,9 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private final LoadNoticePort loadNoticePort;
     private final LoadNoticeReadPort loadNoticeReadPort;
     private final LoadNoticeTargetPort loadNoticeTargetPort;
-    private final GetChapterUseCase getChapterUseCase;
 
+    private final GetChapterUseCase getChapterUseCase;
+    private final GetGisuUseCase getGisuUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetNoticeContentUseCase getNoticeContentUseCase;
@@ -90,7 +95,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             notice.getId(),
             notice.getTitle(),
             notice.getContent(),
-            notice.getAuthorChallengerId(),
+            notice.getAuthorMemberId(),
             voteInfo,
             imageInfos,
             linkInfos,
@@ -189,7 +194,23 @@ public class NoticeQueryService implements GetNoticeUseCase {
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
         NoticeTargetInfo targetInfo = NoticeTargetInfo.from(target);
 
-        List<ChallengerInfo> challengers = getChallengerUseCase.getByGisuId(targetInfo.targetGisuId());
+        List<ChallengerInfo> challengers;
+        if (targetInfo.targetGisuId() != null) {
+            challengers = getChallengerUseCase.getByGisuId(targetInfo.targetGisuId());
+        } else {
+            // 모든 기수 챌린저를 가져온 뒤, 멤버당 가장 최근 기수의 챌린저만 남김 (읽음 현황 조회시 혼선 방지)
+            challengers = getGisuUseCase.getList().stream()
+                .map(GisuInfo::gisuId)
+                .flatMap(gisuId -> getChallengerUseCase.getByGisuId(gisuId).stream())
+                // memberId를 key로 그룹핑, 여러 챌린저 갖는 경우 gisuId가 큰 챌린저 (최근 챌린저)로 남김
+                .collect(Collectors.toMap(
+                    ChallengerInfo::memberId,
+                    Function.identity(),
+                    BinaryOperator.maxBy(Comparator.comparing(ChallengerInfo::gisuId))
+                ))
+                .values().stream().toList();
+        }
+
         if (challengers.isEmpty()) {
             return new TargetChallengerContext(List.of(), Map.of(), new HashMap<>());
         }
@@ -219,30 +240,22 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private NoticeQueryData fetchBatchData(Page<Notice> notices) {
         List<Long> noticeIds = notices.getContent().stream().map(Notice::getId).toList();
 
-        Set<Long> challengerIds = notices.getContent().stream()
-            .map(Notice::getAuthorChallengerId).collect(Collectors.toSet());
+        Set<Long> authorMemberIds = notices.getContent().stream()
+            .map(Notice::getAuthorMemberId).collect(Collectors.toSet());
 
         Map<Long, NoticeTarget> targetMap = loadNoticeTargetPort.findByNoticeIdIn(noticeIds).stream()
             .collect(Collectors.toMap(NoticeTarget::getNoticeId, Function.identity()));
 
         Map<Long, Long> viewCountMap = loadNoticeReadPort.countReadsByNoticeIds(noticeIds);
 
-        Map<Long, ChallengerInfo> challengerMap = getChallengerUseCase.getChallengerPublicInfoByIds(challengerIds);
+        Map<Long, MemberInfo> memberMap = getMemberUseCase.getProfiles(authorMemberIds);
 
-        Set<Long> memberIds = challengerMap.values().stream()
-            .map(ChallengerInfo::memberId).collect(Collectors.toSet());
-
-        Map<Long, MemberInfo> memberMap = getMemberUseCase.getProfiles(memberIds);
-
-        return new NoticeQueryData(targetMap, viewCountMap, challengerMap, memberMap);
+        return new NoticeQueryData(targetMap, viewCountMap, memberMap);
     }
 
     // Notice를 NoticeSummary로 매핑
     private NoticeSummary toNoticeSummary(Notice notice, NoticeQueryData data) {
-        ChallengerInfo challengerInfo = data.challengerMap.get(notice.getAuthorChallengerId());
-
-        MemberInfo memberInfo = challengerInfo != null
-            ? data.memberMap.get(challengerInfo.memberId()) : null;
+        MemberInfo memberInfo = data.memberMap.get(notice.getAuthorMemberId());
 
         NoticeTarget target = data.targetMap.get(notice.getId());
 
@@ -253,7 +266,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
         return new NoticeSummary(
             notice.getId(), notice.getTitle(), notice.getContent(),
             notice.isShouldSendNotification(), viewCount, notice.getCreatedAt(),
-            targetInfo, notice.getAuthorChallengerId(),
+            targetInfo, notice.getAuthorMemberId(),
             memberInfo != null ? memberInfo.nickname() : null,
             memberInfo != null ? memberInfo.name() : null
         );
@@ -379,7 +392,6 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private record NoticeQueryData(
         Map<Long, NoticeTarget> targetMap,
         Map<Long, Long> viewCountMap,
-        Map<Long, ChallengerInfo> challengerMap,
         Map<Long, MemberInfo> memberMap
     ) {
     }

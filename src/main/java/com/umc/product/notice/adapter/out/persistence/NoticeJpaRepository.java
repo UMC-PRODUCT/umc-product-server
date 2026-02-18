@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface NoticeJpaRepository extends JpaRepository<Notice, Long> {
 
-    List<Notice> findAllByAuthorChallengerId(Long challengerId);
+    List<Notice> findAllByAuthorMemberId(Long memberId);
 }
