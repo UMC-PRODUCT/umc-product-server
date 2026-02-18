@@ -12,6 +12,7 @@ import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateRecruitmentI
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormQuestionsRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpsertRecruitmentFormResponseAnswersRequest;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ActiveRecruitmentIdResponse;
+import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicantFormResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.CreateRecruitmentResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ExtensionBaseRecruitmentsResponse;
 import com.umc.product.recruitment.adapter.in.web.dto.response.MyRecruitmentApplicationsResponse;
@@ -170,14 +171,16 @@ public class RecruitmentController {
 
     @GetMapping("/{recruitmentId}/application-form")
     @Operation(summary = "지원서 폼 정보 불러오기", description = "지원서 작성 페이지에서 사용할 폼 (질문 목록)을 조회합니다.")
-    public RecruitmentApplicationFormResponse getApplicationForm(
+    public ApplicantFormResponse getApplicationForm(
         @Parameter(description = "모집 ID") @PathVariable Long recruitmentId
     ) {
         GetRecruitmentApplicationFormQuery query = new GetRecruitmentApplicationFormQuery(recruitmentId);
         RecruitmentApplicationFormInfo info = getRecruitmentApplicationFormUseCase.get(query);
 
         var pages = recruitmentFormMapper.mapToPages(info);
-        return RecruitmentApplicationFormResponse.from(info, pages);
+
+        boolean canApply = Boolean.TRUE.equals(info.canApply());
+        return ApplicantFormResponse.from(info, canApply, pages);
     }
 
     @PostMapping("/{recruitmentId}/applications/draft")
