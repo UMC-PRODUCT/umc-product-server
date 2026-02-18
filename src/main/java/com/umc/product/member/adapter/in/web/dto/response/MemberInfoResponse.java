@@ -29,7 +29,7 @@ public record MemberInfoResponse(
     MemberStatus status,
     List<ChallengerRoleInfo> roles, // TODO: 이거 그대로 써도 괜찮은거 맞나?
     List<ChallengerInfoResponse> challengerRecords,
-    MemberProfileInfo profileInfo
+    MemberProfileInfo profile
     // TODO: 활동 이력이나 각종 링크들 추가해야 함
 ) {
     public static MemberInfoResponse from(MemberInfo info, List<ChallengerInfoResponse> challengerRecords) {
@@ -61,7 +61,7 @@ public record MemberInfoResponse(
             .status(info.status())
             .roles(info.roles())
             .challengerRecords(challengerRecords)
-            .profileInfo(profileInfo)
+            .profile(profileInfo)
             .build();
     }
 }
