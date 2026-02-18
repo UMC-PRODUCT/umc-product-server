@@ -95,7 +95,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             notice.getId(),
             notice.getTitle(),
             notice.getContent(),
-            notice.getAuthorChallengerId(),
+            notice.getAuthorMemberId(),
             voteInfo,
             imageInfos,
             linkInfos,
@@ -240,30 +240,22 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private NoticeQueryData fetchBatchData(Page<Notice> notices) {
         List<Long> noticeIds = notices.getContent().stream().map(Notice::getId).toList();
 
-        Set<Long> challengerIds = notices.getContent().stream()
-            .map(Notice::getAuthorChallengerId).collect(Collectors.toSet());
+        Set<Long> authorMemberIds = notices.getContent().stream()
+            .map(Notice::getAuthorMemberId).collect(Collectors.toSet());
 
         Map<Long, NoticeTarget> targetMap = loadNoticeTargetPort.findByNoticeIdIn(noticeIds).stream()
             .collect(Collectors.toMap(NoticeTarget::getNoticeId, Function.identity()));
 
         Map<Long, Long> viewCountMap = loadNoticeReadPort.countReadsByNoticeIds(noticeIds);
 
-        Map<Long, ChallengerInfo> challengerMap = getChallengerUseCase.getChallengerPublicInfoByIds(challengerIds);
+        Map<Long, MemberInfo> memberMap = getMemberUseCase.getProfiles(authorMemberIds);
 
-        Set<Long> memberIds = challengerMap.values().stream()
-            .map(ChallengerInfo::memberId).collect(Collectors.toSet());
-
-        Map<Long, MemberInfo> memberMap = getMemberUseCase.getProfiles(memberIds);
-
-        return new NoticeQueryData(targetMap, viewCountMap, challengerMap, memberMap);
+        return new NoticeQueryData(targetMap, viewCountMap, memberMap);
     }
 
     // Notice를 NoticeSummary로 매핑
     private NoticeSummary toNoticeSummary(Notice notice, NoticeQueryData data) {
-        ChallengerInfo challengerInfo = data.challengerMap.get(notice.getAuthorChallengerId());
-
-        MemberInfo memberInfo = challengerInfo != null
-            ? data.memberMap.get(challengerInfo.memberId()) : null;
+        MemberInfo memberInfo = data.memberMap.get(notice.getAuthorMemberId());
 
         NoticeTarget target = data.targetMap.get(notice.getId());
 
@@ -274,7 +266,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
         return new NoticeSummary(
             notice.getId(), notice.getTitle(), notice.getContent(),
             notice.isShouldSendNotification(), viewCount, notice.getCreatedAt(),
-            targetInfo, notice.getAuthorChallengerId(),
+            targetInfo, notice.getAuthorMemberId(),
             memberInfo != null ? memberInfo.nickname() : null,
             memberInfo != null ? memberInfo.name() : null
         );
@@ -400,7 +392,6 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private record NoticeQueryData(
         Map<Long, NoticeTarget> targetMap,
         Map<Long, Long> viewCountMap,
-        Map<Long, ChallengerInfo> challengerMap,
         Map<Long, MemberInfo> memberMap
     ) {
     }

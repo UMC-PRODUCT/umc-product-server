@@ -16,7 +16,6 @@ import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeComman
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
-import com.umc.product.notice.application.service.NoticeAuthorValidator;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
@@ -28,7 +27,6 @@ import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.notification.application.port.in.dto.TopicNotificationCommand;
 import com.umc.product.notification.domain.FcmTopicName;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
-import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,15 +59,9 @@ public class NoticeService implements ManageNoticeUseCase {
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChapterUseCase getChapterUseCase;
-    private final GetGisuUseCase getGisuUseCase;
-    private final NoticeAuthorValidator noticeAuthorValidator;
 
     @Override
     public Long createNotice(CreateNoticeCommand command) {
-        ChallengerInfo challenger = getChallengerByMemberAndGisu(
-            command.memberId(),
-            getGisuUseCase.getActiveGisu().gisuId());
-
         if (!validateNoticeWritePermission(command.targetInfo(), command.memberId())) {
             throw new NoticeDomainException(NoticeErrorCode.NO_WRITE_PERMISSION);
         }
@@ -77,7 +69,7 @@ public class NoticeService implements ManageNoticeUseCase {
         Notice notice = Notice.create(
             command.title(),
             command.content(),
-            challenger.challengerId(),
+            command.memberId(),
             command.shouldNotify()
         );
 
@@ -119,7 +111,7 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void updateNoticeTitleOrContent(UpdateNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-        noticeAuthorValidator.validate(notice, command.memberId());
+        notice.validateAuthorMember(command.memberId());
 
         /**
          * 제목/내용만 수정
@@ -134,8 +126,7 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void deleteNotice(DeleteNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-        noticeAuthorValidator.validate(notice, command.memberId());
-
+        notice.validateAuthorMember(command.memberId());
         /*
          * 관련 이미지, 투표, 링크 등도 모두 삭제
          */

@@ -13,7 +13,7 @@ public record NoticeInfo(
     Long id,
     String title,
     String content,
-    Long authorChallengerId,
+    Long authorMemberId,
     VoteInfo vote,
     List<NoticeImageInfo> images,
     List<NoticeLinkInfo> links,
