@@ -33,16 +33,25 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class NoticeQueryServiceTest {
 
-    @Mock LoadNoticePort loadNoticePort;
-    @Mock LoadNoticeReadPort loadNoticeReadPort;
-    @Mock LoadNoticeTargetPort loadNoticeTargetPort;
-    @Mock GetChapterUseCase getChapterUseCase;
-    @Mock GetGisuUseCase getGisuUseCase;
-    @Mock GetMemberUseCase getMemberUseCase;
-    @Mock GetChallengerUseCase getChallengerUseCase;
-    @Mock GetNoticeContentUseCase getNoticeContentUseCase;
+    @Mock
+    LoadNoticePort loadNoticePort;
+    @Mock
+    LoadNoticeReadPort loadNoticeReadPort;
+    @Mock
+    LoadNoticeTargetPort loadNoticeTargetPort;
+    @Mock
+    GetChapterUseCase getChapterUseCase;
+    @Mock
+    GetGisuUseCase getGisuUseCase;
+    @Mock
+    GetMemberUseCase getMemberUseCase;
+    @Mock
+    GetChallengerUseCase getChallengerUseCase;
+    @Mock
+    GetNoticeContentUseCase getNoticeContentUseCase;
 
-    @InjectMocks NoticeQueryService sut;
+    @InjectMocks
+    NoticeQueryService sut;
 
     private static final Long NOTICE_ID = 100L;
 
