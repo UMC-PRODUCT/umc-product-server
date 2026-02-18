@@ -1,8 +1,6 @@
 package com.umc.product.notice.application.service.command;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -53,7 +51,6 @@ public class NoticeService implements ManageNoticeUseCase {
     private final LoadChallengerPort loadChallengerPort;
 
     // 도메인 외부 UseCase
-    private final GetChallengerUseCase getChallengerUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final ManageFcmUseCase manageFcmUseCase;
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
@@ -147,13 +144,6 @@ public class NoticeService implements ManageNoticeUseCase {
     }
 
     // === PRIVATE METHODS ===
-
-    /**
-     * 회원ID와 기수ID로 챌린저 조회
-     */
-    private ChallengerInfo getChallengerByMemberAndGisu(Long memberId, Long gisuId) {
-        return getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId);
-    }
 
     /**
      * Notice ID로 Entity를 조회, 없으면 Exception 발생
