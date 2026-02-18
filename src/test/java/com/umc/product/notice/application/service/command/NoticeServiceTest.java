@@ -31,6 +31,9 @@ import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -65,6 +68,8 @@ class NoticeServiceTest {
     GetMemberUseCase getMemberUseCase;
     @Mock
     GetChapterUseCase getChapterUseCase;
+    @Mock
+    GetGisuUseCase getGisuUseCase;
     @Mock
     NoticeAuthorValidator noticeAuthorValidator;
 
@@ -105,6 +110,8 @@ class NoticeServiceTest {
             NoticeTargetInfo targetInfo = createTargetInfo();
             var command = new CreateNoticeCommand(MEMBER_ID, "공지 제목", "공지 내용", false, targetInfo);
 
+            given(getGisuUseCase.getActiveGisu())
+                .willReturn(new GisuInfo(GISU_ID, 9L, 9L, Instant.now(), Instant.now(), true));
             given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
                 .willReturn(createChallengerInfo());
             given(getChallengerRoleUseCase.isCentralCore(MEMBER_ID)).willReturn(true);
@@ -129,6 +136,8 @@ class NoticeServiceTest {
             NoticeTargetInfo targetInfo = createTargetInfo();
             var command = new CreateNoticeCommand(MEMBER_ID, "공지 제목", "공지 내용", false, targetInfo);
 
+            given(getGisuUseCase.getActiveGisu())
+                .willReturn(new GisuInfo(GISU_ID, 9L, 9L, Instant.now(), Instant.now(), true));
             given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
                 .willReturn(createChallengerInfo());
             given(getChallengerRoleUseCase.isCentralCore(MEMBER_ID)).willReturn(false);
@@ -145,6 +154,8 @@ class NoticeServiceTest {
             NoticeTargetInfo targetInfo = createTargetInfo();
             var command = new CreateNoticeCommand(MEMBER_ID, "공지 제목", "공지 내용", true, targetInfo);
 
+            given(getGisuUseCase.getActiveGisu())
+                .willReturn(new GisuInfo(GISU_ID, 9L, 9L, Instant.now(), Instant.now(), true));
             given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
                 .willReturn(createChallengerInfo());
             given(getChallengerRoleUseCase.isCentralCore(MEMBER_ID)).willReturn(true);

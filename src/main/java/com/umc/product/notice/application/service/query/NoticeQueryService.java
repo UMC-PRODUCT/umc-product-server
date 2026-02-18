@@ -30,10 +30,12 @@ import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -196,11 +198,17 @@ public class NoticeQueryService implements GetNoticeUseCase {
         if (targetInfo.targetGisuId() != null) {
             challengers = getChallengerUseCase.getByGisuId(targetInfo.targetGisuId());
         } else {
-            // 모든 기수 챌린저 가져오기
+            // 모든 기수 챌린저를 가져온 뒤, 멤버당 가장 최근 기수의 챌린저만 남김 (읽음 현황 조회시 혼선 방지)
             challengers = getGisuUseCase.getList().stream()
                 .map(GisuInfo::gisuId)
                 .flatMap(gisuId -> getChallengerUseCase.getByGisuId(gisuId).stream())
-                .toList();
+                // memberId를 key로 그룹핑, 여러 챌린저 갖는 경우 gisuId가 큰 챌린저 (최근 챌린저)로 남김
+                .collect(Collectors.toMap(
+                    ChallengerInfo::memberId,
+                    Function.identity(),
+                    BinaryOperator.maxBy(Comparator.comparing(ChallengerInfo::gisuId))
+                ))
+                .values().stream().toList();
         }
 
         if (challengers.isEmpty()) {
