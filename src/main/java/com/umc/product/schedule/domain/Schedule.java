@@ -1,11 +1,13 @@
 package com.umc.product.schedule.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.global.converter.KstLocalDateTimeConverter;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -57,9 +59,11 @@ public class Schedule extends BaseEntity {
     @Column(nullable = false)
     private Long authorChallengerId;
 
+    @Convert(converter = KstLocalDateTimeConverter.class)
     @Column(nullable = false)
     private LocalDateTime startsAt;
 
+    @Convert(converter = KstLocalDateTimeConverter.class)
     @Column(nullable = false)
     private LocalDateTime endsAt;
 

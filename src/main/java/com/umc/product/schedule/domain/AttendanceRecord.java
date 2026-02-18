@@ -1,8 +1,10 @@
 package com.umc.product.schedule.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.global.converter.KstLocalDateTimeConverter;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -44,6 +46,7 @@ public class AttendanceRecord extends BaseEntity {
     @Column(nullable = false)
     private AttendanceStatus status;
 
+    @Convert(converter = KstLocalDateTimeConverter.class)
     private LocalDateTime checkedAt;
 
     @Column(length = 500)
@@ -51,6 +54,7 @@ public class AttendanceRecord extends BaseEntity {
 
     private Long confirmedBy;
 
+    @Convert(converter = KstLocalDateTimeConverter.class)
     private LocalDateTime confirmedAt;
 
     private Double latitude;

@@ -1,7 +1,9 @@
 package com.umc.product.schedule.domain.vo;
 
+import com.umc.product.global.converter.KstLocalDateTimeConverter;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -22,9 +24,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AttendanceWindow {
 
+    @Convert(converter = KstLocalDateTimeConverter.class)
     @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime;
 
+    @Convert(converter = KstLocalDateTimeConverter.class)
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime;
 
