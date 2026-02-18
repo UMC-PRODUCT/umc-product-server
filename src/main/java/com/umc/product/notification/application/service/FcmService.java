@@ -41,17 +41,11 @@ public class FcmService implements ManageFcmUseCase {
         Member member = loadMemberPort.findById(userId)
                 .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
 
-        // 이미 등록된 FCMToken이 있는지 확인
-        FcmToken existingToken = loadFcmPort.findByMemberId(userId);
-
-        if (existingToken != null) {
-            // 이미 등록된 FCMToken이 있는 경우 값을 업데이트
-            existingToken.updateToken(request.fcmToken());
-        } else {
-            // 등록된 FCMToken이 없는 경우 새로 생성하여 저장
-            FcmToken newToken = FcmToken.createFCMToken(member, request.fcmToken());
-            saveFcmPort.save(newToken);
-        }
+        loadFcmPort.findOptionalByMemberId(userId)
+                .ifPresentOrElse(
+                        existingToken -> existingToken.updateToken(request.fcmToken()),
+                        () -> saveFcmPort.save(FcmToken.createFCMToken(member, request.fcmToken()))
+                );
     }
 
     @Override
