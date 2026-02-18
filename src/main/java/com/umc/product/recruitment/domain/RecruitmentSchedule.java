@@ -134,4 +134,46 @@ public class RecruitmentSchedule extends BaseEntity {
         return Objects.equals(this.startsAt, other.getStartsAt()) &&
             Objects.equals(this.endsAt, other.getEndsAt());
     }
+
+    /**
+     * 현재 시각 기준으로 해당 일정이 '활성화' 상태인지 확인합니다. - WINDOW: 시작 시각(포함)과 종료 시각(미포함) 사이일 때 - AT: 시작 시각(발표 시각 등)을 지났을 때 (정각 포함)
+     */
+    public boolean isActive(Instant now) {
+        if (now == null) {
+            return false;
+        }
+
+        if (type.isWindow()) {
+            // 시작과 종료가 모두 있어야 하며, 그 사이일 때 활성
+            if (startsAt == null || endsAt == null) {
+                return false;
+            }
+            return !now.isBefore(startsAt) && now.isBefore(endsAt);
+        }
+
+        // AT 타입: 시작 시각(기준점)만 있으면 되며, 그 시점을 지났을 때 활성
+        if (startsAt == null) {
+            return false;
+        }
+        return !now.isBefore(startsAt);
+    }
+
+    /**
+     * 현재 시각 기준으로 해당 단계가 완전히 '종료'되었는지 확인합니다. (대시보드 상태바 제어용) * - WINDOW: 종료 시각(endsAt)이 되는 그 찰나(정각)부터 '지나간 것'으로 간주합니다.
+     * (now >= endsAt) - AT: 시작 시각(발표 시각 등)이 되는 그 순간 '사건 발생 완료'로 간주합니다. (now >= startsAt)
+     */
+    public boolean isPassed(Instant now) {
+        if (now == null) {
+            return false;
+        }
+
+        if (type.isWindow()) {
+            // isActive는 종료 정각 미포함(< endsAt)
+            // isPassed는 정각 포함(>= endsAt) (상태의 공백이 없도록)
+            return endsAt != null && !now.isBefore(endsAt);
+        }
+
+        // AT 타입: 선언된 기준 시각이 되는 순간부터 해당 일정은 완료된 상태입니다.
+        return startsAt != null && !now.isBefore(startsAt);
+    }
 }
