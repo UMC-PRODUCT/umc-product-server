@@ -129,7 +129,7 @@ jwt:
 springdoc:
   swagger-ui:
     path: /docs # Swagger 경로
-    enabled: false # Swagger는 기본적으로 비활성화
+    enabled: ${SWAGGER_ENABLE:false} # Swagger는 기본적으로 비활성화
 
     # 정렬 옵션
     groups-order: DESC  # 그룹 정렬 (ASC/DESC)
@@ -152,9 +152,9 @@ springdoc:
 
   api-docs:
     path: /docs-json # API 문서 경로
-    enabled: false
+    enabled: ${SWAGGER_ENABLE:false}
 
-  show-actuator: false
+  show-actuator: ${SWAGGER_ENABLE_ACTUATOR:false}
 
 logging:
   level:
@@ -233,7 +233,7 @@ app:
     frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT_URL}
 
 storage:
-  provider: s3
+  provider: ${STORAGE_PROVIDER:s3}
 
   s3:
     bucket-name: ${S3_BUCKET_NAME}
@@ -241,8 +241,8 @@ storage:
     access-key-id: ${S3_ACCESS_KEY_ID}
     secret-access-key: ${S3_SECRET_ACCESS_KEY}
     cloudfront:
-      enabled: false
-      distribution-domain: cdn.umc.it.kr
+      enabled: ${AWS_CLOUDFRONT_ENABLED:false}
+      distribution-domain: ${AWS_CLOUDFRONT_DISTRIBUTION_DOMAIN:cdn.umc.it.kr}
       private-key: ${CDN_PRIVATE_KEY}
       key-pair-id: ${CDN_KEY_PAIR_ID}
 
@@ -262,4 +262,4 @@ sentry:
   exception-resolver-order: -2147483647
   max-request-body-size: none
   send-default-pii: false
-  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:1.0}
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.1}
