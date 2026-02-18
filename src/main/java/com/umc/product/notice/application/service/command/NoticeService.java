@@ -16,11 +16,11 @@ import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeComman
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
+import com.umc.product.notice.application.service.NoticeAuthorValidator;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import com.umc.product.notice.application.service.NoticeAuthorValidator;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.notice.dto.NoticeTargetPattern;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
@@ -194,7 +194,7 @@ public class NoticeService implements ManageNoticeUseCase {
         List<Long> targetIds = new ArrayList<>();
 
         for (Challenger challenger : challengers) {
-            MemberInfo memberInfo = getMemberUseCase.getById(challenger.getMemberId());
+            MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challenger.getMemberId());
             Long schoolId = memberInfo.schoolId();
             Long chapterId = getChapterUseCase.byGisuAndSchool(challenger.getGisuId(), schoolId).id();
 
