@@ -32,22 +32,22 @@ public class JwtTokenProvider {
     private final long verificationTokenValidityInMilliseconds;
 
     public JwtTokenProvider(
-            @Value("${jwt.access-token-secret}") String accessTokenSecret,
-            @Value("${jwt.refresh-token-secret}") String refreshTokenSecret,
-            @Value("${jwt.oauth-verification-token-secret}") String oAuthVerificationTokenSecret,
-            @Value("${jwt.email-verification-token-secret}") String emailVerificationTokenSecret,
-            @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityInSeconds,
-            @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValidityInSeconds,
-            @Value("${jwt.verification-token-validity-in-seconds}") long verificationTokenValidityInSeconds
+        @Value("${jwt.access-token-secret}") String accessTokenSecret,
+        @Value("${jwt.refresh-token-secret}") String refreshTokenSecret,
+        @Value("${jwt.oauth-verification-token-secret}") String oAuthVerificationTokenSecret,
+        @Value("${jwt.email-verification-token-secret}") String emailVerificationTokenSecret,
+        @Value("${jwt.access-token-validity-in-seconds}") long accessTokenValidityInSeconds,
+        @Value("${jwt.refresh-token-validity-in-seconds}") long refreshTokenValidityInSeconds,
+        @Value("${jwt.verification-token-validity-in-seconds}") long verificationTokenValidityInSeconds
     ) {
 
         // SecretKey 객체로 안전하게 변환
         this.accessTokenSecret = Keys.hmacShaKeyFor(accessTokenSecret.getBytes(StandardCharsets.UTF_8));
         this.refreshTokenSecret = Keys.hmacShaKeyFor(refreshTokenSecret.getBytes(StandardCharsets.UTF_8));
         this.oAuthVerificationTokenSecret = Keys.hmacShaKeyFor(oAuthVerificationTokenSecret
-                .getBytes(StandardCharsets.UTF_8));
+            .getBytes(StandardCharsets.UTF_8));
         this.emailVerificationTokenSecret = Keys.hmacShaKeyFor(emailVerificationTokenSecret
-                .getBytes(StandardCharsets.UTF_8));
+            .getBytes(StandardCharsets.UTF_8));
 
         this.accessTokenValidityInMilliseconds = accessTokenValidityInSeconds * 1000;
         this.refreshTokenValidityInMilliseconds = refreshTokenValidityInSeconds * 1000;
@@ -62,14 +62,14 @@ public class JwtTokenProvider {
         Date validityDate = new Date(now.getTime() + verificationTokenValidityInMilliseconds); // 10분 유효
 
         return Jwts.builder()
-                .subject("OAUTH_VERIFICATION")
-                .claim("email", email)
-                .claim("provider", provider)
-                .claim("providerId", providerId)
-                .issuedAt(now)
-                .expiration(validityDate)
-                .signWith(oAuthVerificationTokenSecret)
-                .compact();
+            .subject("OAUTH_VERIFICATION")
+            .claim("email", email)
+            .claim("provider", provider)
+            .claim("providerId", providerId)
+            .issuedAt(now)
+            .expiration(validityDate)
+            .signWith(oAuthVerificationTokenSecret)
+            .compact();
     }
 
     /**
@@ -80,12 +80,12 @@ public class JwtTokenProvider {
         Date validityDate = new Date(now.getTime() + verificationTokenValidityInMilliseconds); // 10분 유효
 
         return Jwts.builder()
-                .subject("EMAIL_VERIFICATION")
-                .claim("email", email)
-                .issuedAt(now)
-                .expiration(validityDate)
-                .signWith(emailVerificationTokenSecret)
-                .compact();
+            .subject("EMAIL_VERIFICATION")
+            .claim("email", email)
+            .issuedAt(now)
+            .expiration(validityDate)
+            .signWith(emailVerificationTokenSecret)
+            .compact();
     }
 
     /**
@@ -96,13 +96,27 @@ public class JwtTokenProvider {
         Date validityDate = new Date(now.getTime() + accessTokenValidityInMilliseconds);
 
         return Jwts.builder()
-                .subject(String.valueOf(memberId)) // 사용자 식별자 (ID)
-                .claim(AUTHORITIES_KEY, roles)     // 권한 정보 저장
-                .issuedAt(now)
-                .expiration(validityDate)
-                .signWith(accessTokenSecret)
-                .compact()
-                ;
+            .subject(String.valueOf(memberId)) // 사용자 식별자 (ID)
+            .claim(AUTHORITIES_KEY, roles)     // 권한 정보 저장
+            .issuedAt(now)
+            .expiration(validityDate)
+            .signWith(accessTokenSecret)
+            .compact()
+            ;
+    }
+
+    public String createAccessToken(Long memberId, List<String> roles, Long expiresInSeconds) {
+        Date now = new Date();
+        Date validityDate = new Date(now.getTime() + expiresInSeconds * 1000);
+
+        return Jwts.builder()
+            .subject(String.valueOf(memberId)) // 사용자 식별자 (ID)
+            .claim(AUTHORITIES_KEY, roles)     // 권한 정보 저장
+            .issuedAt(now)
+            .expiration(validityDate)
+            .signWith(accessTokenSecret)
+            .compact()
+            ;
     }
 
     // 2. Refresh Token 생성
@@ -113,12 +127,12 @@ public class JwtTokenProvider {
         Date validityDate = new Date(now.getTime() + refreshTokenValidityInMilliseconds);
 
         return Jwts.builder()
-                .subject(String.valueOf(memberId)) // 사용자 식별자 (ID)
-                .issuedAt(now)
-                .expiration(validityDate)
-                .signWith(refreshTokenSecret)
-                .compact()
-                ;
+            .subject(String.valueOf(memberId)) // 사용자 식별자 (ID)
+            .issuedAt(now)
+            .expiration(validityDate)
+            .signWith(refreshTokenSecret)
+            .compact()
+            ;
     }
 
     public List<String> getRolesFromAccessToken(String token) {
@@ -159,10 +173,10 @@ public class JwtTokenProvider {
     private Claims parseClaims(String token, SecretKey secretKey) {
 
         return Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+            .verifyWith(secretKey)
+            .build()
+            .parseSignedClaims(token)
+            .getPayload();
     }
 
     /**

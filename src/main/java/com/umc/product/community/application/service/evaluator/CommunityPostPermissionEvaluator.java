@@ -35,7 +35,8 @@ public class CommunityPostPermissionEvaluator implements ResourcePermissionEvalu
         Long postId = resourcePermission.getResourceIdAsLong();
 
         PostInfo postInfo = getPostDetailUseCase.getPostDetail(postId);
-        Long authorMemberId = postInfo.authorId();
+        Long authorChallengerId = postInfo.authorId();
+        Long authorMemberId = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId).memberId();
 
         switch (resourcePermission.permission()) {
             case READ -> {
