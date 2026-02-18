@@ -32,8 +32,8 @@ public enum FileCategory {
     /**
      * 공지사항 첨부파일
      */
-    NOTICE_ATTACHMENT("public/notice", 50 * 1024 * 1024,
-        new String[]{"pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "zip"}),
+    NOTICE_ATTACHMENT("public/notice", 10 * 1024 * 1024,
+        new String[]{"jpg", "jpeg", "png", "webp", "gif", "heic"}),
 
     /**
      * 워크북 제출 파일
