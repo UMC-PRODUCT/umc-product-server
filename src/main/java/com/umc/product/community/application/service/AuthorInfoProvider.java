@@ -8,8 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * 작성자 정보 조회를 담당하는 컴포넌트
- * 챌린저 ID로부터 작성자 이름을 조회하는 공통 로직을 제공합니다.
+ * 작성자 정보 조회를 담당하는 컴포넌트 챌린저 ID로부터 작성자 이름을 조회하는 공통 로직을 제공합니다.
  */
 @Component
 @RequiredArgsConstructor
@@ -26,7 +25,7 @@ public class AuthorInfoProvider {
      */
     public String getAuthorName(Long challengerId) {
         ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-        MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
+        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
         return memberInfo.name();
     }
 }

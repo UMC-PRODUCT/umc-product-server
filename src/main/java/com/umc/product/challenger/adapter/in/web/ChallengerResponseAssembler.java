@@ -27,7 +27,7 @@ public class ChallengerResponseAssembler {
 
     public ChallengerInfoResponse fromChallengerId(Long challengerId) {
         ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-        MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
+        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
         GisuInfo gisuInfo = getGisuUseCase.getById(challengerInfo.gisuId());
         ChapterInfo chapterInfo = getChapterUseCase.byGisuAndSchool(challengerInfo.gisuId(), memberInfo.schoolId());
 
@@ -36,7 +36,7 @@ public class ChallengerResponseAssembler {
 
     public List<ChallengerInfoResponse> fromMemberId(Long memberId) {
         List<ChallengerInfo> challengerInfos = getChallengerUseCase.getMemberChallengerList(memberId);
-        MemberInfo memberInfo = getMemberUseCase.getById(memberId);
+        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(memberId);
 
         return challengerInfos.stream()
             .map(challengerInfo -> {

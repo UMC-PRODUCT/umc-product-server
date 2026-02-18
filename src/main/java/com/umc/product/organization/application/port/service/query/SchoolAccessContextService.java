@@ -25,7 +25,7 @@ public class SchoolAccessContextService implements GetSchoolAccessContextUseCase
     @Override
     public SchoolAccessContext getContext(Long memberId) {
         // 1. 회원 정보 조회 (schoolId 획득)
-        MemberInfo memberInfo = getMemberUseCase.getById(memberId);
+        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(memberId);
         Long schoolId = memberInfo.schoolId();
 
         // 2. 현재 활성 기수 조회

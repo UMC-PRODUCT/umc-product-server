@@ -114,7 +114,7 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
         InterviewLiveQuestion saved = saveInterviewLiveQuestionPort.save(liveQuestion);
 
         // 5. 작성자 정보 조회
-        MemberInfo memberInfo = getMemberUseCase.getById(command.memberId());
+        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(command.memberId());
 
         return new CreateLiveQuestionResult(
             saved.getId(),

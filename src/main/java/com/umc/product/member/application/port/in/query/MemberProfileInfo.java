@@ -21,6 +21,11 @@ public record MemberProfileInfo(
 ) {
     // TODO: 도메인 로직으로 분리하는 것이 나은가? or Member를 제공받아서 getProfile() 등을 쓰는게 좋은가? 고민이 필요한 부분
     public static MemberProfileInfo from(MemberProfile memberProfile) {
+        if (memberProfile == null) {
+            log.warn("MemberProfile이 null인 사용자를 호출하였습니다.");
+            return MemberProfileInfo.builder().build();
+        }
+
         return MemberProfileInfo.builder()
             .id(memberProfile.getId())
             .linkedIn(memberProfile.getLinkedIn())
