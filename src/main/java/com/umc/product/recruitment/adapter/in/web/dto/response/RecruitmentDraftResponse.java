@@ -13,7 +13,7 @@ public record RecruitmentDraftResponse(
     Long recruitmentId,
     String status,
     Long formId,
-
+    Boolean isRoot,
     String title,
     List<ChallengerPart> recruitmentParts,
     Integer maxPreferredPartCount,
@@ -62,6 +62,7 @@ public record RecruitmentDraftResponse(
             info.recruitmentId(),
             info.status(),
             info.formId(),
+            info.isRoot(),
             info.title(),
             info.recruitmentParts(),
             info.maxPreferredPartCount(),
