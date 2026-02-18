@@ -74,7 +74,7 @@ class FcmServiceTest {
             // given
             Member member = createMember(1L);
             given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
-            given(loadFcmPort.findByMemberId(1L)).willReturn(null);
+            given(loadFcmPort.findOptionalByMemberId(1L)).willReturn(Optional.empty());
 
             // when
             sut.registerFcmToken(1L, new FcmRegistrationRequest("new-token"));
@@ -90,7 +90,7 @@ class FcmServiceTest {
             given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
 
             FcmToken existingToken = createFcmToken("old-token");
-            given(loadFcmPort.findByMemberId(1L)).willReturn(existingToken);
+            given(loadFcmPort.findOptionalByMemberId(1L)).willReturn(Optional.of(existingToken));
 
             // when
             sut.registerFcmToken(1L, new FcmRegistrationRequest("new-token"));
