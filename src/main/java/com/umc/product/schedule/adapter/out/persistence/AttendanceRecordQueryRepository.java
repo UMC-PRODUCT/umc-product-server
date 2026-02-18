@@ -7,6 +7,7 @@ import static com.umc.product.schedule.domain.QAttendanceSheet.attendanceSheet;
 import static com.umc.product.schedule.domain.QSchedule.schedule;
 
 import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.schedule.application.port.in.query.dto.PendingAttendanceInfo;
 import com.umc.product.schedule.application.port.out.dto.AttendanceRecordPermissionContext;
@@ -30,28 +31,12 @@ public class AttendanceRecordQueryRepository {
     );
 
     public List<PendingAttendanceInfo> findPendingWithMemberInfo(Long sheetId) {
-        return queryFactory
-            .select(Projections.constructor(PendingAttendanceInfo.class,
-                attendanceRecord.id,
-                schedule.id,
-                member.id,
-                member.name,
-                member.nickname,
-                member.profileImageId,
-                school.name,
-                attendanceRecord.status,
-                attendanceRecord.memo,
-                attendanceRecord.checkedAt
-            ))
-            .from(attendanceRecord)
-            .join(attendanceSheet).on(attendanceSheet.id.eq(attendanceRecord.attendanceSheetId))
-            .join(schedule).on(schedule.id.eq(attendanceSheet.scheduleId))
-            .join(member).on(member.id.eq(attendanceRecord.memberId))
-            .leftJoin(school).on(school.id.eq(member.schoolId))
+        return buildPendingBaseQuery()
             .where(
                 attendanceRecord.attendanceSheetId.eq(sheetId),
                 attendanceRecord.status.in(APPROVAL_PENDING_STATUSES)
             )
+            .orderBy(attendanceRecord.checkedAt.desc())
             .fetch();
     }
 
@@ -65,6 +50,16 @@ public class AttendanceRecordQueryRepository {
             return List.of();
         }
 
+        return buildPendingBaseQuery()
+            .where(
+                attendanceRecord.attendanceSheetId.in(sheetIds),
+                attendanceRecord.status.in(APPROVAL_PENDING_STATUSES)
+            )
+            .orderBy(attendanceRecord.checkedAt.desc())
+            .fetch();
+    }
+
+    private JPAQuery<PendingAttendanceInfo> buildPendingBaseQuery() {
         return queryFactory
             .select(Projections.constructor(PendingAttendanceInfo.class,
                 attendanceRecord.id,
@@ -82,13 +77,7 @@ public class AttendanceRecordQueryRepository {
             .join(attendanceSheet).on(attendanceSheet.id.eq(attendanceRecord.attendanceSheetId))
             .join(schedule).on(schedule.id.eq(attendanceSheet.scheduleId))
             .join(member).on(member.id.eq(attendanceRecord.memberId))
-            .leftJoin(school).on(school.id.eq(member.schoolId))
-            .where(
-                attendanceRecord.attendanceSheetId.in(sheetIds),
-                attendanceRecord.status.in(APPROVAL_PENDING_STATUSES)
-            )
-            .orderBy(attendanceRecord.checkedAt.desc())
-            .fetch();
+            .leftJoin(school).on(school.id.eq(member.schoolId));
     }
 
     /**

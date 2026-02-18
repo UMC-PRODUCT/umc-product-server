@@ -81,37 +81,9 @@ public class AttendanceWebMapper {
 
     // 관리자용 승인 대기 목록
     public List<PendingAttendanceResponse> toPendingAttendanceResponses(List<PendingAttendanceInfo> infos) {
-        // N+1 문제 방지: 모든 profileImageId를 수집하여 한 번에 조회
-        List<String> profileImageIds = infos.stream()
-            .map(PendingAttendanceInfo::profileImageId)
-            .filter(id -> id != null)
-            .distinct()
-            .toList();
-
-        // 파일 ID -> 파일 링크 매핑을 한 번에 조회
-        Map<String, String> profileImageLinks = profileImageIds.isEmpty()
-            ? Map.of()
-            : getFileUseCase.getFileLinks(profileImageIds);
-
-        // 각 항목을 변환하면서 Map에서 파일 링크 조회
+        Map<String, String> profileImageLinks = buildProfileImageLinks(infos);
         return infos.stream()
-            .map(info -> {
-                String profileImageLink = info.profileImageId() != null
-                    ? profileImageLinks.get(info.profileImageId())
-                    : null;
-
-                return new PendingAttendanceResponse(
-                    info.attendanceId(),
-                    info.memberId(),
-                    info.memberName(),
-                    info.nickname(),
-                    profileImageLink,
-                    info.schoolName(),
-                    info.status().name(),
-                    info.reason(),
-                    info.requestedAt()
-                );
-            })
+            .map(info -> toPendingAttendanceResponse(info, profileImageLinks))
             .toList();
     }
 
@@ -119,49 +91,51 @@ public class AttendanceWebMapper {
     public List<PendingAttendancesByScheduleResponse> toPendingAttendancesByScheduleResponses(
         List<PendingAttendancesByScheduleInfo> infos
     ) {
-        // N+1 방지: 모든 승인 대기 정보에서 profileImageId 수집
-        List<String> allProfileImageIds = infos.stream()
+        List<PendingAttendanceInfo> allPendingInfos = infos.stream()
             .flatMap(scheduleInfo -> scheduleInfo.pendingAttendances().stream())
+            .toList();
+        Map<String, String> profileImageLinks = buildProfileImageLinks(allPendingInfos);
+
+        return infos.stream()
+            .map(scheduleInfo -> new PendingAttendancesByScheduleResponse(
+                scheduleInfo.scheduleId(),
+                scheduleInfo.scheduleName(),
+                scheduleInfo.pendingAttendances().stream()
+                    .map(info -> toPendingAttendanceResponse(info, profileImageLinks))
+                    .toList()
+            ))
+            .toList();
+    }
+
+    private Map<String, String> buildProfileImageLinks(List<PendingAttendanceInfo> infos) {
+        List<String> profileImageIds = infos.stream()
             .map(PendingAttendanceInfo::profileImageId)
             .filter(id -> id != null)
             .distinct()
             .toList();
 
-        // 파일 ID -> 파일 링크 매핑을 한 번에 조회
-        Map<String, String> profileImageLinks = allProfileImageIds.isEmpty()
+        return profileImageIds.isEmpty()
             ? Map.of()
-            : getFileUseCase.getFileLinks(allProfileImageIds);
+            : getFileUseCase.getFileLinks(profileImageIds);
+    }
 
-        // 각 일정별 그룹을 변환
-        return infos.stream()
-            .map(scheduleInfo -> {
-                // 각 일정의 승인 대기 목록 변환
-                List<PendingAttendanceResponse> pendingResponses = scheduleInfo.pendingAttendances().stream()
-                    .map(info -> {
-                        String profileImageLink = info.profileImageId() != null
-                            ? profileImageLinks.get(info.profileImageId())
-                            : null;
+    private PendingAttendanceResponse toPendingAttendanceResponse(
+        PendingAttendanceInfo info, Map<String, String> profileImageLinks
+    ) {
+        String profileImageLink = info.profileImageId() != null
+            ? profileImageLinks.get(info.profileImageId())
+            : null;
 
-                        return new PendingAttendanceResponse(
-                            info.attendanceId(),
-                            info.memberId(),
-                            info.memberName(),
-                            info.nickname(),
-                            profileImageLink,
-                            info.schoolName(),
-                            info.status().name(),
-                            info.reason(),
-                            info.requestedAt()
-                        );
-                    })
-                    .toList();
-
-                return new PendingAttendancesByScheduleResponse(
-                    scheduleInfo.scheduleId(),
-                    scheduleInfo.scheduleName(),
-                    pendingResponses
-                );
-            })
-            .toList();
+        return new PendingAttendanceResponse(
+            info.attendanceId(),
+            info.memberId(),
+            info.memberName(),
+            info.nickname(),
+            profileImageLink,
+            info.schoolName(),
+            info.status().name(),
+            info.reason(),
+            info.requestedAt()
+        );
     }
 }
