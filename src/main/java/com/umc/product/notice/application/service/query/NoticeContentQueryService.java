@@ -9,7 +9,6 @@ import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
 import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
-import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.survey.application.port.in.query.GetVoteDetailUseCase;
 import com.umc.product.survey.application.port.in.query.dto.GetVoteDetailsQuery;
@@ -62,6 +61,7 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
         List<String> imageIds = images.stream()
             .map(NoticeImage::getImageId)
             .toList();
+
         Map<String, String> fileLinks = getFileUseCase.getFileLinks(imageIds);
 
         return images.stream()
