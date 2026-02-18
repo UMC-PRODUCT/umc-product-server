@@ -199,9 +199,10 @@ public class NoticeQueryService implements GetNoticeUseCase {
             challengers = getChallengerUseCase.getByGisuId(targetInfo.targetGisuId());
         } else {
             // 모든 기수 챌린저를 가져온 뒤, 멤버당 가장 최근 기수의 챌린저만 남김 (읽음 현황 조회시 혼선 방지)
-            challengers = getGisuUseCase.getList().stream()
+            List<Long> gisuIds = getGisuUseCase.getList().stream()
                 .map(GisuInfo::gisuId)
-                .flatMap(gisuId -> getChallengerUseCase.getByGisuId(gisuId).stream())
+                .toList();
+            challengers = getChallengerUseCase.getByGisuIds(gisuIds).stream()
                 // memberId를 key로 그룹핑, 여러 챌린저 갖는 경우 gisuId가 큰 챌린저 (최근 챌린저)로 남김
                 .collect(Collectors.toMap(
                     ChallengerInfo::memberId,

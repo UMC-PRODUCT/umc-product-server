@@ -88,6 +88,13 @@ public class ChallengerQueryService implements GetChallengerUseCase {
             .toList();
     }
 
+    @Override
+    public List<ChallengerInfo> getByGisuIds(List<Long> gisuIds) {
+        return loadChallengerPort.findByGisuIdIn(gisuIds).stream()
+            .map(this::getChallengerInfoFromChallenger)
+            .toList();
+    }
+
     private ChallengerInfo getChallengerInfoFromChallenger(Challenger challenger) {
         List<ChallengerPointInfo> challengerPointInfos =
             getChallengerPointUseCase.getListByChallengerId(challenger.getId());
