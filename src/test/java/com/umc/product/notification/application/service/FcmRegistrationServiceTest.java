@@ -16,6 +16,7 @@ import com.umc.product.notification.domain.FcmToken;
 import com.umc.product.notification.domain.exception.FcmDomainException;
 import com.umc.product.notification.domain.exception.FcmErrorCode;
 import java.lang.reflect.Constructor;
+import java.util.Optional;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +54,7 @@ class FcmRegistrationServiceTest {
         void 구독해제_토큰갱신_재구독_순서로_정상_수행된다() {
             // given
             FcmToken existingToken = createFcmToken("old-token");
-            given(loadFcmPort.findByMemberId(1L)).willReturn(existingToken);
+            given(loadFcmPort.findOptionalByMemberId(1L)).willReturn(Optional.of(existingToken));
             willDoNothing().given(manageFcmTopicUseCase).unsubscribeAllTopicsByMemberId(1L);
             willDoNothing().given(manageFcmTopicUseCase).subscribeAllTopicsByMemberId(1L);
 
@@ -71,7 +72,7 @@ class FcmRegistrationServiceTest {
         void 구독해제_실패해도_토큰갱신과_재구독이_진행된다() {
             // given
             FcmToken existingToken = createFcmToken("old-token");
-            given(loadFcmPort.findByMemberId(1L)).willReturn(existingToken);
+            given(loadFcmPort.findOptionalByMemberId(1L)).willReturn(Optional.of(existingToken));
             willThrow(new FcmDomainException(FcmErrorCode.TOPIC_UNSUBSCRIBE_FAILED))
                     .given(manageFcmTopicUseCase).unsubscribeAllTopicsByMemberId(1L);
             willDoNothing().given(manageFcmTopicUseCase).subscribeAllTopicsByMemberId(1L);
@@ -90,6 +91,7 @@ class FcmRegistrationServiceTest {
             FcmToken existingToken = createFcmToken("old-token");
             // 첫 번째 호출: refreshTokenAndSubscriptions 시작 시 기존 토큰 조회
             // 두 번째 호출: 보상 로직에서 토큰 복구를 위한 조회
+            given(loadFcmPort.findOptionalByMemberId(1L)).willReturn(Optional.of(existingToken));
             given(loadFcmPort.findByMemberId(1L)).willReturn(existingToken);
             willDoNothing().given(manageFcmTopicUseCase).unsubscribeAllTopicsByMemberId(1L);
             willThrow(new FcmDomainException(FcmErrorCode.TOPIC_SUBSCRIBE_FAILED))
@@ -101,8 +103,8 @@ class FcmRegistrationServiceTest {
                     sut.refreshTokenAndSubscriptions(1L, new FcmRegistrationRequest("new-token")))
                     .isInstanceOf(FcmDomainException.class);
 
-            // 보상 로직: 토큰 복구를 위해 loadFcmPort.findByMemberId가 추가 호출됨
-            then(loadFcmPort).should(times(2)).findByMemberId(1L);
+            // 보상 로직: 토큰 복구를 위해 loadFcmPort.findByMemberId가 호출됨
+            then(loadFcmPort).should().findByMemberId(1L);
             // 보상 로직: 재구독 재시도
             then(manageFcmTopicUseCase).should(times(2)).subscribeAllTopicsByMemberId(1L);
         }
