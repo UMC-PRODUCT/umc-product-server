@@ -176,4 +176,15 @@ public class RecruitmentSchedule extends BaseEntity {
         // AT 타입: 선언된 기준 시각이 되는 순간부터 해당 일정은 완료된 상태입니다.
         return startsAt != null && !now.isBefore(startsAt);
     }
+
+    /**
+     * 현재 시각 기준으로 해당 일정이 이미 시작되었는지 확인합니다. - WINDOW/AT 공통: 시작 시각(startsAt)이 되는 그 찰나(정각)부터 '시작된 것'으로 간주합니다. (now >=
+     * startsAt) - 발행된 모집의 시작일 수정 제한(Frozen)이나, 특정 단계의 진행 여부를 판단할 때 사용합니다.
+     */
+    public boolean isStarted(Instant now) {
+        if (now == null || startsAt == null) {
+            return false;
+        }
+        return !now.isBefore(startsAt); // 정각 포함 시작 여부
+    }
 }

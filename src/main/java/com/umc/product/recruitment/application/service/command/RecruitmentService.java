@@ -624,9 +624,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             .orElseThrow(
                 () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
-        if (recruitment.getStatus() != RecruitmentStatus.DRAFT) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_PUBLISHED);
-        }
+        recruitment.requireDraftEditable();
 
         boolean isExtension = recruitment.getParentRecruitmentId() != null;
 
@@ -799,10 +797,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     public RecruitmentApplicationFormInfo upsert(UpsertRecruitmentFormQuestionsCommand command) {
         validateOtherOption(command);
 
-        Long formId = loadRecruitmentPort.findById(command.recruitmentId())
-            .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND))
-            .getFormId();
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        recruitment.requireDraftEditable();
+
+        Long formId = recruitment.getFormId();
 
         List<UpsertRecruitmentFormQuestionsCommand.Item> items =
             command.items() == null ? List.of() : command.items();
@@ -1115,6 +1115,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         Instant now = Instant.now();
         Long recruitmentId = command.recruitmentId();
 
+        // 도메인 메서드 기반으로 리팩토링
         // 수정 가능 여부 검증
         validateNoPastChange(now, existing, command.schedule());
         validateApplyStartFrozenAfterStarted(now, existing, command.schedule());
