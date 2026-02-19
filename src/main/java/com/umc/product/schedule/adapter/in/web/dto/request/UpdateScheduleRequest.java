@@ -2,6 +2,7 @@ package com.umc.product.schedule.adapter.in.web.dto.request;
 
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCommand;
+import com.umc.product.schedule.domain.ScheduleConstants;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
@@ -17,10 +18,10 @@ public record UpdateScheduleRequest(
     @Schema(description = "일정 제목", example = "9기 OT")
     String name,
 
-    @Schema(description = "시작 일시", example = "2026-03-16T10:00:00")
+    @Schema(description = "시작 일시 (KST 기준 LocalDateTime, 타임존 없이 전송. 예: 2026-03-16T10:00:00)", example = "2026-03-16T10:00:00")
     LocalDateTime startsAt,
 
-    @Schema(description = "종료 일시", example = "2026-03-16T12:00:00")
+    @Schema(description = "종료 일시 (KST 기준 LocalDateTime, 타임존 없이 전송. 예: 2026-03-16T12:00:00)", example = "2026-03-16T12:00:00")
     LocalDateTime endsAt,
 
     @Schema(description = "종일 여부", example = "false")
@@ -53,8 +54,8 @@ public record UpdateScheduleRequest(
         return UpdateScheduleCommand.of(
             scheduleId,
             name,
-            startsAt,
-            endsAt,
+            startsAt != null ? startsAt.atZone(ScheduleConstants.KST).toInstant() : null,
+            endsAt != null ? endsAt.atZone(ScheduleConstants.KST).toInstant() : null,
             isAllDay,
             locationName,
             GeometryUtils.createPoint(latitude, longitude),

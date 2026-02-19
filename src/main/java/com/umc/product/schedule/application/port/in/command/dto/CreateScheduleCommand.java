@@ -1,9 +1,10 @@
 package com.umc.product.schedule.application.port.in.command.dto;
 
 import com.umc.product.schedule.domain.Schedule;
+import com.umc.product.schedule.domain.ScheduleConstants;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Objects;
@@ -15,8 +16,8 @@ import org.locationtech.jts.geom.Point;
  */
 public record CreateScheduleCommand(
     String name,
-    LocalDateTime startsAt,
-    LocalDateTime endsAt,
+    Instant startsAt,
+    Instant endsAt,
     boolean isAllDay,
     String locationName,
     Point location,
@@ -31,8 +32,8 @@ public record CreateScheduleCommand(
 
     public static CreateScheduleCommand of(
         String name,
-        LocalDateTime startsAt,
-        LocalDateTime endsAt,
+        Instant startsAt,
+        Instant endsAt,
         boolean isAllDay,
         String locationName,
         Point location,
@@ -41,14 +42,14 @@ public record CreateScheduleCommand(
         Set<ScheduleTag> tags,
         Long authorMemberId
     ) {
-        LocalDateTime adjustedStartsAt = startsAt;
-        LocalDateTime adjustedEndsAt = endsAt;
+        Instant adjustedStartsAt = startsAt;
+        Instant adjustedEndsAt = endsAt;
 
-        if (isAllDay) { // 하루종일 이면 시간을 23:59 로 지정
-            LocalDate startDate = startsAt.toLocalDate();
-            LocalDate endDate = endsAt.toLocalDate();
-            adjustedStartsAt = startDate.atStartOfDay();
-            adjustedEndsAt = endDate.atTime(LocalTime.of(23, 59, 59));
+        if (isAllDay) { // 하루종일 이면 KST 기준으로 시작/종료 시간 조정
+            LocalDate startDate = startsAt.atZone(ScheduleConstants.KST).toLocalDate();
+            LocalDate endDate = endsAt.atZone(ScheduleConstants.KST).toLocalDate();
+            adjustedStartsAt = startDate.atStartOfDay(ScheduleConstants.KST).toInstant();
+            adjustedEndsAt = endDate.atTime(LocalTime.of(23, 59, 59)).atZone(ScheduleConstants.KST).toInstant();
         }
 
         return new CreateScheduleCommand(

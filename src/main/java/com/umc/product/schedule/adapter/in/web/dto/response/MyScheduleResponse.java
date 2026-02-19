@@ -2,6 +2,7 @@ package com.umc.product.schedule.adapter.in.web.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.umc.product.schedule.application.port.in.query.dto.MyScheduleInfo;
+import com.umc.product.schedule.domain.ScheduleConstants;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 
@@ -32,8 +33,8 @@ public record MyScheduleResponse(
         return new MyScheduleResponse(
             info.scheduleId(),
             info.name(),
-            info.startsAt(),
-            info.endsAt(),
+            info.startsAt().atZone(ScheduleConstants.KST).toLocalDateTime(),
+            info.endsAt().atZone(ScheduleConstants.KST).toLocalDateTime(),
             info.status(),
             info.dDay()
         );

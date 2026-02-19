@@ -1,7 +1,7 @@
 package com.umc.product.schedule.application.port.out;
 
 import com.umc.product.schedule.domain.Schedule;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,7 +11,7 @@ public interface LoadSchedulePort {
 
     boolean existsById(Long id);
 
-    List<Schedule> findMySchedulesByMonth(Long memberId, LocalDateTime monthStart, LocalDateTime nextMonthStart);
+    List<Schedule> findMySchedulesByMonth(Long memberId, Instant monthStart, Instant nextMonthStart);
 
     /**
      * ID 목록으로 일정 일괄 조회

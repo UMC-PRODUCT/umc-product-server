@@ -3,6 +3,7 @@ package com.umc.product.schedule.adapter.in.web.dto.response;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
+import com.umc.product.schedule.domain.ScheduleConstants;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -63,8 +64,8 @@ public record ScheduleDetailResponse(
             info.name(),
             info.description(),
             tagNames,
-            info.startsAt(),
-            info.endsAt(),
+            info.startsAt().atZone(ScheduleConstants.KST).toLocalDateTime(),
+            info.endsAt().atZone(ScheduleConstants.KST).toLocalDateTime(),
             info.isAllDay(),
             info.locationName(),
             info.latitude(),

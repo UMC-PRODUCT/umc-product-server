@@ -7,7 +7,7 @@ import static com.umc.product.schedule.domain.QSchedule.schedule;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.schedule.domain.Schedule;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +19,8 @@ public class ScheduleQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public List<Schedule> findMySchedulesByMonth(Long memberId, LocalDateTime monthStart,
-                                                 LocalDateTime nextMonthStart) {
+    public List<Schedule> findMySchedulesByMonth(Long memberId, Instant monthStart,
+                                                 Instant nextMonthStart) {
         return queryFactory
             .selectDistinct(schedule)
             .from(attendanceRecord)

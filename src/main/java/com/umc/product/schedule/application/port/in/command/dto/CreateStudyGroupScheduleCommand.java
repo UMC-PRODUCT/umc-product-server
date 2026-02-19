@@ -1,7 +1,7 @@
 package com.umc.product.schedule.application.port.in.command.dto;
 
 import com.umc.product.schedule.domain.enums.ScheduleTag;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -14,8 +14,8 @@ import org.locationtech.jts.geom.Point;
  */
 public record CreateStudyGroupScheduleCommand(
     String name,
-    LocalDateTime startsAt,
-    LocalDateTime endsAt,
+    Instant startsAt,
+    Instant endsAt,
     boolean isAllDay,
     String locationName,
     Point location,

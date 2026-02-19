@@ -1,13 +1,11 @@
 package com.umc.product.schedule.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.global.converter.KstLocalDateTimeConverter;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -18,9 +16,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AccessLevel;
@@ -59,13 +58,11 @@ public class Schedule extends BaseEntity {
     @Column(nullable = false)
     private Long authorChallengerId;
 
-    @Convert(converter = KstLocalDateTimeConverter.class)
     @Column(nullable = false)
-    private LocalDateTime startsAt;
+    private Instant startsAt;
 
-    @Convert(converter = KstLocalDateTimeConverter.class)
     @Column(nullable = false)
-    private LocalDateTime endsAt;
+    private Instant endsAt;
 
     @Column(nullable = false)
     private boolean isAllDay;
@@ -79,7 +76,7 @@ public class Schedule extends BaseEntity {
 
     @Builder
     private Schedule(String name, String description, Set<ScheduleTag> tags,
-                     Long authorChallengerId, LocalDateTime startsAt, LocalDateTime endsAt,
+                     Long authorChallengerId, Instant startsAt, Instant endsAt,
                      boolean isAllDay, String locationName, Point location, Long studyGroupId) {
         this.name = name;
         this.description = description;
@@ -103,11 +100,11 @@ public class Schedule extends BaseEntity {
         this.studyGroupId = studyGroupId;
     }
 
-    public boolean isInProgress(LocalDateTime referenceTime) {
+    public boolean isInProgress(Instant referenceTime) {
         return referenceTime.isAfter(startsAt) && referenceTime.isBefore(endsAt);
     }
 
-    public String resolveStatus(LocalDateTime now) {
+    public String resolveStatus(Instant now) {
         if (this.isEnded(now)) {
             return "종료됨";
         }
@@ -117,7 +114,7 @@ public class Schedule extends BaseEntity {
         return "예정";
     }
 
-    public boolean isEnded(LocalDateTime referenceTime) {
+    public boolean isEnded(Instant referenceTime) {
         return referenceTime.isAfter(endsAt);
     }
 
@@ -125,8 +122,8 @@ public class Schedule extends BaseEntity {
         String name,
         String description,
         Set<ScheduleTag> tags,
-        LocalDateTime startsAt,
-        LocalDateTime endsAt,
+        Instant startsAt,
+        Instant endsAt,
         Boolean isAllDay,
         String locationName,
         Point location
@@ -166,18 +163,19 @@ public class Schedule extends BaseEntity {
         }
     }
 
-    private void updateTime(LocalDateTime newStartsAt, LocalDateTime newEndsAt, Boolean newIsAllDay) {
+    private void updateTime(Instant newStartsAt, Instant newEndsAt, Boolean newIsAllDay) {
         // 변경할 값이 없으면 기존 값 유지
         boolean effectiveIsAllDay = (newIsAllDay != null) ? newIsAllDay : this.isAllDay;
-        LocalDateTime effectiveStartsAt = (newStartsAt != null) ? newStartsAt : this.startsAt;
-        LocalDateTime effectiveEndsAt = (newEndsAt != null) ? newEndsAt : this.endsAt;
+        Instant effectiveStartsAt = (newStartsAt != null) ? newStartsAt : this.startsAt;
+        Instant effectiveEndsAt = (newEndsAt != null) ? newEndsAt : this.endsAt;
 
-        // 종일 일정일 경우 시간 강제 조정 (00:00 ~ 23:59)
+        // 종일 일정일 경우 시간 강제 조정 (KST 기준 00:00 ~ 23:59)
         if (effectiveIsAllDay) {
-            LocalDate startDate = effectiveStartsAt.toLocalDate();
-            LocalDate endDate = effectiveEndsAt.toLocalDate();
-            effectiveStartsAt = startDate.atStartOfDay();
-            effectiveEndsAt = endDate.atTime(LocalTime.of(23, 59, 59));
+            ZoneId kst = ZoneId.of("Asia/Seoul");
+            LocalDate startDate = effectiveStartsAt.atZone(kst).toLocalDate();
+            LocalDate endDate = effectiveEndsAt.atZone(kst).toLocalDate();
+            effectiveStartsAt = startDate.atStartOfDay(kst).toInstant();
+            effectiveEndsAt = endDate.atTime(LocalTime.of(23, 59, 59)).atZone(kst).toInstant();
         }
 
         if (effectiveStartsAt.isAfter(effectiveEndsAt)) {
