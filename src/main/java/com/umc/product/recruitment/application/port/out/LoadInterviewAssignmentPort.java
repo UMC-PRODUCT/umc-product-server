@@ -45,4 +45,6 @@ public interface LoadInterviewAssignmentPort {
     boolean existsByRootIdAndApplicationId(Long rootId, Long applicationId);
 
     List<InterviewAssignment> findByRootIdWithSlotAndApplication(Long rootId);
+
+    Optional<InterviewAssignment> findByApplicationId(Long applicationId);
 }

@@ -67,7 +67,6 @@ import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
-import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
@@ -177,6 +176,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
         }
 
+        validateApplyWindow(recruitment);
+
         Long formId = recruitment.getFormId();
         if (formId == null) {
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
@@ -221,6 +222,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
         }
 
+        validateApplyWindow(recruitment);
+
         Long formId = recruitment.getFormId();
         if (formId == null) {
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
@@ -256,6 +259,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         if (!recruitment.isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
         }
+
+        validateApplyWindow(recruitment);
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
@@ -624,9 +629,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             .orElseThrow(
                 () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
-        if (recruitment.getStatus() != RecruitmentStatus.DRAFT) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_PUBLISHED);
-        }
+        recruitment.requireDraftEditable();
 
         boolean isExtension = recruitment.getParentRecruitmentId() != null;
 
@@ -799,10 +802,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     public RecruitmentApplicationFormInfo upsert(UpsertRecruitmentFormQuestionsCommand command) {
         validateOtherOption(command);
 
-        Long formId = loadRecruitmentPort.findById(command.recruitmentId())
-            .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND))
-            .getFormId();
+        Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        recruitment.requireDraftEditable();
+
+        Long formId = recruitment.getFormId();
 
         List<UpsertRecruitmentFormQuestionsCommand.Item> items =
             command.items() == null ? List.of() : command.items();
@@ -999,8 +1004,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     public RecruitmentApplicationFormInfo delete(DeleteRecruitmentFormQuestionCommand command) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-            .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+
+        // 발행된 모집의 문항은 삭제 불가
+        recruitment.requireDraftEditable();
 
         // TODO: 권한 검증
 
@@ -1061,6 +1068,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
         }
 
+        validateApplyWindow(recruitment);
+
         Long formId = recruitment.getFormId();
         if (formId == null) {
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
@@ -1101,7 +1110,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             .orElseThrow(
                 () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
-        if (recruitment.getStatus() != RecruitmentStatus.PUBLISHED) {
+        if (!recruitment.isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
         }
 
@@ -1110,11 +1119,13 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         Map<RecruitmentScheduleType, RecruitmentSchedule> existing =
             loadRecruitmentPort.findScheduleMapByRecruitmentId(command.recruitmentId());
 
+        ZoneId seoulZone = ZoneId.of("Asia/Seoul");
         Instant now = Instant.now();
+        Instant todayStart = LocalDate.now(seoulZone).atStartOfDay(seoulZone).toInstant();
         Long recruitmentId = command.recruitmentId();
 
         // 수정 가능 여부 검증
-        validateNoPastChange(now, existing, command.schedule());
+        validateNoPastChange(todayStart, existing, command.schedule());
         validateApplyStartFrozenAfterStarted(now, existing, command.schedule());
         validateApplyEndNoShortenDuringOpen(now, existing, command.schedule());
         validateInterviewNoShorten(existing, command.schedule());
@@ -1187,9 +1198,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             .orElseThrow(() -> new BusinessException(
                 Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
-        if (recruitment.getStatus() != RecruitmentStatus.DRAFT) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_PUBLISHED);
-        }
+        // 발행된 모집의 옵션은 삭제 불가
+        recruitment.requireDraftEditable();
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
@@ -1215,29 +1225,19 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         RecruitmentSchedule applyWindow = loadRecruitmentSchedulePort
             .findByRecruitmentIdAndType(recruitment.getId(), RecruitmentScheduleType.APPLY_WINDOW);
 
-        if (applyWindow == null) {
+        if (applyWindow == null || applyWindow.getStartsAt() == null || applyWindow.getEndsAt() == null) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_WINDOW_NOT_SET);
-        }
-
-        Instant start = applyWindow.getStartsAt();
-        Instant end = applyWindow.getEndsAt();
-
-        if (start == null || end == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_WINDOW_NOT_SET);
-        }
-
-        // start < end 기본 검증
-        if (!start.isBefore(end)) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_WINDOW_INVALID);
         }
 
         Instant now = Instant.now();
 
-        if (now.isBefore(start)) {
+        // 2. 시작 전 체크
+        if (!applyWindow.isStarted(now)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_NOT_STARTED);
         }
 
-        if (!now.isBefore(end)) {
+        // 3. 마감 후 체크
+        if (applyWindow.isPassed(now)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_CLOSED);
         }
     }
@@ -2098,25 +2098,25 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     // published 모집 수정 가능 검증
 
-    private void validateNoPastChange(Instant now,
+    private void validateNoPastChange(Instant todayStart,
                                       Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
                                       UpdatePublishedRecruitmentScheduleCommand.SchedulePatch patch) {
-        if (patch.applyStartAt() != null && patch.applyStartAt().isBefore(now)) {
+        if (patch.applyStartAt() != null && patch.applyStartAt().isBefore(todayStart)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
-        if (patch.applyEndAt() != null && patch.applyEndAt().isBefore(now)) {
+        if (patch.applyEndAt() != null && patch.applyEndAt().isBefore(todayStart)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
-        if (patch.docResultAt() != null && patch.docResultAt().isBefore(now)) {
+        if (patch.docResultAt() != null && patch.docResultAt().isBefore(todayStart)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
-        if (patch.interviewStartAt() != null && patch.interviewStartAt().isBefore(now)) {
+        if (patch.interviewStartAt() != null && patch.interviewStartAt().isBefore(todayStart)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
-        if (patch.interviewEndAt() != null && patch.interviewEndAt().isBefore(now)) {
+        if (patch.interviewEndAt() != null && patch.interviewEndAt().isBefore(todayStart)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
-        if (patch.finalResultAt() != null && patch.finalResultAt().isBefore(now)) {
+        if (patch.finalResultAt() != null && patch.finalResultAt().isBefore(todayStart)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
     }
@@ -2129,8 +2129,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             return;
         }
 
-        boolean alreadyStarted = !now.isBefore(apply.getStartsAt());
-        if (alreadyStarted && patch.applyStartAt() != null && !patch.applyStartAt().equals(apply.getStartsAt())) {
+        if (apply.isStarted(now) && patch.applyStartAt() != null && !patch.applyStartAt().equals(apply.getStartsAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
                 RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_START_FROZEN);
         }
@@ -2147,8 +2146,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             return;
         }
 
-        boolean isOpen = !now.isBefore(apply.getStartsAt()) && now.isBefore(apply.getEndsAt());
-        if (isOpen && patch.applyEndAt().isBefore(apply.getEndsAt())) {
+        if (apply.isActive(now) && patch.applyEndAt().isBefore(apply.getEndsAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
                 RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_END_SHORTEN_FORBIDDEN);
         }

@@ -43,6 +43,11 @@ public class EvaluationPersistenceAdapter implements LoadEvaluationPort, SaveEva
         return evaluationQueryRepository.findApplicationIdsWithEvaluations(applicationIds, evaluatorUserId, stage);
     }
 
+    @Override
+    public boolean existsByApplicationIdAndStage(Long applicationId, EvaluationStage evaluationStage) {
+        return evaluationRepository.existsByApplicationIdAndStage(applicationId, evaluationStage);
+    }
+
     // ============== SaveEvaluationPort ==============
     @Override
     public Evaluation save(Evaluation evaluation) {
