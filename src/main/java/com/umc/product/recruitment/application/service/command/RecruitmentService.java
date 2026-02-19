@@ -67,7 +67,6 @@ import com.umc.product.recruitment.domain.RecruitmentPart;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
-import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
@@ -1103,7 +1102,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             .orElseThrow(
                 () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
-        if (recruitment.getStatus() != RecruitmentStatus.PUBLISHED) {
+        if (recruitment.isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
         }
 
