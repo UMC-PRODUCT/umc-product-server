@@ -20,6 +20,7 @@ import com.umc.product.recruitment.application.port.out.LoadEvaluationPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewLiveQuestionPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.application.port.out.SaveEvaluationPort;
 import com.umc.product.recruitment.application.port.out.SaveInterviewLiveQuestionPort;
 import com.umc.product.recruitment.domain.Application;
@@ -27,7 +28,9 @@ import com.umc.product.recruitment.domain.Evaluation;
 import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.recruitment.domain.InterviewLiveQuestion;
 import com.umc.product.recruitment.domain.Recruitment;
+import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
+import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import java.time.Instant;
@@ -50,6 +53,7 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
     private final SaveEvaluationPort saveEvaluationPort;
     private final GetMemberUseCase getMemberUseCase;
     private final LoadRecruitmentPort loadRecruitmentPort;
+    private final LoadRecruitmentSchedulePort loadRecruitmentSchedulePort;
 
     @Override
     public GetMyInterviewEvaluationInfo upsert(UpsertMyInterviewEvaluationCommand command) {
@@ -57,6 +61,7 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
         InterviewAssignment assignment = getValidatedAssignment(command.assignmentId(), command.recruitmentId());
 
         validateInterviewEvaluationTime(assignment);
+        validateFinalResultNotPublished(command.recruitmentId());
 
         // 2. Application 가져오기
         Application application = assignment.getApplication();
@@ -95,6 +100,9 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
 
     @Override
     public CreateLiveQuestionResult create(CreateLiveQuestionCommand command) {
+
+        validateFinalResultNotPublished(command.recruitmentId());
+
         // 1. 검증: InterviewAssignment 존재 & 해당 recruitment에 속하는지
         InterviewAssignment assignment = getValidatedAssignment(command.assignmentId(), command.recruitmentId());
 
@@ -127,6 +135,9 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
 
     @Override
     public UpdateLiveQuestionResult update(UpdateLiveQuestionCommand command) {
+
+        validateFinalResultNotPublished(command.recruitmentId());
+
         InterviewLiveQuestion question = validateAndGetQuestion(command.recruitmentId(), command.assignmentId(),
             command.liveQuestionId(), command.memberId());
 
@@ -141,6 +152,9 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
 
     @Override
     public void delete(DeleteLiveQuestionCommand command) {
+
+        validateFinalResultNotPublished(command.recruitmentId());
+
         InterviewLiveQuestion question = validateAndGetQuestion(command.recruitmentId(), command.assignmentId(),
             command.liveQuestionId(), command.memberId());
 
@@ -199,7 +213,17 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
 
         // 면접 시작 전이면 차단
         if (now.isBefore(interviewStartsAt)) {
-            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_EVALUATION_NOT_STARTED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_NOT_STARTED);
+        }
+    }
+
+    private void validateFinalResultNotPublished(Long recruitmentId) {
+        RecruitmentSchedule finalResultAt = loadRecruitmentSchedulePort.findByRecruitmentIdAndType(recruitmentId,
+            RecruitmentScheduleType.FINAL_RESULT_AT);
+
+        // 최종 결과 발표 시점이 지났다면(isActive) 평가 제출/재제출 불가
+        if (finalResultAt != null && finalResultAt.isActive(java.time.Instant.now())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.FINAL_RESULT_ALREADY_PUBLISHED);
         }
     }
 
