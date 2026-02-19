@@ -145,6 +145,7 @@ public enum RecruitmentErrorCode implements BaseCode {
     FINAL_RESULT_ALREADY_PUBLISHED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0083", "최종 결과 공개 이후에는 수정이 불가능합니다."),
     INTERVIEW_SLOT_ALREADY_ENDED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0084", "이미 끝난 면접 슬롯에 면접자를 할당할 수 없습니다."),
     INTERVIEW_ALREADY_EVALUATED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0085", "이미 평가가 등록된 지원서입니다."),
+    INTERVIEW_NOT_FINISHED_YET(HttpStatus.BAD_REQUEST, "RECRUITMENT-0086", "아직 면접이 끝나지 않은 지원자입니다."),
     ;
 
     private final HttpStatus httpStatus;
