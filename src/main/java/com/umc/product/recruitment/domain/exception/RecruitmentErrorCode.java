@@ -141,6 +141,7 @@ public enum RecruitmentErrorCode implements BaseCode {
     EXTENSION_SCHEDULE_INCONSISTENT_WITH_ROOT(HttpStatus.BAD_REQUEST, "RECRUITMENT-0080",
         "추가 모집의 면접/최종 일정이 기준 모집과 다릅니다."),
     DOC_RESULT_ALREADY_PUBLISHED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0081", "서류 결과가 이미 공개되어 평가를 수정할 수 없습니다."),
+    INTERVIEW_NOT_STARTED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0082", "면접이 아직 시작되지 않은 지원자를 평가할 수 없습니다."),
     ;
 
     private final HttpStatus httpStatus;
