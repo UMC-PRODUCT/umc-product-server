@@ -3,9 +3,10 @@ package com.umc.product.schedule.application.port.in.query.dto;
 import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
+import com.umc.product.schedule.domain.ScheduleConstants;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -13,7 +14,7 @@ public record MyAttendanceHistoryInfo(
     Long attendanceId,
     Long scheduleId,
     String scheduleName,
-    LocalDateTime scheduledAt,
+    Instant scheduledAt,
     List<ScheduleTag> tags,
     String scheduledDate,     // "2024-01-15"
     String startTime,         // "14:30"
@@ -26,7 +27,7 @@ public record MyAttendanceHistoryInfo(
     String locationName,      // 일정 장소명
     Boolean locationVerified, // 위치 인증 여부
     String memo,              // 출석 메모 (사유 등)
-    LocalDateTime checkedAt   // 실제 출석 체크한 시간
+    Instant checkedAt   // 실제 출석 체크한 시간
 ) {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
@@ -48,9 +49,9 @@ public record MyAttendanceHistoryInfo(
             schedule.getName(),
             schedule.getStartsAt(),
             schedule.getTags().stream().toList(),
-            schedule.getStartsAt().format(DATE_FORMATTER),
-            schedule.getStartsAt().format(TIME_FORMATTER),
-            schedule.getEndsAt().format(TIME_FORMATTER),
+            schedule.getStartsAt().atZone(ScheduleConstants.KST).format(DATE_FORMATTER),
+            schedule.getStartsAt().atZone(ScheduleConstants.KST).format(TIME_FORMATTER),
+            schedule.getEndsAt().atZone(ScheduleConstants.KST).format(TIME_FORMATTER),
             record.getStatus(),
             record.getStatusDisplay(),
             sheet != null ? sheet.getId() : null,  // null-safe

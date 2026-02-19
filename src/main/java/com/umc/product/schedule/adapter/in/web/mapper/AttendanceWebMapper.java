@@ -8,6 +8,7 @@ import com.umc.product.schedule.application.port.in.query.dto.AttendanceRecordIn
 import com.umc.product.schedule.application.port.in.query.dto.AvailableAttendanceInfo;
 import com.umc.product.schedule.application.port.in.query.dto.MyAttendanceHistoryInfo;
 import com.umc.product.schedule.application.port.in.query.dto.PendingAttendanceInfo;
+import com.umc.product.schedule.domain.ScheduleConstants;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.util.List;
@@ -69,7 +70,9 @@ public class AttendanceWebMapper {
             info.locationName(),
             info.locationVerified(),
             info.memo(),
-            info.checkedAt()
+            info.checkedAt() != null
+                ? info.checkedAt().atZone(ScheduleConstants.KST).toLocalDateTime()
+                : null
         );
     }
 
@@ -107,7 +110,9 @@ public class AttendanceWebMapper {
                     info.schoolName(),
                     info.status().name(),
                     info.reason(),
-                    info.requestedAt()
+                    info.requestedAt() != null
+                        ? info.requestedAt().atZone(ScheduleConstants.KST).toLocalDateTime()
+                        : null
                 );
             })
             .toList();

@@ -11,7 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -86,8 +86,8 @@ public class AttendanceSheet extends BaseEntity {
     public static AttendanceSheet createWithSchedule(
         Long scheduleId,
         Long gisuId,
-        LocalDateTime scheduleStartsAt,
-        LocalDateTime scheduleEndsAt,
+        Instant scheduleStartsAt,
+        Instant scheduleEndsAt,
         boolean requiresApproval
     ) {
         // 출석 인정 시간: 시작 10분 전 ~ 시작 후 10분 (총 20분)
@@ -113,7 +113,7 @@ public class AttendanceSheet extends BaseEntity {
      * active 상태와 무관하게 시간대만 체크합니다.
      * active는 삭제 대신 비활성화 용도로만 사용됩니다.
      */
-    public boolean isWithinTimeWindow(LocalDateTime checkTime) {
+    public boolean isWithinTimeWindow(Instant checkTime) {
         return window.contains(checkTime);
     }
 
@@ -122,7 +122,7 @@ public class AttendanceSheet extends BaseEntity {
      * <p>
      * active 상태와 무관하게 시간대만 체크합니다.
      */
-    public AttendanceStatus determineStatusByTime(LocalDateTime checkTime) {
+    public AttendanceStatus determineStatusByTime(Instant checkTime) {
         return window.determineStatus(checkTime, requiresApproval);
     }
 

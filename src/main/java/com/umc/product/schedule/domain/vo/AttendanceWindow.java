@@ -1,12 +1,11 @@
 package com.umc.product.schedule.domain.vo;
 
-import com.umc.product.global.converter.KstLocalDateTimeConverter;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import jakarta.persistence.Column;
-import jakarta.persistence.Convert;
 import jakarta.persistence.Embeddable;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -24,18 +23,16 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AttendanceWindow {
 
-    @Convert(converter = KstLocalDateTimeConverter.class)
     @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    private Instant startTime;
 
-    @Convert(converter = KstLocalDateTimeConverter.class)
     @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
+    private Instant endTime;
 
     @Column(name = "late_threshold_minutes", nullable = false)
     private int lateThresholdMinutes;  // 몇 분까지 지각 인정
 
-    private AttendanceWindow(LocalDateTime startTime, LocalDateTime endTime, int lateThresholdMinutes) {
+    private AttendanceWindow(Instant startTime, Instant endTime, int lateThresholdMinutes) {
         if (startTime == null) {
             throw new IllegalArgumentException("시작 시간은 필수입니다");
         }
@@ -66,7 +63,7 @@ public class AttendanceWindow {
      * @param lateThresholdMinutes 지각 인정 시간
      */
     public static AttendanceWindow of(
-        LocalDateTime baseTime,
+        Instant baseTime,
         int beforeMinutes,
         int afterMinutes,
         int lateThresholdMinutes
@@ -81,8 +78,8 @@ public class AttendanceWindow {
             throw new IllegalArgumentException("이후 시간은 0분 이상이어야 합니다");
         }
 
-        LocalDateTime start = baseTime.minusMinutes(beforeMinutes);
-        LocalDateTime end = baseTime.plusMinutes(afterMinutes);
+        Instant start = baseTime.minus(beforeMinutes, ChronoUnit.MINUTES);
+        Instant end = baseTime.plus(afterMinutes, ChronoUnit.MINUTES);
 
         return new AttendanceWindow(start, end, lateThresholdMinutes);
     }
@@ -90,7 +87,7 @@ public class AttendanceWindow {
     /**
      * 기본 출석 시간대 생성 - 테스트용 신경 쓸 필요 Xx
      */
-    public static AttendanceWindow ofDefault(LocalDateTime baseTime) {
+    public static AttendanceWindow ofDefault(Instant baseTime) {
         return of(baseTime, 30, 30, 10);
     }
 
@@ -102,8 +99,8 @@ public class AttendanceWindow {
      * @param lateThresholdMinutes 지각 인정 시간
      */
     public static AttendanceWindow from(
-        LocalDateTime startTime,
-        LocalDateTime endTime,
+        Instant startTime,
+        Instant endTime,
         int lateThresholdMinutes
     ) {
         return new AttendanceWindow(startTime, endTime, lateThresholdMinutes);
@@ -112,7 +109,7 @@ public class AttendanceWindow {
     /**
      * 주어진 시간이 출석 시간대 내에 있는지 확인
      */
-    public boolean contains(LocalDateTime checkTime) {
+    public boolean contains(Instant checkTime) {
         if (checkTime == null) {
             return false;
         }
@@ -126,7 +123,7 @@ public class AttendanceWindow {
      * @param requiresApproval 승인 필요 여부
      * @return 결정된 출석 상태
      */
-    public AttendanceStatus determineStatus(LocalDateTime checkTime, boolean requiresApproval) {
+    public AttendanceStatus determineStatus(Instant checkTime, boolean requiresApproval) {
         if (checkTime == null) {
             throw new IllegalArgumentException("체크 시간은 필수입니다");
         }
@@ -137,7 +134,7 @@ public class AttendanceWindow {
         }
 
         // 출석 인정 시간 계산
-        LocalDateTime lateThreshold = startTime.plusMinutes(lateThresholdMinutes);
+        Instant lateThreshold = startTime.plus(lateThresholdMinutes, ChronoUnit.MINUTES);
 
         // 정시 출석
         if (!checkTime.isAfter(lateThreshold)) {
