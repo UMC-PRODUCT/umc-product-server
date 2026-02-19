@@ -15,4 +15,6 @@ public interface EvaluationRepository extends JpaRepository<Evaluation, Long> {
     );
 
     List<Evaluation> findByApplicationIdAndStage(Long applicationId, EvaluationStage evaluationStage);
+
+    boolean existsByApplicationIdAndStage(Long applicationId, EvaluationStage evaluationStage);
 }
