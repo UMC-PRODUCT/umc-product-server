@@ -1,8 +1,8 @@
 package com.umc.product.community.adapter.out.persistence;
 
-import com.umc.product.community.application.port.in.post.ToggleCommentLikeUseCase.LikeResult;
-import com.umc.product.community.application.port.out.LoadCommentPort;
-import com.umc.product.community.application.port.out.SaveCommentPort;
+import com.umc.product.community.application.port.in.command.comment.ToggleCommentLikeUseCase.LikeResult;
+import com.umc.product.community.application.port.out.comment.LoadCommentPort;
+import com.umc.product.community.application.port.out.comment.SaveCommentPort;
 import com.umc.product.community.domain.Comment;
 import java.util.HashMap;
 import java.util.List;
@@ -23,13 +23,13 @@ public class CommentPersistenceAdapter implements LoadCommentPort, SaveCommentPo
     @Override
     public Optional<Comment> findById(Long commentId) {
         return commentRepository.findById(commentId)
-                .map(CommentJpaEntity::toDomain);
+            .map(CommentJpaEntity::toDomain);
     }
 
     @Override
     public Page<Comment> findByPostId(Long postId, Pageable pageable) {
         return commentRepository.findByPostIdOrderByCreatedAtDesc(postId, pageable)
-                .map(CommentJpaEntity::toDomain);
+            .map(CommentJpaEntity::toDomain);
     }
 
     @Override
@@ -45,10 +45,10 @@ public class CommentPersistenceAdapter implements LoadCommentPort, SaveCommentPo
 
         List<Object[]> results = commentRepository.countByPostIdIn(postIds);
         return results.stream()
-                .collect(Collectors.toMap(
-                        row -> (Long) row[0],           // postId
-                        row -> ((Number) row[1]).intValue()  // count
-                ));
+            .collect(Collectors.toMap(
+                row -> (Long) row[0],           // postId
+                row -> ((Number) row[1]).intValue()  // count
+            ));
     }
 
     @Override
@@ -68,7 +68,7 @@ public class CommentPersistenceAdapter implements LoadCommentPort, SaveCommentPo
     @Override
     public LikeResult toggleLike(Long commentId, Long challengerId) {
         CommentJpaEntity entity = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+            .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
         boolean liked = entity.toggleLike(challengerId);
         return new LikeResult(liked, entity.getLikeCount());
     }

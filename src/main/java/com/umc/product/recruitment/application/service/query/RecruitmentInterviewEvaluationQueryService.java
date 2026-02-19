@@ -109,7 +109,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .findAllByApplicationIdOrderByPriorityAsc(applicationId);
 
         // 4. 지원자 프로필 조회
-        MemberInfo applicantProfile = getMemberUseCase.getProfile(application.getApplicantMemberId());
+        MemberInfo applicantProfile = getMemberUseCase.getMemberInfoById(application.getApplicantMemberId());
 
         // 5. ApplicationInfo 생성
         GetInterviewEvaluationViewInfo.ApplicationInfo applicationInfo = buildApplicationInfo(

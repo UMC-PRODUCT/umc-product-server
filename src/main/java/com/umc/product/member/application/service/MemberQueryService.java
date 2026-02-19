@@ -4,6 +4,7 @@ import com.umc.product.authorization.application.port.in.query.ChallengerRoleInf
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.MemberProfileInfo;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberDomainException;
@@ -32,10 +33,9 @@ public class MemberQueryService implements GetMemberUseCase {
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @Override
-    public MemberInfo getById(Long memberId) {
+    public MemberInfo getMemberInfoById(Long memberId) {
         // 회원
-        Member member = loadMemberPort.findById(memberId)
-            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
+        Member member = getOrThrowMember(memberId);
 
         // 학교명 채워넣기
         String schoolName = getSchoolUseCase.getSchoolDetail(member.getSchoolId()).schoolName();
@@ -55,8 +55,8 @@ public class MemberQueryService implements GetMemberUseCase {
     }
 
     @Override
-    public MemberInfo getProfile(Long memberId) {
-        return getById(memberId);
+    public MemberProfileInfo getMemberProfileById(Long memberId) {
+        return MemberProfileInfo.from(getOrThrowMember(memberId).getProfile());
     }
 
     @Override
@@ -104,5 +104,12 @@ public class MemberQueryService implements GetMemberUseCase {
     @Override
     public boolean existsByEmail(String email) {
         return loadMemberPort.existsByEmail(email);
+    }
+
+    // === Private Methods ===
+
+    private Member getOrThrowMember(Long memberId) {
+        return loadMemberPort.findById(memberId)
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 }

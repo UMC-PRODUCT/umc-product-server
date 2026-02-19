@@ -39,25 +39,19 @@ public class FcmService implements ManageFcmUseCase {
     @Transactional
     public void registerFcmToken(Long userId, FcmRegistrationRequest request) {
         Member member = loadMemberPort.findById(userId)
-                .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
 
-        // 이미 등록된 FCMToken이 있는지 확인
-        FcmToken existingToken = loadFcmPort.findByMemberId(userId);
-
-        if (existingToken != null) {
-            // 이미 등록된 FCMToken이 있는 경우 값을 업데이트
-            existingToken.updateToken(request.fcmToken());
-        } else {
-            // 등록된 FCMToken이 없는 경우 새로 생성하여 저장
-            FcmToken newToken = FcmToken.createFCMToken(member, request.fcmToken());
-            saveFcmPort.save(newToken);
-        }
+        loadFcmPort.findOptionalByMemberId(userId)
+            .ifPresentOrElse(
+                existingToken -> existingToken.updateToken(request.fcmToken()),
+                () -> saveFcmPort.save(FcmToken.createFCMToken(member, request.fcmToken()))
+            );
     }
 
     @Override
     public void sendMessageByToken(NotificationCommand command) {
         Member member = loadMemberPort.findById(command.memberId())
-                .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
 
         FcmToken fcm = loadFcmPort.findByMemberId(member.getId());
 
@@ -85,7 +79,7 @@ public class FcmService implements ManageFcmUseCase {
         try {
             TopicManagementResponse response = firebaseMessaging.subscribeToTopic(fcmTokens, topic);
             log.info("토픽 구독 완료 topic={}, 성공={}, 실패={}",
-                    topic, response.getSuccessCount(), response.getFailureCount());
+                topic, response.getSuccessCount(), response.getFailureCount());
         } catch (FirebaseMessagingException e) {
             log.error("토픽 구독 실패 topic={}", topic, e);
             throw new FcmDomainException(FcmErrorCode.TOPIC_SUBSCRIBE_FAILED);
@@ -101,7 +95,7 @@ public class FcmService implements ManageFcmUseCase {
         try {
             TopicManagementResponse response = firebaseMessaging.unsubscribeFromTopic(fcmTokens, topic);
             log.info("토픽 구독 해제 완료 topic={}, 성공={}, 실패={}",
-                    topic, response.getSuccessCount(), response.getFailureCount());
+                topic, response.getSuccessCount(), response.getFailureCount());
         } catch (FirebaseMessagingException e) {
             log.error("토픽 구독 해제 실패 topic={}", topic, e);
             throw new FcmDomainException(FcmErrorCode.TOPIC_UNSUBSCRIBE_FAILED);

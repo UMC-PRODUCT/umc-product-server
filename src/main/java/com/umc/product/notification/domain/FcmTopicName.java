@@ -8,6 +8,8 @@ import java.util.List;
  * FCM 토픽 네이밍 규칙을 관리하는 유틸리티 클래스
  *
  * 토픽명 예시:
+ * - all (전체 대상)
+ * - school-5 (전체 기수 특정 학교)
  * - gisu-1 (기수 전체)
  * - gisu-1-part-SPRINGBOOT (기수 + 파트)
  * - gisu-1-school-5 (기수 + 학교)
@@ -18,6 +20,14 @@ import java.util.List;
 public final class FcmTopicName {
 
     private FcmTopicName() {
+    }
+
+    public static String all() {
+        return "all";
+    }
+
+    public static String school(Long schoolId) {
+        return "school-" + schoolId;
     }
 
     public static String gisu(Long gisuId) {
@@ -49,10 +59,12 @@ public final class FcmTopicName {
      */
     public static List<String> allTopicsFor(Long gisuId, ChallengerPart part, Long schoolId, Long chapterId) {
         List<String> topics = new ArrayList<>();
+        topics.add(all());
         topics.add(gisu(gisuId));
         topics.add(gisuPart(gisuId, part));
 
         if (schoolId != null) {
+            topics.add(school(schoolId));
             topics.add(gisuSchool(gisuId, schoolId));
             topics.add(gisuSchoolPart(gisuId, schoolId, part));
         }
@@ -73,6 +85,13 @@ public final class FcmTopicName {
             Long gisuId, Long chapterId, Long schoolId, List<ChallengerPart> parts
     ) {
         boolean hasParts = parts != null && !parts.isEmpty();
+
+        if (gisuId == null) {
+            if (schoolId != null) {
+                return List.of(school(schoolId));
+            }
+            return List.of(all());
+        }
 
         if (chapterId != null) {
             if (hasParts) {

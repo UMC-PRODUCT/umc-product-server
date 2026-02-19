@@ -1,5 +1,7 @@
 package com.umc.product.notification.adapter.in.web.swagger;
 
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmTestSendRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,8 +21,9 @@ public interface FcmControllerApi {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "MEMBER-0001: 사용자를 찾을 수 없습니다."),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "FCM-0004: FCM 토픽 구독에 실패했습니다.")
     })
-    void registerFcmToken(
-        @Parameter(description = "사용자 ID", required = true) Long userId,
+    void refreshFcmToken(
+        @Parameter(hidden = true)
+        @CurrentMember MemberPrincipal memberPrincipal,
         FcmRegistrationRequest request
     );
 

@@ -34,13 +34,15 @@ public class Post {
     private final int likeCount;
 
     @Getter
-    private final boolean liked;
+    private final boolean liked; // TODO:
 
     @Getter
     private final Instant createdAt;
 
+    // ============== 예은 ==============
+
     public static Post createPost(String title, String content, Category category, Long authorChallengerId) {
-        if (category == Category.LIGHTNING) {
+        if (category.isLightning()) {
             throw new IllegalArgumentException("번개 게시글은 createLightning()을 사용하세요");
         }
         validateCommonFields(title, content);
@@ -52,21 +54,24 @@ public class Post {
         if (info == null) {
             throw new IllegalArgumentException("번개 게시글은 추가 정보가 필수입니다.");
         }
+
         validateCommonFields(title, content);
         validateAuthorChallengerId(authorChallengerId);
         // 시간 검증은 Service 레이어에서 수행
         return new Post(null, title, content, Category.LIGHTNING, authorChallengerId, info, 0, false, null);
     }
 
-    public static Post reconstruct(PostId postId, String title, String content, Category category,
-                                   Long authorChallengerId,
-                                   LightningInfo lightningInfo, int likeCount, boolean liked, Instant createdAt) {
+    // TODO: 이건 정체가 뭐임? - 경운
+    public static Post reconstruct(
+        PostId postId, String title, String content, Category category,
+        Long authorChallengerId, LightningInfo lightningInfo,
+        int likeCount, boolean liked, Instant createdAt) {
         return new Post(postId, title, content, category, authorChallengerId, lightningInfo, likeCount, liked,
             createdAt);
     }
 
     public boolean isLightning() {
-        return category == Category.LIGHTNING;
+        return this.category == Category.LIGHTNING;
     }
 
     public LightningInfo getLightningInfoOrThrow() {
@@ -125,6 +130,7 @@ public class Post {
         this.lightningInfo = newLightningInfo;
     }
 
+    @Builder
     public record PostId(Long id) {
         public PostId {
             if (id <= 0) {
@@ -133,6 +139,7 @@ public class Post {
         }
     }
 
+    @Builder
     public record LightningInfo(
         LocalDateTime meetAt,
         String location,

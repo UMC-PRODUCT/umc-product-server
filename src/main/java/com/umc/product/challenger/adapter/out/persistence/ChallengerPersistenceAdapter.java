@@ -51,6 +51,11 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     }
 
     @Override
+    public List<Challenger> findByGisuIdIn(List<Long> gisuIds) {
+        return repository.findByGisuIdIn(gisuIds);
+    }
+
+    @Override
     public Long countByIdIn(Set<Long> ids) {
         return repository.countByIdIn(ids);
     }

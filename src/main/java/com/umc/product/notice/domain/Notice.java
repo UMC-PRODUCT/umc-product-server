@@ -34,8 +34,8 @@ public class Notice extends BaseEntity {
     @Column(nullable = false, length = 3000)
     private String content;
 
-    @Column(name = "author_challenger_id", nullable = false)
-    private Long authorChallengerId;
+    @Column(name = "author_member_id", nullable = false)
+    private Long authorMemberId;
 
     /* 알림발송 여부 */
     private boolean shouldSendNotification;
@@ -43,11 +43,11 @@ public class Notice extends BaseEntity {
     /* 알림발송 시각 */
     private Instant notifiedAt;
 
-    public static Notice create(String title, String content, Long authorChallengerId, boolean shouldNotify) {
+    public static Notice create(String title, String content, Long authorMemberId, boolean shouldNotify) {
         return Notice.builder()
             .title(title)
             .content(content)
-            .authorChallengerId(authorChallengerId)
+            .authorMemberId(authorMemberId)
             .shouldSendNotification(shouldNotify)
             .build();
     }
@@ -60,8 +60,8 @@ public class Notice extends BaseEntity {
     /**
      * 공지사항 작성자와 일치하는 챌린저인지 확인함
      */
-    public void validateAuthorChallenger(Long challengerId) {
-        if (!this.authorChallengerId.equals(challengerId)) {
+    public void validateAuthorMember(Long authorMemberId) {
+        if (!this.authorMemberId.equals(authorMemberId)) {
             throw new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH);
         }
     }
@@ -78,12 +78,5 @@ public class Notice extends BaseEntity {
      */
     public void markAsNotified(Instant notifiedAt) {
         this.notifiedAt = notifiedAt;
-    }
-
-    /**
-     * 공지 작성자 동일인물 여부 확인
-     */
-    public boolean isAuthorChallenger(Long challengerId) {
-        return this.authorChallengerId.equals(challengerId);
     }
 }

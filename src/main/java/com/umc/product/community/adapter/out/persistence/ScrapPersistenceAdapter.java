@@ -1,7 +1,7 @@
 package com.umc.product.community.adapter.out.persistence;
 
-import com.umc.product.community.application.port.out.LoadScrapPort;
-import com.umc.product.community.application.port.out.SaveScrapPort;
+import com.umc.product.community.application.port.out.scrap.LoadScrapPort;
+import com.umc.product.community.application.port.out.scrap.SaveScrapPort;
 import com.umc.product.community.domain.Scrap;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ public class ScrapPersistenceAdapter implements LoadScrapPort, SaveScrapPort {
     @Override
     public Optional<Scrap> findByPostIdAndChallengerId(Long postId, Long challengerId) {
         return scrapRepository.findByPostIdAndChallengerId(postId, challengerId)
-                .map(ScrapJpaEntity::toDomain);
+            .map(ScrapJpaEntity::toDomain);
     }
 
     @Override

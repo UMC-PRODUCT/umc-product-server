@@ -6,6 +6,7 @@ import java.time.Instant;
 
 public record PendingAttendanceInfo(
     Long attendanceId,
+    Long scheduleId,
     Long memberId,
     String memberName,
     String nickname,
@@ -17,6 +18,7 @@ public record PendingAttendanceInfo(
 ) {
     public static PendingAttendanceInfo of(
         AttendanceRecord record,
+        Long scheduleId,
         Long memberId,
         String memberName,
         String nickname,
@@ -25,6 +27,7 @@ public record PendingAttendanceInfo(
     ) {
         return new PendingAttendanceInfo(
             record.getId(),
+            scheduleId,
             memberId,
             memberName,
             nickname,

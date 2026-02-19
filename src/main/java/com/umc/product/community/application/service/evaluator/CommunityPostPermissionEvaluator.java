@@ -6,8 +6,8 @@ import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.community.application.port.in.PostInfo;
-import com.umc.product.community.application.port.in.post.query.GetPostDetailUseCase;
+import com.umc.product.community.application.port.in.query.GetPostDetailUseCase;
+import com.umc.product.community.application.port.in.query.dto.PostInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -35,7 +35,7 @@ public class CommunityPostPermissionEvaluator implements ResourcePermissionEvalu
         Long postId = resourcePermission.getResourceIdAsLong();
 
         PostInfo postInfo = getPostDetailUseCase.getPostDetail(postId);
-        Long authorChallengerId = postInfo.authorId();
+        Long authorChallengerId = postInfo.authorChallengerId();
         Long authorMemberId = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId).memberId();
 
         switch (resourcePermission.permission()) {

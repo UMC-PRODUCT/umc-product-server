@@ -9,7 +9,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.community.application.port.in.trophy.query.TrophySearchQuery;
+import com.umc.product.community.application.port.in.query.dto.TrophySearchQuery;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -23,20 +23,19 @@ public class TrophyQueryRepository {
     /**
      * 트로피 검색 (week, school, part 필터링)
      * <p>
-     * DB 레벨에서 필터링하여 필요한 데이터만 조회합니다.
-     * Trophy -> Challenger -> Member -> School 조인을 통해 school과 part 필터링을 수행합니다.
+     * DB 레벨에서 필터링하여 필요한 데이터만 조회합니다. Trophy -> Challenger -> Member -> School 조인을 통해 school과 part 필터링을 수행합니다.
      */
     public List<TrophyJpaEntity> findAllByQuery(TrophySearchQuery query) {
         BooleanBuilder condition = buildSearchCondition(query);
 
         return queryFactory
-                .selectFrom(trophyJpaEntity)
-                .leftJoin(challenger).on(trophyJpaEntity.challengerId.eq(challenger.id))
-                .leftJoin(member).on(challenger.memberId.eq(member.id))
-                .leftJoin(school).on(member.schoolId.eq(school.id))
-                .where(condition)
-                .orderBy(trophyJpaEntity.id.desc())
-                .fetch();
+            .selectFrom(trophyJpaEntity)
+            .leftJoin(challenger).on(trophyJpaEntity.challengerId.eq(challenger.id))
+            .leftJoin(member).on(challenger.memberId.eq(member.id))
+            .leftJoin(school).on(member.schoolId.eq(school.id))
+            .where(condition)
+            .orderBy(trophyJpaEntity.id.desc())
+            .fetch();
     }
 
     /**

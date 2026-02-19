@@ -76,6 +76,14 @@ public interface LoadAttendanceRecordPort {
     List<PendingAttendanceInfo> findPendingWithMemberInfo(Long sheetId);
 
     /**
+     * 여러 출석부의 승인 대기 출석 기록을 멤버 정보와 함께 일괄 조회
+     *
+     * @param sheetIds 출석부 ID 목록
+     * @return 멤버 정보가 포함된 승인 대기 출석 정보 목록
+     */
+    List<PendingAttendanceInfo> findPendingWithMemberInfoBySheetIds(List<Long> sheetIds);
+
+    /**
      * 권한 평가에 필요한 컨텍스트 정보 조회 (record → sheet → schedule JOIN)
      *
      * @param recordId 출석 기록 ID
