@@ -1,4 +1,4 @@
-package com.umc.product.community.application.port.in.command.comment.dto;
+package com.umc.product.community.application.port.in.query.dto;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.domain.Comment;

@@ -1,6 +1,6 @@
 package com.umc.product.community.application.port.in.query;
 
-import com.umc.product.community.application.port.in.command.trophy.dto.TrophyInfo;
+import com.umc.product.community.application.port.in.query.dto.TrophyInfo;
 import com.umc.product.community.application.port.in.query.dto.TrophySearchQuery;
 import java.util.List;
 

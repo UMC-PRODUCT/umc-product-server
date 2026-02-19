@@ -57,7 +57,7 @@ public class PostQueryRepository {
         return null;
     }
 
-    public Page<PostSearchData> searchByKeyword(String keyword, Pageable pageable) {
+    public Page<Post> searchByKeyword(String keyword, Pageable pageable) {
         if (!StringUtils.hasText(keyword)) {
             return Page.empty(pageable);
         }
@@ -86,11 +86,18 @@ public class PostQueryRepository {
             .where(searchCondition)
             .fetchOne();
 
-        List<PostSearchData> searchDataList = results.stream()
-            .map(entity -> toSearchData(entity, searchKeyword))
+        List<Post> postInfos = results.stream()
+            .map(PostJpaEntity::toDomain)
             .toList();
 
-        return new PageImpl<>(searchDataList, pageable, totalCount != null ? totalCount : 0);
+        return new PageImpl<>(postInfos, pageable, totalCount != null ? totalCount : 0);
+
+        // TODO: 여기서 PostSearchData 반환하는 중
+//        List<PostSearchData> searchDataList = results.stream()
+//            .map(entity -> toSearchData(entity, searchKeyword))
+//            .toList();
+//
+//        return new PageImpl<>(searchDataList, pageable, totalCount != null ? totalCount : 0);
     }
 
     private BooleanExpression titleContains(String keyword) {
@@ -116,16 +123,7 @@ public class PostQueryRepository {
         MatchType matchType = determineMatchType(entity, keyword);
         int score = calculateScore(entity, keyword);
 
-        return new PostSearchData(
-            entity.getId(),
-            entity.getTitle(),
-            entity.getContent(),
-            entity.getCategory(),
-            entity.getLikeCount(),
-            entity.getCreatedAt(),
-            matchType,
-            score
-        );
+        return PostSearchData.from(entity, matchType, score);
     }
 
     private MatchType determineMatchType(PostJpaEntity entity, String keyword) {

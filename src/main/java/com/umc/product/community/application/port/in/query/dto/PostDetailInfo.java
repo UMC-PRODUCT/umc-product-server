@@ -1,7 +1,6 @@
 package com.umc.product.community.application.port.in.query.dto;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.community.application.port.in.command.post.dto.PostInfo;
 import com.umc.product.community.domain.enums.Category;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -34,7 +33,7 @@ public record PostDetailInfo(
             postInfo.title(),
             postInfo.content(),
             postInfo.category(),
-            postInfo.authorId(),
+            postInfo.authorChallengerId(),
             postInfo.authorName(),
             postInfo.authorProfileImage(),
             authorPart,

@@ -4,16 +4,14 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.community.adapter.in.web.dto.response.PostDetailResponse;
 import com.umc.product.community.adapter.in.web.dto.response.PostResponse;
-import com.umc.product.community.adapter.in.web.dto.response.PostSearchResponse;
-import com.umc.product.community.application.port.in.command.post.dto.PostInfo;
 import com.umc.product.community.application.port.in.query.GetCommentedPostsUseCase;
 import com.umc.product.community.application.port.in.query.GetMyPostsUseCase;
 import com.umc.product.community.application.port.in.query.GetPostDetailUseCase;
 import com.umc.product.community.application.port.in.query.GetPostListUseCase;
 import com.umc.product.community.application.port.in.query.GetScrappedPostsUseCase;
 import com.umc.product.community.application.port.in.query.SearchPostUseCase;
+import com.umc.product.community.application.port.in.query.dto.PostInfo;
 import com.umc.product.community.application.port.in.query.dto.PostSearchQuery;
-import com.umc.product.community.application.port.in.query.dto.PostSearchResult;
 import com.umc.product.community.domain.enums.Category;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.MemberPrincipal;
@@ -76,7 +74,7 @@ public class PostQueryController {
 
     @GetMapping("/search")
     @Operation(summary = "게시글 검색", description = "제목과 본문에서 키워드를 검색합니다. 관련도순(제목 시작 > 제목 포함 > 본문 포함)으로 정렬됩니다.")
-    public PageResponse<PostSearchResponse> search(
+    public PageResponse<PostResponse> search(
         @RequestParam
         @Parameter(description = "검색 키워드", example = "스터디")
         String keyword,
@@ -84,8 +82,11 @@ public class PostQueryController {
         @ParameterObject
         Pageable pageable
     ) {
-        Page<PostSearchResult> results = searchPostUseCase.search(keyword, pageable);
-        return PageResponse.of(results, PostSearchResponse::from);
+        // TODO: 마티가 검색이랑 listing이랑 DTO 통일해달라는 요청에 수정 중
+
+        Page<PostResponse> results = searchPostUseCase.search(keyword, pageable);
+
+        return PageResponse.of(results);
     }
 
     @GetMapping("/my")

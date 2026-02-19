@@ -2,7 +2,7 @@ package com.umc.product.community.application.service.command;
 
 import com.umc.product.community.application.port.in.command.trophy.CreateTrophyUseCase;
 import com.umc.product.community.application.port.in.command.trophy.dto.CreateTrophyCommand;
-import com.umc.product.community.application.port.in.command.trophy.dto.TrophyInfo;
+import com.umc.product.community.application.port.in.query.dto.TrophyInfo;
 import com.umc.product.community.application.port.out.trophy.SaveTrophyPort;
 import com.umc.product.community.domain.Trophy;
 import com.umc.product.community.domain.Trophy.ChallengerId;

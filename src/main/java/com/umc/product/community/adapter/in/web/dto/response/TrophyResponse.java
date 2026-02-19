@@ -1,6 +1,6 @@
 package com.umc.product.community.adapter.in.web.dto.response;
 
-import com.umc.product.community.application.port.in.command.trophy.dto.TrophyInfo;
+import com.umc.product.community.application.port.in.query.dto.TrophyInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "상장 응답")

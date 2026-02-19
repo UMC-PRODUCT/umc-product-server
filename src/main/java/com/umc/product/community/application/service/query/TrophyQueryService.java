@@ -2,8 +2,8 @@ package com.umc.product.community.application.service.query;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import com.umc.product.community.application.port.in.command.trophy.dto.TrophyInfo;
 import com.umc.product.community.application.port.in.query.GetTrophyListUseCase;
+import com.umc.product.community.application.port.in.query.dto.TrophyInfo;
 import com.umc.product.community.application.port.in.query.dto.TrophySearchQuery;
 import com.umc.product.community.application.port.out.trophy.LoadTrophyPort;
 import com.umc.product.community.domain.Trophy;

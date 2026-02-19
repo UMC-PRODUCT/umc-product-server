@@ -2,7 +2,12 @@ package com.umc.product.community.application.port.in.query.dto;
 
 import com.umc.product.community.domain.enums.Category;
 import java.time.Instant;
+import lombok.Builder;
 
+/**
+ * {@link com.umc.product.community.application.port.out.dto.PostSearchData} 에서 만들어졌습니다.
+ */
+@Builder
 public record PostSearchResult(
     Long postId,
     String title,
@@ -28,15 +33,15 @@ public record PostSearchResult(
         Instant createdAt,
         MatchType matchType
     ) {
-        return new PostSearchResult(
-            postId,
-            title,
-            truncateContent(content, 100),
-            category,
-            likeCount,
-            createdAt,
-            matchType
-        );
+        return PostSearchResult.builder()
+            .postId(postId)
+            .title(title)
+            .contentPreview(truncateContent(content, 100))
+            .category(category)
+            .likeCount(likeCount)
+            .createdAt(createdAt)
+            .matchType(matchType)
+            .build();
     }
 
     private static String truncateContent(String content, int maxLength) {

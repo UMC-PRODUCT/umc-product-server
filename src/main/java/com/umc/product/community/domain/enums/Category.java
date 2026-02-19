@@ -5,5 +5,10 @@ public enum Category {
     HABIT,       // 취미
     QUESTION,    // 질문
     INFORMATION, // 정보
-    FREE         // 자유
+    FREE,         // 자유
+    ;
+
+    public boolean isLightning() {
+        return this == LIGHTNING;
+    }
 }

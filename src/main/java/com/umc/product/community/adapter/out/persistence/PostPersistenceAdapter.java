@@ -2,7 +2,6 @@ package com.umc.product.community.adapter.out.persistence;
 
 import com.umc.product.community.application.port.in.command.post.TogglePostLikeUseCase.LikeResult;
 import com.umc.product.community.application.port.in.query.dto.PostSearchQuery;
-import com.umc.product.community.application.port.out.dto.PostSearchData;
 import com.umc.product.community.application.port.out.dto.PostWithAuthor;
 import com.umc.product.community.application.port.out.post.LoadPostPort;
 import com.umc.product.community.application.port.out.post.SavePostPort;
@@ -23,6 +22,8 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     private final PostRepository postRepository;
     private final PostQueryRepository postQueryRepository;
     // private final PostLikeRepository postLikeRepository;
+
+    // ================= SavePostPort 구현 =================
 
     @Override
     public Post save(Post post) {
@@ -61,6 +62,8 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
         postRepository.deleteById(postId);
     }
 
+    // ================= LoadPostPort 구현 =================
+
     @Override
     public Page<Post> findAllByQuery(PostSearchQuery query, Pageable pageable) {
         return postQueryRepository.findAllByQuery(query, pageable);
@@ -70,6 +73,21 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     public Optional<Post> findById(Long postId) {
         return postRepository.findById(postId)
             .map(PostJpaEntity::toDomain);
+    }
+
+    @Override
+    public Page<Post> findByAuthorChallengerId(Long challengerId, Pageable pageable) {
+        return postQueryRepository.findByAuthorChallengerId(challengerId, pageable);
+    }
+
+    @Override
+    public Page<Post> findCommentedPostsByChallengerId(Long challengerId, Pageable pageable) {
+        return postQueryRepository.findCommentedPostsByChallengerId(challengerId, pageable);
+    }
+
+    @Override
+    public Page<Post> findScrappedPostsByChallengerId(Long challengerId, Pageable pageable) {
+        return postQueryRepository.findScrappedPostsByChallengerId(challengerId, pageable);
     }
 
     @Override
@@ -100,7 +118,7 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     }
 
     @Override
-    public Page<PostSearchData> searchByKeyword(String keyword, Pageable pageable) {
+    public Page<Post> searchByKeyword(String keyword, Pageable pageable) {
         return postQueryRepository.searchByKeyword(keyword, pageable);
     }
 
@@ -114,20 +132,5 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     @Override
     public Map<Long, Long> findAuthorIdsByPostIds(List<Long> postIds) {
         return postRepository.findAuthorIdsMapByPostIds(postIds);
-    }
-
-    @Override
-    public Page<Post> findByAuthorChallengerId(Long challengerId, Pageable pageable) {
-        return postQueryRepository.findByAuthorChallengerId(challengerId, pageable);
-    }
-
-    @Override
-    public Page<Post> findCommentedPostsByChallengerId(Long challengerId, Pageable pageable) {
-        return postQueryRepository.findCommentedPostsByChallengerId(challengerId, pageable);
-    }
-
-    @Override
-    public Page<Post> findScrappedPostsByChallengerId(Long challengerId, Pageable pageable) {
-        return postQueryRepository.findScrappedPostsByChallengerId(challengerId, pageable);
     }
 }

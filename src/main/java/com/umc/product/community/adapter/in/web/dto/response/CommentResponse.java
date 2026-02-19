@@ -1,7 +1,7 @@
 package com.umc.product.community.adapter.in.web.dto.response;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.community.application.port.in.command.comment.dto.CommentInfo;
+import com.umc.product.community.application.port.in.query.dto.CommentInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 

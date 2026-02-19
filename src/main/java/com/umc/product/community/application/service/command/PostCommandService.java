@@ -7,9 +7,9 @@ import com.umc.product.community.application.port.in.command.post.UpdateLightnin
 import com.umc.product.community.application.port.in.command.post.UpdatePostUseCase;
 import com.umc.product.community.application.port.in.command.post.dto.CreateLightningCommand;
 import com.umc.product.community.application.port.in.command.post.dto.CreatePostCommand;
-import com.umc.product.community.application.port.in.command.post.dto.PostInfo;
 import com.umc.product.community.application.port.in.command.post.dto.UpdateLightningCommand;
 import com.umc.product.community.application.port.in.command.post.dto.UpdatePostCommand;
+import com.umc.product.community.application.port.in.query.dto.PostInfo;
 import com.umc.product.community.application.port.out.dto.PostWithAuthor;
 import com.umc.product.community.application.port.out.post.LoadPostPort;
 import com.umc.product.community.application.port.out.post.SavePostPort;

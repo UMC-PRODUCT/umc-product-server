@@ -3,7 +3,7 @@ package com.umc.product.community.application.service.query;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.community.application.port.in.command.post.dto.PostInfo;
+import com.umc.product.community.adapter.in.web.dto.response.PostResponse;
 import com.umc.product.community.application.port.in.query.GetCommentedPostsUseCase;
 import com.umc.product.community.application.port.in.query.GetMyPostsUseCase;
 import com.umc.product.community.application.port.in.query.GetPostDetailUseCase;
@@ -11,10 +11,9 @@ import com.umc.product.community.application.port.in.query.GetPostListUseCase;
 import com.umc.product.community.application.port.in.query.GetScrappedPostsUseCase;
 import com.umc.product.community.application.port.in.query.SearchPostUseCase;
 import com.umc.product.community.application.port.in.query.dto.PostDetailInfo;
+import com.umc.product.community.application.port.in.query.dto.PostInfo;
 import com.umc.product.community.application.port.in.query.dto.PostSearchQuery;
-import com.umc.product.community.application.port.in.query.dto.PostSearchResult;
 import com.umc.product.community.application.port.out.comment.LoadCommentPort;
-import com.umc.product.community.application.port.out.dto.PostSearchData;
 import com.umc.product.community.application.port.out.dto.PostWithAuthor;
 import com.umc.product.community.application.port.out.post.LoadPostPort;
 import com.umc.product.community.application.port.out.scrap.LoadScrapPort;
@@ -103,10 +102,20 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
     }
 
     @Override
-    public Page<PostSearchResult> search(String keyword, Pageable pageable) {
-        Page<PostSearchData> searchDataPage = loadPostPort.searchByKeyword(keyword, pageable);
+    public Page<PostResponse> search(String keyword, Pageable pageable) {
+        Page<Post> searchDataPage = loadPostPort.searchByKeyword(keyword, pageable);
 
-        return searchDataPage.map(PostSearchData::toResult);
+        return searchDataPage.map(
+            data -> {
+                ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(
+                    data.getAuthorChallengerId());
+                MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
+
+                return PostResponse.from(data, memberInfo, challengerInfo);
+            }
+        );
+
+//        return searchDataPage.map(PostSearchData::toResult);
     }
 
     @Override

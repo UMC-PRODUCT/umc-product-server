@@ -1,6 +1,6 @@
 package com.umc.product.community.application.port.in.query;
 
-import com.umc.product.community.application.port.in.command.comment.dto.CommentInfo;
+import com.umc.product.community.application.port.in.query.dto.CommentInfo;
 import java.util.List;
 
 public interface GetCommentListUseCase {
