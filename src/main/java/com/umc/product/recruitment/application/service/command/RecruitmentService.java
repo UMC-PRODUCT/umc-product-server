@@ -176,6 +176,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
         }
 
+        validateApplyWindow(recruitment);
+
         Long formId = recruitment.getFormId();
         if (formId == null) {
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
@@ -220,6 +222,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
         }
 
+        validateApplyWindow(recruitment);
+
         Long formId = recruitment.getFormId();
         if (formId == null) {
             throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
@@ -255,6 +259,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         if (!recruitment.isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
         }
+
+        validateApplyWindow(recruitment);
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
@@ -1061,6 +1067,8 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         if (!recruitment.isPublished()) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
         }
+
+        validateApplyWindow(recruitment);
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
