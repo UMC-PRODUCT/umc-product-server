@@ -20,6 +20,7 @@ import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
+import com.umc.product.global.exception.BusinessException;
 import com.umc.product.member.domain.Member;
 import com.umc.product.organization.application.port.in.query.GetSchoolAccessContextUseCase;
 import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
@@ -34,7 +35,6 @@ import com.umc.product.support.TestMemberRepository;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.Instant;
 import java.util.List;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -462,7 +462,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
 
             // when & then
             assertThatThrownBy(() -> getSchoolAccessContextUseCase.getContext(member.getId()))
-                .isInstanceOf(IllegalStateException.class);
+                .isInstanceOf(BusinessException.class);
         }
     }
 
