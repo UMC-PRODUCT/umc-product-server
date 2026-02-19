@@ -1122,7 +1122,6 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         Instant now = Instant.now();
         Long recruitmentId = command.recruitmentId();
 
-        // 도메인 메서드 기반으로 리팩토링
         // 수정 가능 여부 검증
         validateNoPastChange(now, existing, command.schedule());
         validateApplyStartFrozenAfterStarted(now, existing, command.schedule());
@@ -2128,8 +2127,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             return;
         }
 
-        boolean alreadyStarted = !now.isBefore(apply.getStartsAt());
-        if (alreadyStarted && patch.applyStartAt() != null && !patch.applyStartAt().equals(apply.getStartsAt())) {
+        if (apply.isStarted(now) && patch.applyStartAt() != null && !patch.applyStartAt().equals(apply.getStartsAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
                 RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_START_FROZEN);
         }
@@ -2146,8 +2144,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             return;
         }
 
-        boolean isOpen = !now.isBefore(apply.getStartsAt()) && now.isBefore(apply.getEndsAt());
-        if (isOpen && patch.applyEndAt().isBefore(apply.getEndsAt())) {
+        if (apply.isActive(now) && patch.applyEndAt().isBefore(apply.getEndsAt())) {
             throw new BusinessException(Domain.RECRUITMENT,
                 RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_END_SHORTEN_FORBIDDEN);
         }
