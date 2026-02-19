@@ -5,6 +5,7 @@ import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 public record WorkbookSubmissionInfo(
         Long challengerWorkbookId,
         Long challengerId,
+        String memberName,
         String challengerName,
         String profileImageUrl,
         String schoolName,

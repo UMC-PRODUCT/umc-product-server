@@ -32,6 +32,7 @@ public class WorkbookSubmissionQueryRepository {
                 .select(Projections.constructor(WorkbookSubmissionInfo.class,
                         challengerWorkbook.id,
                         challenger.id,
+                        member.name,
                         member.nickname,
                         member.profileImageId.stringValue(),
                         school.name,

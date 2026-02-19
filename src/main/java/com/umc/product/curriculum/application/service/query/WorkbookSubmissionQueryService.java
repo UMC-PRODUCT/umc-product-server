@@ -49,6 +49,7 @@ public class WorkbookSubmissionQueryService implements
                 .map(s -> new WorkbookSubmissionInfo(
                         s.challengerWorkbookId(),
                         s.challengerId(),
+                        s.memberName(),
                         s.challengerName(),
                         urlMap.getOrDefault(s.profileImageUrl(), s.profileImageUrl()),
                         s.schoolName(),
