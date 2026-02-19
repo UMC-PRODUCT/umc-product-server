@@ -1216,29 +1216,19 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         RecruitmentSchedule applyWindow = loadRecruitmentSchedulePort
             .findByRecruitmentIdAndType(recruitment.getId(), RecruitmentScheduleType.APPLY_WINDOW);
 
-        if (applyWindow == null) {
+        if (applyWindow == null || applyWindow.getStartsAt() == null || applyWindow.getEndsAt() == null) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_WINDOW_NOT_SET);
-        }
-
-        Instant start = applyWindow.getStartsAt();
-        Instant end = applyWindow.getEndsAt();
-
-        if (start == null || end == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_WINDOW_NOT_SET);
-        }
-
-        // start < end 기본 검증
-        if (!start.isBefore(end)) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_WINDOW_INVALID);
         }
 
         Instant now = Instant.now();
 
-        if (now.isBefore(start)) {
+        // 2. 시작 전 체크
+        if (!applyWindow.isStarted(now)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_NOT_STARTED);
         }
 
-        if (!now.isBefore(end)) {
+        // 3. 마감 후 체크
+        if (applyWindow.isPassed(now)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_CLOSED);
         }
     }
