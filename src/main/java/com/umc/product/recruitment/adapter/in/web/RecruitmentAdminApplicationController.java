@@ -1,5 +1,8 @@
 package com.umc.product.recruitment.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.response.ApplicationListForAdminResponse;
@@ -24,6 +27,10 @@ public class RecruitmentAdminApplicationController {
     private final GetApplicationListForAdminUseCase getApplicationListForAdminUseCase;
 
     @GetMapping("/applications")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.MANAGE
+    )
     @Operation(
         summary = "(총괄) 지원자 관리 리스트 조회",
         description = """

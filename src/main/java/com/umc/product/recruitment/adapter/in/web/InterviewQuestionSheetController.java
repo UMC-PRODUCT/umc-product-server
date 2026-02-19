@@ -1,5 +1,8 @@
 package com.umc.product.recruitment.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateInterviewSheetQuestionRequest;
@@ -91,6 +94,10 @@ public class InterviewQuestionSheetController {
     }
 
     @PostMapping("/questions")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.WRITE
+    )
     @Operation(
         summary = "면접 질문지에 질문 등록",
         description = "현재 선택한 파트(COMMON/파트)에 사전 질문을 등록합니다."
@@ -107,6 +114,10 @@ public class InterviewQuestionSheetController {
     }
 
     @PatchMapping("/questions/{questionId}")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.EDIT
+    )
     @Operation(
         summary = "면접 질문지에 등록된 질문 수정",
         description = "사전 면접 질문의 내용을 수정합니다."
@@ -129,6 +140,10 @@ public class InterviewQuestionSheetController {
     }
 
     @DeleteMapping("/questions/{questionId}")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.DELETE
+    )
     @Operation(
         summary = "면접 질문지에 등록된 질문 삭제",
         description = "사전 면접 질문을 삭제합니다."
@@ -148,6 +163,10 @@ public class InterviewQuestionSheetController {
     }
 
     @PatchMapping("/questions/reorder")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.EDIT
+    )
     @Operation(
         summary = "면접 질문지 질문 순서 변경",
         description = """
