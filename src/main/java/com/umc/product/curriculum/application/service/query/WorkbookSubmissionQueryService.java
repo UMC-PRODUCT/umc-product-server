@@ -13,7 +13,10 @@ import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadWorkbookSubmissionPort;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,10 +33,30 @@ public class WorkbookSubmissionQueryService implements
     private final LoadChallengerWorkbookPort loadChallengerWorkbookPort;
     private final LoadOriginalWorkbookPort loadOriginalWorkbookPort;
     private final GetStudyGroupUseCase getStudyGroupUseCase;
+    private final GetFileUseCase getFileUseCase;
 
     @Override
     public List<WorkbookSubmissionInfo> getSubmissions(GetWorkbookSubmissionsQuery query) {
-        return loadWorkbookSubmissionPort.findSubmissions(query);
+        List<WorkbookSubmissionInfo> submissions = loadWorkbookSubmissionPort.findSubmissions(query);
+
+        Map<String, String> urlMap = submissions.stream()
+                .map(WorkbookSubmissionInfo::profileImageUrl)
+                .filter(id -> id != null)
+                .distinct()
+                .collect(Collectors.toMap(id -> id, id -> getFileUseCase.getById(id).fileLink()));
+
+        return submissions.stream()
+                .map(s -> new WorkbookSubmissionInfo(
+                        s.challengerWorkbookId(),
+                        s.challengerId(),
+                        s.challengerName(),
+                        urlMap.getOrDefault(s.profileImageUrl(), s.profileImageUrl()),
+                        s.schoolName(),
+                        s.part(),
+                        s.workbookTitle(),
+                        s.status()
+                ))
+                .toList();
     }
 
     @Override
