@@ -1,7 +1,6 @@
 package com.umc.product.notice.application.service.command;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.notice.application.port.in.command.ManageNoticeReadUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;

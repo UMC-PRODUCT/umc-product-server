@@ -36,17 +36,17 @@ class RefreshFcmTokenUseCaseTest extends UseCaseTestSupport {
         void 토큰이_없는_회원이_처음_등록하면_새_토큰이_저장된다() {
             // given
             Member member = saveMemberPort.save(Member.builder()
-                    .name("테스트")
-                    .nickname("test")
-                    .email("test@umc.com")
-                    .build());
+                .name("테스트")
+                .nickname("test")
+                .email("test@umc.com")
+                .build());
 
             given(getChallengerUseCase.getMemberChallengerList(member.getId()))
-                    .willReturn(Collections.emptyList());
+                .willReturn(Collections.emptyList());
 
             // when
             refreshFcmTokenUseCase.refreshTokenAndSubscriptions(
-                    member.getId(), new FcmRegistrationRequest("new-fcm-token"));
+                member.getId(), new FcmRegistrationRequest("new-fcm-token"));
 
             // then
             FcmToken saved = loadFcmPort.findByMemberId(member.getId());
@@ -58,18 +58,18 @@ class RefreshFcmTokenUseCaseTest extends UseCaseTestSupport {
         void 기존_토큰이_있으면_새_토큰으로_업데이트된다() {
             // given
             Member member = saveMemberPort.save(Member.builder()
-                    .name("테스트")
-                    .nickname("test")
-                    .email("test2@umc.com")
-                    .build());
+                .name("테스트")
+                .nickname("test")
+                .email("test2@umc.com")
+                .build());
             saveFcmPort.save(FcmToken.createFCMToken(member, "old-fcm-token"));
 
             given(getChallengerUseCase.getMemberChallengerList(member.getId()))
-                    .willReturn(Collections.emptyList());
+                .willReturn(Collections.emptyList());
 
             // when
             refreshFcmTokenUseCase.refreshTokenAndSubscriptions(
-                    member.getId(), new FcmRegistrationRequest("updated-fcm-token"));
+                member.getId(), new FcmRegistrationRequest("updated-fcm-token"));
 
             // then
             FcmToken updated = loadFcmPort.findByMemberId(member.getId());

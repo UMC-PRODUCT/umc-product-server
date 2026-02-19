@@ -14,7 +14,6 @@ import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

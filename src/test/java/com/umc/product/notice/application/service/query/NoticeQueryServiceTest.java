@@ -33,6 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class NoticeQueryServiceTest {
 
+    private static final Long NOTICE_ID = 100L;
     @Mock
     LoadNoticePort loadNoticePort;
     @Mock
@@ -49,11 +50,8 @@ class NoticeQueryServiceTest {
     GetChallengerUseCase getChallengerUseCase;
     @Mock
     GetNoticeContentUseCase getNoticeContentUseCase;
-
     @InjectMocks
     NoticeQueryService sut;
-
-    private static final Long NOTICE_ID = 100L;
 
     private ChallengerInfo challenger(Long challengerId, Long memberId, Long gisuId) {
         return ChallengerInfo.builder()

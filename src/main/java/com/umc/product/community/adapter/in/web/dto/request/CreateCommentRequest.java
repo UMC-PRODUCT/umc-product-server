@@ -1,13 +1,13 @@
 package com.umc.product.community.adapter.in.web.dto.request;
 
-import com.umc.product.community.application.port.in.post.command.CreateCommentCommand;
+import com.umc.product.community.application.port.in.command.comment.dto.CreateCommentCommand;
 import jakarta.validation.constraints.NotBlank;
 
 public record CreateCommentRequest(
-        @NotBlank(message = "댓글 내용은 필수입니다")
-        String content,
+    @NotBlank(message = "댓글 내용은 필수입니다")
+    String content,
 
-        Long parentId
+    Long parentId
 ) {
     public CreateCommentCommand toCommand(Long postId, Long challengerId) {
         return new CreateCommentCommand(postId, challengerId, content, parentId);

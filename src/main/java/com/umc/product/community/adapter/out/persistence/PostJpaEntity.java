@@ -52,6 +52,8 @@ public class PostJpaEntity extends BaseEntity {
     @Column(nullable = false)
     private boolean anonymous;
 
+    // TODO: 이건 또 왜 Embeddable 같은걸로 안 뺀 ...
+
     // Lightning 관련 필드 (nullable)
     private LocalDateTime meetAt;
 
@@ -99,16 +101,16 @@ public class PostJpaEntity extends BaseEntity {
         }
 
         return new PostJpaEntity(
-                post.getTitle(),
-                post.getContent(),
-                post.getCategory(),
-                authorChallengerId,
-                DEFAULT_REGION,
-                DEFAULT_ANONYMOUS,
-                meetAt,
-                location,
-                maxParticipants,
-                openChatUrl
+            post.getTitle(),
+            post.getContent(),
+            post.getCategory(),
+            authorChallengerId,
+            DEFAULT_REGION,
+            DEFAULT_ANONYMOUS,
+            meetAt,
+            location,
+            maxParticipants,
+            openChatUrl
         );
     }
 
@@ -117,24 +119,28 @@ public class PostJpaEntity extends BaseEntity {
         return toDomain(null);
     }
 
+    // 조회한 챌린저 ID를 받아서 도메인 객체를 생성...
+    // TODO: 왜?
+    // TODO: 아키텍쳐 위반입니다, 하위 객체에서 상위 객체를 생성하는 정적 팩토리 메소드를 구성하고 있습니다.
     public Post toDomain(Long viewerChallengerId) {
         Post.LightningInfo lightningInfo = null;
-        if (category == Category.LIGHTNING && meetAt != null) {
+        if (category.isLightning() && meetAt != null) {
             lightningInfo = new Post.LightningInfo(meetAt, location, maxParticipants, openChatUrl);
         }
 
+        // TODO: GET THE FUCK OUT OF HERE
         boolean liked = viewerChallengerId != null && isLikedBy(viewerChallengerId);
 
         return Post.reconstruct(
-                new PostId(id),
-                title,
-                content,
-                category,
-                authorChallengerId,
-                lightningInfo,
-                getLikeCount(),
-                liked,
-                getCreatedAt()
+            new PostId(id),
+            title,
+            content,
+            category,
+            authorChallengerId,
+            lightningInfo,
+            getLikeCount(),
+            liked,
+            getCreatedAt()
         );
     }
 

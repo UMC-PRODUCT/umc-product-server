@@ -19,10 +19,10 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResu
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.dto.NoticeTargetInfo;
+import com.umc.product.support.DocumentationTest;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo.VoteOptionInfo;
 import com.umc.product.survey.domain.enums.FormOpenStatus;
-import com.umc.product.support.DocumentationTest;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -63,7 +63,8 @@ public class NoticeQueryControllerTest extends DocumentationTest {
                     parameterWithName("gisuId").description("기수 ID (필수)"),
                     parameterWithName("chapterId").optional().description("지부 ID"),
                     parameterWithName("schoolId").optional().description("학교 ID"),
-                    parameterWithName("part").optional().description("파트 (PLAN, DESIGN, WEB, IOS, ANDROID, SPRINGBOOT, NODEJS)"),
+                    parameterWithName("part").optional()
+                        .description("파트 (PLAN, DESIGN, WEB, IOS, ANDROID, SPRINGBOOT, NODEJS)"),
                     parameterWithName("page").optional().description("페이지 번호 (기본값: 0)"),
                     parameterWithName("size").optional().description("페이지 크기 (기본값: 10)"),
                     parameterWithName("sort").optional().description("정렬 기준 (기본값: createdAt,desc)")
@@ -75,16 +76,23 @@ public class NoticeQueryControllerTest extends DocumentationTest {
                     fieldWithPath("result.content[].id").type(JsonFieldType.STRING).description("공지사항 ID"),
                     fieldWithPath("result.content[].title").type(JsonFieldType.STRING).description("공지 제목"),
                     fieldWithPath("result.content[].content").type(JsonFieldType.STRING).description("공지 내용"),
-                    fieldWithPath("result.content[].shouldSendNotification").type(JsonFieldType.BOOLEAN).description("알림 발송 여부"),
+                    fieldWithPath("result.content[].shouldSendNotification").type(JsonFieldType.BOOLEAN)
+                        .description("알림 발송 여부"),
                     fieldWithPath("result.content[].viewCount").type(JsonFieldType.STRING).description("조회수"),
                     fieldWithPath("result.content[].createdAt").type(JsonFieldType.STRING).description("생성 일시"),
                     fieldWithPath("result.content[].targetInfo").type(JsonFieldType.OBJECT).description("공지 대상 정보"),
-                    fieldWithPath("result.content[].targetInfo.targetGisuId").optional().type(JsonFieldType.STRING).description("대상 기수 ID"),
-                    fieldWithPath("result.content[].targetInfo.targetChapterId").optional().type(JsonFieldType.STRING).description("대상 지부 ID"),
-                    fieldWithPath("result.content[].targetInfo.targetSchoolId").optional().type(JsonFieldType.STRING).description("대상 학교 ID"),
-                    fieldWithPath("result.content[].targetInfo.targetParts").optional().type(JsonFieldType.ARRAY).description("대상 파트 목록"),
-                    fieldWithPath("result.content[].authorChallengerId").optional().type(JsonFieldType.NULL).description("작성자 챌린저 ID (deprecated, null)"),
-                    fieldWithPath("result.content[].authorMemberId").type(JsonFieldType.STRING).description("작성자 멤버 ID"),
+                    fieldWithPath("result.content[].targetInfo.targetGisuId").optional().type(JsonFieldType.STRING)
+                        .description("대상 기수 ID"),
+                    fieldWithPath("result.content[].targetInfo.targetChapterId").optional().type(JsonFieldType.STRING)
+                        .description("대상 지부 ID"),
+                    fieldWithPath("result.content[].targetInfo.targetSchoolId").optional().type(JsonFieldType.STRING)
+                        .description("대상 학교 ID"),
+                    fieldWithPath("result.content[].targetInfo.targetParts").optional().type(JsonFieldType.ARRAY)
+                        .description("대상 파트 목록"),
+                    fieldWithPath("result.content[].authorChallengerId").optional().type(JsonFieldType.NULL)
+                        .description("작성자 챌린저 ID (deprecated, null)"),
+                    fieldWithPath("result.content[].authorMemberId").type(JsonFieldType.STRING)
+                        .description("작성자 멤버 ID"),
                     fieldWithPath("result.content[].authorNickname").type(JsonFieldType.STRING).description("작성자 닉네임"),
                     fieldWithPath("result.content[].authorName").type(JsonFieldType.STRING).description("작성자 이름"),
                     fieldWithPath("result.page").type(JsonFieldType.STRING).description("현재 페이지 번호"),
@@ -137,16 +145,23 @@ public class NoticeQueryControllerTest extends DocumentationTest {
                     fieldWithPath("result.content[].id").type(JsonFieldType.STRING).description("공지사항 ID"),
                     fieldWithPath("result.content[].title").type(JsonFieldType.STRING).description("공지 제목"),
                     fieldWithPath("result.content[].content").type(JsonFieldType.STRING).description("공지 내용"),
-                    fieldWithPath("result.content[].shouldSendNotification").type(JsonFieldType.BOOLEAN).description("알림 발송 여부"),
+                    fieldWithPath("result.content[].shouldSendNotification").type(JsonFieldType.BOOLEAN)
+                        .description("알림 발송 여부"),
                     fieldWithPath("result.content[].viewCount").type(JsonFieldType.STRING).description("조회수"),
                     fieldWithPath("result.content[].createdAt").type(JsonFieldType.STRING).description("생성 일시"),
                     fieldWithPath("result.content[].targetInfo").type(JsonFieldType.OBJECT).description("공지 대상 정보"),
-                    fieldWithPath("result.content[].targetInfo.targetGisuId").optional().type(JsonFieldType.STRING).description("대상 기수 ID"),
-                    fieldWithPath("result.content[].targetInfo.targetChapterId").optional().type(JsonFieldType.NULL).description("대상 지부 ID"),
-                    fieldWithPath("result.content[].targetInfo.targetSchoolId").optional().type(JsonFieldType.NULL).description("대상 학교 ID"),
-                    fieldWithPath("result.content[].targetInfo.targetParts").optional().type(JsonFieldType.ARRAY).description("대상 파트 목록"),
-                    fieldWithPath("result.content[].authorChallengerId").optional().type(JsonFieldType.NULL).description("작성자 챌린저 ID (deprecated, null)"),
-                    fieldWithPath("result.content[].authorMemberId").type(JsonFieldType.STRING).description("작성자 멤버 ID"),
+                    fieldWithPath("result.content[].targetInfo.targetGisuId").optional().type(JsonFieldType.STRING)
+                        .description("대상 기수 ID"),
+                    fieldWithPath("result.content[].targetInfo.targetChapterId").optional().type(JsonFieldType.NULL)
+                        .description("대상 지부 ID"),
+                    fieldWithPath("result.content[].targetInfo.targetSchoolId").optional().type(JsonFieldType.NULL)
+                        .description("대상 학교 ID"),
+                    fieldWithPath("result.content[].targetInfo.targetParts").optional().type(JsonFieldType.ARRAY)
+                        .description("대상 파트 목록"),
+                    fieldWithPath("result.content[].authorChallengerId").optional().type(JsonFieldType.NULL)
+                        .description("작성자 챌린저 ID (deprecated, null)"),
+                    fieldWithPath("result.content[].authorMemberId").type(JsonFieldType.STRING)
+                        .description("작성자 멤버 ID"),
                     fieldWithPath("result.content[].authorNickname").type(JsonFieldType.STRING).description("작성자 닉네임"),
                     fieldWithPath("result.content[].authorName").type(JsonFieldType.STRING).description("작성자 이름"),
                     fieldWithPath("result.page").type(JsonFieldType.STRING).description("현재 페이지 번호"),
@@ -198,14 +213,17 @@ public class NoticeQueryControllerTest extends DocumentationTest {
                     fieldWithPath("result.id").type(JsonFieldType.STRING).description("공지사항 ID"),
                     fieldWithPath("result.title").type(JsonFieldType.STRING).description("공지 제목"),
                     fieldWithPath("result.content").type(JsonFieldType.STRING).description("공지 내용"),
-                    fieldWithPath("result.authorChallengerId").optional().type(JsonFieldType.NULL).description("작성자 챌린저 ID (deprecated, null)"),
+                    fieldWithPath("result.authorChallengerId").optional().type(JsonFieldType.NULL)
+                        .description("작성자 챌린저 ID (deprecated, null)"),
                     fieldWithPath("result.authorMemberId").type(JsonFieldType.STRING).description("작성자 멤버 ID"),
                     fieldWithPath("result.vote").type(JsonFieldType.OBJECT).description("투표 정보"),
                     fieldWithPath("result.vote.voteId").type(JsonFieldType.STRING).description("투표 ID"),
                     fieldWithPath("result.vote.title").type(JsonFieldType.STRING).description("투표 제목"),
                     fieldWithPath("result.vote.isAnonymous").type(JsonFieldType.BOOLEAN).description("익명 투표 여부"),
-                    fieldWithPath("result.vote.allowMultipleChoice").type(JsonFieldType.BOOLEAN).description("복수 선택 허용 여부"),
-                    fieldWithPath("result.vote.status").type(JsonFieldType.STRING).description("투표 상태 (NOT_STARTED, OPEN, CLOSED)"),
+                    fieldWithPath("result.vote.allowMultipleChoice").type(JsonFieldType.BOOLEAN)
+                        .description("복수 선택 허용 여부"),
+                    fieldWithPath("result.vote.status").type(JsonFieldType.STRING)
+                        .description("투표 상태 (NOT_STARTED, OPEN, CLOSED)"),
                     fieldWithPath("result.vote.startsAt").type(JsonFieldType.STRING).description("투표 시작 시각"),
                     fieldWithPath("result.vote.endsAtExclusive").type(JsonFieldType.STRING).description("투표 종료 시각"),
                     fieldWithPath("result.vote.startDateKst").type(JsonFieldType.STRING).description("투표 시작일 (KST)"),
@@ -216,7 +234,8 @@ public class NoticeQueryControllerTest extends DocumentationTest {
                     fieldWithPath("result.vote.options[].content").type(JsonFieldType.STRING).description("옵션 내용"),
                     fieldWithPath("result.vote.options[].voteCount").type(JsonFieldType.STRING).description("투표 수"),
                     fieldWithPath("result.vote.options[].voteRate").type(JsonFieldType.STRING).description("투표 비율"),
-                    fieldWithPath("result.vote.mySelectedOptionIds").type(JsonFieldType.ARRAY).description("내가 선택한 옵션 ID 목록"),
+                    fieldWithPath("result.vote.mySelectedOptionIds").type(JsonFieldType.ARRAY)
+                        .description("내가 선택한 옵션 ID 목록"),
                     fieldWithPath("result.images").type(JsonFieldType.ARRAY).description("이미지 목록"),
                     fieldWithPath("result.images[].id").type(JsonFieldType.STRING).description("이미지 ID"),
                     fieldWithPath("result.images[].url").type(JsonFieldType.STRING).description("이미지 URL"),
@@ -226,10 +245,14 @@ public class NoticeQueryControllerTest extends DocumentationTest {
                     fieldWithPath("result.links[].url").type(JsonFieldType.STRING).description("링크 URL"),
                     fieldWithPath("result.links[].displayOrder").type(JsonFieldType.STRING).description("표시 순서"),
                     fieldWithPath("result.targetInfo").type(JsonFieldType.OBJECT).description("공지 대상 정보"),
-                    fieldWithPath("result.targetInfo.targetGisuId").optional().type(JsonFieldType.STRING).description("대상 기수 ID"),
-                    fieldWithPath("result.targetInfo.targetChapterId").optional().type(JsonFieldType.STRING).description("대상 지부 ID"),
-                    fieldWithPath("result.targetInfo.targetSchoolId").optional().type(JsonFieldType.STRING).description("대상 학교 ID"),
-                    fieldWithPath("result.targetInfo.targetParts").optional().type(JsonFieldType.ARRAY).description("대상 파트 목록"),
+                    fieldWithPath("result.targetInfo.targetGisuId").optional().type(JsonFieldType.STRING)
+                        .description("대상 기수 ID"),
+                    fieldWithPath("result.targetInfo.targetChapterId").optional().type(JsonFieldType.STRING)
+                        .description("대상 지부 ID"),
+                    fieldWithPath("result.targetInfo.targetSchoolId").optional().type(JsonFieldType.STRING)
+                        .description("대상 학교 ID"),
+                    fieldWithPath("result.targetInfo.targetParts").optional().type(JsonFieldType.ARRAY)
+                        .description("대상 파트 목록"),
                     fieldWithPath("result.viewCount").type(JsonFieldType.STRING).description("조회수"),
                     fieldWithPath("result.createdAt").type(JsonFieldType.STRING).description("생성 일시")
                 )
@@ -291,7 +314,8 @@ public class NoticeQueryControllerTest extends DocumentationTest {
                     parameterWithName("noticeId").description("공지사항 ID")
                 ),
                 queryParameters(
-                    parameterWithName("cursorId").optional().description("커서 ID (읽은 경우: NoticeReadId, 읽지 않은 경우: ChallengerId)"),
+                    parameterWithName("cursorId").optional()
+                        .description("커서 ID (읽은 경우: NoticeReadId, 읽지 않은 경우: ChallengerId)"),
                     parameterWithName("filterType").description("필터 타입 (ALL, CHAPTER, SCHOOL)"),
                     parameterWithName("organizationIds").optional().description("필터 대상 조직 ID 목록"),
                     parameterWithName("status").description("읽음 상태 (READ, UNREAD)")
@@ -302,7 +326,8 @@ public class NoticeQueryControllerTest extends DocumentationTest {
                     fieldWithPath("message").type(JsonFieldType.STRING).description("응답 메시지"),
                     fieldWithPath("result.content[].challengerId").type(JsonFieldType.STRING).description("챌린저 ID"),
                     fieldWithPath("result.content[].name").type(JsonFieldType.STRING).description("챌린저 이름"),
-                    fieldWithPath("result.content[].profileImageUrl").type(JsonFieldType.STRING).description("프로필 이미지 URL"),
+                    fieldWithPath("result.content[].profileImageUrl").type(JsonFieldType.STRING)
+                        .description("프로필 이미지 URL"),
                     fieldWithPath("result.content[].part").type(JsonFieldType.STRING).description("파트"),
                     fieldWithPath("result.content[].schoolId").type(JsonFieldType.STRING).description("학교 ID"),
                     fieldWithPath("result.content[].schoolName").type(JsonFieldType.STRING).description("학교 이름"),

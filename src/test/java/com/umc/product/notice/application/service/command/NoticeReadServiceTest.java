@@ -33,13 +33,19 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class NoticeReadServiceTest {
 
-    @Mock LoadNoticePort loadNoticePort;
-    @Mock LoadNoticeReadPort loadNoticeReadPort;
-    @Mock SaveNoticeReadPort saveNoticeReadPort;
-    @Mock GetChallengerUseCase getChallengerUseCase;
-    @Mock GetNoticeTargetUseCase getNoticeTargetUseCase;
+    @Mock
+    LoadNoticePort loadNoticePort;
+    @Mock
+    LoadNoticeReadPort loadNoticeReadPort;
+    @Mock
+    SaveNoticeReadPort saveNoticeReadPort;
+    @Mock
+    GetChallengerUseCase getChallengerUseCase;
+    @Mock
+    GetNoticeTargetUseCase getNoticeTargetUseCase;
 
-    @InjectMocks NoticeReadService sut;
+    @InjectMocks
+    NoticeReadService sut;
 
     private static final Long NOTICE_ID = 100L;
     private static final Long MEMBER_ID = 1L;
@@ -54,11 +60,11 @@ class NoticeReadServiceTest {
 
     private ChallengerInfo createChallengerInfo() {
         return ChallengerInfo.builder()
-                .challengerId(CHALLENGER_ID)
-                .memberId(MEMBER_ID)
-                .gisuId(GISU_ID)
-                .part(ChallengerPart.SPRINGBOOT)
-                .build();
+            .challengerId(CHALLENGER_ID)
+            .memberId(MEMBER_ID)
+            .gisuId(GISU_ID)
+            .part(ChallengerPart.SPRINGBOOT)
+            .build();
     }
 
     private NoticeTargetInfo createTargetInfo() {
@@ -78,7 +84,7 @@ class NoticeReadServiceTest {
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
             given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID)).willReturn(targetInfo);
             given(getChallengerUseCase.getActiveByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
-                    .willReturn(createChallengerInfo());
+                .willReturn(createChallengerInfo());
             given(loadNoticeReadPort.existsRead(NOTICE_ID, CHALLENGER_ID)).willReturn(false);
 
             // when
@@ -97,7 +103,7 @@ class NoticeReadServiceTest {
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
             given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID)).willReturn(targetInfo);
             given(getChallengerUseCase.getActiveByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
-                    .willReturn(createChallengerInfo());
+                .willReturn(createChallengerInfo());
             given(loadNoticeReadPort.existsRead(NOTICE_ID, CHALLENGER_ID)).willReturn(true);
 
             // when
@@ -114,7 +120,7 @@ class NoticeReadServiceTest {
 
             // when & then
             Assertions.assertThatThrownBy(() -> sut.recordRead(NOTICE_ID, MEMBER_ID))
-                    .isInstanceOf(NoticeDomainException.class);
+                .isInstanceOf(NoticeDomainException.class);
         }
 
         @Test
@@ -126,13 +132,13 @@ class NoticeReadServiceTest {
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
             given(getNoticeTargetUseCase.findByNoticeId(NOTICE_ID)).willReturn(allGisuTarget);
             given(getChallengerUseCase.getLatestActiveChallengerByMemberId(MEMBER_ID))
-                    .willReturn(ChallengerInfoWithStatus.builder()
-                            .challengerId(CHALLENGER_ID)
-                            .memberId(MEMBER_ID)
-                            .gisuId(GISU_ID)
-                            .part(ChallengerPart.SPRINGBOOT)
-                            .status(ChallengerStatus.ACTIVE)
-                            .build());
+                .willReturn(ChallengerInfoWithStatus.builder()
+                    .challengerId(CHALLENGER_ID)
+                    .memberId(MEMBER_ID)
+                    .gisuId(GISU_ID)
+                    .part(ChallengerPart.SPRINGBOOT)
+                    .status(ChallengerStatus.ACTIVE)
+                    .build());
             given(loadNoticeReadPort.existsRead(NOTICE_ID, CHALLENGER_ID)).willReturn(false);
 
             // when

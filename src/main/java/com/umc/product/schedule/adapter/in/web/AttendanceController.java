@@ -4,8 +4,6 @@ import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CheckAttendanceRequest;
@@ -27,7 +25,6 @@ import com.umc.product.schedule.application.port.in.query.GetChallengerAttendanc
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetPendingAttendancesUseCase;
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
-import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

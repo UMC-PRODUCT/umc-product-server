@@ -1,14 +1,14 @@
 package com.umc.product.community.adapter.in.web.dto.request;
 
-import com.umc.product.community.application.port.in.trophy.CreateTrophyCommand;
+import com.umc.product.community.application.port.in.command.trophy.dto.CreateTrophyCommand;
 import java.util.Objects;
 
 public record CreateTrophyRequest(
-        Long challengerId,
-        Integer week,
-        String title,
-        String content,
-        String url
+    Long challengerId,
+    Integer week,
+    String title,
+    String content,
+    String url
 ) {
     public CreateTrophyRequest {
         Objects.requireNonNull(challengerId, "챌린저 ID는 필수입니다");

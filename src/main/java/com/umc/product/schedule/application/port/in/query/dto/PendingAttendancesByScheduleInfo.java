@@ -5,8 +5,7 @@ import java.util.List;
 /**
  * 일정별 승인 대기 출석 목록 정보
  * <p>
- * scheduleId별로 그룹핑된 승인 대기 출석 정보를 담는 DTO.
- * 전체 승인 대기 조회 시 사용.
+ * scheduleId별로 그룹핑된 승인 대기 출석 정보를 담는 DTO. 전체 승인 대기 조회 시 사용.
  */
 public record PendingAttendancesByScheduleInfo(
     Long scheduleId,

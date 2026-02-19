@@ -8,13 +8,9 @@ import java.util.List;
  * <p>
  * 기존 API는 일정별로 개별 호출해야 했으나, 이 API는 한 번에 전체 조회 가능.
  * <p>
- * 조회 대상:
- * - 해당 기수의 활성 출석부에 속한 승인 대기 기록
- * - PRESENT_PENDING, LATE_PENDING, EXCUSED_PENDING 상태
+ * 조회 대상: - 해당 기수의 활성 출석부에 속한 승인 대기 기록 - PRESENT_PENDING, LATE_PENDING, EXCUSED_PENDING 상태
  * <p>
- * 반환 형식:
- * - scheduleId별로 그룹핑
- * - 각 그룹에 일정명과 승인 대기 목록 포함
+ * 반환 형식: - scheduleId별로 그룹핑 - 각 그룹에 일정명과 승인 대기 목록 포함
  */
 public interface GetAllPendingAttendancesUseCase {
 

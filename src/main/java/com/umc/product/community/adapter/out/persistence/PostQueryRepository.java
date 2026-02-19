@@ -1,18 +1,17 @@
 package com.umc.product.community.adapter.out.persistence;
 
-import static com.umc.product.community.adapter.out.persistence.QPostJpaEntity.postJpaEntity;
 import static com.umc.product.community.adapter.out.persistence.QCommentJpaEntity.commentJpaEntity;
+import static com.umc.product.community.adapter.out.persistence.QPostJpaEntity.postJpaEntity;
 import static com.umc.product.community.adapter.out.persistence.QScrapJpaEntity.scrapJpaEntity;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
-import com.umc.product.community.application.port.in.post.query.PostSearchResult.MatchType;
-import com.umc.product.community.application.port.out.PostSearchData;
+import com.umc.product.community.application.port.in.query.dto.PostSearchQuery;
+import com.umc.product.community.application.port.in.query.dto.PostSearchResult.MatchType;
+import com.umc.product.community.application.port.out.dto.PostSearchData;
 import com.umc.product.community.domain.Post;
-import com.umc.product.community.domain.enums.Category;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -31,22 +30,22 @@ public class PostQueryRepository {
         BooleanExpression condition = buildCondition(query);
 
         List<PostJpaEntity> results = queryFactory
-                .selectFrom(postJpaEntity)
-                .where(condition)
-                .orderBy(postJpaEntity.createdAt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+            .selectFrom(postJpaEntity)
+            .where(condition)
+            .orderBy(postJpaEntity.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
         Long totalCount = queryFactory
-                .select(postJpaEntity.count())
-                .from(postJpaEntity)
-                .where(condition)
-                .fetchOne();
+            .select(postJpaEntity.count())
+            .from(postJpaEntity)
+            .where(condition)
+            .fetchOne();
 
         List<Post> posts = results.stream()
-                .map(PostJpaEntity::toDomain)
-                .toList();
+            .map(PostJpaEntity::toDomain)
+            .toList();
 
         return new PageImpl<>(posts, pageable, totalCount != null ? totalCount : 0);
     }
@@ -58,7 +57,7 @@ public class PostQueryRepository {
         return null;
     }
 
-    public Page<PostSearchData> searchByKeyword(String keyword, Pageable pageable) {
+    public Page<Post> searchByKeyword(String keyword, Pageable pageable) {
         if (!StringUtils.hasText(keyword)) {
             return Page.empty(pageable);
         }
@@ -66,32 +65,39 @@ public class PostQueryRepository {
         String searchKeyword = keyword.trim().toLowerCase();
 
         BooleanExpression searchCondition = titleContains(searchKeyword)
-                .or(contentContains(searchKeyword));
+            .or(contentContains(searchKeyword));
 
         NumberExpression<Integer> relevanceScore = createRelevanceScore(searchKeyword);
 
         List<PostJpaEntity> results = queryFactory
-                .selectFrom(postJpaEntity)
-                .where(searchCondition)
-                .orderBy(
-                        relevanceScore.desc(),
-                        postJpaEntity.createdAt.desc()
-                )
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+            .selectFrom(postJpaEntity)
+            .where(searchCondition)
+            .orderBy(
+                relevanceScore.desc(),
+                postJpaEntity.createdAt.desc()
+            )
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
         Long totalCount = queryFactory
-                .select(postJpaEntity.count())
-                .from(postJpaEntity)
-                .where(searchCondition)
-                .fetchOne();
+            .select(postJpaEntity.count())
+            .from(postJpaEntity)
+            .where(searchCondition)
+            .fetchOne();
 
-        List<PostSearchData> searchDataList = results.stream()
-                .map(entity -> toSearchData(entity, searchKeyword))
-                .toList();
+        List<Post> postInfos = results.stream()
+            .map(PostJpaEntity::toDomain)
+            .toList();
 
-        return new PageImpl<>(searchDataList, pageable, totalCount != null ? totalCount : 0);
+        return new PageImpl<>(postInfos, pageable, totalCount != null ? totalCount : 0);
+
+        // TODO: 여기서 PostSearchData 반환하는 중
+//        List<PostSearchData> searchDataList = results.stream()
+//            .map(entity -> toSearchData(entity, searchKeyword))
+//            .toList();
+//
+//        return new PageImpl<>(searchDataList, pageable, totalCount != null ? totalCount : 0);
     }
 
     private BooleanExpression titleContains(String keyword) {
@@ -104,29 +110,20 @@ public class PostQueryRepository {
 
     private NumberExpression<Integer> createRelevanceScore(String keyword) {
         return new CaseBuilder()
-                .when(postJpaEntity.title.lower().startsWith(keyword))
-                .then(100)
-                .when(postJpaEntity.title.lower().contains(keyword))
-                .then(50)
-                .when(postJpaEntity.content.lower().contains(keyword))
-                .then(10)
-                .otherwise(0);
+            .when(postJpaEntity.title.lower().startsWith(keyword))
+            .then(100)
+            .when(postJpaEntity.title.lower().contains(keyword))
+            .then(50)
+            .when(postJpaEntity.content.lower().contains(keyword))
+            .then(10)
+            .otherwise(0);
     }
 
     private PostSearchData toSearchData(PostJpaEntity entity, String keyword) {
         MatchType matchType = determineMatchType(entity, keyword);
         int score = calculateScore(entity, keyword);
 
-        return new PostSearchData(
-                entity.getId(),
-                entity.getTitle(),
-                entity.getContent(),
-                entity.getCategory(),
-                entity.getLikeCount(),
-                entity.getCreatedAt(),
-                matchType,
-                score
-        );
+        return PostSearchData.from(entity, matchType, score);
     }
 
     private MatchType determineMatchType(PostJpaEntity entity, String keyword) {
@@ -158,22 +155,22 @@ public class PostQueryRepository {
      */
     public Page<Post> findByAuthorChallengerId(Long challengerId, Pageable pageable) {
         List<PostJpaEntity> results = queryFactory
-                .selectFrom(postJpaEntity)
-                .where(postJpaEntity.authorChallengerId.eq(challengerId))
-                .orderBy(postJpaEntity.createdAt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+            .selectFrom(postJpaEntity)
+            .where(postJpaEntity.authorChallengerId.eq(challengerId))
+            .orderBy(postJpaEntity.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
         Long totalCount = queryFactory
-                .select(postJpaEntity.count())
-                .from(postJpaEntity)
-                .where(postJpaEntity.authorChallengerId.eq(challengerId))
-                .fetchOne();
+            .select(postJpaEntity.count())
+            .from(postJpaEntity)
+            .where(postJpaEntity.authorChallengerId.eq(challengerId))
+            .fetchOne();
 
         List<Post> posts = results.stream()
-                .map(PostJpaEntity::toDomain)
-                .toList();
+            .map(PostJpaEntity::toDomain)
+            .toList();
 
         return new PageImpl<>(posts, pageable, totalCount != null ? totalCount : 0);
     }
@@ -184,15 +181,15 @@ public class PostQueryRepository {
     public Page<Post> findCommentedPostsByChallengerId(Long challengerId, Pageable pageable) {
         // 1. JOIN과 GROUP BY를 사용하여 단일 쿼리로 조회 (DB에서 정렬)
         List<PostJpaEntity> results = queryFactory
-                .selectFrom(postJpaEntity)
-                .innerJoin(commentJpaEntity)
-                .on(postJpaEntity.id.eq(commentJpaEntity.postId))
-                .where(commentJpaEntity.challengerId.eq(challengerId))
-                .groupBy(postJpaEntity.id)
-                .orderBy(commentJpaEntity.createdAt.max().desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+            .selectFrom(postJpaEntity)
+            .innerJoin(commentJpaEntity)
+            .on(postJpaEntity.id.eq(commentJpaEntity.postId))
+            .where(commentJpaEntity.challengerId.eq(challengerId))
+            .groupBy(postJpaEntity.id)
+            .orderBy(commentJpaEntity.createdAt.max().desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
         if (results.isEmpty()) {
             return Page.empty(pageable);
@@ -200,14 +197,14 @@ public class PostQueryRepository {
 
         // 2. 전체 개수 조회
         Long totalCount = queryFactory
-                .select(commentJpaEntity.postId.countDistinct())
-                .from(commentJpaEntity)
-                .where(commentJpaEntity.challengerId.eq(challengerId))
-                .fetchOne();
+            .select(commentJpaEntity.postId.countDistinct())
+            .from(commentJpaEntity)
+            .where(commentJpaEntity.challengerId.eq(challengerId))
+            .fetchOne();
 
         List<Post> posts = results.stream()
-                .map(PostJpaEntity::toDomain)
-                .toList();
+            .map(PostJpaEntity::toDomain)
+            .toList();
 
         return new PageImpl<>(posts, pageable, totalCount != null ? totalCount : 0);
     }
@@ -218,14 +215,14 @@ public class PostQueryRepository {
     public Page<Post> findScrappedPostsByChallengerId(Long challengerId, Pageable pageable) {
         // 1. JOIN을 사용하여 단일 쿼리로 조회 (DB에서 정렬)
         List<PostJpaEntity> results = queryFactory
-                .selectFrom(postJpaEntity)
-                .innerJoin(scrapJpaEntity)
-                .on(postJpaEntity.id.eq(scrapJpaEntity.postId))
-                .where(scrapJpaEntity.challengerId.eq(challengerId))
-                .orderBy(scrapJpaEntity.createdAt.desc())
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+            .selectFrom(postJpaEntity)
+            .innerJoin(scrapJpaEntity)
+            .on(postJpaEntity.id.eq(scrapJpaEntity.postId))
+            .where(scrapJpaEntity.challengerId.eq(challengerId))
+            .orderBy(scrapJpaEntity.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
 
         if (results.isEmpty()) {
             return Page.empty(pageable);
@@ -233,14 +230,14 @@ public class PostQueryRepository {
 
         // 2. 전체 개수 조회
         Long totalCount = queryFactory
-                .select(scrapJpaEntity.count())
-                .from(scrapJpaEntity)
-                .where(scrapJpaEntity.challengerId.eq(challengerId))
-                .fetchOne();
+            .select(scrapJpaEntity.count())
+            .from(scrapJpaEntity)
+            .where(scrapJpaEntity.challengerId.eq(challengerId))
+            .fetchOne();
 
         List<Post> posts = results.stream()
-                .map(PostJpaEntity::toDomain)
-                .toList();
+            .map(PostJpaEntity::toDomain)
+            .toList();
 
         return new PageImpl<>(posts, pageable, totalCount != null ? totalCount : 0);
     }

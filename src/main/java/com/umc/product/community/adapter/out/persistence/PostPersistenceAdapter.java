@@ -1,11 +1,10 @@
 package com.umc.product.community.adapter.out.persistence;
 
-import com.umc.product.community.application.port.in.post.TogglePostLikeUseCase.LikeResult;
-import com.umc.product.community.application.port.in.post.query.PostSearchQuery;
-import com.umc.product.community.application.port.out.LoadPostPort;
-import com.umc.product.community.application.port.out.PostSearchData;
-import com.umc.product.community.application.port.out.PostWithAuthor;
-import com.umc.product.community.application.port.out.SavePostPort;
+import com.umc.product.community.application.port.in.command.post.TogglePostLikeUseCase.LikeResult;
+import com.umc.product.community.application.port.in.query.dto.PostSearchQuery;
+import com.umc.product.community.application.port.out.dto.PostWithAuthor;
+import com.umc.product.community.application.port.out.post.LoadPostPort;
+import com.umc.product.community.application.port.out.post.SavePostPort;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
 import java.util.List;
@@ -24,12 +23,14 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     private final PostQueryRepository postQueryRepository;
     // private final PostLikeRepository postLikeRepository;
 
+    // ================= SavePostPort 구현 =================
+
     @Override
     public Post save(Post post) {
         // UPDATE용 (authorChallengerId 필요 없음)
         if (post.getPostId() != null) {
             PostJpaEntity entity = postRepository.findById(post.getPostId().id())
-                    .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
             entity.update(post.getTitle(), post.getContent(), post.getCategory());
             return entity.toDomain();
         }
@@ -61,6 +62,8 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
         postRepository.deleteById(postId);
     }
 
+    // ================= LoadPostPort 구현 =================
+
     @Override
     public Page<Post> findAllByQuery(PostSearchQuery query, Pageable pageable) {
         return postQueryRepository.findAllByQuery(query, pageable);
@@ -69,51 +72,7 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     @Override
     public Optional<Post> findById(Long postId) {
         return postRepository.findById(postId)
-                .map(PostJpaEntity::toDomain);
-    }
-
-    @Override
-    public Optional<PostWithAuthor> findByIdWithAuthor(Long postId) {
-        return postRepository.findById(postId)
-                .map(entity -> new PostWithAuthor(entity.toDomain(), entity.getAuthorChallengerId()));
-    }
-
-    @Override
-    public Optional<PostWithAuthor> findByIdWithAuthor(Long postId, Long viewerChallengerId) {
-        return postRepository.findById(postId)
-                .map(entity -> new PostWithAuthor(entity.toDomain(viewerChallengerId), entity.getAuthorChallengerId()));
-    }
-
-    @Override
-    public List<Post> findByCategory(Category category) {
-        return postRepository.findByCategory(category).stream()
-                .map(PostJpaEntity::toDomain)
-                .toList();
-    }
-
-    @Override
-    public LikeResult toggleLike(Long postId, Long challengerId) {
-        PostJpaEntity entity = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-        boolean liked = entity.toggleLike(challengerId);
-        return new LikeResult(liked, entity.getLikeCount());
-    }
-
-    @Override
-    public Page<PostSearchData> searchByKeyword(String keyword, Pageable pageable) {
-        return postQueryRepository.searchByKeyword(keyword, pageable);
-    }
-
-    @Override
-    public Long findAuthorIdByPostId(Long postId) {
-        return postRepository.findById(postId)
-                .map(PostJpaEntity::getAuthorChallengerId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-    }
-
-    @Override
-    public Map<Long, Long> findAuthorIdsByPostIds(List<Long> postIds) {
-        return postRepository.findAuthorIdsMapByPostIds(postIds);
+            .map(PostJpaEntity::toDomain);
     }
 
     @Override
@@ -129,5 +88,49 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     @Override
     public Page<Post> findScrappedPostsByChallengerId(Long challengerId, Pageable pageable) {
         return postQueryRepository.findScrappedPostsByChallengerId(challengerId, pageable);
+    }
+
+    @Override
+    public Optional<PostWithAuthor> findByIdWithAuthor(Long postId) {
+        return postRepository.findById(postId)
+            .map(entity -> new PostWithAuthor(entity.toDomain(), entity.getAuthorChallengerId()));
+    }
+
+    @Override
+    public Optional<PostWithAuthor> findByIdWithAuthor(Long postId, Long viewerChallengerId) {
+        return postRepository.findById(postId)
+            .map(entity -> new PostWithAuthor(entity.toDomain(viewerChallengerId), entity.getAuthorChallengerId()));
+    }
+
+    @Override
+    public List<Post> findByCategory(Category category) {
+        return postRepository.findByCategory(category).stream()
+            .map(PostJpaEntity::toDomain)
+            .toList();
+    }
+
+    @Override
+    public LikeResult toggleLike(Long postId, Long challengerId) {
+        PostJpaEntity entity = postRepository.findById(postId)
+            .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+        boolean liked = entity.toggleLike(challengerId);
+        return new LikeResult(liked, entity.getLikeCount());
+    }
+
+    @Override
+    public Page<Post> searchByKeyword(String keyword, Pageable pageable) {
+        return postQueryRepository.searchByKeyword(keyword, pageable);
+    }
+
+    @Override
+    public Long findAuthorIdByPostId(Long postId) {
+        return postRepository.findById(postId)
+            .map(PostJpaEntity::getAuthorChallengerId)
+            .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+    }
+
+    @Override
+    public Map<Long, Long> findAuthorIdsByPostIds(List<Long> postIds) {
+        return postRepository.findAuthorIdsMapByPostIds(postIds);
     }
 }

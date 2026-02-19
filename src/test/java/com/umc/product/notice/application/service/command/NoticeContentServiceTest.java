@@ -26,7 +26,6 @@ import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
-import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
 import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
 import java.time.Instant;
