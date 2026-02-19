@@ -1,7 +1,7 @@
 package com.umc.product.notice.application.service.command;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.notice.application.port.in.command.ManageNoticeReadUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
@@ -33,15 +33,23 @@ public class NoticeReadService implements ManageNoticeReadUseCase {
     public void recordRead(Long noticeId, Long memberId) {
         Notice notice = findNoticeById(noticeId);
         NoticeTargetInfo target = getNoticeTargetUseCase.findByNoticeId(noticeId);
-        ChallengerInfo challenger = getChallengerUseCase.getActiveByMemberIdAndGisuId(memberId, target.targetGisuId());
 
-        if (loadNoticeReadPort.existsRead(noticeId, challenger.challengerId())) {
+        Long challengerId;
+        if (target.targetGisuId() != null) {
+            challengerId = getChallengerUseCase.getActiveByMemberIdAndGisuId(memberId, target.targetGisuId())
+                .challengerId();
+        } else {
+            ChallengerInfoWithStatus latest = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
+            challengerId = latest.challengerId();
+        }
+
+        if (loadNoticeReadPort.existsRead(noticeId, challengerId)) {
             return;
         }
 
         NoticeRead noticeRead = NoticeRead.builder()
             .notice(notice)
-            .challengerId(challenger.challengerId())
+            .challengerId(challengerId)
             .build();
 
         saveNoticeReadPort.saveRead(noticeRead);

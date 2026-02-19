@@ -84,6 +84,11 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
     }
 
     @Override
+    public List<PendingAttendanceInfo> findPendingWithMemberInfoBySheetIds(List<Long> sheetIds) {
+        return recordQueryRepository.findPendingWithMemberInfoBySheetIds(sheetIds);
+    }
+
+    @Override
     public Optional<AttendanceRecordPermissionContext> findPermissionContext(Long recordId) {
         return recordQueryRepository.findPermissionContext(recordId);
     }

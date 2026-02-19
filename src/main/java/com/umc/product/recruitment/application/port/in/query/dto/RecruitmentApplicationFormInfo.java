@@ -12,6 +12,7 @@ public record RecruitmentApplicationFormInfo(
     Long recruitmentId,
     Long formId,
     String status,
+    Boolean canApply,
     String recruitmentFormTitle,
     String noticeTitle,
     String noticeContent,
@@ -78,6 +79,7 @@ public record RecruitmentApplicationFormInfo(
             recruitment.getId(),
             recruitment.getFormId(),
             recruitment.getStatus() == null ? null : recruitment.getStatus().name(),
+            null, // canApply는 기본적으로 null (운영진용 등)
             recruitment.getTitle(),
             recruitment.getNoticeTitle(),
             recruitment.getNoticeContent(),
@@ -100,11 +102,28 @@ public record RecruitmentApplicationFormInfo(
             recruitmentId,
             formId,
             status,
+            this.canApply, // 현재 값 유지
             recruitmentFormTitle,
             noticeTitle,
             noticeContent,
             formDefinition,
             filtered,
+            interviewTimeTableInfo,
+            preferredPartInfo
+        );
+    }
+
+    public RecruitmentApplicationFormInfo withCanApply(boolean canApply) {
+        return new RecruitmentApplicationFormInfo(
+            recruitmentId,
+            formId,
+            status,
+            canApply,
+            recruitmentFormTitle,
+            noticeTitle,
+            noticeContent,
+            formDefinition,
+            recruitmentFormDefinition,
             interviewTimeTableInfo,
             preferredPartInfo
         );

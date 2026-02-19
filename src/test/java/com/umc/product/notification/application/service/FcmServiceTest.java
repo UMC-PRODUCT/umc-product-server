@@ -11,6 +11,7 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.TopicManagementResponse;
+import com.umc.product.global.exception.BusinessException;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
@@ -20,7 +21,6 @@ import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.application.port.out.SaveFcmPort;
 import com.umc.product.notification.domain.FcmToken;
 import com.umc.product.notification.domain.exception.FcmDomainException;
-import com.umc.product.global.exception.BusinessException;
 import java.lang.reflect.Constructor;
 import java.util.List;
 import java.util.Optional;
@@ -35,21 +35,26 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class FcmServiceTest {
 
-    @Mock FirebaseMessaging firebaseMessaging;
-    @Mock LoadMemberPort loadMemberPort;
-    @Mock LoadFcmPort loadFcmPort;
-    @Mock SaveFcmPort saveFcmPort;
+    @Mock
+    FirebaseMessaging firebaseMessaging;
+    @Mock
+    LoadMemberPort loadMemberPort;
+    @Mock
+    LoadFcmPort loadFcmPort;
+    @Mock
+    SaveFcmPort saveFcmPort;
 
-    @InjectMocks FcmService sut;
+    @InjectMocks
+    FcmService sut;
 
     // -- test fixtures --
 
     private Member createMember(Long id) {
         Member member = Member.builder()
-                .name("강하나")
-                .nickname("와나")
-                .email("test@umc.com")
-                .build();
+            .name("강하나")
+            .nickname("와나")
+            .email("test@umc.com")
+            .build();
         ReflectionTestUtils.setField(member, "id", id);
         return member;
     }
@@ -74,7 +79,7 @@ class FcmServiceTest {
             // given
             Member member = createMember(1L);
             given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
-            given(loadFcmPort.findByMemberId(1L)).willReturn(null);
+            given(loadFcmPort.findOptionalByMemberId(1L)).willReturn(Optional.empty());
 
             // when
             sut.registerFcmToken(1L, new FcmRegistrationRequest("new-token"));
@@ -90,7 +95,7 @@ class FcmServiceTest {
             given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
 
             FcmToken existingToken = createFcmToken("old-token");
-            given(loadFcmPort.findByMemberId(1L)).willReturn(existingToken);
+            given(loadFcmPort.findOptionalByMemberId(1L)).willReturn(Optional.of(existingToken));
 
             // when
             sut.registerFcmToken(1L, new FcmRegistrationRequest("new-token"));
@@ -106,8 +111,8 @@ class FcmServiceTest {
 
             // when & then
             assertThatThrownBy(() ->
-                    sut.registerFcmToken(999L, new FcmRegistrationRequest("token")))
-                    .isInstanceOf(BusinessException.class);
+                sut.registerFcmToken(999L, new FcmRegistrationRequest("token")))
+                .isInstanceOf(BusinessException.class);
         }
     }
 
@@ -119,7 +124,7 @@ class FcmServiceTest {
             // given
             TopicManagementResponse response = mock(TopicManagementResponse.class);
             given(firebaseMessaging.subscribeToTopic(List.of("token"), "gisu-1"))
-                    .willReturn(response);
+                .willReturn(response);
 
             // when
             sut.subscribeToTopic(List.of("token"), "gisu-1");
@@ -150,12 +155,12 @@ class FcmServiceTest {
         void Firebase_예외_발생시_FcmDomainException을_던진다() throws FirebaseMessagingException {
             // given
             given(firebaseMessaging.subscribeToTopic(any(), any()))
-                    .willThrow(FirebaseMessagingException.class);
+                .willThrow(FirebaseMessagingException.class);
 
             // when & then
             assertThatThrownBy(() ->
-                    sut.subscribeToTopic(List.of("token"), "gisu-1"))
-                    .isInstanceOf(FcmDomainException.class);
+                sut.subscribeToTopic(List.of("token"), "gisu-1"))
+                .isInstanceOf(FcmDomainException.class);
         }
     }
 
@@ -167,7 +172,7 @@ class FcmServiceTest {
             // given
             TopicManagementResponse response = mock(TopicManagementResponse.class);
             given(firebaseMessaging.unsubscribeFromTopic(List.of("token"), "gisu-1"))
-                    .willReturn(response);
+                .willReturn(response);
 
             // when
             sut.unsubscribeFromTopic(List.of("token"), "gisu-1");
@@ -189,12 +194,12 @@ class FcmServiceTest {
         void Firebase_예외_발생시_FcmDomainException을_던진다() throws FirebaseMessagingException {
             // given
             given(firebaseMessaging.unsubscribeFromTopic(any(), any()))
-                    .willThrow(FirebaseMessagingException.class);
+                .willThrow(FirebaseMessagingException.class);
 
             // when & then
             assertThatThrownBy(() ->
-                    sut.unsubscribeFromTopic(List.of("token"), "gisu-1"))
-                    .isInstanceOf(FcmDomainException.class);
+                sut.unsubscribeFromTopic(List.of("token"), "gisu-1"))
+                .isInstanceOf(FcmDomainException.class);
         }
     }
 
@@ -217,12 +222,12 @@ class FcmServiceTest {
         void Firebase_예외_발생시_FcmDomainException을_던진다() throws FirebaseMessagingException {
             // given
             given(firebaseMessaging.send(any(Message.class)))
-                    .willThrow(FirebaseMessagingException.class);
+                .willThrow(FirebaseMessagingException.class);
 
             // when & then
             assertThatThrownBy(() ->
-                    sut.sendMessageByTopic(new TopicNotificationCommand("gisu-1", "제목", "내용")))
-                    .isInstanceOf(FcmDomainException.class);
+                sut.sendMessageByTopic(new TopicNotificationCommand("gisu-1", "제목", "내용")))
+                .isInstanceOf(FcmDomainException.class);
         }
     }
 
@@ -254,8 +259,8 @@ class FcmServiceTest {
 
             // when & then
             assertThatThrownBy(() ->
-                    sut.sendMessageByToken(new NotificationCommand(999L, "제목", "내용")))
-                    .isInstanceOf(BusinessException.class);
+                sut.sendMessageByToken(new NotificationCommand(999L, "제목", "내용")))
+                .isInstanceOf(BusinessException.class);
         }
     }
 }

@@ -7,6 +7,7 @@ import com.umc.product.schedule.adapter.in.web.dto.response.AttendanceRecordResp
 import com.umc.product.schedule.adapter.in.web.dto.response.AvailableAttendanceResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.MyAttendanceHistoryResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.PendingAttendanceResponse;
+import com.umc.product.schedule.adapter.in.web.dto.response.PendingAttendancesByScheduleResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -83,6 +84,23 @@ public interface AttendanceControllerApi {
     @Operation(summary = "승인 대기 출석 조회", description = "승인 대기 중인 출석 요청 목록을 조회합니다 (관리자)")
     List<PendingAttendanceResponse> getPendingAttendances(
         @Parameter(description = "일정 ID") Long scheduleId
+    );
+
+    @Operation(
+        summary = "전체 승인 대기 출석 조회",
+        description = """
+            현재 기수의 전체 승인 대기 출석 목록을 일정별로 그룹핑하여 조회
+
+            기존 API는 일정별로 개별 호출해야 했으나, 이 API는 한 번에 전체 조회
+
+            조회 대상:
+            - PRESENT_PENDING: 출석 승인 대기
+            - LATE_PENDING: 지각 승인 대기
+            - EXCUSED_PENDING: 인정결석 승인 대기
+            """
+    )
+    List<PendingAttendancesByScheduleResponse> getAllPendingAttendances(
+        @Parameter(hidden = true) MemberPrincipal memberPrincipal
     );
 
     @Operation(summary = "출석 승인", description = "승인 대기 중인 출석을 승인합니다 (관리자)")

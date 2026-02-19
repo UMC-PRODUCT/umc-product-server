@@ -1,22 +1,21 @@
 package com.umc.product.member.adapter.in.web;
 
-import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
-import com.umc.product.authentication.application.port.in.query.GetOAuthListUseCase;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.OAuthVerificationClaims;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberInfoRequest;
+import com.umc.product.member.adapter.in.web.dto.request.EditMemberProfileRequest;
 import com.umc.product.member.adapter.in.web.dto.request.RegisterMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
+import com.umc.product.member.application.port.in.command.ManageMemberProfileUseCase;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
-import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -38,10 +37,7 @@ public class MemberCommandController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final ManageMemberUseCase manageMemberUseCase;
-    private final GetMemberUseCase getMemberUseCase;
-
-    private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
-    private final GetOAuthListUseCase getOAuthListUseCase;
+    private final ManageMemberProfileUseCase manageMemberProfileUseCase;
 
 
     // 로그인은 OAuth를 통해서만 진행됨!!
@@ -93,6 +89,19 @@ public class MemberCommandController {
         manageMemberUseCase.updateMember(UpdateMemberCommand.forProfileUpdate(
             memberPrincipal.getMemberId(),
             request.profileImageId())
+        );
+
+        return assembler.fromMemberId(memberPrincipal.getMemberId());
+    }
+
+    @Operation(summary = "회원 프로필 링크 수정")
+    @PatchMapping("/profile/links")
+    MemberInfoResponse editMemberProfile(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @RequestBody EditMemberProfileRequest request
+    ) {
+        manageMemberProfileUseCase.upsert(
+            request.toCommand(memberPrincipal.getMemberId())
         );
 
         return assembler.fromMemberId(memberPrincipal.getMemberId());

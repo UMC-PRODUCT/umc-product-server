@@ -4,8 +4,6 @@ import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.dto.request.CheckAttendanceRequest;
@@ -14,18 +12,19 @@ import com.umc.product.schedule.adapter.in.web.dto.response.AttendanceRecordResp
 import com.umc.product.schedule.adapter.in.web.dto.response.AvailableAttendanceResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.MyAttendanceHistoryResponse;
 import com.umc.product.schedule.adapter.in.web.dto.response.PendingAttendanceResponse;
+import com.umc.product.schedule.adapter.in.web.dto.response.PendingAttendancesByScheduleResponse;
 import com.umc.product.schedule.adapter.in.web.mapper.AttendanceWebMapper;
 import com.umc.product.schedule.adapter.in.web.swagger.AttendanceControllerApi;
 import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.SubmitReasonUseCase;
+import com.umc.product.schedule.application.port.in.query.GetAllPendingAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAttendanceRecordUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetChallengerAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetPendingAttendancesUseCase;
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
-import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,6 +47,7 @@ public class AttendanceController implements AttendanceControllerApi {
     private final GetMyAttendanceHistoryUseCase getMyAttendanceHistoryUseCase;
     private final GetChallengerAttendanceHistoryUseCase getChallengerAttendanceHistoryUseCase;
     private final GetPendingAttendancesUseCase getPendingAttendancesUseCase;
+    private final GetAllPendingAttendancesUseCase getAllPendingAttendancesUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
 
     private final AttendanceWebMapper mapper;
@@ -133,6 +133,19 @@ public class AttendanceController implements AttendanceControllerApi {
     ) {
         return mapper.toPendingAttendanceResponses(
             getPendingAttendancesUseCase.getPendingList(scheduleId)
+        );
+    }
+
+    @Override
+    @GetMapping("/pending")
+    public List<PendingAttendancesByScheduleResponse> getAllPendingAttendances(
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        Long memberId = memberPrincipal.getMemberId();
+        Long gisuId = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId).gisuId();
+
+        return mapper.toPendingAttendancesByScheduleResponses(
+            getAllPendingAttendancesUseCase.getAllPendingList(gisuId)
         );
     }
 

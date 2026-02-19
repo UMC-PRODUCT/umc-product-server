@@ -26,8 +26,9 @@ public class FcmRegistrationService implements RefreshFcmTokenUseCase {
     @Transactional
     public void refreshTokenAndSubscriptions(Long userId, FcmRegistrationRequest request) {
         // 1. 이전 토큰으로 토픽 구독 해제 (실패해도 계속 진행)
-        FcmToken existingToken = loadFcmPort.findByMemberId(userId);
-        String oldTokenValue = existingToken != null ? existingToken.getFcmToken() : null;
+        String oldTokenValue = loadFcmPort.findOptionalByMemberId(userId)
+            .map(FcmToken::getFcmToken)
+            .orElse(null);
 
         try {
             manageFcmTopicUseCase.unsubscribeAllTopicsByMemberId(userId);

@@ -4,9 +4,9 @@ import java.util.Map;
 import java.util.Set;
 
 public interface GetMemberUseCase {
-    MemberInfo getById(Long memberId);
+    MemberInfo getMemberInfoById(Long memberId);
 
-    MemberInfo getProfile(Long memberId);
+    MemberProfileInfo getMemberProfileById(Long memberId);
 
     Map<Long, MemberInfo> getProfiles(Set<Long> memberIds);
 

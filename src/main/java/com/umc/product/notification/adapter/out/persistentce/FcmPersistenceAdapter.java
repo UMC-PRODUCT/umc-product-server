@@ -6,6 +6,7 @@ import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.application.port.out.SaveFcmPort;
 import com.umc.product.notification.domain.FcmToken;
 import com.umc.product.notification.domain.exception.FcmErrorCode;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,11 @@ public class FcmPersistenceAdapter implements LoadFcmPort, SaveFcmPort {
     public FcmToken findByMemberId(Long memberId) {
         return fcmJpaRepository.findByMemberId(memberId).orElseThrow(() -> new BusinessException(Domain.FCM,
                 FcmErrorCode.USER_FCM_NOT_FOUND));
+    }
+
+    @Override
+    public Optional<FcmToken> findOptionalByMemberId(Long memberId) {
+        return fcmJpaRepository.findByMemberId(memberId);
     }
 
     @Override

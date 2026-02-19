@@ -21,6 +21,7 @@ public record GetNoticeSummaryResponse(
     Instant createdAt,
     NoticeTargetInfo targetInfo,
     Long authorChallengerId,
+    Long authorMemberId,
     String authorNickname,
     String authorName
 ) {
@@ -35,7 +36,8 @@ public record GetNoticeSummaryResponse(
             .viewCount(noticeSummary.viewCount())
             .createdAt(noticeSummary.createdAt())
             .targetInfo(noticeSummary.targetInfo())
-            .authorChallengerId(noticeSummary.authorChallengerId())
+            .authorChallengerId(null)
+            .authorMemberId(noticeSummary.authorMemberId())
             .authorNickname(noticeSummary.authorNickname())
             .authorName(noticeSummary.authorName())
             .build();

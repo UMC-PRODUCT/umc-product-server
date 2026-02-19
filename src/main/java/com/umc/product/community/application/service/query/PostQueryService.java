@@ -58,7 +58,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId);
 
         // 멤버 프로필 조회 (이름과 프로필 이미지)
-        MemberInfo memberProfile = getMemberUseCase.getProfile(challengerInfo.memberId());
+        MemberInfo memberProfile = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
         String authorName = memberProfile.name();
         String authorProfileImage = memberProfile.profileImageLink();
 
@@ -77,7 +77,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         ChallengerInfo authorChallengerInfo = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId);
 
         // 작성자 멤버 프로필 조회 (이름과 프로필 이미지)
-        MemberInfo memberProfile = getMemberUseCase.getProfile(authorChallengerInfo.memberId());
+        MemberInfo memberProfile = getMemberUseCase.getMemberInfoById(authorChallengerInfo.memberId());
         String authorName = memberProfile.name();
         String authorProfileImage = memberProfile.profileImageLink();
 
@@ -109,7 +109,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
             data -> {
                 ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(
                     data.getAuthorChallengerId());
-                MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
+                MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
 
                 return PostResponse.from(data, memberInfo, challengerInfo);
             }
@@ -131,13 +131,14 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
 
         // 작성자 멤버 프로필 조회 (이름과 프로필 이미지, 한 번만)
-        MemberInfo memberProfile = getMemberUseCase.getProfile(challengerInfo.memberId());
+        MemberInfo memberProfile = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
         String authorName = memberProfile.name();
         String authorProfileImage = memberProfile.profileImageLink();
 
         // PostInfo로 변환 (모든 게시글이 본인 글이므로 isAuthor = true)
         return posts.map(
-            post -> PostInfo.from(post, challengerId, authorName, authorProfileImage, challengerInfo.part(), 0, true));
+            post -> PostInfo.from(post, challengerId, authorName, authorProfileImage, challengerInfo.part(), 0,
+                true));
     }
 
     @Override
@@ -223,6 +224,10 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
     /**
      * 작성자 정보를 담는 내부 record
      */
-    private record AuthorDetails(String name, String profileImage, ChallengerPart part) {
+    private record AuthorDetails(
+        String name,
+        String profileImage,
+        ChallengerPart part
+    ) {
     }
 }

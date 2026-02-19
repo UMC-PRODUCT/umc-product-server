@@ -5,28 +5,22 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
-import com.umc.product.notice.application.service.NoticeAuthorValidator;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
-import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
@@ -54,8 +48,6 @@ class NoticeServiceTest {
     @Mock
     LoadChallengerPort loadChallengerPort;
     @Mock
-    GetChallengerUseCase getChallengerUseCase;
-    @Mock
     GetChallengerRoleUseCase getChallengerRoleUseCase;
     @Mock
     ManageFcmUseCase manageFcmUseCase;
@@ -65,28 +57,16 @@ class NoticeServiceTest {
     GetMemberUseCase getMemberUseCase;
     @Mock
     GetChapterUseCase getChapterUseCase;
-    @Mock
-    NoticeAuthorValidator noticeAuthorValidator;
 
     @InjectMocks
     NoticeService sut;
 
     private static final Long MEMBER_ID = 1L;
-    private static final Long CHALLENGER_ID = 10L;
     private static final Long GISU_ID = 7L;
     private static final Long NOTICE_ID = 100L;
 
-    private ChallengerInfo createChallengerInfo() {
-        return ChallengerInfo.builder()
-            .challengerId(CHALLENGER_ID)
-            .memberId(MEMBER_ID)
-            .gisuId(GISU_ID)
-            .part(ChallengerPart.SPRINGBOOT)
-            .build();
-    }
-
     private Notice createNotice() {
-        Notice notice = Notice.create("테스트 공지", "테스트 내용", CHALLENGER_ID, false);
+        Notice notice = Notice.create("테스트 공지", "테스트 내용", MEMBER_ID, false);
         ReflectionTestUtils.setField(notice, "id", NOTICE_ID);
         return notice;
     }
@@ -105,8 +85,6 @@ class NoticeServiceTest {
             NoticeTargetInfo targetInfo = createTargetInfo();
             var command = new CreateNoticeCommand(MEMBER_ID, "공지 제목", "공지 내용", false, targetInfo);
 
-            given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
-                .willReturn(createChallengerInfo());
             given(getChallengerRoleUseCase.isCentralCore(MEMBER_ID)).willReturn(true);
             given(saveNoticePort.save(any(Notice.class))).willAnswer(inv -> {
                 Notice n = inv.getArgument(0);
@@ -129,8 +107,6 @@ class NoticeServiceTest {
             NoticeTargetInfo targetInfo = createTargetInfo();
             var command = new CreateNoticeCommand(MEMBER_ID, "공지 제목", "공지 내용", false, targetInfo);
 
-            given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
-                .willReturn(createChallengerInfo());
             given(getChallengerRoleUseCase.isCentralCore(MEMBER_ID)).willReturn(false);
 
             // when & then
@@ -145,8 +121,6 @@ class NoticeServiceTest {
             NoticeTargetInfo targetInfo = createTargetInfo();
             var command = new CreateNoticeCommand(MEMBER_ID, "공지 제목", "공지 내용", true, targetInfo);
 
-            given(getChallengerUseCase.getByMemberIdAndGisuId(MEMBER_ID, GISU_ID))
-                .willReturn(createChallengerInfo());
             given(getChallengerRoleUseCase.isCentralCore(MEMBER_ID)).willReturn(true);
             given(saveNoticePort.save(any(Notice.class))).willAnswer(inv -> {
                 Notice n = inv.getArgument(0);
@@ -189,8 +163,6 @@ class NoticeServiceTest {
             var command = new UpdateNoticeCommand(2L, NOTICE_ID, "수정된 제목", "수정된 내용");
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
-            willThrow(new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH))
-                .given(noticeAuthorValidator).validate(notice, 2L);
 
             // when & then
             assertThatThrownBy(() -> sut.updateNoticeTitleOrContent(command))
