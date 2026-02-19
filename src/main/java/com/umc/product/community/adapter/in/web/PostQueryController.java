@@ -66,6 +66,7 @@ public class PostQueryController {
         Pageable pageable
     ) {
         PostSearchQuery query = new PostSearchQuery(category);
+
         return PageResponse.of(
             getPostListUseCase.getPostList(query, pageable),
             PostResponse::from

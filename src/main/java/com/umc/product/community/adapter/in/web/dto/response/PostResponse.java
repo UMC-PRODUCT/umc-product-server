@@ -105,6 +105,8 @@ public record PostResponse(
             .content(info.content())
             .category(info.category())
             .authorId(info.authorChallengerId()) // authorId 필드 추가
+            .authorChallengerId(info.authorChallengerId())
+            .authorMemberId(null) // TODO: 이거 null값 안 들어가도록 수정하기
             .authorName(info.authorName())
             .authorProfileImage(info.authorProfileImage())
             .authorPart(info.authorPart())
