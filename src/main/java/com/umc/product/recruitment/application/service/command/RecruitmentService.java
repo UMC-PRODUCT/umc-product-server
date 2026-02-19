@@ -1119,11 +1119,13 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         Map<RecruitmentScheduleType, RecruitmentSchedule> existing =
             loadRecruitmentPort.findScheduleMapByRecruitmentId(command.recruitmentId());
 
+        ZoneId seoulZone = ZoneId.of("Asia/Seoul");
         Instant now = Instant.now();
+        Instant todayStart = LocalDate.now(seoulZone).atStartOfDay(seoulZone).toInstant();
         Long recruitmentId = command.recruitmentId();
 
         // 수정 가능 여부 검증
-        validateNoPastChange(now, existing, command.schedule());
+        validateNoPastChange(todayStart, existing, command.schedule());
         validateApplyStartFrozenAfterStarted(now, existing, command.schedule());
         validateApplyEndNoShortenDuringOpen(now, existing, command.schedule());
         validateInterviewNoShorten(existing, command.schedule());
@@ -2096,25 +2098,25 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     // published 모집 수정 가능 검증
 
-    private void validateNoPastChange(Instant now,
+    private void validateNoPastChange(Instant todayStart,
                                       Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
                                       UpdatePublishedRecruitmentScheduleCommand.SchedulePatch patch) {
-        if (patch.applyStartAt() != null && patch.applyStartAt().isBefore(now)) {
+        if (patch.applyStartAt() != null && patch.applyStartAt().isBefore(todayStart)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
-        if (patch.applyEndAt() != null && patch.applyEndAt().isBefore(now)) {
+        if (patch.applyEndAt() != null && patch.applyEndAt().isBefore(todayStart)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
-        if (patch.docResultAt() != null && patch.docResultAt().isBefore(now)) {
+        if (patch.docResultAt() != null && patch.docResultAt().isBefore(todayStart)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
-        if (patch.interviewStartAt() != null && patch.interviewStartAt().isBefore(now)) {
+        if (patch.interviewStartAt() != null && patch.interviewStartAt().isBefore(todayStart)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
-        if (patch.interviewEndAt() != null && patch.interviewEndAt().isBefore(now)) {
+        if (patch.interviewEndAt() != null && patch.interviewEndAt().isBefore(todayStart)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
-        if (patch.finalResultAt() != null && patch.finalResultAt().isBefore(now)) {
+        if (patch.finalResultAt() != null && patch.finalResultAt().isBefore(todayStart)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
     }
