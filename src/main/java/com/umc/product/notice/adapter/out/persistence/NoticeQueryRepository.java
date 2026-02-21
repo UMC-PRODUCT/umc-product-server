@@ -126,18 +126,9 @@ public class NoticeQueryRepository {
 
     // ========== PRIVATE ====================
 
-    // 조건에 맞는 공지 총 개수
-    private Long getTotalCountQuery(QNotice notice, QNoticeTarget target,
-                                    BooleanExpression condition, String keyword) {
-        return queryFactory
-            .select(notice.count())
-            .from(notice)
-            .join(target).on(target.noticeId.eq(notice.id))
-            .where(condition, keywordContains(keyword))
-            .fetchOne();
-    }
-
-    // 조건에 맞는 공지 반환
+    /**
+     * 조건에 맞는 공지 반환 전체조회 : keyword = null, 키워드조회 : keyword = 검색어
+     */
     private List<Notice> getContentQuery(QNotice notice, QNoticeTarget target,
                                          BooleanExpression condition, String keyword, Pageable pageable) {
 
@@ -152,9 +143,86 @@ public class NoticeQueryRepository {
             .fetch();
     }
 
+    /**
+     * 조건에 맞는 공지 총 개수 전체조회 : keyword = null, 키워드조회 : keyword = 검색어
+     */
+    private Long getTotalCountQuery(QNotice notice, QNoticeTarget target,
+                                    BooleanExpression condition, String keyword) {
+        return queryFactory
+            .select(notice.count())
+            .from(notice)
+            .join(target).on(target.noticeId.eq(notice.id))
+            .where(condition, keywordContains(keyword))
+            .fetchOne();
+    }
+
+    /*
+     * 전체조회 시 사용
+     *
+     * 조회 조건:
+     * - 전체 조회 (gisuId만): 기수 전체 대상 공지 (지부/학교/파트 모두 NULL)
+     * - 지부 조회 (gisuId + chapterId): 해당 지부 공지 + 전체 지부 대상 공지
+     * - 학교 조회 (+ schoolId): 해당 학교 공지 + 전체 학교 대상 공지
+     * - 파트 조회 (+ part): 해당 파트 공지 + 전체 파트 대상 공지
+     */
+    private BooleanExpression buildClassificationCondition(
+        NoticeClassification classification,
+        QNoticeTarget target) {
+
+        Long gisuId = classification.gisuId();
+        Long chapterId = classification.chapterId();
+        Long schoolId = classification.schoolId();
+        ChallengerPart part = classification.part();
+
+        boolean hasChapter = chapterId != null;
+        boolean hasSchool = schoolId != null;
+        boolean hasPart = part != null;
+
+        // 특정 기수 공지 혹은 모든 기수 공지(targetGisuId=null)
+        BooleanExpression gisuMatch = target.targetGisuId.eq(gisuId)
+            .or(target.targetGisuId.isNull());
+
+        // 전체 필터: 특정 기수 전체 대상 + 모든 기수 전체 대상(ALL_GISU_ALL_TARGET)
+        if (!hasChapter && !hasSchool && !hasPart) {
+            return gisuMatch
+                .and(target.targetChapterId.isNull())
+                .and(target.targetSchoolId.isNull())
+                .and(targetPartIsEmpty(target));
+        }
+
+        // 지부 필터 (gisuId + chapterId): 해당 기수 지부 공지
+        if (hasChapter && !hasSchool && !hasPart) {
+            return target.targetGisuId.eq(gisuId)
+                .and(target.targetChapterId.eq(chapterId))
+                .and(target.targetSchoolId.isNull())
+                .and(targetPartIsEmpty(target));
+        }
+
+        // 학교 필터 (gisuId + chapterId + schoolId): 해당 기수 학교 대상 + 모든 기수 학교 대상 (ALL_GISU_SPECIFIC_SCHOOL)
+        if (hasChapter && hasSchool && !hasPart) {
+            return gisuMatch
+                .and(target.targetChapterId.isNull())
+                .and(target.targetSchoolId.eq(schoolId))
+                .and(targetPartIsEmpty(target));
+        }
+
+        // 파트 필터 (gisuId + chapterId + schoolId + part)
+        // 파트 공지는 기수 + 파트 / 기수 + 지부 + 파트 / 기수 + 학교 + 파트 세 패턴 묶기
+        return target.targetGisuId.eq(gisuId)
+            .and(targetPartContains(target, part))
+            .and(
+                target.targetChapterId.isNull().and(target.targetSchoolId.isNull())   // SPECIFIC_GISU_SPECIFIC_PART
+                    .or(target.targetChapterId.eq(chapterId)
+                        .and(target.targetSchoolId.isNull()))  // SPECIFIC_GISU_SPECIFIC_CHAPTER_WITH_PART
+                    .or(target.targetChapterId.isNull()
+                        .and(target.targetSchoolId.eq(schoolId))) // SPECIFIC_GISU_SPECIFIC_SCHOOL_WITH_PART
+            );
+    }
+
     /*
      * 검색어 기반 전체조회 시 사용
-     * 해당 조회는 사용자가 접근 가능한 모든 공지 범위(전체/지부/학교/파트)에서 키워드를 검색하므로 condition 빌더 별도 구현
+     * 해당 조회는 필터링 없이사용자가 접근 가능한 모든 공지 범위(전체/지부/학교/파트)에서
+     * 키워드를 검색하므로 condition 빌더 별도 구현
      */
     private BooleanExpression buildClassificationConditionForKeywordSearch(
         NoticeClassification classification,
@@ -219,74 +287,11 @@ public class NoticeQueryRepository {
         return result;
     }
 
-    private BooleanExpression buildClassificationCondition(
-        NoticeClassification classification,
-        QNoticeTarget target) {
-
-        Long gisuId = classification.gisuId();
-        Long chapterId = classification.chapterId();
-        Long schoolId = classification.schoolId();
-        ChallengerPart part = classification.part();
-
-        boolean hasChapter = chapterId != null;
-        boolean hasSchool = schoolId != null;
-        boolean hasPart = part != null;
-
-        // 특정 기수 공지 혹은 모든 기수 공지(targetGisuId=null)
-        BooleanExpression gisuMatch = target.targetGisuId.eq(gisuId)
-            .or(target.targetGisuId.isNull());
-
-        // 전체 필터: 특정 기수 전체 대상 + 모든 기수 전체 대상(ALL_GISU_ALL_TARGET)
-        if (!hasChapter && !hasSchool && !hasPart) {
-            return gisuMatch
-                .and(target.targetChapterId.isNull())
-                .and(target.targetSchoolId.isNull())
-                .and(targetPartIsEmpty(target));
-        }
-
-        // 지부 필터 (gisuId + chapterId): 해당 기수 지부 공지
-        if (hasChapter && !hasSchool && !hasPart) {
-            return target.targetGisuId.eq(gisuId)
-                .and(target.targetChapterId.eq(chapterId))
-                .and(target.targetSchoolId.isNull())
-                .and(targetPartIsEmpty(target));
-        }
-
-        // 학교 필터 (gisuId + chapterId + schoolId): 해당 기수 학교 대상 + 모든 기수 학교 대상 (ALL_GISU_SPECIFIC_SCHOOL)
-        if (hasChapter && hasSchool && !hasPart) {
-            return gisuMatch
-                .and(target.targetChapterId.isNull())
-                .and(target.targetSchoolId.eq(schoolId))
-                .and(targetPartIsEmpty(target));
-        }
-
-        // 파트 필터 (gisuId + chapterId + schoolId + part)
-        // 파트 공지는 기수 + 파트 / 기수 + 지부 + 파트 / 기수 + 학교 + 파트 세 패턴 묶기
-        return target.targetGisuId.eq(gisuId)
-            .and(targetPartContains(target, part))
-            .and(
-                target.targetChapterId.isNull().and(target.targetSchoolId.isNull())   // SPECIFIC_GISU_SPECIFIC_PART
-                    .or(target.targetChapterId.eq(chapterId)
-                        .and(target.targetSchoolId.isNull()))  // SPECIFIC_GISU_SPECIFIC_CHAPTER_WITH_PART
-                    .or(target.targetChapterId.isNull()
-                        .and(target.targetSchoolId.eq(schoolId))) // SPECIFIC_GISU_SPECIFIC_SCHOOL_WITH_PART
-            );
-    }
-
     private BooleanExpression targetPartIsEmpty(QNoticeTarget target) {
         return Expressions.numberTemplate(Integer.class,
             "coalesce(cardinality({0}), 0)",
             target.targetChallengerPart
         ).eq(0);
-    }
-
-    private BooleanExpression targetPartContainsOrEmpty(QNoticeTarget target, ChallengerPart part) {
-        return targetPartIsEmpty(target)
-            .or(Expressions.booleanTemplate(
-                "array_contains({0}, {1})",
-                target.targetChallengerPart,
-                part
-            ));
     }
 
     private BooleanExpression targetPartContains(QNoticeTarget target, ChallengerPart part) {

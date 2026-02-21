@@ -1,6 +1,8 @@
 package com.umc.product.recruitment.application.service.command;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.application.port.in.command.CreateInterviewSheetQuestionUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteInterviewSheetQuestionUseCase;
 import com.umc.product.recruitment.application.port.in.command.ReorderInterviewSheetQuestionUseCase;
@@ -15,12 +17,15 @@ import com.umc.product.recruitment.application.port.in.command.dto.UpdateIntervi
 import com.umc.product.recruitment.application.port.out.LoadInterviewQuestionSheetPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPartPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.application.port.out.SaveInterviewQuestionSheetPort;
 import com.umc.product.recruitment.domain.InterviewQuestionSheet;
 import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentPart;
+import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.PartKey;
 import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
+import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import java.util.HashSet;
@@ -45,9 +50,12 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
     private final LoadInterviewQuestionSheetPort loadInterviewQuestionSheetPort;
     private final LoadRecruitmentPort loadRecruitmentPort;
     private final LoadRecruitmentPartPort loadRecruitmentPartPort;
+    private final LoadRecruitmentSchedulePort loadRecruitmentSchedulePort;
 
     @Override
     public CreateInterviewSheetQuestionResult create(CreateInterviewSheetQuestionCommand command) {
+
+        validateFinalResultNotPublished(command.recruitmentId());
 
         // 1. 검증 : Recruitment 존재
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
@@ -83,6 +91,8 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
     @Override
     public UpdateInterviewSheetQuestionResult update(UpdateInterviewSheetQuestionCommand command) {
 
+        validateFinalResultNotPublished(command.recruitmentId());
+
         // 1. 검증 : InterviewQuestionSheet 존재
         InterviewQuestionSheet question = loadInterviewQuestionSheetPort.findById(command.questionId())
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SHEET_QUESTION_NOT_FOUND));
@@ -107,6 +117,9 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
 
     @Override
     public void delete(DeleteInterviewSheetQuestionCommand command) {
+
+        validateFinalResultNotPublished(command.recruitmentId());
+
         // 1. 검증 : InterviewQuestionSheet 존재
         InterviewQuestionSheet question = loadInterviewQuestionSheetPort.findById(command.questionId())
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SHEET_QUESTION_NOT_FOUND));
@@ -126,6 +139,9 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
 
     @Override
     public ReorderInterviewSheetQuestionResult reorder(ReorderInterviewSheetQuestionCommand command) {
+
+        validateFinalResultNotPublished(command.recruitmentId());
+        
         // 1. 검증 : Recruitment 존재
         Recruitment requestedRecruitment = loadRecruitmentPort.findById(command.recruitmentId())
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
@@ -193,4 +209,15 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
             throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SHEET_PART_NOT_OPEN);
         }
     }
+
+    private void validateFinalResultNotPublished(Long recruitmentId) {
+        RecruitmentSchedule finalResultAt = loadRecruitmentSchedulePort.findByRecruitmentIdAndType(recruitmentId,
+            RecruitmentScheduleType.FINAL_RESULT_AT);
+
+        // 최종 결과 발표 시점이 지났다면(isActive) 면접 질문지 조작 불가
+        if (finalResultAt != null && finalResultAt.isActive(java.time.Instant.now())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.FINAL_RESULT_ALREADY_PUBLISHED);
+        }
+    }
+
 }

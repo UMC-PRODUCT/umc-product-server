@@ -155,7 +155,8 @@ public class SecurityConfig {
                 }
 
                 // 나머지는 인증 필요
-                auth.anyRequest().authenticated();
+//                auth.anyRequest().authenticated();
+                auth.anyRequest().permitAll(); // TODO: 개발 편의 위해 일단 전체 허용, 나중에 다시 인증 필요로 변경
             })
             // Spring 기본 로그인 필터 동작 전에 JWT 동작
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

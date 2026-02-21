@@ -13,17 +13,22 @@ import com.umc.product.recruitment.application.port.in.query.dto.DeleteInterview
 import com.umc.product.recruitment.application.port.in.query.dto.GetInterviewSchedulingSummaryQuery;
 import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
+import com.umc.product.recruitment.application.port.out.LoadEvaluationPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewSlotPort;
 import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.application.port.out.SaveInterviewAssignmentPort;
 import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.InterviewAssignment;
 import com.umc.product.recruitment.domain.InterviewSlot;
 import com.umc.product.recruitment.domain.Recruitment;
+import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
+import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import jakarta.transaction.Transactional;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import lombok.RequiredArgsConstructor;
@@ -46,10 +51,15 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
     private final GetInterviewSchedulingSummaryUseCase getInterviewSchedulingSummaryUseCase;
     private final SaveInterviewAssignmentPort saveInterviewAssignmentPort;
     private final LoadRecruitmentPort loadRecruitmentPort;
+    private final LoadRecruitmentSchedulePort loadRecruitmentSchedulePort;
+    private final LoadEvaluationPort loadEvaluationPort;
 
     @Override
     public CreateInterviewAssignmentResult create(CreateInterviewAssignmentCommand command) {
         // todo: 운영진 권한 검증 필요
+
+        validateFinalResultNotPublished(command.recruitmentId());
+
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
             .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = recruitment.getEffectiveRootId();
@@ -59,6 +69,11 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
         InterviewSlot slot = loadInterviewSlotPort.findById(command.slotId())
             .orElseThrow(
                 () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND));
+
+        // 완전히 종료된 슬롯이라면 할당 불가
+        if (slot.getEndsAt().isBefore(Instant.now())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_SLOT_ALREADY_ENDED);
+        }
 
         if (!slot.getRecruitment().getEffectiveRootId().equals(rootId)) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT);
@@ -109,12 +124,24 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
     @Override
     public DeleteInterviewAssignmentResult delete(DeleteInterviewAssignmentCommand command) {
         // todo: 운영진 권한 검증 필요
+
+        validateFinalResultNotPublished(command.recruitmentId());
+
         InterviewAssignment assignment =
             loadInterviewAssignmentPort.findById(command.assignmentId())
                 .orElseThrow(() -> new BusinessException(
                     Domain.RECRUITMENT,
                     RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND
                 ));
+
+        boolean hasEvaluation = loadEvaluationPort.existsByApplicationIdAndStage(
+            assignment.getApplication().getId(),
+            com.umc.product.recruitment.domain.enums.EvaluationStage.INTERVIEW
+        );
+
+        if (hasEvaluation) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_ALREADY_EVALUATED);
+        }
 
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
             .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
@@ -149,6 +176,16 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
             new DeleteInterviewAssignmentResult.UnassignedInfo(applicationId),
             summary
         );
+    }
+
+    private void validateFinalResultNotPublished(Long recruitmentId) {
+        RecruitmentSchedule finalResultAt = loadRecruitmentSchedulePort.findByRecruitmentIdAndType(recruitmentId,
+            RecruitmentScheduleType.FINAL_RESULT_AT);
+
+        // 최종 결과 발표 시점이 지났다면(isActive) 스케줄 조작 불가
+        if (finalResultAt != null && finalResultAt.isActive(java.time.Instant.now())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.FINAL_RESULT_ALREADY_PUBLISHED);
+        }
     }
 
 }
