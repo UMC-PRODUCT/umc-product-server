@@ -200,6 +200,11 @@ jobs:
             const testFailed = '${{ steps.test.outcome }}' === 'failure';
             const isPR = context.eventName === 'pull_request';
 
+            // PR이면 head commit SHA, 아니면 일반 SHA
+            const sha = isPR
+              ? context.payload.pull_request.head.sha
+              : context.sha;
+
             // 테스트 실패 + PR이면 코멘트 작성
             if (testFailed && isPR) {
               await github.rest.issues.createComment({
