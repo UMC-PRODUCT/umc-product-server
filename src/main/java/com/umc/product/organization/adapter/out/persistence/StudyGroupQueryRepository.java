@@ -125,7 +125,7 @@ public class StudyGroupQueryRepository {
                 .join(member).on(member.id.eq(challenger.memberId))
                 .where(
                         studyGroup.gisu.isActive.eq(true),
-                        studyGroup.part.eq(part),
+                        partCondition(part),
                         member.schoolId.eq(schoolId)
                 )
                 .fetch();

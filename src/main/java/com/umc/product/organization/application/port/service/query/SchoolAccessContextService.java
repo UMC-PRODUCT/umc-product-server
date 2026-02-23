@@ -3,11 +3,14 @@ package com.umc.product.organization.application.port.service.query;
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
 import com.umc.product.authorization.domain.RoleAttribute;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.exception.BusinessException;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolAccessContextUseCase;
 import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
+import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,12 +41,11 @@ public class SchoolAccessContextService implements GetSchoolAccessContextUseCase
             .map(RoleAttribute::from)
             .toList();
 
-        // 학교 운영진 역할 찾기 (@CheckAccess 통과 시 반드시 존재)
+        // 학교 운영진 역할 찾기 (학교 운영진이 아니면 접근 불가)
         RoleAttribute schoolAdminRole = roles.stream()
             .filter(role -> role.roleType().isSchoolAdmin())
             .findFirst()
-            .orElseThrow(() -> new IllegalStateException(
-                "현재 활성 기수에서 학교 운영진 역할을 찾을 수 없습니다. 권한 검증 로직을 확인하세요."));
+            .orElseThrow(() -> new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.STUDY_GROUP_ACCESS_DENIED));
 
         // 4. 파트 제한 적용
         // 회장/부회장(isSchoolCore): 모든 파트 조회 가능 (part = null)
