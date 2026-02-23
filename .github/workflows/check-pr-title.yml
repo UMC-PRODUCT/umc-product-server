@@ -1,4 +1,4 @@
-name: PR Title Validation
+name: PR 제목 검증
 
 on:
   pull_request:
