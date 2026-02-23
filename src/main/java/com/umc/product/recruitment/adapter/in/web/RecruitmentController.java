@@ -1,5 +1,8 @@
 package com.umc.product.recruitment.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateExtensionRequest;
@@ -342,6 +345,10 @@ public class RecruitmentController {
     }
 
     @PostMapping("")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.WRITE
+    )
     @Operation(
         summary = "모집 최초 생성",
         description = """
@@ -369,6 +376,10 @@ public class RecruitmentController {
     }
 
     @PostMapping("/{recruitmentId}/extensions")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.WRITE
+    )
     @Operation(
         summary = "추가 모집 최초 생성",
         description = """
@@ -411,6 +422,10 @@ public class RecruitmentController {
     }
 
     @DeleteMapping("{recruitmentId}")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.DELETE
+    )
     @Operation(
         summary = "모집 삭제",
         description = """
@@ -426,6 +441,10 @@ public class RecruitmentController {
     }
 
     @PatchMapping("/{recruitmentId}")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.EDIT
+    )
     @Operation(
         summary = "모집 임시저장(부분 업데이트)",
         description = """
@@ -450,6 +469,10 @@ public class RecruitmentController {
     }
 
     @PatchMapping("/{recruitmentId}/application-form")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.EDIT
+    )
     @Operation(
         summary = "운영진 지원서 폼 문항 임시저장",
         description = """
@@ -472,6 +495,10 @@ public class RecruitmentController {
     }
 
     @PostMapping("/{recruitmentId}/publish")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.APPROVE
+    )
     @Operation(
         summary = "모집(지원서 폼) 최종 저장/발행",
         description = """
@@ -565,6 +592,10 @@ public class RecruitmentController {
     }
 
     @DeleteMapping("/{recruitmentId}/application-form/questions/{questionId}")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.DELETE
+    )
     @Operation(
         summary = "운영진 지원서 폼 단일 문항 삭제",
         description = """
@@ -612,6 +643,10 @@ public class RecruitmentController {
     }
 
     @PatchMapping("/{recruitmentId}/published")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.EDIT
+    )
     @Operation(
         summary = "발행된 모집 수정",
         description = """
@@ -675,6 +710,10 @@ public class RecruitmentController {
 //    }
 
     @DeleteMapping("/{recruitmentId}/application-form/questions/{questionId}/options/{optionId}")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.DELETE
+    )
     @Operation(
         summary = "지원서 폼 질문 옵션 삭제",
         description = """

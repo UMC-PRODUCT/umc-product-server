@@ -1,5 +1,8 @@
 package com.umc.product.recruitment.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateDocumentStatusRequest;
@@ -144,6 +147,10 @@ public class DocumentEvaluationController {
     }
 
     @PatchMapping("/{applicationId}/document-evaluations/me")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.WRITE
+    )
     @Operation(
         summary = "(운영진) 지원서에 대한 평가 등록하기 (내 평가 Upsert)",
         description = """
@@ -172,6 +179,10 @@ public class DocumentEvaluationController {
     }
 
     @PatchMapping("/{applicationId}/document-status")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.EDIT
+    )
     @Operation(
         summary = "지원서 합격/불합격 처리하기 (서류 결과)",
         description = """

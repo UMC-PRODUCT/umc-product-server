@@ -1,5 +1,8 @@
 package com.umc.product.recruitment.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateInterviewAssignmentRequest;
@@ -138,6 +141,10 @@ public class InterviewSchedulingController {
     }
 
     @PostMapping("/assignments")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.WRITE
+    )
     @Operation(
         summary = "지원자 슬롯 배정",
         description = """
@@ -166,6 +173,10 @@ public class InterviewSchedulingController {
     }
 
     @DeleteMapping("/assignments/{assignmentId}")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.DELETE
+    )
     @Operation(
         summary = "지원자 슬롯 배정 해제",
         description = """

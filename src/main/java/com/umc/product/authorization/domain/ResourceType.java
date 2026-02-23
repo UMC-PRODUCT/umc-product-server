@@ -30,6 +30,9 @@ public enum ResourceType {
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
     COMMUNITY_COMMENT("community_comment", "커뮤니티 게시글에 대한 댓글",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+    RECRUITMENT("recruitment", "모집",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE,
+            PermissionType.APPROVE, PermissionType.MANAGE)),
     ;
 
     private final String code;
