@@ -18,8 +18,8 @@ public record ScheduleListResponse(
     @Schema(description = "일정 상태 (진행 중, 종료됨)", example = "진행 중")
     String status,
 
-    @Schema(description = "날짜", example = "2026.03.16 (토)")
-    @JsonFormat(pattern = "yyyy.MM.dd (E)", locale = "ko_KR")
+    @Schema(description = "날짜", example = "2026-03-16")
+    @JsonFormat(pattern = "yyyy-MM-dd")
     LocalDateTime date,
 
     @Schema(description = "시작 시간", example = "10:00")
