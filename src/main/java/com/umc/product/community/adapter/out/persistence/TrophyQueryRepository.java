@@ -1,7 +1,7 @@
 package com.umc.product.community.adapter.out.persistence;
 
 import static com.umc.product.challenger.domain.QChallenger.challenger;
-import static com.umc.product.community.adapter.out.persistence.QTrophyJpaEntity.trophyJpaEntity;
+import static com.umc.product.community.adapter.out.persistence.entity.QTrophyJpaEntity.trophyJpaEntity;
 import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.organization.domain.QSchool.school;
 
@@ -9,6 +9,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.community.adapter.out.persistence.entity.TrophyJpaEntity;
 import com.umc.product.community.application.port.in.query.dto.TrophySearchQuery;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

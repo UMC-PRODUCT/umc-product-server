@@ -1,5 +1,6 @@
 package com.umc.product.community.adapter.out.persistence;
 
+import com.umc.product.community.adapter.out.persistence.entity.PostJpaEntity;
 import com.umc.product.community.application.port.in.command.post.TogglePostLikeUseCase.LikeResult;
 import com.umc.product.community.application.port.in.query.dto.PostSearchQuery;
 import com.umc.product.community.application.port.out.dto.PostWithAuthor;

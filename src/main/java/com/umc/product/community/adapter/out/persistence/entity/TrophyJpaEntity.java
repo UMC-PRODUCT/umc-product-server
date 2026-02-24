@@ -1,4 +1,4 @@
-package com.umc.product.community.adapter.out.persistence;
+package com.umc.product.community.adapter.out.persistence.entity;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.community.domain.Trophy;
@@ -49,22 +49,22 @@ public class TrophyJpaEntity extends BaseEntity {
 
     public static TrophyJpaEntity from(Trophy trophy) {
         return new TrophyJpaEntity(
-                trophy.getChallengerId().id(),
-                trophy.getWeek(),
-                trophy.getTitle(),
-                trophy.getContent(),
-                trophy.getUrl()
+            trophy.getChallengerId().id(),
+            trophy.getWeek(),
+            trophy.getTitle(),
+            trophy.getContent(),
+            trophy.getUrl()
         );
     }
 
     public Trophy toDomain() {
         return Trophy.reconstruct(
-                new TrophyId(id),
-                new ChallengerId(challengerId),
-                week,
-                title,
-                content,
-                url
+            new TrophyId(id),
+            new ChallengerId(challengerId),
+            week,
+            title,
+            content,
+            url
         );
     }
 }

@@ -17,6 +17,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +30,7 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "study_group")
 public class StudyGroup extends BaseEntity {
 
     @Id
@@ -58,10 +60,10 @@ public class StudyGroup extends BaseEntity {
 
     public static StudyGroup create(String name, Gisu gisu, ChallengerPart part) {
         return StudyGroup.builder()
-                .name(name)
-                .gisu(gisu)
-                .part(part)
-                .build();
+            .name(name)
+            .gisu(gisu)
+            .part(part)
+            .build();
     }
 
     private static void validate(String name, Gisu gisu, ChallengerPart part) {
@@ -168,8 +170,8 @@ public class StudyGroup extends BaseEntity {
      */
     public Optional<StudyGroupMember> getLeader() {
         return studyGroupMembers.stream()
-                .filter(StudyGroupMember::isLeader)
-                .findFirst();
+            .filter(StudyGroupMember::isLeader)
+            .findFirst();
     }
 
     /**
@@ -180,7 +182,7 @@ public class StudyGroup extends BaseEntity {
      */
     public boolean hasMember(Long challengerId) {
         return studyGroupMembers.stream()
-                .anyMatch(member -> member.getChallengerId().equals(challengerId));
+            .anyMatch(member -> member.getChallengerId().equals(challengerId));
     }
 
     /**
@@ -200,10 +202,10 @@ public class StudyGroup extends BaseEntity {
 
     private StudyGroupMember findMemberByChallengerId(Long challengerId) {
         return studyGroupMembers.stream()
-                .filter(member -> member.getChallengerId().equals(challengerId))
-                .findFirst()
-                .orElseThrow(
-                        () -> new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_MEMBER_NOT_FOUND));
+            .filter(member -> member.getChallengerId().equals(challengerId))
+            .findFirst()
+            .orElseThrow(
+                () -> new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_MEMBER_NOT_FOUND));
     }
 
 }

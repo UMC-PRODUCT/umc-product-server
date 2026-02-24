@@ -7,4 +7,8 @@ public class TermDomainException extends BusinessException {
     public TermDomainException(TermErrorCode termErrorCode) {
         super(Domain.TERMS, termErrorCode);
     }
+
+    public TermDomainException(TermErrorCode termErrorCode, String message) {
+        super(Domain.TERMS, termErrorCode, message);
+    }
 }

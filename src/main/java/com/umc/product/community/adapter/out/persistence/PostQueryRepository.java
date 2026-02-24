@@ -1,13 +1,15 @@
 package com.umc.product.community.adapter.out.persistence;
 
-import static com.umc.product.community.adapter.out.persistence.QCommentJpaEntity.commentJpaEntity;
-import static com.umc.product.community.adapter.out.persistence.QPostJpaEntity.postJpaEntity;
-import static com.umc.product.community.adapter.out.persistence.QScrapJpaEntity.scrapJpaEntity;
+
+import static com.umc.product.community.adapter.out.persistence.entity.QCommentJpaEntity.commentJpaEntity;
+import static com.umc.product.community.adapter.out.persistence.entity.QPostJpaEntity.postJpaEntity;
+import static com.umc.product.community.adapter.out.persistence.entity.QScrapJpaEntity.scrapJpaEntity;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.umc.product.community.adapter.out.persistence.entity.PostJpaEntity;
 import com.umc.product.community.application.port.in.query.dto.PostSearchQuery;
 import com.umc.product.community.application.port.in.query.dto.PostSearchResult.MatchType;
 import com.umc.product.community.application.port.out.dto.PostSearchData;

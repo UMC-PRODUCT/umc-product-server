@@ -1,4 +1,4 @@
-package com.umc.product.community.adapter.out.persistence;
+package com.umc.product.community.adapter.out.persistence.entity;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.community.domain.Post;

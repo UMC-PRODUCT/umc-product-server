@@ -1,5 +1,6 @@
 package com.umc.product.organization.domain;
 
+import com.umc.product.common.BaseEntity;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.exception.OrganizationErrorCode;
@@ -10,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +20,8 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class ChapterSchool {
+@Table(name = "chapter_school")
+public class ChapterSchool extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,9 +43,9 @@ public class ChapterSchool {
 
     public static ChapterSchool create(Chapter chapter, School school) {
         return ChapterSchool.builder()
-                .chapter(chapter)
-                .school(school)
-                .build();
+            .chapter(chapter)
+            .school(school)
+            .build();
     }
 
     private static void validate(Chapter chapter, School school) {

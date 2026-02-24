@@ -18,7 +18,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "terms_consent_log")
+@Table(name = "term_consent_log")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class TermConsentLog extends BaseEntity {

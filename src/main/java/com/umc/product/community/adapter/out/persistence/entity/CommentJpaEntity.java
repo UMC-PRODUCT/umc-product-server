@@ -1,4 +1,4 @@
-package com.umc.product.community.adapter.out.persistence;
+package com.umc.product.community.adapter.out.persistence.entity;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.community.domain.Comment;
@@ -54,10 +54,10 @@ public class CommentJpaEntity extends BaseEntity {
 
     public static CommentJpaEntity from(Comment comment) {
         return new CommentJpaEntity(
-                comment.getPostId(),
-                comment.getChallengerId(),
-                comment.getContent(),
-                null
+            comment.getPostId(),
+            comment.getChallengerId(),
+            comment.getContent(),
+            null
         );
     }
 
@@ -70,14 +70,14 @@ public class CommentJpaEntity extends BaseEntity {
         boolean liked = viewerChallengerId != null && isLikedBy(viewerChallengerId);
 
         return Comment.reconstruct(
-                new CommentId(id),
-                postId,
-                challengerId,
-                content,
-                parentId,
-                getLikeCount(),
-                liked,
-                getCreatedAt()
+            new CommentId(id),
+            postId,
+            challengerId,
+            content,
+            parentId,
+            getLikeCount(),
+            liked,
+            getCreatedAt()
         );
     }
 

@@ -1,4 +1,4 @@
-package com.umc.product.community.adapter.out.persistence;
+package com.umc.product.community.adapter.out.persistence.entity;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.community.domain.Scrap;
@@ -16,8 +16,8 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(
-        name = "scrap",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"post_id", "challenger_id"})
+    name = "scrap",
+    uniqueConstraints = @UniqueConstraint(columnNames = {"post_id", "challenger_id"})
 )
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

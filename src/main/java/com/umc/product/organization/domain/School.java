@@ -8,18 +8,20 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import org.hibernate.annotations.BatchSize;
+import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import org.springframework.util.StringUtils;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "school")
 public class School extends BaseEntity {
 
     @Id
@@ -51,10 +53,10 @@ public class School extends BaseEntity {
 
     public static School create(String name, String remark) {
         return School.builder()
-                .name(name)
-                .remark(remark)
-                .chapterSchools(new ArrayList<>())
-                .build();
+            .name(name)
+            .remark(remark)
+            .chapterSchools(new ArrayList<>())
+            .build();
     }
 
     public void updateLogoImageId(String logoImageId) {

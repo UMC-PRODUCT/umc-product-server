@@ -1,5 +1,6 @@
 package com.umc.product.community.adapter.out.persistence;
 
+import com.umc.product.community.adapter.out.persistence.entity.TrophyJpaEntity;
 import com.umc.product.community.application.port.in.query.dto.TrophySearchQuery;
 import com.umc.product.community.application.port.out.trophy.LoadTrophyPort;
 import com.umc.product.community.application.port.out.trophy.SaveTrophyPort;

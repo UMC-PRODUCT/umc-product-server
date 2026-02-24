@@ -1,6 +1,6 @@
 package com.umc.product.community.application.port.out.dto;
 
-import com.umc.product.community.adapter.out.persistence.PostJpaEntity;
+import com.umc.product.community.adapter.out.persistence.entity.PostJpaEntity;
 import com.umc.product.community.application.port.in.query.dto.PostSearchResult;
 import com.umc.product.community.application.port.in.query.dto.PostSearchResult.MatchType;
 import com.umc.product.community.domain.Post;

@@ -1,5 +1,6 @@
 package com.umc.product.organization.domain;
 
+import com.umc.product.common.BaseEntity;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.exception.OrganizationErrorCode;
@@ -10,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -18,7 +20,8 @@ import lombok.NoArgsConstructor;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class CentralOrganization {
+@Table(name = "central_organization")
+public class CentralOrganization extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,5 +48,4 @@ public class CentralOrganization {
             throw new BusinessException(Domain.COMMON, OrganizationErrorCode.ORGAN_NAME_REQUIRED);
         }
     }
-
 }
