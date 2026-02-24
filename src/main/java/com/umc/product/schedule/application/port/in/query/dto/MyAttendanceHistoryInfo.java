@@ -7,6 +7,7 @@ import com.umc.product.schedule.domain.ScheduleConstants;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -16,9 +17,9 @@ public record MyAttendanceHistoryInfo(
     String scheduleName,
     Instant scheduledAt,
     List<ScheduleTag> tags,
-    String scheduledDate,     // "2024-01-15"
-    String startTime,         // "14:30"
-    String endTime,           // "16:00"
+    LocalDate scheduledDate,     // "2024-01-15"
+    Instant startTime,         // "14:30"
+    Instant endTime,           // "16:00"
     AttendanceStatus status,
     String statusDisplay,     // "출석", "지각", "결석"
 
@@ -49,9 +50,9 @@ public record MyAttendanceHistoryInfo(
             schedule.getName(),
             schedule.getStartsAt(),
             schedule.getTags().stream().toList(),
-            schedule.getStartsAt().atZone(ScheduleConstants.KST).format(DATE_FORMATTER),
-            schedule.getStartsAt().atZone(ScheduleConstants.KST).format(TIME_FORMATTER),
-            schedule.getEndsAt().atZone(ScheduleConstants.KST).format(TIME_FORMATTER),
+            schedule.getStartsAt().atZone(ScheduleConstants.KST).toLocalDate(),
+            schedule.getStartsAt(),
+            schedule.getEndsAt(),
             record.getStatus(),
             record.getStatusDisplay(),
             sheet != null ? sheet.getId() : null,  // null-safe
