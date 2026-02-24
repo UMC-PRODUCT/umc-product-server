@@ -1,5 +1,6 @@
 package com.umc.product.community.adapter.out.persistence;
 
+import com.umc.product.community.adapter.out.persistence.entity.CommentJpaEntity;
 import com.umc.product.community.application.port.in.command.comment.ToggleCommentLikeUseCase.LikeResult;
 import com.umc.product.community.application.port.out.comment.LoadCommentPort;
 import com.umc.product.community.application.port.out.comment.SaveCommentPort;

@@ -1,5 +1,6 @@
 package com.umc.product.community.adapter.out.persistence;
 
+import com.umc.product.community.adapter.out.persistence.entity.ScrapJpaEntity;
 import com.umc.product.community.application.port.out.scrap.LoadScrapPort;
 import com.umc.product.community.application.port.out.scrap.SaveScrapPort;
 import com.umc.product.community.domain.Scrap;

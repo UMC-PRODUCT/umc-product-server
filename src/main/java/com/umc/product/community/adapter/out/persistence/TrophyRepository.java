@@ -1,5 +1,6 @@
 package com.umc.product.community.adapter.out.persistence;
 
+import com.umc.product.community.adapter.out.persistence.entity.TrophyJpaEntity;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 

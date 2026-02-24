@@ -8,15 +8,17 @@ import static org.mockito.Mockito.any;
 
 import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ResourcePermissionInfo;
+import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -26,25 +28,44 @@ class CheckResourcePermissionServiceTest {
     @Mock
     CheckPermissionUseCase checkPermissionUseCase;
 
-    @InjectMocks
+    @Mock
+    ResourcePermissionEvaluator noticeEvaluator;
+
+    @Mock
+    ResourcePermissionEvaluator workbookSubmissionEvaluator;
+
     CheckResourcePermissionService sut;
+
+    @BeforeEach
+    void setUp() {
+        given(noticeEvaluator.supportedResourceType()).willReturn(ResourceType.NOTICE);
+        given(workbookSubmissionEvaluator.supportedResourceType()).willReturn(ResourceType.WORKBOOK_SUBMISSION);
+
+        sut = new CheckResourcePermissionService(
+            checkPermissionUseCase,
+            List.of(noticeEvaluator, workbookSubmissionEvaluator)
+        );
+    }
 
     private static final Long MEMBER_ID = 1L;
     private static final Long RESOURCE_ID = 100L;
 
     @Nested
-    @DisplayName("hasPermission")
+    @DisplayName("권한이 있나요?")
     class HasPermissionTest {
 
         @Test
         void 특정_리소스에_대한_모든_권한을_조회한다() {
             // given
             ResourceType resourceType = ResourceType.NOTICE;
-            // NOTICE supports: READ, DELETE, CHECK
+            // NOTICE supports: READ, EDIT, DELETE, CHECK
 
             given(checkPermissionUseCase.check(eq(MEMBER_ID),
                 eq(ResourcePermission.of(resourceType, String.valueOf(RESOURCE_ID), PermissionType.READ))))
                 .willReturn(true);
+            given(checkPermissionUseCase.check(eq(MEMBER_ID),
+                eq(ResourcePermission.of(resourceType, String.valueOf(RESOURCE_ID), PermissionType.EDIT))))
+                .willReturn(false);
             given(checkPermissionUseCase.check(eq(MEMBER_ID),
                 eq(ResourcePermission.of(resourceType, String.valueOf(RESOURCE_ID), PermissionType.DELETE))))
                 .willReturn(false);
@@ -59,6 +80,7 @@ class CheckResourcePermissionServiceTest {
             assertThat(result.resourceType()).isEqualTo(ResourceType.NOTICE);
             assertThat(result.resourceId()).isEqualTo(RESOURCE_ID);
             assertThat(result.permissions()).containsEntry(PermissionType.READ, true);
+            assertThat(result.permissions()).containsEntry(PermissionType.EDIT, false);
             assertThat(result.permissions()).containsEntry(PermissionType.DELETE, false);
             assertThat(result.permissions()).containsEntry(PermissionType.CHECK, false);
         }
@@ -100,7 +122,7 @@ class CheckResourcePermissionServiceTest {
         void 리소스_타입이_지원하는_권한_개수만큼_결과를_반환한다() {
             // given
             ResourceType resourceType = ResourceType.NOTICE;
-            // NOTICE supports: READ, DELETE, CHECK (3개)
+            // NOTICE supports: READ, EDIT, DELETE, CHECK (4개)
 
             given(checkPermissionUseCase.check(eq(MEMBER_ID), any(ResourcePermission.class)))
                 .willReturn(false);

@@ -18,7 +18,7 @@ import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
-import com.umc.product.organization.domain.SchoolLinkType;
+import com.umc.product.organization.domain.enums.SchoolLinkType;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.Instant;
 import java.util.List;

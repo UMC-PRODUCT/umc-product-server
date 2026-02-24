@@ -26,10 +26,10 @@ import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.out.LoadFileMetadataPort;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
 import com.umc.product.storage.domain.exception.StorageException;
-import com.umc.product.terms.application.port.in.command.ManageTermsAgreementUseCase;
-import com.umc.product.terms.application.port.in.query.GetTermsUseCase;
-import com.umc.product.terms.domain.exception.TermsDomainException;
-import com.umc.product.terms.domain.exception.TermsErrorCode;
+import com.umc.product.term.application.port.in.command.ManageTermAgreementUseCase;
+import com.umc.product.term.application.port.in.query.GetTermUseCase;
+import com.umc.product.term.domain.exception.TermDomainException;
+import com.umc.product.term.domain.exception.TermErrorCode;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -66,10 +66,10 @@ class ManageMemberUseCaseTest {
     OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
 
     @Mock
-    ManageTermsAgreementUseCase manageTermsAgreementUseCase;
+    ManageTermAgreementUseCase manageTermAgreementUseCase;
 
     @Mock
-    GetTermsUseCase getTermsUseCase;
+    GetTermUseCase getTermUseCase;
 
     @InjectMocks
     MemberService memberService;
@@ -86,7 +86,7 @@ class ManageMemberUseCaseTest {
         // 학교가 존재 검증 bypass
         given(loadSchoolPort.existsById(1L)).willReturn(true);
         // 필수 약관을 동의했는지 검증하는 부분 bypass
-        given(getTermsUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));
+        given(getTermUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));
         // member entity 저장 시 id를 1로 반환할 것
         given(saveMemberPort.save(any(Member.class))).willAnswer(invocation -> {
             Member member = invocation.getArgument(0);
@@ -101,7 +101,7 @@ class ManageMemberUseCaseTest {
         assertThat(memberId).isEqualTo(1L);
         then(saveMemberPort).should().save(any(Member.class));
         then(oAuthAuthenticationUseCase).should().linkOAuth(any());
-        then(manageTermsAgreementUseCase).should(times(2)).createTermConsent(any());
+        then(manageTermAgreementUseCase).should(times(2)).createTermConsent(any());
     }
 
     @Test
@@ -150,7 +150,7 @@ class ManageMemberUseCaseTest {
         ));
 
         given(loadSchoolPort.existsById(1L)).willReturn(true);
-        given(getTermsUseCase.getRequiredTermIds()).willReturn(Set.of(1L));
+        given(getTermUseCase.getRequiredTermIds()).willReturn(Set.of(1L));
         given(saveMemberPort.save(any(Member.class))).willAnswer(invocation -> {
             Member member = invocation.getArgument(0);
             ReflectionTestUtils.setField(member, "id", 1L);
@@ -174,13 +174,13 @@ class ManageMemberUseCaseTest {
         ));
 
         given(loadSchoolPort.existsById(1L)).willReturn(true);
-        given(getTermsUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));
+        given(getTermUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));
 
         // when & then
         assertThatThrownBy(() -> memberService.registerMember(command))
-            .isInstanceOf(TermsDomainException.class)
+            .isInstanceOf(TermDomainException.class)
             .extracting("code")
-            .isEqualTo(TermsErrorCode.MANDATORY_TERMS_NOT_AGREED);
+            .isEqualTo(TermErrorCode.MANDATORY_TERMS_NOT_AGREED);
 
         then(saveMemberPort).should(never()).save(any());
     }
@@ -194,13 +194,13 @@ class ManageMemberUseCaseTest {
         ));
 
         given(loadSchoolPort.existsById(1L)).willReturn(true);
-        given(getTermsUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));
+        given(getTermUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));
 
         // when & then
         assertThatThrownBy(() -> memberService.registerMember(command))
-            .isInstanceOf(TermsDomainException.class)
+            .isInstanceOf(TermDomainException.class)
             .extracting("code")
-            .isEqualTo(TermsErrorCode.MANDATORY_TERMS_NOT_AGREED);
+            .isEqualTo(TermErrorCode.MANDATORY_TERMS_NOT_AGREED);
 
         then(saveMemberPort).should(never()).save(any());
     }
@@ -215,7 +215,7 @@ class ManageMemberUseCaseTest {
         ));
 
         given(loadSchoolPort.existsById(1L)).willReturn(true);
-        given(getTermsUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));  // 1, 2만 필수
+        given(getTermUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));  // 1, 2만 필수
         given(saveMemberPort.save(any(Member.class))).willAnswer(invocation -> {
             Member member = invocation.getArgument(0);
             ReflectionTestUtils.setField(member, "id", 1L);

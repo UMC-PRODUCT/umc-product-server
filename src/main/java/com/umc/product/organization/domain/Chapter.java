@@ -1,5 +1,6 @@
 package com.umc.product.organization.domain;
 
+import com.umc.product.common.BaseEntity;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.exception.OrganizationErrorCode;
@@ -18,12 +19,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(uniqueConstraints = {
+@Table(
+    name = "chapter",
+    uniqueConstraints = {
         @UniqueConstraint(name = "uk_chapter_gisu_id_name", columnNames = {"gisu_id", "name"})
-})
+    })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Chapter {
+public class Chapter extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
