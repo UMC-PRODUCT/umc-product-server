@@ -54,8 +54,6 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
     @Override
     @Transactional
     public Long createEmailVerificationSession(String email) {
-        // TODO: 이미 존재하는 verification이 있는지 검증 필요
-
         String code = generateRandomCode();
         String token = UUID.randomUUID().toString();
 
@@ -65,26 +63,28 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
             .token(token)
             .build();
 
-        String emailVerificationPath = "/api/v1/auth/email-verification/token";
+        Long sessionId = saveEmailVerificationPort.save(emailVerification).getId();
 
-        String verificationLink = UriComponentsBuilder
-            .fromUriString(serverUrl)
-            .path(emailVerificationPath)
-            .queryParam("token", token)
-            .toUriString();
+        sendVerificationEmail(email, code, token);
 
-        sendEmailUseCase.sendVerificationEmail(
-            SendVerificationEmailCommand.builder()
-                .to(email)
-                .verificationCode(code)
-                .verificationLink(verificationLink)
-                .build()
-        );
-
-        return saveEmailVerificationPort.save(emailVerification).getId();
+        return sessionId;
     }
 
     @Override
+    @Transactional
+    public void resendEmailVerification(Long sessionId) {
+        EmailVerification emailVerification = loadEmailVerificationPort.getById(sessionId);
+
+        String newCode = generateRandomCode();
+        String newToken = UUID.randomUUID().toString();
+
+        emailVerification.regenerate(newCode, newToken);
+
+        sendVerificationEmail(emailVerification.getEmail(), newCode, newToken);
+    }
+
+    @Override
+    @Transactional
     public String validateEmailVerificationSession(ValidateEmailVerificationSessionCommand command) {
         // code가 주어지면 토큰이 우선 순위
         if (command.code() != null) {
@@ -102,6 +102,24 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
         }
 
         throw new AuthenticationDomainException(AuthenticationErrorCode.NO_EMAIL_VERIFICATION_METHOD_GIVEN);
+    }
+
+    private void sendVerificationEmail(String email, String code, String token) {
+        String emailVerificationPath = "/api/v1/auth/email-verification/token";
+
+        String verificationLink = UriComponentsBuilder
+            .fromUriString(serverUrl)
+            .path(emailVerificationPath)
+            .queryParam("token", token)
+            .toUriString();
+
+        sendEmailUseCase.sendVerificationEmail(
+            SendVerificationEmailCommand.builder()
+                .to(email)
+                .verificationCode(code)
+                .verificationLink(verificationLink)
+                .build()
+        );
     }
 
     private String generateRandomCode() {

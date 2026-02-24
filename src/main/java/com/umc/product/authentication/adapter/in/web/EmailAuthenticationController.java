@@ -1,6 +1,7 @@
 package com.umc.product.authentication.adapter.in.web;
 
 import com.umc.product.authentication.adapter.in.web.dto.request.CompleteEmailVerificationRequest;
+import com.umc.product.authentication.adapter.in.web.dto.request.ResendEmailVerificationRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.SendEmailVerificationRequest;
 import com.umc.product.authentication.adapter.in.web.dto.response.CompleteEmailVerificationResponse;
 import com.umc.product.authentication.adapter.in.web.dto.response.SendEmailVerificationResponse;
@@ -72,5 +73,20 @@ public class EmailAuthenticationController {
             .builder()
             .emailVerificationId(sessionId.toString())
             .build();
+    }
+
+    @Operation(summary = "이메일 인증 코드 재전송",
+        description = """
+            기존 이메일 인증 세션의 인증 코드를 재발급하고 이메일을 재전송합니다.
+
+            기존 인증 코드는 무효화되며, 만료 시간이 갱신됩니다.
+            이미 인증이 완료된 세션에는 재전송할 수 없습니다.
+            """)
+    @PostMapping("email-verification/resend")
+    @Public
+    public void resendEmailVerification(
+        @RequestBody ResendEmailVerificationRequest request
+    ) {
+        manageAuthenticationUseCase.resendEmailVerification(request.emailVerificationId());
     }
 }

@@ -84,6 +84,16 @@ public class EmailVerification extends BaseEntity {
         throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
     }
 
+    public void regenerate(String newCode, String newToken) {
+        if (this.isVerified) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.ALREADY_VERIFIED_EMAIL);
+        }
+
+        this.code = newCode;
+        this.token = newToken;
+        this.expiresAt = Instant.now().plusSeconds(10 * 60);
+    }
+
     private void setVerified(String method) {
         this.isVerified = true;
         this.verifiedAt = Instant.now();

@@ -8,13 +8,16 @@ import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import java.io.UnsupportedEncodingException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SendEmailService implements SendEmailUseCase {
@@ -25,7 +28,7 @@ public class SendEmailService implements SendEmailUseCase {
     @Value("${spring.mail.username}")
     private String fromAddress;
 
-    // TODO: 비동기 처리 고려
+    @Async("emailTaskExecutor")
     @Override
     public void sendVerificationEmail(SendVerificationEmailCommand command) {
         try {

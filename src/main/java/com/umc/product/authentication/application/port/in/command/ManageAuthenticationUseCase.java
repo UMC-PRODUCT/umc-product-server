@@ -16,6 +16,11 @@ public interface ManageAuthenticationUseCase {
     Long createEmailVerificationSession(String email);
 
     /**
+     * 기존 이메일 인증 세션의 인증 코드를 재발급하고 이메일을 재전송합니다.
+     */
+    void resendEmailVerification(Long sessionId);
+
+    /**
      * 이메일 인증 요청을 검증합니다.
      */
     String validateEmailVerificationSession(ValidateEmailVerificationSessionCommand command);
