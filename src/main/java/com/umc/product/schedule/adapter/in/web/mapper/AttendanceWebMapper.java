@@ -10,7 +10,6 @@ import com.umc.product.schedule.application.port.in.query.dto.AvailableAttendanc
 import com.umc.product.schedule.application.port.in.query.dto.MyAttendanceHistoryInfo;
 import com.umc.product.schedule.application.port.in.query.dto.PendingAttendanceInfo;
 import com.umc.product.schedule.application.port.in.query.dto.PendingAttendancesByScheduleInfo;
-import com.umc.product.schedule.domain.ScheduleConstants;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.util.List;
@@ -72,7 +71,7 @@ public class AttendanceWebMapper {
             info.locationVerified(),
             info.memo(),
             info.checkedAt() != null
-                ? info.checkedAt().atZone(ScheduleConstants.KST).toLocalDateTime()
+                ? info.checkedAt()
                 : null
         );
     }
