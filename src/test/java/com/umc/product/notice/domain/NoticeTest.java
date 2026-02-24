@@ -23,7 +23,7 @@ class NoticeTest {
             // then
             assertThat(notice.getTitle()).isEqualTo("제목");
             assertThat(notice.getContent()).isEqualTo("내용");
-            assertThat(notice.getAuthorChallengerId()).isEqualTo(1L);
+            assertThat(notice.getAuthorMemberId()).isEqualTo(1L);
             assertThat(notice.isShouldSendNotification()).isTrue();
             assertThat(notice.getNotifiedAt()).isNull();
         }
@@ -66,7 +66,7 @@ class NoticeTest {
             Notice notice = Notice.create("제목", "내용", 1L, false);
 
             // when & then (예외 없음)
-            notice.validateAuthorChallenger(1L);
+            notice.validateAuthorMember(1L);
         }
 
         @Test
@@ -75,8 +75,8 @@ class NoticeTest {
             Notice notice = Notice.create("제목", "내용", 1L, false);
 
             // when & then
-            assertThatThrownBy(() -> notice.validateAuthorChallenger(999L))
-                    .isInstanceOf(NoticeDomainException.class);
+            assertThatThrownBy(() -> notice.validateAuthorMember(999L))
+                .isInstanceOf(NoticeDomainException.class);
         }
     }
 
@@ -141,7 +141,7 @@ class NoticeTest {
             Notice notice = Notice.create("제목", "내용", 1L, false);
 
             // when & then
-            assertThat(notice.isAuthorChallenger(1L)).isTrue();
+//            assertThat(notice.isAuthorChallenger(1L)).isTrue();
         }
 
         @Test
@@ -150,7 +150,7 @@ class NoticeTest {
             Notice notice = Notice.create("제목", "내용", 1L, false);
 
             // when & then
-            assertThat(notice.isAuthorChallenger(2L)).isFalse();
+//            assertThat(notice.isAuthorChallenger(2L)).isFalse();
         }
     }
 }

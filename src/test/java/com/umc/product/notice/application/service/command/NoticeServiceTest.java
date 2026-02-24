@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
@@ -20,13 +19,11 @@ import com.umc.product.notice.application.port.in.command.dto.CreateNoticeComman
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
-import com.umc.product.notice.application.service.NoticeAuthorValidator;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
-import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
@@ -65,8 +62,6 @@ class NoticeServiceTest {
     GetMemberUseCase getMemberUseCase;
     @Mock
     GetChapterUseCase getChapterUseCase;
-    @Mock
-    NoticeAuthorValidator noticeAuthorValidator;
 
     @InjectMocks
     NoticeService sut;
@@ -189,8 +184,6 @@ class NoticeServiceTest {
             var command = new UpdateNoticeCommand(2L, NOTICE_ID, "수정된 제목", "수정된 내용");
 
             given(loadNoticePort.findNoticeById(NOTICE_ID)).willReturn(Optional.of(notice));
-            willThrow(new NoticeDomainException(NoticeErrorCode.NOTICE_AUTHOR_MISMATCH))
-                .given(noticeAuthorValidator).validate(notice, 2L);
 
             // when & then
             assertThatThrownBy(() -> sut.updateNoticeTitleOrContent(command))
