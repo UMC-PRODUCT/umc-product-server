@@ -1,7 +1,7 @@
 package com.umc.product.member.application.port.in.command.dto;
 
 import com.umc.product.member.adapter.in.web.dto.request.TermConsentStatus;
-import com.umc.product.terms.application.port.in.command.dto.CreateTermConsentCommand;
+import com.umc.product.term.application.port.in.command.dto.CreateTermConsentCommand;
 import lombok.Builder;
 
 /**

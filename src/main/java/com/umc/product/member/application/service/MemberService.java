@@ -17,10 +17,10 @@ import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import com.umc.product.terms.application.port.in.command.ManageTermsAgreementUseCase;
-import com.umc.product.terms.application.port.in.query.GetTermsUseCase;
-import com.umc.product.terms.domain.exception.TermsDomainException;
-import com.umc.product.terms.domain.exception.TermsErrorCode;
+import com.umc.product.term.application.port.in.command.ManageTermAgreementUseCase;
+import com.umc.product.term.application.port.in.query.GetTermUseCase;
+import com.umc.product.term.domain.exception.TermDomainException;
+import com.umc.product.term.domain.exception.TermErrorCode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -40,8 +40,8 @@ public class MemberService implements ManageMemberUseCase {
     private final GetFileUseCase getFileUseCase;
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
     private final GetOAuthListUseCase getOAuthListUseCase;
-    private final ManageTermsAgreementUseCase manageTermsAgreementUseCase;
-    private final GetTermsUseCase getTermsUseCase;
+    private final ManageTermAgreementUseCase manageTermAgreementUseCase;
+    private final GetTermUseCase getTermUseCase;
 
 
     @Override
@@ -64,7 +64,7 @@ public class MemberService implements ManageMemberUseCase {
 
         // 약관 동의 정보 저장
         command.termConsents().forEach(termConsent ->
-            manageTermsAgreementUseCase.createTermConsent(
+            manageTermAgreementUseCase.createTermConsent(
                 termConsent.toCommand(savedMember.getId())
             )
         );
@@ -102,7 +102,7 @@ public class MemberService implements ManageMemberUseCase {
 
             // 약관 동의 정보 저장
             command.termConsents().forEach(termConsent ->
-                manageTermsAgreementUseCase.createTermConsent(
+                manageTermAgreementUseCase.createTermConsent(
                     termConsent.toCommand(savedMember.getId())
                 )
             );
@@ -148,7 +148,7 @@ public class MemberService implements ManageMemberUseCase {
     }
 
     private void validateMandatoryTermsAgreed(RegisterMemberCommand command) {
-        Set<Long> requiredTermIds = getTermsUseCase.getRequiredTermIds();
+        Set<Long> requiredTermIds = getTermUseCase.getRequiredTermIds();
 
         Set<Long> agreedTermIds = command.termConsents().stream()
             .filter(TermConsents::isAgreed)
@@ -156,7 +156,7 @@ public class MemberService implements ManageMemberUseCase {
             .collect(Collectors.toSet());
 
         if (!agreedTermIds.containsAll(requiredTermIds)) {
-            throw new TermsDomainException(TermsErrorCode.MANDATORY_TERMS_NOT_AGREED);
+            throw new TermDomainException(TermErrorCode.MANDATORY_TERMS_NOT_AGREED);
         }
     }
 

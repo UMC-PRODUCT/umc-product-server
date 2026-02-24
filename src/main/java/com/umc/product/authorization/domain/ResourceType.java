@@ -33,6 +33,8 @@ public enum ResourceType {
     RECRUITMENT("recruitment", "모집",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE,
             PermissionType.APPROVE, PermissionType.MANAGE)),
+    TERM("term", "약관",
+        Set.of(PermissionType.WRITE)),
     ;
 
     private final String code;

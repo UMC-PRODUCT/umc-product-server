@@ -17,10 +17,10 @@ import com.umc.product.organization.application.port.in.command.ManageSchoolUseC
 import com.umc.product.organization.application.port.in.command.dto.CreateChapterCommand;
 import com.umc.product.organization.application.port.in.command.dto.CreateGisuCommand;
 import com.umc.product.organization.application.port.in.command.dto.CreateSchoolCommand;
-import com.umc.product.terms.application.port.in.command.ManageTermsUseCase;
-import com.umc.product.terms.application.port.in.command.dto.CreateTermCommand;
-import com.umc.product.terms.application.port.in.query.GetTermsUseCase;
-import com.umc.product.terms.domain.enums.TermsType;
+import com.umc.product.term.application.port.in.command.ManageTermUseCase;
+import com.umc.product.term.application.port.in.command.dto.CreateTermCommand;
+import com.umc.product.term.application.port.in.query.GetTermUseCase;
+import com.umc.product.term.domain.enums.TermType;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -53,9 +53,9 @@ public class MockDataController {
     private final ManageSchoolUseCase manageSchoolUseCase;
     private final ManageChallengerUseCase manageChallengerUseCase;
     private final ManageMemberUseCase manageMemberUseCase;
-    private final ManageTermsUseCase manageTermsUseCase;
+    private final ManageTermUseCase manageTermUseCase;
 
-    private final GetTermsUseCase getTermsUseCase;
+    private final GetTermUseCase getTermUseCase;
 
     private static final Faker faker = new Faker(Locale.KOREAN);
 
@@ -96,28 +96,28 @@ public class MockDataController {
 
     private void createTerms() {
         // 개인정보처리방침
-        manageTermsUseCase.createTerms(
+        manageTermUseCase.createTerms(
             CreateTermCommand.builder()
                 .link("https://makeus-challenge.notion.site/300b57f4596b803f8c94dd4f4fb71960?source=copy_link")
-                .type(TermsType.PRIVACY)
+                .type(TermType.PRIVACY)
                 .required(true)
                 .build()
         );
 
         // 서비스 이용약관
-        manageTermsUseCase.createTerms(
+        manageTermUseCase.createTerms(
             CreateTermCommand.builder()
                 .link("https://makeus-challenge.notion.site/300b57f4596b8018a2dfd38784478715?source=copy_link")
-                .type(TermsType.SERVICE)
+                .type(TermType.SERVICE)
                 .required(true)
                 .build()
         );
 
         // 마케팅정보수신동의
-        manageTermsUseCase.createTerms(
+        manageTermUseCase.createTerms(
             CreateTermCommand.builder()
                 .link("https://makeus-challenge.notion.site/300b57f4596b808193c0c4d2d8e2f785?source=copy_link")
-                .type(TermsType.MARKETING)
+                .type(TermType.MARKETING)
                 .required(false)
                 .build()
         );
@@ -205,7 +205,7 @@ public class MockDataController {
     }
 
     private void createMembers(int memberPerSchool) {
-        List<TermConsents> termConsentsList = getTermsUseCase.getRequiredTermIds().stream()
+        List<TermConsents> termConsentsList = getTermUseCase.getRequiredTermIds().stream()
             .map(
                 termId -> TermConsents.builder()
                     .termId(termId)
