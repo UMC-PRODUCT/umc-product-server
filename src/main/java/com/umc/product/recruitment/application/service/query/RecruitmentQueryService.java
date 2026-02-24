@@ -1130,9 +1130,29 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         Long schoolId = resolveSchoolId(memberId);
         Long activeGisuId = resolveActiveGisuId();
 
-        Long activeRecruitmentId = loadRecruitmentPort.findActiveRecruitmentId(
-            schoolId, activeGisuId, Instant.now()
-        ).orElse(null);
+        List<Recruitment> activeRecruitments = loadRecruitmentPort.findAllPublishedBySchoolIdAndGisuId(schoolId,
+            activeGisuId);
+        Long activeRecruitmentId = null;
+
+        if (!activeRecruitments.isEmpty()) {
+            List<Long> recruitmentIds = activeRecruitments.stream().map(Recruitment::getId).toList();
+            Map<Long, RecruitmentSchedule> applySchedules = loadRecruitmentSchedulePort.findScheduleMapByRecruitmentIdsAndType(
+                recruitmentIds, RecruitmentScheduleType.APPLY_WINDOW);
+
+            Instant now = Instant.now();
+
+            Recruitment activeOne = activeRecruitments.stream()
+                .sorted(Comparator
+                    .comparing((Recruitment r) -> isApplying(applySchedules.get(r.getId()), now)).reversed()
+                    .thenComparing(Recruitment::getPublishedAt, Comparator.reverseOrder())
+                )
+                .findFirst()
+                .orElse(null);
+
+            if (activeOne != null) {
+                activeRecruitmentId = activeOne.getId();
+            }
+        }
 
         List<FormResponse> drafts = loadFormResponsePort.findAllDraftByRespondentMemberId(memberId);
         if (drafts == null) {
@@ -1457,19 +1477,24 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         Instant docResultInstant = pickAt(docResultAt);
         Instant finalResultInstant = pickAt(finalResultAt);
 
-        if (appStatus != null && currentStep == ApplicationProgressStep.BEFORE_APPLY) {
-            currentStep = ApplicationProgressStep.DOC_REVIEWING;
-        }
+        if (appStatus == null) {
+            // 지원 전 (미지원 또는 임시저장): 실제 일정이 어떻게 되든 무조건 '지원 전'
+            currentStep = ApplicationProgressStep.BEFORE_APPLY;
+        } else {
+            // 지원 완료한 경우
+            if (currentStep == ApplicationProgressStep.BEFORE_APPLY) {
+                currentStep = ApplicationProgressStep.DOC_REVIEWING;
+            }
 
-        if (appStatus != null) {
-            // 서류 불합격은 "서류 결과 발표" 이후에만 고정
             if (isDocFailed(appStatus)) {
+                // 서류 불합격: 서류 결과 발표 이후라면 '서류 결과 발표'에 멈춤 (면접으로 넘어가지 않음)
                 if (docResultInstant != null && !now.isBefore(docResultInstant)) {
                     currentStep = ApplicationProgressStep.DOC_RESULT_PUBLISHED;
+                } else {
+                    currentStep = ApplicationProgressStep.DOC_REVIEWING;
                 }
-            }
-            // 최종 결과(합/불) 확정도 "최종 발표일" 이후에만 고정
-            else if (isFinalDecided(appStatus)) {
+            } else if (isFinalDecided(appStatus)) {
+                // 최종 결과 확정 상태: 최종 발표 이후라면 '최종 결과 발표'에 멈춤
                 if (finalResultInstant != null && !now.isBefore(finalResultInstant)) {
                     currentStep = ApplicationProgressStep.FINAL_RESULT_PUBLISHED;
                 }

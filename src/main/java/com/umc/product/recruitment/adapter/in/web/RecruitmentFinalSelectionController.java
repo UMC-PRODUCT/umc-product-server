@@ -1,5 +1,8 @@
 package com.umc.product.recruitment.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.UpdateFinalStatusRequest;
@@ -35,6 +38,10 @@ public class RecruitmentFinalSelectionController {
     private final GetFinalSelectionListUseCase getFinalSelectionListUseCase;
 
     @PatchMapping("/{applicationId}/final-status")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.EDIT
+    )
     @Operation(
         summary = "최종 선발 단건 합격/불합격/결정 취소",
         description = """

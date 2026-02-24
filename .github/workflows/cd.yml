@@ -1,4 +1,4 @@
-name: CD
+name: CD [Home Server]
 
 on:
   push:
@@ -69,29 +69,29 @@ jobs:
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           echo "🔍 필수 환경 변수 검증 시작..."
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-          
+
           MISSING_VARS=()
-          
+
           echo "📦 Docker Hub 자격증명 확인..."
           [[ -z "$DOCKERHUB_USERNAME" ]] && MISSING_VARS+=("DOCKERHUB_USERNAME")
           [[ -z "$DOCKERHUB_TOKEN" ]] && MISSING_VARS+=("DOCKERHUB_TOKEN")
           [[ -z "$DOCKERHUB_REPOSITORY_NAME" ]] && MISSING_VARS+=("DOCKERHUB_REPOSITORY_NAME")
-          
+
           echo "🔐 SSH 접속 정보 확인..."
           [[ -z "$SERVER_APP_DIRECTORY" ]] && MISSING_VARS+=("SERVER_APP_DIRECTORY")
           [[ -z "$SERVER_SSH_HOST" ]] && MISSING_VARS+=("SERVER_SSH_HOST")
           [[ -z "$SERVER_SSH_USERNAME" ]] && MISSING_VARS+=("SERVER_SSH_USERNAME")
           [[ -z "$SERVER_SSH_PRIVATE_KEY" ]] && MISSING_VARS+=("SERVER_SSH_PRIVATE_KEY")
           [[ -z "$SERVER_SSH_PORT" ]] && MISSING_VARS+=("SERVER_SSH_PORT")
-          
+
           echo "⚙️  애플리케이션 설정 확인..."
           [[ -z "$DOCKER_COMPOSE_ENV" ]] && MISSING_VARS+=("DOCKER_COMPOSE_ENV")
           [[ -z "$APPLICATION_PROFILE_SECRET" ]] && MISSING_VARS+=("APPLICATION_PROFILE_SECRET")
-          
+
           echo "🌍 환경 변수 확인..."
           [[ -z "$APP_ENVIRONMENT" ]] && MISSING_VARS+=("ENVIRONMENT")
           [[ -z "$APP_IMAGE_TAG" ]] && MISSING_VARS+=("IMAGE_TAG")
-          
+
           if [ ${#MISSING_VARS[@]} -gt 0 ]; then
             echo ""
             echo "❌ 다음 환경 변수들이 설정되지 않았습니다:"
@@ -99,7 +99,7 @@ jobs:
             echo ""
             exit 1
           fi
-          
+
           echo ""
           echo "✅ 모든 필수 환경 변수가 설정되었습니다."
 
@@ -143,18 +143,18 @@ jobs:
             echo "=============================="
             echo "🚀 배포 시작: ${{ env.ENVIRONMENT }} 환경"
             echo "=============================="
-            
+
             # 환경 변수 설정
             export XDG_RUNTIME_DIR=/run/user/$(id -u)
             export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock
             export PATH="$PATH:/usr/local/bin"
-            
+
             # Docker 환경 검증
             echo "[1] Docker 환경 확인"
             echo "  - DOCKER_HOST: $DOCKER_HOST"
             echo "  - User ID: $(id -u)"
             echo "  - Docker Path: $(which docker)"
-            
+
             if ! docker info &>/dev/null; then
               echo "❌ Docker daemon에 연결할 수 없습니다"
               echo "Docker 서비스 상태:"
@@ -162,12 +162,12 @@ jobs:
               exit 1
             fi
             echo "✅ Docker 환경 정상"
-            
+
             # Docker Hub 로그인
             echo ""
              echo "[2] Docker Hub 로그인 (GHCR)"
             # echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-            
+
             # GHCR 로그인
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             if [ $? -eq 0 ]; then
@@ -176,7 +176,7 @@ jobs:
               echo "❌ Docker Hub 로그인 실패"
               exit 1
             fi
-            
+
             # App Directory가 존재하는지 확인
             echo ""
             echo "[3] 애플리케이션 디렉토리 확인: ${{ secrets.SERVER_APP_DIRECTORY }}"
@@ -186,49 +186,49 @@ jobs:
             else
               echo "✅ 애플리케이션 디렉토리가 존재합니다. 다음 단계로 진행합니다."
             fi
-            
+
             # Docker Compose 파일용 env 로딩
             echo ""
             echo "📝 Docker Compose 용 .env 파일 생성 중..."
             echo "${{ secrets.DOCKER_COMPOSE_ENV }}" > ${{ secrets.SERVER_APP_DIRECTORY }}/.env
             echo "✅ Docker Compose 용 .env 파일 생성 완료"
-            
+
             # SpringBoot Config 파일들 로딩
             echo ""
             echo "📝 Spring Boot 설정 파일 생성 중..."
-            
+
             case "$ENVIRONMENT" in
               "Production") PROFILE="prod" ;;
               "Development") PROFILE="dev" ;;
               "Test") PROFILE="test" ;;
               *) PROFILE="dev" ;;
             esac
-            
+
             mkdir -p ${{ secrets.SERVER_APP_DIRECTORY }}/config
-            
+
             # application-secret.yml을 사용하지 않도록 변경함에 따라 제거
-            
+
             cat > ${{ secrets.SERVER_APP_DIRECTORY }}/config/application-${PROFILE}.yml << 'EOF'
             ${{ secrets.APPLICATION_PROFILE_SECRET }}
             EOF
-            
+
             # 기존 컨테이너 중지 및 제거
             echo ""
             echo "서비스 디렉토리로 이동합니다, 이전 위치: $(pwd)"
             cd ${{ secrets.SERVER_APP_DIRECTORY }}
             echo "서비스 디렉토리로 이동을 완료했습니다. 현재 위치: $(pwd)"
-            
+
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "📥 Docker 이미지 Pull"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             docker compose pull
-            
+
             echo "🛑 기존 컨테이너 중지 중..."
             docker compose down
-            
+
             echo "🚀 새 컨테이너 시작 중..."
             docker compose up -d --remove-orphans
-            
+
             if [ $? -ne 0 ]; then
               echo "❌ 컨테이너 시작 실패"
               echo ""
@@ -236,15 +236,15 @@ jobs:
               docker compose logs --tail=50
               exit 1
             fi
-            
+
             echo "✅ 컨테이너가 성공적으로 시작되었습니다"
             echo ""
-            
+
             # 컨테이너 상태 확인
             echo "📊 컨테이너 상태:"
             docker compose ps
             echo ""
-            
+
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             echo "🎉 배포 완료!"
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -264,7 +264,7 @@ jobs:
           echo "| 📁 Directory | \`${{ secrets.SERVER_APP_DIRECTORY }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| ✅ Status | \`${{ job.status }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [[ "${{ job.status }}" == "success" ]]; then
           echo "### ✅ 배포가 성공적으로 완료되었습니다!" >> $GITHUB_STEP_SUMMARY
           else

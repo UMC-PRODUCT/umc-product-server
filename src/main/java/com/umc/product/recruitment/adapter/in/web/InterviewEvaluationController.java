@@ -1,5 +1,8 @@
 package com.umc.product.recruitment.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.recruitment.adapter.in.web.dto.request.CreateLiveQuestionRequest;
@@ -113,6 +116,10 @@ public class InterviewEvaluationController {
     }
 
     @PatchMapping("/assignments/{assignmentId}/evaluations/me")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.WRITE
+    )
     @Operation(
         summary = "(운영진) 내 면접 평가 제출/재제출",
         description = """
@@ -168,6 +175,10 @@ public class InterviewEvaluationController {
     }
 
     @PostMapping("/assignments/{assignmentId}/live-questions")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.WRITE
+    )
     @Operation(summary = "추가 질문(즉석 질문) 등록")
     public CreateLiveQuestionResponse createLiveQuestion(
         @PathVariable Long recruitmentId,
@@ -187,6 +198,10 @@ public class InterviewEvaluationController {
     }
 
     @PatchMapping("/assignments/{assignmentId}/live-questions/{liveQuestionId}")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.EDIT
+    )
     @Operation(summary = "추가 질문(즉석 질문) 수정")
     public UpdateLiveQuestionResponse updateLiveQuestion(
         @PathVariable Long recruitmentId,
@@ -208,6 +223,10 @@ public class InterviewEvaluationController {
     }
 
     @DeleteMapping("/assignments/{assignmentId}/live-questions/{liveQuestionId}")
+    @CheckAccess(
+        resourceType = ResourceType.RECRUITMENT,
+        permission = PermissionType.DELETE
+    )
     @Operation(summary = "추가 질문(즉석 질문) 삭제")
     public void deleteLiveQuestion(
         @PathVariable Long recruitmentId,

@@ -15,14 +15,18 @@ import com.umc.product.recruitment.application.port.out.LoadApplicationListPort;
 import com.umc.product.recruitment.application.port.out.LoadApplicationPort;
 import com.umc.product.recruitment.application.port.out.LoadEvaluationPort;
 import com.umc.product.recruitment.application.port.out.LoadInterviewAssignmentPort;
+import com.umc.product.recruitment.application.port.out.LoadRecruitmentSchedulePort;
 import com.umc.product.recruitment.application.port.out.SaveApplicationPort;
 import com.umc.product.recruitment.application.port.out.SaveEvaluationPort;
 import com.umc.product.recruitment.domain.Application;
 import com.umc.product.recruitment.domain.Evaluation;
+import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.EvaluationStage;
 import com.umc.product.recruitment.domain.enums.EvaluationStatus;
+import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,10 +43,14 @@ public class RecruitmentDocumentEvaluationService implements UpdateMyDocumentEva
     private final SaveEvaluationPort saveEvaluationPort;
     private final SaveApplicationPort saveApplicationPort;
     private final LoadInterviewAssignmentPort loadInterviewAssignmentPort;
+    private final LoadRecruitmentSchedulePort loadRecruitmentSchedulePort;
 
     @Override
     public GetMyDocumentEvaluationInfo update(UpdateMyDocumentEvaluationCommand command) {
-        // todo: 평가 기간, 운영진 권한 검증 필요
+
+        validateDocumentEvaluationPeriod(command.recruitmentId());
+
+        // todo: 운영진 권한 검증 필요
 
         Long recruitmentId = command.recruitmentId();
         Long applicationId = command.applicationId();
@@ -97,13 +105,15 @@ public class RecruitmentDocumentEvaluationService implements UpdateMyDocumentEva
 
     @Override
     public UpdateDocumentStatusInfo update(UpdateDocumentStatusCommand command) {
+
+        validateDocumentEvaluationPeriod(command.recruitmentId());
+
         Application application = loadApplicationPort.getByRecruitmentIdAndApplicationId(
             command.recruitmentId(),
             command.applicationId()
         ).orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
 
         // todo: 운영진 권한 및 학교 체크
-        // todo: 서류 평가 기간 검증
 
         if (command.decision() == EvaluationDecision.FAIL ||
             command.decision() == EvaluationDecision.WAIT) {
@@ -131,6 +141,16 @@ public class RecruitmentDocumentEvaluationService implements UpdateMyDocumentEva
             application.getId(),
             new DocumentResult(command.decision().name())
         );
+    }
+
+    private void validateDocumentEvaluationPeriod(Long recruitmentId) {
+        RecruitmentSchedule docResultAt = loadRecruitmentSchedulePort
+            .findByRecruitmentIdAndType(recruitmentId, RecruitmentScheduleType.DOC_RESULT_AT);
+
+        // docResultAt.isActive(now) -> 현재 시각이 발표 시점을 지났음을 의미
+        if (docResultAt != null && docResultAt.isActive(Instant.now())) {
+            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.DOC_RESULT_ALREADY_PUBLISHED);
+        }
     }
 
 }

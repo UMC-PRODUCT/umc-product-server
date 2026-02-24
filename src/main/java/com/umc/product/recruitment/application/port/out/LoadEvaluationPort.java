@@ -24,4 +24,6 @@ public interface LoadEvaluationPort {
         Long evaluatorUserId,
         EvaluationStage stage
     );
+
+    boolean existsByApplicationIdAndStage(Long applicationId, EvaluationStage evaluationStage);
 }

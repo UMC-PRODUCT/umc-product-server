@@ -11,7 +11,10 @@ public record WorkbookSubmissionResponse(
         @Schema(description = "챌린저 ID", example = "10")
         Long challengerId,
 
-        @Schema(description = "챌린저 이름", example = "홍길동")
+        @Schema(description = "멤버 이름(실명)", example = "홍길동")
+        String memberName,
+
+        @Schema(description = "챌린저 닉네임", example = "길동이")
         String challengerName,
 
         @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
@@ -33,6 +36,7 @@ public record WorkbookSubmissionResponse(
         return new WorkbookSubmissionResponse(
                 info.challengerWorkbookId(),
                 info.challengerId(),
+                info.memberName(),
                 info.challengerName(),
                 info.profileImageUrl(),
                 info.schoolName(),

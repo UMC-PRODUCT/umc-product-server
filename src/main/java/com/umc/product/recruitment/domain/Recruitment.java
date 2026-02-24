@@ -198,7 +198,7 @@ public class Recruitment extends BaseEntity {
         }
     }
 
-    private void requireDraftEditable() {
+    public void requireDraftEditable() {
         if (this.status != RecruitmentStatus.DRAFT) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_DRAFT);
         }
