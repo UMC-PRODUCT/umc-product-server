@@ -76,7 +76,7 @@ spring:
 
   flyway:
     enabled: true
-    baseline-version: 1
+    baseline-version: 202602250130
     baseline-on-migrate: true
 
   jpa:
