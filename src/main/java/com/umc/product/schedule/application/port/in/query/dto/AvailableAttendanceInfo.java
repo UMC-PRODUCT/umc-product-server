@@ -3,10 +3,9 @@ package com.umc.product.schedule.application.port.in.query.dto;
 import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
-import com.umc.product.schedule.domain.ScheduleConstants;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
-import java.time.LocalTime;
+import java.time.Instant;
 import java.util.Set;
 
 public record AvailableAttendanceInfo(
@@ -14,8 +13,8 @@ public record AvailableAttendanceInfo(
     Long scheduleId,
     String scheduleName,
     Set<ScheduleTag> tags,
-    LocalTime startTime,
-    LocalTime endTime,
+    Instant startTime,
+    Instant endTime,
 
     // ==== AttendanceSheet 정보 ====
     Long sheetId,
@@ -34,8 +33,8 @@ public record AvailableAttendanceInfo(
             schedule.getId(),
             schedule.getName(),
             Set.copyOf(schedule.getTags()),
-            schedule.getStartsAt().atZone(ScheduleConstants.KST).toLocalTime(),
-            schedule.getEndsAt().atZone(ScheduleConstants.KST).toLocalTime(),
+            schedule.getStartsAt(),
+            schedule.getEndsAt(),
             sheet.getId(),
             null,
             AttendanceStatus.PENDING,
@@ -52,8 +51,8 @@ public record AvailableAttendanceInfo(
             schedule.getId(),
             schedule.getName(),
             Set.copyOf(schedule.getTags()),
-            schedule.getStartsAt().atZone(ScheduleConstants.KST).toLocalTime(),
-            schedule.getEndsAt().atZone(ScheduleConstants.KST).toLocalTime(),
+            schedule.getStartsAt(),
+            schedule.getEndsAt(),
             sheet.getId(),
             record.getId(),
             record.getStatus(),

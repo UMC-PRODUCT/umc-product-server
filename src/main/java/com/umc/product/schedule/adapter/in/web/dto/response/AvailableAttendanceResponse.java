@@ -1,7 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalTime;
+import java.time.Instant;
 import java.util.List;
 
 @Schema(description = "출석 가능 일정 응답")
@@ -16,10 +16,10 @@ public record AvailableAttendanceResponse(
     List<String> tags,
 
     @Schema(description = "시작 시간", example = "10:00:00")
-    LocalTime startTime,
+    Instant startTime,
 
     @Schema(description = "종료 시간", example = "12:00:00")
-    LocalTime endTime,
+    Instant endTime,
 
     @Schema(description = "출석부 ID", example = "1")
     Long sheetId,
