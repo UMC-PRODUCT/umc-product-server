@@ -12,20 +12,20 @@ public class ScheduleWebMapper {
 
     // Schedule
     public ScheduleListResponse toScheduleListResponse(ScheduleWithStatsInfo info) {
-        return new ScheduleListResponse(
-            info.scheduleId(),
-            info.name(),
-//                info.type().name(),
-            info.status(),
-            info.startsAt().atZone(ScheduleConstants.KST).toLocalDateTime(),
-            info.startsAt().atZone(ScheduleConstants.KST).toLocalDateTime(),
-            info.endsAt().atZone(ScheduleConstants.KST).toLocalDateTime(),
-            info.locationName(),
-            info.totalCount(),
-            info.presentCount(),
-            info.pendingCount(),
-            info.attendanceRate()
-        );
+        return ScheduleListResponse.builder()
+            .scheduleId(info.scheduleId())
+            .name(info.name())
+//                .type(info.type().name())
+            .status(info.status())
+            .date(info.endsAt().atZone(ScheduleConstants.KST).toLocalDateTime())
+            .startTime(info.startsAt())
+            .endTime(info.endsAt())
+            .locationName(info.locationName())
+            .totalCount(info.totalCount())
+            .presentCount(info.presentCount())
+            .pendingCount(info.pendingCount())
+            .attendanceRate(info.attendanceRate())
+            .build();
     }
 
     public List<ScheduleListResponse> toScheduleListResponses(List<ScheduleWithStatsInfo> infos) {
