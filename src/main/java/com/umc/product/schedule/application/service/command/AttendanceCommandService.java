@@ -15,10 +15,9 @@ import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
-import com.umc.product.schedule.domain.ScheduleConstants;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,8 +57,8 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
             .orElseThrow(
                 () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
-        LocalDateTime checkTime = command.checkedAt();
-        LocalDateTime windowStartTime = sheet.getWindow().getStartTime();
+        Instant checkTime = command.checkedAt();
+        Instant windowStartTime = sheet.getWindow().getStartTime();
 
         // 출석 가능 시간 범위 검증
         // 0. 출석 시작 전 - 상태 변경 없이 막기
@@ -73,7 +72,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         }
         // 2. 지각 시간 (윈도우 종료 ~ 세션 종료)
         else if (checkTime.isAfter(sheet.getWindow().getEndTime())
-                 && !checkTime.isAfter(schedule.getEndsAt())) {
+            && !checkTime.isAfter(schedule.getEndsAt())) {
             // OK - 지각 처리
         }
         // 3. 세션 종료 후 - 결석 처리
@@ -103,7 +102,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         return savedRecord.getAttendanceRecordId().id();
     }
 
-    private AttendanceStatus determineAttendanceStatus(AttendanceSheet sheet, Schedule schedule, LocalDateTime checkTime) {
+    private AttendanceStatus determineAttendanceStatus(AttendanceSheet sheet, Schedule schedule, Instant checkTime) {
         // 출석 인정 시간
         if (sheet.isWithinTimeWindow(checkTime)) {
             return sheet.determineStatusByTime(checkTime);
@@ -158,7 +157,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
                 () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
         // 출석 시간대 검증 (active 대신 시간대 체크)
-        LocalDateTime submittedAt = java.time.LocalDateTime.ofInstant(command.submittedAt(), ScheduleConstants.KST);
+        Instant submittedAt = command.submittedAt();
         if (!sheet.isWithinTimeWindow(submittedAt)) {
             throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.OUTSIDE_ATTENDANCE_WINDOW);
         }

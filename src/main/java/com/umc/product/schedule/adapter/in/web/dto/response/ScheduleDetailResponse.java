@@ -1,10 +1,9 @@
 package com.umc.product.schedule.adapter.in.web.dto.response;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -23,13 +22,11 @@ public record ScheduleDetailResponse(
     @Schema(description = "태그 목록", example = "[\"STUDY\", \"PROJECT\"]")
     Set<String> tags,
 
-    @Schema(description = "시작 일시", example = "2026-03-16T10:00:00")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    LocalDateTime startsAt,
+    @Schema(description = "시작 일시", example = "2026-03-16T10:00:00Z")
+    Instant startsAt,
 
-    @Schema(description = "종료 일시", example = "2026-03-16T12:00:00")
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    LocalDateTime endsAt,
+    @Schema(description = "종료 일시", example = "2026-03-16T12:00:00Z")
+    Instant endsAt,
 
     @Schema(description = "종일 여부", example = "false")
     boolean isAllDay,
@@ -46,7 +43,7 @@ public record ScheduleDetailResponse(
     @Schema(description = "일정 상태", example = "예정")
     String status,
 
-    @Schema(description = "D-Day", example = "7")
+    @Schema(description = "(deprecated) D-Day", example = "7", deprecated = true)
     long dDay,
 
     @Schema(description = "출석 승인 필요 여부", example = "true")

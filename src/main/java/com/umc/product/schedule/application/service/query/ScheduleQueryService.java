@@ -10,7 +10,8 @@ import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
-import java.time.LocalDateTime;
+import com.umc.product.schedule.domain.ScheduleConstants;
+import java.time.Instant;
 import java.time.YearMonth;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -30,11 +31,11 @@ public class ScheduleQueryService implements
     // 캘린더 나의 일정 조회하기
     @Override
     public List<MyScheduleInfo> getMyMonthlySchedules(Long memberId, int year, int month) {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         YearMonth yearMonth = YearMonth.of(year, month);
-        LocalDateTime monthStart = yearMonth.atDay(1).atStartOfDay();
-        LocalDateTime nextMonthStart = yearMonth.plusMonths(1).atDay(1).atStartOfDay();
+        Instant monthStart = yearMonth.atDay(1).atStartOfDay(ScheduleConstants.KST).toInstant();
+        Instant nextMonthStart = yearMonth.plusMonths(1).atDay(1).atStartOfDay(ScheduleConstants.KST).toInstant();
 
         List<Schedule> schedules = loadSchedulePort.findMySchedulesByMonth(
             memberId, monthStart, nextMonthStart);
@@ -52,7 +53,7 @@ public class ScheduleQueryService implements
 
     @Override
     public ScheduleDetailInfo getScheduleDetail(Long scheduleId) {
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
 
         Schedule schedule = loadSchedulePort.findByIdWithTags(scheduleId)
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));

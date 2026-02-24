@@ -130,4 +130,27 @@ class NoticeTest {
             assertThat(notice.getNotifiedAt()).isEqualTo(now);
         }
     }
+
+    @Nested
+    @DisplayName("isAuthorChallenger")
+    class IsAuthorTest {
+
+        @Test
+        void 작성자이면_true를_반환한다() {
+            // given
+            Notice notice = Notice.create("제목", "내용", 1L, false);
+
+            // when & then
+//            assertThat(notice.isAuthorChallenger(1L)).isTrue();
+        }
+
+        @Test
+        void 작성자가_아니면_false를_반환한다() {
+            // given
+            Notice notice = Notice.create("제목", "내용", 1L, false);
+
+            // when & then
+//            assertThat(notice.isAuthorChallenger(2L)).isFalse();
+        }
+    }
 }

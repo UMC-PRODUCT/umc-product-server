@@ -1,7 +1,8 @@
 package com.umc.product.schedule.adapter.in.web.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Schema(description = "내 출석 이력 응답")
@@ -19,13 +20,13 @@ public record MyAttendanceHistoryResponse(
     List<String> tag,
 
     @Schema(description = "일정 날짜", example = "2024-01-15")
-    String scheduledDate,
+    LocalDate scheduledDate,
 
-    @Schema(description = "시작 시간", example = "14:30")
-    String startTime,
+    @Schema(description = "시작 시간", example = "2024-01-15T14:35:00Z")
+    Instant startTime,
 
-    @Schema(description = "종료 시간", example = "16:00")
-    String endTime,
+    @Schema(description = "종료 시간", example = "2024-01-15T15:35:00Z")
+    Instant endTime,
 
     @Schema(
         description = "출석 상태 (확정된 상태만 반환)",
@@ -49,7 +50,7 @@ public record MyAttendanceHistoryResponse(
     @Schema(description = "출석 메모/사유", example = "지각 사유: 지하철 지연")
     String memo,
 
-    @Schema(description = "실제 출석 체크 시간", example = "2024-01-15T14:35:00")
-    LocalDateTime checkedAt
+    @Schema(description = "실제 출석 체크 시간", example = "2024-01-15T17:35:00Z")
+    Instant checkedAt
 ) {
 }

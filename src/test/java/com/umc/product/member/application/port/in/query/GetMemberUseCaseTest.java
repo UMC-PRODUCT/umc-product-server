@@ -49,7 +49,7 @@ class GetMemberUseCaseTest {
     MemberQueryService memberQueryService;
 
     @Nested
-    @DisplayName("getMemberInfoById")
+    @DisplayName("getById")
     class GetById {
 
         @Test

@@ -10,7 +10,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -44,14 +44,14 @@ public class AttendanceRecord extends BaseEntity {
     @Column(nullable = false)
     private AttendanceStatus status;
 
-    private LocalDateTime checkedAt;
+    private Instant checkedAt;
 
     @Column(length = 500)
     private String memo;
 
     private Long confirmedBy;
 
-    private LocalDateTime confirmedAt;
+    private Instant confirmedAt;
 
     private Double latitude;
 
@@ -65,7 +65,7 @@ public class AttendanceRecord extends BaseEntity {
         Long attendanceSheetId,
         Long memberId,
         AttendanceStatus status,
-        LocalDateTime checkedAt,
+        Instant checkedAt,
         String memo
     ) {
         validateAttendanceSheetId(attendanceSheetId);
@@ -84,7 +84,7 @@ public class AttendanceRecord extends BaseEntity {
      */
     public void checkIn(
         AttendanceStatus newStatus,
-        LocalDateTime checkedAt,
+        Instant checkedAt,
         Double latitude,
         Double longitude,
         boolean locationVerified
@@ -121,7 +121,7 @@ public class AttendanceRecord extends BaseEntity {
             default -> throw new IllegalStateException("승인 가능한 상태가 아닙니다: " + status);
         };
         this.confirmedBy = confirmerId;
-        this.confirmedAt = LocalDateTime.now();
+        this.confirmedAt = Instant.now();
     }
 
     /**
@@ -141,7 +141,7 @@ public class AttendanceRecord extends BaseEntity {
 
         this.status = AttendanceStatus.ABSENT;
         this.confirmedBy = confirmerId;
-        this.confirmedAt = LocalDateTime.now();
+        this.confirmedAt = Instant.now();
 
         // 일반 출석 거절 시 재시도를 위해 체크 데이터 초기화
         if (isRegularAttendance) {
@@ -175,7 +175,7 @@ public class AttendanceRecord extends BaseEntity {
      * <p>
      * PENDING, LATE, ABSENT 상태에서 가능
      */
-    public void submitReasonBeforeCheck(String reason, LocalDateTime submittedAt) {
+    public void submitReasonBeforeCheck(String reason, Instant submittedAt) {
         // 출석 전, 지각, 결석 상태에서만 사유 제출 가능
         if (this.status != AttendanceStatus.PENDING &&
             this.status != AttendanceStatus.LATE &&
@@ -220,7 +220,7 @@ public class AttendanceRecord extends BaseEntity {
         this.status = newStatus;
     }
 
-    public void updateCheckInfo(LocalDateTime checkedAt) {
+    public void updateCheckInfo(Instant checkedAt) {
         if (this.checkedAt == null) {
             throw new IllegalStateException("출석 체크가 되지 않은 기록입니다");
         }

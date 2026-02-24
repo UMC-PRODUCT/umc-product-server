@@ -1,7 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Schema(description = "승인 대기 출석 응답")
 public record PendingAttendanceResponse(
@@ -29,7 +29,7 @@ public record PendingAttendanceResponse(
     @Schema(description = "사유", example = "병원 방문으로 인한 지각")
     String reason,
 
-    @Schema(description = "요청 일시", example = "2026-03-16T10:05:00")
-    LocalDateTime requestedAt
+    @Schema(description = "요청 일시", example = "2026-03-16T10:05:00Z")
+    Instant requestedAt
 ) {
 }

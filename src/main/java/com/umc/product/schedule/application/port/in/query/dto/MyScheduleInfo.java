@@ -1,13 +1,14 @@
 package com.umc.product.schedule.application.port.in.query.dto;
 
-import java.time.LocalDateTime;
+import com.umc.product.schedule.domain.ScheduleConstants;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 public record MyScheduleInfo(
     Long scheduleId,
     String name,
-    LocalDateTime startsAt,
-    LocalDateTime endsAt,
+    Instant startsAt,
+    Instant endsAt,
     String status,
     long dDay
 ) {
@@ -15,17 +16,20 @@ public record MyScheduleInfo(
     public static MyScheduleInfo of(
         Long scheduleId,
         String name,
-        LocalDateTime startsAt,
-        LocalDateTime endsAt,
-        LocalDateTime now
+        Instant startsAt,
+        Instant endsAt,
+        Instant now
     ) {
         String status = resolveStatus(startsAt, endsAt, now);
-        long dDay = ChronoUnit.DAYS.between(now.toLocalDate(), startsAt.toLocalDate());
+        long dDay = ChronoUnit.DAYS.between(
+            now.atZone(ScheduleConstants.KST).toLocalDate(),
+            startsAt.atZone(ScheduleConstants.KST).toLocalDate()
+        );
 
         return new MyScheduleInfo(scheduleId, name, startsAt, endsAt, status, dDay);
     }
 
-    private static String resolveStatus(LocalDateTime startsAt, LocalDateTime endsAt, LocalDateTime now) {
+    private static String resolveStatus(Instant startsAt, Instant endsAt, Instant now) {
         if (now.isAfter(endsAt)) {
             return "종료됨";
         }

@@ -67,10 +67,11 @@ class NoticeContentServiceTest {
 
     private static final Long NOTICE_ID = 100L;
     private static final Long AUTHOR_MEMBER_ID = 1L;
+    private static final Long AUTHOR_CHALLENGER_ID = 10L;
     private static final Long OTHER_MEMBER_ID = 999L;
 
     private Notice createNotice() {
-        Notice notice = Notice.create("테스트 공지", "테스트 내용", AUTHOR_MEMBER_ID, false);
+        Notice notice = Notice.create("테스트 공지", "테스트 내용", AUTHOR_CHALLENGER_ID, false);
         ReflectionTestUtils.setField(notice, "id", NOTICE_ID);
         return notice;
     }

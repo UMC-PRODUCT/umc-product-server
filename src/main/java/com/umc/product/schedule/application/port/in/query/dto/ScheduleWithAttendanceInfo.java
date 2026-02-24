@@ -1,7 +1,7 @@
 package com.umc.product.schedule.application.port.in.query.dto;
 
 import com.umc.product.schedule.domain.enums.ScheduleTag;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Set;
 
 /**
@@ -13,8 +13,8 @@ public record ScheduleWithAttendanceInfo(
     String name,
     String description,
     Set<ScheduleTag> tags,
-    LocalDateTime startsAt,
-    LocalDateTime endsAt,
+    Instant startsAt,
+    Instant endsAt,
     boolean isAllDay,
     String locationName,
     Double latitude,

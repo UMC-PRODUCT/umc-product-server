@@ -9,8 +9,6 @@ import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCo
 import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCommand;
 import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleLocationCommand;
 import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleLocationInfo;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.out.DeleteAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.DeleteAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
@@ -26,7 +24,7 @@ import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -80,7 +78,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         var attendanceSheetOpt = loadAttendanceSheetPort.findByScheduleId(command.scheduleId());
 
         // 변경 전 기존 일정 시작 시간
-        LocalDateTime oldStartsAt = schedule.getStartsAt();
+        Instant oldStartsAt = schedule.getStartsAt();
 
         // 일정 정보 업데이트
         schedule.update(
@@ -147,9 +145,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
      * <p>
      * 제한 없음: 언제든 자유롭게 참여자 추가/삭제 가능
      * <p>
-     * 동작:
-     * - 추가된 참여자: AttendanceRecord 생성 (PENDING 상태)
-     * - 삭제된 참여자: AttendanceRecord 삭제 (Hard Delete)
+     * 동작: - 추가된 참여자: AttendanceRecord 생성 (PENDING 상태) - 삭제된 참여자: AttendanceRecord 삭제 (Hard Delete)
      */
     private void syncAttendanceRecords(AttendanceSheet sheet, List<Long> newParticipantIds) {
         Long sheetId = sheet.getId();

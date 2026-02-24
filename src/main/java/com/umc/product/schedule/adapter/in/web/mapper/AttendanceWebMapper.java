@@ -70,7 +70,9 @@ public class AttendanceWebMapper {
             info.locationName(),
             info.locationVerified(),
             info.memo(),
-            info.checkedAt()
+            info.checkedAt() != null
+                ? info.checkedAt()
+                : null
         );
     }
 
@@ -118,6 +120,7 @@ public class AttendanceWebMapper {
             : getFileUseCase.getFileLinks(profileImageIds);
     }
 
+    // TODO: DTO에 정적 팩토리 메소드로 변경할 것
     private PendingAttendanceResponse toPendingAttendanceResponse(
         PendingAttendanceInfo info, Map<String, String> profileImageLinks
     ) {
@@ -134,7 +137,9 @@ public class AttendanceWebMapper {
             info.schoolName(),
             info.status().name(),
             info.reason(),
-            info.requestedAt()
+            info.requestedAt() != null
+                ? info.requestedAt()
+                : null
         );
     }
 }
