@@ -83,16 +83,17 @@ public class ChallengerQueryService implements GetChallengerUseCase {
 
     @Override
     public List<ChallengerInfo> getByGisuId(Long gisuId) {
-        return loadChallengerPort.findByGisuId(gisuId).stream()
-            .map(this::getChallengerInfoFromChallenger)
-            .toList();
+        return toChallengerInfoListBatch(loadChallengerPort.findByGisuId(gisuId));
     }
 
     @Override
     public List<ChallengerInfo> getByGisuIds(List<Long> gisuIds) {
-        return loadChallengerPort.findByGisuIdIn(gisuIds).stream()
-            .map(this::getChallengerInfoFromChallenger)
-            .toList();
+        return toChallengerInfoListBatch(loadChallengerPort.findByGisuIdIn(gisuIds));
+    }
+
+    @Override
+    public List<ChallengerInfo> getLatestPerMember() {
+        return toChallengerInfoListBatch(loadChallengerPort.findLatestPerMember());
     }
 
     private ChallengerInfo getChallengerInfoFromChallenger(Challenger challenger) {
@@ -100,5 +101,25 @@ public class ChallengerQueryService implements GetChallengerUseCase {
             getChallengerPointUseCase.getListByChallengerId(challenger.getId());
 
         return ChallengerInfo.from(challenger, challengerPointInfos);
+    }
+
+    /**
+     * 챌린저 목록의 포인트를 IN 쿼리 1번으로 일괄 조회해 ChallengerInfo 리스트로 변환합니다.
+     */
+    private List<ChallengerInfo> toChallengerInfoListBatch(List<Challenger> challengers) {
+        if (challengers.isEmpty()) {
+            return List.of();
+        }
+
+        Set<Long> ids = challengers.stream()
+            .map(Challenger::getId)
+            .collect(Collectors.toSet());
+
+        Map<Long, List<ChallengerPointInfo>> pointsMap =
+            getChallengerPointUseCase.getMapByChallengerIds(ids);
+
+        return challengers.stream()
+            .map(c -> ChallengerInfo.from(c, pointsMap.getOrDefault(c.getId(), List.of())))
+            .toList();
     }
 }

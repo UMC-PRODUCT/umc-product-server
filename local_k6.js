@@ -20,11 +20,11 @@ export let options = {
 
 const BASE_URL = 'http://localhost:8080';
 const NOTICE_ID = 1; // 테스트할 공지 ID
-const ACCESS_TOKEN = "";
+const ACCESS_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzcyMDAwNzIyLCJleHAiOjE3NzIwMDQzMjJ9.lmQR3Vg6zGkdtBf4vwtnVVO01fPNamYyw5LhhvRpKzSSDifk56i3LHLpPwlYNxBlkmLByEjB0aPIWBiqB2YX3w";
 
 export default function () {
     group('읽음 현황 조회', () => {
-        const res = http.get(`${BASE_URL}/api/v1/notices/${NOTICE_ID}/read-status`, {
+        const res = http.get(`${BASE_URL}/api/v1/notices/${NOTICE_ID}/read-status?filterType=ALL&status=UNREAD`, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${ACCESS_TOKEN}` // 인증 필요하면 추가
