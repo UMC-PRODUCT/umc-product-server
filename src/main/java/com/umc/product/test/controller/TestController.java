@@ -74,8 +74,8 @@ public class TestController {
     @Public
     @Operation(summary = "AccessToken 발급")
     @GetMapping("/token/access")
-    public String getAccessToken(@RequestParam("memberId") Long memberId,
-                                 @RequestParam(name = "expirationInMinutes", required = false) Long expirationInMinutes) {
+    public String getAccessToken(@RequestParam Long memberId,
+                                 @RequestParam(required = false) Long expirationInMinutes) {
         return expirationInMinutes == null ?
             // null이면 기본값
             jwtTokenProvider.createAccessToken(memberId, null) :

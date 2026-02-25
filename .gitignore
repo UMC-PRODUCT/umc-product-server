@@ -248,3 +248,6 @@ $RECYCLE.BIN/
 
 # HTTP Client private env (tokens)
 http-client.private.env.json
+
+# K6
+local_k6.js
