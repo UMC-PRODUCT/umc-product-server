@@ -31,6 +31,7 @@ import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -205,7 +206,25 @@ public class NoticeQueryService implements GetNoticeUseCase {
             challengers.stream().map(ChallengerInfo::memberId).collect(Collectors.toSet())
         );
 
+        // 필터링 전에 필요한 챕터 정보를 1번 쿼리로 선점해 캐시에 채워둠
+        Set<Long> gisuIds = challengers.stream()
+            .map(ChallengerInfo::gisuId)
+            .collect(Collectors.toSet());
+
+        Set<Long> schoolIds = challengers.stream()
+            .map(c -> memberMap.get(c.memberId()))
+            .filter(Objects::nonNull)
+            .map(MemberInfo::schoolId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
         Map<ChapterKey, ChapterInfo> chapterCache = new HashMap<>();
+        getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(gisuIds, schoolIds)
+            .forEach((gId, schoolMap) ->
+                schoolMap.forEach((sId, info) ->
+                    chapterCache.put(new ChapterKey(gId, sId), info)
+                )
+            );
 
         List<ChallengerInfo> targetChallengers = challengers.stream()
             .filter(challenger -> isTargetChallenger(targetInfo, challenger, memberMap.get(challenger.memberId()),
