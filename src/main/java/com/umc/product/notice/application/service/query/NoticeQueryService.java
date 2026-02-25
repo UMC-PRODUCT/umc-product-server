@@ -191,6 +191,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
         NoticeTargetInfo targetInfo = NoticeTargetInfo.from(target);
 
         List<ChallengerInfo> challengers;
+
+        // 전체 기수 공지 여부
         if (targetInfo.targetGisuId() != null) {
             challengers = getChallengerUseCase.getByGisuId(targetInfo.targetGisuId());
         } else {
@@ -220,12 +222,13 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         Map<ChapterKey, ChapterInfo> chapterCache = new HashMap<>();
         getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(gisuIds, schoolIds)
-            .forEach((gId, schoolMap) ->
-                schoolMap.forEach((sId, info) ->
-                    chapterCache.put(new ChapterKey(gId, sId), info)
+            .forEach((gisuId, schoolMap) ->
+                schoolMap.forEach((schoolId, info) ->
+                    chapterCache.put(new ChapterKey(gisuId, schoolId), info)
                 )
             );
 
+        // 조건에 맞는 챌린저 필터링
         List<ChallengerInfo> targetChallengers = challengers.stream()
             .filter(challenger -> isTargetChallenger(targetInfo, challenger, memberMap.get(challenger.memberId()),
                 chapterCache))
