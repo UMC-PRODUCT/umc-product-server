@@ -41,7 +41,8 @@ jobs:
   deploy:
     needs: ci-and-build
     if: needs.ci-and-build.outputs.environment != 'test'
-    runs-on: [ self-hosted, cd-runner ]
+    #    runs-on: [ self-hosted, cd-runner ]
+    runs-on: ubuntu-latest
     # 빌드 단계에서 결정된 환경 사용
     environment: ${{ needs.ci-and-build.outputs.environment }}
 

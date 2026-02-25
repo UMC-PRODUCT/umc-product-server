@@ -37,8 +37,8 @@ jobs:
   deploy:
     needs: ci-and-build
     if: needs.ci-and-build.outputs.environment != 'test'
-    #    runs-on: ubuntu-latest
-    runs-on: [ self-hosted, cd-runner ]
+    runs-on: ubuntu-latest
+    #    runs-on: [ self-hosted, cd-runner ]
     environment: ${{ needs.ci-and-build.outputs.environment }}
 
     env:
