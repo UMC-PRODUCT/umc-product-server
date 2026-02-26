@@ -12,6 +12,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +29,7 @@ import org.hibernate.type.SqlTypes;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "recruitment")
 public class Recruitment extends BaseEntity {
 
     @Id
@@ -138,6 +140,28 @@ public class Recruitment extends BaseEntity {
         return extension;
     }
 
+    private static void validateDraftContext(Long schoolId, Long gisuId, Long formId) {
+        if (schoolId == null || gisuId == null || formId == null) {
+            throw new IllegalStateException("Recruitment draft context invalid");
+        }
+    }
+
+    private static String normalizeTitle(String title) {
+        if (title == null) {
+            return null;
+        }
+        String t = title.trim();
+        return t.isBlank() ? null : t;
+    }
+
+    private static String normalizeNoticeContent(String content) {
+        if (content == null) {
+            return null;
+        }
+        String c = content.trim();
+        return c.isBlank() ? null : c;
+    }
+
     // 기준 모집 Root 설정 (Service에서 호출)
     // insert(save) 후 ID가 생기면, 이 메서드를 호출해서 root = id로 업데이트
     public void setRootToSelf() {
@@ -165,12 +189,6 @@ public class Recruitment extends BaseEntity {
 
     public boolean isRoot() {
         return this.parentRecruitmentId == null;
-    }
-
-    private static void validateDraftContext(Long schoolId, Long gisuId, Long formId) {
-        if (schoolId == null || gisuId == null || formId == null) {
-            throw new IllegalStateException("Recruitment draft context invalid");
-        }
     }
 
     public void changeTitle(String title) {
@@ -205,22 +223,6 @@ public class Recruitment extends BaseEntity {
 //        if (Boolean.FALSE.equals(this.isActive)) {
 //            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_INACTIVE);
 //        }
-    }
-
-    private static String normalizeTitle(String title) {
-        if (title == null) {
-            return null;
-        }
-        String t = title.trim();
-        return t.isBlank() ? null : t;
-    }
-
-    private static String normalizeNoticeContent(String content) {
-        if (content == null) {
-            return null;
-        }
-        String c = content.trim();
-        return c.isBlank() ? null : c;
     }
 
     public boolean isPublished() {
