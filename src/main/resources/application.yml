@@ -185,13 +185,16 @@ logging:
 management:
   server:
     port: ${MANAGEMENT_PORT:9090}
+
   endpoint:
     health:
       show-details: always
+
   endpoints:
     web:
       exposure:
         include: "health,info,metrics,prometheus,tracing"
+
   tracing:
     enabled: true
     sampling:
@@ -219,6 +222,10 @@ management:
     metrics:
       export:
         enabled: true
+
+  health:
+    mail:
+      enabled: false
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:${SERVER_PORT:8080}}
