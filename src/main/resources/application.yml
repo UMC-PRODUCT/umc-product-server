@@ -76,8 +76,8 @@ spring:
 
   flyway:
     enabled: true
-    baseline-version: 202602250130
-    baseline-on-migrate: true
+    baseline-version: 2026.02.25.01.30
+    baseline-on-migrate: ${FLYWAY_BASELINE_ON_MIGRATE:false}
 
   jpa:
     # database-platform은 SpringBoot가 hibernate-spatial 의존성을 기반으로 자동으로 선택함
