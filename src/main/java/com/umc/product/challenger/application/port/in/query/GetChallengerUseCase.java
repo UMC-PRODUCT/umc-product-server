@@ -59,4 +59,11 @@ public interface GetChallengerUseCase {
      * memberId로 해당 사용자가 가지고 있는 가장 최근 챌린저 정보 조회
      */
     ChallengerInfoWithStatus getLatestActiveChallengerByMemberId(Long memberId);
+
+    /**
+     * 각 멤버별 가장 최근 기수(gisuId 최대값)의 챌린저 정보 조회
+     * <p>
+     * 한 멤버가 여러 기수에 걸쳐 챌린저인 경우, 가장 최근 기수의 챌린저 1건만 반환합니다.
+     */
+    List<ChallengerInfo> getLatestPerMember();
 }

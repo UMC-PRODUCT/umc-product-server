@@ -26,16 +26,13 @@ import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeClassification;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
-import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
-import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +55,6 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private final LoadNoticeTargetPort loadNoticeTargetPort;
 
     private final GetChapterUseCase getChapterUseCase;
-    private final GetGisuUseCase getGisuUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetNoticeContentUseCase getNoticeContentUseCase;
@@ -195,21 +191,13 @@ public class NoticeQueryService implements GetNoticeUseCase {
         NoticeTargetInfo targetInfo = NoticeTargetInfo.from(target);
 
         List<ChallengerInfo> challengers;
+
+        // 전체 기수 공지 여부
         if (targetInfo.targetGisuId() != null) {
             challengers = getChallengerUseCase.getByGisuId(targetInfo.targetGisuId());
         } else {
-            // 모든 기수 챌린저를 가져온 뒤, 멤버당 가장 최근 기수의 챌린저만 남김 (읽음 현황 조회시 혼선 방지)
-            List<Long> gisuIds = getGisuUseCase.getList().stream()
-                .map(GisuInfo::gisuId)
-                .toList();
-            challengers = getChallengerUseCase.getByGisuIds(gisuIds).stream()
-                // memberId를 key로 그룹핑, 여러 챌린저 갖는 경우 gisuId가 큰 챌린저 (최근 챌린저)로 남김
-                .collect(Collectors.toMap(
-                    ChallengerInfo::memberId,
-                    Function.identity(),
-                    BinaryOperator.maxBy(Comparator.comparing(ChallengerInfo::gisuId))
-                ))
-                .values().stream().toList();
+            // 모든 기수 대상 공지: DB 쿼리에서 멤버당 최신 기수 챌린저 1건만 조회 (읽음 현황 조회 시 혼선 방지)
+            challengers = getChallengerUseCase.getLatestPerMember();
         }
 
         if (challengers.isEmpty()) {
@@ -220,8 +208,27 @@ public class NoticeQueryService implements GetNoticeUseCase {
             challengers.stream().map(ChallengerInfo::memberId).collect(Collectors.toSet())
         );
 
-        Map<ChapterKey, ChapterInfo> chapterCache = new HashMap<>();
+        // 필터링 전에 필요한 챕터 정보를 1번 쿼리로 선점해 캐시에 채워둠
+        Set<Long> gisuIds = challengers.stream()
+            .map(ChallengerInfo::gisuId)
+            .collect(Collectors.toSet());
 
+        Set<Long> schoolIds = challengers.stream()
+            .map(c -> memberMap.get(c.memberId()))
+            .filter(Objects::nonNull)
+            .map(MemberInfo::schoolId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        Map<ChapterKey, ChapterInfo> chapterCache = new HashMap<>();
+        getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(gisuIds, schoolIds)
+            .forEach((gisuId, schoolMap) ->
+                schoolMap.forEach((schoolId, info) ->
+                    chapterCache.put(new ChapterKey(gisuId, schoolId), info)
+                )
+            );
+
+        // 조건에 맞는 챌린저 필터링
         List<ChallengerInfo> targetChallengers = challengers.stream()
             .filter(challenger -> isTargetChallenger(targetInfo, challenger, memberMap.get(challenger.memberId()),
                 chapterCache))

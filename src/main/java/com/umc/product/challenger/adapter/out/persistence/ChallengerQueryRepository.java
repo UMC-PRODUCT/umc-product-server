@@ -131,6 +131,25 @@ public class ChallengerQueryRepository {
             ));
     }
 
+    /**
+     * 각 멤버별 가장 최근 기수(gisuId 최대값)의 챌린저 조회
+     * <p>
+     * SQL: SELECT c.* FROM challenger c
+     * WHERE c.gisu_id = (SELECT MAX(sub.gisu_id) FROM challenger sub WHERE sub.member_id = c.member_id)
+     */
+    public List<Challenger> findLatestPerMember() {
+        QChallenger sub = new QChallenger("sub");
+
+        return queryFactory
+            .selectFrom(challenger)
+            .where(challenger.gisuId.eq(
+                JPAExpressions.select(sub.gisuId.max())
+                    .from(sub)
+                    .where(sub.memberId.eq(challenger.memberId))
+            ))
+            .fetch();
+    }
+
     // ========== private methods ==========
 
     private NumberExpression<Double> pointValueExpression(QChallengerPoint point) {

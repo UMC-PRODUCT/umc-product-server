@@ -72,6 +72,11 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     }
 
     @Override
+    public List<Challenger> findLatestPerMember() {
+        return queryRepository.findLatestPerMember();
+    }
+
+    @Override
     public Page<Challenger> search(SearchChallengerQuery query, Pageable pageable) {
         return queryRepository.pagingSearch(query, pageable);
     }

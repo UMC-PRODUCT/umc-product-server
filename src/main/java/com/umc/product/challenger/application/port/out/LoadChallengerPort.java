@@ -48,4 +48,9 @@ public interface LoadChallengerPort {
      * 여러 ID로 챌린저 배치 조회
      */
     List<Challenger> findByIdIn(Set<Long> ids);
+
+    /**
+     * 각 멤버별 가장 최근 기수(gisuId 최대값)의 챌린저 목록 조회
+     */
+    List<Challenger> findLatestPerMember();
 }

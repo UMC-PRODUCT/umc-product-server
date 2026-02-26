@@ -7,6 +7,7 @@ import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -47,6 +48,11 @@ public class ChapterSchoolPersistenceAdapter implements LoadChapterSchoolPort, M
     @Override
     public List<ChapterSchool> findBySchoolId(Long schoolId) {
         return chapterSchoolQueryRepository.findBySchoolId(schoolId);
+    }
+
+    @Override
+    public List<ChapterSchool> findByGisuIdsAndSchoolIds(Set<Long> gisuIds, Set<Long> schoolIds) {
+        return chapterSchoolQueryRepository.findByGisuIdInAndSchoolIdIn(gisuIds, schoolIds);
     }
 
 }

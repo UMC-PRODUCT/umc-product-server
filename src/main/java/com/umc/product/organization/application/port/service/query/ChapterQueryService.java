@@ -9,8 +9,10 @@ import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -80,5 +82,27 @@ public class ChapterQueryService implements GetChapterUseCase {
     @Override
     public ChapterInfo getChapterById(Long chapterId) {
         return ChapterInfo.from(loadChapterPort.findById(chapterId));
+    }
+
+    @Override
+    public Map<Long, Map<Long, ChapterInfo>> getChapterMapByGisuIdsAndSchoolIds(
+        Set<Long> gisuIds, Set<Long> schoolIds
+    ) {
+        if (gisuIds.isEmpty() || schoolIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<ChapterSchool> chapterSchools =
+            loadChapterSchoolPort.findByGisuIdsAndSchoolIds(gisuIds, schoolIds);
+
+        // chapter, chapter.gisu, school이 fetch join으로 이미 로드되어 있음
+        Map<Long, Map<Long, ChapterInfo>> result = new HashMap<>();
+        for (ChapterSchool cs : chapterSchools) {
+            Long gisuId = cs.getChapter().getGisu().getId();
+            Long schoolId = cs.getSchool().getId();
+            result.computeIfAbsent(gisuId, k -> new HashMap<>())
+                  .put(schoolId, ChapterInfo.from(cs.getChapter()));
+        }
+        return result;
     }
 }

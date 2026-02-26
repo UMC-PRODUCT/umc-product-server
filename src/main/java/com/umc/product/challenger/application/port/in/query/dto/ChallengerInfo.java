@@ -43,13 +43,17 @@ public record ChallengerInfo(
     }
 
     public static ChallengerInfo from(Challenger challenger, List<ChallengerPointInfo> challengerPoints) {
+        double totalPoints = challengerPoints.stream()
+            .mapToDouble(ChallengerPointInfo::point)
+            .sum();
+
         return ChallengerInfo.builder()
             .challengerId(challenger.getId())
             .memberId(challenger.getMemberId())
             .gisuId(challenger.getGisuId())
             .part(challenger.getPart())
             .challengerPoints(challengerPoints)
-            .totalPoints(challenger.getTotalPoints())
+            .totalPoints(totalPoints)
             .challengerStatus(challenger.getStatus())
             .build();
     }
