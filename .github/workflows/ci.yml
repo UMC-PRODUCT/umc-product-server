@@ -1,0 +1,237 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'src/**'
+      - 'build.gradle.kts'
+      - 'docker/**'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/cd.yml'
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: '배포 환경 (prod/dev)'
+        required: true
+        type: choice
+        options:
+          - Development
+          - Production
+          - Test
+
+  workflow_call:
+    inputs:
+      environment:
+        description: '배포 환경'
+        required: false
+        type: string
+    outputs:
+      environment:
+        description: "결정된 환경"
+        value: ${{ jobs.build-and-test.outputs.environment }}
+      repo_owner:
+        description: "Repository owner"
+        value: ${{ jobs.build-and-test.outputs.repo_owner }}
+      image_tag:
+        description: "Docker image tag"
+        value: ${{ jobs.build-and-test.outputs.image_tag }}
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true  # 이전 실행 취소
+
+jobs:
+  # Job 1: 빌드 및 테스트 (한 번만 실행)
+  build-and-test:
+    name: Build & Run Tests
+    #    runs-on: [ self-hosted, ci-runner ]
+    # self-hosted 러너가 .. Dockerhub에서 IP 밴을 당한 것 같아서 ARM 환경의 GH hosted runner로 변경합니다.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+      packages: write
+      statuses: write
+      deployments: write
+
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      repo_owner: ${{ steps.set-env.outputs.repo_owner }}
+      image_tag: ${{ steps.set-env.outputs.image_tag }}
+
+    #    strategy:
+    #      matrix:
+    #        platform: [ linux/amd64, linux/arm64 ]
+    #        include:
+    #          - platform: linux/amd64
+    #            tag-suffix: amd64
+    #          - platform: linux/arm64
+    #            tag-suffix: arm64
+
+    steps:
+      - name: 📦 코드베이스 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 🎯 배포 환경 설정
+        id: set-env
+        run: |
+          INPUT_ENV="${{ inputs.environment }}"
+
+          # PR일 때는 'test' 환경으로 설정
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "Running in PR mode - Setting test environment for build"
+            ENVIRONMENT="Test"
+          elif [[ -n "$INPUT_ENV" ]]; then
+            ENVIRONMENT="$INPUT_ENV"
+
+          # CD에서 호출한 경우 branch에 따라서 환경 결정
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            ENVIRONMENT="Production"
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            ENVIRONMENT="Development"
+          else
+            ENVIRONMENT="Test"
+          fi
+
+          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
+          echo "lower_environment=$(echo "${ENVIRONMENT}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+          REPO_OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo_owner=${REPO_OWNER}" >> $GITHUB_OUTPUT
+
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          IMAGE_TAG=$(echo "${ENVIRONMENT}-${SHORT_SHA}" | tr '[:upper:]' '[:lower:]')
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+
+      - name: 🧑‍💻 JDK 21 Corretto 설정
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'corretto'
+          cache: gradle
+
+      - name: 🔑 Gradlew 실행 권한 부여
+        run: chmod +x gradlew
+
+      - name: 🔍 컴파일 체크
+        run: ./gradlew compileJava compileTestJava
+
+      - name: 🧪 테스트 실행
+        id: test
+        run: ./gradlew test
+        continue-on-error: true
+
+      - name: 📊 테스트 결과 배포
+        uses: dorny/test-reporter@v2
+        if: always()
+        with:
+          name: 'Backend Test Results'
+          path: 'build/test-results/test/*.xml'
+          reporter: 'java-junit'
+          use-actions-summary: 'true'
+          fail-on-error: 'false'
+
+      - name: 🏗️ Build JAR
+        run: ./gradlew bootJar
+
+      - name: 📋 빌드 결과 확인
+        run: |
+          ls -la build/libs/
+          echo "Current directory: $(pwd)"
+
+      - name: 🖥️ Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: 🔐 Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}  # 실제 푸시하는 사용자
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔐 Login to ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 📋 ECR Registry 출력 설정
+        id: set-ecr
+        run: |
+          echo "ecr_registry=${{ steps.ecr-login.outputs.registry }}" >> $GITHUB_OUTPUT
+
+      - name: 🐳 Build and Push Docker Image To ECR
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/app/dockerfile
+          # PR의 경우 빌드까지만 하고 레지스트리 등에 푸시하지 않음
+          push: ${{ github.event_name != 'pull_request' }}
+
+          # 우선은 GHCR과 ECR 모두에 푸시하도록 설정함, CD를 기존 on-premise dev 환경 지원을 위해서 유지 예정
+          # ghcr.io/${{ steps.set-env.outputs.repo_owner }}/server:${{ steps.set-env.outputs.image_tag }}
+          # ghcr.io/${{ steps.set-env.outputs.repo_owner }}/server:${{ steps.set-env.outputs.lower_environment }}-latest
+
+          tags: |
+            ${{ steps.ecr-login.outputs.registry }}/umc-product-server:${{ steps.set-env.outputs.image_tag }}
+            ${{ steps.ecr-login.outputs.registry }}/umc-product-server:${{ steps.set-env.outputs.lower_environment }}-latest
+
+          platforms: linux/amd64,linux/arm64
+          # 캐시는 추후 빌드 성능 최적화를 통해 개선, 현재는 네트워크 비용이 더 많이 들어서 비활성화 합니다.
+
+      - name: 📝 PR Comment & Commit Status
+        if: always()  # 성공/실패 모두 실행
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const testFailed = '${{ steps.test.outcome }}' === 'failure';
+            const isPR = context.eventName === 'pull_request';
+
+            // PR이면 head commit SHA, 아니면 일반 SHA
+            const sha = isPR
+              ? context.payload.pull_request.head.sha
+              : context.sha;
+
+            // 테스트 실패 + PR이면 코멘트 작성
+            if (testFailed && isPR) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: '⚠️ 테스트가 실패했습니다. 테스트 결과를 확인해주세요.'
+              });
+            }
+
+            // 커밋 상태 생성
+            // status는 다음 중 하나: 'error', 'failure', 'pending', 'success'
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: testFailed ? 'failure' : 'success',
+              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              description: testFailed ? '테스트가 실패했습니다' : '빌드가 성공했습니다!',
+              context: 'Product Team Server CI'
+            });
+
+      - name: 📝 Build Summary
+        if: always()
+        run: |
+          echo "### Build Summary :package:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ steps.set-env.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tag:** ${{ steps.set-env.outputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Platforms:** linux/amd64, linux/arm64" >> $GITHUB_STEP_SUMMARY

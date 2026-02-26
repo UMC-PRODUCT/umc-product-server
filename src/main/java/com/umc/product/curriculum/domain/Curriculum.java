@@ -1,0 +1,67 @@
+package com.umc.product.curriculum.domain;
+
+import com.umc.product.common.BaseEntity;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "curriculum")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Curriculum extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private Long gisuId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ChallengerPart part;
+
+    @Column(nullable = false)
+    private String title;
+
+    @OneToMany(mappedBy = "curriculum", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OriginalWorkbook> originalWorkbooks = new ArrayList<>();
+
+    @Builder(access = AccessLevel.PRIVATE)
+    private Curriculum(Long gisuId, ChallengerPart part, String title) {
+        this.gisuId = gisuId;
+        this.part = part;
+        this.title = title;
+    }
+
+    public static Curriculum create(Long gisuId, ChallengerPart part, String title) {
+        return Curriculum.builder().gisuId(gisuId).part(part).title(title).build();
+    }
+
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    public void addWorkbook(OriginalWorkbook workbook) {
+        this.originalWorkbooks.add(workbook);
+    }
+
+    public void removeOriginalWorkbook(OriginalWorkbook workbook) {
+        this.originalWorkbooks.remove(workbook);
+    }
+}

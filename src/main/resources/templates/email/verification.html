@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>이메일 인증</title>
+</head>
+<body
+    style="font-family: 'Malgun Gothic', '맑은 고딕', 'Apple SD Gothic Neo', sans-serif; margin: 0; padding: 0; background-color: #F0F0F0; color: #333333;">
+
+<div style="background-color: #F0F0F0; padding: 40px 0;">
+    <table cellpadding="0"
+           cellspacing="0"
+           role="presentation"
+           style="max-width: 600px; margin: 0 auto; background-color: #1A1A1A; border-collapse: collapse;"
+           width="100%">
+
+        <!-- Header -->
+        <tr>
+            <td style="padding: 40px 0 28px 0; text-align: center; background-color: #1A1A1A;">
+                <span
+                    style="font-weight: 900; font-size: 20px; color: #ffffff; letter-spacing: 0.08em; text-transform: uppercase;">
+                    University MakeUs Challenge
+                </span>
+            </td>
+        </tr>
+
+        <!-- Divider -->
+        <tr>
+            <td style="padding: 0 40px;">
+                <div style="height: 1px; background-color: #2e2e2e;"></div>
+            </td>
+        </tr>
+
+        <!-- Content -->
+        <tr>
+            <td style="padding: 56px 40px 48px 40px; text-align: center; background-color: #1A1A1A;">
+
+                <h1 style="font-size: 22px; font-weight: 700; margin: 0 0 16px 0; color: #ffffff; letter-spacing: -0.3px;">
+                    이메일 인증 코드
+                </h1>
+
+                <p style="font-size: 15px; color: #888888; margin: 0 0 40px 0; line-height: 1.7;">
+                    회원가입을 위한 이메일 인증 코드입니다.
+                </p>
+
+                <!-- Verification Token -->
+                <table cellpadding="0" cellspacing="0" style="margin: 0 auto 12px auto;">
+                    <tr>
+                        <td style="
+                            font-size: 48px;
+                            font-weight: 700;
+                            letter-spacing: 0.7em;
+                            padding: 24px 32px 24px calc(32px + 0.7em);
+                            color: #95EF4B;
+                            background-color: #242424;
+                            border-radius: 8px;
+                            text-align: center;"
+                            th:text="${verificationToken}">
+                            123456
+                        </td>
+                    </tr>
+                </table>
+
+                <p style="font-size: 15px; color: #666666; margin: 20px 0 0 0; letter-spacing: 0.02em;">
+                    이 코드는 <span style="color: #888888;">10분</span> 뒤에 만료됩니다.
+                </p>
+
+            </td>
+        </tr>
+
+        <!-- Divider -->
+        <tr>
+            <td style="padding: 0 40px;">
+                <div style="height: 1px; background-color: #2e2e2e;"></div>
+            </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+            <td style="padding: 32px 40px 40px 40px; text-align: center; background-color: #1A1A1A;">
+
+                <!-- 안내 메시지 -->
+                <p style="font-size: 14px; color: #666666; margin: 0 0 6px 0; line-height: 1.7;">
+                    본 메일은 발신 전용이며, 서비스 회원가입을 위한 이메일 인증을 위하여 발송하였습니다.
+                </p>
+                <p style="font-size: 14px; color: #666666; margin: 0 0 28px 0; line-height: 1.7;">
+                    직접 요청하신 경우가 아니라면, 이 메일을 무시하셔도 됩니다.
+                </p>
+
+                <!-- 링크 영역 -->
+                <p style="margin: 0 0 20px 0;">
+                    <a href="https://umc.it.kr"
+                       style="color: #777777; text-decoration: none; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 10px;">
+                        홈페이지
+                    </a>
+                    <span style="color: #333333;">|</span>
+                    <a href="https://makeus-challenge.notion.site/2b4b57f4596b80d683ecd6f15f0b0f7c?source=copy_link"
+                       style="color: #777777; text-decoration: none; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 10px;">
+                        개인정보 처리방침
+                    </a>
+                    <span style="color: #333333;">|</span>
+                    <a href="https://makeus-challenge.notion.site/2b4b57f4596b80d683ecd6f15f0b0f7c?source=copy_link"
+                       style="color: #777777; text-decoration: none; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 10px;">
+                        서비스 이용약관
+                    </a>
+                </p>
+
+                <!-- 저작권 -->
+                <p style="margin: 0; color: #888888; font-size: 12px; letter-spacing: 0.03em;">
+                    © 2026 University MakeUs Challenge. All rights reserved.
+                </p>
+
+            </td>
+        </tr>
+
+    </table>
+</div>
+
+</body>
+</html>

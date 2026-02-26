@@ -5,15 +5,14 @@ docker/db/postgres
 logs/
 *.log
 
+/.run/
+
 application-*.yml
 .env
 .env.*
 
 .gradle
 build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
 
 ### STS ###
 .apt_generated
@@ -32,9 +31,9 @@ bin/
 *.iws
 *.iml
 *.ipr
+
+# 빌드 결과물인 out은 무시해야 하나, 소스코드 내에 있는건 지켜야 함
 out/
-!**/src/main/**/out/
-!**/src/test/**/out/
 
 ### NetBeans ###
 /nbproject/private/
@@ -238,3 +237,17 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij+all,macos,windows,linux
+
+# gitignore의 예외 사항들 (가장 하단에 위치해야함)
+
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# HTTP Client private env (tokens)
+http-client.private.env.json
+
+# K6
+local_k6.js

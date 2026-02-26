@@ -1,10 +1,13 @@
 package com.umc.product.global.security;
 
 
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,12 +16,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.List;
-
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    public static final String JWT_ERROR_ATTRIBUTE = "jwt.error";
+    public static final String JWT_UNKNOWN_ERROR_ATTRIBUTE = "jwt.error.unknown";
 
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -28,30 +31,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = resolveToken(request);
 
-        if (token != null && jwtTokenProvider.validateToken(token)) {
-            Long userId = jwtTokenProvider.getUserId(token);
-            List<String> roles = jwtTokenProvider.getRoles(token);
+        if (token != null) {
+            try {
+                if (jwtTokenProvider.validateAccessToken(token)) {
+                    Long memberId = jwtTokenProvider.parseAccessToken(token);
+                    List<String> roles = jwtTokenProvider.getRolesFromAccessToken(token);
 
-            UserPrincipal userPrincipal = UserPrincipal.builder()
-                    .userId(userId)
-                    .roles(roles)
-                    .build();
+                    MemberPrincipal memberPrincipal = new MemberPrincipal(memberId);
 
-            List<SimpleGrantedAuthority> authorities = roles.stream()
-                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                    .toList();
+                    List<SimpleGrantedAuthority> authorities = roles.stream()
+                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                            .toList();
 
-            // UsernamePasswordAuthenticationToken은 Authentication 인터페이스의 구현체.
-            // principal: 인증된 사용자 정보 (여기서는 userId)
-            // credentials: 인증에 사용된 자격 증명 (여기서는 null로 설정)
-            // authorities: 사용자의 권한 정보 (여기서는 null로 설정)
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                    userPrincipal,
-                    null,
-                    authorities
-            );
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            memberPrincipal,
+                            null,
+                            authorities
+                    );
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (AuthenticationDomainException e) {
+                // JwtAuthenticationFilter는 ExceptionTranslationFilter보다 앞에 있어서
+                // 예외를 던지면 AuthenticationEntryPoint가 처리하지 못함
+                // request attribute에 저장 후 인증 없이 진행 → AuthenticationEntryPoint에서 처리
+                request.setAttribute(JWT_ERROR_ATTRIBUTE, e);
+            } catch (Exception e) {
+                request.setAttribute(JWT_UNKNOWN_ERROR_ATTRIBUTE, e);
+            }
         }
 
         filterChain.doFilter(request, response);
