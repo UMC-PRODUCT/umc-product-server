@@ -9,6 +9,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.Objects;
 import lombok.AccessLevel;
@@ -22,6 +23,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "recruitment_schedule")
 public class RecruitmentSchedule extends BaseEntity {
 
     @Id
@@ -67,35 +69,6 @@ public class RecruitmentSchedule extends BaseEntity {
             .build();
     }
 
-    public void changePeriod(Instant startsAt, Instant endsAt) {
-        if (startsAt != null) {
-            this.startsAt = startsAt;
-        }
-        if (endsAt != null) {
-            this.endsAt = endsAt;
-        }
-    }
-
-    public boolean canChangeStartNotAdvanced(Instant newStartAt) {
-        if (newStartAt == null || this.startsAt == null) {
-            return true;
-        }
-        return !newStartAt.isBefore(this.startsAt); // 면접 일정 앞당기기 금지
-    }
-
-    public boolean canChangeEndNotShortened(Instant newEndAt) {
-        if (newEndAt == null || this.endsAt == null) {
-            return true;
-        }
-        return !newEndAt.isBefore(this.endsAt); // 단축 금지
-    }
-
-    public void changeAt(Instant at) {
-        if (at != null) {
-            this.startsAt = at;
-        }
-    }
-
     public static RecruitmentSchedule create(
         Long recruitmentId,
         RecruitmentScheduleType type,
@@ -123,6 +96,35 @@ public class RecruitmentSchedule extends BaseEntity {
             .endsAt(null)
             .note(null)
             .build();
+    }
+
+    public void changePeriod(Instant startsAt, Instant endsAt) {
+        if (startsAt != null) {
+            this.startsAt = startsAt;
+        }
+        if (endsAt != null) {
+            this.endsAt = endsAt;
+        }
+    }
+
+    public boolean canChangeStartNotAdvanced(Instant newStartAt) {
+        if (newStartAt == null || this.startsAt == null) {
+            return true;
+        }
+        return !newStartAt.isBefore(this.startsAt); // 면접 일정 앞당기기 금지
+    }
+
+    public boolean canChangeEndNotShortened(Instant newEndAt) {
+        if (newEndAt == null || this.endsAt == null) {
+            return true;
+        }
+        return !newEndAt.isBefore(this.endsAt); // 단축 금지
+    }
+
+    public void changeAt(Instant at) {
+        if (at != null) {
+            this.startsAt = at;
+        }
     }
 
     public boolean isSamePeriod(RecruitmentSchedule other) {

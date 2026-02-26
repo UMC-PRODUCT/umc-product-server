@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,6 +22,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "interview_live_question")
 public class InterviewLiveQuestion extends BaseEntity {
 
     @Id
@@ -37,15 +39,15 @@ public class InterviewLiveQuestion extends BaseEntity {
     @Column(name = "content", nullable = false, length = 300)
     private String content;
 
-    public void changeContent(String content) {
-        this.content = normalize(content);
-    }
-
     private static String normalize(String v) {
         if (v == null) {
             return null;
         }
         String t = v.trim();
         return t.isBlank() ? null : t;
+    }
+
+    public void changeContent(String content) {
+        this.content = normalize(content);
     }
 }

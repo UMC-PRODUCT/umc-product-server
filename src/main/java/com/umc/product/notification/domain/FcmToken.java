@@ -1,5 +1,6 @@
 package com.umc.product.notification.domain;
 
+import com.umc.product.common.BaseEntity;
 import com.umc.product.member.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,7 +20,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "fcm_token")
-public class FcmToken {
+public class FcmToken extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

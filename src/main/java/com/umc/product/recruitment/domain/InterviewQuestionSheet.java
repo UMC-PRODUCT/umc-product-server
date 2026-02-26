@@ -12,6 +12,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,6 +23,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "interview_question_sheet")
 public class InterviewQuestionSheet extends BaseEntity {
 
     @Id
@@ -50,19 +52,19 @@ public class InterviewQuestionSheet extends BaseEntity {
         this.content = content;
     }
 
-    public void changeContent(String content) {
-        this.content = normalize(content);
-    }
-
-    public void changeOrderNo(Integer orderNo) {
-        this.orderNo = orderNo;
-    }
-
     private static String normalize(String v) {
         if (v == null) {
             return null;
         }
         String t = v.trim();
         return t.isBlank() ? null : t;
+    }
+
+    public void changeContent(String content) {
+        this.content = normalize(content);
+    }
+
+    public void changeOrderNo(Integer orderNo) {
+        this.orderNo = orderNo;
     }
 }
