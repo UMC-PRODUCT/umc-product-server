@@ -3,7 +3,6 @@ name: CD [Home Server]
 on:
   push:
     branches:
-      - main
       - develop
     paths:
       - 'src/**'

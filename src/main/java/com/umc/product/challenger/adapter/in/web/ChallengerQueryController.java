@@ -1,5 +1,6 @@
 package com.umc.product.challenger.adapter.in.web;
 
+import com.umc.product.challenger.adapter.in.web.assembler.ChallengerResponseAssembler;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;

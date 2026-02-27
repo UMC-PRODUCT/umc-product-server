@@ -60,4 +60,5 @@ public interface ManageChallengerUseCase {
      */
     void deleteChallengerPoint(DeleteChallengerPointCommand command);
 
+    void createWithRecord(Long memberId, String code);
 }

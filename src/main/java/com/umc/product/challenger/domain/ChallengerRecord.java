@@ -31,6 +31,9 @@ public class ChallengerRecord extends BaseEntity {
     @Column(unique = true, nullable = false, length = 6)
     private String code;
 
+    @Column(name = "member_name", length = 30)
+    private String memberName;
+
     @Column(nullable = false, name = "created_member_id")
     private Long createdMemberId;
 
@@ -46,7 +49,7 @@ public class ChallengerRecord extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "part")
     private ChallengerPart part;
-    
+
     @Column(nullable = false, name = "is_used")
     private boolean isUsed;
 
@@ -56,8 +59,10 @@ public class ChallengerRecord extends BaseEntity {
     @Column(name = "used_at")
     private Instant usedAt;
 
-    public static ChallengerRecord create(Long createdMemberId, Long gisuId, Long chapterId, Long schoolId,
-                                          ChallengerPart part) {
+    public static ChallengerRecord create(
+        Long createdMemberId, Long gisuId, Long chapterId, Long schoolId,
+        ChallengerPart part, String memberName
+    ) {
         ChallengerRecord record = new ChallengerRecord();
 
         record.code = generateUniqueCode();
@@ -66,6 +71,7 @@ public class ChallengerRecord extends BaseEntity {
         record.gisuId = gisuId;
         record.schoolId = schoolId;
         record.chapterId = chapterId;
+        record.memberName = memberName;
         record.isUsed = false; // 생성 시에는 사용되지 않은 상태로 시작
 
         return record;
@@ -92,6 +98,16 @@ public class ChallengerRecord extends BaseEntity {
     public void validateNotUsed() {
         if (this.isUsed) {
             throw new ChallengerDomainException(ChallengerErrorCode.USED_CHALLENGER_RECORD_CODE);
+        }
+    }
+
+    public void validateMember(String memberName, Long schoolId) {
+        if (!this.memberName.equals(memberName)) {
+            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_MEMBER_NAME_FOR_RECORD);
+        }
+
+        if (!this.schoolId.equals(schoolId)) {
+            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_SCHOOL_FOR_RECORD);
         }
     }
 }

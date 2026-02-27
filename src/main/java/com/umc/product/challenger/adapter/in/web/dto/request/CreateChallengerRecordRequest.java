@@ -6,6 +6,7 @@ public record CreateChallengerRecordRequest(
     Long gisuId,
     Long chapterId,
     Long schoolId,
-    ChallengerPart part
+    ChallengerPart part,
+    String memberName
 ) {
 }
