@@ -1,5 +1,6 @@
 package com.umc.product.challenger.adapter.in.web;
 
+import com.umc.product.challenger.adapter.in.web.assembler.ChallengerRecordResponseAssembler;
 import com.umc.product.challenger.adapter.in.web.dto.request.AddChallengerRecordToMemberRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.CreateChallengerRecordRequest;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerRecordResponse;

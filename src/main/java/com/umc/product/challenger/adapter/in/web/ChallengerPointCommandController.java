@@ -1,5 +1,6 @@
 package com.umc.product.challenger.adapter.in.web;
 
+import com.umc.product.challenger.adapter.in.web.assembler.ChallengerResponseAssembler;
 import com.umc.product.challenger.adapter.in.web.dto.request.DeleteChallengerPointRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPointRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.GrantChallengerPointRequest;

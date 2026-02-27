@@ -1,4 +1,4 @@
-package com.umc.product.challenger.adapter.in.web;
+package com.umc.product.challenger.adapter.in.web.assembler;
 
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerRecordResponse;
 import com.umc.product.challenger.application.port.in.query.GetChallengerRecordUseCase;
