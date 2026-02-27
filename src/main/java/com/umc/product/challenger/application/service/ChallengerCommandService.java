@@ -22,6 +22,8 @@ import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,8 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
     private final SaveChallengerPort saveChallengerPort;
     private final LoadChallengerPointPort loadChallengerPointPort;
     private final SaveChallengerPointPort saveChallengerPointPort;
+
+    private final GetMemberUseCase getMemberUseCase;
 
     // NOTE: 같은 도메인은 port를 통해서 접근하도록 함.
     // 동일 도메인 내에서 UseCase를 통해서 접근할 경우, 의존 방향이 역전된 것
@@ -188,6 +192,10 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
     @Override
     public void createWithRecord(Long memberId, String code) {
         ChallengerRecord record = loadChallengerRecordPort.getByCode(code);
+        record.validateNotUsed();
+
+        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(memberId);
+        record.validateMember(memberInfo.name(), memberInfo.schoolId());
 
         saveChallengerPort.save(
             Challenger.builder()
@@ -196,6 +204,8 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
                 .gisuId(record.getGisuId())
                 .build()
         );
+
+        record.markAsUsed(memberInfo.id());
     }
 
     private ChallengerStatus resolveDeactivationStatus(ChallengerDeactivationType deactivationType) {

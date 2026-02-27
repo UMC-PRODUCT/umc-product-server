@@ -21,6 +21,8 @@ public enum ChallengerErrorCode implements BaseCode {
     MEMBER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "CHALLENGER-0010", "챌린저에 연결된 멤버 프로필을 찾을 수 없습니다."),
     INVALID_CURSOR_ID(HttpStatus.BAD_REQUEST, "CHALLENGER-0011", "유효하지 않은 커서 ID입니다."),
     USED_CHALLENGER_RECORD_CODE(HttpStatus.BAD_REQUEST, "CHALLENGER-0012", "이미 사용된 챌린저 기록 추가용 코드입니다."),
+    INVALID_MEMBER_NAME_FOR_RECORD(HttpStatus.BAD_REQUEST, "CHALLENGER-0013", "코드에 등록된 사용자 이름이 요청자와 일치하지 않습니다."),
+    INVALID_CHAPTER_FOR_RECORD(HttpStatus.BAD_REQUEST, "CHALLENGER-0014", "코드에 등록된 학교가 요청자의 학교와 일치하지 않습니다."),
     ;
 
     private final HttpStatus httpStatus;
