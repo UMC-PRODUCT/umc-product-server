@@ -46,7 +46,7 @@ public class ChallengerRecord extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, name = "part")
     private ChallengerPart part;
-    
+
     @Column(nullable = false, name = "is_used")
     private boolean isUsed;
 
@@ -56,8 +56,10 @@ public class ChallengerRecord extends BaseEntity {
     @Column(name = "used_at")
     private Instant usedAt;
 
-    public static ChallengerRecord create(Long createdMemberId, Long gisuId, Long chapterId, Long schoolId,
-                                          ChallengerPart part) {
+    public static ChallengerRecord create(
+        Long createdMemberId, Long gisuId, Long chapterId, Long schoolId,
+        ChallengerPart part
+    ) {
         ChallengerRecord record = new ChallengerRecord();
 
         record.code = generateUniqueCode();
