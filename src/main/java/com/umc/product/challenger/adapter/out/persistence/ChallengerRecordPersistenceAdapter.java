@@ -44,6 +44,16 @@ public class ChallengerRecordPersistenceAdapter implements LoadChallengerRecordP
     }
 
     @Override
+    public List<ChallengerRecord> findBySchoolId(Long schoolId) {
+        return repository.findBySchoolId(schoolId);
+    }
+
+    @Override
+    public List<ChallengerRecord> findByChapterId(Long chapterId) {
+        return repository.findByChapterId(chapterId);
+    }
+
+    @Override
     public ChallengerRecord save(ChallengerRecord record) {
         return repository.save(record);
     }

@@ -1,6 +1,7 @@
 package com.umc.product.challenger.application.port.out;
 
 import com.umc.product.challenger.domain.ChallengerRecord;
+import java.util.List;
 import java.util.Optional;
 
 public interface LoadChallengerRecordPort {
@@ -29,4 +30,14 @@ public interface LoadChallengerRecordPort {
      * 코드 존재 여부 확인
      */
     boolean existsByCode(String code);
+
+    /**
+     * schoolId로 챌린저 기록 목록 조회
+     */
+    List<ChallengerRecord> findBySchoolId(Long schoolId);
+
+    /**
+     * chapterId로 챌린저 기록 목록 조회
+     */
+    List<ChallengerRecord> findByChapterId(Long chapterId);
 }
