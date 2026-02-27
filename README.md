@@ -4,7 +4,7 @@
 
 [![codecov](https://codecov.io/gh/UMC-PRODUCT/umc-product-server/graph/badge.svg?token=0GUPQZQ40J)](https://codecov.io/gh/UMC-PRODUCT/umc-product-server)
 ![GitHub Actions](https://github.com/UMC-PRODUCT/umc-product-server/actions/workflows/ci.yml/badge.svg)
-![GitHub Actions](https://github.com/UMC-PRODUCT/umc-product-server/actions/workflows/cd.yml/badge.svg)
+![GitHub Actions](https://github.com/UMC-PRODUCT/umc-product-server/actions/workflows/cd-ecr.yml/badge.svg)
 ![Version](https://img.shields.io/github/v/release/UMC-PRODUCT/umc-product-server)
 ![License](https://img.shields.io/github/license/UMC-PRODUCT/umc-product-server)
 
