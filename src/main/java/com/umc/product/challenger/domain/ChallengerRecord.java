@@ -101,13 +101,13 @@ public class ChallengerRecord extends BaseEntity {
         }
     }
 
-    public void validateMember(String memberName, Long chapterId) {
+    public void validateMember(String memberName, Long schoolId) {
         if (!this.memberName.equals(memberName)) {
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_MEMBER_NAME_FOR_RECORD);
         }
 
-        if (!this.chapterId.equals(chapterId)) {
-            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHAPTER_FOR_RECORD);
+        if (!this.schoolId.equals(schoolId)) {
+            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_SCHOOL_FOR_RECORD);
         }
     }
 }
