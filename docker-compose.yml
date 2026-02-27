@@ -22,12 +22,14 @@ services:
 
   # PostgreSQL Database
   umc-product-postgres:
-    image: postgres:18.1 # 2025/12/20 기준 가장 최신 버전 사용
+    #    image: postgres:18
+    image: postgis/postgis:18-3.6
+    platform: linux/amd64  # Rosetta 2로 x86 에뮬레이션 (M 시리즈 맥 호환)
     container_name: umc-product-postgresql-local
     ports:
       - "54321:5432"
     environment:
-      - POSTGRES_DB=umc_product_db_local
+      - POSTGRES_DB=umc_product
       - POSTGRES_USER=umc_product
       - POSTGRES_PASSWORD=umc_product_password
     volumes:

@@ -1,0 +1,9 @@
+{
+    "properties": [
+        {
+            "name": "storage.provider",
+            "type": "java.lang.String",
+            "description": "클라우드 저장소 제공자 유형."
+        }
+    ]
+}

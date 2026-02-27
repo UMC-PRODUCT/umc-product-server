@@ -1,0 +1,47 @@
+# 공통 설정
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Java 파일
+[*.java]
+indent_style = space
+indent_size = 4
+tab_width = 4
+max_line_length = 120
+
+# YAML 파일 (application.yml 등)
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+# Properties 파일
+[*.properties]
+indent_style = space
+indent_size = 4
+
+# XML 파일 (pom.xml 등)
+[*.xml]
+indent_style = space
+indent_size = 4
+
+# Gradle
+[*.gradle]
+indent_style = space
+indent_size = 4
+
+# Markdown
+[*.md]
+max_line_length = 9999
+trim_trailing_whitespace = false
+
+# Spring REST Docs snippets
+[*.snippet]
+indent_style = space
+indent_size = 4

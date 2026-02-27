@@ -1,0 +1,297 @@
+package com.umc.product.schedule.domain;
+
+import com.umc.product.common.BaseEntity;
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import java.time.Instant;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+/**
+ * 개별 챌린저의 출석 기록 파트
+ * <p>
+ * 하나의 AttendanceSheet(출석부)에 소속된 챌린저별 출석 상태를 관리한다. 상태 변경은 반드시 아래 도메인 메서드를 통해서만 이루어지며, 외부에서 직접 상태를 수정할 수 없음.
+ * <p>
+ * 상태 규칙 PENDING ──checkIn()──→ PRESENT / LATE / PRESENT_PENDING / LATE_PENDING PENDING ──approve()──→ PRESENT / LATE/
+ * EXCUSED  (승인자 ID 기록 남도록) PENDING ──reject()───→ ABSENT──requestExcuse()──→ EXCUSED_PENDING        (사유 memo 필수)
+ */
+@Entity
+@Table(name = "attendance_record")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class AttendanceRecord extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private Long attendanceSheetId;
+
+    @Column(nullable = false)
+    private Long memberId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AttendanceStatus status;
+
+    private Instant checkedAt;
+
+    @Column(length = 500)
+    private String memo;
+
+    private Long confirmedBy;
+
+    private Instant confirmedAt;
+
+    private Double latitude;
+
+    private Double longitude;
+
+    @Column(nullable = false)
+    private boolean locationVerified;
+
+    @Builder
+    private AttendanceRecord(
+        Long attendanceSheetId,
+        Long memberId,
+        AttendanceStatus status,
+        Instant checkedAt,
+        String memo
+    ) {
+        validateAttendanceSheetId(attendanceSheetId);
+        validateMemberId(memberId);
+        validateStatus(status);
+
+        this.attendanceSheetId = attendanceSheetId;
+        this.memberId = memberId;
+        this.status = status;
+        this.checkedAt = checkedAt;
+        this.memo = memo;
+    }
+
+    /**
+     * 출석 체크 처리. 한 번만 호출 가능하며, 이미 체크된 기록에 재호출하면 예외 발생. newStatus는 AttendanceSheet.determineStatusByTime()이 시간 기반으로 결정
+     */
+    public void checkIn(
+        AttendanceStatus newStatus,
+        Instant checkedAt,
+        Double latitude,
+        Double longitude,
+        boolean locationVerified
+    ) {
+        if (this.checkedAt != null) {
+            throw new IllegalStateException("이미 출석 체크가 완료되었습니다");
+        }
+        if (newStatus == null) {
+            throw new IllegalArgumentException("출석 상태는 필수입니다");
+        }
+        if (checkedAt == null) {
+            throw new IllegalArgumentException("체크 시간은 필수입니다");
+        }
+
+        this.status = newStatus;
+        this.checkedAt = checkedAt;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.locationVerified = locationVerified;
+    }
+
+    /**
+     * 관리자가 PENDING 상태의 출석을 승인한다. PRESENT_PENDING → PRESENT, LATE_PENDING → LATE, EXCUSED_PENDING → PRESENT로 전이. 승인자 ID와
+     * 승인 시각이 함께 기록된다.
+     */
+    public void approve(Long confirmerId) {
+        validatePendingStatus();
+        validateConfirmerId(confirmerId);
+
+        this.status = switch (status) {
+            case PRESENT_PENDING -> AttendanceStatus.PRESENT;
+            case LATE_PENDING -> AttendanceStatus.LATE;
+            case EXCUSED_PENDING -> AttendanceStatus.PRESENT;  // ✅ 인정 시 출석으로 처리
+            default -> throw new IllegalStateException("승인 가능한 상태가 아닙니다: " + status);
+        };
+        this.confirmedBy = confirmerId;
+        this.confirmedAt = Instant.now();
+    }
+
+    /**
+     * 관리자가 PENDING 상태의 출석을 거절함. 상태는 무조건 ABSENT로 바뀜
+     * <p>
+     * 재시도 정책:
+     * - PRESENT_PENDING, LATE_PENDING (일반 출석): 거절 후 재시도 가능 (checkedAt 초기화)
+     * - EXCUSED_PENDING (사유 제출): 거절 후 재시도 불가 (checkedAt 유지)
+     */
+    public void reject(Long confirmerId) {
+        validatePendingStatus();
+        validateConfirmerId(confirmerId);
+
+        // 일반 출석 체크는 재시도 허용 (단순 오류 가능성)
+        boolean isRegularAttendance = (status == AttendanceStatus.PRESENT_PENDING
+                                    || status == AttendanceStatus.LATE_PENDING);
+
+        this.status = AttendanceStatus.ABSENT;
+        this.confirmedBy = confirmerId;
+        this.confirmedAt = Instant.now();
+
+        // 일반 출석 거절 시 재시도를 위해 체크 데이터 초기화
+        if (isRegularAttendance) {
+            this.checkedAt = null;
+            this.latitude = null;
+            this.longitude = null;
+            this.locationVerified = false;
+            // memo는 유지 (관리자가 거절 사유를 남길 수 있음)
+        }
+        // 사유 제출(EXCUSED_PENDING)은 재시도 불가 - checkedAt 유지
+    }
+
+    /**
+     * 결석/지각 상태에서 인정결석을 신청할 수 있음. EXCUSED_PENDING 상태로 바뀌며, 이후 관리자가 approve/reject 처리
+     */
+    public void requestExcuse(String memo) {
+        if (status != AttendanceStatus.ABSENT && status != AttendanceStatus.LATE) {
+            throw new IllegalStateException("결석 또는 지각 상태에서만 인정결석을 신청할 수 있습니다. 현재 상태: " + status);
+        }
+        if (memo == null || memo.isBlank()) {
+            throw new IllegalArgumentException("사유는 필수입니다");
+        }
+
+        this.status = AttendanceStatus.EXCUSED_PENDING;
+        this.memo = memo;
+    }
+
+    /**
+     * 출석 체크 전에 사유를 제출하는 메서드 (사유 작성 출석)
+     * 위치 인증은 실패로 간주됨
+     * <p>
+     * PENDING, LATE, ABSENT 상태에서 가능
+     */
+    public void submitReasonBeforeCheck(String reason, Instant submittedAt) {
+        // 출석 전, 지각, 결석 상태에서만 사유 제출 가능
+        if (this.status != AttendanceStatus.PENDING &&
+            this.status != AttendanceStatus.LATE &&
+            this.status != AttendanceStatus.ABSENT) {
+            throw new IllegalStateException(
+                "출석 전, 지각, 결석 상태에서만 사유를 제출할 수 있습니다. 현재 상태: " + this.status);
+        }
+        if (reason == null || reason.isBlank()) {
+            throw new IllegalArgumentException("사유는 필수입니다");
+        }
+        if (submittedAt == null) {
+            throw new IllegalArgumentException("제출 시각은 필수입니다");
+        }
+
+        // 상태 변경
+        this.status = AttendanceStatus.EXCUSED_PENDING;
+        this.memo = reason;
+
+        // PENDING 상태가 아닌 경우(LATE, ABSENT)는 이미 checkedAt이 있을 수 있음
+        if (this.checkedAt == null) {
+            this.checkedAt = submittedAt;
+        }
+
+        this.locationVerified = false;  // 사유 작성 = 위치 인증 실패
+
+        // 기존 위치 정보 초기화 (혹시 있을 수 있는 불일치 데이터 정리)
+        this.latitude = null;
+        this.longitude = null;
+    }
+
+    /**
+     * 관리자 직접 상태 변경용 권한 설정 차후 결정 *_PENDING 상태로는 이 메서드로 변경 안됨.
+     */
+    public void updateStatus(AttendanceStatus newStatus) {
+        validateStatus(newStatus);
+
+        // PENDING 상태는 approve/reject 메서드로만 변경 가능
+        if (newStatus.name().endsWith("_PENDING")) {
+            throw new IllegalArgumentException("PENDING 상태는 직접 변경할 수 없습니다");
+        }
+
+        this.status = newStatus;
+    }
+
+    public void updateCheckInfo(Instant checkedAt) {
+        if (this.checkedAt == null) {
+            throw new IllegalStateException("출석 체크가 되지 않은 기록입니다");
+        }
+        this.checkedAt = checkedAt;
+    }
+
+    public boolean isPending() {
+        return status.name().endsWith("_PENDING");
+    }
+
+    public boolean isChecked() {
+        return checkedAt != null;
+    }
+
+    private void validatePendingStatus() {
+        if (!isPending()) {
+            throw new IllegalStateException("승인 대기 상태가 아닙니다: " + status);
+        }
+    }
+
+    private void validateAttendanceSheetId(Long attendanceSheetId) {
+        if (attendanceSheetId == null || attendanceSheetId <= 0) {
+            throw new IllegalArgumentException("유효하지 않은 출석부 ID입니다");
+        }
+    }
+
+    private void validateMemberId(Long memberId) {
+        if (memberId == null || memberId <= 0) {
+            throw new IllegalArgumentException("유효하지 않은 멤버 ID입니다");
+        }
+    }
+
+    private void validateStatus(AttendanceStatus status) {
+        if (status == null) {
+            throw new IllegalArgumentException("출석 상태는 필수입니다");
+        }
+    }
+
+    private void validateConfirmerId(Long confirmerId) {
+        if (confirmerId == null || confirmerId <= 0) {
+            throw new IllegalArgumentException("유효하지 않은 승인자 ID입니다");
+        }
+    }
+
+    /**
+     * 타입 안전한 ID 반환
+     */
+    public AttendanceRecordId getAttendanceRecordId() {
+        if (this.id == null) {
+            return null;
+        }
+        return new AttendanceRecordId(this.id);
+    }
+
+    public String getStatusDisplay() {
+        return switch (status) {
+            case PRESENT, EXCUSED -> "출석";  // 인정결석도 출석으로 표시
+            case LATE -> "지각";
+            case ABSENT -> "결석";
+            case PENDING, PRESENT_PENDING, LATE_PENDING, EXCUSED_PENDING -> "대기";
+        };
+    }
+
+    /**
+     * 출석 기록 ID 타입안정성 때매 별도 구현
+     */
+    public record AttendanceRecordId(long id) {
+        public AttendanceRecordId {
+            if (id <= 0) {
+                throw new IllegalArgumentException("ID는 양수여야 합니다.");
+            }
+        }
+    }
+}

@@ -1,0 +1,65 @@
+spring:
+  config:
+    import: "classpath:application.yml"  # main의 설정을 가져옴
+  profiles:
+    active: test
+
+  mail:
+    host: some_mail_host
+    port: 587
+    username: mail_username
+    password: mail_password
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+        show_sql: false
+
+  flyway:
+    enabled: false
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: google_client_id
+            client-secret: google_client_secret
+
+jwt:
+  access-token-secret: access_token_secret
+  refresh-token-secret: refresh_token_secret
+  oauth-verification-token-secret: oauth_verification_token_secret
+  email-verification-token-secret: email_verification_token_secret
+  access-token-validity-in-seconds: 3600
+  refresh-token-validity-in-seconds: 604800
+  verification-token-validity-in-seconds: 600
+
+
+management:
+  health:
+    mail:
+      enabled: false
+  server:
+    port: 9090
+
+logging:
+  level:
+    root: WARN
+    org.testcontainers: INFO
+  org:
+    testcontainers:
+      level: DEBUG
+
+app:
+  base-url: http://localhost:8080
+  firebase-configuration: |
+    {
+        "type": "service_account",
+        "project_id": "test-project",
+        "private_key_id": "test-private
+    }

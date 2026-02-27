@@ -1,0 +1,105 @@
+name: CD [ECR-ECS]
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'build.gradle.kts'
+      - 'docker/**'
+      - '.github/workflows/ci.yml'
+      - '.github/workflows/cd.yml'
+      - '.github/workflows/cd-ecr.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy environment'
+        required: true
+        type: choice
+        options:
+          - Development
+          - Production
+
+jobs:
+  ci-and-build:
+    uses: ./.github/workflows/ci.yml
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+      packages: write
+      statuses: write
+      deployments: write
+    secrets: inherit
+    with:
+      environment: ${{ inputs.environment }}
+
+  deploy:
+    needs: ci-and-build
+    if: needs.ci-and-build.outputs.environment != 'test'
+    runs-on: ubuntu-latest
+    #    runs-on: [ self-hosted, cd-runner ]
+    environment: ${{ needs.ci-and-build.outputs.environment }}
+
+    env:
+      ENVIRONMENT: ${{ needs.ci-and-build.outputs.environment }}
+      IMAGE_TAG: ${{ needs.ci-and-build.outputs.image_tag }}
+      AWS_REGION: ap-northeast-2
+      ECS_CLUSTER: ${{ secrets.AWS_ECS_CLUSTER }}
+      ECS_SERVICE: ${{ secrets.AWS_ECS_SERVICE }}
+
+    steps:
+      - name: 🔑 AWS 인증
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🚀 ECS 서비스 배포
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🚀 배포 시작: ${{ env.ENVIRONMENT }}"
+          echo "📦 Image Tag: ${{ env.IMAGE_TAG }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }} \
+            --force-new-deployment \
+            --no-cli-pager
+
+          echo ""
+          echo "⏳ 배포 안정화 대기 중..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }}
+
+          echo "✅ 배포 완료!"
+
+      - name: 📊 Deployment Summary
+        if: always()
+        run: |
+          echo "### 🚀 ECS Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 항목 | 값 |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🌍 Environment | \`${{ env.ENVIRONMENT }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🌿 Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📦 Image Tag | \`${{ env.IMAGE_TAG }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🏗️ Cluster | \`${{ env.ECS_CLUSTER }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| ✅ Status | \`${{ job.status }}\` |" >> $GITHUB_STEP_SUMMARY
+
+      - name: ❌ 배포 실패 알림
+        if: failure()
+        run: |
+          echo "::error::ECS deployment to ${{ env.ENVIRONMENT }} failed!"
+          echo "CloudWatch 로그를 확인해주세요"
+
+  skip-test-deployment:
+    needs: ci-and-build
+    if: needs.ci-and-build.outputs.environment == 'test'
+    runs-on: ubuntu-latest
+    steps:
+      - name: ℹ️ Test 환경 배포 스킵
+        run: echo "Test 환경은 CI만 실행합니다."

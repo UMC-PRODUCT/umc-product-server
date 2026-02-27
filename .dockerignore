@@ -21,3 +21,6 @@ logs
 **/application-dev.yml
 **/application-local.yml
 **/application-*.yml
+
+!build/libs
+!build/libs/*.jar

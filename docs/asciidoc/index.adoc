@@ -1,0 +1,60 @@
+= UMC Product API Documentation
+:doctype: book
+:icons: font
+:source-highlighter: highlightjs
+:toc: left
+:toclevels: 2
+:sectlinks:
+
+ifndef::snippets[]
+:snippets: ../../../build/generated-snippets
+endif::[]
+
+== Chapter
+
+=== 신규_지부를_생성한다
+
+operation::chapter-controller-test/신규_지부를_생성한다[snippets='http-request,http-response,request-fields']
+
+== Chapter query
+
+=== 지부_목록을_조회합니다
+
+operation::chapter-query-controller-test/지부_목록을_조회합니다[snippets='http-request,http-response,response-fields']
+
+== Gisu
+
+=== 현재_기수를_설정한다
+
+operation::gisu-controller-test/현재_기수를_설정한다[snippets='http-request,http-response,path-parameters']
+
+== Gisu query
+
+=== 기수_목록을_조회한다
+
+operation::gisu-query-controller-test/기수_목록을_조회한다[snippets='http-request,http-response,response-fields']
+
+== School
+
+=== 총괄_신규학교를_추가한다
+
+operation::school-controller-test/총괄_신규학교를_추가한다[snippets='http-request,http-response,request-fields']
+
+=== 총괄_학교를_일괄_삭제한다
+
+operation::school-controller-test/총괄_학교를_일괄_삭제한다[snippets='http-request,http-response,request-fields']
+
+=== 총괄_학교정보를_수정한다
+
+operation::school-controller-test/총괄_학교정보를_수정한다[snippets='http-request,http-response,path-parameters,request-fields']
+
+== School query
+
+=== 학교_목록을_조회합니다
+
+operation::school-query-controller-test/학교_목록을_조회합니다[snippets='http-request,http-response,query-parameters,response-fields']
+
+=== 학교_상세정보를_조회합니다
+
+operation::school-query-controller-test/학교_상세정보를_조회합니다[snippets='http-request,http-response,path-parameters,response-fields']
+

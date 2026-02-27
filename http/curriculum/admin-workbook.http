@@ -1,0 +1,28 @@
+###############################################################################
+# Admin Workbook API
+#
+# 워크북 관리 API
+# - 워크북 배포 (release)
+#
+# 워크북 배포 플로우:
+# 1. 커리큘럼 API로 워크북 생성 (releasedAt = null)
+# 2. 모든 데이터 입력 완료 후 워크북 배포 API 호출
+# 3. releasedAt이 현재 시간으로 설정됨
+# 4. 앱에서 해당 워크북 조회 가능
+###############################################################################
+
+### [정식] 워크북 배포
+# 개별 워크북을 배포합니다.
+# 배포된 워크북만 앱에서 조회됩니다.
+# - 배포 전: releasedAt = null (앱에서 보이지 않음)
+# - 배포 후: releasedAt = 현재시간 (앱에서 조회 가능)
+POST {{host}}/api/v1/admin/workbooks/1/release
+Content-Type: application/json
+
+### [정식] 워크북 배포 - ID 2
+POST {{host}}/api/v1/admin/workbooks/2/release
+Content-Type: application/json
+
+### [정식] 워크북 배포 - ID 3
+POST {{host}}/api/v1/admin/workbooks/3/release
+Content-Type: application/json
