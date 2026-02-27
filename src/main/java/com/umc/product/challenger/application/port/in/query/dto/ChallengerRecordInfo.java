@@ -9,6 +9,7 @@ import lombok.Builder;
 public record ChallengerRecordInfo(
     Long id,
     String code,
+    String memberName,
     Long createdMemberId,
     Long gisuId,
     Long chapterId,
@@ -22,6 +23,7 @@ public record ChallengerRecordInfo(
         return ChallengerRecordInfo.builder()
             .id(entity.getId())
             .code(entity.getCode())
+            .memberName(entity.getMemberName())
             .createdMemberId(entity.getCreatedMemberId())
             .gisuId(entity.getGisuId())
             .chapterId(entity.getChapterId())

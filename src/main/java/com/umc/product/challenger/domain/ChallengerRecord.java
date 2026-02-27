@@ -31,6 +31,9 @@ public class ChallengerRecord extends BaseEntity {
     @Column(unique = true, nullable = false, length = 6)
     private String code;
 
+    @Column(name = "member_name", length = 30)
+    private String memberName;
+
     @Column(nullable = false, name = "created_member_id")
     private Long createdMemberId;
 
@@ -58,7 +61,7 @@ public class ChallengerRecord extends BaseEntity {
 
     public static ChallengerRecord create(
         Long createdMemberId, Long gisuId, Long chapterId, Long schoolId,
-        ChallengerPart part
+        ChallengerPart part, String memberName
     ) {
         ChallengerRecord record = new ChallengerRecord();
 
@@ -68,6 +71,7 @@ public class ChallengerRecord extends BaseEntity {
         record.gisuId = gisuId;
         record.schoolId = schoolId;
         record.chapterId = chapterId;
+        record.memberName = memberName;
         record.isUsed = false; // 생성 시에는 사용되지 않은 상태로 시작
 
         return record;

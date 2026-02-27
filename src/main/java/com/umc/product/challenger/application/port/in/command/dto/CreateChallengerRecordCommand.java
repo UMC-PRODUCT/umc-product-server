@@ -10,7 +10,8 @@ public record CreateChallengerRecordCommand(
     Long gisuId,
     Long chapterId,
     Long schoolId,
-    ChallengerPart part
+    ChallengerPart part,
+    String memberName
 ) {
     @Override
     public String toString() {
@@ -25,7 +26,7 @@ public record CreateChallengerRecordCommand(
 
     public ChallengerRecord toEntity() {
         return ChallengerRecord.create(
-            creatorMemberId, gisuId, chapterId, schoolId, part
+            creatorMemberId, gisuId, chapterId, schoolId, part, memberName
         );
     }
 }
