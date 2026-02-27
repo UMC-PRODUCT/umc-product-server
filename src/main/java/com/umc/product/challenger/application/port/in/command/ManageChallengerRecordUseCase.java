@@ -4,9 +4,9 @@ import com.umc.product.challenger.application.port.in.command.dto.CreateChalleng
 import java.util.List;
 
 public interface ManageChallengerRecordUseCase {
-    void create(CreateChallengerRecordCommand command);
+    Long create(CreateChallengerRecordCommand command);
 
-    void createBulk(List<CreateChallengerRecordCommand> commands);
+    List<Long> createBulk(List<CreateChallengerRecordCommand> commands);
 
     void delete(Long id);
 }

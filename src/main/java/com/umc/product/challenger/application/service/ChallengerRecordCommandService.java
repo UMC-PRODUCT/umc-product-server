@@ -19,13 +19,13 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
     private final LoadChallengerRecordPort loadChallengerRecordPort;
 
     @Override
-    public void create(CreateChallengerRecordCommand command) {
+    public Long create(CreateChallengerRecordCommand command) {
         log.info("ChallengerRecord를 생성합니다. command={}", command.toString());
-        saveChallengerRecordPort.save(command.toEntity());
+        return saveChallengerRecordPort.save(command.toEntity()).getId();
     }
 
     @Override
-    public void createBulk(List<CreateChallengerRecordCommand> commands) {
+    public List<Long> createBulk(List<CreateChallengerRecordCommand> commands) {
         log.info("ChallengerRecord를 대량으로 생성합니다. commands={}",
             commands.stream().map(CreateChallengerRecordCommand::toString).toList());
 
@@ -33,7 +33,8 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
             .map(CreateChallengerRecordCommand::toEntity)
             .toList();
 
-        saveChallengerRecordPort.saveAll(records);
+        return saveChallengerRecordPort.saveAll(records)
+            .stream().map(ChallengerRecord::getId).toList();
     }
 
     @Override
