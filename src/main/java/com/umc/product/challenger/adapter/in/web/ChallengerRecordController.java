@@ -4,9 +4,9 @@ import com.umc.product.challenger.adapter.in.web.assembler.ChallengerRecordRespo
 import com.umc.product.challenger.adapter.in.web.dto.request.AddChallengerRecordToMemberRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.CreateChallengerRecordRequest;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerRecordResponse;
+import com.umc.product.challenger.application.port.in.command.ManageChallengerRecordUseCase;
+import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerRecordCommand;
-import com.umc.product.challenger.application.service.ChallengerRecordCommandService;
-import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,7 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class ChallengerRecordController {
 
     private final ChallengerRecordResponseAssembler assembler;
-    private final ChallengerRecordCommandService challengerRecordCommandService;
+    private final ManageChallengerRecordUseCase manageChallengerRecordUseCase;
+    private final ManageChallengerUseCase manageChallengerUseCase;
 
     // 코드를 이용해서 Member에 챌린저 기록을 추가하는 API
     @Operation(summary = "6자리 코드를 이용해서 회원(계정)에 챌린저 기록 추가",
@@ -41,9 +42,8 @@ public class ChallengerRecordController {
     public void addChallengerRecordToMember(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody AddChallengerRecordToMemberRequest request) {
-        // TODO: 챌린저 기록 추가 로직 구현
 
-        throw new NotImplementedException();
+        manageChallengerUseCase.createWithRecord(memberPrincipal.getMemberId(), request.code());
     }
 
     @GetMapping("code/{code}")
@@ -75,7 +75,7 @@ public class ChallengerRecordController {
     ) {
         // TODO: SUPER_ADMIN 만 가능하도록 권한 설정
 
-        Long id = challengerRecordCommandService.create(
+        Long id = manageChallengerRecordUseCase.create(
             CreateChallengerRecordCommand.builder()
                 .part(request.part())
                 .creatorMemberId(memberPrincipal.getMemberId())
@@ -101,7 +101,7 @@ public class ChallengerRecordController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody List<CreateChallengerRecordRequest> request
     ) {
-        List<Long> ids = challengerRecordCommandService.createBulk(
+        List<Long> ids = manageChallengerRecordUseCase.createBulk(
             request.stream()
                 .map(req -> CreateChallengerRecordCommand.builder()
                     .part(req.part())

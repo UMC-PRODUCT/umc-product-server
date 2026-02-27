@@ -11,10 +11,12 @@ import com.umc.product.challenger.application.port.in.command.dto.UpdateChalleng
 import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerPointCommand;
 import com.umc.product.challenger.application.port.out.LoadChallengerPointPort;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
+import com.umc.product.challenger.application.port.out.LoadChallengerRecordPort;
 import com.umc.product.challenger.application.port.out.SaveChallengerPointPort;
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.ChallengerPoint;
+import com.umc.product.challenger.domain.ChallengerRecord;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerStatus;
@@ -38,6 +40,10 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
     private final SaveChallengerPort saveChallengerPort;
     private final LoadChallengerPointPort loadChallengerPointPort;
     private final SaveChallengerPointPort saveChallengerPointPort;
+
+    // NOTE: 같은 도메인은 port를 통해서 접근하도록 함.
+    // 동일 도메인 내에서 UseCase를 통해서 접근할 경우, 의존 방향이 역전된 것
+    private final LoadChallengerRecordPort loadChallengerRecordPort;
 
     @Override
     public Long createChallenger(CreateChallengerCommand command) {
@@ -177,6 +183,19 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
     public void deleteChallengerPoint(DeleteChallengerPointCommand command) {
         ChallengerPoint point = loadChallengerPointPort.getById(command.challengerPointId());
         saveChallengerPointPort.delete(point);
+    }
+
+    @Override
+    public void createWithRecord(Long memberId, String code) {
+        ChallengerRecord record = loadChallengerRecordPort.getByCode(code);
+
+        saveChallengerPort.save(
+            Challenger.builder()
+                .memberId(memberId)
+                .part(record.getPart())
+                .gisuId(record.getGisuId())
+                .build()
+        );
     }
 
     private ChallengerStatus resolveDeactivationStatus(ChallengerDeactivationType deactivationType) {
