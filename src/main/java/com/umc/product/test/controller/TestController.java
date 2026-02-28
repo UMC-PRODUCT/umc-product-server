@@ -1,19 +1,23 @@
 package com.umc.product.test.controller;
 
 import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
+import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
+import com.umc.product.notification.domain.WebhookPlatform;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,8 +32,44 @@ import org.springframework.web.bind.annotation.RestController;
 public class TestController {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final GetChallengerUseCase getChallengerUseCase;
     private final AppleTokenVerifier appleTokenVerifier;
+    private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
+
+    @PostMapping("webhook/alarm")
+    @Operation(summary = "웹훅 알람 전송 테스트")
+    public void sendWebhookAlarm(
+        @RequestParam String title,
+        @RequestParam String content
+    ) {
+        sendWebhookAlarmUseCase.send(
+            SendWebhookAlarmCommand.builder()
+                .title(title == null ? "알람 테스트" : title)
+                .content(content == null ? "알람 테스트 내용입니다." : content)
+                .platforms(List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD))
+                .build()
+        );
+    }
+
+    // buffer alarm test
+    @PostMapping("webhook/alarm/buffer")
+    @Operation(summary = "웹훅 알람 버퍼 전송 테스트")
+    public void sendBufferedWebhookAlarm(
+        @RequestParam String title,
+        @RequestParam String content
+    ) {
+        for (int i = 0; i < 5; i++) {
+            String bTitle = title == null ? "버퍼 알람 테스트" : title + " #" + (i + 1);
+            String bContent = content == null ? "버퍼 알람 테스트 내용입니다." : content + " #" + (i + 1);
+
+            sendWebhookAlarmUseCase.sendBuffered(
+                SendWebhookAlarmCommand.builder()
+                    .title(bTitle)
+                    .content(bContent)
+                    .platforms(List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD))
+                    .build()
+            );
+        }
+    }
 
     @GetMapping("apple-client-secret")
     @Operation(summary = "Apple Client Secret 생성")
