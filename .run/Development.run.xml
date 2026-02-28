@@ -3,6 +3,7 @@
                    factoryName="Spring Boot">
         <option name="ACTIVE_PROFILES" value="dev"/>
         <module name="umc-product.main"/>
+        <option name="SHORTEN_COMMAND_LINE" value="ARGS_FILE"/>
         <option name="SPRING_BOOT_MAIN_CLASS" value="com.umc.product.UmcProductApplication"/>
         <extension name="net.ashald.envfile">
             <option name="IS_ENABLED" value="false"/>
