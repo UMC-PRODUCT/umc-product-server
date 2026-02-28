@@ -19,10 +19,10 @@ server:
 
 spring:
   application:
-    name: x-umc-product
+    name: ${SPRING_APPLICATION_NAME:-x-umc-product}
   profiles:
     # 기본적으로 local 프로필을 활성화, 실수로 prod에 접근하는 것을 방지함
-    active: local
+    active: ${SPRING_PROFILES_ACTIVE:-local}
 
   docker:
     compose:
@@ -236,8 +236,8 @@ app:
       enabled: ${WEBHOOK_BUFFER_ENABLED:true}
       flush-interval-ms: ${WEBHOOK_BUFFER_FLUSH_INTERVAL_MS:60000} # 1분마다 버퍼 플러시
     telegram:
-      bot-token: ${TELEGRAM_BOT_TOKEN}
-      chat-id: ${TELEGRAM_CHAT_ID}
+      bot-token: ${TELEGRAM_BOT_TOKEN:-}
+      chat-id: ${TELEGRAM_CHAT_ID:-}
     slack:
       url: ${SLACK_WEBHOOK_URL:-}
     discord:
