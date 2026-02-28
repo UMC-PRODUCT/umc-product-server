@@ -8,8 +8,10 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
+import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
 import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
 import com.umc.product.notification.domain.WebhookPlatform;
+import com.umc.product.test.dto.TestAopAlarmResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -35,6 +37,23 @@ public class TestController {
     private final AppleTokenVerifier appleTokenVerifier;
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
 
+    @WebhookAlarm(
+        title = "'알람 테스트 : ' + #title",
+        content = "'내용 : ' + #result.content"
+    )
+    @GetMapping("webhook/aop-test")
+    @Operation(summary = "AOP로 전송하는 알람 테스트")
+    public TestAopAlarmResponse sendAopWebhookAlarm(
+        @RequestParam String title,
+        @RequestParam String content
+    ) {
+        log.debug("웹훅 알람 AOP 테스트가 호출되었습니다~!");
+
+        return TestAopAlarmResponse.builder()
+            .content(content)
+            .build();
+    }
+
     @PostMapping("webhook/alarm")
     @Operation(summary = "웹훅 알람 전송 테스트")
     public void sendWebhookAlarm(
@@ -55,9 +74,10 @@ public class TestController {
     @Operation(summary = "웹훅 알람 버퍼 전송 테스트")
     public void sendBufferedWebhookAlarm(
         @RequestParam String title,
-        @RequestParam String content
+        @RequestParam String content,
+        @RequestParam int repeatCount
     ) {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < repeatCount; i++) {
             String bTitle = title == null ? "버퍼 알람 테스트" : title + " #" + (i + 1);
             String bContent = content == null ? "버퍼 알람 테스트 내용입니다." : content + " #" + (i + 1);
 
