@@ -266,7 +266,7 @@ storage:
       private-key: ${CDN_PRIVATE_KEY}
 
 sentry:
-  dsn: ${SENTRY_DSN}
+  dsn: ${SENTRY_DSN:-}
   environment: ${spring.profiles.active}
   exception-resolver-order: -2147483647
   max-request-body-size: none
