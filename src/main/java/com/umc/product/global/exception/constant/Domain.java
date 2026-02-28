@@ -21,5 +21,6 @@ public enum Domain {
     RECRUITMENT,
     TERMS,
     EMAIL,
-    STORAGE
+    STORAGE,
+    WEBHOOK
 }

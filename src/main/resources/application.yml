@@ -19,10 +19,10 @@ server:
 
 spring:
   application:
-    name: x-umc-product
+    name: ${SPRING_APPLICATION_NAME:-x-umc-product}
   profiles:
     # 기본적으로 local 프로필을 활성화, 실수로 prod에 접근하는 것을 방지함
-    active: local
+    active: ${SPRING_PROFILES_ACTIVE:-local}
 
   docker:
     compose:
@@ -230,9 +230,23 @@ management:
 app:
   base-url: ${APP_BASE_URL:http://localhost:${SERVER_PORT:8080}}
   firebase-configuration: ${FIREBASE_CONFIGURATION}
+
+  webhook:
+    buffer:
+      enabled: ${WEBHOOK_BUFFER_ENABLED:true}
+      flush-interval-ms: ${WEBHOOK_BUFFER_FLUSH_INTERVAL_MS:60000} # 1분마다 버퍼 플러시
+    telegram:
+      bot-token: ${TELEGRAM_BOT_TOKEN:-}
+      chat-id: ${TELEGRAM_CHAT_ID:-}
+    slack:
+      url: ${SLACK_WEBHOOK_URL:-}
+    discord:
+      url: ${DISCORD_WEBHOOK_URL:-}
+
   swagger-auth:
     username: ${SWAGGER_AUTH_USERNAME:username}
     password: ${SWAGGER_AUTH_PASSWORD:password}
+
   oauth2:
     apple:
       client-id: ${APPLE_CLIENT_ID}
@@ -266,7 +280,7 @@ storage:
       private-key: ${CDN_PRIVATE_KEY}
 
 sentry:
-  dsn: ${SENTRY_DSN}
+  dsn: ${SENTRY_DSN:-}
   environment: ${spring.profiles.active}
   exception-resolver-order: -2147483647
   max-request-body-size: none
