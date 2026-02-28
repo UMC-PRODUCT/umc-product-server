@@ -18,9 +18,11 @@ public class WebhookAlarmBuffer {
     public List<SendWebhookAlarmCommand> drainAll() {
         List<SendWebhookAlarmCommand> drained = new ArrayList<>();
         SendWebhookAlarmCommand command;
+
         while ((command = queue.poll()) != null) {
             drained.add(command);
         }
+
         return drained;
     }
 

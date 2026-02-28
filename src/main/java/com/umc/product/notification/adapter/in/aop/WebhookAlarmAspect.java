@@ -4,7 +4,6 @@ import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
 import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
 import com.umc.product.notification.domain.WebhookPlatform;
-import java.lang.reflect.Method;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,12 +11,12 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.springframework.context.expression.MethodBasedEvaluationContext;
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.ParameterNameDiscoverer;
 import org.springframework.expression.EvaluationContext;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
-import org.springframework.expression.spel.support.StandardEvaluationContext;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -32,6 +31,8 @@ public class WebhookAlarmAspect {
 
     @AfterReturning(pointcut = "@annotation(webhookAlarm)", returning = "result")
     public void sendAlarm(JoinPoint joinPoint, WebhookAlarm webhookAlarm, Object result) {
+        log.debug("@WebhookAlarm 감지: method={}", joinPoint.getSignature().toShortString());
+
         try {
             EvaluationContext context = createEvaluationContext(joinPoint, result);
 
@@ -52,19 +53,15 @@ public class WebhookAlarmAspect {
         }
     }
 
-    // JoinPoint에서 메서드 정보와 파라미터를 추출하여 EvaluationContext를 생성
     private EvaluationContext createEvaluationContext(JoinPoint joinPoint, Object result) {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        Method method = signature.getMethod();
-        Object[] args = joinPoint.getArgs();
-        String[] paramNames = parameterNameDiscoverer.getParameterNames(method);
 
-        StandardEvaluationContext context = new StandardEvaluationContext();
-        if (paramNames != null) {
-            for (int i = 0; i < paramNames.length; i++) {
-                context.setVariable(paramNames[i], args[i]);
-            }
-        }
+        MethodBasedEvaluationContext context = new MethodBasedEvaluationContext(
+            null,
+            signature.getMethod(),
+            joinPoint.getArgs(),
+            parameterNameDiscoverer
+        );
         context.setVariable("result", result);
         return context;
     }

@@ -38,7 +38,7 @@ public @interface WebhookAlarm {
     /**
      * 알람을 전송할 플랫폼 목록.
      */
-    WebhookPlatform[] platforms();
+    WebhookPlatform[] platforms() default {WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD};
 
     /**
      * 알람 제목 (SpEL). 리터럴 문자열은 작은따옴표로 감싸야 합니다.
