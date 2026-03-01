@@ -163,7 +163,7 @@ logging:
     root: INFO
 
     # 애플리케이션 기본값
-    com.umc.product: INFO
+    com.umc.product: ${LOGGING_APP_LEVEL:-INFO}
 
     # Spring Framework
     org.springframework.web: INFO

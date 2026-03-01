@@ -35,6 +35,17 @@ public class FcmService implements ManageFcmUseCase {
     private final LoadFcmPort loadFcmPort;
     private final SaveFcmPort saveFcmPort;
 
+    private static Message getMessage(NotificationCommand command, String fcmToken) {
+        Notification notification = Notification.builder()
+            .setTitle(command.title())
+            .setBody(command.body())
+            .build();
+
+        log.trace("FCM 메시지 생성: token={}, title={}, body={}", fcmToken, command.title(), command.body());
+        Message message = Message.builder().setToken(fcmToken).setNotification(notification).build();
+        return message;
+    }
+
     @Override
     @Transactional
     public void registerFcmToken(Long userId, FcmRegistrationRequest request) {
@@ -121,13 +132,6 @@ public class FcmService implements ManageFcmUseCase {
             log.error("토픽 메시지 전송 실패 topic={}", command.topic(), e);
             throw new FcmDomainException(FcmErrorCode.TOPIC_SEND_FAILED);
         }
-    }
-
-    private static Message getMessage(NotificationCommand command, String fcmToken) {
-        Notification notification = Notification.builder().setTitle(command.title()).setBody(command.body()).build();
-
-        Message message = Message.builder().setToken(fcmToken).setNotification(notification).build();
-        return message;
     }
 
 }
