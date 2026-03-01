@@ -30,9 +30,9 @@ public class FcmConfig {
 
         // private_key가 제대로 파싱됐는지 확인
         if (credentials instanceof com.google.auth.oauth2.ServiceAccountCredentials saCreds) {
-            log.trace("service account email: {}", saCreds.getClientEmail());
-            log.trace("private key algorithm: {}", saCreds.getPrivateKey().getAlgorithm());
-            log.trace("private key format: {}", saCreds.getPrivateKey().getFormat());
+            log.debug("service account email: {}", saCreds.getClientEmail());
+            log.debug("private key algorithm: {}", saCreds.getPrivateKey().getAlgorithm());
+            log.debug("private key format: {}", saCreds.getPrivateKey().getFormat());
         }
 
         log.debug("Firebase credentials 로드 완료");
