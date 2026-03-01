@@ -1,5 +1,8 @@
 package com.umc.product.organization.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateStudyGroupRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateStudyGroupMembersRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateStudyGroupRequest;
@@ -23,12 +26,14 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
 
     private final ManageStudyGroupUseCase manageStudyGroupUseCase;
 
+    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.WRITE)
     @Override
     @PostMapping
     public void create(@Valid @RequestBody CreateStudyGroupRequest request) {
         manageStudyGroupUseCase.create(request.toCommand());
     }
 
+    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.EDIT)
     @Override
     @PatchMapping("/{groupId}")
     public void update(
@@ -37,6 +42,7 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
         manageStudyGroupUseCase.update(request.toCommand(groupId));
     }
 
+    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.EDIT)
     @Override
     @PutMapping("/{groupId}/members")
     public void updateMembers(
@@ -45,6 +51,7 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
         manageStudyGroupUseCase.updateMembers(request.toCommand(groupId));
     }
 
+    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.DELETE)
     @Override
     @DeleteMapping("/{groupId}")
     public void delete(@PathVariable Long groupId) {
