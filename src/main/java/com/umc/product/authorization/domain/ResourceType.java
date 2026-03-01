@@ -24,6 +24,8 @@ public enum ResourceType {
         Set.of(PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
     GISU("gisu", "기수",
         Set.of(PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+    STUDY_GROUP("study_group", "스터디 그룹",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
     WORKBOOK_SUBMISSION("workbook_submission", "워크북 제출 현황",
         Set.of(PermissionType.READ)),
     ATTENDANCE_SHEET("attendance_sheet", "출석부",
