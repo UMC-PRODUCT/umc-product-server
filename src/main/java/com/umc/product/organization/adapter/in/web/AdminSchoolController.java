@@ -34,7 +34,7 @@ public class AdminSchoolController implements AdminSchoolControllerApi {
         manageSchoolUseCase.register(request.toCommand());
     }
 
-    @CheckAccess(resourceType = ResourceType.SCHOOL, resourceId = "#schoolId", permission = PermissionType.EDIT)
+    @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.EDIT)
     @Override
     @PatchMapping("/{schoolId}")
     public void updateSchool(@PathVariable Long schoolId, @RequestBody @Valid UpdateSchoolRequest request) {
@@ -48,14 +48,14 @@ public class AdminSchoolController implements AdminSchoolControllerApi {
         manageSchoolUseCase.deleteSchools(request.schoolIds());
     }
 
-    @CheckAccess(resourceType = ResourceType.SCHOOL, resourceId = "#schoolId", permission = PermissionType.EDIT)
+    @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.EDIT)
     @Override
     @PatchMapping("/{schoolId}/assign")
     public void assignToChapter(@PathVariable Long schoolId, @RequestBody @Valid AssignSchoolRequest request) {
         manageSchoolUseCase.assignToChapter(request.toCommand(schoolId));
     }
 
-    @CheckAccess(resourceType = ResourceType.SCHOOL, resourceId = "#schoolId", permission = PermissionType.EDIT)
+    @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.EDIT)
     @Override
     @PatchMapping("/{schoolId}/unassign")
     public void unassignFromChapter(@PathVariable Long schoolId, @RequestBody @Valid UnassignSchoolRequest request) {

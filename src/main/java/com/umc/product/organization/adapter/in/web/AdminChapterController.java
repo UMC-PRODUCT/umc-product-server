@@ -40,7 +40,7 @@ public class AdminChapterController implements AdminChapterControllerApi {
             .toList();
     }
 
-    @CheckAccess(resourceType = ResourceType.CHAPTER, resourceId = "#chapterId", permission = PermissionType.DELETE)
+    @CheckAccess(resourceType = ResourceType.CHAPTER, permission = PermissionType.DELETE)
     @Override
     @DeleteMapping("/{chapterId}")
     public void deleteChapter(@PathVariable Long chapterId) {
