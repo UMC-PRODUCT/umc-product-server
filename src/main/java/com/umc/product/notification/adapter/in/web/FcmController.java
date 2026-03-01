@@ -9,6 +9,7 @@ import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.RefreshFcmTokenUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,6 +34,7 @@ public class FcmController implements FcmControllerApi {
     }
 
     @Override
+    @Profile("local | dev")
     @PostMapping("/test-send")
     public void sendTestNotification(@RequestBody FcmTestSendRequest request) {
         manageFcmUseCase.sendMessageByToken(request.toCommand());
