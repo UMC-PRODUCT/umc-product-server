@@ -29,7 +29,6 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
     private final GetSchoolUseCase getSchoolUseCase;
     private final GetFileUseCase getFileUseCase;
 
-    @Public
     @Override
     @GetMapping
     @Deprecated(since = "0.3.0", forRemoval = true)
@@ -50,7 +49,6 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
         return SchoolNameListResponse.from(getSchoolUseCase.getAllSchoolNames());
     }
 
-    @Public
     @Override
     @GetMapping("/{schoolId}")
     public SchoolDetailResponse getSchoolDetail(@PathVariable Long schoolId) {
@@ -58,7 +56,6 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
         return SchoolDetailResponse.of(schoolDetailInfo);
     }
 
-    @Public
     @Override
     @GetMapping("/unassigned")
     public UnassignedSchoolListResponse getUnassignedSchools(@RequestParam Long gisuId) {
