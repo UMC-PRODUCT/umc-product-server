@@ -1,6 +1,8 @@
 package com.umc.product.organization.adapter.in.web;
 
-import com.umc.product.global.security.annotation.Public;
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateGisuRequest;
 import com.umc.product.organization.adapter.in.web.swagger.AdminGisuControllerApi;
 import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
@@ -20,21 +22,21 @@ public class AdminGisuController implements AdminGisuControllerApi {
 
     private final ManageGisuUseCase manageGisuUseCase;
 
-    @Public
+    @CheckAccess(resourceType = ResourceType.GISU, permission = PermissionType.WRITE)
     @Override
     @PostMapping
     public Long createGisu(@Valid @RequestBody CreateGisuRequest request) {
         return manageGisuUseCase.register(request.toCommand());
     }
 
-    @Public
+    @CheckAccess(resourceType = ResourceType.GISU, resourceId = "#gisuId", permission = PermissionType.DELETE)
     @Override
     @DeleteMapping("/{gisuId}")
     public void deleteGisu(@PathVariable Long gisuId) {
         manageGisuUseCase.deleteGisu(gisuId);
     }
 
-    @Public
+    @CheckAccess(resourceType = ResourceType.GISU, resourceId = "#gisuId", permission = PermissionType.EDIT)
     @Override
     @PostMapping("/{gisuId}/active")
     public void updateActiveGisu(@PathVariable Long gisuId) {
