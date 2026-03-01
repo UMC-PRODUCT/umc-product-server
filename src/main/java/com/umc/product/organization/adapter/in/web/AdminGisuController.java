@@ -29,14 +29,14 @@ public class AdminGisuController implements AdminGisuControllerApi {
         return manageGisuUseCase.register(request.toCommand());
     }
 
-    @CheckAccess(resourceType = ResourceType.GISU, resourceId = "#gisuId", permission = PermissionType.DELETE)
+    @CheckAccess(resourceType = ResourceType.GISU, permission = PermissionType.DELETE)
     @Override
     @DeleteMapping("/{gisuId}")
     public void deleteGisu(@PathVariable Long gisuId) {
         manageGisuUseCase.deleteGisu(gisuId);
     }
 
-    @CheckAccess(resourceType = ResourceType.GISU, resourceId = "#gisuId", permission = PermissionType.EDIT)
+    @CheckAccess(resourceType = ResourceType.GISU, permission = PermissionType.EDIT)
     @Override
     @PostMapping("/{gisuId}/active")
     public void updateActiveGisu(@PathVariable Long gisuId) {
