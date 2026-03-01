@@ -1,6 +1,5 @@
 package com.umc.product.organization.adapter.in.web;
 
-import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.response.SchoolLinkResponse;
 import com.umc.product.organization.adapter.in.web.swagger.SchoolQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
@@ -19,14 +18,12 @@ public class SchoolQueryController implements SchoolQueryControllerApi {
 
     private final GetSchoolUseCase getSchoolUseCase;
 
-    @Public
     @Override
     @GetMapping("/link/{schoolId}")
     public SchoolLinkResponse getSchoolLink(@PathVariable Long schoolId) {
         return SchoolLinkResponse.of(getSchoolUseCase.getSchoolLink(schoolId));
     }
 
-    @Public
     @GetMapping("/gisu/{gisuId}")
     public List<SchoolDetailInfo> getSchoolListsByGisu(@PathVariable Long gisuId) {
         return getSchoolUseCase.getSchoolListByGisuId(gisuId);
