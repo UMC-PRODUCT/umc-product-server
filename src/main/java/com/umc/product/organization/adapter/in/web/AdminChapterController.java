@@ -1,6 +1,8 @@
 package com.umc.product.organization.adapter.in.web;
 
-import com.umc.product.global.security.annotation.Public;
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateChapterRequest;
 import com.umc.product.organization.adapter.in.web.swagger.AdminChapterControllerApi;
 import com.umc.product.organization.application.port.in.command.ManageChapterUseCase;
@@ -21,14 +23,14 @@ public class AdminChapterController implements AdminChapterControllerApi {
 
     private final ManageChapterUseCase manageChapterUseCase;
 
-    @Public
+    @CheckAccess(resourceType = ResourceType.CHAPTER, permission = PermissionType.WRITE)
     @Override
     @PostMapping
     public Long createChapter(@RequestBody @Valid CreateChapterRequest request) {
         return manageChapterUseCase.create(request.toCommand());
     }
 
-    @Public
+//    @CheckAccess(resourceType = ResourceType.CHAPTER, permission = PermissionType.WRITE)
     @Override
     @PostMapping("/bulk")
     public List<Long> createChapterBulk(@RequestBody List<CreateChapterRequest> requests) {
@@ -38,8 +40,7 @@ public class AdminChapterController implements AdminChapterControllerApi {
             .toList();
     }
 
-
-    @Public
+    @CheckAccess(resourceType = ResourceType.CHAPTER, resourceId = "#chapterId", permission = PermissionType.DELETE)
     @Override
     @DeleteMapping("/{chapterId}")
     public void deleteChapter(@PathVariable Long chapterId) {
