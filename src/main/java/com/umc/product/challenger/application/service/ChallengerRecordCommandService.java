@@ -41,7 +41,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
     public Long create(CreateChallengerRecordCommand command) {
         log.info("ChallengerRecord를 생성합니다. command={}", command.toString());
 
-        validateRecord(command.gisuId(), command.chapterId(), command.schoolId());
+        validateRecord(command.gisuId(), command.schoolId(), command.chapterId());
 
         return saveChallengerRecordPort.save(command.toEntity()).getId();
     }
@@ -110,6 +110,9 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
         ChapterInfo chapterInfo = getChapterUseCase.byGisuAndSchool(gisuId, schoolId);
 
         if (!chapterInfo.id().equals(chapterId)) {
+            log.debug("학교 schoolId={}가 해당 기수에 속한 지부는 {}, id={} 이지만 요청에서 제공된 chapterId={} 입니다.",
+                schoolId, chapterInfo.name(), chapterInfo.id(), chapterId);
+
             throw new ChallengerDomainException(ChallengerErrorCode.INVALID_CHALLENGER_RECORD_CREATE_REQUEST,
                 "주어진 학교는 해당 기수에 해당 지부에 속하지 않았습니다.");
         }
