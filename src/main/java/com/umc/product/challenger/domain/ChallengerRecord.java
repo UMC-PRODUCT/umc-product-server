@@ -48,7 +48,7 @@ public class ChallengerRecord extends BaseEntity {
     private Long schoolId;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, name = "part")
+    @Column(name = "part")
     private ChallengerPart part;
 
     @Column(name = "challenger_role_type")
