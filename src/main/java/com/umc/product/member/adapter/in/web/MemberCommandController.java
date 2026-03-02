@@ -16,6 +16,7 @@ import com.umc.product.member.application.port.in.command.dto.DeleteMemberComman
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
+import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +51,10 @@ public class MemberCommandController {
             해당 토큰은 사전에 인증된 OAuth2 Provider와 ProviderId를 인증해줍니다.
             """)
     @PostMapping("register")
+    @WebhookAlarm(
+        title = "'새로운 회원이 가입했어요!'",
+        content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
+    )
     RegisterResponse registerMember(@RequestBody RegisterMemberRequest request) {
         // TODO: oAuthVerificationToken은 authentication domain에서 port 가져와서 처리함
 
