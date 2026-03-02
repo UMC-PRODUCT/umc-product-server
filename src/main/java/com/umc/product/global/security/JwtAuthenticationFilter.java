@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -18,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     public static final String JWT_ERROR_ATTRIBUTE = "jwt.error";
@@ -37,16 +39,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     Long memberId = jwtTokenProvider.parseAccessToken(token);
                     List<String> roles = jwtTokenProvider.getRolesFromAccessToken(token);
 
+                    log.info("JWT TOKEN Authenticated: memberId={}", memberId);
+
                     MemberPrincipal memberPrincipal = new MemberPrincipal(memberId);
 
                     List<SimpleGrantedAuthority> authorities = roles.stream()
-                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                            .toList();
+                        .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                        .toList();
 
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            memberPrincipal,
-                            null,
-                            authorities
+                        memberPrincipal,
+                        null,
+                        authorities
                     );
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
