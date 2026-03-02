@@ -212,8 +212,20 @@ public class NoticeQueryRepository {
                 .and(targetPartIsEmpty(target));
         }
 
-        // 파트 필터 (gisuId + chapterId + schoolId + part)
-        // 파트 공지는 기수 + 파트 / 기수 + 지부 + 파트 / 기수 + 학교 + 파트 세 패턴 묶기
+        // 파트 필터 (gisuId + chapterId + part, schoolId 없음)
+        // 기수 + 파트 / 기수 + 지부 + 파트 두 패턴
+        if (hasChapter && !hasSchool && hasPart) {
+            return target.targetGisuId.eq(gisuId)
+                .and(targetPartContains(target, part))
+                .and(
+                    target.targetChapterId.isNull().and(target.targetSchoolId.isNull())   // SPECIFIC_GISU_SPECIFIC_PART
+                        .or(target.targetChapterId.eq(chapterId)
+                            .and(target.targetSchoolId.isNull()))  // SPECIFIC_GISU_SPECIFIC_CHAPTER_WITH_PART
+                );
+        }
+
+        // 파트 필터 (gisuId + chapterId + schoolId + part, 모두 있음)
+        // 기수 + 파트 / 기수 + 지부 + 파트 / 기수 + 학교 + 파트 세 패턴 묶기
         return target.targetGisuId.eq(gisuId)
             .and(targetPartContains(target, part))
             .and(
@@ -302,9 +314,9 @@ public class NoticeQueryRepository {
 
     private BooleanExpression targetPartContains(QNoticeTarget target, ChallengerPart part) {
         return Expressions.booleanTemplate(
-            "array_contains({0}, {1})",
+            "array_contains({0}, {1}) = true",
             target.targetChallengerPart,
-            part
+            part.name()
         );
     }
 
