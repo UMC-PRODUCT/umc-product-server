@@ -27,7 +27,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         request.setAttribute(START_TIME_ATTR, Instant.now());
 
-        log.info("[REQ] {} {}", request.getMethod(), request.getRequestURI());
+        log.info("[REQ] \uD83D\uDC97 {} {}", request.getMethod(), request.getRequestURI());
 
         log.debug("[MDC] {}", MDC.getCopyOfContextMap());
 
