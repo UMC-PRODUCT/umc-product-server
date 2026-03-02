@@ -2,6 +2,8 @@ package com.umc.product.global.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +31,13 @@ public class LoggingInterceptor implements HandlerInterceptor {
 
         // URI와 Query String 조합
         String requestUri = request.getRequestURI();
+
         String queryString = request.getQueryString();
+        if (queryString != null) {
+            // 인코딩된 문자열을 사람이 읽을 수 있게 디코딩
+            queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
+        }
+
         String fullPath = (queryString != null) ? requestUri + "?" + queryString : requestUri;
 
         log.info("[REQ] 💗 {} {}", request.getMethod(), fullPath);
