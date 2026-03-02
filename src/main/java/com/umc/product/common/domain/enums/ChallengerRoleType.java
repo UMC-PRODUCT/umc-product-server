@@ -74,7 +74,7 @@ public enum ChallengerRoleType {
      * 해당 역할이 속하는 조직 타입을 반환합니다.
      */
     public OrganizationType organizationType() {
-        if (isCentralCore()) {
+        if (isCentralMember()) {
             return OrganizationType.CENTRAL;
         }
 
