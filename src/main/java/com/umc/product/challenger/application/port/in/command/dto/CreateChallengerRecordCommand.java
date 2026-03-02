@@ -13,8 +13,7 @@ public record CreateChallengerRecordCommand(
     Long schoolId,
     ChallengerPart part,
     String memberName,
-    ChallengerRoleType challengerRoleType,
-    Long organizationId
+    ChallengerRoleType challengerRoleType
 ) {
     @Override
     public String toString() {
@@ -33,9 +32,15 @@ public record CreateChallengerRecordCommand(
 
     public ChallengerRecord toEntity() {
         if (isAdminRecord()) {
+            Long adminOrganizationId = switch (challengerRoleType.organizationType()) {
+                case CENTRAL -> null; // 중앙운영사무국 소속은 organizationId가 필요없음
+                case CHAPTER -> chapterId; // 챕터 관리자: organizationId는 chapterId
+                case SCHOOL -> schoolId; // 학교 관리자: organizationId는 schoolId
+            };
+
             return ChallengerRecord.createAdmin(
                 creatorMemberId, gisuId, chapterId, schoolId, part, memberName,
-                challengerRoleType, organizationId
+                challengerRoleType, adminOrganizationId
             );
         } else {
             return ChallengerRecord.create(
