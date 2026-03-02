@@ -46,6 +46,8 @@ public class ChallengerRecordResponseAssembler {
             .chapterId(schoolInfo.chapterId())
             .chapterName(schoolInfo.chapterName())
             .memberName(recordInfo.memberName())
+            .challengerRoleType(recordInfo.challengerRoleType())
+            .organizationId(recordInfo.organizationId())
             .build();
     }
 }

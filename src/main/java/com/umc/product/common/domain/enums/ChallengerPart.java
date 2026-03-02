@@ -12,12 +12,14 @@ public enum ChallengerPart {
     ANDROID("안드로이드", 3),
     IOS("iOS", 4),
     NODEJS("노드", 5),
-    SPRINGBOOT("스프링부트", 6);
+    SPRINGBOOT("스프링부트", 6),
+    ADMIN("운영진", 7),
+    ;
 
     private final String displayName;
     private final int sortOrder;
 
     public static ChallengerPart random() {
-        return values()[(int) (Math.random() * values().length)];
+        return values()[(int) (Math.random() * values().length - 1)];
     }
 }
