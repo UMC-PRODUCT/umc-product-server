@@ -4,6 +4,8 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.util.List;
@@ -36,8 +38,9 @@ public class NoticeTarget extends BaseEntity {
     @Column(name = "target_school_id")
     private Long targetSchoolId;
 
-    @Column(name = "target_challenger_part")
+    @Column(name = "target_challenger_part", columnDefinition = "text[]")
     @JdbcTypeCode(SqlTypes.ARRAY)
+    @Enumerated(EnumType.STRING)
     private List<ChallengerPart> targetChallengerPart;
 
     @Builder
