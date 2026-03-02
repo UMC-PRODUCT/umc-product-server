@@ -5,7 +5,7 @@ import com.umc.product.challenger.adapter.in.web.dto.request.AddChallengerRecord
 import com.umc.product.challenger.adapter.in.web.dto.request.CreateChallengerRecordRequest;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerRecordResponse;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerRecordUseCase;
-import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
+import com.umc.product.challenger.application.port.in.command.dto.ConsumeChallengerRecordCommand;
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerRecordCommand;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -29,7 +29,6 @@ public class ChallengerRecordController {
 
     private final ChallengerRecordResponseAssembler assembler;
     private final ManageChallengerRecordUseCase manageChallengerRecordUseCase;
-    private final ManageChallengerUseCase manageChallengerUseCase;
 
     // 코드를 이용해서 Member에 챌린저 기록을 추가하는 API
     @Operation(summary = "6자리 코드를 이용해서 회원(계정)에 챌린저 기록 추가",
@@ -48,7 +47,12 @@ public class ChallengerRecordController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody AddChallengerRecordToMemberRequest request) {
 
-        manageChallengerUseCase.createWithRecord(memberPrincipal.getMemberId(), request.code());
+        manageChallengerRecordUseCase.consumeCode(
+            ConsumeChallengerRecordCommand.builder()
+                .targetMemberId(memberPrincipal.getMemberId())
+                .code(request.code())
+                .build()
+        );
     }
 
     @GetMapping("code/{code}")
@@ -88,6 +92,7 @@ public class ChallengerRecordController {
                 .chapterId(request.chapterId())
                 .schoolId(request.schoolId())
                 .memberName(request.memberName())
+                .challengerRoleType(request.challengerRoleType())
                 .build()
         );
 
@@ -115,6 +120,7 @@ public class ChallengerRecordController {
                     .chapterId(req.chapterId())
                     .schoolId(req.schoolId())
                     .memberName(req.memberName())
+                    .challengerRoleType(req.challengerRoleType())
                     .build())
                 .toList()
         );

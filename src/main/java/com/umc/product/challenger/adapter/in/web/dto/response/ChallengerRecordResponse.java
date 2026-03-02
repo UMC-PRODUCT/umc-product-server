@@ -1,6 +1,7 @@
 package com.umc.product.challenger.adapter.in.web.dto.response;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import lombok.Builder;
 
 @Builder
@@ -13,6 +14,8 @@ public record ChallengerRecordResponse(
     String schoolName,
     Long chapterId,
     String chapterName,
-    String memberName
+    String memberName,
+    ChallengerRoleType challengerRoleType,
+    Long organizationId
 ) {
 }

@@ -1,5 +1,8 @@
 package com.umc.product.common.domain.enums;
 
+import com.umc.product.common.domain.exception.CommonException;
+import com.umc.product.global.exception.constant.CommonErrorCode;
+
 /**
  * 챌린저가 가질 수 있는 Role의 유형을 정의합니다.
  * <p>
@@ -71,17 +74,20 @@ public enum ChallengerRoleType {
      * 해당 역할이 속하는 조직 타입을 반환합니다.
      */
     public OrganizationType organizationType() {
+        if (isCentralMember()) {
+            return OrganizationType.CENTRAL;
+        }
+
         // 지부장인 경우에는 Chapter 반환
-        if (this == CHAPTER_PRESIDENT) {
+        else if (this == CHAPTER_PRESIDENT) {
             return OrganizationType.CHAPTER;
         }
 
         // 교내 운영진은 학교 단위 반환
-        if (isSchoolAdmin()) {
+        else if (isSchoolAdmin()) {
             return OrganizationType.SCHOOL;
         }
 
-        // SUPER_ADMIN을 포함한 그 외는 중앙운영사무국 소속으로 함.
-        return OrganizationType.CENTRAL;
+        throw new CommonException(CommonErrorCode.INTERNAL_SERVER_ERROR, "해당 역할 유형의 조직 단계를 알 수 없습니다.");
     }
 }

@@ -2,6 +2,7 @@ package com.umc.product.challenger.application.port.in.query.dto;
 
 import com.umc.product.challenger.domain.ChallengerRecord;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import java.time.Instant;
 import lombok.Builder;
 
@@ -10,6 +11,8 @@ public record ChallengerRecordInfo(
     Long id,
     String code,
     String memberName,
+    ChallengerRoleType challengerRoleType,
+    Long organizationId,
     Long createdMemberId,
     Long gisuId,
     Long chapterId,
@@ -24,6 +27,8 @@ public record ChallengerRecordInfo(
             .id(entity.getId())
             .code(entity.getCode())
             .memberName(entity.getMemberName())
+            .challengerRoleType(entity.getChallengerRoleType())
+            .organizationId(entity.getOrganizationId())
             .createdMemberId(entity.getCreatedMemberId())
             .gisuId(entity.getGisuId())
             .chapterId(entity.getChapterId())

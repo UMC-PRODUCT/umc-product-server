@@ -59,6 +59,4 @@ public interface ManageChallengerUseCase {
      * 챌린저에게 부여한 상벌점을 삭제합니다.
      */
     void deleteChallengerPoint(DeleteChallengerPointCommand command);
-
-    void createWithRecord(Long memberId, String code);
 }
