@@ -9,7 +9,6 @@ public record CreateChallengerRecordRequest(
     Long schoolId,
     ChallengerPart part,
     String memberName,
-    ChallengerRoleType challengerRoleType,
-    Long organizationId
+    ChallengerRoleType challengerRoleType
 ) {
 }

@@ -11,7 +11,6 @@ import com.umc.product.challenger.application.port.in.command.dto.UpdateChalleng
 import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerPointCommand;
 import com.umc.product.challenger.application.port.out.LoadChallengerPointPort;
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
-import com.umc.product.challenger.application.port.out.LoadChallengerRecordPort;
 import com.umc.product.challenger.application.port.out.SaveChallengerPointPort;
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
@@ -21,7 +20,6 @@ import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
-import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -41,11 +39,8 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
     private final LoadChallengerPointPort loadChallengerPointPort;
     private final SaveChallengerPointPort saveChallengerPointPort;
 
-    private final GetMemberUseCase getMemberUseCase;
-
     // NOTE: 같은 도메인은 port를 통해서 접근하도록 함.
     // 동일 도메인 내에서 UseCase를 통해서 접근할 경우, 의존 방향이 역전된 것
-    private final LoadChallengerRecordPort loadChallengerRecordPort;
 
     @Override
     public Long createChallenger(CreateChallengerCommand command) {
