@@ -92,6 +92,8 @@ public class ChallengerRecordController {
                 .chapterId(request.chapterId())
                 .schoolId(request.schoolId())
                 .memberName(request.memberName())
+                .challengerRoleType(request.challengerRoleType())
+                .organizationId(request.organizationId())
                 .build()
         );
 
@@ -119,6 +121,8 @@ public class ChallengerRecordController {
                     .chapterId(req.chapterId())
                     .schoolId(req.schoolId())
                     .memberName(req.memberName())
+                    .challengerRoleType(req.challengerRoleType())
+                    .organizationId(req.organizationId())
                     .build())
                 .toList()
         );

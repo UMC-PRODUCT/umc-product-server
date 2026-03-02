@@ -2,6 +2,7 @@ package com.umc.product.challenger.application.port.in.command.dto;
 
 import com.umc.product.challenger.domain.ChallengerRecord;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import lombok.Builder;
 
 @Builder
@@ -11,7 +12,9 @@ public record CreateChallengerRecordCommand(
     Long chapterId,
     Long schoolId,
     ChallengerPart part,
-    String memberName
+    String memberName,
+    ChallengerRoleType challengerRoleType,
+    Long organizationId
 ) {
     @Override
     public String toString() {
@@ -24,9 +27,20 @@ public record CreateChallengerRecordCommand(
             '}';
     }
 
+    private boolean isAdminRecord() {
+        return challengerRoleType != null;
+    }
+
     public ChallengerRecord toEntity() {
-        return ChallengerRecord.create(
-            creatorMemberId, gisuId, chapterId, schoolId, part, memberName
-        );
+        if (isAdminRecord()) {
+            return ChallengerRecord.createAdmin(
+                creatorMemberId, gisuId, chapterId, schoolId, part, memberName,
+                challengerRoleType, organizationId
+            );
+        } else {
+            return ChallengerRecord.create(
+                creatorMemberId, gisuId, chapterId, schoolId, part, memberName
+            );
+        }
     }
 }

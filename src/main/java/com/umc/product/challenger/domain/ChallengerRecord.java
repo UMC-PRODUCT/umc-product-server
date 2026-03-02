@@ -4,6 +4,7 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -50,6 +51,13 @@ public class ChallengerRecord extends BaseEntity {
     @Column(nullable = false, name = "part")
     private ChallengerPart part;
 
+    @Column(name = "challenger_role_type")
+    @Enumerated(EnumType.STRING)
+    private ChallengerRoleType challengerRoleType;
+
+    @Column(name = "organization_id")
+    private Long organizationId;
+
     @Column(nullable = false, name = "is_used")
     private boolean isUsed;
 
@@ -77,6 +85,20 @@ public class ChallengerRecord extends BaseEntity {
         return record;
     }
 
+    public static ChallengerRecord createAdmin(
+        Long createdMemberId, Long gisuId, Long chapterId, Long schoolId,
+        ChallengerPart part, String memberName,
+        ChallengerRoleType challengerRoleType, Long organizationId
+    ) {
+        // 이전 팩토리 메소드 재사용
+        ChallengerRecord record = create(createdMemberId, gisuId, chapterId, schoolId, part, memberName);
+
+        record.challengerRoleType = challengerRoleType;
+        record.organizationId = organizationId;
+
+        return record;
+    }
+
     private static String generateUniqueCode() {
         String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         ThreadLocalRandom random = ThreadLocalRandom.current();
@@ -87,11 +109,15 @@ public class ChallengerRecord extends BaseEntity {
             .toString();
     }
 
-    public void markAsUsed(Long memberId) {
+    public boolean isAdminRecord() {
+        return this.challengerRoleType != null;
+    }
+
+    public void markAsUsed(Long usedMemberId) {
         validateNotUsed();
 
         this.isUsed = true;
-        this.usedMemberId = memberId;
+        this.usedMemberId = usedMemberId;
         this.usedAt = Instant.now();
     }
 
@@ -102,12 +128,14 @@ public class ChallengerRecord extends BaseEntity {
     }
 
     public void validateMember(String memberName, Long schoolId) {
-        if (!this.memberName.equals(memberName)) {
-            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_MEMBER_NAME_FOR_RECORD);
-        }
+        // TODO: 앱 심사 과정에서 임시로 검증 제거
 
-        if (!this.schoolId.equals(schoolId)) {
-            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_SCHOOL_FOR_RECORD);
-        }
+        //        if (!this.memberName.equals(memberName)) {
+//            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_MEMBER_NAME_FOR_RECORD);
+//        }
+
+//        if (!this.schoolId.equals(schoolId)) {
+//            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_SCHOOL_FOR_RECORD);
+//        }
     }
 }
