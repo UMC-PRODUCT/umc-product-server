@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class NoticeQueryRepository {
 
     private final JPAQueryFactory queryFactory;
@@ -167,7 +169,8 @@ public class NoticeQueryRepository {
      */
     private BooleanExpression buildClassificationCondition(
         NoticeClassification classification,
-        QNoticeTarget target) {
+        QNoticeTarget target
+    ) {
 
         Long gisuId = classification.gisuId();
         Long chapterId = classification.chapterId();
@@ -177,6 +180,9 @@ public class NoticeQueryRepository {
         boolean hasChapter = chapterId != null;
         boolean hasSchool = schoolId != null;
         boolean hasPart = part != null;
+
+        log.info("공지사항 조회 조건 제작: gisuId={}, chapterId={}, schoolId={}, part={}",
+            gisuId, chapterId, schoolId, part);
 
         // 특정 기수 공지 혹은 모든 기수 공지(targetGisuId=null)
         BooleanExpression gisuMatch = target.targetGisuId.eq(gisuId)
