@@ -8,4 +8,8 @@ public class CommonException extends BusinessException {
     public CommonException(CommonErrorCode errorCode) {
         super(Domain.COMMON, errorCode);
     }
+
+    public CommonException(CommonErrorCode errorCode, String message) {
+        super(Domain.COMMON, errorCode, message);
+    }
 }
