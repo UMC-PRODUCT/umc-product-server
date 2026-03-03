@@ -8,12 +8,11 @@ import com.umc.product.curriculum.adapter.out.persistence.OriginalWorkbookJpaRep
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.MissionType;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
+import com.umc.product.support.fixture.GisuFixture;
 import java.time.Instant;
 import java.util.List;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -25,22 +24,13 @@ class GetAvailableWeeksUseCaseTest extends UseCaseTestSupport {
     private GetAvailableWeeksUseCase getAvailableWeeksUseCase;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private GisuFixture gisuFixture;
 
     @Autowired
     private CurriculumJpaRepository curriculumJpaRepository;
 
     @Autowired
     private OriginalWorkbookJpaRepository originalWorkbookJpaRepository;
-
-    private Gisu createActiveGisu(Long generation) {
-        return Gisu.create(
-            generation,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-08-31T23:59:59Z"),
-            true
-        );
-    }
 
     // ========== Fixture 메서드 ==========
 
@@ -69,7 +59,7 @@ class GetAvailableWeeksUseCaseTest extends UseCaseTestSupport {
         @DisplayName("특정 파트의 배포된 주차만 조회된다")
         void 특정_파트의_배포된_주차만_조회된다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
 
             Curriculum springCurriculum = curriculumJpaRepository.save(
                 createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));
@@ -99,7 +89,7 @@ class GetAvailableWeeksUseCaseTest extends UseCaseTestSupport {
         @DisplayName("파트가 null이면 모든 파트의 배포된 주차가 합산되어 조회된다")
         void 파트가_null이면_모든_파트의_배포된_주차가_합산되어_조회된다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
 
             // 스프링 커리큘럼: 1~3주차 배포
             Curriculum springCurriculum = curriculumJpaRepository.save(
@@ -132,7 +122,7 @@ class GetAvailableWeeksUseCaseTest extends UseCaseTestSupport {
         @DisplayName("미배포 워크북은 조회되지 않는다")
         void 미배포_워크북은_조회되지_않는다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
             Curriculum curriculum = curriculumJpaRepository.save(
                 createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));
 
@@ -151,12 +141,7 @@ class GetAvailableWeeksUseCaseTest extends UseCaseTestSupport {
         @DisplayName("비활성 기수의 워크북은 조회되지 않는다")
         void 비활성_기수의_워크북은_조회되지_않는다() {
             // given
-            Gisu inactiveGisu = manageGisuPort.save(Gisu.create(
-                8L,
-                Instant.parse("2023-03-01T00:00:00Z"),
-                Instant.parse("2023-08-31T23:59:59Z"),
-                false
-            ));
+            Gisu inactiveGisu = gisuFixture.비활성_기수(8L);
             Curriculum curriculum = curriculumJpaRepository.save(
                 createCurriculum(inactiveGisu.getId(), ChallengerPart.SPRINGBOOT));
 
@@ -176,7 +161,7 @@ class GetAvailableWeeksUseCaseTest extends UseCaseTestSupport {
         @DisplayName("주차 번호가 오름차순으로 정렬된다")
         void 주차_번호가_오름차순으로_정렬된다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
             Curriculum curriculum = curriculumJpaRepository.save(
                 createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));
 

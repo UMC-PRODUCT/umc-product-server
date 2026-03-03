@@ -15,15 +15,14 @@ import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.member.domain.Member;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
 import com.umc.product.support.TestChallengerRepository;
 import com.umc.product.support.TestMemberRepository;
 import com.umc.product.support.UseCaseTestSupport;
+import com.umc.product.support.fixture.GisuFixture;
 import java.time.Instant;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,7 +33,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
     private ManageWorkbookUseCase manageWorkbookUseCase;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private GisuFixture gisuFixture;
 
     @Autowired
     private ManageSchoolPort manageSchoolPort;
@@ -55,7 +54,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
     private ChallengerWorkbookJpaRepository challengerWorkbookJpaRepository;
 
     private ChallengerWorkbook createWorkbookWithStatus(WorkbookStatus status, MissionType missionType) {
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
         Member member = memberRepository.save(createMember("홍길동", school.getId()));
         Challenger challenger = challengerRepository.save(
@@ -71,15 +70,6 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
                 .scheduleId(1L)
                 .status(status)
                 .build()
-        );
-    }
-
-    private Gisu createActiveGisu(Long generation) {
-        return Gisu.create(
-            generation,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-08-31T23:59:59Z"),
-            true
         );
     }
 
