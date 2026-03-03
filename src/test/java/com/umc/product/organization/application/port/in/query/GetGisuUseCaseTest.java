@@ -8,9 +8,9 @@ import com.umc.product.organization.application.port.in.query.dto.GisuNameInfo;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
+import com.umc.product.support.fixture.GisuFixture;
 import java.time.Instant;
 import java.util.List;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -24,12 +24,15 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
     @Autowired
     private ManageGisuPort manageGisuPort;
 
+    @Autowired
+    private GisuFixture gisuFixture;
+
     @Test
     void 전체_기수_목록을_조회한다() {
         // given
-        manageGisuPort.save(createGisu(7L, false));
-        manageGisuPort.save(createGisu(8L, true));
-        manageGisuPort.save(createGisu(9L, false));
+        gisuFixture.비활성_기수(7L);
+        gisuFixture.활성_기수(8L);
+        gisuFixture.비활성_기수(9L);
 
         // when
         List<GisuInfo> result = getGisuUseCase.getList();
@@ -41,8 +44,8 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
     @Test
     void 활성_기수와_비활성_기수를_구분할_수_있다() {
         // given
-        Gisu activeGisu = manageGisuPort.save(createGisu(8L, true));
-        Gisu inactiveGisu = manageGisuPort.save(createGisu(7L, false));
+        Gisu activeGisu = gisuFixture.활성_기수(8L);
+        Gisu inactiveGisu = gisuFixture.비활성_기수(7L);
 
         // when
         GisuInfo activeInfo = getGisuUseCase.getById(activeGisu.getId());
@@ -72,7 +75,7 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
     void 기수_목록을_페이징하여_조회한다() {
         // given
         for (int i = 1; i <= 5; i++) {
-            manageGisuPort.save(createGisu((long) i, false));
+            gisuFixture.비활성_기수((long) i);
         }
 
         PageRequest pageRequest = PageRequest.of(0, 3);
@@ -93,7 +96,7 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
     void 기수_페이징_마지막_페이지를_조회한다() {
         // given
         for (int i = 1; i <= 5; i++) {
-            manageGisuPort.save(createGisu((long) i, false));
+            gisuFixture.비활성_기수((long) i);
         }
 
         PageRequest pageRequest = PageRequest.of(1, 3);
@@ -127,9 +130,9 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
     @Test
     void 페이징_결과가_generation_내림차순으로_정렬된다() {
         // given
-        manageGisuPort.save(createGisu(7L, false));
-        manageGisuPort.save(createGisu(9L, true));
-        manageGisuPort.save(createGisu(8L, false));
+        gisuFixture.비활성_기수(7L);
+        gisuFixture.활성_기수(9L);
+        gisuFixture.비활성_기수(8L);
 
         PageRequest pageRequest = PageRequest.of(0, 10);
 
@@ -146,9 +149,9 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
     @Test
     void 전체_기수_이름_목록을_조회한다() {
         // given
-        manageGisuPort.save(createGisu(7L, false));
-        manageGisuPort.save(createGisu(9L, true));
-        manageGisuPort.save(createGisu(8L, false));
+        gisuFixture.비활성_기수(7L);
+        gisuFixture.활성_기수(9L);
+        gisuFixture.비활성_기수(8L);
 
         // when
         List<GisuNameInfo> result = getGisuUseCase.getAllGisuNames();
@@ -171,8 +174,8 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
     @Test
     void 활성화된_기수를_조회한다() {
         // given
-        manageGisuPort.save(createGisu(7L, false));
-        Gisu activeGisu = manageGisuPort.save(createGisu(8L, true));
+        gisuFixture.비활성_기수(7L);
+        Gisu activeGisu = gisuFixture.활성_기수(8L);
 
         // when
         GisuInfo result = getGisuUseCase.getActiveGisu();
@@ -186,19 +189,10 @@ class GetGisuUseCaseTest extends UseCaseTestSupport {
     @Test
     void 활성화된_기수가_없으면_예외가_발생한다() {
         // given
-        manageGisuPort.save(createGisu(7L, false));
+        gisuFixture.비활성_기수(7L);
 
         // when & then
         assertThatThrownBy(() -> getGisuUseCase.getActiveGisu())
             .isInstanceOf(com.umc.product.global.exception.BusinessException.class);
-    }
-
-    private Gisu createGisu(Long generation, boolean isActive) {
-        return Gisu.create(
-            generation,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-08-31T23:59:59Z"),
-            isActive
-        );
     }
 }

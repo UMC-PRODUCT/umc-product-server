@@ -10,7 +10,6 @@ import com.umc.product.organization.application.port.in.query.dto.SchoolStudyGro
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
@@ -20,9 +19,8 @@ import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.support.TestChallengerRepository;
 import com.umc.product.support.TestMemberRepository;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.Instant;
+import com.umc.product.support.fixture.GisuFixture;
 import java.util.List;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -38,7 +36,7 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     private ManageSchoolPort manageSchoolPort;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private GisuFixture gisuFixture;
 
     @Autowired
     private TestMemberRepository memberRepository;
@@ -52,7 +50,7 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     @Test
     void 활성_기수의_스터디_그룹이_있는_학교_목록을_조회한다() {
         // given
-        Gisu activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu activeGisu = gisuFixture.활성_기수(9L);
         School school1 = manageSchoolPort.save(School.create("서울대학교", "비고1"));
         School school2 = manageSchoolPort.save(School.create("연세대학교", "비고2"));
         manageSchoolPort.save(School.create("고려대학교", "비고3")); // 스터디 그룹 없음
@@ -102,8 +100,8 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     @Test
     void 비활성_기수의_스터디_그룹은_학교_목록에_포함되지_않는다() {
         // given
-        Gisu inactiveGisu = manageGisuPort.save(createInactiveGisu(8L));
-        Gisu activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu inactiveGisu = gisuFixture.비활성_기수(8L);
+        Gisu activeGisu = gisuFixture.활성_기수(9L);
         School school1 = manageSchoolPort.save(School.create("서울대학교", "비고1"));
         School school2 = manageSchoolPort.save(School.create("연세대학교", "비고2"));
 
@@ -135,7 +133,7 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     @Test
     void 특정_학교의_파트별_스터디_그룹_요약을_조회한다() {
         // given
-        Gisu activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu activeGisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고1"));
 
         Challenger webChallenger1 = createAndSaveChallenger("웹1", school.getId(), ChallengerPart.WEB,
@@ -187,8 +185,8 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     @Test
     void 활성_기수_스터디_그룹이_없는_학교는_빈_파트_목록을_반환한다() {
         // given
-        Gisu inactiveGisu = manageGisuPort.save(createInactiveGisu(8L));
-        manageGisuPort.save(createActiveGisu(9L));
+        Gisu inactiveGisu = gisuFixture.비활성_기수(8L);
+        gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고1"));
 
         Challenger oldChallenger = createAndSaveChallenger("서울대생1", school.getId(), ChallengerPart.WEB,
@@ -211,7 +209,7 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     @Test
     void 스터디_그룹_목록을_커서_기반으로_조회한다() {
         // given
-        Gisu activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu activeGisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고1"));
 
         // 5개의 스터디 그룹 생성 (각각 멤버 포함)
@@ -252,7 +250,7 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     @Test
     void 다른_파트의_스터디_그룹은_조회되지_않는다() {
         // given
-        Gisu activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu activeGisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고1"));
 
         Challenger webChallenger = createAndSaveChallenger("웹1", school.getId(), ChallengerPart.WEB,
@@ -280,7 +278,7 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     @Test
     void 조건에_맞는_스터디_그룹이_없으면_빈_목록을_반환한다() {
         // given
-        Gisu activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu activeGisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고1"));
 
         Challenger challenger = createAndSaveChallenger("웹1", school.getId(), ChallengerPart.WEB, activeGisu.getId());
@@ -300,7 +298,7 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     @Test
     void 스터디_그룹_이름_목록을_파트_필터로_조회한다() {
         // given
-        Gisu activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu activeGisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고1"));
 
         Challenger webChallenger1 = createAndSaveChallenger("웹1", school.getId(), ChallengerPart.WEB,
@@ -334,7 +332,7 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     @Test
     void 파트가_null이면_모든_파트의_스터디_그룹_이름을_조회한다() {
         // given
-        Gisu activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu activeGisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고1"));
 
         Challenger webChallenger = createAndSaveChallenger("웹1", school.getId(), ChallengerPart.WEB,
@@ -362,8 +360,8 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     @Test
     void 비활성_기수의_스터디_그룹_이름은_조회되지_않는다() {
         // given
-        Gisu inactiveGisu = manageGisuPort.save(createInactiveGisu(8L));
-        Gisu activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu inactiveGisu = gisuFixture.비활성_기수(8L);
+        Gisu activeGisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고1"));
 
         Challenger oldChallenger = createAndSaveChallenger("옛날1", school.getId(), ChallengerPart.WEB,
@@ -390,7 +388,7 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     @Test
     void 스터디_그룹이_없으면_빈_이름_목록을_반환한다() {
         // given
-        manageGisuPort.save(createActiveGisu(9L));
+        gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고1"));
 
         // when
@@ -399,25 +397,6 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
         // then
         assertThat(result).isEmpty();
     }
-
-    private Gisu createActiveGisu(Long generation) {
-        return Gisu.create(
-            generation,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-08-31T23:59:59Z"),
-            true
-        );
-    }
-
-    private Gisu createInactiveGisu(Long generation) {
-        return Gisu.create(
-            generation,
-            Instant.parse("2023-03-01T00:00:00Z"),
-            Instant.parse("2023-08-31T23:59:59Z"),
-            false
-        );
-    }
-
     private StudyGroup createStudyGroup(String name, Gisu gisu, ChallengerPart part) {
         return StudyGroup.create(name, gisu, part);
     }

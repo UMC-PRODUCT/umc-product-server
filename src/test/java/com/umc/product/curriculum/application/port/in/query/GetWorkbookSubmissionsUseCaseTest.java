@@ -24,7 +24,6 @@ import com.umc.product.global.exception.BusinessException;
 import com.umc.product.member.domain.Member;
 import com.umc.product.organization.application.port.in.query.GetSchoolAccessContextUseCase;
 import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
 import com.umc.product.organization.domain.Gisu;
@@ -33,6 +32,7 @@ import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.support.TestChallengerRepository;
 import com.umc.product.support.TestMemberRepository;
 import com.umc.product.support.UseCaseTestSupport;
+import com.umc.product.support.fixture.GisuFixture;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
@@ -51,7 +51,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     private GetStudyGroupsForFilterUseCase getStudyGroupsForFilterUseCase;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private GisuFixture gisuFixture;
 
     @Autowired
     private ManageSchoolPort manageSchoolPort;
@@ -80,7 +80,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 주차별_워크북_제출_현황을_조회한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
         Member member = memberRepository.save(createMember("홍길동", school.getId()));
@@ -107,7 +107,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 학교_필터링으로_조회한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school1 = manageSchoolPort.save(School.create("서울대학교", "비고"));
         School school2 = manageSchoolPort.save(School.create("연세대학교", "비고"));
 
@@ -139,7 +139,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 스터디_그룹_필터링으로_조회한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
         Member member1 = memberRepository.save(createMember("그룹원1", school.getId()));
@@ -181,7 +181,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 커서_기반_페이지네이션으로_조회한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
         Curriculum curriculum = curriculumJpaRepository.save(createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));
@@ -215,7 +215,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 필터용_스터디_그룹_목록을_조회한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
         // 멤버와 챌린저 생성 (schoolId 기반 필터링을 위해 필요)
@@ -266,7 +266,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 챌린저_워크북의_제출_URL을_조회한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
         Member member = memberRepository.save(createMember("홍길동", school.getId()));
@@ -293,7 +293,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 미제출_워크북의_제출_URL은_null이다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
         Member member = memberRepository.save(createMember("홍길동", school.getId()));
@@ -313,15 +313,6 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         // then
         assertThat(result.challengerWorkbookId()).isEqualTo(challengerWorkbook.getId());
         assertThat(result.submission()).isNull();
-    }
-
-    private Gisu createActiveGisu(Long generation) {
-        return Gisu.create(
-            generation,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-08-31T23:59:59Z"),
-            true
-        );
     }
 
     private Member createMember(String nickname, Long schoolId) {
@@ -365,7 +356,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         @Test
         void 회장은_모든_파트를_조회할_수_있다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
             School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
             Member member = memberRepository.save(createMember("회장", school.getId()));
@@ -387,7 +378,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         @Test
         void 부회장은_모든_파트를_조회할_수_있다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
             School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
             Member member = memberRepository.save(createMember("부회장", school.getId()));
@@ -409,7 +400,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         @Test
         void 파트장은_담당_파트만_조회할_수_있다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
             School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
             Member member = memberRepository.save(createMember("스프링파트장", school.getId()));
@@ -431,7 +422,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         @Test
         void 기타_교내_운영진은_담당_파트만_조회할_수_있다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
             School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
             Member member = memberRepository.save(createMember("운영진", school.getId()));
@@ -453,7 +444,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         @Test
         void 학교_운영진_역할이_없으면_예외가_발생한다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
             School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
             Member member = memberRepository.save(createMember("일반챌린저", school.getId()));

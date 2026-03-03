@@ -7,9 +7,9 @@ import com.umc.product.curriculum.application.port.out.SaveCurriculumPort;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.MissionType;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
+import com.umc.product.support.fixture.GisuFixture;
 import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,13 +24,13 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
     private SaveCurriculumPort saveCurriculumPort;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private GisuFixture gisuFixture;
 
     private Gisu activeGisu;
 
     @BeforeEach
     void setUp() {
-        activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        activeGisu = gisuFixture.활성_기수(9L);
     }
 
     @Test
@@ -167,7 +167,7 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
     @Test
     void 비활성_기수의_커리큘럼은_조회되지_않는다() {
         // given
-        Gisu inactiveGisu = manageGisuPort.save(createInactiveGisu(8L));
+        Gisu inactiveGisu = gisuFixture.비활성_기수(8L);
         Curriculum curriculum = Curriculum.create(inactiveGisu.getId(), ChallengerPart.SPRINGBOOT, "8기 Springboot");
         saveCurriculumPort.save(curriculum);
 
@@ -176,23 +176,5 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
 
         // then
         assertThat(result).isNull();
-    }
-
-    private Gisu createActiveGisu(Long generation) {
-        return Gisu.create(
-            generation,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-08-31T23:59:59Z"),
-            true
-        );
-    }
-
-    private Gisu createInactiveGisu(Long generation) {
-        return Gisu.create(
-            generation,
-            Instant.parse("2023-03-01T00:00:00Z"),
-            Instant.parse("2023-08-31T23:59:59Z"),
-            false
-        );
     }
 }

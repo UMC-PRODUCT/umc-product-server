@@ -11,13 +11,12 @@ import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.global.exception.BusinessException;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
+import com.umc.product.support.fixture.GisuFixture;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -33,13 +32,13 @@ class ManageCurriculumUseCaseTest extends UseCaseTestSupport {
     private SaveCurriculumPort saveCurriculumPort;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private GisuFixture gisuFixture;
 
     private Gisu activeGisu;
 
     @BeforeEach
     void setUp() {
-        activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        activeGisu = gisuFixture.활성_기수(9L);
     }
 
     @Test
@@ -232,16 +231,6 @@ class ManageCurriculumUseCaseTest extends UseCaseTestSupport {
         assertThat(updatedWorkbook.getEndDate()).isEqualTo(Instant.parse("2024-03-07T23:59:59Z"));
         assertThat(updatedWorkbook.getMissionType()).isEqualTo(MissionType.LINK);
     }
-
-    private Gisu createActiveGisu(Long generation) {
-        return Gisu.create(
-            generation,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-08-31T23:59:59Z"),
-            true
-        );
-    }
-
     private WorkbookCommand createWorkbookCommand(Long id, Integer weekNo, String title) {
         return new WorkbookCommand(
             id, weekNo, title, null, null,
