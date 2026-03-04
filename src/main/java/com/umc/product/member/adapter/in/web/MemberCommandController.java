@@ -71,6 +71,7 @@ public class MemberCommandController {
             .schoolId(request.schoolId())
             .profileImageId(request.profileImageId())
             .termConsents(request.termsAgreements().stream().map(TermConsents::fromRequest).toList())
+            .appleRefreshToken(request.appleRefreshToken())
             .build();
 
         Long createdMemberId = manageMemberUseCase.registerMember(command);

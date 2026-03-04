@@ -1,6 +1,7 @@
 package com.umc.product.authentication.application.port.out;
 
 import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
+import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier.AppleAuthorizationCodeResult;
 import com.umc.product.common.domain.enums.OAuthProvider;
 
 /**
@@ -26,5 +27,5 @@ public interface VerifyOAuthTokenPort {
      * @return OAuth2Attributes
      * @throws com.umc.product.authentication.domain.exception.AuthenticationDomainException 코드 교환 또는 토큰 검증 실패 시
      */
-    OAuth2Attributes verifyAppleAuthorizationCode(String authorizationCode);
+    AppleAuthorizationCodeResult verifyAppleAuthorizationCode(String authorizationCode);
 }

@@ -43,7 +43,11 @@ public class AppleTokenVerifier {
 
     private static final String APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys";
     private static final String APPLE_TOKEN_URL = "https://appleid.apple.com/auth/token";
+    private static final String APPLE_REVOKE_URL = "https://appleid.apple.com/auth/revoke";
     private static final String APPLE_ISSUER = "https://appleid.apple.com";
+
+    public record AppleAuthorizationCodeResult(OAuth2Attributes attrs, String refreshToken) {
+    }
 
     private final AppleOAuthProperties appleProperties;
     private final RestClient restClient;
@@ -105,7 +109,7 @@ public class AppleTokenVerifier {
      * @return OAuth2Attributes
      * @throws AuthenticationDomainException 코드 교환 또는 토큰 검증 실패 시
      */
-    public OAuth2Attributes verifyAuthorizationCode(String authorizationCode) {
+    public AppleAuthorizationCodeResult verifyAuthorizationCode(String authorizationCode) {
         log.debug("Apple Authorization Code 교환 시작");
 
         try {
@@ -137,12 +141,51 @@ public class AppleTokenVerifier {
             log.info("Apple Authorization Code 교환 성공, ID Token 검증 진행");
 
             // 3. 받은 id_token을 검증
-            return verifyIdToken(response.idToken());
+            OAuth2Attributes attrs = verifyIdToken(response.idToken());
+            return new AppleAuthorizationCodeResult(attrs, response.refreshToken());
 
         } catch (AuthenticationDomainException e) {
             throw e;
         } catch (Exception e) {
             log.error("Apple Authorization Code 교환 중 오류 발생", e);
+            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+        }
+    }
+
+    /**
+     * Apple refresh token을 revoke합니다.
+     *
+     * @param refreshToken Apple에서 발급받은 refresh token
+     */
+    public void revokeToken(String refreshToken) {
+        log.info("Apple token revoke 시작");
+
+        try {
+            String clientSecret = generateClientSecret();
+
+            MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+            formData.add("client_id", appleProperties.clientId());
+            formData.add("client_secret", clientSecret);
+            formData.add("token", refreshToken);
+            formData.add("token_type_hint", "refresh_token");
+
+            restClient.post()
+                .uri(APPLE_REVOKE_URL)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(formData)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    log.error("Apple token revoke 실패: status={}", res.getStatusCode());
+                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+                })
+                .toBodilessEntity();
+
+            log.info("Apple token revoke 성공");
+
+        } catch (AuthenticationDomainException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Apple token revoke 중 오류 발생", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }

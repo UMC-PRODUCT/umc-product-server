@@ -1,6 +1,8 @@
 package com.umc.product.authentication.adapter.out.external;
 
 import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
+import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier.AppleAuthorizationCodeResult;
+import com.umc.product.authentication.application.port.out.RevokeOAuthTokenPort;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +17,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort {
+public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort, RevokeOAuthTokenPort {
 
     private final GoogleTokenVerifier googleTokenVerifier;
     private final KakaoTokenVerifier kakaoTokenVerifier;
@@ -33,8 +35,14 @@ public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort {
     }
 
     @Override
-    public OAuth2Attributes verifyAppleAuthorizationCode(String authorizationCode) {
+    public AppleAuthorizationCodeResult verifyAppleAuthorizationCode(String authorizationCode) {
         log.info("Apple Authorization Code 교환 시작");
         return appleTokenVerifier.verifyAuthorizationCode(authorizationCode);
+    }
+
+    @Override
+    public void revokeAppleToken(String refreshToken) {
+        log.info("Apple token revoke 시작");
+        appleTokenVerifier.revokeToken(refreshToken);
     }
 }

@@ -8,6 +8,7 @@ public record OAuthLoginResponse(
     String code, // OAuth2ResultCode ENUM 이용해서 해야함
     String oAuthVerificationToken,
     String accessToken,
-    String refreshToken
+    String refreshToken,
+    String appleRefreshToken
 ) {
 }

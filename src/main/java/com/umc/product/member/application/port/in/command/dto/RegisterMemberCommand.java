@@ -27,7 +27,8 @@ public record RegisterMemberCommand(
     String email,
     Long schoolId,
     String profileImageId,
-    List<TermConsents> termConsents
+    List<TermConsents> termConsents,
+    String appleRefreshToken
 ) {
 
     public Member toEntity() {

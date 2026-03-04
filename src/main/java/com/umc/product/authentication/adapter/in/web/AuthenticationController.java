@@ -1,11 +1,11 @@
 package com.umc.product.authentication.adapter.in.web;
 
-import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.adapter.in.web.dto.request.AppleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.GoogleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.KakaoLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.response.OAuthLoginResponse;
 import com.umc.product.authentication.adapter.in.web.swagger.AuthenticationControllerInterface;
+import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
@@ -59,11 +59,19 @@ public class AuthenticationController implements AuthenticationControllerInterfa
         }
 
         // Authorization Code 방식
-        OAuth2Attributes attrs = verifyOAuthTokenPort.verifyAppleAuthorizationCode(
+        AppleAuthorizationCodeResult codeResult = verifyOAuthTokenPort.verifyAppleAuthorizationCode(
             request.authorizationCode()
         );
-        OAuthTokenLoginResult result = oAuthAuthenticationUseCase.loginWithOAuth2Attributes(attrs);
-        return buildLoginResponse(OAuthProvider.APPLE, result);
+        OAuthTokenLoginResult result = oAuthAuthenticationUseCase.loginWithOAuth2Attributes(codeResult.attrs());
+
+        if (result.isExistingMember()) {
+            // 기존 회원: MemberOAuth에 appleRefreshToken 바로 업데이트
+            oAuthAuthenticationUseCase.updateAppleRefreshToken(
+                OAuthProvider.APPLE, result.providerId(), codeResult.refreshToken()
+            );
+        }
+
+        return buildLoginResponse(OAuthProvider.APPLE, result, codeResult.refreshToken());
     }
 
     /**
@@ -81,6 +89,11 @@ public class AuthenticationController implements AuthenticationControllerInterfa
      * OAuthTokenLoginResult를 기반으로 OAuthLoginResponse를 생성합니다.
      */
     private OAuthLoginResponse buildLoginResponse(OAuthProvider provider, OAuthTokenLoginResult result) {
+        return buildLoginResponse(provider, result, null);
+    }
+
+    private OAuthLoginResponse buildLoginResponse(OAuthProvider provider, OAuthTokenLoginResult result,
+                                                  String appleRefreshToken) {
         if (result.isExistingMember()) {
             // 기존 회원: JWT 발급
             String accessToken = jwtTokenProvider.createAccessToken(
@@ -95,7 +108,8 @@ public class AuthenticationController implements AuthenticationControllerInterfa
                 OAuth2ResultCode.SUCCESS.getCode(),
                 null,  // oAuthVerificationToken 불필요
                 accessToken,
-                refreshToken
+                refreshToken,
+                null   // 기존 회원은 appleRefreshToken 불필요
             );
         } else {
             // 신규 회원: oAuthVerificationToken 발급 (회원가입 시 사용)
@@ -111,7 +125,8 @@ public class AuthenticationController implements AuthenticationControllerInterfa
                 OAuth2ResultCode.REGISTER_REQUIRED.getCode(),
                 oAuthVerificationToken,
                 null,  // accessToken 없음
-                null   // refreshToken 없음
+                null,  // appleRefreshToken 없음
+                appleRefreshToken  // 신규 회원은 회원가입 시 전달하도록
             );
         }
     }
