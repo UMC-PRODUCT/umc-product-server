@@ -335,7 +335,7 @@ class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
 
     private StudyGroup createAndSaveStudyGroup(Gisu gisu, String name, ChallengerPart part, Long leaderId) {
         StudyGroup studyGroup = StudyGroup.create(name, gisu, part);
-        studyGroup.addMember(leaderId, true);
+        studyGroup.addLeader(leaderId);
         return manageStudyGroupPort.save(studyGroup);
     }
 

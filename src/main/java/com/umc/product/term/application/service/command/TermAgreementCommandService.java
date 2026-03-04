@@ -51,9 +51,8 @@ public class TermAgreementCommandService implements ManageTermAgreementUseCase {
 
             // 동의 로그 기록
             saveConsentLog(command.memberId(), term.getType(), TermConsentStatus.AGREED);
-        } else {
-            // 미동의 처리 - 기존 동의 기록이 없으면 skip (회원가입 시나리오)
         }
+        // 미동의 시 아무것도 하지 않음 (회원가입 시나리오에서 기존 동의 기록이 없음)
     }
 
     private void saveConsentLog(Long memberId, TermType termType, TermConsentStatus status) {

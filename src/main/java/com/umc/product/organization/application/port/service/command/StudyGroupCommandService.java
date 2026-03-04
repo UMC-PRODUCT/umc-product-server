@@ -37,7 +37,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
         StudyGroup studyGroup = StudyGroup.create(command.name(), gisu, command.part());
 
-        studyGroup.addMember(command.leaderId(), true);
+        studyGroup.addLeader(command.leaderId());
 
         if (command.memberIds() != null) {
             command.memberIds().forEach(studyGroup::addMember);

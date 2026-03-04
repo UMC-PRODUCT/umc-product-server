@@ -155,8 +155,8 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
 
         StudyGroup studyGroup = manageStudyGroupPort.save(
             createStudyGroup("스프링 1조", gisu, ChallengerPart.SPRINGBOOT));
-        studyGroup.addMember(challenger1.getId(), true);
-        studyGroup.addMember(challenger2.getId(), false);
+        studyGroup.addLeader(challenger1.getId());
+        studyGroup.addMember(challenger2.getId());
         manageStudyGroupPort.save(studyGroup);
 
         Curriculum curriculum = curriculumJpaRepository.save(createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));

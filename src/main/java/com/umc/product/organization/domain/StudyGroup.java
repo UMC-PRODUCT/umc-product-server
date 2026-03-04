@@ -80,16 +80,14 @@ public class StudyGroup extends BaseEntity {
     // ============ Domain Methods (Aggregate Root Pattern) ============
 
     /**
-     * 스터디 그룹에 멤버 추가
+     * 스터디 그룹에 리더 추가
      *
      * @param challengerId 추가할 챌린저 ID
-     * @param isLeader     리더 여부
      * @throws BusinessException 이미 존재하는 멤버인 경우
      */
-    public void addMember(Long challengerId, boolean isLeader) {
-        validateMemberNotExists(challengerId);
-        StudyGroupMember member = StudyGroupMember.create(this, challengerId, isLeader);
-        studyGroupMembers.add(member);
+    public void addLeader(Long challengerId) {
+        throwIfMemberAlreadyExists(challengerId);
+        studyGroupMembers.add(StudyGroupMember.create(this, challengerId, true));
     }
 
     /**
@@ -99,7 +97,8 @@ public class StudyGroup extends BaseEntity {
      * @throws BusinessException 이미 존재하는 멤버인 경우
      */
     public void addMember(Long challengerId) {
-        addMember(challengerId, false);
+        throwIfMemberAlreadyExists(challengerId);
+        studyGroupMembers.add(StudyGroupMember.create(this, challengerId, false));
     }
 
     /**
@@ -121,14 +120,14 @@ public class StudyGroup extends BaseEntity {
     public void replaceMembersExcludingLeader(Set<Long> challengerIds) {
         Long leaderId = getLeader().getChallengerId();
 
+        if (challengerIds.contains(leaderId)) {
+            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.LEADER_CANNOT_BE_MEMBER);
+        }
+
         studyGroupMembers.clear();
 
-        addMember(leaderId, true);
-        if (challengerIds != null) {
-            challengerIds.stream()
-                .filter(id -> !id.equals(leaderId))
-                .forEach(this::addMember);
-        }
+        addLeader(leaderId);
+        challengerIds.forEach(this::addMember);
     }
 
     /**
@@ -200,7 +199,7 @@ public class StudyGroup extends BaseEntity {
         return studyGroupMembers.size();
     }
 
-    private void validateMemberNotExists(Long challengerId) {
+    private void throwIfMemberAlreadyExists(Long challengerId) {
         if (hasMember(challengerId)) {
             throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_MEMBER_ALREADY_EXISTS);
         }
