@@ -1,6 +1,5 @@
 package com.umc.product.authentication.adapter.in.web;
 
-import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.adapter.in.web.dto.request.AppleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.GoogleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.KakaoLoginRequest;
@@ -9,8 +8,8 @@ import com.umc.product.authentication.adapter.in.web.swagger.AuthenticationContr
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
+import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
-import com.umc.product.authentication.domain.enums.OAuth2ResultCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
@@ -54,16 +53,20 @@ public class AuthenticationController implements AuthenticationControllerInterfa
     public OAuthLoginResponse appleOAuthLogin(
         @RequestBody AppleLoginRequest request
     ) {
-        if (request.idToken() != null) {
-            return processAccessTokenLogin(OAuthProvider.APPLE, request.idToken());
-        }
-
         // Authorization Code 방식
-        OAuth2Attributes attrs = verifyOAuthTokenPort.verifyAppleAuthorizationCode(
+        AppleAuthorizationCodeResult codeResult = verifyOAuthTokenPort.verifyAppleAuthorizationCode(
             request.authorizationCode()
         );
-        OAuthTokenLoginResult result = oAuthAuthenticationUseCase.loginWithOAuth2Attributes(attrs);
-        return buildLoginResponse(OAuthProvider.APPLE, result);
+        OAuthTokenLoginResult result = oAuthAuthenticationUseCase.loginWithOAuth2Attributes(codeResult.attrs());
+
+        if (result.isExistingMember() && codeResult.refreshToken() != null) {
+            // 기존 회원: MemberOAuth에 appleRefreshToken 바로 업데이트
+            oAuthAuthenticationUseCase.updateAppleRefreshToken(
+                OAuthProvider.APPLE, result.providerId(), codeResult.refreshToken()
+            );
+        }
+
+        return buildLoginResponse(OAuthProvider.APPLE, result, codeResult.refreshToken());
     }
 
     /**
@@ -81,6 +84,11 @@ public class AuthenticationController implements AuthenticationControllerInterfa
      * OAuthTokenLoginResult를 기반으로 OAuthLoginResponse를 생성합니다.
      */
     private OAuthLoginResponse buildLoginResponse(OAuthProvider provider, OAuthTokenLoginResult result) {
+        return buildLoginResponse(provider, result, null);
+    }
+
+    private OAuthLoginResponse buildLoginResponse(OAuthProvider provider, OAuthTokenLoginResult result,
+                                                  String appleRefreshToken) {
         if (result.isExistingMember()) {
             // 기존 회원: JWT 발급
             String accessToken = jwtTokenProvider.createAccessToken(
@@ -89,13 +97,8 @@ public class AuthenticationController implements AuthenticationControllerInterfa
             );
             String refreshToken = jwtTokenProvider.createRefreshToken(result.memberId());
 
-            return new OAuthLoginResponse(
-                provider,
-                OAuth2ResultCode.SUCCESS.isSuccess(),
-                OAuth2ResultCode.SUCCESS.getCode(),
-                null,  // oAuthVerificationToken 불필요
-                accessToken,
-                refreshToken
+            return OAuthLoginResponse.ofLoginSuccess(
+                provider, accessToken, refreshToken
             );
         } else {
             // 신규 회원: oAuthVerificationToken 발급 (회원가입 시 사용)
@@ -105,13 +108,8 @@ public class AuthenticationController implements AuthenticationControllerInterfa
                 result.providerId()
             );
 
-            return new OAuthLoginResponse(
-                provider,
-                OAuth2ResultCode.REGISTER_REQUIRED.isSuccess(),
-                OAuth2ResultCode.REGISTER_REQUIRED.getCode(),
-                oAuthVerificationToken,
-                null,  // accessToken 없음
-                null   // refreshToken 없음
+            return OAuthLoginResponse.ofRegisterRequired(
+                provider, oAuthVerificationToken
             );
         }
     }

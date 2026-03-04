@@ -8,13 +8,15 @@ import lombok.Builder;
 public record LinkOAuthCommand(
     Long memberId,
     OAuthProvider provider,
-    String providerId
+    String providerId,
+    String appleRefreshToken
 ) {
     public static MemberOAuth toEntity(LinkOAuthCommand command) {
         return MemberOAuth.builder()
             .memberId(command.memberId())
             .provider(command.provider())
             .providerId(command.providerId())
+            .appleRefreshToken(command.appleRefreshToken())
             .build();
     }
 }
