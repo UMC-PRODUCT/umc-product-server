@@ -25,15 +25,28 @@ public class FcmConfig {
         log.info("Firebase 초기화 시작");
 
         GoogleCredentials credentials = GoogleCredentials.fromStream(
-                new ByteArrayInputStream(firebaseCredentials.getBytes(StandardCharsets.UTF_8))
+            new ByteArrayInputStream(firebaseCredentials.getBytes(StandardCharsets.UTF_8))
         );
+
+        // private_key가 제대로 파싱됐는지 확인
+        if (credentials instanceof com.google.auth.oauth2.ServiceAccountCredentials saCreds) {
+            log.debug("service account email: {}", saCreds.getClientEmail());
+            log.debug("private key algorithm: {}", saCreds.getPrivateKey().getAlgorithm());
+            log.debug("private key format: {}", saCreds.getPrivateKey().getFormat());
+        }
+
         log.debug("Firebase credentials 로드 완료");
+
+        log.trace("Firebase credentials 길이: {}", firebaseCredentials.length());
+        log.trace("Firebase credentials 시작: {}",
+            firebaseCredentials.substring(0, Math.min(30, firebaseCredentials.length())));
 
         FirebaseApp firebaseApp = null;
         List<FirebaseApp> apps = FirebaseApp.getApps();
 
         if (apps != null && !apps.isEmpty()) {
             log.info("기존 FirebaseApp 검색 중... (총 {}개)", apps.size());
+
             for (FirebaseApp app : apps) {
                 if (app.getName().equals(FirebaseApp.DEFAULT_APP_NAME)) {
                     firebaseApp = app;
@@ -42,10 +55,12 @@ public class FcmConfig {
             }
         } else {
             log.info("FirebaseApp 신규 생성");
+
             FirebaseOptions options =
-                    FirebaseOptions.builder()
-                            .setCredentials(credentials)
-                            .build();
+                FirebaseOptions.builder()
+                    .setCredentials(credentials)
+                    .build();
+
             firebaseApp = FirebaseApp.initializeApp(options);
             log.info("FirebaseApp 초기화 완료: {}", firebaseApp.getName());
         }

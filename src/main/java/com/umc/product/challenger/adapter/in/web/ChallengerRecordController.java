@@ -5,10 +5,11 @@ import com.umc.product.challenger.adapter.in.web.dto.request.AddChallengerRecord
 import com.umc.product.challenger.adapter.in.web.dto.request.CreateChallengerRecordRequest;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerRecordResponse;
 import com.umc.product.challenger.application.port.in.command.ManageChallengerRecordUseCase;
-import com.umc.product.challenger.application.port.in.command.ManageChallengerUseCase;
+import com.umc.product.challenger.application.port.in.command.dto.ConsumeChallengerRecordCommand;
 import com.umc.product.challenger.application.port.in.command.dto.CreateChallengerRecordCommand;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -28,7 +29,6 @@ public class ChallengerRecordController {
 
     private final ChallengerRecordResponseAssembler assembler;
     private final ManageChallengerRecordUseCase manageChallengerRecordUseCase;
-    private final ManageChallengerUseCase manageChallengerUseCase;
 
     // 코드를 이용해서 Member에 챌린저 기록을 추가하는 API
     @Operation(summary = "6자리 코드를 이용해서 회원(계정)에 챌린저 기록 추가",
@@ -39,11 +39,20 @@ public class ChallengerRecordController {
             각 코드는 1회만 생성 가능하며, 어떤 계정에, 언제 사용되었는지 기록됩니다.
             """)
     @PostMapping("member")
+    @WebhookAlarm(
+        title = "'챌린저 기록이 추가되었어요!'",
+        content = "'회원 ID: ' + #memberPrincipal.getMemberId() + '\n챌린저 코드: ' + #request.code"
+    )
     public void addChallengerRecordToMember(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody AddChallengerRecordToMemberRequest request) {
 
-        manageChallengerUseCase.createWithRecord(memberPrincipal.getMemberId(), request.code());
+        manageChallengerRecordUseCase.consumeCode(
+            ConsumeChallengerRecordCommand.builder()
+                .targetMemberId(memberPrincipal.getMemberId())
+                .code(request.code())
+                .build()
+        );
     }
 
     @GetMapping("code/{code}")
@@ -83,6 +92,7 @@ public class ChallengerRecordController {
                 .chapterId(request.chapterId())
                 .schoolId(request.schoolId())
                 .memberName(request.memberName())
+                .challengerRoleType(request.challengerRoleType())
                 .build()
         );
 
@@ -110,6 +120,7 @@ public class ChallengerRecordController {
                     .chapterId(req.chapterId())
                     .schoolId(req.schoolId())
                     .memberName(req.memberName())
+                    .challengerRoleType(req.challengerRoleType())
                     .build())
                 .toList()
         );

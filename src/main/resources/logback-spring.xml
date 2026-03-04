@@ -1,50 +1,79 @@
 <configuration>
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
-    <property name="LOG_DIR" value="./logs"/>
-    <property name="LOG_NAME" value="umc-product"/>
-
-    <appender class="ch.qos.logback.core.rolling.RollingFileAppender" name="FILE">
-        <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{traceId}] [%thread] %logger{40} : %msg%n
-            </pattern>
-        </encoder>
-
-        <file>${LOG_DIR}/${LOG_NAME}.log</file>
-
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/${LOG_NAME}-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
-
-            <maxFileSize>50MB</maxFileSize>
-            <maxHistory>30</maxHistory>
-            <totalSizeCap>2GB</totalSizeCap>
-        </rollingPolicy>
-    </appender>
-
+    <!-- ========== Custom Converter ========== -->
     <conversionRule conversionWord="customHighlight"
                     class="com.umc.product.global.config.CustomHighlightConverter"/>
 
-    <property name="CONSOLE_LOG_PATTERN"
+    <property name="LOG_DIR" value="./logs"/>
+    <property name="LOG_NAME" value="umc-product"/>
+
+    <!-- ========== 콘솔 로깅 패턴 정의 ========== -->
+    <property name="LOCAL_CONSOLE_LOG_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} %customHighlight(%-5level) [%-4.-4X{traceId}] [%thread] %logger{40} : %msg%n"/>
 
-    <appender class="ch.qos.logback.core.ConsoleAppender" name="APP_CONSOLE">
+    <property name="FULL_LOG_PATTERN"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%X{traceId}] [%thread] %logger{40} : %msg%n"/>
+
+    <!-- ========== CONSOLE LOGGING APPENDER 정의 ========== -->
+    <appender class="ch.qos.logback.core.ConsoleAppender" name="LOCAL_CONSOLE">
         <encoder>
-            <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+            <pattern>${LOCAL_CONSOLE_LOG_PATTERN}</pattern>
         </encoder>
     </appender>
 
-    <!-- Sentry Appender -->
-    <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
-        <options>
-            <dsn>${SENTRY_DSN:-}</dsn>
-        </options>
-        <minimumEventLevel>DEBUG</minimumEventLevel>
-        <minimumBreadcrumbLevel>DEBUG</minimumBreadcrumbLevel>
+    <appender class="ch.qos.logback.core.ConsoleAppender" name="ECS_CONSOLE">
+        <encoder>
+            <pattern>${FULL_LOG_PATTERN}</pattern>
+        </encoder>
     </appender>
 
-    <root level="INFO">
-        <appender-ref ref="APP_CONSOLE"/>
-        <appender-ref ref="FILE"/>
-        <appender-ref ref="SENTRY"/>
-    </root>
+    <!-- ========== 로컬: 컬러 + 축약 traceId ========== -->
+    <springProfile name="local">
+        <root level="INFO">
+            <appender-ref ref="LOCAL_CONSOLE"/>
+        </root>
+    </springProfile>
+
+
+    <springProfile name="dev">
+        <!-- dev용 파일 appender -->
+        <appender class="ch.qos.logback.core.rolling.RollingFileAppender" name="FILE">
+            <encoder>
+                <pattern>${FULL_LOG_PATTERN}</pattern>
+            </encoder>
+
+            <file>${LOG_DIR}/${LOG_NAME}.log</file>
+
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_DIR}/${LOG_NAME}-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+
+                <maxFileSize>50MB</maxFileSize>
+                <maxHistory>30</maxHistory>
+                <totalSizeCap>2GB</totalSizeCap>
+            </rollingPolicy>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="ECS_CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
+
+    <!-- ========== prod용은 ECS인 관계로 stdout으로 내보내기 (CloudWatch) ========== -->
+    <springProfile name="prod">
+        <!-- Sentry Appender -->
+        <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
+            <options>
+                <dsn>${SENTRY_DSN:-}</dsn>
+            </options>
+            <minimumEventLevel>DEBUG</minimumEventLevel>
+            <minimumBreadcrumbLevel>DEBUG</minimumBreadcrumbLevel>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="ECS_CONSOLE"/>
+            <appender-ref ref="SENTRY"/>
+        </root>
+    </springProfile>
 </configuration>

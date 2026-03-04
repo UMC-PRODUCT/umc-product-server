@@ -1,24 +1,25 @@
 package com.umc.product.test.controller;
 
 import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier;
-import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
-import com.umc.product.authorization.domain.PermissionType;
-import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
+import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
+import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
+import com.umc.product.notification.domain.WebhookPlatform;
+import com.umc.product.test.dto.TestAopAlarmResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,49 +34,76 @@ import org.springframework.web.bind.annotation.RestController;
 public class TestController {
 
     private final JwtTokenProvider jwtTokenProvider;
-    private final GetChallengerUseCase getChallengerUseCase;
     private final AppleTokenVerifier appleTokenVerifier;
+    private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
+
+    @WebhookAlarm(
+        title = "'알람 테스트 : ' + #title",
+        content = "'내용 : ' + #result.content"
+    )
+    @GetMapping("webhook/aop-test")
+    @Operation(summary = "AOP로 전송하는 알람 테스트")
+    public TestAopAlarmResponse sendAopWebhookAlarm(
+        @RequestParam String title,
+        @RequestParam String content
+    ) {
+        log.debug("웹훅 알람 AOP 테스트가 호출되었습니다~!");
+
+        return TestAopAlarmResponse.builder()
+            .content(content)
+            .build();
+    }
+
+    @PostMapping("webhook/alarm")
+    @Operation(summary = "웹훅 알람 전송 테스트")
+    public void sendWebhookAlarm(
+        @RequestParam String title,
+        @RequestParam String content
+    ) {
+        sendWebhookAlarmUseCase.send(
+            SendWebhookAlarmCommand.builder()
+                .title(title == null ? "알람 테스트" : title)
+                .content(content == null ? "알람 테스트 내용입니다." : content)
+                .platforms(List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD))
+                .build()
+        );
+    }
+
+    // buffer alarm test
+    @PostMapping("webhook/alarm/buffer")
+    @Operation(summary = "웹훅 알람 버퍼 전송 테스트")
+    public void sendBufferedWebhookAlarm(
+        @RequestParam String title,
+        @RequestParam String content,
+        @RequestParam int repeatCount
+    ) {
+        for (int i = 0; i < repeatCount; i++) {
+            String bTitle = title == null ? "버퍼 알람 테스트" : title + " #" + (i + 1);
+            String bContent = content == null ? "버퍼 알람 테스트 내용입니다." : content + " #" + (i + 1);
+
+            sendWebhookAlarmUseCase.sendBuffered(
+                SendWebhookAlarmCommand.builder()
+                    .title(bTitle)
+                    .content(bContent)
+                    .platforms(List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD))
+                    .build()
+            );
+        }
+    }
 
     @GetMapping("apple-client-secret")
+    @Operation(summary = "Apple Client Secret 생성")
     String getAppleClientSecret() {
         return appleTokenVerifier.generateClientSecret();
-    }
-
-    @GetMapping("permission/notice-read")
-    @CheckAccess(
-        resourceType = ResourceType.NOTICE,
-        resourceId = "#noticeId", // SpEL 표현식 - 공부하세요!!
-        permission = PermissionType.READ,
-        message = "하나야 스트레스 많이 받을거야~ 자기 전에도 생각 날꺼야~ 도움 많이 될꺼야~"
-    )
-    void permissionTest(Long noticeId) {
-    }
-
-    @GetMapping("permission/no-evaluator-test")
-    @CheckAccess(
-        resourceType = ResourceType.CURRICULUM,
-        resourceId = "#noticeId",
-        permission = PermissionType.DELETE,
-        message = "하나야 스트레스 많이 받을거야~ 자기 전에도 생각 날꺼야~ 도움 많이 될꺼야~"
-    )
-    void noEvaluatorForPermission(Long something) {
-    }
-
-    @GetMapping("challenger")
-    @Operation(summary = "memberId와 gisuId로 챌린저 정보 조회")
-    public ChallengerInfo getChallengerByMemberAndGisuId(
-        Long memberId, Long gisuId
-    ) {
-        return getChallengerUseCase.getByMemberIdAndGisuId(
-            memberId, gisuId
-        );
     }
 
     @Public
     @Operation(summary = "AccessToken 발급")
     @GetMapping("/token/access")
-    public String getAccessToken(@RequestParam Long memberId,
-                                 @RequestParam(required = false) Long expirationInMinutes) {
+    public String getAccessToken(
+        @RequestParam Long memberId,
+        @RequestParam(required = false) Long expirationInMinutes
+    ) {
         return expirationInMinutes == null ?
             // null이면 기본값
             jwtTokenProvider.createAccessToken(memberId, null) :
@@ -85,15 +113,15 @@ public class TestController {
 
     @Operation(summary = "RefreshToken 발급")
     @Public
-    @GetMapping("/token/refresh/{memberId}")
-    public String getRefreshToken(@PathVariable Long memberId) {
+    @GetMapping("/token/refresh")
+    public String getRefreshToken(@RequestParam Long memberId) {
         return jwtTokenProvider.createRefreshToken(memberId);
     }
 
     @Operation(summary = "EmailVerificationToken 발급")
     @Public
-    @GetMapping("/token/email/{email}")
-    public String getEmailVerification(@PathVariable String email) {
+    @GetMapping("/token/email")
+    public String getEmailVerification(@RequestParam String email) {
         return jwtTokenProvider.createEmailVerificationToken(email);
     }
 

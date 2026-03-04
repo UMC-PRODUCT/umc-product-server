@@ -8,5 +8,7 @@ public class ChallengerDomainException extends BusinessException {
         super(Domain.CHALLENGER, challengerErrorCode);
     }
 
-
+    public ChallengerDomainException(ChallengerErrorCode challengerErrorCode, String message) {
+        super(Domain.CHALLENGER, challengerErrorCode, message);
+    }
 }

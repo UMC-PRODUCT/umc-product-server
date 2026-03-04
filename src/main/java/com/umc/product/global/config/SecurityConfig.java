@@ -10,6 +10,7 @@ import com.umc.product.global.security.JwtAuthenticationFilter;
 import com.umc.product.global.security.util.PublicEndpointCollector;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,6 +40,7 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @EnableWebSecurity
 @EnableMethodSecurity // @PreAuthorize, @PostAuthorize 활성화
 @RequiredArgsConstructor
+@Slf4j
 public class SecurityConfig {
 
     private static final String[] SWAGGER_PATHS = {
@@ -49,7 +51,6 @@ public class SecurityConfig {
         "/swagger-resources/**",
         "/webjars/**"
     };
-
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ApiAuthenticationEntryPoint authenticationEntryPoint;
     private final ApiAccessDeniedHandler accessDeniedHandler;
@@ -57,6 +58,10 @@ public class SecurityConfig {
     private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
     private final OAuth2AuthenticationFailureHandler oAuth2FailureHandler;
     private final RequestMappingHandlerMapping requestMappingHandlerMapping;
+
+    // application.yml에서 cors.allowed-origin-patterns 값을 List 형태로 주입받음
+    @Value("${app.cors.allowed-origin-patterns}")
+    private List<String> allowedOriginPatterns;
 
     /**
      * Swagger용 SecurityFilterChain (dev에서만 활성화, local은 따로 제약을 걸지 않음)
@@ -207,16 +212,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
+        log.info("Allowed Origin Patterns for CORS: {}", allowedOriginPatterns);
+        
         // Swagger CORS 설정
-        configuration.setAllowedOriginPatterns(
-            List.of(
-                "http://localhost:8080",
-                "http://localhost:3000", // FE Web Local
-                "https://umc.it.kr", // FE Web Production
-                "https://dev.umc.it.kr", // FE Web Development
-                "https://api.umc.it.kr", // BE Production
-                "https://dev.api.umc.it.kr" // BE Development
-            ));
+        configuration.setAllowedOriginPatterns(allowedOriginPatterns);
+
         configuration.setAllowedMethods(List.of("*"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

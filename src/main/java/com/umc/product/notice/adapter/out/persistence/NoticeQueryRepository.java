@@ -11,11 +11,14 @@ import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.QNotice;
 import com.umc.product.notice.domain.QNoticeRead;
 import com.umc.product.notice.domain.QNoticeTarget;
+import com.umc.product.notice.domain.exception.NoticeDomainException;
+import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeClassification;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +26,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
+@Slf4j
 public class NoticeQueryRepository {
 
     private final JPAQueryFactory queryFactory;
@@ -167,7 +171,8 @@ public class NoticeQueryRepository {
      */
     private BooleanExpression buildClassificationCondition(
         NoticeClassification classification,
-        QNoticeTarget target) {
+        QNoticeTarget target
+    ) {
 
         Long gisuId = classification.gisuId();
         Long chapterId = classification.chapterId();
@@ -177,6 +182,9 @@ public class NoticeQueryRepository {
         boolean hasChapter = chapterId != null;
         boolean hasSchool = schoolId != null;
         boolean hasPart = part != null;
+
+        log.info("공지사항 조회 조건 제작: gisuId={}, chapterId={}, schoolId={}, part={}",
+            gisuId, chapterId, schoolId, part);
 
         // 특정 기수 공지 혹은 모든 기수 공지(targetGisuId=null)
         BooleanExpression gisuMatch = target.targetGisuId.eq(gisuId)
@@ -206,17 +214,35 @@ public class NoticeQueryRepository {
                 .and(targetPartIsEmpty(target));
         }
 
-        // 파트 필터 (gisuId + chapterId + schoolId + part)
-        // 파트 공지는 기수 + 파트 / 기수 + 지부 + 파트 / 기수 + 학교 + 파트 세 패턴 묶기
-        return target.targetGisuId.eq(gisuId)
-            .and(targetPartContains(target, part))
-            .and(
-                target.targetChapterId.isNull().and(target.targetSchoolId.isNull())   // SPECIFIC_GISU_SPECIFIC_PART
-                    .or(target.targetChapterId.eq(chapterId)
-                        .and(target.targetSchoolId.isNull()))  // SPECIFIC_GISU_SPECIFIC_CHAPTER_WITH_PART
-                    .or(target.targetChapterId.isNull()
-                        .and(target.targetSchoolId.eq(schoolId))) // SPECIFIC_GISU_SPECIFIC_SCHOOL_WITH_PART
-            );
+        // 파트 필터 (gisuId + chapterId + part, schoolId 없음)
+        // 기수 + 파트 / 기수 + 지부 + 파트 두 패턴
+        if (hasChapter && !hasSchool && hasPart) {
+            return target.targetGisuId.eq(gisuId)
+                .and(targetPartContains(target, part))
+                .and(
+                    target.targetChapterId.isNull().and(target.targetSchoolId.isNull())   // SPECIFIC_GISU_SPECIFIC_PART
+                        .or(target.targetChapterId.eq(chapterId)
+                            .and(target.targetSchoolId.isNull()))  // SPECIFIC_GISU_SPECIFIC_CHAPTER_WITH_PART
+                );
+        }
+
+        // 파트 필터 (gisuId + chapterId + schoolId + part, 모두 있음)
+        // 기수 + 파트 / 기수 + 지부 + 파트 / 기수 + 학교 + 파트 세 패턴 묶기
+        if (hasChapter && hasSchool && hasPart) {
+            return target.targetGisuId.eq(gisuId)
+                .and(targetPartContains(target, part))
+                .and(
+                    target.targetChapterId.isNull().and(target.targetSchoolId.isNull())   // SPECIFIC_GISU_SPECIFIC_PART
+                        .or(target.targetChapterId.eq(chapterId)
+                            .and(target.targetSchoolId.isNull()))  // SPECIFIC_GISU_SPECIFIC_CHAPTER_WITH_PART
+                        .or(target.targetChapterId.isNull()
+                            .and(target.targetSchoolId.eq(schoolId))) // SPECIFIC_GISU_SPECIFIC_SCHOOL_WITH_PART
+                );
+        }
+
+        // 그 외의 조건 조합은 허용되지 않음
+        throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
+            "현재 입력: gisuId=" + gisuId + ", chapterId=" + chapterId + ", schoolId=" + schoolId + ", part=" + part);
     }
 
     /*
@@ -296,9 +322,9 @@ public class NoticeQueryRepository {
 
     private BooleanExpression targetPartContains(QNoticeTarget target, ChallengerPart part) {
         return Expressions.booleanTemplate(
-            "array_contains({0}, {1})",
+            "array_contains({0}, {1}) = true",
             target.targetChallengerPart,
-            part
+            part.name()
         );
     }
 
