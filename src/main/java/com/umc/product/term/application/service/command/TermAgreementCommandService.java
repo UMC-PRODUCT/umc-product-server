@@ -52,15 +52,7 @@ public class TermAgreementCommandService implements ManageTermAgreementUseCase {
             // 동의 로그 기록
             saveConsentLog(command.memberId(), term.getType(), TermConsentStatus.AGREED);
         } else {
-            // 동의 철회 처리
-            TermConsent termConsent = loadTermConsentPort
-                .findByMemberIdAndTermType(command.memberId(), term.getType())
-                .orElseThrow(() -> new TermDomainException(TermErrorCode.TERMS_CONSENT_NOT_FOUND));
-
-            saveTermConsentPort.delete(termConsent);
-
-            // 철회 로그 기록
-            saveConsentLog(command.memberId(), term.getType(), TermConsentStatus.WITHDRAWN);
+            // 미동의 처리 - 기존 동의 기록이 없으면 skip (회원가입 시나리오)
         }
     }
 

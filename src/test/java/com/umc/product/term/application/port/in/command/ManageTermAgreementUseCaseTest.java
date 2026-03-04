@@ -139,12 +139,10 @@ class ManageTermAgreementUseCaseTest {
     }
 
     @Test
-    void 동의하지_않은_약관을_철회하면_예외() {
+    void 동의하지_않은_약관은_아무것도_저장하지_않는다() {
         // given
         Term term = createTerms(TermType.MARKETING);
         given(loadTermPort.findById(2L)).willReturn(Optional.of(term));
-        given(loadTermConsentPort.findByMemberIdAndTermType(100L, TermType.MARKETING))
-            .willReturn(Optional.empty());
 
         CreateTermConsentCommand command = CreateTermConsentCommand.builder()
             .memberId(100L)
@@ -152,12 +150,11 @@ class ManageTermAgreementUseCaseTest {
             .isAgreed(false)
             .build();
 
-        // when & then
-        assertThatThrownBy(() -> sut.createTermConsent(command))
-            .isInstanceOf(TermDomainException.class)
-            .extracting("code")
-            .isEqualTo(TermErrorCode.TERMS_CONSENT_NOT_FOUND);
+        // when
+        sut.createTermConsent(command);
 
+        // then
+        then(saveTermConsentPort).should(never()).save(any());
         then(saveTermConsentPort).should(never()).delete(any());
         then(saveTermConsentLogPort).should(never()).save(any());
     }
