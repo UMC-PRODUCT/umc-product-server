@@ -61,7 +61,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
         validateChallengerIdsExist(command.challengerIds());
 
         StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
-        studyGroup.updateMembers(command.challengerIds());
+        studyGroup.replaceMembersExcludingLeader(command.challengerIds());
 
         manageStudyGroupPort.save(studyGroup);
     }

@@ -20,7 +20,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -47,7 +46,7 @@ public class StudyGroup extends BaseEntity {
     @Column(nullable = false)
     private ChallengerPart part;
 
-    @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
@@ -119,10 +118,16 @@ public class StudyGroup extends BaseEntity {
      *
      * @param challengerIds 새로운 멤버 ID 목록
      */
-    public void updateMembers(Set<Long> challengerIds) {
+    public void replaceMembersExcludingLeader(Set<Long> challengerIds) {
+        Long leaderId = getLeader().getChallengerId();
+
         studyGroupMembers.clear();
+
+        addMember(leaderId, true);
         if (challengerIds != null) {
-            challengerIds.forEach(this::addMember);
+            challengerIds.stream()
+                .filter(id -> !id.equals(leaderId))
+                .forEach(this::addMember);
         }
     }
 
@@ -158,7 +163,7 @@ public class StudyGroup extends BaseEntity {
      */
     public void assignLeader(Long challengerId) {
         // 기존 리더 해제
-        getLeader().ifPresent(StudyGroupMember::removeAsLeader);
+        getLeader().removeAsLeader();
         // 새 리더 지정
         findMemberByChallengerId(challengerId).assignAsLeader();
     }
@@ -166,12 +171,13 @@ public class StudyGroup extends BaseEntity {
     /**
      * 현재 리더 조회
      *
-     * @return 리더 멤버 (없으면 empty)
+     * @return 리더 멤버
      */
-    public Optional<StudyGroupMember> getLeader() {
+    public StudyGroupMember getLeader() {
         return studyGroupMembers.stream()
             .filter(StudyGroupMember::isLeader)
-            .findFirst();
+            .findFirst()
+            .orElseThrow(() -> new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_LEADER_REQUIRED));
     }
 
     /**
