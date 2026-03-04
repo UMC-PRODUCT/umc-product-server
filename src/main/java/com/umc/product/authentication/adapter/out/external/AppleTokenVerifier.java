@@ -2,6 +2,7 @@ package com.umc.product.authentication.adapter.out.external;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
+import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import io.jsonwebtoken.Claims;
@@ -45,9 +46,6 @@ public class AppleTokenVerifier {
     private static final String APPLE_TOKEN_URL = "https://appleid.apple.com/auth/token";
     private static final String APPLE_REVOKE_URL = "https://appleid.apple.com/auth/revoke";
     private static final String APPLE_ISSUER = "https://appleid.apple.com";
-
-    public record AppleAuthorizationCodeResult(OAuth2Attributes attrs, String refreshToken) {
-    }
 
     private final AppleOAuthProperties appleProperties;
     private final RestClient restClient;

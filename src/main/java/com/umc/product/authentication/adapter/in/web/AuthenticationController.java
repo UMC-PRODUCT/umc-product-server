@@ -5,12 +5,11 @@ import com.umc.product.authentication.adapter.in.web.dto.request.GoogleLoginRequ
 import com.umc.product.authentication.adapter.in.web.dto.request.KakaoLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.response.OAuthLoginResponse;
 import com.umc.product.authentication.adapter.in.web.swagger.AuthenticationControllerInterface;
-import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
+import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
-import com.umc.product.authentication.domain.enums.OAuth2ResultCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
@@ -60,7 +59,7 @@ public class AuthenticationController implements AuthenticationControllerInterfa
         );
         OAuthTokenLoginResult result = oAuthAuthenticationUseCase.loginWithOAuth2Attributes(codeResult.attrs());
 
-        if (result.isExistingMember()) {
+        if (result.isExistingMember() && codeResult.refreshToken() != null) {
             // 기존 회원: MemberOAuth에 appleRefreshToken 바로 업데이트
             oAuthAuthenticationUseCase.updateAppleRefreshToken(
                 OAuthProvider.APPLE, result.providerId(), codeResult.refreshToken()
@@ -98,14 +97,8 @@ public class AuthenticationController implements AuthenticationControllerInterfa
             );
             String refreshToken = jwtTokenProvider.createRefreshToken(result.memberId());
 
-            return new OAuthLoginResponse(
-                provider,
-                OAuth2ResultCode.SUCCESS.isSuccess(),
-                OAuth2ResultCode.SUCCESS.getCode(),
-                null,  // oAuthVerificationToken 불필요
-                accessToken,
-                refreshToken,
-                null   // 기존 회원은 appleRefreshToken 불필요
+            return OAuthLoginResponse.ofLoginSuccess(
+                provider, accessToken, refreshToken
             );
         } else {
             // 신규 회원: oAuthVerificationToken 발급 (회원가입 시 사용)
@@ -115,14 +108,8 @@ public class AuthenticationController implements AuthenticationControllerInterfa
                 result.providerId()
             );
 
-            return new OAuthLoginResponse(
-                provider,
-                OAuth2ResultCode.REGISTER_REQUIRED.isSuccess(),
-                OAuth2ResultCode.REGISTER_REQUIRED.getCode(),
-                oAuthVerificationToken,
-                null,  // accessToken 없음
-                null,  // appleRefreshToken 없음
-                appleRefreshToken  // 신규 회원은 회원가입 시 전달하도록
+            return OAuthLoginResponse.ofRegisterRequired(
+                provider, oAuthVerificationToken
             );
         }
     }

@@ -1,7 +1,6 @@
 package com.umc.product.authentication.application.port.out;
 
 import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
-import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier.AppleAuthorizationCodeResult;
 import com.umc.product.common.domain.enums.OAuthProvider;
 
 /**
