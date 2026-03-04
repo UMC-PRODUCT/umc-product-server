@@ -11,6 +11,8 @@ import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.QNotice;
 import com.umc.product.notice.domain.QNoticeRead;
 import com.umc.product.notice.domain.QNoticeTarget;
+import com.umc.product.notice.domain.exception.NoticeDomainException;
+import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeClassification;
 import java.util.List;
 import java.util.Map;
@@ -226,15 +228,21 @@ public class NoticeQueryRepository {
 
         // 파트 필터 (gisuId + chapterId + schoolId + part, 모두 있음)
         // 기수 + 파트 / 기수 + 지부 + 파트 / 기수 + 학교 + 파트 세 패턴 묶기
-        return target.targetGisuId.eq(gisuId)
-            .and(targetPartContains(target, part))
-            .and(
-                target.targetChapterId.isNull().and(target.targetSchoolId.isNull())   // SPECIFIC_GISU_SPECIFIC_PART
-                    .or(target.targetChapterId.eq(chapterId)
-                        .and(target.targetSchoolId.isNull()))  // SPECIFIC_GISU_SPECIFIC_CHAPTER_WITH_PART
-                    .or(target.targetChapterId.isNull()
-                        .and(target.targetSchoolId.eq(schoolId))) // SPECIFIC_GISU_SPECIFIC_SCHOOL_WITH_PART
-            );
+        if (hasChapter && hasSchool && hasPart) {
+            return target.targetGisuId.eq(gisuId)
+                .and(targetPartContains(target, part))
+                .and(
+                    target.targetChapterId.isNull().and(target.targetSchoolId.isNull())   // SPECIFIC_GISU_SPECIFIC_PART
+                        .or(target.targetChapterId.eq(chapterId)
+                            .and(target.targetSchoolId.isNull()))  // SPECIFIC_GISU_SPECIFIC_CHAPTER_WITH_PART
+                        .or(target.targetChapterId.isNull()
+                            .and(target.targetSchoolId.eq(schoolId))) // SPECIFIC_GISU_SPECIFIC_SCHOOL_WITH_PART
+                );
+        }
+
+        // 그 외의 조건 조합은 허용되지 않음
+        throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
+            "현재 입력: gisuId=" + gisuId + ", chapterId=" + chapterId + ", schoolId=" + schoolId + ", part=" + part);
     }
 
     /*

@@ -83,15 +83,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     }
 
     /**
-     * 공지사항 관리 권한 확인 (수신 현황 조회 등)
-     * <p>
-     * - 총괄/부총괄: 항상 허용
-     * <p>
-     * - School 레벨 공지: 해당 학교 운영진
-     * <p>
-     * - Chapter 레벨 공지: 해당 지부장
-     * <p>
-     * - Gisu 레벨 공지: 중앙 멤버
+     * 공지사항 관리 권한 확인 (수신 현황 조회 등) - 총괄/부총괄: 항상 허용 - School 레벨 공지: 해당 학교 운영진 - Chapter 레벨 공지: 해당 지부장 - Gisu 레벨 공지: 중앙 멤버
      */
     private boolean canManageNotice(Long memberId, NoticeTargetInfo targetInfo) {
         // 총괄/부총괄은 항상 허용
