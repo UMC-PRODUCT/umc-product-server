@@ -6,12 +6,14 @@ import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmComm
 import com.umc.product.notification.application.port.out.SendWebhookPort;
 import com.umc.product.notification.domain.WebhookPlatform;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -20,17 +22,21 @@ public class WebhookAlarmService implements SendWebhookAlarmUseCase, FlushWebhoo
 
     private final Map<WebhookPlatform, SendWebhookPort> adapterMap;
     private final WebhookAlarmBuffer webhookAlarmBuffer;
+    private final String profilePrefix;
 
-    public WebhookAlarmService(List<SendWebhookPort> adapters, WebhookAlarmBuffer webhookAlarmBuffer) {
+    public WebhookAlarmService(List<SendWebhookPort> adapters, WebhookAlarmBuffer webhookAlarmBuffer,
+                               Environment environment) {
         this.adapterMap = adapters.stream()
             .collect(Collectors.toMap(SendWebhookPort::platform, Function.identity()));
         this.webhookAlarmBuffer = webhookAlarmBuffer;
+        this.profilePrefix = buildProfilePrefix(environment);
     }
 
     @Override
     public void send(SendWebhookAlarmCommand command) {
+        String prefixedTitle = profilePrefix + command.title();
         for (WebhookPlatform platform : command.platforms()) {
-            trySend(platform, command.title(), command.content());
+            trySend(platform, prefixedTitle, command.content());
         }
     }
 
@@ -55,7 +61,7 @@ public class WebhookAlarmService implements SendWebhookAlarmUseCase, FlushWebhoo
             WebhookPlatform platform = entry.getKey();
             List<SendWebhookAlarmCommand> platformCommands = entry.getValue();
             String mergedContent = mergeMessages(platformCommands);
-            String title = "알림 모아보기 (" + platformCommands.size() + "건)";
+            String title = profilePrefix + "알림 모아보기 (" + platformCommands.size() + "건)";
 
             trySend(platform, title, mergedContent);
         }
@@ -99,5 +105,16 @@ public class WebhookAlarmService implements SendWebhookAlarmUseCase, FlushWebhoo
             sb.append(cmd.content());
         }
         return sb.toString();
+    }
+
+    private static String buildProfilePrefix(Environment environment) {
+        String[] profiles = environment.getActiveProfiles();
+        if (profiles.length == 0) {
+            return "[Default] ";
+        }
+        String capitalized = Arrays.stream(profiles)
+            .map(p -> p.substring(0, 1).toUpperCase() + p.substring(1).toLowerCase())
+            .collect(Collectors.joining(", "));
+        return "[" + capitalized + "] ";
     }
 }

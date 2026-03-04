@@ -5,13 +5,11 @@ import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmComm
 import com.umc.product.notification.domain.WebhookPlatform;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -25,18 +23,18 @@ public class MetricsReportScheduler {
 
     private final MeterRegistry meterRegistry;
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
-    private final Environment environment;
 
     @Scheduled(fixedRateString = "${app.metrics-report.interval-ms:3600000}")
     public void reportMetrics() {
         log.debug("메트릭 보고 스케줄 실행");
 
-        String profile = getCapitalizedProfile();
         String content = buildMetricsReport();
+
+        log.info("메트릭 보고 내용:\n{}", content);
 
         SendWebhookAlarmCommand command = SendWebhookAlarmCommand.builder()
             .platforms(PLATFORMS)
-            .title("[" + profile + "] 서버 메트릭 보고")
+            .title("서버 메트릭 보고")
             .content(content)
             .build();
 
@@ -105,15 +103,5 @@ public class MetricsReportScheduler {
     private double getTimerTotalTime(String name) {
         Timer timer = meterRegistry.find(name).timer();
         return timer != null ? timer.totalTime(TimeUnit.SECONDS) : 0.0;
-    }
-
-    private String getCapitalizedProfile() {
-        String[] profiles = environment.getActiveProfiles();
-        if (profiles.length == 0) {
-            return "Default";
-        }
-        return String.join(", ", Arrays.stream(profiles)
-            .map(p -> p.substring(0, 1).toUpperCase() + p.substring(1).toLowerCase())
-            .toList());
     }
 }
