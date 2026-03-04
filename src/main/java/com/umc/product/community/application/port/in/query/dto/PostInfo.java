@@ -6,7 +6,6 @@ import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import lombok.Builder;
 
 @Builder
@@ -19,7 +18,7 @@ public record PostInfo(
     String authorName,
     String authorProfileImage,
     ChallengerPart authorPart,
-    LocalDateTime meetAt,
+    Instant meetAt,
     String location,
     Integer maxParticipants,
     String openChatUrl,
@@ -42,7 +41,7 @@ public record PostInfo(
             .authorName(memberInfo.name())
             .authorProfileImage(memberInfo.profileImageLink())
             .authorPart(challengerInfo.part())
-            //        LocalDateTime meetAt,
+            //        Instant meetAt,
             //        String location,
             //        Integer maxParticipants,
             //        String openChatUrl,
