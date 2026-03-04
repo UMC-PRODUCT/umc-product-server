@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.adapter.out.persistence.ChallengerWorkbookJpaRepository;
+import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
@@ -46,7 +46,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
     private ManageSchoolPort manageSchoolPort;
 
     @Autowired
-    private ChallengerWorkbookJpaRepository challengerWorkbookJpaRepository;
+    private LoadChallengerWorkbookPort loadChallengerWorkbookPort;
 
     private ChallengerWorkbook createWorkbookWithStatus(WorkbookStatus status, MissionType missionType) {
         Gisu gisu = gisuFixture.활성_기수(9L);
@@ -80,7 +80,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.submit(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.SUBMITTED);
             assertThat(result.getSubmission()).isEqualTo(submission);
         }
@@ -114,7 +114,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.submit(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.SUBMITTED);
             assertThat(result.getSubmission()).isNull();
         }
@@ -167,7 +167,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.review(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.PASS);
             assertThat(result.getFeedback()).isEqualTo(feedback);
         }
@@ -188,7 +188,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.review(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.FAIL);
             assertThat(result.getFeedback()).isEqualTo(feedback);
         }
@@ -208,7 +208,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.review(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.PASS);
             assertThat(result.getFeedback()).isNull();
         }
@@ -268,7 +268,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.selectBest(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.BEST);
             assertThat(result.getBestReason()).isEqualTo(bestReason);
         }
@@ -288,7 +288,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.selectBest(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.BEST);
             assertThat(result.getBestReason()).isEqualTo(bestReason);
         }
@@ -307,7 +307,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.selectBest(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.BEST);
             assertThat(result.getBestReason()).isNull();
         }

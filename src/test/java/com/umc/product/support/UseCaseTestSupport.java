@@ -2,7 +2,6 @@ package com.umc.product.support;
 
 import com.google.cloud.storage.Storage;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.storage.application.port.out.StoragePort;
 import com.umc.product.support.isolation.DatabaseIsolation;
@@ -22,10 +21,6 @@ public abstract class UseCaseTestSupport {
 
     @MockitoBean
     protected JwtTokenProvider jwtTokenProvider;
-
-    // TODO: 제거 예정
-    @MockitoBean
-    protected GetChallengerUseCase getChallengerUseCase;
 
     @MockitoBean
     protected FirebaseMessaging firebaseMessaging;
