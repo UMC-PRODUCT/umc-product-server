@@ -256,6 +256,8 @@ app:
       team-id: ${APPLE_TEAM_ID}
       key-id: ${APPLE_KEY_ID}
       private-key: ${APPLE_PRIVATE_KEY}
+    kakao:
+      admin-key: ${KAKAO_ADMIN_KEY:}
     frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT_URL}
 
 storage:

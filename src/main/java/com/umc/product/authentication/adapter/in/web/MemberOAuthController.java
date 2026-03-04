@@ -1,6 +1,7 @@
 package com.umc.product.authentication.adapter.in.web;
 
 import com.umc.product.authentication.adapter.in.web.dto.request.AddOAuthRequest;
+import com.umc.product.authentication.adapter.in.web.dto.request.UnlinkOAuthRequest;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
@@ -56,16 +57,20 @@ public class MemberOAuthController {
     @DeleteMapping("{memberOAuthId}")
     @Operation(summary = "로그인용 OAuth 수단 제거",
         description = """
-            현재는 memberOAuthId로 식별해서 제거 처리를 진행하나, 추후 OAuth측에 다시 로그인해서 제거하는 방식으로 변경될 수 있습니다.
+                memberOAuthId로 식별해서 제거 처리를 진행합니다.
+                Google/Kakao OAuth의 경우 해당 Provider의 Access Token을 함께 전달하면 OAuth Provider측 연결도 해제됩니다.
             """)
     List<MemberOAuthInfo> deleteMemberOAuth(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @PathVariable Long memberOAuthId
+        @PathVariable Long memberOAuthId,
+        @RequestBody(required = false) UnlinkOAuthRequest request
     ) {
         oAuthAuthenticationUseCase.unlinkOAuth(
             UnlinkOAuthCommand.builder()
                 .memberId(memberPrincipal.getMemberId())
                 .memberOAuthId(memberOAuthId)
+                .googleAccessToken(request != null ? request.googleAccessToken() : null)
+                .kakaoAccessToken(request != null ? request.kakaoAccessToken() : null)
                 .build()
         );
 

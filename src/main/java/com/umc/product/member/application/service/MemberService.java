@@ -141,6 +141,8 @@ public class MemberService implements ManageMemberUseCase {
                     .memberId(memberId)
                     .memberOAuthId(oAuthInfo.memberOAuthId())
                     .isWithdrawal(true)
+                    .googleAccessToken(command.googleAccessToken())
+                    .kakaoAccessToken(command.kakaoAccessToken())
                     .build()
             );
         }

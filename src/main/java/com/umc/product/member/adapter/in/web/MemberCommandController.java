@@ -8,6 +8,7 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.OAuthVerificationClaims;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.member.adapter.in.web.dto.request.DeleteMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberInfoRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberProfileRequest;
 import com.umc.product.member.adapter.in.web.dto.request.RegisterMemberRequest;
@@ -113,13 +114,17 @@ public class MemberCommandController {
     }
 
     @DeleteMapping
-    @Operation(summary = "회원 탈퇴")
+    @Operation(summary = "회원 탈퇴",
+        description = "Google/Kakao OAuth 연동이 있는 경우 해당 Provider의 Access Token을 함께 전달하면 Provider측 연결도 해제됩니다.")
     @WebhookAlarm(
         title = "'회원이 탈퇴하였습니다'",
         content = "'회원 ID: ' + #memberPrincipal.getMemberId() + '\n닉네임/이름: ' + #result.nickname() + '/' + #result.name() + '\n학교: ' + #result.schoolName()"
     )
-    public MemberInfoResponse deleteMember(@CurrentMember MemberPrincipal memberPrincipal) {
-        return deleteMemberById(memberPrincipal.getMemberId());
+    public MemberInfoResponse deleteMember(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @RequestBody(required = false) DeleteMemberRequest request
+    ) {
+        return deleteMemberById(memberPrincipal.getMemberId(), request);
     }
 
     @Operation(summary = "관리자 권한으로 회원 게정 삭제 (Hard Delete)", description = "SUPER_ADMIN 권한이 필요합니다. (적용 전)")
@@ -134,22 +139,20 @@ public class MemberCommandController {
         content = "'회원 ID: ' + #memberId + '\n닉네임/이름: ' + #result.nickname() + '/' + #result.name() + '\n학교: ' + #result.schoolName()"
     )
     public MemberInfoResponse deleteMember(@PathVariable Long memberId) {
-        // TODO: SUPER_ADMIN 권한 필요
-
-        return deleteMemberById(memberId);
+        return deleteMemberById(memberId, null);
     }
 
-    private MemberInfoResponse deleteMemberById(Long memberId) {
+    private MemberInfoResponse deleteMemberById(Long memberId, DeleteMemberRequest request) {
         MemberInfoResponse deletedMemberInfoResponse = assembler.fromMemberId(memberId);
 
         manageMemberUseCase.deleteMember(
             DeleteMemberCommand
                 .builder()
                 .memberId(memberId)
+                .googleAccessToken(request != null ? request.googleAccessToken() : null)
+                .kakaoAccessToken(request != null ? request.kakaoAccessToken() : null)
                 .build()
         );
-
-        // TODO: 회원 탈퇴 후에도 다른 도메인에서 정보를 조회했을 때 null-safe하게 동작할 수 있도록 변경 필요
 
         return deletedMemberInfoResponse;
     }

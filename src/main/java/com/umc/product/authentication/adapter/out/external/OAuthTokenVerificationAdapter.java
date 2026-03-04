@@ -45,4 +45,16 @@ public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort, Revo
         log.info("Apple token revoke 시작");
         appleTokenVerifier.revokeToken(refreshToken);
     }
+
+    @Override
+    public void revokeKakaoToken(String accessToken) {
+        log.info("Kakao 사용자 연결 끊기 시작");
+        kakaoTokenVerifier.unlinkUser(accessToken);
+    }
+
+    @Override
+    public void revokeGoogleToken(String token) {
+        log.info("Google token revoke 시작");
+        googleTokenVerifier.revokeToken(token);
+    }
 }

@@ -168,18 +168,39 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             }
         }
 
-        // Apple OAuth인 경우 refresh token revoke
-        if (memberOAuth.getProvider() == OAuthProvider.APPLE) {
-            if (memberOAuth.getAppleRefreshToken() != null) {
-                revokeOAuthTokenPort.revokeAppleToken(memberOAuth.getAppleRefreshToken());
-            } else {
-                log.error(
-                    "[Apple 계정 연동 해제] Apple OAuth refresh token이 없어 revoke를 skip합니다: memberId={} memberOAuthId={}",
-                    memberOAuth.getMemberId(), memberOAuth.getId());
-            }
-        }
+        // Provider별 토큰 revoke / 연결 해제
+        revokeProviderToken(memberOAuth, command);
 
         saveMemberOAuthPort.delete(memberOAuth);
+    }
+
+    private void revokeProviderToken(MemberOAuth memberOAuth, UnlinkOAuthCommand command) {
+        switch (memberOAuth.getProvider()) {
+            case APPLE -> {
+                if (memberOAuth.getAppleRefreshToken() != null) {
+                    revokeOAuthTokenPort.revokeAppleToken(memberOAuth.getAppleRefreshToken());
+                } else {
+                    log.warn("[Apple 계정 연동 해제] refresh token이 없어 revoke를 skip합니다: memberId={} memberOAuthId={}",
+                        memberOAuth.getMemberId(), memberOAuth.getId());
+                }
+            }
+            case KAKAO -> {
+                if (command.kakaoAccessToken() != null) {
+                    revokeOAuthTokenPort.revokeKakaoToken(command.kakaoAccessToken());
+                } else {
+                    log.warn("[Kakao 계정 연동 해제] access token이 전달되지 않아 revoke를 skip합니다: memberId={} memberOAuthId={}",
+                        memberOAuth.getMemberId(), memberOAuth.getId());
+                }
+            }
+            case GOOGLE -> {
+                if (command.googleAccessToken() != null) {
+                    revokeOAuthTokenPort.revokeGoogleToken(command.googleAccessToken());
+                } else {
+                    log.warn("[Google 계정 연동 해제] access token이 전달되지 않아 revoke를 skip합니다: memberId={} memberOAuthId={}",
+                        memberOAuth.getMemberId(), memberOAuth.getId());
+                }
+            }
+        }
     }
 
     @Override
