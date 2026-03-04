@@ -234,6 +234,10 @@ app:
   cors:
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:}
 
+  metrics-report:
+    enabled: ${METRICS_REPORT_ENABLED:false}
+    interval-ms: ${METRICS_REPORT_INTERVAL_MS:10000} # 10초마다 메트릭 보고
+
   webhook:
     buffer:
       enabled: ${WEBHOOK_BUFFER_ENABLED:true}
