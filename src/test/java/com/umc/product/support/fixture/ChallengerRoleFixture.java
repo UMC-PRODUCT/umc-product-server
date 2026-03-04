@@ -54,11 +54,6 @@ public class ChallengerRoleFixture {
             ChallengerRole.create(challengerId, ChallengerRoleType.SCHOOL_PART_LEADER, schoolId, part, gisuId));
     }
 
-    public ChallengerRole 학교_운영진(Long challengerId, Long schoolId, Long gisuId) {
-        return saveChallengerRolePort.save(
-            ChallengerRole.create(challengerId, ChallengerRoleType.SCHOOL_ETC_ADMIN, schoolId, null, gisuId));
-    }
-
     public ChallengerRole 학교_운영진(Long challengerId, ChallengerPart part, Long schoolId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.SCHOOL_ETC_ADMIN, schoolId, part, gisuId));

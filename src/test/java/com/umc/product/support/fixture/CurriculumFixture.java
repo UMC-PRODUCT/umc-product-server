@@ -37,9 +37,7 @@ public class CurriculumFixture {
     }
 
     public OriginalWorkbook 워크북(Curriculum curriculum, int weekNo, String title) {
-        return saveOriginalWorkbookPort.save(
-            OriginalWorkbook.create(curriculum, weekNo, title, null, null, DEFAULT_START, DEFAULT_END, MissionType.LINK)
-        );
+        return 워크북(curriculum, weekNo, title, MissionType.LINK);
     }
 
     public OriginalWorkbook 워크북(Curriculum curriculum, int weekNo, String title, MissionType missionType) {
@@ -49,33 +47,20 @@ public class CurriculumFixture {
     }
 
     public OriginalWorkbook 배포된_워크북(Curriculum curriculum, int weekNo, String title) {
-        OriginalWorkbook workbook = saveOriginalWorkbookPort.save(
-            OriginalWorkbook.create(curriculum, weekNo, title, null, null, DEFAULT_START, DEFAULT_END, MissionType.LINK)
-        );
+        OriginalWorkbook workbook = OriginalWorkbook.create(
+            curriculum, weekNo, title, null, null, DEFAULT_START, DEFAULT_END, MissionType.LINK);
         workbook.release();
         return saveOriginalWorkbookPort.save(workbook);
     }
 
     public ChallengerWorkbook 챌린저워크북(Long challengerId, Long workbookId, WorkbookStatus status) {
         return saveChallengerWorkbookPort.save(
-            ChallengerWorkbook.builder()
-                .challengerId(challengerId)
-                .originalWorkbookId(workbookId)
-                .scheduleId(1L)
-                .status(status)
-                .build()
+            ChallengerWorkbook.create(challengerId, workbookId,  status, 1L)
         );
     }
 
     public ChallengerWorkbook 제출된_챌린저워크북(Long challengerId, Long workbookId, String submission) {
-        ChallengerWorkbook workbook = saveChallengerWorkbookPort.save(
-            ChallengerWorkbook.builder()
-                .challengerId(challengerId)
-                .originalWorkbookId(workbookId)
-                .scheduleId(1L)
-                .status(WorkbookStatus.PENDING)
-                .build()
-        );
+        ChallengerWorkbook workbook = ChallengerWorkbook.create(challengerId, workbookId, WorkbookStatus.PENDING, 1L);
         workbook.submit(submission);
         return saveChallengerWorkbookPort.save(workbook);
     }
