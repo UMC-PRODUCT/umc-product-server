@@ -54,10 +54,6 @@ public class AuthenticationController implements AuthenticationControllerInterfa
     public OAuthLoginResponse appleOAuthLogin(
         @RequestBody AppleLoginRequest request
     ) {
-        if (request.idToken() != null) {
-            return processAccessTokenLogin(OAuthProvider.APPLE, request.idToken());
-        }
-
         // Authorization Code 방식
         AppleAuthorizationCodeResult codeResult = verifyOAuthTokenPort.verifyAppleAuthorizationCode(
             request.authorizationCode()
