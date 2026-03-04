@@ -49,6 +49,7 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
         return SchoolNameListResponse.from(getSchoolUseCase.getAllSchoolNames());
     }
 
+    @Public
     @Override
     @GetMapping("/{schoolId}")
     public SchoolDetailResponse getSchoolDetail(@PathVariable Long schoolId) {
@@ -56,6 +57,7 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
         return SchoolDetailResponse.of(schoolDetailInfo);
     }
 
+    @Public
     @Override
     @GetMapping("/unassigned")
     public UnassignedSchoolListResponse getUnassignedSchools(@RequestParam Long gisuId) {

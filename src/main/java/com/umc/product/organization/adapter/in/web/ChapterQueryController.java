@@ -1,5 +1,6 @@
 package com.umc.product.organization.adapter.in.web;
 
+import com.umc.product.global.security.annotation.Public;
 import com.umc.product.organization.adapter.in.web.dto.response.ChapterListResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.ChapterListResponse.ChapterItem;
 import com.umc.product.organization.adapter.in.web.dto.response.ChapterWithSchoolsResponse;
@@ -22,12 +23,14 @@ public class ChapterQueryController implements ChapterQueryControllerApi {
 
     private final GetChapterUseCase getChapterUseCase;
 
+    @Public
     @GetMapping("{chapterId}")
     public ChapterItem getChapterById(@PathVariable Long chapterId) {
         ChapterInfo chapterInfo = getChapterUseCase.getChapterById(chapterId);
         return ChapterItem.from(chapterInfo);
     }
 
+    @Public
     @Override
     @GetMapping
     public ChapterListResponse getAllChapters() {
@@ -35,6 +38,7 @@ public class ChapterQueryController implements ChapterQueryControllerApi {
         return ChapterListResponse.from(chapters);
     }
 
+    @Public
     @Override
     @GetMapping("/with-schools")
     public ChapterWithSchoolsResponse getChaptersWithSchoolsByGisuId(@RequestParam Long gisuId) {

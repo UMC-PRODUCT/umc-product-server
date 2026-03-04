@@ -30,7 +30,7 @@ public class AdminChapterController implements AdminChapterControllerApi {
         return manageChapterUseCase.create(request.toCommand());
     }
 
-//    @CheckAccess(resourceType = ResourceType.CHAPTER, permission = PermissionType.WRITE)
+    @CheckAccess(resourceType = ResourceType.CHAPTER, permission = PermissionType.WRITE)
     @Override
     @PostMapping("/bulk")
     public List<Long> createChapterBulk(@RequestBody List<CreateChapterRequest> requests) {
