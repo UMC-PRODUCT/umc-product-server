@@ -35,6 +35,8 @@ public enum ResourceType {
             PermissionType.APPROVE, PermissionType.MANAGE)),
     TERM("term", "약관",
         Set.of(PermissionType.WRITE)),
+    MEMBER("member", "회원",
+        Set.of(PermissionType.READ, PermissionType.DELETE)),
     ;
 
     private final String code;
