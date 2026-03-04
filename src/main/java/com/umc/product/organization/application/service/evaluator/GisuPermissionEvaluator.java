@@ -25,12 +25,6 @@ public class GisuPermissionEvaluator implements ResourcePermissionEvaluator {
 
     @Override
     public boolean evaluate(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
-        if (!resourcePermission.resourceType().getSupportedPermissions()
-            .contains(resourcePermission.permission())) {
-            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_RESOURCE_PERMISSION_GIVEN,
-                "GisuPermissionEvaluator에서 지원하지 않는 권한 유형에 대한 평가가 시도되었습니다: " + resourcePermission.permission());
-        }
-
         return switch (resourcePermission.permission()) {
             case WRITE, EDIT, DELETE -> getChallengerRoleUseCase.isCentralCore(subjectAttributes.memberId());
             default -> throw new AuthorizationDomainException(AuthorizationErrorCode.PERMISSION_TYPE_NOT_IMPLEMENTED,
