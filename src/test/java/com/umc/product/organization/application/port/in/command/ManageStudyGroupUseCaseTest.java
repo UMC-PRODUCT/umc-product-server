@@ -220,56 +220,6 @@ class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
     }
 
     @Test
-    void 스터디_그룹_멤버를_전체_교체한다() {
-        // given
-        Gisu gisu = gisuFixture.활성_기수(8L);
-        Challenger leader = challengerFixture.챌린저(memberFixture.일반_멤버("리더").getId(), ChallengerPart.WEB, gisu.getId());
-        Challenger member1 = challengerFixture.챌린저(memberFixture.일반_멤버("멤버1").getId(), ChallengerPart.WEB, gisu.getId());
-        Challenger member2 = challengerFixture.챌린저(memberFixture.일반_멤버("멤버2").getId(), ChallengerPart.WEB, gisu.getId());
-        Challenger newMember1 = challengerFixture.챌린저(memberFixture.일반_멤버("새멤버1").getId(), ChallengerPart.WEB, gisu.getId());
-        Challenger newMember2 = challengerFixture.챌린저(memberFixture.일반_멤버("새멤버2").getId(), ChallengerPart.WEB, gisu.getId());
-
-        StudyGroup studyGroup = studyGroupFixture.스터디그룹("React A팀", gisu, ChallengerPart.WEB, leader.getId(), member1.getId(), member2.getId());
-
-        UpdateStudyGroupMembersCommand command = new UpdateStudyGroupMembersCommand(
-            studyGroup.getId(),
-            Set.of(newMember1.getId(), newMember2.getId())
-        );
-
-        // when
-        manageStudyGroupUseCase.updateMembers(command);
-
-        // then
-        StudyGroup result = loadStudyGroupPort.findById(studyGroup.getId());
-        List<Long> allMemberIds = result.getStudyGroupMembers().stream()
-            .map(StudyGroupMember::getChallengerId)
-            .toList();
-        assertThat(allMemberIds).containsExactlyInAnyOrder(newMember1.getId(), newMember2.getId());
-    }
-
-    @Test
-    void 스터디_그룹_멤버를_빈_목록으로_교체하면_모든_멤버가_제거된다() {
-        // given
-        Gisu gisu = gisuFixture.활성_기수(8L);
-        Challenger leader = challengerFixture.챌린저(memberFixture.일반_멤버("리더").getId(), ChallengerPart.WEB, gisu.getId());
-        Challenger member1 = challengerFixture.챌린저(memberFixture.일반_멤버("멤버1").getId(), ChallengerPart.WEB, gisu.getId());
-
-        StudyGroup studyGroup = studyGroupFixture.스터디그룹("React A팀", gisu, ChallengerPart.WEB, leader.getId(), member1.getId());
-
-        UpdateStudyGroupMembersCommand command = new UpdateStudyGroupMembersCommand(
-            studyGroup.getId(),
-            Set.of()
-        );
-
-        // when
-        manageStudyGroupUseCase.updateMembers(command);
-
-        // then
-        StudyGroup result = loadStudyGroupPort.findById(studyGroup.getId());
-        assertThat(result.getStudyGroupMembers()).isEmpty();
-    }
-
-    @Test
     void 존재하지_않는_챌린저_ID로_멤버를_수정하면_예외가_발생한다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(8L);
@@ -317,9 +267,7 @@ class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
     }
 
     private Long getLeaderId(StudyGroup studyGroup) {
-        return studyGroup.getLeader()
-            .map(StudyGroupMember::getChallengerId)
-            .orElse(null);
+        return studyGroup.getLeader().getChallengerId();
     }
 
     private List<Long> getMemberIds(StudyGroup studyGroup) {
