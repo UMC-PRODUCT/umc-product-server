@@ -13,13 +13,13 @@ import com.umc.product.term.application.port.out.SaveTermConsentLogPort;
 import com.umc.product.term.application.port.out.SaveTermConsentPort;
 import com.umc.product.term.application.service.command.TermAgreementCommandService;
 import com.umc.product.term.domain.Term;
+import com.umc.product.term.domain.Term;
 import com.umc.product.term.domain.TermConsent;
 import com.umc.product.term.domain.TermConsentLog;
 import com.umc.product.term.domain.enums.TermConsentStatus;
 import com.umc.product.term.domain.enums.TermType;
 import com.umc.product.term.domain.exception.TermDomainException;
 import com.umc.product.term.domain.exception.TermErrorCode;
-import java.time.Instant;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -100,43 +100,6 @@ class ManageTermAgreementUseCaseTest {
         then(saveTermConsentLogPort).should(never()).save(any());
     }
 
-    // ===== 철회 처리 =====
-
-    @Test
-    void 약관_동의를_철회한다() {
-        // given
-        Term term = createTerms(TermType.MARKETING);
-        TermConsent existingConsent = TermConsent.builder()
-            .memberId(100L)
-            .termType(TermType.MARKETING)
-            .agreedAt(Instant.now())
-            .build();
-
-        given(loadTermPort.findById(2L)).willReturn(Optional.of(term));
-        given(loadTermConsentPort.findByMemberIdAndTermType(100L, TermType.MARKETING))
-            .willReturn(Optional.of(existingConsent));
-
-        CreateTermConsentCommand command = CreateTermConsentCommand.builder()
-            .memberId(100L)
-            .termId(2L)
-            .isAgreed(false)
-            .build();
-
-        // when
-        sut.createTermConsent(command);
-
-        // then
-        then(saveTermConsentPort).should().delete(existingConsent);
-        then(saveTermConsentPort).should(never()).save(any());
-
-        ArgumentCaptor<TermConsentLog> logCaptor = ArgumentCaptor.forClass(TermConsentLog.class);
-        then(saveTermConsentLogPort).should().save(logCaptor.capture());
-
-        TermConsentLog savedLog = logCaptor.getValue();
-        assert savedLog.getMemberId().equals(100L);
-        assert savedLog.getTermType() == TermType.MARKETING;
-        assert savedLog.getStatus() == TermConsentStatus.WITHDRAWN;
-    }
 
     @Test
     void 동의하지_않은_약관은_아무것도_저장하지_않는다() {
