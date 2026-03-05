@@ -2,7 +2,8 @@ package com.umc.product.community.adapter.in.web.dto.request;
 
 import com.umc.product.community.application.port.in.command.post.dto.CreateLightningCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Objects;
 
 @Schema(description = "번개 게시글 작성 요청")
@@ -13,8 +14,8 @@ public record CreateLightningRequest(
     @Schema(description = "내용", example = "강남역 근처에서 치킨 먹을 분 구합니다.")
     String content,
 
-    @Schema(description = "모임 시간 (UTC ISO8601)", example = "2026-03-16T09:00:00Z")
-    Instant meetAt,
+    @Schema(description = "모임 시간 (KST 기준 LocalDateTime, 타임존 없이 전송. 예: 2026-03-16T18:00:00)", example = "2026-03-16T18:00:00")
+    LocalDateTime meetAt,
 
     @Schema(description = "모임 장소", example = "강남역 2번 출구")
     String location,
@@ -45,16 +46,15 @@ public record CreateLightningRequest(
         if (openChatUrl.isBlank()) {
             throw new IllegalArgumentException("오픈 채팅 링크는 비어있을 수 없습니다");
         }
-        if (meetAt.isBefore(Instant.now())) {
-            throw new IllegalArgumentException("모임 시간은 현재 이후여야 합니다");
-        }
         if (maxParticipants < 1) {
             throw new IllegalArgumentException("최대 참가자는 1명 이상이어야 합니다");
         }
     }
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
+
     public CreateLightningCommand toCommand(Long authorChallengerId) {
-        return new CreateLightningCommand(title, content, meetAt, location, maxParticipants, openChatUrl,
-            authorChallengerId);
+        return new CreateLightningCommand(title, content, meetAt.atZone(KST).toInstant(), location, maxParticipants,
+            openChatUrl, authorChallengerId);
     }
 }
