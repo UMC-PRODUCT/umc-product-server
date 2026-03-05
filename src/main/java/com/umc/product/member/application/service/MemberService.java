@@ -59,6 +59,7 @@ public class MemberService implements ManageMemberUseCase {
                 .memberId(savedMember.getId())
                 .provider(command.provider())
                 .providerId(command.providerId())
+                .appleRefreshToken(command.appleRefreshToken())
                 .build()
         );
 
@@ -139,7 +140,9 @@ public class MemberService implements ManageMemberUseCase {
                 UnlinkOAuthCommand.builder()
                     .memberId(memberId)
                     .memberOAuthId(oAuthInfo.memberOAuthId())
-                    .bypassValidation(true)
+                    .isWithdrawal(true)
+                    .googleAccessToken(command.googleAccessToken())
+                    .kakaoAccessToken(command.kakaoAccessToken())
                     .build()
             );
         }

@@ -1,10 +1,14 @@
 package com.umc.product.member.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.OAuthVerificationClaims;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.member.adapter.in.web.dto.request.DeleteMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberInfoRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberProfileRequest;
 import com.umc.product.member.adapter.in.web.dto.request.RegisterMemberRequest;
@@ -45,10 +49,8 @@ public class MemberCommandController {
     @Public
     @Operation(summary = "회원가입",
         description = """
-            OAuth2 로그인을 통해서 oAuthVerificationToken을 발급받은 후,
-            해당 토큰을 첨부해서 회원가입을 진행해주세요.
-
-            해당 토큰은 사전에 인증된 OAuth2 Provider와 ProviderId를 인증해줍니다.
+            OAuth2 로그인을 통해서 oAuthVerificationToken 및 Email 인증을 통한 emailVerificationToken을 발급받은 후,
+            해당 토큰들을 첨부해서 회원가입을 진행해주세요.
             """)
     @PostMapping("register")
     @WebhookAlarm(
@@ -56,8 +58,6 @@ public class MemberCommandController {
         content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
     )
     RegisterResponse registerMember(@RequestBody RegisterMemberRequest request) {
-        // TODO: oAuthVerificationToken은 authentication domain에서 port 가져와서 처리함
-
         OAuthVerificationClaims claims = jwtTokenProvider.parseOAuthVerificationToken(request.oAuthVerificationToken());
         String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
 
@@ -71,6 +71,7 @@ public class MemberCommandController {
             .schoolId(request.schoolId())
             .profileImageId(request.profileImageId())
             .termConsents(request.termsAgreements().stream().map(TermConsents::fromRequest).toList())
+            .appleRefreshToken(request.appleRefreshToken())
             .build();
 
         Long createdMemberId = manageMemberUseCase.registerMember(command);
@@ -112,33 +113,46 @@ public class MemberCommandController {
         return assembler.fromMemberId(memberPrincipal.getMemberId());
     }
 
-    // TODO: 총괄이 임의로 계정을 삭제시키려면 memberId로 삭제하는 API도 필요할 것 같음
-
     @DeleteMapping
-    @Operation(summary = "회원 탈퇴")
-    public MemberInfoResponse deleteMember(@CurrentMember MemberPrincipal memberPrincipal) {
-        return deleteMemberById(memberPrincipal.getMemberId());
+    @Operation(summary = "회원 탈퇴",
+        description = "Google/Kakao OAuth 연동이 있는 경우 해당 Provider의 Access Token을 함께 전달하면 Provider측 연결도 해제됩니다.")
+    @WebhookAlarm(
+        title = "'회원이 탈퇴하였습니다'",
+        content = "'회원 ID: ' + #memberPrincipal.getMemberId() + '\n닉네임/이름: ' + #result.nickname() + '/' + #result.name() + '\n학교: ' + #result.schoolName()"
+    )
+    public MemberInfoResponse deleteMember(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @RequestBody(required = false) DeleteMemberRequest request
+    ) {
+        return deleteMemberById(memberPrincipal.getMemberId(), request);
     }
 
     @Operation(summary = "관리자 권한으로 회원 게정 삭제 (Hard Delete)", description = "SUPER_ADMIN 권한이 필요합니다. (적용 전)")
     @DeleteMapping("{memberId}")
+    @CheckAccess(
+        resourceType = ResourceType.MEMBER,
+        resourceId = "#memberId",
+        permission = PermissionType.DELETE
+    )
+    @WebhookAlarm(
+        title = "'관리자가 계정을 삭제하였습니다.'",
+        content = "'회원 ID: ' + #memberId + '\n닉네임/이름: ' + #result.nickname() + '/' + #result.name() + '\n학교: ' + #result.schoolName()"
+    )
     public MemberInfoResponse deleteMember(@PathVariable Long memberId) {
-        // TODO: SUPER_ADMIN 권한 필요
-
-        return deleteMemberById(memberId);
+        return deleteMemberById(memberId, null);
     }
 
-    private MemberInfoResponse deleteMemberById(Long memberId) {
+    private MemberInfoResponse deleteMemberById(Long memberId, DeleteMemberRequest request) {
         MemberInfoResponse deletedMemberInfoResponse = assembler.fromMemberId(memberId);
 
         manageMemberUseCase.deleteMember(
             DeleteMemberCommand
                 .builder()
                 .memberId(memberId)
+                .googleAccessToken(request != null ? request.googleAccessToken() : null)
+                .kakaoAccessToken(request != null ? request.kakaoAccessToken() : null)
                 .build()
         );
-
-        // TODO: 회원 탈퇴 후에도 다른 도메인에서 정보를 조회했을 때 null-safe하게 동작할 수 있도록 변경 필요
 
         return deletedMemberInfoResponse;
     }
