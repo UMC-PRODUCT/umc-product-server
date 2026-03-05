@@ -35,6 +35,9 @@ public record ScheduleListResponse(
     @Schema(description = "장소명", example = "강남역 스터디룸")
     String locationName,
 
+    @Schema(description = "출석부 ID (출석부가 없는 경우 null)", example = "1", nullable = true)
+    Long sheetId,
+
     @Schema(description = "전체 인원", example = "30")
     Integer totalCount,
 
