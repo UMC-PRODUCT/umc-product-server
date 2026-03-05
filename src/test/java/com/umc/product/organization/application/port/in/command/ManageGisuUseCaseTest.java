@@ -7,10 +7,9 @@ import com.umc.product.global.exception.BusinessException;
 import com.umc.product.organization.application.port.in.command.dto.CreateGisuCommand;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
-import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import com.umc.product.support.UseCaseTestSupport;
+import com.umc.product.support.fixture.GisuFixture;
 import java.time.Instant;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,7 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
     private GetGisuUseCase getGisuUseCase;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private GisuFixture gisuFixture;
 
     @Test
     void 신규_기수를_생성한다() {
@@ -48,13 +47,7 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
     @Test
     void 이미_존재하는_기수_번호로_생성하면_예외가_발생한다() {
         // given
-        Gisu existingGisu = Gisu.create(
-            10L,
-            Instant.parse("2025-03-01T00:00:00Z"),
-            Instant.parse("2025-08-31T23:59:59Z"),
-            false
-        );
-        manageGisuPort.save(existingGisu);
+        gisuFixture.비활성_기수(10L);
 
         CreateGisuCommand command = new CreateGisuCommand(
             10L,
@@ -72,14 +65,7 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
     @Test
     void 기수를_삭제한다() {
         // given
-        Gisu gisu = Gisu.create(
-            11L,
-            Instant.parse("2025-03-01T00:00:00Z"),
-            Instant.parse("2025-08-31T23:59:59Z"),
-            false
-        );
-        Gisu savedGisu = manageGisuPort.save(gisu);
-        Long gisuId = savedGisu.getId();
+        Long gisuId = gisuFixture.비활성_기수(11L).getId();
 
         // when
         manageGisuUseCase.deleteGisu(gisuId);
@@ -106,28 +92,15 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
     @Test
     void 활성_기수를_변경한다() {
         // given
-        Gisu oldActiveGisu = Gisu.create(
-            8L,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-08-31T23:59:59Z"),
-            true
-        );
-        oldActiveGisu = manageGisuPort.save(oldActiveGisu);
-
-        Gisu newGisu = Gisu.create(
-            9L,
-            Instant.parse("2025-03-01T00:00:00Z"),
-            Instant.parse("2025-08-31T23:59:59Z"),
-            false
-        );
-        newGisu = manageGisuPort.save(newGisu);
+        GisuInfo oldActiveGisu = getGisuUseCase.getById(gisuFixture.활성_기수(8L).getId());
+        Long newGisuId = gisuFixture.비활성_기수(9L).getId();
 
         // when
-        manageGisuUseCase.updateActiveGisu(newGisu.getId());
+        manageGisuUseCase.updateActiveGisu(newGisuId);
 
         // then
-        GisuInfo oldGisuInfo = getGisuUseCase.getById(oldActiveGisu.getId());
-        GisuInfo newGisuInfo = getGisuUseCase.getById(newGisu.getId());
+        GisuInfo oldGisuInfo = getGisuUseCase.getById(oldActiveGisu.gisuId());
+        GisuInfo newGisuInfo = getGisuUseCase.getById(newGisuId);
 
         assertThat(oldGisuInfo.isActive()).isFalse();
         assertThat(newGisuInfo.isActive()).isTrue();

@@ -10,9 +10,9 @@ import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.global.exception.BusinessException;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.support.UseCaseTestSupport;
+import com.umc.product.support.fixture.GisuFixture;
 import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -32,13 +32,13 @@ class ReleaseWorkbookUseCaseTest extends UseCaseTestSupport {
     private LoadOriginalWorkbookPort loadOriginalWorkbookPort;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private GisuFixture gisuFixture;
 
     private Gisu activeGisu;
 
     @BeforeEach
     void setUp() {
-        activeGisu = manageGisuPort.save(createActiveGisu(9L));
+        activeGisu = gisuFixture.활성_기수(9L);
     }
 
     @Test
@@ -99,14 +99,5 @@ class ReleaseWorkbookUseCaseTest extends UseCaseTestSupport {
 
         assertThat(released1.isReleased()).isTrue();
         assertThat(notReleased2.isReleased()).isFalse();
-    }
-
-    private Gisu createActiveGisu(Long generation) {
-        return Gisu.create(
-            generation,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-08-31T23:59:59Z"),
-            true
-        );
     }
 }

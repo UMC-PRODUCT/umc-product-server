@@ -5,9 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.adapter.out.persistence.ChallengerWorkbookJpaRepository;
-import com.umc.product.curriculum.adapter.out.persistence.CurriculumJpaRepository;
-import com.umc.product.curriculum.adapter.out.persistence.OriginalWorkbookJpaRepository;
+import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
@@ -15,15 +13,14 @@ import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.member.domain.Member;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
-import com.umc.product.support.TestChallengerRepository;
-import com.umc.product.support.TestMemberRepository;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.Instant;
-import org.junit.jupiter.api.Disabled;
+import com.umc.product.support.fixture.ChallengerFixture;
+import com.umc.product.support.fixture.CurriculumFixture;
+import com.umc.product.support.fixture.GisuFixture;
+import com.umc.product.support.fixture.MemberFixture;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,79 +31,35 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
     private ManageWorkbookUseCase manageWorkbookUseCase;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private GisuFixture gisuFixture;
+
+    @Autowired
+    private MemberFixture memberFixture;
+
+    @Autowired
+    private ChallengerFixture challengerFixture;
+
+    @Autowired
+    private CurriculumFixture curriculumFixture;
 
     @Autowired
     private ManageSchoolPort manageSchoolPort;
 
     @Autowired
-    private TestMemberRepository memberRepository;
-
-    @Autowired
-    private TestChallengerRepository challengerRepository;
-
-    @Autowired
-    private CurriculumJpaRepository curriculumJpaRepository;
-
-    @Autowired
-    private OriginalWorkbookJpaRepository originalWorkbookJpaRepository;
-
-    @Autowired
-    private ChallengerWorkbookJpaRepository challengerWorkbookJpaRepository;
+    private LoadChallengerWorkbookPort loadChallengerWorkbookPort;
 
     private ChallengerWorkbook createWorkbookWithStatus(WorkbookStatus status, MissionType missionType) {
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
-        Member member = memberRepository.save(createMember("홍길동", school.getId()));
-        Challenger challenger = challengerRepository.save(
-            new Challenger(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
-        Curriculum curriculum = curriculumJpaRepository.save(createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));
-        OriginalWorkbook originalWorkbook = originalWorkbookJpaRepository.save(
-            createWorkbook(curriculum, 1, "1주차 워크북", missionType));
-
-        return challengerWorkbookJpaRepository.save(
-            ChallengerWorkbook.builder()
-                .challengerId(challenger.getId())
-                .originalWorkbookId(originalWorkbook.getId())
-                .scheduleId(1L)
-                .status(status)
-                .build()
-        );
-    }
-
-    private Gisu createActiveGisu(Long generation) {
-        return Gisu.create(
-            generation,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-08-31T23:59:59Z"),
-            true
-        );
-    }
-
-    private Member createMember(String nickname, Long schoolId) {
-        return Member.builder()
-            .name(nickname)
-            .nickname(nickname)
-            .email(nickname + "@test.com")
-            .schoolId(schoolId)
-            .build();
+        Member member = memberFixture.학교_소속_멤버("홍길동", school.getId());
+        Challenger challenger = challengerFixture.챌린저(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
+        Curriculum curriculum = curriculumFixture.커리큘럼(gisu.getId(), ChallengerPart.SPRINGBOOT);
+        OriginalWorkbook originalWorkbook = curriculumFixture.워크북(curriculum, 1, "1주차 워크북", missionType);
+        return curriculumFixture.챌린저워크북(challenger.getId(), originalWorkbook.getId(), status);
     }
 
     private ChallengerWorkbook createWorkbookWithStatus(WorkbookStatus status) {
         return createWorkbookWithStatus(status, MissionType.LINK);
-    }
-
-    private OriginalWorkbook createWorkbook(Curriculum curriculum, int weekNo, String title, MissionType missionType) {
-        return OriginalWorkbook.create(
-            curriculum,
-            weekNo,
-            title,
-            null,
-            null,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-03-07T23:59:59Z"),
-            missionType
-        );
     }
 
     @Nested
@@ -127,7 +80,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.submit(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.SUBMITTED);
             assertThat(result.getSubmission()).isEqualTo(submission);
         }
@@ -161,7 +114,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.submit(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.SUBMITTED);
             assertThat(result.getSubmission()).isNull();
         }
@@ -214,7 +167,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.review(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.PASS);
             assertThat(result.getFeedback()).isEqualTo(feedback);
         }
@@ -235,7 +188,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.review(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.FAIL);
             assertThat(result.getFeedback()).isEqualTo(feedback);
         }
@@ -255,7 +208,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.review(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.PASS);
             assertThat(result.getFeedback()).isNull();
         }
@@ -297,14 +250,6 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
         }
     }
 
-    private Curriculum createCurriculum(Long gisuId, ChallengerPart part) {
-        return Curriculum.create(gisuId, part, "9기 " + part.name());
-    }
-
-    private OriginalWorkbook createWorkbook(Curriculum curriculum, int weekNo, String title) {
-        return createWorkbook(curriculum, weekNo, title, MissionType.LINK);
-    }
-
     @Nested
     class 베스트_워크북_선정 {
 
@@ -323,7 +268,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.selectBest(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.BEST);
             assertThat(result.getBestReason()).isEqualTo(bestReason);
         }
@@ -343,7 +288,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.selectBest(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.BEST);
             assertThat(result.getBestReason()).isEqualTo(bestReason);
         }
@@ -362,7 +307,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             manageWorkbookUseCase.selectBest(command);
 
             // then
-            ChallengerWorkbook result = challengerWorkbookJpaRepository.findById(workbook.getId()).orElseThrow();
+            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
             assertThat(result.getStatus()).isEqualTo(WorkbookStatus.BEST);
             assertThat(result.getBestReason()).isNull();
         }

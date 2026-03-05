@@ -1,6 +1,8 @@
 package com.umc.product.organization.adapter.in.web;
 
-import com.umc.product.global.security.annotation.Public;
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.organization.adapter.in.web.dto.request.AssignSchoolRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateSchoolRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.DeleteSchoolsRequest;
@@ -25,35 +27,35 @@ public class AdminSchoolController implements AdminSchoolControllerApi {
 
     private final ManageSchoolUseCase manageSchoolUseCase;
 
-    @Public
+    @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.WRITE)
     @Override
     @PostMapping
     public void createSchool(@RequestBody @Valid CreateSchoolRequest request) {
         manageSchoolUseCase.register(request.toCommand());
     }
 
-    @Public
+    @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.EDIT)
     @Override
     @PatchMapping("/{schoolId}")
     public void updateSchool(@PathVariable Long schoolId, @RequestBody @Valid UpdateSchoolRequest request) {
         manageSchoolUseCase.updateSchool(schoolId, request.toCommand());
     }
 
-    @Public
+    @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.DELETE)
     @Override
     @DeleteMapping
     public void deleteSchools(@RequestBody @Valid DeleteSchoolsRequest request) {
         manageSchoolUseCase.deleteSchools(request.schoolIds());
     }
 
-    @Public
+    @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.EDIT)
     @Override
     @PatchMapping("/{schoolId}/assign")
     public void assignToChapter(@PathVariable Long schoolId, @RequestBody @Valid AssignSchoolRequest request) {
         manageSchoolUseCase.assignToChapter(request.toCommand(schoolId));
     }
 
-    @Public
+    @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.EDIT)
     @Override
     @PatchMapping("/{schoolId}/unassign")
     public void unassignFromChapter(@PathVariable Long schoolId, @RequestBody @Valid UnassignSchoolRequest request) {
