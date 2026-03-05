@@ -66,7 +66,7 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
             .map(schedule -> {
                 AttendanceSheet sheet = sheetByScheduleId.get(schedule.getId());
                 AttendanceStats stats = calculateStats(sheet, recordsBySheetId);
-                return ScheduleWithStatsInfo.of(schedule, stats, now);
+                return ScheduleWithStatsInfo.of(schedule, sheet, stats, now);
             })
             .toList();
 

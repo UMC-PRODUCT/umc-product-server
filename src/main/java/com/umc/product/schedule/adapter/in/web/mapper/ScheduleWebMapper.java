@@ -21,6 +21,7 @@ public class ScheduleWebMapper {
             .startTime(info.startsAt())
             .endTime(info.endsAt())
             .locationName(info.locationName())
+            .sheetId(info.sheetId())
             .totalCount(info.totalCount())
             .presentCount(info.presentCount())
             .pendingCount(info.pendingCount())
