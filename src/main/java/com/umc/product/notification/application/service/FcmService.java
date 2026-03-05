@@ -49,13 +49,10 @@ public class FcmService implements ManageFcmUseCase {
     @Override
     @Transactional
     public void registerFcmToken(Long userId, FcmRegistrationRequest request) {
-        Member member = loadMemberPort.findById(userId)
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
-
         loadFcmPort.findOptionalByMemberId(userId)
             .ifPresentOrElse(
                 existingToken -> existingToken.updateToken(request.fcmToken()),
-                () -> saveFcmPort.save(FcmToken.createFCMToken(member, request.fcmToken()))
+                () -> saveFcmPort.save(FcmToken.createFCMToken(userId, request.fcmToken()))
             );
     }
 
