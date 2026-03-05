@@ -13,7 +13,6 @@ import com.umc.product.term.application.port.out.SaveTermConsentLogPort;
 import com.umc.product.term.application.port.out.SaveTermConsentPort;
 import com.umc.product.term.application.service.command.TermAgreementCommandService;
 import com.umc.product.term.domain.Term;
-import com.umc.product.term.domain.Term;
 import com.umc.product.term.domain.TermConsent;
 import com.umc.product.term.domain.TermConsentLog;
 import com.umc.product.term.domain.enums.TermConsentStatus;
