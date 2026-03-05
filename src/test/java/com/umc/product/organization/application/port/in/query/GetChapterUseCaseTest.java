@@ -6,16 +6,14 @@ import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.ChapterWithSchoolsInfo;
 import com.umc.product.organization.application.port.out.command.ManageChapterPort;
 import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.Instant;
+import com.umc.product.support.fixture.GisuFixture;
 import java.util.List;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -25,7 +23,7 @@ class GetChapterUseCaseTest extends UseCaseTestSupport {
     private GetChapterUseCase getChapterUseCase;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private GisuFixture gisuFixture;
 
     @Autowired
     private ManageChapterPort manageChapterPort;
@@ -39,8 +37,7 @@ class GetChapterUseCaseTest extends UseCaseTestSupport {
     @Test
     void 전체_지부_목록을_조회한다() {
         // given
-        Gisu gisu = createGisu(8L);
-        manageGisuPort.save(gisu);
+        Gisu gisu = gisuFixture.활성_기수(8L);
 
         manageChapterPort.save(Chapter.builder().gisu(gisu).name("서울").build());
         manageChapterPort.save(Chapter.builder().gisu(gisu).name("경기").build());
@@ -57,8 +54,8 @@ class GetChapterUseCaseTest extends UseCaseTestSupport {
     @Test
     void 기수별_지부와_소속_학교_목록을_조회한다() {
         // given
-        Gisu gisu9 = manageGisuPort.save(createGisu(9L));
-        Gisu gisu10 = manageGisuPort.save(createGisu(10L));
+        Gisu gisu9 = gisuFixture.활성_기수(9L);
+        Gisu gisu10 = gisuFixture.활성_기수(10L);
 
         Chapter scorpioChapter = manageChapterPort.save(Chapter.builder().gisu(gisu9).name("Scorpio").build());
         Chapter leoChapter = manageChapterPort.save(Chapter.builder().gisu(gisu9).name("Leo").build());
@@ -96,7 +93,7 @@ class GetChapterUseCaseTest extends UseCaseTestSupport {
     @Test
     void 학교가_없는_지부도_조회된다() {
         // given
-        Gisu gisu = manageGisuPort.save(createGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
         manageChapterPort.save(Chapter.builder().gisu(gisu).name("Leo").build());
 
@@ -106,14 +103,5 @@ class GetChapterUseCaseTest extends UseCaseTestSupport {
         // then
         assertThat(result).hasSize(2);
         assertThat(result).allMatch(c -> c.schools().isEmpty());
-    }
-
-    private Gisu createGisu(Long generation) {
-        return Gisu.create(
-            generation,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-08-31T23:59:59Z"),
-            true
-        );
     }
 }

@@ -41,11 +41,19 @@ public class MemberOAuth extends BaseEntity {
     @Column(name = "provider_id", nullable = false, length = 512)
     private String providerId;
 
+    @Column(name = "apple_refresh_token", length = 512)
+    private String appleRefreshToken;
+
     @Builder
-    private MemberOAuth(Long memberId, OAuthProvider provider, String providerId) {
+    private MemberOAuth(Long memberId, OAuthProvider provider, String providerId, String appleRefreshToken) {
         this.memberId = memberId;
         this.provider = provider;
         this.providerId = providerId;
+        this.appleRefreshToken = appleRefreshToken;
+    }
+
+    public void updateRefreshToken(String refreshToken) {
+        this.appleRefreshToken = refreshToken;
     }
 
     /**

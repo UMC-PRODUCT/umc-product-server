@@ -57,6 +57,8 @@ logging:
 
 app:
   base-url: http://localhost:8080
+  cors:
+    allowed-origin-patterns: ""
   firebase-configuration: |
     {
         "type": "service_account",

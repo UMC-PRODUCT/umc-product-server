@@ -7,6 +7,7 @@ import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthC
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
 import com.umc.product.authentication.application.port.out.LoadMemberOAuthPort;
+import com.umc.product.authentication.application.port.out.RevokeOAuthTokenPort;
 import com.umc.product.authentication.application.port.out.SaveMemberOAuthPort;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
 import com.umc.product.authentication.domain.MemberOAuth;
@@ -33,6 +34,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
     private final VerifyOAuthTokenPort verifyIdTokenPort;
     private final LoadMemberOAuthPort loadMemberOAuthPort;
     private final SaveMemberOAuthPort saveMemberOAuthPort;
+    private final RevokeOAuthTokenPort revokeOAuthTokenPort;
 
     @Override
     @Transactional(readOnly = true)
@@ -157,7 +159,7 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
 
         memberOAuth.throwIfNotValidMember(command.memberId());
 
-        if (!command.bypassValidation()) {
+        if (!command.isWithdrawal()) {
             // 회원에 연결된 OAuth 계정이 최소한 한 개는 있어야 함
             List<MemberOAuth> linkedOAuth = loadMemberOAuthPort.findAllByMemberId(command.memberId());
 
@@ -166,6 +168,47 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
             }
         }
 
+        // Provider별 토큰 revoke / 연결 해제
+        revokeProviderToken(memberOAuth, command);
+
         saveMemberOAuthPort.delete(memberOAuth);
+    }
+
+    private void revokeProviderToken(MemberOAuth memberOAuth, UnlinkOAuthCommand command) {
+        switch (memberOAuth.getProvider()) {
+            case APPLE -> {
+                if (memberOAuth.getAppleRefreshToken() != null) {
+                    revokeOAuthTokenPort.revokeAppleToken(memberOAuth.getAppleRefreshToken());
+                } else {
+                    log.warn("[Apple 계정 연동 해제] refresh token이 없어 revoke를 skip합니다: memberId={} memberOAuthId={}",
+                        memberOAuth.getMemberId(), memberOAuth.getId());
+                }
+            }
+            case KAKAO -> {
+                if (command.kakaoAccessToken() != null) {
+                    revokeOAuthTokenPort.revokeKakaoToken(command.kakaoAccessToken());
+                } else {
+                    log.warn("[Kakao 계정 연동 해제] access token이 전달되지 않아 revoke를 skip합니다: memberId={} memberOAuthId={}",
+                        memberOAuth.getMemberId(), memberOAuth.getId());
+                }
+            }
+            case GOOGLE -> {
+                if (command.googleAccessToken() != null) {
+                    revokeOAuthTokenPort.revokeGoogleToken(command.googleAccessToken());
+                } else {
+                    log.warn("[Google 계정 연동 해제] access token이 전달되지 않아 revoke를 skip합니다: memberId={} memberOAuthId={}",
+                        memberOAuth.getMemberId(), memberOAuth.getId());
+                }
+            }
+        }
+    }
+
+    @Override
+    public void updateAppleRefreshToken(OAuthProvider provider, String providerId, String refreshToken) {
+        MemberOAuth memberOAuth = loadMemberOAuthPort.findByProviderAndProviderId(provider, providerId)
+            .orElseThrow(() -> new AuthenticationDomainException(AuthenticationErrorCode.MEMBER_OAUTH_NOT_FOUND));
+
+        memberOAuth.updateRefreshToken(refreshToken);
+        saveMemberOAuthPort.save(memberOAuth);
     }
 }

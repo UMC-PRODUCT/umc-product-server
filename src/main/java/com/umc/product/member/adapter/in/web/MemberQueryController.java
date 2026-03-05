@@ -1,5 +1,8 @@
 package com.umc.product.member.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.member.adapter.in.web.dto.request.SearchMemberRequest;
@@ -27,11 +30,14 @@ public class MemberQueryController {
 
     @Operation(summary = "memberId로 회원 정보 조회")
     @GetMapping("profile/{memberId}")
+    @CheckAccess(
+        resourceType = ResourceType.MEMBER,
+        resourceId = "#memberId",
+        permission = PermissionType.READ
+    )
     MemberInfoResponse getMemberProfile(
         @PathVariable Long memberId
     ) {
-        // TODO: 총괄단만 가능하도록 권한 제한 필요
-
         return assembler.fromMemberId(memberId);
     }
 

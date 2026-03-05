@@ -1,5 +1,6 @@
 package com.umc.product.schedule.application.port.in.query.dto;
 
+import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.vo.AttendanceStats;
 import java.time.Instant;
@@ -14,6 +15,8 @@ public record ScheduleWithStatsInfo(
     Instant startsAt,
     Instant endsAt,
     String locationName,
+    // === AttendanceSheet Info ===
+    Long sheetId,
     // === Attendance Stats ===
     Integer totalCount,
     Integer presentCount,
@@ -23,7 +26,7 @@ public record ScheduleWithStatsInfo(
     /**
      * Schedule 엔티티와 통계 수치를 받아 Info DTO 생성
      */
-    public static ScheduleWithStatsInfo of(Schedule schedule, AttendanceStats stats, Instant now) {
+    public static ScheduleWithStatsInfo of(Schedule schedule, AttendanceSheet sheet, AttendanceStats stats, Instant now) {
         return new ScheduleWithStatsInfo(
             schedule.getId(),
             schedule.getName(),
@@ -32,6 +35,7 @@ public record ScheduleWithStatsInfo(
             schedule.getStartsAt(),
             schedule.getEndsAt(),
             schedule.getLocationName(),
+            sheet != null ? sheet.getId() : null,
             stats.totalCount(),
             stats.presentCount(),
             stats.pendingCount(),

@@ -14,7 +14,6 @@ import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCo
 import com.umc.product.organization.application.port.in.query.dto.UnassignedSchoolInfo;
 import com.umc.product.organization.application.port.out.command.ManageChapterPort;
 import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
@@ -25,7 +24,7 @@ import com.umc.product.storage.domain.FileMetadata;
 import com.umc.product.storage.domain.enums.FileCategory;
 import com.umc.product.storage.domain.enums.StorageProvider;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.Instant;
+import com.umc.product.support.fixture.GisuFixture;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,7 +40,7 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
     private ManageSchoolPort manageSchoolPort;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private GisuFixture gisuFixture;
 
     @Autowired
     private ManageChapterPort manageChapterPort;
@@ -97,7 +96,7 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 지부로_학교를_필터링한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createGisu(8L));
+        Gisu gisu = gisuFixture.활성_기수(8L);
         Chapter leoChapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Leo").build());
         Chapter scorpioChapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
 
@@ -184,7 +183,7 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 활성_기수에_속한_학교는_isActive가_true다() {
         // given
-        Gisu gisu = manageGisuPort.save(createGisu(8L));
+        Gisu gisu = gisuFixture.활성_기수(8L);
         Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Ain").build());
 
         School activeSchool = School.create("한성대", "비고1");
@@ -221,7 +220,7 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void keyword와_chapterId를_함께_사용하여_학교를_검색한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createGisu(8L));
+        Gisu gisu = gisuFixture.활성_기수(8L);
         Chapter scorpioChapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
 
         School school1 = School.create("한성대", "비고1");
@@ -249,7 +248,7 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 배정_대기_중인_학교_목록을_조회한다() {
         // given
-        Gisu gisu9 = manageGisuPort.save(createGisu(9L));
+        Gisu gisu9 = gisuFixture.활성_기수(9L);
         Chapter scorpioChapter = manageChapterPort.save(Chapter.builder().gisu(gisu9).name("Scorpio").build());
 
         School assignedSchool = manageSchoolPort.save(School.create("한성대", null));
@@ -270,8 +269,8 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 다른_기수에_배정된_학교는_배정_대기로_조회된다() {
         // given
-        Gisu gisu9 = manageGisuPort.save(createGisu(9L));
-        Gisu gisu10 = manageGisuPort.save(createGisu(10L));
+        Gisu gisu9 = gisuFixture.활성_기수(9L);
+        Gisu gisu10 = gisuFixture.활성_기수(10L);
 
         Chapter chapter9 = manageChapterPort.save(Chapter.builder().gisu(gisu9).name("Scorpio").build());
         Chapter chapter10 = manageChapterPort.save(Chapter.builder().gisu(gisu10).name("Leo").build());
@@ -294,7 +293,7 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 모든_학교가_배정되어_있으면_빈_목록을_반환한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
 
         School school = manageSchoolPort.save(School.create("한성대", null));
@@ -310,7 +309,7 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 학교_상세를_조회한다_활성_기수_지부_정보를_포함한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createGisu(8L));
+        Gisu gisu = gisuFixture.활성_기수(8L);
         Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Ain").build());
 
         School school = School.create("중앙대", "비고");
@@ -333,7 +332,7 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 비활성_기수_지부는_상세_조회에서_null로_반환된다() {
         // given
-        Gisu inactiveGisu = manageGisuPort.save(createGisu(7L, false));
+        Gisu inactiveGisu = gisuFixture.비활성_기수(7L);
         Chapter inactiveChapter = manageChapterPort.save(
                 Chapter.builder().gisu(inactiveGisu).name("Scorpio").build()
         );
@@ -487,23 +486,5 @@ class GetSchoolUseCaseTest extends UseCaseTestSupport {
                 .build();
 
         return saveFileMetadataPort.save(metadata);
-    }
-
-    private Gisu createGisu(Long generation) {
-        return Gisu.create(
-                generation,
-                Instant.parse("2024-03-01T00:00:00Z"),
-                Instant.parse("2024-08-31T23:59:59Z"),
-                true
-        );
-    }
-
-    private Gisu createGisu(Long generation, boolean isActive) {
-        return Gisu.create(
-                generation,
-                Instant.parse("2024-03-01T00:00:00Z"),
-                Instant.parse("2024-08-31T23:59:59Z"),
-                isActive
-        );
     }
 }

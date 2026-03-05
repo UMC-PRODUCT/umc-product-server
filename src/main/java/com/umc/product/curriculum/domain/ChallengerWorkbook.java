@@ -50,13 +50,22 @@ public class ChallengerWorkbook extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String submission;
 
-    @Builder
+    @Builder(access =  AccessLevel.PRIVATE)
     private ChallengerWorkbook(Long challengerId, Long originalWorkbookId, Long scheduleId,
                                WorkbookStatus status) {
         this.challengerId = challengerId;
         this.originalWorkbookId = originalWorkbookId;
         this.scheduleId = scheduleId;
         this.status = status != null ? status : WorkbookStatus.PENDING;
+    }
+
+    public static ChallengerWorkbook create(Long challengerId, Long originalWorkbookId, WorkbookStatus status, Long scheduleId) {
+        return ChallengerWorkbook.builder()
+            .challengerId(challengerId)
+            .originalWorkbookId(originalWorkbookId)
+            .scheduleId(scheduleId)
+            .status(status)
+            .build();
     }
 
     /**

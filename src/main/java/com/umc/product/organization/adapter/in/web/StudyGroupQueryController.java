@@ -1,5 +1,8 @@
 package com.umc.product.organization.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -83,6 +86,7 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     /**
      * 스터디 그룹 상세 조회
      */
+    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.READ)
     @Override
     @GetMapping("/{groupId}")
     public StudyGroupResponse getStudyGroupDetail(@PathVariable Long groupId) {
