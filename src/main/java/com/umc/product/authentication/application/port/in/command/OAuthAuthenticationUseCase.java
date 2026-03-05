@@ -5,6 +5,7 @@ import com.umc.product.authentication.application.port.in.command.dto.AccessToke
 import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
+import com.umc.product.common.domain.enums.OAuthProvider;
 import java.util.List;
 
 public interface OAuthAuthenticationUseCase {
@@ -32,4 +33,9 @@ public interface OAuthAuthenticationUseCase {
      * member에 연동된 OAuth 계정을 해제합니다.
      */
     void unlinkOAuth(UnlinkOAuthCommand command);
+
+    /**
+     * Apple OAuth의 refresh token을 업데이트합니다.
+     */
+    void updateAppleRefreshToken(OAuthProvider provider, String providerId, String refreshToken);
 }

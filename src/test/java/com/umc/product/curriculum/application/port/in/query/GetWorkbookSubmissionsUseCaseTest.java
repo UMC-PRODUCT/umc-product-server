@@ -3,14 +3,8 @@ package com.umc.product.curriculum.application.port.in.query;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.umc.product.authorization.adapter.out.persistence.ChallengerRoleJpaRepository;
-import com.umc.product.authorization.domain.ChallengerRole;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.curriculum.adapter.out.persistence.ChallengerWorkbookJpaRepository;
-import com.umc.product.curriculum.adapter.out.persistence.CurriculumJpaRepository;
-import com.umc.product.curriculum.adapter.out.persistence.OriginalWorkbookJpaRepository;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
 import com.umc.product.curriculum.application.port.in.query.dto.StudyGroupFilterInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionDetailInfo;
@@ -18,22 +12,22 @@ import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissi
 import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
-import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.member.domain.Member;
 import com.umc.product.organization.application.port.in.query.GetSchoolAccessContextUseCase;
 import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
-import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
 import com.umc.product.organization.domain.StudyGroup;
-import com.umc.product.support.TestChallengerRepository;
-import com.umc.product.support.TestMemberRepository;
 import com.umc.product.support.UseCaseTestSupport;
-import java.time.Instant;
+import com.umc.product.support.fixture.ChallengerFixture;
+import com.umc.product.support.fixture.ChallengerRoleFixture;
+import com.umc.product.support.fixture.CurriculumFixture;
+import com.umc.product.support.fixture.GisuFixture;
+import com.umc.product.support.fixture.MemberFixture;
+import com.umc.product.support.fixture.StudyGroupFixture;
 import java.util.List;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -51,47 +45,39 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     private GetStudyGroupsForFilterUseCase getStudyGroupsForFilterUseCase;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private GisuFixture gisuFixture;
+
+    @Autowired
+    private MemberFixture memberFixture;
+
+    @Autowired
+    private ChallengerFixture challengerFixture;
+
+    @Autowired
+    private CurriculumFixture curriculumFixture;
+
+    @Autowired
+    private ChallengerRoleFixture challengerRoleFixture;
+
+    @Autowired
+    private StudyGroupFixture studyGroupFixture;
 
     @Autowired
     private ManageSchoolPort manageSchoolPort;
 
-    @Autowired
-    private ManageStudyGroupPort manageStudyGroupPort;
-
-    @Autowired
-    private TestMemberRepository memberRepository;
-
-    @Autowired
-    private TestChallengerRepository challengerRepository;
-
-    @Autowired
-    private ChallengerRoleJpaRepository challengerRoleJpaRepository;
-
-    @Autowired
-    private CurriculumJpaRepository curriculumJpaRepository;
-
-    @Autowired
-    private OriginalWorkbookJpaRepository originalWorkbookJpaRepository;
-
-    @Autowired
-    private ChallengerWorkbookJpaRepository challengerWorkbookJpaRepository;
-
     @Test
     void 주차별_워크북_제출_현황을_조회한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
-        Member member = memberRepository.save(createMember("홍길동", school.getId()));
-        Challenger challenger = challengerRepository.save(
-            new Challenger(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
+        Member member = memberFixture.학교_소속_멤버("홍길동", school.getId());
+        Challenger challenger = challengerFixture.챌린저(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
 
-        Curriculum curriculum = curriculumJpaRepository.save(createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));
-        OriginalWorkbook workbook = originalWorkbookJpaRepository.save(createWorkbook(curriculum, 1, "1주차 워크북"));
+        Curriculum curriculum = curriculumFixture.커리큘럼(gisu.getId(), ChallengerPart.SPRINGBOOT);
+        OriginalWorkbook workbook = curriculumFixture.워크북(curriculum, 1, "1주차 워크북");
 
-        challengerWorkbookJpaRepository.save(
-            createChallengerWorkbook(challenger.getId(), workbook.getId(), WorkbookStatus.SUBMITTED));
+        curriculumFixture.챌린저워크북(challenger.getId(), workbook.getId(), WorkbookStatus.SUBMITTED);
 
         // when
         GetWorkbookSubmissionsQuery query = new GetWorkbookSubmissionsQuery(null, 1, null, null, null, 20);
@@ -107,25 +93,21 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 학교_필터링으로_조회한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school1 = manageSchoolPort.save(School.create("서울대학교", "비고"));
         School school2 = manageSchoolPort.save(School.create("연세대학교", "비고"));
 
-        Member member1 = memberRepository.save(createMember("서울대생", school1.getId()));
-        Member member2 = memberRepository.save(createMember("연세대생", school2.getId()));
+        Member member1 = memberFixture.학교_소속_멤버("서울대생", school1.getId());
+        Member member2 = memberFixture.학교_소속_멤버("연세대생", school2.getId());
 
-        Challenger challenger1 = challengerRepository.save(
-            new Challenger(member1.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
-        Challenger challenger2 = challengerRepository.save(
-            new Challenger(member2.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
+        Challenger challenger1 = challengerFixture.챌린저(member1.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
+        Challenger challenger2 = challengerFixture.챌린저(member2.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
 
-        Curriculum curriculum = curriculumJpaRepository.save(createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));
-        OriginalWorkbook workbook = originalWorkbookJpaRepository.save(createWorkbook(curriculum, 1, "1주차 워크북"));
+        Curriculum curriculum = curriculumFixture.커리큘럼(gisu.getId(), ChallengerPart.SPRINGBOOT);
+        OriginalWorkbook workbook = curriculumFixture.워크북(curriculum, 1, "1주차 워크북");
 
-        challengerWorkbookJpaRepository.save(
-            createChallengerWorkbook(challenger1.getId(), workbook.getId(), WorkbookStatus.SUBMITTED));
-        challengerWorkbookJpaRepository.save(
-            createChallengerWorkbook(challenger2.getId(), workbook.getId(), WorkbookStatus.SUBMITTED));
+        curriculumFixture.챌린저워크북(challenger1.getId(), workbook.getId(), WorkbookStatus.SUBMITTED);
+        curriculumFixture.챌린저워크북(challenger2.getId(), workbook.getId(), WorkbookStatus.SUBMITTED);
 
         // when
         GetWorkbookSubmissionsQuery query = new GetWorkbookSubmissionsQuery(school1.getId(), 1, null, null, null, 20);
@@ -139,35 +121,25 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 스터디_그룹_필터링으로_조회한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
-        Member member1 = memberRepository.save(createMember("그룹원1", school.getId()));
-        Member member2 = memberRepository.save(createMember("그룹원2", school.getId()));
-        Member member3 = memberRepository.save(createMember("비그룹원", school.getId()));
+        Member member1 = memberFixture.학교_소속_멤버("그룹원1", school.getId());
+        Member member2 = memberFixture.학교_소속_멤버("그룹원2", school.getId());
+        Member member3 = memberFixture.학교_소속_멤버("비그룹원", school.getId());
 
-        Challenger challenger1 = challengerRepository.save(
-            new Challenger(member1.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
-        Challenger challenger2 = challengerRepository.save(
-            new Challenger(member2.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
-        Challenger challenger3 = challengerRepository.save(
-            new Challenger(member3.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
+        Challenger challenger1 = challengerFixture.챌린저(member1.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
+        Challenger challenger2 = challengerFixture.챌린저(member2.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
+        Challenger challenger3 = challengerFixture.챌린저(member3.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
 
-        StudyGroup studyGroup = manageStudyGroupPort.save(
-            createStudyGroup("스프링 1조", gisu, ChallengerPart.SPRINGBOOT));
-        studyGroup.addLeader(challenger1.getId());
-        studyGroup.addMember(challenger2.getId());
-        manageStudyGroupPort.save(studyGroup);
+        StudyGroup studyGroup = studyGroupFixture.스터디그룹("스프링 1조", gisu, ChallengerPart.SPRINGBOOT, challenger1.getId(), challenger2.getId());
 
-        Curriculum curriculum = curriculumJpaRepository.save(createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));
-        OriginalWorkbook workbook = originalWorkbookJpaRepository.save(createWorkbook(curriculum, 1, "1주차 워크북"));
+        Curriculum curriculum = curriculumFixture.커리큘럼(gisu.getId(), ChallengerPart.SPRINGBOOT);
+        OriginalWorkbook workbook = curriculumFixture.워크북(curriculum, 1, "1주차 워크북");
 
-        challengerWorkbookJpaRepository.save(
-            createChallengerWorkbook(challenger1.getId(), workbook.getId(), WorkbookStatus.SUBMITTED));
-        challengerWorkbookJpaRepository.save(
-            createChallengerWorkbook(challenger2.getId(), workbook.getId(), WorkbookStatus.SUBMITTED));
-        challengerWorkbookJpaRepository.save(
-            createChallengerWorkbook(challenger3.getId(), workbook.getId(), WorkbookStatus.SUBMITTED));
+        curriculumFixture.챌린저워크북(challenger1.getId(), workbook.getId(), WorkbookStatus.SUBMITTED);
+        curriculumFixture.챌린저워크북(challenger2.getId(), workbook.getId(), WorkbookStatus.SUBMITTED);
+        curriculumFixture.챌린저워크북(challenger3.getId(), workbook.getId(), WorkbookStatus.SUBMITTED);
 
         // when
         GetWorkbookSubmissionsQuery query = new GetWorkbookSubmissionsQuery(null, 1, studyGroup.getId(), null, null,
@@ -181,19 +153,17 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 커서_기반_페이지네이션으로_조회한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
-        Curriculum curriculum = curriculumJpaRepository.save(createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));
-        OriginalWorkbook workbook = originalWorkbookJpaRepository.save(createWorkbook(curriculum, 1, "1주차 워크북"));
+        Curriculum curriculum = curriculumFixture.커리큘럼(gisu.getId(), ChallengerPart.SPRINGBOOT);
+        OriginalWorkbook workbook = curriculumFixture.워크북(curriculum, 1, "1주차 워크북");
 
         // 5명의 챌린저 생성
         for (int i = 1; i <= 5; i++) {
-            Member member = memberRepository.save(createMember("챌린저" + i, school.getId()));
-            Challenger challenger = challengerRepository.save(
-                new Challenger(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
-            challengerWorkbookJpaRepository.save(
-                createChallengerWorkbook(challenger.getId(), workbook.getId(), WorkbookStatus.SUBMITTED));
+            Member member = memberFixture.학교_소속_멤버("챌린저" + i, school.getId());
+            Challenger challenger = challengerFixture.챌린저(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
+            curriculumFixture.챌린저워크북(challenger.getId(), workbook.getId(), WorkbookStatus.SUBMITTED);
         }
 
         // when - 첫 페이지 (size=2)
@@ -215,33 +185,20 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 필터용_스터디_그룹_목록을_조회한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
-        // 멤버와 챌린저 생성 (schoolId 기반 필터링을 위해 필요)
-        Member member1 = memberRepository.save(createMember("멤버1", school.getId()));
-        Member member2 = memberRepository.save(createMember("멤버2", school.getId()));
-        Member member3 = memberRepository.save(createMember("멤버3", school.getId()));
+        Member member1 = memberFixture.학교_소속_멤버("멤버1", school.getId());
+        Member member2 = memberFixture.학교_소속_멤버("멤버2", school.getId());
+        Member member3 = memberFixture.학교_소속_멤버("멤버3", school.getId());
 
-        Challenger challenger1 = challengerRepository.save(
-            new Challenger(member1.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
-        Challenger challenger2 = challengerRepository.save(
-            new Challenger(member2.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
-        Challenger challenger3 = challengerRepository.save(
-            new Challenger(member3.getId(), ChallengerPart.WEB, gisu.getId()));
+        Challenger challenger1 = challengerFixture.챌린저(member1.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
+        Challenger challenger2 = challengerFixture.챌린저(member2.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
+        Challenger challenger3 = challengerFixture.챌린저(member3.getId(), ChallengerPart.WEB, gisu.getId());
 
-        // 스터디 그룹 생성 및 멤버 추가
-        StudyGroup springGroup1 = createStudyGroup("스프링 1조", gisu, ChallengerPart.SPRINGBOOT);
-        springGroup1.addMember(challenger1.getId());
-        manageStudyGroupPort.save(springGroup1);
-
-        StudyGroup springGroup2 = createStudyGroup("스프링 2조", gisu, ChallengerPart.SPRINGBOOT);
-        springGroup2.addMember(challenger2.getId());
-        manageStudyGroupPort.save(springGroup2);
-
-        StudyGroup webGroup = createStudyGroup("웹 1조", gisu, ChallengerPart.WEB);
-        webGroup.addMember(challenger3.getId());
-        manageStudyGroupPort.save(webGroup);
+        studyGroupFixture.스터디그룹("스프링 1조", gisu, ChallengerPart.SPRINGBOOT, challenger1.getId());
+        studyGroupFixture.스터디그룹("스프링 2조", gisu, ChallengerPart.SPRINGBOOT, challenger2.getId());
+        studyGroupFixture.스터디그룹("웹 1조", gisu, ChallengerPart.WEB, challenger3.getId());
 
         // when
         List<StudyGroupFilterInfo> result = getStudyGroupsForFilterUseCase.getStudyGroupsForFilter(
@@ -266,20 +223,17 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 챌린저_워크북의_제출_URL을_조회한다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
-        Member member = memberRepository.save(createMember("홍길동", school.getId()));
-        Challenger challenger = challengerRepository.save(
-            new Challenger(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
+        Member member = memberFixture.학교_소속_멤버("홍길동", school.getId());
+        Challenger challenger = challengerFixture.챌린저(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
 
-        Curriculum curriculum = curriculumJpaRepository.save(createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));
-        OriginalWorkbook workbook = originalWorkbookJpaRepository.save(createWorkbook(curriculum, 1, "1주차 워크북"));
+        Curriculum curriculum = curriculumFixture.커리큘럼(gisu.getId(), ChallengerPart.SPRINGBOOT);
+        OriginalWorkbook workbook = curriculumFixture.워크북(curriculum, 1, "1주차 워크북");
 
-        ChallengerWorkbook challengerWorkbook = challengerWorkbookJpaRepository.save(
-            createChallengerWorkbook(challenger.getId(), workbook.getId(), WorkbookStatus.PENDING));
-        challengerWorkbook.submit("https://github.com/user/repo");
-        challengerWorkbookJpaRepository.save(challengerWorkbook);
+        ChallengerWorkbook challengerWorkbook = curriculumFixture.제출된_챌린저워크북(
+            challenger.getId(), workbook.getId(), "https://github.com/user/repo");
 
         // when
         WorkbookSubmissionDetailInfo result = getWorkbookSubmissionsUseCase.getSubmissionDetail(
@@ -293,18 +247,17 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 미제출_워크북의_제출_URL은_null이다() {
         // given
-        Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+        Gisu gisu = gisuFixture.활성_기수(9L);
         School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
-        Member member = memberRepository.save(createMember("홍길동", school.getId()));
-        Challenger challenger = challengerRepository.save(
-            new Challenger(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
+        Member member = memberFixture.학교_소속_멤버("홍길동", school.getId());
+        Challenger challenger = challengerFixture.챌린저(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
 
-        Curriculum curriculum = curriculumJpaRepository.save(createCurriculum(gisu.getId(), ChallengerPart.SPRINGBOOT));
-        OriginalWorkbook workbook = originalWorkbookJpaRepository.save(createWorkbook(curriculum, 1, "1주차 워크북"));
+        Curriculum curriculum = curriculumFixture.커리큘럼(gisu.getId(), ChallengerPart.SPRINGBOOT);
+        OriginalWorkbook workbook = curriculumFixture.워크북(curriculum, 1, "1주차 워크북");
 
-        ChallengerWorkbook challengerWorkbook = challengerWorkbookJpaRepository.save(
-            createChallengerWorkbook(challenger.getId(), workbook.getId(), WorkbookStatus.PENDING));
+        ChallengerWorkbook challengerWorkbook = curriculumFixture.챌린저워크북(
+            challenger.getId(), workbook.getId(), WorkbookStatus.PENDING);
 
         // when
         WorkbookSubmissionDetailInfo result = getWorkbookSubmissionsUseCase.getSubmissionDetail(
@@ -315,66 +268,19 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         assertThat(result.submission()).isNull();
     }
 
-    private Gisu createActiveGisu(Long generation) {
-        return Gisu.create(
-            generation,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-08-31T23:59:59Z"),
-            true
-        );
-    }
-
-    private Member createMember(String nickname, Long schoolId) {
-        return Member.builder()
-            .name(nickname)
-            .nickname(nickname)
-            .email(nickname + "@test.com")
-            .schoolId(schoolId)
-            .build();
-    }
-
-    private OriginalWorkbook createWorkbook(Curriculum curriculum, int weekNo, String title) {
-        return OriginalWorkbook.create(
-            curriculum,
-            weekNo,
-            title,
-            null,
-            null,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-03-07T23:59:59Z"),
-            MissionType.LINK
-        );
-    }
-
-    private Curriculum createCurriculum(Long gisuId, ChallengerPart part) {
-        return Curriculum.create(gisuId, part, "9기 " + part.name());
-    }
-
-    private ChallengerWorkbook createChallengerWorkbook(Long challengerId, Long workbookId, WorkbookStatus status) {
-        return ChallengerWorkbook.builder()
-            .challengerId(challengerId)
-            .originalWorkbookId(workbookId)
-            .scheduleId(1L)
-            .status(status)
-            .build();
-    }
-
     @Nested
     class 권한별_컨텍스트_조회 {
 
         @Test
         void 회장은_모든_파트를_조회할_수_있다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
             School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
-            Member member = memberRepository.save(createMember("회장", school.getId()));
-            Challenger challenger = challengerRepository.save(
-                new Challenger(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
+            Member member = memberFixture.학교_소속_멤버("회장", school.getId());
+            Challenger challenger = challengerFixture.챌린저(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
 
-            challengerRoleJpaRepository.save(ChallengerRole.create(
-                challenger.getId(), ChallengerRoleType.SCHOOL_PRESIDENT,
-                school.getId(), null, gisu.getId()));
+            challengerRoleFixture.학교_회장(challenger.getId(), school.getId(), gisu.getId());
 
             // when
             SchoolAccessContext context = getSchoolAccessContextUseCase.getContext(member.getId());
@@ -387,16 +293,13 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         @Test
         void 부회장은_모든_파트를_조회할_수_있다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
             School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
-            Member member = memberRepository.save(createMember("부회장", school.getId()));
-            Challenger challenger = challengerRepository.save(
-                new Challenger(member.getId(), ChallengerPart.WEB, gisu.getId()));
+            Member member = memberFixture.학교_소속_멤버("부회장", school.getId());
+            Challenger challenger = challengerFixture.챌린저(member.getId(), ChallengerPart.WEB, gisu.getId());
 
-            challengerRoleJpaRepository.save(ChallengerRole.create(
-                challenger.getId(), ChallengerRoleType.SCHOOL_VICE_PRESIDENT,
-                school.getId(), null, gisu.getId()));
+            challengerRoleFixture.학교_부회장(challenger.getId(), school.getId(), gisu.getId());
 
             // when
             SchoolAccessContext context = getSchoolAccessContextUseCase.getContext(member.getId());
@@ -409,16 +312,13 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         @Test
         void 파트장은_담당_파트만_조회할_수_있다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
             School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
-            Member member = memberRepository.save(createMember("스프링파트장", school.getId()));
-            Challenger challenger = challengerRepository.save(
-                new Challenger(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
+            Member member = memberFixture.학교_소속_멤버("스프링파트장", school.getId());
+            Challenger challenger = challengerFixture.챌린저(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
 
-            challengerRoleJpaRepository.save(ChallengerRole.create(
-                challenger.getId(), ChallengerRoleType.SCHOOL_PART_LEADER,
-                school.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
+            challengerRoleFixture.학교_파트장(challenger.getId(), ChallengerPart.SPRINGBOOT, school.getId(), gisu.getId());
 
             // when
             SchoolAccessContext context = getSchoolAccessContextUseCase.getContext(member.getId());
@@ -431,16 +331,13 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         @Test
         void 기타_교내_운영진은_담당_파트만_조회할_수_있다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
             School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
-            Member member = memberRepository.save(createMember("운영진", school.getId()));
-            Challenger challenger = challengerRepository.save(
-                new Challenger(member.getId(), ChallengerPart.WEB, gisu.getId()));
+            Member member = memberFixture.학교_소속_멤버("운영진", school.getId());
+            Challenger challenger = challengerFixture.챌린저(member.getId(), ChallengerPart.WEB, gisu.getId());
 
-            challengerRoleJpaRepository.save(ChallengerRole.create(
-                challenger.getId(), ChallengerRoleType.SCHOOL_ETC_ADMIN,
-                school.getId(), ChallengerPart.WEB, gisu.getId()));
+            challengerRoleFixture.학교_운영진(challenger.getId(), ChallengerPart.WEB, school.getId(), gisu.getId());
 
             // when
             SchoolAccessContext context = getSchoolAccessContextUseCase.getContext(member.getId());
@@ -453,20 +350,15 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         @Test
         void 학교_운영진_역할이_없으면_예외가_발생한다() {
             // given
-            Gisu gisu = manageGisuPort.save(createActiveGisu(9L));
+            Gisu gisu = gisuFixture.활성_기수(9L);
             School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
 
-            Member member = memberRepository.save(createMember("일반챌린저", school.getId()));
-            challengerRepository.save(
-                new Challenger(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId()));
+            Member member = memberFixture.학교_소속_멤버("일반챌린저", school.getId());
+            challengerFixture.챌린저(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
 
             // when & then
             assertThatThrownBy(() -> getSchoolAccessContextUseCase.getContext(member.getId()))
                 .isInstanceOf(BusinessException.class);
         }
-    }
-
-    private StudyGroup createStudyGroup(String name, Gisu gisu, ChallengerPart part) {
-        return StudyGroup.create(name, gisu, part);
     }
 }

@@ -29,7 +29,6 @@ public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi
     private final GetSchoolUseCase getSchoolUseCase;
     private final GetFileUseCase getFileUseCase;
 
-    @Public
     @Override
     @GetMapping
     @Deprecated(since = "0.3.0", forRemoval = true)

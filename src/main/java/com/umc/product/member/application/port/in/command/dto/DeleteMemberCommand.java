@@ -4,6 +4,8 @@ import lombok.Builder;
 
 @Builder
 public record DeleteMemberCommand(
-    Long memberId
+    Long memberId,
+    String googleAccessToken,
+    String kakaoAccessToken
 ) {
 }

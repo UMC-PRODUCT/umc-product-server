@@ -41,6 +41,9 @@ public record RegisterMemberRequest(
     @NotNull(message = "약관 동의 목록은 필수입니다")
     @Size(min = 1, message = "최소 1개 이상의 약관 동의 정보가 필요합니다")
     @Valid
-    List<TermConsentStatus> termsAgreements
+    List<TermConsentStatus> termsAgreements,
+
+    @Schema(description = "Apple OAuth refresh token (Apple 로그인 회원가입 시 전달)")
+    String appleRefreshToken
 ) {
 }

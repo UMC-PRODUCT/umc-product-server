@@ -8,8 +8,12 @@ import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -23,8 +27,12 @@ import org.springframework.web.client.RestClient;
 public class KakaoTokenVerifier {
 
     private static final String KAKAO_USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
+    private static final String KAKAO_UNLINK_URL = "https://kapi.kakao.com/v1/user/unlink";
 
     private final RestClient restClient;
+
+    @Value("${app.oauth2.kakao.admin-key:}")
+    private String kakaoAdminKey;
 
     /**
      * Kakao Access Token을 검증하고 OAuth2Attributes로 변환합니다.
@@ -96,6 +104,77 @@ public class KakaoTokenVerifier {
         }
 
         return attributes;
+    }
+
+    /**
+     * Kakao Access Token을 사용하여 앱과 사용자의 연결을 해제합니다.
+     *
+     * @param accessToken Kakao Access Token
+     * @see <a href="https://developers.kakao.com/docs/latest/ko/kakaologin/rest-api#unlink">Kakao 연결 끊기</a>
+     */
+    public void unlinkUser(String accessToken) {
+        log.info("Kakao 사용자 연결 끊기 시작");
+
+        try {
+            restClient.post()
+                .uri(KAKAO_UNLINK_URL)
+                .header("Authorization", "Bearer " + accessToken)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    log.error("Kakao 연결 끊기 실패: status={}", res.getStatusCode());
+                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+                })
+                .toBodilessEntity();
+
+            log.info("Kakao 연결 끊기 성공");
+
+        } catch (AuthenticationDomainException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Kakao 연결 끊기 중 오류 발생", e);
+            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+        }
+    }
+
+    /**
+     * Kakao Admin API를 사용하여 앱과 사용자의 연결을 해제합니다.
+     *
+     * @param kakaoUserId Kakao 사용자 고유 ID (providerId)
+     * @see <a href="https://developers.kakao.com/docs/latest/ko/kakaologin/rest-api#unlink">Kakao 연결 끊기</a>
+     */
+    public void unlinkUserByAdmin(String kakaoUserId) {
+        log.info("Kakao 사용자 연결 끊기 시작: kakaoUserId={}", kakaoUserId);
+
+        if (kakaoAdminKey == null || kakaoAdminKey.isBlank()) {
+            log.warn("Kakao Admin Key가 설정되지 않아 연결 끊기를 skip합니다: kakaoUserId={}", kakaoUserId);
+            return;
+        }
+
+        try {
+            MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+            formData.add("target_id_type", "user_id");
+            formData.add("target_id", kakaoUserId);
+
+            restClient.post()
+                .uri(KAKAO_UNLINK_URL)
+                .header("Authorization", "KakaoAK " + kakaoAdminKey)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(formData)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    log.error("Kakao 연결 끊기 실패: status={}, kakaoUserId={}", res.getStatusCode(), kakaoUserId);
+                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+                })
+                .toBodilessEntity();
+
+            log.info("Kakao 연결 끊기 성공: kakaoUserId={}", kakaoUserId);
+
+        } catch (AuthenticationDomainException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Kakao 연결 끊기 중 오류 발생: kakaoUserId={}", kakaoUserId, e);
+            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+        }
     }
 
     // ===== Response DTOs =====

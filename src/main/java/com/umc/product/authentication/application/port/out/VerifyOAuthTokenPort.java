@@ -26,5 +26,5 @@ public interface VerifyOAuthTokenPort {
      * @return OAuth2Attributes
      * @throws com.umc.product.authentication.domain.exception.AuthenticationDomainException 코드 교환 또는 토큰 검증 실패 시
      */
-    OAuth2Attributes verifyAppleAuthorizationCode(String authorizationCode);
+    AppleAuthorizationCodeResult verifyAppleAuthorizationCode(String authorizationCode);
 }

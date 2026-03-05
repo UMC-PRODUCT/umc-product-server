@@ -9,7 +9,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 /**
@@ -23,6 +26,7 @@ import org.springframework.web.client.RestClient;
 public class GoogleTokenVerifier {
 
     private static final String GOOGLE_TOKEN_INFO_URL = "https://oauth2.googleapis.com/tokeninfo";
+    private static final String GOOGLE_REVOKE_URL = "https://oauth2.googleapis.com/revoke";
 
     private final RestClient restClient;
 
@@ -117,6 +121,40 @@ public class GoogleTokenVerifier {
             throw e;
         } catch (Exception e) {
             log.error("Google Access Token 검증 중 오류 발생", e);
+            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+        }
+    }
+
+    /**
+     * Google OAuth 토큰을 revoke합니다.
+     *
+     * @param token revoke할 토큰 (access token 또는 refresh token)
+     * @see <a href="https://developers.google.com/identity/protocols/oauth2/web-server#tokenrevoke">Google Token Revoke</a>
+     */
+    public void revokeToken(String token) {
+        log.info("Google token revoke 시작");
+
+        try {
+            MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+            formData.add("token", token);
+
+            restClient.post()
+                .uri(GOOGLE_REVOKE_URL)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(formData)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    log.error("Google token revoke 실패: status={}", res.getStatusCode());
+                    throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+                })
+                .toBodilessEntity();
+
+            log.info("Google token revoke 성공");
+
+        } catch (AuthenticationDomainException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Google token revoke 중 오류 발생", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
     }
