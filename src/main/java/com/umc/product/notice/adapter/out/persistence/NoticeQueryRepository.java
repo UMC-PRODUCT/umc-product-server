@@ -258,11 +258,13 @@ public class NoticeQueryRepository {
     }
 
     private BooleanExpression targetPartContains(QNoticeTarget target, ChallengerPart part) {
-        return Expressions.booleanTemplate(
-            "{0} = ANY({1})",
-            Expressions.constant(part.name()),
-            target.targetChallengerPart
-        );
+        // HQL 파서가 = ANY(collection) 를 서브쿼리 한정자로 오해하므로
+        // array_position 으로 대체 (NULL이면 미포함, 양수면 포함)
+        return Expressions.numberTemplate(Integer.class,
+            "coalesce(array_position({0}, {1}), 0)",
+            target.targetChallengerPart,
+            Expressions.constant(part.name())
+        ).gt(0);
     }
 
     /**
