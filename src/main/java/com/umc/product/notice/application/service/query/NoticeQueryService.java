@@ -66,7 +66,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
     @Override
     public Page<NoticeSummary> getAllNoticeSummaries(Long memberId, NoticeClassification info, Pageable pageable) {
         Set<ChallengerPart> memberParts = resolveMemberParts(memberId, info.gisuId());
-        Page<Notice> notices = loadNoticePort.findNoticesByClassification(info, memberParts, pageable);
+        NoticeClassification enriched = enrichClassificationWithPart(memberId, info);
+        Page<Notice> notices = loadNoticePort.findNoticesByClassification(enriched, memberParts, pageable);
         return toNoticeSummaryPage(notices);
     }
 
@@ -74,7 +75,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
     public Page<NoticeSummary> searchNoticesByKeyword(Long memberId, String keyword, NoticeClassification classification,
                                                       Pageable pageable) {
         Set<ChallengerPart> memberParts = resolveMemberParts(memberId, classification.gisuId());
-        Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, classification, memberParts, pageable);
+        NoticeClassification enriched = enrichClassificationWithPart(memberId, classification);
+        Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, enriched, memberParts, pageable);
         return toNoticeSummaryPage(notices);
     }
 
@@ -244,6 +246,38 @@ public class NoticeQueryService implements GetNoticeUseCase {
     }
 
     // ====== PRIVATE =====
+
+    /**
+     * 파트 필터 요청 시, 호출자의 소속 학교/지부를 조회해 Classification에 채워 반환합니다.
+     * 파트 필터가 없으면 그대로 반환합니다.
+     * <p>
+     * 파트 필터 공지 조회 범위:
+     * - 특정 기수 + 특정 파트 공지
+     * - 특정 기수 + 호출자 지부 + 특정 파트 공지
+     * - 특정 기수 + 호출자 학교 + 특정 파트 공지
+     */
+    private NoticeClassification enrichClassificationWithPart(Long memberId, NoticeClassification classification) {
+        if (classification.part() == null) {
+            return classification;
+        }
+
+        Long gisuId = classification.gisuId();
+
+        MemberInfo memberInfo = getMemberUseCase.getProfiles(Set.of(memberId)).get(memberId);
+        Long schoolId = memberInfo != null ? memberInfo.schoolId() : null;
+
+        Long chapterId = null;
+        if (schoolId != null) {
+            try {
+                ChapterInfo chapterInfo = getChapterUseCase.byGisuAndSchool(gisuId, schoolId);
+                chapterId = chapterInfo.id();
+            } catch (Exception e) {
+                log.debug("지부 정보 조회 실패 - gisuId={}, schoolId={}: {}", gisuId, schoolId, e.getMessage());
+            }
+        }
+
+        return new NoticeClassification(gisuId, chapterId, schoolId, classification.part());
+    }
 
     /**
      * 해당 기수에서 멤버가 볼 수 있는 파트 목록을 조회합니다.
