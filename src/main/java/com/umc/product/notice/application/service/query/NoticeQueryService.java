@@ -1,5 +1,6 @@
 package com.umc.product.notice.application.service.query;
 
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -20,6 +21,7 @@ import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.domain.NoticeTarget;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
@@ -29,6 +31,7 @@ import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -57,18 +60,21 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private final GetChapterUseCase getChapterUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetNoticeContentUseCase getNoticeContentUseCase;
 
     @Override
-    public Page<NoticeSummary> getAllNoticeSummaries(NoticeClassification info, Pageable pageable) {
-        Page<Notice> notices = loadNoticePort.findNoticesByClassification(info, pageable);
+    public Page<NoticeSummary> getAllNoticeSummaries(Long memberId, NoticeClassification info, Pageable pageable) {
+        Set<ChallengerPart> memberParts = resolveMemberParts(memberId, info.gisuId());
+        Page<Notice> notices = loadNoticePort.findNoticesByClassification(info, memberParts, pageable);
         return toNoticeSummaryPage(notices);
     }
 
     @Override
-    public Page<NoticeSummary> searchNoticesByKeyword(String keyword, NoticeClassification classification,
+    public Page<NoticeSummary> searchNoticesByKeyword(Long memberId, String keyword, NoticeClassification classification,
                                                       Pageable pageable) {
-        Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, classification, pageable);
+        Set<ChallengerPart> memberParts = resolveMemberParts(memberId, classification.gisuId());
+        Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, classification, memberParts, pageable);
         return toNoticeSummaryPage(notices);
     }
 
@@ -237,7 +243,23 @@ public class NoticeQueryService implements GetNoticeUseCase {
         return new TargetChallengerContext(targetChallengers, memberMap, chapterCache);
     }
 
-    // ====== PRIVTE =====
+    // ====== PRIVATE =====
+
+    /**
+     * 해당 기수에서 멤버가 볼 수 있는 파트 목록을 조회합니다.
+     * - Challenger.part: 챌린저 본인의 소속 파트
+     * - ChallengerRole.responsiblePart: 파트장 역할에서 담당하는 파트
+     * 챌린저 정보가 없으면 빈 Set을 반환하여 파트 조건 없는 공지만 노출합니다.
+     */
+    private Set<ChallengerPart> resolveMemberParts(Long memberId, Long gisuId) {
+        if (memberId == null || gisuId == null) {
+            return Set.of();
+        }
+
+        Set<ChallengerPart> parts = new HashSet<>(getChallengerUseCase.getPartsByMemberAndGisu(memberId, gisuId));
+        parts.addAll(getChallengerRoleUseCase.getResponsiblePartsByMemberAndGisu(memberId, gisuId));
+        return parts;
+    }
 
     private Page<NoticeSummary> toNoticeSummaryPage(Page<Notice> notices) {
         NoticeQueryData queryData = fetchBatchData(notices);

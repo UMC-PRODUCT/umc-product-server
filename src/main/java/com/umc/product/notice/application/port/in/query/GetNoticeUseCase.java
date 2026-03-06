@@ -15,13 +15,14 @@ public interface GetNoticeUseCase {
      * 공지 전체조회 -> 간략한 정보 조회
      * @return 해당 scope에 맞는 공지사항 리스트 반환
      */
-    Page<NoticeSummary> getAllNoticeSummaries(NoticeClassification info, Pageable pageable);
+    Page<NoticeSummary> getAllNoticeSummaries(Long memberId, NoticeClassification info, Pageable pageable);
 
 
     /*
      * 검색어 기반 공지 전체 조회
      */
-    Page<NoticeSummary> searchNoticesByKeyword(String keyword, NoticeClassification noticeClassification, Pageable pageable);
+    Page<NoticeSummary> searchNoticesByKeyword(Long memberId, String keyword, NoticeClassification noticeClassification,
+                                               Pageable pageable);
 
     /*
      * 공지 세부조회 -> 이때 조회수를 증가시켜야 함
