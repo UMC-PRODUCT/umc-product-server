@@ -99,10 +99,9 @@ public class ChallengerQueryService implements GetChallengerUseCase {
 
     @Override
     public Set<ChallengerPart> getPartsByMemberAndGisu(Long memberId, Long gisuId) {
-        return loadChallengerPort.findByMemberId(memberId).stream()
-            .filter(c -> c.getGisuId().equals(gisuId))
-            .map(Challenger::getPart)
-            .collect(Collectors.toSet());
+        return loadChallengerPort.findByMemberIdAndGisuId(memberId, gisuId)
+            .map(c -> Set.of(c.getPart()))
+            .orElse(Set.of());
     }
 
     private ChallengerInfo getChallengerInfoFromChallenger(Challenger challenger) {
