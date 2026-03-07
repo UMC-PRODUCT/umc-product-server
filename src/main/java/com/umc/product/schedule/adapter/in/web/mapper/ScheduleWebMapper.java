@@ -17,7 +17,6 @@ public class ScheduleWebMapper {
             .name(info.name())
 //                .type(info.type().name())
             .status(info.status())
-            .startDate(info.startsAt().atZone(ZoneOffset.UTC).toLocalDate())
             .date(info.endsAt().atZone(ZoneOffset.UTC).toLocalDateTime())
             .startTime(info.startsAt())
             .endTime(info.endsAt())
