@@ -2,7 +2,7 @@ package com.umc.product.schedule.adapter.in.web.mapper;
 
 import com.umc.product.schedule.adapter.in.web.dto.response.ScheduleListResponse;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleWithStatsInfo;
-import com.umc.product.schedule.domain.ScheduleConstants;
+import java.time.ZoneOffset;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +17,8 @@ public class ScheduleWebMapper {
             .name(info.name())
 //                .type(info.type().name())
             .status(info.status())
-            .date(info.endsAt().atZone(ScheduleConstants.KST).toLocalDateTime())
+            .startDate(info.startsAt().atZone(ZoneOffset.UTC).toLocalDate())
+            .date(info.endsAt().atZone(ZoneOffset.UTC).toLocalDateTime())
             .startTime(info.startsAt())
             .endTime(info.endsAt())
             .locationName(info.locationName())

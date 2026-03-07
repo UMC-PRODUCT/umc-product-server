@@ -3,6 +3,7 @@ package com.umc.product.schedule.adapter.in.web.dto.response;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.Builder;
 
@@ -21,9 +22,11 @@ public record ScheduleListResponse(
     @Schema(description = "일정 상태 (진행 중, 종료됨)", example = "진행 중")
     String status,
 
+    @Schema(description = "날짜", example = "2026-03-16")
+    LocalDate startDate,
+
     @Schema(description = "날짜", example = "2026.03.16 (토)", deprecated = true)
     @JsonFormat(pattern = "yyyy.MM.dd (E)", locale = "ko_KR")
-    @Deprecated
     LocalDateTime date,
 
     @Schema(description = "시작 시간", example = "2001-01-01T09:00:00Z")
