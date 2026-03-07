@@ -2,7 +2,6 @@ package com.umc.product.challenger.application.port.in.query;
 
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
-import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,12 +67,4 @@ public interface GetChallengerUseCase {
      */
     List<ChallengerInfo> getLatestPerMember();
 
-    /**
-     * 특정 멤버가 특정 기수에서 보유한 모든 파트를 조회
-     * <p>
-     * 한 멤버가 같은 기수에 복수의 챌린저(파트)를 가질 수 있습니다. (ex. iOS파트장 + Spring챌린저)
-     *
-     * @return 해당 기수에서 멤버가 보유한 파트 Set. 챌린저가 없으면 빈 Set 반환.
-     */
-    Set<ChallengerPart> getPartsByMemberAndGisu(Long memberId, Long gisuId);
 }

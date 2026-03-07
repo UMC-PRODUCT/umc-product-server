@@ -291,7 +291,10 @@ public class NoticeQueryService implements GetNoticeUseCase {
             return Set.of();
         }
 
-        Set<ChallengerPart> parts = new HashSet<>(getChallengerUseCase.getPartsByMemberAndGisu(memberId, gisuId));
+        ChallengerInfo challenger = getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId);
+
+        Set<ChallengerPart> parts = new HashSet<>();
+        parts.add(challenger.part());
         parts.addAll(getChallengerRoleUseCase.getResponsiblePartsByMemberAndGisu(memberId, gisuId));
         return parts;
     }

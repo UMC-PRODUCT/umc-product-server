@@ -9,7 +9,6 @@ import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import java.util.List;
 import java.util.Map;
@@ -95,13 +94,6 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     @Override
     public List<ChallengerInfo> getLatestPerMember() {
         return toChallengerInfoListBatch(loadChallengerPort.findLatestPerMember());
-    }
-
-    @Override
-    public Set<ChallengerPart> getPartsByMemberAndGisu(Long memberId, Long gisuId) {
-        return loadChallengerPort.findByMemberIdAndGisuId(memberId, gisuId)
-            .map(c -> Set.of(c.getPart()))
-            .orElse(Set.of());
     }
 
     private ChallengerInfo getChallengerInfoFromChallenger(Challenger challenger) {
