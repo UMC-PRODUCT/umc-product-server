@@ -88,6 +88,25 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
         }
     }
 
+    @Override
+    public void unsubscribeTokenFromTopics(String fcmToken, Long memberId) {
+        if (fcmToken == null || fcmToken.isBlank()) {
+            return;
+        }
+
+        List<ChallengerInfo> challengers = getChallengerUseCase.getMemberChallengerList(memberId);
+        List<String> tokens = List.of(fcmToken);
+
+        for (ChallengerInfo challenger : challengers) {
+            List<String> topics = resolveTopicsForChallenger(challenger);
+            for (String topic : topics) {
+                manageFcmUseCase.unsubscribeFromTopic(tokens, topic);
+            }
+        }
+
+        log.info("이전 토큰 토픽 구독 해제 완료 memberId={}", memberId);
+    }
+
     /**
      * 챌린저 정보를 기반으로 구독해야 할 토픽 목록을 생성 챌린저는 반드시 기수/학교/지부/파트 정보가 모두 존재해야 한다.
      */

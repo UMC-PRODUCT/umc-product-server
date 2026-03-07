@@ -15,7 +15,11 @@ import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.notification.application.port.in.dto.TopicNotificationCommand;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
+import com.umc.product.notification.application.port.out.SaveFcmOutboxPort;
 import com.umc.product.notification.application.port.out.SaveFcmPort;
+import com.umc.product.notification.domain.FcmOutbox;
+import com.umc.product.notification.domain.FcmOutboxEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import com.umc.product.notification.domain.FcmToken;
 import com.umc.product.notification.domain.exception.FcmDomainException;
 import com.umc.product.notification.domain.exception.FcmErrorCode;
@@ -34,6 +38,8 @@ public class FcmService implements ManageFcmUseCase {
     private final LoadMemberPort loadMemberPort;
     private final LoadFcmPort loadFcmPort;
     private final SaveFcmPort saveFcmPort;
+    private final SaveFcmOutboxPort saveFcmOutboxPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static Message getMessage(NotificationCommand command, String fcmToken) {
         Notification notification = Notification.builder()
@@ -49,11 +55,22 @@ public class FcmService implements ManageFcmUseCase {
     @Override
     @Transactional
     public void registerFcmToken(Long userId, FcmRegistrationRequest request) {
+        String oldToken = loadFcmPort.findOptionalByMemberId(userId)
+                .map(FcmToken::getFcmToken)
+                .orElse(null);
+
+        // FcmToken이 존재하면 업데이트, 없으면 새로 저장
         loadFcmPort.findOptionalByMemberId(userId)
             .ifPresentOrElse(
                 existingToken -> existingToken.updateToken(request.fcmToken()),
                 () -> saveFcmPort.save(FcmToken.createFCMToken(userId, request.fcmToken()))
             );
+
+        if (oldToken != null) {
+            saveFcmOutboxPort.save(FcmOutbox.unsubscribeEvent(userId, oldToken));
+        }
+        saveFcmOutboxPort.save(FcmOutbox.subscribeEvent(userId));
+        eventPublisher.publishEvent(new FcmOutboxEvent());
     }
 
     @Override

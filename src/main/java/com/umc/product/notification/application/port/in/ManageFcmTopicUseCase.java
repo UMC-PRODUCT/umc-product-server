@@ -35,4 +35,12 @@ public interface ManageFcmTopicUseCase {
      * @param memberId 회원 ID
      */
     void unsubscribeAllTopicsByMemberId(Long memberId);
+
+    /**
+     * 특정 토큰을 회원의 모든 챌린저 토픽에서 해제 (Outbox 처리 시 이전 토큰 정리용)
+     *
+     * @param fcmToken 해제할 FCM 토큰
+     * @param memberId 회원 ID
+     */
+    void unsubscribeTokenFromTopics(String fcmToken, Long memberId);
 }
