@@ -32,22 +32,18 @@ import lombok.NoArgsConstructor;
 @Table(name = "study_group")
 public class StudyGroup extends BaseEntity {
 
+    @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private final List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String name;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gisu_id")
     private Gisu gisu;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ChallengerPart part;
-
-    @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    private List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
     private StudyGroup(String name, Gisu gisu, ChallengerPart part) {
@@ -121,7 +117,7 @@ public class StudyGroup extends BaseEntity {
         Long leaderId = getLeader().getChallengerId();
 
         if (challengerIds.contains(leaderId)) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.LEADER_CANNOT_BE_MEMBER);
+            throw new OrganizationDomainException(OrganizationErrorCode.LEADER_CANNOT_BE_MEMBER);
         }
 
         studyGroupMembers.clear();
@@ -137,7 +133,7 @@ public class StudyGroup extends BaseEntity {
      */
     public void updateName(String newName) {
         if (newName == null || newName.isBlank()) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
         }
         this.name = newName;
     }
@@ -149,7 +145,7 @@ public class StudyGroup extends BaseEntity {
      */
     public void updatePart(ChallengerPart newPart) {
         if (newPart == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.PART_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.PART_REQUIRED);
         }
         this.part = newPart;
     }
@@ -176,7 +172,7 @@ public class StudyGroup extends BaseEntity {
         return studyGroupMembers.stream()
             .filter(StudyGroupMember::isLeader)
             .findFirst()
-            .orElseThrow(() -> new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_LEADER_REQUIRED));
+            .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_LEADER_REQUIRED));
     }
 
     /**
@@ -201,7 +197,7 @@ public class StudyGroup extends BaseEntity {
 
     private void throwIfMemberAlreadyExists(Long challengerId) {
         if (hasMember(challengerId)) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_MEMBER_ALREADY_EXISTS);
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_ALREADY_EXISTS);
         }
     }
 
@@ -210,7 +206,7 @@ public class StudyGroup extends BaseEntity {
             .filter(member -> member.getChallengerId().equals(challengerId))
             .findFirst()
             .orElseThrow(
-                () -> new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_MEMBER_NOT_FOUND));
+                () -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_NOT_FOUND));
     }
 
 }
