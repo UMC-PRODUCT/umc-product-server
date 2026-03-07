@@ -55,19 +55,19 @@ public class FcmService implements ManageFcmUseCase {
     @Override
     @Transactional
     public void registerFcmToken(Long userId, FcmRegistrationRequest request) {
-        String oldToken = loadFcmPort.findOptionalByMemberId(userId)
-                .map(FcmToken::getFcmToken)
-                .orElse(null);
+        String[] oldToken = {null};
 
-        // FcmToken이 존재하면 업데이트, 없으면 새로 저장
         loadFcmPort.findOptionalByMemberId(userId)
             .ifPresentOrElse(
-                existingToken -> existingToken.updateToken(request.fcmToken()),
+                existingToken -> {
+                    oldToken[0] = existingToken.getFcmToken();
+                    existingToken.updateToken(request.fcmToken());
+                },
                 () -> saveFcmPort.save(FcmToken.createFCMToken(userId, request.fcmToken()))
             );
 
-        if (oldToken != null) {
-            saveFcmOutboxPort.save(FcmOutbox.unsubscribeEvent(userId, oldToken));
+        if (oldToken[0] != null) {
+            saveFcmOutboxPort.save(FcmOutbox.unsubscribeEvent(userId, oldToken[0]));
         }
         saveFcmOutboxPort.save(FcmOutbox.subscribeEvent(userId));
         eventPublisher.publishEvent(new FcmOutboxEvent());

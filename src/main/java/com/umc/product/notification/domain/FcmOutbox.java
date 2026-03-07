@@ -21,6 +21,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "fcm_outbox")
 public class FcmOutbox extends BaseEntity {
 
+    private static final int MAX_RETRY = 3;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -74,9 +76,9 @@ public class FcmOutbox extends BaseEntity {
         this.processedAt = Instant.now();
     }
 
-    public void incrementRetry(int maxRetry) {
+    public void incrementRetry() {
         this.retryCount++;
-        if (this.retryCount >= maxRetry) {
+        if (this.retryCount >= MAX_RETRY) {
             this.status = FcmOutboxStatus.FAILED;
         }
     }
