@@ -193,8 +193,8 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 학교의_지부를_수정한다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(8L);
-        Chapter scorpioChapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
-        Chapter leoChapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Leo").build());
+        Chapter scorpioChapter = manageChapterPort.save(Chapter.create(gisu, "Scorpio"));
+        Chapter leoChapter = manageChapterPort.save(Chapter.create(gisu, "Leo"));
 
         School school = manageSchoolPort.save(School.create("한성대", "비고"));
 
@@ -260,7 +260,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 학교를_지부에_배정한다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(9L);
-        Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
+        Chapter chapter = manageChapterPort.save(Chapter.create(gisu, "Scorpio"));
         School school = manageSchoolPort.save(School.create("한성대", null));
 
         AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), chapter.getId());
@@ -278,8 +278,8 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 이미_배정된_학교를_다른_지부로_이동한다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(9L);
-        Chapter scorpioChapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
-        Chapter leoChapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Leo").build());
+        Chapter scorpioChapter = manageChapterPort.save(Chapter.create(gisu, "Scorpio"));
+        Chapter leoChapter = manageChapterPort.save(Chapter.create(gisu, "Leo"));
 
         School school = manageSchoolPort.save(School.create("한성대", null));
         manageChapterSchoolPort.save(ChapterSchool.create(scorpioChapter, school));
@@ -301,8 +301,8 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         Gisu gisu9 = gisuFixture.활성_기수(9L);
         Gisu gisu10 = gisuFixture.활성_기수(10L);
 
-        Chapter chapter9 = manageChapterPort.save(Chapter.builder().gisu(gisu9).name("Scorpio").build());
-        Chapter chapter10 = manageChapterPort.save(Chapter.builder().gisu(gisu10).name("Leo").build());
+        Chapter chapter9 = manageChapterPort.save(Chapter.create(gisu9, "Scorpio"));
+        Chapter chapter10 = manageChapterPort.save(Chapter.create(gisu10, "Leo"));
 
         School school = manageSchoolPort.save(School.create("한성대", null));
         manageChapterSchoolPort.save(ChapterSchool.create(chapter10, school));
@@ -324,7 +324,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 학교의_지부_배정을_해제한다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(9L);
-        Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
+        Chapter chapter = manageChapterPort.save(Chapter.create(gisu, "Scorpio"));
 
         School school = manageSchoolPort.save(School.create("한성대", null));
         manageChapterSchoolPort.save(ChapterSchool.create(chapter, school));
@@ -345,8 +345,8 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         Gisu gisu9 = gisuFixture.활성_기수(9L);
         Gisu gisu10 = gisuFixture.활성_기수(10L);
 
-        Chapter chapter9 = manageChapterPort.save(Chapter.builder().gisu(gisu9).name("Scorpio").build());
-        Chapter chapter10 = manageChapterPort.save(Chapter.builder().gisu(gisu10).name("Leo").build());
+        Chapter chapter9 = manageChapterPort.save(Chapter.create(gisu9, "Scorpio"));
+        Chapter chapter10 = manageChapterPort.save(Chapter.create(gisu10, "Leo"));
 
         School school = manageSchoolPort.save(School.create("한성대", null));
         manageChapterSchoolPort.save(ChapterSchool.create(chapter9, school));
@@ -367,7 +367,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 존재하지_않는_학교를_배정하면_예외가_발생한다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(9L);
-        Chapter chapter = manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
+        Chapter chapter = manageChapterPort.save(Chapter.create(gisu, "Scorpio"));
 
         AssignSchoolCommand command = new AssignSchoolCommand(999L, chapter.getId());
 

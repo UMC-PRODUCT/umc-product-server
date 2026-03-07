@@ -39,9 +39,9 @@ class GetChapterUseCaseTest extends UseCaseTestSupport {
         // given
         Gisu gisu = gisuFixture.활성_기수(8L);
 
-        manageChapterPort.save(Chapter.builder().gisu(gisu).name("서울").build());
-        manageChapterPort.save(Chapter.builder().gisu(gisu).name("경기").build());
-        manageChapterPort.save(Chapter.builder().gisu(gisu).name("인천").build());
+        manageChapterPort.save(Chapter.create(gisu, "서울"));
+        manageChapterPort.save(Chapter.create(gisu, "경기"));
+        manageChapterPort.save(Chapter.create(gisu, "인천"));
 
         // when
         List<ChapterInfo> result = getChapterUseCase.getAllChapters();
@@ -57,9 +57,9 @@ class GetChapterUseCaseTest extends UseCaseTestSupport {
         Gisu gisu9 = gisuFixture.활성_기수(9L);
         Gisu gisu10 = gisuFixture.활성_기수(10L);
 
-        Chapter scorpioChapter = manageChapterPort.save(Chapter.builder().gisu(gisu9).name("Scorpio").build());
-        Chapter leoChapter = manageChapterPort.save(Chapter.builder().gisu(gisu9).name("Leo").build());
-        manageChapterPort.save(Chapter.builder().gisu(gisu10).name("Ain").build());
+        Chapter scorpioChapter = manageChapterPort.save(Chapter.create(gisu9, "Scorpio"));
+        Chapter leoChapter = manageChapterPort.save(Chapter.create(gisu9, "Leo"));
+        manageChapterPort.save(Chapter.create(gisu10, "Ain"));
 
         School school1 = manageSchoolPort.save(School.create("한성대", null));
         School school2 = manageSchoolPort.save(School.create("동국대", null));
@@ -94,8 +94,8 @@ class GetChapterUseCaseTest extends UseCaseTestSupport {
     void 학교가_없는_지부도_조회된다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(9L);
-        manageChapterPort.save(Chapter.builder().gisu(gisu).name("Scorpio").build());
-        manageChapterPort.save(Chapter.builder().gisu(gisu).name("Leo").build());
+        manageChapterPort.save(Chapter.create(gisu, "Scorpio"));
+        manageChapterPort.save(Chapter.create(gisu, "Leo"));
 
         // when
         List<ChapterWithSchoolsInfo> result = getChapterUseCase.getChaptersWithSchoolsByGisuId(gisu.getId());
