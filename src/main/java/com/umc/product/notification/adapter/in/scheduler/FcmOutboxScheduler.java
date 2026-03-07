@@ -13,7 +13,7 @@ public class FcmOutboxScheduler {
 
     private final ProcessFcmOutboxUseCase processFcmOutboxUseCase;
 
-    @Scheduled(fixedRateString = "${app.fcm.outbox.interval-ms:30000}")
+    @Scheduled(fixedRateString = "${app.fcm.outbox-interval-ms}")
     public void processPendingEvents() {
         log.debug("FCM outbox 처리 스케줄 실행");
         processFcmOutboxUseCase.process();
