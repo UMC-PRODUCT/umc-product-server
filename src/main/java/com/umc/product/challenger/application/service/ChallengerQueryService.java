@@ -85,11 +85,7 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     public List<ChallengerInfo> getByGisuId(Long gisuId) {
         return toChallengerInfoListBatch(loadChallengerPort.findByGisuId(gisuId));
     }
-
-    @Override
-    public List<ChallengerInfo> getByGisuIds(List<Long> gisuIds) {
-        return toChallengerInfoListBatch(loadChallengerPort.findByGisuIdIn(gisuIds));
-    }
+    
 
     @Override
     public List<ChallengerInfo> getLatestPerMember() {

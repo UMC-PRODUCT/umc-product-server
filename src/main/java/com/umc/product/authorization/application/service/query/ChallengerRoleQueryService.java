@@ -6,12 +6,14 @@ import com.umc.product.authorization.application.port.out.LoadChallengerRolePort
 import com.umc.product.authorization.domain.ChallengerRole;
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -298,6 +300,14 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
                 ChallengerRole::getChallengerId,
                 Collectors.mapping(ChallengerRole::getChallengerRoleType, Collectors.toList())
             ));
+    }
+
+    @Override
+    public Set<ChallengerPart> getResponsiblePartsByMemberAndGisu(Long memberId, Long gisuId) {
+        return loadChallengerRolePort.findRolesByMemberIdAndGisuId(memberId, gisuId).stream()
+            .map(ChallengerRole::getResponsiblePart)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
     }
 
     @Override

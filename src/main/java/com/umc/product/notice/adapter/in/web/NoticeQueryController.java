@@ -49,10 +49,11 @@ public class NoticeQueryController implements NoticeQueryApi {
     public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(
         @ParameterObject @Valid NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
-        @ParameterObject
-        Pageable pageable) {
+        @ParameterObject Pageable pageable,
+        @CurrentMember MemberPrincipal memberPrincipal) {
 
-        Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(classification,
+        Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(memberPrincipal.getMemberId(),
+            classification,
             pageable);
 
         return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
@@ -67,9 +68,11 @@ public class NoticeQueryController implements NoticeQueryApi {
         @ParameterObject @Valid NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
         @ParameterObject
-        Pageable pageable) {
+        Pageable pageable,
+        @CurrentMember MemberPrincipal memberPrincipal) {
 
-        Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(keyword, classification, pageable);
+        Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(memberPrincipal.getMemberId(), keyword,
+            classification, pageable);
 
         return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
     }

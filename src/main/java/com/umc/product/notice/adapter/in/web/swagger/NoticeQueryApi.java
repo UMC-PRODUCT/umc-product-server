@@ -44,7 +44,8 @@ public interface NoticeQueryApi {
 
         @Parameter(description = "페이징 정보. page=페이지 번호(0부터), size=페이지 크기, sort=정렬 기준(기본: createdAt,DESC)")
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
-        Pageable pageable
+        Pageable pageable,
+        @CurrentMember MemberPrincipal memberPrincipal
     );
 
     @Operation(
@@ -66,7 +67,9 @@ public interface NoticeQueryApi {
 
         @Parameter(description = "페이징 정보. page=페이지 번호(0부터), size=페이지 크기")
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
-        Pageable pageable
+        Pageable pageable,
+
+        @CurrentMember MemberPrincipal memberPrincipal
     );
 
     @Operation(

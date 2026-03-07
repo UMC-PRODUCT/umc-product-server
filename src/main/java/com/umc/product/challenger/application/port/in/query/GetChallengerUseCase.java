@@ -48,14 +48,6 @@ public interface GetChallengerUseCase {
     List<ChallengerInfo> getByGisuId(Long gisuId);
 
     /**
-     * 여러 기수 ID로 챌린저 정보 일괄 조회 (IN 쿼리 1회)
-     *
-     * @param gisuIds 기수 ID 목록
-     * @return 해당 기수들의 챌린저 정보 목록
-     */
-    List<ChallengerInfo> getByGisuIds(List<Long> gisuIds);
-
-    /**
      * memberId로 해당 사용자가 가지고 있는 가장 최근 챌린저 정보 조회
      */
     ChallengerInfoWithStatus getLatestActiveChallengerByMemberId(Long memberId);
@@ -66,4 +58,5 @@ public interface GetChallengerUseCase {
      * 한 멤버가 여러 기수에 걸쳐 챌린저인 경우, 가장 최근 기수의 챌린저 1건만 반환합니다.
      */
     List<ChallengerInfo> getLatestPerMember();
+
 }
