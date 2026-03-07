@@ -3,6 +3,7 @@ package com.umc.product.notice.application.service.query;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.notice.application.port.in.query.GetNoticeContentUseCase;
@@ -21,7 +22,6 @@ import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.domain.NoticeTarget;
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
@@ -72,7 +72,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
     }
 
     @Override
-    public Page<NoticeSummary> searchNoticesByKeyword(Long memberId, String keyword, NoticeClassification classification,
+    public Page<NoticeSummary> searchNoticesByKeyword(Long memberId, String keyword,
+                                                      NoticeClassification classification,
                                                       Pageable pageable) {
         Set<ChallengerPart> memberParts = resolveMemberParts(memberId, classification.gisuId());
         NoticeClassification enriched = enrichClassificationWithPart(memberId, classification);
@@ -248,16 +249,14 @@ public class NoticeQueryService implements GetNoticeUseCase {
     // ====== PRIVATE =====
 
     /**
-     * 파트 필터 요청 시, 호출자의 소속 학교/지부를 조회해 Classification에 채워 반환합니다.
-     * 파트 필터가 없으면 그대로 반환합니다.
+     * 지부/학교/파트 필터 요청 시, 호출자의 실제 소속 정보로 chapterId/schoolId를 덮어씁니다. 모든 필터가 없으면 그대로 반환합니다.
      * <p>
-     * 파트 필터 공지 조회 범위:
-     * - 특정 기수 + 특정 파트 공지
-     * - 특정 기수 + 호출자 지부 + 특정 파트 공지
-     * - 특정 기수 + 호출자 학교 + 특정 파트 공지
+     * 클라이언트가 넘긴 chapterId/schoolId는 "이 필터 종류로 조회"라는 의도로만 사용하고, 실제 ID 값은 인증된 사용자 프로필에서 직접 조회합니다.
      */
     private NoticeClassification enrichClassificationWithPart(Long memberId, NoticeClassification classification) {
-        if (classification.part() == null) {
+        if (classification.chapterId() == null
+            && classification.schoolId() == null
+            && classification.part() == null) {
             return classification;
         }
 
@@ -276,14 +275,16 @@ public class NoticeQueryService implements GetNoticeUseCase {
             }
         }
 
-        return new NoticeClassification(gisuId, chapterId, schoolId, classification.part());
+        // 클라이언트가 요청한 필터 종류는 유지하되, 실제 값은 사용자 프로필에서만 가져옴
+        Long filteredChapterId = classification.chapterId() != null ? chapterId : null;
+        Long filteredSchoolId = classification.schoolId() != null ? schoolId : null;
+
+        return new NoticeClassification(gisuId, filteredChapterId, filteredSchoolId, classification.part());
     }
 
     /**
-     * 해당 기수에서 멤버가 볼 수 있는 파트 목록을 조회합니다.
-     * - Challenger.part: 챌린저 본인의 소속 파트
-     * - ChallengerRole.responsiblePart: 파트장 역할에서 담당하는 파트
-     * 챌린저 정보가 없으면 빈 Set을 반환하여 파트 조건 없는 공지만 노출합니다.
+     * 해당 기수에서 멤버가 볼 수 있는 파트 목록을 조회합니다. - Challenger.part: 챌린저 본인의 소속 파트 - ChallengerRole.responsiblePart: 파트장 역할에서 담당하는
+     * 파트 챌린저 정보가 없으면 빈 Set을 반환하여 파트 조건 없는 공지만 노출합니다.
      */
     private Set<ChallengerPart> resolveMemberParts(Long memberId, Long gisuId) {
         if (memberId == null || gisuId == null) {
