@@ -53,6 +53,7 @@ public class TermAgreementCommandService implements ManageTermAgreementUseCase {
             saveConsentLog(command.memberId(), term.getType(), TermConsentStatus.AGREED);
         }
         // 미동의 시 아무것도 하지 않음 (회원가입 시나리오에서 기존 동의 기록이 없음)
+        // TODO: 동의 철회의 경우에 대한 처리 로직을 추가할 것
     }
 
     private void saveConsentLog(Long memberId, TermType termType, TermConsentStatus status) {
