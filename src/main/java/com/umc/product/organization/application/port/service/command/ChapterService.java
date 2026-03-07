@@ -40,10 +40,8 @@ public class ChapterService implements ManageChapterUseCase {
         Gisu gisu = loadGisuPort.findById(command.gisuId());
         validateChapterNameNotDuplicated(command.gisuId(), command.name());
 
-        Chapter chapter = Chapter.builder()
-                .gisu(gisu)
-                .name(command.name())
-                .build();
+        Chapter chapter = Chapter.create(gisu, command.name());
+
         Chapter savedChapter = manageChapterPort.save(chapter);
 
         if (!command.schoolIds().isEmpty()) {

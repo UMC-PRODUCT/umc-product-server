@@ -1,15 +1,11 @@
 package com.umc.product.notification.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.member.domain.Member;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -25,21 +21,20 @@ public class FcmToken extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @JoinColumn(name = "member_id", nullable = false)
-    @OneToOne(fetch = FetchType.LAZY)
-    private Member member;
+    @Column(name = "member_id", nullable = false)
+    private Long memberId;
 
     @Column(name = "fcm_token", columnDefinition = "TEXT")
     private String fcmToken;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private FcmToken(Member member, String fcmToken) {
-        this.member = member;
+    private FcmToken(Long memberId, String fcmToken) {
+        this.memberId = memberId;
         this.fcmToken = fcmToken;
     }
 
-    public static FcmToken createFCMToken(Member member, String fcmToken) {
-        return FcmToken.builder().member(member).fcmToken(fcmToken).build();
+    public static FcmToken createFCMToken(Long memberId, String fcmToken) {
+        return FcmToken.builder().memberId(memberId).fcmToken(fcmToken).build();
     }
 
     public void updateToken(String fcmToken) {

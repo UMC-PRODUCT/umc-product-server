@@ -229,7 +229,10 @@ management:
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:${SERVER_PORT:8080}}
-  firebase-configuration: ${FIREBASE_CONFIGURATION}
+
+  fcm:
+    outbox-interval-ms: ${FCM_OUTBOX_INTERVAL_MS:60000}
+    firebase-configuration: ${FIREBASE_CONFIGURATION}
 
   cors:
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:}

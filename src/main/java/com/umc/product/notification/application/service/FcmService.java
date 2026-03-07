@@ -15,7 +15,11 @@ import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.notification.application.port.in.dto.TopicNotificationCommand;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
+import com.umc.product.notification.application.port.out.SaveFcmOutboxPort;
 import com.umc.product.notification.application.port.out.SaveFcmPort;
+import com.umc.product.notification.domain.FcmOutbox;
+import com.umc.product.notification.domain.FcmOutboxEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import com.umc.product.notification.domain.FcmToken;
 import com.umc.product.notification.domain.exception.FcmDomainException;
 import com.umc.product.notification.domain.exception.FcmErrorCode;
@@ -34,6 +38,8 @@ public class FcmService implements ManageFcmUseCase {
     private final LoadMemberPort loadMemberPort;
     private final LoadFcmPort loadFcmPort;
     private final SaveFcmPort saveFcmPort;
+    private final SaveFcmOutboxPort saveFcmOutboxPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static Message getMessage(NotificationCommand command, String fcmToken) {
         Notification notification = Notification.builder()
@@ -49,14 +55,22 @@ public class FcmService implements ManageFcmUseCase {
     @Override
     @Transactional
     public void registerFcmToken(Long userId, FcmRegistrationRequest request) {
-        Member member = loadMemberPort.findById(userId)
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+        String[] oldToken = {null};
 
         loadFcmPort.findOptionalByMemberId(userId)
             .ifPresentOrElse(
-                existingToken -> existingToken.updateToken(request.fcmToken()),
-                () -> saveFcmPort.save(FcmToken.createFCMToken(member, request.fcmToken()))
+                existingToken -> {
+                    oldToken[0] = existingToken.getFcmToken();
+                    existingToken.updateToken(request.fcmToken());
+                },
+                () -> saveFcmPort.save(FcmToken.createFCMToken(userId, request.fcmToken()))
             );
+
+        if (oldToken[0] != null) {
+            saveFcmOutboxPort.save(FcmOutbox.unsubscribeEvent(userId, oldToken[0]));
+        }
+        saveFcmOutboxPort.save(FcmOutbox.subscribeEvent(userId));
+        eventPublisher.publishEvent(new FcmOutboxEvent());
     }
 
     @Override

@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class FcmConfig {
 
-    @Value("${app.firebase-configuration}")
+    @Value("${app.fcm.firebase-configuration}")
     private String firebaseCredentials;
 
     @Bean

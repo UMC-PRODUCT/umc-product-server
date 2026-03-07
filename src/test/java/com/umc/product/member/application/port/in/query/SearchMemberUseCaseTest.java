@@ -72,7 +72,7 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
         school1 = manageSchoolPort.save(School.create("한양대학교 ERICA", null));
         school2 = manageSchoolPort.save(School.create("한성대학교", null));
 
-        chapter = manageChapterPort.save(Chapter.builder().gisu(gisu8).name("Scorpio").build());
+        chapter = manageChapterPort.save(Chapter.create(gisu8, "Scorpio"));
         school1.updateChapterSchool(chapter);
         manageSchoolPort.save(school1);
     }
