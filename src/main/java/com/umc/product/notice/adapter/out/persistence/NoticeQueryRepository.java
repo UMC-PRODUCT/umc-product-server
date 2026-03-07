@@ -187,6 +187,11 @@ public class NoticeQueryRepository {
         boolean hasSchool = schoolId != null;
         boolean hasPart = part != null;
 
+        // 기수 ID는 모든 조회에서 필수 조건이므로 null이면 예외 처리
+        if (gisuId == null) {
+            throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING, "기수 ID는 필수입니다");
+        }
+
         log.info("공지사항 조회 조건 제작: gisuId={}, chapterId={}, schoolId={}, part={}, memberParts={}",
             gisuId, chapterId, schoolId, part, memberParts);
 
@@ -229,18 +234,16 @@ public class NoticeQueryRepository {
                 .and(target.targetSchoolId.isNull());
 
             // 특정 기수 + 특정 지부 + 특정 파트
-            if (hasChapter) {
-                scopeCondition = scopeCondition.or(
-                    target.targetChapterId.eq(chapterId).and(target.targetSchoolId.isNull())
-                );
-            }
+            scopeCondition.or(
+                target.targetChapterId.eq(chapterId)
+                    .and(target.targetSchoolId.isNull())
+            );
 
             // 특정 기수 + 특정 학교 + 특정 파트
-            if (hasSchool) {
-                scopeCondition = scopeCondition.or(
-                    target.targetChapterId.isNull().and(target.targetSchoolId.eq(schoolId))
-                );
-            }
+            scopeCondition.or(
+                target.targetChapterId.isNull()
+                    .and(target.targetSchoolId.eq(schoolId))
+            );
 
             return gisuAndPartMatch.and(scopeCondition);
         }
@@ -278,8 +281,9 @@ public class NoticeQueryRepository {
         BooleanExpression containsAny = memberParts.stream()
             .map(part -> targetPartContains(target, part))
             .reduce(BooleanExpression::or)
-            .orElse(null);
-        return containsAny != null ? isEmpty.or(containsAny) : isEmpty;
+            .get();
+
+        return isEmpty.or(containsAny);
     }
 
     private BooleanExpression keywordContains(String keyword) {

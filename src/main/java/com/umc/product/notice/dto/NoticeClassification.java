@@ -9,9 +9,9 @@ import jakarta.validation.constraints.NotNull;
  *
  * 조회 레벨은 null이 아닌 필드로 결정:
  * - gisuId만: 전체 조회
- * - gisuId + chapterId: 지부별 조회
- * - gisuId + chapterId + schoolId: 학교별 조회
- * - 모두 제공: 파트별 조회
+ * - gisuId + chapterId: 지부 필터
+ * - gisuId + schoolId: 학교 필터
+ * - gisuId + part: 파트 필터
  */
 @Schema(description = "공지 조회 필터. 조회 범위는 입력한 필드 조합으로 결정됩니다. "
     + "전체필터 : gisuId만 입력, 지부필터 : gisuId + chapterId, 학교필터 : gisuId + schoolId, 파트필터 : gisuId + part")
