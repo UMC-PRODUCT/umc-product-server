@@ -32,7 +32,6 @@ public class StudyGroupMember extends BaseEntity {
     @JoinColumn(name = "group_id")
     private StudyGroup studyGroup;
 
-    // DDD 원칙: 다른 도메인(challenger)의 Entity를 직접 참조하지 않고 ID만 저장
     @Column(nullable = false)
     private Long challengerId;
 

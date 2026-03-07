@@ -20,7 +20,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -33,22 +32,18 @@ import lombok.NoArgsConstructor;
 @Table(name = "study_group")
 public class StudyGroup extends BaseEntity {
 
+    @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    private final List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String name;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gisu_id")
     private Gisu gisu;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ChallengerPart part;
-
-    @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
     private StudyGroup(String name, Gisu gisu, ChallengerPart part) {
@@ -81,16 +76,14 @@ public class StudyGroup extends BaseEntity {
     // ============ Domain Methods (Aggregate Root Pattern) ============
 
     /**
-     * 스터디 그룹에 멤버 추가
+     * 스터디 그룹에 리더 추가
      *
      * @param challengerId 추가할 챌린저 ID
-     * @param isLeader     리더 여부
      * @throws BusinessException 이미 존재하는 멤버인 경우
      */
-    public void addMember(Long challengerId, boolean isLeader) {
-        validateMemberNotExists(challengerId);
-        StudyGroupMember member = StudyGroupMember.create(this, challengerId, isLeader);
-        studyGroupMembers.add(member);
+    public void addLeader(Long challengerId) {
+        throwIfMemberAlreadyExists(challengerId);
+        studyGroupMembers.add(StudyGroupMember.create(this, challengerId, true));
     }
 
     /**
@@ -100,7 +93,8 @@ public class StudyGroup extends BaseEntity {
      * @throws BusinessException 이미 존재하는 멤버인 경우
      */
     public void addMember(Long challengerId) {
-        addMember(challengerId, false);
+        throwIfMemberAlreadyExists(challengerId);
+        studyGroupMembers.add(StudyGroupMember.create(this, challengerId, false));
     }
 
     /**
@@ -119,11 +113,17 @@ public class StudyGroup extends BaseEntity {
      *
      * @param challengerIds 새로운 멤버 ID 목록
      */
-    public void updateMembers(Set<Long> challengerIds) {
-        studyGroupMembers.clear();
-        if (challengerIds != null) {
-            challengerIds.forEach(this::addMember);
+    public void replaceMembersExcludingLeader(Set<Long> challengerIds) {
+        Long leaderId = getLeader().getChallengerId();
+
+        if (challengerIds.contains(leaderId)) {
+            throw new OrganizationDomainException(OrganizationErrorCode.LEADER_CANNOT_BE_MEMBER);
         }
+
+        studyGroupMembers.clear();
+
+        addLeader(leaderId);
+        challengerIds.forEach(this::addMember);
     }
 
     /**
@@ -133,7 +133,7 @@ public class StudyGroup extends BaseEntity {
      */
     public void updateName(String newName) {
         if (newName == null || newName.isBlank()) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
         }
         this.name = newName;
     }
@@ -145,7 +145,7 @@ public class StudyGroup extends BaseEntity {
      */
     public void updatePart(ChallengerPart newPart) {
         if (newPart == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.PART_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.PART_REQUIRED);
         }
         this.part = newPart;
     }
@@ -158,7 +158,7 @@ public class StudyGroup extends BaseEntity {
      */
     public void assignLeader(Long challengerId) {
         // 기존 리더 해제
-        getLeader().ifPresent(StudyGroupMember::removeAsLeader);
+        getLeader().removeAsLeader();
         // 새 리더 지정
         findMemberByChallengerId(challengerId).assignAsLeader();
     }
@@ -166,12 +166,13 @@ public class StudyGroup extends BaseEntity {
     /**
      * 현재 리더 조회
      *
-     * @return 리더 멤버 (없으면 empty)
+     * @return 리더 멤버
      */
-    public Optional<StudyGroupMember> getLeader() {
+    public StudyGroupMember getLeader() {
         return studyGroupMembers.stream()
             .filter(StudyGroupMember::isLeader)
-            .findFirst();
+            .findFirst()
+            .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_LEADER_REQUIRED));
     }
 
     /**
@@ -194,9 +195,9 @@ public class StudyGroup extends BaseEntity {
         return studyGroupMembers.size();
     }
 
-    private void validateMemberNotExists(Long challengerId) {
+    private void throwIfMemberAlreadyExists(Long challengerId) {
         if (hasMember(challengerId)) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_MEMBER_ALREADY_EXISTS);
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_ALREADY_EXISTS);
         }
     }
 
@@ -205,7 +206,7 @@ public class StudyGroup extends BaseEntity {
             .filter(member -> member.getChallengerId().equals(challengerId))
             .findFirst()
             .orElseThrow(
-                () -> new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_MEMBER_NOT_FOUND));
+                () -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_NOT_FOUND));
     }
 
 }

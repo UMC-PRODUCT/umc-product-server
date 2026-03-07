@@ -37,7 +37,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
         StudyGroup studyGroup = StudyGroup.create(command.name(), gisu, command.part());
 
-        studyGroup.addMember(command.leaderId(), true);
+        studyGroup.addLeader(command.leaderId());
 
         if (command.memberIds() != null) {
             command.memberIds().forEach(studyGroup::addMember);
@@ -61,7 +61,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
         validateChallengerIdsExist(command.challengerIds());
 
         StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
-        studyGroup.updateMembers(command.challengerIds());
+        studyGroup.replaceMembersExcludingLeader(command.challengerIds());
 
         manageStudyGroupPort.save(studyGroup);
     }
