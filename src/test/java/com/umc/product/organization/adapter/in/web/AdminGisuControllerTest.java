@@ -28,7 +28,7 @@ class AdminGisuControllerTest extends DocumentationTest {
         // given
         CreateGisuRequest request = new CreateGisuRequest(9L, Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-08-31T23:59:59Z"));
 
-        given(manageGisuUseCase.register(any())).willReturn(1L);
+        given(manageGisuUseCase.create(any())).willReturn(1L);
 
         // when
         ResultActions result = mockMvc.perform(

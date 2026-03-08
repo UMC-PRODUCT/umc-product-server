@@ -22,7 +22,7 @@ public class GisuService implements ManageGisuUseCase {
     private final ManageGisuPort manageGisuPort;
 
     @Override
-    public Long register(CreateGisuCommand command) {
+    public Long create(CreateGisuCommand command) {
         if (loadGisuPort.existsByGeneration(command.number())) {
             throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.GISU_ALREADY_EXISTS);
         }

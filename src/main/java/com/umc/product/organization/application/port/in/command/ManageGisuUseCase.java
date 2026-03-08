@@ -5,7 +5,7 @@ import com.umc.product.organization.application.port.in.command.dto.UpdateGisuCo
 
 public interface ManageGisuUseCase {
 
-    Long register(CreateGisuCommand command);
+    Long create(CreateGisuCommand command);
 
     void updateGisu(UpdateGisuCommand command);
 
