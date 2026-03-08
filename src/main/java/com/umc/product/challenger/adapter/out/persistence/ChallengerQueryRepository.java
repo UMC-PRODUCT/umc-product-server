@@ -113,8 +113,10 @@ public class ChallengerQueryRepository {
             return Map.of();
         }
 
+        NumberExpression<Double> pointSum = pointValueExpression(challengerPoint).sum();
+
         List<Tuple> tuples = queryFactory
-            .select(challengerPoint.challenger.id, pointValueExpression(challengerPoint).sum())
+            .select(challengerPoint.challenger.id, pointSum)
             .from(challengerPoint)
             .where(challengerPoint.challenger.id.in(challengerIds))
             .groupBy(challengerPoint.challenger.id)
@@ -125,7 +127,7 @@ public class ChallengerQueryRepository {
             .collect(Collectors.toMap(
                 tuple -> Objects.requireNonNull(tuple.get(challengerPoint.challenger.id)),
                 tuple -> {
-                    Double value = tuple.get(pointValueExpression(challengerPoint).sum());
+                    Double value = tuple.get(pointSum);
                     return value != null ? value : 0.0;
                 }
             ));
