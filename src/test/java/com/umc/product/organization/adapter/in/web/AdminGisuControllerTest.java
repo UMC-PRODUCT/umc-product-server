@@ -39,7 +39,7 @@ class AdminGisuControllerTest extends DocumentationTest {
         // then
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(
                 requestFields(
-                        fieldWithPath("number").type(JsonFieldType.STRING).description("기수 번호"),
+                        fieldWithPath("generation").type(JsonFieldType.STRING).description("기수 번호"),
                         fieldWithPath("startAt").type(JsonFieldType.STRING).description("기수 시작일시"),
                         fieldWithPath("endAt").type(JsonFieldType.STRING).description("기수 종료일시"))));
     }

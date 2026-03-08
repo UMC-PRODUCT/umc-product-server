@@ -5,7 +5,7 @@ import lombok.Builder;
 
 @Builder
 public record CreateGisuCommand(
-    Long number,
+    Long generation,
     Instant startAt,
     Instant endAt
 ) {
