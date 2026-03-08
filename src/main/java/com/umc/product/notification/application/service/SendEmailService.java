@@ -38,7 +38,7 @@ public class SendEmailService implements SendEmailUseCase {
             // fromAddress는 바꿔도 SMTP 설정대로 전송됨
             helper.setFrom(fromAddress, "University MakeUs Challenge");
             helper.setTo(command.to());
-            helper.setSubject("University MakeUs Challenge: 이메일 인증 코드");
+            helper.setSubject("이메일 인증 코드: " + command.verificationCode());
 
             // Thymeleaf 템플릿 렌더링
             Context context = new Context();
