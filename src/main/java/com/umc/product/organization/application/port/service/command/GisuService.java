@@ -23,9 +23,7 @@ public class GisuService implements ManageGisuUseCase {
 
     @Override
     public Long create(CreateGisuCommand command) {
-        if (loadGisuPort.existsByGeneration(command.number())) {
-            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.GISU_ALREADY_EXISTS);
-        }
+        throwIfGenerationAlreadyExists(command);
 
         Gisu gisu = Gisu.create(command.number(), command.startAt(), command.endAt(), false);
 
@@ -47,11 +45,17 @@ public class GisuService implements ManageGisuUseCase {
     public void updateActiveGisu(Long gisuId) {
         Gisu oldGisu = loadGisuPort.findActiveGisu();
 
-        oldGisu.updateIsActive(false);
+        oldGisu.inactive();
 
         Gisu newGisu = loadGisuPort.findById(gisuId);
 
-        newGisu.updateIsActive(true);
+        newGisu.isActive();
 
+    }
+
+    private void throwIfGenerationAlreadyExists(CreateGisuCommand command) {
+        if (loadGisuPort.existsByGeneration(command.number())) {
+            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.GISU_ALREADY_EXISTS);
+        }
     }
 }
