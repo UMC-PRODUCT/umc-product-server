@@ -21,9 +21,11 @@ public record CreateScheduleRequest(
     String name,
 
     @Schema(description = "시작 일시 (UTC ISO8601. 예: 2026-03-16T01:00:00Z)", example = "2026-03-16T01:00:00Z")
+    @NotNull(message = "시작 일시는 필수입니다")
     Instant startsAt,
 
     @Schema(description = "종료 일시 (UTC ISO8601. 예: 2026-03-16T03:00:00Z)", example = "2026-03-16T03:00:00Z")
+    @NotNull(message = "종료 일시는 필수입니다")
     Instant endsAt,
 
     @Schema(description = "종일 여부", example = "false")
