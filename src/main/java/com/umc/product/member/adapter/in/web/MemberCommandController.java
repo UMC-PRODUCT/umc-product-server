@@ -8,6 +8,7 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.OAuthVerificationClaims;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.member.adapter.in.web.assembler.MemberInfoResponseAssembler;
 import com.umc.product.member.adapter.in.web.dto.request.DeleteMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberInfoRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberProfileRequest;
@@ -86,7 +87,7 @@ public class MemberCommandController {
             .build();
     }
 
-    @Operation(summary = "회원 정보 수정")
+    @Operation(summary = "내 회원 정보 수정")
     @PatchMapping
     MemberInfoResponse editMemberInfo(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -100,7 +101,7 @@ public class MemberCommandController {
         return assembler.fromMemberId(memberPrincipal.getMemberId());
     }
 
-    @Operation(summary = "회원 프로필 링크 수정")
+    @Operation(summary = "내 회원 프로필 링크 수정")
     @PatchMapping("/profile/links")
     MemberInfoResponse editMemberProfile(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -127,7 +128,7 @@ public class MemberCommandController {
         return deleteMemberById(memberPrincipal.getMemberId(), request);
     }
 
-    @Operation(summary = "관리자 권한으로 회원 게정 삭제 (Hard Delete)", description = "SUPER_ADMIN 권한이 필요합니다. (적용 전)")
+    @Operation(summary = "관리자 권한으로 회원 게정 삭제 (Hard Delete)", description = "총괄단 권한이 필요합니다. (적용 전)")
     @DeleteMapping("{memberId}")
     @CheckAccess(
         resourceType = ResourceType.MEMBER,
