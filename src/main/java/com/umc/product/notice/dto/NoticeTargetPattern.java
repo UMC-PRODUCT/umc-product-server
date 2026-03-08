@@ -79,8 +79,9 @@ public enum NoticeTargetPattern {
     SPECIFIC_GISU_SPECIFIC_SCHOOL_WITH_PART(true, false, true, true) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            return useCase.isSchoolCore(memberId, info.targetSchoolId());
+            return useCase.isSchoolAdmin(memberId, info.targetSchoolId());
         }
+
     },
 
     // 특정 기수 특정 지부
