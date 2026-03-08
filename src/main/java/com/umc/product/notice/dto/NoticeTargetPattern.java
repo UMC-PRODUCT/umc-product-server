@@ -63,7 +63,8 @@ public enum NoticeTargetPattern {
     SPECIFIC_GISU_SPECIFIC_PART(true, false, false, true) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            return useCase.hasRole(memberId, ChallengerRoleType.CENTRAL_EDUCATION_TEAM_MEMBER);
+            return useCase.hasRoleInGisu(memberId, info.targetGisuId(),
+                ChallengerRoleType.CENTRAL_EDUCATION_TEAM_MEMBER);
         }
     },
 
@@ -71,7 +72,7 @@ public enum NoticeTargetPattern {
     SPECIFIC_GISU_SPECIFIC_SCHOOL(true, false, true, false) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            return useCase.isSchoolCore(memberId, info.targetSchoolId());
+            return useCase.isSchoolCoreInGisu(memberId, info.targetGisuId(), info.targetSchoolId());
         }
     },
 
@@ -79,7 +80,7 @@ public enum NoticeTargetPattern {
     SPECIFIC_GISU_SPECIFIC_SCHOOL_WITH_PART(true, false, true, true) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            return useCase.isSchoolAdmin(memberId, info.targetSchoolId());
+            return useCase.isSchoolAdminInGisu(memberId, info.targetGisuId(), info.targetSchoolId());
         }
     },
 
@@ -87,7 +88,7 @@ public enum NoticeTargetPattern {
     SPECIFIC_GISU_SPECIFIC_CHAPTER(true, true, false, false) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            return useCase.isChapterPresident(memberId, info.targetChapterId());
+            return useCase.isChapterPresidentInGisu(memberId, info.targetGisuId(), info.targetChapterId());
         }
     },
 
@@ -95,7 +96,7 @@ public enum NoticeTargetPattern {
     SPECIFIC_GISU_SPECIFIC_CHAPTER_WITH_PART(true, true, false, true) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            return useCase.isChapterPresident(memberId, info.targetChapterId());
+            return useCase.isChapterPresidentInGisu(memberId, info.targetGisuId(), info.targetChapterId());
         }
     },
 
