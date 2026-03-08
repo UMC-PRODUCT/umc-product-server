@@ -113,8 +113,10 @@ public class ChallengerQueryRepository {
             return Map.of();
         }
 
+        NumberExpression<Double> pointSum = pointValueExpression(challengerPoint).sum();
+
         List<Tuple> tuples = queryFactory
-            .select(challengerPoint.challenger.id, pointValueExpression(challengerPoint).sum())
+            .select(challengerPoint.challenger.id, pointSum)
             .from(challengerPoint)
             .where(challengerPoint.challenger.id.in(challengerIds))
             .groupBy(challengerPoint.challenger.id)
@@ -125,7 +127,7 @@ public class ChallengerQueryRepository {
             .collect(Collectors.toMap(
                 tuple -> Objects.requireNonNull(tuple.get(challengerPoint.challenger.id)),
                 tuple -> {
-                    Double value = tuple.get(pointValueExpression(challengerPoint).sum());
+                    Double value = tuple.get(pointSum);
                     return value != null ? value : 0.0;
                 }
             ));
@@ -134,8 +136,8 @@ public class ChallengerQueryRepository {
     /**
      * 각 멤버별 가장 최근 기수(gisuId 최대값)의 챌린저 조회
      * <p>
-     * SQL: SELECT c.* FROM challenger c
-     * WHERE c.gisu_id = (SELECT MAX(sub.gisu_id) FROM challenger sub WHERE sub.member_id = c.member_id)
+     * SQL: SELECT c.* FROM challenger c WHERE c.gisu_id = (SELECT MAX(sub.gisu_id) FROM challenger sub WHERE
+     * sub.member_id = c.member_id)
      */
     public List<Challenger> findLatestPerMember() {
         QChallenger sub = new QChallenger("sub");
@@ -190,7 +192,14 @@ public class ChallengerQueryRepository {
         BooleanBuilder builder = new BooleanBuilder();
 
         builder.and(challengerIdEq(query.challengerId(), challenger));
-        builder.and(nicknameOrNameContains(query.nickname(), query.name(), member));
+
+        // keyword가 있으면 name/nickname 무시하고 keyword로 검색, 없으면 각각 검색
+        if (query.keyword() != null && !query.keyword().isBlank()) {
+            builder.and(keywordContains(query.keyword(), member));
+        } else {
+            builder.and(nicknameOrNameContains(query.nickname(), query.name(), member));
+        }
+
         builder.and(schoolIdEq(query.schoolId(), member));
         builder.and(chapterIdExists(query.chapterId(), member));
         builder.and(partEq(query.part(), challenger));
@@ -246,6 +255,11 @@ public class ChallengerQueryRepository {
 
     private BooleanExpression partEq(ChallengerPart part, QChallenger challenger) {
         return part != null ? challenger.part.eq(part) : null;
+    }
+
+    private BooleanExpression keywordContains(String keyword, QMember member) {
+        return member.nickname.containsIgnoreCase(keyword)
+            .or(member.name.containsIgnoreCase(keyword));
     }
 
     private BooleanExpression nicknameOrNameContains(String nickname, String name, QMember member) {

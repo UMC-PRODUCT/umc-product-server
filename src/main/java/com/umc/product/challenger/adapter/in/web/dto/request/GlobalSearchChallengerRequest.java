@@ -30,6 +30,7 @@ public record GlobalSearchChallengerRequest(
                 null,
                 null,
                 null,
+                null,
                 List.of(ChallengerStatus.ACTIVE, ChallengerStatus.GRADUATED)
         );
     }
