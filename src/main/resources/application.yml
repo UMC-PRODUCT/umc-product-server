@@ -163,7 +163,7 @@ logging:
     root: INFO
 
     # 애플리케이션 기본값
-    com.umc.product: ${LOGGING_APP_LEVEL:-INFO}
+    com.umc.product: ${LOGGING_APP_LEVEL:INFO}
 
     # Spring Framework
     org.springframework.web: INFO
@@ -266,6 +266,8 @@ app:
     password: ${SWAGGER_AUTH_PASSWORD:password}
 
   oauth2:
+    google:
+      client-id-list: ${GOOGLE_CLIENT_ID_LIST:}
     apple:
       client-id: ${APPLE_CLIENT_ID}
       team-id: ${APPLE_TEAM_ID}
