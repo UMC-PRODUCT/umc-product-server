@@ -49,7 +49,7 @@ public class GisuService implements ManageGisuUseCase {
 
         Gisu newGisu = loadGisuPort.findById(gisuId);
 
-        newGisu.isActive();
+        newGisu.active();
 
     }
 
