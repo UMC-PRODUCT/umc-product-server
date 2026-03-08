@@ -10,8 +10,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface SearchChallengerUseCase {
-
-
     /**
      * 조건에 맞는 챌린저 목록을 조회합니다. (Offset 기반)
      */

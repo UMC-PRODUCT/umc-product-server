@@ -5,6 +5,7 @@ import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.member.adapter.in.web.assembler.MemberInfoResponseAssembler;
 import com.umc.product.member.adapter.in.web.dto.request.SearchMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.SearchMemberResponse;

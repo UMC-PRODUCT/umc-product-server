@@ -7,10 +7,15 @@ import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.notification.application.port.in.SendEmailUseCase;
 import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
+import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
 import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
 import com.umc.product.notification.domain.WebhookPlatform;
+import com.umc.product.storage.adapter.in.web.dto.FileResponse;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
+import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import com.umc.product.test.dto.TestAopAlarmResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -19,7 +24,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,6 +43,31 @@ public class TestController {
     private final JwtTokenProvider jwtTokenProvider;
     private final AppleTokenVerifier appleTokenVerifier;
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
+    private final GetFileUseCase getFileUseCase;
+    private final SendEmailUseCase sendEmailUseCase;
+
+    /**
+     * 파일 정보 및 접근 URL을 조회합니다.
+     */
+    @Operation(summary = "[개발용] 파일 ID를 기반으로 접근 가능한 URL을 조회합니다.", description = """
+        local 및 development 환경에서만 사용 가능합니다.
+
+        크롤링을 방지하기 위한 절차입니다. 파일이 정상적으로 업로드되었는지 확인하는 용도로만 사용하세요.
+        """)
+    @GetMapping("/file/{fileId}")
+    @Public
+    public ApiResponse<FileResponse> getFile(@PathVariable String fileId) {
+        FileInfo fileInfo = getFileUseCase.getById(fileId);
+        return ApiResponse.onSuccess(FileResponse.from(fileInfo));
+    }
+
+    @PostMapping("/email/send-test")
+    @Public
+    void sendTestEmail(
+        @RequestBody SendVerificationEmailCommand command
+    ) {
+        sendEmailUseCase.sendVerificationEmail(command);
+    }
 
     @WebhookAlarm(
         title = "'알람 테스트 : ' + #title",
