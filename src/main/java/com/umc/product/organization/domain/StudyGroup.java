@@ -32,7 +32,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "study_group")
 public class StudyGroup extends BaseEntity {
 
-    @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
