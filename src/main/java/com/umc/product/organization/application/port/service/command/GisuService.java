@@ -37,12 +37,14 @@ public class GisuService implements ManageGisuUseCase {
 
     @Override
     public void updateActiveGisu(Long gisuId) {
-        Gisu oldGisu = loadGisuPort.findActiveGisu();
 
-        oldGisu.inactive();
+        /**
+         * active 상태인 기존 학기가 없다면 findActiveGisuWithLock()는 Optional.empty()를 반환하므로,
+         * ifPresent()는 아무 작업도 수행하지 않고 새로운 학기만 active 상태로 변경됩니다.
+         */
+        loadGisuPort.findActiveGisuWithLock().ifPresent(Gisu::inactive);
 
         Gisu newGisu = loadGisuPort.findById(gisuId);
-
         newGisu.active();
     }
 
