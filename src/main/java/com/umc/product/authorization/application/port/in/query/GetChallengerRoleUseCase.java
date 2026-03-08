@@ -172,6 +172,36 @@ public interface GetChallengerRoleUseCase {
     boolean isCentralMemberInGisu(Long memberId, Long gisuId);
 
     /**
+     * 특정 기수에서 특정 학교의 회장단 여부 (회장, 부회장)
+     *
+     * @param memberId 사용자 ID
+     * @param gisuId   기수 ID
+     * @param schoolId 학교 ID
+     * @return 해당 기수에서 해당 학교 회장단이면 true
+     */
+    boolean isSchoolCoreInGisu(Long memberId, Long gisuId, Long schoolId);
+
+    /**
+     * 특정 기수에서 특정 학교의 관리자 여부 (회장단, 파트장, 기타 운영진)
+     *
+     * @param memberId 사용자 ID
+     * @param gisuId   기수 ID
+     * @param schoolId 학교 ID
+     * @return 해당 기수에서 해당 학교 관리자면 true
+     */
+    boolean isSchoolAdminInGisu(Long memberId, Long gisuId, Long schoolId);
+
+    /**
+     * 특정 기수에서 특정 지부의 지부장 여부
+     *
+     * @param memberId  사용자 ID
+     * @param gisuId    기수 ID
+     * @param chapterId 지부 ID
+     * @return 해당 기수에서 해당 지부 지부장이면 true
+     */
+    boolean isChapterPresidentInGisu(Long memberId, Long gisuId, Long chapterId);
+
+    /**
      * 여러 챌린저의 역할 타입을 일괄 조회
      *
      * @param challengerIds 챌린저 ID 목록
