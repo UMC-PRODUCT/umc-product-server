@@ -35,6 +35,9 @@ public enum CommonErrorCode implements BaseCode {
 
     // ENVIRONMENT: SpringBoot 실행환경 관련 에러
     INVALID_ENV(HttpStatus.BAD_REQUEST, "ENV-0001", "현재 실행 환경에서는 사용할 수 없는 기능입니다."),
+
+    // Permission Evaluator 관련 에러
+    PERMISSION_TYPE_NOT_IMPLEMENTED(HttpStatus.NOT_IMPLEMENTED, "PE-0001", "요청하신 PE가 존재하지 않습니다. 관리자에게 문의해주세요."),
     ;
 
     private final HttpStatus httpStatus;

@@ -1,5 +1,8 @@
 package com.umc.product.challenger.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.challenger.adapter.in.web.assembler.ChallengerResponseAssembler;
 import com.umc.product.challenger.adapter.in.web.dto.request.DeleteChallengerPointRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.EditChallengerPointRequest;
@@ -26,7 +29,11 @@ public class ChallengerPointCommandController {
     private final ManageChallengerUseCase manageChallengerUseCase;
     private final ChallengerResponseAssembler assembler;
 
-    @Operation(summary = "챌린저 상벌점 부여")
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER_POINT,
+        permission = PermissionType.WRITE
+    )
+    @Operation(summary = "챌린저 상벌점 부여", description = "회장단 이상 가능합니다.")
     @PostMapping("{challengerId}/points")
     ChallengerInfoResponse grantChallengerPoints(
         @PathVariable Long challengerId,
@@ -37,7 +44,11 @@ public class ChallengerPointCommandController {
         return assembler.fromChallengerId(challengerId);
     }
 
-    @Operation(summary = "챌린저 상벌점 사유 수정")
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER_POINT,
+        permission = PermissionType.EDIT
+    )
+    @Operation(summary = "챌린저 상벌점 사유 수정", description = "회장단 이상 가능합니다.")
     @PatchMapping("points/{challengerPointId}")
     void editChallengerPoints(
         @PathVariable Long challengerPointId,
@@ -46,7 +57,11 @@ public class ChallengerPointCommandController {
         manageChallengerUseCase.updateChallengerPoint(request.toCommand(challengerPointId));
     }
 
-    @Operation(summary = "챌린저 상벌점 삭제")
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER_POINT,
+        permission = PermissionType.DELETE
+    )
+    @Operation(summary = "챌린저 상벌점 삭제", description = "총괄단만 가능합니다.")
     @DeleteMapping("points/{challengerPointId}")
     void deleteChallengerPoint(@PathVariable Long challengerPointId) {
         manageChallengerUseCase.deleteChallengerPoint(
