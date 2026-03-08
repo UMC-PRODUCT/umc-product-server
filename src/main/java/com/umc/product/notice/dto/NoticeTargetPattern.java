@@ -81,7 +81,6 @@ public enum NoticeTargetPattern {
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
             return useCase.isSchoolAdmin(memberId, info.targetSchoolId());
         }
-
     },
 
     // 특정 기수 특정 지부
