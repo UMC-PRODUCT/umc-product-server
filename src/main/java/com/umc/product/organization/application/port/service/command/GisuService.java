@@ -1,10 +1,8 @@
 package com.umc.product.organization.application.port.service.command;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
+import com.umc.product.organization.domain.OrganizationDomainException;
 import com.umc.product.organization.application.port.in.command.dto.CreateGisuCommand;
-import com.umc.product.organization.application.port.in.command.dto.UpdateGisuCommand;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
@@ -46,12 +44,11 @@ public class GisuService implements ManageGisuUseCase {
         Gisu newGisu = loadGisuPort.findById(gisuId);
 
         newGisu.active();
-
     }
 
     private void throwIfGenerationAlreadyExists(CreateGisuCommand command) {
         if (loadGisuPort.existsByGeneration(command.number())) {
-            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.GISU_ALREADY_EXISTS);
+            throw new OrganizationDomainException(OrganizationErrorCode.GISU_ALREADY_EXISTS);
         }
     }
 }

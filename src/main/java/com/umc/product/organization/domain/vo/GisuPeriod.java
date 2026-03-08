@@ -1,7 +1,6 @@
 package com.umc.product.organization.domain.vo;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.organization.domain.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
@@ -23,13 +22,13 @@ public class GisuPeriod {
 
     private GisuPeriod(Instant startAt, Instant endAt) {
         if (startAt == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_START_AT_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.GISU_START_AT_REQUIRED);
         }
         if (endAt == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_END_AT_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.GISU_END_AT_REQUIRED);
         }
         if (!startAt.isBefore(endAt)) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_PERIOD_INVALID);
+            throw new OrganizationDomainException(OrganizationErrorCode.GISU_PERIOD_INVALID);
         }
         this.startAt = startAt;
         this.endAt = endAt;
