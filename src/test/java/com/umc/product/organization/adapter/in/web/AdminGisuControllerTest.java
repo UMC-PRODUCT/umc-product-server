@@ -23,10 +23,13 @@ import org.springframework.test.web.servlet.ResultActions;
 
 class AdminGisuControllerTest extends DocumentationTest {
 
+    private static final Instant START_AT = Instant.parse("2025-03-01T00:00:00Z");
+    private static final Instant END_AT = Instant.parse("2025-08-31T23:59:59Z");
+
     @Test
     void 신규_기수를_추가한다() throws Exception {
         // given
-        CreateGisuRequest request = new CreateGisuRequest(9L, Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-08-31T23:59:59Z"));
+        CreateGisuRequest request = new CreateGisuRequest(9L, START_AT, END_AT);
 
         given(manageGisuUseCase.create(any())).willReturn(1L);
 
@@ -49,7 +52,7 @@ class AdminGisuControllerTest extends DocumentationTest {
     void 기수_정보를_수정한다() throws Exception {
         // given
         Long gisuId = 1L;
-        UpdateGisuRequest request = new UpdateGisuRequest(Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-09-30T23:59:59Z"));
+        UpdateGisuRequest request = new UpdateGisuRequest(START_AT, Instant.parse("2025-09-30T23:59:59Z"));
 
         // when
         ResultActions result = mockMvc.perform(
