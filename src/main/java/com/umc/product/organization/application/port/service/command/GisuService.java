@@ -30,10 +30,6 @@ public class GisuService implements ManageGisuUseCase {
         return manageGisuPort.save(gisu).getId();
     }
 
-    @Override
-    public void updateGisu(UpdateGisuCommand command) {
-
-    }
 
     @Override
     public void deleteGisu(Long gisuId) {
