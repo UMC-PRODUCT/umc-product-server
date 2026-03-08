@@ -234,16 +234,20 @@ public class NoticeQueryRepository {
                 .and(target.targetSchoolId.isNull());
 
             // 특정 기수 + 특정 지부 + 특정 파트
-            scopeCondition.or(
-                target.targetChapterId.eq(chapterId)
-                    .and(target.targetSchoolId.isNull())
-            );
+            if (chapterId != null) {
+                scopeCondition = scopeCondition.or(
+                    target.targetChapterId.eq(chapterId)
+                        .and(target.targetSchoolId.isNull())
+                );
+            }
 
             // 특정 기수 + 특정 학교 + 특정 파트
-            scopeCondition.or(
-                target.targetChapterId.isNull()
-                    .and(target.targetSchoolId.eq(schoolId))
-            );
+            if (schoolId != null) {
+                scopeCondition = scopeCondition.or(
+                    target.targetChapterId.isNull()
+                        .and(target.targetSchoolId.eq(schoolId))
+                );
+            }
 
             return gisuAndPartMatch.and(scopeCondition);
         }
