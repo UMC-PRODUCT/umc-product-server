@@ -22,6 +22,9 @@ public record SearchChallengerCursorRequest(
         @Parameter(description = "닉네임으로 부분 검색")
         String nickname,
 
+        @Parameter(description = "이름 또는 닉네임으로 통합 검색. 값이 있으면 name/nickname 필드를 무시하고 keyword로만 검색")
+        String keyword,
+
         @Parameter(description = "소속 학교 ID로 필터링")
         Long schoolId,
 
@@ -42,6 +45,7 @@ public record SearchChallengerCursorRequest(
                 challengerId,
                 name,
                 nickname,
+                keyword,
                 schoolId,
                 chapterId,
                 part,

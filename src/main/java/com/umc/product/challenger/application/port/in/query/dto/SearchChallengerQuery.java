@@ -8,6 +8,7 @@ public record SearchChallengerQuery(
         Long challengerId,
         String name,
         String nickname,
+        String keyword,
         Long schoolId,
         Long chapterId,
         ChallengerPart part,
