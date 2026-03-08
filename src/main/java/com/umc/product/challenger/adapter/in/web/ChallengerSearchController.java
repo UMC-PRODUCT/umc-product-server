@@ -45,7 +45,7 @@ public class ChallengerSearchController {
         @ParameterObject SearchChallengerRequest searchRequest
     ) {
         return SearchChallengerResponse.from(
-            searchChallengerUseCase.search(
+            searchChallengerUseCase.offsetSearch(
                 searchRequest.toQuery(),
                 pageable
             )

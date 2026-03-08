@@ -13,7 +13,7 @@ public interface SearchChallengerUseCase {
     /**
      * 조건에 맞는 챌린저 목록을 조회합니다. (Offset 기반)
      */
-    SearchChallengerResult search(SearchChallengerQuery query, Pageable pageable);
+    SearchChallengerResult offsetSearch(SearchChallengerQuery query, Pageable pageable);
 
     /**
      * 조건에 맞는 챌린저 목록을 조회합니다. (Cursor 기반)

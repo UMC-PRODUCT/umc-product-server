@@ -44,11 +44,8 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
 
     private final GetChallengerPointUseCase getChallengerPointUseCase;
 
-    /**
-     * 현재는 사용하고 있지 않는 것으로 보입니다.
-     */
     @Override
-    public SearchChallengerResult search(SearchChallengerQuery query, Pageable pageable) {
+    public SearchChallengerResult offsetSearch(SearchChallengerQuery query, Pageable pageable) {
         // 페이지네이션을 적용해서 조건에 따라 챌린저 검색
         Page<Challenger> challengers = searchChallengerPort.search(query, pageable);
 
@@ -60,9 +57,10 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         Map<Long, MemberInfo> memberProfiles = loadMemberProfiles(challengers);
         // 챌린저별 역할 조회
         Map<Long, List<ChallengerRoleType>> roleTypes = loadRoleTypes(challengers.getContent());
-        //
+        // 챌린저별 기수 정보 조회
         Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(challengers.getContent());
 
+        // Page Item으로 변환
         Page<SearchChallengerItemInfo> items = challengers.map(challenger ->
             toItemInfo(challenger, memberProfiles, pointSums, roleTypes, gisuGenerationMap)
         );
@@ -72,13 +70,16 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
 
     @Override
     public SearchChallengerCursorResult cursorSearch(SearchChallengerQuery query, Long cursor, int size) {
+        // 조건에 맞는 챌린저 결과 및 파트별 인원 수 조회
         List<Challenger> challengers = searchChallengerPort.cursorSearch(query, cursor, size);
         Map<ChallengerPart, Long> partCounts = buildPartCounts(query);
 
+        // cursor 기반 페이지네이션 처리
+        // 조회된 결과가 요청한 size보다 많으면 다음 페이지가 존재하는 것으로 간주 및 마지막 값 자르기
         boolean hasNext = challengers.size() > size;
         List<Challenger> result = hasNext ? challengers.subList(0, size) : challengers;
 
-        Map<Long, Double> pointSums = buildPointSums(result);
+        Map<Long, Double> pointSums = buildPointSums(result); // 챌린저별 상벌점 합계 계산
         Map<Long, MemberInfo> memberProfiles = loadMemberProfiles(result);
         Map<Long, List<ChallengerRoleType>> roleTypes = loadRoleTypes(result);
         Map<Long, Long> gisuGenerationMap = loadGisuGenerationMap(result);
@@ -87,11 +88,14 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
             .map(challenger -> toItemInfo(challenger, memberProfiles, pointSums, roleTypes, gisuGenerationMap))
             .toList();
 
+        // 커서 페이지네이션: 다음 커서 ID값 제공
         Long nextCursor = hasNext ? result.get(result.size() - 1).getId() : null;
 
         return new SearchChallengerCursorResult(items, nextCursor, hasNext, partCounts);
     }
 
+    // global API에서 사용하는 해당 메소드는 deprecate 예정입니다. (중복)
+    @Deprecated(since = "v1.3.0", forRemoval = true)
     @Override
     public GlobalSearchChallengerCursorResult globalCursorSearch(SearchChallengerQuery query, Long cursor, int size) {
         List<Challenger> challengers = searchChallengerPort.cursorSearch(query, cursor, size);
@@ -110,6 +114,8 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
 
         return new GlobalSearchChallengerCursorResult(items, nextCursor, hasNext);
     }
+
+    // TODO: 아래 V2 메소드들은 왜 사용되고 있지 않은지 파악 필요 - 경운
 
     @Override
     public Page<ChallengerInfo> searchV2(SearchChallengerQuery query, Pageable pageable) {
@@ -144,11 +150,15 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
      * 조회된 챌린저의 파트별 인원 수를 계산
      */
     private Map<ChallengerPart, Long> buildPartCounts(SearchChallengerQuery query) {
+        // 빈 Map 생성 후, 모든 ChallengerPart에 대해 0으로 초기화
         Map<ChallengerPart, Long> counts = new EnumMap<>(ChallengerPart.class);
         for (ChallengerPart part : ChallengerPart.values()) {
             counts.put(part, 0L);
         }
+
+        // 검색 조건에 맞는 결과값을 파트에 따라 나누어서 제공함.
         counts.putAll(searchChallengerPort.countByPart(query));
+
         return counts;
     }
 
@@ -183,6 +193,9 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
         return loadMemberProfiles(challengers.getContent());
     }
 
+    /**
+     * 챌린저 목록에 있는 모든 회원의 프로필 정보를 조회함
+     */
     private Map<Long, MemberInfo> loadMemberProfiles(List<Challenger> challengers) {
         Set<Long> memberIds = challengers.stream()
             .map(Challenger::getMemberId)
