@@ -28,10 +28,30 @@
         </encoder>
     </appender>
 
+    <!-- Loki -->
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <http>
+            <url>${LOKI_URL:-http://localhost:3100/loki/api/v1/push}</url>
+            <auth>
+                <username>${LOKI_USERNAME:-}</username>
+                <password>${GRAFANA_API_KEY:-}</password>
+            </auth>
+        </http>
+        <format>
+            <label>
+                <pattern>application=${SPRING_APPLICATION_NAME},level=%level</pattern>
+            </label>
+            <message>
+                <pattern>${FULL_LOG_PATTERN}</pattern>
+            </message>
+        </format>
+    </appender>
+
     <!-- ========== 로컬: 컬러 + 축약 traceId ========== -->
     <springProfile name="local">
         <root level="INFO">
             <appender-ref ref="LOCAL_CONSOLE"/>
+            <appender-ref ref="LOKI"/>
         </root>
     </springProfile>
 
@@ -56,6 +76,7 @@
 
         <root level="INFO">
             <appender-ref ref="ECS_CONSOLE"/>
+            <appender-ref ref="LOKI"/>
             <appender-ref ref="FILE"/>
         </root>
     </springProfile>
@@ -73,6 +94,7 @@
 
         <root level="INFO">
             <appender-ref ref="ECS_CONSOLE"/>
+            <appender-ref ref="LOKI"/>
             <appender-ref ref="SENTRY"/>
         </root>
     </springProfile>
