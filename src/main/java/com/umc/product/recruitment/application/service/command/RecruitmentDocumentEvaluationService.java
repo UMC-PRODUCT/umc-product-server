@@ -1,7 +1,5 @@
 package com.umc.product.recruitment.application.service.command;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.adapter.in.web.dto.request.EvaluationDecision;
 import com.umc.product.recruitment.application.port.in.command.UpdateMyDocumentEvaluationUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateDocumentStatusCommand;
@@ -122,10 +120,7 @@ public class RecruitmentDocumentEvaluationService implements UpdateMyDocumentEva
                 loadInterviewAssignmentPort.existsByApplicationId(application.getId());
 
             if (hasInterviewAssignment) {
-                throw new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.INTERVIEW_ALREADY_ASSIGNED
-                );
+                throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ALREADY_ASSIGNED);
             }
         }
 

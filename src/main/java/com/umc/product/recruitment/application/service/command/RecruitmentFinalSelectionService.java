@@ -60,8 +60,7 @@ public class RecruitmentFinalSelectionService implements UpdateFinalStatusUseCas
         validateInterviewProcessFinished(application);
 
         if (!application.getRecruitment().getEffectiveRootId().equals(rootId)) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
         }
 
         // todo: 운영진 권한 및 학교 체크

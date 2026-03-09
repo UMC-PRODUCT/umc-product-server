@@ -1,13 +1,13 @@
 package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
+import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import com.umc.product.recruitment.adapter.in.web.mapper.AnswerInfoMapper;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
@@ -133,7 +133,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
         return member.getSchoolId();
     }
 
@@ -330,11 +330,11 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     public RecruitmentListInfo getList(GetRecruitmentListQuery query) {
 
         Member member = loadMemberPort.findById(query.requesterMemberId())
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         Long schoolId = member.getSchoolId();
         if (schoolId == null) {
-            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.SCHOOL_NOT_FOUND);
+            throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_NOT_FOUND);
         }
 
         if (query.status() == RecruitmentListStatus.DRAFT) {
@@ -1124,7 +1124,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         Long memberId = query.memberId();
 
         Member member = loadMemberPort.findById(memberId)
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         String nickName = member.getNickname();
         String name = member.getName();
@@ -1870,9 +1870,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
     @Override
     public RecruitmentApplicationFormInfo get(GetRecruitmentDraftApplicationFormQuery query) {
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-            .orElseThrow(() -> new BusinessException(
-                Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
-            ));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         // TODO: 운영진 권한 검증 필요 (requesterMemberId 기반)
 
@@ -1926,7 +1924,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         Long gisuId = resolveActiveGisuId();
 
         Member member = loadMemberPort.findById(memberId)
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         // 2. 해당 학교 + Active 기수의 발행된 모집 목록 조회
         List<Recruitment> recruitments = loadRecruitmentPort.findAllPublishedBySchoolIdAndGisuId(

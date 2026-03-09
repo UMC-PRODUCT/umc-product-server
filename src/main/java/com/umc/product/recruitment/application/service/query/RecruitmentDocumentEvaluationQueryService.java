@@ -1,10 +1,9 @@
 package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.recruitment.adapter.in.web.dto.request.EvaluationDecision;
@@ -113,12 +112,11 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_FOUND));
 
         if (!application.getRecruitment().getEffectiveRootId().equals(rootId)) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
         }
 
         Member applicant = loadMemberPort.findById(application.getApplicantMemberId())
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         Long formId = currentRecruitment.getFormId();
         if (formId == null) {
@@ -423,7 +421,7 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
         // todo: 운영진 권한 검증 필요
 
         Member requester = loadMemberPort.findById(query.memberId())
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         Long schoolId = requester.getSchoolId();
         if (schoolId == null) {

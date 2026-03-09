@@ -67,19 +67,13 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
     public InterviewSchedulingSummaryInfo get(GetInterviewSchedulingSummaryQuery query) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-            .orElseThrow(() -> new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
-            ));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         Long rootId = recruitment.getEffectiveRootId();
 
         Recruitment rootRecruitment = recruitment.isRoot() ? recruitment :
             loadRecruitmentPort.findById(rootId)
-                .orElseThrow(() -> new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.ROOT_RECRUITMENT_NOT_FOUND
-                ));
+                .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.ROOT_RECRUITMENT_NOT_FOUND));
 
         PartOption requestedPart = (query.part() != null) ? query.part() : PartOption.ALL;
 
