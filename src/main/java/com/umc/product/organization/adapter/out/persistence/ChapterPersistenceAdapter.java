@@ -1,11 +1,10 @@
 package com.umc.product.organization.adapter.out.persistence;
 
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.out.command.ManageChapterPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterPort;
 import com.umc.product.organization.domain.Chapter;
+import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -18,14 +17,14 @@ public class ChapterPersistenceAdapter implements LoadChapterPort, ManageChapter
     private final ChapterJpaRepository chapterJpaRepository;
 
     public void validateExists(Long chapterId) {
-        if(!chapterJpaRepository.existsById(chapterId)) {
-            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.CHAPTER_NOT_FOUND);
+        if (!chapterJpaRepository.existsById(chapterId)) {
+            throw new OrganizationDomainException(OrganizationErrorCode.CHAPTER_NOT_FOUND);
         }
     }
 
     public Chapter findById(Long chapterId) {
         return chapterJpaRepository.findById(chapterId).orElseThrow(() ->
-                new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.CHAPTER_NOT_FOUND));
+            new OrganizationDomainException(OrganizationErrorCode.CHAPTER_NOT_FOUND));
     }
 
     @Override

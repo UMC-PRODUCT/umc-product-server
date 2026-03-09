@@ -3,13 +3,12 @@ package com.umc.product.organization.application.port.service.query;
 import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
 import com.umc.product.authorization.domain.RoleAttribute;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolAccessContextUseCase;
 import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
+import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +44,7 @@ public class SchoolAccessContextService implements GetSchoolAccessContextUseCase
         RoleAttribute schoolAdminRole = roles.stream()
             .filter(role -> role.roleType().isSchoolAdmin())
             .findFirst()
-            .orElseThrow(() -> new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.STUDY_GROUP_ACCESS_DENIED));
+            .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_ACCESS_DENIED));
 
         // 4. 파트 제한 적용
         // 회장/부회장(isSchoolCore): 모든 파트 조회 가능 (part = null)

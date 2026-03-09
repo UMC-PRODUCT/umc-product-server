@@ -1,6 +1,6 @@
 package com.umc.product.organization.domain.vo;
 
-import com.umc.product.organization.domain.OrganizationDomainException;
+import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

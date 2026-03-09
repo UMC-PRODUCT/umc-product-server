@@ -1,7 +1,5 @@
 package com.umc.product.organization.application.port.service.command;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.in.command.ManageChapterUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateChapterCommand;
 import com.umc.product.organization.application.port.out.command.ManageChapterPort;
@@ -14,6 +12,7 @@ import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
+import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.HashSet;
 import java.util.List;
@@ -69,20 +68,20 @@ public class ChapterService implements ManageChapterUseCase {
     private void validateAllSchoolsExist(List<Long> requestedIds, List<School> foundSchools) {
         Set<Long> requestedSet = new HashSet<>(requestedIds);
         Set<Long> foundSet = foundSchools.stream()
-                .map(School::getId)
-                .collect(Collectors.toSet());
+            .map(School::getId)
+            .collect(Collectors.toSet());
 
         if (!foundSet.containsAll(requestedSet)) {
-            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.SCHOOL_NOT_FOUND);
+            throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_NOT_FOUND);
         }
     }
 
     private void validateChapterNameNotDuplicated(Long gisuId, String name) {
         boolean duplicated = loadChapterPort.findByGisuId(gisuId).stream()
-                .anyMatch(chapter -> chapter.getName().equals(name));
+            .anyMatch(chapter -> chapter.getName().equals(name));
 
         if (duplicated) {
-            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.CHAPTER_NAME_DUPLICATED);
+            throw new OrganizationDomainException(OrganizationErrorCode.CHAPTER_NAME_DUPLICATED);
         }
     }
 
@@ -90,13 +89,13 @@ public class ChapterService implements ManageChapterUseCase {
         Set<Long> requestedSet = new HashSet<>(schoolIds);
 
         Set<Long> alreadyAssignedSchoolIds = loadChapterSchoolPort.findByGisuId(gisuId).stream()
-                .map(cs -> cs.getSchool().getId())
-                .collect(Collectors.toSet());
+            .map(cs -> cs.getSchool().getId())
+            .collect(Collectors.toSet());
 
         requestedSet.retainAll(alreadyAssignedSchoolIds);
 
         if (!requestedSet.isEmpty()) {
-            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.SCHOOL_ALREADY_ASSIGNED_TO_CHAPTER);
+            throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_ALREADY_ASSIGNED_TO_CHAPTER);
         }
     }
 }

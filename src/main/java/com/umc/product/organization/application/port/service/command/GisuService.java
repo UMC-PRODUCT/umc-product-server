@@ -5,7 +5,7 @@ import com.umc.product.organization.application.port.in.command.dto.CreateGisuCo
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
-import com.umc.product.organization.domain.OrganizationDomainException;
+import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
