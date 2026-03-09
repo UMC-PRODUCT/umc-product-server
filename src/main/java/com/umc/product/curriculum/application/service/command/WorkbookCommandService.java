@@ -11,9 +11,8 @@ import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
+import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +42,7 @@ public class WorkbookCommandService implements ManageWorkbookUseCase {
 
     private void validateSubmission(MissionType missionType, String submission) {
         if (missionType != MissionType.PLAIN && !StringUtils.hasText(submission)) {
-            throw new BusinessException(Domain.CURRICULUM, CurriculumErrorCode.SUBMISSION_REQUIRED);
+            throw new CurriculumDomainException(CurriculumErrorCode.SUBMISSION_REQUIRED);
         }
     }
 
