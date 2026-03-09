@@ -2,7 +2,6 @@ package com.umc.product.organization.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import jakarta.persistence.CascadeType;
@@ -81,7 +80,6 @@ public class StudyGroup extends BaseEntity {
      * 스터디 그룹에 리더 추가
      *
      * @param challengerId 추가할 챌린저 ID
-     * @throws BusinessException 이미 존재하는 멤버인 경우
      */
     public void addLeader(Long challengerId) {
         throwIfMemberAlreadyExists(challengerId);
@@ -92,7 +90,6 @@ public class StudyGroup extends BaseEntity {
      * 스터디 그룹에 일반 멤버 추가
      *
      * @param challengerId 추가할 챌린저 ID
-     * @throws BusinessException 이미 존재하는 멤버인 경우
      */
     public void addMember(Long challengerId) {
         throwIfMemberAlreadyExists(challengerId);
@@ -103,7 +100,6 @@ public class StudyGroup extends BaseEntity {
      * 스터디 그룹에서 멤버 제거
      *
      * @param challengerId 제거할 챌린저 ID
-     * @throws BusinessException 멤버를 찾을 수 없는 경우
      */
     public void removeMember(Long challengerId) {
         StudyGroupMember member = findMemberByChallengerId(challengerId);
@@ -156,7 +152,6 @@ public class StudyGroup extends BaseEntity {
      * 리더 지정
      *
      * @param challengerId 리더로 지정할 챌린저 ID
-     * @throws BusinessException 멤버를 찾을 수 없는 경우
      */
     public void assignLeader(Long challengerId) {
         // 기존 리더 해제
