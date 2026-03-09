@@ -32,7 +32,5 @@ public interface GisuJpaRepository extends Repository<Gisu, Long> {
 
     boolean existsByGeneration(Long generation);
 
-    boolean existsById(Long id);
-
     void delete(Gisu gisu);
 }

@@ -21,7 +21,7 @@ public class GisuService implements ManageGisuUseCase {
 
     @Override
     public Long create(CreateGisuCommand command) {
-        throwIfGenerationAlreadyExists(command);
+        validateGenerationNotDuplicated(command);
 
         Gisu gisu = Gisu.create(command.generation(), command.startAt(), command.endAt(), false);
 
@@ -39,8 +39,8 @@ public class GisuService implements ManageGisuUseCase {
     public void updateActiveGisu(Long gisuId) {
 
         /**
-         * active 상태인 기존 학기가 없다면 findActiveGisuWithLock()는 Optional.empty()를 반환하므로,
-         * ifPresent()는 아무 작업도 수행하지 않고 새로운 학기만 active 상태로 변경됩니다.
+         * active 상태인 기존 기수가 없다면 findActiveGisuWithLock()는 Optional.empty()를 반환하므로,
+         * ifPresent()는 아무 작업도 수행하지 않고 새로운 기수만 active 상태로 변경됩니다.
          */
         loadGisuPort.findActiveGisuWithLock().ifPresent(Gisu::inactive);
 
@@ -48,7 +48,7 @@ public class GisuService implements ManageGisuUseCase {
         newGisu.active();
     }
 
-    private void throwIfGenerationAlreadyExists(CreateGisuCommand command) {
+    private void validateGenerationNotDuplicated(CreateGisuCommand command) {
         if (loadGisuPort.existsByGeneration(command.generation())) {
             throw new OrganizationDomainException(OrganizationErrorCode.GISU_ALREADY_EXISTS);
         }

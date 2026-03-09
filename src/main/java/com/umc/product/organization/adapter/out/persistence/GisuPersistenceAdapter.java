@@ -63,11 +63,6 @@ public class GisuPersistenceAdapter implements ManageGisuPort, LoadGisuPort {
     }
 
     @Override
-    public boolean existsById(Long id) {
-        return gisuJpaRepository.existsById(id);
-    }
-
-    @Override
     public void delete(Gisu gisu) {
         gisuJpaRepository.delete(gisu);
     }

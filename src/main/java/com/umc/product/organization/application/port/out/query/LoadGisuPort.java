@@ -15,8 +15,6 @@ public interface LoadGisuPort {
 
     Gisu findById(Long gisuId);
 
-    boolean existsById(Long gisuId);
-
     List<Gisu> findByIds(Set<Long> gisuIds);
 
     List<Gisu> findAll();
