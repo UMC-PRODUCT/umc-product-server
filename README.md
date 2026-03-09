@@ -16,9 +16,6 @@
 
 <img width="1000" alt="1st-server-team" src="https://github.com/user-attachments/assets/1b3c94dd-ef23-48ec-9785-3f8a4ceb10dd" />
 
-
 ## 🛠️ 기술 스택
 
 <img width="1000" alt="tech-stack" src="https://github.com/user-attachments/assets/ec0574ec-d7ac-4a93-ba13-68384b04dc42" />
-
-<img width="1000" alt="tech-stack" src="https://github.com/user-attachments/assets/06bde591-1ec5-441d-b609-1ecea42e5433" />
