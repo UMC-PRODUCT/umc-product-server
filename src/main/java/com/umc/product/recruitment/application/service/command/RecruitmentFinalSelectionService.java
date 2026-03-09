@@ -6,8 +6,6 @@ import com.umc.product.challenger.application.port.in.command.dto.DeleteChalleng
 import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerCommand;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.application.port.in.command.UpdateFinalStatusUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateFinalStatusCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateFinalStatusResult;
@@ -76,8 +74,7 @@ public class RecruitmentFinalSelectionService implements UpdateFinalStatusUseCas
                     application.getId(),
                     selectedPart
                 )) {
-                    throw new BusinessException(Domain.RECRUITMENT,
-                        RecruitmentErrorCode.FINAL_SELECTED_PART_NOT_PREFERRED);
+                    throw new RecruitmentDomainException(RecruitmentErrorCode.FINAL_SELECTED_PART_NOT_PREFERRED);
                 }
                 application.passFinal(selectedPart);
 

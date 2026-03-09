@@ -1,8 +1,6 @@
 package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.adapter.out.ApplicationQueryRepository;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAssignmentRow;
@@ -85,17 +83,11 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
             .findByRecruitmentIdAndType(rootId, RecruitmentScheduleType.INTERVIEW_WINDOW);
 
         if (window == null) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_FOUND
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_FOUND);
         }
 
         if (window.getStartsAt() == null || window.getEndsAt() == null) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_WINDOW_NOT_SET
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_WINDOW_NOT_SET);
         }
 
         LocalDate windowStart = toKstLocalDate(window.getStartsAt());
@@ -267,16 +259,10 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
 
         // slot 검증
         InterviewSlot slot = loadInterviewSlotPort.findById(slotId)
-            .orElseThrow(() -> new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND
-            ));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND));
 
         if (!slot.getRecruitment().getEffectiveRootId().equals(rootId)) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT);
         }
 
         // slot time (KST)
@@ -402,16 +388,10 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
 
         // slot이 recruitment에 속하는지 검증
         InterviewSlot slot = loadInterviewSlotPort.findById(slotId)
-            .orElseThrow(() -> new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND
-            ));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND));
 
         if (!slot.getRecruitment().getEffectiveRootId().equals(rootId)) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT);
         }
 
         // 해당 슬롯에 배정된 assignment 목록 조회 (배정 순서대로)

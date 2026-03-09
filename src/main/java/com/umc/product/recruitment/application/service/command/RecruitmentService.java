@@ -3,7 +3,6 @@ package com.umc.product.recruitment.application.service.command;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberErrorCode;
@@ -72,6 +71,7 @@ import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import com.umc.product.storage.domain.exception.StorageErrorCode;
+import com.umc.product.storage.domain.exception.StorageException;
 import com.umc.product.survey.application.port.in.command.CopyFormUseCase;
 import com.umc.product.survey.application.port.in.query.dto.FormDefinitionInfo;
 import com.umc.product.survey.application.port.out.LoadFormPort;
@@ -160,7 +160,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     private Long resolveSchoolId(Long memberId) {
         Member member = loadMemberPort.findById(memberId)
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
         return member.getSchoolId();
     }
 
@@ -194,10 +194,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             .findDraftByFormIdAndRespondentMemberId(formId, command.memberId())
             .isPresent();
         if (existsDraft) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.DRAFT_FORM_RESPONSE_ALREADY_EXISTS
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.DRAFT_FORM_RESPONSE_ALREADY_EXISTS);
         }
 
         Form form = loadFormPort.findById(formId)
@@ -217,8 +214,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     @Override
     public CreateDraftFormResponseInfo reset(ResetDraftFormResponseCommand command) {
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-            .orElseThrow(() -> new BusinessException(
-                Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (!recruitment.isPublished()) {
             throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
@@ -340,10 +336,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     public void delete(DeleteRecruitmentFormResponseCommand command) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-            .orElseThrow(() -> new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
-            ));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (!recruitment.isPublished()) {
             throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
@@ -355,10 +348,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         FormResponse formResponse = loadFormResponsePort.findById(command.formResponseId())
-            .orElseThrow(() -> new BusinessException(
-                Domain.SURVEY,
-                SurveyErrorCode.FORM_RESPONSE_NOT_FOUND
-            ));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
 
         if (formResponse.getForm() == null || formResponse.getForm().getId() == null
             || !formId.equals(formResponse.getForm().getId())) {
@@ -596,8 +586,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         // TODO: 권한 검증
 
         if (loadApplicationPort.existsByRecruitmentId(recruitment.getId())) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_DELETE_FORBIDDEN_HAS_APPLICANTS);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_DELETE_FORBIDDEN_HAS_APPLICANTS);
         }
 
         Long formId = recruitment.getFormId();
@@ -829,7 +818,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         boolean isExtension = recruitment.getParentRecruitmentId() != null;
 
         Member requester = loadMemberPort.findById(command.requesterMemberId())
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         if (!recruitment.getSchoolId().equals(requester.getSchoolId())) {
             throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_FORBIDDEN);
@@ -930,10 +919,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         // 지망 개수 설정이 오픈된 파트 수보다 많으면 발행 불가
         if (recruitment.getMaxPreferredPartCount() > openParts.size()) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.MAX_PREFERRED_PART_EXCEEDS_OPEN_PARTS
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.MAX_PREFERRED_PART_EXCEEDS_OPEN_PARTS);
         }
     }
 
@@ -984,21 +970,17 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             .anyMatch(q -> q != null && q.type() == QuestionType.PREFERRED_PART);
 
         if (!hasPreferredPartQuestion) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_PUBLISH_PREFERRED_PART_REQUIRED
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_PUBLISH_PREFERRED_PART_REQUIRED);
         }
 
         if (draft.maxPreferredPartCount() != null && draft.maxPreferredPartCount() <= 0) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_PUBLISH_MAX_PREFERRED_PART_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_PUBLISH_MAX_PREFERRED_PART_INVALID);
         }
     }
 
     private void requireNonNull(Object v, RecruitmentErrorCode code) {
         if (v == null) {
-            throw new BusinessException(Domain.RECRUITMENT, code);
+            throw new RecruitmentDomainException(code);
         }
     }
 
@@ -1022,8 +1004,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         boolean owned = loadQuestionPort.existsByIdAndFormId(questionId, formId);
         if (!owned) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                SurveyErrorCode.QUESTION_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND);
         }
 
         saveQuestionOptionPort.deleteAllByQuestionId(questionId);
@@ -1110,10 +1091,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     public RecruitmentPublishedInfo update(UpdatePublishedRecruitmentScheduleCommand command) {
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
             .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+                () -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         if (!recruitment.isPublished()) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_PUBLISHED);
         }
 
         // TODO: 권한 검증 (memberId 기반)
@@ -1157,19 +1138,17 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         if (newSlotMinutes != null) {
             if (newSlotMinutes <= 0) {
-                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+                throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
             }
 
             if (newSlotMinutes < 5) {
-                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.SLOT_MINUTES_TOO_SMALL);
+                throw new RecruitmentDomainException(RecruitmentErrorCode.SLOT_MINUTES_TOO_SMALL);
             }
 
             // assignment 1개라도 있으면 slotMinutes 수정 불가
             if (loadInterviewAssignmentPort.countByRootId(recruitmentId) > 0) {
-                throw new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.INTERVIEW_TIMETABLE_SLOT_MINUTES_UPDATE_FORBIDDEN
-                );
+                throw new RecruitmentDomainException(
+                    RecruitmentErrorCode.INTERVIEW_TIMETABLE_SLOT_MINUTES_UPDATE_FORBIDDEN);
             }
 
             // 도메인에 slotMinutes만 업데이트
@@ -1197,8 +1176,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     public RecruitmentApplicationFormInfo delete(DeleteRecruitmentQuestionOptionCommand command) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-            .orElseThrow(() -> new BusinessException(
-                Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         // 발행된 모집의 옵션은 삭제 불가
         recruitment.requireDraftEditable();
@@ -1228,19 +1206,19 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             .findByRecruitmentIdAndType(recruitment.getId(), RecruitmentScheduleType.APPLY_WINDOW);
 
         if (applyWindow == null || applyWindow.getStartsAt() == null || applyWindow.getEndsAt() == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_WINDOW_NOT_SET);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_APPLY_WINDOW_NOT_SET);
         }
 
         Instant now = Instant.now();
 
         // 2. 시작 전 체크
         if (!applyWindow.isStarted(now)) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_NOT_STARTED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_APPLY_NOT_STARTED);
         }
 
         // 3. 마감 후 체크
         if (applyWindow.isPassed(now)) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_APPLY_CLOSED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_APPLY_CLOSED);
         }
     }
 
@@ -1248,7 +1226,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         RecruitmentApplicationFormInfo formInfo = loadRecruitmentPort.findApplicationFormInfoById(recruitment.getId());
         if (formInfo == null || formInfo.formDefinition() == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND);
         }
 
         FormDefinitionInfo def = formInfo.formDefinition();
@@ -1351,7 +1329,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         List<Long> selectedRecruitmentPartIds = extractPreferredRecruitmentPartIds(recruitment, formResponse);
         if (selectedRecruitmentPartIds == null || selectedRecruitmentPartIds.isEmpty()) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.PREFERRED_PART_INVALID);
         }
 
         if (selected.isEmpty()) {
@@ -1368,7 +1346,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new SurveyDomainException(SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
         if (selected.size() > max) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_EXCEEDS_MAX_COUNT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.PREFERRED_PART_EXCEEDS_MAX_COUNT);
         }
 
         if (max >= 2 && selectedRecruitmentPartIds.size() < max) {
@@ -1383,12 +1361,11 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                     "preferredValue", v
                 )
             );
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.PREFERRED_PART_REQUIRED_COUNT_MISMATCH);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.PREFERRED_PART_REQUIRED_COUNT_MISMATCH);
         }
 
         if (selectedRecruitmentPartIds == null || selectedRecruitmentPartIds.isEmpty()) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.PREFERRED_PART_INVALID);
         }
 
         List<RecruitmentPart> parts = loadRecruitmentPartPort.findByRecruitmentId(recruitment.getId());
@@ -1404,7 +1381,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         boolean hasInvalid = selectedRecruitmentPartIds.stream().anyMatch(id -> !openPartIds.contains(id));
         if (hasInvalid) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.PREFERRED_PART_INVALID);
         }
     }
 
@@ -1414,7 +1391,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         try {
             Map<String, Object> tt = recruitment.getInterviewTimeTable();
             if (tt == null || tt.isEmpty()) {
-                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_NOT_SET);
+                throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_NOT_SET);
             }
 
             var scheduleAnswerOpt = formResponse.getAnswers().stream()
@@ -1422,7 +1399,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 .findFirst();
 
             if (scheduleAnswerOpt.isEmpty()) {
-                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
+                throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
             }
 
             Map<String, Object> value = scheduleAnswerOpt.get().getValue();
@@ -1434,14 +1411,14 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 safeListOfMap(value.getOrDefault("selected", List.of()));
 
             if (selected.isEmpty()) {
-                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
+                throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
             }
 
             Map<String, Object> dateRange = safeMap(tt.get("dateRange"));
             Map<String, Object> timeRange = safeMap(tt.get("timeRange"));
 
             if (dateRange == null || timeRange == null) {
-                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_NOT_SET);
+                throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_NOT_SET);
             }
 
             LocalDate startDate = parseDate(requireString(dateRange, "start"));
@@ -1469,18 +1446,16 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 LocalDate d = parseDate(String.valueOf(s.get("date")));
 
                 if (d.isBefore(startDate) || d.isAfter(endDate)) {
-                    throw new BusinessException(Domain.RECRUITMENT,
-                        RecruitmentErrorCode.INTERVIEW_PREFERENCE_OUT_OF_RANGE);
+                    throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_PREFERENCE_OUT_OF_RANGE);
                 }
 
                 List<String> times = safeStringList(s.getOrDefault("times", List.of()));
                 if (times.isEmpty()) {
-                    throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
+                    throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_PREFERENCE_EMPTY);
                 }
                 java.util.Set<String> allowedTimes = allowed.get(d);
                 if (allowedTimes == null || allowedTimes.isEmpty()) {
-                    throw new BusinessException(Domain.RECRUITMENT,
-                        RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_SLOT);
+                    throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_SLOT);
                 }
 
                 for (String raw : times) {
@@ -1488,17 +1463,11 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                     LocalTime t = parseTimeFlexible(raw);
 
                     if (t.isBefore(startTime) || !t.isBefore(endTime)) {
-                        throw new BusinessException(
-                            Domain.RECRUITMENT,
-                            RecruitmentErrorCode.INTERVIEW_PREFERENCE_OUT_OF_RANGE
-                        );
+                        throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_PREFERENCE_OUT_OF_RANGE);
                     }
 
                     if (!allowedTimes.contains(hhmm)) {
-                        throw new BusinessException(
-                            Domain.RECRUITMENT,
-                            RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_SLOT
-                        );
+                        throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_SLOT);
                     }
                 }
             }
@@ -1506,10 +1475,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw e;
         } catch (ClassCastException | IllegalArgumentException e) {
             // payload 구조가 예상과 다를 때 500 방지
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_FORMAT
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_FORMAT);
         }
     }
 
@@ -1538,10 +1504,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
             FileInfo fi = getFileUseCase.getById(fileId);
             if (fi == null) {
-                throw new BusinessException(Domain.STORAGE, StorageErrorCode.FILE_NOT_FOUND);
+                throw new StorageException(StorageErrorCode.FILE_NOT_FOUND);
             }
             if (fi.isUploaded() == null || !fi.isUploaded()) {
-                throw new BusinessException(Domain.STORAGE, StorageErrorCode.FILE_UPLOAD_NOT_COMPLETED);
+                throw new StorageException(StorageErrorCode.FILE_UPLOAD_NOT_COMPLETED);
             }
         }
     }
@@ -1551,7 +1517,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         try {
             return LocalDate.parse(s, DateTimeFormatter.ISO_LOCAL_DATE);
         } catch (DateTimeParseException e) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_FORMAT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_FORMAT);
         }
     }
 
@@ -1562,7 +1528,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             }
             return LocalTime.parse(s, DateTimeFormatter.ofPattern("HH:mm:ss"));
         } catch (DateTimeParseException e) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_FORMAT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_PREFERENCE_INVALID_FORMAT);
         }
     }
 
@@ -1583,7 +1549,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     ) {
         Integer maxPreferred = recruitment.getMaxPreferredPartCount();
         if (maxPreferred != null && maxPreferred <= 0) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID_MAX_COUNT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.PREFERRED_PART_INVALID_MAX_COUNT);
         }
 
         List<RecruitmentPart> parts =
@@ -1613,7 +1579,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new SurveyDomainException(SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
         if (selectedRecruitmentPartIds.size() > max) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_EXCEEDS_MAX_COUNT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.PREFERRED_PART_EXCEEDS_MAX_COUNT);
         }
 
         Map<Long, RecruitmentPart> partById = parts.stream()
@@ -1637,10 +1603,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
             RecruitmentPart rp = partById.get(partId);
             if (rp == null) {
-                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
+                throw new RecruitmentDomainException(RecruitmentErrorCode.PREFERRED_PART_INVALID);
             }
             if (rp.getStatus() != RecruitmentPartStatus.OPEN) {
-                throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
+                throw new RecruitmentDomainException(RecruitmentErrorCode.PREFERRED_PART_INVALID);
             }
             selectedParts.add(rp);
         }
@@ -1729,7 +1695,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 } catch (NumberFormatException ignore) {
                     Long mapped = partIdByName.get(s);
                     if (mapped == null) {
-                        throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_INVALID);
+                        throw new RecruitmentDomainException(RecruitmentErrorCode.PREFERRED_PART_INVALID);
                     }
                     result.add(mapped);
 
@@ -1757,7 +1723,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private String requireString(Map<String, Object> map, String key) {
         Object v = (map == null) ? null : map.get(key);
         if (v == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
         if (v instanceof String s) {
             return s;
@@ -1974,10 +1940,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                 .count();
 
             if (otherCount > 1) {
-                throw new BusinessException(
-                    Domain.SURVEY,
-                    SurveyErrorCode.OTHER_OPTION_DUPLICATED
-                );
+                throw new SurveyDomainException(SurveyErrorCode.OTHER_OPTION_DUPLICATED);
             }
         }
     }
@@ -2104,22 +2067,22 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                                       Map<RecruitmentScheduleType, RecruitmentSchedule> existing,
                                       UpdatePublishedRecruitmentScheduleCommand.SchedulePatch patch) {
         if (patch.applyStartAt() != null && patch.applyStartAt().isBefore(todayStart)) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
         if (patch.applyEndAt() != null && patch.applyEndAt().isBefore(todayStart)) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
         if (patch.docResultAt() != null && patch.docResultAt().isBefore(todayStart)) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
         if (patch.interviewStartAt() != null && patch.interviewStartAt().isBefore(todayStart)) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
         if (patch.interviewEndAt() != null && patch.interviewEndAt().isBefore(todayStart)) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
         if (patch.finalResultAt() != null && patch.finalResultAt().isBefore(todayStart)) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID);
         }
     }
 
@@ -2132,8 +2095,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         if (apply.isStarted(now) && patch.applyStartAt() != null && !patch.applyStartAt().equals(apply.getStartsAt())) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_START_FROZEN);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_START_FROZEN);
         }
     }
 
@@ -2149,8 +2111,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         if (apply.isActive(now) && patch.applyEndAt().isBefore(apply.getEndsAt())) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_END_SHORTEN_FORBIDDEN);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_APPLY_END_SHORTEN_FORBIDDEN);
         }
     }
 
@@ -2162,41 +2123,35 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         if (!interview.canChangeStartNotAdvanced(patch.interviewStartAt())) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INTERVIEW_ADVANCE_FORBIDDEN
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INTERVIEW_ADVANCE_FORBIDDEN);
         }
 
         if (!interview.canChangeEndNotShortened(patch.interviewEndAt())) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INTERVIEW_SHORTEN_FORBIDDEN
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INTERVIEW_SHORTEN_FORBIDDEN);
         }
     }
 
     private void validateOrdering(ResolvedRecruitmentSchedule c) {
         // applyStart <= applyEnd
         if (c.applyStartAt() != null && c.applyEndAt() != null && c.applyEndAt().isBefore(c.applyStartAt())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
         }
         // applyEnd <= docResult
         if (c.applyEndAt() != null && c.docResultAt() != null && c.docResultAt().isBefore(c.applyEndAt())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
         }
         // docResult <= interviewStart
         if (c.docResultAt() != null && c.interviewStartAt() != null && c.interviewStartAt().isBefore(c.docResultAt())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
         }
         // interviewStart <= interviewEnd
         if (c.interviewStartAt() != null && c.interviewEndAt() != null && c.interviewEndAt()
             .isBefore(c.interviewStartAt())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
         }
         // interviewEnd <= finalResult
         if (c.interviewEndAt() != null && c.finalResultAt() != null && c.finalResultAt().isBefore(c.interviewEndAt())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_INVALID_ORDER);
         }
     }
 
@@ -2388,46 +2343,40 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     private void validateScheduleOrderOrThrow(RecruitmentDraftInfo.ScheduleInfo s, boolean isExtension) {
         // applyStart < applyEnd
         if (!s.applyStartAt().isBefore(s.applyEndAt())) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
         }
         // applyEnd <= docResult
         if (s.docResultAt().isBefore(s.applyEndAt())) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
         }
 
         // docResult vs interview period
         if (isExtension) {
             // 추가 모집: 서류 발표 < 면접 종료 (면접이 끝나기 전까지만 발표하면 OK)
             if (!s.docResultAt().isBefore(s.interviewEndAt())) {
-                throw new BusinessException(Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+                throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
             }
         } else {
             // 본모집: 서류 발표 <= 면접 시작 (기존의 엄격한 순서)
             if (s.interviewStartAt().isBefore(s.docResultAt())) {
-                throw new BusinessException(Domain.RECRUITMENT,
-                    RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+                throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
             }
         }
 
         // interviewStart < interviewEnd
         if (!s.interviewStartAt().isBefore(s.interviewEndAt())) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
         }
         // interviewEnd <= finalResult
         if (s.finalResultAt().isBefore(s.interviewEndAt())) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_ORDER_INVALID);
         }
     }
 
     private void validateExtensionScheduleIntegrity(Recruitment extension) {
         Recruitment root = loadRecruitmentPort.findById(extension.getRootRecruitmentId())
             .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.ROOT_RECRUITMENT_NOT_FOUND));
+                () -> new RecruitmentDomainException(RecruitmentErrorCode.ROOT_RECRUITMENT_NOT_FOUND));
 
         Map<RecruitmentScheduleType, RecruitmentSchedule> extSchedules = loadRecruitmentSchedulePort.findScheduleMapByRecruitmentId(
             extension.getId());
@@ -2447,8 +2396,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         RecruitmentSchedule rootS = root.get(type);
 
         if (extS == null || rootS == null || !extS.isSamePeriod(rootS)) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.EXTENSION_SCHEDULE_INCONSISTENT_WITH_ROOT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.EXTENSION_SCHEDULE_INCONSISTENT_WITH_ROOT);
         }
     }
 
@@ -2559,10 +2507,10 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         RecruitmentDraftInfo.InterviewTimeTableInfo tt
     ) {
         if (interviewStartAt == null || interviewEndAt == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_REQUIRED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_PUBLISH_SCHEDULE_REQUIRED);
         }
         if (tt == null || tt.dateRange() == null || tt.timeRange() == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
 
         ZoneId zone = ZoneId.of("Asia/Seoul");
@@ -2573,30 +2521,27 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         LocalTime te = tt.timeRange().end();
 
         if (ds == null || de == null || ts == null || te == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
 
         Instant ttStart = ds.atTime(ts).atZone(zone).toInstant();
         Instant ttEnd = de.atTime(te).atZone(zone).toInstant();
 
         if (!ttStart.isBefore(ttEnd)) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
 
         boolean coversStart = !interviewStartAt.isAfter(ttStart); // interviewStartAt <= ttStart
         boolean coversEnd = !interviewEndAt.isBefore(ttEnd);      // ttEnd <= interviewEndAt
 
         if (!coversStart || !coversEnd) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_COVER_TIMETABLE
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_COVER_TIMETABLE);
         }
     }
 
     private void validateTimeTableStructure(UpdateRecruitmentDraftCommand.InterviewTimeTableCommand tt) {
         if (tt == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
         validateTimeTableStructureCommon(
             tt.dateRange() == null ? null : tt.dateRange().start(),
@@ -2644,7 +2589,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
     }
 
     private void seeInvalidTimeTable() {
-        throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+        throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
     }
 
     private void validateTimeTableStructureCommon(
@@ -2738,14 +2683,11 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         int slotMinutes = parseSlotMinutes(timeTable.get("slotMinutes"));
         if (slotMinutes <= 0) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
 
         if (slotMinutes < 5) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.SLOT_MINUTES_TOO_SMALL);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.SLOT_MINUTES_TOO_SMALL);
         }
 
         Map<LocalDate, List<LocalTime>> enabledByDate = new HashMap<>();
@@ -2869,10 +2811,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
     private int parseSlotMinutes(Object raw) {
         if (raw == null) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
 
         try {
@@ -2891,10 +2830,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             throw new NumberFormatException();
 
         } catch (NumberFormatException e) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
     }
 

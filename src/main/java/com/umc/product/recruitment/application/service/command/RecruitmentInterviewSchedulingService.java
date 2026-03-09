@@ -1,7 +1,5 @@
 package com.umc.product.recruitment.application.service.command;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.command.CreateInterviewAssignmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteInterviewAssignmentUseCase;
@@ -84,8 +82,7 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_FOUND));
 
         if (!loadApplicationListPort.isApplicationBelongsToRecruitmentFamily(application.getId(), rootId)) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
         }
 
         if (application.getStatus() != ApplicationStatus.DOC_PASSED) {
@@ -130,10 +127,7 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
 
         InterviewAssignment assignment =
             loadInterviewAssignmentPort.findById(command.assignmentId())
-                .orElseThrow(() -> new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND
-                ));
+                .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
 
         boolean hasEvaluation = loadEvaluationPort.existsByApplicationIdAndStage(
             assignment.getApplication().getId(),
@@ -149,10 +143,7 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
         Long rootId = recruitment.getEffectiveRootId();
 
         if (!assignment.getRecruitment().getEffectiveRootId().equals(rootId)) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_IN_RECRUITMENT
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_IN_RECRUITMENT);
         }
 
         Long applicationId = assignment.getApplication().getId();
