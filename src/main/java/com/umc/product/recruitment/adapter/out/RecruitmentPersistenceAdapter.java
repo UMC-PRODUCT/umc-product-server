@@ -2,8 +2,6 @@ package com.umc.product.recruitment.adapter.out;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.adapter.out.util.InterviewTimeTableDisabledCalculator;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo.ScheduleInfo;
@@ -37,6 +35,7 @@ import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.enums.FormSectionType;
 import com.umc.product.survey.domain.enums.QuestionType;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -196,7 +195,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         Long formId = recruitment.getFormId();
 
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
         FormDefinitionInfo formDefinitionInfo = loadFormPort.loadFormDefinition(formId);
@@ -218,7 +217,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         }
 
         Form form = formJpaRepository.findById(formId)
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
         for (UpsertRecruitmentFormQuestionsCommand.Item item : items) {
             FormSection section = findOrCreateSection(form, item.target());
@@ -340,7 +339,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
         // 수정
         question = questionJpaRepository.findById(req.questionId())
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND));
 
         if (!question.getFormSection().getId().equals(section.getId())) {
             question.getFormSection().getQuestions().remove(question);
@@ -562,7 +561,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
         FormDefinitionInfo formDefinitionInfo = loadFormPort.loadFormDefinition(formId);

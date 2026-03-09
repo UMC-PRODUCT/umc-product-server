@@ -90,6 +90,7 @@ import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.SingleAnswer;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -181,7 +182,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
         if (loadApplicationPort.existsByRecruitmentIdAndApplicantMemberId(
@@ -200,7 +201,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         Form form = loadFormPort.findById(formId)
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
         FormResponse created = saveFormResponsePort.save(
             FormResponse.createDraft(form, command.memberId())
@@ -227,7 +228,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
         if (loadApplicationPort.existsByRecruitmentIdAndApplicantMemberId(
@@ -240,7 +241,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             .ifPresent(fr -> saveFormResponsePort.deleteById(fr.getId()));
 
         Form form = loadFormPort.findById(formId)
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
         FormResponse created = saveFormResponsePort.save(
             FormResponse.createDraft(form, command.memberId())
@@ -265,18 +266,18 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
         FormResponse formResponse = loadFormResponsePort.findById(command.formResponseId())
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
 
         if (!formResponse.getForm().getId().equals(formId)) {
             throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
         }
 
         if (command.memberId() != null && !command.memberId().equals(formResponse.getRespondentMemberId())) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_FORBIDDEN);
+            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_FORBIDDEN);
         }
 
         List<UpsertRecruitmentFormResponseAnswersCommand.UpsertItem> items =
@@ -292,11 +293,11 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             Long questionId = item.questionId();
 
             if (questionId == null) {
-                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND);
+                throw new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND);
             }
 
             Question question = loadQuestionPort.findById(questionId)
-                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
+                .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND));
 
             Long questionFormId = null;
             if (question.getFormSection() != null
@@ -305,12 +306,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             }
 
             if (questionFormId == null || !questionFormId.equals(formId)) {
-                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_IS_NOT_OWNED_BY_FORM);
+                throw new SurveyDomainException(SurveyErrorCode.QUESTION_IS_NOT_OWNED_BY_FORM);
             }
 
             var serverType = question.getType();
             if (item.answeredAsType() != null && item.answeredAsType() != serverType) {
-                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_TYPE_MISMATCH);
+                throw new SurveyDomainException(SurveyErrorCode.QUESTION_TYPE_MISMATCH);
             }
 
             Map<String, Object> value = (item.value() == null) ? Map.of() : item.value();
@@ -350,7 +351,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
         FormResponse formResponse = loadFormResponsePort.findById(command.formResponseId())
@@ -384,13 +385,13 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
         validateApplyWindow(recruitment);
 
         FormResponse formResponse = loadFormResponsePort.findById(command.formResponseId())
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
 
         if (!formResponse.getForm().getId().equals(formId)) {
             throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
@@ -412,7 +413,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         if (command.applicantMemberId() != null && !command.applicantMemberId()
             .equals(formResponse.getRespondentMemberId())) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_FORBIDDEN);
+            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_FORBIDDEN);
         }
 
         if (formResponse.getStatus() == FormResponseStatus.SUBMITTED) {
@@ -902,7 +903,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         }
 
         Form form = loadFormPort.findById(latest.getFormId())
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
         form.publish();
         saveFormPort.save(form);
 
@@ -1014,7 +1015,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
         Long questionId = command.questionId();
@@ -1038,7 +1039,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         Map<String, Object> value
     ) {
         if (question == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND);
         }
 
         Map<String, Object> safeValue = (value == null) ? Map.of() : value;
@@ -1073,22 +1074,22 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
         FormResponse formResponse = loadFormResponsePort.findById(command.formResponseId())
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
 
         if (!formResponse.getForm().getId().equals(formId)) {
             throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_FORM_MISMATCH);
         }
 
         if (command.memberId() != null && !command.memberId().equals(formResponse.getRespondentMemberId())) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_FORBIDDEN);
+            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_FORBIDDEN);
         }
 
         Question scheduleQuestion = loadQuestionPort.findFirstByFormIdAndType(formId, QuestionType.SCHEDULE)
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND));
 
         Map<String, Object> safeValue = (command.value() == null) ? Map.of() : command.value();
         Map<String, Object> normalized = normalizeInterviewPreferenceToHHmm(safeValue);
@@ -1204,17 +1205,17 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
         boolean ownedQuestion = loadQuestionPort.existsByIdAndFormId(command.questionId(), formId);
         if (!ownedQuestion) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND);
         }
 
         boolean ownedOption = loadQuestionOptionPort.existsByIdAndQuestionId(command.optionId(), command.questionId());
         if (!ownedOption) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_NOT_IN_QUESTION);
+            throw new SurveyDomainException(SurveyErrorCode.OPTION_NOT_IN_QUESTION);
         }
 
         saveQuestionOptionPort.deleteById(command.optionId());
@@ -1308,7 +1309,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                             "answeredQuestionIds", answeredQuestionIds
                         )
                     );
-                    throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+                    throw new SurveyDomainException(SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
                 }
 
                 if (q.type() == QuestionType.PORTFOLIO) {
@@ -1364,7 +1365,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                     "preferredValue", v
                 )
             );
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+            throw new SurveyDomainException(SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
         if (selected.size() > max) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_EXCEEDS_MAX_COUNT);
@@ -1532,7 +1533,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
 
         for (String fileId : fileIds) {
             if (fileId == null || fileId.isBlank()) {
-                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
             }
 
             FileInfo fi = getFileUseCase.getById(fileId);
@@ -1609,7 +1610,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                     "answersCount", formResponse.getAnswers() == null ? 0 : formResponse.getAnswers().size()
                 )
             );
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+            throw new SurveyDomainException(SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
         if (selectedRecruitmentPartIds.size() > max) {
             throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.PREFERRED_PART_EXCEEDS_MAX_COUNT);
@@ -1655,7 +1656,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
                     "openPartIds", partById.keySet()
                 )
             );
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
+            throw new SurveyDomainException(SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
         }
 
         List<ApplicationPartPreference> prefs = new java.util.ArrayList<>();
@@ -1849,17 +1850,17 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         boolean hasLinks = links != null && !links.isEmpty();
 
         if (!hasFiles && !hasLinks) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
         }
 
         if (hasLinks) {
             for (String url : links) {
                 if (url == null || url.isBlank()) {
-                    throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                    throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
                 }
                 String u = url.trim().toLowerCase();
                 if (!(u.startsWith("http://") || u.startsWith("https://"))) {
-                    throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                    throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
                 }
             }
         }
@@ -1867,7 +1868,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         if (hasFiles) {
             for (String fileId : fileIds) {
                 if (fileId == null || fileId.isBlank()) {
-                    throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                    throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
                 }
 
                 getFileUseCase.getById(fileId);
@@ -1986,7 +1987,7 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             return;
         }
         if (value == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
         }
 
         if (type != QuestionType.RADIO && type != QuestionType.DROPDOWN && type != QuestionType.CHECKBOX) {
@@ -2015,20 +2016,20 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         if (type == QuestionType.RADIO || type == QuestionType.DROPDOWN) {
             Long selectedOptionId = asLong(value.get("selectedOptionId"));
             if (selectedOptionId == null) {
-                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
             }
 
             Boolean isOther = isOtherByOptionId.get(selectedOptionId);
             if (isOther == null) {
-                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_NOT_IN_QUESTION);
+                throw new SurveyDomainException(SurveyErrorCode.OPTION_NOT_IN_QUESTION);
             }
 
             if (Boolean.TRUE.equals(isOther) && otherText == null) {
-                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_TEXT_REQUIRED);
+                throw new SurveyDomainException(SurveyErrorCode.OPTION_TEXT_REQUIRED);
             }
 
             if (!Boolean.TRUE.equals(isOther) && otherText != null) {
-                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
             }
 
             return;
@@ -2037,12 +2038,12 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
         // CHECKBOX
         List<Long> selectedOptionIds = asLongList(value.get("selectedOptionIds"));
         if (selectedOptionIds == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
         }
 
         boolean hasUnknown = selectedOptionIds.stream().anyMatch(id -> !isOtherByOptionId.containsKey(id));
         if (hasUnknown) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_NOT_IN_QUESTION);
+            throw new SurveyDomainException(SurveyErrorCode.OPTION_NOT_IN_QUESTION);
         }
 
         long selectedOtherCount = selectedOptionIds.stream()
@@ -2051,15 +2052,15 @@ public class RecruitmentService implements CreateRecruitmentDraftFormResponseUse
             .count();
 
         if (selectedOtherCount > 0 && otherText == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.OPTION_TEXT_REQUIRED);
+            throw new SurveyDomainException(SurveyErrorCode.OPTION_TEXT_REQUIRED);
         }
 
         if (selectedOtherCount == 0 && otherText != null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
         }
 
         if (selectedOtherCount > 1) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_ANSWER_FORMAT);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
         }
     }
 

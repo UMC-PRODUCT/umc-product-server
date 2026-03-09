@@ -81,6 +81,7 @@ import com.umc.product.survey.application.port.in.query.dto.AnswerInfo;
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.SingleAnswer;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -292,12 +293,12 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
         FormResponse formResponse = loadFormResponsePort.findById(query.formResponseId())
             .orElseThrow(() ->
-                new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND)
+                new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_FOUND)
             );
 
         if (formResponse.getForm() == null || formResponse.getForm().getId() == null
@@ -306,7 +307,7 @@ public class RecruitmentQueryService implements GetActiveRecruitmentUseCase, Get
         }
 
         if (query.memberId() != null && !query.memberId().equals(formResponse.getRespondentMemberId())) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_FORBIDDEN);
+            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_FORBIDDEN);
         }
 
         List<AnswerInfo> answers = (formResponse.getAnswers() == null ? List.<SingleAnswer>of()

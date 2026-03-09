@@ -55,6 +55,7 @@ import com.umc.product.survey.application.port.out.LoadFormPort;
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.SingleAnswer;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -121,14 +122,14 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
 
         Long formId = currentRecruitment.getFormId();
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
         FormDefinitionInfo formDefinition = loadFormPort.loadFormDefinition(formId);
 
         RecruitmentFormDefinitionInfo recruitmentDef = RecruitmentFormDefinitionInfo.from(formDefinition);
 
         FormResponse formResponse = loadFormResponsePort.findById(application.getFormResponseId())
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
 
         List<AnswerInfo> answers = (formResponse.getAnswers() == null ? List.<SingleAnswer>of()
             : formResponse.getAnswers())
