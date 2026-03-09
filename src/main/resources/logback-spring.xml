@@ -100,7 +100,7 @@
         </appender>
 
         <!-- 우리 앱 패키지만 DEBUG -->
-        <logger name="com.umc.product" level="DEBUG"/>
+        <logger name="com.umc.product" level="${LOGGING_APP_LEVEL:-INFO}"/>
 
         <root level="INFO">
             <appender-ref ref="ECS_CONSOLE"/>
