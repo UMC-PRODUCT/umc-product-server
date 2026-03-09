@@ -2,9 +2,8 @@ package com.umc.product.recruitment.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
+import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -89,7 +88,7 @@ public class Application extends BaseEntity {
 
     public void passFinal(ChallengerPart selectedPart) {
         if (selectedPart == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.FINAL_SELECTED_PART_REQUIRED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.FINAL_SELECTED_PART_REQUIRED);
         }
         this.status = ApplicationStatus.FINAL_ACCEPTED;
         this.selectedPart = selectedPart;

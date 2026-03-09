@@ -23,6 +23,7 @@ import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentPhase;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
+import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.survey.adapter.out.persistence.FormJpaRepository;
 import com.umc.product.survey.adapter.out.persistence.FormSectionJpaRepository;
@@ -81,7 +82,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     public RecruitmentDraftInfo findDraftInfoById(Long recruitmentId) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
             .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+                () -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         List<ChallengerPart> parts =
             recruitmentPartRepository.findByRecruitmentIdAndStatus(recruitmentId, RecruitmentPartStatus.OPEN)
@@ -190,7 +191,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     public RecruitmentApplicationFormInfo findApplicationFormInfoById(Long recruitmentId) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
             .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+                () -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         Long formId = recruitment.getFormId();
 
@@ -557,7 +558,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     ) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
             .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+                () -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
@@ -583,7 +584,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     public RecruitmentPublishedInfo.ScheduleInfo findPublishedScheduleInfoByRecruitmentId(Long recruitmentId) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
             .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+                () -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         List<RecruitmentSchedule> schedules =
             recruitmentScheduleRepository.findByRecruitmentId(recruitmentId);
@@ -640,7 +641,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
             return toQueryInterviewTimeTableInfo(normalized);
 
         } catch (Exception e) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
     }
 
@@ -834,7 +835,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
             return toPublishedInterviewTimeTableInfo(raw, disabledByDate);
 
         } catch (Exception e) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
     }
 

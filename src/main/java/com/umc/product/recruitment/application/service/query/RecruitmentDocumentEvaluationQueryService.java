@@ -103,13 +103,13 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
     @Override
     public ApplicationDetailInfo get(GetApplicationDetailQuery query) {
         Recruitment currentRecruitment = loadRecruitmentPort.findById(query.recruitmentId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = currentRecruitment.getEffectiveRootId();
 
         // todo: 운영진 권한 검증
 
         Application application = loadApplicationPort.findById(query.applicationId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_FOUND));
 
         if (!application.getRecruitment().getEffectiveRootId().equals(rootId)) {
             throw new BusinessException(Domain.RECRUITMENT,
@@ -426,7 +426,7 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
 
         Long schoolId = requester.getSchoolId();
         if (schoolId == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND);
         }
 
         Long gisuId = resolveActiveGisuId();

@@ -111,7 +111,7 @@ public class RecruitmentDocumentEvaluationService implements UpdateMyDocumentEva
         Application application = loadApplicationPort.getByRecruitmentIdAndApplicationId(
             command.recruitmentId(),
             command.applicationId()
-        ).orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
+        ).orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_FOUND));
 
         // todo: 운영진 권한 및 학교 체크
 
@@ -149,7 +149,7 @@ public class RecruitmentDocumentEvaluationService implements UpdateMyDocumentEva
 
         // docResultAt.isActive(now) -> 현재 시각이 발표 시점을 지났음을 의미
         if (docResultAt != null && docResultAt.isActive(Instant.now())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.DOC_RESULT_ALREADY_PUBLISHED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.DOC_RESULT_ALREADY_PUBLISHED);
         }
     }
 

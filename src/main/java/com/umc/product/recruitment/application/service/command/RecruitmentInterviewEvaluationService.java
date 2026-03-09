@@ -1,7 +1,5 @@
 package com.umc.product.recruitment.application.service.command;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.recruitment.application.port.in.command.CreateLiveQuestionUseCase;
@@ -190,7 +188,7 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
     private InterviewAssignment getValidatedAssignment(Long assignmentId, Long recruitmentId) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(recruitmentId)
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = recruitment.getEffectiveRootId();
 
         InterviewAssignment assignment = loadInterviewAssignmentPort.findById(assignmentId)
@@ -223,7 +221,7 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
 
         // 최종 결과 발표 시점이 지났다면(isActive) 평가 제출/재제출 불가
         if (finalResultAt != null && finalResultAt.isActive(java.time.Instant.now())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.FINAL_RESULT_ALREADY_PUBLISHED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.FINAL_RESULT_ALREADY_PUBLISHED);
         }
     }
 
