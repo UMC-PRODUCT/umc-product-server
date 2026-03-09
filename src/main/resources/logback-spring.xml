@@ -23,6 +23,10 @@
     </appender>
 
     <appender class="ch.qos.logback.core.ConsoleAppender" name="ECS_CONSOLE">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+
         <encoder>
             <pattern>${FULL_LOG_PATTERN}</pattern>
         </encoder>
@@ -58,26 +62,29 @@
 
     <springProfile name="dev">
         <!-- dev용 파일 appender -->
-        <appender class="ch.qos.logback.core.rolling.RollingFileAppender" name="FILE">
-            <encoder>
-                <pattern>${FULL_LOG_PATTERN}</pattern>
-            </encoder>
+        <!--        <appender class="ch.qos.logback.core.rolling.RollingFileAppender" name="FILE">-->
+        <!--            <encoder>-->
+        <!--                <pattern>${FULL_LOG_PATTERN}</pattern>-->
+        <!--            </encoder>-->
 
-            <file>${LOG_DIR}/${LOG_NAME}.log</file>
+        <!--            <file>${LOG_DIR}/${LOG_NAME}.log</file>-->
 
-            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-                <fileNamePattern>${LOG_DIR}/${LOG_NAME}-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+        <!--            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">-->
+        <!--                <fileNamePattern>${LOG_DIR}/${LOG_NAME}-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>-->
 
-                <maxFileSize>50MB</maxFileSize>
-                <maxHistory>30</maxHistory>
-                <totalSizeCap>2GB</totalSizeCap>
-            </rollingPolicy>
-        </appender>
+        <!--                <maxFileSize>50MB</maxFileSize>-->
+        <!--                <maxHistory>30</maxHistory>-->
+        <!--                <totalSizeCap>2GB</totalSizeCap>-->
+        <!--            </rollingPolicy>-->
+        <!--        </appender>-->
+
+        <!-- 우리 앱 패키지만 DEBUG -->
+        <logger name="com.umc.product" level="DEBUG"/>
 
         <root level="INFO">
             <appender-ref ref="ECS_CONSOLE"/>
             <appender-ref ref="LOKI"/>
-            <appender-ref ref="FILE"/>
+            <!--            <appender-ref ref="FILE"/>-->
         </root>
     </springProfile>
 
@@ -88,9 +95,12 @@
             <options>
                 <dsn>${SENTRY_DSN:-}</dsn>
             </options>
-            <minimumEventLevel>DEBUG</minimumEventLevel>
-            <minimumBreadcrumbLevel>DEBUG</minimumBreadcrumbLevel>
+            <minimumEventLevel>WARN</minimumEventLevel>
+            <minimumBreadcrumbLevel>INFO</minimumBreadcrumbLevel>
         </appender>
+
+        <!-- 우리 앱 패키지만 DEBUG -->
+        <logger name="com.umc.product" level="DEBUG"/>
 
         <root level="INFO">
             <appender-ref ref="ECS_CONSOLE"/>
