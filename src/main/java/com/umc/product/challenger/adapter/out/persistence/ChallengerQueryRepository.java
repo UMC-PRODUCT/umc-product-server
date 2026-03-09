@@ -5,6 +5,8 @@ import static com.umc.product.challenger.domain.QChallengerPoint.challengerPoint
 import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.organization.domain.QChapter.chapter;
 import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
+import static com.umc.product.organization.domain.QSchool.school;
+import static java.util.Objects.requireNonNull;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
@@ -14,6 +16,8 @@ import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
+import com.umc.product.challenger.application.port.out.dto.ChallengerSearchBundle;
+import com.umc.product.challenger.application.port.out.dto.ChallengerSearchRow;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.QChallenger;
 import com.umc.product.challenger.domain.QChallengerPoint;
@@ -23,9 +27,9 @@ import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.member.domain.QMember;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -105,8 +109,8 @@ public class ChallengerQueryRepository {
         return tuples.stream()
             .filter(tuple -> tuple.get(challenger.part) != null)
             .collect(Collectors.toMap(
-                tuple -> Objects.requireNonNull(tuple.get(challenger.part)),
-                tuple -> Objects.requireNonNull(tuple.get(challenger.count()))
+                tuple -> requireNonNull(tuple.get(challenger.part)),
+                tuple -> requireNonNull(tuple.get(challenger.count()))
             ));
     }
 
@@ -133,7 +137,7 @@ public class ChallengerQueryRepository {
         return tuples.stream()
             .filter(tuple -> tuple.get(challengerPoint.challenger.id) != null)
             .collect(Collectors.toMap(
-                tuple -> Objects.requireNonNull(tuple.get(challengerPoint.challenger.id)),
+                tuple -> requireNonNull(tuple.get(challengerPoint.challenger.id)),
                 tuple -> {
                     Double value = tuple.get(pointSum);
                     return value != null ? value : 0.0;
@@ -158,6 +162,123 @@ public class ChallengerQueryRepository {
                     .where(sub.memberId.eq(challenger.memberId))
             ))
             .fetch();
+    }
+
+    /**
+     * 커서 기반 검색 + 파트별 카운트를 하나의 호출로 수행합니다.
+     * <p>
+     * - 검색 조건(BooleanBuilder)을 한 번만 생성하여 검색/카운트 쿼리에 공유
+     * <p>
+     * - member + school을 JOIN하여 프로필 정보를 함께 조회 (별도 member 재조회 제거)
+     */
+    public ChallengerSearchBundle cursorSearchWithCounts(SearchChallengerQuery query, Long cursor, int size) {
+        BooleanBuilder condition = buildBaseCondition(query);
+
+        // 파트별 카운트 (같은 condition 공유)
+        // 이 partCount는 전체 DB에서 조건에 부합하는 숫자입니당 ~
+        Map<ChallengerPart, Long> partCounts = executeCountByPart(condition);
+
+        // 커서 조건 추가
+        if (cursor != null) {
+            condition.and(buildCursorSearchCondition(cursor));
+        }
+
+        // 메인 검색: challenger + member + school JOIN
+        List<Tuple> tuples = queryFactory
+            .select(
+                challenger.id, challenger.memberId, challenger.gisuId,
+                challenger.part, challenger.status,
+                member.name, member.nickname, school.name, member.profileImageId
+            )
+            .from(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .leftJoin(school).on(member.schoolId.eq(school.id))
+            .where(condition)
+            .orderBy(partOrder(challenger).asc(), challenger.gisuId.desc(), member.name.asc(), challenger.id.asc())
+            .limit(size + 1)
+            .fetch();
+
+        List<ChallengerSearchRow> rows = tuples.stream()
+            .map(this::toSearchRow)
+            .toList();
+
+        return new ChallengerSearchBundle(rows, partCounts);
+    }
+
+    /**
+     * 오프셋 기반 검색 + 파트별 카운트를 하나의 호출로 수행합니다.
+     */
+    public ChallengerSearchBundle pagingSearchWithCounts(SearchChallengerQuery query, Pageable pageable) {
+        BooleanBuilder condition = buildBaseCondition(query);
+
+        // 파트별 카운트 (같은 condition 공유)
+        Map<ChallengerPart, Long> partCounts = executeCountByPart(condition);
+
+        // 메인 검색: challenger + member + school JOIN
+        List<Tuple> tuples = queryFactory
+            .select(
+                challenger.id, challenger.memberId, challenger.gisuId,
+                challenger.part, challenger.status,
+                member.name, member.nickname, school.name, member.profileImageId
+            )
+            .from(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .leftJoin(school).on(member.schoolId.eq(school.id))
+            .where(condition)
+            .orderBy(partOrder(challenger).asc(), challenger.gisuId.desc(), member.name.asc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        List<ChallengerSearchRow> rows = tuples.stream()
+            .map(this::toSearchRow)
+            .toList();
+
+        return new ChallengerSearchBundle(rows, partCounts);
+    }
+
+    /**
+     * Tuple을 ChallengerSearchRow로 변환
+     */
+    private ChallengerSearchRow toSearchRow(Tuple tuple) {
+        return ChallengerSearchRow.builder()
+            .challengerId(tuple.get(challenger.id))
+            .memberId(tuple.get(challenger.memberId))
+            .gisuId(tuple.get(challenger.gisuId))
+            .part(tuple.get(challenger.part))
+            .status(tuple.get(challenger.status))
+            .memberName(tuple.get(member.name))
+            .memberNickname(tuple.get(member.nickname))
+            .schoolName(tuple.get(school.name))
+            .profileImageId(tuple.get(member.profileImageId))
+            .build();
+    }
+
+    /**
+     * 주어진 조건으로 파트별 카운트를 실행 (condition 재사용)
+     */
+    private Map<ChallengerPart, Long> executeCountByPart(BooleanBuilder condition) {
+        List<Tuple> tuples = queryFactory
+            .select(challenger.part, challenger.count())
+            .from(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .where(condition)
+            .groupBy(challenger.part)
+            .fetch();
+
+        Map<ChallengerPart, Long> counts = new EnumMap<>(ChallengerPart.class);
+        for (ChallengerPart part : ChallengerPart.values()) {
+            counts.put(part, 0L);
+        }
+
+        tuples.stream()
+            .filter(tuple -> tuple.get(challenger.part) != null)
+            .forEach(tuple -> counts.put(
+                requireNonNull(tuple.get(challenger.part)),
+                requireNonNull(tuple.get(challenger.count()))
+            ));
+
+        return counts;
     }
 
     // ========== PRIVATE METHODS ==========
