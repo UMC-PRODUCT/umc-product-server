@@ -5,8 +5,6 @@ import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.TopicManagementResponse;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
@@ -90,7 +88,7 @@ public class FcmService implements ManageFcmUseCase {
                 log.info("푸시 알림 전송 완료 userId = {}", memberInfo.id());
             } catch (FirebaseMessagingException e) {
                 log.error("푸시 알림 전송 실패 userId = {}", memberInfo.id(), e);
-                throw new BusinessException(Domain.FCM, FcmErrorCode.USER_FCM_NOT_FOUND);
+                throw new FcmDomainException(FcmErrorCode.USER_FCM_NOT_FOUND);
             }
         }
     }
