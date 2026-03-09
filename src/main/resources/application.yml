@@ -218,6 +218,8 @@ management:
       instance: ${HOSTNAME:unknown-host}
 
     enable:
+      spring.security: false # Spring Security 인증 메트릭
+
       jvm: true
       process: true
       http: true
@@ -228,7 +230,6 @@ management:
       hikaricp: true # HikariCP 커넥션 풀 메트릭
       logback: true # 로그 레벨별 카운트
       cache: true # 캐시 사용 시
-      spring.security: true # Spring Security 인증 메트릭
 
   prometheus:
     metrics:
