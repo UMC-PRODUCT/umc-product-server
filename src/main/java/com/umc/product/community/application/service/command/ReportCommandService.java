@@ -10,9 +10,9 @@ import com.umc.product.community.application.port.out.report.LoadReportPort;
 import com.umc.product.community.application.port.out.report.SaveReportPort;
 import com.umc.product.community.domain.Report;
 import com.umc.product.community.domain.enums.ReportTargetType;
+import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,7 +31,7 @@ public class ReportCommandService implements ReportPostUseCase, ReportCommentUse
     public void report(ReportPostCommand command) {
         // 게시글 존재 확인
         loadPostPort.findById(command.postId())
-            .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
 
         // 중복 신고 확인 및 저장
         checkDuplicateAndSaveReport(command.reporterId(), ReportTargetType.POST, command.postId());
@@ -41,7 +41,7 @@ public class ReportCommandService implements ReportPostUseCase, ReportCommentUse
     public void report(ReportCommentCommand command) {
         // 댓글 존재 확인
         loadCommentPort.findById(command.commentId())
-            .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.COMMENT_NOT_FOUND));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.COMMENT_NOT_FOUND));
 
         // 중복 신고 확인 및 저장
         checkDuplicateAndSaveReport(command.reporterId(), ReportTargetType.COMMENT, command.commentId());
@@ -58,7 +58,7 @@ public class ReportCommandService implements ReportPostUseCase, ReportCommentUse
     private void checkDuplicateAndSaveReport(Long reporterId, ReportTargetType targetType, Long targetId) {
         // 중복 신고 확인
         if (loadReportPort.existsByReporterIdAndTargetTypeAndTargetId(reporterId, targetType, targetId)) {
-            throw new BusinessException(Domain.COMMUNITY, CommunityErrorCode.REPORT_ALREADY_EXISTS);
+            throw new CommunityDomainException(CommunityErrorCode.REPORT_ALREADY_EXISTS);
         }
 
         // 신고 생성 및 저장
