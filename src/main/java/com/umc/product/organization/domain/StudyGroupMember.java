@@ -1,8 +1,6 @@
 package com.umc.product.organization.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -56,10 +54,10 @@ public class StudyGroupMember extends BaseEntity {
 
     private static void validate(StudyGroup studyGroup, Long challengerId) {
         if (studyGroup == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_REQUIRED);
         }
         if (challengerId == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.CHALLENGER_ID_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.CHALLENGER_ID_REQUIRED);
         }
     }
 
