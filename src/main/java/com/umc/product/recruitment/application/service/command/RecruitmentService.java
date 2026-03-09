@@ -5,6 +5,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.recruitment.application.port.in.command.CreateExtensionCommand;
