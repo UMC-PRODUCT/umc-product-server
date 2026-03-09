@@ -4,6 +4,7 @@ import com.umc.product.challenger.application.port.in.query.dto.SearchChallenger
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.application.port.out.SearchChallengerPort;
+import com.umc.product.challenger.application.port.out.dto.ChallengerSearchBundle;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
@@ -94,6 +95,16 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     @Override
     public Map<Long, Double> sumPointsByChallengerIds(Set<Long> challengerIds) {
         return queryRepository.sumPointsByChallengerIds(challengerIds);
+    }
+
+    @Override
+    public ChallengerSearchBundle cursorSearchWithCounts(SearchChallengerQuery query, Long cursor, int size) {
+        return queryRepository.cursorSearchWithCounts(query, cursor, size);
+    }
+
+    @Override
+    public ChallengerSearchBundle pagingSearchWithCounts(SearchChallengerQuery query, Pageable pageable) {
+        return queryRepository.pagingSearchWithCounts(query, pageable);
     }
 
     @Override

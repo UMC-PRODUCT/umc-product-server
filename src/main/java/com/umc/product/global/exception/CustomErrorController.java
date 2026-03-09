@@ -33,7 +33,7 @@ public class CustomErrorController implements ErrorController {
         if (exception != null) {
             Throwable cause = getRootCause(exception);
             if (cause instanceof BusinessException businessException) {
-                BaseCode code = businessException.getCode();
+                BaseCode code = businessException.getBaseCode();
                 log.warn("[ERROR CONTROLLER - BusinessException] uri={}, code={}, message={}",
                     requestUri, code.getCode(), code.getMessage());
 

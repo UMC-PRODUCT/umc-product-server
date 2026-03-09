@@ -3,7 +3,10 @@ package com.umc.product.challenger.adapter.out.persistence;
 import static com.umc.product.challenger.domain.QChallenger.challenger;
 import static com.umc.product.challenger.domain.QChallengerPoint.challengerPoint;
 import static com.umc.product.member.domain.QMember.member;
+import static com.umc.product.organization.domain.QChapter.chapter;
 import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
+import static com.umc.product.organization.domain.QSchool.school;
+import static java.util.Objects.requireNonNull;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
@@ -13,6 +16,8 @@ import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.challenger.application.port.in.query.dto.SearchChallengerQuery;
+import com.umc.product.challenger.application.port.out.dto.ChallengerSearchBundle;
+import com.umc.product.challenger.application.port.out.dto.ChallengerSearchRow;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.challenger.domain.QChallenger;
 import com.umc.product.challenger.domain.QChallengerPoint;
@@ -22,9 +27,9 @@ import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.member.domain.QMember;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +49,7 @@ public class ChallengerQueryRepository {
      */
     public Page<Challenger> pagingSearch(SearchChallengerQuery query, Pageable pageable) {
 
-        BooleanBuilder condition = buildBaseCondition(query, challenger, member);
+        BooleanBuilder condition = buildBaseCondition(query);
 
         List<Challenger> content = queryFactory
             .selectFrom(challenger)
@@ -70,11 +75,11 @@ public class ChallengerQueryRepository {
      */
     public List<Challenger> cursorSearch(SearchChallengerQuery query, Long cursor, int size) {
 
-        BooleanBuilder condition = buildBaseCondition(query, challenger, member);
+        BooleanBuilder condition = buildBaseCondition(query);
 
         // 커서가 주어졌다면 커서 기반 검색 조건을 추가함
         if (cursor != null) {
-            condition.and(buildCursorSearchCondition(cursor, challenger, member));
+            condition.and(buildCursorSearchCondition(cursor));
         }
 
         return queryFactory
@@ -91,7 +96,7 @@ public class ChallengerQueryRepository {
      */
     public Map<ChallengerPart, Long> countByPart(SearchChallengerQuery query) {
 
-        BooleanBuilder condition = buildBaseCondition(query, challenger, member);
+        BooleanBuilder condition = buildBaseCondition(query);
 
         List<Tuple> tuples = queryFactory
             .select(challenger.part, challenger.count())
@@ -104,8 +109,8 @@ public class ChallengerQueryRepository {
         return tuples.stream()
             .filter(tuple -> tuple.get(challenger.part) != null)
             .collect(Collectors.toMap(
-                tuple -> Objects.requireNonNull(tuple.get(challenger.part)),
-                tuple -> Objects.requireNonNull(tuple.get(challenger.count()))
+                tuple -> requireNonNull(tuple.get(challenger.part)),
+                tuple -> requireNonNull(tuple.get(challenger.count()))
             ));
     }
 
@@ -132,7 +137,7 @@ public class ChallengerQueryRepository {
         return tuples.stream()
             .filter(tuple -> tuple.get(challengerPoint.challenger.id) != null)
             .collect(Collectors.toMap(
-                tuple -> Objects.requireNonNull(tuple.get(challengerPoint.challenger.id)),
+                tuple -> requireNonNull(tuple.get(challengerPoint.challenger.id)),
                 tuple -> {
                     Double value = tuple.get(pointSum);
                     return value != null ? value : 0.0;
@@ -157,6 +162,123 @@ public class ChallengerQueryRepository {
                     .where(sub.memberId.eq(challenger.memberId))
             ))
             .fetch();
+    }
+
+    /**
+     * 커서 기반 검색 + 파트별 카운트를 하나의 호출로 수행합니다.
+     * <p>
+     * - 검색 조건(BooleanBuilder)을 한 번만 생성하여 검색/카운트 쿼리에 공유
+     * <p>
+     * - member + school을 JOIN하여 프로필 정보를 함께 조회 (별도 member 재조회 제거)
+     */
+    public ChallengerSearchBundle cursorSearchWithCounts(SearchChallengerQuery query, Long cursor, int size) {
+        BooleanBuilder condition = buildBaseCondition(query);
+
+        // 파트별 카운트 (같은 condition 공유)
+        // 이 partCount는 전체 DB에서 조건에 부합하는 숫자입니당 ~
+        Map<ChallengerPart, Long> partCounts = executeCountByPart(condition);
+
+        // 커서 조건 추가
+        if (cursor != null) {
+            condition.and(buildCursorSearchCondition(cursor));
+        }
+
+        // 메인 검색: challenger + member + school JOIN
+        List<Tuple> tuples = queryFactory
+            .select(
+                challenger.id, challenger.memberId, challenger.gisuId,
+                challenger.part, challenger.status,
+                member.name, member.nickname, school.name, member.profileImageId
+            )
+            .from(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .leftJoin(school).on(member.schoolId.eq(school.id))
+            .where(condition)
+            .orderBy(partOrder(challenger).asc(), challenger.gisuId.desc(), member.name.asc(), challenger.id.asc())
+            .limit(size + 1)
+            .fetch();
+
+        List<ChallengerSearchRow> rows = tuples.stream()
+            .map(this::toSearchRow)
+            .toList();
+
+        return new ChallengerSearchBundle(rows, partCounts);
+    }
+
+    /**
+     * 오프셋 기반 검색 + 파트별 카운트를 하나의 호출로 수행합니다.
+     */
+    public ChallengerSearchBundle pagingSearchWithCounts(SearchChallengerQuery query, Pageable pageable) {
+        BooleanBuilder condition = buildBaseCondition(query);
+
+        // 파트별 카운트 (같은 condition 공유)
+        Map<ChallengerPart, Long> partCounts = executeCountByPart(condition);
+
+        // 메인 검색: challenger + member + school JOIN
+        List<Tuple> tuples = queryFactory
+            .select(
+                challenger.id, challenger.memberId, challenger.gisuId,
+                challenger.part, challenger.status,
+                member.name, member.nickname, school.name, member.profileImageId
+            )
+            .from(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .leftJoin(school).on(member.schoolId.eq(school.id))
+            .where(condition)
+            .orderBy(partOrder(challenger).asc(), challenger.gisuId.desc(), member.name.asc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+
+        List<ChallengerSearchRow> rows = tuples.stream()
+            .map(this::toSearchRow)
+            .toList();
+
+        return new ChallengerSearchBundle(rows, partCounts);
+    }
+
+    /**
+     * Tuple을 ChallengerSearchRow로 변환
+     */
+    private ChallengerSearchRow toSearchRow(Tuple tuple) {
+        return ChallengerSearchRow.builder()
+            .challengerId(tuple.get(challenger.id))
+            .memberId(tuple.get(challenger.memberId))
+            .gisuId(tuple.get(challenger.gisuId))
+            .part(tuple.get(challenger.part))
+            .status(tuple.get(challenger.status))
+            .memberName(tuple.get(member.name))
+            .memberNickname(tuple.get(member.nickname))
+            .schoolName(tuple.get(school.name))
+            .profileImageId(tuple.get(member.profileImageId))
+            .build();
+    }
+
+    /**
+     * 주어진 조건으로 파트별 카운트를 실행 (condition 재사용)
+     */
+    private Map<ChallengerPart, Long> executeCountByPart(BooleanBuilder condition) {
+        List<Tuple> tuples = queryFactory
+            .select(challenger.part, challenger.count())
+            .from(challenger)
+            .join(member).on(challenger.memberId.eq(member.id))
+            .where(condition)
+            .groupBy(challenger.part)
+            .fetch();
+
+        Map<ChallengerPart, Long> counts = new EnumMap<>(ChallengerPart.class);
+        for (ChallengerPart part : ChallengerPart.values()) {
+            counts.put(part, 0L);
+        }
+
+        tuples.stream()
+            .filter(tuple -> tuple.get(challenger.part) != null)
+            .forEach(tuple -> counts.put(
+                requireNonNull(tuple.get(challenger.part)),
+                requireNonNull(tuple.get(challenger.count()))
+            ));
+
+        return counts;
     }
 
     // ========== PRIVATE METHODS ==========
@@ -200,27 +322,26 @@ public class ChallengerQueryRepository {
      * 페이지네이션 방식과 관계없이 공통으로 쓰이는 조건
      */
     private BooleanBuilder buildBaseCondition(
-        SearchChallengerQuery query,
-        QChallenger challenger,
-        QMember member
+        SearchChallengerQuery query
     ) {
         BooleanBuilder builder = new BooleanBuilder();
 
-        builder.and(challengerIdEq(query.challengerId(), challenger));
+        builder.and(challengerIdEq(query.challengerId()));
 
         // keyword가 있으면 name/nickname 무시하고 keyword로 검색, 없으면 각각 검색
         if (query.keyword() != null && !query.keyword().isBlank()) {
-            builder.and(containsKeyword(query.keyword(), member));
+            builder.and(containsKeyword(query.keyword()));
         } else {
             // JavaDoc 읽을 것, 둘 다 주어지면 AND 조건, 하나만 주어지면 해당 조건으로, 없으면 적용 X
-            builder.and(containsNicknameAndName(query.nickname(), query.name(), member));
+            builder.and(containsNicknameAndName(query.nickname(), query.name()));
         }
 
-        builder.and(schoolIdEq(query.schoolId(), member)); // 학교 ID가 있다면 일치해야함
-        builder.and(chapterIdExists(query.chapterId(), member)); // 지부 ID가 있다면 챌린저의 학교가 해당 지부에 속해야함
-        builder.and(partEq(query.part(), challenger)); // 파트값이 주어졌다면 일치하여야 함
-        builder.and(gisuIdEq(query.gisuId(), challenger)); // 기수 값이 주어졌다면 일치하여야 함
-        builder.and(statusIn(query.statuses(), challenger)); // 챌린저 상태값이 주어졌다면 일치하여야 함
+        builder
+            .and(schoolIdEq(query.schoolId())) // 학교 ID가 있다면 일치해야함
+            .and(chapterIdEq(query.chapterId())) // 지부 ID가 있다면 일치해야함
+            .and(partEq(query.part())) // 파트값이 주어졌다면 일치하여야 함
+            .and(gisuIdEq(query.gisuId())) // 기수 값이 주어졌다면 일치하여야 함
+            .and(statusIn(query.statuses())); // 챌린저 상태값이 주어졌다면 일치하여야 함
 
         return builder;
     }
@@ -228,7 +349,7 @@ public class ChallengerQueryRepository {
     /**
      * 커서 기반 검색 조건을 추가함
      */
-    private BooleanExpression buildCursorSearchCondition(Long cursorId, QChallenger challenger, QMember member) {
+    private BooleanExpression buildCursorSearchCondition(Long cursorId) {
         // 메인 쿼리에서 이미 QChallenger와 QMember의 alias를 사용하고 있어서 새로운 alias 생성
         QChallenger c = new QChallenger("cursorC");
         QMember m = new QMember("cursorM");
@@ -278,7 +399,7 @@ public class ChallengerQueryRepository {
     /**
      * 키워드 검색, 이름 또는 닉네임이 포함하는지
      */
-    private BooleanExpression containsKeyword(String keyword, QMember member) {
+    private BooleanExpression containsKeyword(String keyword) {
         return member.nickname.containsIgnoreCase(keyword)
             .or(member.name.containsIgnoreCase(keyword));
     }
@@ -288,7 +409,7 @@ public class ChallengerQueryRepository {
      * <p>
      * 둘 다 주어진 경우 AND로 검색함. 둘 중 하나만 주어진 경우에는 해당 조건으로 검색함
      */
-    private BooleanExpression containsNicknameAndName(String nickname, String name, QMember member) {
+    private BooleanExpression containsNicknameAndName(String nickname, String name) {
         // 닉네임 관련 조건, 닉네임이 비어있지 않다면 조건 생성
         BooleanExpression nicknameCondition =
             (nickname != null && !nickname.isBlank())
@@ -317,35 +438,67 @@ public class ChallengerQueryRepository {
     /**
      * 챌린저 ID가 일치하는지
      */
-    private BooleanExpression challengerIdEq(Long challengerId, QChallenger challenger) {
-        return challengerId != null ? challenger.id.eq(challengerId) : null;
+    private BooleanExpression challengerIdEq(Long challengerId) {
+        return challengerId != null
+            ? challenger.id.eq(challengerId)
+            : null;
     }
 
     /**
      * 기수 ID가 일치하는지
      */
-    private BooleanExpression gisuIdEq(Long gisuId, QChallenger challenger) {
-        return gisuId != null ? challenger.gisuId.eq(gisuId) : null;
+    private BooleanExpression gisuIdEq(Long gisuId) {
+        return gisuId != null
+            ? challenger.gisuId.eq(gisuId)
+            : null;
     }
 
     /**
      * 파트가 일치하는지
      */
-    private BooleanExpression partEq(ChallengerPart part, QChallenger challenger) {
-        return part != null ? challenger.part.eq(part) : null;
+    private BooleanExpression partEq(ChallengerPart part) {
+        return part != null
+            ? challenger.part.eq(part)
+            : null;
     }
 
     /**
      * 학교 ID가 일치하는지
      */
-    private BooleanExpression schoolIdEq(Long schoolId, QMember member) {
-        return schoolId != null ? member.schoolId.eq(schoolId) : null;
+    private BooleanExpression schoolIdEq(Long schoolId) {
+        return schoolId != null
+            ? member.schoolId.eq(schoolId)
+            : null;
+    }
+
+    private BooleanExpression chapterIdEq(Long chapterId) {
+        // 메인 쿼리 = challenger에 member만 JOIN되어 있음
+        // 그 중에서 지부가 일치하는걸 검색해야 하는거임
+
+        return chapterId != null
+            ? challenger.gisuId.eq( // 2. 챌린저의 기수와 일치해야함
+                // 1. 주어진 지부의 기수가
+                JPAExpressions
+                    .select(chapter.gisu.id)
+                    .from(chapter)
+                    .where(chapter.id.eq(chapterId))
+            )
+            // 회원의 학교가
+            .and(
+                member.schoolId.in( // 3. 이 member의 schoolId 안에 있어야 하고
+                    JPAExpressions
+                        .select(chapterSchool.school.id) // 2. 에서 schoolId를 가져옴
+                        .from(chapterSchool)
+                        .where(chapterSchool.chapter.id.eq(chapterId)) // 1. chapterSchool에서 chapterId가 주어진 id인 행
+                )
+            )
+            : null;
     }
 
     /**
      * 챌린저 상태값이 일치하는지
      */
-    private BooleanExpression statusIn(List<ChallengerStatus> statuses, QChallenger challenger) {
+    private BooleanExpression statusIn(List<ChallengerStatus> statuses) {
         return (statuses != null && !statuses.isEmpty()) ? challenger.status.in(statuses) : null;
     }
 
