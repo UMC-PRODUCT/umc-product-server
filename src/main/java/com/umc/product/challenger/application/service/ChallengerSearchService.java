@@ -89,7 +89,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
             .toList();
 
         // 커서 페이지네이션: 다음 커서 ID값 제공
-        Long nextCursor = hasNext ? result.get(result.size() - 1).getId() : null;
+        Long nextCursor = hasNext ? result.getLast().getId() : null;
 
         return new SearchChallengerCursorResult(items, nextCursor, hasNext, partCounts);
     }

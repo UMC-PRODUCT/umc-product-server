@@ -3,6 +3,7 @@ package com.umc.product.challenger.adapter.out.persistence;
 import static com.umc.product.challenger.domain.QChallenger.challenger;
 import static com.umc.product.challenger.domain.QChallengerPoint.challengerPoint;
 import static com.umc.product.member.domain.QMember.member;
+import static com.umc.product.organization.domain.QChapter.chapter;
 import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
 
 import com.querydsl.core.BooleanBuilder;
@@ -44,7 +45,7 @@ public class ChallengerQueryRepository {
      */
     public Page<Challenger> pagingSearch(SearchChallengerQuery query, Pageable pageable) {
 
-        BooleanBuilder condition = buildBaseCondition(query, challenger, member);
+        BooleanBuilder condition = buildBaseCondition(query);
 
         List<Challenger> content = queryFactory
             .selectFrom(challenger)
@@ -70,11 +71,11 @@ public class ChallengerQueryRepository {
      */
     public List<Challenger> cursorSearch(SearchChallengerQuery query, Long cursor, int size) {
 
-        BooleanBuilder condition = buildBaseCondition(query, challenger, member);
+        BooleanBuilder condition = buildBaseCondition(query);
 
         // 커서가 주어졌다면 커서 기반 검색 조건을 추가함
         if (cursor != null) {
-            condition.and(buildCursorSearchCondition(cursor, challenger, member));
+            condition.and(buildCursorSearchCondition(cursor));
         }
 
         return queryFactory
@@ -91,7 +92,7 @@ public class ChallengerQueryRepository {
      */
     public Map<ChallengerPart, Long> countByPart(SearchChallengerQuery query) {
 
-        BooleanBuilder condition = buildBaseCondition(query, challenger, member);
+        BooleanBuilder condition = buildBaseCondition(query);
 
         List<Tuple> tuples = queryFactory
             .select(challenger.part, challenger.count())
@@ -200,27 +201,26 @@ public class ChallengerQueryRepository {
      * 페이지네이션 방식과 관계없이 공통으로 쓰이는 조건
      */
     private BooleanBuilder buildBaseCondition(
-        SearchChallengerQuery query,
-        QChallenger challenger,
-        QMember member
+        SearchChallengerQuery query
     ) {
         BooleanBuilder builder = new BooleanBuilder();
 
-        builder.and(challengerIdEq(query.challengerId(), challenger));
+        builder.and(challengerIdEq(query.challengerId()));
 
         // keyword가 있으면 name/nickname 무시하고 keyword로 검색, 없으면 각각 검색
         if (query.keyword() != null && !query.keyword().isBlank()) {
-            builder.and(containsKeyword(query.keyword(), member));
+            builder.and(containsKeyword(query.keyword()));
         } else {
             // JavaDoc 읽을 것, 둘 다 주어지면 AND 조건, 하나만 주어지면 해당 조건으로, 없으면 적용 X
-            builder.and(containsNicknameAndName(query.nickname(), query.name(), member));
+            builder.and(containsNicknameAndName(query.nickname(), query.name()));
         }
 
-        builder.and(schoolIdEq(query.schoolId(), member)); // 학교 ID가 있다면 일치해야함
-        builder.and(chapterIdExists(query.chapterId(), member)); // 지부 ID가 있다면 챌린저의 학교가 해당 지부에 속해야함
-        builder.and(partEq(query.part(), challenger)); // 파트값이 주어졌다면 일치하여야 함
-        builder.and(gisuIdEq(query.gisuId(), challenger)); // 기수 값이 주어졌다면 일치하여야 함
-        builder.and(statusIn(query.statuses(), challenger)); // 챌린저 상태값이 주어졌다면 일치하여야 함
+        builder
+            .and(schoolIdEq(query.schoolId())) // 학교 ID가 있다면 일치해야함
+            .and(chapterIdEq(query.chapterId())) // 지부 ID가 있다면 일치해야함
+            .and(partEq(query.part())) // 파트값이 주어졌다면 일치하여야 함
+            .and(gisuIdEq(query.gisuId())) // 기수 값이 주어졌다면 일치하여야 함
+            .and(statusIn(query.statuses())); // 챌린저 상태값이 주어졌다면 일치하여야 함
 
         return builder;
     }
@@ -228,7 +228,7 @@ public class ChallengerQueryRepository {
     /**
      * 커서 기반 검색 조건을 추가함
      */
-    private BooleanExpression buildCursorSearchCondition(Long cursorId, QChallenger challenger, QMember member) {
+    private BooleanExpression buildCursorSearchCondition(Long cursorId) {
         // 메인 쿼리에서 이미 QChallenger와 QMember의 alias를 사용하고 있어서 새로운 alias 생성
         QChallenger c = new QChallenger("cursorC");
         QMember m = new QMember("cursorM");
@@ -278,7 +278,7 @@ public class ChallengerQueryRepository {
     /**
      * 키워드 검색, 이름 또는 닉네임이 포함하는지
      */
-    private BooleanExpression containsKeyword(String keyword, QMember member) {
+    private BooleanExpression containsKeyword(String keyword) {
         return member.nickname.containsIgnoreCase(keyword)
             .or(member.name.containsIgnoreCase(keyword));
     }
@@ -288,7 +288,7 @@ public class ChallengerQueryRepository {
      * <p>
      * 둘 다 주어진 경우 AND로 검색함. 둘 중 하나만 주어진 경우에는 해당 조건으로 검색함
      */
-    private BooleanExpression containsNicknameAndName(String nickname, String name, QMember member) {
+    private BooleanExpression containsNicknameAndName(String nickname, String name) {
         // 닉네임 관련 조건, 닉네임이 비어있지 않다면 조건 생성
         BooleanExpression nicknameCondition =
             (nickname != null && !nickname.isBlank())
@@ -317,35 +317,67 @@ public class ChallengerQueryRepository {
     /**
      * 챌린저 ID가 일치하는지
      */
-    private BooleanExpression challengerIdEq(Long challengerId, QChallenger challenger) {
-        return challengerId != null ? challenger.id.eq(challengerId) : null;
+    private BooleanExpression challengerIdEq(Long challengerId) {
+        return challengerId != null
+            ? challenger.id.eq(challengerId)
+            : null;
     }
 
     /**
      * 기수 ID가 일치하는지
      */
-    private BooleanExpression gisuIdEq(Long gisuId, QChallenger challenger) {
-        return gisuId != null ? challenger.gisuId.eq(gisuId) : null;
+    private BooleanExpression gisuIdEq(Long gisuId) {
+        return gisuId != null
+            ? challenger.gisuId.eq(gisuId)
+            : null;
     }
 
     /**
      * 파트가 일치하는지
      */
-    private BooleanExpression partEq(ChallengerPart part, QChallenger challenger) {
-        return part != null ? challenger.part.eq(part) : null;
+    private BooleanExpression partEq(ChallengerPart part) {
+        return part != null
+            ? challenger.part.eq(part)
+            : null;
     }
 
     /**
      * 학교 ID가 일치하는지
      */
-    private BooleanExpression schoolIdEq(Long schoolId, QMember member) {
-        return schoolId != null ? member.schoolId.eq(schoolId) : null;
+    private BooleanExpression schoolIdEq(Long schoolId) {
+        return schoolId != null
+            ? member.schoolId.eq(schoolId)
+            : null;
+    }
+
+    private BooleanExpression chapterIdEq(Long chapterId) {
+        // 메인 쿼리 = challenger에 member만 JOIN되어 있음
+        // 그 중에서 지부가 일치하는걸 검색해야 하는거임
+
+        return chapterId != null
+            ? challenger.gisuId.eq( // 2. 챌린저의 기수와 일치해야함
+                // 1. 주어진 지부의 기수가
+                JPAExpressions
+                    .select(chapter.gisu.id)
+                    .from(chapter)
+                    .where(chapter.id.eq(chapterId))
+            )
+            // 회원의 학교가
+            .and(
+                member.schoolId.in( // 3. 이 member의 schoolId 안에 있어야 하고
+                    JPAExpressions
+                        .select(chapterSchool.school.id) // 2. 에서 schoolId를 가져옴
+                        .from(chapterSchool)
+                        .where(chapterSchool.chapter.id.eq(chapterId)) // 1. chapterSchool에서 chapterId가 주어진 id인 행
+                )
+            )
+            : null;
     }
 
     /**
      * 챌린저 상태값이 일치하는지
      */
-    private BooleanExpression statusIn(List<ChallengerStatus> statuses, QChallenger challenger) {
+    private BooleanExpression statusIn(List<ChallengerStatus> statuses) {
         return (statuses != null && !statuses.isEmpty()) ? challenger.status.in(statuses) : null;
     }
 
