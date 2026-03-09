@@ -1,14 +1,13 @@
 package com.umc.product.organization.application.port.service.command;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateGisuCommand;
-import com.umc.product.organization.application.port.in.command.dto.UpdateGisuCommand;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
+import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,20 +21,14 @@ public class GisuService implements ManageGisuUseCase {
     private final ManageGisuPort manageGisuPort;
 
     @Override
-    public Long register(CreateGisuCommand command) {
-        if (loadGisuPort.existsByGeneration(command.number())) {
-            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.GISU_ALREADY_EXISTS);
-        }
+    public Long create(CreateGisuCommand command) {
+        validateGenerationNotDuplicated(command);
 
-        Gisu gisu = Gisu.create(command.number(), command.startAt(), command.endAt(), false);
+        Gisu gisu = Gisu.create(command.generation(), command.startAt(), command.endAt(), false);
 
         return manageGisuPort.save(gisu).getId();
     }
 
-    @Override
-    public void updateGisu(UpdateGisuCommand command) {
-
-    }
 
     @Override
     public void deleteGisu(Long gisuId) {
@@ -45,13 +38,25 @@ public class GisuService implements ManageGisuUseCase {
 
     @Override
     public void updateActiveGisu(Long gisuId) {
-        Gisu oldGisu = loadGisuPort.findActiveGisu();
 
-        oldGisu.updateIsActive(false);
+        Optional<Gisu> oldActiveGisuOptional = loadGisuPort.findActiveGisuWithLock();
 
+        // 활성화하려는 기수가 이미 활성 상태인 경우, 추가 작업 없이 종료
+        if (oldActiveGisuOptional.isPresent() && oldActiveGisuOptional.get().getId().equals(gisuId)) {
+            return;
+        }
+
+        // 기존 활성 기수가 있다면 비활성화
+        oldActiveGisuOptional.ifPresent(Gisu::inactive);
+
+        // 새로운 기수를 활성화
         Gisu newGisu = loadGisuPort.findById(gisuId);
+        newGisu.active();
+    }
 
-        newGisu.updateIsActive(true);
-
+    private void validateGenerationNotDuplicated(CreateGisuCommand command) {
+        if (loadGisuPort.existsByGeneration(command.generation())) {
+            throw new OrganizationDomainException(OrganizationErrorCode.GISU_ALREADY_EXISTS);
+        }
     }
 }

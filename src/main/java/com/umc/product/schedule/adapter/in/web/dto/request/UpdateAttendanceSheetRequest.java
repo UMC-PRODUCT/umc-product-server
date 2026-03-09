@@ -1,9 +1,8 @@
 package com.umc.product.schedule.adapter.in.web.dto.request;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.in.command.dto.UpdateAttendanceSheetCommand;
 import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
+import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,15 +24,15 @@ public record UpdateAttendanceSheetRequest(
 ) {
     public UpdateAttendanceSheetRequest {
         if (startTime == null || endTime == null) {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.INVALID_TIME_RANGE);
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
         }
 
         if (lateThresholdMinutes == null) {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.INVALID_LATE_THRESHOLD);
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_LATE_THRESHOLD);
         }
 
         if (startTime.isAfter(endTime)) {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.INVALID_TIME_RANGE);
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
         }
     }
 

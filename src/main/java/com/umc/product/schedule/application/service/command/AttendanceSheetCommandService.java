@@ -1,7 +1,5 @@
 package com.umc.product.schedule.application.service.command;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.in.command.CreateAttendanceSheetUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateAttendanceSheetUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateAttendanceSheetCommand;
@@ -15,6 +13,7 @@ import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +39,7 @@ public class AttendanceSheetCommandService implements CreateAttendanceSheetUseCa
     public AttendanceSheetId create(CreateAttendanceSheetCommand command) {
         // 일정 존재 확인
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
-            .orElseThrow(() -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
         // 출석부 생성
         AttendanceSheet sheet = command.toEntity(schedule);
@@ -68,7 +67,7 @@ public class AttendanceSheetCommandService implements CreateAttendanceSheetUseCa
         // 출석부 조회
         AttendanceSheet sheet = loadAttendanceSheetPort.findById(command.sheetId().id())
             .orElseThrow(
-                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+                () -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
         // 출석 시간대 업데이트
         sheet.update(command.window());
@@ -85,7 +84,7 @@ public class AttendanceSheetCommandService implements CreateAttendanceSheetUseCa
         // 출석부 조회
         AttendanceSheet sheet = loadAttendanceSheetPort.findById(sheetId.id())
             .orElseThrow(
-                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+                () -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
         // 비활성화 (도메인 로직)
         sheet.deactivate();
@@ -99,7 +98,7 @@ public class AttendanceSheetCommandService implements CreateAttendanceSheetUseCa
         // 출석부 조회
         AttendanceSheet sheet = loadAttendanceSheetPort.findById(sheetId.id())
             .orElseThrow(
-                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+                () -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
         // 활성화 (도메인 로직)
         sheet.activate();

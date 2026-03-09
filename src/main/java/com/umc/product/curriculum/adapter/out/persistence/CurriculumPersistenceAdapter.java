@@ -6,16 +6,16 @@ import com.umc.product.curriculum.application.port.out.LoadCurriculumPort;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumProgressPort;
 import com.umc.product.curriculum.application.port.out.SaveCurriculumPort;
 import com.umc.product.curriculum.domain.Curriculum;
+import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCurriculumProgressPort, SaveCurriculumPort {
+public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCurriculumProgressPort,
+    SaveCurriculumPort {
 
     private final CurriculumJpaRepository curriculumJpaRepository;
     private final CurriculumQueryRepository curriculumQueryRepository;
@@ -38,7 +38,7 @@ public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCur
     @Override
     public CurriculumProgressInfo findCurriculumProgress(Long challengerId, ChallengerPart part) {
         return curriculumQueryRepository.findCurriculumProgress(challengerId, part)
-                .orElseThrow(() -> new BusinessException(Domain.CURRICULUM, CurriculumErrorCode.CURRICULUM_NOT_FOUND));
+            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.CURRICULUM_NOT_FOUND));
     }
 
     @Override

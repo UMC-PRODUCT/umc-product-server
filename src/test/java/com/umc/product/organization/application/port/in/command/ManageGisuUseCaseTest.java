@@ -35,7 +35,7 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
         );
 
         // when
-        Long gisuId = manageGisuUseCase.register(command);
+        Long gisuId = manageGisuUseCase.create(command);
 
         // then
         assertThat(gisuId).isNotNull();
@@ -56,7 +56,7 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
         );
 
         // when & then
-        assertThatThrownBy(() -> manageGisuUseCase.register(command))
+        assertThatThrownBy(() -> manageGisuUseCase.create(command))
             .isInstanceOf(BusinessException.class)
             .extracting("code")
             .isEqualTo(OrganizationErrorCode.GISU_ALREADY_EXISTS);

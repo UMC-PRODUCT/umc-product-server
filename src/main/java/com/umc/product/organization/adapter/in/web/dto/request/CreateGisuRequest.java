@@ -4,8 +4,8 @@ import com.umc.product.organization.application.port.in.command.dto.CreateGisuCo
 import jakarta.validation.constraints.NotNull;
 import java.time.Instant;
 
-public record CreateGisuRequest(@NotNull Long number, @NotNull Instant startAt, @NotNull Instant endAt) {
+public record CreateGisuRequest(@NotNull Long generation, @NotNull Instant startAt, @NotNull Instant endAt) {
     public CreateGisuCommand toCommand() {
-        return new CreateGisuCommand(number, startAt, endAt);
+        return new CreateGisuCommand(generation, startAt, endAt);
     }
 }

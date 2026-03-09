@@ -1,10 +1,9 @@
 package com.umc.product.notification.adapter.out.persistentce;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.application.port.out.SaveFcmPort;
 import com.umc.product.notification.domain.FcmToken;
+import com.umc.product.notification.domain.exception.FcmDomainException;
 import com.umc.product.notification.domain.exception.FcmErrorCode;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +17,8 @@ public class FcmPersistenceAdapter implements LoadFcmPort, SaveFcmPort {
 
     @Override
     public FcmToken findByMemberId(Long memberId) {
-        return fcmJpaRepository.findByMemberId(memberId).orElseThrow(() -> new BusinessException(Domain.FCM,
-                FcmErrorCode.USER_FCM_NOT_FOUND));
+        return fcmJpaRepository.findByMemberId(memberId)
+            .orElseThrow(() -> new FcmDomainException(FcmErrorCode.USER_FCM_NOT_FOUND));
     }
 
     @Override

@@ -26,7 +26,7 @@ public class AdminGisuController implements AdminGisuControllerApi {
     @Override
     @PostMapping
     public Long createGisu(@Valid @RequestBody CreateGisuRequest request) {
-        return manageGisuUseCase.register(request.toCommand());
+        return manageGisuUseCase.create(request.toCommand());
     }
 
     @CheckAccess(resourceType = ResourceType.GISU, permission = PermissionType.DELETE)

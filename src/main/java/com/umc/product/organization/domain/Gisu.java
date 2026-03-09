@@ -1,10 +1,9 @@
 package com.umc.product.organization.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
-import com.umc.product.organization.exception.OrganizationErrorCode;
+import com.umc.product.organization.domain.vo.GisuPeriod;
 import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,6 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -30,32 +30,26 @@ public class Gisu extends BaseEntity {
     @Column(name = "is_active")
     private boolean isActive;
 
-    private Instant startAt;
+    @Embedded
+    private GisuPeriod period;
 
-    private Instant endAt;
-
-    private Gisu(Long generation, Instant startAt, Instant endAt, boolean isActive) {
-        validate(startAt, endAt);
+    @Builder(access = AccessLevel.PRIVATE)
+    private Gisu(Long generation, GisuPeriod period, boolean isActive) {
         this.generation = generation;
         this.isActive = isActive;
-        this.startAt = startAt;
-        this.endAt = endAt;
+        this.period = period;
     }
 
     public static Gisu create(Long generation, Instant startAt, Instant endAt, boolean isActive) {
-        return new Gisu(generation, startAt, endAt, isActive);
+        return new Gisu(generation, GisuPeriod.of(startAt, endAt), isActive);
     }
 
-    private static void validate(Instant startAt, Instant endAt) {
-        if (startAt == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_START_AT_REQUIRED);
-        }
-        if (endAt == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_END_AT_REQUIRED);
-        }
-        if (!startAt.isBefore(endAt)) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_PERIOD_INVALID);
-        }
+    public Instant getStartAt() {
+        return period.getStartAt();
+    }
+
+    public Instant getEndAt() {
+        return period.getEndAt();
     }
 
     public void active() {
@@ -64,9 +58,5 @@ public class Gisu extends BaseEntity {
 
     public void inactive() {
         this.isActive = false;
-    }
-
-    public void updateIsActive(boolean isActive) {
-        this.isActive = isActive;
     }
 }
