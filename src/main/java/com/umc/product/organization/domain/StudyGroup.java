@@ -3,7 +3,6 @@ package com.umc.product.organization.domain;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -38,9 +37,11 @@ public class StudyGroup extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gisu_id")
     private Gisu gisu;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ChallengerPart part;
@@ -63,13 +64,13 @@ public class StudyGroup extends BaseEntity {
 
     private static void validate(String name, Gisu gisu, ChallengerPart part) {
         if (name == null || name.isBlank()) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
         }
         if (gisu == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.GISU_REQUIRED);
         }
         if (part == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.PART_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.PART_REQUIRED);
         }
     }
 
