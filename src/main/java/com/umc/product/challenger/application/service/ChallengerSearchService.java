@@ -97,7 +97,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
     }
 
     // global API에서 사용하는 해당 메소드는 deprecate 예정입니다. (중복)
-    @Deprecated(since = "v1.3.0", forRemoval = true)
+    @Deprecated(since = "v1.2.5", forRemoval = true)
     @Override
     public GlobalSearchChallengerCursorResult globalCursorSearch(SearchChallengerQuery query, Long cursor, int size) {
         ChallengerSearchBundle bundle = searchChallengerPort.cursorSearchWithCounts(query, cursor, size);
