@@ -1,10 +1,9 @@
 package com.umc.product.curriculum.domain;
 
-import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
+import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -50,7 +49,7 @@ public class ChallengerWorkbook extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String submission;
 
-    @Builder(access =  AccessLevel.PRIVATE)
+    @Builder(access = AccessLevel.PRIVATE)
     private ChallengerWorkbook(Long challengerId, Long originalWorkbookId, Long scheduleId,
                                WorkbookStatus status) {
         this.challengerId = challengerId;
@@ -59,7 +58,8 @@ public class ChallengerWorkbook extends BaseEntity {
         this.status = status != null ? status : WorkbookStatus.PENDING;
     }
 
-    public static ChallengerWorkbook create(Long challengerId, Long originalWorkbookId, WorkbookStatus status, Long scheduleId) {
+    public static ChallengerWorkbook create(Long challengerId, Long originalWorkbookId, WorkbookStatus status,
+                                            Long scheduleId) {
         return ChallengerWorkbook.builder()
             .challengerId(challengerId)
             .originalWorkbookId(originalWorkbookId)
@@ -108,19 +108,19 @@ public class ChallengerWorkbook extends BaseEntity {
 
     private void validatePendingStatus() {
         if (this.status != WorkbookStatus.PENDING) {
-            throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
+            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WORKBOOK_STATUS);
         }
     }
 
     private void validateSubmittedStatus() {
         if (this.status != WorkbookStatus.SUBMITTED) {
-            throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
+            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WORKBOOK_STATUS);
         }
     }
 
     private void validateCanSelectBest() {
         if (this.status != WorkbookStatus.SUBMITTED && this.status != WorkbookStatus.PASS) {
-            throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
+            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WORKBOOK_STATUS);
         }
     }
 }
