@@ -34,13 +34,14 @@ public class NoticeController implements NoticeApi {
     private final ManageNoticeUseCase manageNoticeUseCase;
     private final ManageNoticeReadUseCase manageNoticeReadUseCase;
 
-    /*
+    /**
      * 공지사항 생성
      */
     @PostMapping
     public ApiResponse<CreateNoticeResponse> createNotice(
         @RequestBody @Valid CreateNoticeRequest request,
-        @CurrentMember MemberPrincipal memberPrincipal) {
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
 
         Long memberId = memberPrincipal.getMemberId();
         Long noticeId = manageNoticeUseCase.createNotice(request.toCommand(memberId));
@@ -58,9 +59,9 @@ public class NoticeController implements NoticeApi {
         permission = PermissionType.DELETE
     )
     public void deleteNotice(
-        @PathVariable("noticeId") Long noticeId,
-        @CurrentMember MemberPrincipal memberPrincipal) {
-
+        @PathVariable Long noticeId,
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
         Long memberId = memberPrincipal.getMemberId();
         manageNoticeUseCase.deleteNotice(new DeleteNoticeCommand(memberId, noticeId));
     }
@@ -70,15 +71,14 @@ public class NoticeController implements NoticeApi {
      */
     @PatchMapping("/{noticeId}")
     public void updateNotice(
-        @PathVariable("noticeId") Long noticeId,
+        @PathVariable Long noticeId,
         @RequestBody @Valid UpdateNoticeRequest request,
-        @CurrentMember MemberPrincipal memberPrincipal) {
-
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
         Long memberId = memberPrincipal.getMemberId();
         manageNoticeUseCase.updateNoticeTitleOrContent(
             request.toCommand(memberId, noticeId)
         );
-
     }
 
     /*
@@ -86,9 +86,10 @@ public class NoticeController implements NoticeApi {
      */
     @PostMapping("/{noticeId}/reminders")
     public void sendNoticeReminder(
-        @PathVariable("noticeId") Long noticeId,
+        @PathVariable Long noticeId,
         @RequestBody @Valid SendNoticeReminderRequest request,
-        @CurrentMember MemberPrincipal memberPrincipal) {
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
 
         Long memberId = memberPrincipal.getMemberId();
         manageNoticeUseCase.remindNotice(request.toCommand(memberId, noticeId));
@@ -104,7 +105,7 @@ public class NoticeController implements NoticeApi {
         permission = PermissionType.READ
     )
     public ApiResponse<Void> recordNoticeRead(
-        @PathVariable("noticeId") Long noticeId,
+        @PathVariable Long noticeId,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         manageNoticeReadUseCase.recordRead(noticeId, memberPrincipal.getMemberId());

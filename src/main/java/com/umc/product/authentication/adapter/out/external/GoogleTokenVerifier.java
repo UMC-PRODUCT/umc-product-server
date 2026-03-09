@@ -4,6 +4,7 @@ import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +31,8 @@ public class GoogleTokenVerifier {
 
     private final RestClient restClient;
 
-    @Value("${spring.security.oauth2.client.registration.google.client-id}")
-    private String googleClientId;
+    @Value("${app.oauth2.google.client-id-list}")
+    private List<String> googleClientIdList;
 
     /**
      * Google ID 토큰을 검증하고 OAuth2Attributes로 변환합니다.
@@ -60,8 +61,8 @@ public class GoogleTokenVerifier {
             }
 
             // audience(aud) 검증 - 우리 앱의 client ID와 일치해야 함
-            if (!googleClientId.equals(response.aud())) {
-                log.error("Google ID 토큰 audience 불일치: expected={}, actual={}", googleClientId, response.aud());
+            if (!googleClientIdList.contains(response.aud())) {
+                log.error("Google ID 토큰 audience 불일치: expected={}, actual={}", googleClientIdList, response.aud());
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
@@ -103,8 +104,8 @@ public class GoogleTokenVerifier {
             }
 
             // audience(aud) 검증 - 우리 앱의 client ID와 일치해야 함
-            if (!googleClientId.equals(response.aud())) {
-                log.error("Google ID 토큰 audience 불일치: expected={}, actual={}", googleClientId, response.aud());
+            if (!googleClientIdList.contains(response.aud())) {
+                log.error("Google ID 토큰 audience 불일치: expected={}, actual={}", googleClientIdList, response.aud());
                 throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
             }
 
@@ -129,7 +130,8 @@ public class GoogleTokenVerifier {
      * Google OAuth 토큰을 revoke합니다.
      *
      * @param token revoke할 토큰 (access token 또는 refresh token)
-     * @see <a href="https://developers.google.com/identity/protocols/oauth2/web-server#tokenrevoke">Google Token Revoke</a>
+     * @see <a href="https://developers.google.com/identity/protocols/oauth2/web-server#tokenrevoke">Google Token
+     * Revoke</a>
      */
     public void revokeToken(String token) {
         log.info("Google token revoke 시작");

@@ -1,5 +1,8 @@
 package com.umc.product.term.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.term.adapter.in.web.dto.request.CreateTermRequest;
 import com.umc.product.term.adapter.in.web.dto.response.TermResponse;
@@ -43,6 +46,10 @@ public class TermController {
 
     @PostMapping
     @Operation(summary = "약관 생성", description = "약관 삭제는 지원하지 않습니다. 새로운 약관을 생성하면 기존 약관이 비활성화됩니다.")
+    @CheckAccess(
+        resourceType = ResourceType.TERM,
+        permission = PermissionType.WRITE
+    )
     Long createTerms(@Valid @RequestBody CreateTermRequest request) {
         return manageTermUseCase.createTerms(
             CreateTermCommand.builder()

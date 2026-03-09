@@ -23,6 +23,7 @@ public class TokenAuthenticationController {
     @Operation(summary = "AccessToken 재발급",
         description = """
             RefreshToken을 이용해서 AccessToken을 재발급합니다.
+            Header에 AccessToken을 포함할 필요는 없지만, 만료된 토큰이나 잘못된 토큰을 401 뜨니까 주의하세요.
             """)
     @PostMapping("token/renew")
     @Public

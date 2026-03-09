@@ -37,9 +37,10 @@ public class NoticeContentController implements NoticeContentApi {
     // 공지사항에 이미지 추가
     @PostMapping("/{noticeId}/images")
     public ApiResponse<AddNoticeImagesResponse> addNoticeImages(
-        @PathVariable("noticeId") Long noticeId,
+        @PathVariable Long noticeId,
         @RequestBody @Valid AddNoticeImagesRequest request,
-        @CurrentMember MemberPrincipal memberPrincipal) {
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
 
         List<Long> imageIds = manageNoticeContentUseCase.addImages(
             request.toCommand(), noticeId, memberPrincipal.getMemberId());
@@ -50,9 +51,10 @@ public class NoticeContentController implements NoticeContentApi {
     // 공지사항에 링크 추가
     @PostMapping("/{noticeId}/links")
     public ApiResponse<AddNoticeLinksResponse> addNoticeLinks(
-        @PathVariable("noticeId") Long noticeId,
+        @PathVariable Long noticeId,
         @RequestBody @Valid AddNoticeLinksRequest request,
-        @CurrentMember MemberPrincipal memberPrincipal) {
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
 
         List<Long> linkIds = manageNoticeContentUseCase.addLinks(
             request.toCommand(), noticeId, memberPrincipal.getMemberId());
@@ -63,9 +65,10 @@ public class NoticeContentController implements NoticeContentApi {
     // 공지사항에 투표 추가
     @PostMapping("/{noticeId}/votes")
     public ApiResponse<AddNoticeVoteResponse> addNoticeVote(
-        @PathVariable("noticeId") Long noticeId,
+        @PathVariable Long noticeId,
         @RequestBody @Valid AddNoticeVoteRequest request,
-        @CurrentMember MemberPrincipal memberPrincipal) {
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
 
         AddNoticeVoteResult result = manageNoticeContentUseCase.addVote(
             request.toCommand(memberPrincipal.getMemberId()), noticeId);
@@ -76,9 +79,10 @@ public class NoticeContentController implements NoticeContentApi {
     // 공지사항 이미지 전체 수정
     @PatchMapping("/{noticeId}/images")
     public void replaceNoticeImages(
-        @PathVariable("noticeId") Long noticeId,
+        @PathVariable Long noticeId,
         @RequestBody @Valid ReplaceNoticeImagesRequest request,
-        @CurrentMember MemberPrincipal memberPrincipal) {
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
 
         manageNoticeContentUseCase.replaceImages(
             request.toCommand(), noticeId, memberPrincipal.getMemberId());
@@ -87,17 +91,20 @@ public class NoticeContentController implements NoticeContentApi {
     // 공지사항 링크 전체 수정
     @PatchMapping("/{noticeId}/links")
     public void replaceNoticeLinks(
-        @PathVariable("noticeId") Long noticeId,
+        @PathVariable Long noticeId,
         @RequestBody @Valid ReplaceNoticeLinksRequest request,
-        @CurrentMember MemberPrincipal memberPrincipal) {
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
 
         manageNoticeContentUseCase.replaceLinks(
             request.toCommand(), noticeId, memberPrincipal.getMemberId());
     }
 
     @DeleteMapping("/{noticeId}/vote")
-    public void deleteNoticeVote(@PathVariable("noticeId") Long noticeId,
-                                 @CurrentMember MemberPrincipal memberPrincipal) {
+    public void deleteNoticeVote(
+        @PathVariable Long noticeId,
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
 
         manageNoticeContentUseCase.deleteVote(noticeId, memberPrincipal.getMemberId());
     }

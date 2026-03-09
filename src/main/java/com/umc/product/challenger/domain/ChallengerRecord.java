@@ -128,14 +128,12 @@ public class ChallengerRecord extends BaseEntity {
     }
 
     public void validateMember(String memberName, Long schoolId) {
-        // TODO: 앱 심사 과정에서 임시로 검증 제거
+        if (!this.memberName.equals(memberName)) {
+            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_MEMBER_NAME_FOR_RECORD);
+        }
 
-        //        if (!this.memberName.equals(memberName)) {
-//            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_MEMBER_NAME_FOR_RECORD);
-//        }
-
-//        if (!this.schoolId.equals(schoolId)) {
-//            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_SCHOOL_FOR_RECORD);
-//        }
+        if (!this.schoolId.equals(schoolId)) {
+            throw new ChallengerDomainException(ChallengerErrorCode.INVALID_SCHOOL_FOR_RECORD);
+        }
     }
 }

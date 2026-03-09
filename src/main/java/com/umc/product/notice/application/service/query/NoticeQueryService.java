@@ -276,8 +276,10 @@ public class NoticeQueryService implements GetNoticeUseCase {
         }
 
         // 클라이언트가 요청한 필터 종류는 유지하되, 실제 값은 사용자 프로필에서만 가져옴
-        Long filteredChapterId = classification.chapterId() != null ? chapterId : null;
-        Long filteredSchoolId = classification.schoolId() != null ? schoolId : null;
+        // 파트 필터일 때는 chapterId/schoolId가 없어도 실제 유저 값으로 채움
+        boolean hasPart = classification.part() != null;
+        Long filteredChapterId = (classification.chapterId() != null || hasPart) ? chapterId : null;
+        Long filteredSchoolId = (classification.schoolId() != null || hasPart) ? schoolId : null;
 
         return new NoticeClassification(gisuId, filteredChapterId, filteredSchoolId, classification.part());
     }

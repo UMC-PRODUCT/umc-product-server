@@ -43,6 +43,14 @@ public enum ResourceType {
         Set.of(PermissionType.WRITE)),
     MEMBER("member", "회원",
         Set.of(PermissionType.READ, PermissionType.DELETE)),
+    CHALLENGER("challenger", "챌린저",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+    CHALLENGER_POINT("challenger_point", "챌린저 상벌점",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+    CHALLENGER_ROLE("challenger_role", "운영진 기록",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+    CHALLENGER_RECORD("challenger_record", "챌린저 코드",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
     ;
 
     private final String code;

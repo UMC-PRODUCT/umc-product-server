@@ -1,5 +1,6 @@
 package com.umc.product.authorization.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.adapter.in.web.dto.request.CreateChallengerRoleRequest;
 import com.umc.product.authorization.adapter.in.web.dto.response.ChallengerRoleResponse;
 import com.umc.product.authorization.adapter.in.web.dto.response.CreateChallengerRoleResponse;
@@ -8,8 +9,11 @@ import com.umc.product.authorization.application.port.in.command.dto.CreateChall
 import com.umc.product.authorization.application.port.in.command.dto.DeleteChallengerRoleCommand;
 import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +37,12 @@ public class ChallengerRoleController {
 
     private final GetGisuUseCase getGisuUseCase;
 
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER_ROLE,
+        permission = PermissionType.WRITE
+    )
     @PostMapping
+    @Operation(summary = "운영진 기록 생성", description = "ChallengerRole, 즉 운영진 기록을 생성합니다. 총괄단만 가능합니다.")
     public CreateChallengerRoleResponse createChallengerRole(
         @RequestBody CreateChallengerRoleRequest request) {
         Long createdId =
@@ -44,6 +53,10 @@ public class ChallengerRoleController {
             .build();
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER_ROLE,
+        permission = PermissionType.READ
+    )
     @GetMapping("{challengerRoleId}")
     public ChallengerRoleResponse getChallengerRole(
         @PathVariable Long challengerRoleId
@@ -55,6 +68,10 @@ public class ChallengerRoleController {
         );
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER_ROLE,
+        permission = PermissionType.DELETE
+    )
     @DeleteMapping("{challengerRoleId}")
     public void deleteChallengerRole(
         @PathVariable Long challengerRoleId

@@ -2,13 +2,12 @@ package com.umc.product.schedule.adapter.in.web.dto.request;
 
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCommand;
-import com.umc.product.schedule.domain.ScheduleConstants;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 
@@ -18,11 +17,11 @@ public record UpdateScheduleRequest(
     @Schema(description = "일정 제목", example = "9기 OT")
     String name,
 
-    @Schema(description = "시작 일시 (KST 기준 LocalDateTime, 타임존 없이 전송. 예: 2026-03-16T10:00:00)", example = "2026-03-16T10:00:00")
-    LocalDateTime startsAt,
+    @Schema(description = "시작 일시 (UTC ISO8601. 예: 2026-03-16T01:00:00Z)", example = "2026-03-16T01:00:00Z")
+    Instant startsAt,
 
-    @Schema(description = "종료 일시 (KST 기준 LocalDateTime, 타임존 없이 전송. 예: 2026-03-16T12:00:00)", example = "2026-03-16T12:00:00")
-    LocalDateTime endsAt,
+    @Schema(description = "종료 일시 (UTC ISO8601. 예: 2026-03-16T03:00:00Z)", example = "2026-03-16T03:00:00Z")
+    Instant endsAt,
 
     @Schema(description = "종일 여부", example = "false")
     Boolean isAllDay,
@@ -54,8 +53,8 @@ public record UpdateScheduleRequest(
         return UpdateScheduleCommand.of(
             scheduleId,
             name,
-            startsAt != null ? startsAt.atZone(ScheduleConstants.KST).toInstant() : null,
-            endsAt != null ? endsAt.atZone(ScheduleConstants.KST).toInstant() : null,
+            startsAt,
+            endsAt,
             isAllDay,
             locationName,
             GeometryUtils.createPoint(latitude, longitude),

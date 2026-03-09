@@ -1,5 +1,8 @@
 package com.umc.product.challenger.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.challenger.adapter.in.web.assembler.ChallengerRecordResponseAssembler;
 import com.umc.product.challenger.adapter.in.web.dto.request.AddChallengerRecordToMemberRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.CreateChallengerRecordRequest;
@@ -55,6 +58,10 @@ public class ChallengerRecordController {
         );
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER_RECORD,
+        permission = PermissionType.READ
+    )
     @GetMapping("code/{code}")
     @Operation(summary = "코드로 ChallengerRecord 조회")
     public ChallengerRecordResponse getChallengerRecordByCode(
@@ -63,6 +70,10 @@ public class ChallengerRecordController {
         return assembler.from(code);
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER_RECORD,
+        permission = PermissionType.READ
+    )
     @GetMapping("id/{id}")
     @Operation(summary = "ID로 ChallengerRecord 조회")
     public ChallengerRecordResponse getChallengerRecordById(
@@ -72,6 +83,10 @@ public class ChallengerRecordController {
     }
 
     // 코드를 생성하는 API
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER_RECORD,
+        permission = PermissionType.WRITE
+    )
     @Operation(summary = "[ADMIN] 과거 챌린저 기록을 위한 코드 생성 기능",
         description = """
             중앙운영사무국 총괄단만 사용 가능한 기능입니다. 9기 이전 기수의 챌린저 기록을 업로드하고,
@@ -99,7 +114,7 @@ public class ChallengerRecordController {
         return assembler.from(id);
     }
 
-    @Operation(summary = "[ADMIN] 챌린저 기록용 코드 추가",
+    @Operation(summary = "[ADMIN] 챌린저 기록용 코드 벌크 추가",
         description = """
             Response는 생성된 챌린저 기록의 ID 리스트입니다. (성능 상 이슈로 각각에 대해서는 id 및 code로 조회하는 API 이용)
 
@@ -107,6 +122,10 @@ public class ChallengerRecordController {
             각 기록을 모든 회원이 추가할 수 있도록 6자리 코드를 생성하여 발급합니다.
             """)
     @PostMapping("bulk")
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER_RECORD,
+        permission = PermissionType.WRITE
+    )
     public List<Long> createChallengerRecordBulk(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody List<CreateChallengerRecordRequest> request

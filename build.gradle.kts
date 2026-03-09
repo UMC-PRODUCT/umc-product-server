@@ -117,8 +117,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
+    // BOM으로 버전 강제 정렬
+    implementation(platform("com.google.protobuf:protobuf-bom:4.29.3"))
+    implementation(platform("io.opentelemetry:opentelemetry-bom:1.44.1"))
+
     // --- Metrics ---
     implementation("io.micrometer:micrometer-registry-prometheus")
+    implementation("com.github.loki4j:loki-logback-appender:1.5.2")
+    implementation("io.micrometer:micrometer-registry-otlp")
 
     // --- Sentry ---
     implementation(platform("io.sentry:sentry-bom:8.31.0"))

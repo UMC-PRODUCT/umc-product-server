@@ -323,4 +323,64 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
             .map(ChallengerRole::getChallengerRoleType)
             .anyMatch(ChallengerRoleType::isCentralMember);
     }
+
+    @Override
+    public boolean isSchoolCoreInGisu(Long memberId, Long gisuId, Long schoolId) {
+        if (gisuId == null) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
+                "gisuId는 null일 수 없습니다.");
+        }
+        if (schoolId == null) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
+                "schoolId는 null일 수 없습니다.");
+        }
+
+        List<ChallengerRole> roles = loadChallengerRolePort.findRolesByMemberIdAndGisuId(memberId, gisuId);
+
+        return roles.stream()
+            .filter(role -> role.getOrganizationType() == OrganizationType.SCHOOL)
+            .filter(role -> role.getOrganizationId().equals(schoolId))
+            .map(ChallengerRole::getChallengerRoleType)
+            .anyMatch(ChallengerRoleType::isSchoolCore);
+    }
+
+    @Override
+    public boolean isSchoolAdminInGisu(Long memberId, Long gisuId, Long schoolId) {
+        if (gisuId == null) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
+                "gisuId는 null일 수 없습니다.");
+        }
+        if (schoolId == null) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
+                "schoolId는 null일 수 없습니다.");
+        }
+
+        List<ChallengerRole> roles = loadChallengerRolePort.findRolesByMemberIdAndGisuId(memberId, gisuId);
+
+        return roles.stream()
+            .filter(role -> role.getOrganizationType() == OrganizationType.SCHOOL)
+            .filter(role -> role.getOrganizationId().equals(schoolId))
+            .map(ChallengerRole::getChallengerRoleType)
+            .anyMatch(ChallengerRoleType::isSchoolAdmin);
+    }
+
+    @Override
+    public boolean isChapterPresidentInGisu(Long memberId, Long gisuId, Long chapterId) {
+        if (gisuId == null) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
+                "gisuId는 null일 수 없습니다.");
+        }
+        if (chapterId == null) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
+                "chapterId는 null일 수 없습니다.");
+        }
+
+        List<ChallengerRole> roles = loadChallengerRolePort.findRolesByMemberIdAndGisuId(memberId, gisuId);
+
+        return roles.stream()
+            .filter(role -> role.getOrganizationType() == OrganizationType.CHAPTER)
+            .filter(role -> role.getOrganizationId().equals(chapterId))
+            .map(ChallengerRole::getChallengerRoleType)
+            .anyMatch(roleType -> roleType == ChallengerRoleType.CHAPTER_PRESIDENT);
+    }
 }

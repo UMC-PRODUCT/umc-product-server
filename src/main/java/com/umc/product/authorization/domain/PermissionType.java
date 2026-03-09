@@ -21,5 +21,5 @@ public enum PermissionType {
     DELETE,     // 삭제
     APPROVE,    // 승인 (출석, 워크북 등)
     CHECK,      // 확인 (공지사항 조회현황 확인)
-    MANAGE      // 관리 (운영진 전용)
+    MANAGE,      // 관리 (운영진 전용)
 }

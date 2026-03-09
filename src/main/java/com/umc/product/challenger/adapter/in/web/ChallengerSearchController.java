@@ -45,7 +45,7 @@ public class ChallengerSearchController {
         @ParameterObject SearchChallengerRequest searchRequest
     ) {
         return SearchChallengerResponse.from(
-            searchChallengerUseCase.search(
+            searchChallengerUseCase.offsetSearch(
                 searchRequest.toQuery(),
                 pageable
             )
@@ -59,7 +59,7 @@ public class ChallengerSearchController {
             전체 챌린저를 대상으로 이름 또는 닉네임을 이용해 챌린저를 검색합니다.
             """)
     @GetMapping("search/global")
-    @Deprecated(since = "2026-02-16", forRemoval = true)
+    @Deprecated(since = "v1.3.0", forRemoval = true)
     GlobalSearchChallengerResponse globalSearchChallenger(
         @ParameterObject GlobalSearchChallengerRequest searchRequest
     ) {

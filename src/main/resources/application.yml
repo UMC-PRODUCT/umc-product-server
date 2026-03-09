@@ -163,7 +163,7 @@ logging:
     root: INFO
 
     # 애플리케이션 기본값
-    com.umc.product: ${LOGGING_APP_LEVEL:-INFO}
+    com.umc.product: ${LOGGING_APP_LEVEL:INFO}
 
     # Spring Framework
     org.springframework.web: INFO
@@ -198,13 +198,25 @@ management:
   tracing:
     enabled: true
     sampling:
-      probability: ${TRACE_SAMPLING_PROBABILITY:0.1}
-    # 지금은 내보내지 않음, Grafana Tempo로 연동하도록 추후 추가
-  #  otlp:
-  #    tracing:
-  #      endpoint: ${TEMPO_URL}
+      probability: ${TRACE_SAMPLING_PROBABILITY:1.0}
+
+  otlp:
+    tracing:
+      endpoint: ${TEMPO_URL:http://localhost:4318}
+      headers:
+        Authorization: "Basic ${TEMPO_AUTH}"
+    metrics:
+      export:
+        url: ${PROM_URL}
+        headers:
+          Authorization: "Basic ${PROM_AUTH}"
+        step: 30s
 
   metrics:
+    tags:
+      application: ${SPRING_PROFILES_ACTIVE}-umc-product-api
+      instance: ${HOSTNAME:unknown-host}
+
     enable:
       jvm: true
       process: true
@@ -237,10 +249,6 @@ app:
   cors:
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:}
 
-  metrics-report:
-    enabled: ${METRICS_REPORT_ENABLED:false}
-    interval-ms: ${METRICS_REPORT_INTERVAL_MS:600000} # 10분마다 메트릭 보고
-
   webhook:
     buffer:
       enabled: ${WEBHOOK_BUFFER_ENABLED:true}
@@ -258,6 +266,8 @@ app:
     password: ${SWAGGER_AUTH_PASSWORD:password}
 
   oauth2:
+    google:
+      client-id-list: ${GOOGLE_CLIENT_ID_LIST:}
     apple:
       client-id: ${APPLE_CLIENT_ID}
       team-id: ${APPLE_TEAM_ID}
