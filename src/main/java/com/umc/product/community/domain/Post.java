@@ -2,7 +2,6 @@ package com.umc.product.community.domain;
 
 import com.umc.product.community.domain.enums.Category;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -141,7 +140,7 @@ public class Post {
 
     @Builder
     public record LightningInfo(
-        LocalDateTime meetAt,
+        Instant meetAt,
         String location,
         Integer maxParticipants,
         String openChatUrl
@@ -170,7 +169,7 @@ public class Post {
          * @param now 비교할 현재 시간 (테스트 용이성을 위해 외부에서 주입)
          * @throws IllegalArgumentException 모임 시간이 현재 이전인 경우
          */
-        public void validateMeetAtIsFuture(LocalDateTime now) {
+        public void validateMeetAtIsFuture(Instant now) {
             if (meetAt.isBefore(now)) {
                 throw new IllegalArgumentException("모임 시간은 현재 이후여야 합니다.");
             }

@@ -3,7 +3,6 @@ package com.umc.product.community.application.port.in.query.dto;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.domain.enums.Category;
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 public record PostDetailInfo(
     Long postId,
@@ -14,7 +13,7 @@ public record PostDetailInfo(
     String authorName,
     String authorProfileImage,
     ChallengerPart authorPart,
-    LocalDateTime meetAt,
+    Instant meetAt,
     String location,
     Integer maxParticipants,
     String openChatUrl,

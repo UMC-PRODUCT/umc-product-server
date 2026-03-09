@@ -10,6 +10,9 @@ public class GisuFixture {
 
     private final ManageGisuPort manageGisuPort;
 
+    private final Instant START_AT = Instant.parse("2024-03-01T00:00:00Z");
+    private final Instant END_AT = Instant.parse("2024-08-31T23:59:59Z");
+
     public GisuFixture(ManageGisuPort manageGisuPort) {
         this.manageGisuPort = manageGisuPort;
     }
@@ -17,8 +20,8 @@ public class GisuFixture {
     public Gisu 활성_기수(Long generation) {
         return manageGisuPort.save(Gisu.create(
             generation,
-            Instant.parse("2024-03-01T00:00:00Z"),
-            Instant.parse("2024-08-31T23:59:59Z"),
+            START_AT,
+            END_AT,
             true
         ));
     }
@@ -26,8 +29,8 @@ public class GisuFixture {
     public Gisu 비활성_기수(Long generation) {
         return manageGisuPort.save(Gisu.create(
             generation,
-            Instant.parse("2023-03-01T00:00:00Z"),
-            Instant.parse("2023-08-31T23:59:59Z"),
+            START_AT,
+            END_AT,
             false
         ));
     }

@@ -5,9 +5,8 @@ import com.umc.product.curriculum.application.port.in.query.CurriculumWeekInfo;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
+import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,7 +20,8 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
 
     @Override
     public OriginalWorkbook findById(Long id) {
-        return originalWorkbookJpaRepository.findById(id).orElseThrow(() -> new BusinessException(Domain.CURRICULUM, CurriculumErrorCode.WORKBOOK_NOT_FOUND));
+        return originalWorkbookJpaRepository.findById(id)
+            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_NOT_FOUND));
     }
 
     @Override

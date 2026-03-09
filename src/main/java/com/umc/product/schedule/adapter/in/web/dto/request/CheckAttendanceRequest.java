@@ -1,8 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.dto.request;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.in.command.dto.CheckAttendanceCommand;
+import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
@@ -23,7 +22,7 @@ public record CheckAttendanceRequest(
 ) {
     public CheckAttendanceRequest {
         if (attendanceSheetId == null) {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND);
+            throw new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND);
         }
         if (locationVerified == null) {
             throw new IllegalArgumentException("위치 인증 여부는 필수입니다");

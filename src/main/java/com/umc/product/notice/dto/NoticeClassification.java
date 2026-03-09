@@ -1,7 +1,6 @@
 package com.umc.product.notice.dto;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 
@@ -10,22 +9,22 @@ import jakarta.validation.constraints.NotNull;
  *
  * 조회 레벨은 null이 아닌 필드로 결정:
  * - gisuId만: 전체 조회
- * - gisuId + chapterId: 지부별 조회
- * - gisuId + chapterId + schoolId: 학교별 조회
- * - 모두 제공: 파트별 조회
+ * - gisuId + chapterId: 지부 필터
+ * - gisuId + schoolId: 학교 필터
+ * - gisuId + part: 파트 필터
  */
 @Schema(description = "공지 조회 필터. 조회 범위는 입력한 필드 조합으로 결정됩니다. "
-    + "gisuId만 → 기수 전체 / +chapterId → 지부별 / +schoolId → 학교별 / +part → 파트별")
+    + "전체필터 : gisuId만 입력, 지부필터 : gisuId + chapterId, 학교필터 : gisuId + schoolId, 파트필터 : gisuId + part")
 public record NoticeClassification(
     @Schema(description = "기수 ID (필수). 이 기수에 해당하는 공지만 조회", example = "9")
     @NotNull(message = "기수 ID는 필수입니다")
     Long gisuId,
 
-    @Schema(description = "지부 ID. null이면 해당 기수의 전체 공지 조회. 값을 넣으면 해당 지부 공지만 필터링",
+    @Schema(description = "지부 ID",
         example = "3", nullable = true)
     Long chapterId,
 
-    @Schema(description = "학교 ID. null이면 지부 레벨까지만 필터링. 값을 넣으면 해당 학교 공지만 필터링",
+    @Schema(description = "학교 ID",
         example = "5", nullable = true)
     Long schoolId,
 

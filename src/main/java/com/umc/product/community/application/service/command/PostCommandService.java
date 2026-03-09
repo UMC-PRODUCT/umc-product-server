@@ -16,10 +16,9 @@ import com.umc.product.community.application.port.out.post.SavePostPort;
 import com.umc.product.community.application.service.AuthorInfoProvider;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.Post.LightningInfo;
+import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,7 +57,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         );
 
         // Service 레이어에서 시간 검증 (테스트 용이성)
-        lightningInfo.validateMeetAtIsFuture(LocalDateTime.now());
+        lightningInfo.validateMeetAtIsFuture(Instant.now());
 
         Post post = Post.createLightning(
             command.title(),
@@ -75,7 +74,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
     @Override
     public PostInfo updatePost(UpdatePostCommand command) {
         PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(command.postId())
-            .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
 
         Post post = postWithAuthor.post();
         post.update(
@@ -92,7 +91,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
     @Override
     public PostInfo updateLightning(UpdateLightningCommand command) {
         PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(command.postId())
-            .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
 
         Post post = postWithAuthor.post();
 
@@ -104,7 +103,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
         );
 
         // Service 레이어에서 시간 검증 (테스트 용이성)
-        lightningInfo.validateMeetAtIsFuture(LocalDateTime.now());
+        lightningInfo.validateMeetAtIsFuture(Instant.now());
 
         post.updateLightning(
             command.title(),
@@ -120,7 +119,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
     @Override
     public void deletePost(Long postId) {
         loadPostPort.findById(postId)
-            .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
 
         savePostPort.deleteById(postId);
     }
@@ -128,7 +127,7 @@ public class PostCommandService implements CreatePostUseCase, UpdatePostUseCase,
     @Override
     public LikeResult toggleLike(Long postId, Long challengerId) {
         loadPostPort.findById(postId)
-            .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
 
         return savePostPort.toggleLike(postId, challengerId);
     }

@@ -17,7 +17,7 @@ public class StudyGroupFixture {
 
     public StudyGroup 스터디그룹(String name, Gisu gisu, ChallengerPart part, Long leaderId, Long... memberIds) {
         StudyGroup studyGroup = StudyGroup.create(name, gisu, part);
-        studyGroup.addMember(leaderId, true);
+        studyGroup.addLeader(leaderId);
         for (Long memberId : memberIds) {
             studyGroup.addMember(memberId);
         }

@@ -1,5 +1,8 @@
 package com.umc.product.challenger.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.challenger.adapter.in.web.assembler.ChallengerResponseAssembler;
 import com.umc.product.challenger.adapter.in.web.dto.request.CreateChallengerInfoRequest;
 import com.umc.product.challenger.adapter.in.web.dto.request.DeactivateChallengerRequest;
@@ -30,6 +33,10 @@ public class ChallengerCommandController {
     private final ManageChallengerUseCase manageChallengerUseCase;
     private final ChallengerResponseAssembler assembler;
 
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER,
+        permission = PermissionType.WRITE
+    )
     @Operation(summary = "챌린저 생성")
     @PostMapping
     ChallengerInfoResponse createChallenger(@RequestBody CreateChallengerInfoRequest request) {
@@ -38,6 +45,10 @@ public class ChallengerCommandController {
         return assembler.fromChallengerId(challengerId);
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER,
+        permission = PermissionType.WRITE
+    )
     @Operation(summary = "챌린저 Bulk 생성")
     @PostMapping("bulk")
     List<ChallengerInfoResponse> bulkCreateChallenger(
@@ -52,6 +63,10 @@ public class ChallengerCommandController {
             .toList();
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER,
+        permission = PermissionType.DELETE
+    )
     @Operation(summary = "챌린저 비활성화 (제명/탈부 처리)")
     @PostMapping("{challengerId}/deactivate")
     void deactivateChallenger(
@@ -61,6 +76,10 @@ public class ChallengerCommandController {
         manageChallengerUseCase.deactivateChallenger(request.toCommand(challengerId));
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER,
+        permission = PermissionType.EDIT
+    )
     @Operation(summary = "챌린저 파트 변경")
     @PatchMapping("{challengerId}/part")
     ChallengerInfoResponse editChallengerInfo(
@@ -73,6 +92,10 @@ public class ChallengerCommandController {
         return assembler.fromChallengerId(challengerId);
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.CHALLENGER,
+        permission = PermissionType.DELETE
+    )
     @Operation(summary = "[주의] 챌린저 삭제 (Hard Delete)")
     @DeleteMapping("{challengerId}")
     void deleteChallenger(@PathVariable Long challengerId) {

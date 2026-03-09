@@ -163,7 +163,7 @@ logging:
     root: INFO
 
     # 애플리케이션 기본값
-    com.umc.product: ${LOGGING_APP_LEVEL:-INFO}
+    com.umc.product: ${LOGGING_APP_LEVEL:INFO}
 
     # Spring Framework
     org.springframework.web: INFO
@@ -198,14 +198,28 @@ management:
   tracing:
     enabled: true
     sampling:
-      probability: ${TRACE_SAMPLING_PROBABILITY:0.1}
-    # 지금은 내보내지 않음, Grafana Tempo로 연동하도록 추후 추가
-  #  otlp:
-  #    tracing:
-  #      endpoint: ${TEMPO_URL}
+      probability: ${TRACE_SAMPLING_PROBABILITY:1.0}
+
+  otlp:
+    tracing:
+      endpoint: ${TEMPO_URL:http://localhost:4318}
+      headers:
+        Authorization: "Basic ${TEMPO_AUTH}"
+    metrics:
+      export:
+        url: ${PROM_URL}
+        headers:
+          Authorization: "Basic ${PROM_AUTH}"
+        step: 30s
 
   metrics:
+    tags:
+      application: ${SPRING_PROFILES_ACTIVE}-umc-product-api
+      instance: ${HOSTNAME:unknown-host}
+
     enable:
+      spring.security: false # Spring Security 인증 메트릭
+
       jvm: true
       process: true
       http: true
@@ -216,7 +230,6 @@ management:
       hikaricp: true # HikariCP 커넥션 풀 메트릭
       logback: true # 로그 레벨별 카운트
       cache: true # 캐시 사용 시
-      spring.security: true # Spring Security 인증 메트릭
 
   prometheus:
     metrics:
@@ -229,14 +242,13 @@ management:
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:${SERVER_PORT:8080}}
-  firebase-configuration: ${FIREBASE_CONFIGURATION}
+
+  fcm:
+    outbox-interval-ms: ${FCM_OUTBOX_INTERVAL_MS:60000}
+    firebase-configuration: ${FIREBASE_CONFIGURATION}
 
   cors:
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:}
-
-  metrics-report:
-    enabled: ${METRICS_REPORT_ENABLED:false}
-    interval-ms: ${METRICS_REPORT_INTERVAL_MS:600000} # 10분마다 메트릭 보고
 
   webhook:
     buffer:
@@ -255,6 +267,8 @@ app:
     password: ${SWAGGER_AUTH_PASSWORD:password}
 
   oauth2:
+    google:
+      client-id-list: ${GOOGLE_CLIENT_ID_LIST:}
     apple:
       client-id: ${APPLE_CLIENT_ID}
       team-id: ${APPLE_TEAM_ID}

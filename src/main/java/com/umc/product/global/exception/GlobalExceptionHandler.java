@@ -47,11 +47,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      * Validation 제약 조건 위반 예외 처리
      */
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<Object> handleConstraintViolation(ConstraintViolationException e,
-                                                            WebRequest request) {
+    public ResponseEntity<Object> handleConstraintViolation(
+        ConstraintViolationException e,
+        WebRequest request
+    ) {
         String messages = e.getConstraintViolations().stream()
-                .map(ConstraintViolation::getMessage)
-                .collect(Collectors.joining(", "));
+            .map(ConstraintViolation::getMessage)
+            .collect(Collectors.joining(", "));
 
         log.warn("[CONSTRAINT VIOLATION] {}", messages);
 
@@ -62,20 +64,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      * @Valid 검증 실패 예외 처리
      */
     @Override
-    public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException e,
-                                                               HttpHeaders headers, HttpStatusCode status,
-                                                               WebRequest request) {
+    public ResponseEntity<Object> handleMethodArgumentNotValid(
+        MethodArgumentNotValidException e,
+        HttpHeaders headers, HttpStatusCode status,
+        WebRequest request
+    ) {
 
         Map<String, String> errors = new LinkedHashMap<>();
 
         e.getBindingResult().getFieldErrors()
-                .forEach(fieldError -> {
-                    String fieldName = fieldError.getField();
-                    String errorMessage = Optional.ofNullable(fieldError.getDefaultMessage()).orElse("");
-                    errors.merge(fieldName, errorMessage,
-                            (existingErrorMessage, newErrorMessage) -> existingErrorMessage + ", "
-                                    + newErrorMessage);
-                });
+            .forEach(fieldError -> {
+                String fieldName = fieldError.getField();
+                String errorMessage = Optional.ofNullable(fieldError.getDefaultMessage()).orElse("");
+                errors.merge(fieldName, errorMessage,
+                    (existingErrorMessage, newErrorMessage) -> existingErrorMessage + ", "
+                        + newErrorMessage);
+            });
 
         log.warn("[VALIDATION ERROR] {}", errors);
 
@@ -87,10 +91,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
      */
     @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(
-            HttpMessageNotReadableException e,
-            HttpHeaders headers,
-            HttpStatusCode status,
-            WebRequest request) {
+        HttpMessageNotReadableException e,
+        HttpHeaders headers,
+        HttpStatusCode status,
+        WebRequest request
+    ) {
 
         log.error("JSON 파싱 에러: {}", e.getMessage());
 
@@ -120,22 +125,27 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.error("[UNHANDLED EXCEPTION] {}", e.getMessage(), e);
 
         String errorDetail = isProductionProfile()
-                ? "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
-                : e.getMessage();
+            ? "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+            : e.getMessage();
 
         return buildResponse(e, CommonErrorCode.INTERNAL_SERVER_ERROR, HttpHeaders.EMPTY, request, errorDetail);
     }
 
     @ExceptionHandler(value = BusinessException.class)
     public ResponseEntity<Object> onThrowException(BusinessException e, WebRequest request) {
-        return buildResponse(e, e.getCode(), HttpHeaders.EMPTY, request, e.getMessage());
+        log.warn("[BUSINESS EXCEPTION] domain={}, code={}, message={}", e.getDomain(), e.getBaseCode().getCode(),
+            e.getMessage(), e);
+
+        return buildResponse(e, e.getBaseCode(), HttpHeaders.EMPTY, request, e.getMessage());
     }
 
     /**
      * 통합 에러 응답 빌더
      */
-    private ResponseEntity<Object> buildResponse(Exception e, BaseCode code,
-                                                 HttpHeaders headers, WebRequest request, Object detail) {
+    private ResponseEntity<Object> buildResponse(
+        Exception e, BaseCode code,
+        HttpHeaders headers, WebRequest request, Object detail
+    ) {
         ApiResponse<Object> body = ApiResponse.onFailure(code.getCode(), code.getMessage(), detail);
         return super.handleExceptionInternal(e, body, headers, code.getHttpStatus(), request);
     }

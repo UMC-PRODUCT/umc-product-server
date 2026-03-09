@@ -5,17 +5,17 @@ import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.TopicManagementResponse;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
-import com.umc.product.member.application.port.out.LoadMemberPort;
-import com.umc.product.member.domain.Member;
-import com.umc.product.member.domain.exception.MemberErrorCode;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.notification.application.port.in.dto.TopicNotificationCommand;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
+import com.umc.product.notification.application.port.out.SaveFcmOutboxPort;
 import com.umc.product.notification.application.port.out.SaveFcmPort;
+import com.umc.product.notification.domain.FcmOutbox;
+import com.umc.product.notification.domain.FcmOutboxEvent;
 import com.umc.product.notification.domain.FcmToken;
 import com.umc.product.notification.domain.exception.FcmDomainException;
 import com.umc.product.notification.domain.exception.FcmErrorCode;
@@ -23,6 +23,7 @@ import jakarta.transaction.Transactional;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -30,10 +31,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class FcmService implements ManageFcmUseCase {
 
+    private final GetMemberUseCase getMemberUseCase;
+
     private final FirebaseMessaging firebaseMessaging;
-    private final LoadMemberPort loadMemberPort;
     private final LoadFcmPort loadFcmPort;
     private final SaveFcmPort saveFcmPort;
+    private final SaveFcmOutboxPort saveFcmOutboxPort;
+    private final ApplicationEventPublisher eventPublisher;
 
     private static Message getMessage(NotificationCommand command, String fcmToken) {
         Notification notification = Notification.builder()
@@ -49,22 +53,30 @@ public class FcmService implements ManageFcmUseCase {
     @Override
     @Transactional
     public void registerFcmToken(Long userId, FcmRegistrationRequest request) {
-        Member member = loadMemberPort.findById(userId)
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+        String[] oldToken = {null};
 
         loadFcmPort.findOptionalByMemberId(userId)
             .ifPresentOrElse(
-                existingToken -> existingToken.updateToken(request.fcmToken()),
-                () -> saveFcmPort.save(FcmToken.createFCMToken(member, request.fcmToken()))
+                existingToken -> {
+                    oldToken[0] = existingToken.getFcmToken();
+                    existingToken.updateToken(request.fcmToken());
+                },
+                () -> saveFcmPort.save(FcmToken.createFCMToken(userId, request.fcmToken()))
             );
+
+        if (oldToken[0] != null) {
+            saveFcmOutboxPort.save(FcmOutbox.unsubscribeEvent(userId, oldToken[0]));
+        }
+        saveFcmOutboxPort.save(FcmOutbox.subscribeEvent(userId));
+        eventPublisher.publishEvent(new FcmOutboxEvent());
     }
 
     @Override
     public void sendMessageByToken(NotificationCommand command) {
-        Member member = loadMemberPort.findById(command.memberId())
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
 
-        FcmToken fcm = loadFcmPort.findByMemberId(member.getId());
+        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(command.memberId());
+
+        FcmToken fcm = loadFcmPort.findByMemberId(memberInfo.id());
 
         String fcmToken = fcm.getFcmToken();
 
@@ -73,10 +85,10 @@ public class FcmService implements ManageFcmUseCase {
 
             try {
                 firebaseMessaging.send(message);
-                log.info("푸시 알림 전송 완료 userId = {}", member.getId());
+                log.info("푸시 알림 전송 완료 userId = {}", memberInfo.id());
             } catch (FirebaseMessagingException e) {
-                log.error("푸시 알림 전송 실패 userId = {}", member.getId(), e);
-                throw new BusinessException(Domain.FCM, FcmErrorCode.USER_FCM_NOT_FOUND);
+                log.error("푸시 알림 전송 실패 userId = {}", memberInfo.id(), e);
+                throw new FcmDomainException(FcmErrorCode.USER_FCM_NOT_FOUND);
             }
         }
     }

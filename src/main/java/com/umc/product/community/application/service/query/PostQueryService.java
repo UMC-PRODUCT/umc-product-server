@@ -17,11 +17,9 @@ import com.umc.product.community.application.port.out.comment.LoadCommentPort;
 import com.umc.product.community.application.port.out.dto.PostWithAuthor;
 import com.umc.product.community.application.port.out.post.LoadPostPort;
 import com.umc.product.community.application.port.out.scrap.LoadScrapPort;
-import com.umc.product.community.application.service.AuthorInfoProvider;
 import com.umc.product.community.domain.Post;
+import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import java.util.List;
@@ -45,12 +43,11 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
     private final LoadScrapPort loadScrapPort;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
-    private final AuthorInfoProvider authorInfoProvider;
 
     @Override
     public PostInfo getPostDetail(Long postId) {
         PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(postId)
-            .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
 
         Long authorChallengerId = postWithAuthor.authorChallengerId();
 
@@ -69,7 +66,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
     @Override
     public PostDetailInfo getPostDetail(Long postId, Long challengerId) {
         PostWithAuthor postWithAuthor = loadPostPort.findByIdWithAuthor(postId, challengerId)
-            .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
 
         Long authorChallengerId = postWithAuthor.authorChallengerId();
 
@@ -216,7 +213,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
             var authorPart = authorDetails != null ? authorDetails.part() : null;
             int commentCount = commentCountMap.getOrDefault(postId, 0);
             // 본인 작성 글 여부 확인
-            boolean isAuthor = currentChallengerId != null && authorId != null && authorId.equals(currentChallengerId);
+            boolean isAuthor = authorId != null && authorId.equals(currentChallengerId);
             return PostInfo.from(post, authorId, authorName, authorProfileImage, authorPart, commentCount, isAuthor);
         });
     }

@@ -6,12 +6,14 @@ import com.umc.product.authorization.application.port.out.LoadChallengerRolePort
 import com.umc.product.authorization.domain.ChallengerRole;
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -301,6 +303,14 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
     }
 
     @Override
+    public Set<ChallengerPart> getResponsiblePartsByMemberAndGisu(Long memberId, Long gisuId) {
+        return loadChallengerRolePort.findRolesByMemberIdAndGisuId(memberId, gisuId).stream()
+            .map(ChallengerRole::getResponsiblePart)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+    }
+
+    @Override
     public boolean isCentralMemberInGisu(Long memberId, Long gisuId) {
         if (gisuId == null) {
             throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
@@ -312,5 +322,65 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
         return roles.stream()
             .map(ChallengerRole::getChallengerRoleType)
             .anyMatch(ChallengerRoleType::isCentralMember);
+    }
+
+    @Override
+    public boolean isSchoolCoreInGisu(Long memberId, Long gisuId, Long schoolId) {
+        if (gisuId == null) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
+                "gisuId는 null일 수 없습니다.");
+        }
+        if (schoolId == null) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
+                "schoolId는 null일 수 없습니다.");
+        }
+
+        List<ChallengerRole> roles = loadChallengerRolePort.findRolesByMemberIdAndGisuId(memberId, gisuId);
+
+        return roles.stream()
+            .filter(role -> role.getOrganizationType() == OrganizationType.SCHOOL)
+            .filter(role -> role.getOrganizationId().equals(schoolId))
+            .map(ChallengerRole::getChallengerRoleType)
+            .anyMatch(ChallengerRoleType::isSchoolCore);
+    }
+
+    @Override
+    public boolean isSchoolAdminInGisu(Long memberId, Long gisuId, Long schoolId) {
+        if (gisuId == null) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
+                "gisuId는 null일 수 없습니다.");
+        }
+        if (schoolId == null) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
+                "schoolId는 null일 수 없습니다.");
+        }
+
+        List<ChallengerRole> roles = loadChallengerRolePort.findRolesByMemberIdAndGisuId(memberId, gisuId);
+
+        return roles.stream()
+            .filter(role -> role.getOrganizationType() == OrganizationType.SCHOOL)
+            .filter(role -> role.getOrganizationId().equals(schoolId))
+            .map(ChallengerRole::getChallengerRoleType)
+            .anyMatch(ChallengerRoleType::isSchoolAdmin);
+    }
+
+    @Override
+    public boolean isChapterPresidentInGisu(Long memberId, Long gisuId, Long chapterId) {
+        if (gisuId == null) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
+                "gisuId는 null일 수 없습니다.");
+        }
+        if (chapterId == null) {
+            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
+                "chapterId는 null일 수 없습니다.");
+        }
+
+        List<ChallengerRole> roles = loadChallengerRolePort.findRolesByMemberIdAndGisuId(memberId, gisuId);
+
+        return roles.stream()
+            .filter(role -> role.getOrganizationType() == OrganizationType.CHAPTER)
+            .filter(role -> role.getOrganizationId().equals(chapterId))
+            .map(ChallengerRole::getChallengerRoleType)
+            .anyMatch(roleType -> roleType == ChallengerRoleType.CHAPTER_PRESIDENT);
     }
 }

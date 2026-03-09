@@ -1,8 +1,7 @@
 package com.umc.product.organization.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -32,7 +31,6 @@ public class StudyGroupMember extends BaseEntity {
     @JoinColumn(name = "group_id")
     private StudyGroup studyGroup;
 
-    // DDD 원칙: 다른 도메인(challenger)의 Entity를 직접 참조하지 않고 ID만 저장
     @Column(nullable = false)
     private Long challengerId;
 
@@ -57,10 +55,10 @@ public class StudyGroupMember extends BaseEntity {
 
     private static void validate(StudyGroup studyGroup, Long challengerId) {
         if (studyGroup == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.STUDY_GROUP_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_REQUIRED);
         }
         if (challengerId == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.CHALLENGER_ID_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.CHALLENGER_ID_REQUIRED);
         }
     }
 

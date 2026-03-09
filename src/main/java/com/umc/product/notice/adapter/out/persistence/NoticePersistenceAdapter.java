@@ -1,5 +1,6 @@
 package com.umc.product.notice.adapter.out.persistence;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
@@ -10,6 +11,7 @@ import com.umc.product.notice.dto.NoticeClassification;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,13 +35,15 @@ public class NoticePersistenceAdapter implements
     }
 
     @Override
-    public Page<Notice> findNoticesByClassification(NoticeClassification classification, Pageable pageable) {
-        return noticeQueryRepository.findByClassification(classification, pageable);
+    public Page<Notice> findNoticesByClassification(NoticeClassification classification, Set<ChallengerPart> memberParts,
+                                                    Pageable pageable) {
+        return noticeQueryRepository.findByClassification(classification, memberParts, pageable);
     }
 
     @Override
-    public Page<Notice> findNoticesByKeyword(String keyword, NoticeClassification noticeClassification, Pageable pageable) {
-        return noticeQueryRepository.findByKeyword(keyword, noticeClassification, pageable);
+    public Page<Notice> findNoticesByKeyword(String keyword, NoticeClassification noticeClassification,
+                                             Set<ChallengerPart> memberParts, Pageable pageable) {
+        return noticeQueryRepository.findByKeyword(keyword, noticeClassification, memberParts, pageable);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.umc.product.organization.application.port.out.query;
 
 import com.umc.product.organization.domain.Gisu;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,6 +10,8 @@ import org.springframework.data.domain.Pageable;
 public interface LoadGisuPort {
 
     Gisu findActiveGisu();
+
+    Optional<Gisu> findActiveGisuWithLock();
 
     Gisu findById(Long gisuId);
 

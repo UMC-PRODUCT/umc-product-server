@@ -10,8 +10,6 @@ import com.umc.product.community.application.port.out.post.LoadPostPort;
 import com.umc.product.community.domain.Comment;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import java.util.List;
@@ -42,7 +40,7 @@ public class CommentQueryService implements GetCommentListUseCase {
     @Override
     public List<CommentInfo> getComments(Long postId, Long currentChallengerId) {
         loadPostPort.findById(postId)
-            .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
 
         Page<Comment> comments = loadCommentPort.findByPostId(postId, Pageable.unpaged());
 
@@ -86,7 +84,7 @@ public class CommentQueryService implements GetCommentListUseCase {
                 String authorProfileImage = authorDetails != null ? authorDetails.profileImage() : null;
                 var authorPart = authorDetails != null ? authorDetails.part() : null;
                 // 본인 작성 댓글 여부 확인
-                boolean isAuthor = currentChallengerId != null && comment.getChallengerId().equals(currentChallengerId);
+                boolean isAuthor = comment.getChallengerId().equals(currentChallengerId);
                 return CommentInfo.from(
                     comment,
                     authorName,

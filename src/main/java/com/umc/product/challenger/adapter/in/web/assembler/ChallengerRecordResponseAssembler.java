@@ -40,7 +40,7 @@ public class ChallengerRecordResponseAssembler {
             .code(recordInfo.code())
             .part(recordInfo.part())
             .gisuId(gisuInfo.gisuId())
-            .gisu(gisuInfo.gisu())
+            .gisu(gisuInfo.generation())
             .schoolId(schoolInfo.schoolId())
             .schoolName(schoolInfo.schoolName())
             .chapterId(schoolInfo.chapterId())

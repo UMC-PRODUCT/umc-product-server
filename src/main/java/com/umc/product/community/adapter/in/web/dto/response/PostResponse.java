@@ -8,7 +8,6 @@ import com.umc.product.community.domain.enums.Category;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import lombok.Builder;
 
 @Schema(description = "게시글 응답")
@@ -122,8 +121,8 @@ public record PostResponse(
     @Schema(description = "번개 정보")
     @Builder
     public record LightningInfoResponse(
-        @Schema(description = "모임 시간", example = "2026-03-16T18:00:00")
-        LocalDateTime meetAt,
+        @Schema(description = "모임 시간 (UTC ISO8601)", example = "2026-03-16T09:00:00Z")
+        Instant meetAt,
 
         @Schema(description = "모임 장소", example = "강남역 2번 출구")
         String location,

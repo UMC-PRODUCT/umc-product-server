@@ -51,17 +51,9 @@ public class TermAgreementCommandService implements ManageTermAgreementUseCase {
 
             // 동의 로그 기록
             saveConsentLog(command.memberId(), term.getType(), TermConsentStatus.AGREED);
-        } else {
-            // 동의 철회 처리
-            TermConsent termConsent = loadTermConsentPort
-                .findByMemberIdAndTermType(command.memberId(), term.getType())
-                .orElseThrow(() -> new TermDomainException(TermErrorCode.TERMS_CONSENT_NOT_FOUND));
-
-            saveTermConsentPort.delete(termConsent);
-
-            // 철회 로그 기록
-            saveConsentLog(command.memberId(), term.getType(), TermConsentStatus.WITHDRAWN);
         }
+        // 미동의 시 아무것도 하지 않음 (회원가입 시나리오에서 기존 동의 기록이 없음)
+        // TODO: 동의 철회의 경우에 대한 처리 로직을 추가할 것
     }
 
     private void saveConsentLog(Long memberId, TermType termType, TermConsentStatus status) {

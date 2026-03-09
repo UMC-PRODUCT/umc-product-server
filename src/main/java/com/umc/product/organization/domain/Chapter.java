@@ -38,11 +38,18 @@ public class Chapter extends BaseEntity {
 
     private String name;
 
-    @Builder
+    @Builder(access = AccessLevel.PRIVATE)
     private Chapter(Gisu gisu, String name) {
         validate(gisu, name);
         this.gisu = gisu;
         this.name = name;
+    }
+
+    public static Chapter create(Gisu gisu, String name) {
+        return Chapter.builder()
+            .gisu(gisu)
+            .name(name)
+            .build();
     }
 
     private static void validate(Gisu gisu, String name) {

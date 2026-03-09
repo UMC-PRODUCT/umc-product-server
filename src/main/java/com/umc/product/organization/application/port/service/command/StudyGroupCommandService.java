@@ -1,8 +1,6 @@
 package com.umc.product.organization.application.port.service.command;
 
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.in.command.ManageStudyGroupUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupCommand;
@@ -12,6 +10,7 @@ import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.StudyGroup;
+import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.HashSet;
 import java.util.Set;
@@ -37,7 +36,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
         StudyGroup studyGroup = StudyGroup.create(command.name(), gisu, command.part());
 
-        studyGroup.addMember(command.leaderId(), true);
+        studyGroup.addLeader(command.leaderId());
 
         if (command.memberIds() != null) {
             command.memberIds().forEach(studyGroup::addMember);
@@ -61,7 +60,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
         validateChallengerIdsExist(command.challengerIds());
 
         StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
-        studyGroup.updateMembers(command.challengerIds());
+        studyGroup.replaceMembersExcludingLeader(command.challengerIds());
 
         manageStudyGroupPort.save(studyGroup);
     }
@@ -90,7 +89,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
         Long count = loadChallengerPort.countByIdIn(challengerIds);
 
         if (count != challengerIds.size()) {
-            throw new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.STUDY_GROUP_CHALLENGER_INVALID);
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_CHALLENGER_INVALID);
         }
     }
 }

@@ -9,12 +9,11 @@ import com.umc.product.curriculum.application.port.out.LoadCurriculumPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveCurriculumPort;
 import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
-import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
+import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,15 +35,22 @@ public class CurriculumCommandService implements ManageCurriculumUseCase, Releas
     private final SaveOriginalWorkbookPort saveOriginalWorkbookPort;
     private final GetGisuUseCase getGisuUseCase;
 
+    private static Set<Long> findHavingId(CurriculumCommand command) {
+        return command.workbooks().stream()
+            .filter(WorkbookCommand::hasId)
+            .map(WorkbookCommand::id)
+            .collect(Collectors.toSet());
+    }
+
     @Override
     public void manage(CurriculumCommand command) {
         Curriculum curriculum = loadCurriculumPort.findByActiveGisuAndPart(command.part())
-                .orElseGet(() -> Curriculum.create(getGisuUseCase.getActiveGisuId(), command.part(), command.title()));
+            .orElseGet(() -> Curriculum.create(getGisuUseCase.getActiveGisuId(), command.part(), command.title()));
 
         curriculum.updateTitle(command.title());
 
         Map<Long, OriginalWorkbook> existingWorkbookMap = curriculum.getOriginalWorkbooks().stream()
-                .collect(Collectors.toMap(OriginalWorkbook::getId, Function.identity()));
+            .collect(Collectors.toMap(OriginalWorkbook::getId, Function.identity()));
 
         Set<Long> requestWorkbookIds = findHavingId(command);
 
@@ -60,40 +66,33 @@ public class CurriculumCommandService implements ManageCurriculumUseCase, Releas
                 // 요청받은 workbookCommand.id가 실제로 존재하는 workbook인지 체크
                 OriginalWorkbook existingWorkbook = existingWorkbookMap.get(workbookCommand.id());
                 if (existingWorkbook == null) {
-                    throw new BusinessException(Domain.CURRICULUM, CurriculumErrorCode.WORKBOOK_NOT_IN_CURRICULUM);
+                    throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_NOT_IN_CURRICULUM);
                 }
                 existingWorkbook.update(
-                        workbookCommand.title(),
-                        workbookCommand.description(),
-                        workbookCommand.workbookUrl(),
-                        workbookCommand.weekNo(),
-                        workbookCommand.startDate(),
-                        workbookCommand.endDate(),
-                        workbookCommand.missionType()
+                    workbookCommand.title(),
+                    workbookCommand.description(),
+                    workbookCommand.workbookUrl(),
+                    workbookCommand.weekNo(),
+                    workbookCommand.startDate(),
+                    workbookCommand.endDate(),
+                    workbookCommand.missionType()
                 );
             } else {
                 OriginalWorkbook newWorkbook = OriginalWorkbook.create(
-                        curriculum,
-                        workbookCommand.weekNo(),
-                        workbookCommand.title(),
-                        workbookCommand.description(),
-                        workbookCommand.workbookUrl(),
-                        workbookCommand.resolveStartDate(),
-                        workbookCommand.resolveEndDate(),
-                        workbookCommand.resolveMissionType()
+                    curriculum,
+                    workbookCommand.weekNo(),
+                    workbookCommand.title(),
+                    workbookCommand.description(),
+                    workbookCommand.workbookUrl(),
+                    workbookCommand.resolveStartDate(),
+                    workbookCommand.resolveEndDate(),
+                    workbookCommand.resolveMissionType()
                 );
                 curriculum.addWorkbook(newWorkbook);
             }
         }
 
         saveCurriculumPort.save(curriculum);
-    }
-
-    private static Set<Long> findHavingId(CurriculumCommand command) {
-        return command.workbooks().stream()
-                .filter(WorkbookCommand::hasId)
-                .map(WorkbookCommand::id)
-                .collect(Collectors.toSet());
     }
 
     @Override
@@ -108,9 +107,9 @@ public class CurriculumCommandService implements ManageCurriculumUseCase, Releas
     private List<OriginalWorkbook> findWorkbooksToDelete(Map<Long, OriginalWorkbook> existingWorkbookMap,
                                                          Set<Long> requestWorkbookIds) {
         return existingWorkbookMap.entrySet().stream()
-                .filter(entry -> !requestWorkbookIds.contains(entry.getKey()))
-                .map(Map.Entry::getValue)
-                .toList();
+            .filter(entry -> !requestWorkbookIds.contains(entry.getKey()))
+            .map(Map.Entry::getValue)
+            .toList();
     }
 
     private void validateNoSubmissions(List<OriginalWorkbook> workbooksToDelete) {
@@ -119,16 +118,16 @@ public class CurriculumCommandService implements ManageCurriculumUseCase, Releas
         }
 
         List<Long> workbookIds = workbooksToDelete.stream()
-                .map(OriginalWorkbook::getId)
-                .toList();
+            .map(OriginalWorkbook::getId)
+            .toList();
 
         // 챌린저에게 배포되었다면 커리큘럼에서 original_workbook 삭제 불가능
         List<Long> workbookIdsWithSubmissions = loadChallengerWorkbookPort
-                .findOriginalWorkbookIdsWithSubmissions(workbookIds);
+            .findOriginalWorkbookIdsWithSubmissions(workbookIds);
 
         if (!workbookIdsWithSubmissions.isEmpty()) {
-            throw new BusinessException(Domain.CURRICULUM, CurriculumErrorCode.WORKBOOK_HAS_SUBMISSIONS);
+            throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_HAS_SUBMISSIONS);
         }
     }
-    
+
 }

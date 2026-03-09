@@ -6,7 +6,6 @@ import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRe
 import com.umc.product.notification.adapter.in.web.dto.request.FcmTestSendRequest;
 import com.umc.product.notification.adapter.in.web.swagger.FcmControllerApi;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
-import com.umc.product.notification.application.port.in.RefreshFcmTokenUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -23,14 +22,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class FcmController implements FcmControllerApi {
 
     private final ManageFcmUseCase manageFcmUseCase;
-    private final RefreshFcmTokenUseCase refreshFcmTokenUseCase;
 
     @Override
     @PutMapping("/token")
     public void refreshFcmToken(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody FcmRegistrationRequest request) {
-        refreshFcmTokenUseCase.refreshTokenAndSubscriptions(memberPrincipal.getMemberId(), request);
+        manageFcmUseCase.registerFcmToken(memberPrincipal.getMemberId(), request);
     }
 
     @Override

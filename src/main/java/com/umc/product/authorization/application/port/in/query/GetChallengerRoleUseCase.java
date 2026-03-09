@@ -1,5 +1,6 @@
 package com.umc.product.authorization.application.port.in.query;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import java.util.List;
 import java.util.Map;
@@ -171,10 +172,49 @@ public interface GetChallengerRoleUseCase {
     boolean isCentralMemberInGisu(Long memberId, Long gisuId);
 
     /**
+     * 특정 기수에서 특정 학교의 회장단 여부 (회장, 부회장)
+     *
+     * @param memberId 사용자 ID
+     * @param gisuId   기수 ID
+     * @param schoolId 학교 ID
+     * @return 해당 기수에서 해당 학교 회장단이면 true
+     */
+    boolean isSchoolCoreInGisu(Long memberId, Long gisuId, Long schoolId);
+
+    /**
+     * 특정 기수에서 특정 학교의 관리자 여부 (회장단, 파트장, 기타 운영진)
+     *
+     * @param memberId 사용자 ID
+     * @param gisuId   기수 ID
+     * @param schoolId 학교 ID
+     * @return 해당 기수에서 해당 학교 관리자면 true
+     */
+    boolean isSchoolAdminInGisu(Long memberId, Long gisuId, Long schoolId);
+
+    /**
+     * 특정 기수에서 특정 지부의 지부장 여부
+     *
+     * @param memberId  사용자 ID
+     * @param gisuId    기수 ID
+     * @param chapterId 지부 ID
+     * @return 해당 기수에서 해당 지부 지부장이면 true
+     */
+    boolean isChapterPresidentInGisu(Long memberId, Long gisuId, Long chapterId);
+
+    /**
      * 여러 챌린저의 역할 타입을 일괄 조회
      *
      * @param challengerIds 챌린저 ID 목록
      * @return 챌린저 ID → 역할 타입 리스트
      */
     Map<Long, List<ChallengerRoleType>> getRoleTypesByChallengerIds(Set<Long> challengerIds);
+
+    /**
+     * 특정 기수에서 멤버가 파트장으로 담당하는 파트 목록을 조회합니다.
+     * <p>
+     * 기수 정보를 별도로 조회하지 않아 단일 쿼리로 동작합니다.
+     *
+     * @return responsiblePart가 설정된 역할에서 추출한 파트 Set. 없으면 빈 Set.
+     */
+    Set<ChallengerPart> getResponsiblePartsByMemberAndGisu(Long memberId, Long gisuId);
 }

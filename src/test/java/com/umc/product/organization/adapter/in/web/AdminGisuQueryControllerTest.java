@@ -30,12 +30,9 @@ class AdminGisuQueryControllerTest extends DocumentationTest {
         int size = 10;
 
         List<GisuInfo> gisuList = List.of(
-            new GisuInfo(3L, 9L, 9L, Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-08-31T23:59:59Z"),
-                true),
-            new GisuInfo(2L, 8L, 8L, Instant.parse("2024-09-01T00:00:00Z"), Instant.parse("2025-02-28T23:59:59Z"),
-                false),
-            new GisuInfo(1L, 7L, 7L, Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-08-31T23:59:59Z"),
-                false));
+            gisuInfo(3L, 9L, Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-08-31T23:59:59Z"), true),
+            gisuInfo(2L, 8L, Instant.parse("2024-09-01T00:00:00Z"), Instant.parse("2025-02-28T23:59:59Z"), false),
+            gisuInfo(1L, 7L, Instant.parse("2024-03-01T00:00:00Z"), Instant.parse("2024-08-31T23:59:59Z"), false));
 
         Page<GisuInfo> pageResult = new PageImpl<>(
             gisuList,
@@ -84,9 +81,9 @@ class AdminGisuQueryControllerTest extends DocumentationTest {
     void 기수_전체_목록을_조회한다() throws Exception {
         // given
         List<GisuNameInfo> gisuNames = List.of(
-            new GisuNameInfo(3L, 9L, 9L, true),
-            new GisuNameInfo(2L, 8L, 8L, false),
-            new GisuNameInfo(1L, 7L, 7L, false)
+            gisuNameInfo(3L, 9L, true),
+            gisuNameInfo(2L, 8L, false),
+            gisuNameInfo(1L, 7L, false)
         );
 
         given(getGisuUseCase.getAllGisuNames()).willReturn(gisuNames);
@@ -113,8 +110,7 @@ class AdminGisuQueryControllerTest extends DocumentationTest {
     @Test
     void 활성화된_기수를_조회한다() throws Exception {
         // given
-        GisuInfo activeGisu = new GisuInfo(3L, 9L, 9L, Instant.parse("2025-03-01T00:00:00Z"),
-            Instant.parse("2025-08-31T23:59:59Z"), true);
+        GisuInfo activeGisu = gisuInfo(3L, 9L, Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-08-31T23:59:59Z"), true);
         given(getGisuUseCase.getActiveGisu()).willReturn(activeGisu);
 
         // when
@@ -134,4 +130,11 @@ class AdminGisuQueryControllerTest extends DocumentationTest {
             ));
     }
 
+    private GisuInfo gisuInfo(Long id, Long generation, Instant startAt, Instant endAt, boolean isActive) {
+        return new GisuInfo(id, generation, startAt, endAt, isActive);
+    }
+
+    private GisuNameInfo gisuNameInfo(Long id, Long generation, boolean isActive) {
+        return new GisuNameInfo(id, generation, generation, isActive);
+    }
 }

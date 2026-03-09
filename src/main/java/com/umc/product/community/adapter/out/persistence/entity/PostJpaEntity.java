@@ -15,7 +15,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AccessLevel;
@@ -94,7 +96,7 @@ public class PostJpaEntity extends BaseEntity {
 
         if (post.isLightning() && post.getLightningInfo() != null) {
             Post.LightningInfo info = post.getLightningInfo();
-            meetAt = info.meetAt();
+            meetAt = LocalDateTime.ofInstant(info.meetAt(), ZoneOffset.UTC);
             location = info.location();
             maxParticipants = info.maxParticipants();
             openChatUrl = info.openChatUrl();
@@ -125,7 +127,7 @@ public class PostJpaEntity extends BaseEntity {
     public Post toDomain(Long viewerChallengerId) {
         Post.LightningInfo lightningInfo = null;
         if (category.isLightning() && meetAt != null) {
-            lightningInfo = new Post.LightningInfo(meetAt, location, maxParticipants, openChatUrl);
+            lightningInfo = new Post.LightningInfo(meetAt.toInstant(ZoneOffset.UTC), location, maxParticipants, openChatUrl);
         }
 
         // TODO: GET THE FUCK OUT OF HERE

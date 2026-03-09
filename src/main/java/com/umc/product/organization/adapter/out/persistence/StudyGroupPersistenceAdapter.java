@@ -2,8 +2,6 @@ package com.umc.product.organization.adapter.out.persistence;
 
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.organization.application.port.in.query.dto.PartSummaryInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolStudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
@@ -12,6 +10,7 @@ import com.umc.product.organization.application.port.in.query.dto.StudyGroupName
 import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.StudyGroup;
+import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,13 +26,13 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
     @Override
     public StudyGroup findById(Long id) {
         return studyGroupJpaRepository.findById(id).orElseThrow(
-                () -> new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.STUDY_GROUP_NOT_FOUND));
+            () -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NOT_FOUND));
     }
 
     @Override
     public StudyGroup findByName(String name) {
         return studyGroupJpaRepository.findByName(name).orElseThrow(
-                () -> new BusinessException(Domain.ORGANIZATION, OrganizationErrorCode.STUDY_GROUP_NOT_FOUND));
+            () -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NOT_FOUND));
     }
 
     @Override
