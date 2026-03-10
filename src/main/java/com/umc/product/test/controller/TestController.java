@@ -7,6 +7,8 @@ import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.test.dto.FcmTestSendRequest;
+import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.SendEmailUseCase;
 import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
@@ -45,6 +47,7 @@ public class TestController {
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
     private final GetFileUseCase getFileUseCase;
     private final SendEmailUseCase sendEmailUseCase;
+    private final ManageFcmUseCase manageFcmUseCase;
 
     /**
      * 파일 정보 및 접근 URL을 조회합니다.
@@ -59,6 +62,12 @@ public class TestController {
     public ApiResponse<FileResponse> getFile(@PathVariable String fileId) {
         FileInfo fileInfo = getFileUseCase.getById(fileId);
         return ApiResponse.onSuccess(FileResponse.from(fileInfo));
+    }
+
+    @Operation(summary = "FCM 푸시 알림 테스트 전송")
+    @PostMapping("/fcm/test-send")
+    public void sendTestNotification(@RequestBody FcmTestSendRequest request) {
+        manageFcmUseCase.sendMessageByToken(request.toCommand());
     }
 
     @PostMapping("/email/send-test")
