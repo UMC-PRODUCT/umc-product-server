@@ -92,9 +92,12 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
                     return null;
                 }
 
-                // 2. 출석 시간대가 종료되었으면 제외 (나의 출석 현황으로 이동)
-                // ⭐ 출석 시간 전에는 조회 가능 (미리 확인), 시간대 종료 후에만 제외
-                if (now.isAfter(sheet.getWindow().getEndTime())) {
+                // 2. 일정 종료 시간이 지났으면 제외 (나의 출석 현황으로 이동)
+                // AttendanceCommandService와 동일한 기준 적용:
+                //   - window.startTime ~ window.endTime: 출석 인정 구간 (PRESENT)
+                //   - window.endTime ~ schedule.endsAt: 지각 구간 (LATE) ← 이 구간에서도 출석 체크 가능
+                //   - schedule.endsAt 이후: 결석 (ABSENT)
+                if (now.isAfter(schedule.getEndsAt())) {
                     return null;
                 }
 
