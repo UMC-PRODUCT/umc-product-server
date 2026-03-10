@@ -18,11 +18,13 @@ import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.vo.AttendanceStats;
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -91,9 +93,9 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
     /**
      * 역할에 따른 일정 목록 조회
      * <p>
-     * 1. 중앙 운영사무국(총괄/부총괄/운영국원/교육국원): 해당 기수에서 본인의 AttendanceRecord가 있는 일정
+     * 1. 중앙 운영사무국(총괄/부총괄/운영국원/교육국원): 해당 기수에서 본인이 포함된 일정 (본인의 AttendanceRecord가 있는 일정)
      * 2. 학교 회장단(회장/부회장): 같은 학교 챌린저가 생성한 모든 일정
-     * 3. 그 외(파트장 등): 본인이 생성한 일정만
+     * 3. 그 외(파트장 등): 본인이 생성했거나 본인이 포함된 일정
      */
     private List<Schedule> resolveSchedulesByRole(Long memberId) {
         ChallengerInfoWithStatus currentChallenger =
@@ -102,7 +104,7 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
         Long gisuId = currentChallenger.gisuId();
         Long currentChallengerId = currentChallenger.challengerId();
 
-        // 1. 중앙 운영사무국: 본인의 AttendanceRecord가 있는 기수 내 일정
+        // 1. 중앙 운영사무국: 본인이 포함된 기수 내 일정
         if (getChallengerRoleUseCase.isCentralMemberInGisu(memberId, gisuId)) {
             return loadSchedulePort.findMySchedulesByGisu(memberId, gisuId);
         }
@@ -127,8 +129,15 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
             return loadSchedulePort.findByAuthorChallengerIdIn(schoolChallengerIds);
         }
 
-        // 3. 그 외(파트장 등): 본인이 생성한 일정만
-        return loadSchedulePort.findByAuthorChallengerIdIn(List.of(currentChallengerId));
+        // 3. 그 외(파트장 등): 본인이 생성한 일정 + 본인이 포함된 일정 (중복 제거)
+        List<Schedule> createdByMe = loadSchedulePort.findByAuthorChallengerIdIn(List.of(currentChallengerId));
+        List<Schedule> includingMe = loadSchedulePort.findMySchedulesByGisu(memberId, gisuId);
+
+        return Stream.concat(createdByMe.stream(), includingMe.stream())
+            .collect(Collectors.toMap(Schedule::getId, Function.identity(), (a, b) -> a, LinkedHashMap::new))
+            .values()
+            .stream()
+            .toList();
     }
 
     private AttendanceStats calculateStats(AttendanceSheet sheet, Map<Long, List<AttendanceRecord>> recordsBySheetId) {
