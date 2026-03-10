@@ -35,6 +35,19 @@ public class ScheduleQueryRepository {
             .fetch();
     }
 
+    public List<Schedule> findMySchedulesByGisu(Long memberId, Long gisuId) {
+        return queryFactory
+            .selectDistinct(schedule)
+            .from(attendanceRecord)
+            .join(attendanceSheet).on(attendanceSheet.id.eq(attendanceRecord.attendanceSheetId))
+            .join(schedule).on(schedule.id.eq(attendanceSheet.scheduleId))
+            .where(
+                attendanceRecord.memberId.eq(memberId),
+                attendanceSheet.gisuId.eq(gisuId)
+            )
+            .fetch();
+    }
+
     public Optional<Schedule> findByIdWithTags(Long scheduleId) {
         return Optional.ofNullable(queryFactory
             .selectFrom(schedule)

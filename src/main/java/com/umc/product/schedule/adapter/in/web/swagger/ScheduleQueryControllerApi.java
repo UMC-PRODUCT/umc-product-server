@@ -15,8 +15,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "Schedule | 일정 Query", description = "")
 public interface ScheduleQueryControllerApi {
 
-    @Operation(summary = "일정 목록 조회", description = "출석 통계와 함께 일정 목록을 조회합니다")
-    List<ScheduleListResponse> getScheduleList();
+    @Operation(summary = "일정 목록 조회",
+        description = "출석 통계와 함께 일정 목록을 조회합니다. 중앙 운영진은 기수 전체 일정, 학교 운영진은 본인 생성 일정만 조회됩니다.")
+    List<ScheduleListResponse> getScheduleList(@CurrentMember MemberPrincipal memberPrincipal);
 
     @Operation(summary = "월별 내 일정 캘린더/리스트 조회",
         description = "본인이 참여하는 일정을 월 단위로 조회합니다. AttendanceRecord에 등록된 일정만 포함됩니다.")

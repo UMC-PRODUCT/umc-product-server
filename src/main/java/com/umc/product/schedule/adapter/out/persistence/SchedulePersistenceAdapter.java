@@ -53,6 +53,19 @@ public class SchedulePersistenceAdapter implements
     }
 
     @Override
+    public List<Schedule> findByAuthorChallengerIdIn(List<Long> authorChallengerIds) {
+        if (authorChallengerIds == null || authorChallengerIds.isEmpty()) {
+            return List.of();
+        }
+        return scheduleJpaRepository.findByAuthorChallengerIdIn(authorChallengerIds);
+    }
+
+    @Override
+    public List<Schedule> findMySchedulesByGisu(Long memberId, Long gisuId) {
+        return scheduleQueryRepository.findMySchedulesByGisu(memberId, gisuId);
+    }
+
+    @Override
     public Optional<Schedule> findByIdWithTags(Long scheduleId) {
         return scheduleQueryRepository.findByIdWithTags(scheduleId);
     }

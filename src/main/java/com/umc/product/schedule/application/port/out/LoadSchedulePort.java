@@ -29,6 +29,23 @@ public interface LoadSchedulePort {
     List<Schedule> findAll();
 
     /**
+     * 작성자 챌린저 ID 목록으로 일정 조회
+     *
+     * @param authorChallengerIds 작성자 챌린저 ID 목록
+     * @return 일정 목록
+     */
+    List<Schedule> findByAuthorChallengerIdIn(List<Long> authorChallengerIds);
+
+    /**
+     * 특정 기수에서 본인의 AttendanceRecord가 존재하는 일정 조회 (중앙 운영사무국용)
+     *
+     * @param memberId 회원 ID
+     * @param gisuId   기수 ID
+     * @return 일정 목록
+     */
+    List<Schedule> findMySchedulesByGisu(Long memberId, Long gisuId);
+
+    /**
      * ID 로 일정 조회
      *
      * @param scheduleId 일정 ID
