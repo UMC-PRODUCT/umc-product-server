@@ -1,8 +1,7 @@
 package com.umc.product.organization.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -50,10 +49,10 @@ public class ChapterSchool extends BaseEntity {
 
     private static void validate(Chapter chapter, School school) {
         if (chapter == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.CHAPTER_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.CHAPTER_REQUIRED);
         }
         if (school == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.SCHOOL_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_REQUIRED);
         }
     }
 }

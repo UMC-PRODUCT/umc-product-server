@@ -2,8 +2,6 @@ package com.umc.product.recruitment.adapter.out;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.adapter.out.util.InterviewTimeTableDisabledCalculator;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo;
 import com.umc.product.recruitment.application.port.in.command.dto.RecruitmentDraftInfo.ScheduleInfo;
@@ -23,6 +21,7 @@ import com.umc.product.recruitment.domain.enums.RecruitmentPartStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentPhase;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
 import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
+import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.survey.adapter.out.persistence.FormJpaRepository;
 import com.umc.product.survey.adapter.out.persistence.FormSectionJpaRepository;
@@ -36,6 +35,7 @@ import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.enums.FormSectionType;
 import com.umc.product.survey.domain.enums.QuestionType;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -81,7 +81,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     public RecruitmentDraftInfo findDraftInfoById(Long recruitmentId) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
             .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+                () -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         List<ChallengerPart> parts =
             recruitmentPartRepository.findByRecruitmentIdAndStatus(recruitmentId, RecruitmentPartStatus.OPEN)
@@ -190,12 +190,12 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     public RecruitmentApplicationFormInfo findApplicationFormInfoById(Long recruitmentId) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
             .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+                () -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         Long formId = recruitment.getFormId();
 
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
         FormDefinitionInfo formDefinitionInfo = loadFormPort.loadFormDefinition(formId);
@@ -217,7 +217,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
         }
 
         Form form = formJpaRepository.findById(formId)
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
         for (UpsertRecruitmentFormQuestionsCommand.Item item : items) {
             FormSection section = findOrCreateSection(form, item.target());
@@ -339,7 +339,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
 
         // 수정
         question = questionJpaRepository.findById(req.questionId())
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.QUESTION_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND));
 
         if (!question.getFormSection().getId().equals(section.getId())) {
             question.getFormSection().getQuestions().remove(question);
@@ -557,11 +557,11 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     ) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
             .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+                () -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         Long formId = recruitment.getFormId();
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
 
         FormDefinitionInfo formDefinitionInfo = loadFormPort.loadFormDefinition(formId);
@@ -583,7 +583,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
     public RecruitmentPublishedInfo.ScheduleInfo findPublishedScheduleInfoByRecruitmentId(Long recruitmentId) {
         Recruitment recruitment = recruitmentRepository.findById(recruitmentId)
             .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+                () -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         List<RecruitmentSchedule> schedules =
             recruitmentScheduleRepository.findByRecruitmentId(recruitmentId);
@@ -640,7 +640,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
             return toQueryInterviewTimeTableInfo(normalized);
 
         } catch (Exception e) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
     }
 
@@ -834,7 +834,7 @@ public class RecruitmentPersistenceAdapter implements SaveRecruitmentPort, LoadR
             return toPublishedInterviewTimeTableInfo(raw, disabledByDate);
 
         } catch (Exception e) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
     }
 

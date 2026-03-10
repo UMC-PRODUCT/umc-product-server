@@ -1,8 +1,6 @@
 package com.umc.product.recruitment.application.service.command;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.application.port.in.command.CreateInterviewSheetQuestionUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteInterviewSheetQuestionUseCase;
 import com.umc.product.recruitment.application.port.in.command.ReorderInterviewSheetQuestionUseCase;
@@ -141,7 +139,7 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
     public ReorderInterviewSheetQuestionResult reorder(ReorderInterviewSheetQuestionCommand command) {
 
         validateFinalResultNotPublished(command.recruitmentId());
-        
+
         // 1. 검증 : Recruitment 존재
         Recruitment requestedRecruitment = loadRecruitmentPort.findById(command.recruitmentId())
             .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
@@ -216,7 +214,7 @@ public class RecruitmentQuestionService implements CreateInterviewSheetQuestionU
 
         // 최종 결과 발표 시점이 지났다면(isActive) 면접 질문지 조작 불가
         if (finalResultAt != null && finalResultAt.isActive(java.time.Instant.now())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.FINAL_RESULT_ALREADY_PUBLISHED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.FINAL_RESULT_ALREADY_PUBLISHED);
         }
     }
 

@@ -1,7 +1,5 @@
 package com.umc.product.recruitment.application.service.command;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.command.CreateInterviewAssignmentUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteInterviewAssignmentUseCase;
@@ -26,6 +24,7 @@ import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.ApplicationStatus;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
+import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import jakarta.transaction.Transactional;
 import java.time.Instant;
@@ -61,38 +60,37 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
         validateFinalResultNotPublished(command.recruitmentId());
 
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = recruitment.getEffectiveRootId();
 
         Long applicationId = command.applicationId();
 
         InterviewSlot slot = loadInterviewSlotPort.findById(command.slotId())
             .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND));
+                () -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND));
 
         // 완전히 종료된 슬롯이라면 할당 불가
         if (slot.getEndsAt().isBefore(Instant.now())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_SLOT_ALREADY_ENDED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SLOT_ALREADY_ENDED);
         }
 
         if (!slot.getRecruitment().getEffectiveRootId().equals(rootId)) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT);
         }
 
         Application application = loadApplicationPort.findById(command.applicationId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_FOUND));
 
         if (!loadApplicationListPort.isApplicationBelongsToRecruitmentFamily(application.getId(), rootId)) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
         }
 
         if (application.getStatus() != ApplicationStatus.DOC_PASSED) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_ONLY_DOC_PASSED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_ONLY_DOC_PASSED);
         }
 
         if (loadInterviewAssignmentPort.existsByRootIdAndApplicationId(rootId, application.getId())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_ALREADY_EXISTS);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_ALREADY_EXISTS);
         }
 
         InterviewAssignment saved = saveInterviewAssignmentPort.save(
@@ -129,10 +127,7 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
 
         InterviewAssignment assignment =
             loadInterviewAssignmentPort.findById(command.assignmentId())
-                .orElseThrow(() -> new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND
-                ));
+                .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
 
         boolean hasEvaluation = loadEvaluationPort.existsByApplicationIdAndStage(
             assignment.getApplication().getId(),
@@ -140,18 +135,15 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
         );
 
         if (hasEvaluation) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_ALREADY_EVALUATED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ALREADY_EVALUATED);
         }
 
         Recruitment recruitment = loadRecruitmentPort.findById(command.recruitmentId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = recruitment.getEffectiveRootId();
 
         if (!assignment.getRecruitment().getEffectiveRootId().equals(rootId)) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_IN_RECRUITMENT
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_IN_RECRUITMENT);
         }
 
         Long applicationId = assignment.getApplication().getId();
@@ -184,7 +176,7 @@ public class RecruitmentInterviewSchedulingService implements CreateInterviewAss
 
         // 최종 결과 발표 시점이 지났다면(isActive) 스케줄 조작 불가
         if (finalResultAt != null && finalResultAt.isActive(java.time.Instant.now())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.FINAL_RESULT_ALREADY_PUBLISHED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.FINAL_RESULT_ALREADY_PUBLISHED);
         }
     }
 

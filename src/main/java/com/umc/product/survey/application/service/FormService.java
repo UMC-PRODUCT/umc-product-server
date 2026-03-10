@@ -1,7 +1,5 @@
 package com.umc.product.survey.application.service;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.survey.application.port.in.command.CopyFormUseCase;
 import com.umc.product.survey.application.port.out.LoadFormPort;
 import com.umc.product.survey.application.port.out.SaveFormPort;
@@ -10,6 +8,7 @@ import com.umc.product.survey.domain.FormSection;
 import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.enums.FormStatus;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -32,7 +31,7 @@ public class FormService implements CopyFormUseCase {
 
         // 1. 원본 폼 조회
         Form sourceForm = loadFormPort.findById(sourceFormId)
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
         // 2. 새로운 폼 객체 생성 (기본 정보 복사)
         Form newForm = Form.builder()

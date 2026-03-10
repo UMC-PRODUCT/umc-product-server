@@ -1,8 +1,6 @@
 package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.recruitment.application.port.in.PartOption;
@@ -96,7 +94,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
         InterviewAssignment assignment = getValidatedAssignment(query.assignmentId(), query.recruitmentId());
 
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = recruitment.getEffectiveRootId();
 
         // 2. Application & 지원자 정보 가져오기
@@ -243,7 +241,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
         Instant now = Instant.now();
 
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = recruitment.getEffectiveRootId();
 
         // 1. 모든 InterviewAssignment 조회 (Slot, Application fetch join)
@@ -388,7 +386,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     public GetInterviewOptionsInfo get(GetInterviewOptionsQuery query) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = recruitment.getEffectiveRootId();
 
         // 1. INTERVIEW_WINDOW 일정 조회
@@ -435,7 +433,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
     private InterviewAssignment getValidatedAssignment(Long assignmentId, Long recruitmentId) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(recruitmentId)
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = recruitment.getEffectiveRootId();
 
         InterviewAssignment assignment = loadInterviewAssignmentPort.findById(assignmentId)

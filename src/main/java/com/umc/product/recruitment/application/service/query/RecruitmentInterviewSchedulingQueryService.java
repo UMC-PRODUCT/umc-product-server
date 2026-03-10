@@ -1,8 +1,6 @@
 package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.adapter.out.ApplicationQueryRepository;
 import com.umc.product.recruitment.adapter.out.dto.ApplicationIdWithFormResponseId;
 import com.umc.product.recruitment.adapter.out.dto.InterviewSchedulingAssignmentRow;
@@ -29,6 +27,7 @@ import com.umc.product.recruitment.domain.InterviewSlot;
 import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
+import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import com.umc.product.survey.application.port.out.LoadSingleAnswerPort;
 import java.time.Instant;
@@ -66,19 +65,13 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
     public InterviewSchedulingSummaryInfo get(GetInterviewSchedulingSummaryQuery query) {
 
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-            .orElseThrow(() -> new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_NOT_FOUND
-            ));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
 
         Long rootId = recruitment.getEffectiveRootId();
 
         Recruitment rootRecruitment = recruitment.isRoot() ? recruitment :
             loadRecruitmentPort.findById(rootId)
-                .orElseThrow(() -> new BusinessException(
-                    Domain.RECRUITMENT,
-                    RecruitmentErrorCode.ROOT_RECRUITMENT_NOT_FOUND
-                ));
+                .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.ROOT_RECRUITMENT_NOT_FOUND));
 
         PartOption requestedPart = (query.part() != null) ? query.part() : PartOption.ALL;
 
@@ -90,17 +83,11 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
             .findByRecruitmentIdAndType(rootId, RecruitmentScheduleType.INTERVIEW_WINDOW);
 
         if (window == null) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_FOUND
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_SCHEDULE_NOT_FOUND);
         }
 
         if (window.getStartsAt() == null || window.getEndsAt() == null) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_WINDOW_NOT_SET
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_WINDOW_NOT_SET);
         }
 
         LocalDate windowStart = toKstLocalDate(window.getStartsAt());
@@ -144,7 +131,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         // todo: 운영진 권한 검증 필요
 
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = recruitment.getEffectiveRootId();
 
         PartOption requestedPart = (query.part() != null) ? query.part() : PartOption.ALL;
@@ -153,7 +140,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         RecruitmentSchedule window = loadRecruitmentSchedulePort
             .findByRecruitmentIdAndType(rootId, RecruitmentScheduleType.INTERVIEW_WINDOW);
         if (window == null || window.getStartsAt() == null || window.getEndsAt() == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_WINDOW_NOT_SET);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_WINDOW_NOT_SET);
         }
 
         LocalDate windowStart = toKstLocalDate(window.getStartsAt());
@@ -263,7 +250,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
         // todo: 운영진 권한 검증 필요
 
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = recruitment.getEffectiveRootId();
 
         Long slotId = query.slotId();
@@ -272,16 +259,10 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
 
         // slot 검증
         InterviewSlot slot = loadInterviewSlotPort.findById(slotId)
-            .orElseThrow(() -> new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND
-            ));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND));
 
         if (!slot.getRecruitment().getEffectiveRootId().equals(rootId)) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT);
         }
 
         // slot time (KST)
@@ -399,7 +380,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
     public InterviewSchedulingAssignmentsInfo get(GetInterviewSchedulingAssignmentsQuery query) {
         // todo: 운영진 권한 검증 필요
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = recruitment.getEffectiveRootId();
 
         Long slotId = query.slotId();
@@ -407,16 +388,10 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
 
         // slot이 recruitment에 속하는지 검증
         InterviewSlot slot = loadInterviewSlotPort.findById(slotId)
-            .orElseThrow(() -> new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND
-            ));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SLOT_NOT_FOUND));
 
         if (!slot.getRecruitment().getEffectiveRootId().equals(rootId)) {
-            throw new BusinessException(
-                Domain.RECRUITMENT,
-                RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT
-            );
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_SLOT_NOT_IN_RECRUITMENT);
         }
 
         // 해당 슬롯에 배정된 assignment 목록 조회 (배정 순서대로)
@@ -523,7 +498,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
     @SuppressWarnings("unchecked")
     private RulesParsed parseRulesFromTimeTable(Map<String, Object> timeTable) {
         if (timeTable == null || timeTable.isEmpty()) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
 
         Object slotMinutesRaw = timeTable.get("slotMinutes");
@@ -531,7 +506,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
 
         Map<String, Object> timeRange = (Map<String, Object>) timeTable.get("timeRange");
         if (timeRange == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
 
         LocalTime start = LocalTime.parse(String.valueOf(timeRange.get("start")));
@@ -543,7 +518,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
 
     private int parseSlotMinutes(Object raw) {
         if (raw == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
         try {
             if (raw instanceof Number n) {
@@ -554,7 +529,7 @@ public class RecruitmentInterviewSchedulingQueryService implements GetInterviewS
             }
             throw new NumberFormatException();
         } catch (NumberFormatException e) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_TIMETABLE_INVALID);
         }
     }
 
