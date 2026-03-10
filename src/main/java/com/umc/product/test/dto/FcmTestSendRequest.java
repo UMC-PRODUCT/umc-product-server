@@ -1,4 +1,4 @@
-package com.umc.product.notification.adapter.in.web.dto.request;
+package com.umc.product.test.dto;
 
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 

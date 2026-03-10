@@ -3,13 +3,10 @@ package com.umc.product.notification.adapter.in.web;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
-import com.umc.product.notification.adapter.in.web.dto.request.FcmTestSendRequest;
 import com.umc.product.notification.adapter.in.web.swagger.FcmControllerApi;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,10 +28,4 @@ public class FcmController implements FcmControllerApi {
         manageFcmUseCase.registerFcmToken(memberPrincipal.getMemberId(), request);
     }
 
-    @Override
-    @Profile("local | dev")
-    @PostMapping("/test-send")
-    public void sendTestNotification(@RequestBody FcmTestSendRequest request) {
-        manageFcmUseCase.sendMessageByToken(request.toCommand());
-    }
 }
