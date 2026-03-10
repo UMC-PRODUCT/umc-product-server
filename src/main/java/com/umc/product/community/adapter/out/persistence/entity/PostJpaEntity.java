@@ -152,6 +152,16 @@ public class PostJpaEntity extends BaseEntity {
         this.category = category;
     }
 
+    public void updateLightning(String title, String content, Instant meetAt,
+                                String location, Integer maxParticipants, String openChatUrl) {
+        this.title = title;
+        this.content = content;
+        this.meetAt = LocalDateTime.ofInstant(meetAt, ZoneOffset.UTC);
+        this.location = location;
+        this.maxParticipants = maxParticipants;
+        this.openChatUrl = openChatUrl;
+    }
+
     public boolean toggleLike(Long challengerId) {
         if (!likedChallengerIds.remove(challengerId)) {
             likedChallengerIds.add(challengerId);
