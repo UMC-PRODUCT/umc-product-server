@@ -1,7 +1,10 @@
 package com.umc.product.schedule.application.service.command;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
@@ -54,6 +57,13 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
 
 
     // 일정 생성
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.CREATE,
+        targetType = "Schedule",
+        targetId = "#result",
+        description = "'일정이 생성되었습니다.'"
+    )
     @Override
     public Long create(CreateScheduleCommand command) {
         // 작성자의 Challenger 상태 조회 (탈부, 제명 상태일 시 exeption)
@@ -69,6 +79,13 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     }
 
     // 일정 수정
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.UPDATE,
+        targetType = "Schedule",
+        targetId = "#command.scheduleId()",
+        description = "'일정이 수정되었습니다.'"
+    )
     @Override
     public void update(UpdateScheduleCommand command) {
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
@@ -191,6 +208,13 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     }
 
     // 일정 삭제
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.DELETE,
+        targetType = "Schedule",
+        targetId = "#scheduleId",
+        description = "'일정이 삭제되었습니다.'"
+    )
     @Override
     public void delete(Long scheduleId) {
         if (!loadSchedulePort.existsById(scheduleId)) {

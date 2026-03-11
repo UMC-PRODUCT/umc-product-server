@@ -11,6 +11,8 @@ import lombok.Getter;
 @Getter
 public enum ResourceType {
 
+    AUDIT("audit", "감사",
+        Set.of(PermissionType.READ)),
     CURRICULUM("curriculum", "커리큘럼",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
     SCHEDULE("schedule", "일정",

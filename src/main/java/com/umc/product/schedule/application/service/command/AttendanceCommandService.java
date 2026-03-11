@@ -1,5 +1,8 @@
 package com.umc.product.schedule.application.service.command;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.SubmitReasonUseCase;
@@ -18,6 +21,7 @@ import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +43,15 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
     private final SaveAttendanceRecordPort saveAttendanceRecordPort;
     private final LoadSchedulePort loadSchedulePort;
 
+    private final ApplicationEventPublisher eventPublisher;
+
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.CHECK,
+        targetType = "AttendanceRecord",
+        targetId = "#result",
+        description = "'출석 체크'"
+    )
     @Override
     public Long check(CheckAttendanceCommand command) {
         // 출석부 조회 및 검증
@@ -119,6 +132,13 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         return AttendanceStatus.ABSENT;
     }
 
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.APPROVE,
+        targetType = "AttendanceRecord",
+        targetId = "#recordId.id()",
+        description = "'출석 승인'"
+    )
     @Override
     public void approve(AttendanceRecordId recordId, Long confirmerId) {
         // 출석 기록 조회
@@ -133,6 +153,13 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         saveAttendanceRecordPort.save(record);
     }
 
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.REJECT,
+        targetType = "AttendanceRecord",
+        targetId = "#recordId.id()",
+        description = "'출석 반려'"
+    )
     @Override
     public void reject(AttendanceRecordId recordId, Long confirmerId) {
         // 출석 기록 조회
@@ -148,6 +175,13 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         saveAttendanceRecordPort.save(record);
     }
 
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.SUBMIT,
+        targetType = "AttendanceRecord",
+        targetId = "#result.id()",
+        description = "'출석 사유 제출'"
+    )
     @Override
     public AttendanceRecordId submitReason(SubmitReasonCommand command) {
         // 출석부 조회 및 검증
