@@ -36,6 +36,10 @@ public class ChallengerPoint extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private PointType type;
 
+    // type가 custom인 경우를 위한 컬럼. 존재할 경우 ENUM 값에 우선하여 적용합니다.
+    @Column(name = "point_value")
+    private Integer pointValue;
+
     @Column(length = 200)
     private String description;
 
