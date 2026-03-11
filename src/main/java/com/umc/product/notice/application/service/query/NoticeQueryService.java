@@ -270,8 +270,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             .map(ChallengerInfo::gisuId)
             .collect(Collectors.toSet());
 
-        Set<Long> schoolIds = challengers.stream()
-            .map(c -> schoolIdMap.get(c.memberId()))
+        Set<Long> schoolIds = schoolIdMap.values().stream()
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());
 
