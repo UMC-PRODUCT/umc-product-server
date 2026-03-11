@@ -42,6 +42,10 @@ public record CurriculumProgressResponse(
 
     @Schema(description = "워크북 진행 정보")
     public record WorkbookProgress(
+
+            @Schema(description = "커리큘럼 ID", example = "1")
+            Long originalWorkbookId,
+
             @Schema(description = "챌린저 워크북 ID (미배포/미생성 시 null)")
             Long challengerWorkbookId,
 
@@ -69,12 +73,13 @@ public record CurriculumProgressResponse(
 
         public static WorkbookProgress from(CurriculumProgressInfo.WorkbookProgressInfo info) {
             return new WorkbookProgress(
+                    info.originalWorkbookId(),
                     info.challengerWorkbookId(),
                     info.weekNo(),
                     info.title(),
                     info.description(),
                     info.missionType(),
-                    info.status(),
+                    info.status() == null ? WorkbookStatus.PENDING : info.status(), // 챌린저 워크북이 없는 경우 PENDING으로 처리
                     info.isReleased(),
                     info.isInProgress()
             );

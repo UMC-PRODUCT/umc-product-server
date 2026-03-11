@@ -73,6 +73,7 @@ public class CurriculumQueryRepository {
         Instant now = Instant.now();
         List<WorkbookProgressInfo> workbooks = results.stream()
                 .map(tuple -> {
+                    Long originalWorkbookId = tuple.get(originalWorkbook.id);
                     Integer weekNo = tuple.get(originalWorkbook.weekNo);
                     Long challengerWorkbookId = tuple.get(challengerWorkbook.id);
                     WorkbookStatus challengerWorkbookStatus = tuple.get(challengerWorkbook.status);
@@ -89,6 +90,7 @@ public class CurriculumQueryRepository {
                     boolean isInProgress = isReleased && isInDateRange;
 
                     return new WorkbookProgressInfo(
+                            originalWorkbookId,
                             challengerWorkbookId,
                             weekNo,
                             tuple.get(originalWorkbook.title),

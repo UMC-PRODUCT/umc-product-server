@@ -14,6 +14,7 @@ public record CurriculumProgressInfo(
 ) {
 
     public record WorkbookProgressInfo(
+            Long originalWorkbookId, // TODO: OriginalWorkbookId은 나중에 삭제해야합니다.
             Long challengerWorkbookId,
             Integer weekNo,
             String title,
