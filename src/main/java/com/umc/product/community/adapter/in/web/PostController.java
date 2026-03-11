@@ -1,6 +1,7 @@
 package com.umc.product.community.adapter.in.web;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.community.adapter.in.web.dto.request.CreateLightningRequest;
 import com.umc.product.community.adapter.in.web.dto.request.CreatePostRequest;
@@ -15,8 +16,11 @@ import com.umc.product.community.application.port.in.command.post.TogglePostLike
 import com.umc.product.community.application.port.in.command.post.ToggleScrapUseCase;
 import com.umc.product.community.application.port.in.command.post.UpdateLightningUseCase;
 import com.umc.product.community.application.port.in.command.post.UpdatePostUseCase;
+import com.umc.product.community.application.port.in.query.dto.PostInfo;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +44,8 @@ public class PostController {
     private final DeletePostUseCase deletePostUseCase;
     private final TogglePostLikeUseCase togglePostLikeUseCase;
     private final ToggleScrapUseCase toggleScrapUseCase;
+
+    private final GetMemberUseCase getMemberUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
 
     @PostMapping
@@ -61,7 +67,7 @@ public class PostController {
     ) {
         Long memberId = memberPrincipal.getMemberId();
         ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
-        return PostResponse.from(createPostUseCase.createLightningPost(request.toCommand(challenger.challengerId())));
+        return toPostResponse(createPostUseCase.createLightningPost(request.toCommand(challenger.challengerId())));
     }
 
     @PatchMapping("/{postId}")
@@ -70,7 +76,7 @@ public class PostController {
         @PathVariable Long postId,
         @RequestBody UpdatePostRequest request
     ) {
-        return PostResponse.from(updatePostUseCase.updatePost(request.toCommand(postId)));
+        return toPostResponse(updatePostUseCase.updatePost(request.toCommand(postId)));
     }
 
     @PatchMapping("/{postId}/lightning")
@@ -79,7 +85,7 @@ public class PostController {
         @PathVariable Long postId,
         @RequestBody UpdateLightningRequest request
     ) {
-        return PostResponse.from(updateLightningUseCase.updateLightning(request.toCommand(postId)));
+        return toPostResponse(updateLightningUseCase.updateLightning(request.toCommand(postId)));
     }
 
     @DeleteMapping("/{postId}")
@@ -108,6 +114,15 @@ public class PostController {
         Long memberId = memberPrincipal.getMemberId();
         ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
         return ScrapResponse.from(toggleScrapUseCase.toggleScrap(postId, challenger.challengerId()));
+    }
+
+    private PostResponse toPostResponse(PostInfo postInfo) {
+        ChallengerInfo challengerInfo = getChallengerUseCase.findByIdOrNull(postInfo.authorChallengerId());
+        MemberInfo memberInfo = challengerInfo != null
+            ? getMemberUseCase.findByIdOrNull(challengerInfo.memberId())
+            : null;
+
+        return PostResponse.from(postInfo, memberInfo, challengerInfo);
     }
 }
 

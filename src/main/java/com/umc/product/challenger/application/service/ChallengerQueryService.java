@@ -28,9 +28,16 @@ public class ChallengerQueryService implements GetChallengerUseCase {
 
     @Override
     public ChallengerInfo getChallengerPublicInfo(Long challengerId) {
-        Challenger challenger = loadChallengerPort.getById(challengerId);
+        return getChallengerInfoFromChallenger(loadChallengerPort.getById(challengerId));
+    }
 
-        return ChallengerInfo.from(challenger, getChallengerPointUseCase.getListByChallengerId(challengerId));
+    @Override
+    public ChallengerInfo findByIdOrNull(Long challengerId) {
+        Challenger challenger = loadChallengerPort.findById(challengerId).orElse(null);
+
+        return challenger != null
+            ? getChallengerInfoFromChallenger(challenger)
+            : null;
     }
 
     @Override
@@ -85,7 +92,7 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     public List<ChallengerInfo> getByGisuId(Long gisuId) {
         return toChallengerInfoListBatch(loadChallengerPort.findByGisuId(gisuId));
     }
-    
+
 
     @Override
     public List<ChallengerInfo> getLatestPerMember() {

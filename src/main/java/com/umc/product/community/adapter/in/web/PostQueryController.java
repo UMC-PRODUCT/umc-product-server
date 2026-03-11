@@ -1,6 +1,7 @@
 package com.umc.product.community.adapter.in.web;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.community.adapter.in.web.dto.response.PostDetailResponse;
 import com.umc.product.community.adapter.in.web.dto.response.PostResponse;
@@ -16,6 +17,8 @@ import com.umc.product.community.domain.enums.Category;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -42,7 +45,18 @@ public class PostQueryController {
     private final GetMyPostsUseCase getMyPostsUseCase;
     private final GetCommentedPostsUseCase getCommentedPostsUseCase;
     private final GetScrappedPostsUseCase getScrappedPostsUseCase;
+
+    private final GetMemberUseCase getMemberUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
+
+    private PostResponse toPostResponse(PostInfo postInfo) {
+        ChallengerInfo challengerInfo = getChallengerUseCase.findByIdOrNull(postInfo.authorChallengerId());
+        MemberInfo memberInfo = challengerInfo != null
+            ? getMemberUseCase.findByIdOrNull(challengerInfo.memberId())
+            : null;
+
+        return PostResponse.from(postInfo, memberInfo, challengerInfo);
+    }
 
     @GetMapping("/{postId}")
     @Operation(summary = "게시글 상세 조회", description = "게시글 상세 정보를 조회합니다. (댓글 수, 좋아요/스크랩 여부 포함)")
@@ -69,7 +83,7 @@ public class PostQueryController {
 
         return PageResponse.of(
             getPostListUseCase.getPostList(query, pageable),
-            PostResponse::from
+            this::toPostResponse
         );
     }
 

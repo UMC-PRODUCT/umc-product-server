@@ -32,11 +32,7 @@ public class MemberQueryService implements GetMemberUseCase {
     private final GetFileUseCase getFileUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
-    @Override
-    public MemberInfo getMemberInfoById(Long memberId) {
-        // 회원
-        Member member = getOrThrowMember(memberId);
-
+    private MemberInfo toMemberInfo(Member member) {
         // 학교명 채워넣기
         String schoolName = getSchoolUseCase.getSchoolDetail(member.getSchoolId()).schoolName();
 
@@ -49,9 +45,23 @@ public class MemberQueryService implements GetMemberUseCase {
                 : getFileUseCase.getById(profileImageId).fileLink();
 
         // 역할 채워넣기
-        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.getRoles(memberId);
+        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.getRoles(member.getId());
 
         return MemberInfo.from(member, schoolName, profileImageLink, roles);
+    }
+
+    @Override
+    public MemberInfo getMemberInfoById(Long memberId) {
+        return toMemberInfo(getOrThrowMember(memberId));
+    }
+
+    @Override
+    public MemberInfo findByIdOrNull(Long memberId) {
+        Member member = loadMemberPort.findById(memberId).orElse(null);
+
+        return member != null
+            ? toMemberInfo(member)
+            : null;
     }
 
     @Override
