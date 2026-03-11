@@ -64,6 +64,10 @@ public class ChallengerPoint extends BaseEntity {
         return new ChallengerPoint(challenger, type, pointValue, description);
     }
 
+    public Long getChallengerId() {
+        return challenger.getId();
+    }
+
     /**
      * 상벌점의 설명을 수정합니다.
      */

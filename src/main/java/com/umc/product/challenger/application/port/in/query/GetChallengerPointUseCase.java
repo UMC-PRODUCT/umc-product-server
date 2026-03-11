@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Set;
 
 public interface GetChallengerPointUseCase {
+    ChallengerPointInfo getById(Long challengerPointId);
+
     List<ChallengerPointInfo> getListByChallengerId(Long challengerId);
 
     /**

@@ -17,6 +17,11 @@ public class ChallengerPointQueryService implements GetChallengerPointUseCase {
     private final LoadChallengerPointPort loadChallengerPointPort;
 
     @Override
+    public ChallengerPointInfo getById(Long challengerPointId) {
+        return ChallengerPointInfo.from(loadChallengerPointPort.getById(challengerPointId));
+    }
+
+    @Override
     public List<ChallengerPointInfo> getListByChallengerId(Long challengerId) {
         return loadChallengerPointPort.findByChallengerId(challengerId)
             .stream().map(ChallengerPointInfo::from).toList();
