@@ -29,7 +29,7 @@ public enum ResourceType {
     WORKBOOK_SUBMISSION("workbook_submission", "워크북 제출 현황",
         Set.of(PermissionType.READ)),
     ORIGINAL_WORKBOOK("original_workbook", "원본 워크북",
-        Set.of(PermissionType.RELEASE)),
+        Set.of(PermissionType.MANAGE, PermissionType.RELEASE)),
     ATTENDANCE_SHEET("attendance_sheet", "출석부",
         Set.of(PermissionType.APPROVE)),
     ATTENDANCE_RECORD("attendance_record", "출석 기록",
