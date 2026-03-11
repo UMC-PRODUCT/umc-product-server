@@ -8,7 +8,6 @@ import com.umc.product.organization.application.port.in.command.dto.UpdateSchool
 import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterPort;
-import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.School;
@@ -27,7 +26,6 @@ public class SchoolService implements ManageSchoolUseCase {
     private final LoadSchoolPort loadSchoolPort;
     private final ManageSchoolPort manageSchoolPort;
     private final ManageChapterSchoolPort manageChapterSchoolPort;
-    private final LoadChapterSchoolPort loadChapterSchoolPort;
 
     @Override
     public Long register(CreateSchoolCommand command) {
@@ -35,12 +33,11 @@ public class SchoolService implements ManageSchoolUseCase {
         School newSchool = School.create(command.schoolName(), command.remark());
         newSchool.updateLogoImageId(command.logoImageId());
 
-        if (command.links() != null && !command.links().isEmpty()) {
-            List<SchoolLink> links = command.links().stream()
-                    .map(linkCommand -> linkCommand.toEntity(newSchool))
-                    .toList();
-            newSchool.updateLinks(links);
-        }
+        List<SchoolLink> links = command.links().stream()
+                .map(linkCommand -> linkCommand.toEntity(newSchool))
+                .toList();
+
+        newSchool.updateLinks(links);
 
         School savedSchool = manageSchoolPort.save(newSchool);
 
