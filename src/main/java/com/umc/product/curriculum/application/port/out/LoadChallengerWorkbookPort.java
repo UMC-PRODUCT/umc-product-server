@@ -7,5 +7,7 @@ public interface LoadChallengerWorkbookPort {
 
     ChallengerWorkbook findById(Long id);
 
+    List<ChallengerWorkbook> findAllByChallengerIdAndOriginalWorkbookId(Long challengerId, Long originalWorkbookId);
+
     List<Long> findOriginalWorkbookIdsWithSubmissions(List<Long> originalWorkbookIds);
 }
