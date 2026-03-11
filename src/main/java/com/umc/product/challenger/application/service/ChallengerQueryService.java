@@ -92,6 +92,20 @@ public class ChallengerQueryService implements GetChallengerUseCase {
         return toChallengerInfoListBatch(loadChallengerPort.findLatestPerMember());
     }
 
+    @Override
+    public List<ChallengerInfo> getByGisuIdWithoutPoints(Long gisuId) {
+        return loadChallengerPort.findByGisuId(gisuId).stream()
+            .map(c -> ChallengerInfo.from(c, List.of()))
+            .toList();
+    }
+
+    @Override
+    public List<ChallengerInfo> getLatestPerMemberWithoutPoints() {
+        return loadChallengerPort.findLatestPerMember().stream()
+            .map(c -> ChallengerInfo.from(c, List.of()))
+            .toList();
+    }
+
     private ChallengerInfo getChallengerInfoFromChallenger(Challenger challenger) {
         List<ChallengerPointInfo> challengerPointInfos =
             getChallengerPointUseCase.getListByChallengerId(challenger.getId());

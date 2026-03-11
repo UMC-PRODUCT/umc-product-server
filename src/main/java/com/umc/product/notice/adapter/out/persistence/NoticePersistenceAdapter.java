@@ -8,6 +8,7 @@ import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.dto.NoticeClassification;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -85,6 +86,11 @@ public class NoticePersistenceAdapter implements
     @Override
     public Map<Long, Long> countReadsByNoticeIds(List<Long> noticeIds) {
         return noticeQueryRepository.countReadsByNoticeIds(noticeIds);
+    }
+
+    @Override
+    public long countReadsByChallengerIdIn(Long noticeId, Collection<Long> challengerIds) {
+        return noticeReadJpaRepository.countByNoticeIdAndChallengerIdIn(noticeId, challengerIds);
     }
 
     @Override
