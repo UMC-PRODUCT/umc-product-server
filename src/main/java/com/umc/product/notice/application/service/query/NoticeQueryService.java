@@ -170,26 +170,21 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
     @Override
     public NoticeReadStatusSummary getReadStatistics(Long noticeId) {
-        TargetChallengerContext context = findTargetChallengerContext(noticeId);
+        List<Long> targetIds = findTargetChallengerIds(noticeId);
 
-        int totalCount = context.targetChallengers().size();
+        int totalCount = targetIds.size();
         if (totalCount == 0) {
             return new NoticeReadStatusSummary(0, 0, 0, 0f);
         }
 
-        Set<Long> readChallengerIds = loadNoticeReadPort.findNoticeReadByNoticeId(noticeId).stream()
-            .map(NoticeRead::getChallengerId)
-            .collect(Collectors.toSet());
-
-        int readCount = (int) context.targetChallengers().stream()
-            .filter(challenger -> readChallengerIds.contains(challenger.challengerId()))
-            .count();
-
+        int readCount = (int) loadNoticeReadPort.countReadsByChallengerIdIn(noticeId, targetIds);
         int unreadCount = totalCount - readCount;
         float readRate = (float) readCount / totalCount * 100;
 
         return new NoticeReadStatusSummary(totalCount, readCount, unreadCount, readRate);
     }
+
+    // ====== PRIVATE =====
 
     /**
      * 공지 대상 챌린저 조회를 위한 공통 컨텍스트를 생성합니다.
@@ -246,7 +241,55 @@ public class NoticeQueryService implements GetNoticeUseCase {
         return new TargetChallengerContext(targetChallengers, memberMap, chapterCache);
     }
 
-    // ====== PRIVATE =====
+    /**
+     * 공지 대상 챌린저 ID 목록을 반환합니다. (경량 조회)
+     * <p>
+     * 통계 집계처럼 ID만 필요한 경우 사용합니다.
+     */
+    private List<Long> findTargetChallengerIds(Long noticeId) {
+        NoticeTarget target = loadNoticeTargetPort.findByNoticeId(noticeId)
+            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
+        NoticeTargetInfo targetInfo = NoticeTargetInfo.from(target);
+
+        List<ChallengerInfo> challengers;
+        if (targetInfo.targetGisuId() != null) {
+            challengers = getChallengerUseCase.getByGisuIdWithoutPoints(targetInfo.targetGisuId());
+        } else {
+            challengers = getChallengerUseCase.getLatestPerMemberWithoutPoints();
+        }
+
+        if (challengers.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Long> schoolIdMap = getMemberUseCase.getSchoolIds(
+            challengers.stream().map(ChallengerInfo::memberId).collect(Collectors.toSet())
+        );
+
+        Set<Long> gisuIds = challengers.stream()
+            .map(ChallengerInfo::gisuId)
+            .collect(Collectors.toSet());
+
+        Set<Long> schoolIds = challengers.stream()
+            .map(c -> schoolIdMap.get(c.memberId()))
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
+
+        Map<ChapterKey, ChapterInfo> chapterCache = new HashMap<>();
+        getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(gisuIds, schoolIds)
+            .forEach((gisuId, schoolMap) ->
+                schoolMap.forEach((schoolId, info) ->
+                    chapterCache.put(new ChapterKey(gisuId, schoolId), info)
+                )
+            );
+
+        return challengers.stream()
+            .filter(challenger -> isTargetChallenger(targetInfo, challenger,
+                schoolIdMap.get(challenger.memberId()), chapterCache))
+            .map(ChallengerInfo::challengerId)
+            .toList();
+    }
+
 
     /**
      * 지부/학교/파트 필터 요청 시, 호출자의 실제 소속 정보로 chapterId/schoolId를 덮어씁니다. 모든 필터가 없으면 그대로 반환합니다.
@@ -368,6 +411,27 @@ public class NoticeQueryService implements GetNoticeUseCase {
             challenger.gisuId(),
             chapterId,
             memberInfo.schoolId(),
+            challenger.part()
+        );
+    }
+
+    private boolean isTargetChallenger(
+        NoticeTargetInfo targetInfo,
+        ChallengerInfo challenger,
+        Long schoolId,
+        Map<ChapterKey, ChapterInfo> chapterCache
+    ) {
+        if (schoolId == null) {
+            return false;
+        }
+
+        ChapterInfo chapterInfo = getCachedChapterInfo(challenger.gisuId(), schoolId, chapterCache);
+        Long chapterId = chapterInfo != null ? chapterInfo.id() : null;
+
+        return targetInfo.isTarget(
+            challenger.gisuId(),
+            chapterId,
+            schoolId,
             challenger.part()
         );
     }

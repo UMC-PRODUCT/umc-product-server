@@ -97,6 +97,16 @@ public class MemberQueryService implements GetMemberUseCase {
     }
 
     @Override
+    public Map<Long, Long> getSchoolIds(Set<Long> memberIds) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return loadMemberPort.findByIdIn(memberIds).stream()
+            .collect(java.util.stream.Collectors.toMap(Member::getId, Member::getSchoolId));
+    }
+
+    @Override
     public boolean existsById(Long memberId) {
         return loadMemberPort.existsById(memberId);
     }

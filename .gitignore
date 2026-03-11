@@ -250,4 +250,4 @@ $RECYCLE.BIN/
 http-client.private.env.json
 
 # K6
-local_k6.js
+k6/*.js

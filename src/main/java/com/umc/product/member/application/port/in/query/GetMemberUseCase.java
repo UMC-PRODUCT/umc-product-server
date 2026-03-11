@@ -10,6 +10,8 @@ public interface GetMemberUseCase {
 
     Map<Long, MemberInfo> getProfiles(Set<Long> memberIds);
 
+    Map<Long, Long> getSchoolIds(Set<Long> memberIds);
+
     boolean existsById(Long memberId);
 
     boolean existsByEmail(String email);
