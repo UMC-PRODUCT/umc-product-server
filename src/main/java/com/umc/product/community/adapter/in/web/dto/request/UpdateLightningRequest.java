@@ -45,6 +45,9 @@ public record UpdateLightningRequest(
         if (openChatUrl.isBlank()) {
             throw new IllegalArgumentException("오픈 채팅 링크는 비어있을 수 없습니다");
         }
+        if (!openChatUrl.startsWith("https://") && !openChatUrl.startsWith("http://")) {
+            throw new IllegalArgumentException("오픈 채팅 링크는 http:// 또는 https://로 시작해야 합니다");
+        }
         if (maxParticipants < 1) {
             throw new IllegalArgumentException("최대 참가자는 1명 이상이어야 합니다");
         }
