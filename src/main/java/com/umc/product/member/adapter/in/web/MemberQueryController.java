@@ -33,13 +33,12 @@ public class MemberQueryController {
     @GetMapping("profile/{memberId}")
     @CheckAccess(
         resourceType = ResourceType.MEMBER,
-        resourceId = "#memberId",
         permission = PermissionType.READ
     )
     MemberInfoResponse getMemberProfile(
         @PathVariable Long memberId
     ) {
-        return assembler.fromMemberId(memberId);
+        return assembler.fromMemberIdToPublic(memberId);
     }
 
     @Operation(summary = "내 프로필 조회")

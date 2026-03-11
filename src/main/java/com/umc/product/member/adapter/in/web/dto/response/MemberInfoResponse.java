@@ -49,7 +49,8 @@ public record MemberInfoResponse(
 
     public static MemberInfoResponse from(
         MemberInfo info, MemberProfileInfo profileInfo,
-        List<ChallengerInfoResponse> challengerRecords) {
+        List<ChallengerInfoResponse> challengerRecords
+    ) {
         return MemberInfoResponse.builder()
             .id(info.id())
             .name(info.name())
@@ -62,6 +63,22 @@ public record MemberInfoResponse(
             .roles(info.roles())
             .challengerRecords(challengerRecords)
             .profile(profileInfo)
+            .build();
+    }
+
+    public MemberInfoResponse toPublic() {
+        return MemberInfoResponse.builder()
+            .id(id)
+            .name(name)
+            .nickname(nickname)
+            .email(null)
+            .schoolId(schoolId)
+            .schoolName(schoolName)
+            .profileImageLink(profileImageLink)
+            .status(null)
+            .roles(roles)
+            .challengerRecords(challengerRecords.stream().map(ChallengerInfoResponse::toPublic).toList())
+            .profile(profile)
             .build();
     }
 }
