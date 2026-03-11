@@ -71,19 +71,27 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         Long authorChallengerId = postWithAuthor.authorChallengerId();
 
         // 작성자 챌린저 정보 조회
-        ChallengerInfo authorChallengerInfo = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId);
+        ChallengerInfo authorChallengerInfo = getChallengerUseCase.findByIdOrNull(authorChallengerId);
 
         // 작성자 멤버 프로필 조회 (이름과 프로필 이미지)
-        MemberInfo memberProfile = getMemberUseCase.getMemberInfoById(authorChallengerInfo.memberId());
-        String authorName = memberProfile.name();
-        String authorProfileImage = memberProfile.profileImageLink();
+        MemberInfo memberProfile = getMemberUseCase.findByIdOrNull(authorChallengerInfo.memberId());
+
+        String authorName = memberProfile != null
+            ? memberProfile.name()
+            : null;
+
+        String authorProfileImage = memberProfile != null
+            ? memberProfile.profileImageLink()
+            : null;
 
         // 본인 작성 글 여부 확인
         boolean isAuthor = authorChallengerId.equals(challengerId);
 
         int commentCount = loadCommentPort.countByPostId(postId);
-        PostInfo postInfo = PostInfo.from(postWithAuthor.post(), authorChallengerId, authorName, authorProfileImage,
-            authorChallengerInfo.part(), commentCount, isAuthor);
+        PostInfo postInfo = PostInfo.from(
+            postWithAuthor.post(), authorChallengerId, authorName, authorProfileImage,
+            authorChallengerInfo.part(), commentCount, isAuthor
+        );
 
         // 스크랩 정보 조회
         boolean isScrapped = loadScrapPort.existsByPostIdAndChallengerId(postId, challengerId);
@@ -108,7 +116,9 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
                     data.getAuthorChallengerId());
                 MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
 
-                return PostResponse.from(data, memberInfo, challengerInfo);
+                return PostResponse.from(
+                    PostInfo.from(data, memberInfo, challengerInfo), memberInfo, challengerInfo
+                );
             }
         );
 

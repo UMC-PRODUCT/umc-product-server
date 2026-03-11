@@ -14,8 +14,10 @@ public record PostInfo(
     String title,
     String content,
     Category category,
+    Long authorMemberId, // Author Challenger ID임 주의
     Long authorChallengerId, // Author Challenger ID임 주의
     String authorName,
+    String authorNickname,
     String authorProfileImage,
     ChallengerPart authorPart,
     Instant meetAt,
@@ -37,8 +39,10 @@ public record PostInfo(
             .title(post.getTitle())
             .content(post.getContent())
             .category(post.getCategory())
+            .authorMemberId(memberInfo.id())
             .authorChallengerId(post.getAuthorChallengerId())
             .authorName(memberInfo.name())
+            .authorNickname(memberInfo.nickname())
             .authorProfileImage(memberInfo.profileImageLink())
             .authorPart(challengerInfo.part())
             //        Instant meetAt,
@@ -89,46 +93,42 @@ public record PostInfo(
         // 번개글인 경우
         if (post.isLightning()) {
             Post.LightningInfo info = post.getLightningInfoOrThrow();
-            return new PostInfo(
-                postId,
-                post.getTitle(),
-                post.getContent(),
-                post.getCategory(),
-                authorId,
-                authorName,
-                authorProfileImage,
-                authorPart,
-                info.meetAt(),
-                info.location(),
-                info.maxParticipants(),
-                info.openChatUrl(),
-                post.getCreatedAt(),
-                commentCount,
-                post.getLikeCount(),
-                post.isLiked(),
-                isAuthor
-            );
+            return PostInfo.builder()
+                .postId(postId)
+                .title(post.getTitle())
+                .content(post.getContent())
+                .category(post.getCategory())
+                .authorChallengerId(authorId)
+                .authorName(authorName)
+                .authorProfileImage(authorProfileImage)
+                .authorPart(authorPart)
+                .meetAt(info.meetAt())
+                .location(info.location())
+                .maxParticipants(info.maxParticipants())
+                .openChatUrl(info.openChatUrl())
+                .createdAt(post.getCreatedAt())
+                .commentCount(commentCount)
+                .likeCount(post.getLikeCount())
+                .isLiked(post.isLiked())
+                .isAuthor(isAuthor)
+                .build();
         }
 
         // 일반 게시글
-        return new PostInfo(
-            postId,
-            post.getTitle(),
-            post.getContent(),
-            post.getCategory(),
-            authorId,
-            authorName,
-            authorProfileImage,
-            authorPart,
-            null,
-            null,
-            null,
-            null,
-            post.getCreatedAt(),
-            commentCount,
-            post.getLikeCount(),
-            post.isLiked(),
-            isAuthor
-        );
+        return PostInfo.builder()
+            .postId(postId)
+            .title(post.getTitle())
+            .content(post.getContent())
+            .category(post.getCategory())
+            .authorChallengerId(authorId)
+            .authorName(authorName)
+            .authorProfileImage(authorProfileImage)
+            .authorPart(authorPart)
+            .createdAt(post.getCreatedAt())
+            .commentCount(commentCount)
+            .likeCount(post.getLikeCount())
+            .isLiked(post.isLiked())
+            .isAuthor(isAuthor)
+            .build();
     }
 }
