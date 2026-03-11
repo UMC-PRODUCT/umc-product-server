@@ -45,7 +45,7 @@ public class WorkbookCommandService implements ManageWorkbookUseCase {
             command.challengerId(),
             originalWorkbook.getId(),
             WorkbookStatus.PENDING,
-            originalWorkbook.getId()
+            null
         );
 
         challengerWorkbook.submit(command.submission());
