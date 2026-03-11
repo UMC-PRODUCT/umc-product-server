@@ -129,7 +129,6 @@ public enum RecruitmentErrorCode implements BaseCode {
         "최종 합격 처리 시 선택 파트(selectedPart)는 지원자가 선택한 지원 파트(preferred) 중 하나여야 합니다."),
     INTERVIEW_TIMETABLE_SLOT_MINUTES_UPDATE_FORBIDDEN(HttpStatus.NOT_FOUND, "RECRUITMENT-0072",
         "이미 할당된 면접이 있는 모집은 slotMinutes를 수정할 수 없습니다."),
-    SLOT_MINUTES_TOO_SMALL(HttpStatus.BAD_REQUEST, "RECRUITMENT-0072", "면접 시간이 너무 짧습니다."),
     SLOT_STARTS_AT_NOT_SET(HttpStatus.BAD_REQUEST, "RECRUITMENT-0073", "면접 슬롯의 시작 시간이 설정되지 않았습니다."),
     INTERVIEW_EVALUATION_NOT_STARTED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0074", "면접 시작 전에는 평가를 제출할 수 없습니다."),
     INTERVIEW_ALREADY_ASSIGNED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0075", "면접 배정이 존재하는 지원서는 서류 결과를 변경할 수 없습니다."),
@@ -146,6 +145,7 @@ public enum RecruitmentErrorCode implements BaseCode {
     INTERVIEW_SLOT_ALREADY_ENDED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0084", "이미 끝난 면접 슬롯에 면접자를 할당할 수 없습니다."),
     INTERVIEW_ALREADY_EVALUATED(HttpStatus.BAD_REQUEST, "RECRUITMENT-0085", "이미 평가가 등록된 지원서입니다."),
     INTERVIEW_NOT_FINISHED_YET(HttpStatus.BAD_REQUEST, "RECRUITMENT-0086", "아직 면접이 끝나지 않은 지원자입니다."),
+    SLOT_MINUTES_TOO_SMALL(HttpStatus.BAD_REQUEST, "RECRUITMENT-0087", "면접 시간이 너무 짧습니다."),
     ;
 
     private final HttpStatus httpStatus;
