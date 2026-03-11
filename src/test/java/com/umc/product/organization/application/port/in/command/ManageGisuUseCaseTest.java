@@ -58,7 +58,7 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
         // when & then
         assertThatThrownBy(() -> manageGisuUseCase.create(command))
             .isInstanceOf(BusinessException.class)
-            .extracting("code")
+            .extracting("baseCode")
             .isEqualTo(OrganizationErrorCode.GISU_ALREADY_EXISTS);
     }
 
@@ -73,7 +73,7 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
         // then
         assertThatThrownBy(() -> getGisuUseCase.getById(gisuId))
             .isInstanceOf(BusinessException.class)
-            .extracting("code")
+            .extracting("baseCode")
             .isEqualTo(OrganizationErrorCode.GISU_NOT_FOUND);
     }
 
@@ -85,7 +85,7 @@ class ManageGisuUseCaseTest extends UseCaseTestSupport {
         // when & then
         assertThatThrownBy(() -> manageGisuUseCase.deleteGisu(nonExistentGisuId))
             .isInstanceOf(BusinessException.class)
-            .extracting("code")
+            .extracting("baseCode")
             .isEqualTo(OrganizationErrorCode.GISU_NOT_FOUND);
     }
 

@@ -6,7 +6,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.umc.product.global.exception.BusinessException;
 import com.umc.product.organization.application.port.in.command.dto.AssignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.CreateSchoolCommand;
-import com.umc.product.organization.application.port.in.command.dto.SchoolLinkCommand;
 import com.umc.product.organization.application.port.in.command.dto.UnassignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateSchoolCommand;
 import com.umc.product.organization.application.port.out.command.ManageChapterPort;
@@ -64,10 +63,10 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Transactional
     void 외부링크와_함께_학교를_등록한다() {
         // given
-        List<SchoolLinkCommand> links = List.of(
-            new SchoolLinkCommand("카카오톡", SchoolLinkType.KAKAO, "https://open.kakao.com/o/example"),
-            new SchoolLinkCommand("인스타그램", SchoolLinkType.INSTAGRAM, "https://instagram.com/example"),
-            new SchoolLinkCommand("유튜브", SchoolLinkType.YOUTUBE, "https://youtube.com/@example")
+        List<CreateSchoolCommand.SchoolLinkCommand> links = List.of(
+            new CreateSchoolCommand.SchoolLinkCommand("카카오톡", SchoolLinkType.KAKAO, "https://open.kakao.com/o/example"),
+            new CreateSchoolCommand.SchoolLinkCommand("인스타그램", SchoolLinkType.INSTAGRAM, "https://instagram.com/example"),
+            new CreateSchoolCommand.SchoolLinkCommand("유튜브", SchoolLinkType.YOUTUBE, "https://youtube.com/@example")
         );
         CreateSchoolCommand command = new CreateSchoolCommand("한성대", "비고", null, links);
 
@@ -87,9 +86,9 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Transactional
     void 같은_타입의_링크를_여러개_등록할_수_있다() {
         // given
-        List<SchoolLinkCommand> links = List.of(
-            new SchoolLinkCommand("메인 인스타", SchoolLinkType.INSTAGRAM, "https://instagram.com/main"),
-            new SchoolLinkCommand("서브 인스타", SchoolLinkType.INSTAGRAM, "https://instagram.com/sub")
+        List<CreateSchoolCommand.SchoolLinkCommand> links = List.of(
+            new CreateSchoolCommand.SchoolLinkCommand("메인 인스타", SchoolLinkType.INSTAGRAM, "https://instagram.com/main"),
+            new CreateSchoolCommand.SchoolLinkCommand("서브 인스타", SchoolLinkType.INSTAGRAM, "https://instagram.com/sub")
         );
         CreateSchoolCommand command = new CreateSchoolCommand("한성대", "비고", null, links);
 
@@ -111,18 +110,18 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Transactional
     void 같은_타입의_링크가_등록된_상태에서_수정할_수_있다() {
         // given
-        List<SchoolLinkCommand> initialLinks = List.of(
-            new SchoolLinkCommand("메인 인스타", SchoolLinkType.INSTAGRAM, "https://instagram.com/main"),
-            new SchoolLinkCommand("서브 인스타", SchoolLinkType.INSTAGRAM, "https://instagram.com/sub")
+        List<CreateSchoolCommand.SchoolLinkCommand> initialLinks = List.of(
+            new CreateSchoolCommand.SchoolLinkCommand("메인 인스타", SchoolLinkType.INSTAGRAM, "https://instagram.com/main"),
+            new CreateSchoolCommand.SchoolLinkCommand("서브 인스타", SchoolLinkType.INSTAGRAM, "https://instagram.com/sub")
         );
         CreateSchoolCommand createCommand = new CreateSchoolCommand("한성대", "비고", null, initialLinks);
         Long schoolId = manageSchoolUseCase.register(createCommand);
 
         // when - 같은 타입 링크를 다른 URL로 교체
-        List<SchoolLinkCommand> updatedLinks = List.of(
-            new SchoolLinkCommand("새 인스타1", SchoolLinkType.INSTAGRAM, "https://instagram.com/new1"),
-            new SchoolLinkCommand("새 인스타2", SchoolLinkType.INSTAGRAM, "https://instagram.com/new2"),
-            new SchoolLinkCommand("카카오톡", SchoolLinkType.KAKAO, "https://open.kakao.com/o/example")
+        List<CreateSchoolCommand.SchoolLinkCommand> updatedLinks = List.of(
+            new CreateSchoolCommand.SchoolLinkCommand("새 인스타1", SchoolLinkType.INSTAGRAM, "https://instagram.com/new1"),
+            new CreateSchoolCommand.SchoolLinkCommand("새 인스타2", SchoolLinkType.INSTAGRAM, "https://instagram.com/new2"),
+            new CreateSchoolCommand.SchoolLinkCommand("카카오톡", SchoolLinkType.KAKAO, "https://open.kakao.com/o/example")
         );
         UpdateSchoolCommand updateCommand = new UpdateSchoolCommand("한성대", null, "비고", null, updatedLinks);
         manageSchoolUseCase.updateSchool(schoolId, updateCommand);
@@ -164,16 +163,16 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         // given
         School school = manageSchoolPort.save(School.create("한성대", "비고"));
 
-        List<SchoolLinkCommand> initialLinks = List.of(
-            new SchoolLinkCommand("카카오톡", SchoolLinkType.KAKAO, "https://open.kakao.com/o/old")
+        List<CreateSchoolCommand.SchoolLinkCommand> initialLinks = List.of(
+            new CreateSchoolCommand.SchoolLinkCommand("카카오톡", SchoolLinkType.KAKAO, "https://open.kakao.com/o/old")
         );
         manageSchoolUseCase.updateSchool(school.getId(),
             new UpdateSchoolCommand("한성대", null, "비고", null, initialLinks));
 
         // when - 링크를 새로운 링크로 교체
-        List<SchoolLinkCommand> updatedLinks = List.of(
-            new SchoolLinkCommand("인스타그램", SchoolLinkType.INSTAGRAM, "https://instagram.com/new"),
-            new SchoolLinkCommand("유튜브", SchoolLinkType.YOUTUBE, "https://youtube.com/@new")
+        List<CreateSchoolCommand.SchoolLinkCommand> updatedLinks = List.of(
+            new CreateSchoolCommand.SchoolLinkCommand("인스타그램", SchoolLinkType.INSTAGRAM, "https://instagram.com/new"),
+            new CreateSchoolCommand.SchoolLinkCommand("유튜브", SchoolLinkType.YOUTUBE, "https://youtube.com/@new")
         );
         UpdateSchoolCommand command = new UpdateSchoolCommand("한성대", null, "비고", null, updatedLinks);
         manageSchoolUseCase.updateSchool(school.getId(), command);

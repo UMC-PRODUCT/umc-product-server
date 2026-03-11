@@ -116,7 +116,7 @@ class ManageMemberUseCaseTest {
         // when & then
         assertThatThrownBy(() -> memberService.registerMember(command))
             .isInstanceOf(OrganizationDomainException.class)
-            .extracting("code")
+            .extracting("baseCode")
             .isEqualTo(OrganizationErrorCode.SCHOOL_NOT_FOUND);
 
         then(saveMemberPort).should(never()).save(any());
@@ -136,7 +136,7 @@ class ManageMemberUseCaseTest {
         // when & then
         assertThatThrownBy(() -> memberService.registerMember(command))
             .isInstanceOf(StorageException.class)
-            .extracting("code")
+            .extracting("baseCode")
             .isEqualTo(StorageErrorCode.FILE_NOT_FOUND);
 
         then(saveMemberPort).should(never()).save(any());
@@ -179,7 +179,7 @@ class ManageMemberUseCaseTest {
         // when & then
         assertThatThrownBy(() -> memberService.registerMember(command))
             .isInstanceOf(TermDomainException.class)
-            .extracting("code")
+            .extracting("baseCode")
             .isEqualTo(TermErrorCode.MANDATORY_TERMS_NOT_AGREED);
 
         then(saveMemberPort).should(never()).save(any());
@@ -199,7 +199,7 @@ class ManageMemberUseCaseTest {
         // when & then
         assertThatThrownBy(() -> memberService.registerMember(command))
             .isInstanceOf(TermDomainException.class)
-            .extracting("code")
+            .extracting("baseCode")
             .isEqualTo(TermErrorCode.MANDATORY_TERMS_NOT_AGREED);
 
         then(saveMemberPort).should(never()).save(any());
@@ -259,7 +259,7 @@ class ManageMemberUseCaseTest {
             // when & then
             assertThatThrownBy(() -> memberService.updateMember(command))
                 .isInstanceOf(MemberDomainException.class)
-                .extracting("code")
+                .extracting("baseCode")
                 .isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
         }
 
@@ -275,7 +275,7 @@ class ManageMemberUseCaseTest {
             // when & then
             assertThatThrownBy(() -> memberService.updateMember(command))
                 .isInstanceOf(StorageException.class)
-                .extracting("code")
+                .extracting("baseCode")
                 .isEqualTo(StorageErrorCode.FILE_NOT_FOUND);
         }
 
