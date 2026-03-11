@@ -37,6 +37,14 @@ public interface LoadSchedulePort {
     List<Schedule> findByAuthorChallengerIdIn(List<Long> authorChallengerIds);
 
     /**
+     * 작성자 챌린저 ID 목록으로 일정 조회 (AttendanceSheet가 존재하는 일정만)
+     *
+     * @param authorChallengerIds 작성자 챌린저 ID 목록
+     * @return 출석부가 존재하는 일정 목록
+     */
+    List<Schedule> findWithSheetByAuthorChallengerIdIn(List<Long> authorChallengerIds);
+
+    /**
      * 특정 기수에서 본인의 AttendanceRecord가 존재하는 일정 조회 (중앙 운영사무국용)
      *
      * @param memberId 회원 ID
@@ -52,4 +60,12 @@ public interface LoadSchedulePort {
      * @return 일정
      */
     Optional<Schedule> findByIdWithTags(Long scheduleId);
+
+    /**
+     * 스터디 그룹 ID 목록으로 일정 조회 (파트장용)
+     *
+     * @param studyGroupIds 스터디 그룹 ID 목록
+     * @return 일정 목록
+     */
+    List<Schedule> findByStudyGroupIdIn(List<Long> studyGroupIds);
 }

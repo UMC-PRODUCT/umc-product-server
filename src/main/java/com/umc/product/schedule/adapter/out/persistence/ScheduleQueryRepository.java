@@ -35,6 +35,15 @@ public class ScheduleQueryRepository {
             .fetch();
     }
 
+    public List<Schedule> findWithSheetByAuthorChallengerIdIn(List<Long> authorChallengerIds) {
+        return queryFactory
+            .selectDistinct(schedule)
+            .from(schedule)
+            .join(attendanceSheet).on(attendanceSheet.scheduleId.eq(schedule.id))
+            .where(schedule.authorChallengerId.in(authorChallengerIds))
+            .fetch();
+    }
+
     public List<Schedule> findMySchedulesByGisu(Long memberId, Long gisuId) {
         return queryFactory
             .selectDistinct(schedule)

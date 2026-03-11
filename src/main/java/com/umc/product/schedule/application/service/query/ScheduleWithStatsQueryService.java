@@ -4,8 +4,10 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleListUseCase;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleWithStatsInfo;
 import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
@@ -40,6 +42,7 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetMemberUseCase getMemberUseCase;
+    private final GetStudyGroupUseCase getStudyGroupUseCase;
 
     @Override
     public List<ScheduleWithStatsInfo> getAll(Long memberId) {
@@ -95,7 +98,8 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
      * <p>
      * 1. 중앙 운영사무국(총괄/부총괄/운영국원/교육국원): 해당 기수에서 본인이 포함된 일정 (본인의 AttendanceRecord가 있는 일정)
      * 2. 학교 회장단(회장/부회장): 같은 학교 챌린저가 생성한 모든 일정
-     * 3. 그 외(파트장 등): 본인이 생성했거나 본인이 포함된 일정
+     * 3. 파트장: 본인이 생성했거나 포함된 일정 + 담당 파트의 스터디 그룹 일정
+     * 4. 그 외: 본인이 생성했거나 본인이 포함된 일정
      */
     private List<Schedule> resolveSchedulesByRole(Long memberId) {
         ChallengerInfoWithStatus currentChallenger =
@@ -104,12 +108,12 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
         Long gisuId = currentChallenger.gisuId();
         Long currentChallengerId = currentChallenger.challengerId();
 
-        // 1. 중앙 운영사무국: 본인이 포함된 기수 내 일정
+        // 1. 중앙 운영사무국: 본인이 생성(출석부 있는)하거나 포함된 기수 내 일정
         if (getChallengerRoleUseCase.isCentralMemberInGisu(memberId, gisuId)) {
-            return loadSchedulePort.findMySchedulesByGisu(memberId, gisuId);
+            return getMyAndCreatedSchedulesWithSheet(memberId, gisuId, currentChallengerId);
         }
 
-        // 2. 학교 회장단: 같은 학교 챌린저들이 생성한 일정
+        // 2. 학교 회장단: 같은 학교 챌린저들이 생성한 일정 (출석부 있는 것만)
         Long schoolId = getMemberUseCase.getMemberInfoById(memberId).schoolId();
         if (schoolId != null && getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, gisuId, schoolId)) {
             List<ChallengerInfo> gisuChallengers = getChallengerUseCase.getByGisuId(gisuId);
@@ -126,10 +130,40 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
                 .map(ChallengerInfo::challengerId)
                 .toList();
 
-            return loadSchedulePort.findByAuthorChallengerIdIn(schoolChallengerIds);
+            return loadSchedulePort.findWithSheetByAuthorChallengerIdIn(schoolChallengerIds);
         }
 
-        // 3. 그 외(파트장 등): 본인이 생성한 일정 + 본인이 포함된 일정 (중복 제거)
+        // 3. 파트장: 본인이 생성했거나 포함된 일정 + 담당 파트의 스터디 그룹 일정 (중복 제거)
+        Set<ChallengerPart> responsibleParts =
+            getChallengerRoleUseCase.getResponsiblePartsByMemberAndGisu(memberId, gisuId);
+        if (!responsibleParts.isEmpty()) {
+            List<Schedule> mySchedules = getMyAndCreatedSchedules(memberId, gisuId, currentChallengerId);
+            List<Long> studyGroupIds = getStudyGroupUseCase.getStudyGroupIdsByParts(gisuId, responsibleParts);
+            List<Schedule> studyGroupSchedules = loadSchedulePort.findByStudyGroupIdIn(studyGroupIds);
+
+            return Stream.concat(mySchedules.stream(), studyGroupSchedules.stream())
+                .collect(Collectors.toMap(Schedule::getId, Function.identity(), (a, b) -> a, LinkedHashMap::new))
+                .values()
+                .stream()
+                .toList();
+        }
+
+        // 4. 그 외: 본인이 생성한 일정 + 본인이 포함된 일정 (중복 제거)
+        return getMyAndCreatedSchedules(memberId, gisuId, currentChallengerId);
+    }
+
+    private List<Schedule> getMyAndCreatedSchedulesWithSheet(Long memberId, Long gisuId, Long currentChallengerId) {
+        List<Schedule> createdByMeWithSheet = loadSchedulePort.findWithSheetByAuthorChallengerIdIn(List.of(currentChallengerId));
+        List<Schedule> includingMe = loadSchedulePort.findMySchedulesByGisu(memberId, gisuId);
+
+        return Stream.concat(createdByMeWithSheet.stream(), includingMe.stream())
+            .collect(Collectors.toMap(Schedule::getId, Function.identity(), (a, b) -> a, LinkedHashMap::new))
+            .values()
+            .stream()
+            .toList();
+    }
+
+    private List<Schedule> getMyAndCreatedSchedules(Long memberId, Long gisuId, Long currentChallengerId) {
         List<Schedule> createdByMe = loadSchedulePort.findByAuthorChallengerIdIn(List.of(currentChallengerId));
         List<Schedule> includingMe = loadSchedulePort.findMySchedulesByGisu(memberId, gisuId);
 

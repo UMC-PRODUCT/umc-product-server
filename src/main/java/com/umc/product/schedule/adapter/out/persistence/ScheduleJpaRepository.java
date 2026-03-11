@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ScheduleJpaRepository extends JpaRepository<Schedule, Long> {
-
     List<Schedule> findByAuthorChallengerIdIn(List<Long> authorChallengerIds);
+
+    List<Schedule> findByStudyGroupIdIn(List<Long> studyGroupIds);
 }
