@@ -22,6 +22,14 @@ public class ChallengerWorkbookPersistenceAdapter implements LoadChallengerWorkb
     }
 
     @Override
+    public List<ChallengerWorkbook> findAllByChallengerIdAndOriginalWorkbookId(Long challengerId, Long originalWorkbookId) {
+        return challengerWorkbookJpaRepository.findAllByChallengerIdAndOriginalWorkbookIdOrderByIdDesc(
+            challengerId,
+            originalWorkbookId
+        );
+    }
+
+    @Override
     public List<Long> findOriginalWorkbookIdsWithSubmissions(List<Long> originalWorkbookIds) {
         if (originalWorkbookIds.isEmpty()) {
             return List.of();

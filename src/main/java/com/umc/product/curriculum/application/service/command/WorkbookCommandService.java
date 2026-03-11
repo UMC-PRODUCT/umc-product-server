@@ -29,15 +29,26 @@ public class WorkbookCommandService implements ManageWorkbookUseCase {
 
     @Override
     public void submit(SubmitWorkbookCommand command) {
-        ChallengerWorkbook workbook = loadChallengerWorkbookPort.findById(command.challengerWorkbookId());
-        OriginalWorkbook originalWorkbook = loadOriginalWorkbookPort.findById(workbook.getOriginalWorkbookId());
+        OriginalWorkbook originalWorkbook = loadOriginalWorkbookPort.findById(command.originalWorkbookId());
 
         // Github, Notion인데 submission이 없다면 에러
-        validateSubmission(originalWorkbook.getMissionType(), command.submission());
+//        validateSubmission(originalWorkbook.getMissionType(), command.submission());
 
-        workbook.submit(command.submission());
+//        if (!loadChallengerWorkbookPort.findAllByChallengerIdAndOriginalWorkbookId(
+//            command.challengerId(),
+//            originalWorkbook.getId()
+//        ).isEmpty()) {
+//            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WORKBOOK_STATUS);
+//        }
 
-        saveChallengerWorkbookPort.save(workbook);
+        ChallengerWorkbook challengerWorkbook = ChallengerWorkbook.create(
+            command.challengerId(),
+            originalWorkbook.getId(),
+            WorkbookStatus.PENDING,
+            originalWorkbook.getId()
+        );
+        challengerWorkbook.submit(command.submission());
+        saveChallengerWorkbookPort.save(challengerWorkbook);
     }
 
     private void validateSubmission(MissionType missionType, String submission) {

@@ -8,7 +8,7 @@ public record SubmitWorkbookRequest(
         @Schema(description = "제출 내용 (링크 또는 메모, PLAIN 타입인 경우 생략 가능)", example = "https://github.com/user/repo")
         String submission
 ) {
-    public SubmitWorkbookCommand toCommand(Long challengerWorkbookId) {
-        return new SubmitWorkbookCommand(challengerWorkbookId, submission);
+    public SubmitWorkbookCommand toCommand(Long originalWorkbookId, Long challengerId) {
+        return new SubmitWorkbookCommand(originalWorkbookId, challengerId, submission);
     }
 }
