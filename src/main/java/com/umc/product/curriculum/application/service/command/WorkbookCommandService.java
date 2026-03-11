@@ -34,12 +34,13 @@ public class WorkbookCommandService implements ManageWorkbookUseCase {
         // Github, Notion인데 submission이 없다면 에러
         validateSubmission(originalWorkbook.getMissionType(), command.submission());
 
-//        if (!loadChallengerWorkbookPort.findAllByChallengerIdAndOriginalWorkbookId(
-//            command.challengerId(),
-//            originalWorkbook.getId()
-//        ).isEmpty()) {
-//            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WORKBOOK_STATUS);
-//        }
+        // 이미 제출한 이력이 있는지 확인
+        if (!loadChallengerWorkbookPort.findAllByChallengerIdAndOriginalWorkbookId(
+            command.challengerId(),
+            originalWorkbook.getId()
+        ).isEmpty()) {
+            throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_SUBMISSION_ALREADY_EXISTS);
+        }
 
         ChallengerWorkbook challengerWorkbook = ChallengerWorkbook.create(
             command.challengerId(),
@@ -49,6 +50,7 @@ public class WorkbookCommandService implements ManageWorkbookUseCase {
         );
 
         challengerWorkbook.submit(command.submission());
+
         saveChallengerWorkbookPort.save(challengerWorkbook);
     }
 

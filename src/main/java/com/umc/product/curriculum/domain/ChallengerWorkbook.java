@@ -12,13 +12,20 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "challenger_workbook")
+@Table(
+    name = "challenger_workbook",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_challenger_workbook_challenger_id_original_workbook_id",
+        columnNames = {"challenger_id", "original_workbook_id"}
+    )
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChallengerWorkbook extends BaseEntity {
