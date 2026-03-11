@@ -77,7 +77,7 @@ class GetMemberUseCaseTest {
             // when & then
             assertThatThrownBy(() -> memberQueryService.getMemberInfoById(999L))
                 .isInstanceOf(MemberDomainException.class)
-                .extracting("code")
+                .extracting("baseCode")
                 .isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
         }
     }
@@ -172,7 +172,7 @@ class GetMemberUseCaseTest {
             // when & then
             assertThatThrownBy(() -> memberQueryService.getMemberInfoById(999L))
                 .isInstanceOf(MemberDomainException.class)
-                .extracting("code")
+                .extracting("baseCode")
                 .isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
 
             then(getSchoolUseCase).should(never()).getSchoolDetail(any());

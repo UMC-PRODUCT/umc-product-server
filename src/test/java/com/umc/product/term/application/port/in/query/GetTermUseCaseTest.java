@@ -47,7 +47,7 @@ class GetTermUseCaseTest {
         // when & then
         assertThatThrownBy(() -> sut.getTermsByType(null))
             .isInstanceOf(TermDomainException.class)
-            .extracting("code")
+            .extracting("baseCode")
             .isEqualTo(TermErrorCode.TERMS_TYPE_REQUIRED);
     }
 
@@ -59,7 +59,7 @@ class GetTermUseCaseTest {
         // when & then
         assertThatThrownBy(() -> sut.getTermsByType(TermType.SERVICE))
             .isInstanceOf(TermDomainException.class)
-            .extracting("code")
+            .extracting("baseCode")
             .isEqualTo(TermErrorCode.TERMS_NOT_FOUND);
     }
 
@@ -82,7 +82,7 @@ class GetTermUseCaseTest {
         // when & then
         assertThatThrownBy(() -> sut.getTermsById(null))
             .isInstanceOf(TermDomainException.class)
-            .extracting("code")
+            .extracting("baseCode")
             .isEqualTo(TermErrorCode.TERM_ID_REQUIRED);
     }
 
@@ -94,7 +94,7 @@ class GetTermUseCaseTest {
         // when & then
         assertThatThrownBy(() -> sut.getTermsById(999L))
             .isInstanceOf(TermDomainException.class)
-            .extracting("code")
+            .extracting("baseCode")
             .isEqualTo(TermErrorCode.TERMS_NOT_FOUND);
     }
 
