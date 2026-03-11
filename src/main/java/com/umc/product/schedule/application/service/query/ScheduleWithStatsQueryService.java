@@ -5,8 +5,9 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleListUseCase;
+import com.umc.product.schedule.application.port.in.query.dto.PendingAttendanceInfo;
+import com.umc.product.schedule.application.port.in.query.dto.PendingAttendancesByScheduleInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleWithStatsInfo;
 import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
@@ -37,7 +38,6 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetMemberUseCase getMemberUseCase;
-    private final GetStudyGroupUseCase getStudyGroupUseCase;
 
     @Override
     public List<ScheduleWithStatsInfo> getAll(Long memberId) {
@@ -88,13 +88,67 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
             .toList();
     }
 
+    @Override
+    public List<PendingAttendancesByScheduleInfo> getAllPendingByRole(Long memberId) {
+        // 1. 역할 기반 일정 목록 조회
+        List<Schedule> schedules = resolveSchedulesByRole(memberId);
+
+        if (schedules.isEmpty()) {
+            return List.of();
+        }
+
+        // 2. 일정 ID 목록 추출
+        List<Long> scheduleIds = schedules.stream()
+            .map(Schedule::getId)
+            .toList();
+
+        // 3. 해당 일정들의 출석부 조회
+        List<AttendanceSheet> sheets = loadAttendanceSheetPort.findByScheduleIds(scheduleIds);
+
+        if (sheets.isEmpty()) {
+            return List.of();
+        }
+
+        // 4. 출석부 ID 목록 추출
+        List<Long> sheetIds = sheets.stream()
+            .map(AttendanceSheet::getId)
+            .toList();
+
+        // 5. 모든 출석부의 승인 대기 기록 일괄 조회 (N+1 방지)
+        List<PendingAttendanceInfo> allPendingRecords =
+            loadAttendanceRecordPort.findPendingWithMemberInfoBySheetIds(sheetIds);
+
+        if (allPendingRecords.isEmpty()) {
+            return List.of();
+        }
+
+        // 6. scheduleId별로 그룹핑
+        Map<Long, List<PendingAttendanceInfo>> groupedBySchedule = allPendingRecords.stream()
+            .collect(Collectors.groupingBy(PendingAttendanceInfo::scheduleId));
+
+        // 7. Schedule 맵 생성
+        Map<Long, Schedule> scheduleMap = schedules.stream()
+            .collect(Collectors.toMap(Schedule::getId, Function.identity()));
+
+        // 8. 결과 조합
+        return groupedBySchedule.entrySet().stream()
+            .map(entry -> {
+                Long scheduleId = entry.getKey();
+                List<PendingAttendanceInfo> pendingList = entry.getValue();
+                Schedule schedule = scheduleMap.get(scheduleId);
+
+                String scheduleName = schedule != null ? schedule.getName() : "알 수 없는 일정";
+
+                return PendingAttendancesByScheduleInfo.of(scheduleId, scheduleName, pendingList);
+            })
+            .toList();
+    }
+
     /**
      * 역할에 따른 일정 목록 조회 (우선순위 기반, 최상위 역할만 적용)
      * <p>
-     * 1. 중앙운영사무국원: 해당 기수 출석부 중 본인 AttendanceRecord가 있는 일정 + 본인 생성 일정
-     * 2. 학교 회장단: 본인 학교 구성원이 파트장인 스터디 일정 + 본인 생성 일정
-     * 3. 학교 파트장: 본인이 파트장인 스터디 그룹 일정 + 본인 생성 일정
-     * 4. 그 외 운영진: 본인 생성 일정만
+     * 1. 중앙운영사무국원: 해당 기수 출석부 중 본인 AttendanceRecord가 있는 일정 + 본인 생성 일정 2. 학교 회장단: 본인 학교 구성원이 파트장인 스터디 일정 + 본인 생성 일정 3. 학교
+     * 파트장: 본인이 파트장인 스터디 그룹 일정 + 본인 생성 일정 4. 그 외 운영진: 본인 생성 일정만
      * <p>
      * 공통: requiresApproval=true 조건 포함
      */
