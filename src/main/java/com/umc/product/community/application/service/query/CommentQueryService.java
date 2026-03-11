@@ -13,9 +13,6 @@ import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +26,7 @@ public class CommentQueryService implements GetCommentListUseCase {
 
     private final LoadPostPort loadPostPort;
     private final LoadCommentPort loadCommentPort;
+
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
 
@@ -44,56 +42,73 @@ public class CommentQueryService implements GetCommentListUseCase {
 
         Page<Comment> comments = loadCommentPort.findByPostId(postId, Pageable.unpaged());
 
+        // Comment 객체에서 CommentInfo를 만들어내야함
+
         if (comments.isEmpty()) {
             return List.of();
         }
 
-        // 1. 챌린저 ID 목록 추출
-        Set<Long> challengerIds = comments.stream()
-            .map(Comment::getChallengerId)
-            .collect(Collectors.toSet());
-
-        // 2. 챌린저 ID -> 챌린저 정보 매핑
-        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getChallengerPublicInfoByIds(challengerIds);
-
-        // 3. 멤버 ID 목록 추출
-        Set<Long> memberIds = challengerInfoMap.values().stream()
-            .map(ChallengerInfo::memberId)
-            .collect(Collectors.toSet());
-
-        // 4. 멤버 ID -> 멤버 프로필 매핑 (1 query, 일괄 조회로 N+1 해결)
-        var memberProfileMap = getMemberUseCase.getProfiles(memberIds);
-
-        // 5. 챌린저 ID -> 작성자 정보 매핑 (이름 + 프로필 이미지 + 파트)
-        Map<Long, AuthorDetails> authorDetailsMap = challengerInfoMap.entrySet().stream()
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry -> {
-                    Long memberId = entry.getValue().memberId();
-                    var memberProfile = memberProfileMap.get(memberId);
-                    String name = memberProfile != null ? memberProfile.name() : "알 수 없음";
-                    String profileImage = memberProfile != null ? memberProfile.profileImageLink() : null;
-                    return new AuthorDetails(name, profileImage, entry.getValue().part());
-                }
-            ));
-
+        // TODO: 성능 개선 나중에 합시다
         return comments.stream()
             .map(comment -> {
-                AuthorDetails authorDetails = authorDetailsMap.get(comment.getChallengerId());
-                String authorName = authorDetails != null ? authorDetails.name() : "알 수 없음";
-                String authorProfileImage = authorDetails != null ? authorDetails.profileImage() : null;
-                var authorPart = authorDetails != null ? authorDetails.part() : null;
-                // 본인 작성 댓글 여부 확인
-                boolean isAuthor = comment.getChallengerId().equals(currentChallengerId);
-                return CommentInfo.from(
-                    comment,
-                    authorName,
-                    authorProfileImage,
-                    authorPart,
-                    isAuthor
-                );
-            })
-            .toList();
+                ChallengerInfo challengerInfo = getChallengerUseCase.findByIdOrNull(comment.getChallengerId());
+                MemberInfo memberInfo = challengerInfo != null
+                    ? getMemberUseCase.findByIdOrNull(challengerInfo.memberId())
+                    : null;
+
+                return CommentInfo.of(comment, memberInfo, challengerInfo);
+            }).toList();
+
+//        // 1. 챌린저 ID 목록 추출
+//        Set<Long> challengerIds = comments.stream()
+//            .map(Comment::getChallengerId)
+//            .collect(Collectors.toSet());
+//
+//        // 2. 챌린저 ID -> 챌린저 정보 매핑
+//        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getChallengerPublicInfoByIds(challengerIds);
+//        Map<Long, ChallengerInfo> newChallengerInfoMap = challengerIds.stream()
+//            .map(getChallengerUseCase::findByIdOrNull)
+//            .filter(Objects::nonNull)
+//            .collect(Collectors.toMap(ChallengerInfo::challengerId, challengerInfo -> challengerInfo));
+//
+//        // 3. 멤버 ID 목록 추출
+//        Set<Long> memberIds = newChallengerInfoMap.values().stream()
+//            .map(ChallengerInfo::memberId)
+//            .collect(Collectors.toSet());
+//
+//        // 4. 멤버 ID -> 멤버 프로필 매핑 (1 query, 일괄 조회로 N+1 해결)
+//        var memberProfileMap = getMemberUseCase.getProfiles(memberIds);
+//
+//        // 5. 챌린저 ID -> 작성자 정보 매핑 (이름 + 프로필 이미지 + 파트)
+//        Map<Long, AuthorDetails> authorDetailsMap = challengerInfoMap.entrySet().stream()
+//            .collect(Collectors.toMap(
+//                Map.Entry::getKey,
+//                entry -> {
+//                    Long memberId = entry.getValue().memberId();
+//                    var memberProfile = memberProfileMap.get(memberId);
+//                    String name = memberProfile != null ? memberProfile.name() : "알 수 없음";
+//                    String profileImage = memberProfile != null ? memberProfile.profileImageLink() : null;
+//                    return new AuthorDetails(name, profileImage, entry.getValue().part());
+//                }
+//            ));
+//
+//        return comments.stream()
+//            .map(comment -> {
+//                AuthorDetails authorDetails = authorDetailsMap.get(comment.getChallengerId());
+//                String authorName = authorDetails != null ? authorDetails.name() : "알 수 없음";
+//                String authorProfileImage = authorDetails != null ? authorDetails.profileImage() : null;
+//                var authorPart = authorDetails != null ? authorDetails.part() : null;
+//                // 본인 작성 댓글 여부 확인
+//                boolean isAuthor = comment.getChallengerId().equals(currentChallengerId);
+//                return CommentInfo.from(
+//                    comment,
+//                    authorName,
+//                    authorProfileImage,
+//                    authorPart,
+//                    isAuthor
+//                );
+//            })
+//            .toList();
     }
 
     @Override

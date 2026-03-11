@@ -1,9 +1,13 @@
 package com.umc.product.community.application.port.in.query.dto;
 
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.domain.Comment;
+import com.umc.product.member.application.port.in.query.MemberInfo;
 import java.time.Instant;
+import lombok.Builder;
 
+@Builder
 public record CommentInfo(
     Long commentId,
     Long postId,
@@ -15,6 +19,25 @@ public record CommentInfo(
     Instant createdAt,
     boolean isAuthor
 ) {
+    public static CommentInfo of(Comment comment, MemberInfo memberInfo, ChallengerInfo challengerInfo) {
+        String name = memberInfo != null ? memberInfo.name() : null;
+        String profileImage = memberInfo != null ? memberInfo.profileImageLink() : null;
+        Long challengerId = challengerInfo != null ? challengerInfo.challengerId() : null;
+        ChallengerPart part = challengerInfo != null ? challengerInfo.part() : null;
+
+        return CommentInfo.builder()
+            .commentId(comment.getCommentId() != null ? comment.getCommentId().id() : null)
+            .postId(comment.getPostId())
+            .challengerId(challengerId)
+            .challengerName(name)
+            .challengerProfileImage(profileImage)
+            .challengerPart(part)
+            .content(comment.getContent())
+            .createdAt(comment.getCreatedAt())
+            .isAuthor(false) // 기본값, 이후 로직에서 판단하여 설정
+            .build();
+    }
+
     public static CommentInfo from(Comment comment, String challengerName) {
         return from(comment, challengerName, null, null, false);
     }
@@ -23,13 +46,17 @@ public record CommentInfo(
         return from(comment, challengerName, challengerProfileImage, null, false);
     }
 
-    public static CommentInfo from(Comment comment, String challengerName, String challengerProfileImage,
-                                   ChallengerPart challengerPart) {
+    public static CommentInfo from(
+        Comment comment, String challengerName, String challengerProfileImage,
+        ChallengerPart challengerPart
+    ) {
         return from(comment, challengerName, challengerProfileImage, challengerPart, false);
     }
 
-    public static CommentInfo from(Comment comment, String challengerName, String challengerProfileImage,
-                                   ChallengerPart challengerPart, boolean isAuthor) {
+    public static CommentInfo from(
+        Comment comment, String challengerName, String challengerProfileImage,
+        ChallengerPart challengerPart, boolean isAuthor
+    ) {
         Long id = comment.getCommentId() != null ? comment.getCommentId().id() : null;
         return new CommentInfo(
             id,
