@@ -3,6 +3,7 @@ package com.umc.product.curriculum.application.port.in.query;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumInfo;
 import com.umc.product.curriculum.application.port.out.SaveCurriculumPort;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
@@ -15,10 +16,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
+class GetCurriculumUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
-    private GetAdminCurriculumUseCase getAdminCurriculumUseCase;
+    private GetCurriculumUseCase getCurriculumUseCase;
 
     @Autowired
     private SaveCurriculumPort saveCurriculumPort;
@@ -50,7 +51,7 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         saveCurriculumPort.save(curriculum);
 
         // when
-        AdminCurriculumInfo result = getAdminCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
+        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
 
         // then
         assertThat(result).isNotNull();
@@ -82,7 +83,7 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         saveCurriculumPort.save(curriculum);
 
         // when
-        AdminCurriculumInfo result = getAdminCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
+        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
 
         // then
         assertThat(result.workbooks()).hasSize(3);
@@ -103,10 +104,10 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         saveCurriculumPort.save(curriculum);
 
         // when
-        AdminCurriculumInfo result = getAdminCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
+        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
 
         // then
-        AdminCurriculumInfo.WorkbookInfo workbookInfo = result.workbooks().get(0);
+        CurriculumInfo.WorkbookInfo workbookInfo = result.workbooks().get(0);
         assertThat(workbookInfo.id()).isNotNull();
         assertThat(workbookInfo.weekNo()).isEqualTo(1);
         assertThat(workbookInfo.title()).isEqualTo("1주차 제목");
@@ -132,10 +133,10 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         saveCurriculumPort.save(curriculum);
 
         // when
-        AdminCurriculumInfo result = getAdminCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
+        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
 
         // then
-        AdminCurriculumInfo.WorkbookInfo workbookInfo = result.workbooks().get(0);
+        CurriculumInfo.WorkbookInfo workbookInfo = result.workbooks().get(0);
         assertThat(workbookInfo.isReleased()).isTrue();
         assertThat(workbookInfo.releasedAt()).isNotNull();
     }
@@ -145,7 +146,7 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         // given - 커리큘럼 없음
 
         // when
-        AdminCurriculumInfo result = getAdminCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
+        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
 
         // then
         assertThat(result).isNull();
@@ -158,7 +159,7 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         saveCurriculumPort.save(webCurriculum);
 
         // when
-        AdminCurriculumInfo result = getAdminCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
+        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
 
         // then
         assertThat(result).isNull();
@@ -172,7 +173,7 @@ class GetAdminCurriculumUseCaseTest extends UseCaseTestSupport {
         saveCurriculumPort.save(curriculum);
 
         // when
-        AdminCurriculumInfo result = getAdminCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
+        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
 
         // then
         assertThat(result).isNull();

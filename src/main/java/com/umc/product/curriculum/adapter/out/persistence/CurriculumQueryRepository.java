@@ -10,9 +10,9 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.application.port.in.query.CurriculumProgressInfo;
-import com.umc.product.curriculum.application.port.in.query.CurriculumProgressInfo.WorkbookProgressInfo;
-import com.umc.product.curriculum.application.port.in.query.CurriculumWeekInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo.WorkbookProgressInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import java.time.Instant;
@@ -33,13 +33,13 @@ public class CurriculumQueryRepository {
     public Optional<CurriculumProgressInfo> findCurriculumProgress(Long challengerId, ChallengerPart part) {
         // 1. 활성 기수의 커리큘럼 조회
         Curriculum curriculumEntity = queryFactory
-                .selectFrom(curriculum)
-                .join(gisu).on(gisu.id.eq(curriculum.gisuId))
-                .where(
-                        gisu.isActive.eq(true),
-                        curriculum.part.eq(part)
-                )
-                .fetchOne();
+            .selectFrom(curriculum)
+            .join(gisu).on(gisu.id.eq(curriculum.gisuId))
+            .where(
+                gisu.isActive.eq(true),
+                curriculum.part.eq(part)
+            )
+            .fetchOne();
 
         if (curriculumEntity == null) {
             return Optional.empty();
@@ -47,75 +47,75 @@ public class CurriculumQueryRepository {
 
         // 2. OriginalWorkbook + ChallengerWorkbook 조인 조회
         List<Tuple> results = queryFactory
-                .select(
-                        originalWorkbook.id,
-                        originalWorkbook.weekNo,
-                        originalWorkbook.title,
-                        originalWorkbook.description,
-                        originalWorkbook.missionType,
-                        originalWorkbook.startDate,
-                        originalWorkbook.endDate,
-                        originalWorkbook.releasedAt,
-                        challengerWorkbook.id,
-                        challengerWorkbook.status
-                )
-                .from(originalWorkbook)
-                .leftJoin(challengerWorkbook)
-                .on(
-                        challengerWorkbook.originalWorkbookId.eq(originalWorkbook.id),
-                        challengerWorkbook.challengerId.eq(challengerId)
-                )
-                .where(originalWorkbook.curriculum.id.eq(curriculumEntity.getId()))
-                .orderBy(originalWorkbook.weekNo.asc())
-                .fetch();
+            .select(
+                originalWorkbook.id,
+                originalWorkbook.weekNo,
+                originalWorkbook.title,
+                originalWorkbook.description,
+                originalWorkbook.missionType,
+                originalWorkbook.startDate,
+                originalWorkbook.endDate,
+                originalWorkbook.releasedAt,
+                challengerWorkbook.id,
+                challengerWorkbook.status
+            )
+            .from(originalWorkbook)
+            .leftJoin(challengerWorkbook)
+            .on(
+                challengerWorkbook.originalWorkbookId.eq(originalWorkbook.id),
+                challengerWorkbook.challengerId.eq(challengerId)
+            )
+            .where(originalWorkbook.curriculum.id.eq(curriculumEntity.getId()))
+            .orderBy(originalWorkbook.weekNo.asc())
+            .fetch();
 
         // 3. 결과 변환
         Instant now = Instant.now();
         List<WorkbookProgressInfo> workbooks = results.stream()
-                .map(tuple -> {
-                    Long originalWorkbookId = tuple.get(originalWorkbook.id);
-                    Integer weekNo = tuple.get(originalWorkbook.weekNo);
-                    Long challengerWorkbookId = tuple.get(challengerWorkbook.id);
-                    WorkbookStatus challengerWorkbookStatus = tuple.get(challengerWorkbook.status);
-                    Instant startDate = tuple.get(originalWorkbook.startDate);
-                    Instant endDate = tuple.get(originalWorkbook.endDate);
-                    boolean isReleased = tuple.get(originalWorkbook.releasedAt) != null;
+            .map(tuple -> {
+                Long originalWorkbookId = tuple.get(originalWorkbook.id);
+                Integer weekNo = tuple.get(originalWorkbook.weekNo);
+                Long challengerWorkbookId = tuple.get(challengerWorkbook.id);
+                WorkbookStatus challengerWorkbookStatus = tuple.get(challengerWorkbook.status);
+                Instant startDate = tuple.get(originalWorkbook.startDate);
+                Instant endDate = tuple.get(originalWorkbook.endDate);
+                boolean isReleased = tuple.get(originalWorkbook.releasedAt) != null;
 
-                    // 상태 결정
-                    WorkbookStatus finalStatus = challengerWorkbookId == null ? null : challengerWorkbookStatus;
+                // 상태 결정
+                WorkbookStatus finalStatus = challengerWorkbookId == null ? null : challengerWorkbookStatus;
 
-                    boolean isInDateRange = startDate != null && endDate != null
-                            && !now.isBefore(startDate)
-                            && !now.isAfter(endDate);
-                    boolean isInProgress = isReleased && isInDateRange;
+                boolean isInDateRange = startDate != null && endDate != null
+                    && !now.isBefore(startDate)
+                    && !now.isAfter(endDate);
+                boolean isInProgress = isReleased && isInDateRange;
 
-                    return new WorkbookProgressInfo(
-                            originalWorkbookId,
-                            challengerWorkbookId,
-                            weekNo,
-                            tuple.get(originalWorkbook.title),
-                            tuple.get(originalWorkbook.description),
-                            tuple.get(originalWorkbook.missionType),
-                            finalStatus,
-                            isReleased,
-                            isInProgress
-                    );
-                })
-                .toList();
+                return new WorkbookProgressInfo(
+                    originalWorkbookId,
+                    challengerWorkbookId,
+                    weekNo,
+                    tuple.get(originalWorkbook.title),
+                    tuple.get(originalWorkbook.description),
+                    tuple.get(originalWorkbook.missionType),
+                    finalStatus,
+                    isReleased,
+                    isInProgress
+                );
+            })
+            .toList();
 
         int completedCount = (int) workbooks.stream()
-                .map(WorkbookProgressInfo::status)
-                .filter(status -> status == WorkbookStatus.PASS || status == WorkbookStatus.FAIL)
-                .count();
+            .map(WorkbookProgressInfo::status)
+            .filter(status -> status == WorkbookStatus.PASS || status == WorkbookStatus.FAIL)
+            .count();
         int totalCount = workbooks.size();
 
         return Optional.of(new CurriculumProgressInfo(
-                curriculumEntity.getId(),
-                curriculumEntity.getTitle(),
-                part.name(),
-                completedCount,
-                totalCount,
-                workbooks
+            curriculumEntity.getId(),
+            curriculumEntity.getTitle(),
+            part.name(),
+            completedCount,
+            totalCount,
+            workbooks
         ));
     }
 
@@ -124,20 +124,20 @@ public class CurriculumQueryRepository {
      */
     public List<CurriculumWeekInfo> findWeekInfoByActiveGisuAndPart(ChallengerPart part) {
         return queryFactory
-                .select(Projections.constructor(
-                        CurriculumWeekInfo.class,
-                        originalWorkbook.weekNo,
-                        originalWorkbook.title
-                ))
-                .from(originalWorkbook)
-                .join(curriculum).on(curriculum.id.eq(originalWorkbook.curriculum.id))
-                .join(gisu).on(gisu.id.eq(curriculum.gisuId))
-                .where(
-                        gisu.isActive.eq(true),
-                        curriculum.part.eq(part)
-                )
-                .orderBy(originalWorkbook.weekNo.asc())
-                .fetch();
+            .select(Projections.constructor(
+                CurriculumWeekInfo.class,
+                originalWorkbook.weekNo,
+                originalWorkbook.title
+            ))
+            .from(originalWorkbook)
+            .join(curriculum).on(curriculum.id.eq(originalWorkbook.curriculum.id))
+            .join(gisu).on(gisu.id.eq(curriculum.gisuId))
+            .where(
+                gisu.isActive.eq(true),
+                curriculum.part.eq(part)
+            )
+            .orderBy(originalWorkbook.weekNo.asc())
+            .fetch();
     }
 
     /**
@@ -148,18 +148,18 @@ public class CurriculumQueryRepository {
      */
     public List<Integer> findReleasedWeekNos(ChallengerPart part) {
         return queryFactory
-                .select(originalWorkbook.weekNo)
-                .distinct()
-                .from(originalWorkbook)
-                .join(curriculum).on(curriculum.id.eq(originalWorkbook.curriculum.id))
-                .join(gisu).on(gisu.id.eq(curriculum.gisuId))
-                .where(
-                        gisu.isActive.eq(true),
-                        originalWorkbook.releasedAt.isNotNull(),
-                        partCondition(part)
-                )
-                .orderBy(originalWorkbook.weekNo.asc())
-                .fetch();
+            .select(originalWorkbook.weekNo)
+            .distinct()
+            .from(originalWorkbook)
+            .join(curriculum).on(curriculum.id.eq(originalWorkbook.curriculum.id))
+            .join(gisu).on(gisu.id.eq(curriculum.gisuId))
+            .where(
+                gisu.isActive.eq(true),
+                originalWorkbook.releasedAt.isNotNull(),
+                partCondition(part)
+            )
+            .orderBy(originalWorkbook.weekNo.asc())
+            .fetch();
     }
 
     private BooleanExpression partCondition(ChallengerPart part) {

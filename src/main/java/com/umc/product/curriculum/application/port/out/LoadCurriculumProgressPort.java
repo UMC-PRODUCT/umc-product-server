@@ -1,7 +1,7 @@
 package com.umc.product.curriculum.application.port.out;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.application.port.in.query.CurriculumProgressInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo;
 
 public interface LoadCurriculumProgressPort {
 
