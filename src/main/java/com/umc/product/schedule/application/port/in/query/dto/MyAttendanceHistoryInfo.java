@@ -8,7 +8,6 @@ import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public record MyAttendanceHistoryInfo(
@@ -17,9 +16,9 @@ public record MyAttendanceHistoryInfo(
     String scheduleName,
     Instant scheduledAt,
     List<ScheduleTag> tags,
-    LocalDate scheduledDate,     // "2024-01-15"
-    Instant startTime,         // "14:30"
-    Instant endTime,           // "16:00"
+    LocalDate scheduledDate,  // "2024-01-15"
+    Instant startTime,
+    Instant endTime,
     AttendanceStatus status,
     String statusDisplay,     // "출석", "지각", "결석"
 
@@ -30,8 +29,6 @@ public record MyAttendanceHistoryInfo(
     String memo,              // 출석 메모 (사유 등)
     Instant checkedAt   // 실제 출석 체크한 시간
 ) {
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
 
     /**
      * AttendanceSheet 없이 생성 (sheet 정보가 불필요한 경우)

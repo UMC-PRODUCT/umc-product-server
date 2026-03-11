@@ -70,9 +70,7 @@ public class AttendanceWebMapper {
             info.locationName(),
             info.locationVerified(),
             info.memo(),
-            info.checkedAt() != null
-                ? info.checkedAt()
-                : null
+            info.checkedAt()
         );
     }
 
