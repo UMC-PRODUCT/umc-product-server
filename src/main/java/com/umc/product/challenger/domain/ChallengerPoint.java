@@ -43,9 +43,10 @@ public class ChallengerPoint extends BaseEntity {
     @Column(length = 200)
     private String description;
 
-    private ChallengerPoint(Challenger challenger, PointType type, String description) {
+    private ChallengerPoint(Challenger challenger, PointType type, Integer pointValue, String description) {
         this.challenger = challenger;
         this.type = type;
+        this.pointValue = pointValue;
         this.description = description;
     }
 
@@ -53,7 +54,14 @@ public class ChallengerPoint extends BaseEntity {
      * 새로운 상벌점을 생성합니다.
      */
     public static ChallengerPoint create(Challenger challenger, PointType type, String description) {
-        return new ChallengerPoint(challenger, type, description);
+        return new ChallengerPoint(challenger, type, null, description);
+    }
+
+    public static ChallengerPoint create(
+        Challenger challenger, PointType type, Integer pointValue,
+        String description
+    ) {
+        return new ChallengerPoint(challenger, type, pointValue, description);
     }
 
     /**
@@ -64,6 +72,8 @@ public class ChallengerPoint extends BaseEntity {
     }
 
     public Double getPointValue() {
-        return type.getValue();
+        return pointValue != null
+            ? pointValue
+            : type.getValue();
     }
 }

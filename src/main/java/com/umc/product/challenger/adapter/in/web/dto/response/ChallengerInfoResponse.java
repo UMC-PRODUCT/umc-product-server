@@ -44,7 +44,8 @@ public record ChallengerInfoResponse(
 ) {
     public static ChallengerInfoResponse from(
         ChallengerInfo info, MemberInfo memberInfo,
-        GisuInfo gisuInfo, ChapterInfo chapterInfo) {
+        GisuInfo gisuInfo, ChapterInfo chapterInfo
+    ) {
         return ChallengerInfoResponse.builder()
             .challengerId(info.challengerId())
             .memberId(info.memberId())
@@ -56,6 +57,7 @@ public record ChallengerInfoResponse(
             .chapterName(chapterInfo.name())
             .part(info.part())
             .challengerPoints(info.challengerPoints())
+            .totalPoints(info.totalPoints())
             .points(info.challengerPoints())
 
             // Member 정보
@@ -79,7 +81,8 @@ public record ChallengerInfoResponse(
      */
     public static ChallengerInfoResponse from(
         ChallengerInfo info, MemberInfo memberInfo, GisuInfo gisuInfo, ChapterInfo chapterInfo,
-        List<ChallengerRoleInfo> roles) {
+        List<ChallengerRoleInfo> roles
+    ) {
         return ChallengerInfoResponse.builder()
             .challengerId(info.challengerId())
             .memberId(info.memberId())
@@ -95,10 +98,12 @@ public record ChallengerInfoResponse(
             // 상벌점
             .challengerPoints(info.challengerPoints())
             .points(info.challengerPoints())
+            .totalPoints(info.totalPoints())
+
             // 역할 (권한)
             .roles(roles.stream()
                 .map(roleInfo -> {
-                    // 보통은 이렇게 assert로 검증하기보다는, 서비스 레이어에서 미리 검증하는게 좋긴 합니다만...
+                    // TODO: 보통은 이렇게 assert로 검증하기보다는, 서비스 레이어에서 미리 검증하는게 좋긴 합니다만...
                     assert roleInfo.gisuId().equals(gisuInfo.gisuId());
                     return ChallengerRoleResponse.from(roleInfo, gisuInfo);
                 }).toList())

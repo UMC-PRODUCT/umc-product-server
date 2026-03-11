@@ -131,6 +131,7 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
         ChallengerPoint point = ChallengerPoint.create(
             challenger,
             command.pointType(),
+            command.pointValue(),
             command.description()
         );
 
