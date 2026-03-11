@@ -32,7 +32,7 @@ public class WorkbookCommandService implements ManageWorkbookUseCase {
         OriginalWorkbook originalWorkbook = loadOriginalWorkbookPort.findById(command.originalWorkbookId());
 
         // Github, Notion인데 submission이 없다면 에러
-//        validateSubmission(originalWorkbook.getMissionType(), command.submission());
+        validateSubmission(originalWorkbook.getMissionType(), command.submission());
 
 //        if (!loadChallengerWorkbookPort.findAllByChallengerIdAndOriginalWorkbookId(
 //            command.challengerId(),
@@ -47,10 +47,14 @@ public class WorkbookCommandService implements ManageWorkbookUseCase {
             WorkbookStatus.PENDING,
             originalWorkbook.getId()
         );
+
         challengerWorkbook.submit(command.submission());
         saveChallengerWorkbookPort.save(challengerWorkbook);
     }
 
+    /**
+     * 미션 유형이 PLAIN, 즉 단순 제출이 아닌 경우에 submission이 없는 경우를 검증합니다.
+     */
     private void validateSubmission(MissionType missionType, String submission) {
         if (missionType != MissionType.PLAIN && !StringUtils.hasText(submission)) {
             throw new CurriculumDomainException(CurriculumErrorCode.SUBMISSION_REQUIRED);
