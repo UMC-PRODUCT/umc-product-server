@@ -1,6 +1,8 @@
 package com.umc.product.global.exception;
 
 
+import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
+import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.code.BaseCode;
@@ -136,6 +138,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         log.warn("[BUSINESS EXCEPTION] domain={}, code={}, message={}", e.getDomain(), e.getBaseCode().getCode(),
             e.getMessage(), e);
 
+        if (e instanceof AuthorizationDomainException) {
+            if (e.getBaseCode().equals(AuthorizationErrorCode.RESOURCE_ACCESS_DENIED)) {
+                return buildResponse(e, e.getBaseCode(), HttpHeaders.EMPTY, request, e.getMessage(), e.getMessage());
+            }
+        }
+
         return buildResponse(e, e.getBaseCode(), HttpHeaders.EMPTY, request, e.getMessage());
     }
 
@@ -147,6 +155,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         HttpHeaders headers, WebRequest request, Object detail
     ) {
         ApiResponse<Object> body = ApiResponse.onFailure(code.getCode(), code.getMessage(), detail);
+        return super.handleExceptionInternal(e, body, headers, code.getHttpStatus(), request);
+    }
+
+    private ResponseEntity<Object> buildResponse(
+        Exception e, BaseCode code,
+        HttpHeaders headers, WebRequest request, Object detail,
+        String message
+    ) {
+        ApiResponse<Object> body = ApiResponse.onFailure(code.getCode(), message, detail);
         return super.handleExceptionInternal(e, body, headers, code.getHttpStatus(), request);
     }
 
