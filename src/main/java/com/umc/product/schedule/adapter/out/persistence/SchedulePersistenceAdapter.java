@@ -79,11 +79,27 @@ public class SchedulePersistenceAdapter implements
     }
 
     @Override
-    public List<Schedule> findByStudyGroupIdIn(List<Long> studyGroupIds) {
-        if (studyGroupIds == null || studyGroupIds.isEmpty()) {
-            return List.of();
-        }
-        return scheduleJpaRepository.findByStudyGroupIdIn(studyGroupIds);
+    public List<Schedule> findSchedulesForCentralMember(Long memberId, Long gisuId,
+                                                        Long authorChallengerId) {
+        return scheduleQueryRepository.findSchedulesForCentralMember(
+            memberId, gisuId, authorChallengerId);
+    }
+
+    @Override
+    public List<Schedule> findSchedulesForSchoolCore(Long schoolId, Long gisuId,
+                                                     Long authorChallengerId) {
+        return scheduleQueryRepository.findSchedulesForSchoolCore(
+            schoolId, gisuId, authorChallengerId);
+    }
+
+    @Override
+    public List<Schedule> findSchedulesForPartLeader(Long challengerId) {
+        return scheduleQueryRepository.findSchedulesForPartLeader(challengerId);
+    }
+
+    @Override
+    public List<Schedule> findSchedulesByAuthor(Long authorChallengerId) {
+        return scheduleQueryRepository.findSchedulesByAuthor(authorChallengerId);
     }
 
     // ========== SaveSchedulePort ==========

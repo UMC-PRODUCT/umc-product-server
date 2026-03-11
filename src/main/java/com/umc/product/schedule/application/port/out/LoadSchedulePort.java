@@ -62,10 +62,38 @@ public interface LoadSchedulePort {
     Optional<Schedule> findByIdWithTags(Long scheduleId);
 
     /**
-     * 스터디 그룹 ID 목록으로 일정 조회 (파트장용)
+     * 중앙운영사무국원용: 본인 AttendanceRecord가 있는 일정 + 본인 생성 일정 (requiresApproval=true 조건 포함)
      *
-     * @param studyGroupIds 스터디 그룹 ID 목록
+     * @param memberId           회원 ID
+     * @param gisuId             기수 ID
+     * @param authorChallengerId 본인 챌린저 ID
      * @return 일정 목록
      */
-    List<Schedule> findByStudyGroupIdIn(List<Long> studyGroupIds);
+    List<Schedule> findSchedulesForCentralMember(Long memberId, Long gisuId, Long authorChallengerId);
+
+    /**
+     * 학교 회장단용: 본인 학교 구성원이 파트장인 스터디 일정 + 본인 생성 일정 (requiresApproval=true 조건 포함)
+     *
+     * @param schoolId           학교 ID
+     * @param gisuId             기수 ID
+     * @param authorChallengerId 본인 챌린저 ID
+     * @return 일정 목록
+     */
+    List<Schedule> findSchedulesForSchoolCore(Long schoolId, Long gisuId, Long authorChallengerId);
+
+    /**
+     * 학교 파트장용: 본인이 파트장인 스터디 그룹 일정 + 본인 생성 일정 (requiresApproval=true 조건 포함)
+     *
+     * @param challengerId 본인 챌린저 ID
+     * @return 일정 목록
+     */
+    List<Schedule> findSchedulesForPartLeader(Long challengerId);
+
+    /**
+     * 기타 운영진용: 본인이 생성한 일정만 조회 (requiresApproval=true 조건 포함)
+     *
+     * @param authorChallengerId 본인 챌린저 ID
+     * @return 일정 목록
+     */
+    List<Schedule> findSchedulesByAuthor(Long authorChallengerId);
 }
