@@ -124,7 +124,7 @@ public class ScheduleQueryRepository {
     /**
      * 학교 파트장용: 본인이 파트장인 스터디 그룹 일정 + 본인 생성 일정 (requiresApproval=true 조건 포함)
      */
-    public List<Schedule> findSchedulesForPartLeader(Long challengerId) {
+    public List<Schedule> findSchedulesForPartLeader(Long challengerId, Long gisuId) {
         return queryFactory
             .selectDistinct(schedule)
             .from(schedule)
@@ -133,6 +133,7 @@ public class ScheduleQueryRepository {
             .leftJoin(studyGroupMember).on(studyGroupMember.studyGroup.id.eq(studyGroup.id))
             .where(
                 attendanceSheet.requiresApproval.isTrue()
+                    .and(attendanceSheet.gisuId.eq(gisuId))
                     .and(
                         studyGroupMember.challengerId.eq(challengerId)
                             .and(studyGroupMember.isLeader.isTrue())
@@ -145,13 +146,14 @@ public class ScheduleQueryRepository {
     /**
      * 기타 운영진용: 본인이 생성한 일정만 조회 (requiresApproval=true 조건 포함)
      */
-    public List<Schedule> findSchedulesByAuthor(Long authorChallengerId) {
+    public List<Schedule> findSchedulesByAuthor(Long authorChallengerId, Long gisuId) {
         return queryFactory
             .selectDistinct(schedule)
             .from(schedule)
             .join(attendanceSheet).on(attendanceSheet.scheduleId.eq(schedule.id))
             .where(
                 attendanceSheet.requiresApproval.isTrue()
+                    .and(attendanceSheet.gisuId.eq(gisuId))
                     .and(schedule.authorChallengerId.eq(authorChallengerId))
             )
             .fetch();

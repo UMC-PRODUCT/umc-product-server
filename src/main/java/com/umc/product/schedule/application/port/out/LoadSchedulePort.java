@@ -85,15 +85,17 @@ public interface LoadSchedulePort {
      * 학교 파트장용: 본인이 파트장인 스터디 그룹 일정 + 본인 생성 일정 (requiresApproval=true 조건 포함)
      *
      * @param challengerId 본인 챌린저 ID
+     * @param gisuId       기수 ID
      * @return 일정 목록
      */
-    List<Schedule> findSchedulesForPartLeader(Long challengerId);
+    List<Schedule> findSchedulesForPartLeader(Long challengerId, Long gisuId);
 
     /**
      * 기타 운영진용: 본인이 생성한 일정만 조회 (requiresApproval=true 조건 포함)
      *
      * @param authorChallengerId 본인 챌린저 ID
+     * @param gisuId             기수 ID
      * @return 일정 목록
      */
-    List<Schedule> findSchedulesByAuthor(Long authorChallengerId);
+    List<Schedule> findSchedulesByAuthor(Long authorChallengerId, Long gisuId);
 }

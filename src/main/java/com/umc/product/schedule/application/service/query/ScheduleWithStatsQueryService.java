@@ -174,11 +174,11 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
 
         // 3. 학교 파트장: 본인이 파트장인 스터디 그룹 일정 + 본인 생성 일정
         if (getChallengerRoleUseCase.hasRoleInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER)) {
-            return loadSchedulePort.findSchedulesForPartLeader(currentChallengerId);
+            return loadSchedulePort.findSchedulesForPartLeader(currentChallengerId, gisuId);
         }
 
         // 4. 그 외 운영진: 본인 생성 일정만
-        return loadSchedulePort.findSchedulesByAuthor(currentChallengerId);
+        return loadSchedulePort.findSchedulesByAuthor(currentChallengerId, gisuId);
     }
 
     private AttendanceStats calculateStats(AttendanceSheet sheet, Map<Long, List<AttendanceRecord>> recordsBySheetId) {
