@@ -8,8 +8,29 @@ import com.umc.product.global.exception.constant.CommonErrorCode;
  * <p>
  * Role에 대한 상속 관계는 Spring Security로 표현됩니다.
  * <p>
- * 역할 계층 구조: - SUPER_ADMIN - 중앙운영사무국 (isCentralMember) - 중앙운영사무국 총괄단 (isCentralCore): 총괄, 부총괄 - 중앙운영사무국 운영국원 - 중앙운영사무국
- * 교육국원 - 지부장 - 학교 (isSchoolAdmin) - 학교 회장단 (isSchoolCore): 회장, 부회장 - 교내 파트장 - 기타 교내 운영진 - 챌린저 - 회원/사용자
+ * 역할 계층 구조:
+ * <p>
+ * - SUPER_ADMIN
+ * <p>
+ * - 중앙운영사무국 (isCentralMember)
+ * <p>
+ * - 중앙운영사무국 총괄단 (isCentralCore): 총괄, 부총괄
+ * <p>
+ * - 중앙운영사무국 운영국원
+ * <p>
+ * - 중앙운영사무국 교육국원
+ * <p>
+ * - 지부장 - 학교 (isSchoolAdmin)
+ * <p>
+ * - 학교 회장단 (isSchoolCore): 회장, 부회장
+ * <p>
+ * - 교내 파트장
+ * <p>
+ * - 기타 교내 운영진
+ * <p>
+ * - 챌린저
+ * <p>
+ * - 회원/사용자
  */
 public enum ChallengerRoleType {
     // 최고 관리자

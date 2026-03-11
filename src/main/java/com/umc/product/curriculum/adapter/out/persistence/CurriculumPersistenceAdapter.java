@@ -1,7 +1,7 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.application.port.in.query.CurriculumProgressInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumPort;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumProgressPort;
 import com.umc.product.curriculum.application.port.out.SaveCurriculumPort;

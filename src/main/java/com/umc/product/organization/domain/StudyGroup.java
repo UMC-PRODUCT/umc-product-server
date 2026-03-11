@@ -33,9 +33,11 @@ public class StudyGroup extends BaseEntity {
 
     @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)

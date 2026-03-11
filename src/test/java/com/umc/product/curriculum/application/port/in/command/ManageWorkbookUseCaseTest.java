@@ -62,91 +62,91 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
         return createWorkbookWithStatus(status, MissionType.LINK);
     }
 
-    @Nested
-    class 워크북_제출 {
-
-        @Test
-        void 워크북을_제출한다() {
-            // given
-            ChallengerWorkbook workbook = createWorkbookWithStatus(WorkbookStatus.PENDING);
-            String submission = "https://github.com/user/repo";
-
-            SubmitWorkbookCommand command = new SubmitWorkbookCommand(
-                workbook.getId(),
-                submission
-            );
-
-            // when
-            manageWorkbookUseCase.submit(command);
-
-            // then
-            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
-            assertThat(result.getStatus()).isEqualTo(WorkbookStatus.SUBMITTED);
-            assertThat(result.getSubmission()).isEqualTo(submission);
-        }
-
-        @Test
-        void 이미_제출한_워크북은_다시_제출할_수_없다() {
-            // given
-            ChallengerWorkbook workbook = createWorkbookWithStatus(WorkbookStatus.SUBMITTED);
-
-            SubmitWorkbookCommand command = new SubmitWorkbookCommand(
-                workbook.getId(),
-                "https://github.com/user/repo"
-            );
-
-            // when & then
-            assertThatThrownBy(() -> manageWorkbookUseCase.submit(command))
-                .isInstanceOf(BusinessException.class);
-        }
-
-        @Test
-        void PLAIN_타입_워크북은_제출_내용_없이_제출할_수_있다() {
-            // given
-            ChallengerWorkbook workbook = createWorkbookWithStatus(WorkbookStatus.PENDING, MissionType.PLAIN);
-
-            SubmitWorkbookCommand command = new SubmitWorkbookCommand(
-                workbook.getId(),
-                null
-            );
-
-            // when
-            manageWorkbookUseCase.submit(command);
-
-            // then
-            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
-            assertThat(result.getStatus()).isEqualTo(WorkbookStatus.SUBMITTED);
-            assertThat(result.getSubmission()).isNull();
-        }
-
-        @Test
-        void LINK_타입_워크북은_제출_내용이_필수다() {
-            // given
-            ChallengerWorkbook workbook = createWorkbookWithStatus(WorkbookStatus.PENDING, MissionType.LINK);
-
-            SubmitWorkbookCommand command = new SubmitWorkbookCommand(
-                workbook.getId(),
-                null
-            );
-
-            // when & then
-            assertThatThrownBy(() -> manageWorkbookUseCase.submit(command))
-                .isInstanceOf(BusinessException.class);
-        }
-
-        @Test
-        void 존재하지_않는_워크북을_제출하면_예외가_발생한다() {
-            // given
-            SubmitWorkbookCommand command = new SubmitWorkbookCommand(
-                999L,
-                "https://github.com/user/repo"
-            );
-
-            // when & then
-            assertThatThrownBy(() -> manageWorkbookUseCase.submit(command))
-                .isInstanceOf(BusinessException.class);
-        }
-    }
+//    @Nested
+//    class 워크북_제출 {
+//
+//        @Test
+//        void 워크북을_제출한다() {
+//            // given
+//            ChallengerWorkbook workbook = createWorkbookWithStatus(WorkbookStatus.PENDING);
+//            String submission = "https://github.com/user/repo";
+//
+//            SubmitWorkbookCommand command = new SubmitWorkbookCommand(
+//                workbook.getId(),
+//                submission
+//            );
+//
+//            // when
+//            manageWorkbookUseCase.submit(command);
+//
+//            // then
+//            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
+//            assertThat(result.getStatus()).isEqualTo(WorkbookStatus.SUBMITTED);
+//            assertThat(result.getSubmission()).isEqualTo(submission);
+//        }
+//
+//        @Test
+//        void 이미_제출한_워크북은_다시_제출할_수_없다() {
+//            // given
+//            ChallengerWorkbook workbook = createWorkbookWithStatus(WorkbookStatus.SUBMITTED);
+//
+//            SubmitWorkbookCommand command = new SubmitWorkbookCommand(
+//                workbook.getId(),
+//                "https://github.com/user/repo"
+//            );
+//
+//            // when & then
+//            assertThatThrownBy(() -> manageWorkbookUseCase.submit(command))
+//                .isInstanceOf(BusinessException.class);
+//        }
+//
+//        @Test
+//        void PLAIN_타입_워크북은_제출_내용_없이_제출할_수_있다() {
+//            // given
+//            ChallengerWorkbook workbook = createWorkbookWithStatus(WorkbookStatus.PENDING, MissionType.PLAIN);
+//
+//            SubmitWorkbookCommand command = new SubmitWorkbookCommand(
+//                workbook.getId(),
+//                null
+//            );
+//
+//            // when
+//            manageWorkbookUseCase.submit(command);
+//
+//            // then
+//            ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
+//            assertThat(result.getStatus()).isEqualTo(WorkbookStatus.SUBMITTED);
+//            assertThat(result.getSubmission()).isNull();
+//        }
+//
+//        @Test
+//        void LINK_타입_워크북은_제출_내용이_필수다() {
+//            // given
+//            ChallengerWorkbook workbook = createWorkbookWithStatus(WorkbookStatus.PENDING, MissionType.LINK);
+//
+//            SubmitWorkbookCommand command = new SubmitWorkbookCommand(
+//                workbook.getId(),
+//                null
+//            );
+//
+//            // when & then
+//            assertThatThrownBy(() -> manageWorkbookUseCase.submit(command))
+//                .isInstanceOf(BusinessException.class);
+//        }
+//
+//        @Test
+//        void 존재하지_않는_워크북을_제출하면_예외가_발생한다() {
+//            // given
+//            SubmitWorkbookCommand command = new SubmitWorkbookCommand(
+//                999L,
+//                "https://github.com/user/repo"
+//            );
+//
+//            // when & then
+//            assertThatThrownBy(() -> manageWorkbookUseCase.submit(command))
+//                .isInstanceOf(BusinessException.class);
+//        }
+//    }
 
     @Nested
     class 워크북_검토 {

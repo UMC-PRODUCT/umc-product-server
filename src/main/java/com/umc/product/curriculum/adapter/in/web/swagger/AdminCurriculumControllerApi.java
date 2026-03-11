@@ -1,31 +1,14 @@
 package com.umc.product.curriculum.adapter.in.web.swagger;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.dto.request.ManageCurriculumRequest;
-import com.umc.product.curriculum.adapter.in.web.dto.response.AdminCurriculumResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "Curriculum | 커리큘럼", description = "")
+@Tag(name = "Curriculum | 커리큘럼 Command", description = "커리큘럼, 원본 워크북 CUD")
 public interface AdminCurriculumControllerApi {
-
-    @Operation(
-        summary = "파트별 커리큘럼 조회",
-        description = "현재 활성화된 기수의 파트별 커리큘럼과 워크북 목록을 조회합니다."
-    )
-    @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "200",
-            description = "조회 성공"
-        )
-    })
-    AdminCurriculumResponse getCurriculum(
-        @Parameter(description = "파트", required = true) ChallengerPart part
-    );
 
     @Operation(
         summary = "커리큘럼 관리 (생성/수정/삭제)",
