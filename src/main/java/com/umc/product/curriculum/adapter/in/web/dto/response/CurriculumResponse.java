@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
 
-@Schema(description = "Admin 커리큘럼 조회 응답")
+@Schema(description = "커리큘럼 조회 응답")
 public record CurriculumResponse(
     @Schema(description = "커리큘럼 ID", example = "1")
     Long id,

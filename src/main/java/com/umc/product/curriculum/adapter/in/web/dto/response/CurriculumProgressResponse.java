@@ -43,7 +43,7 @@ public record CurriculumProgressResponse(
     @Schema(description = "워크북 진행 정보")
     public record WorkbookProgress(
 
-        @Schema(description = "커리큘럼 ID", example = "1")
+        @Schema(description = "원본 워크북 ID", example = "1")
         Long originalWorkbookId,
 
         @Schema(description = "챌린저 워크북 ID (미배포/미생성 시 null)")
