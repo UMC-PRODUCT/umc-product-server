@@ -9,7 +9,6 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,13 +23,14 @@ public class WorkbookController implements WorkbookControllerApi {
     private final GetChallengerUseCase getChallengerUseCase;
 
     @Override
-    @PostMapping("/{originalWorkbookId}/submissions")
+    @PostMapping("/submission")
     public void submitWorkbook(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @PathVariable Long originalWorkbookId,
-        @Valid @RequestBody SubmitWorkbookRequest request) {
+        @Valid @RequestBody SubmitWorkbookRequest request
+    ) {
         ChallengerInfoWithStatus challenger = getChallengerUseCase
             .getLatestActiveChallengerByMemberId(memberPrincipal.getMemberId());
-        manageWorkbookUseCase.submit(request.toCommand(originalWorkbookId, challenger.challengerId()));
+
+        manageWorkbookUseCase.submit(request.toCommand(challenger.challengerId()));
     }
 }

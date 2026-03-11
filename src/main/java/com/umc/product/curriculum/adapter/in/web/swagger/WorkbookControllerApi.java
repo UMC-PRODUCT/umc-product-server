@@ -4,7 +4,6 @@ import com.umc.product.curriculum.adapter.in.web.dto.request.SubmitWorkbookReque
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -30,7 +29,6 @@ public interface WorkbookControllerApi {
     })
     void submitWorkbook(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @Parameter(description = "원본 워크북 ID", required = true) Long originalWorkbookId,
         @RequestBody(description = "워크북 제출 요청") SubmitWorkbookRequest request
     );
 }
