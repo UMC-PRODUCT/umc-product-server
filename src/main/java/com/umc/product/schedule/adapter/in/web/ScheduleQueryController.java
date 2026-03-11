@@ -39,8 +39,10 @@ public class ScheduleQueryController implements ScheduleQueryControllerApi {
         resourceType = ResourceType.SCHEDULE,
         permission = PermissionType.READ
     )
-    public List<ScheduleListResponse> getScheduleList() {
-        return mapper.toScheduleListResponses(getScheduleListUseCase.getAll());
+    public List<ScheduleListResponse> getScheduleList(
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        return mapper.toScheduleListResponses(getScheduleListUseCase.getAll(memberPrincipal.getMemberId()));
     }
 
     @Override

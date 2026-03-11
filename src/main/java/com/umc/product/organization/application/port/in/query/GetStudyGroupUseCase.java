@@ -1,5 +1,6 @@
 package com.umc.product.organization.application.port.in.query;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.query.dto.PartSummaryInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolStudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
@@ -7,6 +8,7 @@ import com.umc.product.organization.application.port.in.query.dto.StudyGroupList
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 스터디 그룹 조회 UseCase
@@ -44,4 +46,9 @@ public interface GetStudyGroupUseCase {
          * 스터디 그룹 상세 조회
          */
         StudyGroupDetailInfo getStudyGroupDetail(Long groupId);
+
+        /**
+         * 특정 기수에서 해당 파트들의 스터디 그룹 ID 목록 조회 (파트장용)
+         */
+        List<Long> getStudyGroupIdsByParts(Long gisuId, Set<ChallengerPart> parts);
 }

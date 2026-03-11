@@ -18,12 +18,12 @@ import com.umc.product.schedule.adapter.in.web.swagger.AttendanceControllerApi;
 import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.SubmitReasonUseCase;
-import com.umc.product.schedule.application.port.in.query.GetAllPendingAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAttendanceRecordUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetChallengerAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetPendingAttendancesUseCase;
+import com.umc.product.schedule.application.port.in.query.GetScheduleListUseCase;
 import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +47,7 @@ public class AttendanceController implements AttendanceControllerApi {
     private final GetMyAttendanceHistoryUseCase getMyAttendanceHistoryUseCase;
     private final GetChallengerAttendanceHistoryUseCase getChallengerAttendanceHistoryUseCase;
     private final GetPendingAttendancesUseCase getPendingAttendancesUseCase;
-    private final GetAllPendingAttendancesUseCase getAllPendingAttendancesUseCase;
+    private final GetScheduleListUseCase getScheduleListUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
 
     private final AttendanceWebMapper mapper;
@@ -142,10 +142,9 @@ public class AttendanceController implements AttendanceControllerApi {
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         Long memberId = memberPrincipal.getMemberId();
-        Long gisuId = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId).gisuId();
 
         return mapper.toPendingAttendancesByScheduleResponses(
-            getAllPendingAttendancesUseCase.getAllPendingList(gisuId)
+            getScheduleListUseCase.getAllPendingByRole(memberId)
         );
     }
 

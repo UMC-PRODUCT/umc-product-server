@@ -1,5 +1,6 @@
 package com.umc.product.organization.application.port.service.query;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.query.GetSchoolAccessContextUseCase;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
 import com.umc.product.organization.application.port.in.query.dto.PartSummaryInfo;
@@ -63,6 +64,11 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     public List<StudyGroupNameInfo> getStudyGroupNames(Long memberId) {
         SchoolAccessContext context = getSchoolAccessContextUseCase.getContext(memberId);
         return loadStudyGroupPort.findStudyGroupNames(context.schoolId(), context.part());
+    }
+
+    @Override
+    public List<Long> getStudyGroupIdsByParts(Long gisuId, Set<ChallengerPart> parts) {
+        return loadStudyGroupPort.findIdsByGisuIdAndPartIn(gisuId, parts);
     }
 
     @Override
