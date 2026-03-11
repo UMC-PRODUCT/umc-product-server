@@ -8,7 +8,6 @@ import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.common.domain.exception.CommonException;
 import com.umc.product.global.exception.constant.CommonErrorCode;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,14 +39,7 @@ public class MemberPermissionEvaluator implements ResourcePermissionEvaluator {
     // === PRIVATE METHODS ===
 
     private boolean canReadMember(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
-        if (isSelf(subjectAttributes, resourcePermission)) {
-            return true;
-        }
-
-        MemberInfo targetMemberInfo = getMemberUseCase.getMemberInfoById(resourcePermission.getResourceIdAsLong());
-
-        return isSchoolCoreOf(subjectAttributes.memberId(), targetMemberInfo.schoolId())
-            || isCentralCore(subjectAttributes.memberId());
+        return !subjectAttributes.gisuChallengerInfos().isEmpty();
     }
 
     private boolean canDeleteMember(SubjectAttributes subjectAttributes) {

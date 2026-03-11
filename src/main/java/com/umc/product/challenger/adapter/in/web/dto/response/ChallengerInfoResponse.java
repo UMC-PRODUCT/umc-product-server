@@ -119,4 +119,36 @@ public record ChallengerInfoResponse(
             .status(memberInfo.status())
             .build();
     }
+
+    /**
+     * Public하게 공개할 목적으로 민감한 정보를 제거합니다
+     */
+    public ChallengerInfoResponse toPublic() {
+        return ChallengerInfoResponse.builder()
+            .challengerId(challengerId)
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .gisu(gisu)
+            .chapterId(chapterId)
+            .chapterName(chapterName)
+            .part(part)
+            .challengerStatus(challengerStatus)
+            // 상벌점 정보는 공개하지 않음
+            .challengerPoints(List.of())
+            .points(List.of())
+            .totalPoints(totalPoints)
+            .roles(roles)
+
+            // 멤버 정보 중 일부만 공개
+            .name(name)
+            .nickname(nickname)
+            .email(null) // 이메일은 보안 상 제거하도록 함
+            .schoolId(schoolId)
+            .schoolName(schoolName)
+            .profileImageLink(profileImageLink)
+            // 회원 상태는 공개하지 않음
+            .memberStatus(null)
+            .status(null)
+            .build();
+    }
 }

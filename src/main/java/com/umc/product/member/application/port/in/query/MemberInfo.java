@@ -45,7 +45,7 @@ public record MemberInfo(
     @Deprecated
     public static MemberInfo from(Member member, String schoolName, String profileImageLink) {
         log.error("챌린저 역할 정보를 포함하지 않는 생성자를 이용하고 있습니다.");
-        
+
         return new MemberInfo(
             member.getId(),
             member.getName(),
@@ -74,6 +74,21 @@ public record MemberInfo(
             .profileImageLink(profileImageLink)
             .status(member.getStatus())
             .roles(roles)
+            .build();
+    }
+
+    public MemberInfo toPublic() {
+        return MemberInfo.builder()
+            .id(this.id)
+            .name(this.name)
+            .nickname(this.nickname)
+            .email("알 수 없음")
+            .schoolId(this.schoolId)
+            .schoolName(this.schoolName)
+            .profileImageId(this.profileImageId)
+            .profileImageLink(this.profileImageLink)
+            .status(this.status)
+            .roles(this.roles)
             .build();
     }
 }
