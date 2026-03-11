@@ -17,6 +17,7 @@ import lombok.Builder;
 @Builder
 public record ChallengerPointInfo(
     Long id,
+    Long challengerId,
     PointType pointType,
     Double point,
     String description,
@@ -26,6 +27,7 @@ public record ChallengerPointInfo(
 
         return ChallengerPointInfo.builder()
             .id(challengerPoint.getId())
+            .challengerId(challengerPoint.getChallengerId())
             .pointType(challengerPoint.getType())
             .point(challengerPoint.getPointValue())
             .description(challengerPoint.getDescription())

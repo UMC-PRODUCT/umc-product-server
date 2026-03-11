@@ -4,10 +4,11 @@ import com.umc.product.challenger.application.port.in.command.dto.GrantChallenge
 import com.umc.product.challenger.domain.enums.PointType;
 
 public record GrantChallengerPointRequest(
-        PointType pointType,
-        String description
+    PointType pointType,
+    Integer pointValue,
+    String description
 ) {
     public GrantChallengerPointCommand toCommand(Long challengerId) {
-        return new GrantChallengerPointCommand(challengerId, pointType, description);
+        return new GrantChallengerPointCommand(challengerId, pointType, pointValue, description);
     }
 }

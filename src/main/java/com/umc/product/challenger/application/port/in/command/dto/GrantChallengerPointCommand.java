@@ -7,6 +7,7 @@ import lombok.Builder;
 public record GrantChallengerPointCommand(
     Long challengerId,
     PointType pointType,
+    Integer pointValue,
     String description
 ) {
 }
