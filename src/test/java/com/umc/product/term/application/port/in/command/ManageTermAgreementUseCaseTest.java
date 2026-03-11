@@ -92,7 +92,7 @@ class ManageTermAgreementUseCaseTest {
         // when & then
         assertThatThrownBy(() -> sut.createTermConsent(command))
             .isInstanceOf(TermDomainException.class)
-            .extracting("code")
+            .extracting("baseCode")
             .isEqualTo(TermErrorCode.TERMS_CONSENT_ALREADY_EXISTS);
 
         then(saveTermConsentPort).should(never()).save(any());
@@ -137,7 +137,7 @@ class ManageTermAgreementUseCaseTest {
         // when & then
         assertThatThrownBy(() -> sut.createTermConsent(command))
             .isInstanceOf(TermDomainException.class)
-            .extracting("code")
+            .extracting("baseCode")
             .isEqualTo(TermErrorCode.TERMS_NOT_FOUND);
 
         then(saveTermConsentPort).should(never()).save(any());
