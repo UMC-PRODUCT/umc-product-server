@@ -1,5 +1,8 @@
 package com.umc.product.curriculum.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.curriculum.adapter.in.web.dto.request.ReviewWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.dto.request.SelectBestWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.dto.response.WorkbookSubmissionDetailResponse;
@@ -7,7 +10,6 @@ import com.umc.product.curriculum.adapter.in.web.swagger.AdminWorkbookController
 import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.ReleaseWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;
-import com.umc.product.global.security.annotation.Public;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,8 +29,12 @@ public class AdminWorkbookController implements AdminWorkbookControllerApi {
     private final ManageWorkbookUseCase manageWorkbookUseCase;
     private final GetWorkbookSubmissionsUseCase getWorkbookSubmissionsUseCase;
 
-    @Public
     @Override
+    @CheckAccess(
+        resourceType = ResourceType.ORIGINAL_WORKBOOK,
+        permission = PermissionType.RELEASE,
+        message = "워크북 배포는 중앙운영사무국 교육국 소속 파트장만 가능합니다."
+    )
     @PostMapping("/{workbookId}/release")
     public void releaseWorkbook(@PathVariable Long workbookId) {
         // TODO: user의 권한에 따라 막히게 구현 필요
