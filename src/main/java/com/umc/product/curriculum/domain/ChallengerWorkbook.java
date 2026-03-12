@@ -44,7 +44,7 @@ public class ChallengerWorkbook extends BaseEntity {
     @Column(nullable = false)
     private WorkbookStatus status;
 
-    @Column(nullable = false)
+    @Column
     private Long scheduleId;
 
     @Column(columnDefinition = "TEXT")
