@@ -83,10 +83,4 @@ public class Notice extends BaseEntity {
         this.notifiedAt = notifiedAt;
     }
 
-    /**
-     * 조회수 증가
-     */
-    public void incrementViewCount() {
-        this.viewCount++;
-    }
 }
