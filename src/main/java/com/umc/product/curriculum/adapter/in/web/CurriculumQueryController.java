@@ -36,6 +36,7 @@ public class CurriculumQueryController implements CurriculumQueryControllerApi {
         return CurriculumResponse.from(getCurriculumUseCase.getByActiveGisuAndPart(part));
     }
 
+    @Deprecated
     @Override
     @GetMapping("/challengers/me/progress")
     public CurriculumProgressResponse getMyProgress(@CurrentMember MemberPrincipal memberPrincipal) {

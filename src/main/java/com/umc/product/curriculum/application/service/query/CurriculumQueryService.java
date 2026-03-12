@@ -44,6 +44,13 @@ public class CurriculumQueryService implements GetCurriculumProgressUseCase, Get
     }
 
     @Override
+    public CurriculumProgressInfo getMyProgressByGisu(Long memberId, Long gisuId) {
+        ChallengerInfo challengerInfo = getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId);
+
+        return loadCurriculumProgressPort.findCurriculumProgress(challengerInfo.challengerId(), challengerInfo.part());
+    }
+
+    @Override
     public List<CurriculumWeekInfo> getWeeksByPart(ChallengerPart part) {
         return loadOriginalWorkbookPort.findWeekInfoByActiveGisuAndPart(part);
     }
