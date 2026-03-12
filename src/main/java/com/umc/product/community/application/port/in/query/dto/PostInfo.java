@@ -34,17 +34,23 @@ public record PostInfo(
     public static PostInfo from(Post post, MemberInfo memberInfo, ChallengerInfo challengerInfo) {
         Long authorChallengerId = post.getAuthorChallengerId();
 
+        Long authorMemberId = memberInfo != null ? memberInfo.id() : null;
+        String authorName = memberInfo != null ? memberInfo.name() : null;
+        String authorNickname = memberInfo != null ? memberInfo.nickname() : null;
+        String authorProfileImage = memberInfo != null ? memberInfo.profileImageLink() : null;
+        ChallengerPart authorPart = challengerInfo != null ? challengerInfo.part() : null;
+
         return PostInfo.builder()
             .postId(post.getPostId().id())
             .title(post.getTitle())
             .content(post.getContent())
             .category(post.getCategory())
-            .authorMemberId(memberInfo.id())
+            .authorMemberId(authorMemberId)
             .authorChallengerId(post.getAuthorChallengerId())
-            .authorName(memberInfo.name())
-            .authorNickname(memberInfo.nickname())
-            .authorProfileImage(memberInfo.profileImageLink())
-            .authorPart(challengerInfo.part())
+            .authorName(authorName)
+            .authorNickname(authorNickname)
+            .authorProfileImage(authorProfileImage)
+            .authorPart(authorPart)
             //        Instant meetAt,
             //        String location,
             //        Integer maxParticipants,
@@ -52,7 +58,7 @@ public record PostInfo(
             .createdAt(post.getCreatedAt())
             .likeCount(post.getLikeCount())
             .isLiked(post.isLiked())
-            .isAuthor(authorChallengerId.equals(challengerInfo.challengerId()))
+            .isAuthor(false) // TODO: deprecate 예정
             .build();
     }
 
@@ -60,16 +66,19 @@ public record PostInfo(
     // ====================== 예은 작업본 ======================
     // ======================================================
 
+    @Deprecated
     public static PostInfo from(Post post, Long authorId, String authorName) {
 
         return from(post, authorId, authorName, null, null, 0, false);
     }
 
+    @Deprecated
     public static PostInfo from(Post post, Long authorId, String authorName, int commentCount) {
 
         return from(post, authorId, authorName, null, null, commentCount, false);
     }
 
+    @Deprecated
     public static PostInfo from(
         Post post, Long authorId, String authorName,
         String authorProfileImage, int commentCount) {
@@ -77,6 +86,7 @@ public record PostInfo(
         return from(post, authorId, authorName, authorProfileImage, null, commentCount, false);
     }
 
+    @Deprecated
     public static PostInfo from(
         Post post, Long authorId, String authorName, String authorProfileImage,
         ChallengerPart authorPart, int commentCount) {
@@ -84,6 +94,7 @@ public record PostInfo(
         return from(post, authorId, authorName, authorProfileImage, authorPart, commentCount, false);
     }
 
+    @Deprecated
     public static PostInfo from(
         Post post, Long authorId, String authorName, String authorProfileImage,
         ChallengerPart authorPart, int commentCount, boolean isAuthor) {
