@@ -4,8 +4,10 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.application.port.in.query.dto.CommentInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import lombok.Builder;
 
 @Schema(description = "댓글 응답")
+@Builder
 public record CommentResponse(
     @Schema(description = "댓글 ID", example = "1")
     Long commentId,
@@ -18,6 +20,8 @@ public record CommentResponse(
 
     @Schema(description = "작성자 이름", example = "홍길동")
     String challengerName,
+
+    String challengerNickname,
 
     @Schema(description = "작성자 프로필 이미지", example = "https://example.com/profile.jpg")
     String challengerProfileImage,
@@ -35,16 +39,17 @@ public record CommentResponse(
     boolean isAuthor
 ) {
     public static CommentResponse from(CommentInfo info) {
-        return new CommentResponse(
-            info.commentId(),
-            info.postId(),
-            info.challengerId(),
-            info.challengerName(),
-            info.challengerProfileImage(),
-            info.challengerPart(),
-            info.content(),
-            info.createdAt(),
-            info.isAuthor()
-        );
+        return CommentResponse.builder()
+            .commentId(info.commentId())
+            .postId(info.postId())
+            .challengerId(info.challengerId())
+            .challengerName(info.challengerName())
+            .challengerNickname(info.challengerNickname())
+            .challengerProfileImage(info.challengerProfileImage())
+            .challengerPart(info.challengerPart())
+            .content(info.content())
+            .createdAt(info.createdAt())
+            .isAuthor(info.isAuthor())
+            .build();
     }
 }

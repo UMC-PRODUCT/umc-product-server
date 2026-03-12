@@ -13,6 +13,7 @@ public record CommentInfo(
     Long postId,
     Long challengerId,
     String challengerName,
+    String challengerNickname,
     String challengerProfileImage,
     ChallengerPart challengerPart,
     String content,
@@ -21,6 +22,7 @@ public record CommentInfo(
 ) {
     public static CommentInfo of(Comment comment, MemberInfo memberInfo, ChallengerInfo challengerInfo) {
         String name = memberInfo != null ? memberInfo.name() : null;
+        String nickname = memberInfo != null ? memberInfo.nickname() : null;
         String profileImage = memberInfo != null ? memberInfo.profileImageLink() : null;
         Long challengerId = challengerInfo != null ? challengerInfo.challengerId() : null;
         ChallengerPart part = challengerInfo != null ? challengerInfo.part() : null;
@@ -30,6 +32,7 @@ public record CommentInfo(
             .postId(comment.getPostId())
             .challengerId(challengerId)
             .challengerName(name)
+            .challengerNickname(nickname)
             .challengerProfileImage(profileImage)
             .challengerPart(part)
             .content(comment.getContent())
@@ -58,16 +61,17 @@ public record CommentInfo(
         ChallengerPart challengerPart, boolean isAuthor
     ) {
         Long id = comment.getCommentId() != null ? comment.getCommentId().id() : null;
-        return new CommentInfo(
-            id,
-            comment.getPostId(),
-            comment.getChallengerId(),
-            challengerName,
-            challengerProfileImage,
-            challengerPart,
-            comment.getContent(),
-            comment.getCreatedAt(),
-            isAuthor
-        );
+
+        return CommentInfo.builder()
+            .commentId(id)
+            .postId(comment.getPostId())
+            .challengerId(comment.getChallengerId())
+            .challengerName(challengerName)
+            .challengerProfileImage(challengerProfileImage)
+            .challengerPart(challengerPart)
+            .content(comment.getContent())
+            .createdAt(comment.getCreatedAt())
+            .isAuthor(isAuthor)
+            .build();
     }
 }
