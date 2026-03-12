@@ -40,7 +40,19 @@ public record PostInfo(
         String authorProfileImage = memberInfo != null ? memberInfo.profileImageLink() : null;
         ChallengerPart authorPart = challengerInfo != null ? challengerInfo.part() : null;
 
-        return PostInfo.builder()
+        PostInfoBuilder builder = PostInfo.builder();
+
+        // 번개글인 경우
+        if (post.isLightning()) {
+            Post.LightningInfo info = post.getLightningInfoOrThrow();
+            builder
+                .meetAt(info.meetAt())
+                .location(info.location())
+                .maxParticipants(info.maxParticipants())
+                .openChatUrl(info.openChatUrl());
+        }
+
+        return builder
             .postId(post.getPostId().id())
             .title(post.getTitle())
             .content(post.getContent())
@@ -51,10 +63,6 @@ public record PostInfo(
             .authorNickname(authorNickname)
             .authorProfileImage(authorProfileImage)
             .authorPart(authorPart)
-            //        Instant meetAt,
-            //        String location,
-            //        Integer maxParticipants,
-            //        String openChatUrl,
             .createdAt(post.getCreatedAt())
             .likeCount(post.getLikeCount())
             .isLiked(post.isLiked())
