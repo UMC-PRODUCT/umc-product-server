@@ -17,7 +17,7 @@ public record GetNoticeSummaryResponse(
     String content,
     // UI에서 빨간 점 표시 용; 알람을 전송하는 것인지에 대한 내용
     Boolean shouldSendNotification,
-    Integer viewCount,
+    Long viewCount,
     Instant createdAt,
     NoticeTargetInfo targetInfo,
     Long authorChallengerId,

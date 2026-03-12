@@ -1,0 +1,3 @@
+ALTER TABLE notice
+    ADD COLUMN view_count BIGINT NOT NULL DEFAULT 0
+;

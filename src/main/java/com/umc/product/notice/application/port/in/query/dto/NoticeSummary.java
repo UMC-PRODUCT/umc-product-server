@@ -8,7 +8,7 @@ public record NoticeSummary(
     String title,
     String content,
     Boolean shouldSendNotification,
-    Integer viewCount,
+    Long viewCount,
     Instant createdAt,
     NoticeTargetInfo targetInfo,
     Long authorMemberId,

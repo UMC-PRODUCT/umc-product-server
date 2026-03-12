@@ -19,6 +19,7 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
+import com.umc.product.notice.application.port.in.command.IncrementNoticeViewCountUseCase;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.domain.NoticeTarget;
@@ -56,6 +57,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private final LoadNoticePort loadNoticePort;
     private final LoadNoticeReadPort loadNoticeReadPort;
     private final LoadNoticeTargetPort loadNoticeTargetPort;
+    private final IncrementNoticeViewCountUseCase incrementNoticeViewCountUseCase;
 
     private final GetChapterUseCase getChapterUseCase;
     private final GetMemberUseCase getMemberUseCase;
@@ -94,7 +96,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
         NoticeTarget target = loadNoticeTargetPort.findByNoticeId(noticeId).orElse(null);
         NoticeTargetInfo targetInfo = target != null ? NoticeTargetInfo.from(target) : null;
 
-        int viewCount = (int) loadNoticeReadPort.countReadsByNoticeId(noticeId);
+        // 조회수 증가 (별도 트랜잭션으로 커밋)
+        incrementNoticeViewCountUseCase.increment(noticeId);
 
         return new NoticeInfo(
             notice.getId(),
@@ -105,7 +108,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             imageInfos,
             linkInfos,
             targetInfo,
-            viewCount,
+            notice.getViewCount() + 1,
             notice.getCreatedAt()
         );
     }
@@ -198,10 +201,10 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         // 전체 기수 공지 여부
         if (targetInfo.targetGisuId() != null) {
-            challengers = getChallengerUseCase.getByGisuId(targetInfo.targetGisuId());
+            challengers = getChallengerUseCase.getByGisuIdWithoutPoints(targetInfo.targetGisuId());
         } else {
             // 모든 기수 대상 공지: DB 쿼리에서 멤버당 최신 기수 챌린저 1건만 조회 (읽음 현황 조회 시 혼선 방지)
-            challengers = getChallengerUseCase.getLatestPerMember();
+            challengers = getChallengerUseCase.getLatestPerMemberWithoutPoints();
         }
 
         if (challengers.isEmpty()) {
@@ -358,11 +361,9 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Map<Long, NoticeTarget> targetMap = loadNoticeTargetPort.findByNoticeIdIn(noticeIds).stream()
             .collect(Collectors.toMap(NoticeTarget::getNoticeId, Function.identity()));
 
-        Map<Long, Long> viewCountMap = loadNoticeReadPort.countReadsByNoticeIds(noticeIds);
-
         Map<Long, MemberInfo> memberMap = getMemberUseCase.getProfiles(authorMemberIds);
 
-        return new NoticeQueryData(targetMap, viewCountMap, memberMap);
+        return new NoticeQueryData(targetMap, memberMap);
     }
 
     // Notice를 NoticeSummary로 매핑
@@ -373,7 +374,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         NoticeTargetInfo targetInfo = target != null ? NoticeTargetInfo.from(target) : null;
 
-        int viewCount = data.viewCountMap.getOrDefault(notice.getId(), 0L).intValue();
+        long viewCount = notice.getViewCount();
 
         return new NoticeSummary(
             notice.getId(), notice.getTitle(), notice.getContent(),
@@ -524,7 +525,6 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
     private record NoticeQueryData(
         Map<Long, NoticeTarget> targetMap,
-        Map<Long, Long> viewCountMap,
         Map<Long, MemberInfo> memberMap
     ) {
     }
