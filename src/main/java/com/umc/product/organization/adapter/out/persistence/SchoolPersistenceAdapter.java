@@ -3,6 +3,7 @@ package com.umc.product.organization.adapter.out.persistence;
 
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
@@ -44,8 +45,8 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
     }
 
     @Override
-    public List<School> findAll() {
-        return schoolJpaRepository.findAllByOrderByNameAsc();
+    public List<SchoolNameInfo> findAllNames() {
+        return schoolJpaRepository.findAllNameInfoOrderByNameAsc();
     }
 
     @Override

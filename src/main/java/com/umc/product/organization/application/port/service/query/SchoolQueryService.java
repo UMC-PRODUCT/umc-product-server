@@ -60,9 +60,7 @@ public class SchoolQueryService implements GetSchoolUseCase {
 
     @Override
     public List<SchoolNameInfo> getAllSchoolNames() {
-        return loadSchoolPort.findAll().stream()
-            .map(SchoolNameInfo::from)
-            .toList();
+        return loadSchoolPort.findAllNames();
     }
 
     @Override
