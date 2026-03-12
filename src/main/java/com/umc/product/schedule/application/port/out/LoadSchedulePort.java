@@ -62,14 +62,15 @@ public interface LoadSchedulePort {
     Optional<Schedule> findByIdWithTags(Long scheduleId);
 
     /**
-     * 중앙운영사무국원용: 본인 AttendanceRecord가 있는 일정 + 본인 생성 일정 (requiresApproval=true 조건 포함)
+     * 중앙운영사무국원용: 본인 AttendanceRecord가 있는 일정 조회 (requiresApproval=true 조건 포함)
+     * <p>
+     * 일정 생성자는 무조건 attendance_record에 포함되므로, 본인 생성 일정도 자동으로 조회됨
      *
-     * @param memberId           회원 ID
-     * @param gisuId             기수 ID
-     * @param authorChallengerId 본인 챌린저 ID
+     * @param memberId 회원 ID
+     * @param gisuId   기수 ID
      * @return 일정 목록
      */
-    List<Schedule> findSchedulesForCentralMember(Long memberId, Long gisuId, Long authorChallengerId);
+    List<Schedule> findSchedulesForCentralMember(Long memberId, Long gisuId);
 
     /**
      * 학교 회장단용: 본인 학교 구성원이 파트장인 스터디 일정 + 본인 생성 일정 (requiresApproval=true 조건 포함)

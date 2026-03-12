@@ -79,10 +79,8 @@ public class SchedulePersistenceAdapter implements
     }
 
     @Override
-    public List<Schedule> findSchedulesForCentralMember(Long memberId, Long gisuId,
-                                                        Long authorChallengerId) {
-        return scheduleQueryRepository.findSchedulesForCentralMember(
-            memberId, gisuId, authorChallengerId);
+    public List<Schedule> findSchedulesForCentralMember(Long memberId, Long gisuId) {
+        return scheduleQueryRepository.findSchedulesForCentralMember(memberId, gisuId);
     }
 
     @Override
