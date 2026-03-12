@@ -113,10 +113,11 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
                     return null;
                 }
 
-                if (record != null) {
-                    return AvailableAttendanceInfo.of(schedule, sheet, record);
+                // 출석 기록이 없으면 해당 일정에 추가되지 않은 참여자 → 제외
+                if (record == null) {
+                    return null;
                 }
-                return AvailableAttendanceInfo.of(schedule, sheet);
+                return AvailableAttendanceInfo.of(schedule, sheet, record);
             })
             .filter(info -> info != null)
             .sorted(Comparator.comparing(AvailableAttendanceInfo::startTime))
