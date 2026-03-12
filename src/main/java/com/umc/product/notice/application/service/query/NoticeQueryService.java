@@ -94,7 +94,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
         NoticeTarget target = loadNoticeTargetPort.findByNoticeId(noticeId).orElse(null);
         NoticeTargetInfo targetInfo = target != null ? NoticeTargetInfo.from(target) : null;
 
-        int viewCount = (int) loadNoticeReadPort.countReadsByNoticeId(noticeId);
+        // 조회수 증가
+        notice.incrementViewCount();
 
         return new NoticeInfo(
             notice.getId(),
@@ -105,7 +106,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             imageInfos,
             linkInfos,
             targetInfo,
-            viewCount,
+            notice.getViewCount(),
             notice.getCreatedAt()
         );
     }
@@ -198,10 +199,10 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         // 전체 기수 공지 여부
         if (targetInfo.targetGisuId() != null) {
-            challengers = getChallengerUseCase.getByGisuId(targetInfo.targetGisuId());
+            challengers = getChallengerUseCase.getByGisuIdWithoutPoints(targetInfo.targetGisuId());
         } else {
             // 모든 기수 대상 공지: DB 쿼리에서 멤버당 최신 기수 챌린저 1건만 조회 (읽음 현황 조회 시 혼선 방지)
-            challengers = getChallengerUseCase.getLatestPerMember();
+            challengers = getChallengerUseCase.getLatestPerMemberWithoutPoints();
         }
 
         if (challengers.isEmpty()) {

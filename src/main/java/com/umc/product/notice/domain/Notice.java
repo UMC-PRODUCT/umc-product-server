@@ -37,6 +37,9 @@ public class Notice extends BaseEntity {
     @Column(name = "author_member_id", nullable = false)
     private Long authorMemberId;
 
+    @Column(nullable = false)
+    private long viewCount;
+
     /* 알림발송 여부 */
     private boolean shouldSendNotification;
 
@@ -78,5 +81,12 @@ public class Notice extends BaseEntity {
      */
     public void markAsNotified(Instant notifiedAt) {
         this.notifiedAt = notifiedAt;
+    }
+
+    /**
+     * 조회수 증가
+     */
+    public void incrementViewCount() {
+        this.viewCount++;
     }
 }
