@@ -79,10 +79,8 @@ public class SchedulePersistenceAdapter implements
     }
 
     @Override
-    public List<Schedule> findSchedulesForCentralMember(Long memberId, Long gisuId,
-                                                        Long authorChallengerId) {
-        return scheduleQueryRepository.findSchedulesForCentralMember(
-            memberId, gisuId, authorChallengerId);
+    public List<Schedule> findSchedulesForCentralMember(Long memberId, Long gisuId) {
+        return scheduleQueryRepository.findSchedulesForCentralMember(memberId, gisuId);
     }
 
     @Override
@@ -93,13 +91,13 @@ public class SchedulePersistenceAdapter implements
     }
 
     @Override
-    public List<Schedule> findSchedulesForPartLeader(Long challengerId) {
-        return scheduleQueryRepository.findSchedulesForPartLeader(challengerId);
+    public List<Schedule> findSchedulesForPartLeader(Long challengerId, Long gisuId) {
+        return scheduleQueryRepository.findSchedulesForPartLeader(challengerId, gisuId);
     }
 
     @Override
-    public List<Schedule> findSchedulesByAuthor(Long authorChallengerId) {
-        return scheduleQueryRepository.findSchedulesByAuthor(authorChallengerId);
+    public List<Schedule> findSchedulesByAuthor(Long authorChallengerId, Long gisuId) {
+        return scheduleQueryRepository.findSchedulesByAuthor(authorChallengerId, gisuId);
     }
 
     // ========== SaveSchedulePort ==========
