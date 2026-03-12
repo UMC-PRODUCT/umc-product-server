@@ -1,5 +1,6 @@
 package com.umc.product.organization.adapter.out.persistence;
 
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.domain.School;
 import java.util.List;
@@ -28,6 +29,9 @@ public interface SchoolJpaRepository extends Repository<School, Long> {
 
     @Query("SELECT new com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo(s.id, s.name) FROM School s ORDER BY s.name ASC")
     List<SchoolNameInfo> findAllNameInfoOrderByNameAsc();
+
+    @Query("SELECT new com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo$SchoolLinkItem(sl.title, sl.type, sl.url) FROM SchoolLink sl WHERE sl.school.id = :schoolId")
+    List<SchoolDetailInfo.SchoolLinkItem> findLinksBySchoolId(@Param("schoolId") Long schoolId);
 
     List<School> findAllByIdIn(List<Long> ids);
 

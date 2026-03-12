@@ -11,7 +11,7 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo.SchoolInfoWithoutSchoolLinkItem;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import java.util.List;
@@ -92,11 +92,11 @@ public class SchoolQueryRepository {
     /**
      * 학교 상세 정보를 반환합니다.
      */
-    public SchoolDetailInfo.SchoolInfo getSchoolDetail(Long schoolId) {
+    public SchoolInfoWithoutSchoolLinkItem getSchoolDetail(Long schoolId) {
         JPQLQuery<Long> activeChapterIds = activeChapterIdSubQuery();
 
         return queryFactory
-            .select(Projections.constructor(SchoolDetailInfo.SchoolInfo.class,
+            .select(Projections.constructor(SchoolInfoWithoutSchoolLinkItem.class,
                 chapter.id,
                 chapter.name,
                 school.name,

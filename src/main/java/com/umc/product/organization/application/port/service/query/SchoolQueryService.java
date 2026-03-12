@@ -2,6 +2,7 @@ package com.umc.product.organization.application.port.service.query;
 
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo.SchoolInfoWithoutSchoolLinkItem;
 import com.umc.product.organization.application.port.in.query.dto.SchoolLinkInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
@@ -66,20 +67,17 @@ public class SchoolQueryService implements GetSchoolUseCase {
     @Override
     public SchoolDetailInfo getSchoolDetail(Long schoolId) {
 
-        SchoolDetailInfo.SchoolInfo schoolInfo = loadSchoolPort.findSchoolDetailByIdWithActiveChapter(schoolId);
+        SchoolInfoWithoutSchoolLinkItem schoolInfoWithoutSchoolLinkItem = loadSchoolPort.findSchoolDetailByIdWithActiveChapter(schoolId);
 
         String logoImageUrl = null;
-        if (schoolInfo.logoImageId() != null) {
-            FileInfo fileInfo = getFileUseCase.getById(schoolInfo.logoImageId());
+        if (schoolInfoWithoutSchoolLinkItem.logoImageId() != null) {
+            FileInfo fileInfo = getFileUseCase.getById(schoolInfoWithoutSchoolLinkItem.logoImageId());
             logoImageUrl = fileInfo.fileLink();
         }
 
-        School school = loadSchoolPort.findById(schoolId);
-        List<SchoolDetailInfo.SchoolLinkItem> links = school.getSchoolLinks().stream()
-            .map(link -> new SchoolDetailInfo.SchoolLinkItem(link.getTitle(), link.getType(), link.getUrl()))
-            .toList();
+        List<SchoolDetailInfo.SchoolLinkItem> links = loadSchoolPort.findLinksBySchoolId(schoolId);
 
-        return schoolInfo.toDetailInfo(logoImageUrl, links);
+        return schoolInfoWithoutSchoolLinkItem.toDetailInfo(logoImageUrl, links);
 
     }
 
@@ -110,20 +108,20 @@ public class SchoolQueryService implements GetSchoolUseCase {
 
         return schools.stream()
             .map(school -> {
-                SchoolDetailInfo.SchoolInfo schoolInfo = loadSchoolPort.findSchoolDetailByIdWithActiveChapter(
+                SchoolInfoWithoutSchoolLinkItem schoolInfoWithoutSchoolLinkItem = loadSchoolPort.findSchoolDetailByIdWithActiveChapter(
                     school.getId());
-
-                String logoImageUrl = null;
-                if (schoolInfo.logoImageId() != null) {
-                    FileInfo fileInfo = getFileUseCase.getById(schoolInfo.logoImageId());
-                    logoImageUrl = fileInfo.fileLink();
-                }
 
                 List<SchoolDetailInfo.SchoolLinkItem> links = school.getSchoolLinks().stream()
                     .map(link -> new SchoolDetailInfo.SchoolLinkItem(link.getTitle(), link.getType(), link.getUrl()))
                     .toList();
 
-                return schoolInfo.toDetailInfo(logoImageUrl, links);
+                String logoImageUrl = null;
+                if (schoolInfoWithoutSchoolLinkItem.logoImageId() != null) {
+                    FileInfo fileInfo = getFileUseCase.getById(schoolInfoWithoutSchoolLinkItem.logoImageId());
+                    logoImageUrl = fileInfo.fileLink();
+                }
+
+                return schoolInfoWithoutSchoolLinkItem.toDetailInfo(logoImageUrl, links);
             }).toList();
     }
 }
