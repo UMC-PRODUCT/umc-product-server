@@ -56,7 +56,7 @@ public class PostController {
     ) {
         Long memberId = memberPrincipal.getMemberId();
         ChallengerInfoWithStatus challenger = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId);
-        return PostResponse.from(createPostUseCase.createPost(request.toCommand(challenger.challengerId())));
+        return toPostResponse(createPostUseCase.createPost(request.toCommand(challenger.challengerId())));
     }
 
     @PostMapping("/lightning")

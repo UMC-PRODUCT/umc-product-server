@@ -75,7 +75,7 @@ public record PostResponse(
             .title(postInfo.title())
             .content(postInfo.content())
             .category(postInfo.category())
-            .authorId(null) // 검색 결과에는 작성자 정보가 없으므로 null로 설정
+            .authorId(challengerId)
             .authorChallengerId(challengerId)
             .authorMemberId(memberId)
             .authorName(name)
