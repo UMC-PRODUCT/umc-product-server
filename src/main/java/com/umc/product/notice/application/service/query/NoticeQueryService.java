@@ -19,6 +19,7 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
+import com.umc.product.notice.application.port.out.SaveNoticePort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.domain.NoticeTarget;
@@ -56,6 +57,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private final LoadNoticePort loadNoticePort;
     private final LoadNoticeReadPort loadNoticeReadPort;
     private final LoadNoticeTargetPort loadNoticeTargetPort;
+    private final SaveNoticePort saveNoticePort;
 
     private final GetChapterUseCase getChapterUseCase;
     private final GetMemberUseCase getMemberUseCase;
@@ -95,7 +97,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
         NoticeTargetInfo targetInfo = target != null ? NoticeTargetInfo.from(target) : null;
 
         // 조회수 증가
-        notice.incrementViewCount();
+        saveNoticePort.incrementViewCount(noticeId);
 
         return new NoticeInfo(
             notice.getId(),
@@ -106,7 +108,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             imageInfos,
             linkInfos,
             targetInfo,
-            notice.getViewCount(),
+            notice.getViewCount() + 1,
             notice.getCreatedAt()
         );
     }
@@ -359,11 +361,9 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Map<Long, NoticeTarget> targetMap = loadNoticeTargetPort.findByNoticeIdIn(noticeIds).stream()
             .collect(Collectors.toMap(NoticeTarget::getNoticeId, Function.identity()));
 
-        Map<Long, Long> viewCountMap = loadNoticeReadPort.countReadsByNoticeIds(noticeIds);
-
         Map<Long, MemberInfo> memberMap = getMemberUseCase.getProfiles(authorMemberIds);
 
-        return new NoticeQueryData(targetMap, viewCountMap, memberMap);
+        return new NoticeQueryData(targetMap, memberMap);
     }
 
     // Notice를 NoticeSummary로 매핑
@@ -374,7 +374,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         NoticeTargetInfo targetInfo = target != null ? NoticeTargetInfo.from(target) : null;
 
-        int viewCount = data.viewCountMap.getOrDefault(notice.getId(), 0L).intValue();
+        long viewCount = notice.getViewCount();
 
         return new NoticeSummary(
             notice.getId(), notice.getTitle(), notice.getContent(),
@@ -525,7 +525,6 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
     private record NoticeQueryData(
         Map<Long, NoticeTarget> targetMap,
-        Map<Long, Long> viewCountMap,
         Map<Long, MemberInfo> memberMap
     ) {
     }

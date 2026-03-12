@@ -64,6 +64,11 @@ public class NoticePersistenceAdapter implements
     }
 
     @Override
+    public void incrementViewCount(Long noticeId) {
+        noticeJpaRepository.incrementViewCount(noticeId);
+    }
+
+    @Override
     public List<NoticeRead> findNoticeReadByNoticeId(Long noticeId) {
         return noticeReadJpaRepository.findAllByNoticeId(noticeId);
     }

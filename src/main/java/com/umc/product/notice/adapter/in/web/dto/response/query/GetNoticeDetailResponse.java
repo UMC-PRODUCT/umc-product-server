@@ -29,7 +29,7 @@ public record GetNoticeDetailResponse(
     NoticeTargetInfo targetInfo,
 
     // 메타데이터
-    Integer viewCount,
+    Long viewCount,
     Instant createdAt
 ) {
     public static GetNoticeDetailResponse from(
