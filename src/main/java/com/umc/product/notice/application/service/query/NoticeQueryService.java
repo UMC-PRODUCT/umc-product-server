@@ -103,7 +103,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             imageInfos,
             linkInfos,
             targetInfo,
-            notice.getViewCount() + 1,
+            notice.getViewCount(),
             notice.getCreatedAt()
         );
     }
