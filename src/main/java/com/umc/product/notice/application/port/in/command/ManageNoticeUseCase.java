@@ -28,5 +28,9 @@ public interface ManageNoticeUseCase {
      */
     void remindNotice(SendNoticeReminderCommand command);
 
+    /*
+     * 공지 조회수 증가
+     */
+    void incrementViewCount(Long noticeId);
 
 }
