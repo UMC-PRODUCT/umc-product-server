@@ -83,7 +83,7 @@ public record PostResponse(
             .authorProfileImage(profileImageLink)
             .authorPart(part)
             .createdAt(postInfo.createdAt())
-            .commentCount(0) // TODO: 리팩토링 후에 다시 하자 ...
+            .commentCount(postInfo.commentCount())
             .likeCount(postInfo.likeCount())
             .isLiked(false) // 검색 결과에서는 좋아요 여부를 알 수 없으므로 false로 설정
             .isAuthor(false) // 검색 결과에서는 본인 작성 여부를 알 수 없으므로 false로 설정
