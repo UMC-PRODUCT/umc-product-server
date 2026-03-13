@@ -36,7 +36,8 @@ public class NoticePersistenceAdapter implements
     }
 
     @Override
-    public Page<Notice> findNoticesByClassification(NoticeClassification classification, Set<ChallengerPart> memberParts,
+    public Page<Notice> findNoticesByClassification(NoticeClassification classification,
+                                                    Set<ChallengerPart> memberParts,
                                                     Pageable pageable) {
         return noticeQueryRepository.findByClassification(classification, memberParts, pageable);
     }
@@ -106,5 +107,10 @@ public class NoticePersistenceAdapter implements
     @Override
     public void deleteRead(NoticeRead noticeRead) {
         noticeReadJpaRepository.delete(noticeRead);
+    }
+
+    @Override
+    public void deleteAllByNoticeId(Long noticeId) {
+        noticeReadJpaRepository.deleteAllByNoticeId(noticeId);
     }
 }
