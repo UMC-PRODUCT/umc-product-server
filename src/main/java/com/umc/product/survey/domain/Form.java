@@ -1,12 +1,11 @@
 package com.umc.product.survey.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.survey.domain.enums.FormOpenStatus;
 import com.umc.product.survey.domain.enums.FormSectionType;
 import com.umc.product.survey.domain.enums.FormStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -82,14 +81,14 @@ public class Form extends BaseEntity {
 
     public void publish() {
         if (isPublished()) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_ALREADY_PUBLISHED);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_ALREADY_PUBLISHED);
         }
         this.status = FormStatus.PUBLISHED;
     }
 
     public void setVotePolicy(boolean isAnonymous, Instant startsAt, Instant endsAtExclusive) {
         if (startsAt != null && endsAtExclusive != null && !endsAtExclusive.isAfter(startsAt)) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_FORM_ACTIVE_PERIOD);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_FORM_ACTIVE_PERIOD);
         }
         this.isAnonymous = isAnonymous;
         this.startsAt = startsAt;

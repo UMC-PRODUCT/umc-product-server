@@ -8,6 +8,7 @@ import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.dto.NoticeClassification;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -35,7 +36,8 @@ public class NoticePersistenceAdapter implements
     }
 
     @Override
-    public Page<Notice> findNoticesByClassification(NoticeClassification classification, Set<ChallengerPart> memberParts,
+    public Page<Notice> findNoticesByClassification(NoticeClassification classification,
+                                                    Set<ChallengerPart> memberParts,
                                                     Pageable pageable) {
         return noticeQueryRepository.findByClassification(classification, memberParts, pageable);
     }
@@ -60,6 +62,11 @@ public class NoticePersistenceAdapter implements
     @Override
     public void delete(Notice notice) {
         noticeJpaRepository.delete(notice);
+    }
+
+    @Override
+    public void incrementViewCount(Long noticeId) {
+        noticeJpaRepository.incrementViewCount(noticeId);
     }
 
     @Override
@@ -88,6 +95,11 @@ public class NoticePersistenceAdapter implements
     }
 
     @Override
+    public long countReadsByChallengerIdIn(Long noticeId, Collection<Long> challengerIds) {
+        return noticeReadJpaRepository.countByNoticeIdAndChallengerIdIn(noticeId, challengerIds);
+    }
+
+    @Override
     public NoticeRead saveRead(NoticeRead noticeRead) {
         return noticeReadJpaRepository.save(noticeRead);
     }
@@ -95,5 +107,10 @@ public class NoticePersistenceAdapter implements
     @Override
     public void deleteRead(NoticeRead noticeRead) {
         noticeReadJpaRepository.delete(noticeRead);
+    }
+
+    @Override
+    public void deleteAllByNoticeId(Long noticeId) {
+        noticeReadJpaRepository.deleteAllByNoticeId(noticeId);
     }
 }

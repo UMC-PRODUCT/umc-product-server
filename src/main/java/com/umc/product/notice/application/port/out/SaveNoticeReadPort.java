@@ -7,4 +7,6 @@ public interface SaveNoticeReadPort {
     NoticeRead saveRead(NoticeRead noticeRead);
 
     void deleteRead(NoticeRead noticeRead);
+
+    void deleteAllByNoticeId(Long noticeId);
 }

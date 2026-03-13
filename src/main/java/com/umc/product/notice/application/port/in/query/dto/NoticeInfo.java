@@ -21,7 +21,7 @@ public record NoticeInfo(
     NoticeTargetInfo targetInfo,
 
     // 메타데이터
-    Integer viewCount,
+    long viewCount,
     Instant createdAt
 ) {
 

@@ -15,8 +15,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "Schedule | 일정 Query", description = "")
 public interface ScheduleQueryControllerApi {
 
-    @Operation(summary = "일정 목록 조회", description = "출석 통계와 함께 일정 목록을 조회합니다")
-    List<ScheduleListResponse> getScheduleList();
+    @Operation(summary = "출석 통계와 함께 일정 목록 조회",
+        description = """
+            출석 통계와 함께 일정 목록을 조회합니다.
+            - 중앙 운영진 : 본인 참석 일정
+            - 교내 회장단 : 교내 챌린저가 파트장으로 있는 스터디 그룹 일정 + 본인이 생성한 일정
+            - 교내 파트장 : 본인이 파트장으로 있는 스터디 그룹 일정 + 본인이 생성한 일정
+            - 기타 운영진 : 본인이 생성한 일정
+            """)
+    List<ScheduleListResponse> getScheduleList(@CurrentMember MemberPrincipal memberPrincipal);
 
     @Operation(summary = "월별 내 일정 캘린더/리스트 조회",
         description = "본인이 참여하는 일정을 월 단위로 조회합니다. AttendanceRecord에 등록된 일정만 포함됩니다.")

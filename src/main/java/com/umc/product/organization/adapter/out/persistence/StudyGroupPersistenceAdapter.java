@@ -13,6 +13,7 @@ import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -59,6 +60,14 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
     @Override
     public StudyGroupDetailInfo findStudyGroupDetail(Long groupId) {
         return studyGroupQueryRepository.findStudyGroupDetail(groupId);
+    }
+
+    @Override
+    public List<Long> findIdsByGisuIdAndPartIn(Long gisuId, Set<ChallengerPart> parts) {
+        if (parts == null || parts.isEmpty()) {
+            return List.of();
+        }
+        return studyGroupJpaRepository.findIdsByGisuIdAndPartIn(gisuId, parts);
     }
 
     @Override

@@ -43,4 +43,8 @@ public class MemberInfoResponseAssembler {
 
         return MemberInfoResponse.from(memberInfo, memberProfileInfo, challengerInfoResponses);
     }
+
+    public MemberInfoResponse fromMemberIdToPublic(Long memberId) {
+        return fromMemberId(memberId).toPublic();
+    }
 }

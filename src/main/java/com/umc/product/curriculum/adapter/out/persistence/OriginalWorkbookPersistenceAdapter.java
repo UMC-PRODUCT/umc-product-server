@@ -1,7 +1,7 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.application.port.in.query.CurriculumWeekInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
 import com.umc.product.curriculum.domain.OriginalWorkbook;

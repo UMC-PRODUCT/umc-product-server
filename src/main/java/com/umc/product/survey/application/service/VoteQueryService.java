@@ -1,7 +1,5 @@
 package com.umc.product.survey.application.service;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.survey.application.port.in.query.GetVoteDetailUseCase;
 import com.umc.product.survey.application.port.in.query.dto.GetVoteDetailsQuery;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
@@ -14,6 +12,7 @@ import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.enums.FormOpenStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -47,7 +46,7 @@ public class VoteQueryService implements GetVoteDetailUseCase {
         Instant now = Instant.now();
 
         Form form = loadFormPort.findById(voteId)
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
         // 투표는 "섹션 1 / 질문 1" 전제
         Question question = extractSingleQuestion(form);
@@ -120,18 +119,18 @@ public class VoteQueryService implements GetVoteDetailUseCase {
 
     private Question extractSingleQuestion(Form form) {
         if (form.getSections() == null || form.getSections().isEmpty()) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
         }
         var section = form.getSections().iterator().next();
         if (section.getQuestions() == null || section.getQuestions().isEmpty()) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
         }
 
         Question q = section.getQuestions().iterator().next();
 
         // 투표 질문 타입 가드
         if (q.getType() != QuestionType.RADIO && q.getType() != QuestionType.CHECKBOX) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
         }
         return q;
     }

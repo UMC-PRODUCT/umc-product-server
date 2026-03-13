@@ -1,7 +1,5 @@
 package com.umc.product.survey.application.service;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
 import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
 import com.umc.product.survey.application.port.in.command.SubmitVoteResponseUseCase;
@@ -20,6 +18,7 @@ import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.enums.FormOpenStatus;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -52,21 +51,21 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
         validate(command);
 
         QuestionType qType = command.allowMultipleChoice()
-                ? QuestionType.CHECKBOX
-                : QuestionType.RADIO;
+            ? QuestionType.CHECKBOX
+            : QuestionType.RADIO;
 
         Form form = Form.createPublished(
-                command.createdMemberId(),
-                command.title()
+            command.createdMemberId(),
+            command.title()
         );
 
         form.setVotePolicy(command.isAnonymous(), command.startsAt(), command.endsAtExclusive());
 
         // 섹션/질문/옵션 조립
         form.appendSingleQuestion(
-                command.title(), // 투표 제목 그대로 questionText로 사용
-                qType,
-                command.options()
+            command.title(), // 투표 제목 그대로 questionText로 사용
+            qType,
+            command.options()
         );
 
         return saveFormPort.save(form).getId();
@@ -75,28 +74,28 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
     private void validate(CreateVoteCommand cmd) {
         List<String> options = cmd.options();
         if (options == null || options.size() < 2 || options.size() > 5) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_OPTION_COUNT);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_OPTION_COUNT);
         }
         if (options.stream().anyMatch(s -> s == null || s.trim().isEmpty())) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_OPTION_CONTENT);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_OPTION_CONTENT);
         }
 
         Instant startsAt = cmd.startsAt();
         Instant endsAtExclusive = cmd.endsAtExclusive();
 
         if (startsAt == null || endsAtExclusive == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_FORM_ACTIVE_PERIOD);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_FORM_ACTIVE_PERIOD);
         }
 
         // 기본 기간 검증: end > start
         if (!endsAtExclusive.isAfter(startsAt)) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_FORM_ACTIVE_PERIOD);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_FORM_ACTIVE_PERIOD);
         }
 
         // 시작일: 오늘부터 선택 가능 (KST 기준 오늘 00:00 이상)
         Instant todayStartKst = LocalDate.now(KST).atStartOfDay(KST).toInstant();
         if (startsAt.isBefore(todayStartKst)) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_START_DATE);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_START_DATE);
         }
 
         // 마감일: 시작일 하루 뒤부터 선택 가능
@@ -105,14 +104,14 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
         // endDate >= startDate + 1  <=>  endsAtExclusive >= startsAt + 2 days
         Instant minEndsAtExclusive = startsAt.plus(2, ChronoUnit.DAYS);
         if (endsAtExclusive.isBefore(minEndsAtExclusive)) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_END_DATE);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_END_DATE);
         }
     }
 
     @Override
     public void delete(DeleteVoteCommand cmd) {
         Form form = loadFormPort.findById(cmd.voteId())
-                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
         // todo: 권한 검증 추가
 
@@ -137,20 +136,20 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
         Instant now = Instant.now();
 
         Form form = loadFormPort.findById(cmd.voteId())
-                .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
         // 1) 기간 체크
         FormOpenStatus openStatus = form.getOpenStatus(now);
         if (openStatus == FormOpenStatus.NOT_STARTED) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.VOTE_NOT_STARTED);
+            throw new SurveyDomainException(SurveyErrorCode.VOTE_NOT_STARTED);
         }
         if (openStatus == FormOpenStatus.CLOSED) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.VOTE_CLOSED);
+            throw new SurveyDomainException(SurveyErrorCode.VOTE_CLOSED);
         }
 
         // 2) 중복 투표 체크
         if (loadFormResponsePort.existsByFormIdAndMemberId(form.getId(), cmd.memberId())) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.VOTE_ALREADY_RESPONDED);
+            throw new SurveyDomainException(SurveyErrorCode.VOTE_ALREADY_RESPONDED);
         }
 
         // 3) 투표 구조에서 Question 1개 꺼내기
@@ -159,7 +158,7 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
         // 4) 선택 검증
         List<Long> optionIds = cmd.optionIds();
         if (optionIds == null || optionIds.isEmpty()) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_SELECTION);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
         }
 
         // 중복 제거
@@ -167,13 +166,13 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
 
         if (question.getType() == QuestionType.RADIO) {
             if (uniqueOptionIds.size() != 1) {
-                throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_SELECTION);
+                throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
             }
         } else if (question.getType() == QuestionType.CHECKBOX) {
             // 추가 검증 x
         } else {
             // 투표 질문은 RADIO/CHECKBOX만 와야 함
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
         }
 
         // 5) optionIds가 이 question의 옵션인지 검증
@@ -182,16 +181,16 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
             allowedOptionIds.add(opt.getId());
         }
         if (!allowedOptionIds.containsAll(new HashSet<>(uniqueOptionIds))) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_SELECTION);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
         }
 
         // 6) 응답 저장
         FormResponse formResponse = FormResponse.createVoteResponse(
-                form,
-                cmd.memberId(),
-                question,
-                uniqueOptionIds.stream().toList(),
-                now
+            form,
+            cmd.memberId(),
+            question,
+            uniqueOptionIds.stream().toList(),
+            now
         );
 
         saveFormResponsePort.save(formResponse);
@@ -199,12 +198,12 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
 
     private Question extractSingleQuestion(Form form) {
         if (form.getSections().isEmpty()) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
         }
         // 섹션 1개 전제
         var section = form.getSections().iterator().next();
         if (section.getQuestions().isEmpty()) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
         }
         return section.getQuestions().iterator().next();
     }

@@ -3,7 +3,6 @@ package com.umc.product.community.adapter.in.web.dto.response;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.application.port.in.query.dto.PostInfo;
-import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -37,6 +36,8 @@ public record PostResponse(
     @Schema(description = "작성자 이름", example = "홍길동")
     String authorName,
 
+    String authorNickname,
+
     @Schema(description = "작성자 프로필 이미지", example = "https://example.com/profile.jpg")
     String authorProfileImage,
 
@@ -61,21 +62,29 @@ public record PostResponse(
     @Schema(description = "번개 정보 (번개글인 경우)")
     LightningInfoResponse lightningInfo
 ) {
-    public static PostResponse from(Post post, MemberInfo memberInfo, ChallengerInfo challengerInfo) {
+    public static PostResponse from(PostInfo postInfo, MemberInfo memberInfo, ChallengerInfo challengerInfo) {
+        Long challengerId = challengerInfo != null ? challengerInfo.challengerId() : null;
+        ChallengerPart part = challengerInfo != null ? challengerInfo.part() : null;
+        Long memberId = memberInfo != null ? memberInfo.id() : null;
+        String name = memberInfo != null ? memberInfo.name() : null;
+        String nickname = memberInfo != null ? memberInfo.nickname() : null;
+        String profileImageLink = memberInfo != null ? memberInfo.profileImageLink() : null;
+
         return PostResponse.builder()
-            .postId(post.getPostId().id())
-            .title(post.getTitle())
-            .content(post.getContent())
-            .category(post.getCategory())
-            .authorId(challengerInfo.challengerId()) // 검색 결과에는 작성자 정보가 없으므로 null로 설정
-            .authorChallengerId(challengerInfo.challengerId())
-            .authorMemberId(memberInfo.id())
-            .authorName(memberInfo.name())
-            .authorProfileImage(memberInfo.profileImageLink())
-            .authorPart(challengerInfo.part())
-            .createdAt(post.getCreatedAt())
+            .postId(postInfo.postId())
+            .title(postInfo.title())
+            .content(postInfo.content())
+            .category(postInfo.category())
+            .authorId(challengerId)
+            .authorChallengerId(challengerId)
+            .authorMemberId(memberId)
+            .authorName(name)
+            .authorNickname(nickname)
+            .authorProfileImage(profileImageLink)
+            .authorPart(part)
+            .createdAt(postInfo.createdAt())
             .commentCount(0) // TODO: 리팩토링 후에 다시 하자 ...
-            .likeCount(post.getLikeCount())
+            .likeCount(postInfo.likeCount())
             .isLiked(false) // 검색 결과에서는 좋아요 여부를 알 수 없으므로 false로 설정
             .isAuthor(false) // 검색 결과에서는 본인 작성 여부를 알 수 없으므로 false로 설정
             .lightningInfo(null) // 검색 결과에서는 번개 정보가 없으므로 null로 설정
@@ -86,6 +95,7 @@ public record PostResponse(
     // ====================== 예은 작업본 ======================
     // ======================================================
 
+    @Deprecated(since = "v1.2.7", forRemoval = true)
     public static PostResponse from(PostInfo info) {
         LightningInfoResponse lightningInfoResponse = null;
 

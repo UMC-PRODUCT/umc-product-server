@@ -11,6 +11,8 @@ import lombok.Getter;
 @Getter
 public enum ResourceType {
 
+    AUDIT("audit", "감사",
+        Set.of(PermissionType.READ)),
     CURRICULUM("curriculum", "커리큘럼",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
     SCHEDULE("schedule", "일정",
@@ -28,6 +30,8 @@ public enum ResourceType {
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
     WORKBOOK_SUBMISSION("workbook_submission", "워크북 제출 현황",
         Set.of(PermissionType.READ)),
+    ORIGINAL_WORKBOOK("original_workbook", "원본 워크북",
+        Set.of(PermissionType.MANAGE, PermissionType.RELEASE)),
     ATTENDANCE_SHEET("attendance_sheet", "출석부",
         Set.of(PermissionType.APPROVE)),
     ATTENDANCE_RECORD("attendance_record", "출석 기록",

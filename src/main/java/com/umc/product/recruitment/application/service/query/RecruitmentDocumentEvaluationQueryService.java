@@ -1,10 +1,9 @@
 package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.recruitment.adapter.in.web.dto.request.EvaluationDecision;
@@ -55,6 +54,7 @@ import com.umc.product.survey.application.port.out.LoadFormPort;
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.SingleAnswer;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -103,32 +103,31 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
     @Override
     public ApplicationDetailInfo get(GetApplicationDetailQuery query) {
         Recruitment currentRecruitment = loadRecruitmentPort.findById(query.recruitmentId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = currentRecruitment.getEffectiveRootId();
 
         // todo: 운영진 권한 검증
 
         Application application = loadApplicationPort.findById(query.applicationId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_FOUND));
 
         if (!application.getRecruitment().getEffectiveRootId().equals(rootId)) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
         }
 
         Member applicant = loadMemberPort.findById(application.getApplicantMemberId())
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         Long formId = currentRecruitment.getFormId();
         if (formId == null) {
-            throw new BusinessException(Domain.SURVEY, SurveyErrorCode.SURVEY_NOT_FOUND);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND);
         }
         FormDefinitionInfo formDefinition = loadFormPort.loadFormDefinition(formId);
 
         RecruitmentFormDefinitionInfo recruitmentDef = RecruitmentFormDefinitionInfo.from(formDefinition);
 
         FormResponse formResponse = loadFormResponsePort.findById(application.getFormResponseId())
-            .orElseThrow(() -> new BusinessException(Domain.SURVEY, SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
 
         List<AnswerInfo> answers = (formResponse.getAnswers() == null ? List.<SingleAnswer>of()
             : formResponse.getAnswers())
@@ -422,11 +421,11 @@ public class RecruitmentDocumentEvaluationQueryService implements GetApplication
         // todo: 운영진 권한 검증 필요
 
         Member requester = loadMemberPort.findById(query.memberId())
-            .orElseThrow(() -> new BusinessException(Domain.MEMBER, MemberErrorCode.MEMBER_NOT_FOUND));
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
         Long schoolId = requester.getSchoolId();
         if (schoolId == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND);
         }
 
         Long gisuId = resolveActiveGisuId();

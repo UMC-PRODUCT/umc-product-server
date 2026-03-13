@@ -9,7 +9,7 @@ import lombok.Getter;
  * 비즈니스 로직에서 의도적으로 발생시킨 오류를 정의하는 클래스
  */
 @Getter
-public class BusinessException extends RuntimeException {
+public abstract class BusinessException extends RuntimeException {
     private final Domain domain;
     private final BaseCode baseCode;
     private final String message;

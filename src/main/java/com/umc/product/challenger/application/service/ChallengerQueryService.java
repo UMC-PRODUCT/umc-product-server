@@ -28,9 +28,16 @@ public class ChallengerQueryService implements GetChallengerUseCase {
 
     @Override
     public ChallengerInfo getChallengerPublicInfo(Long challengerId) {
-        Challenger challenger = loadChallengerPort.getById(challengerId);
+        return getChallengerInfoFromChallenger(loadChallengerPort.getById(challengerId));
+    }
 
-        return ChallengerInfo.from(challenger, getChallengerPointUseCase.getListByChallengerId(challengerId));
+    @Override
+    public ChallengerInfo findByIdOrNull(Long challengerId) {
+        Challenger challenger = loadChallengerPort.findById(challengerId).orElse(null);
+
+        return challenger != null
+            ? getChallengerInfoFromChallenger(challenger)
+            : null;
     }
 
     @Override
@@ -85,11 +92,25 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     public List<ChallengerInfo> getByGisuId(Long gisuId) {
         return toChallengerInfoListBatch(loadChallengerPort.findByGisuId(gisuId));
     }
-    
+
 
     @Override
     public List<ChallengerInfo> getLatestPerMember() {
         return toChallengerInfoListBatch(loadChallengerPort.findLatestPerMember());
+    }
+
+    @Override
+    public List<ChallengerInfo> getByGisuIdWithoutPoints(Long gisuId) {
+        return loadChallengerPort.findByGisuId(gisuId).stream()
+            .map(c -> ChallengerInfo.from(c, List.of()))
+            .toList();
+    }
+
+    @Override
+    public List<ChallengerInfo> getLatestPerMemberWithoutPoints() {
+        return loadChallengerPort.findLatestPerMember().stream()
+            .map(c -> ChallengerInfo.from(c, List.of()))
+            .toList();
     }
 
     private ChallengerInfo getChallengerInfoFromChallenger(Challenger challenger) {

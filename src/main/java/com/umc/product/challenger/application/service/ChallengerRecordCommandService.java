@@ -15,6 +15,9 @@ import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
+import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
+import com.umc.product.notification.domain.WebhookPlatform;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import jakarta.transaction.Transactional;
@@ -38,6 +41,8 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
     private final GetChapterUseCase getChapterUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final ManageChallengerRoleUseCase manageChallengerRoleUseCase;
+
+    private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
 
     @Override
     public Long create(CreateChallengerRecordCommand command) {
@@ -80,6 +85,8 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
                 .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.NO_CHALLENGER_IN_MEMBER_GISU))
                 .getId();
 
+            MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(memberId);
+
             manageChallengerRoleUseCase.createChallengerRole(
                 CreateChallengerRoleCommand.builder()
                     .challengerId(challengerId)
@@ -89,6 +96,20 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
                     .gisuId(record.getGisuId())
                     .build()
             );
+
+            String roleType =
+                record.getChallengerRoleType() != null ? record.getChallengerRoleType().name() : "역할없음";
+            String responsiblePart = record.getPart() != null ? record.getPart().name() : "파트없음";
+
+            sendWebhookAlarmUseCase.sendBuffered(
+                SendWebhookAlarmCommand.builder()
+                    .title("운영진 권한이 추가되었습니다.")
+                    .content(
+                        memberInfo.schoolName() + " " + memberInfo.nickname() + "/" + memberInfo.name() + " 님이 gisuId"
+                            + record.getGisuId() + "에" + roleType + "/" + responsiblePart + " 권한을 가진 코드를 등록하였습니다.")
+                    .platforms(List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD))
+                    .build()
+            );
         }
 
         // 챌린저 기록 추가하기
@@ -96,11 +117,28 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
             MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(memberId);
             record.validateMember(memberInfo.name(), memberInfo.schoolId());
 
+            // 해당 기수에 챌린저 기록이 없는지 확인
+            loadChallengerPort.findByMemberIdAndGisuId(memberId, record.getGisuId())
+                .ifPresent(challenger -> {
+                    throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_ALREADY_EXISTS,
+                        "해당 기수에 이미 챌린저 기록이 존재합니다.");
+                });
+
             saveChallengerPort.save(
                 Challenger.builder()
                     .memberId(memberId)
                     .part(record.getPart())
                     .gisuId(record.getGisuId())
+                    .build()
+            );
+
+            sendWebhookAlarmUseCase.sendBuffered(
+                SendWebhookAlarmCommand.builder()
+                    .title("챌린저 기록이 추가되었습니다.")
+                    .content(
+                        memberInfo.schoolName() + " " + memberInfo.nickname() + "/" + memberInfo.name() + " 님이 gisuId"
+                            + record.getGisuId() + "에" + record.getPart() + " 파트 챌린저 코드를 등록하였습니다.")
+                    .platforms(List.of(WebhookPlatform.TELEGRAM, WebhookPlatform.DISCORD))
                     .build()
             );
         }

@@ -16,6 +16,8 @@ public interface GetChallengerUseCase {
      */
     ChallengerInfo getChallengerPublicInfo(Long challengerId);
 
+    ChallengerInfo findByIdOrNull(Long challengerId);
+
     /**
      * memberId와 gisuId로 챌린저 정보 조회
      */
@@ -58,5 +60,19 @@ public interface GetChallengerUseCase {
      * 한 멤버가 여러 기수에 걸쳐 챌린저인 경우, 가장 최근 기수의 챌린저 1건만 반환합니다.
      */
     List<ChallengerInfo> getLatestPerMember();
+
+    /**
+     * 기수 ID로 해당 기수의 모든 챌린저 ID 조회 (상벌점 제외)
+     * <p>
+     * 대상자 집계 등 상벌점이 불필요한 경우 사용합니다.
+     */
+    List<ChallengerInfo> getByGisuIdWithoutPoints(Long gisuId);
+
+    /**
+     * 각 멤버별 가장 최근 기수의 챌린저 조회 (상벌점 제외)
+     * <p>
+     * 대상자 집계 등 상벌점이 불필요한 경우 사용합니다.
+     */
+    List<ChallengerInfo> getLatestPerMemberWithoutPoints();
 
 }

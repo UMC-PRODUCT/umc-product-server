@@ -14,8 +14,10 @@ public record PostInfo(
     String title,
     String content,
     Category category,
+    Long authorMemberId, // Author Challenger ID임 주의
     Long authorChallengerId, // Author Challenger ID임 주의
     String authorName,
+    String authorNickname,
     String authorProfileImage,
     ChallengerPart authorPart,
     Instant meetAt,
@@ -32,23 +34,39 @@ public record PostInfo(
     public static PostInfo from(Post post, MemberInfo memberInfo, ChallengerInfo challengerInfo) {
         Long authorChallengerId = post.getAuthorChallengerId();
 
-        return PostInfo.builder()
+        Long authorMemberId = memberInfo != null ? memberInfo.id() : null;
+        String authorName = memberInfo != null ? memberInfo.name() : null;
+        String authorNickname = memberInfo != null ? memberInfo.nickname() : null;
+        String authorProfileImage = memberInfo != null ? memberInfo.profileImageLink() : null;
+        ChallengerPart authorPart = challengerInfo != null ? challengerInfo.part() : null;
+
+        PostInfoBuilder builder = PostInfo.builder();
+
+        // 번개글인 경우
+        if (post.isLightning()) {
+            Post.LightningInfo info = post.getLightningInfoOrThrow();
+            builder
+                .meetAt(info.meetAt())
+                .location(info.location())
+                .maxParticipants(info.maxParticipants())
+                .openChatUrl(info.openChatUrl());
+        }
+
+        return builder
             .postId(post.getPostId().id())
             .title(post.getTitle())
             .content(post.getContent())
             .category(post.getCategory())
+            .authorMemberId(authorMemberId)
             .authorChallengerId(post.getAuthorChallengerId())
-            .authorName(memberInfo.name())
-            .authorProfileImage(memberInfo.profileImageLink())
-            .authorPart(challengerInfo.part())
-            //        Instant meetAt,
-            //        String location,
-            //        Integer maxParticipants,
-            //        String openChatUrl,
+            .authorName(authorName)
+            .authorNickname(authorNickname)
+            .authorProfileImage(authorProfileImage)
+            .authorPart(authorPart)
             .createdAt(post.getCreatedAt())
             .likeCount(post.getLikeCount())
             .isLiked(post.isLiked())
-            .isAuthor(authorChallengerId.equals(challengerInfo.challengerId()))
+            .isAuthor(false) // TODO: deprecate 예정
             .build();
     }
 
@@ -56,16 +74,19 @@ public record PostInfo(
     // ====================== 예은 작업본 ======================
     // ======================================================
 
+    @Deprecated
     public static PostInfo from(Post post, Long authorId, String authorName) {
 
         return from(post, authorId, authorName, null, null, 0, false);
     }
 
+    @Deprecated
     public static PostInfo from(Post post, Long authorId, String authorName, int commentCount) {
 
         return from(post, authorId, authorName, null, null, commentCount, false);
     }
 
+    @Deprecated
     public static PostInfo from(
         Post post, Long authorId, String authorName,
         String authorProfileImage, int commentCount) {
@@ -73,6 +94,7 @@ public record PostInfo(
         return from(post, authorId, authorName, authorProfileImage, null, commentCount, false);
     }
 
+    @Deprecated
     public static PostInfo from(
         Post post, Long authorId, String authorName, String authorProfileImage,
         ChallengerPart authorPart, int commentCount) {
@@ -80,6 +102,7 @@ public record PostInfo(
         return from(post, authorId, authorName, authorProfileImage, authorPart, commentCount, false);
     }
 
+    @Deprecated
     public static PostInfo from(
         Post post, Long authorId, String authorName, String authorProfileImage,
         ChallengerPart authorPart, int commentCount, boolean isAuthor) {
@@ -89,46 +112,42 @@ public record PostInfo(
         // 번개글인 경우
         if (post.isLightning()) {
             Post.LightningInfo info = post.getLightningInfoOrThrow();
-            return new PostInfo(
-                postId,
-                post.getTitle(),
-                post.getContent(),
-                post.getCategory(),
-                authorId,
-                authorName,
-                authorProfileImage,
-                authorPart,
-                info.meetAt(),
-                info.location(),
-                info.maxParticipants(),
-                info.openChatUrl(),
-                post.getCreatedAt(),
-                commentCount,
-                post.getLikeCount(),
-                post.isLiked(),
-                isAuthor
-            );
+            return PostInfo.builder()
+                .postId(postId)
+                .title(post.getTitle())
+                .content(post.getContent())
+                .category(post.getCategory())
+                .authorChallengerId(authorId)
+                .authorName(authorName)
+                .authorProfileImage(authorProfileImage)
+                .authorPart(authorPart)
+                .meetAt(info.meetAt())
+                .location(info.location())
+                .maxParticipants(info.maxParticipants())
+                .openChatUrl(info.openChatUrl())
+                .createdAt(post.getCreatedAt())
+                .commentCount(commentCount)
+                .likeCount(post.getLikeCount())
+                .isLiked(post.isLiked())
+                .isAuthor(isAuthor)
+                .build();
         }
 
         // 일반 게시글
-        return new PostInfo(
-            postId,
-            post.getTitle(),
-            post.getContent(),
-            post.getCategory(),
-            authorId,
-            authorName,
-            authorProfileImage,
-            authorPart,
-            null,
-            null,
-            null,
-            null,
-            post.getCreatedAt(),
-            commentCount,
-            post.getLikeCount(),
-            post.isLiked(),
-            isAuthor
-        );
+        return PostInfo.builder()
+            .postId(postId)
+            .title(post.getTitle())
+            .content(post.getContent())
+            .category(post.getCategory())
+            .authorChallengerId(authorId)
+            .authorName(authorName)
+            .authorProfileImage(authorProfileImage)
+            .authorPart(authorPart)
+            .createdAt(post.getCreatedAt())
+            .commentCount(commentCount)
+            .likeCount(post.getLikeCount())
+            .isLiked(post.isLiked())
+            .isAuthor(isAuthor)
+            .build();
     }
 }

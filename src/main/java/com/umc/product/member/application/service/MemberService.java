@@ -1,10 +1,13 @@
 package com.umc.product.member.application.service;
 
+import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.audit.domain.AuditLogEvent;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.query.GetOAuthListUseCase;
 import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
@@ -15,6 +18,10 @@ import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
+import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
+import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
+import com.umc.product.notification.domain.WebhookPlatform;
+import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.term.application.port.in.command.ManageTermAgreementUseCase;
@@ -26,6 +33,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +51,9 @@ public class MemberService implements ManageMemberUseCase {
     private final ManageTermAgreementUseCase manageTermAgreementUseCase;
     private final GetTermUseCase getTermUseCase;
 
+    private final ApplicationEventPublisher eventPublisher;
+    private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
+    private final GetSchoolUseCase getSchoolUseCase;
 
     @Override
     @Transactional
@@ -68,6 +79,28 @@ public class MemberService implements ManageMemberUseCase {
             manageTermAgreementUseCase.createTermConsent(
                 termConsent.toCommand(savedMember.getId())
             )
+        );
+
+        String logDescription = getSchoolUseCase.getSchoolDetail(command.schoolId()).schoolName()
+            + "소속 " + command.nickname() + "/" + command.name() +
+            " 님이 회원 가입하셨습니다.";
+
+        sendWebhookAlarmUseCase.sendBuffered(
+            SendWebhookAlarmCommand.builder()
+                .platforms(List.of(WebhookPlatform.TELEGRAM))
+                .title("새로운 회원이 가입하였습니다.")
+                .content(logDescription)
+                .build()
+        );
+
+        eventPublisher.publishEvent(
+            AuditLogEvent.builder()
+                .domain(Domain.MEMBER)
+                .action(AuditAction.REGISTER)
+                .targetType("Member")
+                .targetId(String.valueOf(savedMember.getId()))
+                .description(logDescription)
+                .build()
         );
 
         return savedMember.getId();
@@ -126,6 +159,7 @@ public class MemberService implements ManageMemberUseCase {
     }
 
     @Override
+    @Transactional
     public void deleteMember(DeleteMemberCommand command) {
         Long memberId = command.memberId();
 
@@ -148,6 +182,19 @@ public class MemberService implements ManageMemberUseCase {
         }
 
         saveMemberPort.delete(memberToDelete);
+
+        eventPublisher.publishEvent(
+            AuditLogEvent.builder()
+                .domain(Domain.MEMBER)
+                .action(AuditAction.WITHDRAW)
+                .targetType("Member")
+                .targetId(String.valueOf(memberId))
+                .description(
+                    getSchoolUseCase.getSchoolDetail(memberToDelete.getSchoolId()).schoolName()
+                        + "소속 " + memberToDelete.getNickname() + "/" + memberToDelete.getName() +
+                        " 님이 회원 탈퇴하셨습니다.")
+                .build()
+        );
     }
 
     private void validateMandatoryTermsAgreed(RegisterMemberCommand command) {

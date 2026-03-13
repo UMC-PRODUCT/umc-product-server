@@ -32,7 +32,19 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
         if (post.getPostId() != null) {
             PostJpaEntity entity = postRepository.findById(post.getPostId().id())
                 .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
-            entity.update(post.getTitle(), post.getContent(), post.getCategory());
+            if (post.isLightning() && post.getLightningInfo() != null) {
+                Post.LightningInfo info = post.getLightningInfo();
+                entity.updateLightning(
+                    post.getTitle(),
+                    post.getContent(),
+                    info.meetAt(),
+                    info.location(),
+                    info.maxParticipants(),
+                    info.openChatUrl()
+                );
+            } else {
+                entity.update(post.getTitle(), post.getContent(), post.getCategory());
+            }
             return entity.toDomain();
         }
 

@@ -1,9 +1,8 @@
 package com.umc.product.recruitment.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.domain.enums.RecruitmentStatus;
+import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -115,7 +114,7 @@ public class Recruitment extends BaseEntity {
     ) {
         // (1) 검증: 부모가 배포된 상태여야 함
         if (!baseRecruitment.isPublished()) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.BASE_RECRUITMENT_NOT_PUBLISHED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.BASE_RECRUITMENT_NOT_PUBLISHED);
         }
 
         Recruitment extension = new Recruitment();
@@ -166,7 +165,7 @@ public class Recruitment extends BaseEntity {
     // insert(save) 후 ID가 생기면, 이 메서드를 호출해서 root = id로 업데이트
     public void setRootToSelf() {
         if (this.id == null) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ID_MISSING);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_ID_MISSING);
         }
         this.rootRecruitmentId = this.id;
     }
@@ -218,10 +217,10 @@ public class Recruitment extends BaseEntity {
 
     public void requireDraftEditable() {
         if (this.status != RecruitmentStatus.DRAFT) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_DRAFT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_DRAFT);
         }
 //        if (Boolean.FALSE.equals(this.isActive)) {
-//            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_INACTIVE);
+//            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_INACTIVE);
 //        }
     }
 
@@ -232,7 +231,7 @@ public class Recruitment extends BaseEntity {
     public void publish(Instant now) {
 
         if (isPublished()) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_ALREADY_PUBLISHED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_ALREADY_PUBLISHED);
         }
 
         this.status = RecruitmentStatus.PUBLISHED;

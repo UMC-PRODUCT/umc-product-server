@@ -1,12 +1,12 @@
-package com.umc.product.curriculum.application.service;
+package com.umc.product.curriculum.application.service.evaluator;
 
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
-import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
-import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
+import com.umc.product.common.domain.exception.CommonException;
+import com.umc.product.global.exception.constant.CommonErrorCode;
 import org.springframework.stereotype.Component;
 
 /**
@@ -29,9 +29,8 @@ public class WorkbookSubmissionPermissionEvaluator implements ResourcePermission
                 .anyMatch(role -> role.roleType().isSchoolAdmin());
         }
 
-        // 지원하지 않는 권한 타입
-        throw new AuthorizationDomainException(
-            AuthorizationErrorCode.INVALID_RESOURCE_PERMISSION_GIVEN,
-            "WorkbookSubmissionPermissionEvaluator에서 지원하지 않는 권한 유형에 대한 평가가 시도되었습니다: " + resourcePermission.permission());
+        throw new CommonException(CommonErrorCode.PERMISSION_TYPE_NOT_IMPLEMENTED,
+            "WorkbookSubmissionPermissionEvaluator에서 지원하지 않는 권한 유형에 대한 평가가 시도되었습니다: "
+                + resourcePermission.permission());
     }
 }

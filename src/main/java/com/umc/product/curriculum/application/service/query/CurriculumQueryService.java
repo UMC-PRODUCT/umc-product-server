@@ -3,9 +3,12 @@ package com.umc.product.curriculum.application.service.query;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.application.port.in.query.CurriculumProgressInfo;
-import com.umc.product.curriculum.application.port.in.query.CurriculumWeekInfo;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumProgressUseCase;
+import com.umc.product.curriculum.application.port.in.query.GetCurriculumUseCase;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
+import com.umc.product.curriculum.application.port.out.LoadCurriculumPort;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumProgressPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -17,12 +20,20 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class CurriculumQueryService implements GetCurriculumProgressUseCase {
+public class CurriculumQueryService implements GetCurriculumProgressUseCase, GetCurriculumUseCase {
 
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final LoadCurriculumProgressPort loadCurriculumProgressPort;
     private final LoadOriginalWorkbookPort loadOriginalWorkbookPort;
+    private final LoadCurriculumPort loadCurriculumPort;
+
+    @Override
+    public CurriculumInfo getByActiveGisuAndPart(ChallengerPart part) {
+        return loadCurriculumPort.findByActiveGisuAndPart(part)
+            .map(CurriculumInfo::from)
+            .orElse(null);
+    }
 
     @Override
     public CurriculumProgressInfo getMyProgress(Long memberId) {

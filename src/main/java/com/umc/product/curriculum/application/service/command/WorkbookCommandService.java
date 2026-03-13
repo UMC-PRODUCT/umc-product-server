@@ -11,9 +11,8 @@ import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
+import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,20 +29,37 @@ public class WorkbookCommandService implements ManageWorkbookUseCase {
 
     @Override
     public void submit(SubmitWorkbookCommand command) {
-        ChallengerWorkbook workbook = loadChallengerWorkbookPort.findById(command.challengerWorkbookId());
-        OriginalWorkbook originalWorkbook = loadOriginalWorkbookPort.findById(workbook.getOriginalWorkbookId());
+        OriginalWorkbook originalWorkbook = loadOriginalWorkbookPort.findById(command.originalWorkbookId());
 
         // Github, Notion인데 submission이 없다면 에러
         validateSubmission(originalWorkbook.getMissionType(), command.submission());
 
-        workbook.submit(command.submission());
+        // 이미 제출한 이력이 있는지 확인
+        if (!loadChallengerWorkbookPort.findAllByChallengerIdAndOriginalWorkbookId(
+            command.challengerId(),
+            originalWorkbook.getId()
+        ).isEmpty()) {
+            throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_SUBMISSION_ALREADY_EXISTS);
+        }
 
-        saveChallengerWorkbookPort.save(workbook);
+        ChallengerWorkbook challengerWorkbook = ChallengerWorkbook.create(
+            command.challengerId(),
+            originalWorkbook.getId(),
+            WorkbookStatus.PENDING,
+            null
+        );
+
+        challengerWorkbook.submit(command.submission());
+
+        saveChallengerWorkbookPort.save(challengerWorkbook);
     }
 
+    /**
+     * 미션 유형이 PLAIN, 즉 단순 제출이 아닌 경우에 submission이 없는 경우를 검증합니다.
+     */
     private void validateSubmission(MissionType missionType, String submission) {
         if (missionType != MissionType.PLAIN && !StringUtils.hasText(submission)) {
-            throw new BusinessException(Domain.CURRICULUM, CurriculumErrorCode.SUBMISSION_REQUIRED);
+            throw new CurriculumDomainException(CurriculumErrorCode.SUBMISSION_REQUIRED);
         }
     }
 

@@ -5,9 +5,8 @@ import com.umc.product.community.application.port.out.post.LoadPostPort;
 import com.umc.product.community.application.port.out.scrap.LoadScrapPort;
 import com.umc.product.community.application.port.out.scrap.SaveScrapPort;
 import com.umc.product.community.domain.Scrap;
+import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +24,7 @@ public class ScrapCommandService implements ToggleScrapUseCase {
     public ScrapResult toggleScrap(Long postId, Long challengerId) {
         // 게시글 존재 확인
         loadPostPort.findById(postId)
-            .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
 
         // 스크랩 토글
         boolean scrapped;

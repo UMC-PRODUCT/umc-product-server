@@ -5,8 +5,10 @@ import com.umc.product.community.application.port.in.query.dto.PostDetailInfo;
 import com.umc.product.community.domain.enums.Category;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import lombok.Builder;
 
 @Schema(description = "게시글 상세 응답")
+@Builder
 public record PostDetailResponse(
     @Schema(description = "게시글 ID", example = "1")
     Long postId,
@@ -22,9 +24,13 @@ public record PostDetailResponse(
 
     @Schema(description = "작성자 ID", example = "123")
     Long authorId,
+    Long authorMemberId,
+    Long authorChallengerId,
 
     @Schema(description = "작성자 이름", example = "홍길동")
     String authorName,
+
+    String authorNickname,
 
     @Schema(description = "작성자 프로필 이미지", example = "https://example.com/profile.jpg")
     String authorProfileImage,
@@ -68,24 +74,27 @@ public record PostDetailResponse(
             );
         }
 
-        return new PostDetailResponse(
-            info.postId(),
-            info.title(),
-            info.content(),
-            info.category(),
-            info.authorId(),
-            info.authorName(),
-            info.authorProfileImage(),
-            info.authorPart(),
-            lightningInfoResponse,
-            info.commentCount(),
-            info.createdAt(),
-            info.likeCount(),
-            info.isLiked(),
-            info.isAuthor(),
-            info.scrapCount(),
-            info.isScrapped()
-        );
+        return PostDetailResponse.builder()
+            .postId(info.postId())
+            .title(info.title())
+            .content(info.content())
+            .category(info.category())
+            .authorId(null)
+            .authorMemberId(info.authorMemberId())
+            .authorChallengerId(info.authorChallengerId())
+            .authorName(info.authorName())
+            .authorNickname(info.authorNickname())
+            .authorProfileImage(info.authorProfileImage())
+            .authorPart(info.authorPart())
+            .lightningInfo(lightningInfoResponse)
+            .commentCount(info.commentCount())
+            .writeTime(info.createdAt())
+            .likeCount(info.likeCount())
+            .isLiked(info.isLiked())
+            .isAuthor(info.isAuthor())
+            .scrapCount(info.scrapCount())
+            .isScrapped(info.isScrapped())
+            .build();
     }
 
     @Schema(description = "번개 정보")

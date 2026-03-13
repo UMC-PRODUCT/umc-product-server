@@ -28,6 +28,10 @@ public class StudyGroupScheduleCommandService implements CreateStudyGroupSchedul
     public Long create(CreateStudyGroupScheduleCommand command) {
         StudyGroupDetailInfo studyGroup = getStudyGroupUseCase.getStudyGroupDetail(command.studyGroupId());
 
+        if (!validateWritePermission(command.authorMemberId(), studyGroup)) {
+            throw new ScheduleDomainException(ScheduleErrorCode.NOT_STUDY_GROUP_LEADER);
+        }
+
         List<Long> participantMemberIds = new ArrayList<>();
         participantMemberIds.add(studyGroup.leader().memberId());
         for (StudyGroupDetailInfo.MemberInfo member : studyGroup.members()) {
@@ -43,5 +47,12 @@ public class StudyGroupScheduleCommandService implements CreateStudyGroupSchedul
         schedule.assignStudyGroup(command.studyGroupId());
 
         return scheduleId;
+    }
+
+    /**
+     * 스터디 그룹 일정 생성 권한 검증 - 스터디 그룹 리더만 일정을 생성할 수 있습니다.
+     */
+    private boolean validateWritePermission(Long authorMemberId, StudyGroupDetailInfo studyGroup) {
+        return authorMemberId.equals(studyGroup.leader().memberId());
     }
 }

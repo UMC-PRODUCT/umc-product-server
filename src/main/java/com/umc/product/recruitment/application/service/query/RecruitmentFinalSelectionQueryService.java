@@ -1,7 +1,5 @@
 package com.umc.product.recruitment.application.service.query;
 
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.adapter.out.dto.FinalSelectionListItemProjection;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.SortOption;
@@ -14,6 +12,7 @@ import com.umc.product.recruitment.application.port.out.LoadRecruitmentPort;
 import com.umc.product.recruitment.domain.ApplicationPartPreference;
 import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.enums.PartKey;
+import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -43,7 +42,7 @@ public class RecruitmentFinalSelectionQueryService implements GetFinalSelectionL
         // todo: 최종 선발 기간/조건 검증
 
         Recruitment recruitment = loadRecruitmentPort.findById(query.recruitmentId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = recruitment.getEffectiveRootId();
 
         Long recruitmentId = query.recruitmentId();

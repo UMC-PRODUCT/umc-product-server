@@ -6,8 +6,6 @@ import com.umc.product.challenger.application.port.in.command.dto.DeleteChalleng
 import com.umc.product.challenger.application.port.in.command.dto.UpdateChallengerCommand;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.recruitment.application.port.in.command.UpdateFinalStatusUseCase;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateFinalStatusCommand;
 import com.umc.product.recruitment.application.port.in.command.dto.UpdateFinalStatusResult;
@@ -23,6 +21,7 @@ import com.umc.product.recruitment.domain.Recruitment;
 import com.umc.product.recruitment.domain.RecruitmentSchedule;
 import com.umc.product.recruitment.domain.enums.PartKey;
 import com.umc.product.recruitment.domain.enums.RecruitmentScheduleType;
+import com.umc.product.recruitment.domain.exception.RecruitmentDomainException;
 import com.umc.product.recruitment.domain.exception.RecruitmentErrorCode;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
@@ -50,17 +49,16 @@ public class RecruitmentFinalSelectionService implements UpdateFinalStatusUseCas
         validateFinalResultNotPublished(command.recruitmentId());
 
         Recruitment currentRecruitment = loadRecruitmentPort.findById(command.recruitmentId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.RECRUITMENT_NOT_FOUND));
         Long rootId = currentRecruitment.getEffectiveRootId();
 
         Application application = loadApplicationPort.findById(command.applicationId())
-            .orElseThrow(() -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.APPLICATION_NOT_FOUND));
+            .orElseThrow(() -> new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_FOUND));
 
         validateInterviewProcessFinished(application);
 
         if (!application.getRecruitment().getEffectiveRootId().equals(rootId)) {
-            throw new BusinessException(Domain.RECRUITMENT,
-                RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.APPLICATION_NOT_BELONGS_TO_RECRUITMENT);
         }
 
         // todo: 운영진 권한 및 학교 체크
@@ -76,8 +74,7 @@ public class RecruitmentFinalSelectionService implements UpdateFinalStatusUseCas
                     application.getId(),
                     selectedPart
                 )) {
-                    throw new BusinessException(Domain.RECRUITMENT,
-                        RecruitmentErrorCode.FINAL_SELECTED_PART_NOT_PREFERRED);
+                    throw new RecruitmentDomainException(RecruitmentErrorCode.FINAL_SELECTED_PART_NOT_PREFERRED);
                 }
                 application.passFinal(selectedPart);
 
@@ -141,11 +138,11 @@ public class RecruitmentFinalSelectionService implements UpdateFinalStatusUseCas
         // 면접 배정이 아예 없는 경우
         InterviewAssignment assignment = loadInterviewAssignmentPort.findByApplicationId(application.getId())
             .orElseThrow(
-                () -> new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
+                () -> new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_ASSIGNMENT_NOT_FOUND));
 
         // 아직 면접 시간이 끝나지 않은 경우 - 슬롯 시간이 지난 후에만 최종합격 가능
         if (assignment.getSlot().getEndsAt().isAfter(Instant.now())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.INTERVIEW_NOT_FINISHED_YET);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.INTERVIEW_NOT_FINISHED_YET);
         }
 
     }
@@ -156,7 +153,7 @@ public class RecruitmentFinalSelectionService implements UpdateFinalStatusUseCas
 
         // 최종 결과 발표 시점이 지났다면(isActive) 평가 제출/재제출 불가
         if (finalResultAt != null && finalResultAt.isActive(java.time.Instant.now())) {
-            throw new BusinessException(Domain.RECRUITMENT, RecruitmentErrorCode.FINAL_RESULT_ALREADY_PUBLISHED);
+            throw new RecruitmentDomainException(RecruitmentErrorCode.FINAL_RESULT_ALREADY_PUBLISHED);
         }
     }
 

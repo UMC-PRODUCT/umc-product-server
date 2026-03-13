@@ -10,9 +10,8 @@ import com.umc.product.community.application.port.out.comment.SaveCommentPort;
 import com.umc.product.community.application.port.out.post.LoadPostPort;
 import com.umc.product.community.application.service.AuthorInfoProvider;
 import com.umc.product.community.domain.Comment;
+import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,7 +29,7 @@ public class CommentCommandService implements CreateCommentUseCase, DeleteCommen
     @Override
     public CommentInfo create(CreateCommentCommand command) {
         loadPostPort.findById(command.postId())
-            .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.POST_NOT_FOUND));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
 
         Comment comment = Comment.create(
             command.postId(),
@@ -48,10 +47,10 @@ public class CommentCommandService implements CreateCommentUseCase, DeleteCommen
     @Override
     public void delete(Long commentId, Long challengerId) {
         Comment comment = loadCommentPort.findById(commentId)
-            .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.COMMENT_NOT_FOUND));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.COMMENT_NOT_FOUND));
 
         if (!comment.getChallengerId().equals(challengerId)) {
-            throw new BusinessException(Domain.COMMUNITY, CommunityErrorCode.COMMENT_NOT_OWNED);
+            throw new CommunityDomainException(CommunityErrorCode.COMMENT_NOT_OWNED);
         }
 
         saveCommentPort.delete(comment);
@@ -60,7 +59,7 @@ public class CommentCommandService implements CreateCommentUseCase, DeleteCommen
     @Override
     public LikeResult toggle(Long commentId, Long challengerId) {
         loadCommentPort.findById(commentId)
-            .orElseThrow(() -> new BusinessException(Domain.COMMUNITY, CommunityErrorCode.COMMENT_NOT_FOUND));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.COMMENT_NOT_FOUND));
 
         return saveCommentPort.toggleLike(commentId, challengerId);
     }

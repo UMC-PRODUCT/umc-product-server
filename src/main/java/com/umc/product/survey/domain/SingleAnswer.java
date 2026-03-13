@@ -1,9 +1,8 @@
 package com.umc.product.survey.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.survey.domain.enums.QuestionType;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -100,7 +99,7 @@ public class SingleAnswer extends BaseEntity {
         }
 
         // 여기 도달 시 구조이상
-        throw new BusinessException(Domain.SURVEY, SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
+        throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
     }
 }
 

@@ -12,7 +12,9 @@ import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeComman
 import com.umc.product.notice.application.port.in.command.dto.SendNoticeReminderCommand;
 import com.umc.product.notice.application.port.in.command.dto.UpdateNoticeCommand;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
+import com.umc.product.notice.application.port.out.ManageNoticeTargetPort;
 import com.umc.product.notice.application.port.out.SaveNoticePort;
+import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTarget;
@@ -48,6 +50,8 @@ public class NoticeService implements ManageNoticeUseCase {
     private final LoadNoticePort loadNoticePort;
     private final SaveNoticePort saveNoticePort;
     private final SaveNoticeTargetPort saveNoticeTargetPort;
+    private final ManageNoticeTargetPort manageNoticeTargetPort;
+    private final SaveNoticeReadPort saveNoticeReadPort;
     private final LoadChallengerPort loadChallengerPort;
 
     // 도메인 외부 UseCase
@@ -124,11 +128,15 @@ public class NoticeService implements ManageNoticeUseCase {
     public void deleteNotice(DeleteNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
         notice.validateAuthorMember(command.memberId());
-        /*
-         * 관련 이미지, 투표, 링크 등도 모두 삭제
-         */
+
+        // 관련 이미지, 투표, 링크 등도 모두 삭제
         manageNoticeContentUseCase.removeContentsByNoticeId(notice.getId(), command.memberId());
 
+        // noticeRead, noticeTarget 삭제
+        saveNoticeReadPort.deleteAllByNoticeId(notice.getId());
+        manageNoticeTargetPort.deleteByNoticeId(notice.getId());
+
+        // 공지 삭제
         saveNoticePort.delete(notice);
     }
 

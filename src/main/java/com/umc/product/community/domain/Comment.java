@@ -3,36 +3,51 @@ package com.umc.product.community.domain;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
+@Builder
 public class Comment {
 
     private final CommentId commentId;
     private final Long postId;
     private final Long challengerId;
-    private String content;
     private final int likeCount;
     private final boolean liked;
     private final Instant createdAt;
+    private String content;
 
-    public static Comment create(Long postId, Long challengerId, String content, Long parentId) {
+    public static Comment create(
+        Long postId, Long challengerId, String content, Long parentId
+    ) {
         validateRequired(postId, challengerId, content);
-        return new Comment(null, postId, challengerId, content, 0, false, null);
+
+        return Comment.builder()
+            .postId(postId)
+            .challengerId(challengerId)
+            .content(content)
+            .likeCount(0)
+            .liked(false)
+            .createdAt(Instant.now())
+            .build();
     }
 
-    public static Comment reconstruct(CommentId commentId, Long postId, Long challengerId,
-                                      String content, Long parentId, int likeCount, boolean liked,
-                                      Instant createdAt) {
-        return new Comment(commentId, postId, challengerId, content, likeCount, liked, createdAt);
-    }
-
-    public void updateContent(String content) {
-        if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("내용은 필수입니다.");
-        }
-        this.content = content;
+    public static Comment reconstruct(
+        CommentId commentId, Long postId, Long challengerId,
+        String content, Long parentId, int likeCount, boolean liked,
+        Instant createdAt
+    ) {
+        return Comment.builder()
+            .commentId(commentId)
+            .postId(postId)
+            .challengerId(challengerId)
+            .content(content)
+            .likeCount(likeCount)
+            .liked(liked)
+            .createdAt(createdAt)
+            .build();
     }
 
     private static void validateRequired(Long postId, Long challengerId, String content) {
@@ -45,6 +60,13 @@ public class Comment {
         if (content == null || content.isBlank()) {
             throw new IllegalArgumentException("내용은 필수입니다.");
         }
+    }
+
+    public void updateContent(String content) {
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("내용은 필수입니다.");
+        }
+        this.content = content;
     }
 
     public record CommentId(Long id) {

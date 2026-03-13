@@ -1,8 +1,7 @@
 package com.umc.product.organization.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -42,10 +41,10 @@ public class CentralOrganization extends BaseEntity {
 
     private static void validate(Gisu gisu, String name) {
         if (gisu == null) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.GISU_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.GISU_REQUIRED);
         }
         if (name == null || name.isBlank()) {
-            throw new BusinessException(Domain.COMMON, OrganizationErrorCode.ORGAN_NAME_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.ORGAN_NAME_REQUIRED);
         }
     }
 }

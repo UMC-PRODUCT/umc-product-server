@@ -1,6 +1,6 @@
 package com.umc.product.organization.adapter.in.web.dto.request;
 
-import com.umc.product.organization.application.port.in.command.dto.SchoolLinkCommand;
+import com.umc.product.organization.application.port.in.command.dto.CreateSchoolCommand;
 import com.umc.product.organization.domain.enums.SchoolLinkType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -20,7 +20,7 @@ public record SchoolLinkRequest(
     @NotBlank(message = "링크 URL은 필수입니다")
     String url
 ) {
-    public SchoolLinkCommand toCommand() {
-        return new SchoolLinkCommand(title, type, url);
+    public CreateSchoolCommand.SchoolLinkCommand toCommand() {
+        return new CreateSchoolCommand.SchoolLinkCommand(title, type, url);
     }
 }

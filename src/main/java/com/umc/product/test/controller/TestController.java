@@ -1,12 +1,16 @@
 package com.umc.product.test.controller;
 
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier;
 import com.umc.product.common.domain.enums.OAuthProvider;
+import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.SendEmailUseCase;
 import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
@@ -16,6 +20,7 @@ import com.umc.product.notification.domain.WebhookPlatform;
 import com.umc.product.storage.adapter.in.web.dto.FileResponse;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
+import com.umc.product.test.dto.FcmTestSendRequest;
 import com.umc.product.test.dto.TestAopAlarmResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,6 +50,7 @@ public class TestController {
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
     private final GetFileUseCase getFileUseCase;
     private final SendEmailUseCase sendEmailUseCase;
+    private final ManageFcmUseCase manageFcmUseCase;
 
     /**
      * 파일 정보 및 접근 URL을 조회합니다.
@@ -61,6 +67,12 @@ public class TestController {
         return ApiResponse.onSuccess(FileResponse.from(fileInfo));
     }
 
+    @Operation(summary = "FCM 푸시 알림 테스트 전송")
+    @PostMapping("/fcm/test-send")
+    public void sendTestNotification(@RequestBody FcmTestSendRequest request) {
+        manageFcmUseCase.sendMessageByToken(request.toCommand());
+    }
+
     @PostMapping("/email/send-test")
     @Public
     void sendTestEmail(
@@ -71,7 +83,15 @@ public class TestController {
 
     @WebhookAlarm(
         title = "'알람 테스트 : ' + #title",
-        content = "'내용 : ' + #result.content"
+        content = "'내용 : ' + #result.content",
+        platforms = {WebhookPlatform.TELEGRAM}
+    )
+    @Audited(
+        domain = Domain.AUDIT_LOG,
+        action = AuditAction.CREATE,
+        targetType = "Test",
+        targetId = "'TEST'",
+        description = "'내용 : ' + #result.content"
     )
     @GetMapping("webhook/aop-test")
     @Operation(summary = "AOP로 전송하는 알람 테스트")

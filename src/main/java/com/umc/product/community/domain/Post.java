@@ -161,6 +161,9 @@ public class Post {
             if (openChatUrl == null || openChatUrl.isBlank()) {
                 throw new IllegalArgumentException("오픈 채팅 링크는 필수입니다.");
             }
+            if (!openChatUrl.startsWith("https://") && !openChatUrl.startsWith("http://")) {
+                throw new IllegalArgumentException("오픈 채팅 링크는 http:// 또는 https://로 시작해야 합니다.");
+            }
         }
 
         /**

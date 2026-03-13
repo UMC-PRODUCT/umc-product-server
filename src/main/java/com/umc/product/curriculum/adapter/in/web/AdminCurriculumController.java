@@ -1,19 +1,16 @@
 package com.umc.product.curriculum.adapter.in.web;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.curriculum.adapter.in.web.dto.request.ManageCurriculumRequest;
-import com.umc.product.curriculum.adapter.in.web.dto.response.AdminCurriculumResponse;
 import com.umc.product.curriculum.adapter.in.web.swagger.AdminCurriculumControllerApi;
 import com.umc.product.curriculum.application.port.in.command.ManageCurriculumUseCase;
-import com.umc.product.curriculum.application.port.in.query.GetAdminCurriculumUseCase;
-import com.umc.product.global.security.annotation.Public;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -21,26 +18,18 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AdminCurriculumController implements AdminCurriculumControllerApi {
 
-    private final GetAdminCurriculumUseCase getAdminCurriculumUseCase;
     private final ManageCurriculumUseCase manageCurriculumUseCase;
 
-    @Public
-    @Override
-    @GetMapping
-    public AdminCurriculumResponse getCurriculum(
-        @RequestParam ChallengerPart part
-    ) {
-        // TODO: user의 권한에 따라 막히게 구현 필요
-        return AdminCurriculumResponse.from(getAdminCurriculumUseCase.getByActiveGisuAndPart(part));
-    }
-
-    @Public
+    @CheckAccess(
+        resourceType = ResourceType.ORIGINAL_WORKBOOK,
+        permission = PermissionType.MANAGE,
+        message = "커리큘럼은 중앙운영사무국 교육국 소속 파트장만 관리할 수 있습니다."
+    )
     @Override
     @PutMapping
     public void manageCurriculum(
         @Valid @RequestBody ManageCurriculumRequest request
     ) {
-        // TODO: user의 권한에 따라 막히게 구현 필요
         manageCurriculumUseCase.manage(request.toCommand());
     }
 }

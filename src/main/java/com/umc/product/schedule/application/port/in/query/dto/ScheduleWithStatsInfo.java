@@ -17,6 +17,7 @@ public record ScheduleWithStatsInfo(
     String locationName,
     // === AttendanceSheet Info ===
     Long sheetId,
+    boolean sheetActive,
     // === Attendance Stats ===
     Integer totalCount,
     Integer presentCount,
@@ -36,6 +37,7 @@ public record ScheduleWithStatsInfo(
             schedule.getEndsAt(),
             schedule.getLocationName(),
             sheet != null ? sheet.getId() : null,
+            sheet != null && sheet.isActive(),
             stats.totalCount(),
             stats.presentCount(),
             stats.pendingCount(),

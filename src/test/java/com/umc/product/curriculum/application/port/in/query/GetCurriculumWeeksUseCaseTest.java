@@ -3,6 +3,7 @@ package com.umc.product.curriculum.application.port.in.query;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
 import com.umc.product.curriculum.application.port.out.SaveCurriculumPort;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
@@ -124,6 +125,7 @@ class GetCurriculumWeeksUseCaseTest extends UseCaseTestSupport {
         // then
         assertThat(result).isEmpty();
     }
+
     private OriginalWorkbook createWorkbook(Curriculum curriculum, int weekNo, String title) {
         Instant startBase = Instant.parse("2024-03-01T00:00:00Z");
         Instant endBase = Instant.parse("2024-03-07T00:00:00Z");

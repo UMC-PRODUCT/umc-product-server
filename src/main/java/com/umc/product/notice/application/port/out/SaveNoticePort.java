@@ -7,4 +7,5 @@ public interface SaveNoticePort {
 
     void delete(Notice notice);
 
+    void incrementViewCount(Long noticeId);
 }

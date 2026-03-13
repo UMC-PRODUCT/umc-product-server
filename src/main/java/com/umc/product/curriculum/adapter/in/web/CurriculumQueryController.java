@@ -2,13 +2,16 @@ package com.umc.product.curriculum.adapter.in.web;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumProgressResponse;
+import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumResponse;
 import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumWeeksResponse;
 import com.umc.product.curriculum.adapter.in.web.swagger.CurriculumQueryControllerApi;
-import com.umc.product.curriculum.application.port.in.query.CurriculumProgressInfo;
-import com.umc.product.curriculum.application.port.in.query.CurriculumWeekInfo;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumProgressUseCase;
+import com.umc.product.curriculum.application.port.in.query.GetCurriculumUseCase;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.global.security.annotation.Public;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +25,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class CurriculumQueryController implements CurriculumQueryControllerApi {
 
     private final GetCurriculumProgressUseCase getCurriculumProgressUseCase;
+    private final GetCurriculumUseCase getCurriculumUseCase;
+
+    @Public
+    @Override
+    @GetMapping
+    public CurriculumResponse getCurriculum(
+        @RequestParam ChallengerPart part
+    ) {
+        return CurriculumResponse.from(getCurriculumUseCase.getByActiveGisuAndPart(part));
+    }
 
     @Override
     @GetMapping("/challengers/me/progress")

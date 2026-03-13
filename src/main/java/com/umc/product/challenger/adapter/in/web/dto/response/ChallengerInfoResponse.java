@@ -44,7 +44,8 @@ public record ChallengerInfoResponse(
 ) {
     public static ChallengerInfoResponse from(
         ChallengerInfo info, MemberInfo memberInfo,
-        GisuInfo gisuInfo, ChapterInfo chapterInfo) {
+        GisuInfo gisuInfo, ChapterInfo chapterInfo
+    ) {
         return ChallengerInfoResponse.builder()
             .challengerId(info.challengerId())
             .memberId(info.memberId())
@@ -56,6 +57,7 @@ public record ChallengerInfoResponse(
             .chapterName(chapterInfo.name())
             .part(info.part())
             .challengerPoints(info.challengerPoints())
+            .totalPoints(info.totalPoints())
             .points(info.challengerPoints())
 
             // Member 정보
@@ -79,7 +81,8 @@ public record ChallengerInfoResponse(
      */
     public static ChallengerInfoResponse from(
         ChallengerInfo info, MemberInfo memberInfo, GisuInfo gisuInfo, ChapterInfo chapterInfo,
-        List<ChallengerRoleInfo> roles) {
+        List<ChallengerRoleInfo> roles
+    ) {
         return ChallengerInfoResponse.builder()
             .challengerId(info.challengerId())
             .memberId(info.memberId())
@@ -95,10 +98,12 @@ public record ChallengerInfoResponse(
             // 상벌점
             .challengerPoints(info.challengerPoints())
             .points(info.challengerPoints())
+            .totalPoints(info.totalPoints())
+
             // 역할 (권한)
             .roles(roles.stream()
                 .map(roleInfo -> {
-                    // 보통은 이렇게 assert로 검증하기보다는, 서비스 레이어에서 미리 검증하는게 좋긴 합니다만...
+                    // TODO: 보통은 이렇게 assert로 검증하기보다는, 서비스 레이어에서 미리 검증하는게 좋긴 합니다만...
                     assert roleInfo.gisuId().equals(gisuInfo.gisuId());
                     return ChallengerRoleResponse.from(roleInfo, gisuInfo);
                 }).toList())
@@ -112,6 +117,38 @@ public record ChallengerInfoResponse(
             .profileImageLink(memberInfo.profileImageLink())
             .memberStatus(memberInfo.status())
             .status(memberInfo.status())
+            .build();
+    }
+
+    /**
+     * Public하게 공개할 목적으로 민감한 정보를 제거합니다
+     */
+    public ChallengerInfoResponse toPublic() {
+        return ChallengerInfoResponse.builder()
+            .challengerId(challengerId)
+            .memberId(memberId)
+            .gisuId(gisuId)
+            .gisu(gisu)
+            .chapterId(chapterId)
+            .chapterName(chapterName)
+            .part(part)
+            .challengerStatus(challengerStatus)
+            // 상벌점 정보는 공개하지 않음
+            .challengerPoints(List.of())
+            .points(List.of())
+            .totalPoints(totalPoints)
+            .roles(roles)
+
+            // 멤버 정보 중 일부만 공개
+            .name(name)
+            .nickname(nickname)
+            .email(null) // 이메일은 보안 상 제거하도록 함
+            .schoolId(schoolId)
+            .schoolName(schoolName)
+            .profileImageLink(profileImageLink)
+            // 회원 상태는 공개하지 않음
+            .memberStatus(null)
+            .status(null)
             .build();
     }
 }

@@ -1,6 +1,7 @@
 package com.umc.product.schedule.application.service.command;
 
-import com.umc.product.global.exception.BusinessException;
+import com.umc.product.audit.application.port.in.annotation.Audited;
+import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
@@ -16,9 +17,11 @@ import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,22 +43,31 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
     private final SaveAttendanceRecordPort saveAttendanceRecordPort;
     private final LoadSchedulePort loadSchedulePort;
 
+    private final ApplicationEventPublisher eventPublisher;
+
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.CHECK,
+        targetType = "AttendanceRecord",
+        targetId = "#result",
+        description = "'출석 체크'"
+    )
     @Override
     public Long check(CheckAttendanceCommand command) {
         // 출석부 조회 및 검증
         AttendanceSheet sheet = loadAttendanceSheetPort.findById(command.attendanceSheetId())
             .orElseThrow(
-                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+                () -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
         // 출석부 활성화 여부 확인
         if (!sheet.isActive()) {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_INACTIVE);
+            throw new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_INACTIVE);
         }
 
         // 일정 조회 (지각/결석 판별용)
         Schedule schedule = loadSchedulePort.findById(sheet.getScheduleId())
             .orElseThrow(
-                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+                () -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
         Instant checkTime = command.checkedAt();
         Instant windowStartTime = sheet.getWindow().getStartTime();
@@ -63,7 +75,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         // 출석 가능 시간 범위 검증
         // 0. 출석 시작 전 - 상태 변경 없이 막기
         if (checkTime.isBefore(windowStartTime)) {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.OUTSIDE_ATTENDANCE_WINDOW);
+            throw new ScheduleDomainException(ScheduleErrorCode.OUTSIDE_ATTENDANCE_WINDOW);
         }
 
         // 1. 출석 인정 시간 (윈도우 내)
@@ -82,7 +94,7 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         AttendanceRecord record = loadAttendanceRecordPort
             .findBySheetIdAndMemberId(command.attendanceSheetId(), command.memberId())
             .orElseThrow(
-                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
+                () -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
 
         // 시간에 따른 출석 상태 결정
         AttendanceStatus newStatus = determineAttendanceStatus(sheet, schedule, checkTime);
@@ -120,12 +132,19 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         return AttendanceStatus.ABSENT;
     }
 
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.APPROVE,
+        targetType = "AttendanceRecord",
+        targetId = "#recordId.id()",
+        description = "'출석 승인'"
+    )
     @Override
     public void approve(AttendanceRecordId recordId, Long confirmerId) {
         // 출석 기록 조회
         AttendanceRecord record = loadAttendanceRecordPort.findById(recordId.id())
             .orElseThrow(
-                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
+                () -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
 
         // 승인 처리
         record.approve(confirmerId);
@@ -134,12 +153,19 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         saveAttendanceRecordPort.save(record);
     }
 
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.REJECT,
+        targetType = "AttendanceRecord",
+        targetId = "#recordId.id()",
+        description = "'출석 반려'"
+    )
     @Override
     public void reject(AttendanceRecordId recordId, Long confirmerId) {
         // 출석 기록 조회
         AttendanceRecord record = loadAttendanceRecordPort.findById(recordId.id())
             .orElseThrow(
-                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
+                () -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
 
         // 반려 처리
         record.reject(confirmerId);
@@ -149,24 +175,31 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
         saveAttendanceRecordPort.save(record);
     }
 
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.SUBMIT,
+        targetType = "AttendanceRecord",
+        targetId = "#result.id()",
+        description = "'출석 사유 제출'"
+    )
     @Override
     public AttendanceRecordId submitReason(SubmitReasonCommand command) {
         // 출석부 조회 및 검증
         AttendanceSheet sheet = loadAttendanceSheetPort.findById(command.attendanceSheetId())
             .orElseThrow(
-                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
+                () -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
         // 출석 시간대 검증 (active 대신 시간대 체크)
         Instant submittedAt = command.submittedAt();
         if (!sheet.isWithinTimeWindow(submittedAt)) {
-            throw new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.OUTSIDE_ATTENDANCE_WINDOW);
+            throw new ScheduleDomainException(ScheduleErrorCode.OUTSIDE_ATTENDANCE_WINDOW);
         }
 
         // 기존 출석 기록 조회
         AttendanceRecord record = loadAttendanceRecordPort
             .findBySheetIdAndMemberId(command.attendanceSheetId(), command.memberId())
             .orElseThrow(
-                () -> new BusinessException(Domain.SCHEDULE, ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
+                () -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_RECORD_NOT_FOUND));
 
         // 사유 제출 (출석 체크 전 상태에서만 가능, 위치 인증은 실패로 처리됨)
         record.submitReasonBeforeCheck(command.reason(), submittedAt);

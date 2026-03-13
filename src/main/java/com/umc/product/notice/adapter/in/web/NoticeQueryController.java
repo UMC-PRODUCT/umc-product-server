@@ -87,7 +87,7 @@ public class NoticeQueryController implements NoticeQueryApi {
     )
     @GetMapping("/{noticeId}")
     public ApiResponse<GetNoticeDetailResponse> getNotice(
-        @PathVariable("noticeId") Long noticeId,
+        @PathVariable Long noticeId,
         @CurrentMember MemberPrincipal memberPrincipal) {
 
         NoticeInfo noticeDetail = getNoticeUseCase.getNoticeDetail(noticeId, memberPrincipal.getMemberId());

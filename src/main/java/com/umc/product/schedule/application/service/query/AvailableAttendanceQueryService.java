@@ -23,9 +23,13 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 현재 출석 체크 가능한 일정 목록을 조회
  *
- * <p>해당 기수의 활성 출석부 중 아직 종료되지 않은 일정만,
- * <p>해당 멤버의 기존 출석 기록이 있으면 함께 가져옴.
- * <p>시작 시간 오름차순.
+ * <p>해당 기수의 활성 출석부 중 세션이 종료(schedule.endsAt)되지 않은 일정만 반환.
+ * <p>시간대 구분:
+ * <ul>
+ *   <li>window.startTime ~ window.endTime : 출석 인정 시간 (PRESENT/LATE 판정)</li>
+ *   <li>window.endTime ~ schedule.endsAt  : 지각 시간 (출석 신청 가능, 결과는 LATE)</li>
+ *   <li>schedule.endsAt ~                 : 결석 시간 (출석 신청 불가, 세션 목록에서 제외)</li>
+ * </ul>
  */
 @Service
 @RequiredArgsConstructor
@@ -86,22 +90,26 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
                 Schedule schedule = scheduleMap.get(sheet.getScheduleId());
                 AttendanceRecord record = recordBySheetId.get(sheet.getId());
 
-                // 필터링: 출석 가능한 것만
                 // 1. 일정이 없으면 제외
                 if (schedule == null) {
                     return null;
                 }
 
-                // 2. 출석 시간대가 종료되었으면 제외 (나의 출석 현황으로 이동)
-                // ⭐ 출석 시간 전에는 조회 가능 (미리 확인), 시간대 종료 후에만 제외
-                if (now.isAfter(sheet.getWindow().getEndTime())) {
+                // 2. 결석 시간(세션 종료) 이후 제외 → 나의 출석 현황으로 이동
+                //    지각 시간(window.endTime ~ schedule.endsAt)에는 여전히 출석 신청 가능
+                if (now.isAfter(schedule.getEndsAt())) {
                     return null;
                 }
 
-                // 3. 출석 프로세스 완료된 것 제외 (나의 출석 현황으로 이동)
-                // 포함: PENDING (출석 전), PRESENT/PRESENT_PENDING (출석 완료), EXCUSED_PENDING (사유 제출 승인 대기)
-                // 제외: LATE/LATE_PENDING (지각), ABSENT (결석), EXCUSED (인정결석 승인 완료)
-                if (record != null && isAttendanceProcessCompleted(record.getStatus())) {
+                // 3. 결석/인정결석 확정 상태는 제외 (더 이상 출석 신청 불필요)
+                if (record != null && COMPLETED_STATUSES.contains(record.getStatus())) {
+                    return null;
+                }
+
+                // 4. 출석 완료(PRESENT)는 출석 시간대(window) 이후에는 "나의 출석 현황"으로 이동
+                if (record != null
+                    && record.getStatus() == AttendanceStatus.PRESENT
+                    && !sheet.isWithinTimeWindow(now)) {
                     return null;
                 }
 
@@ -113,9 +121,5 @@ public class AvailableAttendanceQueryService implements GetAvailableAttendancesU
             .filter(info -> info != null)
             .sorted(Comparator.comparing(AvailableAttendanceInfo::startTime))
             .toList();
-    }
-
-    private boolean isAttendanceProcessCompleted(AttendanceStatus status) {
-        return COMPLETED_STATUSES.contains(status);
     }
 }

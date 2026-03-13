@@ -1,7 +1,7 @@
 package com.umc.product.curriculum.application.port.out;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.application.port.in.query.CurriculumWeekInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import java.util.List;
 

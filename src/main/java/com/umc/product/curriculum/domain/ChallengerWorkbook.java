@@ -1,10 +1,9 @@
 package com.umc.product.curriculum.domain;
 
-import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
-import com.umc.product.global.exception.BusinessException;
-import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
+import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,13 +12,20 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "challenger_workbook")
+@Table(
+    name = "challenger_workbook",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_challenger_workbook_challenger_id_original_workbook_id",
+        columnNames = {"challenger_id", "original_workbook_id"}
+    )
+)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChallengerWorkbook extends BaseEntity {
@@ -38,7 +44,7 @@ public class ChallengerWorkbook extends BaseEntity {
     @Column(nullable = false)
     private WorkbookStatus status;
 
-    @Column(nullable = false)
+    @Column
     private Long scheduleId;
 
     @Column(columnDefinition = "TEXT")
@@ -50,16 +56,21 @@ public class ChallengerWorkbook extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String submission;
 
-    @Builder(access =  AccessLevel.PRIVATE)
-    private ChallengerWorkbook(Long challengerId, Long originalWorkbookId, Long scheduleId,
-                               WorkbookStatus status) {
+    @Builder(access = AccessLevel.PRIVATE)
+    private ChallengerWorkbook(
+        Long challengerId, Long originalWorkbookId,
+        Long scheduleId, WorkbookStatus status
+    ) {
         this.challengerId = challengerId;
         this.originalWorkbookId = originalWorkbookId;
         this.scheduleId = scheduleId;
         this.status = status != null ? status : WorkbookStatus.PENDING;
     }
 
-    public static ChallengerWorkbook create(Long challengerId, Long originalWorkbookId, WorkbookStatus status, Long scheduleId) {
+    public static ChallengerWorkbook create(
+        Long challengerId, Long originalWorkbookId,
+        WorkbookStatus status, Long scheduleId
+    ) {
         return ChallengerWorkbook.builder()
             .challengerId(challengerId)
             .originalWorkbookId(originalWorkbookId)
@@ -108,19 +119,19 @@ public class ChallengerWorkbook extends BaseEntity {
 
     private void validatePendingStatus() {
         if (this.status != WorkbookStatus.PENDING) {
-            throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
+            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WORKBOOK_STATUS);
         }
     }
 
     private void validateSubmittedStatus() {
         if (this.status != WorkbookStatus.SUBMITTED) {
-            throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
+            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WORKBOOK_STATUS);
         }
     }
 
     private void validateCanSelectBest() {
         if (this.status != WorkbookStatus.SUBMITTED && this.status != WorkbookStatus.PASS) {
-            throw new BusinessException(Domain.CHALLENGER, ChallengerErrorCode.INVALID_WORKBOOK_STATUS);
+            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WORKBOOK_STATUS);
         }
     }
 }
