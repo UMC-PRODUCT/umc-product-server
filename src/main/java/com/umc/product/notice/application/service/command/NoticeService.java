@@ -151,6 +151,11 @@ public class NoticeService implements ManageNoticeUseCase {
         }
     }
 
+    @Override
+    public void incrementViewCount(Long noticeId) {
+        saveNoticePort.incrementViewCount(noticeId);
+    }
+
     // === PRIVATE METHODS ===
 
     /**

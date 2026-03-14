@@ -14,6 +14,7 @@ import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeReadSta
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeStaticsResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeSummaryResponse;
 import com.umc.product.notice.adapter.in.web.swagger.NoticeQueryApi;
+import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
@@ -41,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class NoticeQueryController implements NoticeQueryApi {
 
     private final GetNoticeUseCase getNoticeUseCase;
+    private final ManageNoticeUseCase manageNoticeUseCase;
 
     /*
      * 공지 전체 조회
@@ -91,6 +93,7 @@ public class NoticeQueryController implements NoticeQueryApi {
         @CurrentMember MemberPrincipal memberPrincipal) {
 
         NoticeInfo noticeDetail = getNoticeUseCase.getNoticeDetail(noticeId, memberPrincipal.getMemberId());
+        manageNoticeUseCase.incrementViewCount(noticeId);
         return ApiResponse.onSuccess(GetNoticeDetailResponse.from(noticeDetail));
     }
 
