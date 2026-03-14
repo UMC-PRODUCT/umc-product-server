@@ -28,10 +28,13 @@ public interface CurriculumQueryControllerApi {
     );
 
     @Operation(
-        summary = "내 커리큘럼 진행 상황 조회",
+        summary = "내 커리큘럼 진행 상황 조회 (Deprecated)",
         description = "챌린저의 커리큘럼 진행 상황을 조회합니다. " +
-            "각 주차별 워크북의 상태(기본/진행중/제출완료/통과/실패)를 반환합니다."
+            "각 주차별 워크북의 상태(기본/진행중/제출완료/통과/실패)를 반환합니다.\n\n" +
+            "**Deprecated**: 현재 활성 기수 기준으로만 조회되어 이전 기수 사용자는 조회가 불가합니다. " +
+            "`GET /api/v2/curriculums/challengers/me/progress?gisuId={gisuId}` 사용을 권장합니다."
     )
+    @Deprecated
     CurriculumProgressResponse getMyProgress(MemberPrincipal memberPrincipal);
 
     @Operation(
