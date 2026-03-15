@@ -5,6 +5,7 @@ import com.umc.product.schedule.domain.ScheduleConstants;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Set;
 
 public record ScheduleDetailInfo(
@@ -20,10 +21,16 @@ public record ScheduleDetailInfo(
     Double longitude,
     String status,
     long dDay,
-    boolean requiresAttendanceApproval
+    boolean requiresAttendanceApproval,
+    List<Long> participantMemberIds
 ) {
 
-    public static ScheduleDetailInfo from(Schedule schedule, Instant now, boolean requiresAttendanceApproval) {
+    public static ScheduleDetailInfo from(
+        Schedule schedule,
+        Instant now,
+        boolean requiresAttendanceApproval,
+        List<Long> participantMemberIds
+    ) {
         Double lat = schedule.getLocation() != null ? schedule.getLocation().getY() : null;
         Double lng = schedule.getLocation() != null ? schedule.getLocation().getX() : null;
         long dDay = ChronoUnit.DAYS.between(
@@ -44,7 +51,8 @@ public record ScheduleDetailInfo(
             lng,
             schedule.resolveStatus(now),
             dDay,
-            requiresAttendanceApproval
+            requiresAttendanceApproval,
+            participantMemberIds
         );
     }
 }
