@@ -23,10 +23,6 @@ public record CurriculumResponse(
     List<WorkbookResponse> workbooks
 ) {
     public static CurriculumResponse from(CurriculumInfo info) {
-        if (info == null) {
-            return null;
-        }
-
         List<WorkbookResponse> workbookResponses = info.workbooks().stream()
             .map(WorkbookResponse::from)
             .toList();
