@@ -23,7 +23,7 @@ public record SchoolDetailInfo(
     ) {
     }
 
-    public record SchoolInfo(
+    public record SchoolInfoWithoutSchoolLinkItem (
         Long chapterId,
         String chapterName,
         String schoolName,

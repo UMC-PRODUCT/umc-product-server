@@ -1,7 +1,9 @@
 package com.umc.product.organization.application.port.out.query;
 
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo.SchoolInfoWithoutSchoolLinkItem;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.domain.School;
 import java.util.List;
@@ -12,17 +14,21 @@ public interface LoadSchoolPort {
 
     Page<SchoolListItemInfo> findSchools(SchoolSearchCondition condition, Pageable pageable);
 
-    List<School> findAll();
+    List<SchoolNameInfo> findAllNames();
 
     School findSchoolDetailById(Long schoolId);
 
     School findById(Long schoolId);
 
-    SchoolDetailInfo.SchoolInfo findSchoolDetailByIdWithActiveChapter(Long schoolId);
+    SchoolInfoWithoutSchoolLinkItem findSchoolDetailByIdWithActiveChapter(Long schoolId);
+
+    List<SchoolDetailInfo.SchoolLinkItem> findLinksBySchoolId(Long schoolId);
 
     List<School> findAllByIds(List<Long> schoolIds);
 
     List<School> findUnassignedByGisuId(Long gisuId);
+
+    List<School> findSchoolsByGisuId(Long gisuId);
 
     boolean existsById(Long schoolId);
 

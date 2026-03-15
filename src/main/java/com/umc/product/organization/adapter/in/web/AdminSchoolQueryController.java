@@ -11,7 +11,6 @@ import com.umc.product.organization.adapter.in.web.dto.response.UnassignedSchool
 import com.umc.product.organization.adapter.in.web.swagger.AdminSchoolQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
-import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminSchoolQueryController implements AdminSchoolQueryControllerApi {
 
     private final GetSchoolUseCase getSchoolUseCase;
-    private final GetFileUseCase getFileUseCase;
 
     @Override
     @GetMapping

@@ -2,7 +2,9 @@ package com.umc.product.organization.adapter.out.persistence;
 
 
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo.SchoolInfoWithoutSchoolLinkItem;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
@@ -44,8 +46,8 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
     }
 
     @Override
-    public List<School> findAll() {
-        return schoolJpaRepository.findAllByOrderByNameAsc();
+    public List<SchoolNameInfo> findAllNames() {
+        return schoolJpaRepository.findAllNameInfoOrderByNameAsc();
     }
 
     @Override
@@ -82,11 +84,21 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
     }
 
     @Override
-    public SchoolDetailInfo.SchoolInfo findSchoolDetailByIdWithActiveChapter(Long schoolId) {
-        SchoolDetailInfo.SchoolInfo schoolInfo = schoolQueryRepository.getSchoolDetail(schoolId);
-        if (schoolInfo == null) {
+    public List<School> findSchoolsByGisuId(Long gisuId) {
+        return schoolJpaRepository.findSchoolsByGisuId(gisuId);
+    }
+
+    @Override
+    public SchoolInfoWithoutSchoolLinkItem findSchoolDetailByIdWithActiveChapter(Long schoolId) {
+        SchoolInfoWithoutSchoolLinkItem schoolInfoWithoutSchoolLinkItem = schoolQueryRepository.getSchoolDetail(schoolId);
+        if (schoolInfoWithoutSchoolLinkItem == null) {
             throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_NOT_FOUND);
         }
-        return schoolInfo;
+        return schoolInfoWithoutSchoolLinkItem;
+    }
+
+    @Override
+    public List<SchoolDetailInfo.SchoolLinkItem> findLinksBySchoolId(Long schoolId) {
+        return schoolJpaRepository.findLinksBySchoolId(schoolId);
     }
 }

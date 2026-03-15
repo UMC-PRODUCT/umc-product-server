@@ -11,7 +11,7 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo.SchoolInfoWithoutSchoolLinkItem;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import java.util.List;
@@ -92,11 +92,11 @@ public class SchoolQueryRepository {
     /**
      * 학교 상세 정보를 반환합니다.
      */
-    public SchoolDetailInfo.SchoolInfo getSchoolDetail(Long schoolId) {
+    public SchoolInfoWithoutSchoolLinkItem getSchoolDetail(Long schoolId) {
         JPQLQuery<Long> activeChapterIds = activeChapterIdSubQuery();
 
         return queryFactory
-            .select(Projections.constructor(SchoolDetailInfo.SchoolInfo.class,
+            .select(Projections.constructor(SchoolInfoWithoutSchoolLinkItem.class,
                 chapter.id,
                 chapter.name,
                 school.name,
@@ -115,7 +115,5 @@ public class SchoolQueryRepository {
             .leftJoin(chapterSchool.chapter, chapter)
             .where(school.id.eq(schoolId))
             .fetchFirst();
-        // TODO: fetchFirst로 임시로 해결은 해두었으나, 같은 기수 (활성 기수) 내에 학교가 중복된 지부에 속하는 경우 오류가 발생함.
-        // 해당 경우를 고려해서 학교를 지부에 배정할 때 검증하는 로직을 추가할 필요성이 있음.
     }
 }
