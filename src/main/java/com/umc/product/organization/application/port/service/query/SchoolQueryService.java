@@ -1,15 +1,14 @@
 package com.umc.product.organization.application.port.service.query;
 
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
+import com.umc.product.organization.application.port.in.query.dto.SchoolChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo.SchoolInfoWithoutSchoolLinkItem;
 import com.umc.product.organization.application.port.in.query.dto.SchoolLinkInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import com.umc.product.organization.application.port.in.query.dto.UnassignedSchoolInfo;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
-import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.School;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
@@ -64,7 +63,7 @@ public class SchoolQueryService implements GetSchoolUseCase {
     @Override
     public SchoolDetailInfo getSchoolDetail(Long schoolId) {
 
-        SchoolInfoWithoutSchoolLinkItem schoolInfoWithoutSchoolLinkItem = loadSchoolPort.findSchoolDetailByIdWithActiveChapter(schoolId);
+        SchoolChapterInfo schoolInfoWithoutSchoolLinkItem = loadSchoolPort.findSchoolDetailByIdWithActiveChapter(schoolId);
 
         String logoImageUrl = null;
         if (schoolInfoWithoutSchoolLinkItem.logoImageId() != null) {
@@ -74,7 +73,7 @@ public class SchoolQueryService implements GetSchoolUseCase {
 
         List<SchoolDetailInfo.SchoolLinkItem> links = loadSchoolPort.findLinksBySchoolId(schoolId);
 
-        return schoolInfoWithoutSchoolLinkItem.toDetailInfo(logoImageUrl, links);
+        return toSchoolDetailInfo(schoolInfoWithoutSchoolLinkItem, logoImageUrl, links);
 
     }
 
@@ -96,10 +95,16 @@ public class SchoolQueryService implements GetSchoolUseCase {
 
     @Override
     public List<SchoolDetailInfo> getSchoolListByGisuId(Long gisuId) {
-        List<School> schools = loadSchoolPort.findSchoolsByGisuId(gisuId);
+
+        List<SchoolChapterInfo> schools = loadSchoolPort.findSchoolDetailsByGisuId(gisuId);
+        if (schools.isEmpty()) return List.of();
+
+        List<Long> schoolIds = schools.stream().map(SchoolChapterInfo::schoolId).toList();
+
+        Map<Long, List<SchoolDetailInfo.SchoolLinkItem>> linksMap = loadSchoolPort.findLinksBySchoolIds(schoolIds);
 
         List<String> logoImageIds = schools.stream()
-            .map(School::getLogoImageId)
+            .map(SchoolChapterInfo::logoImageId)
             .filter(Objects::nonNull)
             .toList();
 
@@ -108,31 +113,26 @@ public class SchoolQueryService implements GetSchoolUseCase {
             : getFileUseCase.getFileLinks(logoImageIds);
 
         return schools.stream()
-            .map(school -> toSchoolDetailInfo(school, gisuId, logoImageUrls.get(school.getLogoImageId())))
+            .map(school -> toSchoolDetailInfo(
+                school,
+                logoImageUrls.get(school.logoImageId()),
+                linksMap.getOrDefault(school.schoolId(), List.of())
+            ))
             .toList();
     }
 
-    private SchoolDetailInfo toSchoolDetailInfo(School school, Long gisuId, String logoImageUrl) {
-        ChapterSchool cs = school.getChapterSchools().stream()
-            .filter(c -> c.getChapter().getGisu().getId().equals(gisuId))
-            .findFirst()
-            .orElse(null);
-
-        List<SchoolDetailInfo.SchoolLinkItem> links = school.getSchoolLinks().stream()
-            .map(link -> new SchoolDetailInfo.SchoolLinkItem(link.getTitle(), link.getType(), link.getUrl()))
-            .toList();
-
+    private SchoolDetailInfo toSchoolDetailInfo(SchoolChapterInfo info, String logoImageUrl, List<SchoolDetailInfo.SchoolLinkItem> links) {
         return new SchoolDetailInfo(
-            cs != null ? cs.getChapter().getId() : null,
-            cs != null ? cs.getChapter().getName() : null,
-            school.getName(),
-            school.getId(),
-            school.getRemark(),
+            info.chapterId(),
+            info.chapterName(),
+            info.schoolName(),
+            info.schoolId(),
+            info.remark(),
             logoImageUrl,
             links,
-            cs != null && cs.getChapter().getGisu().isActive(),
-            school.getCreatedAt(),
-            school.getUpdatedAt()
+            info.isActive(),
+            info.createdAt(),
+            info.updatedAt()
         );
     }
 }

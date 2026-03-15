@@ -1,8 +1,8 @@
 package com.umc.product.organization.adapter.out.persistence;
 
 
+import com.umc.product.organization.application.port.in.query.dto.SchoolChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo.SchoolInfoWithoutSchoolLinkItem;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
@@ -12,6 +12,7 @@ import com.umc.product.organization.domain.School;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -84,13 +85,18 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
     }
 
     @Override
-    public List<School> findSchoolsByGisuId(Long gisuId) {
-        return schoolJpaRepository.findSchoolsByGisuId(gisuId);
+    public List<SchoolChapterInfo> findSchoolDetailsByGisuId(Long gisuId) {
+        return schoolQueryRepository.getSchoolDetailsByGisuId(gisuId);
     }
 
     @Override
-    public SchoolInfoWithoutSchoolLinkItem findSchoolDetailByIdWithActiveChapter(Long schoolId) {
-        SchoolInfoWithoutSchoolLinkItem schoolInfoWithoutSchoolLinkItem = schoolQueryRepository.getSchoolDetail(schoolId);
+    public Map<Long, List<SchoolDetailInfo.SchoolLinkItem>> findLinksBySchoolIds(List<Long> schoolIds) {
+        return schoolQueryRepository.findLinksBySchoolIds(schoolIds);
+    }
+
+    @Override
+    public SchoolChapterInfo findSchoolDetailByIdWithActiveChapter(Long schoolId) {
+        SchoolChapterInfo schoolInfoWithoutSchoolLinkItem = schoolQueryRepository.getSchoolDetail(schoolId);
         if (schoolInfoWithoutSchoolLinkItem == null) {
             throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_NOT_FOUND);
         }

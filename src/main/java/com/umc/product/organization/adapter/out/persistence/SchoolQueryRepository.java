@@ -4,17 +4,22 @@ import static com.umc.product.organization.domain.QChapter.chapter;
 import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
 import static com.umc.product.organization.domain.QGisu.gisu;
 import static com.umc.product.organization.domain.QSchool.school;
+import static com.umc.product.organization.domain.QSchoolLink.schoolLink;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo.SchoolInfoWithoutSchoolLinkItem;
+import com.umc.product.organization.application.port.in.query.dto.SchoolChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -92,11 +97,11 @@ public class SchoolQueryRepository {
     /**
      * 학교 상세 정보를 반환합니다.
      */
-    public SchoolInfoWithoutSchoolLinkItem getSchoolDetail(Long schoolId) {
+    public SchoolChapterInfo getSchoolDetail(Long schoolId) {
         JPQLQuery<Long> activeChapterIds = activeChapterIdSubQuery();
 
         return queryFactory
-            .select(Projections.constructor(SchoolInfoWithoutSchoolLinkItem.class,
+            .select(Projections.constructor(SchoolChapterInfo.class,
                 chapter.id,
                 chapter.name,
                 school.name,
@@ -115,5 +120,49 @@ public class SchoolQueryRepository {
             .leftJoin(chapterSchool.chapter, chapter)
             .where(school.id.eq(schoolId))
             .fetchFirst();
+    }
+
+    public List<SchoolChapterInfo> getSchoolDetailsByGisuId(Long gisuId) {
+        return queryFactory
+            .select(Projections.constructor(SchoolChapterInfo.class,
+                chapter.id,
+                chapter.name,
+                school.name,
+                school.id,
+                school.remark,
+                school.logoImageId,
+                gisu.isActive,
+                school.createdAt,
+                school.updatedAt
+            ))
+            .from(school)
+            .join(chapterSchool).on(chapterSchool.school.eq(school))
+            .join(chapterSchool.chapter, chapter)
+            .join(chapter.gisu, gisu)
+            .where(gisu.id.eq(gisuId))
+            .fetch();
+    }
+
+    public Map<Long, List<SchoolDetailInfo.SchoolLinkItem>> findLinksBySchoolIds(List<Long> schoolIds) {
+        if (schoolIds.isEmpty()) return Map.of();
+
+        List<Tuple> tuples = queryFactory
+            .select(schoolLink.school.id, schoolLink.title, schoolLink.type, schoolLink.url)
+            .from(schoolLink)
+            .where(schoolLink.school.id.in(schoolIds))
+            .fetch();
+
+        return tuples.stream()
+            .collect(Collectors.groupingBy(
+                t -> t.get(schoolLink.school.id),
+                Collectors.mapping(
+                    t -> new SchoolDetailInfo.SchoolLinkItem(
+                        t.get(schoolLink.title),
+                        t.get(schoolLink.type),
+                        t.get(schoolLink.url)
+                    ),
+                    Collectors.toList()
+                )
+            ));
     }
 }
