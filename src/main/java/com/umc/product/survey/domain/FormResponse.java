@@ -108,4 +108,16 @@ public class FormResponse extends BaseEntity {
         return fr;
     }
 
+    public void updateVoteResponse(
+        Question question,
+        List<Long> selectedOptionIds,
+        Instant now
+    ) {
+        this.answers.clear();
+        this.answers.add(SingleAnswer.createVoteAnswer(this, question, selectedOptionIds));
+        this.lastSavedAt = now;
+        this.submittedAt = now;
+        this.status = FormResponseStatus.SUBMITTED;
+    }
+
 }
