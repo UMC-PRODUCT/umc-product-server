@@ -8,5 +8,7 @@ public class SurveyDomainException extends BusinessException {
         super(Domain.SURVEY, surveyErrorCode);
     }
 
-
+    public SurveyDomainException(SurveyErrorCode surveyErrorCode, String message) {
+        super(Domain.SURVEY, surveyErrorCode, message);
+    }
 }
