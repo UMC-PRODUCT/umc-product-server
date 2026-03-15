@@ -3,9 +3,11 @@ package com.umc.product.survey.application.service;
 import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
 import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
 import com.umc.product.survey.application.port.in.command.SubmitVoteResponseUseCase;
+import com.umc.product.survey.application.port.in.command.UpdateVoteResponseUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateVoteCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
 import com.umc.product.survey.application.port.in.command.dto.SubmitVoteResponseCommand;
+import com.umc.product.survey.application.port.in.command.dto.UpdateVoteResponseCommand;
 import com.umc.product.survey.application.port.out.LoadFormPort;
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.application.port.out.SaveFormPort;
@@ -37,7 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Transactional
 @RequiredArgsConstructor
-public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, SubmitVoteResponseUseCase {
+public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, SubmitVoteResponseUseCase, UpdateVoteResponseUseCase {
 
     private final SaveFormPort saveFormPort;
     private final LoadFormPort loadFormPort;
@@ -192,6 +194,62 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
             uniqueOptionIds.stream().toList(),
             now
         );
+
+        saveFormResponsePort.save(formResponse);
+    }
+
+    @Override
+    public void update(UpdateVoteResponseCommand cmd) {
+        Instant now = Instant.now();
+
+        Form form = loadFormPort.findById(cmd.voteId())
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
+
+        // 1) 기간 체크
+        FormOpenStatus openStatus = form.getOpenStatus(now);
+        if (openStatus == FormOpenStatus.NOT_STARTED) {
+            throw new SurveyDomainException(SurveyErrorCode.VOTE_NOT_STARTED);
+        }
+        if (openStatus == FormOpenStatus.CLOSED) {
+            throw new SurveyDomainException(SurveyErrorCode.VOTE_CLOSED);
+        }
+
+        // 2) 기존 응답 조회
+        FormResponse formResponse = loadFormResponsePort
+            .findSubmittedByFormIdAndRespondentMemberId(form.getId(), cmd.memberId())
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.VOTE_RESPONSE_NOT_FOUND));
+
+        // 3) 투표 구조에서 Question 1개 꺼내기
+        Question question = extractSingleQuestion(form);
+
+        // 4) 선택 검증
+        List<Long> optionIds = cmd.optionIds();
+        if (optionIds == null || optionIds.isEmpty()) {
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
+        }
+
+        Set<Long> uniqueOptionIds = new LinkedHashSet<>(optionIds);
+
+        if (question.getType() == QuestionType.RADIO) {
+            if (uniqueOptionIds.size() != 1) {
+                throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
+            }
+        } else if (question.getType() == QuestionType.CHECKBOX) {
+            // pass
+        } else {
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
+        }
+
+        Set<Long> allowedOptionIds = new HashSet<>();
+        for (QuestionOption opt : question.getOptions()) {
+            allowedOptionIds.add(opt.getId());
+        }
+        if (!allowedOptionIds.containsAll(uniqueOptionIds)) {
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
+        }
+
+        // 5) 기존 응답 갱신
+        formResponse.updateVoteResponse(question, uniqueOptionIds.stream().toList(), now);
 
         saveFormResponsePort.save(formResponse);
     }
