@@ -225,32 +225,38 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
 
         // 4) 선택 검증
         List<Long> optionIds = cmd.optionIds();
-        if (optionIds == null || optionIds.isEmpty()) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
+        if (optionIds == null) {
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION,
+                "기존에 선택한 응답을 삭제하려면 null이 아닌 빈 배열을 보내야 합니다.");
         }
 
-        Set<Long> uniqueOptionIds = new LinkedHashSet<>(optionIds);
+        if (optionIds.isEmpty()) {
+            formResponse.clearVoteResponse();
+        } else {
 
-        if (question.getType() == QuestionType.RADIO) {
-            if (uniqueOptionIds.size() > 1) {
+            Set<Long> uniqueOptionIds = new LinkedHashSet<>(optionIds);
+
+            if (question.getType() == QuestionType.RADIO) {
+                if (uniqueOptionIds.size() != 1) {
+                    throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
+                }
+            } else if (question.getType() == QuestionType.CHECKBOX) {
+                // pass
+            } else {
+                throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
+            }
+
+            Set<Long> allowedOptionIds = new HashSet<>();
+            for (QuestionOption opt : question.getOptions()) {
+                allowedOptionIds.add(opt.getId());
+            }
+            if (!allowedOptionIds.containsAll(uniqueOptionIds)) {
                 throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
             }
-        } else if (question.getType() == QuestionType.CHECKBOX) {
-            // pass
-        } else {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
-        }
 
-        Set<Long> allowedOptionIds = new HashSet<>();
-        for (QuestionOption opt : question.getOptions()) {
-            allowedOptionIds.add(opt.getId());
+            // 5) 기존 응답 갱신
+            formResponse.updateVoteResponse(question, uniqueOptionIds.stream().toList(), now);
         }
-        if (!allowedOptionIds.containsAll(uniqueOptionIds)) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
-        }
-
-        // 5) 기존 응답 갱신
-        formResponse.updateVoteResponse(question, uniqueOptionIds.stream().toList(), now);
 
         saveFormResponsePort.save(formResponse);
     }

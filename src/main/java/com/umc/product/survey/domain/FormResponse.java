@@ -70,19 +70,6 @@ public class FormResponse extends BaseEntity {
         return fr;
     }
 
-    public void submit(java.time.Instant submittedAt, String submittedIp) {
-        if (this.status == com.umc.product.survey.domain.enums.FormResponseStatus.SUBMITTED) {
-            return;
-        }
-        this.status = com.umc.product.survey.domain.enums.FormResponseStatus.SUBMITTED;
-        this.submittedAt = submittedAt;
-        this.submittedIp = submittedIp;
-    }
-
-    public void updateLastSavedAt(Instant now) {
-        this.lastSavedAt = now;
-    }
-
     public static FormResponse createVoteResponse(
         Form form,
         Long respondentMemberId,
@@ -106,6 +93,28 @@ public class FormResponse extends BaseEntity {
         fr.answers.add(SingleAnswer.createVoteAnswer(fr, question, selectedOptionIds));
 
         return fr;
+    }
+
+    public void submit(java.time.Instant submittedAt, String submittedIp) {
+        if (this.status == com.umc.product.survey.domain.enums.FormResponseStatus.SUBMITTED) {
+            return;
+        }
+        this.status = com.umc.product.survey.domain.enums.FormResponseStatus.SUBMITTED;
+        this.submittedAt = submittedAt;
+        this.submittedIp = submittedIp;
+    }
+
+    public void updateLastSavedAt(Instant now) {
+        this.lastSavedAt = now;
+    }
+
+    public void clearVoteResponse() {
+        Instant now = Instant.now();
+
+        this.answers.clear();
+        this.lastSavedAt = now;
+        this.submittedAt = now;
+        this.status = FormResponseStatus.SUBMITTED;
     }
 
     public void updateVoteResponse(
