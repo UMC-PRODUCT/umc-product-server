@@ -42,5 +42,12 @@ public interface SchoolJpaRepository extends Repository<School, Long> {
             ")")
     List<School> findUnassignedByGisuId(@Param("gisuId") Long gisuId);
 
+    @Query("SELECT DISTINCT s FROM School s " +
+            "JOIN FETCH s.chapterSchools cs " +
+            "JOIN FETCH cs.chapter c " +
+            "JOIN FETCH c.gisu " +
+            "WHERE c.gisu.id = :gisuId")
+    List<School> findSchoolsByGisuId(@Param("gisuId") Long gisuId);
+
     boolean existsById(Long schoolId);
 }

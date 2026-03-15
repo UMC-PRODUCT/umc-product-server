@@ -28,6 +28,8 @@ public interface LoadSchoolPort {
 
     List<School> findUnassignedByGisuId(Long gisuId);
 
+    List<School> findSchoolsByGisuId(Long gisuId);
+
     boolean existsById(Long schoolId);
 
     void throwIfNotExists(Long schoolId);

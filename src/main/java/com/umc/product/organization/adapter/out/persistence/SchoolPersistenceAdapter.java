@@ -84,6 +84,11 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
     }
 
     @Override
+    public List<School> findSchoolsByGisuId(Long gisuId) {
+        return schoolJpaRepository.findSchoolsByGisuId(gisuId);
+    }
+
+    @Override
     public SchoolInfoWithoutSchoolLinkItem findSchoolDetailByIdWithActiveChapter(Long schoolId) {
         SchoolInfoWithoutSchoolLinkItem schoolInfoWithoutSchoolLinkItem = schoolQueryRepository.getSchoolDetail(schoolId);
         if (schoolInfoWithoutSchoolLinkItem == null) {
