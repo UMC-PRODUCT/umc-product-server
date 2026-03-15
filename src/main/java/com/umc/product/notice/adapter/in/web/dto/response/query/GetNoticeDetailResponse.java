@@ -45,7 +45,7 @@ public record GetNoticeDetailResponse(
             .images(noticeInfo.images())
             .links(noticeInfo.links())
             .targetInfo(noticeInfo.targetInfo())
-            .viewCount(noticeInfo.viewCount())
+            .viewCount(noticeInfo.viewCount() + 1)
             .createdAt(noticeInfo.createdAt())
             .build();
     }

@@ -19,7 +19,6 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
-import com.umc.product.notice.application.port.in.command.IncrementNoticeViewCountUseCase;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.domain.NoticeTarget;
@@ -57,7 +56,6 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private final LoadNoticePort loadNoticePort;
     private final LoadNoticeReadPort loadNoticeReadPort;
     private final LoadNoticeTargetPort loadNoticeTargetPort;
-    private final IncrementNoticeViewCountUseCase incrementNoticeViewCountUseCase;
 
     private final GetChapterUseCase getChapterUseCase;
     private final GetMemberUseCase getMemberUseCase;
@@ -96,9 +94,6 @@ public class NoticeQueryService implements GetNoticeUseCase {
         NoticeTarget target = loadNoticeTargetPort.findByNoticeId(noticeId).orElse(null);
         NoticeTargetInfo targetInfo = target != null ? NoticeTargetInfo.from(target) : null;
 
-        // 조회수 증가 (별도 트랜잭션으로 커밋)
-        incrementNoticeViewCountUseCase.increment(noticeId);
-
         return new NoticeInfo(
             notice.getId(),
             notice.getTitle(),
@@ -108,7 +103,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             imageInfos,
             linkInfos,
             targetInfo,
-            notice.getViewCount() + 1,
+            notice.getViewCount(),
             notice.getCreatedAt()
         );
     }
