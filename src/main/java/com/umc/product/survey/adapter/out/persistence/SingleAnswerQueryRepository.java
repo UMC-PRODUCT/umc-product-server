@@ -1,10 +1,14 @@
 package com.umc.product.survey.adapter.out.persistence;
 
+import static com.umc.product.survey.domain.QFormResponse.formResponse;
 import static com.umc.product.survey.domain.QQuestion.question;
 import static com.umc.product.survey.domain.QSingleAnswer.singleAnswer;
 
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.umc.product.survey.application.port.out.dto.VoteAnswerRow;
+import com.umc.product.survey.domain.enums.FormResponseStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
 import java.util.HashMap;
 import java.util.List;
@@ -46,5 +50,22 @@ public class SingleAnswerQueryRepository {
             }
         }
         return result;
+    }
+
+    public List<VoteAnswerRow> findVoteAnswerRows(Long voteId) {
+        return queryFactory
+            .select(Projections.constructor(
+                VoteAnswerRow.class,
+                formResponse.respondentMemberId,
+                singleAnswer.answeredAsType,
+                singleAnswer.value
+            ))
+            .from(singleAnswer)
+            .join(singleAnswer.formResponse, formResponse)
+            .where(
+                formResponse.form.id.eq(voteId),
+                formResponse.status.eq(FormResponseStatus.SUBMITTED)
+            )
+            .fetch();
     }
 }

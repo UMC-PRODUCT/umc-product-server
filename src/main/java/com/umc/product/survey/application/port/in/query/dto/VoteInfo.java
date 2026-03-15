@@ -24,7 +24,8 @@ public record VoteInfo(
         Long optionId,
         String content,
         int voteCount,
-        BigDecimal voteRate
+        BigDecimal voteRate,
+        List<Long> selectedMemberIds
     ) {
     }
 }
