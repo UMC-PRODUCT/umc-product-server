@@ -39,11 +39,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Transactional
 @RequiredArgsConstructor
-public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, SubmitVoteResponseUseCase, UpdateVoteResponseUseCase {
+public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, SubmitVoteResponseUseCase,
+    UpdateVoteResponseUseCase {
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final SaveFormPort saveFormPort;
     private final LoadFormPort loadFormPort;
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final LoadFormResponsePort loadFormResponsePort;
     private final SaveFormResponsePort saveFormResponsePort;
     private final SaveSingleAnswerPort saveSingleAnswerPort;
@@ -231,7 +232,7 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
         Set<Long> uniqueOptionIds = new LinkedHashSet<>(optionIds);
 
         if (question.getType() == QuestionType.RADIO) {
-            if (uniqueOptionIds.size() != 1) {
+            if (uniqueOptionIds.size() > 1) {
                 throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
             }
         } else if (question.getType() == QuestionType.CHECKBOX) {
