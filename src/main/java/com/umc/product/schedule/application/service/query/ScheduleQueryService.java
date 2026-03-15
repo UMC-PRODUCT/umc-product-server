@@ -7,7 +7,6 @@ import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo
 import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
-import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.ScheduleConstants;
@@ -65,10 +64,7 @@ public class ScheduleQueryService implements
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
         List<Long> participantMemberIds = loadAttendanceRecordPort
-            .findByAttendanceSheetId(attendanceSheet.getId())
-            .stream()
-            .map(AttendanceRecord::getMemberId)
-            .toList();
+            .findMemberIdsByAttendanceSheetId(attendanceSheet.getId());
 
         return ScheduleDetailInfo.from(schedule, now, attendanceSheet.isRequiresApproval(), participantMemberIds);
     }

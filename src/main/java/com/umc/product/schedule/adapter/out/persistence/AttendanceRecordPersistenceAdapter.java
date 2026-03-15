@@ -93,6 +93,11 @@ public class AttendanceRecordPersistenceAdapter implements SaveAttendanceRecordP
         return recordQueryRepository.findPermissionContext(recordId);
     }
 
+    @Override
+    public List<Long> findMemberIdsByAttendanceSheetId(Long sheetId) {
+        return recordQueryRepository.findMemberIdsByAttendanceSheetId(sheetId);
+    }
+
     // ========== DeleteAttendanceRecordPort ==========
 
     @Override
