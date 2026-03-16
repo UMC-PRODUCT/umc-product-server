@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/member")
 @RequiredArgsConstructor
-@Tag(name = "Member | 회원 Command", description = "")
+@Tag(name = "Member | 회원 Command", description = "회원가입, 정보 수정, 탈퇴 등")
 public class MemberCommandController {
 
     private final MemberInfoResponseAssembler assembler;
