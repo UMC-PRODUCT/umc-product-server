@@ -14,14 +14,16 @@ public record RoleAttribute(
     OrganizationType organizationType,
     // CENTRAL이면 null, CHAPTER이면 chapterId, SCHOOL이면 schoolId
     Long organizationId,
-    ChallengerPart responsiblePart
+    ChallengerPart responsiblePart,
+    Long gisuId
 ) {
     public static RoleAttribute from(ChallengerRole challengerRole) {
         return new RoleAttribute(
             challengerRole.getChallengerRoleType(),
             challengerRole.getOrganizationType(),
             challengerRole.getOrganizationId(),
-            challengerRole.getResponsiblePart()
+            challengerRole.getResponsiblePart(),
+            challengerRole.getGisuId()
         );
     }
 }
