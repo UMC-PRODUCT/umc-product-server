@@ -165,4 +165,23 @@ public class CurriculumQueryRepository {
     private BooleanExpression partCondition(ChallengerPart part) {
         return part != null ? curriculum.part.eq(part) : null;
     }
+
+    /**
+     * 미배포 상태이면서 시작일이 지난 워크북 목록 조회 (자동 배포 대상)
+     * <p>
+     * 조건 : - releasedAt IS NULL (미배포) - startDate < now (시작일이 지남)
+     *
+     * @param now 현재 시간
+     * @return 자동 배포 후보 워크북 목록
+     */
+    public List<Long> findUnreleasedWorkbookIdsWithStartDateBefore(Instant now) {
+        return queryFactory
+            .select(originalWorkbook.id)
+            .from(originalWorkbook)
+            .where(
+                originalWorkbook.releasedAt.isNull(),
+                originalWorkbook.startDate.before(now)
+            )
+            .fetch();
+    }
 }

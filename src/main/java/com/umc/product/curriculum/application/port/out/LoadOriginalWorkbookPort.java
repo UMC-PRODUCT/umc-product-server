@@ -3,7 +3,9 @@ package com.umc.product.curriculum.application.port.out;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 public interface LoadOriginalWorkbookPort {
 
@@ -30,4 +32,21 @@ public interface LoadOriginalWorkbookPort {
      * @return 배포된 주차 번호 목록 (오름차순)
      */
     List<Integer> findReleasedWeekNos(ChallengerPart part);
+
+    /**
+     * 미배포 상태이면서 시작일이 지난 워크북 목록 조회 (자동 배포 대상)
+     *
+     * @param now 현재 시간
+     * @return 자동 배포 후보 워크북 목록
+     */
+    List<OriginalWorkbook> findUnreleasedWithStartDateBefore(Instant now);
+
+    /**
+     * 커리큘럼 ID와 주차 번호로 워크북 조회
+     *
+     * @param curriculumId 커리큘럼 ID
+     * @param weekNo       주차 번호
+     * @return 워크북 (없으면 empty)
+     */
+    Optional<OriginalWorkbook> findByCurriculumIdAndWeekNo(Long curriculumId, Integer weekNo);
 }
