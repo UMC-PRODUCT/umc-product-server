@@ -27,6 +27,11 @@ public class CurriculumQueryController implements CurriculumQueryControllerApi {
     private final GetCurriculumProgressUseCase getCurriculumProgressUseCase;
     private final GetCurriculumUseCase getCurriculumUseCase;
 
+    /**
+     * @deprecated {@code GET /api/v2/curriculums?gisuId={gisuId}&part={part}} 사용 권장.
+     * @since 1.3.0
+     */
+    @Deprecated(since = "1.3.0", forRemoval = true)
     @Public
     @Override
     @GetMapping
@@ -36,7 +41,11 @@ public class CurriculumQueryController implements CurriculumQueryControllerApi {
         return CurriculumResponse.from(getCurriculumUseCase.getByActiveGisuAndPart(part));
     }
 
-    @Deprecated
+    /**
+     * @deprecated {@code GET /api/v2/curriculums/challengers/me/progress?gisuId={gisuId}} 사용 권장.
+     * @since 1.3.0
+     */
+    @Deprecated(since = "1.3.0", forRemoval = true)
     @Override
     @GetMapping("/challengers/me/progress")
     public CurriculumProgressResponse getMyProgress(@CurrentMember MemberPrincipal memberPrincipal) {
@@ -44,6 +53,11 @@ public class CurriculumQueryController implements CurriculumQueryControllerApi {
         return CurriculumProgressResponse.from(info);
     }
 
+    /**
+     * @deprecated 대체 API 미정. 추후 v2 엔드포인트 추가 예정.
+     * @since 1.3.0
+     */
+    @Deprecated(since = "1.3.0", forRemoval = true)
     @Override
     @GetMapping("/weeks")
     public CurriculumWeeksResponse getWeeksByPart(@RequestParam ChallengerPart part) {
