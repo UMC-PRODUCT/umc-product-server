@@ -176,11 +176,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
         if (!mySchoolId.equals(targetInfo.targetSchoolId())) {
             return false;
         }
-        return subject.gisuChallengerInfos().stream()
-            .filter(info -> role.gisuId().equals(info.gisuId()))
-            .anyMatch(info ->
-                (targetInfo.targetGisuId() == null || targetInfo.targetGisuId().equals(info.gisuId()))
-                    && (targetInfo.targetChapterId() == null || targetInfo.targetChapterId().equals(info.chapterId())));
+        return isInGisuAndChapter(role, targetInfo, subject);
     }
 
     // 교내 파트장: 담당 파트 공지를 본인 학교 범위 내에서 읽기 가능
@@ -201,6 +197,10 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
             || !targetInfo.targetParts().contains(responsiblePart)) {
             return false;
         }
+        return isInGisuAndChapter(role, targetInfo, subject);
+    }
+
+    private boolean isInGisuAndChapter(RoleAttribute role, NoticeTargetInfo targetInfo, SubjectAttributes subject) {
         return subject.gisuChallengerInfos().stream()
             .filter(info -> role.gisuId().equals(info.gisuId()))
             .anyMatch(info ->
