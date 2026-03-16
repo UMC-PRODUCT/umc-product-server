@@ -6,20 +6,14 @@ import java.util.List;
 
 /**
  * FCM 토픽 네이밍 규칙을 관리하는 유틸리티 클래스
- *
- * 토픽명 예시:
- * - all (전체 대상)
- * - school-5 (전체 기수 특정 학교)
- * - gisu-1 (기수 전체)
- * - gisu-1-part-SPRINGBOOT (기수 + 파트)
- * - gisu-1-school-5 (기수 + 학교)
- * - gisu-1-school-5-part-WEB (기수 + 학교 + 파트)
- * - gisu-1-chapter-3 (기수 + 지부)
- * - gisu-1-chapter-3-part-ANDROID (기수 + 지부 + 파트)
+ * <p>
+ * 토픽명 예시: - all (전체 대상) - school-5 (전체 기수 특정 학교) - gisu-1 (기수 전체) - gisu-1-part-SPRINGBOOT (기수 + 파트) - gisu-1-school-5
+ * (기수 + 학교) - gisu-1-school-5-part-WEB (기수 + 학교 + 파트) - gisu-1-chapter-3 (기수 + 지부) - gisu-1-chapter-3-part-ANDROID (기수
+ * + 지부 + 파트)
  */
 public final class FcmTopicName {
 
-    private static String prefix = "local";
+    private static volatile String prefix = "local";
 
     private FcmTopicName() {
     }
@@ -88,11 +82,10 @@ public final class FcmTopicName {
     }
 
     /**
-     * NoticeTargetInfo 기반으로 발행할 토픽 이름 목록을 반환
-     * 파트가 여러 개이면 각 파트별 토픽을 생성
+     * NoticeTargetInfo 기반으로 발행할 토픽 이름 목록을 반환 파트가 여러 개이면 각 파트별 토픽을 생성
      */
     public static List<String> resolveTopics(
-            Long gisuId, Long chapterId, Long schoolId, List<ChallengerPart> parts
+        Long gisuId, Long chapterId, Long schoolId, List<ChallengerPart> parts
     ) {
         boolean hasParts = parts != null && !parts.isEmpty();
 
@@ -106,8 +99,8 @@ public final class FcmTopicName {
         if (chapterId != null) {
             if (hasParts) {
                 return parts.stream()
-                        .map(part -> gisuChapterPart(gisuId, chapterId, part))
-                        .toList();
+                    .map(part -> gisuChapterPart(gisuId, chapterId, part))
+                    .toList();
             }
             return List.of(gisuChapter(gisuId, chapterId));
         }
@@ -115,16 +108,16 @@ public final class FcmTopicName {
         if (schoolId != null) {
             if (hasParts) {
                 return parts.stream()
-                        .map(part -> gisuSchoolPart(gisuId, schoolId, part))
-                        .toList();
+                    .map(part -> gisuSchoolPart(gisuId, schoolId, part))
+                    .toList();
             }
             return List.of(gisuSchool(gisuId, schoolId));
         }
 
         if (hasParts) {
             return parts.stream()
-                    .map(part -> gisuPart(gisuId, part))
-                    .toList();
+                .map(part -> gisuPart(gisuId, part))
+                .toList();
         }
 
         return List.of(gisu(gisuId));
