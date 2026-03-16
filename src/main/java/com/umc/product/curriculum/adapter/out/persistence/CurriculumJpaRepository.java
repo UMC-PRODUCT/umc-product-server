@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 public interface CurriculumJpaRepository extends JpaRepository<Curriculum, Long> {
 
     @Query("SELECT c FROM Curriculum c left join fetch c.originalWorkbooks WHERE c.part = :part AND c.gisuId = :gisuId")
-    Optional<Curriculum> findEntityByGisuIdAndPart(@Param("gisuId") Long gisuId, @Param("part") ChallengerPart part);
+    Optional<Curriculum> findByGisuIdAndPart(@Param("gisuId") Long gisuId, @Param("part") ChallengerPart part);
 
     @Query("SELECT c FROM Curriculum c left join fetch c.originalWorkbooks WHERE c.id = :id")
     Optional<Curriculum> findById(Long id);

@@ -28,7 +28,7 @@ public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCur
 
     @Override
     public Optional<Curriculum> findEntityByGisuIdAndPart(Long gisuId, ChallengerPart part) {
-        return curriculumJpaRepository.findEntityByGisuIdAndPart(gisuId, part);
+        return curriculumJpaRepository.findByGisuIdAndPart(gisuId, part);
     }
 
     @Override
