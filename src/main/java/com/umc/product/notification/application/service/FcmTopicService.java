@@ -30,6 +30,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChapterUseCase getChapterUseCase;
+    private final FcmTopicName fcmTopicName;
 
     @Override
     public void subscribeTopics(Long challengerId) {
@@ -120,7 +121,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
         ChapterInfo chapter = getChapterUseCase.byGisuAndSchool(
             challenger.gisuId(), memberInfo.schoolId());
 
-        return FcmTopicName.allTopicsFor(
+        return fcmTopicName.allTopicsFor(
             challenger.gisuId(),
             challenger.part(),
             memberInfo.schoolId(),
