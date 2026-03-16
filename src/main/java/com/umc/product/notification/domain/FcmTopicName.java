@@ -19,39 +19,49 @@ import java.util.List;
  */
 public final class FcmTopicName {
 
+    private static String prefix = "local";
+
     private FcmTopicName() {
     }
 
+    public static void init(String activeProfile) {
+        prefix = activeProfile;
+    }
+
+    private static String withPrefix(String topic) {
+        return prefix + "-" + topic;
+    }
+
     public static String all() {
-        return "all";
+        return withPrefix("all");
     }
 
     public static String school(Long schoolId) {
-        return "school-" + schoolId;
+        return withPrefix("school-" + schoolId);
     }
 
     public static String gisu(Long gisuId) {
-        return "gisu-" + gisuId;
+        return withPrefix("gisu-" + gisuId);
     }
 
     public static String gisuPart(Long gisuId, ChallengerPart part) {
-        return "gisu-" + gisuId + "-part-" + part.name();
+        return withPrefix("gisu-" + gisuId + "-part-" + part.name());
     }
 
     public static String gisuSchool(Long gisuId, Long schoolId) {
-        return "gisu-" + gisuId + "-school-" + schoolId;
+        return withPrefix("gisu-" + gisuId + "-school-" + schoolId);
     }
 
     public static String gisuSchoolPart(Long gisuId, Long schoolId, ChallengerPart part) {
-        return "gisu-" + gisuId + "-school-" + schoolId + "-part-" + part.name();
+        return withPrefix("gisu-" + gisuId + "-school-" + schoolId + "-part-" + part.name());
     }
 
     public static String gisuChapter(Long gisuId, Long chapterId) {
-        return "gisu-" + gisuId + "-chapter-" + chapterId;
+        return withPrefix("gisu-" + gisuId + "-chapter-" + chapterId);
     }
 
     public static String gisuChapterPart(Long gisuId, Long chapterId, ChallengerPart part) {
-        return "gisu-" + gisuId + "-chapter-" + chapterId + "-part-" + part.name();
+        return withPrefix("gisu-" + gisuId + "-chapter-" + chapterId + "-part-" + part.name());
     }
 
     /**
