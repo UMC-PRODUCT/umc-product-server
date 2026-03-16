@@ -51,7 +51,7 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
     }
 
     @Override
-    public List<WorkbookInfo> findWorkbookProjections(Long curriculumId, Integer weekNo) {
+    public List<WorkbookInfo> findWorkbookInfos(Long curriculumId, Integer weekNo) {
         return curriculumQueryRepository.fetchWorkbooks(curriculumId, weekNo);
     }
 
