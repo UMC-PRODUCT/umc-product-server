@@ -4,6 +4,8 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.FirebaseMessaging;
+import com.umc.product.notification.domain.FcmTopicName;
+import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -19,6 +21,15 @@ public class FcmConfig {
 
     @Value("${app.fcm.firebase-configuration}")
     private String firebaseCredentials;
+
+    @Value("${app.fcm.topic-prefix}")
+    private String topicPrefix;
+
+    @PostConstruct
+    public void initTopicPrefix() {
+        FcmTopicName.init(topicPrefix);
+        log.info("FCM 토픽 prefix 설정: {}", topicPrefix);
+    }
 
     @Bean
     FirebaseMessaging firebaseMessaging() throws IOException {
