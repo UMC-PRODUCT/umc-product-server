@@ -31,7 +31,7 @@ public class AdminSchoolController implements AdminSchoolControllerApi {
     @Override
     @PostMapping
     public void createSchool(@RequestBody @Valid CreateSchoolRequest request) {
-        manageSchoolUseCase.register(request.toCommand());
+        manageSchoolUseCase.create(request.toCommand());
     }
 
     @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.EDIT)
