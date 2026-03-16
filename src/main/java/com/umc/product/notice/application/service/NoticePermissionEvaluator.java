@@ -108,6 +108,10 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
 
 
     private boolean canDeleteNotice(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
+        if (subjectAttributes.roleAttributes().stream().anyMatch(r -> r.roleType().isSuperAdmin())) {
+            return true;
+        }
+
         NoticeInfo noticeInfo = getNoticeUseCase.getNoticeDetail(resourcePermission.getResourceIdAsLong(),
             subjectAttributes.memberId());
 
