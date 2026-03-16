@@ -25,6 +25,6 @@ public class ChallengerRolePermissionEvaluator implements ResourcePermissionEval
         // 조회를 제외한 생성/수정/삭제는 중앙운영사무국 총괄만 가능하도록 설정함. 추후 개선
         // TODO: 중앙운영사무국 측과 협의할 것
         return subjectAttributes.roleAttributes().stream()
-            .anyMatch(roleAttribute -> roleAttribute.roleType().isCentralCore());
+            .anyMatch(roleAttribute -> roleAttribute.roleType().isAtLeastCentralCore());
     }
 }

@@ -24,7 +24,7 @@ public class OriginalWorkbookPermissionEvaluator implements ResourcePermissionEv
                 // 중앙운영사무국 멤버만 가능
                 // TODO: 중앙 파트장으로 좁힐 필요 있음
                 subjectAttributes.roleAttributes().stream()
-                    .anyMatch(role -> role.roleType().isCentralMember());
+                    .anyMatch(role -> role.roleType().isAtLeastCentralMember());
             default -> throw new CommonException(CommonErrorCode.PERMISSION_TYPE_NOT_IMPLEMENTED);
         };
     }
