@@ -5,7 +5,6 @@ import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekIn
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 public interface LoadOriginalWorkbookPort {
 
@@ -42,11 +41,10 @@ public interface LoadOriginalWorkbookPort {
     List<OriginalWorkbook> findUnreleasedWithStartDateBefore(Instant now);
 
     /**
-     * 커리큘럼 ID와 주차 번호로 워크북 조회
+     * 여러 커리큘럼의 워크북 일괄 조회 (N+1 방지용)
      *
-     * @param curriculumId 커리큘럼 ID
-     * @param weekNo       주차 번호
-     * @return 워크북 (없으면 empty)
+     * @param curriculumIds 커리큘럼 ID 목록
+     * @return 해당 커리큘럼들의 모든 워크북
      */
-    Optional<OriginalWorkbook> findByCurriculumIdAndWeekNo(Long curriculumId, Integer weekNo);
+    List<OriginalWorkbook> findByCurriculumIdIn(List<Long> curriculumIds);
 }

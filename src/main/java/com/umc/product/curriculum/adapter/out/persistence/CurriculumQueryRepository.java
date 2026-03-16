@@ -14,6 +14,7 @@ import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgre
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo.WorkbookProgressInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
 import com.umc.product.curriculum.domain.Curriculum;
+import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import java.time.Instant;
 import java.util.List;
@@ -174,10 +175,10 @@ public class CurriculumQueryRepository {
      * @param now 현재 시간
      * @return 자동 배포 후보 워크북 목록
      */
-    public List<Long> findUnreleasedWorkbookIdsWithStartDateBefore(Instant now) {
+    public List<OriginalWorkbook> findUnreleasedWorkbookIdsWithStartDateBefore(Instant now) {
         return queryFactory
-            .select(originalWorkbook.id)
-            .from(originalWorkbook)
+            .selectFrom(originalWorkbook)
+            .join(originalWorkbook.curriculum, curriculum).fetchJoin()
             .where(
                 originalWorkbook.releasedAt.isNull(),
                 originalWorkbook.startDate.before(now)

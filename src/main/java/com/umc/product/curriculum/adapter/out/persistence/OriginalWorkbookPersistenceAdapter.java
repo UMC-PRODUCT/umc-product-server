@@ -9,7 +9,6 @@ import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -58,15 +57,14 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
 
     @Override
     public List<OriginalWorkbook> findUnreleasedWithStartDateBefore(Instant now) {
-        List<Long> workbookIds = curriculumQueryRepository.findUnreleasedWorkbookIdsWithStartDateBefore(now);
-        if (workbookIds.isEmpty()) {
-            return List.of();
-        }
-        return originalWorkbookJpaRepository.findAllById(workbookIds);
+        return curriculumQueryRepository.findUnreleasedWorkbookIdsWithStartDateBefore(now);
     }
 
     @Override
-    public Optional<OriginalWorkbook> findByCurriculumIdAndWeekNo(Long curriculumId, Integer weekNo) {
-        return originalWorkbookJpaRepository.findByCurriculumIdAndWeekNo(curriculumId, weekNo);
+    public List<OriginalWorkbook> findByCurriculumIdIn(List<Long> curriculumIds) {
+        if (curriculumIds == null || curriculumIds.isEmpty()) {
+            return List.of();
+        }
+        return originalWorkbookJpaRepository.findByCurriculumIdIn(curriculumIds);
     }
 }

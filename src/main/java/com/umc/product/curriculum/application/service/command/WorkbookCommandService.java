@@ -16,6 +16,9 @@ import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -107,9 +110,31 @@ public class WorkbookCommandService implements ManageWorkbookUseCase, AutoReleas
             return 0;
         }
 
-        // 2. 직전 주차 배포 여부 확인하여 필터링
+        // 2. 커리큘럼별 배포된 주차 Set 조회 (N+1 방지)
+        List<Long> curriculumIds = candidates.stream()
+            .map(w -> w.getCurriculum().getId())
+            .distinct()
+            .toList();
+
+        Map<Long, Set<Integer>> releasedWeeksByCurriculum = loadOriginalWorkbookPort
+            .findByCurriculumIdIn(curriculumIds)
+            .stream()
+            .filter(OriginalWorkbook::isReleased)
+            .collect(Collectors.groupingBy(
+                w -> w.getCurriculum().getId(),
+                Collectors.mapping(OriginalWorkbook::getWeekNo, Collectors.toSet())
+            ));
+
+        // 3. 직전 주차 배포 여부 확인하여 필터링
         List<OriginalWorkbook> toRelease = candidates.stream()
-            .filter(this::isPreviousWeekReleased)
+            .filter(candidate -> {
+                if (candidate.getWeekNo() == 1) {
+                    return true;
+                }
+                Set<Integer> releasedWeeks = releasedWeeksByCurriculum
+                    .getOrDefault(candidate.getCurriculum().getId(), Set.of());
+                return releasedWeeks.contains(candidate.getWeekNo() - 1);
+            })
             .toList();
 
         if (toRelease.isEmpty()) {
@@ -117,7 +142,7 @@ public class WorkbookCommandService implements ManageWorkbookUseCase, AutoReleas
             return 0;
         }
 
-        // 3. 한 번에 배포
+        // 4. 한 번에 배포
         for (OriginalWorkbook workbook : toRelease) {
             workbook.release();
             log.info("[WorkbookAutoRelease] 워크북 배포 완료: id={}, weekNo={}, title={}",
@@ -126,22 +151,5 @@ public class WorkbookCommandService implements ManageWorkbookUseCase, AutoReleas
 
         log.info("[WorkbookAutoRelease] 총 {}건 배포 완료", toRelease.size());
         return toRelease.size();
-    }
-
-    /**
-     * 직전 주차가 배포되었는지 확인합니다. 1주차는 직전 주차가 없으므로 true를 반환합니다.
-     */
-    private boolean isPreviousWeekReleased(OriginalWorkbook workbook) {
-        if (workbook.getWeekNo() == 1) {
-            return true;
-        }
-
-        return loadOriginalWorkbookPort
-            .findByCurriculumIdAndWeekNo(
-                workbook.getCurriculum().getId(),
-                workbook.getWeekNo() - 1
-            )
-            .map(OriginalWorkbook::isReleased)
-            .orElse(false);
     }
 }
