@@ -3,6 +3,7 @@ package com.umc.product.organization.application.port.service.command;
 import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateGisuCommand;
 import com.umc.product.organization.application.port.out.command.ManageGisuPort;
+import com.umc.product.organization.application.port.out.query.LoadChapterPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.exception.OrganizationDomainException;
@@ -19,6 +20,7 @@ public class GisuService implements ManageGisuUseCase {
 
     private final LoadGisuPort loadGisuPort;
     private final ManageGisuPort manageGisuPort;
+    private final LoadChapterPort loadChapterPort;
 
     @Override
     public Long create(CreateGisuCommand command) {
@@ -33,6 +35,9 @@ public class GisuService implements ManageGisuUseCase {
     @Override
     public void deleteGisu(Long gisuId) {
         Gisu gisu = loadGisuPort.findById(gisuId);
+        if (loadChapterPort.existsByGisuId(gisuId)) {
+            throw new OrganizationDomainException(OrganizationErrorCode.GISU_HAS_ASSOCIATED_CHAPTERS);
+        }
         manageGisuPort.delete(gisu);
     }
 
