@@ -113,7 +113,7 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
 
         return roles.stream()
             .map(ChallengerRole::getChallengerRoleType)
-            .anyMatch(ChallengerRoleType::isCentralCore);
+            .anyMatch(ChallengerRoleType::isAtLeastCentralCore);
     }
 
     @Override
@@ -122,7 +122,7 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
 
         return roles.stream()
             .map(ChallengerRole::getChallengerRoleType)
-            .anyMatch(ChallengerRoleType::isCentralMember);
+            .anyMatch(ChallengerRoleType::isAtLeastCentralMember);
     }
 
     @Override
@@ -138,7 +138,7 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
             .filter(role -> role.getOrganizationType() == OrganizationType.SCHOOL)
             .filter(role -> role.getOrganizationId().equals(schoolId))
             .map(ChallengerRole::getChallengerRoleType)
-            .anyMatch(ChallengerRoleType::isSchoolCore);
+            .anyMatch(ChallengerRoleType::isAtLeastSchoolCore);
     }
 
     @Override
@@ -154,7 +154,7 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
             .filter(role -> role.getOrganizationType() == OrganizationType.SCHOOL)
             .filter(role -> role.getOrganizationId().equals(schoolId))
             .map(ChallengerRole::getChallengerRoleType)
-            .anyMatch(ChallengerRoleType::isSchoolAdmin);
+            .anyMatch(ChallengerRoleType::isAtLeastSchoolAdmin);
     }
 
     @Override
@@ -286,7 +286,7 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
 
         return roles.stream()
             .map(ChallengerRole::getChallengerRoleType)
-            .anyMatch(ChallengerRoleType::isCentralCore);
+            .anyMatch(ChallengerRoleType::isAtLeastCentralCore);
     }
 
     @Override
@@ -321,7 +321,7 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
 
         return roles.stream()
             .map(ChallengerRole::getChallengerRoleType)
-            .anyMatch(ChallengerRoleType::isCentralMember);
+            .anyMatch(ChallengerRoleType::isAtLeastCentralMember);
     }
 
     @Override
@@ -341,7 +341,7 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
             .filter(role -> role.getOrganizationType() == OrganizationType.SCHOOL)
             .filter(role -> role.getOrganizationId().equals(schoolId))
             .map(ChallengerRole::getChallengerRoleType)
-            .anyMatch(ChallengerRoleType::isSchoolCore);
+            .anyMatch(ChallengerRoleType::isAtLeastSchoolCore);
     }
 
     @Override
@@ -361,7 +361,7 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
             .filter(role -> role.getOrganizationType() == OrganizationType.SCHOOL)
             .filter(role -> role.getOrganizationId().equals(schoolId))
             .map(ChallengerRole::getChallengerRoleType)
-            .anyMatch(ChallengerRoleType::isSchoolAdmin);
+            .anyMatch(ChallengerRoleType::isAtLeastSchoolAdmin);
     }
 
     @Override

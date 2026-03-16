@@ -64,7 +64,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
 
     private boolean canReadNotice(SubjectAttributes subjectAttributes, NoticeTargetInfo targetInfo) {
         // 총괄/부총괄: 모든 공지 읽기 가능
-        if (subjectAttributes.roleAttributes().stream().anyMatch(r -> r.roleType().isCentralCore())) {
+        if (subjectAttributes.roleAttributes().stream().anyMatch(r -> r.roleType().isAtLeastCentralCore())) {
             return true;
         }
 
