@@ -81,10 +81,9 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
         }
 
         // 역할 기반 추가 권한 체크
-        for (RoleAttribute role : subjectAttributes.roleAttributes()) {
-            if (canReadByRole(role, targetInfo, subjectAttributes)) {
-                return true;
-            }
+        if (subjectAttributes.roleAttributes().stream()
+            .anyMatch(role -> canReadByRole(role, targetInfo, subjectAttributes))) {
+            return true;
         }
 
         return false;
@@ -98,9 +97,8 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     private boolean canReadByRole(RoleAttribute role, NoticeTargetInfo targetInfo, SubjectAttributes subject) {
         return switch (role.roleType()) {
             // 중앙운영진(운영국원, 교육국원): 본인 기수 범위의 모든 공지를 파트 무관하게 읽기 가능
-            case CENTRAL_OPERATING_TEAM_MEMBER, CENTRAL_EDUCATION_TEAM_MEMBER -> subject.gisuChallengerInfos().stream()
-                .anyMatch(info -> role.gisuId().equals(info.gisuId())
-                    && (targetInfo.targetGisuId() == null || targetInfo.targetGisuId().equals(info.gisuId())));
+            case CENTRAL_OPERATING_TEAM_MEMBER, CENTRAL_EDUCATION_TEAM_MEMBER -> targetInfo.targetGisuId() == null ||
+                targetInfo.targetGisuId().equals(role.gisuId());
             case CHAPTER_PRESIDENT -> chapterPresidentCanRead(role, targetInfo, subject);
             case SCHOOL_PRESIDENT, SCHOOL_VICE_PRESIDENT -> schoolCoreCanRead(role, targetInfo, subject);
             case SCHOOL_PART_LEADER -> schoolPartLeaderCanRead(role, targetInfo, subject);
