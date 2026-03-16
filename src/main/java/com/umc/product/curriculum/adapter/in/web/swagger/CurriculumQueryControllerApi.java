@@ -17,7 +17,7 @@ public interface CurriculumQueryControllerApi {
      * @deprecated {@code GET /api/v2/curriculums/{gisuId}?part={part}} 사용 권장.
      *             v2는 gisuId를 직접 지정하여 특정 기수의 커리큘럼 조회 가능.
      * @since 1.3.0
-     * @see CurriculumQueryV2ControllerApi
+     * @see CurriculumQueryControllerApiV2
      */
     @Deprecated(since = "1.3.0", forRemoval = true)
     @Operation(
@@ -38,7 +38,7 @@ public interface CurriculumQueryControllerApi {
     );
 
     /**
-     * @deprecated {@code GET /api/v2/curriculums/challengers/me/progress?gisuId={gisuId}} 사용 권장.
+     * @deprecated {@code GET /api/v2/curriculums/{gisuId}/challengers/me/progress} 사용 권장.
      *             v1은 현재 활성 기수 기준으로만 조회되어 이전 기수 사용자 조회 불가.
      * @since 1.3.0
      */
@@ -49,7 +49,7 @@ public interface CurriculumQueryControllerApi {
             "각 주차별 워크북의 상태(기본/진행중/제출완료/통과/실패)를 반환합니다.\n\n" +
             "⚠️ **Deprecated (v1.3.0)**: 2026-04-01 제거 예정.\n\n" +
             "현재 활성 기수 기준으로만 조회되어 이전 기수 사용자는 조회가 불가합니다. " +
-            "`GET /api/v2/curriculums/challengers/me/progress?gisuId={gisuId}` 사용을 권장합니다.",
+            "`GET /api/v2/curriculums/{gisuId}/challengers/me/progress` 사용을 권장합니다.",
         deprecated = true
     )
     CurriculumProgressResponse getMyProgress(MemberPrincipal memberPrincipal);
