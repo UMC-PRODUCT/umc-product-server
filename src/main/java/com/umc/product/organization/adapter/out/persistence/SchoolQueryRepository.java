@@ -14,8 +14,10 @@ import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.organization.application.port.in.query.dto.SchoolChapterInfo;
+import com.umc.product.organization.domain.School;
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
+import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
 import java.util.List;
 import java.util.Map;
@@ -140,6 +142,40 @@ public class SchoolQueryRepository {
             .join(chapterSchool.chapter, chapter)
             .join(chapter.gisu, gisu)
             .where(gisu.id.eq(gisuId))
+            .fetch();
+    }
+
+    public List<School> findSchoolsByGisuId(Long gisuId) {
+        return queryFactory
+            .selectDistinct(school)
+            .from(school)
+            .join(school.chapterSchools, chapterSchool).fetchJoin()
+            .join(chapterSchool.chapter, chapter).fetchJoin()
+            .join(chapter.gisu, gisu).fetchJoin()
+            .where(gisu.id.eq(gisuId))
+            .fetch();
+    }
+
+    public List<SchoolNameInfo> findAllNames() {
+        return queryFactory
+            .select(Projections.constructor(SchoolNameInfo.class,
+                school.id,
+                school.name
+            ))
+            .from(school)
+            .orderBy(school.name.asc())
+            .fetch();
+    }
+
+    public List<SchoolDetailInfo.SchoolLinkItem> findLinksBySchoolId(Long schoolId) {
+        return queryFactory
+            .select(Projections.constructor(SchoolDetailInfo.SchoolLinkItem.class,
+                schoolLink.title,
+                schoolLink.type,
+                schoolLink.url
+            ))
+            .from(schoolLink)
+            .where(schoolLink.school.id.eq(schoolId))
             .fetch();
     }
 

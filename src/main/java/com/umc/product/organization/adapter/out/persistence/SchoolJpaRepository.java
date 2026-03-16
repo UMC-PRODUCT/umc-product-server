@@ -1,7 +1,5 @@
 package com.umc.product.organization.adapter.out.persistence;
 
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.domain.School;
 import java.util.List;
 import java.util.Optional;
@@ -27,12 +25,6 @@ public interface SchoolJpaRepository extends Repository<School, Long> {
             "WHERE s.id = :schoolId")
     Optional<School> findByIdWithDetails(@Param("schoolId") Long schoolId);
 
-    @Query("SELECT new com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo(s.id, s.name) FROM School s ORDER BY s.name ASC")
-    List<SchoolNameInfo> findAllNameInfoOrderByNameAsc();
-
-    @Query("SELECT new com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo$SchoolLinkItem(sl.title, sl.type, sl.url) FROM SchoolLink sl WHERE sl.school.id = :schoolId")
-    List<SchoolDetailInfo.SchoolLinkItem> findLinksBySchoolId(@Param("schoolId") Long schoolId);
-
     List<School> findAllByIdIn(List<Long> ids);
 
     @Query("SELECT s FROM School s " +
@@ -41,13 +33,6 @@ public interface SchoolJpaRepository extends Repository<School, Long> {
             "    WHERE cs.chapter.gisu.id = :gisuId" +
             ")")
     List<School> findUnassignedByGisuId(@Param("gisuId") Long gisuId);
-
-    @Query("SELECT DISTINCT s FROM School s " +
-            "JOIN FETCH s.chapterSchools cs " +
-            "JOIN FETCH cs.chapter c " +
-            "JOIN FETCH c.gisu " +
-            "WHERE c.gisu.id = :gisuId")
-    List<School> findSchoolsByGisuId(@Param("gisuId") Long gisuId);
 
     boolean existsById(Long schoolId);
 }

@@ -48,7 +48,7 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
 
     @Override
     public List<SchoolNameInfo> findAllNames() {
-        return schoolJpaRepository.findAllNameInfoOrderByNameAsc();
+        return schoolQueryRepository.findAllNames();
     }
 
     @Override
@@ -105,6 +105,6 @@ public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPor
 
     @Override
     public List<SchoolDetailInfo.SchoolLinkItem> findLinksBySchoolId(Long schoolId) {
-        return schoolJpaRepository.findLinksBySchoolId(schoolId);
+        return schoolQueryRepository.findLinksBySchoolId(schoolId);
     }
 }
