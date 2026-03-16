@@ -6,13 +6,13 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumProgressUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumUseCase;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumInfo.WorkbookInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProjection;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumPort;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumProgressPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
-import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
-import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -31,10 +31,10 @@ public class CurriculumQueryService implements GetCurriculumProgressUseCase, Get
     private final LoadCurriculumPort loadCurriculumPort;
 
     @Override
-    public CurriculumInfo getByActiveGisuAndPart(ChallengerPart part) {
-        return loadCurriculumPort.findByActiveGisuAndPart(part)
-            .map(CurriculumInfo::from)
-            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.CURRICULUM_NOT_FOUND));
+    public CurriculumInfo getByGisuAndPart(Long gisuId, ChallengerPart part, Integer weekNo) {
+        CurriculumProjection projection = loadCurriculumPort.getByGisuIdAndPart(gisuId, part);
+        List<WorkbookInfo> workbooks = loadOriginalWorkbookPort.findWorkbookProjections(projection.id(), weekNo);
+        return new CurriculumInfo(projection.id(), projection.part(), projection.title(), workbooks);
     }
 
     @Override

@@ -10,6 +10,8 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumInfo.WorkbookInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProjection;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo.WorkbookProgressInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
@@ -160,6 +162,47 @@ public class CurriculumQueryRepository {
             )
             .orderBy(originalWorkbook.weekNo.asc())
             .fetch();
+    }
+
+    public Optional<CurriculumProjection> findByGisuIdAndPart(Long gisuId, ChallengerPart part) {
+        return Optional.ofNullable(
+            queryFactory
+                .select(Projections.constructor(CurriculumProjection.class,
+                    curriculum.id,
+                    curriculum.part,
+                    curriculum.title
+                ))
+                .from(curriculum)
+                .where(curriculum.gisuId.eq(gisuId), curriculum.part.eq(part))
+                .fetchOne()
+        );
+    }
+
+    public List<WorkbookInfo> fetchWorkbooks(Long curriculumId, Integer weekNo) {
+        return queryFactory
+            .select(Projections.constructor(WorkbookInfo.class,
+                originalWorkbook.id,
+                originalWorkbook.weekNo,
+                originalWorkbook.title,
+                originalWorkbook.description,
+                originalWorkbook.workbookUrl,
+                originalWorkbook.startDate,
+                originalWorkbook.endDate,
+                originalWorkbook.missionType,
+                originalWorkbook.releasedAt,
+                originalWorkbook.releasedAt.isNotNull()
+            ))
+            .from(originalWorkbook)
+            .where(
+                originalWorkbook.curriculum.id.eq(curriculumId),
+                weekNoCondition(weekNo)
+            )
+            .orderBy(originalWorkbook.weekNo.asc())
+            .fetch();
+    }
+
+    private BooleanExpression weekNoCondition(Integer weekNo) {
+        return weekNo != null ? originalWorkbook.weekNo.eq(weekNo) : null;
     }
 
     private BooleanExpression partCondition(ChallengerPart part) {
