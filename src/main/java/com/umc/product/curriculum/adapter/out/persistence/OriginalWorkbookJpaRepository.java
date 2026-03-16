@@ -12,7 +12,9 @@ public interface OriginalWorkbookJpaRepository extends JpaRepository<OriginalWor
 
     List<OriginalWorkbook> findByCurriculumIdOrderByWeekNoAsc(Long curriculumId);
 
+    List<OriginalWorkbook> findByCurriculumIdIn(List<Long> curriculumIds);
+
     @Query("SELECT DISTINCT o.weekNo FROM OriginalWorkbook o " +
-            "WHERE o.curriculum.gisuId = :gisuId ORDER BY o.weekNo")
+        "WHERE o.curriculum.gisuId = :gisuId ORDER BY o.weekNo")
     List<Integer> findDistinctWeekNoByGisuId(@Param("gisuId") Long gisuId);
 }
