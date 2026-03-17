@@ -7,6 +7,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -39,7 +40,7 @@ public class Curriculum extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
-    @OneToMany(mappedBy = "curriculum", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "curriculum", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<OriginalWorkbook> originalWorkbooks = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
@@ -54,6 +55,9 @@ public class Curriculum extends BaseEntity {
     }
 
     public void updateTitle(String title) {
+        if(title == null || title.isBlank()) {
+            throw new IllegalArgumentException("Title must not be null or blank");
+        }
         this.title = title;
     }
 
