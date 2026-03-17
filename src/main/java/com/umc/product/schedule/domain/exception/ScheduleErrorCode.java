@@ -30,10 +30,14 @@ public enum ScheduleErrorCode implements BaseCode {
 
     // 참여자 관련
     PARTICIPANT_NOT_REGISTERED(HttpStatus.FORBIDDEN, "SCHEDULE-0012", "출석 대상자 명단에 등록되지 않았습니다. 관리자에게 문의하세요."),
-    CANNOT_UPDATE_STARTED_ATTENDANCE(HttpStatus.BAD_REQUEST, "SCHEDULE-0013", "이미 출석이 시작되었습니다. 출석 시작 전에만 명단을 수정할 수 있습니다."),
+    CANNOT_UPDATE_STARTED_ATTENDANCE(HttpStatus.BAD_REQUEST, "SCHEDULE-0013",
+        "이미 출석이 시작되었습니다. 출석 시작 전에만 명단을 수정할 수 있습니다."),
 
     // 권한 관련
     NOT_STUDY_GROUP_LEADER(HttpStatus.FORBIDDEN, "SCHEDULE-0014", "스터디 그룹 리더만 일정을 생성할 수 있습니다."),
+
+    // 참여자 명단 수정 관련
+    CANNOT_REMOVE_SCHEDULE_AUTHOR(HttpStatus.BAD_REQUEST, "SCHEDULE-0015", "일정 생성자는 참여자 명단에서 제외할 수 없습니다."),
 
     // 출석 체크 관련
     ALREADY_CHECKED_IN(HttpStatus.BAD_REQUEST, "SCHEDULE-0015", "이미 출석 체크가 완료되었습니다"),
