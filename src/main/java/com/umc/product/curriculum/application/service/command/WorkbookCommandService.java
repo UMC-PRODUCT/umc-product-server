@@ -79,11 +79,7 @@ public class WorkbookCommandService implements ManageWorkbookUseCase, AutoReleas
     public void review(ReviewWorkbookCommand command) {
         ChallengerWorkbook workbook = loadChallengerWorkbookPort.findById(command.challengerWorkbookId());
 
-        if (command.status() == WorkbookStatus.PASS) {
-            workbook.markAsPass(command.feedback());
-        } else if (command.status() == WorkbookStatus.FAIL) {
-            workbook.markAsFail(command.feedback());
-        }
+        workbook.review(command.status(), command.feedback());
 
         saveChallengerWorkbookPort.save(workbook);
     }

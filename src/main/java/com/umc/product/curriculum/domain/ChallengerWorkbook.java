@@ -94,20 +94,14 @@ public class ChallengerWorkbook extends BaseEntity {
     }
 
     /**
-     * 심사 통과 (SUBMITTED → PASS)
+     * 워크북 심사 (SUBMITTED → PASS or FAIL)
+     *
+     * @param status   심사 결과 (PASS 또는 FAIL)
+     * @param feedback 심사 피드백
      */
-    public void markAsPass(String feedback) {
+    public void review(WorkbookStatus status, String feedback) {
         validateSubmittedStatus();
-        this.status = WorkbookStatus.PASS;
-        this.feedback = feedback;
-    }
-
-    /**
-     * 심사 불합격 (SUBMITTED → FAIL)
-     */
-    public void markAsFail(String feedback) {
-        validateSubmittedStatus();
-        this.status = WorkbookStatus.FAIL;
+        this.status = status;
         this.feedback = feedback;
     }
 
