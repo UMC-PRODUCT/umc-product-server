@@ -26,4 +26,15 @@ public interface FcmControllerApi {
         FcmRegistrationRequest request
     );
 
+    @Operation(
+        summary = "[마이그레이션] 기존 토픽 구독 해제",
+        description = "prefix 없이 구독된 레거시 토픽을 일괄 해제합니다. 마이그레이션 일회성 용도입니다."
+    )
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "레거시 토픽 구독 해제 성공")
+    })
+    void unsubscribeLegacyTopics(
+        @Parameter(hidden = true)
+        @CurrentMember MemberPrincipal memberPrincipal
+    );
 }
