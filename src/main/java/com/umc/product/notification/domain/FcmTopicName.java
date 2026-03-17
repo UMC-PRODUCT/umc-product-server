@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * <p>
  * 토픽명 예시: - prod-all (전체 대상) - prod-school-5 (전체 기수 특정 학교) - prod-gisu-1 (기수 전체) - prod-gisu-1-part-SPRINGBOOT (기수 +
  * 파트) - prod-gisu-1-school-5 (기수 + 학교) - prod-gisu-1-school-5-part-WEB (기수 + 학교 + 파트) - prod-gisu-1-chapter-3 (기수 + 지부)
- * - prod-gisu-1-chapter-3-part-ANDROID (기수 + 지부 + 파트)
+ * - prod-gisu-1-chapter-3-part-ANDROID (기수 + 지부 + 파트) - prod-member-2 (개인 알림용 토픽)
  */
 @Component
 public class FcmTopicName {
@@ -59,7 +59,14 @@ public class FcmTopicName {
     }
 
     /**
-     * 챌린저가 구독해야 할 모든 토픽 목록을 반환
+     * 개인 알림용 토픽 (prefix 포함, 예: "dev-member-2")
+     */
+    public String member(Long memberId) {
+        return withPrefix("member-" + memberId);
+    }
+
+    /**
+     * 챌린저가 구독해야 할 모든 토픽 목록을 반환 (prefix 포함)
      */
     public List<String> allTopicsFor(Long gisuId, ChallengerPart part, Long schoolId, Long chapterId) {
         List<String> topics = new ArrayList<>();
@@ -76,6 +83,31 @@ public class FcmTopicName {
         if (chapterId != null) {
             topics.add(gisuChapter(gisuId, chapterId));
             topics.add(gisuChapterPart(gisuId, chapterId, part));
+        }
+
+        return topics;
+    }
+
+    /**
+     * 챌린저가 구독해야 할 모든 토픽 목록을 반환 (prefix 없는 버전)
+     * <p>
+     * prefix 없이 구독했던 레거시 토픽들을 일괄 해제할 때 사용
+     */
+    public List<String> allTopicsForWithoutPrefix(Long gisuId, ChallengerPart part, Long schoolId, Long chapterId) {
+        List<String> topics = new ArrayList<>();
+        topics.add("all");
+        topics.add("gisu-" + gisuId);
+        topics.add("gisu-" + gisuId + "-part-" + part.name());
+
+        if (schoolId != null) {
+            topics.add("school-" + schoolId);
+            topics.add("gisu-" + gisuId + "-school-" + schoolId);
+            topics.add("gisu-" + gisuId + "-school-" + schoolId + "-part-" + part.name());
+        }
+
+        if (chapterId != null) {
+            topics.add("gisu-" + gisuId + "-chapter-" + chapterId);
+            topics.add("gisu-" + gisuId + "-chapter-" + chapterId + "-part-" + part.name());
         }
 
         return topics;
