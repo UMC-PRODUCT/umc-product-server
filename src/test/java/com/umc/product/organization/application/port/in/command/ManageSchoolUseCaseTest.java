@@ -51,7 +51,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         CreateSchoolCommand command = new CreateSchoolCommand("한성대", "비고", null, List.of());
 
         // when
-        Long schoolId = manageSchoolUseCase.register(command);
+        Long schoolId = manageSchoolUseCase.create(command);
 
         // then
         School savedSchool = loadSchoolPort.findSchoolDetailById(schoolId);
@@ -71,7 +71,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         CreateSchoolCommand command = new CreateSchoolCommand("한성대", "비고", null, links);
 
         // when
-        Long schoolId = manageSchoolUseCase.register(command);
+        Long schoolId = manageSchoolUseCase.create(command);
 
         // then
         School savedSchool = loadSchoolPort.findSchoolDetailById(schoolId);
@@ -93,7 +93,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         CreateSchoolCommand command = new CreateSchoolCommand("한성대", "비고", null, links);
 
         // when
-        Long schoolId = manageSchoolUseCase.register(command);
+        Long schoolId = manageSchoolUseCase.create(command);
 
         // then
         School savedSchool = loadSchoolPort.findSchoolDetailById(schoolId);
@@ -115,7 +115,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
             new CreateSchoolCommand.SchoolLinkCommand("서브 인스타", SchoolLinkType.INSTAGRAM, "https://instagram.com/sub")
         );
         CreateSchoolCommand createCommand = new CreateSchoolCommand("한성대", "비고", null, initialLinks);
-        Long schoolId = manageSchoolUseCase.register(createCommand);
+        Long schoolId = manageSchoolUseCase.create(createCommand);
 
         // when - 같은 타입 링크를 다른 URL로 교체
         List<CreateSchoolCommand.SchoolLinkCommand> updatedLinks = List.of(

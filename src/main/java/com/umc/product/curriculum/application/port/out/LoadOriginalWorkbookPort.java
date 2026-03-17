@@ -4,6 +4,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
+import java.time.Instant;
 import java.util.List;
 
 public interface LoadOriginalWorkbookPort {
@@ -33,4 +34,20 @@ public interface LoadOriginalWorkbookPort {
      * @return 배포된 주차 번호 목록 (오름차순)
      */
     List<Integer> findReleasedWeekNos(ChallengerPart part);
+
+    /**
+     * 미배포 상태이면서 시작일이 지난 워크북 목록 조회 (자동 배포 대상)
+     *
+     * @param now 현재 시간
+     * @return 자동 배포 후보 워크북 목록
+     */
+    List<OriginalWorkbook> findUnreleasedWithStartDateBefore(Instant now);
+
+    /**
+     * 여러 커리큘럼의 워크북 일괄 조회 (N+1 방지용)
+     *
+     * @param curriculumIds 커리큘럼 ID 목록
+     * @return 해당 커리큘럼들의 모든 워크북
+     */
+    List<OriginalWorkbook> findByCurriculumIdIn(List<Long> curriculumIds);
 }

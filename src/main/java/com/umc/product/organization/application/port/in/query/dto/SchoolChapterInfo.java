@@ -1,0 +1,16 @@
+package com.umc.product.organization.application.port.in.query.dto;
+
+import java.time.Instant;
+
+public record SchoolChapterInfo(
+    Long chapterId,
+    String chapterName,
+    String schoolName,
+    Long schoolId,
+    String remark,
+    String logoImageId, // 아직 파일 URL이 아닌 ID
+    boolean isActive,
+    Instant createdAt,
+    Instant updatedAt
+) {
+}

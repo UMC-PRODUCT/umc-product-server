@@ -1,19 +1,20 @@
 package com.umc.product.organization.application.port.service.query;
 
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
+import com.umc.product.organization.application.port.in.query.dto.SchoolChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolLinkInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.UnassignedSchoolInfo;
-import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
-import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.School;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,33 +26,27 @@ public class SchoolQueryService implements GetSchoolUseCase {
 
 
     private final LoadSchoolPort loadSchoolPort;
-    private final LoadChapterSchoolPort loadChapterSchoolPort;
     private final GetFileUseCase getFileUseCase;
 
     @Override
     public List<SchoolNameInfo> getAllSchoolNames() {
-        return loadSchoolPort.findAll().stream()
-            .map(SchoolNameInfo::from)
-            .toList();
+        return loadSchoolPort.findAllNames();
     }
 
     @Override
     public SchoolDetailInfo getSchoolDetail(Long schoolId) {
 
-        SchoolDetailInfo.SchoolInfo schoolInfo = loadSchoolPort.findSchoolDetailByIdWithActiveChapter(schoolId);
+        SchoolChapterInfo schoolInfoWithoutSchoolLinkItem = loadSchoolPort.findSchoolDetailByIdWithActiveChapter(schoolId);
 
         String logoImageUrl = null;
-        if (schoolInfo.logoImageId() != null) {
-            FileInfo fileInfo = getFileUseCase.getById(schoolInfo.logoImageId());
+        if (schoolInfoWithoutSchoolLinkItem.logoImageId() != null) {
+            FileInfo fileInfo = getFileUseCase.getById(schoolInfoWithoutSchoolLinkItem.logoImageId());
             logoImageUrl = fileInfo.fileLink();
         }
 
-        School school = loadSchoolPort.findById(schoolId);
-        List<SchoolDetailInfo.SchoolLinkItem> links = school.getSchoolLinks().stream()
-            .map(link -> new SchoolDetailInfo.SchoolLinkItem(link.getTitle(), link.getType(), link.getUrl()))
-            .toList();
+        List<SchoolDetailInfo.SchoolLinkItem> links = loadSchoolPort.findLinksBySchoolId(schoolId);
 
-        return schoolInfo.toDetailInfo(logoImageUrl, links);
+        return toSchoolDetailInfo(schoolInfoWithoutSchoolLinkItem, logoImageUrl, links);
 
     }
 
@@ -71,31 +66,46 @@ public class SchoolQueryService implements GetSchoolUseCase {
             .toList();
     }
 
-    // TODO: 여기는 심각하게 리팩토링이 필요해보인다
-
     @Override
     public List<SchoolDetailInfo> getSchoolListByGisuId(Long gisuId) {
-        Set<School> schools = loadChapterSchoolPort.findByGisuId(gisuId)
-            .stream()
-            .map(ChapterSchool::getSchool)
-            .collect(Collectors.toSet());
+
+        List<SchoolChapterInfo> schools = loadSchoolPort.findSchoolDetailsByGisuId(gisuId);
+        if (schools.isEmpty()) return List.of();
+
+        List<Long> schoolIds = schools.stream().map(SchoolChapterInfo::schoolId).toList();
+
+        Map<Long, List<SchoolDetailInfo.SchoolLinkItem>> linksMap = loadSchoolPort.findLinksBySchoolIds(schoolIds);
+
+        List<String> logoImageIds = schools.stream()
+            .map(SchoolChapterInfo::logoImageId)
+            .filter(Objects::nonNull)
+            .toList();
+
+        Map<String, String> logoImageUrls = logoImageIds.isEmpty()
+            ? Map.of()
+            : getFileUseCase.getFileLinks(logoImageIds);
 
         return schools.stream()
-            .map(school -> {
-                SchoolDetailInfo.SchoolInfo schoolInfo = loadSchoolPort.findSchoolDetailByIdWithActiveChapter(
-                    school.getId());
+            .map(school -> toSchoolDetailInfo(
+                school,
+                logoImageUrls.get(school.logoImageId()),
+                linksMap.getOrDefault(school.schoolId(), List.of())
+            ))
+            .toList();
+    }
 
-                String logoImageUrl = null;
-                if (schoolInfo.logoImageId() != null) {
-                    FileInfo fileInfo = getFileUseCase.getById(schoolInfo.logoImageId());
-                    logoImageUrl = fileInfo.fileLink();
-                }
-
-                List<SchoolDetailInfo.SchoolLinkItem> links = school.getSchoolLinks().stream()
-                    .map(link -> new SchoolDetailInfo.SchoolLinkItem(link.getTitle(), link.getType(), link.getUrl()))
-                    .toList();
-
-                return schoolInfo.toDetailInfo(logoImageUrl, links);
-            }).toList();
+    private SchoolDetailInfo toSchoolDetailInfo(SchoolChapterInfo info, String logoImageUrl, List<SchoolDetailInfo.SchoolLinkItem> links) {
+        return new SchoolDetailInfo(
+            info.chapterId(),
+            info.chapterName(),
+            info.schoolName(),
+            info.schoolId(),
+            info.remark(),
+            logoImageUrl,
+            links,
+            info.isActive(),
+            info.createdAt(),
+            info.updatedAt()
+        );
     }
 }
