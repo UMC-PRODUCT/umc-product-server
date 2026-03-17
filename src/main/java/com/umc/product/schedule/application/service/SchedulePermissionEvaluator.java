@@ -14,9 +14,6 @@ import org.springframework.stereotype.Component;
 
 /**
  * Schedule(일정) 리소스에 대한 권한 평가
- * <p>
- * - READ: 운영진 또는 중앙 총괄단만 가능 (참석 통계와 함께 일정 목록 조회 권한, 상세 조회는 별도 체크 없이 누구나 가능) - WRITE, DELETE: 일정 작성자 본인만 가능 - APPROVE:
- * 해당 기수의 중앙 총괄단 또는 (일정 작성자 본인 AND 해당 기수 운영진)만 가능
  */
 @Component
 @RequiredArgsConstructor
