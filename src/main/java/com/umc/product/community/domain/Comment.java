@@ -1,5 +1,7 @@
 package com.umc.product.community.domain;
 
+import com.umc.product.community.domain.exception.CommunityDomainException;
+import com.umc.product.community.domain.exception.CommunityErrorCode;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -52,19 +54,19 @@ public class Comment {
 
     private static void validateRequired(Long postId, Long challengerId, String content) {
         if (postId == null || postId <= 0) {
-            throw new IllegalArgumentException("게시글 ID는 필수입니다.");
+            throw new CommunityDomainException(CommunityErrorCode.INVALID_COMMENT_POST_ID);
         }
         if (challengerId == null || challengerId <= 0) {
-            throw new IllegalArgumentException("챌린저 ID는 필수입니다.");
+            throw new CommunityDomainException(CommunityErrorCode.INVALID_COMMENT_CHALLENGER_ID);
         }
         if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("내용은 필수입니다.");
+            throw new CommunityDomainException(CommunityErrorCode.INVALID_COMMENT_CONTENT);
         }
     }
 
     public void updateContent(String content) {
         if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("내용은 필수입니다.");
+            throw new CommunityDomainException(CommunityErrorCode.INVALID_COMMENT_CONTENT);
         }
         this.content = content;
     }
@@ -72,7 +74,7 @@ public class Comment {
     public record CommentId(Long id) {
         public CommentId {
             if (id <= 0) {
-                throw new IllegalArgumentException("ID는 양수여야 합니다.");
+                throw new CommunityDomainException(CommunityErrorCode.INVALID_ID);
             }
         }
     }
