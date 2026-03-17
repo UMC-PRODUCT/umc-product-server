@@ -1,6 +1,7 @@
 package com.umc.product.curriculum.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
@@ -82,10 +83,12 @@ public class ChallengerWorkbook extends BaseEntity {
     /**
      * 워크북 제출 (PENDING → SUBMITTED)
      *
-     * @param submission 제출 링크 (깃허브, 노션 등)
+     * @param missionType 미션 유형
+     * @param submission  제출 링크 (깃허브, 노션 등). PLAIN 타입인 경우 null 허용
      */
-    public void submit(String submission) {
+    public void submit(MissionType missionType, String submission) {
         validatePendingStatus();
+        validateSubmission(missionType, submission);
         this.submission = submission;
         this.status = WorkbookStatus.SUBMITTED;
     }
@@ -115,6 +118,12 @@ public class ChallengerWorkbook extends BaseEntity {
         validateCanSelectBest();
         this.status = WorkbookStatus.BEST;
         this.bestReason = bestReason;
+    }
+
+    private void validateSubmission(MissionType missionType, String submission) {
+        if (missionType != MissionType.PLAIN && (submission == null || submission.isBlank())) {
+            throw new CurriculumDomainException(CurriculumErrorCode.SUBMISSION_REQUIRED);
+        }
     }
 
     private void validatePendingStatus() {
