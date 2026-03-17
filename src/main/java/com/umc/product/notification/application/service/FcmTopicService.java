@@ -24,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class FcmTopicService implements ManageFcmTopicUseCase {
 
     private final LoadFcmPort loadFcmPort;
@@ -41,6 +40,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
      * FCM 토큰 최초 등록 시 또는 새 챌린저 등록 후 호출. member 토픽을 한 번 구독하고, 모든 챌린저의 토픽을 구독한다. fcm_token_topic에 이미 존재하는 토픽은 스킵함
      */
     @Override
+    @Transactional
     public void subscribeAllTopicsByMemberId(Long memberId) {
         FcmToken fcmToken = loadFcmPort.findOptionalByMemberId(memberId).orElse(null);
         if (fcmToken == null || fcmToken.getFcmToken().isBlank()) {
@@ -55,26 +55,31 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
         manageFcmUseCase.subscribeToTopic(tokens, memberTopic);
         saveFcmTopicPort.saveTopicSubscription(fcmToken.getId(), memberTopic);
 
-        // 챌린저 토픽: 챌린저별 기수/학교/지부/파트 토픽 구독 (이미 있으면 스킵)
+        // memberInfo는 모든 챌린저가 동일한 memberId를 가지므로 한 번만 조회
+        MemberInfo memberInfo = getMemberUseCase.getById(memberId);
+        if (memberInfo.schoolId() == null) {
+            throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_NOT_FOUND);
+        }
+
         List<ChallengerInfo> challengers = getChallengerUseCase.getMemberChallengerList(memberId);
         for (ChallengerInfo challenger : challengers) {
-            subscribeChallengerTopics(fcmToken, tokens, challenger);
+            subscribeChallengerTopics(fcmToken, tokens, challenger, memberInfo);
         }
 
         log.info("토픽 구독 완료 memberId={}", memberId);
     }
 
     /**
-     * 회원 탈퇴 등 전체 구독을 정리할 때 호출. member 토픽을 한 번 해제하고, 모든 챌린저의 org 토픽을 해제한다.
+     * 회원 탈퇴 등 전체 구독을 정리할 때 호출. DB 기반으로 동작하므로 챌린저 데이터가 없어도 안전.
      */
     @Override
+    @Transactional
     public void unsubscribeAllTopicsByMemberId(Long memberId) {
         FcmToken fcmToken = loadFcmPort.findOptionalByMemberId(memberId).orElse(null);
         if (fcmToken == null || fcmToken.getFcmToken().isBlank()) {
             return;
         }
 
-        // 탈퇴 시점에 챌린저 데이터가 이미 삭제됐을 수 있으므로 DB 기반으로 해제
         List<String> tokens = List.of(fcmToken.getFcmToken());
         List<String> topics = loadFcmTopicPort.findTopicNamesByFcmTokenId(fcmToken.getId());
 
@@ -92,6 +97,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
      * 레코드를 삭제하여 새 토큰 재구독 시 깨끗한 상태를 보장.
      */
     @Override
+    @Transactional
     public void unsubscribeTokenFromTopics(String fcmToken, Long memberId) {
         if (fcmToken == null || fcmToken.isBlank()) {
             return;
@@ -125,15 +131,17 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
             return;
         }
 
+        // memberInfo는 모든 챌린저가 동일한 memberId를 가지므로 한 번만 조회
+        MemberInfo memberInfo = getMemberUseCase.getById(memberId);
+        if (memberInfo.schoolId() == null) {
+            log.warn("학교 정보가 없어 레거시 토픽 해제를 건너뜁니다. memberId={}", memberId);
+            return;
+        }
+
         List<String> tokens = List.of(fcmToken.getFcmToken());
-        List<ChallengerInfo> challengers = getChallengerUseCase.getMemberChallengerList(memberId);
+        List<ChallengerInfo> challengers = getChallengerUseCase.getAllByMemberId(memberId);
 
         for (ChallengerInfo challenger : challengers) {
-            MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challenger.memberId());
-            if (memberInfo.schoolId() == null) {
-                continue;
-            }
-
             ChapterInfo chapter = getChapterUseCase.byGisuAndSchool(challenger.gisuId(), memberInfo.schoolId());
             List<String> legacyTopics = fcmTopicName.allTopicsForWithoutPrefix(
                 challenger.gisuId(), challenger.part(), memberInfo.schoolId(), chapter.id());
@@ -148,25 +156,16 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
 
     // =========== PRIVATE ==============
 
-    private void subscribeChallengerTopics(FcmToken fcmToken, List<String> tokens, ChallengerInfo challenger) {
-        List<String> topics = resolveChallengerTopics(challenger);
+    private void subscribeChallengerTopics(FcmToken fcmToken, List<String> tokens, ChallengerInfo challenger, MemberInfo memberInfo) {
+        List<String> topics = resolveChallengerTopics(challenger, memberInfo);
         for (String topic : topics) {
             manageFcmUseCase.subscribeToTopic(tokens, topic);
             saveFcmTopicPort.saveTopicSubscription(fcmToken.getId(), topic);
         }
-        log.debug("org 토픽 구독 완료 challengerId={}, topics={}", challenger.challengerId(), topics);
+        log.debug("챌린저 토픽 구독 완료 challengerId={}, topics={}", challenger.challengerId(), topics);
     }
 
-    /**
-     * 챌린저 정보를 기반으로 구독해야 할 토픽 목록을 생성 챌린저는 반드시 기수/학교/지부/파트 정보가 모두 존재해야 한다.
-     */
-    private List<String> resolveTopicsForChallenger(ChallengerInfo challenger) {
-        MemberInfo memberInfo = getMemberUseCase.getById(challenger.memberId());
-
-        if (memberInfo.schoolId() == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_NOT_FOUND);
-        }
-
+    private List<String> resolveChallengerTopics(ChallengerInfo challenger, MemberInfo memberInfo) {
         ChapterInfo chapter = getChapterUseCase.byGisuAndSchool(challenger.gisuId(), memberInfo.schoolId());
 
         return fcmTopicName.allTopicsFor(
