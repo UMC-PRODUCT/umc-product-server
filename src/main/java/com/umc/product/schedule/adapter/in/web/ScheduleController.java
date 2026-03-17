@@ -15,7 +15,6 @@ import com.umc.product.schedule.adapter.in.web.swagger.ScheduleControllerApi;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleWithAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateStudyGroupScheduleUseCase;
-import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleWithAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
@@ -38,12 +37,16 @@ public class ScheduleController implements ScheduleControllerApi {
     private final CreateScheduleWithAttendanceUseCase createScheduleWithAttendanceUseCase;
     private final CreateStudyGroupScheduleUseCase createStudyGroupScheduleUseCase;
     private final UpdateScheduleUseCase updateScheduleUseCase;
-    private final DeleteScheduleUseCase deleteScheduleUseCase;
     private final DeleteScheduleWithAttendanceUseCase deleteScheduleWithAttendanceUseCase;
 
 
     @Override
     @PostMapping
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        permission = PermissionType.WRITE,
+        message = "일정 생성은 챌린저만 가능합니다."
+    )
     public void createSchedule(
         @CurrentMember MemberPrincipal memberPrincipal,
         @Valid @RequestBody CreateScheduleRequest request
@@ -79,7 +82,8 @@ public class ScheduleController implements ScheduleControllerApi {
     @CheckAccess(
         resourceType = ResourceType.SCHEDULE,
         resourceId = "#scheduleId",
-        permission = PermissionType.WRITE
+        permission = PermissionType.EDIT,
+        message = "일정 수정 및 삭제는 작성자나 관리자만 가능합니다."
     )
     public void updateSchedule(
         @PathVariable Long scheduleId,
@@ -93,7 +97,8 @@ public class ScheduleController implements ScheduleControllerApi {
     @CheckAccess(
         resourceType = ResourceType.SCHEDULE,
         resourceId = "#scheduleId",
-        permission = PermissionType.DELETE
+        permission = PermissionType.DELETE,
+        message = "일정 수정 및 삭제는 작성자나 관리자만 가능합니다."
     )
     public void deleteScheduleWithAttendance(@PathVariable Long scheduleId) {
         deleteScheduleWithAttendanceUseCase.delete(scheduleId);
@@ -104,7 +109,8 @@ public class ScheduleController implements ScheduleControllerApi {
     @CheckAccess(
         resourceType = ResourceType.SCHEDULE,
         resourceId = "#scheduleId",
-        permission = PermissionType.WRITE
+        permission = PermissionType.EDIT,
+        message = "일정 수정 및 삭제는 작성자나 관리자만 가능합니다."
     )
     public UpdateScheduleLocationResponse updateScheduleLocation(
         @PathVariable Long scheduleId,
