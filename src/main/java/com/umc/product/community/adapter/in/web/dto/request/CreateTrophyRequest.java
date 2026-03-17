@@ -34,4 +34,8 @@ public record CreateTrophyRequest(
     public CreateTrophyCommand toCommand() {
         return new CreateTrophyCommand(challengerId, week, title, content, url);
     }
+
+    public CreateTrophyCommand toCommand(Long challengerId) {
+        return new CreateTrophyCommand(challengerId, week, title, content, url);
+    }
 }
