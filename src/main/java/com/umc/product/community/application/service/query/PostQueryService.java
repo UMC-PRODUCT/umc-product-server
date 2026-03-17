@@ -88,9 +88,9 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
     }
 
     @Override
-    public Page<PostInfo> getPostList(PostSearchQuery query, Pageable pageable) {
+    public Page<PostInfo> getPostList(PostSearchQuery query, Long challengerId, Pageable pageable) {
         Page<Post> posts = loadPostPort.findAllByQuery(query, pageable);
-        return convertToPostInfoPage(posts, null, pageable);
+        return convertToPostInfoPage(posts, challengerId, pageable);
     }
 
     @Override

@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
-@Tag(name = "Community | 게시글 Query", description = "")
+@Tag(name = "Community | 게시글 Query", description = "게시글 조회 API")
 public class PostQueryController {
 
     private final GetPostDetailUseCase getPostDetailUseCase;
@@ -77,12 +77,19 @@ public class PostQueryController {
         Category category,
         @PageableDefault(size = 20)
         @ParameterObject
-        Pageable pageable
+        Pageable pageable,
+        @CurrentMember MemberPrincipal memberPrincipal
     ) {
+        Long challengerId = null;
+        if (memberPrincipal != null) {
+            Long memberId = memberPrincipal.getMemberId();
+            challengerId = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId).challengerId();
+        }
+
         PostSearchQuery query = new PostSearchQuery(category);
 
         return PageResponse.of(
-            getPostListUseCase.getPostList(query, pageable),
+            getPostListUseCase.getPostList(query, challengerId, pageable),
             this::toPostResponse
         );
     }

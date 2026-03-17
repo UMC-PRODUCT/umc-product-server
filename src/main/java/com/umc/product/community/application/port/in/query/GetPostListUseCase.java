@@ -6,5 +6,5 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface GetPostListUseCase {
-    Page<PostInfo> getPostList(PostSearchQuery query, Pageable pageable);
+    Page<PostInfo> getPostList(PostSearchQuery query, Long challengerId, Pageable pageable);
 }
