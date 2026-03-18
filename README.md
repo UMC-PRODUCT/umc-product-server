@@ -12,6 +12,11 @@
 
 ## 👬 프로덕트팀 구성원
 
+### 2nd 서버팀
+
+<img width="1000" alt="2nd-server-team" src="https://github.com/user-attachments/assets/da5cdc75-563b-45b8-b09d-04dce454478d" />
+
+
 ### 1st Founders
 
 <img width="1000" alt="1st-server-team" src="https://github.com/user-attachments/assets/1b3c94dd-ef23-48ec-9785-3f8a4ceb10dd" />
