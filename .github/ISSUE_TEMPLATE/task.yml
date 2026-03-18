@@ -1,0 +1,54 @@
+name: "👻 Task"
+description: 특정 태그로 분류하기 어려운 작업
+title: "[Task] "
+labels: [ ":ghost: Task" ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 👻 Task 이슈에 앞서
+        Feature, Bug, Refactor, Chore, Docs 중 **어느 태그로도 분류하기 어려운 작업**에 사용해주세요.
+        Assignee 및 Sub-Issue를 적극적으로 활용해주세요.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 어떤 작업인가요?
+      description: 무엇을, 왜 해야 하는지 육하원칙에 의거해서 작성해주세요.
+      placeholder: |
+        _e.g._ Team Notion에 UI 관련 정리하기 (related to #ISSUE_NUM)
+    validations:
+      required: true
+
+  - type: textarea
+    id: todo
+    attributes:
+      label: 🔧 TODO
+      description: 작업에 필요한 사항들을 체크리스트로 작성해주세요.
+      placeholder: |
+        _e.g._
+        - [ ] Task 1
+        - [ ] Task 2
+    validations:
+      required: true
+
+  - type: input
+    id: related
+    attributes:
+      label: 🔗 관련 이슈
+      description: 연관된 이슈가 있다면 번호를 입력해주세요.
+      placeholder: "_e.g._ #123, #456"
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: ✅ 제출 전 확인사항
+      options:
+        - label: 동일하거나 유사한 이슈가 없는지 확인했습니다.
+          required: true
+        - label: Feature/Bug/Refactor/Chore/Docs 템플릿이 더 적합하지 않은지 확인했습니다.
+          required: true
+        - label: 적절한 라벨과 Assignee를 설정했습니다.
+          required: false
