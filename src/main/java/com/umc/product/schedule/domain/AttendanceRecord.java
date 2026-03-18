@@ -120,7 +120,8 @@ public class AttendanceRecord extends BaseEntity {
             case PRESENT_PENDING -> AttendanceStatus.PRESENT;
             case LATE_PENDING -> AttendanceStatus.LATE;
             case EXCUSED_PENDING -> AttendanceStatus.PRESENT;  // ✅ 인정 시 출석으로 처리
-            default -> throw new ScheduleDomainException(ScheduleErrorCode.NOT_PENDING_STATUS);
+            default ->
+                throw new ScheduleDomainException(ScheduleErrorCode.NOT_PENDING_STATUS, "승인 가능한 상태가 아닙니다: " + status);
         };
         this.confirmedBy = confirmerId;
         this.confirmedAt = Instant.now();
@@ -129,9 +130,8 @@ public class AttendanceRecord extends BaseEntity {
     /**
      * 관리자가 PENDING 상태의 출석을 거절함. 상태는 무조건 ABSENT로 바뀜
      * <p>
-     * 재시도 정책:
-     * - PRESENT_PENDING, LATE_PENDING (일반 출석): 거절 후 재시도 가능 (checkedAt 초기화)
-     * - EXCUSED_PENDING (사유 제출): 거절 후 재시도 불가 (checkedAt 유지)
+     * 재시도 정책: - PRESENT_PENDING, LATE_PENDING (일반 출석): 거절 후 재시도 가능 (checkedAt 초기화) - EXCUSED_PENDING (사유 제출): 거절 후 재시도
+     * 불가 (checkedAt 유지)
      */
     public void reject(Long confirmerId) {
         validatePendingStatus();
@@ -139,7 +139,7 @@ public class AttendanceRecord extends BaseEntity {
 
         // 일반 출석 체크는 재시도 허용 (단순 오류 가능성)
         boolean isRegularAttendance = (status == AttendanceStatus.PRESENT_PENDING
-                                    || status == AttendanceStatus.LATE_PENDING);
+            || status == AttendanceStatus.LATE_PENDING);
 
         this.status = AttendanceStatus.ABSENT;
         this.confirmedBy = confirmerId;
@@ -161,7 +161,8 @@ public class AttendanceRecord extends BaseEntity {
      */
     public void requestExcuse(String memo) {
         if (status != AttendanceStatus.ABSENT && status != AttendanceStatus.LATE) {
-            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_EXCUSE_STATUS);
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_EXCUSE_STATUS,
+                "결석 또는 지각 상태에서만 인정결석을 신청할 수 있습니다. 현재 상태: " + status);
         }
         if (memo == null || memo.isBlank()) {
             throw new ScheduleDomainException(ScheduleErrorCode.EXCUSE_REASON_REQUIRED);
@@ -172,8 +173,7 @@ public class AttendanceRecord extends BaseEntity {
     }
 
     /**
-     * 출석 체크 전에 사유를 제출하는 메서드 (사유 작성 출석)
-     * 위치 인증은 실패로 간주됨
+     * 출석 체크 전에 사유를 제출하는 메서드 (사유 작성 출석) 위치 인증은 실패로 간주됨
      * <p>
      * PENDING, LATE, ABSENT 상태에서 가능
      */
@@ -182,7 +182,8 @@ public class AttendanceRecord extends BaseEntity {
         if (this.status != AttendanceStatus.PENDING &&
             this.status != AttendanceStatus.LATE &&
             this.status != AttendanceStatus.ABSENT) {
-            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_SUBMIT_REASON_STATUS);
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_SUBMIT_REASON_STATUS,
+                "출석 전, 지각, 결석 상태에서만 사유를 제출할 수 있습니다. 현재 상태: " + this.status);
         }
         if (reason == null || reason.isBlank()) {
             throw new ScheduleDomainException(ScheduleErrorCode.EXCUSE_REASON_REQUIRED);
@@ -238,7 +239,7 @@ public class AttendanceRecord extends BaseEntity {
 
     private void validatePendingStatus() {
         if (!isPending()) {
-            throw new ScheduleDomainException(ScheduleErrorCode.NOT_PENDING_STATUS);
+            throw new ScheduleDomainException(ScheduleErrorCode.NOT_PENDING_STATUS, "승인 대기 상태가 아닙니다: " + status);
         }
     }
 

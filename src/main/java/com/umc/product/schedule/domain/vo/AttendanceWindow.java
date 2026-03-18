@@ -45,10 +45,10 @@ public class AttendanceWindow {
             throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
         }
         if (lateThresholdMinutes < 0) {
-            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_LATE_THRESHOLD);
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_LATE_THRESHOLD, "지각 인정 시간은 0분 이상이어야 합니다");
         }
         if (lateThresholdMinutes > 120) {
-            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_LATE_THRESHOLD);
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_LATE_THRESHOLD, "지각 인정 시간은 120분을 초과할 수 없습니다");
             //스터디를 보통 2시간 정도 하는 것같아서 세운 기준
         }
         this.startTime = startTime;
