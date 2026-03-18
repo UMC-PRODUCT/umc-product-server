@@ -2,6 +2,8 @@ package com.umc.product.schedule.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import com.umc.product.schedule.domain.exception.ScheduleDomainException;
+import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
@@ -143,7 +145,7 @@ public class AttendanceSheet extends BaseEntity {
      */
     public void deactivate() {
         if (!active) {
-            throw new IllegalStateException("이미 비활성화된 출석부입니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_ALREADY_INACTIVE);
         }
         this.active = false;
     }
@@ -153,7 +155,7 @@ public class AttendanceSheet extends BaseEntity {
      */
     public void activate() {
         if (active) {
-            throw new IllegalStateException("이미 활성화된 출석부입니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_ALREADY_ACTIVE);
         }
         this.active = true;
     }
