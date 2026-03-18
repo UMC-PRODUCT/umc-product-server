@@ -8,6 +8,8 @@ import com.umc.product.community.application.port.out.post.LoadPostPort;
 import com.umc.product.community.application.port.out.post.SavePostPort;
 import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.enums.Category;
+import com.umc.product.community.domain.exception.CommunityDomainException;
+import com.umc.product.community.domain.exception.CommunityErrorCode;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,7 +33,7 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
         // UPDATE용 (authorChallengerId 필요 없음)
         if (post.getPostId() != null) {
             PostJpaEntity entity = postRepository.findById(post.getPostId().id())
-                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
             if (post.isLightning() && post.getLightningInfo() != null) {
                 Post.LightningInfo info = post.getLightningInfo();
                 entity.updateLightning(
@@ -48,14 +50,14 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
             return entity.toDomain();
         }
 
-        throw new IllegalArgumentException("새 게시글 생성 시에는 save(Post post, Long authorChallengerId)를 사용하세요.");
+        throw new CommunityDomainException(CommunityErrorCode.POST_SAVE_REQUIRES_AUTHOR);
     }
 
     @Override
     public Post save(Post post, Long authorChallengerId) {
         // CREATE용 (authorChallengerId 포함)
         if (post.getPostId() != null) {
-            throw new IllegalArgumentException("이미 ID가 있는 게시글은 save(Post post)를 사용하세요.");
+            throw new CommunityDomainException(CommunityErrorCode.POST_UPDATE_INVALID_CALL);
         }
 
         PostJpaEntity entity = PostJpaEntity.from(post, authorChallengerId);
@@ -125,7 +127,7 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     @Override
     public LikeResult toggleLike(Long postId, Long challengerId) {
         PostJpaEntity entity = postRepository.findById(postId)
-            .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
         boolean liked = entity.toggleLike(challengerId);
         return new LikeResult(liked, entity.getLikeCount());
     }
@@ -139,7 +141,7 @@ public class PostPersistenceAdapter implements LoadPostPort, SavePostPort {
     public Long findAuthorIdByPostId(Long postId) {
         return postRepository.findById(postId)
             .map(PostJpaEntity::getAuthorChallengerId)
-            .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
+            .orElseThrow(() -> new CommunityDomainException(CommunityErrorCode.POST_NOT_FOUND));
     }
 
     @Override
