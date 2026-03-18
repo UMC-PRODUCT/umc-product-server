@@ -231,33 +231,31 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
         }
 
         if (optionIds.isEmpty()) {
-            formResponse.clearVoteResponse();
-        } else {
-
-            Set<Long> uniqueOptionIds = new LinkedHashSet<>(optionIds);
-
-            if (question.getType() == QuestionType.RADIO) {
-                if (uniqueOptionIds.size() != 1) {
-                    throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
-                }
-            } else if (question.getType() == QuestionType.CHECKBOX) {
-                // pass
-            } else {
-                throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
-            }
-
-            Set<Long> allowedOptionIds = new HashSet<>();
-            for (QuestionOption opt : question.getOptions()) {
-                allowedOptionIds.add(opt.getId());
-            }
-            if (!allowedOptionIds.containsAll(uniqueOptionIds)) {
-                throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
-            }
-
-            // 5) 기존 응답 갱신
-            formResponse.updateVoteResponse(question, uniqueOptionIds.stream().toList(), now);
+            cancelVoteResponse(formResponse);
+            return;
         }
 
+        Set<Long> uniqueOptionIds = new LinkedHashSet<>(optionIds);
+
+        if (question.getType() == QuestionType.RADIO) {
+            if (uniqueOptionIds.size() != 1) {
+                throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
+            }
+        } else if (question.getType() == QuestionType.CHECKBOX) {
+            // pass
+        } else {
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
+        }
+
+        Set<Long> allowedOptionIds = new HashSet<>();
+        for (QuestionOption opt : question.getOptions()) {
+            allowedOptionIds.add(opt.getId());
+        }
+        if (!allowedOptionIds.containsAll(uniqueOptionIds)) {
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
+        }
+
+        formResponse.updateVoteResponse(question, uniqueOptionIds.stream().toList(), now);
         saveFormResponsePort.save(formResponse);
     }
 
@@ -271,5 +269,10 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
             throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
         }
         return section.getQuestions().iterator().next();
+    }
+
+    private void cancelVoteResponse(FormResponse formResponse) {
+        saveSingleAnswerPort.deleteAllByFormResponseIds(List.of(formResponse.getId()));
+        saveFormResponsePort.deleteById(formResponse.getId());
     }
 }
