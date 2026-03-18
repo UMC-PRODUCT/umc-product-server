@@ -8,4 +8,8 @@ public class ScheduleDomainException extends BusinessException {
     public ScheduleDomainException(ScheduleErrorCode errorCode) {
         super(Domain.SCHEDULE, errorCode);
     }
+
+    public ScheduleDomainException(ScheduleErrorCode errorCode, String message) {
+        super(Domain.SCHEDULE, errorCode, message);
+    }
 }

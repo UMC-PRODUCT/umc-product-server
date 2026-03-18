@@ -2,6 +2,8 @@ package com.umc.product.schedule.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import com.umc.product.schedule.domain.exception.ScheduleDomainException;
+import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -90,13 +92,13 @@ public class AttendanceRecord extends BaseEntity {
         boolean locationVerified
     ) {
         if (this.checkedAt != null) {
-            throw new IllegalStateException("이미 출석 체크가 완료되었습니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.ALREADY_CHECKED_IN);
         }
         if (newStatus == null) {
-            throw new IllegalArgumentException("출석 상태는 필수입니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_ATTENDANCE_STATUS);
         }
         if (checkedAt == null) {
-            throw new IllegalArgumentException("체크 시간은 필수입니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.CHECK_TIME_REQUIRED);
         }
 
         this.status = newStatus;
@@ -118,7 +120,7 @@ public class AttendanceRecord extends BaseEntity {
             case PRESENT_PENDING -> AttendanceStatus.PRESENT;
             case LATE_PENDING -> AttendanceStatus.LATE;
             case EXCUSED_PENDING -> AttendanceStatus.PRESENT;  // ✅ 인정 시 출석으로 처리
-            default -> throw new IllegalStateException("승인 가능한 상태가 아닙니다: " + status);
+            default -> throw new ScheduleDomainException(ScheduleErrorCode.NOT_PENDING_STATUS);
         };
         this.confirmedBy = confirmerId;
         this.confirmedAt = Instant.now();
@@ -159,10 +161,10 @@ public class AttendanceRecord extends BaseEntity {
      */
     public void requestExcuse(String memo) {
         if (status != AttendanceStatus.ABSENT && status != AttendanceStatus.LATE) {
-            throw new IllegalStateException("결석 또는 지각 상태에서만 인정결석을 신청할 수 있습니다. 현재 상태: " + status);
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_EXCUSE_STATUS);
         }
         if (memo == null || memo.isBlank()) {
-            throw new IllegalArgumentException("사유는 필수입니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.EXCUSE_REASON_REQUIRED);
         }
 
         this.status = AttendanceStatus.EXCUSED_PENDING;
@@ -180,14 +182,13 @@ public class AttendanceRecord extends BaseEntity {
         if (this.status != AttendanceStatus.PENDING &&
             this.status != AttendanceStatus.LATE &&
             this.status != AttendanceStatus.ABSENT) {
-            throw new IllegalStateException(
-                "출석 전, 지각, 결석 상태에서만 사유를 제출할 수 있습니다. 현재 상태: " + this.status);
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_SUBMIT_REASON_STATUS);
         }
         if (reason == null || reason.isBlank()) {
-            throw new IllegalArgumentException("사유는 필수입니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.EXCUSE_REASON_REQUIRED);
         }
         if (submittedAt == null) {
-            throw new IllegalArgumentException("제출 시각은 필수입니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.SUBMIT_TIME_REQUIRED);
         }
 
         // 상태 변경
@@ -214,7 +215,7 @@ public class AttendanceRecord extends BaseEntity {
 
         // PENDING 상태는 approve/reject 메서드로만 변경 가능
         if (newStatus.name().endsWith("_PENDING")) {
-            throw new IllegalArgumentException("PENDING 상태는 직접 변경할 수 없습니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.CANNOT_SET_PENDING_DIRECTLY);
         }
 
         this.status = newStatus;
@@ -222,7 +223,7 @@ public class AttendanceRecord extends BaseEntity {
 
     public void updateCheckInfo(Instant checkedAt) {
         if (this.checkedAt == null) {
-            throw new IllegalStateException("출석 체크가 되지 않은 기록입니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.NOT_CHECKED_IN);
         }
         this.checkedAt = checkedAt;
     }
@@ -237,7 +238,7 @@ public class AttendanceRecord extends BaseEntity {
 
     private void validatePendingStatus() {
         if (!isPending()) {
-            throw new IllegalStateException("승인 대기 상태가 아닙니다: " + status);
+            throw new ScheduleDomainException(ScheduleErrorCode.NOT_PENDING_STATUS);
         }
     }
 
@@ -255,7 +256,7 @@ public class AttendanceRecord extends BaseEntity {
 
     private void validateStatus(AttendanceStatus status) {
         if (status == null) {
-            throw new IllegalArgumentException("출석 상태는 필수입니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_ATTENDANCE_STATUS);
         }
     }
 
