@@ -1,0 +1,88 @@
+name: "🐛 Bug"
+description: 예상하지 못한 오류가 있는 경우
+title: "[Bug] "
+labels: [ ":bug: Bug" ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🐛 버그 제보에 앞서
+        버그 제보는 **육하원칙에 의거**해서 **재현이 가능하도록 작성**해주세요.
+        개인정보와 같은 민감한 정보는 **마스킹 처리** 후에 작성해주세요.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 어떤 버그인가요?
+      description: 버그 상황을 간결하게 설명해주세요.
+      placeholder: |
+        _e.g._ 인증이 만료된 상황에서 `/api/v1/auth/login` API 호출 시 `AUTHENTICATION-0232` 에러가 발생합니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 🔁 재현 방법
+      description: 버그를 재현할 수 있는 단계를 순서대로 작성해주세요.
+      placeholder: |
+        _e.g._
+
+        1. ...
+        2. ...
+        3. 버그 발생
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 💡 기대 동작
+      description: 정상적으로 동작했다면 어떤 결과가 나와야 했나요?
+      placeholder: _e.g._ 200 OK와 함께 토큰이 정상 반환되어야 합니다.
+    validations:
+      required: true
+
+  - type: input
+    id: trace_id
+    attributes:
+      label: 🔍 Trace ID
+      description: 에러 발생 시점의 Trace ID를 입력해주세요.
+      placeholder: _e.g._ 1pa23de
+    validations:
+      required: false
+
+  - type: input
+    id: error_code
+    attributes:
+      label: ❗ 에러 코드
+      description: 응답에 포함된 에러 코드를 입력해주세요.
+      placeholder: _e.g._ AUTHENTICATION-0232
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: 📎 추가 정보
+      description: 에러 로그, 스크린샷, 원본 cURL, 발생 일시 등을 첨부해주세요. 민감한 정보는 마스킹 후 작성해주세요.
+      placeholder: |
+        _e.g._
+
+        - 발생 일시:
+        - cURL:
+        - 로그:
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: ✅ 제출 전 확인사항
+      options:
+        - label: 동일하거나 유사한 이슈가 없는지 확인했습니다.
+          required: true
+        - label: 민감한 정보(개인정보, 토큰 등)를 마스킹했습니다.
+          required: true
+        - label: 적절한 라벨과 Assignee를 설정했습니다.
+          required: false

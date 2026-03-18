@@ -68,6 +68,11 @@ public class VoteQueryService implements GetVoteDetailUseCase {
         // 2) 옵션별 득표수 (optionId -> count)
         Map<Long, Integer> optionCounts = loadSingleAnswerPort.countVotesByOptionId(voteId);
 
+        Map<Long, List<Long>> selectedMemberIdsByOptionId =
+            form.isAnonymous()
+                ? Map.of()
+                : loadSingleAnswerPort.findSelectedMemberIdsByOptionId(voteId);
+
         // 3) 옵션 DTO 구성 (옵션 순서 유지)
         List<VoteInfo.VoteOptionInfo> options = new ArrayList<>();
         for (QuestionOption opt : question.getOptions()) {
@@ -76,11 +81,16 @@ public class VoteQueryService implements GetVoteDetailUseCase {
 
             BigDecimal voteRate = calcRate(voteCount, totalParticipants);
 
+            List<Long> selectedMemberIds = form.isAnonymous()
+                ? List.of()
+                : selectedMemberIdsByOptionId.getOrDefault(optionId, List.of());
+
             options.add(new VoteOptionInfo(
                 optionId,
                 opt.getContent(),
                 voteCount,
-                voteRate
+                voteRate,
+                selectedMemberIds
             ));
         }
 

@@ -59,7 +59,7 @@ public enum ChallengerRoleType {
     /**
      * 중앙운영사무국 총괄단 여부를 확인합니다. 총괄, 부총괄이 해당됩니다.
      */
-    public boolean isCentralCore() {
+    public boolean isAtLeastCentralCore() {
         return
             isSuperAdmin() ||
                 this == CENTRAL_PRESIDENT || this == CENTRAL_VICE_PRESIDENT;
@@ -68,8 +68,8 @@ public enum ChallengerRoleType {
     /**
      * 중앙운영사무국 멤버 여부를 확인합니다. 총괄단, 운영국원, 교육국원이 해당됩니다.
      */
-    public boolean isCentralMember() {
-        return isCentralCore()
+    public boolean isAtLeastCentralMember() {
+        return isAtLeastCentralCore()
             || this == CENTRAL_OPERATING_TEAM_MEMBER
             || this == CENTRAL_EDUCATION_TEAM_MEMBER;
     }
@@ -77,7 +77,7 @@ public enum ChallengerRoleType {
     /**
      * 학교 회장단 여부를 확인합니다. 회장, 부회장이 해당됩니다.
      */
-    public boolean isSchoolCore() {
+    public boolean isAtLeastSchoolCore() {
         return isSuperAdmin() ||
             this == SCHOOL_PRESIDENT || this == SCHOOL_VICE_PRESIDENT;
     }
@@ -85,8 +85,8 @@ public enum ChallengerRoleType {
     /**
      * 학교 관리자 여부를 확인합니다. 회장단, 파트장, 기타 운영진이 해당됩니다.
      */
-    public boolean isSchoolAdmin() {
-        return isSchoolCore()
+    public boolean isAtLeastSchoolAdmin() {
+        return isAtLeastSchoolCore()
             || this == SCHOOL_PART_LEADER
             || this == SCHOOL_ETC_ADMIN;
     }
@@ -95,7 +95,7 @@ public enum ChallengerRoleType {
      * 해당 역할이 속하는 조직 타입을 반환합니다.
      */
     public OrganizationType organizationType() {
-        if (isCentralMember()) {
+        if (isAtLeastCentralMember()) {
             return OrganizationType.CENTRAL;
         }
 
@@ -105,7 +105,7 @@ public enum ChallengerRoleType {
         }
 
         // 교내 운영진은 학교 단위 반환
-        else if (isSchoolAdmin()) {
+        else if (isAtLeastSchoolAdmin()) {
             return OrganizationType.SCHOOL;
         }
 

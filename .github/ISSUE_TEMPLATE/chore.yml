@@ -1,0 +1,52 @@
+name: "🧹 Chore"
+description: 소스 코드와 무관한 작업
+title: "[Chore] "
+labels: [ ":broom: Chore" ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🧹 Chore 이슈에 앞서
+        빌드 스크립트, 패키지 업데이트, CI/CD 설정, 환경 설정 등 **소스 코드 로직과 무관한 작업**에 사용해주세요.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 작업 내용
+      description: 무엇을, 왜 해야 하는지 육하원칙에 의거해서 작성해주세요.
+      placeholder: |
+        _e.g._ Gradle 의존성 버전 업데이트 (Spring Boot 3.4 → 3.5)
+    validations:
+      required: true
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: 🤔 작업이 필요한 이유
+      description: 이 작업이 왜 필요한지 배경과 이유를 설명해주세요.
+      placeholder: |
+        _e.g._ 보안 취약점 패치 및 최신 기능 활용을 위해 버전 업그레이드가 필요합니다.
+    validations:
+      required: false
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: ⚠️ 영향 범위
+      description: 이 작업으로 인해 영향을 받을 수 있는 범위를 작성해주세요.
+      placeholder: |
+        _e.g._ 빌드 환경 전체, 로컬 개발 환경 재설정 필요
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: ✅ 제출 전 확인사항
+      options:
+        - label: 동일하거나 유사한 이슈가 없는지 확인했습니다.
+          required: true
+        - label: 소스 코드 로직 변경이 없는 작업임을 확인했습니다.
+          required: true
+        - label: 적절한 라벨과 Assignee를 설정했습니다.
+          required: false

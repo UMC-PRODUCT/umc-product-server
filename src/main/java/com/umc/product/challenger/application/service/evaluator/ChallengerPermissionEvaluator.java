@@ -29,18 +29,18 @@ public class ChallengerPermissionEvaluator implements ResourcePermissionEvaluato
     private boolean canCreateChallenger(SubjectAttributes subjectAttributes) {
         // 교내 회장/부회장 이상만 가능함
         return subjectAttributes.roleAttributes().stream()
-            .anyMatch(roleAttribute -> roleAttribute.roleType().isSchoolCore());
+            .anyMatch(roleAttribute -> roleAttribute.roleType().isAtLeastSchoolCore());
     }
 
     private boolean canUpdateChallenger(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
         // 중앙운영사무국 총괄단만 가능
         return subjectAttributes.roleAttributes().stream()
-            .anyMatch(roleAttribute -> roleAttribute.roleType().isCentralCore());
+            .anyMatch(roleAttribute -> roleAttribute.roleType().isAtLeastCentralCore());
     }
 
     private boolean canDeleteChallenger(SubjectAttributes subjectAttributes) {
         // 중앙운영사무국 총괄단만 가능함
         return subjectAttributes.roleAttributes().stream()
-            .anyMatch(roleAttribute -> roleAttribute.roleType().isCentralCore());
+            .anyMatch(roleAttribute -> roleAttribute.roleType().isAtLeastCentralCore());
     }
 }

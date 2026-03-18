@@ -25,8 +25,6 @@ public interface SchoolJpaRepository extends Repository<School, Long> {
             "WHERE s.id = :schoolId")
     Optional<School> findByIdWithDetails(@Param("schoolId") Long schoolId);
 
-    List<School> findAllByOrderByNameAsc();
-
     List<School> findAllByIdIn(List<Long> ids);
 
     @Query("SELECT s FROM School s " +

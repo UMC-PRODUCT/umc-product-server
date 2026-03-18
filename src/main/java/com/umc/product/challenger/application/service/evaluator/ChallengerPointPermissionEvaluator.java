@@ -104,6 +104,6 @@ public class ChallengerPointPermissionEvaluator implements ResourcePermissionEva
     private boolean canDelete(SubjectAttributes subjectAttributes) {
         // 중앙운영사무국 총괄단만 가능함
         return subjectAttributes.roleAttributes().stream()
-            .anyMatch(roleAttribute -> roleAttribute.roleType().isCentralCore());
+            .anyMatch(roleAttribute -> roleAttribute.roleType().isAtLeastCentralCore());
     }
 }

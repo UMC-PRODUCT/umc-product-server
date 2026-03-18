@@ -1,7 +1,6 @@
 package com.umc.product.organization.application.port.service.query;
 
-import com.umc.product.authorization.application.port.out.LoadChallengerRolePort;
-import com.umc.product.authorization.domain.RoleAttribute;
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
@@ -10,7 +9,6 @@ import com.umc.product.organization.application.port.in.query.GetSchoolAccessCon
 import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +20,7 @@ public class SchoolAccessContextService implements GetSchoolAccessContextUseCase
 
     private final GetMemberUseCase getMemberUseCase;
     private final GetGisuUseCase getGisuUseCase;
-    private final LoadChallengerRolePort loadChallengerRolePort; // TODO: usecase에 의존하도록 수정되어야 한다.
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @Override
     public SchoolAccessContext getContext(Long memberId) {
@@ -33,25 +31,18 @@ public class SchoolAccessContextService implements GetSchoolAccessContextUseCase
         // 2. 현재 활성 기수 조회
         Long activeGisuId = getGisuUseCase.getActiveGisuId();
 
-        // 3. 해당 기수에서의 역할 조회 (권한 체크는 @CheckAccess에서 처리됨)
-        List<RoleAttribute> roles = loadChallengerRolePort
-            .findRolesByMemberIdAndGisuId(memberId, activeGisuId)
-            .stream()
-            .map(RoleAttribute::from)
-            .toList();
-
-        // 학교 운영진 역할 찾기 (학교 운영진이 아니면 접근 불가)
-        RoleAttribute schoolAdminRole = roles.stream()
-            .filter(role -> role.roleType().isSchoolAdmin())
-            .findFirst()
-            .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_ACCESS_DENIED));
+        // 3. 학교 운영진 여부 확인 (학교 운영진이 아니면 접근 불가)
+        if (!getChallengerRoleUseCase.isSchoolAdminInGisu(memberId, activeGisuId, schoolId)) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_ACCESS_DENIED);
+        }
 
         // 4. 파트 제한 적용
         // 회장/부회장(isSchoolCore): 모든 파트 조회 가능 (part = null)
         // 파트장/기타 운영진: 본인 담당 파트만 조회 가능
-        ChallengerPart part = schoolAdminRole.roleType().isSchoolCore()
+        ChallengerPart part = getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, activeGisuId, schoolId)
             ? null
-            : schoolAdminRole.responsiblePart();
+            : getChallengerRoleUseCase.getResponsiblePartsByMemberAndGisu(memberId, activeGisuId)
+                .stream().findFirst().orElse(null);
 
         return new SchoolAccessContext(schoolId, part);
     }

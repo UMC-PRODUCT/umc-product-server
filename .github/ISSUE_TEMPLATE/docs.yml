@@ -1,0 +1,68 @@
+name: "📝 Docs"
+description: 문서화해요
+title: "[Docs] "
+labels: [ ":memo: Docs" ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 📃 문서화 작업에 앞서
+        코드가 아닌 **문서 작성·수정·보완**이 필요한 경우에 사용해주세요.
+
+  - type: dropdown
+    id: doc_type
+    attributes:
+      label: 📂 문서 유형
+      description: 작성하려는 문서의 유형을 선택해주세요.
+      options:
+        - "아키텍처 / 설계"
+        - "API 명세"
+        - "권한 체계"
+        - "개발 가이드 / 컨벤션"
+        - "운영 / 배포 가이드"
+        - "README"
+        - "기타"
+    validations:
+      required: true
+
+  - type: textarea
+    id: target
+    attributes:
+      label: 📄 문서화 대상
+      description: 어떤 부분을 문서화하려는지 구체적으로 작성해주세요.
+      placeholder: |
+        _e.g._ 프로젝트 아키텍처, 권한 체계, API 명세서 등
+    validations:
+      required: true
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: 🤔 문서화가 필요한 이유
+      description: 왜 지금 이 문서가 필요한지 작성해주세요.
+      placeholder: |
+        _e.g._ 온보딩 시 헥사고날 아키텍처에 대한 이해가 부족해 진입 장벽이 높습니다.
+    validations:
+      required: false
+
+  - type: textarea
+    id: content
+    attributes:
+      label: ✏️ 주요 내용 (선택)
+      description: 문서에 포함되어야 할 핵심 내용이나 개요를 미리 작성해주세요.
+      placeholder: |
+        _e.g._
+        - 항목 1
+        - 항목 2
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: ✅ 제출 전 확인사항
+      options:
+        - label: 동일하거나 유사한 이슈가 없는지 확인했습니다.
+          required: true
+        - label: 적절한 라벨과 Assignee를 설정했습니다.
+          required: false

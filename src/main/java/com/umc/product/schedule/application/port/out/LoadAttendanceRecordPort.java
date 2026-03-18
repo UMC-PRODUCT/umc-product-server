@@ -90,4 +90,12 @@ public interface LoadAttendanceRecordPort {
      * @return 권한 평가 컨텍스트
      */
     Optional<AttendanceRecordPermissionContext> findPermissionContext(Long recordId);
+
+    /**
+     * 출석부 ID로 참여자 Member ID 목록만 조회 (성능 최적화)
+     *
+     * @param sheetId 출석부 ID
+     * @return Member ID 목록
+     */
+    List<Long> findMemberIdsByAttendanceSheetId(Long sheetId);
 }

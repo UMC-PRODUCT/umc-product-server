@@ -138,6 +138,13 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
         return List.of();
     }
 
+    @Override
+    public Optional<FormResponse> findSubmittedByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId) {
+        return formResponseJpaRepository.findFirstByForm_IdAndRespondentMemberIdAndStatusOrderByIdDesc(
+            formId, respondentMemberId, FormResponseStatus.SUBMITTED
+        );
+    }
+
     private Long toLong(Object o) {
         if (o instanceof Long l) {
             return l;

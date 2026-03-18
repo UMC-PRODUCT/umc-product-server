@@ -16,7 +16,8 @@ public enum ResourceType {
     CURRICULUM("curriculum", "커리큘럼",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
     SCHEDULE("schedule", "일정",
-        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE, PermissionType.APPROVE)),
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE,
+            PermissionType.APPROVE)),
     NOTICE("notice", "공지사항",
         // WRITE는 Service 단에서 처리함
         Set.of(PermissionType.READ, PermissionType.EDIT, PermissionType.DELETE, PermissionType.CHECK)),

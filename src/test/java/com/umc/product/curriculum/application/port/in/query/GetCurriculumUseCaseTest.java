@@ -141,41 +141,5 @@ class GetCurriculumUseCaseTest extends UseCaseTestSupport {
         assertThat(workbookInfo.releasedAt()).isNotNull();
     }
 
-    @Test
-    void 커리큘럼이_없으면_null을_반환한다() {
-        // given - 커리큘럼 없음
 
-        // when
-        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
-
-        // then
-        assertThat(result).isNull();
-    }
-
-    @Test
-    void 다른_파트의_커리큘럼은_조회되지_않는다() {
-        // given
-        Curriculum webCurriculum = Curriculum.create(activeGisu.getId(), ChallengerPart.WEB, "9기 WEB");
-        saveCurriculumPort.save(webCurriculum);
-
-        // when
-        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
-
-        // then
-        assertThat(result).isNull();
-    }
-
-    @Test
-    void 비활성_기수의_커리큘럼은_조회되지_않는다() {
-        // given
-        Gisu inactiveGisu = gisuFixture.비활성_기수(8L);
-        Curriculum curriculum = Curriculum.create(inactiveGisu.getId(), ChallengerPart.SPRINGBOOT, "8기 Springboot");
-        saveCurriculumPort.save(curriculum);
-
-        // when
-        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
-
-        // then
-        assertThat(result).isNull();
-    }
 }

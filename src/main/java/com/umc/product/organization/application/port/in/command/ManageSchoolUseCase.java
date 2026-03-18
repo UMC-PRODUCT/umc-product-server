@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface ManageSchoolUseCase {
 
-    Long register(CreateSchoolCommand command);
+    Long create(CreateSchoolCommand command);
 
     void updateSchool(Long schoolId, UpdateSchoolCommand command);
 

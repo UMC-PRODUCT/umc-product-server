@@ -101,4 +101,15 @@ public class AttendanceRecordQueryRepository {
 
         return Optional.ofNullable(result);
     }
+
+    /**
+     * 출석부 ID로 참여자 Member ID 목록만 조회 (성능 최적화)
+     */
+    public List<Long> findMemberIdsByAttendanceSheetId(Long sheetId) {
+        return queryFactory
+            .select(attendanceRecord.memberId)
+            .from(attendanceRecord)
+            .where(attendanceRecord.attendanceSheetId.eq(sheetId))
+            .fetch();
+    }
 }

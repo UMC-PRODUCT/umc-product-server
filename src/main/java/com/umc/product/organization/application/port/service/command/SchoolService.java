@@ -28,7 +28,7 @@ public class SchoolService implements ManageSchoolUseCase {
     private final ManageChapterSchoolPort manageChapterSchoolPort;
 
     @Override
-    public Long register(CreateSchoolCommand command) {
+    public Long create(CreateSchoolCommand command) {
 
         School newSchool = School.create(command.schoolName(), command.remark());
         newSchool.updateLogoImageId(command.logoImageId());

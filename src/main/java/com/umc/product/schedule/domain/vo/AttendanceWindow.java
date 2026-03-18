@@ -1,6 +1,8 @@
 package com.umc.product.schedule.domain.vo;
 
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import com.umc.product.schedule.domain.exception.ScheduleDomainException;
+import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.time.Duration;
@@ -34,19 +36,19 @@ public class AttendanceWindow {
 
     private AttendanceWindow(Instant startTime, Instant endTime, int lateThresholdMinutes) {
         if (startTime == null) {
-            throw new IllegalArgumentException("시작 시간은 필수입니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.START_TIME_REQUIRED);
         }
         if (endTime == null) {
-            throw new IllegalArgumentException("종료 시간은 필수입니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.END_TIME_REQUIRED);
         }
         if (startTime.isAfter(endTime)) {
-            throw new IllegalArgumentException("시작 시간은 종료 시간보다 이전이어야 합니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
         }
         if (lateThresholdMinutes < 0) {
-            throw new IllegalArgumentException("지각 인정 시간은 0분 이상이어야 합니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_LATE_THRESHOLD, "지각 인정 시간은 0분 이상이어야 합니다");
         }
         if (lateThresholdMinutes > 120) {
-            throw new IllegalArgumentException("지각 인정 시간은 120분을 초과할 수 없습니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_LATE_THRESHOLD, "지각 인정 시간은 120분을 초과할 수 없습니다");
             //스터디를 보통 2시간 정도 하는 것같아서 세운 기준
         }
         this.startTime = startTime;
@@ -69,13 +71,13 @@ public class AttendanceWindow {
         int lateThresholdMinutes
     ) {
         if (baseTime == null) {
-            throw new IllegalArgumentException("기준 시간은 필수입니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.BASE_TIME_REQUIRED);
         }
         if (beforeMinutes < 0) {
-            throw new IllegalArgumentException("이전 시간은 0분 이상이어야 합니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_BEFORE_MINUTES);
         }
         if (afterMinutes < 0) {
-            throw new IllegalArgumentException("이후 시간은 0분 이상이어야 합니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_AFTER_MINUTES);
         }
 
         Instant start = baseTime.minus(beforeMinutes, ChronoUnit.MINUTES);
@@ -125,7 +127,7 @@ public class AttendanceWindow {
      */
     public AttendanceStatus determineStatus(Instant checkTime, boolean requiresApproval) {
         if (checkTime == null) {
-            throw new IllegalArgumentException("체크 시간은 필수입니다");
+            throw new ScheduleDomainException(ScheduleErrorCode.CHECK_TIME_REQUIRED);
         }
 
         // 시간대 밖

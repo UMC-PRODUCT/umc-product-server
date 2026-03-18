@@ -3,9 +3,11 @@ package com.umc.product.survey.application.service;
 import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
 import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
 import com.umc.product.survey.application.port.in.command.SubmitVoteResponseUseCase;
+import com.umc.product.survey.application.port.in.command.UpdateVoteResponseUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateVoteCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
 import com.umc.product.survey.application.port.in.command.dto.SubmitVoteResponseCommand;
+import com.umc.product.survey.application.port.in.command.dto.UpdateVoteResponseCommand;
 import com.umc.product.survey.application.port.out.LoadFormPort;
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.application.port.out.SaveFormPort;
@@ -37,11 +39,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Transactional
 @RequiredArgsConstructor
-public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, SubmitVoteResponseUseCase {
+public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, SubmitVoteResponseUseCase,
+    UpdateVoteResponseUseCase {
 
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final SaveFormPort saveFormPort;
     private final LoadFormPort loadFormPort;
-    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
     private final LoadFormResponsePort loadFormResponsePort;
     private final SaveFormResponsePort saveFormResponsePort;
     private final SaveSingleAnswerPort saveSingleAnswerPort;
@@ -196,6 +199,66 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
         saveFormResponsePort.save(formResponse);
     }
 
+    @Override
+    public void update(UpdateVoteResponseCommand cmd) {
+        Instant now = Instant.now();
+
+        Form form = loadFormPort.findById(cmd.voteId())
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
+
+        // 1) 기간 체크
+        FormOpenStatus openStatus = form.getOpenStatus(now);
+        if (openStatus == FormOpenStatus.NOT_STARTED) {
+            throw new SurveyDomainException(SurveyErrorCode.VOTE_NOT_STARTED);
+        }
+        if (openStatus == FormOpenStatus.CLOSED) {
+            throw new SurveyDomainException(SurveyErrorCode.VOTE_CLOSED);
+        }
+
+        // 2) 기존 응답 조회
+        FormResponse formResponse = loadFormResponsePort
+            .findSubmittedByFormIdAndRespondentMemberId(form.getId(), cmd.memberId())
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.VOTE_RESPONSE_NOT_FOUND));
+
+        // 3) 투표 구조에서 Question 1개 꺼내기
+        Question question = extractSingleQuestion(form);
+
+        // 4) 선택 검증
+        List<Long> optionIds = cmd.optionIds();
+        if (optionIds == null) {
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION,
+                "기존에 선택한 응답을 삭제하려면 null이 아닌 빈 배열을 보내야 합니다.");
+        }
+
+        if (optionIds.isEmpty()) {
+            cancelVoteResponse(formResponse);
+            return;
+        }
+
+        Set<Long> uniqueOptionIds = new LinkedHashSet<>(optionIds);
+
+        if (question.getType() == QuestionType.RADIO) {
+            if (uniqueOptionIds.size() != 1) {
+                throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
+            }
+        } else if (question.getType() == QuestionType.CHECKBOX) {
+            // pass
+        } else {
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
+        }
+
+        Set<Long> allowedOptionIds = new HashSet<>();
+        for (QuestionOption opt : question.getOptions()) {
+            allowedOptionIds.add(opt.getId());
+        }
+        if (!allowedOptionIds.containsAll(uniqueOptionIds)) {
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_SELECTION);
+        }
+
+        formResponse.updateVoteResponse(question, uniqueOptionIds.stream().toList(), now);
+        saveFormResponsePort.save(formResponse);
+    }
+
     private Question extractSingleQuestion(Form form) {
         if (form.getSections().isEmpty()) {
             throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
@@ -206,5 +269,10 @@ public class VoteService implements CreateVoteUseCase, DeleteVoteUseCase, Submit
             throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
         }
         return section.getQuestions().iterator().next();
+    }
+
+    private void cancelVoteResponse(FormResponse formResponse) {
+        saveSingleAnswerPort.deleteAllByFormResponseIds(List.of(formResponse.getId()));
+        saveFormResponsePort.deleteById(formResponse.getId());
     }
 }

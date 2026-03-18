@@ -132,8 +132,8 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
         loadNoticeVotePort.findVoteByNoticeId(noticeId)
             .ifPresent(vote -> {
-                deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
                 saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
+                deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
             });
     }
 

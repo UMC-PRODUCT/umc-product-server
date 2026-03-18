@@ -30,12 +30,45 @@ public enum ScheduleErrorCode implements BaseCode {
 
     // 참여자 관련
     PARTICIPANT_NOT_REGISTERED(HttpStatus.FORBIDDEN, "SCHEDULE-0012", "출석 대상자 명단에 등록되지 않았습니다. 관리자에게 문의하세요."),
-    CANNOT_UPDATE_STARTED_ATTENDANCE(HttpStatus.BAD_REQUEST, "SCHEDULE-0013", "이미 출석이 시작되었습니다. 출석 시작 전에만 명단을 수정할 수 있습니다."),
+    CANNOT_UPDATE_STARTED_ATTENDANCE(HttpStatus.BAD_REQUEST, "SCHEDULE-0013",
+        "이미 출석이 시작되었습니다. 출석 시작 전에만 명단을 수정할 수 있습니다."),
 
     // 권한 관련
     NOT_STUDY_GROUP_LEADER(HttpStatus.FORBIDDEN, "SCHEDULE-0014", "스터디 그룹 리더만 일정을 생성할 수 있습니다."),
+
+    // 참여자 명단 수정 관련
+    CANNOT_REMOVE_SCHEDULE_AUTHOR(HttpStatus.BAD_REQUEST, "SCHEDULE-0015", "일정 생성자는 참여자 명단에서 제외할 수 없습니다."),
+
+    // 출석 체크 관련
+    ALREADY_CHECKED_IN(HttpStatus.BAD_REQUEST, "SCHEDULE-0016", "이미 출석 체크가 완료되었습니다"),
+    CHECK_TIME_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0017", "체크 시간은 필수입니다"),
+
+    // 승인/거절 관련
+    NOT_PENDING_STATUS(HttpStatus.BAD_REQUEST, "SCHEDULE-0018", "승인 대기 상태가 아닙니다"),
+
+    // 인정결석 관련
+    INVALID_EXCUSE_STATUS(HttpStatus.BAD_REQUEST, "SCHEDULE-0019", "결석 또는 지각 상태에서만 인정결석을 신청할 수 있습니다"),
+    EXCUSE_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0020", "사유는 필수입니다"),
+
+    // 사유 제출 관련
+    INVALID_SUBMIT_REASON_STATUS(HttpStatus.BAD_REQUEST, "SCHEDULE-0021", "출석 전, 지각, 결석 상태에서만 사유를 제출할 수 있습니다"),
+    SUBMIT_TIME_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0022", "제출 시각은 필수입니다"),
+
+    // 상태 변경 관련
+    CANNOT_SET_PENDING_DIRECTLY(HttpStatus.BAD_REQUEST, "SCHEDULE-0023", "PENDING 상태는 직접 변경할 수 없습니다"),
+    NOT_CHECKED_IN(HttpStatus.BAD_REQUEST, "SCHEDULE-0024", "출석 체크가 되지 않은 기록입니다"),
+
+    // 출석부 상태 관련
+    ATTENDANCE_SHEET_ALREADY_INACTIVE(HttpStatus.BAD_REQUEST, "SCHEDULE-0025", "이미 비활성화된 출석부입니다"),
+    ATTENDANCE_SHEET_ALREADY_ACTIVE(HttpStatus.BAD_REQUEST, "SCHEDULE-0026", "이미 활성화된 출석부입니다"),
+
+    // 출석 시간대 관련
+    START_TIME_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0027", "시작 시간은 필수입니다"),
+    END_TIME_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0028", "종료 시간은 필수입니다"),
+    BASE_TIME_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0029", "기준 시간은 필수입니다"),
+    INVALID_BEFORE_MINUTES(HttpStatus.BAD_REQUEST, "SCHEDULE-0030", "이전 시간은 0분 이상이어야 합니다"),
+    INVALID_AFTER_MINUTES(HttpStatus.BAD_REQUEST, "SCHEDULE-0031", "이후 시간은 0분 이상이어야 합니다"),
     ;
-    //별도 추가 예정
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;

@@ -4,13 +4,14 @@ import com.umc.product.schedule.application.port.in.query.GetMyScheduleUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleDetailUseCase;
 import com.umc.product.schedule.application.port.in.query.dto.MyScheduleInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
+import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
+import com.umc.product.schedule.domain.ScheduleConstants;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
-import com.umc.product.schedule.domain.ScheduleConstants;
 import java.time.Instant;
 import java.time.YearMonth;
 import java.util.List;
@@ -27,6 +28,7 @@ public class ScheduleQueryService implements
 
     private final LoadSchedulePort loadSchedulePort;
     private final LoadAttendanceSheetPort loadAttendanceSheetPort;
+    private final LoadAttendanceRecordPort loadAttendanceRecordPort;
 
     // 캘린더 나의 일정 조회하기
     @Override
@@ -61,6 +63,9 @@ public class ScheduleQueryService implements
         AttendanceSheet attendanceSheet = loadAttendanceSheetPort.findByScheduleId(scheduleId)
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_SHEET_NOT_FOUND));
 
-        return ScheduleDetailInfo.from(schedule, now, attendanceSheet.isRequiresApproval());
+        List<Long> participantMemberIds = loadAttendanceRecordPort
+            .findMemberIdsByAttendanceSheetId(attendanceSheet.getId());
+
+        return ScheduleDetailInfo.from(schedule, now, attendanceSheet.isRequiresApproval(), participantMemberIds);
     }
 }

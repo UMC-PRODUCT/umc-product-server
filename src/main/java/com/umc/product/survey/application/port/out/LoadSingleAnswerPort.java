@@ -9,5 +9,6 @@ public interface LoadSingleAnswerPort {
     Map<Long, Map<String, Object>> findScheduleValuesByFormResponseIds(List<Long> formResponseIds);
 
     Map<Long, Integer> countVotesByOptionId(Long formId);
-    
+
+    Map<Long, List<Long>> findSelectedMemberIdsByOptionId(Long voteId);
 }

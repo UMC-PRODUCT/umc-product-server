@@ -8,22 +8,25 @@ import com.umc.product.survey.adapter.in.web.dto.response.CreateVoteResponse;
 import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
 import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
 import com.umc.product.survey.application.port.in.command.SubmitVoteResponseUseCase;
+import com.umc.product.survey.application.port.in.command.UpdateVoteResponseUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateVoteCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
 import com.umc.product.survey.application.port.in.command.dto.SubmitVoteResponseCommand;
+import com.umc.product.survey.application.port.in.command.dto.UpdateVoteResponseCommand;
 import com.umc.product.survey.application.port.in.query.GetVoteDetailUseCase;
 import com.umc.product.survey.application.port.in.query.dto.GetVoteDetailsQuery;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/api/v1/surveys/votes")
@@ -34,6 +37,7 @@ public class VoteController {
     private final CreateVoteUseCase createVoteUseCase;
     private final DeleteVoteUseCase deleteVoteUseCase;
     private final SubmitVoteResponseUseCase submitVoteResponseUseCase;
+    private final UpdateVoteResponseUseCase updateVoteResponseUseCase;
     private final GetVoteDetailUseCase getVoteDetailUseCase;
 
     @PostMapping
@@ -102,6 +106,29 @@ public class VoteController {
     ) {
         SubmitVoteResponseCommand command = request.toCommand(voteId, memberPrincipal.getMemberId());
         submitVoteResponseUseCase.submit(command);
+    }
+
+    @PutMapping("/{voteId}/responses")
+    @Operation(
+        summary = "투표 응답 수정",
+        description = """
+        특정 투표에 대해 사용자의 기존 응답을 수정합니다.
+
+        - 투표 기간 내(OPEN 상태)에서만 수정 가능합니다.
+        - 기존에 제출한 응답이 있어야 수정 가능합니다.
+        - 단일 선택(RADIO)의 경우 1개만 선택해야 합니다.
+        - 복수 선택(CHECKBOX)의 경우 여러 개 선택 가능합니다.
+        - 선택한 optionId는 해당 투표의 옵션에 포함되어 있어야 합니다.
+        """
+    )
+    public void update(
+        @PathVariable Long voteId,
+        @RequestBody SubmitVoteResponseRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        UpdateVoteResponseCommand command =
+            request.toUpdateCommand(voteId, memberPrincipal.getMemberId());
+        updateVoteResponseUseCase.update(command);
     }
 
     @Deprecated

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -47,7 +48,10 @@ public record ScheduleDetailResponse(
     long dDay,
 
     @Schema(description = "출석 승인 필요 여부", example = "true")
-    boolean requiresAttendanceApproval
+    boolean requiresAttendanceApproval,
+
+    @Schema(description = "참여자 Member ID 목록")
+    List<Long> participantMemberIds
 ) {
 
     public static ScheduleDetailResponse from(ScheduleDetailInfo info) {
@@ -68,7 +72,8 @@ public record ScheduleDetailResponse(
             info.longitude(),
             info.status(),
             info.dDay(),
-            info.requiresAttendanceApproval()
+            info.requiresAttendanceApproval(),
+            info.participantMemberIds()
         );
     }
 }

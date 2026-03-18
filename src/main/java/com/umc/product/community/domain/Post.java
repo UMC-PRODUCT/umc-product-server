@@ -1,6 +1,8 @@
 package com.umc.product.community.domain;
 
 import com.umc.product.community.domain.enums.Category;
+import com.umc.product.community.domain.exception.CommunityDomainException;
+import com.umc.product.community.domain.exception.CommunityErrorCode;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -42,7 +44,7 @@ public class Post {
 
     public static Post createPost(String title, String content, Category category, Long authorChallengerId) {
         if (category.isLightning()) {
-            throw new IllegalArgumentException("번개 게시글은 createLightning()을 사용하세요");
+            throw new CommunityDomainException(CommunityErrorCode.USE_LIGHTNING_API);
         }
         validateCommonFields(title, content);
         validateAuthorChallengerId(authorChallengerId);
@@ -51,7 +53,7 @@ public class Post {
 
     public static Post createLightning(String title, String content, LightningInfo info, Long authorChallengerId) {
         if (info == null) {
-            throw new IllegalArgumentException("번개 게시글은 추가 정보가 필수입니다.");
+            throw new CommunityDomainException(CommunityErrorCode.LIGHTNING_INFO_REQUIRED);
         }
 
         validateCommonFields(title, content);
@@ -75,38 +77,38 @@ public class Post {
 
     public LightningInfo getLightningInfoOrThrow() {
         if (!isLightning() || lightningInfo == null) {
-            throw new IllegalStateException("번개 게시글이 아닙니다.");
+            throw new CommunityDomainException(CommunityErrorCode.NOT_LIGHTNING_POST);
         }
         return lightningInfo;
     }
 
     private static void validateCommonFields(String title, String content) {
         if (title == null || title.isBlank()) {
-            throw new IllegalArgumentException("제목은 필수입니다.");
+            throw new CommunityDomainException(CommunityErrorCode.INVALID_POST_TITLE);
         }
         if (content == null || content.isBlank()) {
-            throw new IllegalArgumentException("내용은 필수입니다.");
+            throw new CommunityDomainException(CommunityErrorCode.INVALID_POST_CONTENT);
         }
     }
 
     private static void validateAuthorChallengerId(Long authorChallengerId) {
         if (authorChallengerId == null) {
-            throw new IllegalArgumentException("작성자 ID는 필수입니다");
+            throw new CommunityDomainException(CommunityErrorCode.INVALID_POST_AUTHOR);
         }
     }
 
     public void update(String title, String content, Category category) {
         validateCommonFields(title, content);
         if (category == null) {
-            throw new IllegalArgumentException("카테고리는 필수입니다.");
+            throw new CommunityDomainException(CommunityErrorCode.INVALID_POST_CATEGORY);
         }
         // 번개 게시글로 카테고리 변경 불가
         if (category == Category.LIGHTNING && this.category != Category.LIGHTNING) {
-            throw new IllegalArgumentException("일반 게시글을 번개 게시글로 변경할 수 없습니다.");
+            throw new CommunityDomainException(CommunityErrorCode.CANNOT_CHANGE_TO_LIGHTNING);
         }
         // 번개 게시글에서 일반 게시글로 변경 불가
         if (this.category == Category.LIGHTNING && category != Category.LIGHTNING) {
-            throw new IllegalArgumentException("번개 게시글을 일반 게시글로 변경할 수 없습니다.");
+            throw new CommunityDomainException(CommunityErrorCode.CANNOT_CHANGE_FROM_LIGHTNING);
         }
 
         this.title = title;
@@ -116,11 +118,11 @@ public class Post {
 
     public void updateLightning(String title, String content, LightningInfo newLightningInfo) {
         if (!isLightning()) {
-            throw new IllegalStateException("번개 게시글이 아닙니다.");
+            throw new CommunityDomainException(CommunityErrorCode.NOT_LIGHTNING_POST);
         }
         validateCommonFields(title, content);
         if (newLightningInfo == null) {
-            throw new IllegalArgumentException("번개 정보는 필수입니다.");
+            throw new CommunityDomainException(CommunityErrorCode.LIGHTNING_INFO_REQUIRED);
         }
         // 시간 검증은 Service 레이어에서 수행
 
@@ -133,7 +135,7 @@ public class Post {
     public record PostId(Long id) {
         public PostId {
             if (id <= 0) {
-                throw new IllegalArgumentException("ID는 양수여야 합니다.");
+                throw new CommunityDomainException(CommunityErrorCode.INVALID_ID);
             }
         }
     }
@@ -150,19 +152,19 @@ public class Post {
             // 비즈니스 로직 검증은 Request DTO에서 수행
             // 필수 필드만 검증
             if (meetAt == null) {
-                throw new IllegalArgumentException("모임 시간은 필수입니다.");
+                throw new CommunityDomainException(CommunityErrorCode.INVALID_LIGHTNING_MEET_AT);
             }
             if (location == null || location.isBlank()) {
-                throw new IllegalArgumentException("모임 장소는 필수입니다.");
+                throw new CommunityDomainException(CommunityErrorCode.INVALID_LIGHTNING_LOCATION);
             }
             if (maxParticipants == null || maxParticipants <= 0) {
-                throw new IllegalArgumentException("최대 참가자는 1명 이상이어야 합니다.");
+                throw new CommunityDomainException(CommunityErrorCode.INVALID_LIGHTNING_MAX_PARTICIPANTS);
             }
             if (openChatUrl == null || openChatUrl.isBlank()) {
-                throw new IllegalArgumentException("오픈 채팅 링크는 필수입니다.");
+                throw new CommunityDomainException(CommunityErrorCode.INVALID_LIGHTNING_OPEN_CHAT_URL);
             }
             if (!openChatUrl.startsWith("https://") && !openChatUrl.startsWith("http://")) {
-                throw new IllegalArgumentException("오픈 채팅 링크는 http:// 또는 https://로 시작해야 합니다.");
+                throw new CommunityDomainException(CommunityErrorCode.INVALID_LIGHTNING_OPEN_CHAT_URL_FORMAT);
             }
         }
 
@@ -170,11 +172,11 @@ public class Post {
          * 모임 시간이 현재 이후인지 검증 (Service 레이어에서 호출)
          *
          * @param now 비교할 현재 시간 (테스트 용이성을 위해 외부에서 주입)
-         * @throws IllegalArgumentException 모임 시간이 현재 이전인 경우
+         * @throws CommunityDomainException 모임 시간이 현재 이전인 경우
          */
         public void validateMeetAtIsFuture(Instant now) {
             if (meetAt.isBefore(now)) {
-                throw new IllegalArgumentException("모임 시간은 현재 이후여야 합니다.");
+                throw new CommunityDomainException(CommunityErrorCode.INVALID_LIGHTNING_MEET_AT_PAST);
             }
         }
     }

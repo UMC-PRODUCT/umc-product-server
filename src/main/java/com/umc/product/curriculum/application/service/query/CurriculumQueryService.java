@@ -11,6 +11,8 @@ import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekIn
 import com.umc.product.curriculum.application.port.out.LoadCurriculumPort;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumProgressPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
+import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
+import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -32,13 +34,20 @@ public class CurriculumQueryService implements GetCurriculumProgressUseCase, Get
     public CurriculumInfo getByActiveGisuAndPart(ChallengerPart part) {
         return loadCurriculumPort.findByActiveGisuAndPart(part)
             .map(CurriculumInfo::from)
-            .orElse(null);
+            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.CURRICULUM_NOT_FOUND));
     }
 
     @Override
     public CurriculumProgressInfo getMyProgress(Long memberId) {
         Long activeGisuId = getGisuUseCase.getActiveGisuId();
         ChallengerInfo challengerInfo = getChallengerUseCase.getByMemberIdAndGisuId(memberId, activeGisuId);
+
+        return loadCurriculumProgressPort.findCurriculumProgress(challengerInfo.challengerId(), challengerInfo.part());
+    }
+
+    @Override
+    public CurriculumProgressInfo getMyProgressByGisu(Long memberId, Long gisuId) {
+        ChallengerInfo challengerInfo = getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId);
 
         return loadCurriculumProgressPort.findCurriculumProgress(challengerInfo.challengerId(), challengerInfo.part());
     }

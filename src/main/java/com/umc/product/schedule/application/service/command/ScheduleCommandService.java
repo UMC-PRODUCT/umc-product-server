@@ -3,6 +3,7 @@ package com.umc.product.schedule.application.service.command;
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
@@ -33,9 +34,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -123,6 +126,8 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
 
             // 2. 참여자 명단 동기화: participantMemberIds가 제공되었으면
             if (command.participantMemberIds() != null) {
+                // 일정 생성자는 참여자 명단에서 제외할 수 없음
+                validateAuthorNotRemoved(schedule.getAuthorChallengerId(), command.participantMemberIds());
                 syncAttendanceRecords(sheet, command.participantMemberIds());
             }
         }
@@ -155,6 +160,23 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             schedule.getLocationName(),
             schedule.getLocation()
         );
+    }
+
+    /**
+     * 일정 생성자가 참여자 명단에서 제외되지 않았는지 검증
+     */
+    private void validateAuthorNotRemoved(Long authorChallengerId, List<Long> participantMemberIds) {
+        ChallengerInfo authorInfo = getChallengerUseCase.findByIdOrNull(authorChallengerId);
+
+        // 일정 생성자가 탈퇴/제명당한 회원일 경우 관리자가 일정을 수정할 수 있도록 검증 스킵 + 로그 남김
+        if (authorInfo == null) {
+            log.warn("[Schedule] 일정 생성자 챌린저 정보를 찾을 수 없음: authorChallengerId={}", authorChallengerId);
+            return;
+        }
+
+        if (!participantMemberIds.contains(authorInfo.memberId())) {
+            throw new ScheduleDomainException(ScheduleErrorCode.CANNOT_REMOVE_SCHEDULE_AUTHOR);
+        }
     }
 
     /**
