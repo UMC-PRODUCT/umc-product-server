@@ -10,7 +10,8 @@ on:
       - 'build.gradle.kts'
       - 'docker/**'
       - '.github/workflows/ci.yml'
-      - '.github/workflows/cd.yml'
+      #      - '.github/workflows/cd.yml'
+      - '.github/workflows/cd-ecr.yml'
 
   workflow_dispatch:
     inputs:

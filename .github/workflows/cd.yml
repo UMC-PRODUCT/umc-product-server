@@ -1,15 +1,15 @@
 name: CD [Home Server]
 
 on:
-  push:
-    branches:
-      - develop
-    paths:
-      - 'src/**'
-      - 'build.gradle.kts'
-      - 'docker/**'
-      - '.github/workflows/ci.yml'
-      - '.github/workflows/cd.yml'
+  #  push:
+  #    branches:
+  #      - develop
+  #    paths:
+  #      - 'src/**'
+  #      - 'build.gradle.kts'
+  #      - 'docker/**'
+  #      - '.github/workflows/ci.yml'
+  #      - '.github/workflows/cd.yml'
 
   workflow_dispatch:
     inputs:

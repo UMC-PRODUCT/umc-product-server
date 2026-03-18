@@ -1,0 +1,65 @@
+name: "♻️ Refactor"
+description: 기존 코드를 개선해요
+title: "[Refactor] "
+labels: [ "♻️ Refactor" ]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ♻️ 리팩토링 제안에 앞서
+        기능 변경 없이 **코드 품질을 개선**하는 경우에 사용해주세요.
+        무엇을, 왜, 어떻게 개선할 것인지 육하원칙에 의거해서 작성해주세요.
+
+  - type: textarea
+    id: target
+    attributes:
+      label: 🎯 개선 대상
+      description: 개선하고자 하는 코드/모듈/구조가 무엇인지 작성해주세요.
+      placeholder: |
+        _e.g._ `ChallengerCommandService의` `register()` 메서드
+    validations:
+      required: true
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: 🤔 개선이 필요한 이유
+      description: 현재 코드의 어떤 부분이 문제인지, 왜 개선이 필요한지 설명해주세요.
+      placeholder: |
+        _e.g._ 단일 메서드에 너무 많은 책임이 집중되어 있어 테스트가 어렵고 유지보수성이 낮습니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: approach
+    attributes:
+      label: 🔧 개선 방법
+      description: 어떻게 개선할 것인지 구체적인 방법을 작성해주세요.
+      placeholder: |
+        _e.g._ 유효성 검증 로직을 별도 메서드로 분리하고, 도메인 이벤트를 활용해 부수 효과를 분리합니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: todo
+    attributes:
+      label: 🔧 TODO
+      description: 리팩토링 작업에 필요한 세부 항목을 체크리스트로 작성해주세요.
+      placeholder: |
+        _e.g._
+        - [ ] Task 1
+        - [ ] Task 2
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: ✅ 제출 전 확인사항
+      options:
+        - label: 동일하거나 유사한 이슈가 없는지 확인했습니다.
+          required: true
+        - label: 기능 변경이 없는 순수 리팩토링임을 확인했습니다.
+          required: true
+        - label: 적절한 라벨과 Assignee를 설정했습니다.
+          required: false
