@@ -21,6 +21,11 @@ public class FcmTokenTopicPersistenceAdapter implements LoadFcmTopicPort, SaveFc
     }
 
     @Override
+    public boolean existsByFcmTokenIdAndTopicName(Long fcmTokenId, String topicName) {
+        return repository.existsByFcmTokenIdAndTopicName(fcmTokenId, topicName);
+    }
+
+    @Override
     public void saveTopicSubscription(Long fcmTokenId, String topicName) {
         if (!repository.existsByFcmTokenIdAndTopicName(fcmTokenId, topicName)) {
             repository.save(FcmTokenTopic.of(fcmTokenId, topicName));

@@ -70,7 +70,7 @@ public class TestController {
     @Operation(summary = "FCM 푸시 알림 테스트 전송")
     @PostMapping("/fcm/test-send")
     public void sendTestNotification(@RequestBody FcmTestSendRequest request) {
-        manageFcmUseCase.sendMessageByToken(request.toCommand());
+        manageFcmUseCase.sendMessageToMember(request.toCommand());
     }
 
     @PostMapping("/email/send-test")
