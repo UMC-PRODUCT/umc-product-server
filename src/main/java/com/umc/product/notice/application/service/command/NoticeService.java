@@ -145,7 +145,7 @@ public class NoticeService implements ManageNoticeUseCase {
     public void remindNotice(SendNoticeReminderCommand command) {
         Notice notice = findNoticeById(command.noticeId());
         for (Long targetId : command.targetIds()) {
-            manageFcmUseCase.sendMessageByToken(new NotificationCommand(targetId,
+            manageFcmUseCase.sendMessageToMember(new NotificationCommand(targetId,
                 NOTICE_REMINDER_TITLE_PREFIX + notice.getTitle(),
                 REMINDER_BODY_SUFFIX))
             ;

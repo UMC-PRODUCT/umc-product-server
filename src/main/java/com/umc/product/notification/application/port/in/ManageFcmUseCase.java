@@ -9,7 +9,7 @@ public interface ManageFcmUseCase {
 
     void registerFcmToken(Long userId, FcmRegistrationRequest request);
 
-    void sendMessageByToken(NotificationCommand request);
+    void sendMessageToMember(NotificationCommand request);
 
     void subscribeToTopic(List<String> fcmTokens, String topic);
 
