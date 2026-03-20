@@ -1,5 +1,7 @@
 package com.umc.product.notification.application.port.in;
 
+import java.util.List;
+
 /**
  * FCM 토픽 구독 관리 UseCase
  *
@@ -66,4 +68,8 @@ public interface ManageFcmTopicUseCase {
      * @param memberId 회원 ID
      */
     void unsubscribeLegacyTopics(Long memberId);
+
+    void subscribeToTopic(List<String> fcmTokens, String topic);
+
+    void unsubscribeFromTopic(List<String> fcmTokens, String topic);
 }
