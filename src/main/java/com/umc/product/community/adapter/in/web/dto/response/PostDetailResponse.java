@@ -53,9 +53,6 @@ public record PostDetailResponse(
     @Schema(description = "좋아요 클릭 여부", example = "true")
     boolean isLiked,
 
-    @Schema(description = "본인 작성 글 여부", example = "true")
-    boolean isAuthor,
-
     @Schema(description = "스크랩 수", example = "3")
     int scrapCount,
 
@@ -91,7 +88,6 @@ public record PostDetailResponse(
             .writeTime(info.createdAt())
             .likeCount(info.likeCount())
             .isLiked(info.isLiked())
-            .isAuthor(info.isAuthor())
             .scrapCount(info.scrapCount())
             .isScrapped(info.isScrapped())
             .build();

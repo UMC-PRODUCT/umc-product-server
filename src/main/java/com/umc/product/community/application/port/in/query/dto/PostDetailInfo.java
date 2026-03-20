@@ -26,7 +26,6 @@ public record PostDetailInfo(
     Instant createdAt,
     int likeCount,
     boolean isLiked,
-    boolean isAuthor,
     boolean isScrapped,
     int scrapCount
 ) {
@@ -54,7 +53,6 @@ public record PostDetailInfo(
             .createdAt(postInfo.createdAt())
             .likeCount(postInfo.likeCount())
             .isLiked(postInfo.isLiked())
-            .isAuthor(postInfo.isAuthor())
             .isScrapped(isScrapped)
             .scrapCount(scrapCount)
             .build();
