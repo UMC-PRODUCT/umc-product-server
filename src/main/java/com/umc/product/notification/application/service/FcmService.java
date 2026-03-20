@@ -4,7 +4,6 @@ import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
-import com.google.firebase.messaging.TopicManagementResponse;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
@@ -19,7 +18,6 @@ import com.umc.product.notification.domain.FcmTopicName;
 import com.umc.product.notification.domain.exception.FcmDomainException;
 import com.umc.product.notification.domain.exception.FcmErrorCode;
 import jakarta.transaction.Transactional;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -79,38 +77,6 @@ public class FcmService implements ManageFcmUseCase {
         } catch (FirebaseMessagingException e) {
             log.error("개인 토픽 알림 전송 실패 memberId={}, topic={}", command.memberId(), topic, e);
             throw new FcmDomainException(FcmErrorCode.TOPIC_SEND_FAILED);
-        }
-    }
-
-    @Override
-    public void subscribeToTopic(List<String> fcmTokens, String topic) {
-        if (fcmTokens == null || fcmTokens.isEmpty()) {
-            return;
-        }
-
-        try {
-            TopicManagementResponse response = firebaseMessaging.subscribeToTopic(fcmTokens, topic);
-            log.info("토픽 구독 완료 topic={}, 성공={}, 실패={}",
-                topic, response.getSuccessCount(), response.getFailureCount());
-        } catch (FirebaseMessagingException e) {
-            log.error("토픽 구독 실패 topic={}", topic, e);
-            throw new FcmDomainException(FcmErrorCode.TOPIC_SUBSCRIBE_FAILED);
-        }
-    }
-
-    @Override
-    public void unsubscribeFromTopic(List<String> fcmTokens, String topic) {
-        if (fcmTokens == null || fcmTokens.isEmpty()) {
-            return;
-        }
-
-        try {
-            TopicManagementResponse response = firebaseMessaging.unsubscribeFromTopic(fcmTokens, topic);
-            log.info("토픽 구독 해제 완료 topic={}, 성공={}, 실패={}",
-                topic, response.getSuccessCount(), response.getFailureCount());
-        } catch (FirebaseMessagingException e) {
-            log.error("토픽 구독 해제 실패 topic={}", topic, e);
-            throw new FcmDomainException(FcmErrorCode.TOPIC_UNSUBSCRIBE_FAILED);
         }
     }
 

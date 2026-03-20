@@ -1,16 +1,20 @@
 package com.umc.product.notification.application.service;
 
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.TopicManagementResponse;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notification.application.port.in.ManageFcmTopicUseCase;
-import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.application.port.out.LoadFcmTopicPort;
 import com.umc.product.notification.application.port.out.SaveFcmTopicPort;
 import com.umc.product.notification.domain.FcmToken;
 import com.umc.product.notification.domain.FcmTopicName;
+import com.umc.product.notification.domain.exception.FcmDomainException;
+import com.umc.product.notification.domain.exception.FcmErrorCode;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import com.umc.product.organization.exception.OrganizationDomainException;
@@ -26,12 +30,12 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class FcmTopicService implements ManageFcmTopicUseCase {
 
+    private final FirebaseMessaging firebaseMessaging;
     private final LoadFcmPort loadFcmPort;
     private final LoadFcmTopicPort loadFcmTopicPort;
     private final SaveFcmTopicPort saveFcmTopicPort;
     private final FcmTopicName fcmTopicName;
 
-    private final ManageFcmUseCase manageFcmUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChapterUseCase getChapterUseCase;
@@ -53,7 +57,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
         // member 토픽: 멤버 단위로 한 번만 구독 (이미 있으면 스킵)
         String memberTopic = fcmTopicName.member(memberId);
         if (!loadFcmTopicPort.existsByFcmTokenIdAndTopicName(fcmToken.getId(), memberTopic)) {
-            manageFcmUseCase.subscribeToTopic(tokens, memberTopic);
+            subscribeToTopic(tokens, memberTopic);
             saveFcmTopicPort.saveTopicSubscription(fcmToken.getId(), memberTopic);
         }
 
@@ -86,7 +90,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
         List<String> topics = loadFcmTopicPort.findTopicNamesByFcmTokenId(fcmToken.getId());
 
         for (String topic : topics) {
-            manageFcmUseCase.unsubscribeFromTopic(tokens, topic);
+            unsubscribeFromTopic(tokens, topic);
         }
 
         saveFcmTopicPort.deleteAllTopicSubscriptions(fcmToken.getId());
@@ -114,7 +118,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
         List<String> topics = loadFcmTopicPort.findTopicNamesByFcmTokenId(tokenEntity.getId());
 
         for (String topic : topics) {
-            manageFcmUseCase.unsubscribeFromTopic(tokens, topic);
+            unsubscribeFromTopic(tokens, topic);
         }
 
         saveFcmTopicPort.deleteAllTopicSubscriptions(tokenEntity.getId());
@@ -149,7 +153,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
                 challenger.gisuId(), challenger.part(), memberInfo.schoolId(), chapter.id());
 
             for (String topic : legacyTopics) {
-                manageFcmUseCase.unsubscribeFromTopic(tokens, topic);
+                unsubscribeFromTopic(tokens, topic);
             }
 
             log.info("레거시 토픽 구독 해제 완료 challengerId={}, topics={}", challenger.challengerId(), legacyTopics);
@@ -162,7 +166,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
         List<String> topics = resolveChallengerTopics(challenger, memberInfo);
         for (String topic : topics) {
             if (!loadFcmTopicPort.existsByFcmTokenIdAndTopicName(fcmToken.getId(), topic)) {
-                manageFcmUseCase.subscribeToTopic(tokens, topic);
+                subscribeToTopic(tokens, topic);
                 saveFcmTopicPort.saveTopicSubscription(fcmToken.getId(), topic);
             }
         }
@@ -178,5 +182,37 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
             memberInfo.schoolId(),
             chapter.id()
         );
+    }
+
+    @Override
+    public void subscribeToTopic(List<String> fcmTokens, String topic) {
+        if (fcmTokens == null || fcmTokens.isEmpty()) {
+            return;
+        }
+
+        try {
+            TopicManagementResponse response = firebaseMessaging.subscribeToTopic(fcmTokens, topic);
+            log.info("토픽 구독 완료 topic={}, 성공={}, 실패={}",
+                topic, response.getSuccessCount(), response.getFailureCount());
+        } catch (FirebaseMessagingException e) {
+            log.error("토픽 구독 실패 topic={}", topic, e);
+            throw new FcmDomainException(FcmErrorCode.TOPIC_SUBSCRIBE_FAILED);
+        }
+    }
+
+    @Override
+    public void unsubscribeFromTopic(List<String> fcmTokens, String topic) {
+        if (fcmTokens == null || fcmTokens.isEmpty()) {
+            return;
+        }
+
+        try {
+            TopicManagementResponse response = firebaseMessaging.unsubscribeFromTopic(fcmTokens, topic);
+            log.info("토픽 구독 해제 완료 topic={}, 성공={}, 실패={}",
+                topic, response.getSuccessCount(), response.getFailureCount());
+        } catch (FirebaseMessagingException e) {
+            log.error("토픽 구독 해제 실패 topic={}", topic, e);
+            throw new FcmDomainException(FcmErrorCode.TOPIC_UNSUBSCRIBE_FAILED);
+        }
     }
 }
