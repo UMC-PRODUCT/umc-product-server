@@ -5,5 +5,5 @@ import com.umc.product.curriculum.application.port.in.query.dto.CurriculumInfo;
 
 public interface GetCurriculumUseCase {
 
-    CurriculumInfo getByActiveGisuAndPart(ChallengerPart part);
+    CurriculumInfo getByGisuAndPart(Long gisuId, ChallengerPart part, Integer weekNo);
 }

@@ -12,6 +12,7 @@ import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekIn
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,17 +27,28 @@ public class CurriculumQueryController implements CurriculumQueryControllerApi {
 
     private final GetCurriculumProgressUseCase getCurriculumProgressUseCase;
     private final GetCurriculumUseCase getCurriculumUseCase;
+    private final GetGisuUseCase getGisuUseCase;
 
+    /**
+     * @deprecated {@code GET /api/v2/curriculums?gisuId={gisuId}&part={part}} 사용 권장.
+     * @since 1.3.0
+     */
+    @Deprecated(since = "1.3.0", forRemoval = true)
     @Public
     @Override
     @GetMapping
     public CurriculumResponse getCurriculum(
         @RequestParam ChallengerPart part
     ) {
-        return CurriculumResponse.from(getCurriculumUseCase.getByActiveGisuAndPart(part));
+        Long activeGisuId = getGisuUseCase.getActiveGisuId();
+        return CurriculumResponse.from(getCurriculumUseCase.getByGisuAndPart(activeGisuId, part, null));
     }
 
-    @Deprecated
+    /**
+     * @deprecated {@code GET /api/v2/curriculums/challengers/me/progress?gisuId={gisuId}} 사용 권장.
+     * @since 1.3.0
+     */
+    @Deprecated(since = "1.3.0", forRemoval = true)
     @Override
     @GetMapping("/challengers/me/progress")
     public CurriculumProgressResponse getMyProgress(@CurrentMember MemberPrincipal memberPrincipal) {
@@ -44,6 +56,11 @@ public class CurriculumQueryController implements CurriculumQueryControllerApi {
         return CurriculumProgressResponse.from(info);
     }
 
+    /**
+     * @deprecated 대체 API 미정. 추후 v2 엔드포인트 추가 예정.
+     * @since 1.3.0
+     */
+    @Deprecated(since = "1.3.0", forRemoval = true)
     @Override
     @GetMapping("/weeks")
     public CurriculumWeeksResponse getWeeksByPart(@RequestParam ChallengerPart part) {

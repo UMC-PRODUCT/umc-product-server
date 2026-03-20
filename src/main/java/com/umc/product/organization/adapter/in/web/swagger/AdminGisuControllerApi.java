@@ -17,10 +17,11 @@ public interface AdminGisuControllerApi {
     })
     Long createGisu(CreateGisuRequest request);
 
-    @Operation(summary = "기수 삭제", description = "기수를 삭제합니다.")
+    @Operation(summary = "기수 삭제", description = "기수를 삭제합니다. 연결된 지부 또는 학교가 있으면 삭제할 수 없습니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "삭제 성공"),
-        @ApiResponse(responseCode = "404", description = "기수를 찾을 수 없음")
+        @ApiResponse(responseCode = "404", description = "기수를 찾을 수 없음"),
+        @ApiResponse(responseCode = "409", description = "연결된 지부 또는 학교가 존재하여 삭제 불가")
     })
     void deleteGisu(@Parameter(description = "기수 ID", required = true) Long gisuId);
 

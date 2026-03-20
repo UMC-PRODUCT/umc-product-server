@@ -57,7 +57,7 @@ class ManageCurriculumUseCaseTest extends UseCaseTestSupport {
         manageCurriculumUseCase.manage(command);
 
         // then
-        Curriculum savedCurriculum = loadCurriculumPort.findByActiveGisuAndPart(ChallengerPart.SPRINGBOOT)
+        Curriculum savedCurriculum = loadCurriculumPort.findEntityByGisuIdAndPart(activeGisu.getId(), ChallengerPart.SPRINGBOOT)
             .orElseThrow();
         assertThat(savedCurriculum.getTitle()).isEqualTo("9기 Springboot 커리큘럼");
         assertThat(savedCurriculum.getPart()).isEqualTo(ChallengerPart.SPRINGBOOT);

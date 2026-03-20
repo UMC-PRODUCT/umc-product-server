@@ -54,6 +54,9 @@ public class Curriculum extends BaseEntity {
     }
 
     public void updateTitle(String title) {
+        if(title == null || title.isBlank()) {
+            throw new IllegalArgumentException("Title must not be null or blank");
+        }
         this.title = title;
     }
 

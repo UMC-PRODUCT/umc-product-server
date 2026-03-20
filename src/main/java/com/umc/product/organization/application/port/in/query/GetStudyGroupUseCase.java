@@ -1,8 +1,6 @@
 package com.umc.product.organization.application.port.in.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.organization.application.port.in.query.dto.PartSummaryInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolStudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
@@ -14,18 +12,6 @@ import java.util.Set;
  * 스터디 그룹 조회 UseCase
  */
 public interface GetStudyGroupUseCase {
-
-        /**
-         * @deprecated 3단계 getMyStudyGroups로 대체
-         */
-        @Deprecated
-        List<SchoolStudyGroupInfo> getSchools();
-
-        /**
-         * @deprecated 3단계 getMyStudyGroups로 대체
-         */
-        @Deprecated
-        PartSummaryInfo getParts(Long schoolId);
 
         /**
          * 내 스터디 그룹 목록 조회 - memberId 기반으로 schoolId/part를 자동 resolve

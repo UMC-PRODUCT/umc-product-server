@@ -1,13 +1,15 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProjection;
+import com.umc.product.curriculum.application.port.in.query.dto.WorkbookProgressProjection;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumPort;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumProgressPort;
 import com.umc.product.curriculum.application.port.out.SaveCurriculumPort;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,8 +28,25 @@ public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCur
     }
 
     @Override
-    public Optional<Curriculum> findByActiveGisuAndPart(ChallengerPart part) {
-        return curriculumJpaRepository.findByActiveGisuAndPart(part);
+    public Optional<Curriculum> findEntityByGisuIdAndPart(Long gisuId, ChallengerPart part) {
+        return curriculumJpaRepository.findByGisuIdAndPart(gisuId, part);
+    }
+
+    @Override
+    public Curriculum getEntityByGisuIdAndPart(Long gisuId, ChallengerPart part) {
+        return findEntityByGisuIdAndPart(gisuId, part)
+            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.CURRICULUM_NOT_FOUND));
+    }
+
+    @Override
+    public Optional<CurriculumProjection> findByGisuIdAndPart(Long gisuId, ChallengerPart part) {
+        return curriculumQueryRepository.findByGisuIdAndPart(gisuId, part);
+    }
+
+    @Override
+    public CurriculumProjection getByGisuIdAndPart(Long gisuId, ChallengerPart part) {
+        return findByGisuIdAndPart(gisuId, part)
+            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.CURRICULUM_NOT_FOUND));
     }
 
     @Override
@@ -36,9 +55,8 @@ public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCur
     }
 
     @Override
-    public CurriculumProgressInfo findCurriculumProgress(Long challengerId, ChallengerPart part) {
-        return curriculumQueryRepository.findCurriculumProgress(challengerId, part)
-            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.CURRICULUM_NOT_FOUND));
+    public List<WorkbookProgressProjection> findWorkbookProgressProjections(Long curriculumId, Long challengerId) {
+        return curriculumQueryRepository.findWorkbookProgressProjections(curriculumId, challengerId);
     }
 
     @Override
