@@ -5,4 +5,6 @@ import java.util.List;
 public interface LoadFcmTopicPort {
 
     List<String> findTopicNamesByFcmTokenId(Long fcmTokenId);
+
+    boolean existsByFcmTokenIdAndTopicName(Long fcmTokenId, String topicName);
 }

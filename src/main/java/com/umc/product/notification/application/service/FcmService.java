@@ -60,7 +60,7 @@ public class FcmService implements ManageFcmUseCase {
     }
 
     @Override
-    public void sendMessageByToken(NotificationCommand command) {
+    public void sendMessageToMember(NotificationCommand command) {
         String topic = fcmTopicName.member(command.memberId());
 
         Notification notification = Notification.builder()

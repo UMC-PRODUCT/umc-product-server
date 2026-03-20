@@ -52,8 +52,10 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
 
         // member 토픽: 멤버 단위로 한 번만 구독 (이미 있으면 스킵)
         String memberTopic = fcmTopicName.member(memberId);
-        manageFcmUseCase.subscribeToTopic(tokens, memberTopic);
-        saveFcmTopicPort.saveTopicSubscription(fcmToken.getId(), memberTopic);
+        if (!loadFcmTopicPort.existsByFcmTokenIdAndTopicName(fcmToken.getId(), memberTopic)) {
+            manageFcmUseCase.subscribeToTopic(tokens, memberTopic);
+            saveFcmTopicPort.saveTopicSubscription(fcmToken.getId(), memberTopic);
+        }
 
         // memberInfo는 모든 챌린저가 동일한 memberId를 가지므로 한 번만 조회
         MemberInfo memberInfo = getMemberUseCase.getById(memberId);
@@ -159,8 +161,10 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
     private void subscribeChallengerTopics(FcmToken fcmToken, List<String> tokens, ChallengerInfo challenger, MemberInfo memberInfo) {
         List<String> topics = resolveChallengerTopics(challenger, memberInfo);
         for (String topic : topics) {
-            manageFcmUseCase.subscribeToTopic(tokens, topic);
-            saveFcmTopicPort.saveTopicSubscription(fcmToken.getId(), topic);
+            if (!loadFcmTopicPort.existsByFcmTokenIdAndTopicName(fcmToken.getId(), topic)) {
+                manageFcmUseCase.subscribeToTopic(tokens, topic);
+                saveFcmTopicPort.saveTopicSubscription(fcmToken.getId(), topic);
+            }
         }
         log.debug("챌린저 토픽 구독 완료 challengerId={}, topics={}", challenger.challengerId(), topics);
     }
