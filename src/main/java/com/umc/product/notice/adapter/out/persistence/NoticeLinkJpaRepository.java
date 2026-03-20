@@ -14,7 +14,7 @@ public interface NoticeLinkJpaRepository extends JpaRepository<NoticeLink, Long>
 
     int countByNotice_Id(Long noticeId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM NoticeLink nl WHERE nl.notice.id = :noticeId")
     void deleteAllByNoticeId(@Param("noticeId") Long noticeId);
 }

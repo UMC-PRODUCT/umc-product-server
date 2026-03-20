@@ -53,7 +53,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
 
         return switch (resourcePermission.permission()) {
             case READ -> canReadNotice(subjectAttributes, targetInfo);
-            case EDIT, DELETE -> canDeleteNotice(subjectAttributes, resourcePermission);
+            case EDIT, DELETE -> canDeleteOrEditNotice(subjectAttributes, resourcePermission);
             // TODO: Check는 임시로 Manage랑 동일하게 적용, 하나야 수정해줘!
             case MANAGE, CHECK -> canManageNotice(subjectAttributes.memberId(), targetInfo);
             default -> throw new AuthorizationDomainException(AuthorizationErrorCode.PERMISSION_TYPE_NOT_IMPLEMENTED,
@@ -107,7 +107,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     }
 
 
-    private boolean canDeleteNotice(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
+    private boolean canDeleteOrEditNotice(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
         if (subjectAttributes.roleAttributes().stream().anyMatch(r -> r.roleType().isSuperAdmin())) {
             return true;
         }
