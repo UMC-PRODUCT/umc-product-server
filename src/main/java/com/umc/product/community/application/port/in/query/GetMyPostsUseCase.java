@@ -9,11 +9,11 @@ import org.springframework.data.domain.Pageable;
  */
 public interface GetMyPostsUseCase {
     /**
-     * 챌린저가 작성한 게시글 목록 조회
+     * 멤버가 작성한 게시글 목록 조회
      *
-     * @param challengerId 챌린저 ID
-     * @param pageable     페이지네이션
+     * @param memberId 멤버 ID
+     * @param pageable 페이지네이션
      * @return 게시글 목록
      */
-    Page<PostInfo> getMyPosts(Long challengerId, Pageable pageable);
+    Page<PostInfo> getMyPosts(Long memberId, Pageable pageable);
 }

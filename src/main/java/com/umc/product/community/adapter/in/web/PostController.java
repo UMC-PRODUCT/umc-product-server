@@ -16,6 +16,9 @@ import com.umc.product.community.application.port.in.command.post.TogglePostLike
 import com.umc.product.community.application.port.in.command.post.ToggleScrapUseCase;
 import com.umc.product.community.application.port.in.command.post.UpdateLightningUseCase;
 import com.umc.product.community.application.port.in.command.post.UpdatePostUseCase;
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.community.application.port.in.query.dto.PostInfo;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -70,6 +73,12 @@ public class PostController {
         return toPostResponse(createPostUseCase.createLightningPost(request.toCommand(challenger.challengerId())));
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.COMMUNITY_POST,
+        resourceId = "#postId",
+        permission = PermissionType.EDIT,
+        message = "게시글 수정 권한이 없습니다."
+    )
     @PatchMapping("/{postId}")
     @Operation(summary = "일반 게시글 수정", description = "일반 게시글의 제목, 내용, 카테고리를 수정합니다.")
     public PostResponse updatePost(
@@ -79,6 +88,12 @@ public class PostController {
         return toPostResponse(updatePostUseCase.updatePost(request.toCommand(postId)));
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.COMMUNITY_POST,
+        resourceId = "#postId",
+        permission = PermissionType.EDIT,
+        message = "번개 게시글 수정 권한이 없습니다."
+    )
     @PatchMapping("/{postId}/lightning")
     @Operation(summary = "번개글 수정", description = "번개 게시글의 제목, 내용, 모임 정보를 수정합니다.")
     public PostResponse updateLightningPost(
@@ -88,9 +103,17 @@ public class PostController {
         return toPostResponse(updateLightningUseCase.updateLightning(request.toCommand(postId)));
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.COMMUNITY_POST,
+        resourceId = "#postId",
+        permission = PermissionType.DELETE,
+        message = "게시글 삭제 권한이 없습니다."
+    )
     @DeleteMapping("/{postId}")
     @Operation(summary = "게시글 삭제", description = "게시글을 삭제합니다.")
-    public void deletePost(@PathVariable Long postId) {
+    public void deletePost(
+        @PathVariable Long postId
+    ) {
         deletePostUseCase.deletePost(postId);
     }
 

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/trophies")
 @RequiredArgsConstructor
-@Tag(name = "Community | 명예의 전당 Query", description = "")
+@Tag(name = "Community | 명예의 전당 Query", description = "명예의 전당 조회 API")
 public class TrophyQueryController {
 
     private final GetTrophyListUseCase getTrophyListUseCase;
