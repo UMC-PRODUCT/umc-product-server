@@ -11,8 +11,10 @@ import com.umc.product.authorization.domain.exception.AuthorizationDomainExcepti
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
-import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
-import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
+import com.umc.product.notice.application.port.out.LoadNoticePort;
+import com.umc.product.notice.domain.Notice;
+import com.umc.product.notice.domain.exception.NoticeDomainException;
+import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +30,7 @@ import org.springframework.stereotype.Component;
 public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
 
     private final GetNoticeTargetUseCase getNoticeTargetUseCase;
-    private final GetNoticeUseCase getNoticeUseCase;
+    private final LoadNoticePort loadNoticePort;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     @Override
@@ -112,10 +114,10 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
             return true;
         }
 
-        NoticeInfo noticeInfo = getNoticeUseCase.getNoticeDetail(resourcePermission.getResourceIdAsLong(),
-            subjectAttributes.memberId());
+        Notice notice = loadNoticePort.findNoticeById(resourcePermission.getResourceIdAsLong())
+            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
 
-        return Objects.equals(subjectAttributes.memberId(), noticeInfo.authorMemberId());
+        return Objects.equals(subjectAttributes.memberId(), notice.getAuthorMemberId());
     }
 
     /**
