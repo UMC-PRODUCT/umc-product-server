@@ -17,8 +17,6 @@ import com.umc.product.notification.domain.exception.FcmDomainException;
 import com.umc.product.notification.domain.exception.FcmErrorCode;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
-import com.umc.product.organization.exception.OrganizationDomainException;
-import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,9 +61,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
 
         // memberInfo는 모든 챌린저가 동일한 memberId를 가지므로 한 번만 조회
         MemberInfo memberInfo = getMemberUseCase.getById(memberId);
-        if (memberInfo.schoolId() == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_NOT_FOUND);
-        }
+        memberInfo.validateHasSchool();
 
         List<ChallengerInfo> challengers = getChallengerUseCase.getMemberChallengerList(memberId);
         for (ChallengerInfo challenger : challengers) {

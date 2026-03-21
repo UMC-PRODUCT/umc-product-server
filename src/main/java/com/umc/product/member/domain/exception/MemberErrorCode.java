@@ -17,6 +17,7 @@ public enum MemberErrorCode implements BaseCode {
     MEMBER_NOT_ACTIVE(HttpStatus.BAD_REQUEST, "MEMBER-0006", "올바르지 않은 사용자 상태입니다."),
     MEMBER_ALREADY_REGISTERED(HttpStatus.BAD_REQUEST, "MEMBER-0007", "이미 회원가입을 완료한 사용자입니다."),
     MEMBER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER-0008", "프로필을 찾을 수 없습니다."),
+    MEMBER_SCHOOL_NOT_ASSIGNED(HttpStatus.BAD_REQUEST, "MEMBER-0009", "학교가 등록되지 않은 사용자입니다."),
     ;
 
     private final HttpStatus httpStatus;
