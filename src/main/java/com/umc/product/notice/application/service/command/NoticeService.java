@@ -46,6 +46,9 @@ public class NoticeService implements ManageNoticeUseCase {
     private static final String REMINDER_BODY_SUFFIX = " 공지를 확인해주세요.";
     private static final String NOTICE_BODY_SUFFIX = "새로운 공지가 등록되었습니다: ";
 
+    // FCM 토픽
+    private final FcmTopicName fcmTopicName;
+
     // 도메인 내부 포트
     private final LoadNoticePort loadNoticePort;
     private final SaveNoticePort saveNoticePort;
@@ -90,7 +93,7 @@ public class NoticeService implements ManageNoticeUseCase {
          * NoticeTargetInfo에서 토픽 이름을 도출하여 해당 토픽으로 메시지를 발행합니다.
          */
         if (savedNotice.isNotificationRequired()) {
-            List<String> topics = FcmTopicName.resolveTopics(
+            List<String> topics = fcmTopicName.resolveTopics(
                 command.targetInfo().targetGisuId(),
                 command.targetInfo().targetChapterId(),
                 command.targetInfo().targetSchoolId(),
@@ -144,7 +147,7 @@ public class NoticeService implements ManageNoticeUseCase {
     public void remindNotice(SendNoticeReminderCommand command) {
         Notice notice = findNoticeById(command.noticeId());
         for (Long targetId : command.targetIds()) {
-            manageFcmUseCase.sendMessageByToken(new NotificationCommand(targetId,
+            manageFcmUseCase.sendMessageToMember(new NotificationCommand(targetId,
                 NOTICE_REMINDER_TITLE_PREFIX + notice.getTitle(),
                 REMINDER_BODY_SUFFIX))
             ;
