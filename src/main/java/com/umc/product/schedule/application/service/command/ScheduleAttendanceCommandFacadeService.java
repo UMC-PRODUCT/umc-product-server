@@ -41,12 +41,12 @@ public class ScheduleAttendanceCommandFacadeService implements
         CreateScheduleCommand scheduleCommand = command.toScheduleCommand();
         Long scheduleId = createScheduleUseCase.create(scheduleCommand);
 
-        // 2. 출석부 생성 - 일정 시간 기준으로 AttendanceSheet가 Window를 조립 (지각 기준 10분 고정)
+        // 2. 출석부 생성 - 조정된 시간(scheduleCommand)을 사용해야 Schedule과 일치함
         AttendanceSheet sheet = AttendanceSheet.createWithSchedule(
             scheduleId,
             command.gisuId(),
-            command.startsAt(),
-            command.endsAt(),
+            scheduleCommand.startsAt(),
+            scheduleCommand.endsAt(),
             command.requiresApproval()
         );
         AttendanceSheet savedSheet = saveAttendanceSheetPort.save(sheet);

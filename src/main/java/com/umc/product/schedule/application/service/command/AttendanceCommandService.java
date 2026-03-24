@@ -115,6 +115,16 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
     }
 
     private AttendanceStatus determineAttendanceStatus(AttendanceSheet sheet, Schedule schedule, Instant checkTime) {
+        // 종일 일정은 지각 개념 없이 일정 종료 전까지 모두 출석 처리
+        if (schedule.isAllDay()) {
+            if (!checkTime.isAfter(schedule.getEndsAt())) {
+                return sheet.isRequiresApproval()
+                    ? AttendanceStatus.PRESENT_PENDING
+                    : AttendanceStatus.PRESENT;
+            }
+            return AttendanceStatus.ABSENT;
+        }
+
         // 출석 인정 시간
         if (sheet.isWithinTimeWindow(checkTime)) {
             return sheet.determineStatusByTime(checkTime);
