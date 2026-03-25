@@ -78,17 +78,16 @@ public class AttendanceCommandService implements CheckAttendanceUseCase, Approve
             throw new ScheduleDomainException(ScheduleErrorCode.OUTSIDE_ATTENDANCE_WINDOW);
         }
 
-        // 1. 출석 인정 시간 (윈도우 내)
+        // 1. 출석 인정 시간 (윈도우 내) - 출석 또는 지각
         if (sheet.isWithinTimeWindow(checkTime)) {
-            // OK - 출석 처리
+            // OK
         }
-        // 2. 지각 시간 (윈도우 종료 ~ 세션 종료)
+        // 2. 윈도우 종료 ~ 일정 종료: 일반 일정은 지각, 종일 일정은 출석
         else if (checkTime.isAfter(sheet.getWindow().getEndTime())
             && !checkTime.isAfter(schedule.getEndsAt())) {
-            // OK - 지각 처리
+            // OK
         }
-        // 3. 세션 종료 후 - 결석 처리
-        // (else 블록에서 결석으로 처리됨)
+        // 3. 일정 종료 후 - 결석 (determineAttendanceStatus에서 처리)
 
         // 기존 출석 기록 조회
         AttendanceRecord record = loadAttendanceRecordPort
