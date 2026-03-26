@@ -80,10 +80,9 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
             })
             .toList();
 
-        // 7. "예정" 상태 제외 및 정렬: 진행 중 → 종료됨 (종료됨은 최근 것부터)
+        // 7. 정렬: 진행 중 → 예정 → 종료됨
         //    같은 상태 내에서는 활성 출석부가 있는 일정 우선
         return result.stream()
-            .filter(info -> !"예정".equals(info.status()))
             .sorted(scheduleComparator())
             .toList();
     }
@@ -214,7 +213,7 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
                 return a.sheetActive() ? -1 : 1;
             }
 
-            // 진행 중은 시작 시간 오름차순, 종료됨은 종료 시간 내림차순
+            // 예정, 진행 중은 시작 시간 오름차순, 종료됨은 종료 시간 내림차순
             if ("종료됨".equals(a.status())) {
                 return b.endsAt().compareTo(a.endsAt());
             }
