@@ -1,9 +1,9 @@
-package com.umc.product.curriculum.adapter.in.web;
+package com.umc.product.curriculum.adapter.in.web.v2;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumProgressResponse;
 import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumResponse;
-import com.umc.product.curriculum.adapter.in.web.swagger.CurriculumQueryControllerV2Api;
+import com.umc.product.curriculum.adapter.in.web.swagger.v2.CurriculumQueryV2ControllerApi;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumProgressUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumUseCase;
 import com.umc.product.global.security.MemberPrincipal;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v2/curriculums")
 @RequiredArgsConstructor
-public class CurriculumQueryControllerV2 implements CurriculumQueryControllerV2Api {
+public class CurriculumQueryV2Controller implements CurriculumQueryV2ControllerApi {
 
     private final GetCurriculumUseCase getCurriculumUseCase;
     private final GetCurriculumProgressUseCase getCurriculumProgressUseCase;
@@ -36,7 +36,7 @@ public class CurriculumQueryControllerV2 implements CurriculumQueryControllerV2A
     }
 
     @Override
-    @GetMapping("/{gisuId}/challengers/me/progress")
+    @GetMapping("/{gisuId}/progress/me")
     public CurriculumProgressResponse getMyProgress(
         @PathVariable Long gisuId,
         @CurrentMember MemberPrincipal memberPrincipal

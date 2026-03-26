@@ -4,6 +4,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumProgressResponse;
 import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumResponse;
 import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumWeeksResponse;
+import com.umc.product.curriculum.adapter.in.web.swagger.v2.CurriculumQueryV2ControllerApi;
 import com.umc.product.global.security.MemberPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,10 +15,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public interface CurriculumQueryControllerApi {
 
     /**
-     * @deprecated {@code GET /api/v2/curriculums/{gisuId}?part={part}} 사용 권장.
-     *             v2는 gisuId를 직접 지정하여 특정 기수의 커리큘럼 조회 가능.
-     * @since 1.3.0
      * @see CurriculumQueryControllerApiV2
+     * @since 1.3.0
+     * @deprecated {@code GET /api/v2/curriculums/{gisuId}?part={part}} 사용 권장. v2는 gisuId를 직접 지정하여 특정 기수의 커리큘럼 조회 가능.
      */
     @Deprecated(since = "1.3.0", forRemoval = true)
     @Operation(
@@ -38,9 +38,9 @@ public interface CurriculumQueryControllerApi {
     );
 
     /**
-     * @deprecated {@code GET /api/v2/curriculums/{gisuId}/challengers/me/progress} 사용 권장.
-     *             v1은 현재 활성 기수 기준으로만 조회되어 이전 기수 사용자 조회 불가.
      * @since 1.3.0
+     * @deprecated {@code GET /api/v2/curriculums/{gisuId}/challengers/me/progress} 사용 권장. v1은 현재 활성 기수 기준으로만 조회되어 이전 기수
+     * 사용자 조회 불가.
      */
     @Deprecated(since = "1.3.0", forRemoval = true)
     @Operation(
@@ -55,10 +55,10 @@ public interface CurriculumQueryControllerApi {
     CurriculumProgressResponse getMyProgress(MemberPrincipal memberPrincipal);
 
     /**
-     * @deprecated {@code GET /api/v2/curriculums/{gisuId}?part={part}} 사용 권장.
-     *             v2 응답의 workbooks 필드에 weekNo, title이 포함되어 있습니다.
-     * @since 1.3.0
      * @see CurriculumQueryV2ControllerApi
+     * @since 1.3.0
+     * @deprecated {@code GET /api/v2/curriculums/{gisuId}?part={part}} 사용 권장. v2 응답의 workbooks 필드에 weekNo, title이 포함되어
+     * 있습니다.
      */
     @Deprecated(since = "1.3.0", forRemoval = true)
     @Operation(

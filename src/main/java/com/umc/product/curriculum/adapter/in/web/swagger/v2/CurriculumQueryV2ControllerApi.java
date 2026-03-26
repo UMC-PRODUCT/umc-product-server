@@ -1,4 +1,4 @@
-package com.umc.product.curriculum.adapter.in.web.swagger;
+package com.umc.product.curriculum.adapter.in.web.swagger.v2;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumProgressResponse;
@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Curriculum | 커리큘럼 Query V2", description = "커리큘럼 조회 V2")
-public interface CurriculumQueryControllerV2Api {
+public interface CurriculumQueryV2ControllerApi {
 
     @Operation(
         summary = "기수별 파트 커리큘럼 조회 V2",
