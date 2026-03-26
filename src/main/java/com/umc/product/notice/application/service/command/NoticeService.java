@@ -112,7 +112,6 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void updateNoticeTitleOrContent(UpdateNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-        notice.validateAuthorMember(command.memberId());
 
         /**
          * 제목/내용만 수정
@@ -127,7 +126,6 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void deleteNotice(DeleteNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-        notice.validateAuthorMember(command.memberId());
 
         // 관련 이미지, 투표, 링크 등도 모두 삭제
         manageNoticeContentUseCase.removeContentsByNoticeId(notice.getId(), command.memberId());
