@@ -4,14 +4,12 @@ import com.umc.product.community.application.port.in.command.trophy.dto.CreateTr
 import java.util.Objects;
 
 public record CreateTrophyRequest(
-    Long challengerId,
     Integer week,
     String title,
     String content,
     String url
 ) {
     public CreateTrophyRequest {
-        Objects.requireNonNull(challengerId, "챌린저 ID는 필수입니다");
         Objects.requireNonNull(week, "주차는 필수입니다");
         Objects.requireNonNull(title, "제목은 필수입니다");
         Objects.requireNonNull(content, "내용은 필수입니다");
@@ -31,7 +29,13 @@ public record CreateTrophyRequest(
         }
     }
 
-    public CreateTrophyCommand toCommand() {
-        return new CreateTrophyCommand(challengerId, week, title, content, url);
+    public CreateTrophyCommand toCommand(Long challengerId) {
+        return CreateTrophyCommand.builder()
+            .challengerId(challengerId)
+            .week(week)
+            .title(title)
+            .content(content)
+            .url(url)
+            .build();
     }
 }
