@@ -11,20 +11,22 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "Curriculum | 워크북 Command", description = "")
+@Tag(name = "Curriculum | 챌린저용 워크북 Command", description = "미션 제출, ")
 public interface WorkbookControllerApi {
 
-    @Deprecated(since = "1.3.0", forRemoval = true)
     @Operation(
-        summary = "[Deprecated] 워크북 제출 (2026-04-01 삭제 예정)",
+        summary = "deprecated: 원본 워크북 ID로 미션 제출",
         description = """
-            ⚠️ **이 API는 2026-04-01부로 삭제 예정입니다.**
-            `POST /api/v1/workbooks/{challengerWorkbookId}/submission`을 사용해주세요.
+            ⚠️ Deprecated since `v1.3.x`\s\s
 
-            챌린저가 원본 워크북에 링크(깃허브, 노션 등)를 제출합니다.
+            `OriginalWorkbookId`를 이용해서 워크북에 대한 미션을 제출합니다.
 
-            - 제출 시 새 챌린저 워크북이 생성됩니다.
-            - 같은 챌린저가 같은 원본 워크북에 중복 제출할 수 없습니다.
+            `POST /api/v1/workbooks/{challengerWorkbookId}/submission`을 사용해주세요.\s\s
+
+            챌린저가 원본 워크북에 링크(깃허브, 노션 등)를 제출합니다.\s\s\s\s
+
+            - 제출 시 새 챌린저 워크북이 생성됩니다.\s\s
+            - 같은 챌린저가 같은 원본 워크북에 중복 제출할 수 없습니다.\s\s
             - 제출 시 상태는 SUBMITTED가 됩니다.
             """,
         deprecated = true
@@ -40,9 +42,12 @@ public interface WorkbookControllerApi {
     );
 
     @Operation(
-        summary = "워크북 제출",
+        summary = "챌린저 워크북 ID로 미션 제출",
         description = """
             챌린저가 배포된 챌린저 워크북에 링크(깃허브, 노션 등)를 제출합니다.
+
+            `ChallengerWorkbookId`로 미션을 제출합니다.
+            추후 챌린저 워크북 생성 API가 구현되면, 해당 API를 먼저 호출하여 챌린저 워크북을 생성한 후, 미션을 제출하도록 하여야 합니다.
 
             - 이미 배포된 챌린저 워크북의 ID를 경로에 포함합니다.
             - 본인의 워크북만 제출할 수 있습니다.
