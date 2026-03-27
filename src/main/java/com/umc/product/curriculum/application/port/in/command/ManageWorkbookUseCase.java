@@ -14,8 +14,20 @@ public interface ManageWorkbookUseCase {
      * 제출 시 워크북 상태가 PENDING → SUBMITTED로 변경됩니다.
      *
      * @param command 제출 커맨드 (워크북 ID, 제출 링크)
+     * @deprecated 1.3.0부터 {@link #submitByWorkbookId(SubmitChallengerWorkbookCommand)} 사용
      */
+    @Deprecated(since = "1.3.0", forRemoval = true)
     void submit(SubmitWorkbookCommand command);
+
+    /**
+     * 챌린저 워크북 ID 기반 워크북 제출 (챌린저 전용)
+     * <p>
+     * 이미 배포된 챌린저 워크북에 링크(깃허브, 노션 등)를 제출합니다.
+     * 제출 시 워크북 상태가 PENDING → SUBMITTED로 변경됩니다.
+     *
+     * @param command 제출 커맨드 (챌린저 워크북 ID, 제출 링크)
+     */
+    void submitByWorkbookId(SubmitChallengerWorkbookCommand command);
 
     /**
      * 워크북 검토 (운영진 전용)

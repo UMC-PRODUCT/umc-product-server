@@ -4,13 +4,15 @@ import com.umc.product.curriculum.application.port.in.command.AutoReleaseWorkboo
 import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.ReviewWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.SelectBestWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.SubmitChallengerWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.SubmitWorkbookCommand;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveChallengerWorkbookPort;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
-import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
@@ -23,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 @Slf4j
 @Service
@@ -34,13 +35,11 @@ public class WorkbookCommandService implements ManageWorkbookUseCase, AutoReleas
     private final LoadChallengerWorkbookPort loadChallengerWorkbookPort;
     private final LoadOriginalWorkbookPort loadOriginalWorkbookPort;
     private final SaveChallengerWorkbookPort saveChallengerWorkbookPort;
+    private final GetChallengerUseCase getChallengerUseCase;
 
     @Override
     public void submit(SubmitWorkbookCommand command) {
         OriginalWorkbook originalWorkbook = loadOriginalWorkbookPort.findById(command.originalWorkbookId());
-
-        // Github, Notion인데 submission이 없다면 에러
-        validateSubmission(originalWorkbook.getMissionType(), command.submission());
 
         // 이미 제출한 이력이 있는지 확인
         if (!loadChallengerWorkbookPort.findAllByChallengerIdAndOriginalWorkbookId(
@@ -57,29 +56,30 @@ public class WorkbookCommandService implements ManageWorkbookUseCase, AutoReleas
             null
         );
 
-        challengerWorkbook.submit(command.submission());
+        challengerWorkbook.submit(originalWorkbook.getMissionType(), command.submission());
 
         saveChallengerWorkbookPort.save(challengerWorkbook);
     }
 
-    /**
-     * 미션 유형이 PLAIN, 즉 단순 제출이 아닌 경우에 submission이 없는 경우를 검증합니다.
-     */
-    private void validateSubmission(MissionType missionType, String submission) {
-        if (missionType != MissionType.PLAIN && !StringUtils.hasText(submission)) {
-            throw new CurriculumDomainException(CurriculumErrorCode.SUBMISSION_REQUIRED);
-        }
+    @Override
+    public void submitByWorkbookId(SubmitChallengerWorkbookCommand command) {
+        ChallengerWorkbook challengerWorkbook = loadChallengerWorkbookPort.findById(command.challengerWorkbookId());
+
+        // 본인 워크북인지 확인 (challengerId → memberId 비교)
+        verifyWorkbookOwner(challengerWorkbook, command.memberId());
+
+        OriginalWorkbook originalWorkbook = loadOriginalWorkbookPort.findById(challengerWorkbook.getOriginalWorkbookId());
+
+        challengerWorkbook.submit(originalWorkbook.getMissionType(), command.submission());
+
+        saveChallengerWorkbookPort.save(challengerWorkbook);
     }
 
     @Override
     public void review(ReviewWorkbookCommand command) {
         ChallengerWorkbook workbook = loadChallengerWorkbookPort.findById(command.challengerWorkbookId());
 
-        if (command.status() == WorkbookStatus.PASS) {
-            workbook.markAsPass(command.feedback());
-        } else if (command.status() == WorkbookStatus.FAIL) {
-            workbook.markAsFail(command.feedback());
-        }
+        workbook.review(command.status(), command.feedback());
 
         saveChallengerWorkbookPort.save(workbook);
     }
@@ -91,6 +91,13 @@ public class WorkbookCommandService implements ManageWorkbookUseCase, AutoReleas
         workbook.selectBest(command.bestReason());
 
         saveChallengerWorkbookPort.save(workbook);
+    }
+
+    private void verifyWorkbookOwner(ChallengerWorkbook workbook, Long memberId) {
+        ChallengerInfo challenger = getChallengerUseCase.getChallengerPublicInfo(workbook.getChallengerId());
+        if (!challenger.memberId().equals(memberId)) {
+            throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_ACCESS_DENIED);
+        }
     }
 
     /**

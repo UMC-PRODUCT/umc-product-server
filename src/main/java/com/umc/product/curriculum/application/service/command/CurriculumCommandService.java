@@ -44,8 +44,9 @@ public class CurriculumCommandService implements ManageCurriculumUseCase, Releas
 
     @Override
     public void manage(CurriculumCommand command) {
-        Curriculum curriculum = loadCurriculumPort.findByActiveGisuAndPart(command.part())
-            .orElseGet(() -> Curriculum.create(getGisuUseCase.getActiveGisuId(), command.part(), command.title()));
+        Long activeGisuId = getGisuUseCase.getActiveGisuId();
+        Curriculum curriculum = loadCurriculumPort.findEntityByGisuIdAndPart(activeGisuId, command.part())
+            .orElseGet(() -> Curriculum.create(activeGisuId, command.part(), command.title()));
 
         curriculum.updateTitle(command.title());
 

@@ -1,6 +1,7 @@
 package com.umc.product.curriculum.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
@@ -82,29 +83,25 @@ public class ChallengerWorkbook extends BaseEntity {
     /**
      * 워크북 제출 (PENDING → SUBMITTED)
      *
-     * @param submission 제출 링크 (깃허브, 노션 등)
+     * @param missionType 미션 유형
+     * @param submission  제출 링크 (깃허브, 노션 등). PLAIN 타입인 경우 null 허용
      */
-    public void submit(String submission) {
+    public void submit(MissionType missionType, String submission) {
         validatePendingStatus();
+        validateSubmission(missionType, submission);
         this.submission = submission;
         this.status = WorkbookStatus.SUBMITTED;
     }
 
     /**
-     * 심사 통과 (SUBMITTED → PASS)
+     * 워크북 심사 (SUBMITTED → PASS or FAIL)
+     *
+     * @param status   심사 결과 (PASS 또는 FAIL)
+     * @param feedback 심사 피드백
      */
-    public void markAsPass(String feedback) {
+    public void review(WorkbookStatus status, String feedback) {
         validateSubmittedStatus();
-        this.status = WorkbookStatus.PASS;
-        this.feedback = feedback;
-    }
-
-    /**
-     * 심사 불합격 (SUBMITTED → FAIL)
-     */
-    public void markAsFail(String feedback) {
-        validateSubmittedStatus();
-        this.status = WorkbookStatus.FAIL;
+        this.status = status;
         this.feedback = feedback;
     }
 
@@ -115,6 +112,12 @@ public class ChallengerWorkbook extends BaseEntity {
         validateCanSelectBest();
         this.status = WorkbookStatus.BEST;
         this.bestReason = bestReason;
+    }
+
+    private void validateSubmission(MissionType missionType, String submission) {
+        if (missionType != MissionType.PLAIN && (submission == null || submission.isBlank())) {
+            throw new CurriculumDomainException(CurriculumErrorCode.SUBMISSION_REQUIRED);
+        }
     }
 
     private void validatePendingStatus() {

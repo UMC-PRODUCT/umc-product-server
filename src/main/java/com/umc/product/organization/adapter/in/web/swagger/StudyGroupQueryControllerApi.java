@@ -4,9 +4,7 @@ import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupListResponse.Summary;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupPartsResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSchoolsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -32,28 +30,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
  */
 @Tag(name = "Organization | 스터디 그룹 Query", description = "")
 public interface StudyGroupQueryControllerApi {
-
-    /**
-     * @deprecated getStudyGroups로 대체
-     */
-    @Deprecated
-    @Operation(summary = "[Deprecated] 학교 목록 조회", description = "스터디 그룹이 있는 학교 목록을 조회합니다.", deprecated = true)
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupSchoolsResponse.class)))
-    })
-    StudyGroupSchoolsResponse getSchools();
-
-    /**
-     * @deprecated getStudyGroups로 대체
-     */
-    @Deprecated
-    @Operation(summary = "[Deprecated] 파트 목록 조회", description = "특정 학교의 파트별 스터디 그룹 요약을 조회합니다.", deprecated = true)
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupPartsResponse.class))),
-        @ApiResponse(responseCode = "404", description = "학교를 찾을 수 없음")
-    })
-    StudyGroupPartsResponse getParts(
-        @Parameter(description = "학교 ID", required = true) Long schoolId);
 
     @Operation(summary = "내 스터디 그룹 목록 조회", description = "로그인한 유저의 학교/파트 기반으로 스터디 그룹 목록을 조회합니다. cursor 기반 무한스크롤.")
     @ApiResponses(value = {

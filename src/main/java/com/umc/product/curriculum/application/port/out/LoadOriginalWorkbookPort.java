@@ -1,6 +1,7 @@
 package com.umc.product.curriculum.application.port.out;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import java.time.Instant;
@@ -13,6 +14,8 @@ public interface LoadOriginalWorkbookPort {
     List<OriginalWorkbook> findByCurriculumId(Long curriculumId);
 
     List<OriginalWorkbook> findByCurriculumIdOrderByWeekNo(Long curriculumId);
+
+    List<CurriculumInfo.WorkbookInfo> findWorkbookInfos(Long curriculumId, Integer weekNo);
 
     /**
      * 기수의 모든 주차 번호 조회 (드롭다운용)

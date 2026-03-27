@@ -48,6 +48,7 @@ public enum OrganizationErrorCode implements BaseCode {
         "해당 기수에서 이미 다른 지부에 배정된 학교가 포함되어 있습니다."),
     CHAPTER_NAME_DUPLICATED(HttpStatus.CONFLICT, "ORGANIZATION-0030", "해당 기수에 동일한 이름의 지부가 이미 존재합니다."),
     STUDY_GROUP_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORGANIZATION-0031", "스터디 그룹 조회 권한이 없습니다."),
+    GISU_HAS_ASSOCIATED_CHAPTERS(HttpStatus.CONFLICT, "ORGANIZATION-0032", "해당 기수에 연결된 지부 또는 학교가 존재하여 삭제할 수 없습니다."),
     ;
 
     private final HttpStatus httpStatus;

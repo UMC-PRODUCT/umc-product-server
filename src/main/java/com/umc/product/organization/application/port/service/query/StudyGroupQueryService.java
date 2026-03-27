@@ -3,9 +3,7 @@ package com.umc.product.organization.application.port.service.query;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.query.GetSchoolAccessContextUseCase;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
-import com.umc.product.organization.application.port.in.query.dto.PartSummaryInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
-import com.umc.product.organization.application.port.in.query.dto.SchoolStudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
@@ -29,18 +27,6 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     private final LoadStudyGroupPort loadStudyGroupPort;
     private final GetSchoolAccessContextUseCase getSchoolAccessContextUseCase;
     private final GetFileUseCase getFileUseCase;
-
-    @Deprecated
-    @Override
-    public List<SchoolStudyGroupInfo> getSchools() {
-        return loadStudyGroupPort.findSchoolsWithStudyGroups();
-    }
-
-    @Deprecated
-    @Override
-    public PartSummaryInfo getParts(Long schoolId) {
-        return loadStudyGroupPort.findPartSummary(schoolId);
-    }
 
     @Override
     public List<StudyGroupListInfo.StudyGroupInfo> getMyStudyGroups(Long memberId, Long cursor, int size) {
