@@ -1,10 +1,10 @@
-package com.umc.product.curriculum.adapter.in.web;
+package com.umc.product.curriculum.adapter.in.web.v1;
 
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.curriculum.adapter.in.web.dto.request.ManageCurriculumRequest;
-import com.umc.product.curriculum.adapter.in.web.swagger.AdminCurriculumControllerApi;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.ManageCurriculumRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.swagger.AdminCurriculumControllerApi;
 import com.umc.product.curriculum.application.port.in.command.ManageCurriculumUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

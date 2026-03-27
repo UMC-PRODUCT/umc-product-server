@@ -1,8 +1,8 @@
-package com.umc.product.curriculum.adapter.in.web.swagger;
+package com.umc.product.curriculum.adapter.in.web.v1.swagger;
 
-import com.umc.product.curriculum.adapter.in.web.dto.request.ReviewWorkbookRequest;
-import com.umc.product.curriculum.adapter.in.web.dto.request.SelectBestWorkbookRequest;
-import com.umc.product.curriculum.adapter.in.web.dto.response.WorkbookSubmissionDetailResponse;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.ReviewWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SelectBestWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionDetailResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

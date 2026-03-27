@@ -1,4 +1,4 @@
-package com.umc.product.curriculum.adapter.in.web.dto.response;
+package com.umc.product.curriculum.adapter.in.web.v1.dto.response;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumInfo;

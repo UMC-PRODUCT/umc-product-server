@@ -1,10 +1,10 @@
-package com.umc.product.curriculum.adapter.in.web;
+package com.umc.product.curriculum.adapter.in.web.v1;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumProgressResponse;
-import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumResponse;
-import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumWeeksResponse;
-import com.umc.product.curriculum.adapter.in.web.swagger.CurriculumQueryControllerApi;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumProgressResponse;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumResponse;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumWeeksResponse;
+import com.umc.product.curriculum.adapter.in.web.v1.swagger.CurriculumQueryControllerApi;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumProgressUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumUseCase;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo;
@@ -30,8 +30,8 @@ public class CurriculumQueryController implements CurriculumQueryControllerApi {
     private final GetGisuUseCase getGisuUseCase;
 
     /**
-     * @deprecated {@code GET /api/v2/curriculums?gisuId={gisuId}&part={part}} 사용 권장.
      * @since 1.3.0
+     * @deprecated {@code GET /api/v2/curriculums?gisuId={gisuId}&part={part}} 사용 권장.
      */
     @Deprecated(since = "1.3.0", forRemoval = true)
     @Public
@@ -45,8 +45,8 @@ public class CurriculumQueryController implements CurriculumQueryControllerApi {
     }
 
     /**
-     * @deprecated {@code GET /api/v2/curriculums/challengers/me/progress?gisuId={gisuId}} 사용 권장.
      * @since 1.3.0
+     * @deprecated {@code GET /api/v2/curriculums/challengers/me/progress?gisuId={gisuId}} 사용 권장.
      */
     @Deprecated(since = "1.3.0", forRemoval = true)
     @Override
@@ -57,8 +57,8 @@ public class CurriculumQueryController implements CurriculumQueryControllerApi {
     }
 
     /**
-     * @deprecated 대체 API 미정. 추후 v2 엔드포인트 추가 예정.
      * @since 1.3.0
+     * @deprecated 대체 API 미정. 추후 v2 엔드포인트 추가 예정.
      */
     @Deprecated(since = "1.3.0", forRemoval = true)
     @Override

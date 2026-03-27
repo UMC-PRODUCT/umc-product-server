@@ -1,10 +1,10 @@
-package com.umc.product.curriculum.adapter.in.web.swagger;
+package com.umc.product.curriculum.adapter.in.web.v1.swagger;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumProgressResponse;
-import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumResponse;
-import com.umc.product.curriculum.adapter.in.web.dto.response.CurriculumWeeksResponse;
-import com.umc.product.curriculum.adapter.in.web.swagger.v2.CurriculumQueryV2ControllerApi;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumProgressResponse;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumResponse;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumWeeksResponse;
+import com.umc.product.curriculum.adapter.in.web.v2.swagger.CurriculumQueryV2ControllerApi;
 import com.umc.product.global.security.MemberPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

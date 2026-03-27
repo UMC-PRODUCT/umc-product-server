@@ -1,13 +1,13 @@
-package com.umc.product.curriculum.adapter.in.web;
+package com.umc.product.curriculum.adapter.in.web.v1;
 
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.adapter.in.web.dto.response.AvailableWeeksResponse;
-import com.umc.product.curriculum.adapter.in.web.dto.response.StudyGroupFilterResponse;
-import com.umc.product.curriculum.adapter.in.web.dto.response.WorkbookSubmissionResponse;
-import com.umc.product.curriculum.adapter.in.web.swagger.WorkbookQueryControllerApi;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.response.AvailableWeeksResponse;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.response.StudyGroupFilterResponse;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionResponse;
+import com.umc.product.curriculum.adapter.in.web.v1.swagger.WorkbookQueryControllerApi;
 import com.umc.product.curriculum.application.port.in.query.GetAvailableWeeksUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetStudyGroupsForFilterUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;

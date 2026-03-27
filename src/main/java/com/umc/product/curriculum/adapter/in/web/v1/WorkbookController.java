@@ -1,10 +1,10 @@
-package com.umc.product.curriculum.adapter.in.web;
+package com.umc.product.curriculum.adapter.in.web.v1;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
-import com.umc.product.curriculum.adapter.in.web.dto.request.SubmitChallengerWorkbookRequest;
-import com.umc.product.curriculum.adapter.in.web.dto.request.SubmitWorkbookRequest;
-import com.umc.product.curriculum.adapter.in.web.swagger.WorkbookControllerApi;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SubmitChallengerWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SubmitWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.swagger.WorkbookControllerApi;
 import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;

@@ -1,7 +1,7 @@
-package com.umc.product.curriculum.adapter.in.web.swagger;
+package com.umc.product.curriculum.adapter.in.web.v1.swagger;
 
-import com.umc.product.curriculum.adapter.in.web.dto.request.SubmitChallengerWorkbookRequest;
-import com.umc.product.curriculum.adapter.in.web.dto.request.SubmitWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SubmitChallengerWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SubmitWorkbookRequest;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;

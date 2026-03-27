@@ -1,12 +1,12 @@
-package com.umc.product.curriculum.adapter.in.web;
+package com.umc.product.curriculum.adapter.in.web.v1;
 
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.curriculum.adapter.in.web.dto.request.ReviewWorkbookRequest;
-import com.umc.product.curriculum.adapter.in.web.dto.request.SelectBestWorkbookRequest;
-import com.umc.product.curriculum.adapter.in.web.dto.response.WorkbookSubmissionDetailResponse;
-import com.umc.product.curriculum.adapter.in.web.swagger.AdminWorkbookControllerApi;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.ReviewWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SelectBestWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionDetailResponse;
+import com.umc.product.curriculum.adapter.in.web.v1.swagger.AdminWorkbookControllerApi;
 import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.ReleaseWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;

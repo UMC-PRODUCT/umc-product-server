@@ -1,4 +1,4 @@
-package com.umc.product.curriculum.adapter.in.web.dto.response;
+package com.umc.product.curriculum.adapter.in.web.v1.dto.response;
 
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
