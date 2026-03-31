@@ -1,9 +1,7 @@
 package com.umc.product.notice.application.service.query;
 
-import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.notice.application.port.in.query.GetNoticeContentUseCase;
@@ -16,6 +14,7 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusInfo
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
+import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
@@ -31,7 +30,6 @@ import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,24 +58,21 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private final GetChapterUseCase getChapterUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
-    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetNoticeContentUseCase getNoticeContentUseCase;
 
     @Override
-    public Page<NoticeSummary> getAllNoticeSummaries(Long memberId, NoticeClassification info, Pageable pageable) {
-        Set<ChallengerPart> memberParts = resolveMemberParts(memberId, info.gisuId());
-        NoticeClassification enriched = enrichClassificationWithPart(memberId, info);
-        Page<Notice> notices = loadNoticePort.findNoticesByClassification(enriched, memberParts, pageable);
+    public Page<NoticeSummary> getAllNoticeSummaries(NoticeViewerInfo viewerInfo, NoticeClassification classification, Pageable pageable) {
+        NoticeClassification enriched = enrichClassification(viewerInfo, classification);
+        Page<Notice> notices = loadNoticePort.findNoticesByClassification(enriched, viewerInfo.memberParts(), pageable);
         return toNoticeSummaryPage(notices);
     }
 
     @Override
-    public Page<NoticeSummary> searchNoticesByKeyword(Long memberId, String keyword,
+    public Page<NoticeSummary> searchNoticesByKeyword(String keyword, NoticeViewerInfo viewerInfo,
                                                       NoticeClassification classification,
                                                       Pageable pageable) {
-        Set<ChallengerPart> memberParts = resolveMemberParts(memberId, classification.gisuId());
-        NoticeClassification enriched = enrichClassificationWithPart(memberId, classification);
-        Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, enriched, memberParts, pageable);
+        NoticeClassification enriched = enrichClassification(viewerInfo, classification);
+        Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, enriched, viewerInfo.memberParts(), pageable);
         return toNoticeSummaryPage(notices);
     }
 
@@ -289,56 +284,22 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
 
     /**
-     * 지부/학교/파트 필터 요청 시, 호출자의 실제 소속 정보로 chapterId/schoolId를 덮어씁니다. 모든 필터가 없으면 그대로 반환합니다.
+     * 지부/학교/파트 필터 요청 시, 조회자의 실제 소속 정보로 chapterId/schoolId를 채웁니다. 모든 필터가 없으면 그대로 반환합니다.
      * <p>
-     * 클라이언트가 넘긴 chapterId/schoolId는 "이 필터 종류로 조회"라는 의도로만 사용하고, 실제 ID 값은 인증된 사용자 프로필에서 직접 조회합니다.
+     * 클라이언트가 넘긴 chapterId/schoolId는 "이 필터 종류로 조회"라는 의도로만 사용하고, 실제 ID 값은 viewerInfo에서 가져옵니다.
      */
-    private NoticeClassification enrichClassificationWithPart(Long memberId, NoticeClassification classification) {
+    private NoticeClassification enrichClassification(NoticeViewerInfo viewerInfo, NoticeClassification classification) {
         if (classification.chapterId() == null
             && classification.schoolId() == null
             && classification.part() == null) {
             return classification;
         }
 
-        Long gisuId = classification.gisuId();
-
-        MemberInfo memberInfo = getMemberUseCase.getProfiles(Set.of(memberId)).get(memberId);
-        Long schoolId = memberInfo != null ? memberInfo.schoolId() : null;
-
-        Long chapterId = null;
-        if (schoolId != null) {
-            try {
-                ChapterInfo chapterInfo = getChapterUseCase.byGisuAndSchool(gisuId, schoolId);
-                chapterId = chapterInfo.id();
-            } catch (Exception e) {
-                log.debug("지부 정보 조회 실패 - gisuId={}, schoolId={}: {}", gisuId, schoolId, e.getMessage());
-            }
-        }
-
-        // 클라이언트가 요청한 필터 종류는 유지하되, 실제 값은 사용자 프로필에서만 가져옴
-        // 파트 필터일 때는 chapterId/schoolId가 없어도 실제 유저 값으로 채움
         boolean hasPart = classification.part() != null;
-        Long filteredChapterId = (classification.chapterId() != null || hasPart) ? chapterId : null;
-        Long filteredSchoolId = (classification.schoolId() != null || hasPart) ? schoolId : null;
+        Long filteredChapterId = (classification.chapterId() != null || hasPart) ? viewerInfo.chapterId() : null;
+        Long filteredSchoolId = (classification.schoolId() != null || hasPart) ? viewerInfo.schoolId() : null;
 
-        return new NoticeClassification(gisuId, filteredChapterId, filteredSchoolId, classification.part());
-    }
-
-    /**
-     * 해당 기수에서 멤버가 볼 수 있는 파트 목록을 조회합니다. - Challenger.part: 챌린저 본인의 소속 파트 - ChallengerRole.responsiblePart: 파트장 역할에서 담당하는
-     * 파트 챌린저 정보가 없으면 빈 Set을 반환하여 파트 조건 없는 공지만 노출합니다.
-     */
-    private Set<ChallengerPart> resolveMemberParts(Long memberId, Long gisuId) {
-        if (memberId == null || gisuId == null) {
-            return Set.of();
-        }
-
-        ChallengerInfo challenger = getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId);
-
-        Set<ChallengerPart> parts = new HashSet<>();
-        parts.add(challenger.part());
-        parts.addAll(getChallengerRoleUseCase.getResponsiblePartsByMemberAndGisu(memberId, gisuId));
-        return parts;
+        return new NoticeClassification(classification.gisuId(), filteredChapterId, filteredSchoolId, classification.part());
     }
 
     private Page<NoticeSummary> toNoticeSummaryPage(Page<Notice> notices) {
