@@ -2,10 +2,10 @@ package com.umc.product.curriculum.application.service.command;
 
 import com.umc.product.curriculum.application.port.in.command.AutoReleaseWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
-import com.umc.product.curriculum.application.port.in.command.ReviewWorkbookCommand;
-import com.umc.product.curriculum.application.port.in.command.SelectBestWorkbookCommand;
-import com.umc.product.curriculum.application.port.in.command.SubmitChallengerWorkbookCommand;
-import com.umc.product.curriculum.application.port.in.command.SubmitWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.ReviewWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.SelectBestWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.SubmitChallengerWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.SubmitWorkbookCommand;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveChallengerWorkbookPort;

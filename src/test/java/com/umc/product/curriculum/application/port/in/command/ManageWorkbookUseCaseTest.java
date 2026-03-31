@@ -5,6 +5,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.curriculum.application.port.in.command.dto.ReviewWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.SelectBestWorkbookCommand;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.Curriculum;

@@ -1,4 +1,4 @@
-package com.umc.product.curriculum.application.port.in.command;
+package com.umc.product.curriculum.application.port.in.command.dto;
 
 import jakarta.validation.constraints.NotNull;
 

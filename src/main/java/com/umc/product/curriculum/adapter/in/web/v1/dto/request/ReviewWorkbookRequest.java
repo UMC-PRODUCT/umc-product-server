@@ -1,6 +1,6 @@
 package com.umc.product.curriculum.adapter.in.web.v1.dto.request;
 
-import com.umc.product.curriculum.application.port.in.command.ReviewWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.ReviewWorkbookCommand;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;

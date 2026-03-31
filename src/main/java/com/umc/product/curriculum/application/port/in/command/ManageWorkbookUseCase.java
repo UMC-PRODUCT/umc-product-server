@@ -1,5 +1,10 @@
 package com.umc.product.curriculum.application.port.in.command;
 
+import com.umc.product.curriculum.application.port.in.command.dto.ReviewWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.SelectBestWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.SubmitChallengerWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.SubmitWorkbookCommand;
+
 /**
  * 워크북 관리 UseCase
  * <p>

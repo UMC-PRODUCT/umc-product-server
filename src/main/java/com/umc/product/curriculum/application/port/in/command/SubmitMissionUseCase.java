@@ -1,5 +1,7 @@
 package com.umc.product.curriculum.application.port.in.command;
 
+import com.umc.product.curriculum.application.port.in.command.dto.SubmitMissionCommand;
+
 public interface SubmitMissionUseCase {
 
     /**

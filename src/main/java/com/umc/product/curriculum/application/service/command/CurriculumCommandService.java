@@ -1,7 +1,7 @@
 package com.umc.product.curriculum.application.service.command;
 
-import com.umc.product.curriculum.application.port.in.command.CurriculumCommand;
-import com.umc.product.curriculum.application.port.in.command.CurriculumCommand.WorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.CurriculumCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.CurriculumCommand.WorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.ReleaseWorkbookUseCase;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumPort;
