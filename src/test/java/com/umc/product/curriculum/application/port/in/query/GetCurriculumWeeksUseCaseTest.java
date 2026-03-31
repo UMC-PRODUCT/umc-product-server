@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 class GetCurriculumWeeksUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
-    private GetCurriculumProgressUseCase getCurriculumProgressUseCase;
+    private GetCurriculumUseCase getCurriculumProgressUseCase;
 
     @Autowired
     private SaveCurriculumPort saveCurriculumPort;

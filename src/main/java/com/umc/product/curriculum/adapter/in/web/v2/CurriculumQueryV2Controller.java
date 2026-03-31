@@ -4,7 +4,6 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumProgressResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumResponse;
 import com.umc.product.curriculum.adapter.in.web.v2.swagger.CurriculumQueryV2ControllerApi;
-import com.umc.product.curriculum.application.port.in.query.GetCurriculumProgressUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumUseCase;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class CurriculumQueryV2Controller implements CurriculumQueryV2ControllerApi {
 
     private final GetCurriculumUseCase getCurriculumUseCase;
-    private final GetCurriculumProgressUseCase getCurriculumProgressUseCase;
 
     @Public
     @Override
@@ -42,7 +40,7 @@ public class CurriculumQueryV2Controller implements CurriculumQueryV2ControllerA
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         return CurriculumProgressResponse.from(
-            getCurriculumProgressUseCase.getMyProgressByGisu(memberPrincipal.getMemberId(), gisuId)
+            getCurriculumUseCase.getMyProgressByGisu(memberPrincipal.getMemberId(), gisuId)
         );
     }
 }

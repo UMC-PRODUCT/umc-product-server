@@ -1,9 +1,8 @@
 package com.umc.product.curriculum.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.application.port.in.query.GetAvailableWeeksUseCase;
-import com.umc.product.curriculum.application.port.in.query.GetStudyGroupsForFilterUseCase;
-import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;
+import com.umc.product.curriculum.application.port.in.query.GetChallengerWorkbookUseCase;
+import com.umc.product.curriculum.application.port.in.query.GetOriginalWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
 import com.umc.product.curriculum.application.port.in.query.dto.StudyGroupFilterInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionDetailInfo;
@@ -25,9 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class WorkbookSubmissionQueryService implements
-        GetWorkbookSubmissionsUseCase,
-        GetStudyGroupsForFilterUseCase,
-        GetAvailableWeeksUseCase {
+        GetChallengerWorkbookUseCase,
+        GetOriginalWorkbookUseCase {
 
     private final LoadWorkbookSubmissionPort loadWorkbookSubmissionPort;
     private final LoadChallengerWorkbookPort loadChallengerWorkbookPort;

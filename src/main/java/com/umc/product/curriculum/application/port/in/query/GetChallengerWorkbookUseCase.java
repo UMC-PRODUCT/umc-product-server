@@ -1,11 +1,16 @@
 package com.umc.product.curriculum.application.port.in.query;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
+import com.umc.product.curriculum.application.port.in.query.dto.StudyGroupFilterInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionDetailInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
 import java.util.List;
 
-public interface GetWorkbookSubmissionsUseCase {
+/**
+ * ChallengerWorkbook 조회 UseCase
+ */
+public interface GetChallengerWorkbookUseCase {
 
     /**
      * (운영진 기능) 학교, 주차, 스터디그룹별 제출된 ChallengerWorkbook 리스트 조회
@@ -22,4 +27,13 @@ public interface GetWorkbookSubmissionsUseCase {
      * @return 제출 URL 및 상태 정보
      */
     WorkbookSubmissionDetailInfo getSubmissionDetail(Long challengerWorkbookId);
+
+    /**
+     * 워크북 제출 현황 필터용 스터디 그룹 목록 조회
+     *
+     * @param schoolId 학교 ID
+     * @param part 파트
+     * @return 스터디 그룹 목록 (id, name)
+     */
+    List<StudyGroupFilterInfo> getStudyGroupsForFilter(Long schoolId, ChallengerPart part);
 }

@@ -55,6 +55,4 @@ public interface ManageChallengerWorkbookUseCase {
      * @param command 베스트 선정 커맨드 (워크북 ID, 추천사)
      */
     void selectBest(SelectBestWorkbookCommand command);
-
-    void release(Long workbookId);
 }

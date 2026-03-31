@@ -5,7 +5,6 @@ import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumProgr
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumWeeksResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.swagger.CurriculumQueryControllerApi;
-import com.umc.product.curriculum.application.port.in.query.GetCurriculumProgressUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumUseCase;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekInfo;
@@ -25,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class CurriculumQueryController implements CurriculumQueryControllerApi {
 
-    private final GetCurriculumProgressUseCase getCurriculumProgressUseCase;
     private final GetCurriculumUseCase getCurriculumUseCase;
     private final GetGisuUseCase getGisuUseCase;
 
@@ -52,7 +50,7 @@ public class CurriculumQueryController implements CurriculumQueryControllerApi {
     @Override
     @GetMapping("/challengers/me/progress")
     public CurriculumProgressResponse getMyProgress(@CurrentMember MemberPrincipal memberPrincipal) {
-        CurriculumProgressInfo info = getCurriculumProgressUseCase.getMyProgress(memberPrincipal.getMemberId());
+        CurriculumProgressInfo info = getCurriculumUseCase.getMyProgress(memberPrincipal.getMemberId());
         return CurriculumProgressResponse.from(info);
     }
 
@@ -64,7 +62,7 @@ public class CurriculumQueryController implements CurriculumQueryControllerApi {
     @Override
     @GetMapping("/weeks")
     public CurriculumWeeksResponse getWeeksByPart(@RequestParam ChallengerPart part) {
-        List<CurriculumWeekInfo> weeks = getCurriculumProgressUseCase.getWeeksByPart(part);
+        List<CurriculumWeekInfo> weeks = getCurriculumUseCase.getWeeksByPart(part);
         return CurriculumWeeksResponse.from(weeks);
     }
 }

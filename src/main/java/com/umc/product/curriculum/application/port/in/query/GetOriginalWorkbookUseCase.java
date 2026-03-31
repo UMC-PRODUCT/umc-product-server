@@ -4,9 +4,9 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import java.util.List;
 
 /**
- * 배포된 워크북 주차 목록 조회 UseCase (필터 드롭다운용)
+ * OriginalWorkbook 조회 UseCase
  */
-public interface GetAvailableWeeksUseCase {
+public interface GetOriginalWorkbookUseCase {
 
     /**
      * 활성 기수에서 배포된 주차 번호 목록을 조회합니다.
