@@ -1,15 +1,12 @@
 package com.umc.product.curriculum.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.application.port.in.query.GetAvailableWeeksUseCase;
-import com.umc.product.curriculum.application.port.in.query.GetStudyGroupsForFilterUseCase;
-import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;
+import com.umc.product.curriculum.application.port.in.query.GetChallengerWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
 import com.umc.product.curriculum.application.port.in.query.dto.StudyGroupFilterInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionDetailInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
-import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadWorkbookSubmissionPort;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
@@ -24,14 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class WorkbookSubmissionQueryService implements
-        GetWorkbookSubmissionsUseCase,
-        GetStudyGroupsForFilterUseCase,
-        GetAvailableWeeksUseCase {
+public class ChallengerWorkbookQueryService implements GetChallengerWorkbookUseCase {
 
     private final LoadWorkbookSubmissionPort loadWorkbookSubmissionPort;
     private final LoadChallengerWorkbookPort loadChallengerWorkbookPort;
-    private final LoadOriginalWorkbookPort loadOriginalWorkbookPort;
     private final GetStudyGroupUseCase getStudyGroupUseCase;
     private final GetFileUseCase getFileUseCase;
 
@@ -65,11 +58,6 @@ public class WorkbookSubmissionQueryService implements
         return WorkbookSubmissionDetailInfo.from(
                 loadChallengerWorkbookPort.findById(challengerWorkbookId)
         );
-    }
-
-    @Override
-    public List<Integer> getAvailableWeeks(ChallengerPart part) {
-        return loadOriginalWorkbookPort.findReleasedWeekNos(part);
     }
 
     @Override

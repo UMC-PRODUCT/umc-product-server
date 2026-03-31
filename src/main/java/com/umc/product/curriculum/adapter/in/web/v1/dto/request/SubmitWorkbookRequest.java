@@ -1,6 +1,6 @@
 package com.umc.product.curriculum.adapter.in.web.v1.dto.request;
 
-import com.umc.product.curriculum.application.port.in.command.SubmitWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.SubmitWorkbookCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "워크북 제출 요청")

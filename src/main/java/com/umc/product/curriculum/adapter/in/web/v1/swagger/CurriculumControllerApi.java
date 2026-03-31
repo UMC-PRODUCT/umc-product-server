@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Curriculum | 챌린저용 워크북 Command", description = "미션 제출, ")
-public interface WorkbookControllerApi {
+public interface CurriculumControllerApi {
 
     @Operation(
         summary = "deprecated: 원본 워크북 ID로 미션 제출",

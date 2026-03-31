@@ -3,7 +3,6 @@ package com.umc.product.curriculum.application.service.query;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.application.port.in.query.GetCurriculumProgressUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetCurriculumUseCase;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProgressInfo;
@@ -25,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class CurriculumQueryService implements GetCurriculumProgressUseCase, GetCurriculumUseCase {
+public class CurriculumQueryService implements GetCurriculumUseCase {
 
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
@@ -50,10 +49,10 @@ public class CurriculumQueryService implements GetCurriculumProgressUseCase, Get
     @Override
     public CurriculumProgressInfo getMyProgressByGisu(Long memberId, Long gisuId) {
         ChallengerInfo challengerInfo = getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId);
-        CurriculumProjection projection = loadCurriculumPort.getByGisuIdAndPart(gisuId, challengerInfo.part());
+        CurriculumProjection curriculumProjection = loadCurriculumPort.getByGisuIdAndPart(gisuId, challengerInfo.part());
 
         List<WorkbookProgressProjection> workbookProgressProjections = loadCurriculumProgressPort.findWorkbookProgressProjections(
-            projection.id(), challengerInfo.challengerId()
+            curriculumProjection.id(), challengerInfo.challengerId()
         );
 
         Instant now = Instant.now();
@@ -66,9 +65,9 @@ public class CurriculumQueryService implements GetCurriculumProgressUseCase, Get
             .count();
 
         return new CurriculumProgressInfo(
-            projection.id(),
-            projection.title(),
-            projection.part().name(),
+            curriculumProjection.id(),
+            curriculumProjection.title(),
+            curriculumProjection.part().name(),
             completedCount,
             workbooks.size(),
             workbooks

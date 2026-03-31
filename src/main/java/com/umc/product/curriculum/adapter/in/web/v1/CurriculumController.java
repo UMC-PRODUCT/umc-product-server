@@ -4,8 +4,8 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SubmitChallengerWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SubmitWorkbookRequest;
-import com.umc.product.curriculum.adapter.in.web.v1.swagger.WorkbookControllerApi;
-import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
+import com.umc.product.curriculum.adapter.in.web.v1.swagger.CurriculumControllerApi;
+import com.umc.product.curriculum.application.port.in.command.ManageChallengerWorkbookUseCase;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import jakarta.validation.Valid;
@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/workbooks")
 @RequiredArgsConstructor
-public class WorkbookController implements WorkbookControllerApi {
+public class CurriculumController implements CurriculumControllerApi {
 
-    private final ManageWorkbookUseCase manageWorkbookUseCase;
+    private final ManageChallengerWorkbookUseCase manageChallengerWorkbookUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
 
     @Override
@@ -34,7 +34,7 @@ public class WorkbookController implements WorkbookControllerApi {
         ChallengerInfoWithStatus challenger = getChallengerUseCase
             .getLatestActiveChallengerByMemberId(memberPrincipal.getMemberId());
 
-        manageWorkbookUseCase.submit(request.toCommand(challenger.challengerId()));
+        manageChallengerWorkbookUseCase.submit(request.toCommand(challenger.challengerId()));
     }
 
     @Override
@@ -44,7 +44,7 @@ public class WorkbookController implements WorkbookControllerApi {
         @PathVariable Long challengerWorkbookId,
         @Valid @RequestBody SubmitChallengerWorkbookRequest request
     ) {
-        manageWorkbookUseCase.submitByWorkbookId(
+        manageChallengerWorkbookUseCase.submitByWorkbookId(
             request.toCommand(challengerWorkbookId, memberPrincipal.getMemberId())
         );
     }

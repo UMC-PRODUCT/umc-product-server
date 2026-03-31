@@ -14,10 +14,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class GetAvailableWeeksUseCaseTest extends UseCaseTestSupport {
+class GetOriginalWorkbookUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
-    private GetAvailableWeeksUseCase getAvailableWeeksUseCase;
+    private GetOriginalWorkbookUseCase getAvailableWeeksUseCase;
 
     @Autowired
     private GisuFixture gisuFixture;

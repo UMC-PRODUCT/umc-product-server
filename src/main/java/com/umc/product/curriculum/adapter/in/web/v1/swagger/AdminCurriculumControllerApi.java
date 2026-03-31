@@ -1,50 +1,115 @@
 package com.umc.product.curriculum.adapter.in.web.v1.swagger;
 
-import com.umc.product.curriculum.adapter.in.web.v1.dto.request.ManageCurriculumRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.ReviewWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SelectBestWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionDetailResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "Curriculum | 커리큘럼 Command", description = "커리큘럼, 원본 워크북 CUD")
+@Tag(name = "Curriculum | 운영진용 워크북 Command", description = "워크북 배포, 챌린저 미션 검토 및 베스트 워크북 선정 등")
 public interface AdminCurriculumControllerApi {
 
     @Operation(
-        summary = "커리큘럼 관리 (생성/수정/삭제)",
+        summary = "(중앙 파트장용) 원본 워크북 배포",
         description = """
-            현재 활성화된 기수의 커리큘럼과 워크북을 일괄 관리합니다.
+            개별 워크북을 배포합니다.
 
-            ## 기본 동작
-            - 커리큘럼: 활성 기수 + part로 조회하여 없으면 생성, 있으면 title 업데이트
-            - 워크북:
-              - id가 있으면 수정
-              - id가 없으면 생성
-              - 기존에 있던 워크북이 요청에 없으면 삭제
-            - 제출된 워크북(ChallengerWorkbook이 존재)은 삭제 불가 (409 에러)
-
-            ## 선택 필드 (startDate, endDate, missionType, workbookUrl)
-            화면에 있는 필드만 보내도 됩니다.
-            - **신규 생성 (id 없음)**: 기본값 적용 (날짜: 2099-12-31, 미션타입: LINK)
-            - **수정 (id 있음)**: 보내지 않은 필드는 기존값 유지
-
-            예시) 웹에서 title, description만 수정하는 경우:
-            ```json
-            { "id": 1, "weekNo": 1, "title": "수정된 제목", "description": "수정된 설명" }
-            ```
-            → startDate, endDate, missionType은 기존값 그대로 유지됨
+            배포된 워크북만 앱에서 조회됩니다.
+            - 배포 전: releasedAt = null
+            - 배포 후: releasedAt = 현재 시간
             """
     )
     @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "200",
-            description = "관리 성공",
-            content = @Content(schema = @Schema(implementation = Long.class))
+            description = "배포 성공"
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
-            responseCode = "409",
-            description = "제출된 워크북이 있어 삭제 불가"
+        @ApiResponse(
+            responseCode = "404",
+            description = "워크북을 찾을 수 없음"
         )
     })
-    void manageCurriculum(ManageCurriculumRequest request);
+    void releaseWorkbook(
+        @Parameter(description = "워크북 ID", required = true) Long workbookId
+    );
+
+    @Operation(
+        summary = "(파트장용) 챌린저 워크북 검토",
+        description = """
+            제출된 챌린저 워크북을 검토합니다.
+
+            - PASS: 통과
+            - FAIL: 반려
+
+            피드백은 선택 사항입니다.
+            """
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "검토 완료"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "워크북 상태가 유효하지 않음 (SUBMITTED 상태만 검토 가능)"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "챌린저 워크북을 찾을 수 없음"
+        )
+    })
+    void reviewWorkbook(
+        @Parameter(description = "챌린저 워크북 ID", required = true) Long challengerWorkbookId,
+        @RequestBody(description = "워크북 검토 요청") ReviewWorkbookRequest request
+    );
+
+    @Operation(
+        summary = "(파트장용) 베스트 워크북 선정",
+        description = """
+            제출된 워크북 또는 통과된 워크북을 베스트로 선정합니다.
+
+            - SUBMITTED 또는 PASS 상태인 워크북만 베스트 선정 가능
+            - 베스트 선정 이유는 선택 사항입니다.
+            """
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "베스트 선정 완료"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "워크북 상태가 유효하지 않음 (SUBMITTED 또는 PASS 상태만 베스트 선정 가능)"
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "챌린저 워크북을 찾을 수 없음"
+        )
+    })
+    void selectBestWorkbook(
+        @Parameter(description = "챌린저 워크북 ID", required = true) Long challengerWorkbookId,
+        @RequestBody(description = "베스트 워크북 선정 요청") SelectBestWorkbookRequest request
+    );
+
+    @Operation(
+        summary = "(파트장용) 챌린저 워크북 제출 URL 조회",
+        description = "챌린저가 제출한 워크북의 제출 URL을 조회합니다."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(schema = @Schema(implementation = WorkbookSubmissionDetailResponse.class))
+        ),
+        @ApiResponse(responseCode = "404", description = "챌린저 워크북을 찾을 수 없음")
+    })
+    WorkbookSubmissionDetailResponse getSubmissionDetail(
+        @Parameter(description = "챌린저 워크북 ID", required = true) Long challengerWorkbookId
+    );
 }

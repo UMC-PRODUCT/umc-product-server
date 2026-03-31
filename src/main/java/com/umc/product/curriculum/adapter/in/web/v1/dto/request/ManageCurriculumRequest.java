@@ -1,8 +1,8 @@
 package com.umc.product.curriculum.adapter.in.web.v1.dto.request;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.curriculum.application.port.in.command.CurriculumCommand;
-import com.umc.product.curriculum.application.port.in.command.CurriculumCommand.WorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.CurriculumCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.CurriculumCommand.WorkbookCommand;
 import com.umc.product.curriculum.domain.enums.MissionType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;

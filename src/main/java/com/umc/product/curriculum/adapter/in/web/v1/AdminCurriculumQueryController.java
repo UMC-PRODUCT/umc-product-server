@@ -7,10 +7,9 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.AvailableWeeksResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.StudyGroupFilterResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionResponse;
-import com.umc.product.curriculum.adapter.in.web.v1.swagger.WorkbookQueryControllerApi;
-import com.umc.product.curriculum.application.port.in.query.GetAvailableWeeksUseCase;
-import com.umc.product.curriculum.application.port.in.query.GetStudyGroupsForFilterUseCase;
-import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;
+import com.umc.product.curriculum.adapter.in.web.v1.swagger.AdminCurriculumQueryControllerApi;
+import com.umc.product.curriculum.application.port.in.query.GetChallengerWorkbookUseCase;
+import com.umc.product.curriculum.application.port.in.query.GetOriginalWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
 import com.umc.product.global.response.CursorResponse;
@@ -28,12 +27,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/curriculums")
 @RequiredArgsConstructor
-public class WorkbookQueryController implements WorkbookQueryControllerApi {
+public class AdminCurriculumQueryController implements AdminCurriculumQueryControllerApi {
 
-    private final GetWorkbookSubmissionsUseCase getWorkbookSubmissionsUseCase;
+    private final GetChallengerWorkbookUseCase getChallengerWorkbookUseCase;
+    private final GetOriginalWorkbookUseCase getOriginalWorkbookUseCase;
     private final GetSchoolAccessContextUseCase getSchoolAccessContextUseCase;
-    private final GetStudyGroupsForFilterUseCase getStudyGroupsForFilterUseCase;
-    private final GetAvailableWeeksUseCase getAvailableWeeksUseCase;
 
     @Override
     @GetMapping("/workbook-submissions")
@@ -63,7 +61,7 @@ public class WorkbookQueryController implements WorkbookQueryControllerApi {
             size
         );
 
-        List<WorkbookSubmissionInfo> content = getWorkbookSubmissionsUseCase.getSubmissions(query);
+        List<WorkbookSubmissionInfo> content = getChallengerWorkbookUseCase.getSubmissions(query);
 
         return CursorResponse.of(
             content,
@@ -87,7 +85,7 @@ public class WorkbookQueryController implements WorkbookQueryControllerApi {
             memberPrincipal.getMemberId()
         );
         return AvailableWeeksResponse.from(
-            getAvailableWeeksUseCase.getAvailableWeeks(context.part())
+            getOriginalWorkbookUseCase.getAvailableWeeks(context.part())
         );
     }
 
@@ -98,7 +96,7 @@ public class WorkbookQueryController implements WorkbookQueryControllerApi {
         @RequestParam ChallengerPart part
     ) {
         // TODO: 운영진 권한 필요하도록 수정
-        return getStudyGroupsForFilterUseCase.getStudyGroupsForFilter(schoolId, part).stream()
+        return getChallengerWorkbookUseCase.getStudyGroupsForFilter(schoolId, part).stream()
             .map(StudyGroupFilterResponse::from)
             .toList();
     }

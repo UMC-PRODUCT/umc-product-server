@@ -1,4 +1,4 @@
-package com.umc.product.curriculum.application.port.in.command;
+package com.umc.product.curriculum.application.port.in.command.dto;
 
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import jakarta.validation.constraints.NotNull;
