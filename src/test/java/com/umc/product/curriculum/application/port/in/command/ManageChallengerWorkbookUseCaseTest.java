@@ -27,10 +27,10 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
+class ManageChallengerWorkbookUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
-    private ManageWorkbookUseCase manageWorkbookUseCase;
+    private ManageChallengerWorkbookUseCase manageChallengerWorkbookUseCase;
 
     @Autowired
     private GisuFixture gisuFixture;
@@ -166,7 +166,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            manageWorkbookUseCase.review(command);
+            manageChallengerWorkbookUseCase.review(command);
 
             // then
             ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
@@ -187,7 +187,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            manageWorkbookUseCase.review(command);
+            manageChallengerWorkbookUseCase.review(command);
 
             // then
             ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
@@ -207,7 +207,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            manageWorkbookUseCase.review(command);
+            manageChallengerWorkbookUseCase.review(command);
 
             // then
             ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
@@ -220,7 +220,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             // given
             ChallengerWorkbook workbook = createWorkbookWithStatus(WorkbookStatus.SUBMITTED);
 
-            manageWorkbookUseCase.review(new ReviewWorkbookCommand(
+            manageChallengerWorkbookUseCase.review(new ReviewWorkbookCommand(
                 workbook.getId(),
                 WorkbookStatus.PASS,
                 null
@@ -233,7 +233,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
                 "다시 검토"
             );
 
-            assertThatThrownBy(() -> manageWorkbookUseCase.review(command))
+            assertThatThrownBy(() -> manageChallengerWorkbookUseCase.review(command))
                 .isInstanceOf(BusinessException.class);
         }
 
@@ -247,7 +247,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             );
 
             // when & then
-            assertThatThrownBy(() -> manageWorkbookUseCase.review(command))
+            assertThatThrownBy(() -> manageChallengerWorkbookUseCase.review(command))
                 .isInstanceOf(BusinessException.class);
         }
     }
@@ -267,7 +267,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            manageWorkbookUseCase.selectBest(command);
+            manageChallengerWorkbookUseCase.selectBest(command);
 
             // then
             ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
@@ -287,7 +287,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            manageWorkbookUseCase.selectBest(command);
+            manageChallengerWorkbookUseCase.selectBest(command);
 
             // then
             ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
@@ -306,7 +306,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             );
 
             // when
-            manageWorkbookUseCase.selectBest(command);
+            manageChallengerWorkbookUseCase.selectBest(command);
 
             // then
             ChallengerWorkbook result = loadChallengerWorkbookPort.findById(workbook.getId());
@@ -325,7 +325,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             );
 
             // when & then
-            assertThatThrownBy(() -> manageWorkbookUseCase.selectBest(command))
+            assertThatThrownBy(() -> manageChallengerWorkbookUseCase.selectBest(command))
                 .isInstanceOf(BusinessException.class);
         }
 
@@ -338,7 +338,7 @@ class ManageWorkbookUseCaseTest extends UseCaseTestSupport {
             );
 
             // when & then
-            assertThatThrownBy(() -> manageWorkbookUseCase.selectBest(command))
+            assertThatThrownBy(() -> manageChallengerWorkbookUseCase.selectBest(command))
                 .isInstanceOf(BusinessException.class);
         }
     }

@@ -10,7 +10,7 @@ import com.umc.product.curriculum.application.port.in.command.dto.SubmitWorkbook
  * <p>
  * 챌린저의 워크북 제출 및 운영진의 워크북 검토/베스트 선정 기능을 제공합니다.
  */
-public interface ManageWorkbookUseCase {
+public interface ManageChallengerWorkbookUseCase {
 
 
     // <------------------ 챌린저 전용 -------------------------->

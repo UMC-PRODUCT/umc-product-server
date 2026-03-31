@@ -1,7 +1,7 @@
 package com.umc.product.curriculum.application.service.command;
 
 import com.umc.product.curriculum.application.port.in.command.AutoReleaseWorkbookUseCase;
-import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
+import com.umc.product.curriculum.application.port.in.command.ManageChallengerWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.dto.ReviewWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.SelectBestWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.SubmitChallengerWorkbookCommand;
@@ -31,7 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class WorkbookCommandService implements ManageWorkbookUseCase, AutoReleaseWorkbookUseCase {
+public class ChallengerWorkbookCommandService implements ManageChallengerWorkbookUseCase, AutoReleaseWorkbookUseCase {
 
     private final LoadChallengerWorkbookPort loadChallengerWorkbookPort;
     private final LoadOriginalWorkbookPort loadOriginalWorkbookPort;

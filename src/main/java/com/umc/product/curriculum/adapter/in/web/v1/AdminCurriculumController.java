@@ -7,7 +7,7 @@ import com.umc.product.curriculum.adapter.in.web.v1.dto.request.ReviewWorkbookRe
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SelectBestWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionDetailResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.swagger.AdminCurriculumControllerApi;
-import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
+import com.umc.product.curriculum.application.port.in.command.ManageChallengerWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AdminCurriculumController implements AdminCurriculumControllerApi {
 
-    private final ManageWorkbookUseCase manageWorkbookUseCase;
+    private final ManageChallengerWorkbookUseCase manageChallengerWorkbookUseCase;
     private final GetWorkbookSubmissionsUseCase getWorkbookSubmissionsUseCase;
 
     @Override
@@ -35,7 +35,7 @@ public class AdminCurriculumController implements AdminCurriculumControllerApi {
     )
     @PostMapping("/{workbookId}/release")
     public void releaseWorkbook(@PathVariable Long workbookId) {
-        manageWorkbookUseCase.release(workbookId);
+        manageChallengerWorkbookUseCase.release(workbookId);
     }
 
     @Override
@@ -43,7 +43,7 @@ public class AdminCurriculumController implements AdminCurriculumControllerApi {
     public void reviewWorkbook(
         @PathVariable Long challengerWorkbookId,
         @Valid @RequestBody ReviewWorkbookRequest request) {
-        manageWorkbookUseCase.review(request.toCommand(challengerWorkbookId));
+        manageChallengerWorkbookUseCase.review(request.toCommand(challengerWorkbookId));
     }
 
     @Override
@@ -51,7 +51,7 @@ public class AdminCurriculumController implements AdminCurriculumControllerApi {
     public void selectBestWorkbook(
         @PathVariable Long challengerWorkbookId,
         @Valid @RequestBody SelectBestWorkbookRequest request) {
-        manageWorkbookUseCase.selectBest(request.toCommand(challengerWorkbookId));
+        manageChallengerWorkbookUseCase.selectBest(request.toCommand(challengerWorkbookId));
     }
 
     @Override
