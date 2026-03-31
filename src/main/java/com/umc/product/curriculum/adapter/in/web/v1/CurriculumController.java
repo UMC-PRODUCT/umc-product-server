@@ -4,7 +4,7 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SubmitChallengerWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SubmitWorkbookRequest;
-import com.umc.product.curriculum.adapter.in.web.v1.swagger.ChallengerWorkbookControllerApi;
+import com.umc.product.curriculum.adapter.in.web.v1.swagger.CurriculumControllerApi;
 import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/workbooks")
 @RequiredArgsConstructor
-public class ChallengerWorkbookController implements ChallengerWorkbookControllerApi {
+public class CurriculumController implements CurriculumControllerApi {
 
     private final ManageWorkbookUseCase manageWorkbookUseCase;
     private final GetChallengerUseCase getChallengerUseCase;

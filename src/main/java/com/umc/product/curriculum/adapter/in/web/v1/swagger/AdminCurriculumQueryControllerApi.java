@@ -31,7 +31,7 @@ import java.util.List;
  * </ul>
  */
 @Tag(name = "Curriculum | 워크북 Query", description = "")
-public interface WorkbookQueryControllerApi {
+public interface AdminCurriculumQueryControllerApi {
 
     @Operation(
         summary = "워크북 제출 현황 조회",

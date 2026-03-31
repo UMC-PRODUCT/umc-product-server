@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Curriculum | 운영진용 워크북 Command", description = "워크북 배포, 챌린저 미션 검토 및 베스트 워크북 선정 등")
-public interface AdminWorkbookControllerApi {
+public interface AdminCurriculumControllerApi {
 
     @Operation(
         summary = "(중앙 파트장용) 원본 워크북 배포",

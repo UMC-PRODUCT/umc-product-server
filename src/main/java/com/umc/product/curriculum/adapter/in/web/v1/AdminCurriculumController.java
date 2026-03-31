@@ -6,7 +6,7 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.ReviewWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SelectBestWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionDetailResponse;
-import com.umc.product.curriculum.adapter.in.web.v1.swagger.AdminWorkbookControllerApi;
+import com.umc.product.curriculum.adapter.in.web.v1.swagger.AdminCurriculumControllerApi;
 import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.ReleaseWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/workbooks")
 @RequiredArgsConstructor
-public class AdminWorkbookController implements AdminWorkbookControllerApi {
+public class AdminCurriculumController implements AdminCurriculumControllerApi {
 
     private final ReleaseWorkbookUseCase releaseWorkbookUseCase;
     private final ManageWorkbookUseCase manageWorkbookUseCase;

@@ -7,7 +7,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.AvailableWeeksResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.StudyGroupFilterResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionResponse;
-import com.umc.product.curriculum.adapter.in.web.v1.swagger.WorkbookQueryControllerApi;
+import com.umc.product.curriculum.adapter.in.web.v1.swagger.AdminCurriculumQueryControllerApi;
 import com.umc.product.curriculum.application.port.in.query.GetAvailableWeeksUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetStudyGroupsForFilterUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/curriculums")
 @RequiredArgsConstructor
-public class WorkbookQueryController implements WorkbookQueryControllerApi {
+public class AdminCurriculumQueryController implements AdminCurriculumQueryControllerApi {
 
     private final GetWorkbookSubmissionsUseCase getWorkbookSubmissionsUseCase;
     private final GetSchoolAccessContextUseCase getSchoolAccessContextUseCase;
