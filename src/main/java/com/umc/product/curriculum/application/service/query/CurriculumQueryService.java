@@ -50,10 +50,10 @@ public class CurriculumQueryService implements GetCurriculumProgressUseCase, Get
     @Override
     public CurriculumProgressInfo getMyProgressByGisu(Long memberId, Long gisuId) {
         ChallengerInfo challengerInfo = getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId);
-        CurriculumProjection projection = loadCurriculumPort.getByGisuIdAndPart(gisuId, challengerInfo.part());
+        CurriculumProjection curriculumProjection = loadCurriculumPort.getByGisuIdAndPart(gisuId, challengerInfo.part());
 
         List<WorkbookProgressProjection> workbookProgressProjections = loadCurriculumProgressPort.findWorkbookProgressProjections(
-            projection.id(), challengerInfo.challengerId()
+            curriculumProjection.id(), challengerInfo.challengerId()
         );
 
         Instant now = Instant.now();
@@ -66,9 +66,9 @@ public class CurriculumQueryService implements GetCurriculumProgressUseCase, Get
             .count();
 
         return new CurriculumProgressInfo(
-            projection.id(),
-            projection.title(),
-            projection.part().name(),
+            curriculumProjection.id(),
+            curriculumProjection.title(),
+            curriculumProjection.part().name(),
             completedCount,
             workbooks.size(),
             workbooks
