@@ -12,6 +12,8 @@ import com.umc.product.curriculum.application.port.in.command.dto.SubmitWorkbook
  */
 public interface ManageWorkbookUseCase {
 
+
+    // <------------------ 챌린저 전용 -------------------------->
     /**
      * 워크북 제출 (챌린저 전용)
      * <p>
@@ -34,6 +36,8 @@ public interface ManageWorkbookUseCase {
      */
     void submitByWorkbookId(SubmitChallengerWorkbookCommand command);
 
+
+    // <---------------------- 운영진 전용 -------------------------->
     /**
      * 워크북 검토 (운영진 전용)
      * <p>
@@ -51,4 +55,6 @@ public interface ManageWorkbookUseCase {
      * @param command 베스트 선정 커맨드 (워크북 ID, 추천사)
      */
     void selectBest(SelectBestWorkbookCommand command);
+
+    void release(Long workbookId);
 }
