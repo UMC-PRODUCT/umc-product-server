@@ -8,7 +8,6 @@ import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SelectBestWorkbo
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionDetailResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.swagger.AdminCurriculumControllerApi;
 import com.umc.product.curriculum.application.port.in.command.ManageWorkbookUseCase;
-import com.umc.product.curriculum.application.port.in.command.ReleaseWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.query.GetWorkbookSubmissionsUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AdminCurriculumController implements AdminCurriculumControllerApi {
 
-    private final ReleaseWorkbookUseCase releaseWorkbookUseCase;
     private final ManageWorkbookUseCase manageWorkbookUseCase;
     private final GetWorkbookSubmissionsUseCase getWorkbookSubmissionsUseCase;
 
@@ -37,7 +35,7 @@ public class AdminCurriculumController implements AdminCurriculumControllerApi {
     )
     @PostMapping("/{workbookId}/release")
     public void releaseWorkbook(@PathVariable Long workbookId) {
-        releaseWorkbookUseCase.release(workbookId);
+        manageWorkbookUseCase.release(workbookId);
     }
 
     @Override

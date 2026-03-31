@@ -2,7 +2,6 @@ package com.umc.product.curriculum.application.service.command;
 
 import com.umc.product.curriculum.application.port.in.command.dto.CurriculumCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.CurriculumCommand.WorkbookCommand;
-import com.umc.product.curriculum.application.port.in.command.ReleaseWorkbookUseCase;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
@@ -23,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class CurriculumCommandService implements ReleaseWorkbookUseCase {
+public class CurriculumCommandService {
 
     private final LoadCurriculumPort loadCurriculumPort;
     private final SaveCurriculumPort saveCurriculumPort;
@@ -38,15 +37,6 @@ public class CurriculumCommandService implements ReleaseWorkbookUseCase {
             .map(WorkbookCommand::id)
             .collect(Collectors.toSet());
     }
-
-    @Override
-    public void release(Long workbookId) {
-        OriginalWorkbook workbook = loadOriginalWorkbookPort.findById(workbookId);
-
-        workbook.release();
-        saveOriginalWorkbookPort.save(workbook);
-    }
-
 
     private List<OriginalWorkbook> findWorkbooksToDelete(Map<Long, OriginalWorkbook> existingWorkbookMap,
                                                          Set<Long> requestWorkbookIds) {

@@ -9,6 +9,7 @@ import com.umc.product.curriculum.application.port.in.command.dto.SubmitWorkbook
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveChallengerWorkbookPort;
+import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.curriculum.domain.ChallengerWorkbook;
@@ -35,6 +36,7 @@ public class WorkbookCommandService implements ManageWorkbookUseCase, AutoReleas
     private final LoadChallengerWorkbookPort loadChallengerWorkbookPort;
     private final LoadOriginalWorkbookPort loadOriginalWorkbookPort;
     private final SaveChallengerWorkbookPort saveChallengerWorkbookPort;
+    private final SaveOriginalWorkbookPort saveOriginalWorkbookPort;
     private final GetChallengerUseCase getChallengerUseCase;
 
     @Override
@@ -91,6 +93,14 @@ public class WorkbookCommandService implements ManageWorkbookUseCase, AutoReleas
         workbook.selectBest(command.bestReason());
 
         saveChallengerWorkbookPort.save(workbook);
+    }
+
+    @Override
+    public void release(Long workbookId) {
+        OriginalWorkbook workbook = loadOriginalWorkbookPort.findById(workbookId);
+
+        workbook.release();
+        saveOriginalWorkbookPort.save(workbook);
     }
 
     private void verifyWorkbookOwner(ChallengerWorkbook workbook, Long memberId) {
