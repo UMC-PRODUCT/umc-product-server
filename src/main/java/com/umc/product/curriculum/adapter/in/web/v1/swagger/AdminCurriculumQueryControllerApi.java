@@ -30,7 +30,7 @@ import java.util.List;
  *   <li>학교 파트장/기타 운영진: 본인 학교의 담당 파트만 조회 가능</li>
  * </ul>
  */
-@Tag(name = "Curriculum | 워크북 Query", description = "")
+@Tag(name = "Curriculum | 운영진용 워크북 Query", description = "")
 public interface AdminCurriculumQueryControllerApi {
 
     @Operation(

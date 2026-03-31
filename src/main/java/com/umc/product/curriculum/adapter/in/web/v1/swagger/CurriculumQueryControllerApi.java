@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "Curriculum | 커리큘럼 Query", description = "커리큘럼 조회 (본인/파트별)")
+@Tag(name = "Curriculum | 챌린저용 워크북 Query", description = "워크북 조회 (본인/파트별)")
 public interface CurriculumQueryControllerApi {
 
     /**
