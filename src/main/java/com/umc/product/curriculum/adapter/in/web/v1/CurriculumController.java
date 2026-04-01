@@ -44,7 +44,7 @@ public class CurriculumController implements CurriculumControllerApi {
         @PathVariable Long challengerWorkbookId,
         @Valid @RequestBody SubmitChallengerWorkbookRequest request
     ) {
-        manageChallengerWorkbookUseCase.submitByWorkbookId(
+        manageChallengerWorkbookUseCase.submitByChallengerWorkbookId(
             request.toCommand(challengerWorkbookId, memberPrincipal.getMemberId())
         );
     }
