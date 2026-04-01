@@ -2,7 +2,6 @@ package com.umc.product.notice.adapter.in.web.assembler;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.MemberInfo;
@@ -54,11 +53,13 @@ public class NoticeViewerInfoAssembler {
             return Set.of();
         }
 
-        ChallengerInfo challenger = getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId);
-
-        Set<ChallengerPart> parts = new HashSet<>();
-        parts.add(challenger.part());
-        parts.addAll(getChallengerRoleUseCase.getResponsiblePartsByMemberAndGisu(memberId, gisuId));
-        return parts;
+        return getChallengerUseCase.findByMemberIdAndGisuId(memberId, gisuId)
+            .map(challenger -> {
+                Set<ChallengerPart> parts = new HashSet<>();
+                parts.add(challenger.part());
+                parts.addAll(getChallengerRoleUseCase.getResponsiblePartsByMemberAndGisu(memberId, gisuId));
+                return parts;
+            })
+            .orElse(Set.of());
     }
 }

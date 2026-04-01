@@ -4,6 +4,7 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public interface GetChallengerUseCase {
@@ -22,6 +23,11 @@ public interface GetChallengerUseCase {
      * memberId와 gisuId로 챌린저 정보 조회
      */
     ChallengerInfo getByMemberIdAndGisuId(Long memberId, Long gisuId);
+
+    /**
+     * memberId와 gisuId로 챌린저 정보 조회 (없으면 Optional.empty())
+     */
+    Optional<ChallengerInfo> findByMemberIdAndGisuId(Long memberId, Long gisuId);
 
     /**
      * memberId와 gisuId로 ACTIVE 챌린저 정보 조회
