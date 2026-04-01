@@ -97,7 +97,7 @@ public class ChallengerWorkbook extends BaseEntity {
 
     private void validatePendingStatus() {
         if (this.status != WorkbookStatus.PENDING) {
-            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WORKBOOK_STATUS);
+            throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_ALREADY_SUBMITTED);
         }
     }
 
@@ -111,7 +111,7 @@ public class ChallengerWorkbook extends BaseEntity {
 
     private void validateCanSelectBest() {
         if (this.status != WorkbookStatus.SUBMITTED && this.status != WorkbookStatus.PASS) {
-            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WORKBOOK_STATUS);
+            throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_NOT_SELECTABLE_FOR_BEST);
         }
     }
 }
