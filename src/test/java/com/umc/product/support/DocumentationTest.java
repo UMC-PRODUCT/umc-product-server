@@ -8,9 +8,7 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.notice.adapter.in.web.NoticeContentController;
 import com.umc.product.notice.adapter.in.web.NoticeController;
 import com.umc.product.notice.adapter.in.web.NoticeQueryController;
-import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.notice.adapter.in.web.assembler.NoticeViewerInfoAssembler;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeReadUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
@@ -122,11 +120,5 @@ public class DocumentationTest {
     protected GetNoticeUseCase getNoticeUseCase;
 
     @MockitoBean
-    protected GetChallengerUseCase getChallengerUseCase;
-
-    @MockitoBean
-    protected GetChallengerRoleUseCase getChallengerRoleUseCase;
-
-    @MockitoBean
-    protected GetMemberUseCase getMemberUseCase;
+    protected NoticeViewerInfoAssembler noticeViewerInfoAssembler;
 }
