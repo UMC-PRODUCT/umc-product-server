@@ -1,7 +1,5 @@
 package com.umc.product.curriculum.application.service.command;
 
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.curriculum.application.port.in.command.ManageChallengerWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.dto.ReviewWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.SelectBestWorkbookCommand;
@@ -10,6 +8,10 @@ import com.umc.product.curriculum.application.port.in.command.dto.SubmitWorkbook
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveChallengerWorkbookPort;
+import com.umc.product.curriculum.application.port.out.SaveReviewPort;
+import com.umc.product.curriculum.application.port.out.SaveSubmissionPort;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
@@ -27,6 +29,9 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
     private final LoadChallengerWorkbookPort loadChallengerWorkbookPort;
     private final LoadOriginalWorkbookPort loadOriginalWorkbookPort;
     private final SaveChallengerWorkbookPort saveChallengerWorkbookPort;
+    private final SaveSubmissionPort saveSubmissionPort;
+    private final LoadSubmissionPort loadSubmissionPort;
+    private final SaveReviewPort saveReviewPort;
     private final GetChallengerUseCase getChallengerUseCase;
 
     @Override
@@ -48,9 +53,11 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
             null
         );
 
-        challengerWorkbook.submit(originalWorkbook.getMissionType(), command.submission());
-
+        challengerWorkbook.submit();
         saveChallengerWorkbookPort.save(challengerWorkbook);
+
+        Submission submission = Submission.create(challengerWorkbook.getId(), command.submission());
+        saveSubmissionPort.save(submission);
     }
 
     @Override
@@ -60,12 +67,11 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
         // 본인 워크북인지 확인 (challengerId → memberId 비교)
         verifyWorkbookOwner(challengerWorkbook, command.memberId());
 
-        OriginalWorkbook originalWorkbook = loadOriginalWorkbookPort.findById(
-            challengerWorkbook.getOriginalWorkbookId());
-
-        challengerWorkbook.submit(originalWorkbook.getMissionType(), command.submission());
-
+        challengerWorkbook.submit();
         saveChallengerWorkbookPort.save(challengerWorkbook);
+
+        Submission submission = Submission.create(challengerWorkbook.getId(), command.submission());
+        saveSubmissionPort.save(submission);
     }
 
     @Override
