@@ -72,12 +72,18 @@ public class ChallengerWorkbook extends BaseEntity {
     }
 
     /**
-     * 워크북 심사 (SUBMITTED → PASS or FAIL)
+     * 워크북 심사 (OR 정책: 한 명이라도 PASS하면 PASS)
+     * <p>
+     * SUBMITTED, PASS, FAIL 상태에서 심사 가능합니다.
+     * 이미 PASS인 경우 FAIL로 되돌리지 않습니다.
      *
      * @param status 심사 결과 (PASS 또는 FAIL)
      */
     public void review(WorkbookStatus status) {
-        validateSubmittedStatus();
+        validateCanReview();
+        if (this.status == WorkbookStatus.PASS && status == WorkbookStatus.FAIL) {
+            return;
+        }
         this.status = status;
     }
 
@@ -95,9 +101,11 @@ public class ChallengerWorkbook extends BaseEntity {
         }
     }
 
-    private void validateSubmittedStatus() {
-        if (this.status != WorkbookStatus.SUBMITTED) {
-            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WORKBOOK_STATUS);
+    private void validateCanReview() {
+        if (this.status != WorkbookStatus.SUBMITTED
+            && this.status != WorkbookStatus.PASS
+            && this.status != WorkbookStatus.FAIL) {
+            throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_NOT_REVIEWABLE);
         }
     }
 

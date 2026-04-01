@@ -7,13 +7,18 @@ import com.umc.product.curriculum.application.port.in.command.dto.SubmitChalleng
 import com.umc.product.curriculum.application.port.in.command.dto.SubmitWorkbookCommand;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
+import com.umc.product.curriculum.application.port.out.LoadSubmissionPort;
 import com.umc.product.curriculum.application.port.out.SaveChallengerWorkbookPort;
+import com.umc.product.curriculum.application.port.out.LoadReviewPort;
 import com.umc.product.curriculum.application.port.out.SaveReviewPort;
 import com.umc.product.curriculum.application.port.out.SaveSubmissionPort;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
+import com.umc.product.curriculum.domain.Review;
+import com.umc.product.curriculum.domain.Submission;
+import com.umc.product.curriculum.domain.enums.ReviewResult;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
@@ -32,6 +37,7 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
     private final SaveSubmissionPort saveSubmissionPort;
     private final LoadSubmissionPort loadSubmissionPort;
     private final SaveReviewPort saveReviewPort;
+    private final LoadReviewPort loadReviewPort;
     private final GetChallengerUseCase getChallengerUseCase;
 
     @Override
@@ -76,11 +82,35 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
 
     @Override
     public void review(ReviewWorkbookCommand command) {
-        ChallengerWorkbook workbook = loadChallengerWorkbookPort.findById(command.challengerWorkbookId());
+        ChallengerWorkbook challengerWorkbook = loadChallengerWorkbookPort.findById(command.challengerWorkbookId());
 
-        workbook.review(command.status(), command.feedback());
+        Submission submission = loadSubmissionPort.findByChallengerWorkbookId(command.challengerWorkbookId())
+            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.SUBMISSION_NOT_FOUND));
 
-        saveChallengerWorkbookPort.save(workbook);
+        Long reviewerChallengerId = resolveReviewerChallengerId(command.memberId(), challengerWorkbook.getChallengerId());
+        validateNotAlreadyReviewed(submission.getId(), reviewerChallengerId);
+
+        challengerWorkbook.review(command.status());
+
+        Review review = Review.create(submission.getId(), reviewerChallengerId, ReviewResult.valueOf(command.status().name()), command.feedback());
+        saveReviewPort.save(review);
+    }
+
+
+    private void validateNotAlreadyReviewed(Long submissionId, Long reviewerChallengerId) {
+        if (loadReviewPort.existsBySubmissionIdAndReviewerChallengerId(submissionId, reviewerChallengerId)) {
+            throw new CurriculumDomainException(CurriculumErrorCode.REVIEW_ALREADY_EXISTS);
+        }
+    }
+
+    /**
+     * memberId로부터 리뷰어의 challengerId를 조회합니다.
+     * 워크북 소유자의 gisuId를 기준으로 같은 기수의 챌린저를 조회합니다.
+     */
+    private Long resolveReviewerChallengerId(Long memberId, Long workbookChallengerId) {
+        ChallengerInfo workbookOwner = getChallengerUseCase.getChallengerPublicInfo(workbookChallengerId);
+        ChallengerInfo reviewer = getChallengerUseCase.getByMemberIdAndGisuId(memberId, workbookOwner.gisuId());
+        return reviewer.challengerId();
     }
 
     @Override
@@ -90,6 +120,9 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
         workbook.selectBest(command.bestReason());
 
         saveChallengerWorkbookPort.save(workbook);
+
+        Review review = Review.createBest(submission.getId(), reviewerChallengerId, null, command.bestReason());
+        saveReviewPort.save(review);
     }
 
     private void verifyWorkbookOwner(ChallengerWorkbook workbook, Long memberId) {
