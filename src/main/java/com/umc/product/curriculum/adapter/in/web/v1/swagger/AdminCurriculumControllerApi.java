@@ -3,6 +3,8 @@ package com.umc.product.curriculum.adapter.in.web.v1.swagger;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.ReviewWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SelectBestWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionDetailResponse;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -65,6 +67,7 @@ public interface AdminCurriculumControllerApi {
         )
     })
     void reviewWorkbook(
+        @CurrentMember MemberPrincipal memberPrincipal,
         @Parameter(description = "챌린저 워크북 ID", required = true) Long challengerWorkbookId,
         @RequestBody(description = "워크북 검토 요청") ReviewWorkbookRequest request
     );
@@ -93,6 +96,7 @@ public interface AdminCurriculumControllerApi {
         )
     })
     void selectBestWorkbook(
+        @CurrentMember MemberPrincipal memberPrincipal,
         @Parameter(description = "챌린저 워크북 ID", required = true) Long challengerWorkbookId,
         @RequestBody(description = "베스트 워크북 선정 요청") SelectBestWorkbookRequest request
     );
