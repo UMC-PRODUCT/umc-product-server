@@ -71,7 +71,7 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
     }
 
     @Override
-    public void submitByWorkbookId(SubmitChallengerWorkbookCommand command) {
+    public void submitByChallengerWorkbookId(SubmitChallengerWorkbookCommand command) {
         ChallengerWorkbook challengerWorkbook = loadChallengerWorkbookPort.findById(command.challengerWorkbookId());
 
         // 본인 워크북인지 확인 (challengerId → memberId 비교)
@@ -111,7 +111,7 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
      * 워크북 소유자의 gisuId를 기준으로 같은 기수의 챌린저를 조회합니다.
      */
     private Long resolveReviewerChallengerId(Long memberId, Long workbookChallengerId) {
-        ChallengerInfo workbookOwner = getChallengerUseCase.getChallengerPublicInfo(workbookChallengerId);
+        ChallengerInfo workbookOwner = getChallengerUseCase.getById(workbookChallengerId);
         ChallengerInfo reviewer = getChallengerUseCase.getByMemberIdAndGisuId(memberId, workbookOwner.gisuId());
         return reviewer.challengerId();
     }
@@ -147,7 +147,7 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
     }
 
     private void verifyReviewOwner(Review review, Long memberId) {
-        ChallengerInfo reviewer = getChallengerUseCase.getChallengerPublicInfo(review.getReviewerChallengerId());
+        ChallengerInfo reviewer = getChallengerUseCase.getById(review.getReviewerChallengerId());
         if (!reviewer.memberId().equals(memberId)) {
             throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_ACCESS_DENIED);
         }
