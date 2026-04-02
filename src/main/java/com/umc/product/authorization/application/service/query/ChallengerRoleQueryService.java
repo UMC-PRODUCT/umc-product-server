@@ -152,23 +152,6 @@ public class ChallengerRoleQueryService implements GetChallengerRoleUseCase {
     }
 
     @Override
-    public List<ChallengerRoleType> getRolesByChapter(Long memberId, Long chapterId) {
-        if (chapterId == null) {
-            throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
-                "chapterId는 null일 수 없습니다.");
-        }
-
-        List<ChallengerRole> roles = loadChallengerRolePort.findByMemberId(memberId);
-
-        return roles.stream()
-            .filter(role -> role.getOrganizationType() == OrganizationType.CHAPTER)
-            .filter(role -> role.getOrganizationId().equals(chapterId))
-            .map(ChallengerRole::getChallengerRoleType)
-            .distinct()
-            .toList();
-    }
-
-    @Override
     public boolean hasRoleTypeInGisu(Long memberId, Long gisuId, ChallengerRoleType role) {
         if (gisuId == null) {
             throw new AuthorizationDomainException(AuthorizationErrorCode.INVALID_INPUT_VALUE,
