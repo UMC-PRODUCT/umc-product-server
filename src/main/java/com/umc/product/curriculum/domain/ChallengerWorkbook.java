@@ -88,11 +88,21 @@ public class ChallengerWorkbook extends BaseEntity {
     }
 
     /**
-     * 베스트 워크북 선정 (SUBMITTED 또는 PASS 상태여야 함)
+     * 베스트 워크북 선정 (PASS 상태여야 함)
      */
     public void selectBest() {
         validateCanSelectBest();
         this.status = WorkbookStatus.BEST;
+    }
+
+    /**
+     * 베스트 워크북 취소 (BEST → PASS)
+     */
+    public void cancelBest() {
+        if (this.status != WorkbookStatus.BEST) {
+            throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_NOT_BEST);
+        }
+        this.status = WorkbookStatus.PASS;
     }
 
     private void validatePendingStatus() {
@@ -110,7 +120,7 @@ public class ChallengerWorkbook extends BaseEntity {
     }
 
     private void validateCanSelectBest() {
-        if (this.status != WorkbookStatus.SUBMITTED && this.status != WorkbookStatus.PASS) {
+        if (this.status != WorkbookStatus.PASS) {
             throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_NOT_SELECTABLE_FOR_BEST);
         }
     }

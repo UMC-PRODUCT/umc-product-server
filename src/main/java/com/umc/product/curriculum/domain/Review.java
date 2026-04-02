@@ -58,14 +58,31 @@ public class Review extends BaseEntity {
             .feedback(feedback)
             .build();
     }
+    public void cancelBest() {
+        if (this.status != ReviewResult.BEST) {
+            throw new CurriculumDomainException(CurriculumErrorCode.REVIEW_NOT_BEST);
+        }
+        this.status = ReviewResult.PASS;
+        this.bestReason = null;
+    }
 
-    public static Review createBest(Long submissionId, Long reviewerChallengerId, String feedback, String bestReason) {
-        return Review.builder()
-            .submissionId(submissionId)
-            .reviewerChallengerId(reviewerChallengerId)
-            .status(ReviewResult.BEST)
-            .feedback(feedback)
-            .bestReason(bestReason)
-            .build();
+    public void upgradeToBest(String bestReason) {
+        if (this.status == ReviewResult.BEST) {
+            throw new CurriculumDomainException(CurriculumErrorCode.REVIEW_ALREADY_BEST);
+        }
+        this.status = ReviewResult.BEST;
+        this.bestReason = bestReason;
+    }
+
+
+    public void updateBestReason(String bestReason) {
+        if (this.status != ReviewResult.BEST) {
+            throw new CurriculumDomainException(CurriculumErrorCode.REVIEW_NOT_BEST);
+        }
+        this.bestReason = bestReason;
+    }
+
+    public void updateFeedback(String feedback) {
+        this.feedback = feedback;
     }
 }

@@ -125,9 +125,16 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-        workbook.selectBest(command.bestReason());
+    @Override
+    public void cancelBest(CancelBestWorkbookCommand command) {
+        ChallengerWorkbook workbook = loadChallengerWorkbookPort.findById(command.challengerWorkbookId());
 
-        saveChallengerWorkbookPort.save(workbook);
+        workbook.cancelBest();
+
+        Submission submission = loadSubmissionPort.getByChallengerWorkbookId(command.challengerWorkbookId());
+        List<Review> bestReviews = loadReviewPort.findAllBySubmissionIdAndStatus(submission.getId(), ReviewResult.BEST);
+        bestReviews.forEach(Review::cancelBest);
+    }
 
         Review review = Review.createBest(submission.getId(), reviewerChallengerId, null, command.bestReason());
         saveReviewPort.save(review);

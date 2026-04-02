@@ -47,6 +47,18 @@ public interface ManageChallengerWorkbookUseCase {
      */
     void review(ReviewWorkbookCommand command);
 
+
+    /**
+     * 베스트 워크북 취소 (운영진 전용)
+     * <p>
+     * 베스트 선정을 취소하고 워크북을 PASS 상태로 되돌립니다.
+     * 연결된 모든 BEST 리뷰가 PASS로 변경되고 bestReason이 삭제됩니다.
+     *
+     * @param command 베스트 취소 커맨드 (워크북 ID)
+     */
+    void cancelBest(CancelBestWorkbookCommand command);
+
+    
     /**
      * 베스트 워크북 선정 (운영진 전용)
      * <p>

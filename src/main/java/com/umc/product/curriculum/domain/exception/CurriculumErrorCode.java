@@ -24,6 +24,10 @@ public enum CurriculumErrorCode implements BaseCode {
     WORKBOOK_ACCESS_DENIED(HttpStatus.FORBIDDEN, "CURRICULUM-0011", "해당 워크북에 대한 접근 권한이 없습니다."),
     SUBMISSION_NOT_FOUND(HttpStatus.NOT_FOUND, "CURRICULUM-0012", "제출 정보를 찾을 수 없습니다."),
     REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "CURRICULUM-0015", "이미 해당 워크북에 대한 리뷰를 작성하였습니다."),
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "CURRICULUM-0016", "리뷰를 찾을 수 없습니다."),
+    REVIEW_ALREADY_BEST(HttpStatus.CONFLICT, "CURRICULUM-0017", "이미 베스트로 선정된 리뷰입니다."),
+    REVIEW_NOT_BEST(HttpStatus.BAD_REQUEST, "CURRICULUM-0018", "베스트 상태의 리뷰만 취소할 수 있습니다."),
+    WORKBOOK_NOT_BEST(HttpStatus.BAD_REQUEST, "CURRICULUM-0019", "베스트 상태의 워크북만 취소할 수 있습니다."),
     ;
 
     private final HttpStatus httpStatus;
