@@ -5,7 +5,7 @@ import com.umc.product.audit.domain.AuditLogEvent;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
-import com.umc.product.authentication.application.port.in.query.GetOAuthListUseCase;
+import com.umc.product.authentication.application.port.in.query.GetMemberOAuthUseCase;
 import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
@@ -47,7 +47,7 @@ public class MemberService implements ManageMemberUseCase {
 
     private final GetFileUseCase getFileUseCase;
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
-    private final GetOAuthListUseCase getOAuthListUseCase;
+    private final GetMemberOAuthUseCase getMemberOAuthUseCase;
     private final ManageTermAgreementUseCase manageTermAgreementUseCase;
     private final GetTermUseCase getTermUseCase;
 
@@ -166,7 +166,7 @@ public class MemberService implements ManageMemberUseCase {
         Member memberToDelete = loadMemberPort.findById(memberId)
             .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
 
-        List<MemberOAuthInfo> linkedOAuths = getOAuthListUseCase.getOAuthList(memberId);
+        List<MemberOAuthInfo> linkedOAuths = getMemberOAuthUseCase.getOAuthList(memberId);
 
         // TODO: N+1 문제 해결 필요
         for (MemberOAuthInfo oAuthInfo : linkedOAuths) {

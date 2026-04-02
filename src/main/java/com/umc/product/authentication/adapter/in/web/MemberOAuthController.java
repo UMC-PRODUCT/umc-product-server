@@ -5,7 +5,7 @@ import com.umc.product.authentication.adapter.in.web.dto.request.UnlinkOAuthRequ
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
-import com.umc.product.authentication.application.port.in.query.GetOAuthListUseCase;
+import com.umc.product.authentication.application.port.in.query.GetMemberOAuthUseCase;
 import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
@@ -30,7 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MemberOAuthController {
 
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
-    private final GetOAuthListUseCase oAuthListUseCase;
+    private final GetMemberOAuthUseCase oAuthListUseCase;
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping
