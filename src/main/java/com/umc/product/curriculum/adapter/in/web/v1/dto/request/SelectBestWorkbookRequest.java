@@ -8,7 +8,7 @@ public record SelectBestWorkbookRequest(
     @Schema(description = "베스트 선정 이유 (선택)", example = "꼼꼼한 분석과 창의적인 접근이 돋보입니다.")
     String bestReason
 ) {
-    public SelectBestWorkbookCommand toCommand(Long challengerWorkbookId) {
-        return new SelectBestWorkbookCommand(challengerWorkbookId, bestReason);
+    public SelectBestWorkbookCommand toCommand(Long challengerWorkbookId, Long memberId) {
+        return new SelectBestWorkbookCommand(challengerWorkbookId, memberId, bestReason);
     }
 }

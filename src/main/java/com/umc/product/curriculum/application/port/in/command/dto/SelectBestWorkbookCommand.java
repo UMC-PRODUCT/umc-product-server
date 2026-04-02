@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotNull;
 public record SelectBestWorkbookCommand(
         @NotNull(message = "챌린저 워크북 ID는 필수입니다")
         Long challengerWorkbookId,
+        @NotNull(message = "선정자 멤버 ID는 필수입니다")
+        Long memberId,
         String bestReason
 ) {
 }
