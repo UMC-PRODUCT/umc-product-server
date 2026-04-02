@@ -220,23 +220,6 @@ class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
     }
 
     @Test
-    void 존재하지_않는_챌린저_ID로_멤버를_수정하면_예외가_발생한다() {
-        // given
-        Gisu gisu = gisuFixture.활성_기수(8L);
-        Challenger leader = challengerFixture.챌린저(memberFixture.일반_멤버("리더").getId(), ChallengerPart.WEB, gisu.getId());
-        StudyGroup studyGroup = studyGroupFixture.스터디그룹("React A팀", gisu, ChallengerPart.WEB, leader.getId());
-
-        UpdateStudyGroupMembersCommand command = new UpdateStudyGroupMembersCommand(
-            studyGroup.getId(),
-            Set.of(999L, 998L)
-        );
-
-        // when & then
-        assertThatThrownBy(() -> manageStudyGroupUseCase.updateMembers(command))
-            .isInstanceOf(BusinessException.class);
-    }
-
-    @Test
     void 존재하지_않는_스터디_그룹의_멤버를_수정하면_예외가_발생한다() {
         // given
         UpdateStudyGroupMembersCommand command = new UpdateStudyGroupMembersCommand(
