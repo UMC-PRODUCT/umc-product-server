@@ -54,7 +54,7 @@ public class MemberQueryController {
         @ParameterObject SearchMemberRequest searchRequest
     ) {
         return SearchMemberResponse.from(
-            searchMemberUseCase.search(searchRequest.toQuery(), pageable)
+            searchMemberUseCase.searchBy(searchRequest.toQuery(), pageable)
         );
     }
 

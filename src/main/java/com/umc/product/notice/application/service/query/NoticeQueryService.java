@@ -203,7 +203,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             return new TargetChallengerContext(List.of(), Map.of(), new HashMap<>());
         }
 
-        Map<Long, MemberInfo> memberMap = getMemberUseCase.getProfiles(
+        Map<Long, MemberInfo> memberMap = getMemberUseCase.findAllByIds(
             challengers.stream().map(ChallengerInfo::memberId).collect(Collectors.toSet())
         );
 
@@ -257,7 +257,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             return List.of();
         }
 
-        Map<Long, Long> schoolIdMap = getMemberUseCase.getSchoolIds(
+        Map<Long, Long> schoolIdMap = getMemberUseCase.findAllSchoolIdsByIds(
             challengers.stream().map(ChallengerInfo::memberId).collect(Collectors.toSet())
         );
 
@@ -321,7 +321,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Map<Long, NoticeTarget> targetMap = loadNoticeTargetPort.findByNoticeIdIn(noticeIds).stream()
             .collect(Collectors.toMap(NoticeTarget::getNoticeId, Function.identity()));
 
-        Map<Long, MemberInfo> memberMap = getMemberUseCase.getProfiles(authorMemberIds);
+        Map<Long, MemberInfo> memberMap = getMemberUseCase.findAllByIds(authorMemberIds);
 
         return new NoticeQueryData(targetMap, memberMap);
     }

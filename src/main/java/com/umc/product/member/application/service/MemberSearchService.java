@@ -35,7 +35,7 @@ public class MemberSearchService implements SearchMemberUseCase {
     private final GetGisuUseCase getGisuUseCase;
 
     @Override
-    public SearchMemberResult search(SearchMemberQuery query, Pageable pageable) {
+    public SearchMemberResult searchBy(SearchMemberQuery query, Pageable pageable) {
         Page<Challenger> challengers = searchMemberPort.search(query, pageable);
 
         // 배치 데이터 로딩
@@ -86,7 +86,7 @@ public class MemberSearchService implements SearchMemberUseCase {
             return Map.of();
         }
 
-        return getMemberUseCase.getProfiles(memberIds);
+        return getMemberUseCase.findAllByIds(memberIds);
     }
 
     private Map<Long, List<ChallengerRoleType>> loadRoleTypes(List<Challenger> challengers) {

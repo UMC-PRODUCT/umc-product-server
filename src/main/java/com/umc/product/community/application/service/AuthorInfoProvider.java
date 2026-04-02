@@ -25,7 +25,7 @@ public class AuthorInfoProvider {
      */
     public String getAuthorName(Long challengerId) {
         ChallengerInfo challengerInfo = getChallengerUseCase.getById(challengerId);
-        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
+        MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
         return memberInfo.name();
     }
 }

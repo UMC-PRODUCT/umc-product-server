@@ -74,7 +74,7 @@ public class FcmService implements ManageFcmUseCase {
     @Override
     public void sendMessageByToken(NotificationCommand command) {
 
-        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(command.memberId());
+        MemberInfo memberInfo = getMemberUseCase.getById(command.memberId());
 
         FcmToken fcm = loadFcmPort.findByMemberId(memberInfo.id());
 

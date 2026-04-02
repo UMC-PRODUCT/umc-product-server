@@ -104,7 +104,7 @@ class GetMemberUseCaseTest {
             given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
 
             // when
-            MemberInfo result = memberQueryService.getMemberInfoById(1L);
+            MemberInfo result = memberQueryService.getById(1L);
 
             // then
             assertThat(result.id()).isEqualTo(1L);
@@ -119,7 +119,7 @@ class GetMemberUseCaseTest {
             given(loadMemberPort.findById(999L)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> memberQueryService.getMemberInfoById(999L))
+            assertThatThrownBy(() -> memberQueryService.getById(999L))
                 .isInstanceOf(MemberDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
@@ -143,7 +143,7 @@ class GetMemberUseCaseTest {
             given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
-            MemberInfo result = memberQueryService.getMemberInfoById(1L);
+            MemberInfo result = memberQueryService.getById(1L);
 
             // then
             assertThat(result.name()).isEqualTo("홍길동");
@@ -164,7 +164,7 @@ class GetMemberUseCaseTest {
             given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
-            MemberInfo result = memberQueryService.getMemberInfoById(1L);
+            MemberInfo result = memberQueryService.getById(1L);
 
             // then
             assertThat(result.schoolName()).isNull();
@@ -182,7 +182,7 @@ class GetMemberUseCaseTest {
             given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
-            MemberInfo result = memberQueryService.getMemberInfoById(1L);
+            MemberInfo result = memberQueryService.getById(1L);
 
             // then
             assertThat(result.profileImageLink()).isNull();
@@ -199,7 +199,7 @@ class GetMemberUseCaseTest {
             given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
-            MemberInfo result = memberQueryService.getMemberInfoById(1L);
+            MemberInfo result = memberQueryService.getById(1L);
 
             // then
             assertThat(result.schoolName()).isNull();
@@ -214,7 +214,7 @@ class GetMemberUseCaseTest {
             given(loadMemberPort.findById(999L)).willReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> memberQueryService.getMemberInfoById(999L))
+            assertThatThrownBy(() -> memberQueryService.getById(999L))
                 .isInstanceOf(MemberDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(MemberErrorCode.MEMBER_NOT_FOUND);
@@ -234,7 +234,7 @@ class GetMemberUseCaseTest {
             given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
 
             // when
-            MemberInfo result = memberQueryService.getMemberInfoById(1L);
+            MemberInfo result = memberQueryService.getById(1L);
 
             // then
             assertThat(result.schoolName()).isNull();

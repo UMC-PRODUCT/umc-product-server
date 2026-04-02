@@ -111,7 +111,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
      * 챌린저 정보를 기반으로 구독해야 할 토픽 목록을 생성 챌린저는 반드시 기수/학교/지부/파트 정보가 모두 존재해야 한다.
      */
     private List<String> resolveTopicsForChallenger(ChallengerInfo challenger) {
-        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challenger.memberId());
+        MemberInfo memberInfo = getMemberUseCase.getById(challenger.memberId());
 
         if (memberInfo.schoolId() == null) {
             throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_NOT_FOUND);

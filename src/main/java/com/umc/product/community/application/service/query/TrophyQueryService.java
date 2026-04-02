@@ -50,7 +50,7 @@ public class TrophyQueryService implements GetTrophyListUseCase {
             .collect(Collectors.toSet());
 
         // 4. 멤버 ID -> 멤버 프로필 매핑 (1 query, 학교명 포함)
-        Map<Long, MemberInfo> memberProfileMap = getMemberUseCase.getProfiles(memberIds);
+        Map<Long, MemberInfo> memberProfileMap = getMemberUseCase.findAllByIds(memberIds);
 
         // 5. TrophyInfo로 변환
         return trophies.stream()

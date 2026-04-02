@@ -188,7 +188,7 @@ public class NoticeService implements ManageNoticeUseCase {
         List<Long> targetIds = new ArrayList<>();
 
         for (Challenger challenger : challengers) {
-            MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challenger.getMemberId());
+            MemberInfo memberInfo = getMemberUseCase.getById(challenger.getMemberId());
             Long schoolId = memberInfo.schoolId();
             Long chapterId = getChapterUseCase.byGisuAndSchool(challenger.getGisuId(), schoolId).id();
 

@@ -29,7 +29,7 @@ public class NoticeViewerInfoAssembler {
     public NoticeViewerInfo toMemberIdAndGisuId(Long memberId, Long gisuId) {
         Set<ChallengerPart> memberParts = resolveParts(memberId, gisuId);
 
-        MemberInfo memberInfo = getMemberUseCase.getProfiles(Set.of(memberId)).get(memberId);
+        MemberInfo memberInfo = getMemberUseCase.findAllByIds(Set.of(memberId)).get(memberId);
         Long schoolId = memberInfo != null ? memberInfo.schoolId() : null;
 
         Long chapterId = null;

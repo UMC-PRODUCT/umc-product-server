@@ -85,7 +85,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
                 .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.NO_CHALLENGER_IN_MEMBER_GISU))
                 .getId();
 
-            MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(memberId);
+            MemberInfo memberInfo = getMemberUseCase.getById(memberId);
 
             manageChallengerRoleUseCase.createChallengerRole(
                 CreateChallengerRoleCommand.builder()
@@ -114,7 +114,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
 
         // 챌린저 기록 추가하기
         else {
-            MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(memberId);
+            MemberInfo memberInfo = getMemberUseCase.getById(memberId);
             record.validateMember(memberInfo.name(), memberInfo.schoolId());
 
             // 해당 기수에 챌린저 기록이 없는지 확인

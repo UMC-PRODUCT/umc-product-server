@@ -26,13 +26,13 @@ import org.springframework.stereotype.Repository;
 public class MemberQueryRepository {
     private final JPAQueryFactory queryFactory;
 
-    public Long countAllMembers() {
+    public Long countAll() {
         return queryFactory
-                .selectFrom(QMember.member)
-                .stream().count();
+            .selectFrom(QMember.member)
+            .stream().count();
     }
 
-    public Optional<Member> findByIdForUpdate(Long id) {
+    public Optional<Member> findByIdWithPessimisticLock(Long id) {
         return Optional.ofNullable(queryFactory
             .selectFrom(QMember.member)
             .where(QMember.member.id.eq(id))
@@ -43,16 +43,16 @@ public class MemberQueryRepository {
 
     public Optional<Member> findByNickname(String nickname) {
         return Optional.ofNullable(queryFactory
-                .selectFrom(QMember.member)
-                .where(QMember.member.nickname.eq(nickname))
-                .fetchFirst()
+            .selectFrom(QMember.member)
+            .where(QMember.member.nickname.eq(nickname))
+            .fetchFirst()
         );
     }
 
     /**
      * 검색 로직
      */
-    public Page<Challenger> pagingSearch(SearchMemberQuery query, Pageable pageable) {
+    public Page<Challenger> searchBy(SearchMemberQuery query, Pageable pageable) {
         QChallenger challenger = QChallenger.challenger;
         QMember member = QMember.member;
 
@@ -76,7 +76,6 @@ public class MemberQueryRepository {
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
-
 
     // ========= PRIVATE ============
 

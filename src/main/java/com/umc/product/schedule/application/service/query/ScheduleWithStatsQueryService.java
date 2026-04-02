@@ -164,7 +164,7 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
         }
 
         // 2. 학교 회장단: 본인 학교 구성원이 파트장인 스터디 일정 + 본인 생성 일정
-        Long schoolId = getMemberUseCase.getMemberInfoById(memberId).schoolId();
+        Long schoolId = getMemberUseCase.getById(memberId).schoolId();
         if (schoolId != null && getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, gisuId, schoolId)) {
             return loadSchedulePort.findSchedulesForSchoolCore(
                 schoolId, gisuId, currentChallengerId);

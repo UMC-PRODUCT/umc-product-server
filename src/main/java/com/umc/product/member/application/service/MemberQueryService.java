@@ -2,6 +2,7 @@ package com.umc.product.member.application.service;
 
 import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.member.application.port.in.query.GetMemberProfileUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
@@ -16,6 +17,7 @@ import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class MemberQueryService implements GetMemberUseCase {
+public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUseCase {
 
     private final LoadMemberPort loadMemberPort;
 
@@ -51,8 +53,9 @@ public class MemberQueryService implements GetMemberUseCase {
     }
 
     @Override
-    public MemberInfo getMemberInfoById(Long memberId) {
-        return toMemberInfo(getOrThrowMember(memberId));
+    public MemberInfo getById(Long memberId) {
+        return findById(memberId)
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
     }
 
     @Override
@@ -65,17 +68,23 @@ public class MemberQueryService implements GetMemberUseCase {
     }
 
     @Override
+    public Optional<MemberInfo> findById(Long memberId) {
+        return loadMemberPort.findById(memberId)
+            .map(this::toMemberInfo);
+    }
+
+    @Override
     public MemberProfileInfo getMemberProfileById(Long memberId) {
         return MemberProfileInfo.from(getOrThrowMember(memberId).getProfile());
     }
 
     @Override
-    public Map<Long, MemberInfo> getProfiles(Set<Long> memberIds) {
+    public Map<Long, MemberInfo> findAllByIds(Set<Long> memberIds) {
         if (memberIds == null || memberIds.isEmpty()) {
             return Map.of();
         }
 
-        List<Member> members = loadMemberPort.findByIdIn(memberIds);
+        List<Member> members = loadMemberPort.findAllByIds(memberIds);
 
         Map<Long, String> schoolNameCache = new HashMap<>();
         Map<String, String> profileLinkCache = new HashMap<>();
@@ -107,12 +116,12 @@ public class MemberQueryService implements GetMemberUseCase {
     }
 
     @Override
-    public Map<Long, Long> getSchoolIds(Set<Long> memberIds) {
+    public Map<Long, Long> findAllSchoolIdsByIds(Set<Long> memberIds) {
         if (memberIds == null || memberIds.isEmpty()) {
             return Map.of();
         }
 
-        return loadMemberPort.findByIdIn(memberIds).stream()
+        return loadMemberPort.findAllByIds(memberIds).stream()
             .collect(java.util.stream.Collectors.toMap(Member::getId, Member::getSchoolId));
     }
 
