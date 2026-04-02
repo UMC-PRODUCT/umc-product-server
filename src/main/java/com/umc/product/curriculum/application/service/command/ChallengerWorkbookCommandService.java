@@ -115,7 +115,15 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
 
     @Override
     public void selectBest(SelectBestWorkbookCommand command) {
-        ChallengerWorkbook workbook = loadChallengerWorkbookPort.findById(command.challengerWorkbookId());
+        // TODO: 베스트 워크북 선정 비즈니스 로직 구현
+        // 1. 워크북 소유자의 스터디 그룹에서 리더(파트장)를 찾기
+        // 2. 리더의 challengerId를 리뷰어로 사용
+        // 3. 해당 리뷰어의 기존 PASS 리뷰가 존재해야 베스트 선정 가능 (REVIEW_NOT_FOUND)
+        // 4. 스터디 그룹당 베스트 1명 제약조건 확인
+        // 5. workbook.selectBest() → 상태 전이 (PASS → BEST)
+        // 6. review.upgradeToBest(bestReason) → 리뷰 상태 변경
+        throw new UnsupportedOperationException("Not yet implemented");
+    }
 
         workbook.selectBest(command.bestReason());
 
