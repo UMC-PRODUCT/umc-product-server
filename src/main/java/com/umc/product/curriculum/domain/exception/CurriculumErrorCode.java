@@ -28,6 +28,7 @@ public enum CurriculumErrorCode implements BaseCode {
     REVIEW_ALREADY_BEST(HttpStatus.CONFLICT, "CURRICULUM-0017", "이미 베스트로 선정된 리뷰입니다."),
     REVIEW_NOT_BEST(HttpStatus.BAD_REQUEST, "CURRICULUM-0018", "베스트 상태의 리뷰만 취소할 수 있습니다."),
     WORKBOOK_NOT_BEST(HttpStatus.BAD_REQUEST, "CURRICULUM-0019", "베스트 상태의 워크북만 취소할 수 있습니다."),
+    REVIEW_IS_BEST(HttpStatus.BAD_REQUEST, "CURRICULUM-0020", "베스트 상태의 리뷰는 수정할 수 없습니다. 베스트 취소 후 수정해주세요."),
     ;
 
     private final HttpStatus httpStatus;

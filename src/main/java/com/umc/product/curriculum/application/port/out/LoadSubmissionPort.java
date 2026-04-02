@@ -8,4 +8,6 @@ public interface LoadSubmissionPort {
     Optional<Submission> findByChallengerWorkbookId(Long challengerWorkbookId);
 
     Submission getByChallengerWorkbookId(Long challengerWorkbookId);
+
+    Submission getById(Long submissionId);
 }

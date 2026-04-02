@@ -27,6 +27,12 @@ public class SubmissionPersistenceAdapter implements LoadSubmissionPort, SaveSub
     }
 
     @Override
+    public Submission getById(Long submissionId) {
+        return submissionJpaRepository.findById(submissionId)
+            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.SUBMISSION_NOT_FOUND));
+    }
+
+    @Override
     public Submission save(Submission submission) {
         return submissionJpaRepository.save(submission);
     }

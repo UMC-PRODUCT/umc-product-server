@@ -4,6 +4,7 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.curriculum.domain.enums.ReviewResult;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
+import org.springframework.util.StringUtils;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -86,5 +87,20 @@ public class Review extends BaseEntity {
 
     public void updateFeedback(String feedback) {
         this.feedback = feedback;
+    }
+
+    /**
+     * 리뷰 수정 (status + feedback)
+     * <p>
+     * BEST 상태의 리뷰는 수정할 수 없습니다. cancelBest를 먼저 호출하세요.
+     */
+    public void update(ReviewResult newStatus, String newFeedback) {
+        if (this.status == ReviewResult.BEST) {
+            throw new CurriculumDomainException(CurriculumErrorCode.REVIEW_IS_BEST);
+        }
+        this.status = newStatus;
+        if (StringUtils.hasText(newFeedback)) {
+            this.feedback = newFeedback;
+        }
     }
 }

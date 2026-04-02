@@ -96,6 +96,19 @@ public class ChallengerWorkbook extends BaseEntity {
     }
 
     /**
+     * 리뷰 수정 후 워크북 상태 재계산
+     * <p>
+     * 전체 리뷰 결과를 기반으로 워크북 상태를 결정합니다.
+     * PASS 리뷰가 1개 이상이면 PASS, 없으면 FAIL로 설정합니다.
+     *
+     * @param hasPassReview PASS 상태 리뷰가 존재하는지 여부
+     */
+    public void applyReviewResult(boolean hasPassReview) {
+        validateCanReview();
+        this.status = hasPassReview ? WorkbookStatus.PASS : WorkbookStatus.FAIL;
+    }
+
+    /**
      * 베스트 워크북 취소 (BEST → PASS)
      */
     public void cancelBest() {

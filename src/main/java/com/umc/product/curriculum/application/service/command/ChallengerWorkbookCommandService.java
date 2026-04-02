@@ -7,7 +7,7 @@ import com.umc.product.curriculum.application.port.in.command.dto.SelectBestWork
 import com.umc.product.curriculum.application.port.in.command.dto.SubmitChallengerWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.SubmitWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.UpdateBestReasonCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.UpdateReviewFeedbackCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.UpdateReviewCommand;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadSubmissionPort;
@@ -154,10 +154,20 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
     }
 
     @Override
-    public void updateReviewFeedback(UpdateReviewFeedbackCommand command) {
+    public void updateReview(UpdateReviewCommand command) {
         Review review = loadReviewPort.getById(command.reviewId());
         verifyReviewOwner(review, command.memberId());
-        review.updateFeedback(command.feedback());
+
+        review.update(ReviewResult.valueOf(command.status().name()), command.feedback());
+
+        // 워크북 상태 재계산
+        Submission submission = loadSubmissionPort.getById(review.getSubmissionId());
+        List<Review> allReviews = loadReviewPort.findAllBySubmissionId(review.getSubmissionId());
+        boolean hasPassReview = allReviews.stream()
+            .anyMatch(r -> r.getStatus() == ReviewResult.PASS || r.getStatus() == ReviewResult.BEST);
+
+        ChallengerWorkbook workbook = loadChallengerWorkbookPort.findById(submission.getChallengerWorkbookId());
+        workbook.applyReviewResult(hasPassReview);
     }
 
     private void verifyWorkbookOwner(ChallengerWorkbook workbook, Long memberId) {

@@ -14,7 +14,7 @@ public record ReviewWorkbookRequest(
     @Schema(description = "피드백", example = "잘 작성하셨습니다!")
     String feedback
 ) {
-    public ReviewWorkbookCommand toCommand(Long challengerWorkbookId, Long reviewerId) {
-        return new ReviewWorkbookCommand(challengerWorkbookId, reviewerId, status, feedback);
+    public ReviewWorkbookCommand toCommand(Long challengerWorkbookId, Long memberId) {
+        return new ReviewWorkbookCommand(challengerWorkbookId, memberId, status, feedback);
     }
 }

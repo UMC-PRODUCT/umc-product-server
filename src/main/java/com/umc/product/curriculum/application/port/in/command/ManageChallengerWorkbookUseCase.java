@@ -6,7 +6,7 @@ import com.umc.product.curriculum.application.port.in.command.dto.SelectBestWork
 import com.umc.product.curriculum.application.port.in.command.dto.SubmitChallengerWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.SubmitWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.UpdateBestReasonCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.UpdateReviewFeedbackCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.UpdateReviewCommand;
 
 /**
  * 워크북 관리 UseCase
@@ -82,11 +82,13 @@ public interface ManageChallengerWorkbookUseCase {
     void updateBestReason(UpdateBestReasonCommand command);
 
     /**
-     * 리뷰 피드백 수정 (운영진 전용)
+     * 리뷰 수정 (운영진 전용)
      * <p>
-     * 리뷰 ID를 통해 피드백을 수정합니다.
+     * 리뷰의 심사 결과(PASS/FAIL)와 피드백을 수정합니다.
+     * BEST 상태의 리뷰는 수정 불가 — cancelBest 후 수정해야 합니다.
+     * 수정 후 워크북 상태가 자동으로 재계산됩니다.
      *
-     * @param command 피드백 수정 커맨드 (리뷰 ID, 피드백)
+     * @param command 리뷰 수정 커맨드 (리뷰 ID, 심사 결과, 피드백)
      */
-    void updateReviewFeedback(UpdateReviewFeedbackCommand command);
+    void updateReview(UpdateReviewCommand command);
 }
