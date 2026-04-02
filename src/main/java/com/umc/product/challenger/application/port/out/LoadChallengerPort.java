@@ -25,18 +25,19 @@ public interface LoadChallengerPort {
     /**
      * memberId로 챌린저 목록 조회
      */
-    List<Challenger> findByMemberId(Long memberId);
+    List<Challenger> getAllByMemberId(Long memberId);
 
     /**
      * gisuId로 챌린저 목록 조회
      */
-    List<Challenger> findByGisuId(Long gisuId);
+    List<Challenger> getAllByGisuId(Long gisuId);
 
     /**
      * 여러 gisuId로 챌린저 목록 조회
      */
-    List<Challenger> findByGisuIdIn(List<Long> gisuIds);
+    List<Challenger> getAllByGisuIds(List<Long> gisuIds);
 
+    @Deprecated(since = "v1.5.0", forRemoval = true)
     Long countByIdIn(Set<Long> ids);
 
     /**
@@ -47,7 +48,7 @@ public interface LoadChallengerPort {
     /**
      * 여러 ID로 챌린저 배치 조회
      */
-    List<Challenger> findByIdIn(Set<Long> ids);
+    List<Challenger> getAllByIds(Set<Long> ids);
 
     /**
      * 각 멤버별 가장 최근 기수(gisuId 최대값)의 챌린저 목록 조회

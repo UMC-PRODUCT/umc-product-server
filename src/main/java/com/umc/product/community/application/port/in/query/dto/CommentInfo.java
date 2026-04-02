@@ -3,7 +3,7 @@ package com.umc.product.community.application.port.in.query.dto;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.domain.Comment;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import java.time.Instant;
 import lombok.Builder;
 

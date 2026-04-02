@@ -1,7 +1,7 @@
 package com.umc.product.recruitment.application.service.command;
 
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.recruitment.application.port.in.command.CreateLiveQuestionUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteLiveQuestionUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateLiveQuestionUseCase;
@@ -120,7 +120,7 @@ public class RecruitmentInterviewEvaluationService implements UpsertMyInterviewE
         InterviewLiveQuestion saved = saveInterviewLiveQuestionPort.save(liveQuestion);
 
         // 5. 작성자 정보 조회
-        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(command.memberId());
+        MemberInfo memberInfo = getMemberUseCase.getById(command.memberId());
 
         return new CreateLiveQuestionResult(
             saved.getId(),

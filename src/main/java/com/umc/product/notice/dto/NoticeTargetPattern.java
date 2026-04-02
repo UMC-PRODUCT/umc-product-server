@@ -63,7 +63,7 @@ public enum NoticeTargetPattern {
     SPECIFIC_GISU_SPECIFIC_PART(true, false, false, true) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            return useCase.hasRoleInGisu(memberId, info.targetGisuId(),
+            return useCase.hasRoleTypeInGisu(memberId, info.targetGisuId(),
                 ChallengerRoleType.CENTRAL_EDUCATION_TEAM_MEMBER);
         }
     },

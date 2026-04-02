@@ -44,7 +44,7 @@ public class ChallengerPointPermissionEvaluator implements ResourcePermissionEva
     }
 
     private ChallengerInfo getGrantedChallengerInfo(Long challengerId) {
-        return getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        return getChallengerUseCase.getById(challengerId);
     }
 
     /**
@@ -56,7 +56,7 @@ public class ChallengerPointPermissionEvaluator implements ResourcePermissionEva
         ChallengerInfo grantedChallengerInfo = getGrantedChallengerInfo(resourcePermission.getResourceIdAsLong());
 
         Long targetGisuId = grantedChallengerInfo.gisuId();
-        Long targetSchoolId = getMemberUseCase.getMemberInfoById(grantedChallengerInfo.memberId()).schoolId();
+        Long targetSchoolId = getMemberUseCase.getById(grantedChallengerInfo.memberId()).schoolId();
 
         // 대상의 기수에서 요청자가 중앙운영사무국 소속인지 확인
         if (getChallengerRoleUseCase.isCentralMemberInGisu(subjectAttributes.memberId(), targetGisuId)) {
@@ -84,7 +84,7 @@ public class ChallengerPointPermissionEvaluator implements ResourcePermissionEva
         ChallengerInfo grantedChallengerInfo = getGrantedChallengerInfo(challengerPointInfo.challengerId());
 
         Long targetGisuId = grantedChallengerInfo.gisuId();
-        Long targetSchoolId = getMemberUseCase.getMemberInfoById(grantedChallengerInfo.memberId()).schoolId();
+        Long targetSchoolId = getMemberUseCase.getById(grantedChallengerInfo.memberId()).schoolId();
 
         // 대상의 기수에서 요청자가 중앙운영사무국 소속인지 확인
         if (getChallengerRoleUseCase.isCentralMemberInGisu(subjectAttributes.memberId(), targetGisuId)) {

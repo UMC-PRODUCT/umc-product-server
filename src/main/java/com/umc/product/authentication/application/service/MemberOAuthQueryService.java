@@ -1,7 +1,6 @@
 package com.umc.product.authentication.application.service;
 
 import com.umc.product.authentication.application.port.in.query.GetMemberOAuthUseCase;
-import com.umc.product.authentication.application.port.in.query.GetOAuthListUseCase;
 import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
 import com.umc.product.authentication.application.port.out.LoadMemberOAuthPort;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
@@ -13,12 +12,12 @@ import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
-public class OAuthQueryService implements GetMemberOAuthUseCase, GetOAuthListUseCase {
+public class MemberOAuthQueryService implements GetMemberOAuthUseCase {
 
     private final LoadMemberOAuthPort loadMemberOAuthPort;
 
     @Override
-    public MemberOAuthInfo getMemberByOAuthInfo(OAuthProvider provider, String providerId) {
+    public MemberOAuthInfo getByProviderAndProviderId(OAuthProvider provider, String providerId) {
         return loadMemberOAuthPort.findByProviderAndProviderId(provider, providerId)
             .map(MemberOAuthInfo::fromEntity)
             .orElseThrow(() ->

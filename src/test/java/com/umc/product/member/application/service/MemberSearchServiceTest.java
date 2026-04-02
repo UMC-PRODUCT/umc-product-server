@@ -11,7 +11,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberItemInfo;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberQuery;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberResult;
@@ -118,12 +118,12 @@ class MemberSearchServiceTest {
             Page<Challenger> page = new PageImpl<>(pageContent, pageable, 6);
 
             given(searchMemberPort.search(any(), any())).willReturn(page);
-            given(getMemberUseCase.getProfiles(anySet())).willReturn(profiles);
-            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getMemberUseCase.findAllByIds(anySet())).willReturn(profiles);
+            given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
-            SearchMemberResult result = memberSearchService.search(defaultQuery, pageable);
+            SearchMemberResult result = memberSearchService.searchBy(defaultQuery, pageable);
 
             // then
             assertThat(result.page().getContent()).hasSize(4);
@@ -138,12 +138,12 @@ class MemberSearchServiceTest {
             Page<Challenger> page = new PageImpl<>(sixChallengers, pageable, 6);
 
             given(searchMemberPort.search(any(), any())).willReturn(page);
-            given(getMemberUseCase.getProfiles(anySet())).willReturn(profiles);
-            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getMemberUseCase.findAllByIds(anySet())).willReturn(profiles);
+            given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
-            SearchMemberResult result = memberSearchService.search(defaultQuery, pageable);
+            SearchMemberResult result = memberSearchService.searchBy(defaultQuery, pageable);
 
             // then
             List<SearchMemberItemInfo> content = result.page().getContent();
@@ -163,15 +163,15 @@ class MemberSearchServiceTest {
             Page<Challenger> page = new PageImpl<>(sixChallengers, pageable, 6);
 
             given(searchMemberPort.search(any(), any())).willReturn(page);
-            given(getMemberUseCase.getProfiles(anySet())).willReturn(profiles);
-            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of(
+            given(getMemberUseCase.findAllByIds(anySet())).willReturn(profiles);
+            given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of(
                 1L, List.of(ChallengerRoleType.CENTRAL_PRESIDENT),
                 3L, List.of(ChallengerRoleType.SCHOOL_PRESIDENT, ChallengerRoleType.SCHOOL_PART_LEADER)
             ));
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
-            SearchMemberResult result = memberSearchService.search(defaultQuery, pageable);
+            SearchMemberResult result = memberSearchService.searchBy(defaultQuery, pageable);
 
             // then
             List<SearchMemberItemInfo> content = result.page().getContent();
@@ -190,12 +190,12 @@ class MemberSearchServiceTest {
             Page<Challenger> page = new PageImpl<>(sixChallengers, pageable, 6);
 
             given(searchMemberPort.search(any(), any())).willReturn(page);
-            given(getMemberUseCase.getProfiles(anySet())).willReturn(profiles);
-            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getMemberUseCase.findAllByIds(anySet())).willReturn(profiles);
+            given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
-            SearchMemberResult result = memberSearchService.search(defaultQuery, pageable);
+            SearchMemberResult result = memberSearchService.searchBy(defaultQuery, pageable);
 
             // then
             List<SearchMemberItemInfo> content = result.page().getContent();
@@ -216,12 +216,12 @@ class MemberSearchServiceTest {
             Page<Challenger> page = new PageImpl<>(sixChallengers, pageable, 6);
 
             given(searchMemberPort.search(any(), any())).willReturn(page);
-            given(getMemberUseCase.getProfiles(anySet())).willReturn(Map.of());
-            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getMemberUseCase.findAllByIds(anySet())).willReturn(Map.of());
+            given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
-            SearchMemberResult result = memberSearchService.search(defaultQuery, pageable);
+            SearchMemberResult result = memberSearchService.searchBy(defaultQuery, pageable);
 
             // then
             List<SearchMemberItemInfo> content = result.page().getContent();
@@ -240,7 +240,7 @@ class MemberSearchServiceTest {
             given(searchMemberPort.search(any(), any())).willReturn(emptyPage);
 
             // when
-            SearchMemberResult result = memberSearchService.search(defaultQuery, pageable);
+            SearchMemberResult result = memberSearchService.searchBy(defaultQuery, pageable);
 
             // then
             assertThat(result.page().getContent()).isEmpty();
@@ -254,12 +254,12 @@ class MemberSearchServiceTest {
             Page<Challenger> page = new PageImpl<>(sixChallengers, pageable, 6);
 
             given(searchMemberPort.search(any(), any())).willReturn(page);
-            given(getMemberUseCase.getProfiles(anySet())).willReturn(profiles);
-            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getMemberUseCase.findAllByIds(anySet())).willReturn(profiles);
+            given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
-            SearchMemberResult result = memberSearchService.search(defaultQuery, pageable);
+            SearchMemberResult result = memberSearchService.searchBy(defaultQuery, pageable);
 
             // then
             SearchMemberItemInfo first = result.page().getContent().get(0);

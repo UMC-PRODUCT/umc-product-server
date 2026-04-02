@@ -3,9 +3,10 @@ package com.umc.product.member.adapter.in.web.assembler;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
+import com.umc.product.member.application.port.in.query.GetMemberProfileUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
@@ -19,16 +20,17 @@ import org.springframework.stereotype.Component;
 public class MemberInfoResponseAssembler {
 
     private final GetMemberUseCase getMemberUseCase;
+    private final GetMemberProfileUseCase getMemberProfileUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final GetChapterUseCase getChapterUseCase;
 
     public MemberInfoResponse fromMemberId(Long memberId) {
-        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(memberId);
+        MemberInfo memberInfo = getMemberUseCase.getById(memberId);
 
         // TODO: member에서 challenger에 너무 깊게 들어온 기분인데 일단 너무 졸려서 그냥 냅둘께요
         List<ChallengerInfoResponse> challengerInfoResponses =
-            getChallengerUseCase.getMemberChallengerList(memberId)
+            getChallengerUseCase.getAllByMemberId(memberId)
                 .stream()
                 .map(info -> {
                     GisuInfo gisuInfo = getGisuUseCase.getById(info.gisuId());
@@ -39,7 +41,7 @@ public class MemberInfoResponseAssembler {
                 })
                 .toList();
 
-        MemberProfileInfo memberProfileInfo = getMemberUseCase.getMemberProfileById(memberId);
+        MemberProfileInfo memberProfileInfo = getMemberProfileUseCase.getMemberProfileById(memberId);
 
         return MemberInfoResponse.from(memberInfo, memberProfileInfo, challengerInfoResponses);
     }

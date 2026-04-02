@@ -1,10 +1,10 @@
 package com.umc.product.member.adapter.in.web.dto.response;
 
-import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResponse;
 import com.umc.product.common.domain.enums.MemberStatus;
-import com.umc.product.member.application.port.in.query.MemberInfo;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 import java.util.List;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;

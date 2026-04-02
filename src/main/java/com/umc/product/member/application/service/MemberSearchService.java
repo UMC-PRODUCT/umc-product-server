@@ -4,8 +4,8 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
 import com.umc.product.member.application.port.in.query.SearchMemberUseCase;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberItemInfo;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberQuery;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberResult;
@@ -35,7 +35,7 @@ public class MemberSearchService implements SearchMemberUseCase {
     private final GetGisuUseCase getGisuUseCase;
 
     @Override
-    public SearchMemberResult search(SearchMemberQuery query, Pageable pageable) {
+    public SearchMemberResult searchBy(SearchMemberQuery query, Pageable pageable) {
         Page<Challenger> challengers = searchMemberPort.search(query, pageable);
 
         // 배치 데이터 로딩
@@ -86,7 +86,7 @@ public class MemberSearchService implements SearchMemberUseCase {
             return Map.of();
         }
 
-        return getMemberUseCase.getProfiles(memberIds);
+        return getMemberUseCase.findAllByIds(memberIds);
     }
 
     private Map<Long, List<ChallengerRoleType>> loadRoleTypes(List<Challenger> challengers) {
@@ -98,7 +98,7 @@ public class MemberSearchService implements SearchMemberUseCase {
             return Map.of();
         }
 
-        return getChallengerRoleUseCase.getRoleTypesByChallengerIds(challengerIds);
+        return getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(challengerIds);
     }
 
     private Map<Long, Long> loadGisuGenerationMap(List<Challenger> challengers) {

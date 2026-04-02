@@ -21,7 +21,7 @@ import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,10 +52,10 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         Long authorChallengerId = postWithAuthor.authorChallengerId();
 
         // 챌린저 정보 조회
-        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId);
+        ChallengerInfo challengerInfo = getChallengerUseCase.getById(authorChallengerId);
 
         // 멤버 프로필 조회 (이름과 프로필 이미지)
-        MemberInfo memberProfile = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
+        MemberInfo memberProfile = getMemberUseCase.getById(challengerInfo.memberId());
         String authorName = memberProfile.name();
         String authorProfileImage = memberProfile.profileImageLink();
 
@@ -99,9 +99,9 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
 
         return searchDataPage.map(
             data -> {
-                ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(
+                ChallengerInfo challengerInfo = getChallengerUseCase.getById(
                     data.getAuthorChallengerId());
-                MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
+                MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
 
                 return PostResponse.from(
                     PostInfo.from(data, memberInfo, challengerInfo), memberInfo, challengerInfo
@@ -152,7 +152,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         Set<Long> challengerIds = Set.copyOf(postIdToAuthorId.values());
 
         // 4. 챌린저 ID -> 챌린저 정보 매핑 (1 query)
-        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getChallengerPublicInfoByIds(challengerIds);
+        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getAllByIdsAsMap(challengerIds);
 
         // 5. 멤버 ID 목록 추출
         Set<Long> memberIds = challengerInfoMap.values().stream()
@@ -160,7 +160,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
             .collect(Collectors.toSet());
 
         // 6. 멤버 ID -> 멤버 프로필 매핑 (1 query, 일괄 조회로 N+1 해결)
-        Map<Long, MemberInfo> memberProfileMap = getMemberUseCase.getProfiles(memberIds);
+        Map<Long, MemberInfo> memberProfileMap = getMemberUseCase.findAllByIds(memberIds);
 
         // 7. 챌린저 ID -> 작성자 정보 매핑 (이름 + 프로필 이미지 + 파트)
         Map<Long, AuthorDetails> authorDetailsMap = challengerInfoMap.entrySet().stream()

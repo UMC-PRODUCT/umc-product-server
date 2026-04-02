@@ -4,7 +4,7 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import java.util.HashSet;
@@ -29,7 +29,7 @@ public class NoticeViewerInfoAssembler {
     public NoticeViewerInfo toMemberIdAndGisuId(Long memberId, Long gisuId) {
         Set<ChallengerPart> memberParts = resolveParts(memberId, gisuId);
 
-        MemberInfo memberInfo = getMemberUseCase.getProfiles(Set.of(memberId)).get(memberId);
+        MemberInfo memberInfo = getMemberUseCase.findAllByIds(Set.of(memberId)).get(memberId);
         Long schoolId = memberInfo != null ? memberInfo.schoolId() : null;
 
         Long chapterId = null;
@@ -57,7 +57,7 @@ public class NoticeViewerInfoAssembler {
             .map(challenger -> {
                 Set<ChallengerPart> parts = new HashSet<>();
                 parts.add(challenger.part());
-                parts.addAll(getChallengerRoleUseCase.getResponsiblePartsByMemberAndGisu(memberId, gisuId));
+                parts.addAll(getChallengerRoleUseCase.getAllResponsiblePartByMemberIdAndGisuId(memberId, gisuId));
                 return parts;
             })
             .orElse(Set.of());
