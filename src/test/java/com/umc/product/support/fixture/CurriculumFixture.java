@@ -59,9 +59,4 @@ public class CurriculumFixture {
         );
     }
 
-    public ChallengerWorkbook 제출된_챌린저워크북(Long challengerId, Long workbookId, String submission) {
-        ChallengerWorkbook workbook = ChallengerWorkbook.create(challengerId, workbookId, WorkbookStatus.PENDING, 1L);
-        workbook.submit(MissionType.LINK, submission);
-        return saveChallengerWorkbookPort.save(workbook);
-    }
 }

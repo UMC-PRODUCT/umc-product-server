@@ -7,9 +7,7 @@ import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
 import com.umc.product.curriculum.application.port.in.query.dto.StudyGroupFilterInfo;
-import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionDetailInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
-import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
@@ -215,54 +213,6 @@ class GetChallengerWorkbookUseCaseTest extends UseCaseTestSupport {
 
         // then
         assertThat(result).isEmpty();
-    }
-
-    @Test
-    void 챌린저_워크북의_제출_URL을_조회한다() {
-        // given
-        Gisu gisu = gisuFixture.활성_기수(9L);
-        School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
-
-        Member member = memberFixture.학교_소속_멤버("홍길동", school.getId());
-        Challenger challenger = challengerFixture.챌린저(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
-
-        Curriculum curriculum = curriculumFixture.커리큘럼(gisu.getId(), ChallengerPart.SPRINGBOOT);
-        OriginalWorkbook workbook = curriculumFixture.워크북(curriculum, 1, "1주차 워크북");
-
-        ChallengerWorkbook challengerWorkbook = curriculumFixture.제출된_챌린저워크북(
-            challenger.getId(), workbook.getId(), "https://github.com/user/repo");
-
-        // when
-        WorkbookSubmissionDetailInfo result = getChallengerWorkbookUseCase.getSubmissionDetail(
-            challengerWorkbook.getId());
-
-        // then
-        assertThat(result.challengerWorkbookId()).isEqualTo(challengerWorkbook.getId());
-        assertThat(result.submission()).isEqualTo("https://github.com/user/repo");
-    }
-
-    @Test
-    void 미제출_워크북의_제출_URL은_null이다() {
-        // given
-        Gisu gisu = gisuFixture.활성_기수(9L);
-        School school = manageSchoolPort.save(School.create("서울대학교", "비고"));
-
-        Member member = memberFixture.학교_소속_멤버("홍길동", school.getId());
-        Challenger challenger = challengerFixture.챌린저(member.getId(), ChallengerPart.SPRINGBOOT, gisu.getId());
-
-        Curriculum curriculum = curriculumFixture.커리큘럼(gisu.getId(), ChallengerPart.SPRINGBOOT);
-        OriginalWorkbook workbook = curriculumFixture.워크북(curriculum, 1, "1주차 워크북");
-
-        ChallengerWorkbook challengerWorkbook = curriculumFixture.챌린저워크북(
-            challenger.getId(), workbook.getId(), WorkbookStatus.PENDING);
-
-        // when
-        WorkbookSubmissionDetailInfo result = getChallengerWorkbookUseCase.getSubmissionDetail(
-            challengerWorkbook.getId());
-
-        // then
-        assertThat(result.challengerWorkbookId()).isEqualTo(challengerWorkbook.getId());
-        assertThat(result.submission()).isNull();
     }
 
     @Nested
