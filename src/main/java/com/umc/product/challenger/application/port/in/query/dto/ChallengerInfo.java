@@ -9,15 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 
 
 /**
- * 챌린저 공개 정보 조회용 DTO 입니다.
+ * 챌린저 정보를 담고 있는 Info단 DTO 입니다.
  * <p>
- * 사용자에 대한 정보는 member 도메인의 API를 이용해서 조회해야 합니다.
- *
- * @param challengerId     챌린저 ID
- * @param memberId         회원 ID
- * @param gisuId           기수 정보
- * @param part             챌린저 파트
- * @param challengerPoints 챌린저 상벌점 현황
+ * 각 챌린저의 상벌점 현황을 포함하여 번환하며, 성능 상 해당 정보를 제외하고자 하는 경우 별도의 DTO를 생성해서 사용해주세요.
  */
 @Builder
 @Slf4j
@@ -30,7 +24,9 @@ public record ChallengerInfo(
     Double totalPoints,
     ChallengerStatus challengerStatus
 ) {
-    @Deprecated(since = "2026-02-10", forRemoval = true)
+    // 성능 상 상벌점 정보가 필요하지 않은 경우 별도의 DTO를 생성할 것.
+    // 아직 만들지 않았어요.
+    @Deprecated(since = "v1.5.0", forRemoval = true)
     public static ChallengerInfo from(Challenger challenger) {
         log.error("챌린저 상벌점을 포함하지 않는 생성자를 사용하고 있습니다.");
 

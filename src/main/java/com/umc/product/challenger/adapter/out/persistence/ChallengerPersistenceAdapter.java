@@ -42,23 +42,23 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     }
 
     @Override
-    public List<Challenger> findByMemberId(Long memberId) {
+    public List<Challenger> getAllByMemberId(Long memberId) {
         return repository.findByMemberId(memberId);
     }
 
     @Override
-    public List<Challenger> findByGisuId(Long gisuId) {
+    public List<Challenger> getAllByGisuId(Long gisuId) {
         return repository.findByGisuId(gisuId);
     }
 
     @Override
-    public List<Challenger> findByGisuIdIn(List<Long> gisuIds) {
+    public List<Challenger> getAllByGisuIds(List<Long> gisuIds) {
         return repository.findByGisuIdIn(gisuIds);
     }
 
     @Override
     public Long countByIdIn(Set<Long> ids) {
-        return repository.countByIdIn(ids);
+        return (long) ids.size();
     }
 
     @Override
@@ -68,13 +68,13 @@ public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveCha
     }
 
     @Override
-    public List<Challenger> findByIdIn(Set<Long> ids) {
+    public List<Challenger> getAllByIds(Set<Long> ids) {
         return repository.findByIdIn(ids);
     }
 
     @Override
     public List<Challenger> findLatestPerMember() {
-        return queryRepository.findLatestPerMember();
+        return queryRepository.getAllLatestGisuPerMember();
     }
 
     @Override

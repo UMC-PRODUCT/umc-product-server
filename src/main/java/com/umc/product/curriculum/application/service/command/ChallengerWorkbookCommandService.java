@@ -1,5 +1,7 @@
 package com.umc.product.curriculum.application.service.command;
 
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.curriculum.application.port.in.command.ManageChallengerWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.dto.ReviewWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.SelectBestWorkbookCommand;
@@ -8,8 +10,6 @@ import com.umc.product.curriculum.application.port.in.command.dto.SubmitWorkbook
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveChallengerWorkbookPort;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
@@ -60,7 +60,8 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
         // 본인 워크북인지 확인 (challengerId → memberId 비교)
         verifyWorkbookOwner(challengerWorkbook, command.memberId());
 
-        OriginalWorkbook originalWorkbook = loadOriginalWorkbookPort.findById(challengerWorkbook.getOriginalWorkbookId());
+        OriginalWorkbook originalWorkbook = loadOriginalWorkbookPort.findById(
+            challengerWorkbook.getOriginalWorkbookId());
 
         challengerWorkbook.submit(originalWorkbook.getMissionType(), command.submission());
 
@@ -86,7 +87,7 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
     }
 
     private void verifyWorkbookOwner(ChallengerWorkbook workbook, Long memberId) {
-        ChallengerInfo challenger = getChallengerUseCase.getChallengerPublicInfo(workbook.getChallengerId());
+        ChallengerInfo challenger = getChallengerUseCase.getById(workbook.getChallengerId());
         if (!challenger.memberId().equals(memberId)) {
             throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_ACCESS_DENIED);
         }

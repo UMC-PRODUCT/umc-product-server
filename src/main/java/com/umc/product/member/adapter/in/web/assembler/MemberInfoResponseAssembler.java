@@ -28,7 +28,7 @@ public class MemberInfoResponseAssembler {
 
         // TODO: member에서 challenger에 너무 깊게 들어온 기분인데 일단 너무 졸려서 그냥 냅둘께요
         List<ChallengerInfoResponse> challengerInfoResponses =
-            getChallengerUseCase.getMemberChallengerList(memberId)
+            getChallengerUseCase.getAllByMemberId(memberId)
                 .stream()
                 .map(info -> {
                     GisuInfo gisuInfo = getGisuUseCase.getById(info.gisuId());

@@ -38,7 +38,7 @@ public class CommunityCommentPermissionEvaluator implements ResourcePermissionEv
         CommentInfo commentInfo = getCommentListUseCase.getComment(commentId);
         Long authorChallengerId = commentInfo.challengerId();
         ChallengerInfo authorChallengerInfo =
-            getChallengerUseCase.getChallengerPublicInfo(authorChallengerId);
+            getChallengerUseCase.getById(authorChallengerId);
 
         Long authorMemberId = authorChallengerInfo.memberId();
 
@@ -52,7 +52,7 @@ public class CommunityCommentPermissionEvaluator implements ResourcePermissionEv
             case WRITE -> {
                 // 게시글 작성은 챌린저라면 누구나 가능
                 return !getChallengerUseCase
-                    .getMemberChallengerList(authorMemberId).isEmpty();
+                    .getAllByMemberId(authorMemberId).isEmpty();
             }
             case EDIT -> {
                 // 수정은 게시글 작성자만 가능

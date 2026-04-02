@@ -28,7 +28,7 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     private final GetChallengerPointUseCase getChallengerPointUseCase;
 
     @Override
-    public ChallengerInfo getChallengerPublicInfo(Long challengerId) {
+    public ChallengerInfo getById(Long challengerId) {
         return getChallengerInfoFromChallenger(loadChallengerPort.getById(challengerId));
     }
 
@@ -66,8 +66,8 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     }
 
     @Override
-    public List<ChallengerInfo> getMemberChallengerList(Long memberId) {
-        List<Challenger> challengers = loadChallengerPort.findByMemberId(memberId);
+    public List<ChallengerInfo> getAllByMemberId(Long memberId) {
+        List<Challenger> challengers = loadChallengerPort.getAllByMemberId(memberId);
         return challengers.stream()
             .map(this::getChallengerInfoFromChallenger)
             .toList();
@@ -84,11 +84,11 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     }
 
     @Override
-    public Map<Long, ChallengerInfo> getChallengerPublicInfoByIds(Set<Long> challengerIds) {
+    public Map<Long, ChallengerInfo> getAllByIdsAsMap(Set<Long> challengerIds) {
         if (challengerIds == null || challengerIds.isEmpty()) {
             return Map.of();
         }
-        return loadChallengerPort.findByIdIn(challengerIds).stream()
+        return loadChallengerPort.getAllByIds(challengerIds).stream()
             .collect(Collectors.toMap(
                 Challenger::getId,
                 this::getChallengerInfoFromChallenger
@@ -96,27 +96,30 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     }
 
     @Override
-    public List<ChallengerInfo> getByGisuId(Long gisuId) {
-        return toChallengerInfoListBatch(loadChallengerPort.findByGisuId(gisuId));
-    }
-
-
-    @Override
-    public List<ChallengerInfo> getLatestPerMember() {
-        return toChallengerInfoListBatch(loadChallengerPort.findLatestPerMember());
+    public List<ChallengerInfo> getAllByIds(Set<Long> challengerIds) {
+        if (challengerIds == null || challengerIds.isEmpty()) {
+            return List.of();
+        }
+        return loadChallengerPort.getAllByIds(challengerIds).stream()
+            .map(this::getChallengerInfoFromChallenger).toList();
     }
 
     @Override
-    public List<ChallengerInfo> getByGisuIdWithoutPoints(Long gisuId) {
-        return loadChallengerPort.findByGisuId(gisuId).stream()
+    public List<ChallengerInfo> getAllByGisuId(Long gisuId) {
+        return toChallengerInfoListBatch(loadChallengerPort.getAllByGisuId(gisuId));
+    }
+
+    @Override
+    public List<ChallengerInfo> getAllByGisuIdWithoutChallengerPoints(Long gisuId) {
+        return loadChallengerPort.getAllByGisuId(gisuId).stream()
             .map(c -> ChallengerInfo.from(c, List.of()))
             .toList();
     }
 
     @Override
-    public List<ChallengerInfo> getLatestPerMemberWithoutPoints() {
+    public List<ChallengerInfo> getAllLatestGisuPerMemberWithoutChallengerPoints() {
         return loadChallengerPort.findLatestPerMember().stream()
-            .map(c -> ChallengerInfo.from(c, List.of()))
+            .map(ChallengerInfo::from)
             .toList();
     }
 

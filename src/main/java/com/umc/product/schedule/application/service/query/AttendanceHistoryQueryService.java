@@ -26,22 +26,18 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * 개인 출석 이력을 조회
  * <p>
- * 조회 흐름:
- * 1. gisuId로 해당 기수의 출석부 목록 조회
- * 2. memberId의 출석 기록 중 해당 기수 출석부에 속한 것만 필터링
- * 3. 일정 정보와 결합하여 최신순 반환
+ * 조회 흐름: 1. gisuId로 해당 기수의 출석부 목록 조회 2. memberId의 출석 기록 중 해당 기수 출석부에 속한 것만 필터링 3. 일정 정보와 결합하여 최신순 반환
  * <p>
  * N+1 방지를 위해 ID 목록을 추출하여 일괄 조회
  * <p>
- * ⚠️ 확정된 상태만 반환: PRESENT, LATE, ABSENT (3개만!)
- * - PENDING (출석 전) 제외
- * - *_PENDING (승인 대기) 제외
- * - EXCUSED 제외 - 승인 시 PRESENT, 거부 시 ABSENT로 처리됨
+ * ⚠️ 확정된 상태만 반환: PRESENT, LATE, ABSENT (3개만!) - PENDING (출석 전) 제외 - *_PENDING (승인 대기) 제외 - EXCUSED 제외 - 승인 시 PRESENT,
+ * 거부 시 ABSENT로 처리됨
  */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseCase, GetChallengerAttendanceHistoryUseCase {
+public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseCase,
+    GetChallengerAttendanceHistoryUseCase {
 
     private static final Set<AttendanceStatus> CONFIRMED_STATUSES = Set.of(
         AttendanceStatus.PRESENT,
@@ -113,7 +109,7 @@ public class AttendanceHistoryQueryService implements GetMyAttendanceHistoryUseC
     @Override
     public List<MyAttendanceHistoryInfo> getHistoryByChallengerId(Long challengerId) {
         // 1. 챌린저 정보 조회
-        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        ChallengerInfo challengerInfo = getChallengerUseCase.getById(challengerId);
 
         // 2. memberId와 gisuId를 이용하여 기존 메서드 재사용
         return getHistory(challengerInfo.memberId(), challengerInfo.gisuId());

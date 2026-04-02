@@ -117,7 +117,7 @@ public class CommentQueryService implements GetCommentListUseCase {
 
         return loadCommentPort.findById(commentId)
             .map(comment -> {
-                ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(comment.getChallengerId());
+                ChallengerInfo challengerInfo = getChallengerUseCase.getById(comment.getChallengerId());
                 MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
 
                 String authorName = memberInfo != null ? memberInfo.name() : "알 수 없음";

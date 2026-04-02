@@ -33,7 +33,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
 
     @Override
     public void subscribeTopics(Long challengerId) {
-        ChallengerInfo challenger = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        ChallengerInfo challenger = getChallengerUseCase.getById(challengerId);
 
         FcmToken fcmToken = loadFcmPort.findOptionalByMemberId(challenger.memberId())
             .orElse(null);
@@ -54,7 +54,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
 
     @Override
     public void unsubscribeTopics(Long challengerId) {
-        ChallengerInfo challenger = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        ChallengerInfo challenger = getChallengerUseCase.getById(challengerId);
 
         FcmToken fcmToken = loadFcmPort.findOptionalByMemberId(challenger.memberId())
             .orElse(null);
@@ -74,7 +74,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
 
     @Override
     public void subscribeAllTopicsByMemberId(Long memberId) {
-        List<ChallengerInfo> challengers = getChallengerUseCase.getMemberChallengerList(memberId);
+        List<ChallengerInfo> challengers = getChallengerUseCase.getAllByMemberId(memberId);
         for (ChallengerInfo challenger : challengers) {
             subscribeTopics(challenger.challengerId());
         }
@@ -82,7 +82,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
 
     @Override
     public void unsubscribeAllTopicsByMemberId(Long memberId) {
-        List<ChallengerInfo> challengers = getChallengerUseCase.getMemberChallengerList(memberId);
+        List<ChallengerInfo> challengers = getChallengerUseCase.getAllByMemberId(memberId);
         for (ChallengerInfo challenger : challengers) {
             unsubscribeTopics(challenger.challengerId());
         }
@@ -94,7 +94,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
             return;
         }
 
-        List<ChallengerInfo> challengers = getChallengerUseCase.getMemberChallengerList(memberId);
+        List<ChallengerInfo> challengers = getChallengerUseCase.getAllByMemberId(memberId);
         List<String> tokens = List.of(fcmToken);
 
         for (ChallengerInfo challenger : challengers) {

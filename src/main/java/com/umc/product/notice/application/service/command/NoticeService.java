@@ -184,7 +184,7 @@ public class NoticeService implements ManageNoticeUseCase {
             return List.of();
         }
 
-        List<Challenger> challengers = loadChallengerPort.findByGisuId(targetInfo.targetGisuId());
+        List<Challenger> challengers = loadChallengerPort.getAllByGisuId(targetInfo.targetGisuId());
         List<Long> targetIds = new ArrayList<>();
 
         for (Challenger challenger : challengers) {

@@ -78,7 +78,7 @@ public class RecruitmentFinalSelectionService implements UpdateFinalStatusUseCas
                 }
                 application.passFinal(selectedPart);
 
-                var existingChallengerOpt = getChallengerUseCase.getMemberChallengerList(memberId).stream()
+                var existingChallengerOpt = getChallengerUseCase.getAllByMemberId(memberId).stream()
                     .filter(info -> info.gisuId().equals(gisuId)) // (주의: info.gisuId() 필드명 확인)
                     .findFirst();
 
@@ -158,7 +158,7 @@ public class RecruitmentFinalSelectionService implements UpdateFinalStatusUseCas
     }
 
     private void deleteChallengerIfExists(Long memberId, Long gisuId) {
-        getChallengerUseCase.getMemberChallengerList(memberId).stream()
+        getChallengerUseCase.getAllByMemberId(memberId).stream()
             .filter(info -> info.gisuId().equals(gisuId))
             .findFirst()
             .ifPresent(info -> {

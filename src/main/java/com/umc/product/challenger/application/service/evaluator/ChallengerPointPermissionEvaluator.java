@@ -44,7 +44,7 @@ public class ChallengerPointPermissionEvaluator implements ResourcePermissionEva
     }
 
     private ChallengerInfo getGrantedChallengerInfo(Long challengerId) {
-        return getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        return getChallengerUseCase.getById(challengerId);
     }
 
     /**

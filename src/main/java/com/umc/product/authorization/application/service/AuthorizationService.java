@@ -77,7 +77,7 @@ public class AuthorizationService implements CheckPermissionUseCase {
         // memberId로 사용자와 관련된 모든 challenger를 가지고 옴
         // 그 challenger를 기반으로 사용자가 활동했던 모든 기수를 가져옴.
         // 그러면 기수와 학교를 조합해서 챕터들이 나오겠지? 굳 그거 쓰면 될듯
-        List<ChallengerInfo> memberChallengerList = getChallengerUseCase.getMemberChallengerList(memberId);
+        List<ChallengerInfo> memberChallengerList = getChallengerUseCase.getAllByMemberId(memberId);
         List<GisuChallengerInfo> chapterIds = memberChallengerList.stream().map((challengerInfo) ->
             GisuChallengerInfo.builder()
                 .gisuId(challengerInfo.gisuId())

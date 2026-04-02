@@ -42,7 +42,7 @@ public class TrophyQueryService implements GetTrophyListUseCase {
             .collect(Collectors.toSet());
 
         // 2. 챌린저 ID -> 챌린저 정보 매핑 (1 query)
-        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getChallengerPublicInfoByIds(challengerIds);
+        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getAllByIdsAsMap(challengerIds);
 
         // 3. 멤버 ID 목록 추출
         Set<Long> memberIds = challengerInfoMap.values().stream()

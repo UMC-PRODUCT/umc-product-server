@@ -52,7 +52,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         Long authorChallengerId = postWithAuthor.authorChallengerId();
 
         // 챌린저 정보 조회
-        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId);
+        ChallengerInfo challengerInfo = getChallengerUseCase.getById(authorChallengerId);
 
         // 멤버 프로필 조회 (이름과 프로필 이미지)
         MemberInfo memberProfile = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
@@ -99,7 +99,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
 
         return searchDataPage.map(
             data -> {
-                ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(
+                ChallengerInfo challengerInfo = getChallengerUseCase.getById(
                     data.getAuthorChallengerId());
                 MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
 
@@ -152,7 +152,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         Set<Long> challengerIds = Set.copyOf(postIdToAuthorId.values());
 
         // 4. 챌린저 ID -> 챌린저 정보 매핑 (1 query)
-        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getChallengerPublicInfoByIds(challengerIds);
+        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getAllByIdsAsMap(challengerIds);
 
         // 5. 멤버 ID 목록 추출
         Set<Long> memberIds = challengerInfoMap.values().stream()

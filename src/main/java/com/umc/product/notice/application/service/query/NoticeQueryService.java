@@ -61,7 +61,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private final GetNoticeContentUseCase getNoticeContentUseCase;
 
     @Override
-    public Page<NoticeSummary> getAllNoticeSummaries(NoticeViewerInfo viewerInfo, NoticeClassification classification, Pageable pageable) {
+    public Page<NoticeSummary> getAllNoticeSummaries(NoticeViewerInfo viewerInfo, NoticeClassification classification,
+                                                     Pageable pageable) {
         NoticeClassification enriched = enrichClassification(viewerInfo, classification);
         Page<Notice> notices = loadNoticePort.findNoticesByClassification(enriched, viewerInfo.memberParts(), pageable);
         return toNoticeSummaryPage(notices);
@@ -72,7 +73,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
                                                       NoticeClassification classification,
                                                       Pageable pageable) {
         NoticeClassification enriched = enrichClassification(viewerInfo, classification);
-        Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, enriched, viewerInfo.memberParts(), pageable);
+        Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, enriched, viewerInfo.memberParts(),
+            pageable);
         return toNoticeSummaryPage(notices);
     }
 
@@ -191,10 +193,10 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         // 전체 기수 공지 여부
         if (targetInfo.targetGisuId() != null) {
-            challengers = getChallengerUseCase.getByGisuIdWithoutPoints(targetInfo.targetGisuId());
+            challengers = getChallengerUseCase.getAllByGisuIdWithoutChallengerPoints(targetInfo.targetGisuId());
         } else {
             // 모든 기수 대상 공지: DB 쿼리에서 멤버당 최신 기수 챌린저 1건만 조회 (읽음 현황 조회 시 혼선 방지)
-            challengers = getChallengerUseCase.getLatestPerMemberWithoutPoints();
+            challengers = getChallengerUseCase.getAllLatestGisuPerMemberWithoutChallengerPoints();
         }
 
         if (challengers.isEmpty()) {
@@ -246,9 +248,9 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         List<ChallengerInfo> challengers;
         if (targetInfo.targetGisuId() != null) {
-            challengers = getChallengerUseCase.getByGisuIdWithoutPoints(targetInfo.targetGisuId());
+            challengers = getChallengerUseCase.getAllByGisuIdWithoutChallengerPoints(targetInfo.targetGisuId());
         } else {
-            challengers = getChallengerUseCase.getLatestPerMemberWithoutPoints();
+            challengers = getChallengerUseCase.getAllLatestGisuPerMemberWithoutChallengerPoints();
         }
 
         if (challengers.isEmpty()) {
@@ -288,7 +290,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
      * <p>
      * 클라이언트가 넘긴 chapterId/schoolId는 "이 필터 종류로 조회"라는 의도로만 사용하고, 실제 ID 값은 viewerInfo에서 가져옵니다.
      */
-    private NoticeClassification enrichClassification(NoticeViewerInfo viewerInfo, NoticeClassification classification) {
+    private NoticeClassification enrichClassification(NoticeViewerInfo viewerInfo,
+                                                      NoticeClassification classification) {
         if (classification.chapterId() == null
             && classification.schoolId() == null
             && classification.part() == null) {
@@ -299,7 +302,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Long filteredChapterId = (classification.chapterId() != null || hasPart) ? viewerInfo.chapterId() : null;
         Long filteredSchoolId = (classification.schoolId() != null || hasPart) ? viewerInfo.schoolId() : null;
 
-        return new NoticeClassification(classification.gisuId(), filteredChapterId, filteredSchoolId, classification.part());
+        return new NoticeClassification(classification.gisuId(), filteredChapterId, filteredSchoolId,
+            classification.part());
     }
 
     private Page<NoticeSummary> toNoticeSummaryPage(Page<Notice> notices) {
@@ -344,10 +348,6 @@ public class NoticeQueryService implements GetNoticeUseCase {
     private Notice findById(Long noticeId) {
         return loadNoticePort.findNoticeById(noticeId).orElseThrow(
             () -> new NoticeDomainException(NoticeErrorCode.NOTICE_NOT_FOUND));
-    }
-
-    // ChapterInfo 캐싱용 키
-    private record ChapterKey(Long gisuId, Long schoolId) {
     }
 
     private boolean isTargetChallenger(
@@ -475,6 +475,10 @@ public class NoticeQueryService implements GetNoticeUseCase {
         }
 
         return 0;  // 커서를 찾지 못하면 처음부터
+    }
+
+    // ChapterInfo 캐싱용 키
+    private record ChapterKey(Long gisuId, Long schoolId) {
     }
 
     // =============== PRIVATE records ===============
