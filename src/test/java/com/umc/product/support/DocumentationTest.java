@@ -8,6 +8,7 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.notice.adapter.in.web.NoticeContentController;
 import com.umc.product.notice.adapter.in.web.NoticeController;
 import com.umc.product.notice.adapter.in.web.NoticeQueryController;
+import com.umc.product.notice.adapter.in.web.assembler.NoticeViewerInfoAssembler;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeReadUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
@@ -117,4 +118,7 @@ public class DocumentationTest {
 
     @MockitoBean
     protected GetNoticeUseCase getNoticeUseCase;
+
+    @MockitoBean
+    protected NoticeViewerInfoAssembler noticeViewerInfoAssembler;
 }

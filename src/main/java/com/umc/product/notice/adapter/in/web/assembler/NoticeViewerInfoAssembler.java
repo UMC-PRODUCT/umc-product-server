@@ -1,0 +1,65 @@
+package com.umc.product.notice.adapter.in.web.assembler;
+
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
+import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import java.util.HashSet;
+import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
+
+/**
+ * 공지 조회자의 소속 정보를 여러 UseCase를 통해 조립하는 헬퍼 컴포넌트입니다.
+ */
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class NoticeViewerInfoAssembler {
+
+    private final GetChallengerUseCase getChallengerUseCase;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+    private final GetMemberUseCase getMemberUseCase;
+    private final GetChapterUseCase getChapterUseCase;
+
+    public NoticeViewerInfo toMemberIdAndGisuId(Long memberId, Long gisuId) {
+        Set<ChallengerPart> memberParts = resolveParts(memberId, gisuId);
+
+        MemberInfo memberInfo = getMemberUseCase.getProfiles(Set.of(memberId)).get(memberId);
+        Long schoolId = memberInfo != null ? memberInfo.schoolId() : null;
+
+        Long chapterId = null;
+        if (schoolId != null) {
+            try {
+                chapterId = getChapterUseCase.byGisuAndSchool(gisuId, schoolId).id();
+            } catch (Exception e) {
+                log.debug("지부 정보 조회 실패 - gisuId={}, schoolId={}: {}", gisuId, schoolId, e.getMessage());
+            }
+        }
+
+        return new NoticeViewerInfo(memberParts, schoolId, chapterId);
+    }
+
+    /**
+     * 해당 기수에서 멤버가 볼 수 있는 파트 목록을 조회합니다. - Challenger.part: 챌린저 본인의 소속 파트 - ChallengerRole.responsiblePart: 파트장 역할에서 담당하는
+     * 파트 챌린저 정보가 없으면 빈 Set을 반환하여 파트 조건 없는 공지만 노출합니다.
+     */
+    private Set<ChallengerPart> resolveParts(Long memberId, Long gisuId) {
+        if (memberId == null || gisuId == null) {
+            return Set.of();
+        }
+
+        return getChallengerUseCase.findByMemberIdAndGisuId(memberId, gisuId)
+            .map(challenger -> {
+                Set<ChallengerPart> parts = new HashSet<>();
+                parts.add(challenger.part());
+                parts.addAll(getChallengerRoleUseCase.getResponsiblePartsByMemberAndGisu(memberId, gisuId));
+                return parts;
+            })
+            .orElse(Set.of());
+    }
+}

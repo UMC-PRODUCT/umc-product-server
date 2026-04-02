@@ -12,6 +12,7 @@ import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +47,12 @@ public class ChallengerQueryService implements GetChallengerUseCase {
             .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_NOT_FOUND));
 
         return getChallengerInfoFromChallenger(challenger);
+    }
+
+    @Override
+    public Optional<ChallengerInfo> findByMemberIdAndGisuId(Long memberId, Long gisuId) {
+        return loadChallengerPort.findByMemberIdAndGisuId(memberId, gisuId)
+            .map(this::getChallengerInfoFromChallenger);
     }
 
     @Override
