@@ -153,6 +153,13 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
         }
     }
 
+    @Override
+    public void updateReviewFeedback(UpdateReviewFeedbackCommand command) {
+        Review review = loadReviewPort.getById(command.reviewId());
+        verifyReviewOwner(review, command.memberId());
+        review.updateFeedback(command.feedback());
+    }
+
     private void verifyWorkbookOwner(ChallengerWorkbook workbook, Long memberId) {
         ChallengerInfo challenger = getChallengerUseCase.getById(workbook.getChallengerId());
         if (!challenger.memberId().equals(memberId)) {

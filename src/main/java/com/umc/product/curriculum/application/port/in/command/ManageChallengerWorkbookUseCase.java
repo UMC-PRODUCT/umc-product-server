@@ -1,9 +1,12 @@
 package com.umc.product.curriculum.application.port.in.command;
 
+import com.umc.product.curriculum.application.port.in.command.dto.CancelBestWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.ReviewWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.SelectBestWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.SubmitChallengerWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.SubmitWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.UpdateBestReasonCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.UpdateReviewFeedbackCommand;
 
 /**
  * 워크북 관리 UseCase
@@ -58,13 +61,32 @@ public interface ManageChallengerWorkbookUseCase {
      */
     void cancelBest(CancelBestWorkbookCommand command);
 
-    
+
     /**
      * 베스트 워크북 선정 (운영진 전용)
      * <p>
      * 운영진이 우수한 워크북을 베스트로 선정합니다.
+     * 작성한 기존 PASS 리뷰가 있어야 선정 가능합니다.
      *
      * @param command 베스트 선정 커맨드 (워크북 ID, 추천사)
      */
     void selectBest(SelectBestWorkbookCommand command);
+
+    /**
+     * 베스트 추천사 수정 (운영진 전용)
+     * <p>
+     * 리뷰 ID를 통해 베스트 추천사를 수정합니다.
+     *
+     * @param command 추천사 수정 커맨드 (리뷰 ID, 추천사)
+     */
+    void updateBestReason(UpdateBestReasonCommand command);
+
+    /**
+     * 리뷰 피드백 수정 (운영진 전용)
+     * <p>
+     * 리뷰 ID를 통해 피드백을 수정합니다.
+     *
+     * @param command 피드백 수정 커맨드 (리뷰 ID, 피드백)
+     */
+    void updateReviewFeedback(UpdateReviewFeedbackCommand command);
 }

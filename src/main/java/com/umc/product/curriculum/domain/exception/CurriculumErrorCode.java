@@ -18,7 +18,7 @@ public enum CurriculumErrorCode implements BaseCode {
     SUBMISSION_REQUIRED(HttpStatus.BAD_REQUEST, "CURRICULUM-0007", "제출 내용이 필요합니다."),
     WORKBOOK_ALREADY_SUBMITTED(HttpStatus.CONFLICT, "CURRICULUM-0008", "이미 제출된 워크북은 다시 제출할 수 없습니다."),
     WORKBOOK_NOT_REVIEWABLE(HttpStatus.BAD_REQUEST, "CURRICULUM-0013", "제출된 상태의 워크북만 심사할 수 있습니다."),
-    WORKBOOK_NOT_SELECTABLE_FOR_BEST(HttpStatus.BAD_REQUEST, "CURRICULUM-0014", "제출 또는 통과 상태의 워크북만 베스트로 선정할 수 있습니다."),
+    WORKBOOK_NOT_SELECTABLE_FOR_BEST(HttpStatus.BAD_REQUEST, "CURRICULUM-0014", "통과 상태의 워크북만 베스트로 선정할 수 있습니다."),
     WORKBOOK_SUBMISSION_ALREADY_EXISTS(HttpStatus.CONFLICT, "CURRICULUM-0009", "이미 해당 주차의 워크북 미션을 제출하였습니다."),
     CURRICULUM_ALREADY_EXISTS(HttpStatus.CONFLICT, "CURRICULUM-0010", "해당 기수와 파트의 커리큘럼이 이미 존재합니다."),
     WORKBOOK_ACCESS_DENIED(HttpStatus.FORBIDDEN, "CURRICULUM-0011", "해당 워크북에 대한 접근 권한이 없습니다."),
