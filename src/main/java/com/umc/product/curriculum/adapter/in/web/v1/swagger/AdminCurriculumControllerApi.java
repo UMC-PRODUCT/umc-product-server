@@ -2,6 +2,8 @@ package com.umc.product.curriculum.adapter.in.web.v1.swagger;
 
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.ReviewWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SelectBestWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.UpdateBestReasonRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.UpdateReviewFeedbackRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionDetailResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -115,5 +117,53 @@ public interface AdminCurriculumControllerApi {
     })
     WorkbookSubmissionDetailResponse getSubmissionDetail(
         @Parameter(description = "챌린저 워크북 ID", required = true) Long challengerWorkbookId
+    );
+
+    @Operation(
+        summary = "(파트장용) 베스트 워크북 취소",
+        description = """
+            베스트 선정을 취소하고 워크북을 PASS 상태로 되돌립니다.
+
+            - BEST 상태의 워크북만 취소 가능
+            - 연결된 모든 BEST 리뷰가 PASS로 변경되고 bestReason이 삭제됩니다.
+            """
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "베스트 취소 완료"),
+        @ApiResponse(responseCode = "400", description = "베스트 상태의 워크북만 취소할 수 있음"),
+        @ApiResponse(responseCode = "404", description = "챌린저 워크북을 찾을 수 없음")
+    })
+    void cancelBestWorkbook(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Parameter(description = "챌린저 워크북 ID", required = true) Long challengerWorkbookId
+    );
+
+    @Operation(
+        summary = "(파트장용) 베스트 추천사 수정",
+        description = "리뷰 ID를 통해 베스트 추천사를 수정합니다. BEST 상태의 리뷰만 수정 가능합니다."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "추천사 수정 완료"),
+        @ApiResponse(responseCode = "400", description = "베스트 상태의 리뷰만 추천사를 수정할 수 있음"),
+        @ApiResponse(responseCode = "404", description = "리뷰를 찾을 수 없음")
+    })
+    void updateBestReason(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Parameter(description = "리뷰 ID", required = true) Long reviewId,
+        @RequestBody(description = "베스트 추천사 수정 요청") UpdateBestReasonRequest request
+    );
+
+    @Operation(
+        summary = "(파트장용) 리뷰 피드백 수정",
+        description = "리뷰 ID를 통해 피드백을 수정합니다."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "피드백 수정 완료"),
+        @ApiResponse(responseCode = "404", description = "리뷰를 찾을 수 없음")
+    })
+    void updateReviewFeedback(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @Parameter(description = "리뷰 ID", required = true) Long reviewId,
+        @RequestBody(description = "리뷰 피드백 수정 요청") UpdateReviewFeedbackRequest request
     );
 }

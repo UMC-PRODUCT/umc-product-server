@@ -5,6 +5,8 @@ import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.ReviewWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SelectBestWorkbookRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.UpdateBestReasonRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.UpdateReviewFeedbackRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionDetailResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.swagger.AdminCurriculumControllerApi;
 import com.umc.product.curriculum.application.port.in.command.ManageChallengerWorkbookUseCase;
@@ -13,8 +15,10 @@ import com.umc.product.curriculum.application.port.in.query.GetChallengerWorkboo
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
+import com.umc.product.curriculum.application.port.in.command.dto.CancelBestWorkbookCommand;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -71,6 +75,36 @@ public class AdminCurriculumController implements AdminCurriculumControllerApi {
         return WorkbookSubmissionDetailResponse.from(
             getChallengerWorkbookUseCase.getSubmissionDetail(challengerWorkbookId)
         );
+    }
+
+    @Override
+    @DeleteMapping("/api/v1/curriculum/challenger-workbooks/{challengerWorkbookId}/best")
+    public void cancelBestWorkbook(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long challengerWorkbookId) {
+
+        manageChallengerWorkbookUseCase.cancelBest(
+            new CancelBestWorkbookCommand(challengerWorkbookId, memberPrincipal.getMemberId()));
+    }
+
+    @Override
+    @PatchMapping("/api/v1/curriculum/challenger-workbooks/reviews/{reviewId}/best-reason")
+    public void updateBestReason(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long reviewId,
+        @Valid @RequestBody UpdateBestReasonRequest request) {
+        manageChallengerWorkbookUseCase.updateBestReason(
+            request.toCommand(reviewId, memberPrincipal.getMemberId()));
+    }
+
+    @Override
+    @PatchMapping("/api/v1/curriculum/challenger-workbooks/reviews/{reviewId}/feedback")
+    public void updateReviewFeedback(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long reviewId,
+        @Valid @RequestBody UpdateReviewFeedbackRequest request) {
+        manageChallengerWorkbookUseCase.updateReviewFeedback(
+            request.toCommand(reviewId, memberPrincipal.getMemberId()));
     }
 
     // ── Deprecated 경로 (삭제 예정) ──
