@@ -11,4 +11,6 @@ public interface LoadReviewPort {
     List<Review> findAllBySubmissionIdAndStatus(Long submissionId, ReviewResult status);
 
     boolean existsBySubmissionIdAndReviewerChallengerId(Long submissionId, Long reviewerChallengerId);
+
+    Review getById(Long reviewId);
 }

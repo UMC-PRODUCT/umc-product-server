@@ -4,6 +4,8 @@ import com.umc.product.curriculum.application.port.out.LoadReviewPort;
 import com.umc.product.curriculum.application.port.out.SaveReviewPort;
 import com.umc.product.curriculum.domain.Review;
 import com.umc.product.curriculum.domain.enums.ReviewResult;
+import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
+import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,6 +29,12 @@ public class ReviewPersistenceAdapter implements LoadReviewPort, SaveReviewPort 
     @Override
     public boolean existsBySubmissionIdAndReviewerChallengerId(Long submissionId, Long reviewerChallengerId) {
         return reviewJpaRepository.existsBySubmissionIdAndReviewerChallengerId(submissionId, reviewerChallengerId);
+    }
+
+    @Override
+    public Review getById(Long reviewId) {
+        return reviewJpaRepository.findById(reviewId)
+            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.REVIEW_NOT_FOUND));
     }
 
     @Override

@@ -1,10 +1,13 @@
 package com.umc.product.curriculum.application.service.command;
 
 import com.umc.product.curriculum.application.port.in.command.ManageChallengerWorkbookUseCase;
+import com.umc.product.curriculum.application.port.in.command.dto.CancelBestWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.ReviewWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.SelectBestWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.SubmitChallengerWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.SubmitWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.UpdateBestReasonCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.UpdateReviewFeedbackCommand;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadSubmissionPort;
@@ -20,6 +23,7 @@ import com.umc.product.curriculum.domain.Review;
 import com.umc.product.curriculum.domain.Submission;
 import com.umc.product.curriculum.domain.enums.ReviewResult;
 import com.umc.product.curriculum.domain.enums.WorkbookStatus;
+import java.util.List;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -84,8 +88,7 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
     public void review(ReviewWorkbookCommand command) {
         ChallengerWorkbook challengerWorkbook = loadChallengerWorkbookPort.findById(command.challengerWorkbookId());
 
-        Submission submission = loadSubmissionPort.findByChallengerWorkbookId(command.challengerWorkbookId())
-            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.SUBMISSION_NOT_FOUND));
+        Submission submission = loadSubmissionPort.getByChallengerWorkbookId(command.challengerWorkbookId());
 
         Long reviewerChallengerId = resolveReviewerChallengerId(command.memberId(), challengerWorkbook.getChallengerId());
         validateNotAlreadyReviewed(submission.getId(), reviewerChallengerId);
@@ -136,8 +139,18 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
         bestReviews.forEach(Review::cancelBest);
     }
 
-        Review review = Review.createBest(submission.getId(), reviewerChallengerId, null, command.bestReason());
-        saveReviewPort.save(review);
+    @Override
+    public void updateBestReason(UpdateBestReasonCommand command) {
+        Review review = loadReviewPort.getById(command.reviewId());
+        verifyReviewOwner(review, command.memberId());
+        review.updateBestReason(command.bestReason());
+    }
+
+    private void verifyReviewOwner(Review review, Long memberId) {
+        ChallengerInfo reviewer = getChallengerUseCase.getChallengerPublicInfo(review.getReviewerChallengerId());
+        if (!reviewer.memberId().equals(memberId)) {
+            throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_ACCESS_DENIED);
+        }
     }
 
     private void verifyWorkbookOwner(ChallengerWorkbook workbook, Long memberId) {
