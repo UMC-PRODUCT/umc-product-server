@@ -6,7 +6,7 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.ReviewWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SelectBestWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.UpdateBestReasonRequest;
-import com.umc.product.curriculum.adapter.in.web.v1.dto.request.UpdateReviewFeedbackRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.UpdateReviewRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionDetailResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.swagger.AdminCurriculumControllerApi;
 import com.umc.product.curriculum.application.port.in.command.ManageChallengerWorkbookUseCase;
@@ -98,12 +98,12 @@ public class AdminCurriculumController implements AdminCurriculumControllerApi {
     }
 
     @Override
-    @PatchMapping("/api/v1/curriculum/challenger-workbooks/reviews/{reviewId}/feedback")
-    public void updateReviewFeedback(
+    @PatchMapping("/api/v1/curriculum/challenger-workbooks/reviews/{reviewId}")
+    public void updateReview(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long reviewId,
-        @Valid @RequestBody UpdateReviewFeedbackRequest request) {
-        manageChallengerWorkbookUseCase.updateReviewFeedback(
+        @Valid @RequestBody UpdateReviewRequest request) {
+        manageChallengerWorkbookUseCase.updateReview(
             request.toCommand(reviewId, memberPrincipal.getMemberId()));
     }
 

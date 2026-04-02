@@ -3,7 +3,7 @@ package com.umc.product.curriculum.adapter.in.web.v1.swagger;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.ReviewWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.SelectBestWorkbookRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.request.UpdateBestReasonRequest;
-import com.umc.product.curriculum.adapter.in.web.v1.dto.request.UpdateReviewFeedbackRequest;
+import com.umc.product.curriculum.adapter.in.web.v1.dto.request.UpdateReviewRequest;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionDetailResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -154,16 +154,22 @@ public interface AdminCurriculumControllerApi {
     );
 
     @Operation(
-        summary = "(파트장용) 리뷰 피드백 수정",
-        description = "리뷰 ID를 통해 피드백을 수정합니다."
+        summary = "(파트장용) 리뷰 수정",
+        description = """
+            리뷰의 심사 결과(PASS/FAIL)와 피드백을 수정합니다.
+
+            - BEST 상태의 리뷰는 수정 불가 (베스트 취소 후 수정 필요)
+            - 수정 후 워크북 상태가 자동으로 재계산됩니다.
+            """
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "피드백 수정 완료"),
+        @ApiResponse(responseCode = "200", description = "리뷰 수정 완료"),
+        @ApiResponse(responseCode = "400", description = "베스트 상태의 리뷰는 수정할 수 없음"),
         @ApiResponse(responseCode = "404", description = "리뷰를 찾을 수 없음")
     })
-    void updateReviewFeedback(
+    void updateReview(
         @CurrentMember MemberPrincipal memberPrincipal,
         @Parameter(description = "리뷰 ID", required = true) Long reviewId,
-        @RequestBody(description = "리뷰 피드백 수정 요청") UpdateReviewFeedbackRequest request
+        @RequestBody(description = "리뷰 수정 요청") UpdateReviewRequest request
     );
 }
