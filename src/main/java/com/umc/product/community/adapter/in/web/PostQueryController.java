@@ -2,7 +2,6 @@ package com.umc.product.community.adapter.in.web;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.community.adapter.in.web.dto.response.PostDetailResponse;
 import com.umc.product.community.adapter.in.web.dto.response.PostResponse;
 import com.umc.product.community.application.port.in.query.GetCommentedPostsUseCase;
@@ -18,7 +17,7 @@ import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -8,7 +8,7 @@ import com.umc.product.community.application.port.in.query.dto.TrophySearchQuery
 import com.umc.product.community.application.port.out.trophy.LoadTrophyPort;
 import com.umc.product.community.domain.Trophy;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

@@ -1,4 +1,4 @@
-package com.umc.product.member.application.port.in.query;
+package com.umc.product.member.application.port.in.query.dto;
 
 import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.MemberStatus;

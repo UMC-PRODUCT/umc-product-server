@@ -4,7 +4,7 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;

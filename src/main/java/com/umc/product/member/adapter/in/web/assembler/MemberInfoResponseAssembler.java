@@ -4,8 +4,8 @@ import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResp
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
-import com.umc.product.member.application.port.in.query.MemberProfileInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;

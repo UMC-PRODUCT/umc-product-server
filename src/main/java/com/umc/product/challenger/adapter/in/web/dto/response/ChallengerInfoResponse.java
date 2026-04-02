@@ -7,7 +7,7 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointI
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.common.domain.enums.MemberStatus;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import java.util.List;

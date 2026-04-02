@@ -4,7 +4,7 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.application.port.in.query.dto.PostInfo;
 import com.umc.product.community.domain.enums.Category;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import lombok.Builder;

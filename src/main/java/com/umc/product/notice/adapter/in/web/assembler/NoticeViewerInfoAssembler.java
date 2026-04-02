@@ -4,7 +4,7 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import java.util.HashSet;

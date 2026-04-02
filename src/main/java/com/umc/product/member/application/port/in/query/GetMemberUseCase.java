@@ -1,5 +1,7 @@
 package com.umc.product.member.application.port.in.query;
 
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberProfileInfo;
 import java.util.Map;
 import java.util.Set;
 

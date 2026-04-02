@@ -33,6 +33,12 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     }
 
     @Override
+    public Optional<ChallengerInfo> findById(Long challengerId) {
+        return loadChallengerPort.findById(challengerId)
+            .map(this::getChallengerInfoFromChallenger);
+    }
+
+    @Override
     public ChallengerInfo findByIdOrNull(Long challengerId) {
         Challenger challenger = loadChallengerPort.findById(challengerId).orElse(null);
 

@@ -8,6 +8,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.service.MemberQueryService;
 import com.umc.product.member.domain.Member;
@@ -47,6 +48,49 @@ class GetMemberUseCaseTest {
 
     @InjectMocks
     MemberQueryService memberQueryService;
+
+    private Member createMember(Long id, Long schoolId, String profileImageId) {
+        Member member = Member.builder()
+            .name("홍길동")
+            .nickname("길동")
+            .email("test@example.com")
+            .schoolId(schoolId)
+            .profileImageId(profileImageId)
+            .build();
+        ReflectionTestUtils.setField(member, "id", id);
+        return member;
+    }
+
+    private SchoolDetailInfo createSchoolDetailInfo(Long schoolId, String schoolName) {
+        return new SchoolDetailInfo(
+            1L,           // chapterId
+            "cassiopeia",    // chapterName
+            schoolName,
+            schoolId,
+            null,         // remark
+            null,         // logoImageUrl
+            List.of(),  // links
+            true,         // isActive
+            Instant.now(),
+            Instant.now()
+        );
+    }
+
+    // ── 헬퍼 메서드 ──
+
+    private FileInfo createFileInfo(String fileId, String fileLink) {
+        return new FileInfo(
+            fileId,
+            "profile.jpg",
+            null,         // category
+            "image/jpeg",
+            1024L,
+            fileLink,
+            true,
+            1L,
+            Instant.now()
+        );
+    }
 
     @Nested
     @DisplayName("getById")
@@ -195,48 +239,5 @@ class GetMemberUseCaseTest {
             // then
             assertThat(result.schoolName()).isNull();
         }
-    }
-
-    // ── 헬퍼 메서드 ──
-
-    private Member createMember(Long id, Long schoolId, String profileImageId) {
-        Member member = Member.builder()
-            .name("홍길동")
-            .nickname("길동")
-            .email("test@example.com")
-            .schoolId(schoolId)
-            .profileImageId(profileImageId)
-            .build();
-        ReflectionTestUtils.setField(member, "id", id);
-        return member;
-    }
-
-    private SchoolDetailInfo createSchoolDetailInfo(Long schoolId, String schoolName) {
-        return new SchoolDetailInfo(
-            1L,           // chapterId
-            "cassiopeia",    // chapterName
-            schoolName,
-            schoolId,
-            null,         // remark
-            null,         // logoImageUrl
-            List.of(),  // links
-            true,         // isActive
-            Instant.now(),
-            Instant.now()
-        );
-    }
-
-    private FileInfo createFileInfo(String fileId, String fileLink) {
-        return new FileInfo(
-            fileId,
-            "profile.jpg",
-            null,         // category
-            "image/jpeg",
-            1024L,
-            fileLink,
-            true,
-            1L,
-            Instant.now()
-        );
     }
 }

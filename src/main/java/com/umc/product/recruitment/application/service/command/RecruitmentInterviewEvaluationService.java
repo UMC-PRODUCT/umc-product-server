@@ -1,7 +1,7 @@
 package com.umc.product.recruitment.application.service.command;
 
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.recruitment.application.port.in.command.CreateLiveQuestionUseCase;
 import com.umc.product.recruitment.application.port.in.command.DeleteLiveQuestionUseCase;
 import com.umc.product.recruitment.application.port.in.command.UpdateLiveQuestionUseCase;

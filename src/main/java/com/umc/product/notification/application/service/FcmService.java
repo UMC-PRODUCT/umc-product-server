@@ -6,7 +6,7 @@ import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.TopicManagementResponse;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notification.adapter.in.web.dto.request.FcmRegistrationRequest;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;

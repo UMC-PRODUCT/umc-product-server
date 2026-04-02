@@ -2,7 +2,7 @@ package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewAssignmentsUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewEvaluationSummaryUseCase;

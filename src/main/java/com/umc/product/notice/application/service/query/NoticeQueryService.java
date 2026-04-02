@@ -3,7 +3,7 @@ package com.umc.product.notice.application.service.query;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.GetNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
 import com.umc.product.notice.application.port.in.query.dto.GetNoticeStatusQuery;

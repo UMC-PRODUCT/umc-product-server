@@ -14,7 +14,7 @@ import com.umc.product.challenger.domain.ChallengerRecord;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
 import com.umc.product.notification.domain.WebhookPlatform;

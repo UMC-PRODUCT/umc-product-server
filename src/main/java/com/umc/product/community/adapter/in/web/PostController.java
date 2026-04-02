@@ -1,5 +1,8 @@
 package com.umc.product.community.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
@@ -16,14 +19,11 @@ import com.umc.product.community.application.port.in.command.post.TogglePostLike
 import com.umc.product.community.application.port.in.command.post.ToggleScrapUseCase;
 import com.umc.product.community.application.port.in.command.post.UpdateLightningUseCase;
 import com.umc.product.community.application.port.in.command.post.UpdatePostUseCase;
-import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
-import com.umc.product.authorization.domain.PermissionType;
-import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.community.application.port.in.query.dto.PostInfo;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
