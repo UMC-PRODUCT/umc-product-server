@@ -16,7 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "submission")
+@Table(name = "challenger_workbook_submission")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Submission extends BaseEntity {
