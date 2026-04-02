@@ -98,7 +98,7 @@ public class MemberSearchService implements SearchMemberUseCase {
             return Map.of();
         }
 
-        return getChallengerRoleUseCase.getRoleTypesByChallengerIds(challengerIds);
+        return getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(challengerIds);
     }
 
     private Map<Long, Long> loadGisuGenerationMap(List<Challenger> challengers) {

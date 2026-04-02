@@ -1,5 +1,6 @@
 package com.umc.product.authorization.application.port.in.query;
 
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import java.util.List;
@@ -13,97 +14,44 @@ import java.util.Set;
  */
 public interface GetChallengerRoleUseCase {
 
-    ChallengerRoleInfo byId(Long challengerRoleId);
+    ChallengerRoleInfo getById(Long challengerRoleId);
 
-    List<ChallengerRoleInfo> getRoles(Long memberId);
-
-
-    /**
-     * 사용자의 모든 역할 타입을 조회
-     *
-     * @param memberId 사용자 ID
-     * @return 역할 타입 리스트 (중복 제거됨)
-     */
-    List<ChallengerRoleType> getRoleTypes(Long memberId);
+    List<ChallengerRoleInfo> findAllByMemberId(Long memberId);
 
     /**
-     * 특정 역할을 가지고 있는지 확인
-     *
-     * @param memberId 사용자 ID
-     * @param role     확인할 역할
-     * @return 역할이 있으면 true
+     * @deprecated {@link #isCentralCoreInGisu}를 사용해주세요.
      */
-    boolean hasRole(Long memberId, ChallengerRoleType role);
-
-    /**
-     * 여러 역할 중 하나라도 가지고 있는지 확인
-     *
-     * @param memberId 사용자 ID
-     * @param roles    확인할 역할들
-     * @return 역할 중 하나라도 있으면 true
-     */
-    boolean hasAnyRole(Long memberId, ChallengerRoleType... roles);
-
-    /**
-     * 모든 역할을 가지고 있는지 확인
-     *
-     * @param memberId 사용자 ID
-     * @param roles    확인할 역할들
-     * @return 모든 역할을 가지고 있으면 true
-     */
-    boolean hasAllRoles(Long memberId, ChallengerRoleType... roles);
-
-    /**
-     * 중앙운영사무국 총괄단 여부 (총괄, 부총괄)
-     *
-     * @param memberId 사용자 ID
-     * @return 총괄단이면 true
-     */
+    @Deprecated(since = "v1.5.0", forRemoval = true)
     boolean isCentralCore(Long memberId);
 
     /**
-     * 중앙운영사무국 멤버 여부 (총괄단, 운영국원, 교육국원)
-     *
-     * @param memberId 사용자 ID
-     * @return 중앙 멤버면 true
+     * @deprecated {@link #isCentralMemberInGisu}를 사용해주세요.
      */
+    @Deprecated(since = "v1.5.0", forRemoval = true)
     boolean isCentralMember(Long memberId);
 
     /**
-     * 특정 학교의 회장단 여부 (회장, 부회장)
-     *
-     * @param memberId 사용자 ID
-     * @param schoolId 학교 ID
-     * @return 해당 학교 회장단이면 true
+     * @deprecated {@link #isSchoolCoreInGisu}를 사용해주세요.
      */
+    @Deprecated(since = "v1.5.0", forRemoval = true)
     boolean isSchoolCore(Long memberId, Long schoolId);
 
     /**
-     * 특정 학교의 관리자 여부 (회장단, 파트장, 기타 운영진)
-     *
-     * @param memberId 사용자 ID
-     * @param schoolId 학교 ID
-     * @return 해당 학교 관리자면 true
+     * @deprecated {@link #isSchoolAdminInGisu}를 사용해주세요.
      */
+    @Deprecated(since = "v1.5.0", forRemoval = true)
     boolean isSchoolAdmin(Long memberId, Long schoolId);
 
     /**
-     * 특정 지부의 지부장 여부
-     *
-     * @param memberId  사용자 ID
-     * @param chapterId 지부 ID
-     * @return 해당 지부 지부장이면 true
+     * @deprecated {@link #isChapterPresidentInGisu}를 사용해주세요.
      */
     boolean isChapterPresident(Long memberId, Long chapterId);
 
     /**
-     * 특정 기수에서의 역할 타입 조회
-     *
-     * @param memberId 사용자 ID
-     * @param gisuId   기수 ID
-     * @return 해당 기수에서의 역할 타입 리스트
+     * RoleType만 가져오는게 아니라, 전체 {@link com.umc.product.authorization.domain.ChallengerRole}을 가져오도록 구성해서 사용해주세요.
      */
-    List<ChallengerRoleType> getRolesByGisu(Long memberId, Long gisuId);
+    @Deprecated(since = "v1.5.0", forRemoval = true)
+    List<ChallengerRoleType> getAllRoleTypesByMemberIdAndGisuId(Long memberId, Long gisuId);
 
     /**
      * 특정 학교에서의 역할 타입 조회
@@ -112,16 +60,8 @@ public interface GetChallengerRoleUseCase {
      * @param schoolId 학교 ID
      * @return 해당 학교에서의 역할 타입 리스트
      */
-    List<ChallengerRoleType> getRolesBySchool(Long memberId, Long schoolId);
-
-    /**
-     * 특정 지부에서의 역할 타입 조회
-     *
-     * @param memberId  사용자 ID
-     * @param chapterId 지부 ID
-     * @return 해당 지부에서의 역할 타입 리스트
-     */
-    List<ChallengerRoleType> getRolesByChapter(Long memberId, Long chapterId);
+    @Deprecated(since = "v1.5.0", forRemoval = true)
+    List<ChallengerRoleType> getAllRoleTypesByMemberIdAndSchoolId(Long memberId, Long schoolId);
 
     /**
      * 특정 기수에서 특정 역할을 가지고 있는지 확인
@@ -131,7 +71,7 @@ public interface GetChallengerRoleUseCase {
      * @param role     확인할 역할
      * @return 해당 기수에서 역할이 있으면 true
      */
-    boolean hasRoleInGisu(Long memberId, Long gisuId, ChallengerRoleType role);
+    boolean hasRoleTypeInGisu(Long memberId, Long gisuId, ChallengerRoleType role);
 
     /**
      * 특정 기수에서 여러 역할 중 하나라도 가지고 있는지 확인
@@ -141,7 +81,7 @@ public interface GetChallengerRoleUseCase {
      * @param roles    확인할 역할들
      * @return 해당 기수에서 역할 중 하나라도 있으면 true
      */
-    boolean hasAnyRoleInGisu(Long memberId, Long gisuId, ChallengerRoleType... roles);
+    boolean hasAnyRoleTypeInGisu(Long memberId, Long gisuId, ChallengerRoleType... roles);
 
     /**
      * 특정 기수에서 모든 역할을 가지고 있는지 확인
@@ -151,7 +91,7 @@ public interface GetChallengerRoleUseCase {
      * @param roles    확인할 역할들
      * @return 해당 기수에서 모든 역할을 가지고 있으면 true
      */
-    boolean hasAllRolesInGisu(Long memberId, Long gisuId, ChallengerRoleType... roles);
+    boolean hasAllRoleTypeInGisu(Long memberId, Long gisuId, ChallengerRoleType... roles);
 
     /**
      * 특정 기수에서 중앙운영사무국 총괄단 여부 (총괄, 부총괄)
@@ -207,7 +147,7 @@ public interface GetChallengerRoleUseCase {
      * @param challengerIds 챌린저 ID 목록
      * @return 챌린저 ID → 역할 타입 리스트
      */
-    Map<Long, List<ChallengerRoleType>> getRoleTypesByChallengerIds(Set<Long> challengerIds);
+    Map<Long, List<ChallengerRoleType>> getAllRoleTypesByChallengerIds(Set<Long> challengerIds);
 
     /**
      * 특정 기수에서 멤버가 파트장으로 담당하는 파트 목록을 조회합니다.
@@ -216,5 +156,5 @@ public interface GetChallengerRoleUseCase {
      *
      * @return responsiblePart가 설정된 역할에서 추출한 파트 Set. 없으면 빈 Set.
      */
-    Set<ChallengerPart> getResponsiblePartsByMemberAndGisu(Long memberId, Long gisuId);
+    Set<ChallengerPart> getAllResponsiblePartByMemberIdAndGisuId(Long memberId, Long gisuId);
 }

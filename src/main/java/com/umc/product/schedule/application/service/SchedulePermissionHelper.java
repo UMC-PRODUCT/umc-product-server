@@ -37,7 +37,7 @@ public class SchedulePermissionHelper {
      * 해당 기수에서 운영진(ChallengerRoleType이 있는 사람)인지 확인
      */
     public boolean isStaffInGisu(Long memberId, Long gisuId) {
-        return !getChallengerRoleUseCase.getRolesByGisu(memberId, gisuId).isEmpty();
+        return !getChallengerRoleUseCase.getAllRoleTypesByMemberIdAndGisuId(memberId, gisuId).isEmpty();
     }
 
     /**

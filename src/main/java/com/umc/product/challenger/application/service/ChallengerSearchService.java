@@ -176,7 +176,7 @@ public class ChallengerSearchService implements SearchChallengerUseCase {
             return Map.of();
         }
 
-        return getChallengerRoleUseCase.getRoleTypesByChallengerIds(ids);
+        return getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(ids);
     }
 
     private Map<Long, Long> loadGisuGenerationMap(List<ChallengerSearchRow> rows) {

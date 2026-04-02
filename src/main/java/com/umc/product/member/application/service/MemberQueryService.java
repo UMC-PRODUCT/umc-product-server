@@ -1,7 +1,7 @@
 package com.umc.product.member.application.service;
 
-import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.member.application.port.in.query.GetMemberProfileUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -47,7 +47,7 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
                 : getFileUseCase.getById(profileImageId).fileLink();
 
         // 역할 채워넣기
-        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.getRoles(member.getId());
+        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(member.getId());
 
         return MemberInfo.from(member, schoolName, profileImageLink, roles);
     }

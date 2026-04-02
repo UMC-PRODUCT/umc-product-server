@@ -41,7 +41,7 @@ public class SchoolAccessContextService implements GetSchoolAccessContextUseCase
         // 파트장/기타 운영진: 본인 담당 파트만 조회 가능
         ChallengerPart part = getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, activeGisuId, schoolId)
             ? null
-            : getChallengerRoleUseCase.getResponsiblePartsByMemberAndGisu(memberId, activeGisuId)
+            : getChallengerRoleUseCase.getAllResponsiblePartByMemberIdAndGisuId(memberId, activeGisuId)
                 .stream().findFirst().orElse(null);
 
         return new SchoolAccessContext(schoolId, part);

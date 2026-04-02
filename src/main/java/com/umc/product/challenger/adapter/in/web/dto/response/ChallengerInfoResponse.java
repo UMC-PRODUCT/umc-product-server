@@ -1,7 +1,7 @@
 package com.umc.product.challenger.adapter.in.web.dto.response;
 
 import com.umc.product.authorization.adapter.in.web.dto.response.ChallengerRoleResponse;
-import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerPointInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;

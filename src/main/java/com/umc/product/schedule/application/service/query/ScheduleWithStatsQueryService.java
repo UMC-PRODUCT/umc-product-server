@@ -171,7 +171,7 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
         }
 
         // 3. 학교 파트장: 본인이 파트장인 스터디 그룹 일정 + 본인 생성 일정
-        if (getChallengerRoleUseCase.hasRoleInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER)) {
+        if (getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER)) {
             return loadSchedulePort.findSchedulesForPartLeader(currentChallengerId, gisuId);
         }
 

@@ -140,7 +140,7 @@ class GetMemberUseCaseTest {
                 .willReturn(createSchoolDetailInfo(1L, "한양대학교ERICA"));
             given(getFileUseCase.getById("profile_img_1"))
                 .willReturn(createFileInfo("profile_img_1", "https://cdn.example.com/profile.jpg"));
-            given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
+            given(getChallengerRoleUseCase.findAllByMemberId(1L)).willReturn(List.of());
 
             // when
             MemberInfo result = memberQueryService.getById(1L);
@@ -161,7 +161,7 @@ class GetMemberUseCaseTest {
             given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
             given(getFileUseCase.getById("profile_img_1"))
                 .willReturn(createFileInfo("profile_img_1", "https://cdn.example.com/profile.jpg"));
-            given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
+            given(getChallengerRoleUseCase.findAllByMemberId(1L)).willReturn(List.of());
 
             // when
             MemberInfo result = memberQueryService.getById(1L);
@@ -179,7 +179,7 @@ class GetMemberUseCaseTest {
             given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
             given(getSchoolUseCase.getSchoolDetail(1L))
                 .willReturn(createSchoolDetailInfo(1L, "한양대학교ERICA"));
-            given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
+            given(getChallengerRoleUseCase.findAllByMemberId(1L)).willReturn(List.of());
 
             // when
             MemberInfo result = memberQueryService.getById(1L);
@@ -196,7 +196,7 @@ class GetMemberUseCaseTest {
             // given
             Member member = createMember(1L, null, null);
             given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
-            given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
+            given(getChallengerRoleUseCase.findAllByMemberId(1L)).willReturn(List.of());
 
             // when
             MemberInfo result = memberQueryService.getById(1L);
@@ -231,7 +231,7 @@ class GetMemberUseCaseTest {
             Member member = createMember(1L, 1L, null);
             given(loadMemberPort.findById(1L)).willReturn(Optional.of(member));
             given(getSchoolUseCase.getSchoolDetail(1L)).willReturn(null);
-            given(getChallengerRoleUseCase.getRoles(1L)).willReturn(List.of());
+            given(getChallengerRoleUseCase.findAllByMemberId(1L)).willReturn(List.of());
 
             // when
             MemberInfo result = memberQueryService.getById(1L);

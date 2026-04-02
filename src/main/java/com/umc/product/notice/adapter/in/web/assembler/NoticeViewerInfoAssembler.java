@@ -57,7 +57,7 @@ public class NoticeViewerInfoAssembler {
             .map(challenger -> {
                 Set<ChallengerPart> parts = new HashSet<>();
                 parts.add(challenger.part());
-                parts.addAll(getChallengerRoleUseCase.getResponsiblePartsByMemberAndGisu(memberId, gisuId));
+                parts.addAll(getChallengerRoleUseCase.getAllResponsiblePartByMemberIdAndGisuId(memberId, gisuId));
                 return parts;
             })
             .orElse(Set.of());

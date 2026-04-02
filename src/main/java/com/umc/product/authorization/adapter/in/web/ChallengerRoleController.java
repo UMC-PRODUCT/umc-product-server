@@ -7,8 +7,8 @@ import com.umc.product.authorization.adapter.in.web.dto.response.CreateChallenge
 import com.umc.product.authorization.application.port.in.command.ManageChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.command.dto.CreateChallengerRoleCommand;
 import com.umc.product.authorization.application.port.in.command.dto.DeleteChallengerRoleCommand;
-import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
@@ -61,7 +61,7 @@ public class ChallengerRoleController {
     public ChallengerRoleResponse getChallengerRole(
         @PathVariable Long challengerRoleId
     ) {
-        ChallengerRoleInfo challengerRoleInfo = getChallengerRoleUseCase.byId(challengerRoleId);
+        ChallengerRoleInfo challengerRoleInfo = getChallengerRoleUseCase.getById(challengerRoleId);
 
         return ChallengerRoleResponse.from(
             challengerRoleInfo, getGisuInfo(challengerRoleInfo.gisuId())

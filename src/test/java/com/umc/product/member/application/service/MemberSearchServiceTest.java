@@ -119,7 +119,7 @@ class MemberSearchServiceTest {
 
             given(searchMemberPort.search(any(), any())).willReturn(page);
             given(getMemberUseCase.findAllByIds(anySet())).willReturn(profiles);
-            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
@@ -139,7 +139,7 @@ class MemberSearchServiceTest {
 
             given(searchMemberPort.search(any(), any())).willReturn(page);
             given(getMemberUseCase.findAllByIds(anySet())).willReturn(profiles);
-            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
@@ -164,7 +164,7 @@ class MemberSearchServiceTest {
 
             given(searchMemberPort.search(any(), any())).willReturn(page);
             given(getMemberUseCase.findAllByIds(anySet())).willReturn(profiles);
-            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of(
+            given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of(
                 1L, List.of(ChallengerRoleType.CENTRAL_PRESIDENT),
                 3L, List.of(ChallengerRoleType.SCHOOL_PRESIDENT, ChallengerRoleType.SCHOOL_PART_LEADER)
             ));
@@ -191,7 +191,7 @@ class MemberSearchServiceTest {
 
             given(searchMemberPort.search(any(), any())).willReturn(page);
             given(getMemberUseCase.findAllByIds(anySet())).willReturn(profiles);
-            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
@@ -217,7 +217,7 @@ class MemberSearchServiceTest {
 
             given(searchMemberPort.search(any(), any())).willReturn(page);
             given(getMemberUseCase.findAllByIds(anySet())).willReturn(Map.of());
-            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when
@@ -255,7 +255,7 @@ class MemberSearchServiceTest {
 
             given(searchMemberPort.search(any(), any())).willReturn(page);
             given(getMemberUseCase.findAllByIds(anySet())).willReturn(profiles);
-            given(getChallengerRoleUseCase.getRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
+            given(getChallengerRoleUseCase.getAllRoleTypesByChallengerIds(anySet())).willReturn(Map.of());
             given(getGisuUseCase.getByIds(anySet())).willReturn(defaultGisuInfos);
 
             // when

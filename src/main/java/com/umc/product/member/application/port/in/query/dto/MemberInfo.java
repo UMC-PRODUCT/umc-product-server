@@ -1,6 +1,6 @@
 package com.umc.product.member.application.port.in.query.dto;
 
-import com.umc.product.authorization.application.port.in.query.ChallengerRoleInfo;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.domain.Member;
 import java.util.List;
