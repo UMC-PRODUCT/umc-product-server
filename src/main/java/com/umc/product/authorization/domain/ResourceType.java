@@ -56,6 +56,8 @@ public enum ResourceType {
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
     CHALLENGER_RECORD("challenger_record", "챌린저 코드",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
+    FCM("fcm", "FCM 알람 관련",
+        Set.of(PermissionType.DELETE)),
     ;
 
     private final String code;
