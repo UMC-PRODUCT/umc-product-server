@@ -9,11 +9,11 @@ import org.springframework.data.domain.Pageable;
  */
 public interface GetScrappedPostsUseCase {
     /**
-     * 챌린저가 스크랩한 게시글 목록 조회
+     * 멤버가 스크랩한 게시글 목록 조회
      *
-     * @param challengerId 챌린저 ID
-     * @param pageable     페이지네이션
+     * @param memberId 멤버 ID
+     * @param pageable 페이지네이션
      * @return 게시글 목록
      */
-    Page<PostInfo> getScrappedPosts(Long challengerId, Pageable pageable);
+    Page<PostInfo> getScrappedPosts(Long memberId, Pageable pageable);
 }

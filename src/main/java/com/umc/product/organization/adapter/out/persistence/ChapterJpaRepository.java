@@ -24,5 +24,7 @@ public interface ChapterJpaRepository extends Repository<Chapter, Long> {
 
     List<Chapter> findByGisuId(Long gisuId);
 
+    boolean existsByGisuId(Long gisuId);
+
     void delete(Chapter chapter);
 }

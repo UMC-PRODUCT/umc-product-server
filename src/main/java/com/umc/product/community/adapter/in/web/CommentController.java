@@ -5,6 +5,9 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWi
 import com.umc.product.community.adapter.in.web.dto.request.CreateCommentRequest;
 import com.umc.product.community.adapter.in.web.dto.response.CommentResponse;
 import com.umc.product.community.adapter.in.web.dto.response.LikeResponse;
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.community.application.port.in.command.comment.CreateCommentUseCase;
 import com.umc.product.community.application.port.in.command.comment.DeleteCommentUseCase;
 import com.umc.product.community.application.port.in.command.comment.ToggleCommentLikeUseCase;
@@ -51,13 +54,23 @@ public class CommentController {
 
     @GetMapping
     @Operation(summary = "댓글 목록 조회", description = "게시글의 댓글 목록을 조회합니다.")
-    public List<CommentResponse> getComments(@PathVariable Long postId) {
-        return getCommentListUseCase.getComments(postId).stream()
+    public List<CommentResponse> getComments(
+        @PathVariable Long postId,
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        Long challengerId = null;
+        if (memberPrincipal != null) {
+            Long memberId = memberPrincipal.getMemberId();
+            challengerId = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId).challengerId();
+        }
+
+        return getCommentListUseCase.getComments(postId, challengerId).stream()
             .map(CommentResponse::from)
             .toList();
     }
 
     @DeleteMapping("/{commentId}")
+    @CheckAccess(resourceType = ResourceType.COMMUNITY_COMMENT, resourceId = "#commentId", permission = PermissionType.DELETE, message = "본인의 댓글만 삭제할 수 있습니다.")
     @Operation(summary = "댓글 삭제", description = "본인이 작성한 댓글을 삭제합니다.")
     public void deleteComment(
         @PathVariable Long postId,

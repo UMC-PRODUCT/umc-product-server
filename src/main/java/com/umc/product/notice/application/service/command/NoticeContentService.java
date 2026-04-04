@@ -24,6 +24,7 @@ import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
 import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
 import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -127,14 +128,17 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
     @Override
     public void removeContentsByNoticeId(Long noticeId, Long memberId) {
+        // bulk delete(clearAutomatically=true) 이전에 먼저 조회해야
+        // em.clear() 이후 생성된 프록시로 인한 TransientObjectException 방지
+        Optional<NoticeVote> voteOpt = loadNoticeVotePort.findVoteByNoticeId(noticeId);
+
         saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
         saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
 
-        loadNoticeVotePort.findVoteByNoticeId(noticeId)
-            .ifPresent(vote -> {
-                saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
-                deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
-            });
+        voteOpt.ifPresent(vote -> {
+            saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
+            deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
+        });
     }
 
     @Override

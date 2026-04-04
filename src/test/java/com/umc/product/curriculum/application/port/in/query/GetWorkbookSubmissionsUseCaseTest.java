@@ -33,16 +33,13 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
+class GetChallengerWorkbookUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
-    private GetWorkbookSubmissionsUseCase getWorkbookSubmissionsUseCase;
+    private GetChallengerWorkbookUseCase getChallengerWorkbookUseCase;
 
     @Autowired
     private GetSchoolAccessContextUseCase getSchoolAccessContextUseCase;
-
-    @Autowired
-    private GetStudyGroupsForFilterUseCase getStudyGroupsForFilterUseCase;
 
     @Autowired
     private GisuFixture gisuFixture;
@@ -81,7 +78,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
 
         // when
         GetWorkbookSubmissionsQuery query = new GetWorkbookSubmissionsQuery(null, 1, null, null, null, 20);
-        List<WorkbookSubmissionInfo> result = getWorkbookSubmissionsUseCase.getSubmissions(query);
+        List<WorkbookSubmissionInfo> result = getChallengerWorkbookUseCase.getSubmissions(query);
 
         // then
         assertThat(result).hasSize(1);
@@ -111,7 +108,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
 
         // when
         GetWorkbookSubmissionsQuery query = new GetWorkbookSubmissionsQuery(school1.getId(), 1, null, null, null, 20);
-        List<WorkbookSubmissionInfo> result = getWorkbookSubmissionsUseCase.getSubmissions(query);
+        List<WorkbookSubmissionInfo> result = getChallengerWorkbookUseCase.getSubmissions(query);
 
         // then
         assertThat(result).hasSize(1);
@@ -144,7 +141,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         // when
         GetWorkbookSubmissionsQuery query = new GetWorkbookSubmissionsQuery(null, 1, studyGroup.getId(), null, null,
             20);
-        List<WorkbookSubmissionInfo> result = getWorkbookSubmissionsUseCase.getSubmissions(query);
+        List<WorkbookSubmissionInfo> result = getChallengerWorkbookUseCase.getSubmissions(query);
 
         // then
         assertThat(result).hasSize(2);
@@ -168,7 +165,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
 
         // when - 첫 페이지 (size=2)
         GetWorkbookSubmissionsQuery firstQuery = new GetWorkbookSubmissionsQuery(null, 1, null, null, null, 2);
-        List<WorkbookSubmissionInfo> firstPage = getWorkbookSubmissionsUseCase.getSubmissions(firstQuery);
+        List<WorkbookSubmissionInfo> firstPage = getChallengerWorkbookUseCase.getSubmissions(firstQuery);
 
         // then - fetchSize(3)만큼 조회
         assertThat(firstPage).hasSize(3);
@@ -176,7 +173,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         // when - 두 번째 페이지
         Long cursor = firstPage.get(1).challengerWorkbookId();
         GetWorkbookSubmissionsQuery secondQuery = new GetWorkbookSubmissionsQuery(null, 1, null, null, cursor, 2);
-        List<WorkbookSubmissionInfo> secondPage = getWorkbookSubmissionsUseCase.getSubmissions(secondQuery);
+        List<WorkbookSubmissionInfo> secondPage = getChallengerWorkbookUseCase.getSubmissions(secondQuery);
 
         // then
         assertThat(secondPage).hasSize(3);
@@ -201,7 +198,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
         studyGroupFixture.스터디그룹("웹 1조", gisu, ChallengerPart.WEB, challenger3.getId());
 
         // when
-        List<StudyGroupFilterInfo> result = getStudyGroupsForFilterUseCase.getStudyGroupsForFilter(
+        List<StudyGroupFilterInfo> result = getChallengerWorkbookUseCase.getStudyGroupsForFilter(
             school.getId(), ChallengerPart.SPRINGBOOT);
 
         // then
@@ -213,7 +210,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
     @Test
     void 스터디_그룹이_없으면_빈_목록을_반환한다() {
         // when
-        List<StudyGroupFilterInfo> result = getStudyGroupsForFilterUseCase.getStudyGroupsForFilter(
+        List<StudyGroupFilterInfo> result = getChallengerWorkbookUseCase.getStudyGroupsForFilter(
             999L, ChallengerPart.SPRINGBOOT);
 
         // then
@@ -236,7 +233,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
             challenger.getId(), workbook.getId(), "https://github.com/user/repo");
 
         // when
-        WorkbookSubmissionDetailInfo result = getWorkbookSubmissionsUseCase.getSubmissionDetail(
+        WorkbookSubmissionDetailInfo result = getChallengerWorkbookUseCase.getSubmissionDetail(
             challengerWorkbook.getId());
 
         // then
@@ -260,7 +257,7 @@ class GetWorkbookSubmissionsUseCaseTest extends UseCaseTestSupport {
             challenger.getId(), workbook.getId(), WorkbookStatus.PENDING);
 
         // when
-        WorkbookSubmissionDetailInfo result = getWorkbookSubmissionsUseCase.getSubmissionDetail(
+        WorkbookSubmissionDetailInfo result = getChallengerWorkbookUseCase.getSubmissionDetail(
             challengerWorkbook.getId());
 
         // then
