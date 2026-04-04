@@ -33,7 +33,14 @@ public class FcmController implements FcmControllerApi {
 
     @Override
     @DeleteMapping("/topics/legacy")
-    public void unsubscribeLegacyTopics(@CurrentMember MemberPrincipal memberPrincipal) {
+    public void unsubscribeAllMemberLegacyTopics(@CurrentMember MemberPrincipal memberPrincipal) {
         manageFcmTopicUseCase.unsubscribeLegacyTopics(memberPrincipal.getMemberId());
     }
+
+    @Override
+    public void resubscribeAllMemberLegacyTopics() {
+        manageFcmTopicUseCase.resubscribeAllLegacyTopics();
+    }
+
+
 }
