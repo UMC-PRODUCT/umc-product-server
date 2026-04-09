@@ -8,7 +8,7 @@ import com.umc.product.community.application.port.in.query.dto.TrophySearchQuery
 import com.umc.product.community.application.port.out.trophy.LoadTrophyPort;
 import com.umc.product.community.domain.Trophy;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -42,7 +42,7 @@ public class TrophyQueryService implements GetTrophyListUseCase {
             .collect(Collectors.toSet());
 
         // 2. 챌린저 ID -> 챌린저 정보 매핑 (1 query)
-        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getChallengerPublicInfoByIds(challengerIds);
+        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getAllByIdsAsMap(challengerIds);
 
         // 3. 멤버 ID 목록 추출
         Set<Long> memberIds = challengerInfoMap.values().stream()
@@ -50,7 +50,7 @@ public class TrophyQueryService implements GetTrophyListUseCase {
             .collect(Collectors.toSet());
 
         // 4. 멤버 ID -> 멤버 프로필 매핑 (1 query, 학교명 포함)
-        Map<Long, MemberInfo> memberProfileMap = getMemberUseCase.getProfiles(memberIds);
+        Map<Long, MemberInfo> memberProfileMap = getMemberUseCase.findAllByIds(memberIds);
 
         // 5. TrophyInfo로 변환
         return trophies.stream()

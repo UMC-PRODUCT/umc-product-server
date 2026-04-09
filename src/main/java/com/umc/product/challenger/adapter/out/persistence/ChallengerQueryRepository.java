@@ -5,6 +5,7 @@ import static com.umc.product.challenger.domain.QChallengerPoint.challengerPoint
 import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.organization.domain.QChapter.chapter;
 import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
+import static com.umc.product.organization.domain.QGisu.gisu;
 import static com.umc.product.organization.domain.QSchool.school;
 import static java.util.Objects.requireNonNull;
 
@@ -27,6 +28,7 @@ import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.member.domain.QMember;
+import com.umc.product.organization.domain.QGisu;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -146,20 +148,21 @@ public class ChallengerQueryRepository {
     }
 
     /**
-     * 각 멤버별 가장 최근 기수(gisuId 최대값)의 챌린저 조회
-     * <p>
-     * SQL: SELECT c.* FROM challenger c WHERE c.gisu_id = (SELECT MAX(sub.gisu_id) FROM challenger sub WHERE
-     * sub.member_id = c.member_id)
+     * 모든 회원의 가장 최근 기수 챌린저 엔티티 조회
      */
-    public List<Challenger> findLatestPerMember() {
-        QChallenger sub = new QChallenger("sub");
+    public List<Challenger> getAllLatestGisuPerMember() {
+        QChallenger subChallenger = new QChallenger("subChallenger");
+        QGisu subGisu = new QGisu("subGisu");
 
         return queryFactory
             .selectFrom(challenger)
-            .where(challenger.gisuId.eq(
-                JPAExpressions.select(sub.gisuId.max())
-                    .from(sub)
-                    .where(sub.memberId.eq(challenger.memberId))
+            .join(gisu).on(gisu.id.eq(challenger.gisuId))
+            .where(gisu.generation.eq(
+                // SubQuery: member에 gisu를 다시 join한 subquery, 거기서 gisu.generation이 max인 것
+                JPAExpressions.select(subGisu.generation.max())
+                    .from(subChallenger)
+                    .join(subGisu).on(subGisu.id.eq(subChallenger.gisuId))
+                    .where(subChallenger.memberId.eq(challenger.memberId))
             ))
             .fetch();
     }

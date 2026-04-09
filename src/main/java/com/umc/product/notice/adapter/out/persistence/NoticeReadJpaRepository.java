@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 public interface NoticeReadJpaRepository extends JpaRepository<NoticeRead, Long> {
     List<NoticeRead> findAllByNoticeId(Long noticeId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM NoticeRead nr WHERE nr.notice.id = :noticeId")
     void deleteAllByNoticeId(@Param("noticeId") Long noticeId);
 

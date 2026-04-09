@@ -14,7 +14,7 @@ import com.umc.product.challenger.domain.ChallengerRecord;
 import com.umc.product.challenger.domain.exception.ChallengerDomainException;
 import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
 import com.umc.product.notification.domain.WebhookPlatform;
@@ -85,7 +85,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
                 .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.NO_CHALLENGER_IN_MEMBER_GISU))
                 .getId();
 
-            MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(memberId);
+            MemberInfo memberInfo = getMemberUseCase.getById(memberId);
 
             manageChallengerRoleUseCase.createChallengerRole(
                 CreateChallengerRoleCommand.builder()
@@ -114,7 +114,7 @@ public class ChallengerRecordCommandService implements ManageChallengerRecordUse
 
         // 챌린저 기록 추가하기
         else {
-            MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(memberId);
+            MemberInfo memberInfo = getMemberUseCase.getById(memberId);
             record.validateMember(memberInfo.name(), memberInfo.schoolId());
 
             // 해당 기수에 챌린저 기록이 없는지 확인

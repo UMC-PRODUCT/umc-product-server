@@ -3,7 +3,7 @@ package com.umc.product.notification.application.service;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notification.application.port.in.ManageFcmTopicUseCase;
 import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
@@ -33,7 +33,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
 
     @Override
     public void subscribeTopics(Long challengerId) {
-        ChallengerInfo challenger = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        ChallengerInfo challenger = getChallengerUseCase.getById(challengerId);
 
         FcmToken fcmToken = loadFcmPort.findOptionalByMemberId(challenger.memberId())
             .orElse(null);
@@ -54,7 +54,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
 
     @Override
     public void unsubscribeTopics(Long challengerId) {
-        ChallengerInfo challenger = getChallengerUseCase.getChallengerPublicInfo(challengerId);
+        ChallengerInfo challenger = getChallengerUseCase.getById(challengerId);
 
         FcmToken fcmToken = loadFcmPort.findOptionalByMemberId(challenger.memberId())
             .orElse(null);
@@ -74,7 +74,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
 
     @Override
     public void subscribeAllTopicsByMemberId(Long memberId) {
-        List<ChallengerInfo> challengers = getChallengerUseCase.getMemberChallengerList(memberId);
+        List<ChallengerInfo> challengers = getChallengerUseCase.getAllByMemberId(memberId);
         for (ChallengerInfo challenger : challengers) {
             subscribeTopics(challenger.challengerId());
         }
@@ -82,7 +82,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
 
     @Override
     public void unsubscribeAllTopicsByMemberId(Long memberId) {
-        List<ChallengerInfo> challengers = getChallengerUseCase.getMemberChallengerList(memberId);
+        List<ChallengerInfo> challengers = getChallengerUseCase.getAllByMemberId(memberId);
         for (ChallengerInfo challenger : challengers) {
             unsubscribeTopics(challenger.challengerId());
         }
@@ -94,7 +94,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
             return;
         }
 
-        List<ChallengerInfo> challengers = getChallengerUseCase.getMemberChallengerList(memberId);
+        List<ChallengerInfo> challengers = getChallengerUseCase.getAllByMemberId(memberId);
         List<String> tokens = List.of(fcmToken);
 
         for (ChallengerInfo challenger : challengers) {
@@ -111,7 +111,7 @@ public class FcmTopicService implements ManageFcmTopicUseCase {
      * 챌린저 정보를 기반으로 구독해야 할 토픽 목록을 생성 챌린저는 반드시 기수/학교/지부/파트 정보가 모두 존재해야 한다.
      */
     private List<String> resolveTopicsForChallenger(ChallengerInfo challenger) {
-        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challenger.memberId());
+        MemberInfo memberInfo = getMemberUseCase.getById(challenger.memberId());
 
         if (memberInfo.schoolId() == null) {
             throw new OrganizationDomainException(OrganizationErrorCode.SCHOOL_NOT_FOUND);

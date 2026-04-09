@@ -143,7 +143,7 @@ public class ChallengerCommandService implements ManageChallengerUseCase {
     public void grantChallengerPointBulk(List<GrantChallengerPointCommand> commands) {
         validateEnvIsNotProduction();
 
-        List<Challenger> challengers = loadChallengerPort.findByIdIn(
+        List<Challenger> challengers = loadChallengerPort.getAllByIds(
             commands.stream()
                 .map(GrantChallengerPointCommand::challengerId)
                 .collect(Collectors.toSet())

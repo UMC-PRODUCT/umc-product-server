@@ -8,7 +8,6 @@ import com.umc.product.challenger.application.port.out.SaveChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
-import com.umc.product.member.application.port.in.query.dto.SearchMemberItemInfo;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberQuery;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberResult;
 import com.umc.product.member.application.port.out.SaveMemberPort;
@@ -21,7 +20,6 @@ import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.Instant;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -77,6 +75,15 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
         manageSchoolPort.save(school1);
     }
 
+    private Member saveMember(String name, String nickname, String email, Long schoolId) {
+        return saveMemberPort.save(Member.builder()
+            .name(name)
+            .nickname(nickname)
+            .email(email)
+            .schoolId(schoolId)
+            .build());
+    }
+
     @Nested
     @DisplayName("조건 없이 전체 검색")
     class NoConditionSearch {
@@ -86,14 +93,18 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
             // given
             Member member1 = saveMember("홍길동", "hong", "hong@test.com", school1.getId());
             Member member2 = saveMember("김철수", "kim", "kim@test.com", school2.getId());
-            saveChallengerPort.save(Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId()).build());
-            saveChallengerPort.save(Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId()).build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId())
+                    .build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId())
+                    .build());
 
             SearchMemberQuery query = new SearchMemberQuery(null, null, null, null, null);
             PageRequest pageable = PageRequest.of(0, 10);
 
             // when
-            SearchMemberResult result = searchMemberUseCase.search(query, pageable);
+            SearchMemberResult result = searchMemberUseCase.searchBy(query, pageable);
 
             // then
             assertThat(result.page().getContent()).hasSize(2);
@@ -104,14 +115,18 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
         void 한_회원이_여러_기수에_활동하면_각각_별도_행으로_반환된다() {
             // given
             Member member = saveMember("홍길동", "hong", "hong@test.com", school1.getId());
-            saveChallengerPort.save(Challenger.builder().memberId(member.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId()).build());
-            saveChallengerPort.save(Challenger.builder().memberId(member.getId()).part(ChallengerPart.WEB).gisuId(gisu8.getId()).build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId())
+                    .build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member.getId()).part(ChallengerPart.WEB).gisuId(gisu8.getId())
+                    .build());
 
             SearchMemberQuery query = new SearchMemberQuery(null, null, null, null, null);
             PageRequest pageable = PageRequest.of(0, 10);
 
             // when
-            SearchMemberResult result = searchMemberUseCase.search(query, pageable);
+            SearchMemberResult result = searchMemberUseCase.searchBy(query, pageable);
 
             // then
             assertThat(result.page().getContent()).hasSize(2);
@@ -129,14 +144,18 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
             // given
             Member member1 = saveMember("홍길동", "hong", "hong@test.com", school1.getId());
             Member member2 = saveMember("김철수", "kim", "kim@test.com", school1.getId());
-            saveChallengerPort.save(Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId()).build());
-            saveChallengerPort.save(Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId()).build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId())
+                    .build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId())
+                    .build());
 
             SearchMemberQuery query = new SearchMemberQuery("홍길동", null, null, null, null);
             PageRequest pageable = PageRequest.of(0, 10);
 
             // when
-            SearchMemberResult result = searchMemberUseCase.search(query, pageable);
+            SearchMemberResult result = searchMemberUseCase.searchBy(query, pageable);
 
             // then
             assertThat(result.page().getContent()).hasSize(1);
@@ -148,14 +167,18 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
             // given
             Member member1 = saveMember("홍길동", "hong", "hong@umc.com", school1.getId());
             Member member2 = saveMember("김철수", "kim", "kim@test.com", school1.getId());
-            saveChallengerPort.save(Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId()).build());
-            saveChallengerPort.save(Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId()).build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId())
+                    .build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId())
+                    .build());
 
             SearchMemberQuery query = new SearchMemberQuery("umc.com", null, null, null, null);
             PageRequest pageable = PageRequest.of(0, 10);
 
             // when
-            SearchMemberResult result = searchMemberUseCase.search(query, pageable);
+            SearchMemberResult result = searchMemberUseCase.searchBy(query, pageable);
 
             // then
             assertThat(result.page().getContent()).hasSize(1);
@@ -167,14 +190,18 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
             // given
             Member member1 = saveMember("홍길동", "hong", "hong@test.com", school1.getId());
             Member member2 = saveMember("김철수", "kim", "kim@test.com", school2.getId());
-            saveChallengerPort.save(Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId()).build());
-            saveChallengerPort.save(Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId()).build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId())
+                    .build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId())
+                    .build());
 
             SearchMemberQuery query = new SearchMemberQuery("ERICA", null, null, null, null);
             PageRequest pageable = PageRequest.of(0, 10);
 
             // when
-            SearchMemberResult result = searchMemberUseCase.search(query, pageable);
+            SearchMemberResult result = searchMemberUseCase.searchBy(query, pageable);
 
             // then
             assertThat(result.page().getContent()).hasSize(1);
@@ -185,13 +212,15 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
         void 검색_결과가_없으면_빈_페이지를_반환한다() {
             // given
             Member member = saveMember("홍길동", "hong", "hong@test.com", school1.getId());
-            saveChallengerPort.save(Challenger.builder().memberId(member.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId()).build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId())
+                    .build());
 
             SearchMemberQuery query = new SearchMemberQuery("존재하지않는검색어", null, null, null, null);
             PageRequest pageable = PageRequest.of(0, 10);
 
             // when
-            SearchMemberResult result = searchMemberUseCase.search(query, pageable);
+            SearchMemberResult result = searchMemberUseCase.searchBy(query, pageable);
 
             // then
             assertThat(result.page().getContent()).isEmpty();
@@ -208,14 +237,18 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
             // given
             Member member1 = saveMember("홍길동", "hong", "hong@test.com", school1.getId());
             Member member2 = saveMember("김철수", "kim", "kim@test.com", school1.getId());
-            saveChallengerPort.save(Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId()).build());
-            saveChallengerPort.save(Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu8.getId()).build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId())
+                    .build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu8.getId())
+                    .build());
 
             SearchMemberQuery query = new SearchMemberQuery(null, gisu7.getId(), null, null, null);
             PageRequest pageable = PageRequest.of(0, 10);
 
             // when
-            SearchMemberResult result = searchMemberUseCase.search(query, pageable);
+            SearchMemberResult result = searchMemberUseCase.searchBy(query, pageable);
 
             // then
             assertThat(result.page().getContent()).hasSize(1);
@@ -227,14 +260,18 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
             // given
             Member member1 = saveMember("홍길동", "hong", "hong@test.com", school1.getId());
             Member member2 = saveMember("김철수", "kim", "kim@test.com", school1.getId());
-            saveChallengerPort.save(Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId()).build());
-            saveChallengerPort.save(Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId()).build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId())
+                    .build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId())
+                    .build());
 
             SearchMemberQuery query = new SearchMemberQuery(null, null, ChallengerPart.WEB, null, null);
             PageRequest pageable = PageRequest.of(0, 10);
 
             // when
-            SearchMemberResult result = searchMemberUseCase.search(query, pageable);
+            SearchMemberResult result = searchMemberUseCase.searchBy(query, pageable);
 
             // then
             assertThat(result.page().getContent()).hasSize(1);
@@ -247,14 +284,18 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
             // given
             Member member1 = saveMember("홍길동", "hong", "hong@test.com", school1.getId());
             Member member2 = saveMember("김철수", "kim", "kim@test.com", school2.getId());
-            saveChallengerPort.save(Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId()).build());
-            saveChallengerPort.save(Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId()).build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId())
+                    .build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId())
+                    .build());
 
             SearchMemberQuery query = new SearchMemberQuery(null, null, null, null, school2.getId());
             PageRequest pageable = PageRequest.of(0, 10);
 
             // when
-            SearchMemberResult result = searchMemberUseCase.search(query, pageable);
+            SearchMemberResult result = searchMemberUseCase.searchBy(query, pageable);
 
             // then
             assertThat(result.page().getContent()).hasSize(1);
@@ -266,14 +307,18 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
             // given
             Member member1 = saveMember("홍길동", "hong", "hong@test.com", school1.getId()); // school1 → chapter (Scorpio)
             Member member2 = saveMember("김철수", "kim", "kim@test.com", school2.getId()); // school2 → 지부 없음
-            saveChallengerPort.save(Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId()).build());
-            saveChallengerPort.save(Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId()).build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId())
+                    .build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu7.getId())
+                    .build());
 
             SearchMemberQuery query = new SearchMemberQuery(null, null, null, chapter.getId(), null);
             PageRequest pageable = PageRequest.of(0, 10);
 
             // when
-            SearchMemberResult result = searchMemberUseCase.search(query, pageable);
+            SearchMemberResult result = searchMemberUseCase.searchBy(query, pageable);
 
             // then
             assertThat(result.page().getContent()).hasSize(1);
@@ -285,16 +330,22 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
             // given
             Member member1 = saveMember("홍길동", "hong", "hong@test.com", school1.getId());
             Member member2 = saveMember("김철수", "kim", "kim@test.com", school1.getId());
-            saveChallengerPort.save(Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId()).build());
-            saveChallengerPort.save(Challenger.builder().memberId(member1.getId()).part(ChallengerPart.WEB).gisuId(gisu8.getId()).build());
-            saveChallengerPort.save(Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu8.getId()).build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member1.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId())
+                    .build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member1.getId()).part(ChallengerPart.WEB).gisuId(gisu8.getId())
+                    .build());
+            saveChallengerPort.save(
+                Challenger.builder().memberId(member2.getId()).part(ChallengerPart.WEB).gisuId(gisu8.getId())
+                    .build());
 
             // gisu8 + WEB 파트 필터
             SearchMemberQuery query = new SearchMemberQuery(null, gisu8.getId(), ChallengerPart.WEB, null, null);
             PageRequest pageable = PageRequest.of(0, 10);
 
             // when
-            SearchMemberResult result = searchMemberUseCase.search(query, pageable);
+            SearchMemberResult result = searchMemberUseCase.searchBy(query, pageable);
 
             // then
             assertThat(result.page().getContent()).hasSize(2);
@@ -322,7 +373,7 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
             PageRequest pageable = PageRequest.of(0, 10);
 
             // when
-            SearchMemberResult result = searchMemberUseCase.search(query, pageable);
+            SearchMemberResult result = searchMemberUseCase.searchBy(query, pageable);
 
             // then
             assertThat(result.page().getContent()).hasSize(1);
@@ -330,6 +381,8 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
                 .containsExactly(ChallengerRoleType.SCHOOL_PRESIDENT);
         }
     }
+
+    // ── 헬퍼 메서드 ──
 
     @Nested
     @DisplayName("페이징")
@@ -340,7 +393,9 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
             // given
             for (int i = 1; i <= 5; i++) {
                 Member member = saveMember("회원" + i, "nick" + i, "member" + i + "@test.com", school1.getId());
-                saveChallengerPort.save(Challenger.builder().memberId(member.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId()).build());
+                saveChallengerPort.save(
+                    Challenger.builder().memberId(member.getId()).part(ChallengerPart.PLAN).gisuId(gisu7.getId())
+                        .build());
             }
 
             SearchMemberQuery query = new SearchMemberQuery(null, null, null, null, null);
@@ -348,8 +403,8 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
             PageRequest secondPage = PageRequest.of(1, 3);
 
             // when
-            SearchMemberResult firstResult = searchMemberUseCase.search(query, firstPage);
-            SearchMemberResult secondResult = searchMemberUseCase.search(query, secondPage);
+            SearchMemberResult firstResult = searchMemberUseCase.searchBy(query, firstPage);
+            SearchMemberResult secondResult = searchMemberUseCase.searchBy(query, secondPage);
 
             // then
             assertThat(firstResult.page().getContent()).hasSize(3);
@@ -360,16 +415,5 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
             assertThat(secondResult.page().getContent()).hasSize(2);
             assertThat(secondResult.page().hasNext()).isFalse();
         }
-    }
-
-    // ── 헬퍼 메서드 ──
-
-    private Member saveMember(String name, String nickname, String email, Long schoolId) {
-        return saveMemberPort.save(Member.builder()
-            .name(name)
-            .nickname(nickname)
-            .email(email)
-            .schoolId(schoolId)
-            .build());
     }
 }

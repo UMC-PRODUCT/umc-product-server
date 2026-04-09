@@ -2,8 +2,6 @@ package com.umc.product.organization.adapter.out.persistence;
 
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.organization.application.port.in.query.dto.PartSummaryInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolStudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
@@ -34,16 +32,6 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
     public StudyGroup findByName(String name) {
         return studyGroupJpaRepository.findByName(name).orElseThrow(
             () -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NOT_FOUND));
-    }
-
-    @Override
-    public List<SchoolStudyGroupInfo> findSchoolsWithStudyGroups() {
-        return studyGroupQueryRepository.findSchoolsWithStudyGroups();
-    }
-
-    @Override
-    public PartSummaryInfo findPartSummary(Long schoolId) {
-        return studyGroupQueryRepository.findPartSummary(schoolId);
     }
 
     @Override

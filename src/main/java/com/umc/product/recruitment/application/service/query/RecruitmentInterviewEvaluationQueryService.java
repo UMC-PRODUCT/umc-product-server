@@ -2,7 +2,7 @@ package com.umc.product.recruitment.application.service.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.recruitment.application.port.in.PartOption;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewAssignmentsUseCase;
 import com.umc.product.recruitment.application.port.in.query.GetInterviewEvaluationSummaryUseCase;
@@ -107,7 +107,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .findAllByApplicationIdOrderByPriorityAsc(applicationId);
 
         // 4. 지원자 프로필 조회
-        MemberInfo applicantProfile = getMemberUseCase.getMemberInfoById(application.getApplicantMemberId());
+        MemberInfo applicantProfile = getMemberUseCase.getById(application.getApplicantMemberId());
 
         // 5. ApplicationInfo 생성
         GetInterviewEvaluationViewInfo.ApplicationInfo applicationInfo = buildApplicationInfo(
@@ -216,7 +216,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .map(InterviewLiveQuestion::getAuthorMemberId)
             .collect(Collectors.toSet());
 
-        Map<Long, MemberInfo> profileMap = getMemberUseCase.getProfiles(authorMemberIds);
+        Map<Long, MemberInfo> profileMap = getMemberUseCase.findAllByIds(authorMemberIds);
 
         // 4. LiveQuestionInfo 리스트 생성
         List<LiveQuestionInfo> items = new ArrayList<>();
@@ -297,7 +297,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
 
         Map<Long, MemberInfo> profileMap = applicantMemberIds.isEmpty()
             ? Map.of()
-            : getMemberUseCase.getProfiles(applicantMemberIds);
+            : getMemberUseCase.findAllByIds(applicantMemberIds);
 
         // 6. 평가 상태 확인을 위해 현재 사용자의 면접 평가 조회
         Set<Long> applicationIdsToCheck = partFiltered.stream()
@@ -553,7 +553,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .map(InterviewLiveQuestion::getAuthorMemberId)
             .collect(Collectors.toSet());
 
-        Map<Long, MemberInfo> authorProfileMap = getMemberUseCase.getProfiles(authorMemberIds);
+        Map<Long, MemberInfo> authorProfileMap = getMemberUseCase.findAllByIds(authorMemberIds);
 
         List<GetInterviewEvaluationViewInfo.LiveQuestionInfo> result = new ArrayList<>();
         for (int i = 0; i < liveQuestions.size(); i++) {
@@ -618,7 +618,7 @@ public class RecruitmentInterviewEvaluationQueryService implements GetInterviewE
             .map(Evaluation::getEvaluatorUserId)
             .collect(Collectors.toSet());
 
-        return getMemberUseCase.getProfiles(evaluatorIds);
+        return getMemberUseCase.findAllByIds(evaluatorIds);
     }
 
     private GetInterviewEvaluationViewInfo.MyInterviewEvaluationInfo buildMyEvaluationInfo(

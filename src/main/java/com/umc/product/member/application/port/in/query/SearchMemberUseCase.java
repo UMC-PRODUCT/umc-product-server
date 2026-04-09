@@ -6,5 +6,5 @@ import org.springframework.data.domain.Pageable;
 
 public interface SearchMemberUseCase {
 
-    SearchMemberResult search(SearchMemberQuery query, Pageable pageable);
+    SearchMemberResult searchBy(SearchMemberQuery query, Pageable pageable);
 }

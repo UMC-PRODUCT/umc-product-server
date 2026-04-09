@@ -4,7 +4,7 @@ import com.umc.product.challenger.adapter.in.web.dto.response.ChallengerInfoResp
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
@@ -26,8 +26,8 @@ public class ChallengerResponseAssembler {
     private final GetChapterUseCase getChapterUseCase;
 
     public ChallengerInfoResponse fromChallengerId(Long challengerId) {
-        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
+        ChallengerInfo challengerInfo = getChallengerUseCase.getById(challengerId);
+        MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
         GisuInfo gisuInfo = getGisuUseCase.getById(challengerInfo.gisuId());
         ChapterInfo chapterInfo = getChapterUseCase.byGisuAndSchool(challengerInfo.gisuId(), memberInfo.schoolId());
 
@@ -35,8 +35,8 @@ public class ChallengerResponseAssembler {
     }
 
     public List<ChallengerInfoResponse> fromMemberId(Long memberId) {
-        List<ChallengerInfo> challengerInfos = getChallengerUseCase.getMemberChallengerList(memberId);
-        MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(memberId);
+        List<ChallengerInfo> challengerInfos = getChallengerUseCase.getAllByMemberId(memberId);
+        MemberInfo memberInfo = getMemberUseCase.getById(memberId);
 
         return challengerInfos.stream()
             .map(challengerInfo -> {

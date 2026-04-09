@@ -70,6 +70,11 @@ public class NoticeController implements NoticeApi {
      * 공지사항 수정
      */
     @PatchMapping("/{noticeId}")
+    @CheckAccess(
+        resourceType = ResourceType.NOTICE,
+        resourceId = "#noticeId",
+        permission = PermissionType.EDIT
+    )
     public void updateNotice(
         @PathVariable Long noticeId,
         @RequestBody @Valid UpdateNoticeRequest request,

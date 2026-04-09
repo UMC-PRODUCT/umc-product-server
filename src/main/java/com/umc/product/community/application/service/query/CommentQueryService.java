@@ -11,7 +11,7 @@ import com.umc.product.community.domain.Comment;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -117,8 +117,8 @@ public class CommentQueryService implements GetCommentListUseCase {
 
         return loadCommentPort.findById(commentId)
             .map(comment -> {
-                ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(comment.getChallengerId());
-                MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
+                ChallengerInfo challengerInfo = getChallengerUseCase.getById(comment.getChallengerId());
+                MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
 
                 String authorName = memberInfo != null ? memberInfo.name() : "알 수 없음";
                 String authorProfileImage = memberInfo != null ? memberInfo.profileImageLink() : null;

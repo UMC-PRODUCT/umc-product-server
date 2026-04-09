@@ -4,7 +4,7 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.community.application.port.in.query.dto.PostInfo;
 import com.umc.product.community.domain.enums.Category;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import lombok.Builder;
@@ -56,9 +56,6 @@ public record PostResponse(
     @Schema(description = "좋아요 여부", example = "true")
     boolean isLiked,
 
-    @Schema(description = "본인 작성 글 여부", example = "true")
-    boolean isAuthor,
-
     @Schema(description = "번개 정보 (번개글인 경우)")
     LightningInfoResponse lightningInfo
 ) {
@@ -86,7 +83,6 @@ public record PostResponse(
             .commentCount(postInfo.commentCount())
             .likeCount(postInfo.likeCount())
             .isLiked(false) // 검색 결과에서는 좋아요 여부를 알 수 없으므로 false로 설정
-            .isAuthor(false) // 검색 결과에서는 본인 작성 여부를 알 수 없으므로 false로 설정
             .lightningInfo(null) // 검색 결과에서는 번개 정보가 없으므로 null로 설정
             .build();
     }
@@ -123,7 +119,6 @@ public record PostResponse(
             .commentCount(info.commentCount())
             .likeCount(info.likeCount())
             .isLiked(info.isLiked())
-            .isAuthor(info.isAuthor())
             .lightningInfo(lightningInfoResponse)
             .build();
     }

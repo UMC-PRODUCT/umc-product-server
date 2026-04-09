@@ -80,10 +80,9 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
             })
             .toList();
 
-        // 7. "예정" 상태 제외 및 정렬: 진행 중 → 종료됨 (종료됨은 최근 것부터)
+        // 7. 정렬: 진행 중 → 예정 → 종료됨
         //    같은 상태 내에서는 활성 출석부가 있는 일정 우선
         return result.stream()
-            .filter(info -> !"예정".equals(info.status()))
             .sorted(scheduleComparator())
             .toList();
     }
@@ -165,14 +164,14 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
         }
 
         // 2. 학교 회장단: 본인 학교 구성원이 파트장인 스터디 일정 + 본인 생성 일정
-        Long schoolId = getMemberUseCase.getMemberInfoById(memberId).schoolId();
+        Long schoolId = getMemberUseCase.getById(memberId).schoolId();
         if (schoolId != null && getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, gisuId, schoolId)) {
             return loadSchedulePort.findSchedulesForSchoolCore(
                 schoolId, gisuId, currentChallengerId);
         }
 
         // 3. 학교 파트장: 본인이 파트장인 스터디 그룹 일정 + 본인 생성 일정
-        if (getChallengerRoleUseCase.hasRoleInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER)) {
+        if (getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER)) {
             return loadSchedulePort.findSchedulesForPartLeader(currentChallengerId, gisuId);
         }
 
@@ -214,7 +213,7 @@ public class ScheduleWithStatsQueryService implements GetScheduleListUseCase {
                 return a.sheetActive() ? -1 : 1;
             }
 
-            // 진행 중은 시작 시간 오름차순, 종료됨은 종료 시간 내림차순
+            // 예정, 진행 중은 시작 시간 오름차순, 종료됨은 종료 시간 내림차순
             if ("종료됨".equals(a.status())) {
                 return b.endsAt().compareTo(a.endsAt());
             }

@@ -4,7 +4,7 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
 import com.umc.product.challenger.domain.Challenger;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
@@ -112,7 +112,6 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void updateNoticeTitleOrContent(UpdateNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-        notice.validateAuthorMember(command.memberId());
 
         /**
          * 제목/내용만 수정
@@ -127,7 +126,6 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void deleteNotice(DeleteNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-        notice.validateAuthorMember(command.memberId());
 
         // 관련 이미지, 투표, 링크 등도 모두 삭제
         manageNoticeContentUseCase.removeContentsByNoticeId(notice.getId(), command.memberId());
@@ -186,11 +184,11 @@ public class NoticeService implements ManageNoticeUseCase {
             return List.of();
         }
 
-        List<Challenger> challengers = loadChallengerPort.findByGisuId(targetInfo.targetGisuId());
+        List<Challenger> challengers = loadChallengerPort.getAllByGisuId(targetInfo.targetGisuId());
         List<Long> targetIds = new ArrayList<>();
 
         for (Challenger challenger : challengers) {
-            MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challenger.getMemberId());
+            MemberInfo memberInfo = getMemberUseCase.getById(challenger.getMemberId());
             Long schoolId = memberInfo.schoolId();
             Long chapterId = getChapterUseCase.byGisuAndSchool(challenger.getGisuId(), schoolId).id();
 

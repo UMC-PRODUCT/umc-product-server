@@ -181,7 +181,6 @@ public class PostQueryRepository {
      * 챌린저가 댓글을 단 게시글 목록 조회 (중복 제거, 최신 댓글 순)
      */
     public Page<Post> findCommentedPostsByChallengerId(Long challengerId, Pageable pageable) {
-        // 1. JOIN과 GROUP BY를 사용하여 단일 쿼리로 조회 (DB에서 정렬)
         List<PostJpaEntity> results = queryFactory
             .selectFrom(postJpaEntity)
             .innerJoin(commentJpaEntity)
@@ -197,7 +196,6 @@ public class PostQueryRepository {
             return Page.empty(pageable);
         }
 
-        // 2. 전체 개수 조회
         Long totalCount = queryFactory
             .select(commentJpaEntity.postId.countDistinct())
             .from(commentJpaEntity)
@@ -215,7 +213,6 @@ public class PostQueryRepository {
      * 챌린저가 스크랩한 게시글 목록 조회 (최신 스크랩 순)
      */
     public Page<Post> findScrappedPostsByChallengerId(Long challengerId, Pageable pageable) {
-        // 1. JOIN을 사용하여 단일 쿼리로 조회 (DB에서 정렬)
         List<PostJpaEntity> results = queryFactory
             .selectFrom(postJpaEntity)
             .innerJoin(scrapJpaEntity)
@@ -230,7 +227,6 @@ public class PostQueryRepository {
             return Page.empty(pageable);
         }
 
-        // 2. 전체 개수 조회
         Long totalCount = queryFactory
             .select(scrapJpaEntity.count())
             .from(scrapJpaEntity)

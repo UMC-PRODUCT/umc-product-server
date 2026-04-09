@@ -8,6 +8,7 @@ import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.notice.adapter.in.web.assembler.NoticeViewerInfoAssembler;
 import com.umc.product.notice.adapter.in.web.dto.request.GetNoticeStatusRequest;
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeDetailResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeReadStatusResponse;
@@ -20,6 +21,7 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
+import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.dto.NoticeClassification;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +46,8 @@ public class NoticeQueryController implements NoticeQueryApi {
     private final GetNoticeUseCase getNoticeUseCase;
     private final ManageNoticeUseCase manageNoticeUseCase;
 
+    private final NoticeViewerInfoAssembler noticeViewerInfoAssembler;
+
     /*
      * 공지 전체 조회
      */
@@ -54,9 +58,9 @@ public class NoticeQueryController implements NoticeQueryApi {
         @ParameterObject Pageable pageable,
         @CurrentMember MemberPrincipal memberPrincipal) {
 
-        Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(memberPrincipal.getMemberId(),
-            classification,
-            pageable);
+        NoticeViewerInfo viewerInfo = noticeViewerInfoAssembler.toMemberIdAndGisuId(memberPrincipal.getMemberId(),
+            classification.gisuId());
+        Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(viewerInfo, classification, pageable);
 
         return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
     }
@@ -73,8 +77,10 @@ public class NoticeQueryController implements NoticeQueryApi {
         Pageable pageable,
         @CurrentMember MemberPrincipal memberPrincipal) {
 
-        Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(memberPrincipal.getMemberId(), keyword,
-            classification, pageable);
+        NoticeViewerInfo viewerInfo = noticeViewerInfoAssembler.toMemberIdAndGisuId(memberPrincipal.getMemberId(),
+            classification.gisuId());
+        Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(keyword, viewerInfo, classification,
+            pageable);
 
         return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
     }

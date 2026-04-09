@@ -5,6 +5,7 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
+import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.dto.NoticeClassification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,13 +16,13 @@ public interface GetNoticeUseCase {
      * 공지 전체조회 -> 간략한 정보 조회
      * @return 해당 scope에 맞는 공지사항 리스트 반환
      */
-    Page<NoticeSummary> getAllNoticeSummaries(Long memberId, NoticeClassification info, Pageable pageable);
+    Page<NoticeSummary> getAllNoticeSummaries(NoticeViewerInfo viewerInfo, NoticeClassification classification, Pageable pageable);
 
 
     /*
      * 검색어 기반 공지 전체 조회
      */
-    Page<NoticeSummary> searchNoticesByKeyword(Long memberId, String keyword, NoticeClassification noticeClassification,
+    Page<NoticeSummary> searchNoticesByKeyword(String keyword, NoticeViewerInfo viewerInfo, NoticeClassification classification,
                                                Pageable pageable);
 
     /*

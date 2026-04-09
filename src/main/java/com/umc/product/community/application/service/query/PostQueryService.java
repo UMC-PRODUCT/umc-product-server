@@ -21,7 +21,7 @@ import com.umc.product.community.domain.Post;
 import com.umc.product.community.domain.exception.CommunityDomainException;
 import com.umc.product.community.domain.exception.CommunityErrorCode;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.MemberInfo;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,10 +52,10 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         Long authorChallengerId = postWithAuthor.authorChallengerId();
 
         // 챌린저 정보 조회
-        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId);
+        ChallengerInfo challengerInfo = getChallengerUseCase.getById(authorChallengerId);
 
         // 멤버 프로필 조회 (이름과 프로필 이미지)
-        MemberInfo memberProfile = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
+        MemberInfo memberProfile = getMemberUseCase.getById(challengerInfo.memberId());
         String authorName = memberProfile.name();
         String authorProfileImage = memberProfile.profileImageLink();
 
@@ -88,9 +88,9 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
     }
 
     @Override
-    public Page<PostInfo> getPostList(PostSearchQuery query, Pageable pageable) {
+    public Page<PostInfo> getPostList(PostSearchQuery query, Long memberId, Pageable pageable) {
         Page<Post> posts = loadPostPort.findAllByQuery(query, pageable);
-        return convertToPostInfoPage(posts, null, pageable);
+        return convertToPostInfoPage(posts, pageable);
     }
 
     @Override
@@ -99,64 +99,42 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
 
         return searchDataPage.map(
             data -> {
-                ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(
+                ChallengerInfo challengerInfo = getChallengerUseCase.getById(
                     data.getAuthorChallengerId());
-                MemberInfo memberInfo = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
+                MemberInfo memberInfo = getMemberUseCase.getById(challengerInfo.memberId());
 
                 return PostResponse.from(
                     PostInfo.from(data, memberInfo, challengerInfo), memberInfo, challengerInfo
                 );
             }
         );
-
-//        return searchDataPage.map(PostSearchData::toResult);
     }
 
     @Override
-    public Page<PostInfo> getMyPosts(Long challengerId, Pageable pageable) {
+    public Page<PostInfo> getMyPosts(Long memberId, Pageable pageable) {
+        Long challengerId = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId).challengerId();
         Page<Post> posts = loadPostPort.findByAuthorChallengerId(challengerId, pageable);
-
-        // 게시글이 없으면 빈 페이지 반환
-        if (posts.isEmpty()) {
-            return Page.empty(pageable);
-        }
-
-        // 작성자 챌린저 정보 조회 (한 번만)
-        ChallengerInfo challengerInfo = getChallengerUseCase.getChallengerPublicInfo(challengerId);
-
-        // 작성자 멤버 프로필 조회 (이름과 프로필 이미지, 한 번만)
-        MemberInfo memberProfile = getMemberUseCase.getMemberInfoById(challengerInfo.memberId());
-        String authorName = memberProfile.name();
-        String authorProfileImage = memberProfile.profileImageLink();
-
-        // PostInfo로 변환 (모든 게시글이 본인 글이므로 isAuthor = true)
-        return posts.map(
-            post -> PostInfo.from(post, challengerId, authorName, authorProfileImage, challengerInfo.part(), 0,
-                true));
+        return convertToPostInfoPage(posts, pageable);
     }
 
     @Override
-    public Page<PostInfo> getCommentedPosts(Long challengerId, Pageable pageable) {
+    public Page<PostInfo> getCommentedPosts(Long memberId, Pageable pageable) {
+        Long challengerId = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId).challengerId();
         Page<Post> posts = loadPostPort.findCommentedPostsByChallengerId(challengerId, pageable);
-
-        return convertToPostInfoPage(posts, challengerId, pageable);
+        return convertToPostInfoPage(posts, pageable);
     }
 
     @Override
-    public Page<PostInfo> getScrappedPosts(Long challengerId, Pageable pageable) {
+    public Page<PostInfo> getScrappedPosts(Long memberId, Pageable pageable) {
+        Long challengerId = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId).challengerId();
         Page<Post> posts = loadPostPort.findScrappedPostsByChallengerId(challengerId, pageable);
-
-        return convertToPostInfoPage(posts, challengerId, pageable);
+        return convertToPostInfoPage(posts, pageable);
     }
 
     /**
      * Post 페이지를 PostInfo 페이지로 변환 (작성자 정보 포함)
-     *
-     * @param posts               게시글 페이지
-     * @param currentChallengerId 현재 로그인한 사용자의 challengerId (비로그인 시 null)
-     * @param pageable            페이지 정보
      */
-    private Page<PostInfo> convertToPostInfoPage(Page<Post> posts, Long currentChallengerId, Pageable pageable) {
+    private Page<PostInfo> convertToPostInfoPage(Page<Post> posts, Pageable pageable) {
         // 게시글이 없으면 빈 페이지 반환
         if (posts.isEmpty()) {
             return Page.empty(pageable);
@@ -174,7 +152,7 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         Set<Long> challengerIds = Set.copyOf(postIdToAuthorId.values());
 
         // 4. 챌린저 ID -> 챌린저 정보 매핑 (1 query)
-        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getChallengerPublicInfoByIds(challengerIds);
+        Map<Long, ChallengerInfo> challengerInfoMap = getChallengerUseCase.getAllByIdsAsMap(challengerIds);
 
         // 5. 멤버 ID 목록 추출
         Set<Long> memberIds = challengerInfoMap.values().stream()
@@ -182,9 +160,9 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
             .collect(Collectors.toSet());
 
         // 6. 멤버 ID -> 멤버 프로필 매핑 (1 query, 일괄 조회로 N+1 해결)
-        Map<Long, MemberInfo> memberProfileMap = getMemberUseCase.getProfiles(memberIds);
+        Map<Long, MemberInfo> memberProfileMap = getMemberUseCase.findAllByIds(memberIds);
 
-        // 7. 챌린저 ID -> 작성자 정보 매핑 (이름 + 프로필 이미지 + 파트, 한 번의 스트림 처리)
+        // 7. 챌린저 ID -> 작성자 정보 매핑 (이름 + 프로필 이미지 + 파트)
         Map<Long, AuthorDetails> authorDetailsMap = challengerInfoMap.entrySet().stream()
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
@@ -203,21 +181,16 @@ public class PostQueryService implements GetPostDetailUseCase, GetPostListUseCas
         // 9. PostInfo로 변환
         return posts.map(post -> {
             Long postId = post.getPostId().id();
-            Long authorId = postIdToAuthorId.get(postId);
-            AuthorDetails authorDetails = authorId != null ? authorDetailsMap.get(authorId) : null;
+            Long authorChallengerId = postIdToAuthorId.get(postId);
+            AuthorDetails authorDetails = authorChallengerId != null ? authorDetailsMap.get(authorChallengerId) : null;
             String authorName = authorDetails != null ? authorDetails.name() : "알 수 없음";
             String authorProfileImage = authorDetails != null ? authorDetails.profileImage() : null;
-            var authorPart = authorDetails != null ? authorDetails.part() : null;
+            ChallengerPart authorPart = authorDetails != null ? authorDetails.part() : null;
             int commentCount = commentCountMap.getOrDefault(postId, 0);
-            // 본인 작성 글 여부 확인
-            boolean isAuthor = authorId != null && authorId.equals(currentChallengerId);
-            return PostInfo.from(post, authorId, authorName, authorProfileImage, authorPart, commentCount, isAuthor);
+            return PostInfo.from(post, authorChallengerId, authorName, authorProfileImage, authorPart, commentCount);
         });
     }
 
-    /**
-     * 작성자 정보를 담는 내부 record
-     */
     private record AuthorDetails(
         String name,
         String profileImage,

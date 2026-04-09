@@ -29,7 +29,7 @@ public class SchedulePermissionHelper {
      * 일정 작성자 본인인지 확인 (authorChallengerId 기반)
      */
     public boolean isAuthorByChallengerId(Long memberId, Long authorChallengerId) {
-        Long authorMemberId = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId).memberId();
+        Long authorMemberId = getChallengerUseCase.getById(authorChallengerId).memberId();
         return Objects.equals(memberId, authorMemberId);
     }
 
@@ -37,7 +37,7 @@ public class SchedulePermissionHelper {
      * 해당 기수에서 운영진(ChallengerRoleType이 있는 사람)인지 확인
      */
     public boolean isStaffInGisu(Long memberId, Long gisuId) {
-        return !getChallengerRoleUseCase.getRolesByGisu(memberId, gisuId).isEmpty();
+        return !getChallengerRoleUseCase.getAllRoleTypesByMemberIdAndGisuId(memberId, gisuId).isEmpty();
     }
 
     /**
@@ -79,6 +79,6 @@ public class SchedulePermissionHelper {
      */
     public Long getGisuIdFromSchedule(Schedule schedule) {
         Long authorChallengerId = schedule.getAuthorChallengerId();
-        return getChallengerUseCase.getChallengerPublicInfo(authorChallengerId).gisuId();
+        return getChallengerUseCase.getById(authorChallengerId).gisuId();
     }
 }

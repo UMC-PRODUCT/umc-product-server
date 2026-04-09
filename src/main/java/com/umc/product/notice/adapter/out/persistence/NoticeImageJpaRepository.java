@@ -15,7 +15,7 @@ public interface NoticeImageJpaRepository extends JpaRepository<NoticeImage, Lon
 
     int countByNotice_Id(Long noticeId);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM NoticeImage ni WHERE ni.notice.id = :noticeId")
     void deleteAllByNoticeId(@Param("noticeId") Long noticeId);
 

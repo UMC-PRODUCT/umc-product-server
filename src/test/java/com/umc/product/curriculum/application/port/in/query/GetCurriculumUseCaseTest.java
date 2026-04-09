@@ -51,7 +51,7 @@ class GetCurriculumUseCaseTest extends UseCaseTestSupport {
         saveCurriculumPort.save(curriculum);
 
         // when
-        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
+        CurriculumInfo result = getCurriculumUseCase.getByGisuAndPart(activeGisu.getId(), ChallengerPart.SPRINGBOOT, null);
 
         // then
         assertThat(result).isNotNull();
@@ -83,7 +83,7 @@ class GetCurriculumUseCaseTest extends UseCaseTestSupport {
         saveCurriculumPort.save(curriculum);
 
         // when
-        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
+        CurriculumInfo result = getCurriculumUseCase.getByGisuAndPart(activeGisu.getId(), ChallengerPart.SPRINGBOOT, null);
 
         // then
         assertThat(result.workbooks()).hasSize(3);
@@ -104,7 +104,7 @@ class GetCurriculumUseCaseTest extends UseCaseTestSupport {
         saveCurriculumPort.save(curriculum);
 
         // when
-        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
+        CurriculumInfo result = getCurriculumUseCase.getByGisuAndPart(activeGisu.getId(), ChallengerPart.SPRINGBOOT, null);
 
         // then
         CurriculumInfo.WorkbookInfo workbookInfo = result.workbooks().get(0);
@@ -133,7 +133,7 @@ class GetCurriculumUseCaseTest extends UseCaseTestSupport {
         saveCurriculumPort.save(curriculum);
 
         // when
-        CurriculumInfo result = getCurriculumUseCase.getByActiveGisuAndPart(ChallengerPart.SPRINGBOOT);
+        CurriculumInfo result = getCurriculumUseCase.getByGisuAndPart(activeGisu.getId(), ChallengerPart.SPRINGBOOT, null);
 
         // then
         CurriculumInfo.WorkbookInfo workbookInfo = result.workbooks().get(0);

@@ -40,6 +40,11 @@ public class ChapterPersistenceAdapter implements LoadChapterPort, ManageChapter
     }
 
     @Override
+    public boolean existsByGisuId(Long gisuId) {
+        return chapterJpaRepository.existsByGisuId(gisuId);
+    }
+
+    @Override
     public Chapter save(Chapter chapter) {
         return chapterJpaRepository.save(chapter);
     }

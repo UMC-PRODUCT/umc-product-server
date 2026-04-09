@@ -14,7 +14,7 @@ public interface LoadMemberPort {
 
     Optional<Member> findByNickname(String nickname);
 
-    List<Member> findByIdIn(Set<Long> ids);
+    List<Member> findAllByIds(Set<Long> ids);
 
     boolean existsById(Long id);
 

@@ -9,7 +9,6 @@ import com.umc.product.member.domain.Member;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.StreamSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,7 +28,7 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
 
     @Override
     public Optional<Member> findByIdForUpdate(Long id) {
-        return memberQueryRepository.findByIdForUpdate(id);
+        return memberQueryRepository.findByIdWithPessimisticLock(id);
     }
 
     @Override
@@ -44,9 +43,9 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     }
 
     @Override
-    public List<Member> findByIdIn(Set<Long> ids) {
-        return StreamSupport.stream(memberJpaRepository.findAllById(ids).spliterator(), false)
-            .toList();
+    public List<Member> findAllByIds(Set<Long> ids) {
+        return memberJpaRepository.findAllById(ids)
+            .stream().toList();
     }
 
     @Override
@@ -81,6 +80,6 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
 
     @Override
     public Page<Challenger> search(SearchMemberQuery query, Pageable pageable) {
-        return memberQueryRepository.pagingSearch(query, pageable);
+        return memberQueryRepository.searchBy(query, pageable);
     }
 }

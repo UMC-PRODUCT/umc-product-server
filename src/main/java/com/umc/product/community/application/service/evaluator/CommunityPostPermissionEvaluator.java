@@ -36,7 +36,7 @@ public class CommunityPostPermissionEvaluator implements ResourcePermissionEvalu
 
         PostInfo postInfo = getPostDetailUseCase.getPostDetail(postId);
         Long authorChallengerId = postInfo.authorChallengerId();
-        Long authorMemberId = getChallengerUseCase.getChallengerPublicInfo(authorChallengerId).memberId();
+        Long authorMemberId = getChallengerUseCase.getById(authorChallengerId).memberId();
 
         switch (resourcePermission.permission()) {
             case READ -> {
@@ -46,7 +46,7 @@ public class CommunityPostPermissionEvaluator implements ResourcePermissionEvalu
             case WRITE -> {
                 // 게시글 작성은 챌린저라면 누구나 가능
                 return !getChallengerUseCase
-                    .getMemberChallengerList(authorMemberId).isEmpty();
+                    .getAllByMemberId(authorMemberId).isEmpty();
             }
             case EDIT -> {
                 // 수정은 게시글 작성자만 가능
