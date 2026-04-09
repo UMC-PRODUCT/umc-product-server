@@ -1,5 +1,5 @@
 name: "👻 Task"
-description: 특정 태그로 분류하기 어려운 작업
+description: 하위 Feat 등을 보유하고 있는 상위 이슈
 title: "[Task] "
 labels: [ ":ghost: Task" ]
 body:
@@ -30,7 +30,7 @@ body:
         - [ ] Task 1
         - [ ] Task 2
     validations:
-      required: true
+      required: false
 
   - type: input
     id: related
