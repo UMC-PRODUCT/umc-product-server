@@ -10,17 +10,19 @@
 
 <img alt="banner" width="1000" src="https://github.com/user-attachments/assets/d8ffb7f6-6bc0-4aca-a0db-0e6133d6794c" />
 
-## 👬 프로덕트팀 구성원
-
-### 2nd 서버팀
-
-<img width="1000" alt="2nd-server-team" src="https://github.com/user-attachments/assets/da5cdc75-563b-45b8-b09d-04dce454478d" />
-
-
-### 1st Founders
-
-<img width="1000" alt="1st-server-team" src="https://github.com/user-attachments/assets/1b3c94dd-ef23-48ec-9785-3f8a4ceb10dd" />
-
 ## 🛠️ 기술 스택
 
 <img width="1000" alt="tech-stack" src="https://github.com/user-attachments/assets/ec0574ec-d7ac-4a93-ba13-68384b04dc42" />
+
+
+## 👬 프로덕트팀 구성원
+
+### 🥈 2nd
+#### 📅 2026.03 ~ 2026.08
+
+<img width="1000" alt="2nd-server-team" src="https://github.com/user-attachments/assets/9d4425a2-d2d3-469c-82bd-f9ec54e65120" />
+
+### 🥇 1st | Founders 
+#### 📅 2025.12 ~ 2026.02
+
+<img width="1000" alt="1st-server-team" src="https://github.com/user-attachments/assets/79253c47-a8c6-444e-89fc-52d91b92e30e" />
