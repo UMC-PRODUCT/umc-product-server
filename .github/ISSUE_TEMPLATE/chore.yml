@@ -15,7 +15,7 @@ body:
       label: 작업 내용
       description: 무엇을, 왜 해야 하는지 육하원칙에 의거해서 작성해주세요.
       placeholder: |
-        _e.g._ Gradle 의존성 버전 업데이트 (Spring Boot 3.4 → 3.5)
+        e.g. Gradle 의존성 버전 업데이트 (Spring Boot 3.4 → 3.5)
     validations:
       required: true
 
@@ -25,7 +25,7 @@ body:
       label: 🤔 작업이 필요한 이유
       description: 이 작업이 왜 필요한지 배경과 이유를 설명해주세요.
       placeholder: |
-        _e.g._ 보안 취약점 패치 및 최신 기능 활용을 위해 버전 업그레이드가 필요합니다.
+        e.g. 보안 취약점 패치 및 최신 기능 활용을 위해 버전 업그레이드가 필요합니다.
     validations:
       required: false
 
@@ -35,7 +35,7 @@ body:
       label: ⚠️ 영향 범위
       description: 이 작업으로 인해 영향을 받을 수 있는 범위를 작성해주세요.
       placeholder: |
-        _e.g._ 빌드 환경 전체, 로컬 개발 환경 재설정 필요
+        e.g. 빌드 환경 전체, 로컬 개발 환경 재설정 필요
     validations:
       required: false
 

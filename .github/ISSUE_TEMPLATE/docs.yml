@@ -31,7 +31,7 @@ body:
       label: 📄 문서화 대상
       description: 어떤 부분을 문서화하려는지 구체적으로 작성해주세요.
       placeholder: |
-        _e.g._ 프로젝트 아키텍처, 권한 체계, API 명세서 등
+        e.g. 프로젝트 아키텍처, 권한 체계, API 명세서 등
     validations:
       required: true
 
@@ -41,7 +41,7 @@ body:
       label: 🤔 문서화가 필요한 이유
       description: 왜 지금 이 문서가 필요한지 작성해주세요.
       placeholder: |
-        _e.g._ 온보딩 시 헥사고날 아키텍처에 대한 이해가 부족해 진입 장벽이 높습니다.
+        e.g. 온보딩 시 헥사고날 아키텍처에 대한 이해가 부족해 진입 장벽이 높습니다.
     validations:
       required: false
 
@@ -51,7 +51,7 @@ body:
       label: ✏️ 주요 내용 (선택)
       description: 문서에 포함되어야 할 핵심 내용이나 개요를 미리 작성해주세요.
       placeholder: |
-        _e.g._
+        e.g.
         - 항목 1
         - 항목 2
     validations:
