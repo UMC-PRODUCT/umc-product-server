@@ -16,7 +16,7 @@ body:
       label: 어떤 기능이 필요한가요?
       description: 추가되었으면 하거나, 추가할 기능에 대해서 육하원칙에 의거해서 작성해주세요.
       placeholder: |
-        _e.g._ SSOT를 지키고자, 특정 리소스에 대한 권한을 체크할 수 있는 API를 추가했으면 좋겠습니다.
+        e.g. SSOT를 지키고자, 특정 리소스에 대한 권한을 체크할 수 있는 API를 추가했으면 좋겠습니다.
     validations:
       required: true
 
@@ -26,7 +26,7 @@ body:
       label: 🔧 TODO
       description: 기능 구현을 위해서 필요한 작업들을 작성해주세요. 세부 항목이 너무 커지는 경우, Sub-Issue로 분리해주세요.
       placeholder: |
-        _e.g._
+        e.g.
         - [ ] Task 1
         - [ ] Task 2
     validations:
@@ -38,7 +38,7 @@ body:
       label: 📎 참고 자료
       description: 관련 문서, PR, 이슈 링크 등이 있다면 작성해주세요.
       placeholder: |
-        _e.g._
+        e.g.
         - related to #이슈번호
         - https://...
     validations:
