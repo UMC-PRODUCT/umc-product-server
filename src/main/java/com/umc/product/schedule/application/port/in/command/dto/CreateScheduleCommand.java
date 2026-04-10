@@ -76,6 +76,7 @@ public record CreateScheduleCommand(
             .location(location)
             .description(description)
             .tags(tags)
+            // TODO: memberId로 넣어야 하는거 잊지 말아주세요~
             .authorChallengerId(authorChallengerId)
             .build();
     }

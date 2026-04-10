@@ -44,7 +44,9 @@ public class StudyGroupScheduleCommandService implements CreateStudyGroupSchedul
 
         Schedule schedule = loadSchedulePort.findById(scheduleId)
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
-        schedule.assignStudyGroup(command.studyGroupId());
+
+        // 경운: Organization에 엔티티 생성하니, 해당 엔티티를 사용해주세요.
+        // schedule.assignStudyGroup(command.studyGroupId());
 
         return scheduleId;
     }
