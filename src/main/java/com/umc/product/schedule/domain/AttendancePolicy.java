@@ -1,0 +1,70 @@
+package com.umc.product.schedule.domain;
+
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+/**
+ * 각 일정에 대한 출석 상태를 판단하는데 사용되는 기준.
+ * <p>
+ * (A) earlyCheckInMinutes (기본값 10분): 시작 시간 전에 몇 분까지 출석으로 인정할 것인지
+ * <p>
+ * (B) attendanceGraceMinutes (기본값 10분): 시작 시간 후에 몇 분까지 출석으로 인정할 것인지 (C)
+ * <p>
+ * (C) lateToleranceMinutes (기본값 10분): 출석 인정 시간이 종료된 후에 몇 분까지 지각으로 인정할 것인지
+ * <p>
+ * <p>
+ * 출석으로 처리되는 시간: (시작시간 - A분) ~ (시작시간 + B분)
+ * <p>
+ * 지각으로 처리되는 시간: (시작시간 + B분) ~ (시작시간 + B분 + C분)
+ * <p>
+ * 결석은 그 후.
+ */
+@Embeddable
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class AttendancePolicy {
+
+    @Column(nullable = false)
+    private long earlyCheckInMinutes = 10L;
+
+    @Column(nullable = false)
+    private long attendanceGraceMinutes = 10L;
+
+    @Column(nullable = false)
+    private long lateToleranceMinutes = 10L;
+
+    private AttendancePolicy(
+        Long earlyCheckInMinutes,
+        Long attendanceGraceMinutes,
+        Long lateToleranceMinutes
+    ) {
+        this.earlyCheckInMinutes = earlyCheckInMinutes;
+        this.attendanceGraceMinutes = attendanceGraceMinutes;
+        this.lateToleranceMinutes = lateToleranceMinutes;
+    }
+
+    /**
+     * 최초 요청 시에만 사용하여야 하며, 상태 전이는 별도의 로직을 활용할 것.
+     */
+    public AttendanceStatus getAttendanceStatusByPolicy(Instant checkInTime, Instant scheduleStartTime) {
+        Instant earliestCheckIn = scheduleStartTime.minus(earlyCheckInMinutes, ChronoUnit.MINUTES);
+        Instant latestCheckIn = scheduleStartTime.plus(attendanceGraceMinutes, ChronoUnit.MINUTES);
+        Instant lateTolerance = latestCheckIn.plus(lateToleranceMinutes, ChronoUnit.MINUTES);
+
+        if (checkInTime.isBefore(earliestCheckIn)) {
+            return AttendanceStatus.PENDING;
+        } else if (checkInTime.isBefore(latestCheckIn)) {
+            return AttendanceStatus.PRESENT_PENDING;
+        } else if (checkInTime.isBefore(lateTolerance)) {
+            return AttendanceStatus.LATE_PENDING;
+        } else {
+            return AttendanceStatus.ABSENT;
+        }
+    }
+}
