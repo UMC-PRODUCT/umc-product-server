@@ -72,13 +72,14 @@ public enum ScheduleErrorCode implements BaseCode {
     NOT_FIRST_ATTENDANCE_REQUEST(HttpStatus.BAD_REQUEST, "SCHEDULE-0032", "기존 출석 요청이 존재합니다."),
     NO_ATTENDANCE_RECORD(HttpStatus.NOT_FOUND, "SCHEDULE-0033", "출석 요청이 존재하지 않습니다. 출석 요청을 생성하고 다시 시도해주세요."),
     INVALID_ATTENDANCE_STATUS_FOR_EXCUSE(HttpStatus.BAD_REQUEST, "SCHEDULE-0034", "출석 인정은 지각 또는 결석 상태에서만 가능합니다."),
-    INVALID_ATTENDANCE_STATUS_FOR_APPROVAL(HttpStatus.BAD_REQUEST, "SCHEDULE-0035", "출석 인정은 지각 또는 결석 상태에서만 가능합니다."),
+    INVALID_ATTENDANCE_STATUS_FOR_APPROVAL(HttpStatus.BAD_REQUEST, "SCHEDULE-0035", "현재 출석 상태에서는 승인이 불가능합니다."),
     INVALID_ATTENDANCE_STATUS_FOR_REJECT(HttpStatus.BAD_REQUEST, "SCHEDULE-0036", "출석 요청에 대한 거절을 할 수 없는 상태입니다."),
     NO_EXCUSE_REASON_GIVEN(HttpStatus.BAD_REQUEST, "SCHEDULE-0037", "출석 인정을 요청하는 사유가 제공되지 않았거나 비어있습니다."),
     ATTENDANCE_NOT_REQUIRES_CONFIRM(HttpStatus.BAD_REQUEST, "SCHEDULE-0038",
         "해당 출석 요청은 운영진의 승인 또는 기각을 필요로 하는 상태가 아닙니다."),
 
     SCHEDULE_ENDED(HttpStatus.BAD_REQUEST, "SCHEDULE-0039", "종료된 일정에 대한 출석 요청은 허용되지 않습니다."),
+    NO_SCHEDULE_POLICY(HttpStatus.NOT_FOUND, "SCHEDULE-0040", "출결 정책이 존재하지 않습니다."),
     ;
     private final HttpStatus httpStatus;
     private final String code;
