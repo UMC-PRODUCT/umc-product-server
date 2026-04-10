@@ -78,12 +78,12 @@ public class Schedule extends BaseEntity {
     // 삭제: isAllDay
     // 클라이언트 입장에서 기기 시각 기준 00:00에 시작해서, 23:59에 끝나는 일정이면 알아서 "종일"로 표기하기
 
-    // 삭졔: studyGroupId
+    // 삭제: studyGroupId
     // 이건 따로 Entity 만들어서 관리합니다.
     // Schedule에 둘까 Organization에 둘까 영원한 고민
     // => Organization에 두도록 합니다. Schedule 도메인의 순수성을 지키고자 ..
 
-    // 생성자에서 AttendacnePolicy에 있는 값은 3개 다 주어지거나 아예 안 주어지거나 둘 중 하나로 해야합니다!
+    // 생성자에서 AttendancePolicy에 있는 값은 3개 다 주어지거나 아예 안 주어지거나 둘 중 하나로 해야합니다!
 
     // TODO: Builder 생성자 쓰는 곳 수정 유의해주세요
     @Builder
@@ -96,9 +96,13 @@ public class Schedule extends BaseEntity {
         // 일정 관련 기본 정보들
         this.name = name;
         this.description = description;
+
+        validateScheduleTags(tags);
         this.tags = new HashSet<>(tags);
+
         this.authorMemberId = authorMemberId;
 
+        validateScheduleTime();
         this.startsAt = startsAt;
         this.endsAt = endsAt;
 
@@ -106,17 +110,12 @@ public class Schedule extends BaseEntity {
         this.location = location;
 
         this.policy = policy;
-
-        validate(); // 검증은 여기서 한 번에, this 기반입니다.
     }
 
-    private void validate() {
-        validateScheduleTags();
-        validateScheduleTime();
-    }
+    // validate method가 더 많아지고 복잡해질 경우 하나의 validate()로 변경할 것
 
-    private void validateScheduleTags() {
-        if (this.tags == null || this.tags.isEmpty()) {
+    private void validateScheduleTags(Set<ScheduleTag> tags) {
+        if (tags == null || tags.isEmpty()) {
             throw new ScheduleDomainException(ScheduleErrorCode.TAG_REQUIRED);
         }
     }
@@ -125,6 +124,11 @@ public class Schedule extends BaseEntity {
     // (1) 일정 종료 시각은 AttendancePolicy에 따라서, 시작시간 + 출석 인정 시간 + 지각 인정 시간 보다 늦어야 함
     // (2) 종료 시간은 시작 시간보다 앞서서는 안됨
     private void validateScheduleTime() {
+        if (this.policy == null) {
+            throw new ScheduleDomainException(ScheduleErrorCode.NO_SCHEDULE_POLICY,
+                "Schedule ID " + this.id + " 에 대한 출결 정책이 등록되어 있지 않습니다.");
+        }
+
         Instant start = this.startsAt;
         Instant end = this.endsAt;
 

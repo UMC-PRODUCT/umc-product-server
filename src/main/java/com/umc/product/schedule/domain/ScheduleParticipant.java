@@ -31,7 +31,8 @@ public class ScheduleParticipant extends BaseEntity {
 
     private Long memberId;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    // 우선은 LAZY로 두고, 추후 fetch join 등을 사용하여 필요시 최적화
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "schedule_id")
     private Schedule schedule; // 단방향 참조
 
@@ -62,17 +63,17 @@ public class ScheduleParticipant extends BaseEntity {
         Point location,
         boolean isLocationVerified
     ) {
-        if (this.attendance == null) {
-            this.attendance =
-                ScheduleParticipantAttendance.builder()
-                    .location(location)
-                    .status(this.schedule.getAttendanceStatus())
-                    .isLocationVerified(isLocationVerified)
-                    .build();
+        // 이미 출석 요청을 한 기록이 있다면 update 하는 method를 사용해야함
+        if (this.attendance != null) {
+            throw new ScheduleDomainException(ScheduleErrorCode.NOT_FIRST_ATTENDANCE_REQUEST);
         }
 
-        // 이미 출석 요청을 한 기록이 있다면 update 하는 method를 사용해야함
-        throw new ScheduleDomainException(ScheduleErrorCode.NOT_FIRST_ATTENDANCE_REQUEST);
+        this.attendance =
+            ScheduleParticipantAttendance.builder()
+                .location(location)
+                .status(this.schedule.getAttendanceStatus())
+                .isLocationVerified(isLocationVerified)
+                .build();
     }
 
     // 사유제출하는 경우

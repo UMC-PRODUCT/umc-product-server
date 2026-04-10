@@ -5,6 +5,8 @@ import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -27,6 +29,7 @@ public class ScheduleParticipantAttendance {
     @Column(columnDefinition = "geometry(Point, 4326)")
     private Point location; // 출석을 요청한 위치
 
+    @Enumerated(EnumType.STRING)
     private AttendanceStatus status; // 출석 상태
 
     private Long decidedMemberId; // 출석 요청을 승인 또는 기각한 사람
