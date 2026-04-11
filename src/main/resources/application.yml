@@ -247,6 +247,7 @@ app:
   fcm:
     outbox-interval-ms: ${FCM_OUTBOX_INTERVAL_MS:60000}
     firebase-configuration: ${FIREBASE_CONFIGURATION}
+    topic-prefix: ${SPRING_PROFILES_ACTIVE:local}
 
   cors:
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:}

@@ -1,6 +1,7 @@
 package com.umc.product.member.application.port.in.query;
 
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -25,4 +26,9 @@ public interface GetMemberUseCase {
     boolean existsById(Long memberId);
 
     boolean existsByEmail(String email);
+
+    /**
+     * 커서 기반으로 멤버 ID 목록을 조회합니다. lastId보다 큰 ID를 가진 멤버를 최대 limit개 반환합니다. 전체 멤버를 메모리 효율적으로 순회할 때 사용합니다.
+     */
+    List<Long> findAllIdsCursor(Long lastId, int limit);
 }
