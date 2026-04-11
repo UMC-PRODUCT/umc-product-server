@@ -71,6 +71,7 @@ public class Schedule extends BaseEntity {
     private Point location; // nullable, 비대면 일정의 경우에 없습니다!
 
     @Embedded
+    // policy가 존재하면 출석을 체크하는 일정, 즉 출석부를 생성하는 일정임
     private AttendancePolicy policy;
 
     // 삭제: authorChallengerId
