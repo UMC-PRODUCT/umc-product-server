@@ -36,6 +36,8 @@ public class ScheduleParticipantAttendance {
 
     private Instant decidedAt;
 
+    private String decisionReason; // 출석 요청을 결정한 사유
+
     private boolean isLocationVerified; // 클라이언트 단 판단으로, 위치 인증 여부
 
     private String excuseReason;
@@ -47,6 +49,7 @@ public class ScheduleParticipantAttendance {
         AttendanceStatus status,
         Long decidedMemberId,
         Instant decidedAt,
+        String decisionReason,
         boolean isLocationVerified,
         String excuseReason
     ) {
@@ -54,6 +57,7 @@ public class ScheduleParticipantAttendance {
         this.status = status;
         this.decidedMemberId = decidedMemberId;
         this.decidedAt = decidedAt;
+        this.decisionReason = decisionReason;
         this.isLocationVerified = isLocationVerified;
         this.excuseReason = excuseReason;
     }
@@ -61,9 +65,10 @@ public class ScheduleParticipantAttendance {
     // Service Layer에서 아래 메소드들을 직접적으로 사용할 수 없도록, protected를 사용합니다.
     // ScheduleParticipant 내부에서 래핑하여 사용됩니다.
 
-    protected void approve(Long approvedByMemberId) {
+    protected void approve(Long approvedByMemberId, String reason) {
         this.decidedMemberId = approvedByMemberId;
         this.decidedAt = Instant.now();
+        this.decisionReason = reason;
 
         this.status = switch (this.status) {
             case PRESENT_PENDING -> AttendanceStatus.PRESENT;
@@ -79,9 +84,10 @@ public class ScheduleParticipantAttendance {
         };
     }
 
-    protected void reject(Long rejectedByMemberId) {
+    protected void reject(Long rejectedByMemberId, String reason) {
         this.decidedMemberId = rejectedByMemberId;
         this.decidedAt = Instant.now();
+        this.decisionReason = reason;
 
         this.status = switch (this.status) {
             case PRESENT_PENDING,

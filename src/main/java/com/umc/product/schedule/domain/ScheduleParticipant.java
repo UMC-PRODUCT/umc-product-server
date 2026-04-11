@@ -144,16 +144,16 @@ public class ScheduleParticipant extends BaseEntity {
      * <p>
      * 기존에 승인 가능한 상태여야만 합니다.
      */
-    public void approveAttendance(Long approvedByMemberId) {
+    public void approveAttendance(Long approvedByMemberId, String reason) {
         validateAttendanceStatusForConfirm();
 
-        this.attendance.approve(approvedByMemberId);
+        this.attendance.approve(approvedByMemberId, reason);
     }
 
-    public void rejectAttendance(Long rejectedByMemberId) {
+    public void rejectAttendance(Long rejectedByMemberId, String reason) {
         validateAttendanceStatusForConfirm();
 
-        this.attendance.reject(rejectedByMemberId);
+        this.attendance.reject(rejectedByMemberId, reason);
     }
 
     public void forceChangeAttendance(Long decidedMemberId, AttendanceStatus status) {
