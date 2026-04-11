@@ -1,6 +1,8 @@
 package com.umc.product.schedule.domain;
 
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import com.umc.product.schedule.domain.exception.ScheduleDomainException;
+import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.time.Instant;
@@ -50,15 +52,19 @@ public class AttendancePolicy {
     }
 
     /**
-     * 최초 요청 시에만 사용하여야 하며, 상태 전이는 별도의 로직을 활용할 것.
+     * 매개변수로 제공된 checkInTime 및 scheduleStartTime을 기반으로 현재 상태를 판단합니다.
+     * <p>
+     * 최초 요청 시에만 사용하여야 하며, 상태 전이는 별도의 로직을 활용해야 합니다.
+     * <p>
+     * protected method로, 도메인 객체 내부에서만 사용할 수 있습니다.
      */
-    public AttendanceStatus getAttendanceStatusByPolicy(Instant checkInTime, Instant scheduleStartTime) {
+    protected AttendanceStatus getAttendanceStatusByPolicy(Instant checkInTime, Instant scheduleStartTime) {
         Instant earliestCheckIn = scheduleStartTime.minus(earlyCheckInMinutes, ChronoUnit.MINUTES);
         Instant latestCheckIn = scheduleStartTime.plus(attendanceGraceMinutes, ChronoUnit.MINUTES);
         Instant lateTolerance = latestCheckIn.plus(lateToleranceMinutes, ChronoUnit.MINUTES);
 
         if (checkInTime.isBefore(earliestCheckIn)) {
-            return AttendanceStatus.PENDING;
+            throw new ScheduleDomainException(ScheduleErrorCode.CHECK_IN_TOO_EARLY);
         } else if (checkInTime.isBefore(latestCheckIn)) {
             return AttendanceStatus.PRESENT_PENDING;
         } else if (checkInTime.isBefore(lateTolerance)) {

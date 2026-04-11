@@ -55,10 +55,14 @@ public class ScheduleParticipant extends BaseEntity {
     // 해당 경우는 시간에 따라서 요청을 보낼 수 있도록 해야함 .. 근데 모두 다 서비스의 책임이긴 함
 
     // Attendance가 생성되는 시점:
-    // - 사유 출석
     // - 일반적인 요청
+    // - 사유 제출 시
     // - 운영진이 직접 업데이트 하는 경우
     // - (미정) 스케쥴러가 변경하는 상황
+
+    /**
+     * 출석 요청 시 사용하는 정팩메 입니다.
+     */
     public void createAttendance(
         Point location,
         boolean isLocationVerified
@@ -75,10 +79,6 @@ public class ScheduleParticipant extends BaseEntity {
                 .isLocationVerified(isLocationVerified)
                 .build();
     }
-
-    // 사유제출하는 경우
-    // 최초 요청인 경우: EXCUSED_PENDING으로 전환할 것
-    // LATE, ABSENT인 경우: 각각 상태로 전이시킬 것
 
     /**
      * 사유를 제출하는 경우를 핸들링합니다.

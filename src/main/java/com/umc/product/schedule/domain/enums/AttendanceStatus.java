@@ -9,8 +9,6 @@ import lombok.Getter;
  * <p>
  * {@link AttendancePolicy}에 따라서 {@link ScheduleParticipantAttendance} 생성 시에 그 상태가 결정됩니다.
  * <p>
- * PENDING: 존재할 수 없는 상태입니다. null값인 경우 API Response 단에서 PENDING으로 보내기 위해 사용합니다.
- * <p>
  * (1) 처음 사용자가 요청했을 때 지정되는 상태입니다.
  * <p>
  * - PRESENT_PENDING: 출석 가능한 시간 내인 경우
@@ -37,9 +35,7 @@ import lombok.Getter;
  */
 @Getter
 public enum AttendanceStatus {
-    // 초기 상태, 코드 내에서는 존재할 수 없음
-    // ScheduleParticipantAttendance 자체가 Embeddable로 관리되기 때문
-    PENDING(false),         // 출석 체크 전 초기 상태
+    // 경운 to 세은: PENDING 삭제했습니다.
 
     // Attendance 기록이 생성되었을 때는 아래의 값 중 하나로 시작함.
     PRESENT_PENDING(true),  // 출석으로 체크했으나 관리자 승인 대기 중
@@ -55,6 +51,7 @@ public enum AttendanceStatus {
     ABSENT_EXCUSE_PENDING(true),
     LATE_EXCUSE_PENDING(true),
     ;
+
     private final boolean isPending;
 
     AttendanceStatus(boolean isPending) {

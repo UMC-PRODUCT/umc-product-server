@@ -72,6 +72,7 @@ public class Schedule extends BaseEntity {
 
     @Embedded
     // policy가 존재하면 출석을 체크하는 일정, 즉 출석부를 생성하는 일정임
+    // 출석부을 트래킹하지 않도록 변경하고 싶다면 policy를 삭제하면 됨.
     private AttendancePolicy policy;
 
     // 삭제: authorChallengerId
