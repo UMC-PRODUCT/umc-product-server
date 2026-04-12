@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -38,4 +39,29 @@ public class ProjectApplicationForm extends BaseEntity {
     // title 및 description은 Form에 있는 것을 사용합니다.
     private Long formId;
 
+    @Builder(access = AccessLevel.PRIVATE)
+    private ProjectApplicationForm(
+        Project project,
+        Long formId
+    ) {
+        this.project = project;
+        this.formId = formId;
+    }
+
+    /**
+     * 프로젝트 지원 폼을 생성하는 정팩메 입니다.
+     */
+    public static ProjectApplicationForm create(Project project, Long formId) {
+        return ProjectApplicationForm.builder()
+            .project(project)
+            .formId(formId)
+            .build();
+    }
+
+    /**
+     * TODO: 특정 프로젝트에 속한 지원용 폼인지 검증하는 메소드입니다.
+     */
+    public boolean belongsTo(Project project) {
+        return false;
+    }
 }
