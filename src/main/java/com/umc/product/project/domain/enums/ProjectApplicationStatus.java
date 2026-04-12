@@ -5,7 +5,5 @@ public enum ProjectApplicationStatus {
     SUBMITTED, // 지원서 제출 완료
 
     APPROVED, // 합격
-    REJECTED, // 불합격
-
-    CANCELED // 지원자가 지원을 취소한 경우
+    REJECTED // 불합격
 }
