@@ -2,6 +2,8 @@ package com.umc.product.project.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -16,6 +18,7 @@ import jakarta.persistence.Table;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -50,4 +53,48 @@ public class ProjectApplicationFormPolicy extends BaseEntity {
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "allowed_parts", columnDefinition = "varchar[]")
     private Set<ChallengerPart> allowedParts = new HashSet<>();
+
+    @Builder(access = AccessLevel.PRIVATE)
+    private ProjectApplicationFormPolicy(
+        ProjectApplicationForm applicationForm,
+        Long formSectionId,
+        Set<ChallengerPart> allowedParts
+    ) {
+        this.applicationForm = applicationForm;
+        this.formSectionId = formSectionId;
+        this.allowedParts = allowedParts;
+    }
+
+    public static ProjectApplicationFormPolicy create(
+        ProjectApplicationForm form, Long formSectionId,
+        Set<ChallengerPart> allowedParts
+    ) {
+        return ProjectApplicationFormPolicy.builder()
+            .applicationForm(form)
+            .formSectionId(formSectionId)
+            .allowedParts(allowedParts)
+            .build();
+    }
+
+    /**
+     * FormSection에 접근 가능한 파트를 설정합니다.
+     */
+    public void upsertAllowedParts(Set<ChallengerPart> parts) {
+        this.allowedParts = parts;
+    }
+
+    /**
+     * 특정 파트가 FormSection에 접근이 가능한지를 판단합니다.
+     */
+    public boolean canAccess(ChallengerPart part) {
+        return this.allowedParts.contains(part);
+    }
+
+    public void validateSectionAccessPermission(ChallengerPart part) {
+        if (canAccess(part)) {
+            return;
+        }
+
+        throw new ProjectDomainException(ProjectErrorCode.APPLICATION_FORM_ACCESS_NOT_ALLOWED);
+    }
 }
