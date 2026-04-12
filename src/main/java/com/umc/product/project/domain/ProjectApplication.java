@@ -2,6 +2,8 @@ package com.umc.product.project.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
 import com.umc.product.survey.domain.FormResponse;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -14,8 +16,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -25,16 +27,10 @@ import lombok.NoArgsConstructor;
  * 어떤 매칭 라운드에 지원한 폼인지와 지원 결과를 담고 있습니다.
  */
 @Entity
-@Table(
-    name = "project_application",
-    uniqueConstraints = {
-        // 각 지원자는 매칭 차수 당 한 개의 지원서만 제출할 수 있습니다.
-        @UniqueConstraint(
-            name = "uk_project_application_form_member_matching_round",
-            columnNames = {"project_application_form_id", "applied_matching_round_id", "applicantMemberId"}
-        )
-    }
-)
+@Table(name = "project_application")
+// 각 지원자는 매칭 차수 당 한 개의 지원서만 제출할 수 있습니다.
+// UK로 관리하려 했으나, CANCELLED를 이용해서 Soft Delete 시키도록 설계를 변경하여 Service 단에서 검증을 진행해야 합니다.
+// TODO: 이거 반드시 해야함!!!!
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProjectApplication extends BaseEntity {
@@ -63,4 +59,99 @@ public class ProjectApplication extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProjectApplicationStatus status;
+    private Long statusChangedMemberId;
+    private String statusChangeReason;
+
+    @Builder(access = AccessLevel.PRIVATE)
+    private ProjectApplication(
+        ProjectApplicationForm applicationForm, Long formResponseId,
+        Long applicantMemberId, ProjectMatchingRound appliedMatchingRound
+    ) {
+        this.applicationForm = applicationForm;
+        this.formResponseId = formResponseId;
+        this.applicantMemberId = applicantMemberId;
+        this.appliedMatchingRound = appliedMatchingRound;
+        this.status = ProjectApplicationStatus.PENDING;
+    }
+
+    public static ProjectApplication create(
+        ProjectApplicationForm form, Long formResponseId,
+        Long applicantMemberId, ProjectMatchingRound appliedMatchingRound
+    ) {
+        return ProjectApplication.builder()
+            .applicationForm(form)
+            .formResponseId(formResponseId)
+            .applicantMemberId(applicantMemberId)
+            .appliedMatchingRound(appliedMatchingRound)
+            .build();
+    }
+
+    /**
+     * 지원서를 합격시킬 때 사용합니다.
+     *
+     * @param decidedByMemberId 결정한 PO 또는 운영진 ID
+     * @param reason            결정 사유 (필수 아님)
+     */
+    public void approve(Long decidedByMemberId, String reason) {
+        validateIsSubmitted("지원서가 제출된 상태에서만 합격 처리할 수 있습니다.");
+
+        this.status = ProjectApplicationStatus.APPROVED;
+        this.statusChangedMemberId = decidedByMemberId;
+        this.statusChangeReason = reason;
+    }
+
+    /**
+     * 지원서를 불합격시킬 때 사용합니다.
+     *
+     * @param decidedByMemberId 결정한 PO 또는 운영진 ID
+     * @param reason            결정 사유 (필수 아님)
+     */
+    public void reject(Long decidedByMemberId, String reason) {
+        validateIsSubmitted("지원서가 제출된 상태에서만 불합격 처리할 수 있습니다.");
+
+        this.status = ProjectApplicationStatus.REJECTED;
+        this.statusChangedMemberId = decidedByMemberId;
+        this.statusChangeReason = reason;
+    }
+
+    /**
+     * 지원 취소 (철회)
+     *
+     * @param decidedByMemberId 실행자 ID (지원자 본인 또는 운영진)
+     * @param reason            취소 사유 (필수 아님)
+     */
+    public void cancel(Long decidedByMemberId, String reason) {
+        validateIsSubmitted("지원서가 제출된 상태에서만 철회할 수 있습니다.");
+
+        this.status = ProjectApplicationStatus.CANCELED;
+        this.statusChangedMemberId = decidedByMemberId;
+        this.statusChangeReason = reason;
+    }
+
+    /**
+     * 지원서 제출 처리 (임시저장에서만 이동 가능)
+     */
+    public void submit() {
+        if (!this.isPending()) {
+            throw new ProjectDomainException(ProjectErrorCode.APPLICATION_NOT_SUBMITTED);
+        }
+
+        this.status = ProjectApplicationStatus.SUBMITTED;
+    }
+
+    public boolean isPending() {
+        return this.status == ProjectApplicationStatus.PENDING;
+    }
+
+    public boolean isSubmitted() {
+        return this.status == ProjectApplicationStatus.SUBMITTED;
+    }
+
+    public void validateIsSubmitted(String message) {
+        if (isSubmitted()) {
+            return;
+        }
+
+        throw new ProjectDomainException(ProjectErrorCode.APPLICATION_NOT_SUBMITTED, message);
+    }
 }
