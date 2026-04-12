@@ -1,25 +1,25 @@
 package com.umc.product.notice.application.service.query;
 
 
+import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.notice.application.port.in.query.GetNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.query.dto.NoticeImageInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeLinkInfo;
+import com.umc.product.notice.application.port.in.query.dto.VoteInfo;
 import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
 import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
 import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
 import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
-import com.umc.product.survey.application.port.in.query.GetVoteDetailUseCase;
-import com.umc.product.survey.application.port.in.query.dto.GetVoteDetailsQuery;
-import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -30,7 +30,7 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
     private final LoadNoticeVotePort loadNoticeVotePort;
     private final LoadNoticeImagePort loadNoticeImagePort;
     private final LoadNoticeLinkPort loadNoticeLinkPort;
-    private final GetVoteDetailUseCase getVoteDetailUseCase;
+    // private final GetVoteDetailUseCase getVoteDetailUseCase;
     private final GetFileUseCase getFileUseCase;
 
     @Override
@@ -49,9 +49,11 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
 
     @Override
     public VoteInfo findVoteByNoticeId(Long noticeId, Long memberId) {
-        return loadNoticeVotePort.findVoteByNoticeId(noticeId)
-            .map(vote -> getVoteDetailUseCase.get(new GetVoteDetailsQuery(vote.getVoteId(), memberId)))
-            .orElse(null);
+        // TODO: 일을 하자 김민서
+        throw new NotImplementedException();
+//        return loadNoticeVotePort.findVoteByNoticeId(noticeId)
+//            .map(vote -> getVoteDetailUseCase.get(new GetVoteDetailsQuery(vote.getVoteId(), memberId)))
+//            .orElse(null);
     }
 
     @Override
