@@ -20,7 +20,8 @@ public class QuestionOption extends BaseEntity {
     @JoinColumn(name = "question_id")
     private Question question;
 
-    @Column(nullable = false)
+    // 길이 변경 시 AnswerChoice.answeredAsContent도 함께 변경
+    @Column(nullable = false, length = 500)
     private String content; // 보기 내용 (예: '남자', '여자')
 
     @Column(name = "order_no", nullable = false)
