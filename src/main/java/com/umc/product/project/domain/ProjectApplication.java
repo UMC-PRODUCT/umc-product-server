@@ -16,6 +16,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,7 +28,16 @@ import lombok.NoArgsConstructor;
  * 어떤 매칭 라운드에 지원한 폼인지와 지원 결과를 담고 있습니다.
  */
 @Entity
-@Table(name = "project_application")
+@Table(
+    name = "project_application",
+    uniqueConstraints = {
+        // 각 지원자는 매칭 차수 당 한 개의 지원서만 제출할 수 있습니다.
+        @UniqueConstraint(
+            name = "uk_project_application_form_member_matching_round",
+            columnNames = {"project_application_form_id", "applied_matching_round_id", "applicantMemberId"}
+        )
+    }
+)
 // 각 지원자는 매칭 차수 당 한 개의 지원서만 제출할 수 있습니다.
 // UK로 관리하려 했으나, CANCELLED를 이용해서 Soft Delete 시키도록 설계를 변경하여 Service 단에서 검증을 진행해야 합니다.
 // TODO: 이거 반드시 해야함!!!!
@@ -121,11 +131,12 @@ public class ProjectApplication extends BaseEntity {
      * @param reason            취소 사유 (필수 아님)
      */
     public void cancel(Long decidedByMemberId, String reason) {
-        validateIsSubmitted("지원서가 제출된 상태에서만 철회할 수 있습니다.");
+//        validateIsSubmitted("지원서가 제출된 상태에서만 철회할 수 있습니다.");
 
-        this.status = ProjectApplicationStatus.CANCELED;
-        this.statusChangedMemberId = decidedByMemberId;
-        this.statusChangeReason = reason;
+        // HARD DELETE 로직
+        // PENDING일 떄, 즉 임시저장본 일 때 삭제하는 로직 또한 필요할 것 같음
+
+        // TODO: 악악악...
     }
 
     /**
