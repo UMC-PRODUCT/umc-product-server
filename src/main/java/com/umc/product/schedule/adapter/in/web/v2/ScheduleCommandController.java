@@ -55,7 +55,7 @@ public class ScheduleCommandController {
     )
     @PatchMapping("/{scheduleId}")
     public void edit(
-        @PathVariable String scheduleId,
+        @PathVariable Long scheduleId,
         EditScheduleRequest request
     ) {
         throw new NotImplementedException();
@@ -72,7 +72,7 @@ public class ScheduleCommandController {
     @PostMapping("/{scheduleId}/attendances/request")
     public ScheduleParticipantAttendanceInfoResponse requestAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @PathVariable String scheduleId,
+        @PathVariable Long scheduleId,
         @RequestBody ScheduleAttendanceRequest request
     ) {
         throw new NotImplementedException();
@@ -87,7 +87,7 @@ public class ScheduleCommandController {
     @PostMapping("/{scheduleId}/attendances/request")
     public ScheduleParticipantAttendanceInfoResponse excuseAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @PathVariable String scheduleId,
+        @PathVariable Long scheduleId,
         @RequestBody ExcuseScheduleAttendanceRequest request
     ) {
         throw new NotImplementedException();
@@ -107,7 +107,7 @@ public class ScheduleCommandController {
     @PostMapping("/{scheduleId}/attendances/decide")
     public List<ScheduleParticipantAttendanceInfoResponse> decideAttendances(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @PathVariable String scheduleId,
+        @PathVariable Long scheduleId,
         List<DecideAttendanceRequest> requests
     ) {
         throw new NotImplementedException();
