@@ -26,6 +26,7 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
+// TODO: Builder는 엔티티 단에서 정팩메에 붙여서 사용하도록 하고, 따로 엔티티 단에 붙이지 않는게 어떤지
 @Builder
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -43,9 +44,12 @@ public class FormSection extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private FormSectionType type;
+    // TODO: orderNo 기준으로 동작하도록 함, 별도로 Default/Custom 구분은 하지 않음
+    // 특정 도메인에서 필요 시 해당 도메인에서 엔티티로 관리하도록 함.
 
     @Column(name = "target_key", length = 50)
     private String targetKey;
+    // TODO: 필요하다면 사용하는 도메인에서 엔티티로 관리하도록 함.
 
     @Column(nullable = false)
     private String title;
@@ -55,16 +59,13 @@ public class FormSection extends BaseEntity {
 
     @Column(name = "order_no")
     private Integer orderNo;
+    // TODO: Long 박으면 어떨까 하는데 ..
 
     @OneToMany(mappedBy = "formSection", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderNo ASC")
     @Builder.Default
     private Set<Question> questions = new LinkedHashSet<>();
-
-    public void addQuestion(Question question) {
-        this.questions.add(question);
-        question.assignTo(this);
-    }
+    // TODO: OneToMany 말고, ManyToOne으로 단방향 의존성으로 관리해주세요
 
     public static FormSection create(
         Form form,
@@ -80,6 +81,11 @@ public class FormSection extends BaseEntity {
             .title(title)
             .orderNo(orderNo)
             .build();
+    }
+
+    public void addQuestion(Question question) {
+        this.questions.add(question);
+        question.assignTo(this);
     }
 
 }
