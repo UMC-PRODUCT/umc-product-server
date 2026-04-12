@@ -20,7 +20,7 @@ public enum CurriculumErrorCode implements BaseCode {
     WORKBOOK_SUBMISSION_ALREADY_EXISTS(HttpStatus.CONFLICT, "CURRICULUM-0009", "이미 해당 주차의 워크북 미션을 제출하였습니다."),
     CURRICULUM_ALREADY_EXISTS(HttpStatus.CONFLICT, "CURRICULUM-0010", "해당 기수와 파트의 커리큘럼이 이미 존재합니다."),
     WORKBOOK_ACCESS_DENIED(HttpStatus.FORBIDDEN, "CURRICULUM-0011", "해당 워크북에 대한 접근 권한이 없습니다."),
-    ;
+    INVALID_WEEKLY_CURRICULUM_PERIOD(HttpStatus.BAD_REQUEST, "CURRICULUM-0012", "주차 커리큘럼의 시작일이 종료일보다 늦을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
