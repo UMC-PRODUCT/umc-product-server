@@ -43,6 +43,9 @@ public class Project extends BaseEntity {
     @Column(nullable = false)
     private Long productOwnerMemberId;
 
+    private Long statusChangedByMemberId; // 프로젝트 상태를 변경한 멤버의 ID입니다. (예: ABORTED로 변경한 멤버)
+    private String statusChangedReason; // 프로젝트 상태를 변경한 이유입니다. (예: ABORTED로 변경한 이유)
+
     // 프로젝트 지원 폼은, 파트별로 섹션을 나누어서 가지고 있어야 합니다.
     // Design, FE, BE 각각 섹션을 나누어서 가지고 있으며, 지원자의 파트에 따라서 자동으로 해당 섹션으로 렌더링해서 제공하여야 합니다.
     // 기존에는 ElementCollection, CollectionTable을 통해서 저장했으나, FormSection마다 조회 및 작성 가능한 파트를 제한하여야 하고,
@@ -52,4 +55,57 @@ public class Project extends BaseEntity {
     // TO는 Embedded로 전부 때려박아서 관리할지, 별도의 Entity를 분리할지 고려하였으나
     // 추후 확장성을 고려하여 분리하는 방향으로 결정하였습니다.
     // (다음 기수부터 Web-Server 통합 가능성 고려)
+
+    /**
+     * 프로젝트를 생성하는 정팩메 입니다.
+     *
+     * @param gisuId               프로젝트가 속한 기수 ID
+     * @param name                 프로젝트명 (100자 이내)
+     * @param description          프로젝트 설명 (200자 이내)
+     * @param productOwnerMemberId PO Member ID
+     * @return 생성된 프로젝트를 반환합니다.
+     */
+    public static Project create(Long gisuId, String name, String description, Long productOwnerMemberId) {
+        return null;
+    }
+
+    /**
+     * 프로젝트명을 변경합니다.
+     *
+     * @param name 변경하고자 하는 이름
+     */
+    public void rename(String name) {
+    }
+
+    /**
+     * 프로젝트 설명을 변경합니다. null을 제공하면 삭제합니다.
+     *
+     * @param description 변경하고자 하는 프로젝트 설명
+     */
+    public void updateDescription(String description) {
+    }
+
+    /**
+     * 프로젝트 PO를 변경합니다.
+     *
+     * @param newOwnerMemberId 새로운 PO ID
+     */
+    public void changeProductOwner(Long newOwnerMemberId) {
+    }
+
+    /**
+     * 기수가 종료되었을 때, 프로젝트를 완료 처리 합니다.
+     */
+    public void complete() {
+    }
+
+    /**
+     * 프로젝트가 중간에 와해되었을 때 사용합니다. 사유를 반드시 제공하여야 합니다. ㄴ
+     *
+     * @param reason            와해 사유
+     * @param decidedByMemberId 해당 사항을 결정한 운영진 Member ID
+     */
+    public void abort(String reason, Long decidedByMemberId) {
+    }
+
 }
