@@ -28,12 +28,14 @@ import lombok.NoArgsConstructor;
  * <p>- requiresApproval=false: 출석 체크 시 바로 PRESENT/LATE로 확정해줌
  * <p>- active: 삭제 대신 비활성화해소 기존 출석 기록을 보존
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 @Entity
 @Table(name = "attendance_sheet")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AttendanceSheet extends BaseEntity {
 
+    private static final int DEFAULT_LATE_THRESHOLD_MINUTES = 10;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -71,19 +73,16 @@ public class AttendanceSheet extends BaseEntity {
         this.active = true;
     }
 
-    private static final int DEFAULT_LATE_THRESHOLD_MINUTES = 10;
-
     /**
      * 일정 기반 출석부 생성 (동시 생성용)
      * <p>
-     * 출석 시간대(Window)는 일정의 시작/종료 시간을 기준으로 내부에서 생성됩니다.
-     * 지각 기준 시간은 10분으로 고정됩니다.
+     * 출석 시간대(Window)는 일정의 시작/종료 시간을 기준으로 내부에서 생성됩니다. 지각 기준 시간은 10분으로 고정됩니다.
      *
-     * @param scheduleId            연결할 일정 ID
-     * @param gisuId                기수 ID
-     * @param scheduleStartsAt      일정 시작 시간 (출석 시간대 시작)
-     * @param scheduleEndsAt        일정 종료 시간 (출석 시간대 종료)
-     * @param requiresApproval      승인 필요 여부
+     * @param scheduleId       연결할 일정 ID
+     * @param gisuId           기수 ID
+     * @param scheduleStartsAt 일정 시작 시간 (출석 시간대 시작)
+     * @param scheduleEndsAt   일정 종료 시간 (출석 시간대 종료)
+     * @param requiresApproval 승인 필요 여부
      */
     public static AttendanceSheet createWithSchedule(
         Long scheduleId,
@@ -112,8 +111,7 @@ public class AttendanceSheet extends BaseEntity {
     /**
      * 체크 시간이 출석 가능 시간대(window) 안에 있는지 확인.
      * <p>
-     * active 상태와 무관하게 시간대만 체크합니다.
-     * active는 삭제 대신 비활성화 용도로만 사용됩니다.
+     * active 상태와 무관하게 시간대만 체크합니다. active는 삭제 대신 비활성화 용도로만 사용됩니다.
      */
     public boolean isWithinTimeWindow(Instant checkTime) {
         return window.contains(checkTime);
