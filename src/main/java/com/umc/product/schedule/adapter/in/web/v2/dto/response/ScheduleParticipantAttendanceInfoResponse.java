@@ -8,6 +8,7 @@ public record ScheduleParticipantAttendanceInfoResponse(
     Double latitude,
     Double longitude,
     AttendanceStatus status,
+    String excuseReason, // 사유를 제출한 경우, 해당 사유입니다. nullable!
     // AttendanceStatus에 따라서, 출석이 운영진의 승인을 기다리고 있는지를 반환합니다.
     // decidedMemberInfo의 null 여부와는 무관하므로 해당 여부에 대한 flag 값으로 사용하지 않도록 유의합니다.
     boolean isPendingDecision,
