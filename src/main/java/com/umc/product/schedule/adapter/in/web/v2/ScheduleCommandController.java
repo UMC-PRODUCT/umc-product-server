@@ -84,7 +84,7 @@ public class ScheduleCommandController {
         위치 정보는 클라이언트 단에서 잡히는 경우에 한하여 제공하면 됩니다. 단, 사유는 반드시 제춣하여야 합니다.
         """
     )
-    @PostMapping("/{scheduleId}/attendances/request")
+    @PostMapping("/{scheduleId}/attendances/excuse")
     public ScheduleParticipantAttendanceInfoResponse excuseAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long scheduleId,
