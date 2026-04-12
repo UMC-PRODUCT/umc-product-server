@@ -2,41 +2,39 @@ package com.umc.product.survey.adapter.out.persistence;
 
 import com.umc.product.survey.application.port.out.LoadSingleAnswerPort;
 import com.umc.product.survey.application.port.out.SaveSingleAnswerPort;
+import com.umc.product.survey.application.port.out.dto.VoteAnswerRow;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.umc.product.survey.application.port.out.dto.VoteAnswerRow;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
-import static com.umc.product.survey.domain.enums.QuestionType.CHECKBOX;
-
 @Component
 @RequiredArgsConstructor
-public class SingleAnswerPersistenceAdapter implements SaveSingleAnswerPort, LoadSingleAnswerPort {
+@Deprecated
+public class LegacySingleAnswerPersistenceAdapter implements SaveSingleAnswerPort, LoadSingleAnswerPort {
 
-    private final SingleAnswerJpaRepository singleAnswerJpaRepository;
-    private final SingleAnswerQueryRepository singleAnswerQueryRepository;
+    private final LegacySingleAnswerJpaRepository legacySingleAnswerJpaRepository;
+    private final LegacySingleAnswerQueryRepository legacySingleAnswerQueryRepository;
 
     @Override
     public void deleteAllByFormResponseIds(List<Long> ids) {
         if (ids == null || ids.isEmpty()) {
             return;
         }
-        singleAnswerJpaRepository.deleteAllByFormResponseIds(ids);
+        legacySingleAnswerJpaRepository.deleteAllByFormResponseIds(ids);
     }
 
     @Override
     public Map<Long, Map<String, Object>> findScheduleValuesByFormResponseIds(List<Long> formResponseIds) {
-        return singleAnswerQueryRepository.findScheduleValuesByFormResponseIds(formResponseIds);
+        return legacySingleAnswerQueryRepository.findScheduleValuesByFormResponseIds(formResponseIds);
     }
 
     @Override
     public Map<Long, Integer> countVotesByOptionId(Long formId) {
-        List<Object[]> rows = singleAnswerJpaRepository.countVotesByOptionId(formId);
+        List<Object[]> rows = legacySingleAnswerJpaRepository.countVotesByOptionId(formId);
 
         Map<Long, Integer> result = new LinkedHashMap<>();
         for (Object[] row : rows) {
@@ -49,7 +47,7 @@ public class SingleAnswerPersistenceAdapter implements SaveSingleAnswerPort, Loa
 
     @Override
     public Map<Long, List<Long>> findSelectedMemberIdsByOptionId(Long voteId) {
-        List<VoteAnswerRow> rows = singleAnswerQueryRepository.findVoteAnswerRows(voteId);
+        List<VoteAnswerRow> rows = legacySingleAnswerQueryRepository.findVoteAnswerRows(voteId);
 
         Map<Long, List<Long>> result = new LinkedHashMap<>();
 

@@ -4,16 +4,17 @@ import com.umc.product.survey.application.port.out.LoadFormResponsePort;
 import com.umc.product.survey.application.port.out.SaveFormResponsePort;
 import com.umc.product.survey.application.port.out.SaveSingleAnswerPort;
 import com.umc.product.survey.domain.FormResponse;
-import com.umc.product.survey.domain.SingleAnswer;
+import com.umc.product.survey.domain.LegacySingleAnswer;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
@@ -21,7 +22,7 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
 
     private final FormResponseJpaRepository formResponseJpaRepository;
     private final SaveSingleAnswerPort saveSingleAnswerPort;
-    private final SingleAnswerJpaRepository singleAnswerJpaRepository;
+    private final LegacySingleAnswerJpaRepository legacySingleAnswerJpaRepository;
 
     @Override
     public Optional<FormResponse> findById(Long formResponseId) {
@@ -98,7 +99,7 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
     @Override
     public List<Long> findMySelectedOptionIds(Long formId, Long memberId) {
         // 투표는 1문항/1응답 전제, "최신 SUBMITTED 응답"의 answer만 보면 됨
-        List<SingleAnswer> answers = singleAnswerJpaRepository.findLatestSubmittedAnswers(
+        List<LegacySingleAnswer> answers = legacySingleAnswerJpaRepository.findLatestSubmittedAnswers(
             formId, memberId, FormResponseStatus.SUBMITTED
         );
 
@@ -107,7 +108,7 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
         }
 
         // vote 구조상 사실상 1개지만 안전하게 첫 answer만 사용
-        SingleAnswer a = answers.get(0);
+        LegacySingleAnswer a = answers.get(0);
         Map<String, Object> v = a.getValue();
         if (v == null || v.isEmpty()) {
             return List.of();
