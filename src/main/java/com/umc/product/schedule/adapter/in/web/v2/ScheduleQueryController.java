@@ -50,7 +50,7 @@ public class ScheduleQueryController {
         """
     )
     @GetMapping("/{scheduleId}")
-    public ScheduleInfoResponse details(@PathVariable String scheduleId) {
+    public ScheduleInfoResponse details(@PathVariable Long scheduleId) {
         throw new NotImplementedException();
     }
 
@@ -77,7 +77,7 @@ public class ScheduleQueryController {
         @RequestParam Instant to,
         @RequestParam AttendanceStatus attendanceStatus,
         @CurrentMember MemberPrincipal memberPrincipal,
-        @PathVariable String scheduleId
+        @PathVariable Long scheduleId
     ) {
         throw new NotImplementedException();
     }
