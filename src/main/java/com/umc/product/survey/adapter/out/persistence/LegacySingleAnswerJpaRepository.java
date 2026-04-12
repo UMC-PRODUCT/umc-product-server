@@ -1,17 +1,19 @@
 package com.umc.product.survey.adapter.out.persistence;
 
-import com.umc.product.survey.domain.SingleAnswer;
+import com.umc.product.survey.domain.LegacySingleAnswer;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
-import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface SingleAnswerJpaRepository extends JpaRepository<SingleAnswer, Long> {
+import java.util.List;
+
+@Deprecated
+public interface LegacySingleAnswerJpaRepository extends JpaRepository<LegacySingleAnswer, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-            delete from SingleAnswer a
+            delete from LegacySingleAnswer a
             where a.formResponse.id in :formResponseIds
         """)
     int deleteAllByFormResponseIds(@Param("formResponseIds") List<Long> formResponseIds);
@@ -19,14 +21,14 @@ public interface SingleAnswerJpaRepository extends JpaRepository<SingleAnswer, L
 
     @Query("""
             select sa
-            from SingleAnswer sa
+            from LegacySingleAnswer sa
             join sa.formResponse fr
             where fr.form.id = :formId
               and fr.respondentMemberId = :memberId
               and fr.status = :status
             order by fr.id desc, sa.id desc
         """)
-    List<SingleAnswer> findLatestSubmittedAnswers(
+    List<LegacySingleAnswer> findLatestSubmittedAnswers(
         @Param("formId") Long formId,
         @Param("memberId") Long memberId,
         @Param("status") FormResponseStatus status

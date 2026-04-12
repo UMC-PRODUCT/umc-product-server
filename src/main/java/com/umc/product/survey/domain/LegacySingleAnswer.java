@@ -4,26 +4,13 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import java.util.List;
-import java.util.Map;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+
+import java.util.List;
+import java.util.Map;
 
 @Entity
 @Getter
@@ -31,7 +18,7 @@ import org.hibernate.type.SqlTypes;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "single_answer")
-public class SingleAnswer extends BaseEntity {
+public class LegacySingleAnswer extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,13 +40,13 @@ public class SingleAnswer extends BaseEntity {
     @Column(columnDefinition = "jsonb", nullable = false)
     private Map<String, Object> value;
 
-    public static SingleAnswer create(
+    public static LegacySingleAnswer create(
         FormResponse formResponse,
         Question question,
         QuestionType answeredAsType,
         Map<String, Object> value
     ) {
-        SingleAnswer a = new SingleAnswer();
+        LegacySingleAnswer a = new LegacySingleAnswer();
         a.formResponse = formResponse;
         a.question = question;
         a.answeredAsType = answeredAsType;
@@ -67,12 +54,7 @@ public class SingleAnswer extends BaseEntity {
         return a;
     }
 
-    public void change(QuestionType answeredAsType, Map<String, Object> value) {
-        this.answeredAsType = answeredAsType;
-        this.value = (value == null) ? Map.of() : value;
-    }
-
-    public static SingleAnswer createVoteAnswer(
+    public static LegacySingleAnswer createVoteAnswer(
         FormResponse formResponse,
         Question question,
         List<Long> selectedOptionIds
@@ -81,7 +63,7 @@ public class SingleAnswer extends BaseEntity {
 
         if (t == QuestionType.RADIO || t == QuestionType.DROPDOWN) {
             Long selectedOptionId = selectedOptionIds.get(0);
-            return SingleAnswer.create(
+            return LegacySingleAnswer.create(
                 formResponse,
                 question,
                 t,
@@ -90,7 +72,7 @@ public class SingleAnswer extends BaseEntity {
         }
 
         if (t == QuestionType.CHECKBOX) {
-            return SingleAnswer.create(
+            return LegacySingleAnswer.create(
                 formResponse,
                 question,
                 t,
@@ -100,6 +82,11 @@ public class SingleAnswer extends BaseEntity {
 
         // 여기 도달 시 구조이상
         throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_QUESTION_TYPE);
+    }
+
+    public void change(QuestionType answeredAsType, Map<String, Object> value) {
+        this.answeredAsType = answeredAsType;
+        this.value = (value == null) ? Map.of() : value;
     }
 }
 
