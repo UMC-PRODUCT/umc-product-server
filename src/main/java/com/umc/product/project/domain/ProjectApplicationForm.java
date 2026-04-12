@@ -1,0 +1,41 @@
+package com.umc.product.project.domain;
+
+import com.umc.product.common.BaseEntity;
+import com.umc.product.survey.domain.Form;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+/**
+ * 프로젝트에 지원하기 위한 폼에 대한 정보를 담고 있는 {@link Form}과 매핑되는 엔티티입니다.
+ * <p>
+ * Form 안에 속한 FormSection에 대한 접근 권한 제한은 {@link ProjectApplicationFormPolicy}에서 가져옵니다.
+ * <p>
+ * {@link Project}에 Array 타입으로 직접 지정해도 되나, 소속된 각 지원서만이 가지고 있는 필드가 존재해야 하는 확장성을 고려하여 엔티티로 분리합니다.
+ */
+@Entity
+@Table(name = "project_application_form")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class ProjectApplicationForm extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id", nullable = false)
+    private Project project;
+
+    // title 및 description은 Form에 있는 것을 사용합니다.
+    private Long formId;
+
+}
