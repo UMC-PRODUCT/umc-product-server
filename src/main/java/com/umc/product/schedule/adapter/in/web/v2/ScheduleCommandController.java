@@ -1,10 +1,15 @@
 package com.umc.product.schedule.adapter.in.web.v2;
 
 import com.umc.product.global.exception.NotImplementedException;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.CreateScheduleRequest;
+import com.umc.product.schedule.adapter.in.web.v2.dto.request.DecideAttendanceRequest;
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.EditScheduleRequest;
+import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleParticipantAttendanceInfoResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,8 +59,39 @@ public class ScheduleCommandController {
     }
 
     // 각 일정에 출석 요청을 보내는 API -> 변경된 상태는 조회 API를 호출하여 상태를 조회하기 바랍니다.
+    @Operation(summary = "출석 요청하기", description = """
+        특정 일정에 대한 출석을 요청합니다. 반환값으로 변경된 출석 상태를 제공합니다.
+
+        일정의 출석 시작 가능 시간이 경과되지 않은 경우에는 에러를 반환합니다.
+        """
+    )
+    @PostMapping("/{scheduleId}/attendances/request")
+    public ScheduleParticipantAttendanceInfoResponse requestAttendance(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable String scheduleId
+    ) {
+        throw new NotImplementedException();
+    }
 
     // 각 일정에 대한 출석 요청을 승인 또는 기각하는 API, Request는 list 형태로 받을 수 있어야 합니다.
+    @Operation(summary = "[운영진용] 출석 요청 승인/거절", description = """
+        일정에 대한 출석 요청을 승인 또는 거절합니다.
+
+        결정 권한은 아래와 같습니다. (기준은, 일정이 포함된 기수 기준입니다)
+        - 중앙운영사무국 총괄단 이상의 권한을 가지고 있거나, 일정에 참여하는 중앙운영사무국원,
+
+        여러 개의 요청을 한 번에 처리할 수 있도록, DecideAttendanceRequest를 배열로 받습니다.
+        모든 요청이 성공적으로 처리된 경우에만 성공으로 반환합니다. (Transaction)
+        """
+    )
+    @PostMapping("/{scheduleId}/attendances/decide")
+    public List<ScheduleParticipantAttendanceInfoResponse> decideAttendances(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable String scheduleId,
+        List<DecideAttendanceRequest> requests
+    ) {
+        throw new NotImplementedException();
+    }
 
     // TODO: 일정 신고 API (본인이 참여하지 않는 일정에 강제로 초대당한 경우)
 
