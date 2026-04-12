@@ -56,14 +56,6 @@ public class Form extends BaseEntity {
     @Column(name = "is_anonymous", nullable = false)
     private boolean isAnonymous;
 
-    // 시작일 00:00(KST) ~ 마감일 23:59(KST) = (마감일+1) 00:00(KST) exclusive
-    @Column(name = "starts_at")
-    private Instant startsAt;
-
-    // 해당 시간 이전까지 허용합니다. endsAt은 해당 시간 까지라면, 이건 해당 시간 직전까지 입니다.
-    @Column(name = "ends_at_exclusive")
-    private Instant endsAtExclusive;
-
     @OneToMany(mappedBy = "form", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("orderNo ASC")
     @Builder.Default
@@ -95,23 +87,15 @@ public class Form extends BaseEntity {
         this.status = FormStatus.PUBLISHED;
     }
 
+    @Deprecated
+    // TODO: NoticeVote 쪽 도메인 메소드로
     public void setVotePolicy(boolean isAnonymous, Instant startsAt, Instant endsAtExclusive) {
-        if (startsAt != null && endsAtExclusive != null && !endsAtExclusive.isAfter(startsAt)) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_FORM_ACTIVE_PERIOD);
-        }
-        this.isAnonymous = isAnonymous;
-        this.startsAt = startsAt;
-        this.endsAtExclusive = endsAtExclusive;
+        return ;
     }
 
+    // TODO: NoticeVote 쪽 도메인 메소드로
     public FormOpenStatus getOpenStatus(Instant now) {
-        if (startsAt != null && now.isBefore(startsAt)) {
-            return FormOpenStatus.NOT_STARTED;
-        }
-        if (endsAtExclusive != null && !now.isBefore(endsAtExclusive)) {
-            return FormOpenStatus.CLOSED;
-        }
-        return FormOpenStatus.OPEN;
+        return null;
     }
 
     /**
