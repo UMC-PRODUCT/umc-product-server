@@ -75,7 +75,5 @@ public class ProjectMember extends BaseEntity {
     private ProjectMemberStatus status;
     private Instant statusUpdatedAt;
     private String statusChangeReason;
-    private Long statusChangedByMemberId;
-
-
+    private Long statusChangedMemberId;
 }
