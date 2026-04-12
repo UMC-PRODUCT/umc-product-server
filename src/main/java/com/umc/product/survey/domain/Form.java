@@ -22,7 +22,7 @@ public class Form extends BaseEntity {
     @Column(name = "created_member_id", nullable = false)
     private Long createdMemberId;
 
-    @Column()
+    @Column(nullable = false)
     private String title;
 
     @Column(length = 500)

@@ -2,27 +2,8 @@ package com.umc.product.survey.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.survey.domain.enums.QuestionType;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
-import jakarta.persistence.Table;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 
 @Entity
 @Getter
@@ -40,8 +21,11 @@ public class Question extends BaseEntity {
     @JoinColumn(name = "form_section_id", nullable = false)
     private FormSection formSection;
 
-    @Column(name = "question_text", nullable = false, length = 500)
-    private String questionText;
+    @Column(name = "title", nullable = false, length = 500)
+    private String title;
+
+    @Column(length = 1000)
+    private String description;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -51,12 +35,21 @@ public class Question extends BaseEntity {
     private Boolean isRequired;
 
     @Column(name = "order_no", nullable = false)
-    private Integer orderNo;
+    private Long orderNo;
 
-    @OneToMany(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("orderNo ASC")
-    @Builder.Default
-    private Set<QuestionOption> options = new LinkedHashSet<>();
+    public static Question create(
+        String questionText,
+        QuestionType type,
+        boolean isRequired,
+        long orderNo
+    ) {
+        Question q = new Question();
+        q.title = questionText;
+        q.type = type;
+        q.isRequired = isRequired;
+        q.orderNo = orderNo;
+        return q;
+    }
 
     public void assignTo(FormSection section) {
         this.formSection = section;
@@ -67,38 +60,19 @@ public class Question extends BaseEntity {
     }
 
     public void changeQuestionText(String text) {
-        this.questionText = text;
+        this.title = text;
     }
 
     public void changeType(QuestionType type) {
         this.type = type;
     }
 
-    public void changeRequired(Boolean required) {
+    public void changeRequired(boolean required) {
         this.isRequired = required;
     }
 
-    public void changeOrderNo(Integer orderNo) {
+    public void changeOrderNo(long orderNo) {
         this.orderNo = orderNo;
-    }
-
-    public static Question create(
-        String questionText,
-        QuestionType type,
-        boolean isRequired,
-        int orderNo
-    ) {
-        Question q = new Question();
-        q.questionText = questionText;
-        q.type = type;
-        q.isRequired = isRequired;
-        q.orderNo = orderNo;
-        return q;
-    }
-
-    public void addOption(QuestionOption option) {
-        this.options.add(option);
-        option.assignTo(this);
     }
 
 }
