@@ -2,7 +2,6 @@ package com.umc.product.curriculum.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,19 +9,23 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.flywaydb.core.internal.util.StringUtils;
 
 @Entity
-@Table(name = "curriculum")
+// TODO: gisuId, part 조합에 대한 unique 제약조건 추가 flyway까지 추가해야 되는데 일단 보류
+//@Table(name = "curriculum",
+//    uniqueConstraints = @UniqueConstraint(
+//        name = "uk_curriculum_gisu_id_part",
+//        columnNames = {"gisu_id", "part"}
+//    )
+//)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+
 public class Curriculum extends BaseEntity {
 
     @Id
@@ -39,9 +42,6 @@ public class Curriculum extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
-    @OneToMany(mappedBy = "curriculum", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<OriginalWorkbook> originalWorkbooks = new ArrayList<>();
-
     @Builder(access = AccessLevel.PRIVATE)
     private Curriculum(Long gisuId, ChallengerPart part, String title) {
         this.gisuId = gisuId;
@@ -54,17 +54,11 @@ public class Curriculum extends BaseEntity {
     }
 
     public void updateTitle(String title) {
-        if(title == null || title.isBlank()) {
-            throw new IllegalArgumentException("Title must not be null or blank");
+        if(StringUtils.hasText(title)) {
+            this.title = title;
         }
-        this.title = title;
     }
 
-    public void addWorkbook(OriginalWorkbook workbook) {
-        this.originalWorkbooks.add(workbook);
-    }
+    // TODO: updatePart가 필요할수도
 
-    public void removeOriginalWorkbook(OriginalWorkbook workbook) {
-        this.originalWorkbooks.remove(workbook);
-    }
 }
