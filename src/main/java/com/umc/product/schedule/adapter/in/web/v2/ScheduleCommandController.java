@@ -6,6 +6,8 @@ import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.CreateScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.DecideAttendanceRequest;
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.EditScheduleRequest;
+import com.umc.product.schedule.adapter.in.web.v2.dto.request.ExcuseScheduleAttendanceRequest;
+import com.umc.product.schedule.adapter.in.web.v2.dto.request.ScheduleAttendanceRequest;
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleParticipantAttendanceInfoResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -14,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -58,17 +61,34 @@ public class ScheduleCommandController {
         throw new NotImplementedException();
     }
 
-    // 각 일정에 출석 요청을 보내는 API -> 변경된 상태는 조회 API를 호출하여 상태를 조회하기 바랍니다.
+    // 사유 제출까지 여기에 묶어버리는게 맞는 판단일까에 대한 궁금증이 살짝 있음.
     @Operation(summary = "출석 요청하기", description = """
-        특정 일정에 대한 출석을 요청합니다. 반환값으로 변경된 출석 상태를 제공합니다.
+        특정 일정에 대한 출석을 요청합니다. 반환값으로 변경된 출석 상태 및 관련된 정보들을 제공합니다.
 
-        일정의 출석 시작 가능 시간이 경과되지 않은 경우에는 에러를 반환합니다.
+        - 이미 출석 요청을 한 경우, 에러가 반환됩니다. (사유 출석 요청 및 이미 출석/지각/결석으로 확정된 경우 등)
+        - 일정의 출석 시작 가능 시간이 아직 도래하지 않은 경우 및 일정 종료 시간이 경과된 이후에는 에러가 반환됩니다.
         """
     )
     @PostMapping("/{scheduleId}/attendances/request")
     public ScheduleParticipantAttendanceInfoResponse requestAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @PathVariable String scheduleId
+        @PathVariable String scheduleId,
+        @RequestBody ScheduleAttendanceRequest request
+    ) {
+        throw new NotImplementedException();
+    }
+
+    @Operation(summary = "출석 요청이 불가능한 경우, 사유 제출하기", description = """
+        위치 인증이 안되거나, 개인 사정이 있어 결석하지만 출석 인정을 요구하는 경우 사유를 제출하기 위하여 사용합니다.
+
+        위치 정보는 클라이언트 단에서 잡히는 경우에 한하여 제공하면 됩니다. 단, 사유는 반드시 제춣하여야 합니다.
+        """
+    )
+    @PostMapping("/{scheduleId}/attendances/request")
+    public ScheduleParticipantAttendanceInfoResponse excuseAttendance(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable String scheduleId,
+        @RequestBody ExcuseScheduleAttendanceRequest request
     ) {
         throw new NotImplementedException();
     }
