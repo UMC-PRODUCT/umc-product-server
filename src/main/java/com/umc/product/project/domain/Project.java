@@ -38,6 +38,13 @@ public class Project extends BaseEntity {
     @Column(length = 200)
     private String description; // 프로젝트 설명
 
+    private Long logoFileId; // 로고 ID
+    private Long thumbnailFileId; // 프로젝트 썸네일 이미지 파일 ID
+
+
+    @Column(length = 300)
+    private String externalLink; // 프로젝트 외부 링크
+
     // 프로젝트를 생성한, PO의 ID 값입니다.
     // Plan 챌린저가 여러 명 있더라도 해당 프로젝트에 대한 전권을 가지고 있는 PO는 한 명으로 유지하고자 합니다.
     @Column(nullable = false)
@@ -65,7 +72,13 @@ public class Project extends BaseEntity {
      * @param productOwnerMemberId PO Member ID
      * @return 생성된 프로젝트를 반환합니다.
      */
-    public static Project create(Long gisuId, String name, String description, Long productOwnerMemberId) {
+    public static Project create(
+        Long gisuId, String name, String description, String externalLink,
+        Long productOwnerMemberId,
+        Long statusChangedByMemberId, String statusChangedReason
+    ) {
+        // 로그로 생성 이력 남겨주세요
+
         return null;
     }
 
@@ -100,7 +113,7 @@ public class Project extends BaseEntity {
     }
 
     /**
-     * 프로젝트가 중간에 와해되었을 때 사용합니다. 사유를 반드시 제공하여야 합니다. ㄴ
+     * 프로젝트가 중간에 와해되었을 때 사용합니다. 사유를 반드시 제공하여야 합니다.
      *
      * @param reason            와해 사유
      * @param decidedByMemberId 해당 사항을 결정한 운영진 Member ID
