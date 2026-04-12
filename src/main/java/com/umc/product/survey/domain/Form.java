@@ -60,6 +60,7 @@ public class Form extends BaseEntity {
     @Column(name = "starts_at")
     private Instant startsAt;
 
+    // 해당 시간 이전까지 허용합니다. endsAt은 해당 시간 까지라면, 이건 해당 시간 직전까지 입니다.
     @Column(name = "ends_at_exclusive")
     private Instant endsAtExclusive;
 
@@ -72,6 +73,14 @@ public class Form extends BaseEntity {
         Form form = new Form();
         form.createdMemberId = createdMemberId;
         form.status = FormStatus.DRAFT;
+        return form;
+    }
+
+    public static Form createPublished(Long createdMemberId, String title) {
+        Form form = new Form();
+        form.createdMemberId = createdMemberId;
+        form.title = title;
+        form.status = FormStatus.PUBLISHED;
         return form;
     }
 
@@ -103,14 +112,6 @@ public class Form extends BaseEntity {
             return FormOpenStatus.CLOSED;
         }
         return FormOpenStatus.OPEN;
-    }
-
-    public static Form createPublished(Long createdMemberId, String title) {
-        Form form = new Form();
-        form.createdMemberId = createdMemberId;
-        form.title = title;
-        form.status = FormStatus.PUBLISHED;
-        return form;
     }
 
     /**
