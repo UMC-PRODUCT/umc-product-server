@@ -23,8 +23,10 @@ import lombok.NoArgsConstructor;
     name = "mission_submission",
     uniqueConstraints = {
         @UniqueConstraint(
-            name = "uk_mission_submission_challenger_mission_id",
-            columnNames = {"", "challenger_mission_id"}
+            // 원본 워크북의 미션 하나 당 제출물은 하나씩임
+            // 챌린저 워크북은 인 당 하나만 배포되기 때문에 보장됨
+            name = "uk_mission_submission_original_wb_mission_challenger_wb_id",
+            columnNames = {"original_workbook_mission_id", "challenger_workbook_id"}
         )
     }
 )

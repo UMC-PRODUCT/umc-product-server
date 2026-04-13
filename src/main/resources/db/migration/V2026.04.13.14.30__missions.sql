@@ -50,6 +50,9 @@ ALTER TABLE mission_submission
 ALTER TABLE mission_submission
     ADD CONSTRAINT FK_MISSION_SUBMISSION_ON_ORIGINAL_WORKBOOK_MISSION FOREIGN KEY (original_workbook_mission_id) REFERENCES original_workbook_mission (id);
 
+ALTER TABLE mission_submission
+    ADD CONSTRAINT uk_mission_submission_original_wb_mission_challenger_wb_id UNIQUE (original_workbook_mission_id, challenger_workbook_id);
+
 ALTER TABLE workbook_mission
     RENAME TO legacy_workbook_mission;
 
