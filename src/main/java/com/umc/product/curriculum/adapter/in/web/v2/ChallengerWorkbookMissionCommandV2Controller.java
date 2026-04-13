@@ -67,7 +67,7 @@ public class ChallengerWorkbookMissionCommandV2Controller {
     )
     @PatchMapping("/{missionSubmissionId}")
     public void editOriginalMission(
-        @PathVariable String missionSubmissionId,
+        @PathVariable Long missionSubmissionId,
         @RequestBody String content
     ) {
         throw new NotImplementedException();
@@ -83,7 +83,7 @@ public class ChallengerWorkbookMissionCommandV2Controller {
     )
     @DeleteMapping("/{missionSubmissionId}")
     public void deleteOriginalMission(
-        @PathVariable String missionSubmissionId
+        @PathVariable Long missionSubmissionId
     ) {
         throw new NotImplementedException();
     }
@@ -126,7 +126,7 @@ public class ChallengerWorkbookMissionCommandV2Controller {
     )
     @PatchMapping("/feedback/{missionFeedbackId}")
     public void editMissionFeedback(
-        @PathVariable String missionFeedbackId,
+        @PathVariable Long missionFeedbackId,
         @RequestBody String content
     ) {
         throw new NotImplementedException();

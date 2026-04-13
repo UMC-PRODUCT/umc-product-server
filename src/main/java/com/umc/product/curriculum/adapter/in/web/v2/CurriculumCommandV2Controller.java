@@ -49,7 +49,7 @@ public class CurriculumCommandV2Controller {
     @PatchMapping("/{curriculumId}")
     public void editCurriculum(
         @RequestBody String title,
-        @PathVariable String curriculumId
+        @PathVariable Long curriculumId
     ) {
         throw new NotImplementedException();
     }
@@ -63,7 +63,7 @@ public class CurriculumCommandV2Controller {
     )
     @DeleteMapping("/{curriculumId}")
     public void deleteCurriculum(
-        @PathVariable String curriculumId
+        @PathVariable Long curriculumId
     ) {
         throw new NotImplementedException();
     }
@@ -100,7 +100,7 @@ public class CurriculumCommandV2Controller {
     )
     @PatchMapping("/weekly/{weeklyCurriculumId}")
     public void editWeeklyCurriculum(
-        @PathVariable String weeklyCurriculumId,
+        @PathVariable Long weeklyCurriculumId,
         @RequestBody EditWeeklyCurriculumRequest request
     ) {
         throw new NotImplementedException();
@@ -116,7 +116,7 @@ public class CurriculumCommandV2Controller {
     )
     @DeleteMapping("/weekly/{weeklyCurriculumId}")
     public void deleteWeeklyCurriculum(
-        @PathVariable String weeklyCurriculumId
+        @PathVariable Long weeklyCurriculumId
     ) {
         throw new NotImplementedException();
     }

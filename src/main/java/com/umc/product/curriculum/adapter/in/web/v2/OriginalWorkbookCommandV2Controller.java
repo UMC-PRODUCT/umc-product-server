@@ -40,7 +40,7 @@ public class OriginalWorkbookCommandV2Controller {
     )
     @PatchMapping("/{originalWorkbookId}")
     public void editOriginalWorkbook(
-        @PathVariable String originalWorkbookId
+        @PathVariable Long originalWorkbookId
     ) {
         throw new NotImplementedException();
     }
@@ -53,7 +53,7 @@ public class OriginalWorkbookCommandV2Controller {
     )
     @DeleteMapping("/{originalWorkbookId}")
     public void deleteOriginalWorkbook(
-        @PathVariable String originalWorkbookId
+        @PathVariable Long originalWorkbookId
     ) {
         throw new NotImplementedException();
     }

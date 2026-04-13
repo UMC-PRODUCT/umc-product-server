@@ -57,7 +57,7 @@ public class ChallengerWorkbookCommandV2Controller {
     )
     @PatchMapping("/{challengerWorkbookId}")
     public void editChallengerWorkbook(
-        @PathVariable String challengerWorkbookId,
+        @PathVariable Long challengerWorkbookId,
         @RequestBody String content
     ) {
         throw new NotImplementedException();
@@ -77,7 +77,7 @@ public class ChallengerWorkbookCommandV2Controller {
     )
     @DeleteMapping("/{challengerWorkbookId}")
     public void deleteChallengerWorkbook(
-        @PathVariable String challengerWorkbookId,
+        @PathVariable Long challengerWorkbookId,
         @RequestBody String reason
     ) {
         throw new NotImplementedException();
@@ -92,7 +92,7 @@ public class ChallengerWorkbookCommandV2Controller {
     )
     @PostMapping("/{challengerWorkbookId}/excuse")
     public void excuseChallengerWorkbook(
-        @PathVariable String challengerWorkbookId,
+        @PathVariable Long challengerWorkbookId,
         @RequestBody String reason
     ) {
         throw new NotImplementedException();
@@ -135,7 +135,7 @@ public class ChallengerWorkbookCommandV2Controller {
     )
     @PatchMapping("/weekly-best/{weeklyBestWorkbookId}")
     public void editWeeklyBestWorkbookReason(
-        @PathVariable String weeklyBestWorkbookId,
+        @PathVariable Long weeklyBestWorkbookId,
         @RequestBody String newReason
     ) {
         throw new NotImplementedException();
@@ -150,7 +150,7 @@ public class ChallengerWorkbookCommandV2Controller {
     )
     @DeleteMapping("/weekly-best/{weeklyBestWorkbookId}")
     public void deleteWeeklyBestWorkbook(
-        @PathVariable String weeklyBestWorkbookId
+        @PathVariable Long weeklyBestWorkbookId
     ) {
         throw new NotImplementedException();
     }

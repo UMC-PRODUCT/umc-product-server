@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Tag(name = "Curriculum V2 | 워크북 Query", description = "OriginalWorkbook, ChallengerWorkbook, BestWorkbook 조회")
 public class WorkbookQueryV2Controller {
+
     @Operation(
         summary = "OriginalWorkbook 상세 조회",
         description = """
@@ -29,7 +30,7 @@ public class WorkbookQueryV2Controller {
     )
     @GetMapping("/original-workbooks/{originalWorkbookId}")
     public OriginalWorkbookResponse getOriginalWorkbook(
-        @PathVariable String originalWorkbookId
+        @PathVariable Long originalWorkbookId
     ) {
         throw new NotImplementedException();
     }
@@ -45,7 +46,7 @@ public class WorkbookQueryV2Controller {
     )
     @GetMapping("/challenger-workbooks/{challengerWorkbookId}")
     public ChallengerWorkbookResponse getChallengerWorkbook(
-        @PathVariable String challengerWorkbookId
+        @PathVariable Long challengerWorkbookId
     ) {
         throw new NotImplementedException();
     }

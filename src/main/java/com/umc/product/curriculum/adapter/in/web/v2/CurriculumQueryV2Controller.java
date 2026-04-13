@@ -38,7 +38,7 @@ public class CurriculumQueryV2Controller {
     public CurriculumOverviewResponse getCurriculum(
         @RequestParam Long gisuId,
         @RequestParam ChallengerPart part,
-        @RequestParam(required = false) Long week
+        @RequestParam(required = false) Long weekNo
     ) {
         throw new NotImplementedException();
     }

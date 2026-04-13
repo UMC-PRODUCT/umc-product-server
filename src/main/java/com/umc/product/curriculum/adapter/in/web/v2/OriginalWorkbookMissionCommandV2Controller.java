@@ -52,7 +52,7 @@ public class OriginalWorkbookMissionCommandV2Controller {
     )
     @PatchMapping("/{originalWorkbookMissionId}")
     public void editOriginalMission(
-        @PathVariable String originalWorkbookMissionId,
+        @PathVariable Long originalWorkbookMissionId,
         @RequestBody EditOriginalWorkbookMissionRequest request
     ) {
         throw new NotImplementedException();
@@ -70,7 +70,7 @@ public class OriginalWorkbookMissionCommandV2Controller {
     )
     @DeleteMapping("/{originalWorkbookMissionId}")
     public void deleteOriginalMission(
-        @PathVariable String originalWorkbookMissionId
+        @PathVariable Long originalWorkbookMissionId
     ) {
         throw new NotImplementedException();
     }
