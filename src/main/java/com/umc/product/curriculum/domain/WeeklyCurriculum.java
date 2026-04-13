@@ -12,13 +12,22 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "weekly_curriculum")
+@Table(
+    name = "weekly_curriculum",
+    uniqueConstraints = {
+        @UniqueConstraint(
+            name = "uk_weekly_curriculum_curriculum_id_week_no_extra",
+            columnNames = {"curriculum_id", "week_no", "is_extra"}
+        )
+    }
+)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WeeklyCurriculum extends BaseEntity {
 
