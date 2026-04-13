@@ -4,10 +4,12 @@ import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
 import java.time.Instant;
 import java.util.List;
+import lombok.Builder;
 
 /**
  * 커리큘럼, 주차별 커리큘럼, 원본 워크북, 챌린저 워크북, 미션 제출물, 피드백 정보, 베스트 워크북 정보를 나타내는 DTO
  */
+@Builder
 public record MyCurriculumResponse(
     Long curriculumId,
     String title,
@@ -28,6 +30,7 @@ public record MyCurriculumResponse(
      * @param isRequesterBestWorkbook 주차별 워크북이 베스트 워크북으로 선정되었는지 여부
      * @param originalWorkbooks       해당 주차에 대해서 배포 완료된 원본 워크북 목록
      */
+    @Builder
     public record MyWeeklyCurriculumResponse(
         Long weeklyCurriculumId,
         Long weekNo,
@@ -56,6 +59,7 @@ public record MyCurriculumResponse(
      * @param isDeployedToMember 원본 워크북이 요청자에게 배포된 상태인지 여부 (ChallengerWorkbook이 존재하는지)
      * @param challengerWorkbook 원본 워크북을 배포받은 경우 그 챌린저 워크북과 관련된 정보.
      */
+    @Builder
     public record MyOriginalWorkbookResponse(
         Long originalWorkbookId,
         String title,
@@ -79,6 +83,7 @@ public record MyCurriculumResponse(
      * @param hasSubmissions            미션 제출물이 존재하는지 여부
      * @param missionSubmission         요청자가 제출한 미션에 대한 정보, 미션 당 제출물은 한 개로 제한됨
      */
+    @Builder
     public record MyOriginalWorkbookMissionResponse(
         Long originalWorkbookMissionId,
         String title,

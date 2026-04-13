@@ -1,5 +1,8 @@
 package com.umc.product.curriculum.adapter.in.web.v2.dto.response;
 
+import lombok.Builder;
+
+@Builder
 public record ChallengerWorkbookResponse(
     Long challengerWorkbookId,
     Long memberId,
