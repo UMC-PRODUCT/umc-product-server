@@ -3,12 +3,19 @@ package com.umc.product.curriculum.domain;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
-
-import java.time.Instant;
 
 @Entity
 @Table(name = "weekly_curriculum")
@@ -24,7 +31,7 @@ public class WeeklyCurriculum extends BaseEntity {
     private Curriculum curriculum;
 
     @Column(name = "is_extra", nullable = false)
-    private boolean isExtra;
+    private boolean isExtra; // 부록 관련 주차를 표기하기 위함임
 
     @Column(name = "title", nullable = false)
     private String title;
@@ -39,7 +46,11 @@ public class WeeklyCurriculum extends BaseEntity {
     private Instant endsAt;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private WeeklyCurriculum(Curriculum curriculum, boolean isExtra, String title, Long weekNo, Instant startsAt, Instant endsAt) {
+    private WeeklyCurriculum(
+        Curriculum curriculum, boolean isExtra,
+        String title, Long weekNo,
+        Instant startsAt, Instant endsAt
+    ) {
         validateStartBeforeEnd();
         this.curriculum = curriculum;
         this.isExtra = isExtra;

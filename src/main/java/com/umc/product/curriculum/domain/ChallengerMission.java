@@ -15,8 +15,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+@Deprecated(since = "v1.5.0", forRemoval = true)
 @Entity
-@Table(name = "challenger_mission")
+@Table(name = "legacy_challenger_mission")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ChallengerMission extends BaseEntity {

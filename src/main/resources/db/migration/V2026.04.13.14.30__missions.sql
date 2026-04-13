@@ -17,6 +17,8 @@ CREATE TABLE mission_submission
     updated_at                   TIMESTAMP WITHOUT TIME ZONE             NOT NULL,
     original_workbook_mission_id BIGINT                                  NOT NULL,
     challenger_mission_id        BIGINT                                  NOT NULL,
+    content                   TEXT,
+    submitted_mission_as_type VARCHAR(255) NOT NULL,
     CONSTRAINT pk_mission_submission PRIMARY KEY (id)
 );
 
@@ -50,3 +52,6 @@ ALTER TABLE mission_submission
 
 ALTER TABLE workbook_mission
     RENAME TO legacy_workbook_mission;
+
+ALTER TABLE challenger_mission
+    RENAME TO legacy_challenger_mission;
