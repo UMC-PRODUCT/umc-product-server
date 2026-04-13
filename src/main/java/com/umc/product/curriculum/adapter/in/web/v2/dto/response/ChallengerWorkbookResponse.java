@@ -5,10 +5,14 @@ import lombok.Builder;
 @Builder
 public record ChallengerWorkbookResponse(
     Long challengerWorkbookId,
+    Long originalWorkbookId,
+    Long receivedStudyGroupId, // nullable
     Long memberId,
     boolean isExcused,
     String excusedReason,
     String content,
+    boolean isBestWorkbook,
+    ChallengerWorkbookStatusResponse status,
     boolean hasSubmission,
     MissionSubmissionResponse submission
 ) {
@@ -20,4 +24,7 @@ public record ChallengerWorkbookResponse(
     // ==>
     // 이거 Info 단 DTO를 content 없는거로 두 개 만들어서 QueryDSL에서 Projection으로 해당 DTO 바로 Return 받고,
     // 그거에서 of()로 오는 정팩메 만들어야함
+
+    // status는 OriginalWorkbookStatus와 분리된 것이며, 기존에 존재하던 WorkbookStatus와도 다름.
+    // 작성에 주의할 것
 }

@@ -38,7 +38,7 @@ public record MyCurriculumResponse(
         boolean isExtra,
         Instant startsAt,
         Instant endsAt,
-        boolean isRequesterBestWorkbook,
+        WeeklyCurriculumStatus status,
         List<MyOriginalWorkbookResponse> originalWorkbooks
     ) {
     }
@@ -69,15 +69,11 @@ public record MyCurriculumResponse(
         List<MyOriginalWorkbookMissionResponse> missions,
         // challengerWorkbook의 존재 여부
         boolean isDeployedToMember,
-        // 위에거 null이면 아래거 다 null임 ㅅㄱ
-        // 클로드가 이렇게 하래요 ..
-        Long challengerWorkbookId,
-        Long memberId,
-        Boolean isExcused, // nullable이여서!
-        String excusedReason,
-        String content
+        Long challengerWorkbookId
     ) {
         // 정팩메 잘 써서 isDeployedToMember 필드의 정합성 잘 맞춰줍시다 ...
+        // 그냥 challengerWorkbookId만 주고, 커리큘럼 내에서 각 워크북에 대한 정보를 알아야 할 이유가 생긴다면
+        // 그건 FE가 알아서 API 한 번 더 쏘는걸로
     }
 
     /**

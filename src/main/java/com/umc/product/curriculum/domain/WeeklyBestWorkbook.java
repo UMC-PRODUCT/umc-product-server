@@ -1,7 +1,16 @@
 package com.umc.product.curriculum.domain;
 
 import com.umc.product.common.BaseEntity;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,4 +49,6 @@ public class WeeklyBestWorkbook extends BaseEntity {
 
     @Column(nullable = false)
     private Long decidedMemberId;
+
+    // 베스트 워크북 선정 시 상점 부여는 Service 단에서 자동으로 묶어둘것 !
 }
