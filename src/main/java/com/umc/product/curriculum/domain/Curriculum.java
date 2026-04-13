@@ -2,17 +2,7 @@ package com.umc.product.curriculum.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -49,11 +39,6 @@ public class Curriculum extends BaseEntity {
     @Column(nullable = false)
     private String title;
 
-    @OneToMany(mappedBy = "curriculum", orphanRemoval = true, cascade = CascadeType.ALL)
-    private List<WeeklyCurriculum> weeklyCurriculumList = new ArrayList<>();
-
-
-
     @Builder(access = AccessLevel.PRIVATE)
     private Curriculum(Long gisuId, ChallengerPart part, String title) {
         this.gisuId = gisuId;
@@ -66,7 +51,7 @@ public class Curriculum extends BaseEntity {
     }
 
     public void updateTitle(String title) {
-        if(StringUtils.hasText(title)) {
+        if (StringUtils.hasText(title)) {
             this.title = title;
         }
     }
