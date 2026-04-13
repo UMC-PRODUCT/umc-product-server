@@ -1,5 +1,3 @@
--- V{버전}__alter_original_workbook.sql
-
 -- 1. 기존 FK 제약 제거
 ALTER TABLE original_workbook
 DROP CONSTRAINT IF EXISTS fk_org_workbook_curr_id;
