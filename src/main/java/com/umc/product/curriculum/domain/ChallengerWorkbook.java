@@ -23,13 +23,12 @@ public class ChallengerWorkbook extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-//    @Column(name = "member_id", nullable = false)
+    @Column(name = "member_id", nullable = false)
     /// /    private Long challengerId;
-//    private Long memberId;
+    private Long memberId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "weekly_challenger_workbook_id")
-    private WeeklyChallengerWorkbook weeklyChallengerWorkbook;
+    @Column(name = "study_group_id")
+    private Long studyGroupId; // 워크북 강제 배포등을 고려하여 nullable로 함.
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "original_workbook_id", nullable = false)
@@ -63,9 +62,8 @@ public class ChallengerWorkbook extends BaseEntity {
 
     @Builder(access = AccessLevel.PRIVATE)
     private ChallengerWorkbook(
-        Long memberId, OriginalWorkbook originalWorkbook
+        OriginalWorkbook originalWorkbook
     ) {
-        this.memberId = memberId;
         this.originalWorkbook = originalWorkbook;
 //        this.scheduleId = scheduleId;
 //        this.status = status != null ? status : WorkbookStatus.PENDING;

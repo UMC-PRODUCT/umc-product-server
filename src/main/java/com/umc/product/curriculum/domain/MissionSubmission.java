@@ -7,20 +7,22 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "weekly_challenger_workbook")
+@Table(name = "mission_submission")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class WeeklyChallengerWorkbook extends BaseEntity {
-
+public class MissionSubmission extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "weekly_curriculum_id", nullable = false)
-    private WeeklyCurriculum weeklyCurriculum;
+    @JoinColumn(name = "original_workbook_mission_id", nullable = false)
+    private OriginalWorkbookMission originalWorkbookMission;
 
-    private Long memberId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "challenger_mission_id", nullable = false)
+    private ChallengerMission challengerMission;
+
 
 }
