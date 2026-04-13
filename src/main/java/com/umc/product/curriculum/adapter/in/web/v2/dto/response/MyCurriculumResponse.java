@@ -67,9 +67,17 @@ public record MyCurriculumResponse(
         String url,
         OriginalWorkbookType type,
         List<MyOriginalWorkbookMissionResponse> missions,
+        // challengerWorkbook의 존재 여부
         boolean isDeployedToMember,
-        ChallengerWorkbookResponse challengerWorkbook
+        // 위에거 null이면 아래거 다 null임 ㅅㄱ
+        // 클로드가 이렇게 하래요 ..
+        Long challengerWorkbookId,
+        Long memberId,
+        Boolean isExcused, // nullable이여서!
+        String excusedReason,
+        String content
     ) {
+        // 정팩메 잘 써서 isDeployedToMember 필드의 정합성 잘 맞춰줍시다 ...
     }
 
     /**
@@ -90,8 +98,8 @@ public record MyCurriculumResponse(
         String description,
         MissionType missionType,
         boolean isNecessary,
-        boolean hasSubmissions,
-        MissionSubmissionResponse missionSubmission
+        boolean hasSubmission,
+        MissionSubmissionResponse submission
     ) {
     }
 }

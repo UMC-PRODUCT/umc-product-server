@@ -13,6 +13,7 @@ public record MissionSubmissionResponse(
     String submittedContent,
     Instant submittedAt,
     Instant lastEditedAt,
+    boolean hasFeedback,
     List<MissionFeedbackResponse> feedbacks
 ) {
 }
