@@ -41,8 +41,8 @@ public class MissionSubmission extends BaseEntity {
     private OriginalWorkbookMission originalWorkbookMission;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "challenger_mission_id", nullable = false)
-    private ChallengerMission challengerMission;
+    @JoinColumn(name = "challenger_workbook_id", nullable = false)
+    private ChallengerWorkbook challengerWorkbook;
 
     @Column(name = "submitted_mission_as_type", nullable = false)
     @Enumerated(EnumType.STRING)
