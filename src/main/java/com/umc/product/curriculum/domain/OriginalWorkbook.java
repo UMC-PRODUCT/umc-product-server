@@ -54,7 +54,6 @@ public class OriginalWorkbook extends BaseEntity {
     private String content;
 
     private Instant releasedAt;
-
     private Long releasedMemberId;
 
     @Enumerated(EnumType.STRING)
