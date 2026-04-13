@@ -1,5 +1,6 @@
 package com.umc.product.curriculum.adapter.in.web.v2;
 
+import com.umc.product.curriculum.adapter.in.web.v2.dto.request.CreateMissionFeedbackRequest;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.request.CreateMissionSubmissionRequest;
 import com.umc.product.global.exception.NotImplementedException;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,7 +23,7 @@ public class ChallengerWorkbookMissionCommandV2Controller {
     // TODO: @CheckAccess 반드시 추가할 것
 
     @Operation(
-        summary = "워크북 내 미션 제출",
+        summary = "챌린저용: 워크북 내 미션 제출",
         description = """
             미션을 제출합니다.
 
@@ -50,7 +51,7 @@ public class ChallengerWorkbookMissionCommandV2Controller {
 
 
     @Operation(
-        summary = "워크북의 미션 수정",
+        summary = "챌린저용: 제출한 워크북 미션 수정",
         description = """
             이미 제출된 미션의 내용을 수정합니다.
 
@@ -66,13 +67,14 @@ public class ChallengerWorkbookMissionCommandV2Controller {
     )
     @PatchMapping("/{missionSubmissionId}")
     public void editOriginalMission(
-        @PathVariable String missionSubmissionId
+        @PathVariable String missionSubmissionId,
+        @RequestBody String content
     ) {
         throw new NotImplementedException();
     }
 
     @Operation(
-        summary = "워크북의 미션 삭제",
+        summary = "챌린저용: 제출한 워크북 미션 철회",
         description = """
             이미 제출한 미션을 철회합니다.
 
@@ -89,7 +91,7 @@ public class ChallengerWorkbookMissionCommandV2Controller {
     // ===== 운영진용 ====
 
     @Operation(
-        summary = "제출된 미션에 대한 피드백 작성",
+        summary = "운영진용: 제출된 미션에 대한 피드백 작성",
         description = """
             챌린저가 제출한 미션에 대한 피드백을 작성합니다.
 
@@ -105,26 +107,34 @@ public class ChallengerWorkbookMissionCommandV2Controller {
                 - 선택 미션에 대한 피드백은 기간이 경과된 이후에 작성하여도 불이익이 존재하지 않습니다.
             """
     )
-    public void createMissionFeedback() {
+    @PostMapping("/feedback")
+    public void createMissionFeedback(
+        @RequestBody CreateMissionFeedbackRequest request
+    ) {
         throw new NotImplementedException();
     }
 
     @Operation(
-        summary = "제출된 미션에 대한 피드백 수정",
+        summary = "운영진용: 제출된 미션에 대한 피드백 수정",
         description = """
             챌린저에게 제공된 피드백을 수정합니다.
 
             - 작성일 기준 2주가 경과되기 전까지만 수정이 가능합니다.
+            - PASS->FAIL 처리는 불가능합니다.
             - 피드백 최초 작성 일자 기준으로 벌점이 부과되기 때문에 수정은 벌점 부과와는 대부분의 경우에서 무관합니다.
             """
     )
-    public void editMissionFeedback() {
+    @PatchMapping("/feedback/{missionFeedbackId}")
+    public void editMissionFeedback(
+        @PathVariable String missionFeedbackId,
+        @RequestBody String content
+    ) {
         throw new NotImplementedException();
     }
 
 
     @Operation(
-        summary = "제출된 미션에 대한 피드백 삭제",
+        summary = "운영진용: 제출된 미션에 대한 피드백 삭제",
         description = """
             챌린저에게 제공된 피드백을 삭제합니다.
             삭제로 인한 벌점 부과 등의 책임은 삭제한 본인에게 있습니다.
@@ -132,7 +142,10 @@ public class ChallengerWorkbookMissionCommandV2Controller {
             해당 기수 종료 이후에는 피드백 삭제가 불가능합니다.
             """
     )
-    public void deleteMissionFeedback() {
+    @DeleteMapping("/feedback/{missionFeedbackId}")
+    public void deleteMissionFeedback(
+        @PathVariable String missionFeedbackId
+    ) {
         throw new NotImplementedException();
     }
 

@@ -98,6 +98,8 @@ public class ChallengerWorkbookCommandV2Controller {
         throw new NotImplementedException();
     }
 
+    // TODO: 언젠가 시간이 남는다면 인정 처리 철회를 만드시길,,, 근데 그러면 Rollback Policy 모두 정하고 하셔야 해요!
+
     // ============== 운영진용: 베스트 워크북 처리 ==============
 
     @Operation(
