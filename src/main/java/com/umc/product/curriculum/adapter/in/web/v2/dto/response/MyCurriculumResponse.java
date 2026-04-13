@@ -41,9 +41,11 @@ public record MyCurriculumResponse(
     }
 
     /**
-     * 요청자에 따른 원본 워크북과 관련된 정보를 제공하는 DTO
+     * 요청자에 따라서 OriginalWorkbook의 정보와 미션, 해당 원본 워크북을 배포 받은 ChallengerWorkbook에 대한 정보
      * <p>
-     * OriginalWorkbook의 content는 API가 너무 무거워져 분리합니다.
+     * OriginalWorkbook 자체에 대한 정보 조회는 별도의 DTO 사용 예정
+     * <p>
+     * OriginalWorkbook 및 ChallengerWorkbook의 content는 제외하고 제공됩니다.
      *
      * @param originalWorkbookId PK
      * @param title              원본 워크북 제목
@@ -52,7 +54,7 @@ public record MyCurriculumResponse(
      * @param type               워크북 유형 (메인/부록 여부)
      * @param missions           워크북 미션과 관련된 정보
      * @param isDeployedToMember 원본 워크북이 요청자에게 배포된 상태인지 여부 (ChallengerWorkbook이 존재하는지)
-     * @param challengerWorkbook 원본 워크북을 배포받은 경우 그 챌린저 워크북과 관련된 정보
+     * @param challengerWorkbook 원본 워크북을 배포받은 경우 그 챌린저 워크북과 관련된 정보.
      */
     public record MyOriginalWorkbookResponse(
         Long originalWorkbookId,
