@@ -34,7 +34,7 @@ import lombok.NoArgsConstructor;
         // 각 지원자는 매칭 차수 당 한 개의 지원서만 제출할 수 있습니다.
         @UniqueConstraint(
             name = "uk_project_application_form_member_matching_round",
-            columnNames = {"project_application_form_id", "applied_matching_round_id", "applicantMemberId"}
+            columnNames = {"project_application_form_id", "applied_matching_round_id", "applicant_member_id"}
         )
     }
 )
