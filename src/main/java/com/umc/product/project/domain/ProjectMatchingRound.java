@@ -3,6 +3,7 @@ package com.umc.product.project.domain;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -31,7 +32,7 @@ import lombok.NoArgsConstructor;
         @UniqueConstraint(
             name = "uk_project_matching_round_type_phase_chapter",
             // 동일한 매칭 종류와 차수를 가진건 지부에 하나만 있어야 해요!
-            columnNames = {"type", "phase", "chapterId"}
+            columnNames = {"type", "phase", "chapter_id"}
         )
     }
 )
@@ -41,11 +42,13 @@ public class ProjectMatchingRound extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
     private String name; // 매칭 차수 이름
 
     private String description; // 매칭 차수 설명
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private MatchingType type; // 매칭의 종류
 
     /*
@@ -56,12 +59,17 @@ public class ProjectMatchingRound extends BaseEntity {
     -> 랜덤매칭에 최초에 기간이 필요했던 이유는 사람이 일을 해야하니까인데.. 지금은 그냥 랜덤매칭 딸깎 하면 되는거라 enum에 넣을 필요는 없을 듯
      */
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private MatchingPhase phase; // 매칭 차수
 
+    @Column(nullable = false)
     private Long chapterId;
 
+    @Column(nullable = false)
     private Instant startsAt;
+    @Column(nullable = false)
     private Instant endsAt;
+    @Column(nullable = false)
     private Instant decisionDeadline; // 선발 마감 기한
 
     // 선발 마감 기한이 지나서 스케쥴러 등에 의해서 자동으로 선발이 실행된 시간

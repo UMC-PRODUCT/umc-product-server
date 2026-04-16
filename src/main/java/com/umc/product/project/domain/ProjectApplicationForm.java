@@ -2,6 +2,7 @@ package com.umc.product.project.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.survey.domain.Form;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -37,6 +38,7 @@ public class ProjectApplicationForm extends BaseEntity {
     private Project project;
 
     // title 및 description은 Form에 있는 것을 사용합니다.
+    @Column(nullable = false)
     private Long formId;
 
     @Builder(access = AccessLevel.PRIVATE)

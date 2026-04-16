@@ -2,6 +2,7 @@ package com.umc.product.project.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -57,8 +58,11 @@ public class ProjectMember extends BaseEntity {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
+    @Column(nullable = false)
     private Long memberId;
+
     // 리더 여부를 나타냅니다. 추후 리더에 대해서 특정 권한을 부여하거나, 뱃지 등을 필요로 할 때 활용될 수 있습니다.
+    @Column(nullable = false)
     private boolean isLeader = false; // 사용하지 않을 수도 있는 기능이라 defaults to false.
 
     private String description; // 수행한 역할 등의 개인별 설명을 추가할 수 있도록 하는 필드입니다.

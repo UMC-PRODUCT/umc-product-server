@@ -15,7 +15,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -47,12 +48,13 @@ public class ProjectApplicationFormPolicy extends BaseEntity {
     @JoinColumn(name = "project_application_form_id", nullable = false)
     private ProjectApplicationForm applicationForm;
 
+    @Column(nullable = false)
     private Long formSectionId; // 접근 권한 제한을 받을 FormSection의 ID
 
     @Enumerated(EnumType.STRING) // Enum 값이므로 String으로 저장
     @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "allowed_parts", columnDefinition = "varchar[]")
-    private Set<ChallengerPart> allowedParts = new HashSet<>();
+    @Column(name = "allowed_parts", columnDefinition = "text[]", nullable = false)
+    private List<ChallengerPart> allowedParts = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
     private ProjectApplicationFormPolicy(
@@ -62,7 +64,7 @@ public class ProjectApplicationFormPolicy extends BaseEntity {
     ) {
         this.applicationForm = applicationForm;
         this.formSectionId = formSectionId;
-        this.allowedParts = allowedParts;
+        this.allowedParts = allowedParts.stream().toList();
     }
 
     public static ProjectApplicationFormPolicy create(
@@ -80,7 +82,7 @@ public class ProjectApplicationFormPolicy extends BaseEntity {
      * FormSection에 접근 가능한 파트를 설정합니다.
      */
     public void upsertAllowedParts(Set<ChallengerPart> parts) {
-        this.allowedParts = parts;
+        this.allowedParts = parts.stream().toList();
     }
 
     /**
