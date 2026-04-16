@@ -104,7 +104,7 @@ public class Schedule extends BaseEntity {
 
         this.authorMemberId = authorMemberId;
 
-        validateScheduleTime();
+        validateScheduleTime(policy, startsAt, endsAt);
         this.startsAt = startsAt;
         this.endsAt = endsAt;
 
@@ -116,7 +116,7 @@ public class Schedule extends BaseEntity {
 
     // validate method가 더 많아지고 복잡해질 경우 하나의 validate()로 변경할 것
 
-    private void validateScheduleTags(Set<ScheduleTag> tags) {
+    private static void validateScheduleTags(Set<ScheduleTag> tags) {
         if (tags == null || tags.isEmpty()) {
             throw new ScheduleDomainException(ScheduleErrorCode.TAG_REQUIRED);
         }
@@ -125,14 +125,11 @@ public class Schedule extends BaseEntity {
     // 일정 시작, 종료 시간
     // (1) 일정 종료 시각은 AttendancePolicy에 따라서, 시작시간 + 출석 인정 시간 + 지각 인정 시간 보다 늦어야 함
     // (2) 종료 시간은 시작 시간보다 앞서서는 안됨
-    private void validateScheduleTime() {
-        if (this.policy == null) {
+    private static void validateScheduleTime(AttendancePolicy policy, Instant start, Instant end) {
+        if (policy == null) {
             throw new ScheduleDomainException(ScheduleErrorCode.NO_SCHEDULE_POLICY,
-                "Schedule ID " + this.id + " 에 대한 출결 정책이 등록되어 있지 않습니다.");
+                "출결 정책이 등록되어 있지 않습니다.");
         }
-
-        Instant start = this.startsAt;
-        Instant end = this.endsAt;
 
         if (end.isBefore(start)) {
             throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE,
@@ -140,7 +137,7 @@ public class Schedule extends BaseEntity {
         }
 
         long totalLateMinutes =
-            this.policy.getAttendanceGraceMinutes() + this.policy.getLateToleranceMinutes();
+            policy.getAttendanceGraceMinutes() + policy.getLateToleranceMinutes();
 
         if (end.isBefore(start.plus(totalLateMinutes, ChronoUnit.MINUTES))) {
             throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE,
