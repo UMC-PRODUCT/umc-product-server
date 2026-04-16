@@ -72,12 +72,10 @@ public class ScheduleParticipant extends BaseEntity {
             throw new ScheduleDomainException(ScheduleErrorCode.NOT_FIRST_ATTENDANCE_REQUEST);
         }
 
-        this.attendance =
-            ScheduleParticipantAttendance.builder()
-                .location(location)
-                .status(this.schedule.getAttendanceStatus())
-                .isLocationVerified(isLocationVerified)
-                .build();
+        this.attendance = ScheduleParticipantAttendance.create(
+            location, isLocationVerified, null,
+            this.schedule.getAttendanceStatus()
+        );
     }
 
     /**
@@ -101,35 +99,28 @@ public class ScheduleParticipant extends BaseEntity {
         }
         // 기존에 출석 요청이 존재하지 않는 경우
         if (this.attendance == null) {
-            this.attendance =
-                ScheduleParticipantAttendance.builder()
-                    .location(location)
-                    .status(AttendanceStatus.EXCUSED_PENDING)
-                    .isLocationVerified(isLocationVerified)
-                    .excuseReason(excuseReason)
-                    .build();
+            this.attendance = ScheduleParticipantAttendance.create(
+                location, isLocationVerified, excuseReason,
+                AttendanceStatus.EXCUSED_PENDING
+            );
         }
 
         // 기존에 출석 요청이 존재하는 경우
         else {
             // 기존에 결석이였던 경우
             if (this.attendance.getStatus() == AttendanceStatus.ABSENT) {
-                this.attendance = ScheduleParticipantAttendance.builder()
-                    .location(location)
-                    .isLocationVerified(isLocationVerified)
-                    .status(AttendanceStatus.ABSENT_EXCUSE_PENDING)
-                    .excuseReason(excuseReason)
-                    .build();
+                this.attendance = ScheduleParticipantAttendance.create(
+                    location, isLocationVerified, excuseReason,
+                    AttendanceStatus.ABSENT_EXCUSE_PENDING
+                );
             }
 
             // 기존에 지각이였던 경우
             else if (this.attendance.getStatus() == AttendanceStatus.LATE) {
-                this.attendance = ScheduleParticipantAttendance.builder()
-                    .location(location)
-                    .status(AttendanceStatus.LATE_EXCUSE_PENDING)
-                    .isLocationVerified(isLocationVerified)
-                    .excuseReason(excuseReason)
-                    .build();
+                this.attendance = ScheduleParticipantAttendance.create(
+                    location, isLocationVerified, excuseReason,
+                    AttendanceStatus.LATE_EXCUSE_PENDING
+                );
             }
 
             // 이외의 상태에서는 사유 제출이 불가능함.
