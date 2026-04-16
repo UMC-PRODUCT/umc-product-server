@@ -23,5 +23,6 @@ public enum Domain {
     EMAIL,
     STORAGE,
     WEBHOOK,
-    AUDIT_LOG
+    AUDIT_LOG,
+    PROJECT
 }
