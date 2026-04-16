@@ -43,7 +43,7 @@ public class ScheduleParticipantAttendance {
     private String excuseReason;
 
     // 단순 생성자로 사용할 것, 실제 생성 로직은 ScheduleParticipant에 있음
-    @Builder
+    @Builder(access = AccessLevel.PRIVATE)
     private ScheduleParticipantAttendance(
         Point location,
         AttendanceStatus status,
@@ -60,6 +60,21 @@ public class ScheduleParticipantAttendance {
         this.decisionReason = decisionReason;
         this.isLocationVerified = isLocationVerified;
         this.excuseReason = excuseReason;
+    }
+
+    public static ScheduleParticipantAttendance create(
+        Point location,
+        boolean isLocationVerified,
+        String excuseReason,
+        AttendanceStatus status
+    ) {
+        return ScheduleParticipantAttendance.builder()
+            .location(location)
+            .status(AttendanceStatus.EXCUSED_PENDING)
+            .isLocationVerified(isLocationVerified)
+            .excuseReason(excuseReason)
+            .status(status)
+            .build();
     }
 
     // Service Layer에서 아래 메소드들을 직접적으로 사용할 수 없도록, protected를 사용합니다.
