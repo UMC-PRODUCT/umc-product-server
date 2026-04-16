@@ -20,6 +20,7 @@ import lombok.NoArgsConstructor;
  * 판정 기준 (determineStatus) startTime, 출석, startTime + lateThresholdMinutes, 지각, endTime 이중 startTime +
  * lateThresholdMinutes 파트가 출석인정 endTime 이후 체크인은 결석
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 @Embeddable
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

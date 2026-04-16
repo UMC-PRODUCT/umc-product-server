@@ -26,6 +26,7 @@ import lombok.NoArgsConstructor;
  * 상태 규칙 PENDING ──checkIn()──→ PRESENT / LATE / PRESENT_PENDING / LATE_PENDING PENDING ──approve()──→ PRESENT / LATE/
  * EXCUSED  (승인자 ID 기록 남도록) PENDING ──reject()───→ ABSENT──requestExcuse()──→ EXCUSED_PENDING        (사유 memo 필수)
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 @Entity
 @Table(name = "attendance_record")
 @Getter
