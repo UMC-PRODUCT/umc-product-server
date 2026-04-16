@@ -2,27 +2,10 @@ package com.umc.product.survey.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.*;
+
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Getter
@@ -57,76 +40,26 @@ public class FormResponse extends BaseEntity {
     @Column(name = "last_saved_at", nullable = false)
     private Instant lastSavedAt;
 
-    @OneToMany(mappedBy = "formResponse", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<SingleAnswer> answers = new ArrayList<>();
-
     public static FormResponse createDraft(Form form, Long respondentMemberId) {
         FormResponse fr = new FormResponse();
         fr.form = form;
         fr.respondentMemberId = respondentMemberId;
-        fr.status = com.umc.product.survey.domain.enums.FormResponseStatus.DRAFT;
+        fr.status = FormResponseStatus.DRAFT;
         fr.lastSavedAt = Instant.now();
         return fr;
     }
 
-    public static FormResponse createVoteResponse(
-        Form form,
-        Long respondentMemberId,
-        Question question,
-        List<Long> selectedOptionIds,
-        Instant now
-    ) {
-        FormResponse fr = new FormResponse();
-        fr.form = form;
-        fr.respondentMemberId = respondentMemberId;
-
-        // 투표는 즉시 제출로 처리
-        fr.status = FormResponseStatus.SUBMITTED;
-        fr.submittedAt = now;
-
-        fr.lastSavedAt = now;
-
-        // answers 구성 (SingleAnswer 구조에 맞게 구현 필요)
-        // 예: 객관식(옵션 선택) 1문항에 대해 optionIds를 담는 형태
-        fr.answers = new ArrayList<>();
-        fr.answers.add(SingleAnswer.createVoteAnswer(fr, question, selectedOptionIds));
-
-        return fr;
-    }
-
-    public void submit(java.time.Instant submittedAt, String submittedIp) {
-        if (this.status == com.umc.product.survey.domain.enums.FormResponseStatus.SUBMITTED) {
+    public void submit(Instant submittedAt, String submittedIp) {
+        if (this.status == FormResponseStatus.SUBMITTED) {
             return;
         }
-        this.status = com.umc.product.survey.domain.enums.FormResponseStatus.SUBMITTED;
+        this.status = FormResponseStatus.SUBMITTED;
         this.submittedAt = submittedAt;
         this.submittedIp = submittedIp;
     }
 
     public void updateLastSavedAt(Instant now) {
         this.lastSavedAt = now;
-    }
-
-    public void clearVoteResponse() {
-        Instant now = Instant.now();
-
-        this.answers.clear();
-        this.lastSavedAt = now;
-        this.submittedAt = now;
-        this.status = FormResponseStatus.SUBMITTED;
-    }
-
-    public void updateVoteResponse(
-        Question question,
-        List<Long> selectedOptionIds,
-        Instant now
-    ) {
-        this.answers.clear();
-        this.answers.add(SingleAnswer.createVoteAnswer(this, question, selectedOptionIds));
-        this.lastSavedAt = now;
-        this.submittedAt = now;
-        this.status = FormResponseStatus.SUBMITTED;
     }
 
 }

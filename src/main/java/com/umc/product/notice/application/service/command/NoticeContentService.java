@@ -1,34 +1,21 @@
 package com.umc.product.notice.application.service.command;
 
+import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
-import com.umc.product.notice.application.port.in.command.dto.AddNoticeImagesCommand;
-import com.umc.product.notice.application.port.in.command.dto.AddNoticeLinksCommand;
-import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteCommand;
-import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteResult;
-import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
-import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
-import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
-import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
-import com.umc.product.notice.application.port.out.LoadNoticePort;
-import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
-import com.umc.product.notice.application.port.out.SaveNoticeImagePort;
-import com.umc.product.notice.application.port.out.SaveNoticeLinkPort;
-import com.umc.product.notice.application.port.out.SaveNoticeVotePort;
+import com.umc.product.notice.application.port.in.command.dto.*;
+import com.umc.product.notice.application.port.out.*;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
-import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
-import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
-import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
@@ -43,24 +30,26 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     private final SaveNoticeLinkPort saveNoticeLinkPort;
     private final LoadNoticePort loadNoticePort;
 
-    private final CreateVoteUseCase createVoteUseCase;
-    private final DeleteVoteUseCase deleteVoteUseCase;
+//    private final CreateVoteUseCase createVoteUseCase;
+//    private final DeleteVoteUseCase deleteVoteUseCase;
 
     @Override
     public AddNoticeVoteResult addVote(AddNoticeVoteCommand command, Long noticeId) {
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(command.createdMemberId());
-
-        if (loadNoticeVotePort.existsVoteByNoticeId(noticeId)) {
-            throw new NoticeDomainException(NoticeErrorCode.VOTE_ALREADY_EXISTS);
-        }
-
-        Long voteId = createVoteUseCase.create(command.toCreateVoteCommand());
-
-        NoticeVote noticeVote = NoticeVote.create(voteId, notice);
-        NoticeVote savedVote = saveNoticeVotePort.saveVote(noticeVote);
-
-        return new AddNoticeVoteResult(savedVote.getId(), voteId);
+        // TODO: 일을 하자 김민서
+        throw new NotImplementedException();
+//        Notice notice = findNoticeById(noticeId);
+//        notice.validateAuthorMember(command.createdMemberId());
+//
+//        if (loadNoticeVotePort.existsVoteByNoticeId(noticeId)) {
+//            throw new NoticeDomainException(NoticeErrorCode.VOTE_ALREADY_EXISTS);
+//        }
+//
+//        Long voteId = createVoteUseCase.create(command.toCreateVoteCommand());
+//
+//        NoticeVote noticeVote = NoticeVote.create(voteId, notice);
+//        NoticeVote savedVote = saveNoticeVotePort.saveVote(noticeVote);
+//
+//        return new AddNoticeVoteResult(savedVote.getId(), voteId);
     }
 
     @Override
@@ -115,26 +104,30 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
     @Override
     public void deleteVote(Long noticeId, Long memberId) {
-        Notice notice = findNoticeById(noticeId);
-        notice.validateAuthorMember(memberId);
-
-        NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
-            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
-
-        deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
-        saveNoticeVotePort.deleteVote(vote);
+        // TODO: 일을 하자 김민서
+        throw new NotImplementedException();
+//        Notice notice = findNoticeById(noticeId);
+//        notice.validateAuthorMember(memberId);
+//
+//        NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
+//            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
+//
+//        deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
+//        saveNoticeVotePort.deleteVote(vote);
     }
 
     @Override
     public void removeContentsByNoticeId(Long noticeId, Long memberId) {
-        saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
-        saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
-
-        loadNoticeVotePort.findVoteByNoticeId(noticeId)
-            .ifPresent(vote -> {
-                saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
-                deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
-            });
+        // TODO: 일을 하자 김민서
+        throw new NotImplementedException();
+//        saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
+//        saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
+//
+//        loadNoticeVotePort.findVoteByNoticeId(noticeId)
+//            .ifPresent(vote -> {
+//                saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
+//                deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
+//            });
     }
 
     @Override
