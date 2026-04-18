@@ -1,8 +1,12 @@
 package com.umc.product.schedule.adapter.in.web.v2.dto.response;
 
+import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleParticipantAttendanceInfo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.Instant;
+import lombok.AccessLevel;
+import lombok.Builder;
 
+@Builder(access = AccessLevel.PRIVATE)
 public record ScheduleParticipantAttendanceInfoResponse(
     // === 위치 정보 ===
     Double latitude,
@@ -15,19 +19,52 @@ public record ScheduleParticipantAttendanceInfoResponse(
 
     // === 출석 상태 및 승인/기각한 사람 정보 ===
 
-    // decidedMemberInfo의 null 여부에 대한 flag 값입니다.
+    // DecisionMakerMemberInfo의 null 여부에 대한 flag 값입니다.
     // isPendingDecision과의 혼동을 방지하기 위해서 존재합니다.
-    boolean hasDecidedMember,
-    DecidedMemberInfo decidedMemberInfo,
+    boolean hasDecisionMakerMember,
+    DecisionMakerMemberInfo decisionMakerMemberInfo,
     Instant decidedAt,
     String decisionReason
 ) {
-    public record DecidedMemberInfo(
+    public static ScheduleParticipantAttendanceInfoResponse from(ScheduleParticipantAttendanceInfo info) {
+        if (info == null) {
+            return null;
+        }
+
+        return ScheduleParticipantAttendanceInfoResponse.builder()
+            .latitude(info.latitude())
+            .longitude(info.longitude())
+            .status(info.status())
+            .excuseReason(info.excuseReason())
+            .isPendingDecision(info.isPendingDecision())
+            .hasDecisionMakerMember(info.hasDecisionMakerMember())
+            .decisionMakerMemberInfo(DecisionMakerMemberInfo.from(info))
+            .decidedAt(info.decidedAt())
+            .decisionReason(info.decisionReason())
+            .build();
+    }
+
+    @Builder(access = AccessLevel.PRIVATE)
+    public record DecisionMakerMemberInfo(
         Long memberId,
         String name,
         String nickname,
         Long schoolId,
         String schoolName
     ) {
+
+        public static DecisionMakerMemberInfo from(ScheduleParticipantAttendanceInfo info) {
+            if (info == null || !info.hasDecisionMakerMember()) {
+                return null;
+            }
+
+            return DecisionMakerMemberInfo.builder()
+                .memberId(info.decisionMakerMemberInfo().memberId())
+                .name(info.decisionMakerMemberInfo().name())
+                .nickname(info.decisionMakerMemberInfo().nickname())
+                .schoolId(info.decisionMakerMemberInfo().schoolId())
+                .schoolName(info.decisionMakerMemberInfo().schoolName())
+                .build();
+        }
     }
 }

@@ -5,6 +5,7 @@ import com.umc.product.schedule.application.port.v2.out.LoadScheduleParticipantP
 import com.umc.product.schedule.application.port.v2.out.SaveScheduleParticipantPort;
 import com.umc.product.schedule.domain.ScheduleParticipant;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -38,5 +39,10 @@ public class ScheduleParticipantPersistenceAdapter implements
     @Override
     public List<ScheduleParticipant> findAllByScheduleId(Long scheduleId) {
         return scheduleParticipantJpaRepository.findAllByScheduleId(scheduleId);
+    }
+
+    @Override
+    public Optional<ScheduleParticipant> findByScheduleIdAndMemberId(Long scheduleId, Long memberId) {
+        return scheduleParticipantJpaRepository.findByScheduleIdAndMemberId(scheduleId, memberId);
     }
 }

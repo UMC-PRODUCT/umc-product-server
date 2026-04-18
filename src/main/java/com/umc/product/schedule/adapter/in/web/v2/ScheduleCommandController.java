@@ -11,8 +11,10 @@ import com.umc.product.schedule.adapter.in.web.v2.dto.request.ScheduleAttendance
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleParticipantAttendanceInfoResponse;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
+import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleParticipantUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.EditScheduleCommand;
+import com.umc.product.schedule.application.port.v2.in.command.dto.ScheduleAttendanceRequestCommand;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -33,6 +35,7 @@ public class ScheduleCommandController {
 
     private final CreateScheduleUseCase createScheduleUseCase;
     private final UpdateScheduleUseCase updateScheduleUseCase;
+    private final CreateScheduleParticipantUseCase createSchedulePaticipantAttendanceUseCase;
 
     @Operation(summary = "일정 생성", description = """
         일정을 생성합니다. `location` 필드를 작성하지 않으실 경우 비대면 일정으로 간주됩니다.
@@ -53,7 +56,9 @@ public class ScheduleCommandController {
         """
     )
     @PostMapping
-    public Long create(@Valid CreateScheduleRequest request, @CurrentMember MemberPrincipal memberPrincipal) {
+    public Long create(
+        @Valid @RequestBody CreateScheduleRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal) {
 
         CreateScheduleCommand command = request.toCommand(memberPrincipal.getMemberId());
 
@@ -67,7 +72,7 @@ public class ScheduleCommandController {
     @PatchMapping("/{scheduleId}")
     public Long edit(
         @PathVariable Long scheduleId,
-        EditScheduleRequest request,
+        @Valid @RequestBody EditScheduleRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         EditScheduleCommand command = request.toCommand(scheduleId, memberPrincipal.getMemberId());
@@ -87,9 +92,13 @@ public class ScheduleCommandController {
     public ScheduleParticipantAttendanceInfoResponse requestAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long scheduleId,
-        @RequestBody ScheduleAttendanceRequest request
+        @Valid @RequestBody ScheduleAttendanceRequest request
     ) {
-        throw new NotImplementedException();
+        ScheduleAttendanceRequestCommand command = request.toCommand(scheduleId, memberPrincipal.getMemberId());
+
+        return ScheduleParticipantAttendanceInfoResponse.from(
+            createSchedulePaticipantAttendanceUseCase.createScheduleParticipantWithAttendance(command)
+        );
     }
 
     @Operation(summary = "출석 요청이 불가능한 경우, 사유 제출하기", description = """
@@ -102,7 +111,7 @@ public class ScheduleCommandController {
     public ScheduleParticipantAttendanceInfoResponse excuseAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long scheduleId,
-        @RequestBody ExcuseScheduleAttendanceRequest request
+        @Valid @RequestBody ExcuseScheduleAttendanceRequest request
     ) {
         throw new NotImplementedException();
     }
@@ -122,7 +131,7 @@ public class ScheduleCommandController {
     public List<ScheduleParticipantAttendanceInfoResponse> decideAttendances(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long scheduleId,
-        List<DecideAttendanceRequest> requests
+        @Valid @RequestBody List<DecideAttendanceRequest> requests
     ) {
         throw new NotImplementedException();
     }
