@@ -6,7 +6,7 @@ import com.umc.product.schedule.application.port.v2.in.query.dto.SchedulePartici
 
 public interface CreateScheduleParticipantUseCase {
 
-    // 최초 요청 시 사용, 사유 제출 X
+    // 출석 요청 시 사용, 사유 제출 X
     ScheduleParticipantAttendanceInfo createScheduleParticipantWithAttendance(ScheduleAttendanceCommand command);
 
     // 사유 제출 시 사용

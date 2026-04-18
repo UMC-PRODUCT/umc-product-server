@@ -1,6 +1,5 @@
 package com.umc.product.schedule.adapter.in.web.v2;
 
-import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.CreateScheduleRequest;
@@ -12,10 +11,13 @@ import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleParticipa
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleParticipantUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleUseCase;
+import com.umc.product.schedule.application.port.v2.in.command.UpdateScheduleParticipantUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.dto.CreateScheduleCommand;
+import com.umc.product.schedule.application.port.v2.in.command.dto.DecideAttendanceCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.EditScheduleCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.ExcuseScheduleAttendanceCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.ScheduleAttendanceCommand;
+import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleParticipantAttendanceInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -36,7 +38,9 @@ public class ScheduleCommandController {
 
     private final CreateScheduleUseCase createScheduleUseCase;
     private final UpdateScheduleUseCase updateScheduleUseCase;
+
     private final CreateScheduleParticipantUseCase createSchedulePaticipantAttendanceUseCase;
+    private final UpdateScheduleParticipantUseCase updateScheduleParticipantUseCase;
 
     @Operation(summary = "일정 생성", description = """
         일정을 생성합니다. `location` 필드를 작성하지 않으실 경우 비대면 일정으로 간주됩니다.
@@ -138,7 +142,16 @@ public class ScheduleCommandController {
         @PathVariable Long scheduleId,
         @Valid @RequestBody List<DecideAttendanceRequest> requests
     ) {
-        throw new NotImplementedException();
+        // List<Request> -> List<Command> 변환
+        List<DecideAttendanceCommand> commands = requests.stream()
+            .map(request -> request.toCommand(scheduleId, memberPrincipal.getMemberId()))
+            .toList();
+
+        List<ScheduleParticipantAttendanceInfo> results = updateScheduleParticipantUseCase.decideAttendances(commands);
+
+        return results.stream()
+            .map(ScheduleParticipantAttendanceInfoResponse::from)
+            .toList();
     }
 
     // TODO: 일정 신고 API (본인이 참여하지 않는 일정에 강제로 초대당한 경우)

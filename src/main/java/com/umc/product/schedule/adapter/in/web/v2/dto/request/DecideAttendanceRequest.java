@@ -1,5 +1,7 @@
 package com.umc.product.schedule.adapter.in.web.v2.dto.request;
 
+import com.umc.product.schedule.application.port.v2.in.command.dto.DecideAttendanceCommand;
+
 /**
  * 각 출석 요청에 대해서 승인 및 거절 여부를 결정합니다.
  *
@@ -12,4 +14,13 @@ public record DecideAttendanceRequest(
     boolean isApproved,
     String reason
 ) {
+    public DecideAttendanceCommand toCommand(Long scheduleId, Long decisionMakerMemberId) {
+        return DecideAttendanceCommand.builder()
+            .scheduleId(scheduleId)
+            .decisionMakerMemberId(decisionMakerMemberId)
+            .participantMemberId(participantMemberId)
+            .isApproved(isApproved)
+            .reason(reason)
+            .build();
+    }
 }

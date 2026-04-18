@@ -1,6 +1,8 @@
 package com.umc.product.schedule.application.service.command;
 
 import com.umc.product.global.util.GeometryUtils;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleParticipantUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.UpdateScheduleParticipantUseCase;
@@ -32,6 +34,8 @@ public class ScheduleParticipantCommandService implements
     private final SaveScheduleParticipantPort saveScheduleParticipantPort;
     private final LoadScheduleParticipantPort loadScheduleParticipantPort;
 
+    private final GetMemberUseCase getMemberUseCase;
+
     private static void checkSchedulePolicyExists(Schedule schedule) {
         if (schedule.getPolicy() == null) {
             throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST);
@@ -50,8 +54,10 @@ public class ScheduleParticipantCommandService implements
         checkSchedulePolicyExists(schedule);
 
         // ScheduleParticipant 정보가 없으면 에러 반환
-        ScheduleParticipant scheduleParticipant = getScheduleParticipant(command.scheduleId(),
-            command.requesterMemberId());
+        ScheduleParticipant scheduleParticipant = getScheduleParticipant(
+            command.scheduleId(),
+            command.requesterMemberId()
+        );
 
         // 클라이언트에서 값을 안 주면 null (비대면인 경우를 고려)
         Point location = getLocation(command.latitude(), command.longitude());
@@ -80,8 +86,10 @@ public class ScheduleParticipantCommandService implements
         checkSchedulePolicyExists(schedule);
 
         // ScheduleParticipant 정보가 없으면 에러 반환
-        ScheduleParticipant scheduleParticipant = getScheduleParticipant(command.scheduleId(),
-            command.requesterMemberId());
+        ScheduleParticipant scheduleParticipant = getScheduleParticipant(
+            command.scheduleId(),
+            command.requesterMemberId()
+        );
 
         // 클라이언트에서 값을 안 주면 null
         Point location = getLocation(command.latitude(), command.longitude());
@@ -100,15 +108,36 @@ public class ScheduleParticipantCommandService implements
 
     // 출석 요청 승인/거절
     @Override
-    public List<ScheduleParticipantAttendanceInfo> decideAttendances(DecideAttendanceCommand command) {
+    public List<ScheduleParticipantAttendanceInfo> decideAttendances(List<DecideAttendanceCommand> commands) {
+        return commands.stream()
+            .map(this::processDecision) // 단일 command에 대해 출석 요청 승인/거절 로직 수행
+            .toList();
+    }
+
+    // 출석 요청 승인/거절 로직
+    private ScheduleParticipantAttendanceInfo processDecision(DecideAttendanceCommand command) {
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
         // 출석을 요하지 않는, 즉 출석 정책이 없는 일정이면 에러 반환
         checkSchedulePolicyExists(schedule);
 
-        //
-        return null;
+        // ScheduleParticipant 정보가 없으면 에러 반환
+        ScheduleParticipant scheduleParticipant = getScheduleParticipant(
+            command.scheduleId(),
+            command.participantMemberId()
+        );
+
+        // 승인 or 거절로 현재 출석 상태에 맞는 status로 업데이트
+        if (command.isApproved()) {
+            scheduleParticipant.approveAttendance(command.decisionMakerMemberId(), command.reason());
+        } else {
+            scheduleParticipant.rejectAttendance(command.decisionMakerMemberId(), command.reason());
+        }
+        saveScheduleParticipantPort.save(scheduleParticipant);
+
+        MemberInfo decisionMaker = getMemberUseCase.getById(command.decisionMakerMemberId());
+        return ScheduleParticipantAttendanceInfo.of(scheduleParticipant.getAttendance(), decisionMaker);
     }
 
     private ScheduleParticipant getScheduleParticipant(Long scheduleId, Long memberId) {

@@ -86,7 +86,7 @@ public enum ScheduleErrorCode implements BaseCode {
     LOCATION_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0043", "위치 정보 입력은 필수입니다."),
     OFFLINE_SCHEDULE_REQUIRES_LOCATION(HttpStatus.BAD_REQUEST, "SCHEDULE-0044", "대면 일정은 위치 정보가 필수입니다."),
     ONLINE_SCHEDULE_CANNOT_HAVE_POLICY(HttpStatus.BAD_REQUEST, "SCHEDULE-0045", "비대면 일정은 출석 정책을 가질 수 없습니다."),
-    ONLINE_SCHEDULE_ATTENDANCE_REQUEST_IMPOSSIBLE(HttpStatus.BAD_REQUEST, "SCHEDULE-0046", "비대면 일정은 출석 요청을 할 수 없습니다."),
+    SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST(HttpStatus.BAD_REQUEST, "SCHEDULE-0046", "출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다."),
     PARTICIPANT_NOT_FOUND(HttpStatus.BAD_REQUEST, "SCHEDULE-0047", "일정에 대한 참석자 정보가 존재하지 않습니다."),
     LOCATION_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "SCHEDULE-0048", "사용자가 출석 인증 범위에 있지 않습니다."),
 
