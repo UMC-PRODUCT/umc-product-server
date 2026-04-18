@@ -8,10 +8,10 @@ import com.umc.product.schedule.adapter.in.web.v2.dto.request.EditScheduleReques
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.ExcuseScheduleAttendanceRequest;
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.ScheduleAttendanceRequest;
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleParticipantAttendanceInfoResponse;
-import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleParticipantUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.UpdateScheduleParticipantUseCase;
+import com.umc.product.schedule.application.port.v2.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.DecideAttendanceCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.EditScheduleCommand;

@@ -8,11 +8,11 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWi
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
-import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
 import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleUseCase;
+import com.umc.product.schedule.application.port.v2.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.EditScheduleCommand;
 import com.umc.product.schedule.application.port.v2.out.DeleteScheduleParticipantPort;
