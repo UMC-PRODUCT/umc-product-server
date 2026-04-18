@@ -123,17 +123,17 @@ public class Schedule extends BaseEntity {
     }
 
     // 일정 시작, 종료 시간
-    // (1) 일정 종료 시각은 AttendancePolicy에 따라서, 시작시간 + 출석 인정 시간 + 지각 인정 시간 보다 늦어야 함
-    // (2) 종료 시간은 시작 시간보다 앞서서는 안됨
+    // (1) 종료 시간은 시작 시간보다 앞서서는 안됨
+    // (2) policy가 있는 경우, 일정 종료 시각은 시작시간 + 출석 인정 시간 + 지각 인정 시간 보다 늦어야 함
     private static void validateScheduleTime(AttendancePolicy policy, Instant start, Instant end) {
-        if (policy == null) {
-            throw new ScheduleDomainException(ScheduleErrorCode.NO_SCHEDULE_POLICY,
-                "출결 정책이 등록되어 있지 않습니다.");
-        }
-
         if (end.isBefore(start)) {
             throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE,
                 "일정 종료 시각은 시작 시각보다 늦어야 합니다");
+        }
+
+        // policy가 없으면 출석 체크를 하지 않는 일정이므로 추가 검증 불필요
+        if (policy == null) {
+            return;
         }
 
         long totalLateMinutes =
@@ -255,25 +255,11 @@ public class Schedule extends BaseEntity {
         }
     }
 
-    // 비대면 일정으로 전환
-    // location이 삭제됨
+    // 비대면 일정으로 전환 (대면 -> 비대면)
+    // location만 삭제됨, policy는 유지 (출석 체크 여부는 독립적)
     public void convertToOnline() {
         this.location = null;
         this.locationName = null;
-    }
-
-    // 대면 일정으로 전환
-    // location과 policy가 생성됨
-    public void convertToOffline(Point location, String locationName, AttendancePolicy policy) {
-        if (location == null) {
-            throw new ScheduleDomainException(ScheduleErrorCode.LOCATION_REQUIRED);
-        }
-
-        validateScheduleTime(policy, this.startsAt, this.endsAt);
-
-        this.location = location;
-        this.locationName = locationName;
-        this.policy = policy;
     }
 
     // TODO: v1 단계에서 사용되던 메소드들은 전부 제거하였습니다. 터지는 부분 모두 수정해주세요.

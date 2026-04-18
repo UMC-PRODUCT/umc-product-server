@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -96,6 +97,8 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     @Override
     public Long update(EditScheduleCommand command) {
 
+        command.validate();
+
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
@@ -103,35 +106,22 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_ENDED, "종료된 일정은 수정 불가합니다.");
         }
 
-        // 대면/비대면 전환 처리
-        handleOnlineOfflineConversion(schedule, command);
-
-        // 일반 필드 업데이트 (전환이 아닌 경우에만 location/policy 처리)
-        if (!command.isChangingToOnline() && !command.isChangingToOffline()) {
-            schedule.update(
-                command.name(),
-                command.description(),
-                command.tags(),
-                command.startsAt(),
-                command.endsAt(),
-                command.location() != null ? command.location().locationName() : null,
-                command.location() != null ? GeometryUtils.createPoint(
-                    command.location().latitude(),
-                    command.location().longitude()
-                ) : null,
-                createPolicyFromCommand(command, schedule)
-            );
-        } else {
-            // 전환 시에는 location/policy 제외하고 업데이트
-            schedule.update(
-                command.name(),
-                command.description(),
-                command.tags(),
-                command.startsAt(),
-                command.endsAt(),
-                null, null, null
-            );
+        // 대면 -> 비대면 전환 시
+        if (command.isChangingToOnline()) {
+            schedule.convertToOnline();
         }
+
+        // 일반 필드 업데이트 (대면/비대면 유지 또는 비대면 -> 대면 포함)
+        schedule.update(
+            command.name(),
+            command.description(),
+            command.tags(),
+            command.startsAt(),
+            command.endsAt(),
+            extractLocationName(command),
+            extractLocation(command),
+            createPolicyFromCommand(command, schedule)
+        );
 
         // 참여자 update
         updateParticipants(schedule, command);
@@ -140,23 +130,6 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         saveSchedulePort.save(schedule);
 
         return schedule.getId();
-    }
-
-    // 대면/비대면 전환 처리
-    private void handleOnlineOfflineConversion(Schedule schedule, EditScheduleCommand command) {
-        // 비대면 전환 시
-        if (command.isChangingToOnline()) {
-            schedule.convertToOnline();
-        } else if (command.isChangingToOffline()) { // 대면 전환 시
-            schedule.convertToOffline(
-                GeometryUtils.createPoint(
-                    command.location().latitude(),
-                    command.location().longitude()
-                ),
-                command.location().locationName(),
-                createPolicyFromCommand(command, schedule)
-            );
-        }
     }
 
     // command로부터 policy 생성
@@ -175,6 +148,20 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             command.attendancePolicy().lateEndAt(),
             startsAt,
             endsAt
+        );
+    }
+
+    private String extractLocationName(EditScheduleCommand command) {
+        return command.location() != null ? command.location().locationName() : null;
+    }
+
+    private Point extractLocation(EditScheduleCommand command) {
+        if (command.location() == null) {
+            return null;
+        }
+        return GeometryUtils.createPoint(
+            command.location().latitude(),
+            command.location().longitude()
         );
     }
 
