@@ -56,10 +56,5 @@ public record EditScheduleCommand(
         if (isChangingToOffline() && location == null) {
             throw new ScheduleDomainException(ScheduleErrorCode.OFFLINE_SCHEDULE_REQUIRES_LOCATION);
         }
-
-        // 비대면으로 변경하면서 policy를 보내면 에러
-        if (isChangingToOnline() && attendancePolicy != null) {
-            throw new ScheduleDomainException(ScheduleErrorCode.ONLINE_SCHEDULE_CANNOT_HAVE_POLICY);
-        }
     }
 }

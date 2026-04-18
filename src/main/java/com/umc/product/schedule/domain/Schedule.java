@@ -256,11 +256,10 @@ public class Schedule extends BaseEntity {
     }
 
     // 비대면 일정으로 전환
-    // location과 policy가 삭제됨
+    // location이 삭제됨
     public void convertToOnline() {
         this.location = null;
         this.locationName = null;
-        this.policy = null;
     }
 
     // 대면 일정으로 전환
