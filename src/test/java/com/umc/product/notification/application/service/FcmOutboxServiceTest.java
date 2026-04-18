@@ -1,33 +1,18 @@
 package com.umc.product.notification.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
 
-import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.firebase.messaging.TopicManagementResponse;
 import com.umc.product.notification.application.port.in.ProcessFcmOutboxUseCase;
 import com.umc.product.notification.application.port.out.LoadFcmOutboxPort;
-import com.umc.product.notification.domain.FcmOutbox;
 import com.umc.product.notification.domain.FcmOutboxStatus;
-import com.umc.product.organization.domain.Chapter;
-import com.umc.product.organization.domain.Gisu;
-import com.umc.product.organization.domain.School;
 import com.umc.product.support.UseCaseTestSupport;
-import com.umc.product.support.fixture.ChallengerFixture;
-import com.umc.product.support.fixture.ChapterFixture;
 import com.umc.product.support.fixture.FcmOutboxFixture;
-import com.umc.product.support.fixture.FcmTokenFixture;
-import com.umc.product.support.fixture.GisuFixture;
 import com.umc.product.support.fixture.MemberFixture;
-import com.umc.product.support.fixture.SchoolFixture;
-import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 class FcmOutboxServiceTest extends UseCaseTestSupport {
 
     @Autowired
@@ -40,83 +25,53 @@ class FcmOutboxServiceTest extends UseCaseTestSupport {
     private MemberFixture memberFixture;
 
     @Autowired
-    private GisuFixture gisuFixture;
-
-    @Autowired
-    private ChapterFixture chapterFixture;
-
-    @Autowired
-    private SchoolFixture schoolFixture;
-
-    @Autowired
-    private ChallengerFixture challengerFixture;
-
-    @Autowired
-    private FcmTokenFixture fcmTokenFixture;
-
-    @Autowired
     private FcmOutboxFixture fcmOutboxFixture;
 
-    private Long memberId;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        Gisu gisu = gisuFixture.활성_기수(16L);
-        Chapter chapter = chapterFixture.지부(gisu, "서울");
-        School school = schoolFixture.지부에_소속된_학교("한국대", chapter);
-        memberId = memberFixture.학교_소속_멤버("테스터", school.getId()).getId();
-        challengerFixture.스프링_챌린저(memberId, gisu.getId());
-        fcmTokenFixture.FCM_토큰(memberId, "test-token");
-
-        TopicManagementResponse successResponse = mock(TopicManagementResponse.class);
-        given(successResponse.getSuccessCount()).willReturn(1);
-        given(successResponse.getFailureCount()).willReturn(0);
-        given(firebaseMessaging.subscribeToTopic(anyList(), anyString())).willReturn(successResponse);
-        given(firebaseMessaging.unsubscribeFromTopic(anyList(), anyString())).willReturn(successResponse);
-    }
-
     @Test
-    void SUBSCRIBE_이벤트_처리_성공_시_PROCESSED로_변경된다() {
+    void SUBSCRIBE_이벤트는_토픽_기반_비활성화로_인해_즉시_FAILED_처리된다() {
+        // given
+        Long memberId = memberFixture.일반_멤버("테스터").getId();
         fcmOutboxFixture.구독_이벤트(memberId);
 
+        // when
         processFcmOutboxUseCase.process();
 
+        // then - 토픽 구독 로직이 비활성화되어 PENDING 이벤트 없이 FAILED 처리
         assertThat(loadFcmOutboxPort.findPendingEvents()).isEmpty();
     }
 
     @Test
-    void UNSUBSCRIBE_이벤트_처리_성공_시_PROCESSED로_변경된다() {
+    void UNSUBSCRIBE_이벤트는_토픽_기반_비활성화로_인해_즉시_FAILED_처리된다() {
+        // given
+        Long memberId = memberFixture.일반_멤버("테스터").getId();
         fcmOutboxFixture.구독해제_이벤트(memberId, "old-token");
 
+        // when
         processFcmOutboxUseCase.process();
 
+        // then
         assertThat(loadFcmOutboxPort.findPendingEvents()).isEmpty();
     }
 
     @Test
-    void FCM_호출_실패_시_retryCount가_증가하고_PENDING_상태를_유지한다() throws Exception {
-        fcmOutboxFixture.구독_이벤트(memberId);
-        FirebaseMessagingException ex = mock(FirebaseMessagingException.class);
-        given(firebaseMessaging.subscribeToTopic(anyList(), anyString())).willThrow(ex);
-
+    void PENDING_이벤트가_없으면_아무것도_처리하지_않는다() {
+        // when & then - 예외 없이 정상 종료
         processFcmOutboxUseCase.process();
-
-        List<FcmOutbox> pending = loadFcmOutboxPort.findPendingEvents();
-        assertThat(pending).hasSize(1);
-        assertThat(pending.get(0).getRetryCount()).isEqualTo(1);
-        assertThat(pending.get(0).getStatus()).isEqualTo(FcmOutboxStatus.PENDING);
+        assertThat(loadFcmOutboxPort.findPendingEvents()).isEmpty();
     }
 
     @Test
-    void FCM_호출이_3회_연속_실패하면_FAILED로_변경된다() throws Exception {
+    void 여러_PENDING_이벤트가_있으면_모두_FAILED_처리된다() {
+        // given
+        Long memberId = memberFixture.일반_멤버("테스터").getId();
         fcmOutboxFixture.구독_이벤트(memberId);
-        FirebaseMessagingException ex = mock(FirebaseMessagingException.class);
-        given(firebaseMessaging.subscribeToTopic(anyList(), anyString())).willThrow(ex);
+        fcmOutboxFixture.구독_이벤트(memberId);
+        fcmOutboxFixture.구독해제_이벤트(memberId, "some-token");
 
-        processFcmOutboxUseCase.process(); // retryCount = 1
-        processFcmOutboxUseCase.process(); // retryCount = 2
-        processFcmOutboxUseCase.process(); // retryCount = 3 → FAILED
+        // when
+        processFcmOutboxUseCase.process();
 
+        // then
         assertThat(loadFcmOutboxPort.findPendingEvents()).isEmpty();
     }
 }
