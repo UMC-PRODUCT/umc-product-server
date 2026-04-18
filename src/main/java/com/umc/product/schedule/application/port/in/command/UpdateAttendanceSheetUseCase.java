@@ -8,6 +8,7 @@ import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
  * <p>
  * 비활성화(deactivate)는 물리 삭제 대신 사용하며, 기존 출석 기록을 보존 비활성 상태에서는 출석 체크가 불가능함.
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public interface UpdateAttendanceSheetUseCase {
 
     /**

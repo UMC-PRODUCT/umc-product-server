@@ -12,6 +12,7 @@ import org.locationtech.jts.geom.Point;
  * <p>
  * 출석 시간대는 일정의 startsAt ~ endsAt을 기준으로 AttendanceSheet에서 자동 생성됩니다. 지각 기준 시간은 10분으로 고정됩니다.
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public record CreateScheduleWithAttendanceCommand(
     // Schedule 정보
     String name,

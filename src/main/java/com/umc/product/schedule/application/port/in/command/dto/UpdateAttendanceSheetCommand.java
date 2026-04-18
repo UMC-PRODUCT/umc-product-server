@@ -7,6 +7,7 @@ import java.util.Objects;
 /**
  * 출석부 수정 Command
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public record UpdateAttendanceSheetCommand(
     AttendanceSheetId sheetId,
     AttendanceWindow window,

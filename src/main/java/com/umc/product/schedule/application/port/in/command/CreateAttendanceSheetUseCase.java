@@ -10,6 +10,7 @@ import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
  * <p> 일정 1개에 출석부 1개가 1:1로 연결 -> 현재 카테고리별 차이 존재 X
  * <p> 일정과 출석부를 동시에 생성하려면 CreateScheduleWithAttendanceUseCase(Facade)를 사용.
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public interface CreateAttendanceSheetUseCase {
 
     AttendanceSheetId create(CreateAttendanceSheetCommand command);

@@ -9,6 +9,7 @@ import java.util.Objects;
 /**
  * 출석부 생성 Command
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public record CreateAttendanceSheetCommand(
     Long scheduleId,
     Long gisuId,

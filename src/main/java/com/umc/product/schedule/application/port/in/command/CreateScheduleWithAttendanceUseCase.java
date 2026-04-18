@@ -5,6 +5,7 @@ import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleWi
 /**
  * 일정 + 출석부 통합 생성 Facade UseCase
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public interface CreateScheduleWithAttendanceUseCase {
 
     /**

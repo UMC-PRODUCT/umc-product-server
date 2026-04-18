@@ -12,6 +12,7 @@ import org.locationtech.jts.geom.Point;
  * <p>
  * participantMemberIds는 서비스에서 스터디 그룹 멤버로 자동 매핑됩니다.
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public record CreateStudyGroupScheduleCommand(
     String name,
     Instant startsAt,

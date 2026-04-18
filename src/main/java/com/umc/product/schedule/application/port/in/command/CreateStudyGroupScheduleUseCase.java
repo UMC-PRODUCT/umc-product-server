@@ -5,6 +5,7 @@ import com.umc.product.schedule.application.port.in.command.dto.CreateStudyGroup
 /**
  * 스터디 그룹 일정 생성 UseCase
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public interface CreateStudyGroupScheduleUseCase {
 
     /**

@@ -5,6 +5,7 @@ package com.umc.product.schedule.application.port.out.dto;
  * <p>
  * record → sheet → schedule을 JOIN하여 한 번의 쿼리로 조회
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public record AttendanceRecordPermissionContext(
     Long recordId,
     Long recordMemberId,

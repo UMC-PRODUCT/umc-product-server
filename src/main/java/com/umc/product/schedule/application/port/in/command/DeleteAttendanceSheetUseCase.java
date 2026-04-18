@@ -7,6 +7,7 @@ import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
  * <p>
  * 출석 기록 보존이 필요한 경우 삭제 대신 UpdateAttendanceSheetUseCase.deactivate()를 사용할 것. 해당 부분은 데이터 까지도 전부 삭제되는 경우를 위해 필요
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public interface DeleteAttendanceSheetUseCase {
 
     void delete(AttendanceSheetId sheetId);

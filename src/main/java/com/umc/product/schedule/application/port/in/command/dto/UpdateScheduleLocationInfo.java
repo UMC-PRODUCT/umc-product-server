@@ -2,6 +2,7 @@ package com.umc.product.schedule.application.port.in.command.dto;
 
 import org.locationtech.jts.geom.Point;
 
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public record UpdateScheduleLocationInfo(
     Long scheduleId,
     String locationName,

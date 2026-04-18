@@ -7,6 +7,7 @@ import com.umc.product.schedule.domain.vo.AttendanceWindow;
 /**
  * 출석부 정보 DTO
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public record AttendanceSheetInfo(
     AttendanceSheetId id,
     Long scheduleId,

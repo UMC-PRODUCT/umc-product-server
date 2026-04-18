@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public class ScheduleAttendanceCommandFacadeService implements
     CreateScheduleWithAttendanceUseCase,
     DeleteScheduleWithAttendanceUseCase {

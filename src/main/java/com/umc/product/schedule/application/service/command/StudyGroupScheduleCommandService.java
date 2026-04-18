@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public class StudyGroupScheduleCommandService implements CreateStudyGroupScheduleUseCase {
 
     private final GetStudyGroupUseCase getStudyGroupUseCase;

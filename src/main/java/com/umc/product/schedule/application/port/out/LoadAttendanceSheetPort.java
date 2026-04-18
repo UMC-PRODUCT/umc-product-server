@@ -5,6 +5,7 @@ import com.umc.product.schedule.domain.AttendanceSheet;
 import java.util.List;
 import java.util.Optional;
 
+@Deprecated(since = "v1.5.0", forRemoval = true)
 //출석부 조회파트
 public interface LoadAttendanceSheetPort {
 

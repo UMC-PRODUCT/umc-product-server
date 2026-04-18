@@ -7,6 +7,7 @@ import com.umc.product.schedule.domain.enums.AttendanceStatus;
 /**
  * 출석 기록 정보 DTO
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public record AttendanceRecordInfo(
     AttendanceRecordId id,
     Long attendanceSheetId,

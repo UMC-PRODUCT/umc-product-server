@@ -36,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public class AttendanceCommandService implements CheckAttendanceUseCase, ApproveAttendanceUseCase, SubmitReasonUseCase {
 
     private final LoadAttendanceSheetPort loadAttendanceSheetPort;

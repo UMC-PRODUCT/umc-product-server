@@ -6,6 +6,7 @@ import org.locationtech.jts.geom.Point;
 /**
  * 일정 출석체크 위치 변경 Command
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public record UpdateScheduleLocationCommand(
     Long scheduleId,
     String locationName,

@@ -3,6 +3,7 @@ package com.umc.product.schedule.application.port.out;
 import com.umc.product.schedule.domain.AttendanceRecord;
 import java.util.List;
 
+@Deprecated(since = "v1.5.0", forRemoval = true)
 //출석 저장
 public interface SaveAttendanceRecordPort {
 

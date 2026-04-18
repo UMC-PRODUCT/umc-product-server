@@ -6,6 +6,7 @@ import com.umc.product.schedule.domain.AttendanceRecord;
 import java.util.List;
 import java.util.Optional;
 
+@Deprecated(since = "v1.5.0", forRemoval = true)
 //출석 기록 조회 파트
 public interface LoadAttendanceRecordPort {
 

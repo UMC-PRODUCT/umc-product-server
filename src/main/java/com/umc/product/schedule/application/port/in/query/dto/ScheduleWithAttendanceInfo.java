@@ -7,6 +7,7 @@ import java.util.Set;
 /**
  * Schedule + AttendanceSheet 통합 정보 DTO (Facade)
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public record ScheduleWithAttendanceInfo(
     // Schedule 정보
     Long scheduleId,
