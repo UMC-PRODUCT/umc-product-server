@@ -9,4 +9,10 @@ public interface ScheduleParticipantJpaRepository extends JpaRepository<Schedule
     ScheduleParticipant save(ScheduleParticipant participant);
 
     List<ScheduleParticipant> saveAll(List<ScheduleParticipant> participants);
+
+    void deleteAlldeleteAll(List<ScheduleParticipant> participants);
+
+    List<ScheduleParticipant> findAllByScheduleId(Long scheduleId);
+
+
 }

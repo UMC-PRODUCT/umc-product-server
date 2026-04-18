@@ -10,7 +10,9 @@ import com.umc.product.schedule.adapter.in.web.v2.dto.request.ExcuseScheduleAtte
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.ScheduleAttendanceRequest;
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleParticipantAttendanceInfoResponse;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
+import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.dto.CreateScheduleCommand;
+import com.umc.product.schedule.application.port.v2.in.command.dto.EditScheduleCommand;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ScheduleCommandController {
 
     private final CreateScheduleUseCase createScheduleUseCase;
+    private final UpdateScheduleUseCase updateScheduleUseCase;
 
     @Operation(summary = "일정 생성", description = """
         일정을 생성합니다. `location` 필드를 작성하지 않으실 경우 비대면 일정으로 간주됩니다.
@@ -54,7 +57,7 @@ public class ScheduleCommandController {
 
         CreateScheduleCommand command = request.toCommand(memberPrincipal.getMemberId());
 
-        createScheduleUseCase.create(command);
+        return createScheduleUseCase.create(command);
     }
 
     @Operation(summary = "일정 수정", description = """
@@ -62,11 +65,14 @@ public class ScheduleCommandController {
         """
     )
     @PatchMapping("/{scheduleId}")
-    public void edit(
+    public Long edit(
         @PathVariable Long scheduleId,
-        EditScheduleRequest request
+        EditScheduleRequest request,
+        @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        throw new NotImplementedException();
+        EditScheduleCommand command = request.toCommand(scheduleId, memberPrincipal.getMemberId());
+
+        return updateScheduleUseCase.update(command);
     }
 
     // 사유 제출까지 여기에 묶어버리는게 맞는 판단일까에 대한 궁금증이 살짝 있음.

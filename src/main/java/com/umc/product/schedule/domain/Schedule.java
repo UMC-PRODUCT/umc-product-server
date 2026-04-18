@@ -206,5 +206,76 @@ public class Schedule extends BaseEntity {
         }
     }
 
+    // 일정 수정 메서드
+    // null인 필드는 기존 값 유지
+    public void update(
+        String name,
+        String description,
+        Set<ScheduleTag> tags,
+        Instant startsAt,
+        Instant endsAt,
+        String locationName,
+        Point location,
+        AttendancePolicy policy
+    ) {
+        // 단순 필드 - null이면 기존 값 유지
+        if (name != null) {
+            this.name = name;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (locationName != null) {
+            this.locationName = locationName;
+        }
+        if (location != null) {
+            this.location = location;
+        }
+
+        // 태그 : 검증 필요
+        if (tags != null) {
+            validateScheduleTags(tags);
+            this.tags = new HashSet<>(tags);
+        }
+
+        // 일정 시간/출석 정책 : 연관 검증 필요
+        boolean isTimeChanged = startsAt != null || endsAt != null;
+        boolean isPolicyChanged = policy != null;
+
+        if (isTimeChanged || isPolicyChanged) {
+            Instant finalStartsAt = startsAt != null ? startsAt : this.startsAt;
+            Instant finalEndsAt = endsAt != null ? endsAt : this.endsAt;
+            AttendancePolicy finalPolicy = policy != null ? policy : this.policy;
+
+            validateScheduleTime(finalPolicy, finalStartsAt, finalEndsAt);
+
+            this.startsAt = finalStartsAt;
+            this.endsAt = finalEndsAt;
+            this.policy = finalPolicy;
+        }
+    }
+
+    // 비대면 일정으로 전환
+    // location과 policy가 삭제됨
+    public void convertToOnline() {
+        this.location = null;
+        this.locationName = null;
+        this.policy = null;
+    }
+
+    // 대면 일정으로 전환
+    // location과 policy가 생성됨
+    public void convertToOffline(Point location, String locationName, AttendancePolicy policy) {
+        if (location == null) {
+            throw new ScheduleDomainException(ScheduleErrorCode.LOCATION_REQUIRED);
+        }
+
+        validateScheduleTime(policy, this.startsAt, this.endsAt);
+
+        this.location = location;
+        this.locationName = locationName;
+        this.policy = policy;
+    }
+
     // TODO: v1 단계에서 사용되던 메소드들은 전부 제거하였습니다. 터지는 부분 모두 수정해주세요.
 }

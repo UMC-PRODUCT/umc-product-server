@@ -1,19 +1,42 @@
 package com.umc.product.schedule.adapter.out.persistence;
 
+import com.umc.product.schedule.application.port.v2.out.DeleteScheduleParticipantPort;
+import com.umc.product.schedule.application.port.v2.out.LoadScheduleParticipantPort;
 import com.umc.product.schedule.application.port.v2.out.SaveScheduleParticipantPort;
 import com.umc.product.schedule.domain.ScheduleParticipant;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class ScheduleParticipantPersistenceAdapter implements
-    SaveScheduleParticipantPort {
+    SaveScheduleParticipantPort,
+    DeleteScheduleParticipantPort,
+    LoadScheduleParticipantPort {
 
     private final ScheduleParticipantJpaRepository scheduleParticipantJpaRepository;
 
+    // ======== SaveScheduleParticipantPort =======
     @Override
     public ScheduleParticipant save(ScheduleParticipant scheduleParticipant) {
         return scheduleParticipantJpaRepository.save(scheduleParticipant);
+    }
+
+    @Override
+    public List<ScheduleParticipant> saveAll(List<ScheduleParticipant> participants) {
+        return scheduleParticipantJpaRepository.saveAll(participants);
+    }
+
+    // ======== DeleteScheduleParticipantPort =======
+    @Override
+    public void deleteAll(List<ScheduleParticipant> participants) {
+        scheduleParticipantJpaRepository.deleteAll(participants);
+    }
+
+    // ======== LoadScheduleParticipantPort =======
+    @Override
+    public List<ScheduleParticipant> findAllByScheduleId(Long scheduleId) {
+        return scheduleParticipantJpaRepository.findAllByScheduleId(scheduleId);
     }
 }
