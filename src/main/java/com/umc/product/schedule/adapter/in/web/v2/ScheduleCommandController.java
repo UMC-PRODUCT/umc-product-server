@@ -9,8 +9,11 @@ import com.umc.product.schedule.adapter.in.web.v2.dto.request.EditScheduleReques
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.ExcuseScheduleAttendanceRequest;
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.ScheduleAttendanceRequest;
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleParticipantAttendanceInfoResponse;
+import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
+import com.umc.product.schedule.application.port.v2.in.command.dto.CreateScheduleCommand;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -25,6 +28,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Tag(name = "Schedule V2 | Command", description = "일정을 생성하거나 수정하고, 출석 관련 요청을 처리합니다.")
 public class ScheduleCommandController {
+
+    private final CreateScheduleUseCase createScheduleUseCase;
 
     @Operation(summary = "일정 생성", description = """
         일정을 생성합니다. `location` 필드를 작성하지 않으실 경우 비대면 일정으로 간주됩니다.
@@ -45,8 +50,11 @@ public class ScheduleCommandController {
         """
     )
     @PostMapping
-    public Long create(CreateScheduleRequest request) {
-        throw new NotImplementedException();
+    public Long create(@Valid CreateScheduleRequest request, @CurrentMember MemberPrincipal memberPrincipal) {
+
+        CreateScheduleCommand command = request.toCommand(memberPrincipal.getMemberId());
+
+        createScheduleUseCase.create(command);
     }
 
     @Operation(summary = "일정 수정", description = """

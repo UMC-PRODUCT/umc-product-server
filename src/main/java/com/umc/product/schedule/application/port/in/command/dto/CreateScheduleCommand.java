@@ -14,6 +14,7 @@ import org.locationtech.jts.geom.Point;
 /**
  * 일정 생성 Command
  */
+@Deprecated(since = "v1.5.0", forRemoval = true)
 public record CreateScheduleCommand(
     String name,
     Instant startsAt,

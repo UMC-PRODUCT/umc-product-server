@@ -1,7 +1,9 @@
 package com.umc.product.schedule.adapter.in.web.v2.dto.request;
 
+import com.umc.product.schedule.application.port.v2.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -32,5 +34,23 @@ public record CreateScheduleRequest(
     // (기획단 변경이 있기 전까지는 해당 사항을 유지합니다.)
     Set<Long> participantMemberIds
 ) {
-    // toEntity() 정팩메 만들어주세요!
+    public CreateScheduleCommand toCommand(Long authorMemberId) {
+
+        Set<Long> participants = participantMemberIds != null
+            ? new HashSet<>(participantMemberIds)
+            : new HashSet<>();
+        participants.add(authorMemberId);  // 일정 생성자 추가
+
+        return CreateScheduleCommand.builder()
+            .name(name)
+            .description(description)
+            .tags(tags)
+            .authorMemberId(authorMemberId)
+            .startsAt(startsAt)
+            .endsAt(endsAt)
+            .location(location)
+            .attendancePolicy(attendancePolicy)
+            .participantMemberIds(participants)
+            .build();
+    }
 }

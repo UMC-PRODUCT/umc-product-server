@@ -1,6 +1,6 @@
 package com.umc.product.schedule.application.port.in.command;
 
-import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
+import com.umc.product.schedule.application.port.v2.in.command.dto.CreateScheduleCommand;
 
 public interface CreateScheduleUseCase {
 

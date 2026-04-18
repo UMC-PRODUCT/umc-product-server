@@ -73,4 +73,12 @@ public class AttendancePolicy {
             return AttendanceStatus.ABSENT;
         }
     }
+
+    protected static AttendancePolicy create(
+        long earlyCheckInMinutes,
+        long attendanceGraceMinutes,
+        long lateToleranceMinutes) {
+
+        return new AttendancePolicy(earlyCheckInMinutes, attendanceGraceMinutes, lateToleranceMinutes);
+    }
 }

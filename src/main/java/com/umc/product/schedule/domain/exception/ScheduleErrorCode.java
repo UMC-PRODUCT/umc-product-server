@@ -81,7 +81,7 @@ public enum ScheduleErrorCode implements BaseCode {
     SCHEDULE_ENDED(HttpStatus.BAD_REQUEST, "SCHEDULE-0039", "종료된 일정에 대한 출석 요청은 허용되지 않습니다."),
     NO_SCHEDULE_POLICY(HttpStatus.NOT_FOUND, "SCHEDULE-0040", "출결 정책이 존재하지 않습니다."),
     CHECK_IN_TOO_EARLY(HttpStatus.BAD_REQUEST, "SCHEDULE-0041", "출석 가능한 시간 이전입니다. 출석 가능한 시간 이후에 다시 시도해주세요."),
-    ;
+    INVALID_ATTENDANCE_POLICY(HttpStatus.BAD_REQUEST, "SCHEDULE-0042", "출석 정책 시간이 유효하지 않습니다.");
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;

@@ -9,21 +9,18 @@ import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
-import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCommand;
 import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleLocationCommand;
 import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleLocationInfo;
-import com.umc.product.schedule.application.port.out.DeleteAttendanceRecordPort;
-import com.umc.product.schedule.application.port.out.DeleteAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
-import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
-import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
-import com.umc.product.schedule.application.port.out.SaveAttendanceRecordPort;
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
+import com.umc.product.schedule.application.port.v2.in.command.dto.CreateScheduleCommand;
+import com.umc.product.schedule.application.port.v2.out.SaveScheduleParticipantPort;
 import com.umc.product.schedule.domain.AttendanceRecord;
 import com.umc.product.schedule.domain.AttendanceSheet;
 import com.umc.product.schedule.domain.Schedule;
+import com.umc.product.schedule.domain.ScheduleParticipant;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
@@ -48,12 +45,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     private final LoadSchedulePort loadSchedulePort;
     private final DeleteSchedulePort deleteSchedulePort;
 
-    private final LoadAttendanceSheetPort loadAttendanceSheetPort;
-    private final DeleteAttendanceSheetPort deleteAttendanceSheetPort;
-
-    private final LoadAttendanceRecordPort loadAttendanceRecordPort;
-    private final SaveAttendanceRecordPort saveAttendanceRecordPort;
-    private final DeleteAttendanceRecordPort deleteAttendanceRecordPort;
+    private final SaveScheduleParticipantPort saveScheduleParticipantPort;
 
     // 외부 도메인 UseCase
     private final GetChallengerUseCase getChallengerUseCase;
@@ -69,7 +61,8 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     )
     @Override
     public Long create(CreateScheduleCommand command) {
-        // 작성자의 Challenger 상태 조회 (탈부, 제명 상태일 시 exeption)
+
+        // 작성자의 가장 최근 기수 Challenger 상태 조회 (탈부, 제명 상태일 시 exeption)
         ChallengerInfoWithStatus challengerInfoWithStatus = getChallengerUseCase.getLatestActiveChallengerByMemberId(
             command.authorMemberId());
         Long authorChallengerId = challengerInfoWithStatus.challengerId();
@@ -77,6 +70,17 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         // Schedule 생성 및 저장
         Schedule schedule = command.toEntity(authorChallengerId);
         Schedule savedSchedule = saveSchedulePort.save(schedule);
+
+        // ScheduleParticipant 생성 및 저장
+        List<ScheduleParticipant> participants = command.participantMemberIds().stream()
+            .map(memberId -> ScheduleParticipant.builder()
+                .memberId(memberId)
+                .schedule(savedSchedule)
+                .attendance(null)
+                .build())
+            .toList();
+
+        saveScheduleParticipantPort.saveAll(participants);
 
         return savedSchedule.getId();
     }

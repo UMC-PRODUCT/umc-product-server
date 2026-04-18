@@ -173,5 +173,38 @@ public class Schedule extends BaseEntity {
         );
     }
 
+    public static AttendancePolicy createAttendancePolicy(
+        Instant checkInStartAt, // 출석 요청 시작 가능 시점
+        Instant onTimeEndAt, // 출석으로 인정하는 마감 시간
+        Instant lateEndAt, // 지각으로 인정하는 마감 시간,
+        Instant startsAt, // 일정 시작 시간
+        Instant endsAt // 일정 종료 시간
+    ) {
+        validateAttendancePolicyTimes(checkInStartAt, onTimeEndAt, lateEndAt, startsAt, endsAt);
+
+        long earlyCheckInMinutes = ChronoUnit.MINUTES.between(checkInStartAt, startsAt);
+        long attendanceGraceMinutes = ChronoUnit.MINUTES.between(startsAt, onTimeEndAt);
+        long lateToleranceMinutes = ChronoUnit.MINUTES.between(onTimeEndAt, lateEndAt);
+
+        return AttendancePolicy.create(earlyCheckInMinutes, attendanceGraceMinutes, lateToleranceMinutes);
+    }
+
+    private static void validateAttendancePolicyTimes(
+        Instant checkInStartAt, // 출석 요청 시작 가능 시점
+        Instant onTimeEndAt, // 출석으로 인정하는 마감 시간
+        Instant lateEndAt, // 지각으로 인정하는 마감 시간,
+        Instant startsAt, // 일정 시작 시간
+        Instant endsAt // 일정 종료 시간
+    ) {
+        // 검증해야 하는 내용: checkInStartAt < startAt < onTimeEndAt < lateEndAt < endsAt
+        if (!checkInStartAt.isBefore(startsAt) ||
+            !startsAt.isBefore(onTimeEndAt) ||
+            !onTimeEndAt.isBefore(lateEndAt) ||
+            !lateEndAt.isBefore(endsAt)
+        ) {
+            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
+        }
+    }
+
     // TODO: v1 단계에서 사용되던 메소드들은 전부 제거하였습니다. 터지는 부분 모두 수정해주세요.
 }
