@@ -1,0 +1,28 @@
+package com.umc.product.schedule.application.port.v2.in.command.dto;
+
+import com.umc.product.schedule.domain.exception.ScheduleDomainException;
+import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
+import lombok.Builder;
+
+@Builder
+public record ScheduleAttendanceRequestCommand(
+    Long scheduleId,
+
+    // 요청자 memberId
+    Long requesterMemberId,
+
+    // 클라이언트 측에서 받은 위치 인증 여부
+    boolean isVerified,
+
+    // === 위치 정보 ===
+    Double latitude,
+    Double longitude
+) {
+
+    // 객체가 생성될 때 isVerified가 false면 에러 반환
+    public ScheduleAttendanceRequestCommand {
+        if (!isVerified()) {
+            throw new ScheduleDomainException(ScheduleErrorCode.LOCATION_NOT_VERIFIED);
+        }
+    }
+}
