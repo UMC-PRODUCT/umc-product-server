@@ -4,10 +4,11 @@ import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.schedule.domain.ScheduleParticipantAttendance;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.Instant;
+import lombok.AccessLevel;
 import lombok.Builder;
 import org.locationtech.jts.geom.Point;
 
-@Builder
+@Builder(access = AccessLevel.PRIVATE)
 public record ScheduleParticipantAttendanceInfo(
     // === 위치 정보 ===
     Double latitude,
@@ -54,7 +55,7 @@ public record ScheduleParticipantAttendanceInfo(
             .build();
     }
 
-    @Builder
+    @Builder(access = AccessLevel.PRIVATE)
     public record DecisionMakerMemberInfo(
         Long memberId,
         String name,

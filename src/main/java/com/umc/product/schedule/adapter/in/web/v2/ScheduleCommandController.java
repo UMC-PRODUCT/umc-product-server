@@ -9,12 +9,13 @@ import com.umc.product.schedule.adapter.in.web.v2.dto.request.EditScheduleReques
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.ExcuseScheduleAttendanceRequest;
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.ScheduleAttendanceRequest;
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleParticipantAttendanceInfoResponse;
-import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleParticipantUseCase;
+import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.EditScheduleCommand;
-import com.umc.product.schedule.application.port.v2.in.command.dto.ScheduleAttendanceRequestCommand;
+import com.umc.product.schedule.application.port.v2.in.command.dto.ExcuseScheduleAttendanceCommand;
+import com.umc.product.schedule.application.port.v2.in.command.dto.ScheduleAttendanceCommand;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -94,7 +95,7 @@ public class ScheduleCommandController {
         @PathVariable Long scheduleId,
         @Valid @RequestBody ScheduleAttendanceRequest request
     ) {
-        ScheduleAttendanceRequestCommand command = request.toCommand(scheduleId, memberPrincipal.getMemberId());
+        ScheduleAttendanceCommand command = request.toCommand(scheduleId, memberPrincipal.getMemberId());
 
         return ScheduleParticipantAttendanceInfoResponse.from(
             createSchedulePaticipantAttendanceUseCase.createScheduleParticipantWithAttendance(command)
@@ -113,7 +114,11 @@ public class ScheduleCommandController {
         @PathVariable Long scheduleId,
         @Valid @RequestBody ExcuseScheduleAttendanceRequest request
     ) {
-        throw new NotImplementedException();
+        ExcuseScheduleAttendanceCommand command = request.toCommand(scheduleId, memberPrincipal.getMemberId());
+
+        return ScheduleParticipantAttendanceInfoResponse.from(
+            createSchedulePaticipantAttendanceUseCase.createExcusedScheduleParticipantWithAttendance(command)
+        );
     }
 
     // 각 일정에 대한 출석 요청을 승인 또는 기각하는 API, Request는 list 형태로 받을 수 있어야 합니다.

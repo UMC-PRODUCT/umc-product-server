@@ -12,12 +12,12 @@ import com.umc.product.schedule.adapter.in.web.v1.dto.request.UpdateScheduleLoca
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.UpdateScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.UpdateScheduleLocationResponse;
 import com.umc.product.schedule.adapter.in.web.v1.swagger.ScheduleControllerApi;
-import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleWithAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.CreateStudyGroupScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleWithAttendanceUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
+import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;

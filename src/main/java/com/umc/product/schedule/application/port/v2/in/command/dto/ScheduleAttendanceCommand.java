@@ -5,7 +5,7 @@ import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import lombok.Builder;
 
 @Builder
-public record ScheduleAttendanceRequestCommand(
+public record ScheduleAttendanceCommand(
     Long scheduleId,
 
     // 요청자 memberId
@@ -20,7 +20,7 @@ public record ScheduleAttendanceRequestCommand(
 ) {
 
     // 객체가 생성될 때 isVerified가 false면 에러 반환
-    public ScheduleAttendanceRequestCommand {
+    public ScheduleAttendanceCommand {
         if (!isVerified()) {
             throw new ScheduleDomainException(ScheduleErrorCode.LOCATION_NOT_VERIFIED);
         }

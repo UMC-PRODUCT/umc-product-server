@@ -62,7 +62,7 @@ public class ScheduleParticipantAttendance {
         this.excuseReason = excuseReason;
     }
 
-    // 사유 출석 시 사용
+    // 출석 요청 시 ScheduleParticipant에서 호출되어 사용됨.
     public static ScheduleParticipantAttendance create(
         Point location,
         boolean isLocationVerified,
@@ -71,7 +71,6 @@ public class ScheduleParticipantAttendance {
     ) {
         return ScheduleParticipantAttendance.builder()
             .location(location)
-            .status(AttendanceStatus.EXCUSED_PENDING)
             .isLocationVerified(isLocationVerified)
             .excuseReason(excuseReason)
             .status(status)

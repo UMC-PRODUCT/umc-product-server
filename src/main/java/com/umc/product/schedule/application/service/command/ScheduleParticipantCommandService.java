@@ -3,7 +3,8 @@ package com.umc.product.schedule.application.service.command;
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleParticipantUseCase;
-import com.umc.product.schedule.application.port.v2.in.command.dto.ScheduleAttendanceRequestCommand;
+import com.umc.product.schedule.application.port.v2.in.command.dto.ExcuseScheduleAttendanceCommand;
+import com.umc.product.schedule.application.port.v2.in.command.dto.ScheduleAttendanceCommand;
 import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleParticipantAttendanceInfo;
 import com.umc.product.schedule.application.port.v2.out.LoadScheduleParticipantPort;
 import com.umc.product.schedule.application.port.v2.out.SaveScheduleParticipantPort;
@@ -28,7 +29,7 @@ public class ScheduleParticipantCommandService implements CreateScheduleParticip
 
     @Override
     public ScheduleParticipantAttendanceInfo createScheduleParticipantWithAttendance(
-        ScheduleAttendanceRequestCommand command) {
+        ScheduleAttendanceCommand command) {
 
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
@@ -52,7 +53,41 @@ public class ScheduleParticipantCommandService implements CreateScheduleParticip
         // 요청 저장
         saveScheduleParticipantPort.save(scheduleParticipant);
 
-        // 최초 요청이기 때문에 decisionMakerMember는 null
+        // decisionMakerMember는 null
+        return ScheduleParticipantAttendanceInfo.of(scheduleParticipant.getAttendance(), null);
+    }
+
+    @Override
+    public ScheduleParticipantAttendanceInfo createExcusedScheduleParticipantWithAttendance(
+        ExcuseScheduleAttendanceCommand command) {
+
+        Schedule schedule = loadSchedulePort.findById(command.scheduleId())
+            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+
+        // 비대면 일정이면 에러 반환
+        if (schedule.getLocation() == null) {
+            throw new ScheduleDomainException(ScheduleErrorCode.ONLINE_SCHEDULE_ATTENDANCE_REQUEST_IMPOSSIBLE);
+        }
+
+        ScheduleParticipant scheduleParticipant = loadScheduleParticipantPort
+            .findByScheduleIdAndMemberId(command.scheduleId(), command.requesterMemberId())
+            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.PARTICIPANT_NOT_FOUND));
+
+        // 클라이언트에서 값을 안 주면 null
+        Point location = null;
+        if (command.latitude() != null && command.longitude() != null) {
+            location = GeometryUtils.createPoint(command.latitude(), command.longitude());
+        }
+
+        // scheduleParticipant에 연결되는 ScheduleParticipantAttendance를 저장
+        // 이미 출석 요청 기록이 있으면 에러 반환
+        // 이미 종료된 일정에 요청, 출석 시작 전 요청은 에러 반환
+        scheduleParticipant.submitExcuse(location, command.isVerified(), command.excuseReason());
+
+        // 요청 저장
+        saveScheduleParticipantPort.save(scheduleParticipant);
+
+        // decisionMakerMember는 null
         return ScheduleParticipantAttendanceInfo.of(scheduleParticipant.getAttendance(), null);
     }
 }
