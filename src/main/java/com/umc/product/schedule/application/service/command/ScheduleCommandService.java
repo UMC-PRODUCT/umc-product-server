@@ -7,6 +7,8 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.util.GeometryUtils;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
 import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
@@ -50,6 +52,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
 
     // 외부 도메인 UseCase
     private final GetChallengerUseCase getChallengerUseCase;
+    private final GetGisuUseCase getGisuUseCase;
 
 
     // 일정 생성
@@ -67,6 +70,12 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         ChallengerInfoWithStatus challengerInfoWithStatus = getChallengerUseCase.getLatestActiveChallengerByMemberId(
             command.authorMemberId());
         Long authorChallengerId = challengerInfoWithStatus.challengerId();
+
+        // 생성하려는 일정의 날짜가 현재 기수 활동 기간에서 벗어난 경우 에러 반환
+        GisuInfo activeGisu = getGisuUseCase.getActiveGisu();
+        if (command.startsAt().isBefore(activeGisu.startAt()) || command.endsAt().isAfter(activeGisu.endAt())) {
+            throw new ScheduleDomainException(ScheduleErrorCode.NOT_ACTIVE_GISU_SCHEDULE);
+        }
 
         // Schedule 생성 및 저장
         Schedule schedule = command.toEntity(authorChallengerId);

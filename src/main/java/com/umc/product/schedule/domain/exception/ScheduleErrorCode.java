@@ -90,6 +90,8 @@ public enum ScheduleErrorCode implements BaseCode {
     LOCATION_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "SCHEDULE-0047", "사용자가 출석 인증 범위에 있지 않습니다."),
     ONLINE_SCHEDULE_SHOULD_NOT_HAVE_LOCATION(HttpStatus.BAD_REQUEST, "SCHEDULE-0048",
         "비대면 일정으로 변경 시 위치 정보를 포함할 수 없습니다."),
+    NOT_ACTIVE_GISU_SCHEDULE(HttpStatus.BAD_REQUEST, "SCHEDULE-0049",
+        "현재 기수의 일정만 생성할 수 있습니다."),
 
     ;
     private final HttpStatus httpStatus;
