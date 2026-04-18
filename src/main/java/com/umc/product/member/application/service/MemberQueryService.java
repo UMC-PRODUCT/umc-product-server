@@ -123,6 +123,7 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
         }
 
         return loadMemberPort.findAllByIds(memberIds).stream()
+            .filter(m -> m.getSchoolId() != null)
             .collect(java.util.stream.Collectors.toMap(Member::getId, Member::getSchoolId));
     }
 

@@ -8,11 +8,10 @@ import org.springframework.stereotype.Component;
 
 /**
  * FCM 토픽 네이밍 규칙을 관리하는 클래스
- * <p>
- * 토픽명 예시: - prod-all (전체 대상) - prod-school-5 (전체 기수 특정 학교) - prod-gisu-1 (기수 전체) - prod-gisu-1-part-SPRINGBOOT (기수 +
- * 파트) - prod-gisu-1-school-5 (기수 + 학교) - prod-gisu-1-school-5-part-WEB (기수 + 학교 + 파트) - prod-gisu-1-chapter-3 (기수 + 지부)
- * - prod-gisu-1-chapter-3-part-ANDROID (기수 + 지부 + 파트) - prod-member-2 (개인 알림용 토픽)
+ *
+ * @deprecated 토큰 기반 알림(SendNotificationToAudienceUseCase)으로 전환됨. 사용 X
  */
+@Deprecated(since = "token-based migration", forRemoval = true)
 @Component
 public class FcmTopicName {
 
