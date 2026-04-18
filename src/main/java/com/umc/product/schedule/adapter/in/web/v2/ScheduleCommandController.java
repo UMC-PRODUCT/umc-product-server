@@ -39,7 +39,7 @@ public class ScheduleCommandController {
     private final CreateScheduleUseCase createScheduleUseCase;
     private final UpdateScheduleUseCase updateScheduleUseCase;
 
-    private final CreateScheduleParticipantUseCase createSchedulePaticipantAttendanceUseCase;
+    private final CreateScheduleParticipantUseCase createScheduleParticipantAttendanceUseCase;
     private final UpdateScheduleParticipantUseCase updateScheduleParticipantUseCase;
 
     @Operation(summary = "일정 생성", description = """
@@ -102,7 +102,7 @@ public class ScheduleCommandController {
         ScheduleAttendanceCommand command = request.toCommand(scheduleId, memberPrincipal.getMemberId());
 
         return ScheduleParticipantAttendanceInfoResponse.from(
-            createSchedulePaticipantAttendanceUseCase.createScheduleParticipantWithAttendance(command)
+            createScheduleParticipantAttendanceUseCase.createScheduleParticipantWithAttendance(command)
         );
     }
 
@@ -121,7 +121,7 @@ public class ScheduleCommandController {
         ExcuseScheduleAttendanceCommand command = request.toCommand(scheduleId, memberPrincipal.getMemberId());
 
         return ScheduleParticipantAttendanceInfoResponse.from(
-            createSchedulePaticipantAttendanceUseCase.createExcusedScheduleParticipantWithAttendance(command)
+            createScheduleParticipantAttendanceUseCase.createExcusedScheduleParticipantWithAttendance(command)
         );
     }
 
