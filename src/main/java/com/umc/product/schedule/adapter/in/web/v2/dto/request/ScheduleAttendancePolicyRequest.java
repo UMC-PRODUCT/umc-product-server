@@ -1,10 +1,16 @@
 package com.umc.product.schedule.adapter.in.web.v2.dto.request;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
 public record ScheduleAttendancePolicyRequest(
+    @Schema(description = "시작 일시 (UTC ISO8601. 예: 2026-05-21T00:40:00Z)", example = "2026-05-21T00:40:00Z")
     Instant checkInStartAt, // 출석 요청 시작 가능 시점
+
+    @Schema(description = "시작 일시 (UTC ISO8601. 예: 2026-05-21T01:20:00Z)", example = "2026-05-21T01:20:00Z")
     Instant onTimeEndAt, // 출석으로 인정하는 마감 시간
+
+    @Schema(description = "시작 일시 (UTC ISO8601. 예: 2026-05-21T02:00:00Z)", example = "2026-05-21T02:00:00Z")
     Instant lateEndAt // 지각으로 인정하는 마감 시간
 ) {
     // 클라이언트에게 아래와 같은 개념을 설명하는 것 보다, 시간을 직관적으로 입력받아서 제공하는게 빠를 듯 함.
