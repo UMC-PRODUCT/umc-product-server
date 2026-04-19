@@ -31,7 +31,8 @@ public class ScheduleParticipantQueryRepository {
                 school.id,
                 school.name,
                 member.profileImageId,
-                scheduleParticipant.attendance.status
+                scheduleParticipant.attendance.status,
+                scheduleParticipant.attendance.excuseReason
             ))
             .from(scheduleParticipant)
             // Participant -> Member 조인
@@ -58,7 +59,8 @@ public class ScheduleParticipantQueryRepository {
                 school.id,
                 school.name,
                 member.profileImageId,
-                scheduleParticipant.attendance.status
+                scheduleParticipant.attendance.status,
+                scheduleParticipant.attendance.excuseReason
             ))
             .from(scheduleParticipant)
             // Participant -> Member 조인
