@@ -3,10 +3,8 @@ package com.umc.product.notification.application.service;
 import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.Notification;
-import com.google.firebase.messaging.SendResponse;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -15,10 +13,7 @@ import com.umc.product.notification.application.port.in.SendNotificationToAudien
 import com.umc.product.notification.application.port.in.dto.AudienceNotificationCommand;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
-import com.umc.product.notification.application.port.out.SaveFcmPort;
 import com.umc.product.notification.domain.FcmToken;
-import com.umc.product.notification.domain.exception.FcmDomainException;
-import com.umc.product.notification.domain.exception.FcmErrorCode;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import java.util.ArrayList;
@@ -30,7 +25,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -41,13 +35,12 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
 
     private final FirebaseMessaging firebaseMessaging;
     private final LoadFcmPort loadFcmPort;
-    private final SaveFcmPort saveFcmPort;
+    private final FcmTokenDeactivator fcmTokenDeactivator;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChapterUseCase getChapterUseCase;
 
     @Override
-    @Transactional
     public void sendToAudience(AudienceNotificationCommand command) {
         List<Long> memberIds = resolveTargetMemberIds(command.targetInfo());
         if (memberIds.isEmpty()) {
@@ -66,7 +59,6 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
     }
 
     @Override
-    @Transactional
     public void sendToMember(NotificationCommand command) {
         List<FcmToken> tokens = loadFcmPort.findAllActiveByMemberId(command.memberId());
         if (tokens.isEmpty()) {
@@ -78,7 +70,6 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
     }
 
     @Override
-    @Transactional
     public void sendToMembers(List<Long> memberIds, String title, String body) {
         if (memberIds == null || memberIds.isEmpty()) {
             return;
@@ -117,7 +108,7 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
                 totalSuccess += response.getSuccessCount();
                 totalFail += response.getFailureCount();
 
-                deactivateInvalidTokens(batch, response.getResponses());
+                fcmTokenDeactivator.deactivateInvalidTokens(batch, response.getResponses());
             } catch (FirebaseMessagingException e) {
                 log.error("FCM 배치 발송 실패 batchSize={}", batch.size(), e);
                 totalFail += batch.size();
@@ -171,21 +162,6 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
         }
 
         return memberIds;
-    }
-
-    private void deactivateInvalidTokens(List<FcmToken> tokens, List<SendResponse> responses) {
-        for (int i = 0; i < responses.size(); i++) {
-            SendResponse response = responses.get(i);
-            if (!response.isSuccessful()
-                && response.getException() != null
-                && MessagingErrorCode.UNREGISTERED.equals(response.getException().getMessagingErrorCode())) {
-
-                FcmToken token = tokens.get(i);
-                token.deactivate();
-                saveFcmPort.save(token);
-                log.info("유효하지 않은 FCM 토큰 비활성화 tokenId={}, memberId={}", token.getId(), token.getMemberId());
-            }
-        }
     }
 
     private <T> List<List<T>> partition(List<T> list, int size) {
