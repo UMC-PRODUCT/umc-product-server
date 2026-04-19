@@ -12,4 +12,6 @@ public interface GetScheduleUseCase {
         Boolean isAttendanceRequired,
         Long memberId
     );
+
+    ScheduleInfo getScheduleDetails(Long scheduleId, Long memberId);
 }

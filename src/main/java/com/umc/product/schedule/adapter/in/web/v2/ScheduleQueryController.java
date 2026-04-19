@@ -45,6 +45,7 @@ public class ScheduleQueryController {
     ) {
         List<ScheduleInfo> results = getScheduleUseCase.getMySchedule(from, to, isAttendanceRequired,
             memberPrincipal.getMemberId());
+
         return results.stream()
             .map(ScheduleInfoResponse::from)
             .toList();
@@ -58,8 +59,13 @@ public class ScheduleQueryController {
         """
     )
     @GetMapping("/{scheduleId}")
-    public ScheduleInfoResponse details(@PathVariable Long scheduleId) {
-        throw new NotImplementedException();
+    public ScheduleInfoResponse details(
+        @PathVariable Long scheduleId,
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        return ScheduleInfoResponse.from(
+            getScheduleUseCase.getScheduleDetails(scheduleId, memberPrincipal.getMemberId())
+        );
     }
 
     // ========================= 출석 관련 =========================

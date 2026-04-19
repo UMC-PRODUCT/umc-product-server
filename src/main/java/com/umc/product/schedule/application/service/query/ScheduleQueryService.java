@@ -1,7 +1,5 @@
 package com.umc.product.schedule.application.service.query;
 
-import com.umc.product.schedule.application.port.in.query.GetScheduleDetailUseCase;
-import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.v2.in.query.GetScheduleUseCase;
 import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo;
@@ -13,6 +11,8 @@ import com.umc.product.schedule.application.port.v2.out.dto.ScheduleParticipantD
 import com.umc.product.schedule.domain.AttendancePolicy;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import com.umc.product.schedule.domain.exception.ScheduleDomainException;
+import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -26,9 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ScheduleQueryService implements
-    GetScheduleUseCase,
-    GetScheduleDetailUseCase {
-
+    GetScheduleUseCase {
     private final LoadSchedulePort loadSchedulePort;
     private final LoadScheduleParticipantPort loadScheduleParticipantPort;
 
@@ -54,45 +52,75 @@ public class ScheduleQueryService implements
 
         // 참여자 상세 정보 일괄 조회 후 scheduleId 기준으로 그룹화
         List<ScheduleParticipantDetailDto> allParticipants =
-            loadScheduleParticipantPort.findParticipantDetailsByScheduleIds(scheduleIds);
+            loadScheduleParticipantPort.findParticipantDetailsByScheduleId(scheduleIds);
 
         Map<Long, List<ScheduleParticipantDetailDto>> participantsMap = allParticipants.stream()
             .collect(Collectors.groupingBy(ScheduleParticipantDetailDto::scheduleId));
 
         // 도메인 -> List<ScheduleInfo> 매핑
-        return schedules.stream().map(schedule -> {
-            // 순회 중인 scheduleId를 key로 하여 참여자 목록 꺼냄, 참여자가 없으면 빈 리스트 반환
-            List<ScheduleParticipantDetailDto> participants = participantsMap.getOrDefault(schedule.getId(), List.of());
+        return schedules.stream()
+            .map(schedule -> {
+                // 순회 중인 scheduleId를 key로 하여 참여자 목록 꺼냄, 참여자가 없으면 빈 리스트 반환
+                List<ScheduleParticipantDetailDto> participants =
+                    participantsMap.getOrDefault(schedule.getId(), List.of());
 
-            // 위에서 찾은 참여자 목록(participants)을 순회하면서 그 중 내 Id(memberId)랑 일치하는 걸 꺼냄
-            // 찾았으면 출석 상태(attendanceStatus)를 가져오고, 못 찾으면 null
-            AttendanceStatus myStatus = participants.stream()
-                .filter(p -> p.memberId().equals(memberId))
-                .findFirst()
-                .map(ScheduleParticipantDetailDto::attendanceStatus)
-                .orElse(null);
+                return createScheduleInfo(schedule, participants, memberId);
+            }).toList();
+    }
 
-            // ScheduleInfo 객체 생성
-            return new ScheduleInfo(
-                schedule.getId(),
-                schedule.getName(),
-                schedule.getDescription(),
-                schedule.getTags(),
-                schedule.getAuthorMemberId(),
-                schedule.getStartsAt(),
-                schedule.getEndsAt(),
+    @Override
+    public ScheduleInfo getScheduleDetails(Long scheduleId, Long memberId) {
 
-                schedule.getLocation() == null, // isOnline
-                mapLocation(schedule),
+        Schedule schedule = loadSchedulePort.findById(scheduleId)
+            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
-                myStatus,
-                schedule.getPolicy() != null, // isAttendanceChecked
-                mapPolicy(schedule),
+        List<ScheduleParticipantDetailDto> participants = loadScheduleParticipantPort.findParticipantDetailsByScheduleId(
+            scheduleId);
 
-                true, // 이 API 자체가 '내가 참여하는' 일정이므로 항상 true
-                mapParticipants(participants)
-            );
-        }).toList();
+        return createScheduleInfo(schedule, participants, memberId);
+    }
+
+    // ======= Helper Method =======
+
+    // 일정 도메인 + 참여자 DTO 리스트 -> ScheduleInfo 변환 메서드
+    private ScheduleInfo createScheduleInfo(
+        Schedule schedule,
+        List<ScheduleParticipantDetailDto> participants,
+        Long requesterMemberId
+    ) {
+
+        // 요청자의 출석 상태 및 참여자 여부 확인
+        AttendanceStatus myStatus = null;
+        boolean isParticipant = false;
+
+        for (ScheduleParticipantDetailDto p : participants) {
+            if (p.memberId().equals(requesterMemberId)) {
+                myStatus = p.attendanceStatus();
+                isParticipant = true;
+                break;
+            }
+        }
+
+        // ScheduleInfo 반환
+        return new ScheduleInfo(
+            schedule.getId(),
+            schedule.getName(),
+            schedule.getDescription(),
+            schedule.getTags(),
+            schedule.getAuthorMemberId(),
+            schedule.getStartsAt(),
+            schedule.getEndsAt(),
+
+            schedule.getLocation() == null, // isOnline
+            mapLocation(schedule),
+
+            myStatus, // 위에서 계산한 요청자의 참석 상태
+            schedule.getPolicy() != null,
+            mapPolicy(schedule),
+
+            isParticipant,
+            mapParticipants(participants)
+        );
     }
 
     // ScheduleLocationInfo 변환 헬퍼 메서드
@@ -132,11 +160,5 @@ public class ScheduleQueryService implements
                 p.schoolId(), p.schoolName(), p.profileImageUrl()
             )).toList();
     }
-
-    @Override
-    public ScheduleDetailInfo getScheduleDetail(Long scheduleId) {
-        return null;
-    }
-
 
 }
