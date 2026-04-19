@@ -1,7 +1,5 @@
 package com.umc.product.schedule.application.port.v2.in.query.dto;
 
-import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo.ScheduleAttendancePolicyInfo;
-import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo.ScheduleLocationInfo;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import java.time.Instant;
 import java.util.Set;
@@ -24,4 +22,17 @@ public record ScheduleBaseInfo(
     boolean isAttendanceChecked,    // 출석을 체크하는 일정인지, 즉 attendancePolicy의 null 여부를 나타냄
     ScheduleAttendancePolicyInfo attendancePolicy
 ) {
+    public record ScheduleLocationInfo(
+        Double latitude,
+        Double longitude,
+        String locationName
+    ) {
+    }
+
+    public record ScheduleAttendancePolicyInfo(
+        Instant checkInStartAt,
+        Instant onTimeEndAt,
+        Instant lateEndAt
+    ) {
+    }
 }

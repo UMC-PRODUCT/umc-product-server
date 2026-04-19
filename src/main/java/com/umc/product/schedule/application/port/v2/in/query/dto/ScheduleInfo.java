@@ -1,7 +1,6 @@
 package com.umc.product.schedule.application.port.v2.in.query.dto;
 
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
-import java.time.Instant;
 import java.util.List;
 
 public record ScheduleInfo(
@@ -16,20 +15,6 @@ public record ScheduleInfo(
     boolean isParticipant, // 요청한 사용자가 해당 일정의 참여자인지 여부입니다. 참여자 목록에 요청한 사용자가 포함되어 있는지 여부와는 별개로, 서버 측에서 별도로 계산해서 제공합니다.
     List<ScheduleParticipantInfo> participants
 ) {
-    public record ScheduleLocationInfo(
-        Double latitude,
-        Double longitude,
-        String locationName
-    ) {
-    }
-
-    public record ScheduleAttendancePolicyInfo(
-        Instant checkInStartAt,
-        Instant onTimeEndAt,
-        Instant lateEndAt
-    ) {
-    }
-
     public record ScheduleParticipantInfo(
         Long memberId,
         String name,
