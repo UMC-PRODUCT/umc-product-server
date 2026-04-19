@@ -1,4 +1,4 @@
-package com.umc.product.schedule.application.port.v2.in.query.dto;
+package com.umc.product.schedule.application.port.v2.in.command.dto.result;
 
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.schedule.domain.ScheduleParticipantAttendance;
@@ -9,7 +9,7 @@ import lombok.Builder;
 import org.locationtech.jts.geom.Point;
 
 @Builder(access = AccessLevel.PRIVATE)
-public record ScheduleParticipantAttendanceInfo(
+public record ScheduleParticipantAttendanceResult(
     // === 위치 정보 ===
     Double latitude,
     Double longitude,
@@ -28,7 +28,7 @@ public record ScheduleParticipantAttendanceInfo(
     Instant decidedAt,
     String decisionReason
 ) {
-    public static ScheduleParticipantAttendanceInfo of(
+    public static ScheduleParticipantAttendanceResult of(
         ScheduleParticipantAttendance attendance,
         MemberInfo decisionMakerMemberInfo // nullable!
     ) {
@@ -38,7 +38,7 @@ public record ScheduleParticipantAttendanceInfo(
 
         Point location = attendance.getLocation();
 
-        return ScheduleParticipantAttendanceInfo.builder()
+        return ScheduleParticipantAttendanceResult.builder()
             .latitude(location != null ? location.getY() : null)
             .longitude(location != null ? location.getX() : null)
             .status(attendance.getStatus())

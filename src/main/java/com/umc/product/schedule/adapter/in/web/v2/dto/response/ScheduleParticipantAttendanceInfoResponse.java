@@ -1,6 +1,6 @@
 package com.umc.product.schedule.adapter.in.web.v2.dto.response;
 
-import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleParticipantAttendanceInfo;
+import com.umc.product.schedule.application.port.v2.in.command.dto.result.ScheduleParticipantAttendanceResult;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.Instant;
 import lombok.AccessLevel;
@@ -26,7 +26,7 @@ public record ScheduleParticipantAttendanceInfoResponse(
     Instant decidedAt,
     String decisionReason
 ) {
-    public static ScheduleParticipantAttendanceInfoResponse from(ScheduleParticipantAttendanceInfo info) {
+    public static ScheduleParticipantAttendanceInfoResponse from(ScheduleParticipantAttendanceResult info) {
         if (info == null) {
             return null;
         }
@@ -53,7 +53,7 @@ public record ScheduleParticipantAttendanceInfoResponse(
         String schoolName
     ) {
 
-        public static DecisionMakerMemberInfo from(ScheduleParticipantAttendanceInfo info) {
+        public static DecisionMakerMemberInfo from(ScheduleParticipantAttendanceResult info) {
             if (info == null || !info.hasDecisionMakerMember()) {
                 return null;
             }

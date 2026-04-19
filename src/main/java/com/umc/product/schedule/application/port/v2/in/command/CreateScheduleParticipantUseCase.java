@@ -2,15 +2,15 @@ package com.umc.product.schedule.application.port.v2.in.command;
 
 import com.umc.product.schedule.application.port.v2.in.command.dto.ExcuseScheduleAttendanceCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.ScheduleAttendanceCommand;
-import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleParticipantAttendanceInfo;
+import com.umc.product.schedule.application.port.v2.in.command.dto.result.ScheduleParticipantAttendanceResult;
 
 public interface CreateScheduleParticipantUseCase {
 
     // 출석 요청 시 사용, 사유 제출 X
-    ScheduleParticipantAttendanceInfo createScheduleParticipantWithAttendance(ScheduleAttendanceCommand command);
+    ScheduleParticipantAttendanceResult createScheduleParticipantWithAttendance(ScheduleAttendanceCommand command);
 
     // 사유 제출 시 사용
-    ScheduleParticipantAttendanceInfo createExcusedScheduleParticipantWithAttendance(
+    ScheduleParticipantAttendanceResult createExcusedScheduleParticipantWithAttendance(
         ExcuseScheduleAttendanceCommand command
     );
 }

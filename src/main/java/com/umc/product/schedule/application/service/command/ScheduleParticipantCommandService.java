@@ -9,7 +9,7 @@ import com.umc.product.schedule.application.port.v2.in.command.UpdateSchedulePar
 import com.umc.product.schedule.application.port.v2.in.command.dto.DecideAttendanceCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.ExcuseScheduleAttendanceCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.ScheduleAttendanceCommand;
-import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleParticipantAttendanceInfo;
+import com.umc.product.schedule.application.port.v2.in.command.dto.result.ScheduleParticipantAttendanceResult;
 import com.umc.product.schedule.application.port.v2.out.LoadScheduleParticipantPort;
 import com.umc.product.schedule.application.port.v2.out.SaveScheduleParticipantPort;
 import com.umc.product.schedule.domain.Schedule;
@@ -44,7 +44,7 @@ public class ScheduleParticipantCommandService implements
 
     // 출석 요청
     @Override
-    public ScheduleParticipantAttendanceInfo createScheduleParticipantWithAttendance(
+    public ScheduleParticipantAttendanceResult createScheduleParticipantWithAttendance(
         ScheduleAttendanceCommand command) {
 
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
@@ -71,12 +71,12 @@ public class ScheduleParticipantCommandService implements
         saveScheduleParticipantPort.save(scheduleParticipant);
 
         // decisionMakerMember는 null
-        return ScheduleParticipantAttendanceInfo.of(scheduleParticipant.getAttendance(), null);
+        return ScheduleParticipantAttendanceResult.of(scheduleParticipant.getAttendance(), null);
     }
 
     // 사유 제출
     @Override
-    public ScheduleParticipantAttendanceInfo createExcusedScheduleParticipantWithAttendance(
+    public ScheduleParticipantAttendanceResult createExcusedScheduleParticipantWithAttendance(
         ExcuseScheduleAttendanceCommand command) {
 
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
@@ -103,19 +103,19 @@ public class ScheduleParticipantCommandService implements
         saveScheduleParticipantPort.save(scheduleParticipant);
 
         // decisionMakerMember는 null
-        return ScheduleParticipantAttendanceInfo.of(scheduleParticipant.getAttendance(), null);
+        return ScheduleParticipantAttendanceResult.of(scheduleParticipant.getAttendance(), null);
     }
 
     // 출석 요청 승인/거절
     @Override
-    public List<ScheduleParticipantAttendanceInfo> decideAttendances(List<DecideAttendanceCommand> commands) {
+    public List<ScheduleParticipantAttendanceResult> decideAttendances(List<DecideAttendanceCommand> commands) {
         return commands.stream()
             .map(this::processDecision) // 단일 command에 대해 출석 요청 승인/거절 로직 수행
             .toList();
     }
 
     // 출석 요청 승인/거절 로직
-    private ScheduleParticipantAttendanceInfo processDecision(DecideAttendanceCommand command) {
+    private ScheduleParticipantAttendanceResult processDecision(DecideAttendanceCommand command) {
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
@@ -137,7 +137,7 @@ public class ScheduleParticipantCommandService implements
         saveScheduleParticipantPort.save(scheduleParticipant);
 
         MemberInfo decisionMaker = getMemberUseCase.getById(command.decisionMakerMemberId());
-        return ScheduleParticipantAttendanceInfo.of(scheduleParticipant.getAttendance(), decisionMaker);
+        return ScheduleParticipantAttendanceResult.of(scheduleParticipant.getAttendance(), decisionMaker);
     }
 
     private ScheduleParticipant getScheduleParticipant(Long scheduleId, Long memberId) {

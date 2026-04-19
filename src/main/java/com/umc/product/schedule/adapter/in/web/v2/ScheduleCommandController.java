@@ -17,7 +17,7 @@ import com.umc.product.schedule.application.port.v2.in.command.dto.DecideAttenda
 import com.umc.product.schedule.application.port.v2.in.command.dto.EditScheduleCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.ExcuseScheduleAttendanceCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.ScheduleAttendanceCommand;
-import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleParticipantAttendanceInfo;
+import com.umc.product.schedule.application.port.v2.in.command.dto.result.ScheduleParticipantAttendanceResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -147,7 +147,8 @@ public class ScheduleCommandController {
             .map(request -> request.toCommand(scheduleId, memberPrincipal.getMemberId()))
             .toList();
 
-        List<ScheduleParticipantAttendanceInfo> results = updateScheduleParticipantUseCase.decideAttendances(commands);
+        List<ScheduleParticipantAttendanceResult> results = updateScheduleParticipantUseCase.decideAttendances(
+            commands);
 
         return results.stream()
             .map(ScheduleParticipantAttendanceInfoResponse::from)
