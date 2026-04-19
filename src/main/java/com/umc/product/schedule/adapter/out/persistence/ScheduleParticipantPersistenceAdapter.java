@@ -49,7 +49,7 @@ public class ScheduleParticipantPersistenceAdapter implements
     }
 
     @Override
-    public List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleId(List<Long> scheduleIds) {
+    public List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleIds(List<Long> scheduleIds) {
         return scheduleParticipantQueryRepository.findParticipantDetailsByScheduleIds(scheduleIds);
     }
 

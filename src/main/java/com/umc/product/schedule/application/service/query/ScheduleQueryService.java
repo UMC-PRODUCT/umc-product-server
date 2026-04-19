@@ -2,6 +2,7 @@ package com.umc.product.schedule.application.service.query;
 
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.v2.in.query.GetScheduleUseCase;
+import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleBaseInfo;
 import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo;
 import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo.ScheduleAttendancePolicyInfo;
 import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo.ScheduleLocationInfo;
@@ -52,7 +53,7 @@ public class ScheduleQueryService implements
 
         // 참여자 상세 정보 일괄 조회 후 scheduleId 기준으로 그룹화
         List<ScheduleParticipantDetailDto> allParticipants =
-            loadScheduleParticipantPort.findParticipantDetailsByScheduleId(scheduleIds);
+            loadScheduleParticipantPort.findParticipantDetailsByScheduleIds(scheduleIds);
 
         Map<Long, List<ScheduleParticipantDetailDto>> participantsMap = allParticipants.stream()
             .collect(Collectors.groupingBy(ScheduleParticipantDetailDto::scheduleId));
@@ -82,12 +83,30 @@ public class ScheduleQueryService implements
 
     // ======= Helper Method =======
 
+    // ScheduleBaseInfo 변환 메서드
+    private ScheduleBaseInfo createBaseInfo(Schedule schedule) {
+        return new ScheduleBaseInfo(
+            schedule.getId(),
+            schedule.getName(),
+            schedule.getDescription(),
+            schedule.getTags(),
+            schedule.getAuthorMemberId(),
+            schedule.getStartsAt(),
+            schedule.getEndsAt(),
+            schedule.getLocation() == null, // isOnline
+            mapLocation(schedule),
+            schedule.getPolicy() != null, // isAttendanceChecked
+            mapPolicy(schedule)
+        );
+    }
+
     // 일정 도메인 + 참여자 DTO 리스트 -> ScheduleInfo 변환 메서드
     private ScheduleInfo createScheduleInfo(
         Schedule schedule,
         List<ScheduleParticipantDetailDto> participants,
         Long requesterMemberId
     ) {
+        ScheduleBaseInfo baseInfo = createBaseInfo(schedule);
 
         // 요청자의 출석 상태 및 참여자 여부 확인
         AttendanceStatus myStatus = null;
@@ -103,21 +122,8 @@ public class ScheduleQueryService implements
 
         // ScheduleInfo 반환
         return new ScheduleInfo(
-            schedule.getId(),
-            schedule.getName(),
-            schedule.getDescription(),
-            schedule.getTags(),
-            schedule.getAuthorMemberId(),
-            schedule.getStartsAt(),
-            schedule.getEndsAt(),
-
-            schedule.getLocation() == null, // isOnline
-            mapLocation(schedule),
-
-            myStatus, // 위에서 계산한 요청자의 참석 상태
-            schedule.getPolicy() != null,
-            mapPolicy(schedule),
-
+            baseInfo,
+            myStatus,
             isParticipant,
             mapParticipants(participants)
         );

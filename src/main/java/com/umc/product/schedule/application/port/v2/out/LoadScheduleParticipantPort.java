@@ -12,7 +12,7 @@ public interface LoadScheduleParticipantPort {
     Optional<ScheduleParticipant> findByScheduleIdAndMemberId(Long scheduleId, Long requesterMemberId);
 
     // 특정 일정 ID 목록에 속한 모든 참여자의 상세 정보를 가져옵니다 (Member 테이블 조인 필요)
-    List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleId(List<Long> scheduleIds);
+    List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleIds(List<Long> scheduleIds);
 
     // 단일 일정에 대한 참여자 상세 정보를 조회합니다.
     List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleId(Long scheduleIds);
