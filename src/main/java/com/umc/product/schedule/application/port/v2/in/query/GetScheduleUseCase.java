@@ -6,7 +6,7 @@ import java.util.List;
 
 public interface GetScheduleUseCase {
 
-    List<ScheduleInfo> getMySchedule(
+    List<ScheduleInfo> searchMySchedule(
         Instant from,
         Instant to,
         Boolean isAttendanceRequired,

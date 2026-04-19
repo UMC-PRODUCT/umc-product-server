@@ -32,7 +32,7 @@ public class ScheduleQueryService implements
 
     // 내 일정 조회
     @Override
-    public List<ScheduleInfo> getMySchedule(
+    public List<ScheduleInfo> searchMySchedule(
         Instant from,
         Instant to,
         Boolean isAttendanceRequired,

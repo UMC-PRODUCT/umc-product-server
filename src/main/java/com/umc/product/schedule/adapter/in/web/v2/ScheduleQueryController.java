@@ -43,7 +43,7 @@ public class ScheduleQueryController {
         @RequestParam Boolean isAttendanceRequired,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        List<ScheduleInfo> results = getScheduleUseCase.getMySchedule(from, to, isAttendanceRequired,
+        List<ScheduleInfo> results = getScheduleUseCase.searchMySchedule(from, to, isAttendanceRequired,
             memberPrincipal.getMemberId());
 
         return results.stream()
