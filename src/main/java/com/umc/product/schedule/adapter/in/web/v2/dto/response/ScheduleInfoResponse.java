@@ -1,5 +1,9 @@
 package com.umc.product.schedule.adapter.in.web.v2.dto.response;
 
+import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo;
+import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo.ScheduleAttendancePolicyInfo;
+import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo.ScheduleLocationInfo;
+import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo.ScheduleParticipantInfo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import java.time.Instant;
@@ -17,32 +21,65 @@ public record ScheduleInfoResponse(
     Long authorMemberId,
     Instant startsAt,
     Instant endsAt,
+
     // 위치 관련
     boolean isOnline, // 비대면 일정인지 여부, 즉 location이 null인지 여부를 나타냄
     ScheduleLocationInfoResponse location,
+
     // 출석 관련
     // 해당 일정에 대한 요청자의 출석 상태입니다. 요청한 사람이 참여자가 아니거나 아직 출석 요청을 하지 않은 경우 null로 갑니다.
     AttendanceStatus attendanceStatus,
     boolean isAttendanceChecked, // 출석을 체크하는 일정인지, 즉 attendancePolicy의 null 여부를 나타냄
     ScheduleAttendancePolicyInfoResponse attendancePolicy,
+
     // 참여자 관련
     boolean isParticipant, // 요청한 사용자가 해당 일정의 참여자인지 여부입니다. 참여자 목록에 요청한 사용자가 포함되어 있는지 여부와는 별개로, 서버 측에서 별도로 계산해서 제공합니다.
     List<ScheduleParticipantInfoResponse> participants
 ) {
-    public static ScheduleInfoResponse of(
-        // ScheduleInfo와 같이 UseCase단 Info 객체를 이용해서 정팩메를 생성해주세요.
-    ) {
-        // builder 활용하기!
-        return ScheduleInfoResponse.builder().build();
+    public static ScheduleInfoResponse from(ScheduleInfo info) {
+
+        return ScheduleInfoResponse.builder()
+            .scheduleId(info.scheduleId())
+            .name(info.name())
+            .description(info.description())
+            .tags(info.tags())
+            .authorMemberId(info.authorMemberId())
+            .startsAt(info.startsAt())
+            .endsAt(info.endsAt())
+            .isOnline(info.isOnline())
+            .location(ScheduleLocationInfoResponse.from(info.location()))
+            .attendanceStatus(info.attendanceStatus())
+            .isAttendanceChecked(info.isAttendanceChecked())
+            .attendancePolicy(ScheduleAttendancePolicyInfoResponse.from(info.attendancePolicy()))
+            .isParticipant(info.isParticipant())
+            .participants(
+                info.participants().stream()
+                    .map(ScheduleParticipantInfoResponse::from)
+                    .toList()
+            )
+            .build();
     }
 
+    @Builder(access = AccessLevel.PRIVATE)
     public record ScheduleLocationInfoResponse(
         Double latitude,
         Double longitude,
         String locationName
     ) {
+        public static ScheduleLocationInfoResponse from(ScheduleLocationInfo info) {
+            if (info == null) {
+                return null;
+            }
+
+            return ScheduleLocationInfoResponse.builder()
+                .latitude(info.latitude())
+                .longitude(info.longitude())
+                .locationName(info.locationName())
+                .build();
+        }
     }
 
+    @Builder(access = AccessLevel.PRIVATE)
     public record ScheduleAttendancePolicyInfoResponse(
         // Client단을 위해서, 서버 측에서 earlyCheckInMinutes, lateCheckInMinutes, lateToleranceMinutes를 기반으로
         // 아래 3가지 값을 계산해서 제공하도록 합니다.
@@ -50,8 +87,21 @@ public record ScheduleInfoResponse(
         Instant onTimeEndAt,
         Instant lateEndAt
     ) {
+
+        public static ScheduleAttendancePolicyInfoResponse from(ScheduleAttendancePolicyInfo info) {
+            if (info == null) {
+                return null;
+            }
+
+            return ScheduleAttendancePolicyInfoResponse.builder()
+                .checkInStartAt(info.checkInStartAt())
+                .onTimeEndAt(info.onTimeEndAt())
+                .lateEndAt(info.lateEndAt())
+                .build();
+        }
     }
 
+    @Builder(access = AccessLevel.PRIVATE)
     public record ScheduleParticipantInfoResponse(
         Long memberId,
         String name,
@@ -60,5 +110,18 @@ public record ScheduleInfoResponse(
         String schoolName,
         String profileImageUrl
     ) {
+        public static ScheduleParticipantInfoResponse from(ScheduleParticipantInfo info) {
+            if (info == null) {
+                return null;
+            }
+            return ScheduleParticipantInfoResponse.builder()
+                .memberId(info.memberId())
+                .name(info.name())
+                .nickname(info.nickname())
+                .schoolId(info.schoolId())
+                .schoolName(info.schoolName())
+                .profileImageUrl(info.profileImageUrl())
+                .build();
+        }
     }
 }

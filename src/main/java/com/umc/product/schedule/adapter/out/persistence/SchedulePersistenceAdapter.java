@@ -33,10 +33,8 @@ public class SchedulePersistenceAdapter implements
     }
 
     @Override
-    public List<Schedule> findMySchedulesByMonth(Long memberId, Instant monthStart,
-                                                 Instant nextMonthStart) {
-        return scheduleQueryRepository.findMySchedulesByMonth(
-            memberId, monthStart, nextMonthStart);
+    public List<Schedule> findMySchedules(Long memberId, Instant from, Instant to, Boolean isAttendanceRequired) {
+        return scheduleQueryRepository.findMySchedules(memberId, from, to, isAttendanceRequired);
     }
 
     @Override

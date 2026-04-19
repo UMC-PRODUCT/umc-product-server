@@ -11,7 +11,14 @@ public interface LoadSchedulePort {
 
     boolean existsById(Long id);
 
-    List<Schedule> findMySchedulesByMonth(Long memberId, Instant monthStart, Instant nextMonthStart);
+    /**
+     * @param memberId             사용자 memberId
+     * @param from                 탐색을 시작할 날짜
+     * @param to                   탐색을 끝낼 날짜
+     * @param isAttendanceRequired true : policy가 존재하는 일정, false or null : policy가 존재하지 않는 일정
+     * @return 일정 목록
+     */
+    List<Schedule> findMySchedules(Long memberId, Instant from, Instant to, Boolean isAttendanceRequired);
 
     /**
      * ID 목록으로 일정 일괄 조회

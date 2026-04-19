@@ -4,6 +4,8 @@ import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleInfoResponse;
+import com.umc.product.schedule.application.port.v2.in.query.GetScheduleUseCase;
+import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,6 +24,8 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Schedule V2 | Query", description = "일정 및 출석 관련 내용들을 조회합니다.")
 public class ScheduleQueryController {
 
+    private final GetScheduleUseCase getScheduleUseCase;
+
     // ========================= 일정 관련 =========================
 
     @Operation(summary = "내 일정 조회", description = """
@@ -39,7 +43,11 @@ public class ScheduleQueryController {
         @RequestParam Boolean isAttendanceRequired,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        throw new NotImplementedException();
+        List<ScheduleInfo> results = getScheduleUseCase.getMySchedule(from, to, isAttendanceRequired,
+            memberPrincipal.getMemberId());
+        return results.stream()
+            .map(ScheduleInfoResponse::from)
+            .toList();
     }
 
     @Operation(summary = "일정 상세 조회", description = """

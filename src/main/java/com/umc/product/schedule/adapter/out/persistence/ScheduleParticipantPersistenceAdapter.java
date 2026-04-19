@@ -3,6 +3,7 @@ package com.umc.product.schedule.adapter.out.persistence;
 import com.umc.product.schedule.application.port.v2.out.DeleteScheduleParticipantPort;
 import com.umc.product.schedule.application.port.v2.out.LoadScheduleParticipantPort;
 import com.umc.product.schedule.application.port.v2.out.SaveScheduleParticipantPort;
+import com.umc.product.schedule.application.port.v2.out.dto.ScheduleParticipantDetailDto;
 import com.umc.product.schedule.domain.ScheduleParticipant;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +18,7 @@ public class ScheduleParticipantPersistenceAdapter implements
     LoadScheduleParticipantPort {
 
     private final ScheduleParticipantJpaRepository scheduleParticipantJpaRepository;
+    private final ScheduleParticipantQueryRepository scheduleParticipantQueryRepository;
 
     // ======== SaveScheduleParticipantPort =======
     @Override
@@ -44,5 +46,10 @@ public class ScheduleParticipantPersistenceAdapter implements
     @Override
     public Optional<ScheduleParticipant> findByScheduleIdAndMemberId(Long scheduleId, Long memberId) {
         return scheduleParticipantJpaRepository.findByScheduleIdAndMemberId(scheduleId, memberId);
+    }
+
+    @Override
+    public List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleIds(List<Long> scheduleIds) {
+        return scheduleParticipantQueryRepository.findParticipantDetailsByScheduleIds(scheduleIds);
     }
 }
