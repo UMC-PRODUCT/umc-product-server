@@ -1,6 +1,7 @@
 package com.umc.product.schedule.application.port.out;
 
 import com.umc.product.schedule.domain.Schedule;
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -106,4 +107,9 @@ public interface LoadSchedulePort {
      * @return 일정 목록
      */
     List<Schedule> findSchedulesByAuthor(Long authorChallengerId, Long gisuId);
+
+    List<Schedule> findAdminSchedules(Instant from, Instant to,
+                                      AttendanceStatus attendanceStatus,
+                                      Long memberId);
+
 }

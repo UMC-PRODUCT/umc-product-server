@@ -32,7 +32,8 @@ public class ScheduleParticipantQueryRepository {
                 school.name,
                 member.profileImageId,
                 scheduleParticipant.attendance.status,
-                scheduleParticipant.attendance.excuseReason
+                scheduleParticipant.attendance.excuseReason,
+                scheduleParticipant.attendance.isisLocationVerified
             ))
             .from(scheduleParticipant)
             // Participant -> Member 조인
@@ -60,7 +61,8 @@ public class ScheduleParticipantQueryRepository {
                 school.name,
                 member.profileImageId,
                 scheduleParticipant.attendance.status,
-                scheduleParticipant.attendance.excuseReason
+                scheduleParticipant.attendance.excuseReason,
+                scheduleParticipant.attendance.isisLocationVerified
             ))
             .from(scheduleParticipant)
             // Participant -> Member 조인

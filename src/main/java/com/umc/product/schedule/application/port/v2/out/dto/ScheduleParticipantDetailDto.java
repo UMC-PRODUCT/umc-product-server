@@ -16,6 +16,7 @@ public record ScheduleParticipantDetailDto(
 
     // 3. 출석 상태 (ScheduleParticipant 내장 객체에서 가져옴)
     AttendanceStatus attendanceStatus,
-    String excuseReason // 사유가 없으면 null
+    String excuseReason, // 사유가 없으면 null
+    boolean isLocationVerified
 ) {
 }

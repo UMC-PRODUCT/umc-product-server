@@ -3,13 +3,16 @@ package com.umc.product.schedule.adapter.in.web.v2;
 import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.schedule.adapter.in.web.v2.dto.response.AdminScheduleInfoResponse;
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleInfoResponse;
 import com.umc.product.schedule.application.port.v2.in.query.GetScheduleUseCase;
+import com.umc.product.schedule.application.port.v2.in.query.dto.AdminScheduleInfo;
 import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,13 +40,14 @@ public class ScheduleQueryController {
         """
     )
     @GetMapping("/me")
-    public List<ScheduleInfoResponse> mySchedule(
+    public List<ScheduleInfoResponse> mySchedules(
         @RequestParam Instant from,
         @RequestParam Instant to,
         @RequestParam Boolean isAttendanceRequired,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        List<ScheduleInfo> results = getScheduleUseCase.searchMySchedule(from, to, isAttendanceRequired,
+        List<ScheduleInfo> results = getScheduleUseCase.searchMySchedules(
+            from, to, isAttendanceRequired,
             memberPrincipal.getMemberId());
 
         return results.stream()
@@ -70,10 +74,10 @@ public class ScheduleQueryController {
 
     // ========================= 출석 관련 =========================
 
-    // 운영진용: 각 일정에 대한 출석 현황을 조회하는 API, from-to로 기간을 조회할 수 있어야 합니다.
+    // 운영진용: 기간에 기반하여 일정에 대한 출석 현황을 조회하는 API, from-to로 기간을 조회할 수 있어야 합니다.
     // 조회 기간과 무관하게 과거 일정 중에서 출석을 승인하지 않은 일정은 계속 표시됩니다.
     // 사유는 제공된 경우에만 표시됩니다.
-    @Operation(summary = "[운영진용] 단일 일정 출석 현황 조회", description = """
+    @Operation(summary = "[운영진용] 일정들의 출석 현황 조회", description = """
         Query Param을 이용해서 상세한 필터링을 제공하며, 그 기준은 아래와 같습니다.
 
         #### 기간 필터링 (시작 시간 기준)
@@ -85,11 +89,38 @@ public class ScheduleQueryController {
         제공되지 않은 경우, 모든 상태에 대해서 반환합니다.
         """
     )
+    @GetMapping("/attendance")
+    public List<AdminScheduleInfoResponse> getAttendanceInfoList(
+        @RequestParam(required = false) Instant from,
+        @RequestParam(required = false) Instant to,
+        @RequestParam(required = false) AttendanceStatus attendanceStatus,
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        Instant searchFrom = (from != null) ? from : Instant.now().minus(30, ChronoUnit.DAYS);
+        Instant searchTo = (to != null) ? to : Instant.now().plus(24, ChronoUnit.HOURS);
+
+        List<AdminScheduleInfo> results = getScheduleUseCase.searchAdminSchedules(
+            searchFrom, searchTo, attendanceStatus, memberPrincipal.getMemberId()
+        );
+
+        return results.stream()
+            .map(AdminScheduleInfoResponse::from)
+            .toList();
+    }
+
+    // 운영진용: 단일 일정에 대한 출석 현황을 조회하는 API
+    // 사유는 제공된 경우에만 표시됩니다.
+    @Operation(summary = "[운영진용] 단일 일정 출석 현황 조회", description = """
+        Query Param을 이용해서 상세한 필터링을 제공하며, 그 기준은 아래와 같습니다.
+
+        #### 출석 상태 필터링
+        `attendanceStatus`를 통해서 요청 상태를 필터링할 수 있습니다.
+        제공되지 않은 경우, 모든 상태에 대해서 반환합니다.
+        """
+    )
     @GetMapping("/{scheduleId}/attendance")
-    public ScheduleInfoResponse getAttendanceInfo(
-        @RequestParam Instant from,
-        @RequestParam Instant to,
-        @RequestParam AttendanceStatus attendanceStatus,
+    public AdminScheduleInfoResponse getAttendanceInfo(
+        @RequestParam(required = false) AttendanceStatus attendanceStatus,
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long scheduleId
     ) {
