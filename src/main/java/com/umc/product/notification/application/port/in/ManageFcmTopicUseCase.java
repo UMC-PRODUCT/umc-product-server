@@ -1,46 +1,33 @@
 package com.umc.product.notification.application.port.in;
 
+import java.util.List;
+
 /**
  * FCM 토픽 구독 관리 UseCase
  *
- * 챌린저의 기수/파트/학교/지부 정보를 기반으로
- * 관련 토픽을 자동으로 구독/해제합니다.
+ * @deprecated 토큰 기반 알림(SendNotificationToAudienceUseCase)으로 전환됨. 모든 메서드가 no-op입니다.
  */
+@Deprecated(since = "token-based migration", forRemoval = true)
 public interface ManageFcmTopicUseCase {
 
-    /**
-     * 특정 챌린저의 정보를 기반으로 관련 토픽을 구독
-     *
-     * @param challengerId 챌린저 ID
-     */
-    void subscribeTopics(Long challengerId);
-
-    /**
-     * 특정 챌린저의 정보를 기반으로 관련 토픽을 해제
-     *
-     * @param challengerId 챌린저 ID
-     */
-    void unsubscribeTopics(Long challengerId);
-
-    /**
-     * 회원의 모든 챌린저에 대해 토픽을 구독 (FCM 토큰 등록 시 사용)
-     *
-     * @param memberId 회원 ID
-     */
+    @Deprecated(since = "token-based migration", forRemoval = true)
     void subscribeAllTopicsByMemberId(Long memberId);
 
-    /**
-     * 회원의 모든 챌린저에 대해 토픽을 해제 (FCM 토큰 갱신 시 이전 토큰 정리용)
-     *
-     * @param memberId 회원 ID
-     */
+    @Deprecated(since = "token-based migration", forRemoval = true)
     void unsubscribeAllTopicsByMemberId(Long memberId);
 
-    /**
-     * 특정 토큰을 회원의 모든 챌린저 토픽에서 해제 (Outbox 처리 시 이전 토큰 정리용)
-     *
-     * @param fcmToken 해제할 FCM 토큰
-     * @param memberId 회원 ID
-     */
+    @Deprecated(since = "token-based migration", forRemoval = true)
     void unsubscribeTokenFromTopics(String fcmToken, Long memberId);
+
+    @Deprecated(since = "token-based migration", forRemoval = true)
+    void unsubscribeLegacyTopics(Long memberId);
+
+    @Deprecated(since = "token-based migration", forRemoval = true)
+    void subscribeToTopic(List<String> fcmTokens, String topic);
+
+    @Deprecated(since = "token-based migration", forRemoval = true)
+    void unsubscribeFromTopic(List<String> fcmTokens, String topic);
+
+    @Deprecated(since = "token-based migration", forRemoval = true)
+    void resubscribeAllLegacyTopics();
 }

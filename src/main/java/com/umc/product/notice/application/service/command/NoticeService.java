@@ -1,10 +1,7 @@
 package com.umc.product.notice.application.service.command;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.challenger.application.port.out.LoadChallengerPort;
-import com.umc.product.challenger.domain.Challenger;
-import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.member.application.port.in.query.dto.MemberInfo;
+import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.CreateNoticeCommand;
@@ -22,14 +19,11 @@ import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.notice.dto.NoticeTargetPattern;
-import com.umc.product.notification.application.port.in.ManageFcmUseCase;
-import com.umc.product.notification.application.port.in.dto.NotificationCommand;
-import com.umc.product.notification.application.port.in.dto.TopicNotificationCommand;
-import com.umc.product.notification.domain.FcmTopicName;
-import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import com.umc.product.notification.application.port.in.SendNotificationToAudienceUseCase;
+import com.umc.product.notification.application.port.in.dto.AudienceNotificationCommand;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -52,14 +46,12 @@ public class NoticeService implements ManageNoticeUseCase {
     private final SaveNoticeTargetPort saveNoticeTargetPort;
     private final ManageNoticeTargetPort manageNoticeTargetPort;
     private final SaveNoticeReadPort saveNoticeReadPort;
-    private final LoadChallengerPort loadChallengerPort;
 
     // 도메인 외부 UseCase
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
-    private final ManageFcmUseCase manageFcmUseCase;
+    private final GetChallengerUseCase getChallengerUseCase;
     private final ManageNoticeContentUseCase manageNoticeContentUseCase;
-    private final GetMemberUseCase getMemberUseCase;
-    private final GetChapterUseCase getChapterUseCase;
+    private final SendNotificationToAudienceUseCase sendNotificationToAudienceUseCase;
 
     @Override
     public Long createNotice(CreateNoticeCommand command) {
@@ -85,24 +77,11 @@ public class NoticeService implements ManageNoticeUseCase {
             .build()
         );
 
-        /**
-         * 공지 알림 전송 (토픽 기반)
-         * NoticeTargetInfo에서 토픽 이름을 도출하여 해당 토픽으로 메시지를 발행합니다.
-         */
         if (savedNotice.isNotificationRequired()) {
-            List<String> topics = FcmTopicName.resolveTopics(
-                command.targetInfo().targetGisuId(),
-                command.targetInfo().targetChapterId(),
-                command.targetInfo().targetSchoolId(),
-                command.targetInfo().targetParts()
-            );
-
             String title = NOTICE_TITLE_PREFIX + savedNotice.getTitle();
-            for (String topic : topics) {
-                manageFcmUseCase.sendMessageByTopic(
-                    new TopicNotificationCommand(topic, title, NOTICE_BODY_SUFFIX)
-                );
-            }
+            sendNotificationToAudienceUseCase.sendToAudience(
+                new AudienceNotificationCommand(command.targetInfo(), title, NOTICE_BODY_SUFFIX)
+            );
             savedNotice.markAsNotified(Instant.now());
         }
 
@@ -141,12 +120,16 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void remindNotice(SendNoticeReminderCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-        for (Long targetId : command.targetIds()) {
-            manageFcmUseCase.sendMessageByToken(new NotificationCommand(targetId,
-                NOTICE_REMINDER_TITLE_PREFIX + notice.getTitle(),
-                REMINDER_BODY_SUFFIX))
-            ;
-        }
+        String title = NOTICE_REMINDER_TITLE_PREFIX + notice.getTitle();
+
+        // challengerId → memberId 일괄 변환 (쿼리 1회)
+        Set<Long> challengerIdSet = new java.util.HashSet<>(command.targetIds());
+        List<Long> memberIds = getChallengerUseCase.getAllByIds(challengerIdSet).stream()
+            .map(info -> info.memberId())
+            .toList();
+
+        // 대상 멤버 전체에 FCM 배치 발송 (토큰 조회 1회 + FCM 배치 전송)
+        sendNotificationToAudienceUseCase.sendToMembers(memberIds, title, REMINDER_BODY_SUFFIX);
     }
 
     @Override
@@ -172,37 +155,5 @@ public class NoticeService implements ManageNoticeUseCase {
         return pattern.validatePermission(noticeTargetInfo, authorMemberId, getChallengerRoleUseCase);
     }
 
-    /**
-     * NoticeTargetInfo에 매칭되는 챌린저 ID 목록을 조회합니다. (알림 전송용)
-     * <p>
-     * TODO: 헥사고날 관점 상 추후 리팩토링 필요
-     *
-     * @return 대상 챌린저 ID 리스트
-     */
-    private List<Long> resolveTargetChallengerIds(NoticeTargetInfo targetInfo) {
-        if (targetInfo == null || targetInfo.targetGisuId() == null) {
-            return List.of();
-        }
-
-        List<Challenger> challengers = loadChallengerPort.getAllByGisuId(targetInfo.targetGisuId());
-        List<Long> targetIds = new ArrayList<>();
-
-        for (Challenger challenger : challengers) {
-            MemberInfo memberInfo = getMemberUseCase.getById(challenger.getMemberId());
-            Long schoolId = memberInfo.schoolId();
-            Long chapterId = getChapterUseCase.byGisuAndSchool(challenger.getGisuId(), schoolId).id();
-
-            if (targetInfo.isTarget(
-                challenger.getGisuId(),
-                chapterId,
-                schoolId,
-                challenger.getPart()
-            )) {
-                targetIds.add(challenger.getId());
-            }
-        }
-
-        return targetIds;
-    }
 
 }
