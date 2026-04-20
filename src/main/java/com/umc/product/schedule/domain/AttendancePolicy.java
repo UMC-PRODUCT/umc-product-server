@@ -3,7 +3,6 @@ package com.umc.product.schedule.domain;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
-import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -32,14 +31,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AttendancePolicy {
 
-    @Column(nullable = false)
-    private long earlyCheckInMinutes = 10L;
+    private long earlyCheckInMinutes;
 
-    @Column(nullable = false)
-    private long attendanceGraceMinutes = 10L;
+    private long attendanceGraceMinutes;
 
-    @Column(nullable = false)
-    private long lateToleranceMinutes = 10L;
+    private long lateToleranceMinutes;
 
     private AttendancePolicy(
         Long earlyCheckInMinutes,
