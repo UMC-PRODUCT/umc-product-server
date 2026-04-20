@@ -1,6 +1,6 @@
 package com.umc.product.schedule.adapter.in.web.v2.dto.request;
 
-import com.umc.product.schedule.application.port.v2.in.command.dto.DecideAttendanceCommand;
+import com.umc.product.schedule.application.port.in.command.dto.DecideAttendanceCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

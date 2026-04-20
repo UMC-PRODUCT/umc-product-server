@@ -1,8 +1,8 @@
-package com.umc.product.schedule.application.port.v2.in.command;
+package com.umc.product.schedule.application.port.in.command;
 
-import com.umc.product.schedule.application.port.v2.in.command.dto.ExcuseScheduleAttendanceCommand;
-import com.umc.product.schedule.application.port.v2.in.command.dto.ScheduleAttendanceCommand;
-import com.umc.product.schedule.application.port.v2.in.command.dto.result.ScheduleParticipantAttendanceResult;
+import com.umc.product.schedule.application.port.in.command.dto.ExcuseScheduleAttendanceCommand;
+import com.umc.product.schedule.application.port.in.command.dto.ScheduleAttendanceCommand;
+import com.umc.product.schedule.application.port.in.command.dto.result.ScheduleParticipantAttendanceResult;
 
 public interface CreateScheduleParticipantUseCase {
 

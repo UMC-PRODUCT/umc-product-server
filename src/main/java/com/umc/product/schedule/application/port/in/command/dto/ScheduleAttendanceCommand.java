@@ -1,4 +1,4 @@
-package com.umc.product.schedule.application.port.v2.in.command.dto;
+package com.umc.product.schedule.application.port.in.command.dto;
 
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;

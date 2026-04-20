@@ -1,7 +1,7 @@
-package com.umc.product.schedule.application.port.v2.in.query;
+package com.umc.product.schedule.application.port.in.query;
 
-import com.umc.product.schedule.application.port.v2.in.query.dto.AdminScheduleInfo;
-import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo;
+import com.umc.product.schedule.application.port.in.query.dto.AdminScheduleInfo;
+import com.umc.product.schedule.application.port.in.query.dto.ScheduleInfo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.Instant;
 import java.util.List;

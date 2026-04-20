@@ -1,4 +1,4 @@
-package com.umc.product.schedule.application.port.v2.in.command.dto.result;
+package com.umc.product.schedule.application.port.in.command.dto.result;
 
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.schedule.domain.ScheduleParticipantAttendance;

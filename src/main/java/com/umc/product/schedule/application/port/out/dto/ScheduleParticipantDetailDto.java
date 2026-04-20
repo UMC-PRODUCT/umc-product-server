@@ -1,4 +1,4 @@
-package com.umc.product.schedule.application.port.v2.out.dto;
+package com.umc.product.schedule.application.port.out.dto;
 
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 

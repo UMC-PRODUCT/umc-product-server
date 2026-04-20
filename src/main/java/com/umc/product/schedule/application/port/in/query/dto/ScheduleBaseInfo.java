@@ -1,4 +1,4 @@
-package com.umc.product.schedule.application.port.v2.in.query.dto;
+package com.umc.product.schedule.application.port.in.query.dto;
 
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import java.time.Instant;

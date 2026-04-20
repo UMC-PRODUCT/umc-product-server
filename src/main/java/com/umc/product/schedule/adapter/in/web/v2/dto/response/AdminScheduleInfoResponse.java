@@ -2,9 +2,9 @@ package com.umc.product.schedule.adapter.in.web.v2.dto.response;
 
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleInfoResponse.ScheduleAttendancePolicyInfoResponse;
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleInfoResponse.ScheduleLocationInfoResponse;
-import com.umc.product.schedule.application.port.v2.in.query.dto.AdminScheduleInfo;
-import com.umc.product.schedule.application.port.v2.in.query.dto.AdminScheduleInfo.AdminScheduleParticipantInfo;
-import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleBaseInfo;
+import com.umc.product.schedule.application.port.in.query.dto.AdminScheduleInfo;
+import com.umc.product.schedule.application.port.in.query.dto.AdminScheduleInfo.AdminScheduleParticipantInfo;
+import com.umc.product.schedule.application.port.in.query.dto.ScheduleBaseInfo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import java.time.Instant;

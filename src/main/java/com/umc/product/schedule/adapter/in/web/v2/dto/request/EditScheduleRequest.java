@@ -1,6 +1,6 @@
 package com.umc.product.schedule.adapter.in.web.v2.dto.request;
 
-import com.umc.product.schedule.application.port.v2.in.command.dto.EditScheduleCommand;
+import com.umc.product.schedule.application.port.in.command.dto.EditScheduleCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Size;

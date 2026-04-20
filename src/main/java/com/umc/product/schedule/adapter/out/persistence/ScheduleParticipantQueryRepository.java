@@ -5,7 +5,7 @@ import static com.umc.product.organization.domain.QSchool.school;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.schedule.application.port.v2.out.dto.ScheduleParticipantDetailDto;
+import com.umc.product.schedule.application.port.out.dto.ScheduleParticipantDetailDto;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

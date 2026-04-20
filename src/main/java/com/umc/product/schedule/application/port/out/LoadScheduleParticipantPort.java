@@ -1,6 +1,6 @@
-package com.umc.product.schedule.application.port.v2.out;
+package com.umc.product.schedule.application.port.out;
 
-import com.umc.product.schedule.application.port.v2.out.dto.ScheduleParticipantDetailDto;
+import com.umc.product.schedule.application.port.out.dto.ScheduleParticipantDetailDto;
 import com.umc.product.schedule.domain.ScheduleParticipant;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.util.List;
