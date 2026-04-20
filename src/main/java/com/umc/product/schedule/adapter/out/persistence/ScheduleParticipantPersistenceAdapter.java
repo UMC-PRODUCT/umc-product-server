@@ -5,6 +5,7 @@ import com.umc.product.schedule.application.port.v2.out.LoadScheduleParticipantP
 import com.umc.product.schedule.application.port.v2.out.SaveScheduleParticipantPort;
 import com.umc.product.schedule.application.port.v2.out.dto.ScheduleParticipantDetailDto;
 import com.umc.product.schedule.domain.ScheduleParticipant;
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -56,5 +57,11 @@ public class ScheduleParticipantPersistenceAdapter implements
     @Override
     public List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleId(Long scheduleId) {
         return scheduleParticipantQueryRepository.findParticipantDetailsByScheduleId(scheduleId);
+    }
+
+    @Override
+    public List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleIdAndStatus(Long scheduleId,
+                                                                                          AttendanceStatus attendanceStatus) {
+        scheduleParticipantQueryRepository.findParticipantDetailsByScheduleIdAndStatus(scheduleId, attendanceStatus);
     }
 }

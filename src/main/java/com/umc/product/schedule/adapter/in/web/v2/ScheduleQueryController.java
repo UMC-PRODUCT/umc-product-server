@@ -1,6 +1,5 @@
 package com.umc.product.schedule.adapter.in.web.v2;
 
-import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.AdminScheduleInfoResponse;
@@ -124,7 +123,13 @@ public class ScheduleQueryController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long scheduleId
     ) {
-        throw new NotImplementedException();
+        return AdminScheduleInfoResponse.from(
+            getScheduleUseCase.getAdminSchedule(
+                scheduleId,
+                memberPrincipal.getMemberId(),
+                attendanceStatus
+            )
+        );
     }
 
 }

@@ -2,6 +2,7 @@ package com.umc.product.schedule.application.port.v2.out;
 
 import com.umc.product.schedule.application.port.v2.out.dto.ScheduleParticipantDetailDto;
 import com.umc.product.schedule.domain.ScheduleParticipant;
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,4 +17,7 @@ public interface LoadScheduleParticipantPort {
 
     // 단일 일정에 대한 참여자 상세 정보를 조회합니다.
     List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleId(Long scheduleIds);
+
+    List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleIdAndStatus(Long scheduleId,
+                                                                                   AttendanceStatus attendanceStatus);
 }

@@ -106,25 +106,41 @@ public class ScheduleQueryService implements GetScheduleUseCase {
         return schedules.stream()
             .map(schedule -> {
                 // participantsMap에서 schedule의 id를 가지고 있는 ScheduleParticipantDetailDto의 리스트를 반환
-                List<ScheduleParticipantDetailDto> participants = participantsMap.getOrDefault(schedule.getId(),
-                    List.of());
+                List<ScheduleParticipantDetailDto> participants =
+                    participantsMap.getOrDefault(schedule.getId(), List.of());
 
                 // 파라미터로 받은 attendanceStatus와 ScheduleParticipantDetailDto의 attendanceStatus가 일치하는 것만 필터링
-                List<AdminScheduleParticipantInfo> adminParticipants = participants.stream()
-                    // 파라미터 attendanceStatus == null이면 true로 filter 통과
-                    .filter(p -> attendanceStatus == null | p.attendanceStatus() == attendanceStatus)
-                    .map(p -> new AdminScheduleParticipantInfo(
-                        p.memberId(), p.name(), p.nickname(),
-                        p.schoolId(), p.schoolName(), p.profileImageUrl(),
-                        p.attendanceStatus(), p.isLocationVerified(), p.excuseReason()
-                    ))
+                List<ScheduleParticipantDetailDto> filteredDtos = participants.stream()
+                    .filter(p -> attendanceStatus == null || p.attendanceStatus() == attendanceStatus)
                     .toList();
+
+                List<AdminScheduleParticipantInfo> adminParticipants = mapAdminParticipants(filteredDtos);
 
                 return new AdminScheduleInfo(createBaseInfo(schedule), adminParticipants);
             })
             // 필터링 결과, 보여줄 참여자가 없는 일정은 목록에서 제외
             .filter(adminInfo -> !adminInfo.participants().isEmpty())
             .toList();
+    }
+
+    @Override
+    public AdminScheduleInfo getAdminSchedule(Long scheduleId, Long memberId,
+                                              AttendanceStatus attendanceStatus) {
+
+        // 존재하지 않는 일정이면 에러 반환
+        Schedule schedule = loadSchedulePort.findById(scheduleId)
+            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+
+        // 일정의 참여자가 아니면 에러 반환
+        loadScheduleParticipantPort.findByScheduleIdAndMemberId(scheduleId, memberId)
+            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.NOT_SCHEDULE_PARTICIPANT));
+
+        List<ScheduleParticipantDetailDto> participants =
+            loadScheduleParticipantPort.findParticipantDetailsByScheduleIdAndStatus(scheduleId, attendanceStatus);
+
+        List<AdminScheduleParticipantInfo> adminParticipants = mapAdminParticipants(participants);
+
+        return new AdminScheduleInfo(createBaseInfo(schedule), adminParticipants);
     }
 
     // ======= Helper Method =======
@@ -210,6 +226,16 @@ public class ScheduleQueryService implements GetScheduleUseCase {
             .map(p -> new ScheduleParticipantInfo(
                 p.memberId(), p.name(), p.nickname(),
                 p.schoolId(), p.schoolName(), p.profileImageUrl()
+            )).toList();
+    }
+
+    // AdminScheduleParticipantInfo 변환 헬퍼 메서드
+    private List<AdminScheduleParticipantInfo> mapAdminParticipants(List<ScheduleParticipantDetailDto> participants) {
+        return participants.stream()
+            .map(p -> new AdminScheduleParticipantInfo(
+                p.memberId(), p.name(), p.nickname(),
+                p.schoolId(), p.schoolName(), p.profileImageUrl(),
+                p.attendanceStatus(), p.isLocationVerified(), p.excuseReason()
             )).toList();
     }
 

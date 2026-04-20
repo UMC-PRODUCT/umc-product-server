@@ -92,6 +92,7 @@ public enum ScheduleErrorCode implements BaseCode {
         "비대면 일정으로 변경 시 위치 정보를 포함할 수 없습니다."),
     NOT_ACTIVE_GISU_SCHEDULE(HttpStatus.BAD_REQUEST, "SCHEDULE-0049",
         "현재 기수의 일정만 생성할 수 있습니다."),
+    NOT_SCHEDULE_PARTICIPANT(HttpStatus.BAD_REQUEST, "SCHEDULE-0050", "일정의 참여자가 아닙니다."),
 
     ;
     private final HttpStatus httpStatus;

@@ -20,4 +20,7 @@ public interface GetScheduleUseCase {
     List<AdminScheduleInfo> searchAdminSchedules(Instant from, Instant to,
                                                  AttendanceStatus attendanceStatus,
                                                  Long memberId);
+
+    AdminScheduleInfo getAdminSchedule(Long scheduleId, Long memberId,
+                                       AttendanceStatus attendanceStatus);
 }

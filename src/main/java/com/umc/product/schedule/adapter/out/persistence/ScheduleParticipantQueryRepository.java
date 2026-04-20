@@ -6,6 +6,7 @@ import static com.umc.product.organization.domain.QSchool.school;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.schedule.application.port.v2.out.dto.ScheduleParticipantDetailDto;
+import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -70,6 +71,33 @@ public class ScheduleParticipantQueryRepository {
             // Member -> School 조인
             .leftJoin(school).on(member.schoolId.eq(school.id))
             .where(scheduleParticipant.schedule.id.eq(scheduleId))
+            .fetch();
+    }
+
+    public void findParticipantDetailsByScheduleIdAndStatus(Long scheduleId, AttendanceStatus attendanceStatus) {
+        return queryFactory
+            .select(Projections.constructor(ScheduleParticipantDetailDto.class,
+                scheduleParticipant.schedule.id,
+                member.id,
+                member.name,
+                member.nickname,
+                school.id,
+                school.name,
+                member.profileImageId,
+                scheduleParticipant.attendance.status,
+                scheduleParticipant.attendance.excuseReason,
+                scheduleParticipant.attendance.isisLocationVerified
+            ))
+            .from(scheduleParticipant)
+            // Participant -> Member 조인
+            .join(member).on(scheduleParticipant.memberId.eq(member.id))
+            // Member -> School 조인
+            .leftJoin(school).on(member.schoolId.eq(school.id))
+            .where(
+                scheduleParticipant.schedule.id.eq(scheduleId),
+                // attendanceStatus가 null이면 아래 조건은 무시됨
+                attendanceStatus != null ? scheduleParticipant.attendance.status.eq(attendanceStatus) : null
+            )
             .fetch();
     }
 }
