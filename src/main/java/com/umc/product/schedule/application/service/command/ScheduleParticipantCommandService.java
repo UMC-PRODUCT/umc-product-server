@@ -60,7 +60,7 @@ public class ScheduleParticipantCommandService implements
         // scheduleParticipant에 연결되는 ScheduleParticipantAttendance를 저장
         // 이미 출석 요청 기록이 있으면 에러 반환
         // 이미 종료된 일정에 요청, 출석 시작 전 요청은 에러 반환
-        scheduleParticipant.createAttendance(location, command.isVerified());
+        scheduleParticipant.createAttendance(location, command.locationVerified());
 
         // 요청 저장
         saveScheduleParticipantPort.save(scheduleParticipant);

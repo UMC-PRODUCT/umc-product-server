@@ -65,7 +65,7 @@ public class ScheduleParticipant extends BaseEntity {
      */
     public void createAttendance(
         Point location,
-        boolean isLocationVerified
+        Boolean isLocationVerified
     ) {
         // 이미 출석 요청을 한 기록이 있다면 update 하는 method를 사용해야함
         if (this.attendance != null) {
@@ -73,7 +73,10 @@ public class ScheduleParticipant extends BaseEntity {
         }
 
         this.attendance = ScheduleParticipantAttendance.create(
-            location, isLocationVerified, null,
+            location,
+            // null이면 false가 들어감
+            Boolean.TRUE.equals(isLocationVerified),
+            null,
             this.schedule.getAttendanceStatus()
         );
     }

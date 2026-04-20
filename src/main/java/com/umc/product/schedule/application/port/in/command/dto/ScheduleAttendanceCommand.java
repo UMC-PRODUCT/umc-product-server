@@ -12,7 +12,7 @@ public record ScheduleAttendanceCommand(
     Long requesterMemberId,
 
     // 클라이언트 측에서 받은 위치 인증 여부
-    boolean isVerified,
+    Boolean locationVerified,
 
     // === 위치 정보 ===
     Double latitude,
@@ -21,7 +21,7 @@ public record ScheduleAttendanceCommand(
 
     // 객체가 생성될 때 isVerified가 false면 에러 반환
     public ScheduleAttendanceCommand {
-        if (!isVerified()) {
+        if (!Boolean.TRUE.equals(locationVerified)) {
             throw new ScheduleDomainException(ScheduleErrorCode.LOCATION_NOT_VERIFIED);
         }
     }
