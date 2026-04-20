@@ -3,6 +3,7 @@ package com.umc.product.schedule.adapter.in.web.v1;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.CreateScheduleRequest;
@@ -12,10 +13,6 @@ import com.umc.product.schedule.adapter.in.web.v1.dto.request.UpdateScheduleLoca
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.UpdateScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.UpdateScheduleLocationResponse;
 import com.umc.product.schedule.adapter.in.web.v1.swagger.ScheduleControllerApi;
-import com.umc.product.schedule.application.port.in.command.CreateScheduleWithAttendanceUseCase;
-import com.umc.product.schedule.application.port.in.command.CreateStudyGroupScheduleUseCase;
-import com.umc.product.schedule.application.port.in.command.DeleteScheduleWithAttendanceUseCase;
-import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.UpdateScheduleUseCase;
 import jakarta.validation.Valid;
@@ -34,11 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ScheduleController implements ScheduleControllerApi {
 
     private final CreateScheduleUseCase createScheduleUseCase;
-    private final CreateScheduleWithAttendanceUseCase createScheduleWithAttendanceUseCase;
-    private final CreateStudyGroupScheduleUseCase createStudyGroupScheduleUseCase;
     private final UpdateScheduleUseCase updateScheduleUseCase;
-    private final DeleteScheduleWithAttendanceUseCase deleteScheduleWithAttendanceUseCase;
-
 
     @Override
     @PostMapping
@@ -51,8 +44,7 @@ public class ScheduleController implements ScheduleControllerApi {
         @CurrentMember MemberPrincipal memberPrincipal,
         @Valid @RequestBody CreateScheduleRequest request
     ) {
-        CreateScheduleCommand command = request.toCommand(memberPrincipal.getMemberId());
-        createScheduleUseCase.create(command);
+        throw new NotImplementedException();
     }
 
     @Override
@@ -61,9 +53,7 @@ public class ScheduleController implements ScheduleControllerApi {
         @CurrentMember MemberPrincipal memberPrincipal,
         @Valid @RequestBody CreateScheduleWithAttendanceRequest request
     ) {
-        return createScheduleWithAttendanceUseCase.create(
-            request.toCommand(memberPrincipal.getMemberId())
-        );
+        throw new NotImplementedException();
     }
 
     @Override
@@ -72,9 +62,7 @@ public class ScheduleController implements ScheduleControllerApi {
         @CurrentMember MemberPrincipal memberPrincipal,
         @Valid @RequestBody CreateStudyGroupScheduleRequest request
     ) {
-        return createStudyGroupScheduleUseCase.create(
-            request.toCommand(memberPrincipal.getMemberId())
-        );
+        throw new NotImplementedException();
     }
 
     @Override
@@ -89,7 +77,7 @@ public class ScheduleController implements ScheduleControllerApi {
         @PathVariable Long scheduleId,
         @Valid @RequestBody UpdateScheduleRequest request
     ) {
-        updateScheduleUseCase.update(request.toCommand(scheduleId));
+        throw new NotImplementedException();
     }
 
     @Override
@@ -101,7 +89,7 @@ public class ScheduleController implements ScheduleControllerApi {
         message = "일정 수정 및 삭제는 작성자나 관리자만 가능합니다."
     )
     public void deleteScheduleWithAttendance(@PathVariable Long scheduleId) {
-        deleteScheduleWithAttendanceUseCase.delete(scheduleId);
+        throw new NotImplementedException();
     }
 
     @Override
@@ -116,8 +104,6 @@ public class ScheduleController implements ScheduleControllerApi {
         @PathVariable Long scheduleId,
         @Valid @RequestBody UpdateScheduleLocationRequest request
     ) {
-        return UpdateScheduleLocationResponse.from(
-            updateScheduleUseCase.updateLocation(request.toCommand(scheduleId))
-        );
+        throw new NotImplementedException();
     }
 }

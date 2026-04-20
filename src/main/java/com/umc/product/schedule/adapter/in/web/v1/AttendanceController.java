@@ -4,6 +4,7 @@ import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
+import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.CheckAttendanceRequest;
@@ -15,16 +16,12 @@ import com.umc.product.schedule.adapter.in.web.v1.dto.response.PendingAttendance
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.PendingAttendancesByScheduleResponse;
 import com.umc.product.schedule.adapter.in.web.v1.mapper.AttendanceWebMapper;
 import com.umc.product.schedule.adapter.in.web.v1.swagger.AttendanceControllerApi;
-import com.umc.product.schedule.application.port.in.command.ApproveAttendanceUseCase;
-import com.umc.product.schedule.application.port.in.command.CheckAttendanceUseCase;
-import com.umc.product.schedule.application.port.in.command.SubmitReasonUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAttendanceRecordUseCase;
 import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetChallengerAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
 import com.umc.product.schedule.application.port.in.query.GetPendingAttendancesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleListUseCase;
-import com.umc.product.schedule.domain.AttendanceRecord.AttendanceRecordId;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,9 +36,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AttendanceController implements AttendanceControllerApi {
 
-    private final CheckAttendanceUseCase checkAttendanceUseCase;
-    private final SubmitReasonUseCase submitReasonUseCase;
-    private final ApproveAttendanceUseCase approveAttendanceUseCase;
     private final GetAttendanceRecordUseCase getAttendanceRecordUseCase;
     private final GetAvailableAttendancesUseCase getAvailableAttendancesUseCase;
     private final GetMyAttendanceHistoryUseCase getMyAttendanceHistoryUseCase;
@@ -58,7 +52,7 @@ public class AttendanceController implements AttendanceControllerApi {
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody CheckAttendanceRequest request
     ) {
-        return checkAttendanceUseCase.check(request.toCommand(memberPrincipal.getMemberId()));
+        throw new NotImplementedException();
     }
 
     @Override
@@ -67,7 +61,7 @@ public class AttendanceController implements AttendanceControllerApi {
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestBody SubmitReasonRequest request
     ) {
-        return submitReasonUseCase.submitReason(request.toCommand(memberPrincipal.getMemberId())).id();
+        throw new NotImplementedException();
     }
 
     @Override
@@ -75,12 +69,7 @@ public class AttendanceController implements AttendanceControllerApi {
     public List<AvailableAttendanceResponse> getAvailableAttendances(
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        Long memberId = memberPrincipal.getMemberId();
-        Long gisuId = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId).gisuId();
-
-        return mapper.toAvailableAttendanceResponses(
-            getAvailableAttendancesUseCase.getAvailableList(memberId, gisuId)
-        );
+        throw new NotImplementedException();
     }
 
     @Override
@@ -88,12 +77,7 @@ public class AttendanceController implements AttendanceControllerApi {
     public List<MyAttendanceHistoryResponse> getMyAttendanceHistory(
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        Long memberId = memberPrincipal.getMemberId();
-        Long gisuId = getChallengerUseCase.getLatestActiveChallengerByMemberId(memberId).gisuId();
-
-        return mapper.toMyAttendanceHistoryResponses(
-            getMyAttendanceHistoryUseCase.getHistory(memberId, gisuId)
-        );
+        throw new NotImplementedException();
     }
 
     @Override
@@ -101,9 +85,7 @@ public class AttendanceController implements AttendanceControllerApi {
     public List<MyAttendanceHistoryResponse> getChallengerAttendanceHistory(
         @PathVariable Long challengerId
     ) {
-        return mapper.toMyAttendanceHistoryResponses(
-            getChallengerAttendanceHistoryUseCase.getHistoryByChallengerId(challengerId)
-        );
+        throw new NotImplementedException();
     }
 
     @Override
@@ -116,9 +98,7 @@ public class AttendanceController implements AttendanceControllerApi {
     public AttendanceRecordResponse getAttendanceRecord(
         @PathVariable Long recordId
     ) {
-        return mapper.toAttendanceRecordResponse(
-            getAttendanceRecordUseCase.getById(new AttendanceRecordId(recordId))
-        );
+        throw new NotImplementedException();
     }
 
     @Override
@@ -131,9 +111,7 @@ public class AttendanceController implements AttendanceControllerApi {
     public List<PendingAttendanceResponse> getPendingAttendances(
         @PathVariable Long scheduleId
     ) {
-        return mapper.toPendingAttendanceResponses(
-            getPendingAttendancesUseCase.getPendingList(scheduleId)
-        );
+        throw new NotImplementedException();
     }
 
     @Override
@@ -141,11 +119,7 @@ public class AttendanceController implements AttendanceControllerApi {
     public List<PendingAttendancesByScheduleResponse> getAllPendingAttendances(
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        Long memberId = memberPrincipal.getMemberId();
-
-        return mapper.toPendingAttendancesByScheduleResponses(
-            getScheduleListUseCase.getAllPendingByRole(memberId)
-        );
+        throw new NotImplementedException();
     }
 
     @Override
@@ -159,7 +133,7 @@ public class AttendanceController implements AttendanceControllerApi {
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long recordId
     ) {
-        approveAttendanceUseCase.approve(new AttendanceRecordId(recordId), memberPrincipal.getMemberId());
+        throw new NotImplementedException();
     }
 
     @Override
@@ -173,6 +147,6 @@ public class AttendanceController implements AttendanceControllerApi {
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long recordId
     ) {
-        approveAttendanceUseCase.reject(new AttendanceRecordId(recordId), memberPrincipal.getMemberId());
+        throw new NotImplementedException();
     }
 }

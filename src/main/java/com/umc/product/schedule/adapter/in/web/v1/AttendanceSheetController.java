@@ -3,10 +3,9 @@ package com.umc.product.schedule.adapter.in.web.v1;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.UpdateAttendanceSheetRequest;
 import com.umc.product.schedule.adapter.in.web.v1.swagger.AttendanceSheetControllerApi;
-import com.umc.product.schedule.application.port.in.command.UpdateAttendanceSheetUseCase;
-import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -21,8 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AttendanceSheetController implements AttendanceSheetControllerApi {
 
-    private final UpdateAttendanceSheetUseCase updateAttendanceSheetUseCase;
-
     @Override
     @PatchMapping("/attendance-sheets/{sheetId}")
     @CheckAccess(
@@ -34,7 +31,7 @@ public class AttendanceSheetController implements AttendanceSheetControllerApi {
         @PathVariable Long sheetId,
         @RequestBody UpdateAttendanceSheetRequest request
     ) {
-        updateAttendanceSheetUseCase.update(request.toCommand(sheetId));
+        throw new NotImplementedException();
     }
 
     @Override
@@ -45,7 +42,7 @@ public class AttendanceSheetController implements AttendanceSheetControllerApi {
         permission = PermissionType.APPROVE
     )
     public void deactivateAttendanceSheet(@PathVariable Long sheetId) {
-        updateAttendanceSheetUseCase.deactivate(new AttendanceSheetId(sheetId));
+        throw new NotImplementedException();
     }
 
     @Override
@@ -56,6 +53,6 @@ public class AttendanceSheetController implements AttendanceSheetControllerApi {
         permission = PermissionType.APPROVE
     )
     public void activateAttendanceSheet(@PathVariable Long sheetId) {
-        updateAttendanceSheetUseCase.activate(new AttendanceSheetId(sheetId));
+        throw new NotImplementedException();
     }
 }
