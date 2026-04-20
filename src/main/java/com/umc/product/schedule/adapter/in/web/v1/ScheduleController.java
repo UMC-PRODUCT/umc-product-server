@@ -13,8 +13,6 @@ import com.umc.product.schedule.adapter.in.web.v1.dto.request.UpdateScheduleLoca
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.UpdateScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.UpdateScheduleLocationResponse;
 import com.umc.product.schedule.adapter.in.web.v1.swagger.ScheduleControllerApi;
-import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleUseCase;
-import com.umc.product.schedule.application.port.v2.in.command.UpdateScheduleUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -29,9 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/schedules")
 @RequiredArgsConstructor
 public class ScheduleController implements ScheduleControllerApi {
-
-    private final CreateScheduleUseCase createScheduleUseCase;
-    private final UpdateScheduleUseCase updateScheduleUseCase;
 
     @Override
     @PostMapping

@@ -1,4 +1,4 @@
-package com.umc.product.schedule.application.port.out;
+package com.umc.product.schedule.application.port.v2.out;
 
 // 일정 삭제
 public interface DeleteSchedulePort {

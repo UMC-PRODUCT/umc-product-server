@@ -1,6 +1,5 @@
 package com.umc.product.schedule.adapter.in.web.v1.dto.response;
 
-import com.umc.product.schedule.application.port.in.query.dto.MyScheduleInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
@@ -24,15 +23,4 @@ public record MyScheduleResponse(
     @Schema(description = "D-Day", example = "7")
     long dDay
 ) {
-
-    public static MyScheduleResponse from(MyScheduleInfo info) {
-        return new MyScheduleResponse(
-            info.scheduleId(),
-            info.name(),
-            info.startsAt(),
-            info.endsAt(),
-            info.status(),
-            info.dDay()
-        );
-    }
 }

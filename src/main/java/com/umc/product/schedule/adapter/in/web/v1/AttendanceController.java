@@ -3,7 +3,6 @@ package com.umc.product.schedule.adapter.in.web.v1;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -14,14 +13,7 @@ import com.umc.product.schedule.adapter.in.web.v1.dto.response.AvailableAttendan
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.MyAttendanceHistoryResponse;
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.PendingAttendanceResponse;
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.PendingAttendancesByScheduleResponse;
-import com.umc.product.schedule.adapter.in.web.v1.mapper.AttendanceWebMapper;
 import com.umc.product.schedule.adapter.in.web.v1.swagger.AttendanceControllerApi;
-import com.umc.product.schedule.application.port.in.query.GetAttendanceRecordUseCase;
-import com.umc.product.schedule.application.port.in.query.GetAvailableAttendancesUseCase;
-import com.umc.product.schedule.application.port.in.query.GetChallengerAttendanceHistoryUseCase;
-import com.umc.product.schedule.application.port.in.query.GetMyAttendanceHistoryUseCase;
-import com.umc.product.schedule.application.port.in.query.GetPendingAttendancesUseCase;
-import com.umc.product.schedule.application.port.in.query.GetScheduleListUseCase;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,16 +27,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/attendances")
 @RequiredArgsConstructor
 public class AttendanceController implements AttendanceControllerApi {
-
-    private final GetAttendanceRecordUseCase getAttendanceRecordUseCase;
-    private final GetAvailableAttendancesUseCase getAvailableAttendancesUseCase;
-    private final GetMyAttendanceHistoryUseCase getMyAttendanceHistoryUseCase;
-    private final GetChallengerAttendanceHistoryUseCase getChallengerAttendanceHistoryUseCase;
-    private final GetPendingAttendancesUseCase getPendingAttendancesUseCase;
-    private final GetScheduleListUseCase getScheduleListUseCase;
-    private final GetChallengerUseCase getChallengerUseCase;
-
-    private final AttendanceWebMapper mapper;
 
     @Override
     @PostMapping("/check")

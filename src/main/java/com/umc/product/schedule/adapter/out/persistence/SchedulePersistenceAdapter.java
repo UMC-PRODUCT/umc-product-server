@@ -1,8 +1,8 @@
 package com.umc.product.schedule.adapter.out.persistence;
 
-import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
-import com.umc.product.schedule.application.port.out.LoadSchedulePort;
-import com.umc.product.schedule.application.port.out.SaveSchedulePort;
+import com.umc.product.schedule.application.port.v2.out.DeleteSchedulePort;
+import com.umc.product.schedule.application.port.v2.out.LoadSchedulePort;
+import com.umc.product.schedule.application.port.v2.out.SaveSchedulePort;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.Instant;

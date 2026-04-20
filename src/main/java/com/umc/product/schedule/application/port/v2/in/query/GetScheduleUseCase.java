@@ -8,12 +8,10 @@ import java.util.List;
 
 public interface GetScheduleUseCase {
 
-    List<ScheduleInfo> searchMySchedules(
-        Instant from,
-        Instant to,
-        Boolean isAttendanceRequired,
-        Long memberId
-    );
+    List<ScheduleInfo> searchMySchedules(Instant from,
+                                         Instant to,
+                                         Boolean isAttendanceRequired,
+                                         Long memberId);
 
     ScheduleInfo getScheduleDetails(Long scheduleId, Long memberId);
 

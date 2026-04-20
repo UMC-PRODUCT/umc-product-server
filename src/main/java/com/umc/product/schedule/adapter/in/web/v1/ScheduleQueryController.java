@@ -3,18 +3,13 @@ package com.umc.product.schedule.adapter.in.web.v1;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.MyScheduleResponse;
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.ScheduleDetailResponse;
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.ScheduleListResponse;
-import com.umc.product.schedule.adapter.in.web.v1.mapper.ScheduleWebMapper;
 import com.umc.product.schedule.adapter.in.web.v1.swagger.ScheduleQueryControllerApi;
-import com.umc.product.schedule.application.port.in.query.GetMyScheduleUseCase;
-import com.umc.product.schedule.application.port.in.query.GetScheduleDetailUseCase;
-import com.umc.product.schedule.application.port.in.query.GetScheduleListUseCase;
-import com.umc.product.schedule.application.port.in.query.dto.MyScheduleInfo;
-import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,11 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ScheduleQueryController implements ScheduleQueryControllerApi {
 
-    private final GetScheduleListUseCase getScheduleListUseCase;
-    private final GetMyScheduleUseCase getMyScheduleUseCase;
-    private final GetScheduleDetailUseCase getScheduleDetailUseCase;
-    private final ScheduleWebMapper mapper;
-
     @Override
     @GetMapping
     @CheckAccess(
@@ -42,7 +32,7 @@ public class ScheduleQueryController implements ScheduleQueryControllerApi {
     public List<ScheduleListResponse> getScheduleList(
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        return mapper.toScheduleListResponses(getScheduleListUseCase.getAll(memberPrincipal.getMemberId()));
+        throw new NotImplementedException();
     }
 
     @Override
@@ -52,12 +42,7 @@ public class ScheduleQueryController implements ScheduleQueryControllerApi {
         @RequestParam int year,
         @RequestParam int month
     ) {
-        List<MyScheduleInfo> infos = getMyScheduleUseCase.getMyMonthlySchedules(
-            memberPrincipal.getMemberId(), year, month);
-
-        return infos.stream()
-            .map(MyScheduleResponse::from)
-            .toList();
+        throw new NotImplementedException();
     }
 
     @Override
@@ -65,7 +50,6 @@ public class ScheduleQueryController implements ScheduleQueryControllerApi {
     public ScheduleDetailResponse getScheduleDetail(
         @PathVariable Long scheduleId
     ) {
-        ScheduleDetailInfo info = getScheduleDetailUseCase.getScheduleDetail(scheduleId);
-        return ScheduleDetailResponse.from(info);
+        throw new NotImplementedException();
     }
 }

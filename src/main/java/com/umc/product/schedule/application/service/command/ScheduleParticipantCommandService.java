@@ -3,7 +3,6 @@ package com.umc.product.schedule.application.service.command;
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
-import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleParticipantUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.UpdateScheduleParticipantUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.dto.DecideAttendanceCommand;
@@ -11,6 +10,7 @@ import com.umc.product.schedule.application.port.v2.in.command.dto.ExcuseSchedul
 import com.umc.product.schedule.application.port.v2.in.command.dto.ScheduleAttendanceCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.result.ScheduleParticipantAttendanceResult;
 import com.umc.product.schedule.application.port.v2.out.LoadScheduleParticipantPort;
+import com.umc.product.schedule.application.port.v2.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.v2.out.SaveScheduleParticipantPort;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.ScheduleParticipant;

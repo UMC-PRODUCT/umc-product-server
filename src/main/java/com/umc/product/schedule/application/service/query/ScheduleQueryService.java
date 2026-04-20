@@ -1,6 +1,5 @@
 package com.umc.product.schedule.application.service.query;
 
-import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.v2.in.query.GetScheduleUseCase;
 import com.umc.product.schedule.application.port.v2.in.query.dto.AdminScheduleInfo;
 import com.umc.product.schedule.application.port.v2.in.query.dto.AdminScheduleInfo.AdminScheduleParticipantInfo;
@@ -10,6 +9,7 @@ import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleBaseInf
 import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo;
 import com.umc.product.schedule.application.port.v2.in.query.dto.ScheduleInfo.ScheduleParticipantInfo;
 import com.umc.product.schedule.application.port.v2.out.LoadScheduleParticipantPort;
+import com.umc.product.schedule.application.port.v2.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.v2.out.dto.ScheduleParticipantDetailDto;
 import com.umc.product.schedule.domain.AttendancePolicy;
 import com.umc.product.schedule.domain.Schedule;

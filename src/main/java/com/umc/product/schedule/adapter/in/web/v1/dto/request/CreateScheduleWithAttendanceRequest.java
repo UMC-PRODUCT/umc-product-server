@@ -1,7 +1,5 @@
 package com.umc.product.schedule.adapter.in.web.v1.dto.request;
 
-import com.umc.product.global.util.GeometryUtils;
-import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleWithAttendanceCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
@@ -63,20 +61,4 @@ public record CreateScheduleWithAttendanceRequest(
     @Schema(description = "승인 필요 여부", example = "true")
     boolean requiresApproval
 ) {
-    public CreateScheduleWithAttendanceCommand toCommand(Long authorMemberId) {
-        return new CreateScheduleWithAttendanceCommand(
-            name,
-            startsAt,
-            endsAt,
-            isAllDay,
-            locationName,
-            GeometryUtils.createPoint(latitude, longitude),
-            description,
-            participantMemberIds,
-            tags,
-            authorMemberId,
-            gisuId,
-            requiresApproval
-        );
-    }
 }

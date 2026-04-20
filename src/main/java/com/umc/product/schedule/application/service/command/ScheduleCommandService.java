@@ -9,17 +9,15 @@ import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.util.GeometryUtils;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
-import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
-import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
-import com.umc.product.schedule.application.port.out.LoadSchedulePort;
-import com.umc.product.schedule.application.port.out.SaveSchedulePort;
 import com.umc.product.schedule.application.port.v2.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.v2.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.v2.in.command.dto.EditScheduleCommand;
 import com.umc.product.schedule.application.port.v2.out.DeleteScheduleParticipantPort;
 import com.umc.product.schedule.application.port.v2.out.LoadScheduleParticipantPort;
+import com.umc.product.schedule.application.port.v2.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.v2.out.SaveScheduleParticipantPort;
+import com.umc.product.schedule.application.port.v2.out.SaveSchedulePort;
 import com.umc.product.schedule.domain.AttendancePolicy;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.ScheduleParticipant;
@@ -40,11 +38,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ScheduleCommandService implements CreateScheduleUseCase, UpdateScheduleUseCase, DeleteScheduleUseCase {
+public class ScheduleCommandService implements CreateScheduleUseCase, UpdateScheduleUseCase {
 
     private final SaveSchedulePort saveSchedulePort;
     private final LoadSchedulePort loadSchedulePort;
-    private final DeleteSchedulePort deleteSchedulePort;
 
     private final SaveScheduleParticipantPort saveScheduleParticipantPort;
     private final DeleteScheduleParticipantPort deleteScheduleParticipantPort;
@@ -236,33 +233,5 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         if (!participantMemberIds.contains(authorInfo.memberId())) {
             throw new ScheduleDomainException(ScheduleErrorCode.CANNOT_REMOVE_SCHEDULE_AUTHOR);
         }
-    }
-
-    // 일정 삭제
-    @Audited(
-        domain = Domain.SCHEDULE,
-        action = AuditAction.DELETE,
-        targetType = "Schedule",
-        targetId = "#scheduleId",
-        description = "'일정이 삭제되었습니다.'"
-    )
-    @Override
-    public void delete(Long scheduleId) {
-        if (!loadSchedulePort.existsById(scheduleId)) {
-            throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND);
-        }
-
-        // 해당 Schedule의 AttendanceSheet 조회
-        loadAttendanceSheetPort.findByScheduleId(scheduleId)
-            .ifPresent(sheet -> {
-                // Sheet에 연결된 모든 Record 삭제
-                deleteAttendanceRecordPort.deleteAllBySheetId(sheet.getId());
-            });
-
-        // Sheet 삭제
-        deleteAttendanceSheetPort.deleteByScheduleId(scheduleId);
-
-        // Schedule 삭제
-        deleteSchedulePort.delete(scheduleId);
     }
 }

@@ -1,7 +1,5 @@
 package com.umc.product.schedule.adapter.in.web.v1.dto.request;
 
-import com.umc.product.global.util.GeometryUtils;
-import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
@@ -55,18 +53,4 @@ public record CreateScheduleRequest(
     @Size(min = 1, message = "최소 1개 이상의 태그를 선택해야 합니다")
     Set<ScheduleTag> tags
 ) {
-    public CreateScheduleCommand toCommand(Long authorMemberId) {
-        return CreateScheduleCommand.of(
-            name,
-            startsAt,
-            endsAt,
-            isAllDay,
-            locationName,
-            GeometryUtils.createPoint(latitude, longitude),
-            description,
-            participantMemberIds,
-            tags,
-            authorMemberId
-        );
-    }
 }

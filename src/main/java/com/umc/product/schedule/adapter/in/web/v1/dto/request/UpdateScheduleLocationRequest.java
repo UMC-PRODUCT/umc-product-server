@@ -1,7 +1,5 @@
 package com.umc.product.schedule.adapter.in.web.v1.dto.request;
 
-import com.umc.product.global.util.GeometryUtils;
-import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleLocationCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -26,11 +24,4 @@ public record UpdateScheduleLocationRequest(
     @NotNull
     Double longitude
 ) {
-    public UpdateScheduleLocationCommand toCommand(Long scheduleId) {
-        return UpdateScheduleLocationCommand.of(
-            scheduleId,
-            locationName,
-            GeometryUtils.createPoint(latitude, longitude)
-        );
-    }
 }

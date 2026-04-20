@@ -1,12 +1,10 @@
 package com.umc.product.schedule.adapter.in.web.v1.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.umc.product.schedule.application.port.in.query.dto.ScheduleDetailInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Schema(description = "일정 상세 응답")
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -53,27 +51,4 @@ public record ScheduleDetailResponse(
     @Schema(description = "참여자 Member ID 목록")
     List<Long> participantMemberIds
 ) {
-
-    public static ScheduleDetailResponse from(ScheduleDetailInfo info) {
-        Set<String> tagNames = info.tags() != null
-            ? info.tags().stream().map(Enum::name).collect(Collectors.toSet())
-            : Set.of();
-
-        return new ScheduleDetailResponse(
-            info.scheduleId(),
-            info.name(),
-            info.description(),
-            tagNames,
-            info.startsAt(),
-            info.endsAt(),
-            info.isAllDay(),
-            info.locationName(),
-            info.latitude(),
-            info.longitude(),
-            info.status(),
-            info.dDay(),
-            info.requiresAttendanceApproval(),
-            info.participantMemberIds()
-        );
-    }
 }

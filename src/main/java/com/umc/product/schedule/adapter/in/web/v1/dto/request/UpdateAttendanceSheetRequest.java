@@ -1,10 +1,5 @@
 package com.umc.product.schedule.adapter.in.web.v1.dto.request;
 
-import com.umc.product.schedule.application.port.in.command.dto.UpdateAttendanceSheetCommand;
-import com.umc.product.schedule.domain.AttendanceSheet.AttendanceSheetId;
-import com.umc.product.schedule.domain.exception.ScheduleDomainException;
-import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
-import com.umc.product.schedule.domain.vo.AttendanceWindow;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
@@ -22,26 +17,4 @@ public record UpdateAttendanceSheetRequest(
     @Schema(description = "승인 필요 여부", example = "true")
     boolean requiresApproval
 ) {
-    public UpdateAttendanceSheetRequest {
-        if (startTime == null || endTime == null) {
-            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
-        }
-
-        if (lateThresholdMinutes == null) {
-            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_LATE_THRESHOLD);
-        }
-
-        if (startTime.isAfter(endTime)) {
-            throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
-        }
-    }
-
-    public UpdateAttendanceSheetCommand toCommand(Long sheetId) {
-        AttendanceWindow window = AttendanceWindow.from(
-            startTime,
-            endTime,
-            lateThresholdMinutes
-        );
-        return new UpdateAttendanceSheetCommand(new AttendanceSheetId(sheetId), window, requiresApproval);
-    }
 }

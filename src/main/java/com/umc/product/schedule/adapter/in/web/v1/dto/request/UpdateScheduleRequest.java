@@ -1,7 +1,5 @@
 package com.umc.product.schedule.adapter.in.web.v1.dto.request;
 
-import com.umc.product.global.util.GeometryUtils;
-import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
@@ -49,18 +47,4 @@ public record UpdateScheduleRequest(
     @Schema(description = "참여자 멤버 ID 목록 (null이면 기존 명단 유지)", example = "[1, 2, 3]")
     List<Long> participantMemberIds
 ) {
-    public UpdateScheduleCommand toCommand(Long scheduleId) {
-        return UpdateScheduleCommand.of(
-            scheduleId,
-            name,
-            startsAt,
-            endsAt,
-            isAllDay,
-            locationName,
-            GeometryUtils.createPoint(latitude, longitude),
-            description,
-            tags,
-            participantMemberIds
-        );
-    }
 }
