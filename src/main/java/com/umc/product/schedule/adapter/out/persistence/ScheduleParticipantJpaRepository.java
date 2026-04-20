@@ -7,10 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ScheduleParticipantJpaRepository extends JpaRepository<ScheduleParticipant, Long> {
 
-    List<ScheduleParticipant> saveAll(List<ScheduleParticipant> participants);
-
-    void deleteAll(List<ScheduleParticipant> participants);
-
     List<ScheduleParticipant> findAllByScheduleId(Long scheduleId);
 
     Optional<ScheduleParticipant> findByScheduleIdAndMemberId(Long scheduleId, Long memberId);
