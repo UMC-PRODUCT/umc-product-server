@@ -1,5 +1,6 @@
 package com.umc.product.curriculum.application.port.in.command.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
@@ -10,7 +11,7 @@ import lombok.Builder;
  *
  * @param challengerWorkbookId   인정 처리 대상 챌린저 워크북 ID
  * @param excuseApprovedMemberId 요청 운영진의 멤버 ID (권한 확인용)
- * @param reason                 인정 처리 사유
+ * @param reason                 인정 처리 사유 (필수)
  */
 @Builder
 public record ExcuseChallengerWorkbookCommand(
@@ -20,6 +21,7 @@ public record ExcuseChallengerWorkbookCommand(
     @NotNull(message = "멤버 ID는 필수입니다")
     Long excuseApprovedMemberId,
 
+    @NotBlank(message = "인정 사유는 필수입니다.")
     String reason
 ) {
 }

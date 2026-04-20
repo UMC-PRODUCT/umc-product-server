@@ -1,5 +1,6 @@
 package com.umc.product.curriculum.application.port.in.command.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
@@ -26,6 +27,7 @@ public record CreateWeeklyBestWorkbookCommand(
     @NotNull(message = "스터디 그룹 ID는 필수입니다")
     Long studyGroupId,
 
+    @NotBlank(message = "선정 이유는 필수입니다.")
     String reason
 ) {
 }

@@ -1,5 +1,6 @@
 package com.umc.product.curriculum.application.port.in.command.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
@@ -18,6 +19,7 @@ public record EditWeeklyBestWorkbookCommand(
     @NotNull(message = "멤버 ID는 필수입니다")
     Long operatorMemberId,
 
+    @NotBlank(message = "선정 이유는 필수입니다.")
     String newReason
 ) {
 }

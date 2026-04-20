@@ -2,8 +2,9 @@ package com.umc.product.curriculum.application.port.in.command.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.time.Instant;
 import lombok.Builder;
+
+import java.time.Instant;
 
 /**
  * 주차별 커리큘럼 생성 커맨드
@@ -23,7 +24,8 @@ public record CreateWeeklyCurriculumCommand(
     @NotNull(message = "주차 번호는 필수입니다")
     Long weekNo,
 
-    boolean isExtra,
+    @NotNull(message = "부록 여부는 필수입니다.")
+    Boolean isExtra,
 
     @NotBlank(message = "제목은 필수입니다")
     String title,
