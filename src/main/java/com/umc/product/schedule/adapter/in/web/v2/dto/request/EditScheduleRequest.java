@@ -73,6 +73,7 @@ public record EditScheduleRequest(
             .location(location)
             .isOnline(isOnline)
             .attendancePolicy(attendancePolicy)
+            .isAttendanceRequired(isAttendanceRequired)
             .participantMemberIds(participants)
             .build();
     }

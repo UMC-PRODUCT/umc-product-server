@@ -116,9 +116,13 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             schedule.convertToOnline();
         }
 
+        AttendancePolicy newPolicy = null;
         // 출석 O -> 출석 X 전환 시
         if (Boolean.FALSE.equals(command.isAttendanceRequired())) {
             schedule.removeAttendancePolicy();
+        } else {
+            // 출석 해제가 아닐 때만 프론트가 보낸 데이터 파싱
+            newPolicy = createPolicyFromCommand(command, schedule);
         }
 
         // 일반 필드 업데이트 (대면/비대면 유지 또는 비대면 -> 대면 포함)
