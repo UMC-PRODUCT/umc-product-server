@@ -36,11 +36,6 @@ public class ScheduleParticipantCommandService implements
 
     private final GetMemberUseCase getMemberUseCase;
 
-    private static void checkSchedulePolicyExists(Schedule schedule) {
-        if (schedule.getPolicy() == null) {
-            throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST);
-        }
-    }
 
     // 출석 요청
     @Override
@@ -151,5 +146,11 @@ public class ScheduleParticipantCommandService implements
             return GeometryUtils.createPoint(latitude, longitude);
         }
         return null;
+    }
+
+    private static void checkSchedulePolicyExists(Schedule schedule) {
+        if (schedule.getPolicy() == null) {
+            throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST);
+        }
     }
 }

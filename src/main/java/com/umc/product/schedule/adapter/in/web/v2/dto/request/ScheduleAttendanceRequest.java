@@ -1,5 +1,6 @@
 package com.umc.product.schedule.adapter.in.web.v2.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.umc.product.schedule.application.port.in.command.dto.ScheduleAttendanceCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
@@ -10,6 +11,7 @@ public record ScheduleAttendanceRequest(
     // 클라이언트 측에서 받은 위치 인증 여부
     @Schema(description = "클라이언트 측의 위치 인증 여부, 비대면 일정일 경우 false", example = "true")
     @NotNull(message = "위치 인증 여부는 필수입니다.")
+    @JsonProperty("isVerified")
     boolean isVerified,
 
     // === 위치 정보 ===
