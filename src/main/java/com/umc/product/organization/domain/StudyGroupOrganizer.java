@@ -36,8 +36,7 @@ public class StudyGroupOrganizer extends BaseEntity {
         this.memberId = memberId;
     }
 
-    public StudyGroupOrganizer create(StudyGroup studyGroup, Long memberId) {
-
+    public static StudyGroupOrganizer create(StudyGroup studyGroup, Long memberId) {
         return StudyGroupOrganizer.builder()
             .studyGroup(studyGroup)
             .memberId(memberId)

@@ -4,6 +4,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -22,14 +23,15 @@ public record CreateStudyGroupRequest(
         ChallengerPart part,
 
         @Schema(description = "파트장 챌린저 ID", example = "101")
-        @NotNull(message = "파트장 ID는 필수입니다")
+        @NotEmpty
         @Positive(message = "파트장 ID는 양수여야 합니다")
-        Long leaderId,
+        Set<Long> organizationIds,
 
         @Schema(description = "스터디원 챌린저 ID 목록", example = "[102, 103, 104]")
+        @NotEmpty
         Set<Long> memberIds
 ) {
     public CreateStudyGroupCommand toCommand() {
-        return new CreateStudyGroupCommand(name, part, leaderId, memberIds != null ? memberIds : new HashSet<>());
+        return new CreateStudyGroupCommand(name, part, organizationIds, memberIds != null ? memberIds : new HashSet<>());
     }
 }

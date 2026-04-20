@@ -45,11 +45,11 @@ public class StudyGroupMember extends BaseEntity {
         this.isLeader = isLeader;
     }
 
-    public static StudyGroupMember create(StudyGroup studyGroup, Long memberId, boolean isLeader) {
+    public static StudyGroupMember create(StudyGroup studyGroup, Long memberId) {
         return StudyGroupMember.builder()
             .studyGroup(studyGroup)
             .memberId(memberId)
-            .isLeader(isLeader)
+            .isLeader(false)
             .build();
     }
 
@@ -58,15 +58,8 @@ public class StudyGroupMember extends BaseEntity {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_REQUIRED);
         }
         if (memberId == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.MEMBER_ID_REQUIRED);
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_ID_REQUIRED);
         }
     }
 
-    public void assignAsLeader() {
-        this.isLeader = true;
-    }
-
-    public void removeAsLeader() {
-        this.isLeader = false;
-    }
 }

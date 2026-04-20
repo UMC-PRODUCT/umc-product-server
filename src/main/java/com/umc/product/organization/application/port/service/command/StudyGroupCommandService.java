@@ -11,10 +11,6 @@ import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.StudyGroup;
-import com.umc.product.organization.exception.OrganizationDomainException;
-import com.umc.product.organization.exception.OrganizationErrorCode;
-import java.util.HashSet;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,21 +23,14 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
     private final LoadStudyGroupPort loadStudyGroupPort;
     private final LoadGisuPort loadGisuPort;
     private final ManageStudyGroupPort manageStudyGroupPort;
-    private final LoadChallengerPort loadChallengerPort;
 
     @Override
     public void create(CreateStudyGroupCommand command) {
-        validateChallengerIdsExist(command.leaderId(), command.memberIds());
-
+        // TODO: gisuInfo로 수정해야함
         Gisu gisu = loadGisuPort.findActiveGisu();
 
-        StudyGroup studyGroup = StudyGroup.create(command.name(), gisu, command.part());
-
-        studyGroup.addLeader(command.leaderId());
-
-        if (command.memberIds() != null) {
-            command.memberIds().forEach(studyGroup::addMember);
-        }
+        StudyGroup studyGroup = StudyGroup.create(command.name(), gisu.getId(), command.part(),
+            command.organizerIds(), command.memberIds());
 
         manageStudyGroupPort.save(studyGroup);
     }
@@ -76,24 +65,4 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
         manageStudyGroupPort.delete(studyGroup);
     }
 
-    private void validateChallengerIdsExist(Long leaderId, Set<Long> memberIds) {
-        Set<Long> challengerIds = new HashSet<>();
-        challengerIds.add(leaderId);
-        if (memberIds != null) {
-            challengerIds.addAll(memberIds);
-        }
-        validateChallengerIdsExist(challengerIds);
-    }
-
-    private void validateChallengerIdsExist(Set<Long> challengerIds) {
-        if (challengerIds == null || challengerIds.isEmpty()) {
-            return;
-        }
-
-        Long count = loadChallengerPort.countByIdIn(challengerIds);
-
-        if (count != challengerIds.size()) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_CHALLENGER_INVALID);
-        }
-    }
 }

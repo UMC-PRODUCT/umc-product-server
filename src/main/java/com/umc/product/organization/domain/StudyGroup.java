@@ -16,6 +16,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -30,6 +31,9 @@ public class StudyGroup extends BaseEntity {
 
     @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<StudyGroupOrganizer> studyGroupOrganizer = new ArrayList<>();
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,12 +57,35 @@ public class StudyGroup extends BaseEntity {
         this.part = part;
     }
 
-    public static StudyGroup create(String name, Long gisu_id, ChallengerPart part) {
-        return StudyGroup.builder()
+    public static StudyGroup create(String name, Long gisu_id, ChallengerPart part, Set<Long> organizerIds, Set<Long> memberIds) {
+        if(organizerIds == null || organizerIds.isEmpty()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_ORGANIZER_REQUIRED);
+        }
+        if(memberIds == null || memberIds.isEmpty()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED);
+        }
+
+        StudyGroup group = StudyGroup.builder()
             .name(name)
             .gisu_id(gisu_id)
             .part(part)
             .build();
+
+        organizerIds.forEach(group::addOrganizer);
+        memberIds.forEach(group::addStudyGroupMember);
+
+        return group;
+    }
+
+    private void addStudyGroupMember(Long StudyGroupMemberId) {
+        this.studyGroupMembers.add(StudyGroupMember.create(this, StudyGroupMemberId));
+    }
+
+    private void addOrganizer(Long organizerId) {
+        if(organizerId == null) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_ORGANIZER_ID_REQUIRED);
+        }
+        this.studyGroupOrganizer.add(StudyGroupOrganizer.create(this, organizerId));
     }
 
     private static void validate(String name, Long gisu_id, ChallengerPart part) {
@@ -75,18 +102,6 @@ public class StudyGroup extends BaseEntity {
 
     // ============ Domain Methods (Aggregate Root Pattern) ============
 
-    /**
-     * 현재 스터디장 조회
-     *
-     * @return 스터디장 멤버
-     */
-    public StudyGroupMember getLeader() {
-        return studyGroupMembers.stream()
-            .filter(StudyGroupMember::isLeader)
-            .findFirst()
-            .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_LEADER_REQUIRED));
-    }
-
     public void updateName(String name) {
         if(StringUtils.hasText(name)) {
             this.name = name;
@@ -98,8 +113,6 @@ public class StudyGroup extends BaseEntity {
     }
 
     // 동일한 기수에는 동일한 파트의 스터디 그룹 2개 이상 소속될 수 없다.
-    // 스터디를 만들 때 파트장은 최소 1명 이상이여야 한다.
     // 스터디 그룹을 생성할 수 있는 권한은 파트장 직책을 가지고 있다면 가능하다.
-
 
 }

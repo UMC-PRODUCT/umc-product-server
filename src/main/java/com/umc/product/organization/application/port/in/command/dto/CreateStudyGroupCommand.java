@@ -1,12 +1,19 @@
 package com.umc.product.organization.application.port.in.command.dto;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import java.util.Objects;
 import java.util.Set;
 
 public record CreateStudyGroupCommand(
         String name,
         ChallengerPart part,
-        Long leaderId,
+        Set<Long> organizerIds,
         Set<Long> memberIds
 ) {
+    public CreateStudyGroupCommand {
+        Objects.requireNonNull(name, "스터디 그룹 이름은 필수입니다.");
+        Objects.requireNonNull(part, "챌린저 파트는 필수입니다.");
+        organizerIds = organizerIds != null ? organizerIds : Set.copyOf(organizerIds);
+        memberIds = memberIds != null ? memberIds : Set.copyOf(memberIds);
+    }
 }
