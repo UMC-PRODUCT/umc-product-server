@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
+@RestController("attendanceSheetControllerV1")
 @RequestMapping("/api/v1/schedules")
 @RequiredArgsConstructor
 public class AttendanceSheetController implements AttendanceSheetControllerApi {

@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController
+@RestController("attendanceControllerV1")
 @RequestMapping("/api/v1/attendances")
 @RequiredArgsConstructor
 public class AttendanceController implements AttendanceControllerApi {
