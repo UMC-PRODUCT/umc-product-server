@@ -9,17 +9,13 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -38,37 +34,37 @@ public class StudyGroup extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "gisu_id")
-    private Gisu gisu;
+    @Column(nullable = false)
+    private Long gisu_id;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ChallengerPart part;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private StudyGroup(String name, Gisu gisu, ChallengerPart part) {
-        validate(name, gisu, part);
+    private StudyGroup(String name, Long gisu_id, ChallengerPart part) {
+        validate(name, gisu_id, part);
         this.name = name;
-        this.gisu = gisu;
+        this.gisu_id = gisu_id;
         this.part = part;
     }
 
-    public static StudyGroup create(String name, Gisu gisu, ChallengerPart part) {
+    public static StudyGroup create(String name, Long gisu_id, ChallengerPart part) {
         return StudyGroup.builder()
             .name(name)
-            .gisu(gisu)
+            .gisu_id(gisu_id)
             .part(part)
             .build();
     }
 
-    private static void validate(String name, Gisu gisu, ChallengerPart part) {
+    private static void validate(String name, Long gisu_id, ChallengerPart part) {
         if (name == null || name.isBlank()) {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
         }
-        if (gisu == null) {
+        if (gisu_id == null) {
             throw new OrganizationDomainException(OrganizationErrorCode.GISU_REQUIRED);
         }
         if (part == null) {
@@ -79,93 +75,9 @@ public class StudyGroup extends BaseEntity {
     // ============ Domain Methods (Aggregate Root Pattern) ============
 
     /**
-     * 스터디 그룹에 리더 추가
+     * 현재 스터디장 조회
      *
-     * @param challengerId 추가할 챌린저 ID
-     */
-    public void addLeader(Long challengerId) {
-        throwIfMemberAlreadyExists(challengerId);
-        studyGroupMembers.add(StudyGroupMember.create(this, challengerId, true));
-    }
-
-    /**
-     * 스터디 그룹에 일반 멤버 추가
-     *
-     * @param challengerId 추가할 챌린저 ID
-     */
-    public void addMember(Long challengerId) {
-        throwIfMemberAlreadyExists(challengerId);
-        studyGroupMembers.add(StudyGroupMember.create(this, challengerId, false));
-    }
-
-    /**
-     * 스터디 그룹에서 멤버 제거
-     *
-     * @param challengerId 제거할 챌린저 ID
-     */
-    public void removeMember(Long challengerId) {
-        StudyGroupMember member = findMemberByChallengerId(challengerId);
-        studyGroupMembers.remove(member);
-    }
-
-    /**
-     * 스터디 그룹 멤버 목록 전체 교체
-     *
-     * @param challengerIds 새로운 멤버 ID 목록
-     */
-    public void replaceMembersExcludingLeader(Set<Long> challengerIds) {
-        Long leaderId = getLeader().getChallengerId();
-
-        if (challengerIds.contains(leaderId)) {
-            throw new OrganizationDomainException(OrganizationErrorCode.LEADER_CANNOT_BE_MEMBER);
-        }
-
-        studyGroupMembers.clear();
-
-        addLeader(leaderId);
-        challengerIds.forEach(this::addMember);
-    }
-
-    /**
-     * 스터디 그룹 이름 변경
-     *
-     * @param newName 새로운 이름
-     */
-    public void updateName(String newName) {
-        if (newName == null || newName.isBlank()) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
-        }
-        this.name = newName;
-    }
-
-    /**
-     * 스터디 그룹 파트 변경
-     *
-     * @param newPart 새로운 파트
-     */
-    public void updatePart(ChallengerPart newPart) {
-        if (newPart == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.PART_REQUIRED);
-        }
-        this.part = newPart;
-    }
-
-    /**
-     * 리더 지정
-     *
-     * @param challengerId 리더로 지정할 챌린저 ID
-     */
-    public void assignLeader(Long challengerId) {
-        // 기존 리더 해제
-        getLeader().removeAsLeader();
-        // 새 리더 지정
-        findMemberByChallengerId(challengerId).assignAsLeader();
-    }
-
-    /**
-     * 현재 리더 조회
-     *
-     * @return 리더 멤버
+     * @return 스터디장 멤버
      */
     public StudyGroupMember getLeader() {
         return studyGroupMembers.stream()
@@ -174,38 +86,9 @@ public class StudyGroup extends BaseEntity {
             .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_LEADER_REQUIRED));
     }
 
-    /**
-     * 특정 챌린저가 이 그룹의 멤버인지 확인
-     *
-     * @param challengerId 확인할 챌린저 ID
-     * @return 멤버 여부
-     */
-    public boolean hasMember(Long challengerId) {
-        return studyGroupMembers.stream()
-            .anyMatch(member -> member.getChallengerId().equals(challengerId));
-    }
+    // 동일한 기수에는 동일한 파트의 스터디 그룹 2개 이상 소속될 수 없다.
+    // 스터디를 만들 때 파트장은 최소 1명 이상이여야 한다.
+    // 스터디 그룹을 생성할 수 있는 권한은 파트장 직책을 가지고 있다면 가능하다.
 
-    /**
-     * 멤버 수 조회
-     *
-     * @return 현재 멤버 수
-     */
-    public int getMemberCount() {
-        return studyGroupMembers.size();
-    }
-
-    private void throwIfMemberAlreadyExists(Long challengerId) {
-        if (hasMember(challengerId)) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_ALREADY_EXISTS);
-        }
-    }
-
-    private StudyGroupMember findMemberByChallengerId(Long challengerId) {
-        return studyGroupMembers.stream()
-            .filter(member -> member.getChallengerId().equals(challengerId))
-            .findFirst()
-            .orElseThrow(
-                () -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_NOT_FOUND));
-    }
 
 }

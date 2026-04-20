@@ -1,7 +1,8 @@
 package com.umc.product.curriculum.domain;
 
 import com.umc.product.common.BaseEntity;
-import com.umc.product.curriculum.domain.enums.MissionType;
+import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
+import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -30,96 +31,58 @@ public class OriginalWorkbook extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "curriculum_id", nullable = false)
-    private Curriculum curriculum;
+    @JoinColumn(name = "weekly_curriculum_id", nullable = false)
+    private WeeklyCurriculum weeklyCurriculum;
 
-    @Column(nullable = false)
+    @Column(name = "title", nullable = false)
     private String title;
 
+    // 워크북에 대한 간단한 설명
+    @Column(name = "description")
     private String description;
 
-    private String workbookUrl;
+    @Column(name = "url")
+    private String url;
 
-    @Column(nullable = false)
-    private Integer weekNo;
+    //    OriginalWorkbookStatus이 DRAFT, FINAL이 있다면 FINAL만 release할 수 있도록 할 지?
+    //    주차를 한번에 release하게할 까요 originalWorkbook을 하나씩 release하게 할까 고민
+    @Enumerated(EnumType.STRING)
+    @Column(name = "original_workbook_status", nullable = false)
+    private OriginalWorkbookStatus originalWorkbookStatus;
 
-    @Column(nullable = false)
-    private Instant startDate;
+    @Column(name = "content", columnDefinition = "TEXT")
+    private String content;
 
-    @Column(nullable = false)
-    private Instant endDate;
+    private Instant releasedAt;
+    private Long releasedMemberId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private MissionType missionType;
-
-    private Instant releasedAt;
+    private OriginalWorkbookType type;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private OriginalWorkbook(Curriculum curriculum, String title, String description,
-                             String workbookUrl, Integer weekNo, Instant startDate,
-                             Instant endDate, MissionType missionType) {
-        this.curriculum = curriculum;
+    private OriginalWorkbook(
+        WeeklyCurriculum weeklyCurriculum,
+        String title, String description,
+        String url, String content, OriginalWorkbookType type
+    ) {
+        this.weeklyCurriculum = weeklyCurriculum;
         this.title = title;
         this.description = description;
-        this.workbookUrl = workbookUrl;
-        this.weekNo = weekNo;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.missionType = missionType;
-        this.releasedAt = null;
+        this.url = url;
+        this.content = content;
+        this.originalWorkbookStatus = OriginalWorkbookStatus.DRAFT;
+        this.type = type
     }
 
-    public static OriginalWorkbook create(Curriculum curriculum, Integer weekNo, String title,
-                                          String description, String workbookUrl,
-                                          Instant startDate, Instant endDate,
-                                          MissionType missionType) {
+    public static OriginalWorkbook create(WeeklyCurriculum weeklyCurriculum, String title, String description,
+                                          String url, String content) {
         return OriginalWorkbook.builder()
-                .curriculum(curriculum)
-                .weekNo(weekNo)
-                .title(title)
-                .description(description)
-                .workbookUrl(workbookUrl)
-                .startDate(startDate)
-                .endDate(endDate)
-                .missionType(missionType)
-                .build();
-    }
-
-    /**
-     * 워크북 배포
-     */
-    public void release() {
-        this.releasedAt = Instant.now();
-    }
-
-    /**
-     * 워크북 배포 여부 확인
-     */
-    public boolean isReleased() {
-        return this.releasedAt != null;
-    }
-
-    /**
-     * 워크북 URL 업데이트
-     */
-    public void updateWorkbookUrl(String workbookUrl) {
-        this.workbookUrl = workbookUrl;
-    }
-
-    /**
-     * 워크북 정보 업데이트
-     * null인 필드는 기존 값을 유지
-     */
-    public void update(String title, String description, String workbookUrl,
-                       Integer weekNo, Instant startDate, Instant endDate,
-                       MissionType missionType) {
-        this.title = title;
-        this.description = description;
-        this.workbookUrl = workbookUrl;
-        this.weekNo = weekNo;
-        this.startDate = startDate != null ? startDate : this.startDate;
-        this.endDate = endDate != null ? endDate : this.endDate;
-        this.missionType = missionType != null ? missionType : this.missionType;
+            .weeklyCurriculum(weeklyCurriculum)
+            .title(title)
+            .description(description)
+            .url(url)
+            .content(content)
+            .build();
     }
 }

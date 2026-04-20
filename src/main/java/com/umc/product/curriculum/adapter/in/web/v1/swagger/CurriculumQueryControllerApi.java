@@ -4,7 +4,6 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumProgressResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.CurriculumWeeksResponse;
-import com.umc.product.curriculum.adapter.in.web.v2.swagger.CurriculumQueryV2ControllerApi;
 import com.umc.product.global.security.MemberPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,7 +15,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 public interface CurriculumQueryControllerApi {
 
     /**
-     * @see CurriculumQueryControllerApiV2
      * @since 1.3.0
      * @deprecated {@code GET /api/v2/curriculums/{gisuId}?part={part}} 사용 권장. v2는 gisuId를 직접 지정하여 특정 기수의 커리큘럼 조회 가능.
      */
@@ -61,7 +59,6 @@ public interface CurriculumQueryControllerApi {
     CurriculumProgressResponse getMyProgress(MemberPrincipal memberPrincipal);
 
     /**
-     * @see CurriculumQueryV2ControllerApi
      * @since 1.3.0
      * @deprecated {@code GET /api/v2/curriculums/{gisuId}?part={part}} 사용 권장. v2 응답의 workbooks 필드에 weekNo, title이 포함되어
      * 있습니다.
