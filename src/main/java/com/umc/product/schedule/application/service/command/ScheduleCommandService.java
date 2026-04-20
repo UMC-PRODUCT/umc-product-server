@@ -102,10 +102,10 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     @Override
     public Long update(EditScheduleCommand command) {
 
-        command.validate();
-
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+
+        command.validate();
 
         if (schedule.getEndsAt().isBefore(Instant.now())) {
             throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_ENDED, "종료된 일정은 수정 불가합니다.");
@@ -114,6 +114,11 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         // 대면 -> 비대면 전환 시
         if (command.isChangingToOnline()) {
             schedule.convertToOnline();
+        }
+
+        // 출석 O -> 출석 X 전환 시
+        if (Boolean.FALSE.equals(command.isAttendanceRequired())) {
+            schedule.removeAttendancePolicy();
         }
 
         // 일반 필드 업데이트 (대면/비대면 유지 또는 비대면 -> 대면 포함)
@@ -138,9 +143,6 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
                 updateParticipants(schedule, command);
             }
         }
-
-        // 참여자 update
-        updateParticipants(schedule, command);
 
         // 일정 update
         saveSchedulePort.save(schedule);

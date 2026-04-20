@@ -84,7 +84,7 @@ spring:
     # database-platform은 SpringBoot가 hibernate-spatial 의존성을 기반으로 자동으로 선택함
     # 따라서 포함하지 않도록 함.
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     open-in-view: false
     properties:
       hibernate:

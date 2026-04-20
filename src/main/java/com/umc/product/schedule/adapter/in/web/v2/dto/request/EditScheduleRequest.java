@@ -39,18 +39,18 @@ public record EditScheduleRequest(
     ScheduleLocationRequest location,
 
     // patch 요청에서 대면 일정의 위치를 유지하거나, 대면 일정을 비대면 일정을 바꾸는 경우를 고려햐여, 명시적 플래그 필드를 추가합니다.
-    // null : 변경 X, true : 비대면으로 변경, false : 대면으로 변경
-    @Schema(description = """
-        null : 변경 X, true : 대면 -> 비대면으로 변경, false : 비대면 -> 대면으로 변경
-        """)
-    Boolean isOnline, // 대면/비대면 구분
+    @Schema(description = "null: 유지, true: 비대면으로 변경, false: 대면으로 변경")
+    Boolean isOnline,
 
     ScheduleAttendancePolicyRequest attendancePolicy,
+
+    @Schema(description = "null: 유지, true: 출석 필요로 변경, false: 출석 불필요로 변경")
+    Boolean isAttendanceRequired, // 명시적 플래그 추가
+
     // 참여자는 중복되지 않도록 Set으로 받습니다.
     // 참여자 목록에는 반드시 요청한 사용자가 포함되어 있어야 하며,
     // 서버 측 생성자에서 add()를 통해서 강제로 참여시켜야 합니다.
     // (기획단 변경이 있기 전까지는 해당 사항을 유지합니다.)
-
     @Schema(description = "참여자 Member ID 목록", example = "[1, 2, 4]")
     Set<Long> participantMemberIds
 ) {

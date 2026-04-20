@@ -18,12 +18,9 @@ public record EditScheduleCommand(
     Instant startsAt,
     Instant endsAt,
     ScheduleLocationRequest location,
-    // patch 요청에서 대면 일정의 위치를 유지하거나, 대면 일정을 비대면 일정을 바꾸는 경우를 고려햐여, 명시적 플래그 필드를 추가합니다.
-    // null : 대면 유지 or 비대면 유지
-    // true : 비대면으로 변경
-    // false : 대면으로 변경
-    Boolean isOnline, // 대면/비대면 구분
+    Boolean isOnline,
     ScheduleAttendancePolicyRequest attendancePolicy,
+    Boolean isAttendanceRequired,
     Set<Long> participantMemberIds
 ) {
 
@@ -33,14 +30,22 @@ public record EditScheduleCommand(
         return participantMemberIds != null;
     }
 
-    // 대면 변경 여부 확인
+    // 장소 관련 판단
     public boolean isChangingToOffline() {
         return Boolean.FALSE.equals(isOnline);
     }
 
-    // 비대면 변경 여부 확인
     public boolean isChangingToOnline() {
         return Boolean.TRUE.equals(isOnline);
+    }
+
+    // 출석 정책 관련 판단
+    public boolean isChangingToAttendanceRequired() {
+        return Boolean.TRUE.equals(isAttendanceRequired);
+    }
+
+    public boolean isChangingToAttendanceNotRequired() {
+        return Boolean.FALSE.equals(isAttendanceRequired);
     }
 
     // 검증
@@ -55,5 +60,9 @@ public record EditScheduleCommand(
             throw new ScheduleDomainException(ScheduleErrorCode.ONLINE_SCHEDULE_SHOULD_NOT_HAVE_LOCATION);
         }
 
+        // 출석 필요로 변경하는데 정책 데이터가 없으면 에러
+        if (isChangingToAttendanceRequired() && attendancePolicy == null) {
+            throw new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_POLICY_REQUIRED);
+        }
     }
 }

@@ -262,5 +262,8 @@ public class Schedule extends BaseEntity {
         this.locationName = null;
     }
 
-    // TODO: v1 단계에서 사용되던 메소드들은 전부 제거하였습니다. 터지는 부분 모두 수정해주세요.
+    // 출석을 요하지 않는 일정으로 변환 시 사용
+    public void removeAttendancePolicy() {
+        this.policy = null;
+    }
 }

@@ -93,6 +93,7 @@ public enum ScheduleErrorCode implements BaseCode {
     NOT_ACTIVE_GISU_SCHEDULE(HttpStatus.BAD_REQUEST, "SCHEDULE-0049",
         "현재 기수의 일정만 생성할 수 있습니다."),
     NOT_SCHEDULE_PARTICIPANT(HttpStatus.BAD_REQUEST, "SCHEDULE-0050", "일정의 참여자가 아닙니다."),
+    ATTENDANCE_POLICY_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0051", "출석을 요하는 일정의 출석 정책은 필수입니다."),
 
     ;
     private final HttpStatus httpStatus;
