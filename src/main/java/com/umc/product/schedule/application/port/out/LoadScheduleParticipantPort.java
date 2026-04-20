@@ -5,6 +5,7 @@ import com.umc.product.schedule.domain.ScheduleParticipant;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public interface LoadScheduleParticipantPort {
 
@@ -20,4 +21,7 @@ public interface LoadScheduleParticipantPort {
 
     List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleIdAndStatus(Long scheduleId,
                                                                                    AttendanceStatus attendanceStatus);
+
+    // 일정의 참여자들의 memnerId를 조회합니다.
+    Set<Long> findMemberIdsByScheduleId(Long scheduleId);
 }

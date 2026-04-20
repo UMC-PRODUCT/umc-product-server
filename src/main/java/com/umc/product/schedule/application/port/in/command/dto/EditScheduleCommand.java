@@ -27,8 +27,9 @@ public record EditScheduleCommand(
     Set<Long> participantMemberIds
 ) {
 
-    // 참여자가 변경되었는지 확인
-    public boolean hasParticipantsChange() {
+    // 참여자가 변경이 요청되었는지 확인, 즉 request의 participantMemberIds가 null이 아닌지 확인
+    // 실제로 변경되었는지는 service 단에서 판별합니다.
+    public boolean isParticipantsUpdateRequested() {
         return participantMemberIds != null;
     }
 

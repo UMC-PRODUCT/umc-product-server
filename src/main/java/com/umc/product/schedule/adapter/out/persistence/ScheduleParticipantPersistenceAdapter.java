@@ -8,6 +8,7 @@ import com.umc.product.schedule.domain.ScheduleParticipant;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -63,5 +64,10 @@ public class ScheduleParticipantPersistenceAdapter implements
     public List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleIdAndStatus(Long scheduleId,
                                                                                           AttendanceStatus attendanceStatus) {
         scheduleParticipantQueryRepository.findParticipantDetailsByScheduleIdAndStatus(scheduleId, attendanceStatus);
+    }
+
+    @Override
+    public Set<Long> findMemberIdsByScheduleId(Long scheduleId) {
+        return scheduleParticipantQueryRepository.findMemberIdsByScheduleId(scheduleId);
     }
 }

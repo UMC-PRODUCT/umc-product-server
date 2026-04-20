@@ -7,7 +7,9 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.schedule.application.port.out.dto.ScheduleParticipantDetailDto;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -99,5 +101,15 @@ public class ScheduleParticipantQueryRepository {
                 attendanceStatus != null ? scheduleParticipant.attendance.status.eq(attendanceStatus) : null
             )
             .fetch();
+    }
+
+    public Set<Long> findMemberIdsByScheduleId(Long scheduleId) {
+        return new HashSet<>(
+            queryFactory
+                .select(scheduleParticipant.memberId)
+                .from(scheduleParticipant)
+                .where(scheduleParticipant.schedule.id.eq(scheduleId))
+                .fetch()
+        );
     }
 }
