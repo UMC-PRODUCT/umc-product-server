@@ -12,7 +12,7 @@ import java.util.List;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Tag(name = "Schedule | 일정 Query", description = "")
+@Tag(name = "Schedule V1 | 일정 Query", description = "")
 public interface ScheduleQueryControllerApi {
 
     @Operation(summary = "출석 통계와 함께 일정 목록 조회",

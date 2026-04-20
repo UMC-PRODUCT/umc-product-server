@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
-@Tag(name = "Schedule | 출석부", description = "")
+@Tag(name = "Schedule V1 | 출석부", description = "")
 public interface AttendanceSheetControllerApi {
 
     @Operation(summary = "출석부 수정", description = "출석부 설정을 수정합니다")

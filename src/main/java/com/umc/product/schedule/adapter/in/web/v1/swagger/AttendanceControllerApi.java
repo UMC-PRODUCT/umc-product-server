@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 
-@Tag(name = "Schedule | 출석 체크", description = "")
+@Tag(name = "Schedule V1 | 출석 체크", description = "")
 public interface AttendanceControllerApi {
 
     @Operation(summary = "출석 체크", description = "현재 시간 기준으로 출석 체크를 수행합니다")
