@@ -77,10 +77,10 @@ public class ScheduleQueryRepository {
 
     // ======= 동적 조건 Helper Method =======
 
-    // 기간 필터, 상태 필터, 승인 대기 건 표시 로직 조합 메서드
+    // 기간 조건, 상태 필터, 승인 대기 건 표시 로직 조합 메서드
     private BooleanExpression createDateOrPendingCondition(Instant from, Instant to,
                                                            AttendanceStatus attendanceStatus) {
-        // 기간 필터
+        // 기간 조건
         BooleanExpression dateCondition = null;
         if (from != null && to != null) {
             dateCondition = schedule.startsAt.between(from, to);
@@ -90,7 +90,7 @@ public class ScheduleQueryRepository {
             dateCondition = schedule.startsAt.loe(to);
         }
 
-        // 승인 대기 필터 - 기간 상관 없이 이 상태는 무조건 조회되어야 함
+        // 승인 대기 조건 - 기간 상관 없이 이 상태는 무조건 조회되어야 함
         BooleanExpression pendingCondition = scheduleParticipant.attendance.status.in(
             AttendanceStatus.PRESENT_PENDING,
             AttendanceStatus.LATE_PENDING,
