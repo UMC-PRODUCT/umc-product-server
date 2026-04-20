@@ -55,8 +55,9 @@ public class VoteQueryService implements GetVoteDetailUseCase {
         FormOpenStatus openStatus = form.getOpenStatus(now);
 
         // KST 날짜
-        Instant startsAt = form.getStartsAt();
-        Instant endsAtExclusive = form.getEndsAtExclusive();
+        // TODO: NoticeVote의 startsAt, endsAt으로 수정
+        Instant startsAt = Instant.now();
+        Instant endsAtExclusive = Instant.now();
 
         LocalDate startDateKst = (startsAt == null) ? null : startsAt.atZone(KST).toLocalDate();
         LocalDate endDateKst =
