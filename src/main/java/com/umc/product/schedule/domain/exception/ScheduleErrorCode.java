@@ -71,7 +71,7 @@ public enum ScheduleErrorCode implements BaseCode {
 
     NOT_FIRST_ATTENDANCE_REQUEST(HttpStatus.BAD_REQUEST, "SCHEDULE-0032", "기존 출석 요청이 존재합니다."),
     NO_ATTENDANCE_RECORD(HttpStatus.NOT_FOUND, "SCHEDULE-0033", "출석 요청이 존재하지 않습니다. 출석 요청을 생성하고 다시 시도해주세요."),
-    INVALID_ATTENDANCE_STATUS_FOR_EXCUSE(HttpStatus.BAD_REQUEST, "SCHEDULE-0034", "출석 인정은 지각 또는 결석 상태에서만 가능합니다."),
+    INVALID_ATTENDANCE_STATUS_FOR_EXCUSE(HttpStatus.BAD_REQUEST, "SCHEDULE-0034", "출석 사유 제출은 결석 또는 지각 상태에서만 가능합니다."),
     INVALID_ATTENDANCE_STATUS_FOR_APPROVAL(HttpStatus.BAD_REQUEST, "SCHEDULE-0035", "현재 출석 상태에서는 승인이 불가능합니다."),
     INVALID_ATTENDANCE_STATUS_FOR_REJECT(HttpStatus.BAD_REQUEST, "SCHEDULE-0036", "출석 요청에 대한 거절을 할 수 없는 상태입니다."),
     NO_EXCUSE_REASON_GIVEN(HttpStatus.BAD_REQUEST, "SCHEDULE-0037", "출석 인정을 요청하는 사유가 제공되지 않았거나 비어있습니다."),
