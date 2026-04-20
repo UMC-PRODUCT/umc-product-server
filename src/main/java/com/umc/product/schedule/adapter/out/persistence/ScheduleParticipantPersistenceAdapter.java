@@ -63,7 +63,8 @@ public class ScheduleParticipantPersistenceAdapter implements
     @Override
     public List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleIdAndStatus(Long scheduleId,
                                                                                           AttendanceStatus attendanceStatus) {
-        scheduleParticipantQueryRepository.findParticipantDetailsByScheduleIdAndStatus(scheduleId, attendanceStatus);
+        return scheduleParticipantQueryRepository.findParticipantDetailsByScheduleIdAndStatus(scheduleId,
+            attendanceStatus);
     }
 
     @Override

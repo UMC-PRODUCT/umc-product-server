@@ -76,7 +76,8 @@ public class ScheduleParticipantQueryRepository {
             .fetch();
     }
 
-    public void findParticipantDetailsByScheduleIdAndStatus(Long scheduleId, AttendanceStatus attendanceStatus) {
+    public List<ScheduleParticipantDetailDto> findParticipantDetailsByScheduleIdAndStatus(Long scheduleId,
+                                                                                          AttendanceStatus attendanceStatus) {
         return queryFactory
             .select(Projections.constructor(ScheduleParticipantDetailDto.class,
                 scheduleParticipant.schedule.id,
