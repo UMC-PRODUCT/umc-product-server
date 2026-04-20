@@ -25,4 +25,5 @@ public interface LoadSchedulePort {
                                       AttendanceStatus attendanceStatus,
                                       Long memberId);
 
+    Optional<Schedule> findByIdWithTags(Long scheduleId);
 }

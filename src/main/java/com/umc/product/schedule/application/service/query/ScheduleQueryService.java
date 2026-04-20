@@ -72,7 +72,7 @@ public class ScheduleQueryService implements GetScheduleUseCase {
     @Override
     public ScheduleInfo getScheduleDetails(Long scheduleId, Long memberId) {
 
-        Schedule schedule = loadSchedulePort.findById(scheduleId)
+        Schedule schedule = loadSchedulePort.findByIdWithTags(scheduleId)
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
         List<ScheduleParticipantDetailDto> participants = loadScheduleParticipantPort.findParticipantDetailsByScheduleId(
@@ -128,7 +128,7 @@ public class ScheduleQueryService implements GetScheduleUseCase {
                                               AttendanceStatus attendanceStatus) {
 
         // 존재하지 않는 일정이면 에러 반환
-        Schedule schedule = loadSchedulePort.findById(scheduleId)
+        Schedule schedule = loadSchedulePort.findByIdWithTags(scheduleId)
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
         // 일정의 참여자가 아니면 에러 반환

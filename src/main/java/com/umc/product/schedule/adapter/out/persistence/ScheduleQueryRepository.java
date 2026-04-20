@@ -27,12 +27,14 @@ public class ScheduleQueryRepository {
     ) {
         return queryFactory.selectFrom(schedule)
             .join(scheduleParticipant).on(scheduleParticipant.schedule.eq(schedule))
+            .leftJoin(schedule.tags).fetchJoin()
             .where(
                 scheduleParticipant.memberId.eq(memberId), // 내가 참여자인 일정
                 schedule.startsAt.between(from, to), // from ~ to 사이
                 isAttendanceRequiredEq(isAttendanceRequired) // 동적 쿼리
             )
             .orderBy(schedule.startsAt.asc())
+            .distinct()
             .fetch();
     }
 
@@ -60,6 +62,7 @@ public class ScheduleQueryRepository {
             .selectFrom(schedule)
             // scheduleParticipant -> Schedule 조인
             .leftJoin(scheduleParticipant).on(scheduleParticipant.schedule.id.eq(schedule.id))
+            .leftJoin(schedule.tags).fetchJoin()
             .where(
                 // 기본 조건 : 요청한 운영진 본인이 참여하는 일정
                 scheduleParticipant.memberId.eq(memberId),

@@ -46,6 +46,11 @@ public class SchedulePersistenceAdapter implements
         return scheduleQueryRepository.findAdminSchedules(from, to, attendanceStatus, memberId);
     }
 
+    @Override
+    public Optional<Schedule> findByIdWithTags(Long scheduleId) {
+        return scheduleQueryRepository.findByIdWithTags(scheduleId);
+    }
+
     // ========== SaveSchedulePort ==========
 
     @Override
