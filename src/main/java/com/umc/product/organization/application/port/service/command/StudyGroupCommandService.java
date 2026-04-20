@@ -1,6 +1,7 @@
 package com.umc.product.organization.application.port.service.command;
 
 import com.umc.product.challenger.application.port.out.LoadChallengerPort;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.command.ManageStudyGroupUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupCommand;
@@ -50,7 +51,10 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
         StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
 
         studyGroup.updateName(command.name());
-        studyGroup.updatePart(command.part());
+
+        if(command.part() != null) {
+            studyGroup.updatePart(ChallengerPart.from((command.part())));
+        }
 
         manageStudyGroupPort.save(studyGroup);
     }

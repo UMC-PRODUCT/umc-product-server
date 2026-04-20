@@ -1,5 +1,8 @@
 package com.umc.product.common.domain.enums;
 
+import com.umc.product.challenger.domain.exception.ChallengerDomainException;
+import com.umc.product.challenger.domain.exception.ChallengerErrorCode;
+import java.util.Arrays;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -18,4 +21,14 @@ public enum ChallengerPart {
 
     private final String displayName;
     private final int sortOrder;
+
+    public static ChallengerPart from(String part) {
+
+        return Arrays.stream(ChallengerPart.values())
+            .filter(challengerPart -> challengerPart.name() == part)
+            .findFirst()
+            .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND));
+
+
+    }
 }

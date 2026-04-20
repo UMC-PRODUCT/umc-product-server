@@ -20,6 +20,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.util.StringUtils;
 
 @Entity
 @Getter
@@ -84,6 +85,16 @@ public class StudyGroup extends BaseEntity {
             .filter(StudyGroupMember::isLeader)
             .findFirst()
             .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_LEADER_REQUIRED));
+    }
+
+    public void updateName(String name) {
+        if(StringUtils.hasText(name)) {
+            this.name = name;
+        }
+    }
+
+    public void updatePart(ChallengerPart challengerPart) {
+        this.part = challengerPart;
     }
 
     // 동일한 기수에는 동일한 파트의 스터디 그룹 2개 이상 소속될 수 없다.
