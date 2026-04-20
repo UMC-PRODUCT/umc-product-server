@@ -39,67 +39,6 @@ public class SchedulePersistenceAdapter implements
     }
 
     @Override
-    public List<Schedule> findAllByIds(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return List.of();
-        }
-        return scheduleJpaRepository.findAllById(ids);
-    }
-
-    @Override
-    public List<Schedule> findAll() {
-        return scheduleJpaRepository.findAll();
-    }
-
-    @Override
-    public List<Schedule> findByAuthorChallengerIdIn(List<Long> authorChallengerIds) {
-        if (authorChallengerIds == null || authorChallengerIds.isEmpty()) {
-            return List.of();
-        }
-        return scheduleJpaRepository.findByAuthorChallengerIdIn(authorChallengerIds);
-    }
-
-    @Override
-    public List<Schedule> findWithSheetByAuthorChallengerIdIn(List<Long> authorChallengerIds) {
-        if (authorChallengerIds == null || authorChallengerIds.isEmpty()) {
-            return List.of();
-        }
-        return scheduleQueryRepository.findWithSheetByAuthorChallengerIdIn(authorChallengerIds);
-    }
-
-    @Override
-    public List<Schedule> findMySchedulesByGisu(Long memberId, Long gisuId) {
-        return scheduleQueryRepository.findMySchedulesByGisu(memberId, gisuId);
-    }
-
-    @Override
-    public Optional<Schedule> findByIdWithTags(Long scheduleId) {
-        return scheduleQueryRepository.findByIdWithTags(scheduleId);
-    }
-
-    @Override
-    public List<Schedule> findSchedulesForCentralMember(Long memberId, Long gisuId) {
-        return scheduleQueryRepository.findSchedulesForCentralMember(memberId, gisuId);
-    }
-
-    @Override
-    public List<Schedule> findSchedulesForSchoolCore(Long schoolId, Long gisuId,
-                                                     Long authorChallengerId) {
-        return scheduleQueryRepository.findSchedulesForSchoolCore(
-            schoolId, gisuId, authorChallengerId);
-    }
-
-    @Override
-    public List<Schedule> findSchedulesForPartLeader(Long challengerId, Long gisuId) {
-        return scheduleQueryRepository.findSchedulesForPartLeader(challengerId, gisuId);
-    }
-
-    @Override
-    public List<Schedule> findSchedulesByAuthor(Long authorChallengerId, Long gisuId) {
-        return scheduleQueryRepository.findSchedulesByAuthor(authorChallengerId, gisuId);
-    }
-
-    @Override
     public List<Schedule> findAdminSchedules(Instant from, Instant to,
                                              AttendanceStatus attendanceStatus,
                                              Long memberId) {

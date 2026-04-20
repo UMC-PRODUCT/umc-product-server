@@ -21,13 +21,15 @@ public class SchedulePermissionHelper {
     /**
      * 일정 작성자 본인인지 확인
      */
+    // TODO : 수정하기
     public boolean isAuthor(Long memberId, Schedule schedule) {
-        return isAuthorByChallengerId(memberId, schedule.getAuthorChallengerId());
+        return isAuthorByChallengerId(memberId, schedule.getAuthorMemberId());
     }
 
     /**
      * 일정 작성자 본인인지 확인 (authorChallengerId 기반)
      */
+    // TODO : 수정하기
     public boolean isAuthorByChallengerId(Long memberId, Long authorChallengerId) {
         Long authorMemberId = getChallengerUseCase.getById(authorChallengerId).memberId();
         return Objects.equals(memberId, authorMemberId);
@@ -36,9 +38,10 @@ public class SchedulePermissionHelper {
     /**
      * 해당 기수에서 운영진(ChallengerRoleType이 있는 사람)인지 확인
      */
-    public boolean isStaffInGisu(Long memberId, Long gisuId) {
-        return !getChallengerRoleUseCase.getAllRoleTypesByMemberIdAndGisuId(memberId, gisuId).isEmpty();
-    }
+    // TODO : 수정하기
+//    public boolean isStaffInGisu(Long memberId, Long gisuId) {
+//        return !getChallengerRoleUseCase.getAllRoleTypesByMemberIdAndGisuId(memberId, gisuId).isEmpty();
+//    }
 
     /**
      * 해당 기수의 중앙 총괄단인지 확인
@@ -57,28 +60,31 @@ public class SchedulePermissionHelper {
     /**
      * 출석 관리 권한 확인: 해당 기수 중앙 총괄단 OR (일정 작성자 본인 AND 해당 기수 운영진)
      */
-    public boolean canManageAttendance(Long memberId, Schedule schedule, Long gisuId) {
-        return canManageAttendanceByChallengerId(memberId, schedule.getAuthorChallengerId(), gisuId);
-    }
+    // TODO : 수정하기
+//    public boolean canManageAttendance(Long memberId, Schedule schedule, Long gisuId) {
+//        return canManageAttendanceByChallengerId(memberId, schedule.getAuthorMemberId(), gisuId);
+//    }
 
     /**
      * 출석 관리 권한 확인 (authorChallengerId 기반)
      */
-    public boolean canManageAttendanceByChallengerId(Long memberId, Long authorChallengerId, Long gisuId) {
-        // 해당 기수 중앙 총괄단이면 OK
-        if (isCentralCoreInGisu(memberId, gisuId)) {
-            return true;
-        }
-
-        // 일정 작성자 본인 AND 해당 기수 운영진이면 OK
-        return isAuthorByChallengerId(memberId, authorChallengerId) && isStaffInGisu(memberId, gisuId);
-    }
+    // TODO : 수정하기
+//    public boolean canManageAttendanceByChallengerId(Long memberId, Long authorChallengerId, Long gisuId) {
+//        // 해당 기수 중앙 총괄단이면 OK
+//        if (isCentralCoreInGisu(memberId, gisuId)) {
+//            return true;
+//        }
+//
+//        // 일정 작성자 본인 AND 해당 기수 운영진이면 OK
+//        return isAuthorByChallengerId(memberId, authorChallengerId) && isStaffInGisu(memberId, gisuId);
+//    }
 
     /**
      * 일정의 기수 ID 조회 (authorChallengerId 기반)
      */
+    // TODO : 수정하기
     public Long getGisuIdFromSchedule(Schedule schedule) {
-        Long authorChallengerId = schedule.getAuthorChallengerId();
+        Long authorChallengerId = schedule.getAuthorMemberId();
         return getChallengerUseCase.getById(authorChallengerId).gisuId();
     }
 }

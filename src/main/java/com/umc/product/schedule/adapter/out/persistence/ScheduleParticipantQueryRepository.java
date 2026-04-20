@@ -2,6 +2,7 @@ package com.umc.product.schedule.adapter.out.persistence;
 
 import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.organization.domain.QSchool.school;
+import static com.umc.product.schedule.domain.QScheduleParticipant.scheduleParticipant;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -36,7 +37,7 @@ public class ScheduleParticipantQueryRepository {
                 member.profileImageId,
                 scheduleParticipant.attendance.status,
                 scheduleParticipant.attendance.excuseReason,
-                scheduleParticipant.attendance.isisLocationVerified
+                scheduleParticipant.attendance.isLocationVerified
             ))
             .from(scheduleParticipant)
             // Participant -> Member 조인
@@ -65,7 +66,7 @@ public class ScheduleParticipantQueryRepository {
                 member.profileImageId,
                 scheduleParticipant.attendance.status,
                 scheduleParticipant.attendance.excuseReason,
-                scheduleParticipant.attendance.isisLocationVerified
+                scheduleParticipant.attendance.isLocationVerified
             ))
             .from(scheduleParticipant)
             // Participant -> Member 조인
@@ -89,7 +90,7 @@ public class ScheduleParticipantQueryRepository {
                 member.profileImageId,
                 scheduleParticipant.attendance.status,
                 scheduleParticipant.attendance.excuseReason,
-                scheduleParticipant.attendance.isisLocationVerified
+                scheduleParticipant.attendance.isLocationVerified
             ))
             .from(scheduleParticipant)
             // Participant -> Member 조인
