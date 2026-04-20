@@ -60,13 +60,13 @@ public class WeeklyCurriculum extends BaseEntity {
         String title, Long weekNo,
         Instant startsAt, Instant endsAt
     ) {
-        validateStartBeforeEnd();
         this.curriculum = curriculum;
         this.isExtra = isExtra;
         this.title = title;
         this.weekNo = weekNo;
         this.startsAt = startsAt;
         this.endsAt = endsAt;
+        validateStartBeforeEnd();
     }
 
     private void validateStartBeforeEnd() {

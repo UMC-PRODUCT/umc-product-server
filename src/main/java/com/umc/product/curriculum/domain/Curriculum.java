@@ -7,7 +7,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.flywaydb.core.internal.util.StringUtils;
+import org.springframework.util.StringUtils;
 
 /**
  * Curriculum과 WeeklyCurriculum는 하나의 Aggregate
