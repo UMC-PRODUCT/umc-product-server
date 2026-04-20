@@ -144,7 +144,7 @@ public class ChallengerWorkbookMissionCommandV2Controller {
     )
     @DeleteMapping("/feedback/{missionFeedbackId}")
     public void deleteMissionFeedback(
-        @PathVariable String missionFeedbackId
+        @PathVariable Long missionFeedbackId
     ) {
         throw new NotImplementedException();
     }

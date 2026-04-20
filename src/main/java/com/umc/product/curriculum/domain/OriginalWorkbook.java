@@ -64,13 +64,15 @@ public class OriginalWorkbook extends BaseEntity {
     private OriginalWorkbook(
         WeeklyCurriculum weeklyCurriculum,
         String title, String description,
-        String url, String content
+        String url, String content, OriginalWorkbookType type
     ) {
         this.weeklyCurriculum = weeklyCurriculum;
         this.title = title;
         this.description = description;
         this.url = url;
         this.content = content;
+        this.originalWorkbookStatus = OriginalWorkbookStatus.DRAFT;
+        this.type = type
     }
 
     public static OriginalWorkbook create(WeeklyCurriculum weeklyCurriculum, String title, String description,
