@@ -255,7 +255,7 @@ public class StudyGroupQueryRepository {
             .from(studyGroupMember)
             .join(studyGroupMember.studyGroup, studyGroup)
             .where(
-                studyGroup.gisu_id.eq(gisuId),
+                studyGroup.gisuId.eq(gisuId),
                 studyGroup.part.eq(part),
                 studyGroupMember.memberId.in(memberIds)
             )

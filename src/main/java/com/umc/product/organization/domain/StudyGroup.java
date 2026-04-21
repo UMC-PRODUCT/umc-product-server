@@ -17,6 +17,7 @@ import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -43,7 +44,7 @@ public class StudyGroup extends BaseEntity {
     private String name;
 
     @Column(nullable = false)
-    private Long gisu_id;
+    private Long gisuId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -53,7 +54,7 @@ public class StudyGroup extends BaseEntity {
     private StudyGroup(String name, Long gisu_id, ChallengerPart part) {
         validate(name, gisu_id, part);
         this.name = name;
-        this.gisu_id = gisu_id;
+        this.gisuId = gisu_id;
         this.part = part;
     }
 
@@ -77,8 +78,20 @@ public class StudyGroup extends BaseEntity {
         return group;
     }
 
-    private void addStudyGroupMember(Long StudyGroupMemberId) {
-        this.studyGroupMembers.add(StudyGroupMember.create(this, StudyGroupMemberId));
+    public void addStudyGroupMember(Long memberId) {
+        if (memberId == null) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED);
+        }
+        boolean duplicate = hasMember(memberId);
+        if (duplicate) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_DUPLICATED);
+        }
+        this.studyGroupMembers.add(StudyGroupMember.create(this, memberId));
+    }
+
+    public boolean hasMember(Long memberId) {
+        return studyGroupMembers.stream()
+            .anyMatch(m -> m.getMemberId().equals(memberId));
     }
 
     private void addOrganizer(Long organizerId) {
@@ -110,6 +123,19 @@ public class StudyGroup extends BaseEntity {
 
     public void updatePart(ChallengerPart challengerPart) {
         this.part = challengerPart;
+    }
+
+    public void validateMembersNotJoined(Set<Long> memberIds) {
+        Set<Long> alreadyJoined = memberIds.stream()
+            .filter(this::hasMember)
+            .collect(Collectors.toSet());
+
+        if (!alreadyJoined.isEmpty()) {
+            throw new OrganizationDomainException(
+                OrganizationErrorCode.STUDY_GROUP_MEMBER_DUPLICATED,
+                "이미 소속된 멤버: " + alreadyJoined
+            );
+        }
     }
 
     // 동일한 기수에는 동일한 파트의 스터디 그룹 2개 이상 소속될 수 없다.
