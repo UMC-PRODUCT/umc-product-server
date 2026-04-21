@@ -21,5 +21,5 @@ public interface AutoReleaseWorkbookUseCase {
      *
      * @return 배포된 워크북 수
      */
-//    int releaseAllDue();
+    int releaseAllDue();
 }

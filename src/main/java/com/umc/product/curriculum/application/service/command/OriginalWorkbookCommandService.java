@@ -44,4 +44,11 @@ public class OriginalWorkbookCommandService implements ManageOriginalWorkbookUse
         throw new NotImplementedException();
     }
 
+    // ===== AutoReleaseWorkbookUseCase =====
+
+    @Override
+    public int releaseAllDue() {
+        throw new NotImplementedException();
+    }
+
 }
