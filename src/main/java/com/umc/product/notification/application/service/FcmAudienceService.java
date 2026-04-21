@@ -7,6 +7,7 @@ import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.Notification;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.global.config.FcmProperties;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.notification.application.port.in.SendNotificationToAudienceUseCase;
@@ -33,6 +34,7 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
 
     private static final int FCM_MULTICAST_BATCH_SIZE = 500;
 
+    private final FcmProperties fcmProperties;
     private final FirebaseMessaging firebaseMessaging;
     private final LoadFcmPort loadFcmPort;
     private final FcmTokenDeactivator fcmTokenDeactivator;
@@ -42,6 +44,10 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
 
     @Override
     public void sendToAudience(AudienceNotificationCommand command) {
+        if (!fcmProperties.enabled()) {
+            log.info("[FCM 비활성화] sendToAudience 스킵");
+            return;
+        }
         List<Long> memberIds = resolveTargetMemberIds(command.targetInfo());
         if (memberIds.isEmpty()) {
             log.info("알림 발송 대상 없음. targetInfo={}", command.targetInfo());
@@ -60,6 +66,10 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
 
     @Override
     public void sendToMember(NotificationCommand command) {
+        if (!fcmProperties.enabled()) {
+            log.info("[FCM 비활성화] sendToMember 스킵 memberId={}", command.memberId());
+            return;
+        }
         List<FcmToken> tokens = loadFcmPort.findAllActiveByMemberId(command.memberId());
         if (tokens.isEmpty()) {
             log.warn("활성 FCM 토큰 없음. memberId={}", command.memberId());
@@ -71,6 +81,10 @@ public class FcmAudienceService implements SendNotificationToAudienceUseCase {
 
     @Override
     public void sendToMembers(List<Long> memberIds, String title, String body) {
+        if (!fcmProperties.enabled()) {
+            log.info("[FCM 비활성화] sendToMembers 스킵 count={}", memberIds == null ? 0 : memberIds.size());
+            return;
+        }
         if (memberIds == null || memberIds.isEmpty()) {
             return;
         }
