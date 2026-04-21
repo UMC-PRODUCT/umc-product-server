@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Set;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -40,7 +40,7 @@ public class OriginalWorkbookCommandService implements ManageOriginalWorkbookUse
     }
 
     @Override
-    public void changeStatusForRelease(Set<ChangeOriginalWorkbookStatusCommand> commands) {
+    public void changeStatusForRelease(List<ChangeOriginalWorkbookStatusCommand> commands) {
         throw new NotImplementedException();
     }
 

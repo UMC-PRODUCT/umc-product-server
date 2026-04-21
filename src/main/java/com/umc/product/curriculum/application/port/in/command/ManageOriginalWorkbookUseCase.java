@@ -4,7 +4,7 @@ import com.umc.product.curriculum.application.port.in.command.dto.workbook.Chang
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.CreateOriginalWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.EditOriginalWorkbookCommand;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * OriginalWorkbook 관리 UseCase
@@ -48,6 +48,6 @@ public interface ManageOriginalWorkbookUseCase {
      *
      * @param commands 상태 변경 커맨드 목록 (원본 워크북 ID, 변경할 상태)
      */
-    void changeStatusForRelease(Set<ChangeOriginalWorkbookStatusCommand> commands);
+    void changeStatusForRelease(List<ChangeOriginalWorkbookStatusCommand> commands);
 
 }
