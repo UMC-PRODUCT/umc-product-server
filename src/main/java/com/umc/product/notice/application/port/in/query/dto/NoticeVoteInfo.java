@@ -7,7 +7,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
-public record VoteInfo(
+/**
+ * 공지사항 상세 조회 시 사용되는 투표 정보 DTO (Notice 도메인)
+ */
+public record NoticeVoteInfo(
     Long voteId,
     String title,
     boolean isAnonymous,
@@ -16,17 +19,18 @@ public record VoteInfo(
     Instant startsAt,
     Instant endsAtExclusive,
     LocalDate startDateKst,
-    LocalDate endDateKst,  // inclusive endDate
-    int totalParticipants,      // 집계용
+    LocalDate endDateKst,
+    int totalParticipants,
     List<VoteOptionInfo> options,
-    List<Long> mySelectedOptionIds // 미투표면 []
-) {
+    List<Long> mySelectedOptionIds) {
+    /**
+     * 공지사항 투표 선택지 상세 정보
+     */
     public record VoteOptionInfo(
         Long optionId,
         String content,
         int voteCount,
         BigDecimal voteRate,
-        List<Long> selectedMemberIds
-    ) {
+        List<Long> selectedMemberIds) {
     }
 }
