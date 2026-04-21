@@ -43,10 +43,11 @@ public class Form extends BaseEntity {
         return form;
     }
 
-    public static Form createPublished(Long createdMemberId, String title) {
+    public static Form createPublished(Long createdMemberId, String title, boolean isAnonymous) {
         Form form = new Form();
         form.createdMemberId = createdMemberId;
         form.title = title;
+        form.isAnonymous = isAnonymous;
         form.status = FormStatus.PUBLISHED;
 
         return form;
