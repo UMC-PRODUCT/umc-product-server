@@ -59,6 +59,15 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
     }
 
     @Override
+    public Set<Long> findConflictedMemberIds(Long gisuId, ChallengerPart part, Set<Long> memberIds) {
+        if(memberIds == null || memberIds.isEmpty()) {
+            return Set.of();
+        }
+        return studyGroupQueryRepository.findConflictedMemberIds(gisuId, part, memberIds);
+
+    }
+
+    @Override
     public StudyGroup save(StudyGroup studyGroup) {
         return studyGroupJpaRepository.save(studyGroup);
     }

@@ -34,4 +34,6 @@ public interface LoadStudyGroupPort {
      * 특정 기수에서 해당 파트들의 스터디 그룹 ID 목록 조회 (파트장용)
      */
     List<Long> findIdsByGisuIdAndPartIn(Long gisuId, Set<ChallengerPart> parts);
+
+    Set<Long> findConflictedMemberIds(Long id, ChallengerPart part, Set<Long> longs);
 }
