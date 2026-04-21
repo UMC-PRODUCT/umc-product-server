@@ -1,6 +1,7 @@
 package com.umc.product.notice.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.notice.domain.enums.VoteStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -35,19 +36,42 @@ public class NoticeVote extends BaseEntity {
     private Instant endsAtExclusive;
 
     @Builder
-    private NoticeVote(Notice notice, Long voteId, Instant startsAt, Instant endsAtExclusive) {
+    private NoticeVote(
+        Notice notice,
+        Long voteId,
+        Instant startsAt,
+        Instant endsAtExclusive
+    ) {
         this.notice = notice;
         this.voteId = voteId;
         this.startsAt = startsAt;
         this.endsAtExclusive = endsAtExclusive;
     }
 
-    public static NoticeVote create(Long voteId, Notice notice, Instant startsAt, Instant endsAtExclusive) {
+    public static NoticeVote create(
+        Long voteId,
+        Notice notice,
+        Instant startsAt,
+        Instant endsAtExclusive
+    ) {
         return NoticeVote.builder()
             .voteId(voteId)
             .notice(notice)
             .startsAt(startsAt)
             .endsAtExclusive(endsAtExclusive)
             .build();
+    }
+
+    /**
+     * 현재 시각 기준으로 투표 가능 상태를 반환합니다.
+     */
+    public VoteStatus getOpenStatus(Instant now) {
+        if (now.isBefore(startsAt)) {
+            return VoteStatus.NOT_STARTED;
+        }
+        if (!now.isBefore(endsAtExclusive)) {
+            return VoteStatus.CLOSED;
+        }
+        return VoteStatus.OPEN;
     }
 }
