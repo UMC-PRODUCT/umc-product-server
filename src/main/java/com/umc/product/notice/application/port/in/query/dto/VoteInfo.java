@@ -1,6 +1,6 @@
 package com.umc.product.notice.application.port.in.query.dto;
 
-import com.umc.product.survey.domain.enums.FormOpenStatus;
+import com.umc.product.notice.domain.enums.VoteStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -12,7 +12,7 @@ public record VoteInfo(
     String title,
     boolean isAnonymous,
     boolean allowMultipleChoice,
-    FormOpenStatus status,
+    VoteStatus status,
     Instant startsAt,
     Instant endsAtExclusive,
     LocalDate startDateKst,
