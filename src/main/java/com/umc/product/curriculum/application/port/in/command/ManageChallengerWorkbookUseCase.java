@@ -26,14 +26,14 @@ public interface ManageChallengerWorkbookUseCase {
      * @param command 배포 커맨드 (원본 워크북 ID 목록, 요청 멤버 ID)
      * @return 생성된 챌린저 워크북 ID 목록
      */
-    List<ChallengerWorkbookInfo> deploy(DeployChallengerWorkbookCommand command);
+    List<ChallengerWorkbookInfo> batchDeploy(DeployChallengerWorkbookCommand command);
 
     /**
      * 챌린저 워크북 수정 (챌린저 전용)
      *
      * @param command 수정 커맨드 (챌린저 워크북 ID, 요청 멤버 ID, 변경할 내용)
      */
-    void editChallengerWorkbook(EditChallengerWorkbookCommand command);
+    void edit(EditChallengerWorkbookCommand command);
 
     // <---------------------- 운영진 전용 -------------------------->
 
@@ -45,7 +45,7 @@ public interface ManageChallengerWorkbookUseCase {
      *
      * @param command 삭제 커맨드 (챌린저 워크북 ID, 요청 멤버 ID, 삭제 사유)
      */
-    void deleteChallengerWorkbook(DeleteChallengerWorkbookCommand command);
+    void delete(DeleteChallengerWorkbookCommand command);
 
     /**
      * 챌린저 워크북 인정 처리 (운영진 전용)
@@ -55,6 +55,6 @@ public interface ManageChallengerWorkbookUseCase {
      *
      * @param command 인정 처리 커맨드 (챌린저 워크북 ID, 요청 멤버 ID, 사유)
      */
-    void excuseChallengerWorkbook(ExcuseChallengerWorkbookCommand command);
+    void excuse(ExcuseChallengerWorkbookCommand command);
 
 }

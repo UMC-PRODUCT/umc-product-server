@@ -18,7 +18,7 @@ public interface ManageOriginalWorkbookMissionUseCase {
      * @param command 생성 커맨드 (원본 워크북 ID, 제목, 설명, 유형, 필수 여부)
      * @return 생성된 미션 ID
      */
-    Long createOriginalMission(CreateOriginalWorkbookMissionCommand command);
+    Long create(CreateOriginalWorkbookMissionCommand command);
 
     /**
      * 원본 워크북 미션 수정
@@ -27,7 +27,7 @@ public interface ManageOriginalWorkbookMissionUseCase {
      *
      * @param command 수정 커맨드 (미션 ID, 변경할 필드들)
      */
-    void editOriginalMission(EditOriginalWorkbookMissionCommand command);
+    void edit(EditOriginalWorkbookMissionCommand command);
 
     /**
      * 원본 워크북 미션 삭제
@@ -36,5 +36,5 @@ public interface ManageOriginalWorkbookMissionUseCase {
      *
      * @param originalMissionId 삭제 대상 미션 ID
      */
-    void deleteOriginalMission(Long originalMissionId);
+    void delete(Long originalMissionId);
 }

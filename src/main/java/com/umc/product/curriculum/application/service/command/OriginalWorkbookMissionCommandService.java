@@ -14,17 +14,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class OriginalWorkbookMissionCommandService implements ManageOriginalWorkbookMissionUseCase {
 
     @Override
-    public Long createOriginalMission(CreateOriginalWorkbookMissionCommand command) {
+    public Long create(CreateOriginalWorkbookMissionCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void editOriginalMission(EditOriginalWorkbookMissionCommand command) {
+    public void edit(EditOriginalWorkbookMissionCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void deleteOriginalMission(Long originalMissionId) {
+    public void delete(Long originalMissionId) {
         throw new NotImplementedException();
     }
 }

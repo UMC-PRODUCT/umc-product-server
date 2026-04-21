@@ -19,14 +19,14 @@ public interface ManageWeeklyBestWorkbookUseCase {
      *
      * @param command 선정 커맨드 (선정자 ID, 대상 멤버 ID, 주차별 커리큘럼 ID, 스터디 그룹 ID, 사유)
      */
-    void createWeeklyBestWorkbook(CreateWeeklyBestWorkbookCommand command);
+    void selectBest(CreateWeeklyBestWorkbookCommand command);
 
     /**
      * 베스트 워크북 선정 사유 수정
      *
      * @param command 수정 커맨드 (WeeklyBestWorkbook PK, 요청자 멤버 ID, 변경할 사유)
      */
-    void editWeeklyBestWorkbookReason(EditWeeklyBestWorkbookCommand command);
+    void editReason(EditWeeklyBestWorkbookCommand command);
 
     /**
      * 베스트 워크북 선정 철회
@@ -35,5 +35,5 @@ public interface ManageWeeklyBestWorkbookUseCase {
      *
      * @param weeklyBestWorkbookId WeeklyBestWorkbook Entity PK
      */
-    void deleteWeeklyBestWorkbook(Long weeklyBestWorkbookId);
+    void withdraw(Long weeklyBestWorkbookId);
 }

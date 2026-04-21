@@ -15,17 +15,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class MissionSubmissionCommandService implements ManageMissionSubmissionUseCase {
 
     @Override
-    public Long createSubmission(CreateMissionSubmissionCommand command) {
+    public Long create(CreateMissionSubmissionCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void editSubmission(EditMissionSubmissionCommand command) {
+    public void edit(EditMissionSubmissionCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void deleteSubmission(DeleteMissionSubmissionCommand command) {
+    public void withdraw(DeleteMissionSubmissionCommand command) {
         throw new NotImplementedException();
     }
 }

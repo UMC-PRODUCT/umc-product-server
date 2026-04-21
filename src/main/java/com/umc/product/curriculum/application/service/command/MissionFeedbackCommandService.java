@@ -15,17 +15,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class MissionFeedbackCommandService implements ManageMissionFeedbackUseCase {
 
     @Override
-    public Long createFeedback(CreateMissionFeedbackCommand command) {
+    public Long create(CreateMissionFeedbackCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void editFeedback(EditMissionFeedbackCommand command) {
+    public void edit(EditMissionFeedbackCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void deleteFeedback(DeleteMissionFeedbackCommand command) {
+    public void delete(DeleteMissionFeedbackCommand command) {
         throw new NotImplementedException();
     }
 }

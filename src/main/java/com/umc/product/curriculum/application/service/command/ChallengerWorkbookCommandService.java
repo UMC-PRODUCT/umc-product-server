@@ -28,22 +28,22 @@ public class ChallengerWorkbookCommandService implements ManageChallengerWorkboo
     private final GetChallengerUseCase getChallengerUseCase;
 
     @Override
-    public List<ChallengerWorkbookInfo> deploy(DeployChallengerWorkbookCommand command) {
+    public List<ChallengerWorkbookInfo> batchDeploy(DeployChallengerWorkbookCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void editChallengerWorkbook(EditChallengerWorkbookCommand command) {
+    public void edit(EditChallengerWorkbookCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void deleteChallengerWorkbook(DeleteChallengerWorkbookCommand command) {
+    public void delete(DeleteChallengerWorkbookCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void excuseChallengerWorkbook(ExcuseChallengerWorkbookCommand command) {
+    public void excuse(ExcuseChallengerWorkbookCommand command) {
         throw new NotImplementedException();
     }
 

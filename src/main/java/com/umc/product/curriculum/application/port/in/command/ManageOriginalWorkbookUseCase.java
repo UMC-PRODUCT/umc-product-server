@@ -1,8 +1,8 @@
 package com.umc.product.curriculum.application.port.in.command;
 
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.ChangeOriginalWorkbookStatusCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.CreateOriginalWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.EditOriginalWorkbookCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.workbook.ChangeOriginalWorkbookStatusCommand;
 
 import java.util.Set;
 
@@ -21,14 +21,14 @@ public interface ManageOriginalWorkbookUseCase {
      * @param command 생성 커맨드 (주차별 커리큘럼 ID, 제목, 설명, URL, 내용, 유형)
      * @return 생성된 원본 워크북 ID
      */
-    Long createOriginalWorkbook(CreateOriginalWorkbookCommand command);
+    Long create(CreateOriginalWorkbookCommand command);
 
     /**
      * 원본 워크북 수정
      *
      * @param command 수정 커맨드 (원본 워크북 ID, 변경할 필드들)
      */
-    void editOriginalWorkbook(EditOriginalWorkbookCommand command);
+    void edit(EditOriginalWorkbookCommand command);
 
     /**
      * 원본 워크북 삭제
@@ -37,7 +37,7 @@ public interface ManageOriginalWorkbookUseCase {
      *
      * @param originalWorkbookId 삭제 대상 원본 워크북 ID
      */
-    void deleteOriginalWorkbook(Long originalWorkbookId);
+    void delete(Long originalWorkbookId);
 
     /**
      * 원본 워크북 상태 일괄 변경 (배포 준비 또는 배포 처리)

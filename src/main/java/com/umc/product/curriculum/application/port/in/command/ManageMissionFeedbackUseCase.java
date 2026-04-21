@@ -19,7 +19,7 @@ public interface ManageMissionFeedbackUseCase {
      * @param command 작성 커맨드 (미션 제출물 ID, 작성자 멤버 ID, 내용, 평가 결과)
      * @return 생성된 피드백 ID
      */
-    Long createFeedback(CreateMissionFeedbackCommand command);
+    Long create(CreateMissionFeedbackCommand command);
 
     /**
      * 제출된 미션 피드백 수정
@@ -29,7 +29,7 @@ public interface ManageMissionFeedbackUseCase {
      *
      * @param command 수정 커맨드 (피드백 ID, 요청자 멤버 ID, 변경할 내용)
      */
-    void editFeedback(EditMissionFeedbackCommand command);
+    void edit(EditMissionFeedbackCommand command);
 
     /**
      * 제출된 미션 피드백 삭제
@@ -38,5 +38,5 @@ public interface ManageMissionFeedbackUseCase {
      *
      * @param command 삭제 커맨드 (피드백 ID, 요청자 멤버 ID)
      */
-    void deleteFeedback(DeleteMissionFeedbackCommand command);
+    void delete(DeleteMissionFeedbackCommand command);
 }

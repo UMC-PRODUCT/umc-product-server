@@ -2,9 +2,7 @@ package com.umc.product.curriculum.application.service.command;
 
 import com.umc.product.curriculum.application.port.in.command.ManageCurriculumUseCase;
 import com.umc.product.curriculum.application.port.in.command.dto.curriculum.CreateCurriculumCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.curriculum.CreateWeeklyCurriculumCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.curriculum.EditCurriculumCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.curriculum.EditWeeklyCurriculumCommand;
 import com.umc.product.global.exception.NotImplementedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,32 +14,18 @@ import org.springframework.transaction.annotation.Transactional;
 public class CurriculumCommandService implements ManageCurriculumUseCase {
 
     @Override
-    public Long createCurriculum(CreateCurriculumCommand command) {
+    public Long create(CreateCurriculumCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void editCurriculum(EditCurriculumCommand command) {
+    public void edit(EditCurriculumCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void deleteCurriculum(Long curriculumId) {
+    public void delete(Long curriculumId) {
         throw new NotImplementedException();
     }
 
-    @Override
-    public Long createWeeklyCurriculum(CreateWeeklyCurriculumCommand command) {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public void editWeeklyCurriculum(EditWeeklyCurriculumCommand command) {
-        throw new NotImplementedException();
-    }
-
-    @Override
-    public void deleteWeeklyCurriculum(Long weeklyCurriculumId) {
-        throw new NotImplementedException();
-    }
 }

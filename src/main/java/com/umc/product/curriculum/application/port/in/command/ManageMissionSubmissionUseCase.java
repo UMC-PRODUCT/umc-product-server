@@ -18,7 +18,7 @@ public interface ManageMissionSubmissionUseCase {
      * @param command 제출 커맨드 (챌린저 워크북 ID, 미션 ID, 멤버 ID, 제출 내용)
      * @return 생성된 미션 제출물 ID
      */
-    Long createSubmission(CreateMissionSubmissionCommand command);
+    Long create(CreateMissionSubmissionCommand command);
 
     /**
      * 제출한 미션 수정
@@ -27,7 +27,7 @@ public interface ManageMissionSubmissionUseCase {
      *
      * @param command 수정 커맨드 (미션 제출물 ID, 멤버 ID, 변경할 내용)
      */
-    void editSubmission(EditMissionSubmissionCommand command);
+    void edit(EditMissionSubmissionCommand command);
 
     /**
      * 제출한 미션 철회
@@ -36,5 +36,5 @@ public interface ManageMissionSubmissionUseCase {
      *
      * @param command 철회 커맨드 (미션 제출물 ID, 요청자 멤버 ID)
      */
-    void deleteSubmission(DeleteMissionSubmissionCommand command);
+    void withdraw(DeleteMissionSubmissionCommand command);
 }

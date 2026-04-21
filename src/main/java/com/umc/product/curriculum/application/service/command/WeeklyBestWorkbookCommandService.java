@@ -14,17 +14,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class WeeklyBestWorkbookCommandService implements ManageWeeklyBestWorkbookUseCase {
 
     @Override
-    public void createWeeklyBestWorkbook(CreateWeeklyBestWorkbookCommand command) {
+    public void selectBest(CreateWeeklyBestWorkbookCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void editWeeklyBestWorkbookReason(EditWeeklyBestWorkbookCommand command) {
+    public void editReason(EditWeeklyBestWorkbookCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void deleteWeeklyBestWorkbook(Long weeklyBestWorkbookId) {
+    public void withdraw(Long weeklyBestWorkbookId) {
         throw new NotImplementedException();
     }
 }

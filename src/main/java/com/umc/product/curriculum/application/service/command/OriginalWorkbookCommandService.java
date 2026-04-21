@@ -2,9 +2,9 @@ package com.umc.product.curriculum.application.service.command;
 
 import com.umc.product.curriculum.application.port.in.command.AutoReleaseWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.ManageOriginalWorkbookUseCase;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.ChangeOriginalWorkbookStatusCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.CreateOriginalWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.command.dto.workbook.EditOriginalWorkbookCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.workbook.ChangeOriginalWorkbookStatusCommand;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
 import com.umc.product.global.exception.NotImplementedException;
@@ -25,17 +25,17 @@ public class OriginalWorkbookCommandService implements ManageOriginalWorkbookUse
     private final SaveOriginalWorkbookPort saveOriginalWorkbookPort;
 
     @Override
-    public Long createOriginalWorkbook(CreateOriginalWorkbookCommand command) {
+    public Long create(CreateOriginalWorkbookCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void editOriginalWorkbook(EditOriginalWorkbookCommand command) {
+    public void edit(EditOriginalWorkbookCommand command) {
         throw new NotImplementedException();
     }
 
     @Override
-    public void deleteOriginalWorkbook(Long originalWorkbookId) {
+    public void delete(Long originalWorkbookId) {
         throw new NotImplementedException();
     }
 
