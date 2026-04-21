@@ -22,6 +22,14 @@ public interface GetMemberUseCase {
 
     Map<Long, Long> findAllSchoolIdsByIds(Set<Long> memberIds);
 
+    /**
+     * 특정 학교에 소속된 모든 멤버의 ID 집합을 반환한다.
+     *
+     * @param schoolId 학교 ID
+     * @return 해당 학교 소속 멤버의 ID 집합 (없으면 빈 집합)
+     */
+    Set<Long> findAllIdsBySchoolId(Long schoolId);
+
     boolean existsById(Long memberId);
 
     boolean existsByEmail(String email);

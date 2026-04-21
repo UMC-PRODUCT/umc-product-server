@@ -49,6 +49,11 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     }
 
     @Override
+    public Set<Long> findAllIdsBySchoolId(Long schoolId) {
+        return memberJpaRepository.findAllIdsBySchoolId(schoolId);
+    }
+
+    @Override
     public boolean existsById(Long id) {
         return memberJpaRepository.existsById(id);
     }

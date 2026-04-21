@@ -16,6 +16,8 @@ public interface LoadMemberPort {
 
     List<Member> findAllByIds(Set<Long> ids);
 
+    Set<Long> findAllIdsBySchoolId(Long schoolId);
+
     boolean existsById(Long id);
 
     boolean existsByEmail(String email);
