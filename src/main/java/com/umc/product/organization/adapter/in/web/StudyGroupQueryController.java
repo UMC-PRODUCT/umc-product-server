@@ -29,6 +29,7 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
 
     /**
      * 내 스터디 그룹 목록 조회 - 유저의 schoolId/part 기반 자동 조회
+     * TODO: DTO 변환 로직 개선하면서 CursorResponse 조립 방식 개선, 이미지 URL 매핑 최적화 작업
      */
     @Override
     @GetMapping
