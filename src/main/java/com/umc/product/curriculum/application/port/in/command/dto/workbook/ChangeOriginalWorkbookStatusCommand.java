@@ -9,7 +9,7 @@ import lombok.Builder;
  *
  * @param originalWorkbookId 상태를 변경할 원본 워크북 ID
  * @param status             변경할 상태 (READY 또는 RELEASED)
- * @param operatorMemberId   요청 운영진의 멤버 ID (RELEASED 전환 시 releasedMemberId로 기록)
+ * @param requestedMemberId  요청 운영진의 멤버 ID (RELEASED 전환 시 releasedMemberId로 기록)
  */
 @Builder
 public record ChangeOriginalWorkbookStatusCommand(
@@ -20,6 +20,6 @@ public record ChangeOriginalWorkbookStatusCommand(
     OriginalWorkbookStatus status,
 
     @NotNull(message = "요청자 멤버 ID는 필수입니다")
-    Long operatorMemberId
+    Long requestedMemberId
 ) {
 }

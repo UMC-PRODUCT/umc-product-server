@@ -3,9 +3,10 @@ package com.umc.product.curriculum.application.port.in.query.dto;
 import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
+import lombok.Builder;
+
 import java.time.Instant;
 import java.util.List;
-import lombok.Builder;
 
 /**
  * 원본 워크북 상세 조회 결과 Info
@@ -32,7 +33,7 @@ public record OriginalWorkbookInfo(
     OriginalWorkbookStatus status,
     Instant releasedAt,
     Long releasedMemberId,
-    List<WorkbookMissionInfo> missions
+    List<OriginalWorkbookMissionInfo> missions
 ) {
 
     /**
@@ -45,7 +46,7 @@ public record OriginalWorkbookInfo(
      * @param isNecessary               미션 필수 수행 여부
      */
     @Builder
-    public record WorkbookMissionInfo(
+    public record OriginalWorkbookMissionInfo(
         Long originalWorkbookMissionId,
         String title,
         String description,
