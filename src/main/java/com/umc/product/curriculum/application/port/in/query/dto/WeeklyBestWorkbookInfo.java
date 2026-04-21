@@ -1,13 +1,17 @@
 package com.umc.product.curriculum.application.port.in.query.dto;
 
-import java.util.List;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import lombok.Builder;
+
+import java.util.List;
 
 /**
  * 베스트 워크북 조회 결과 Info
  *
  * @param weeklyBestWorkbookEntityId WeeklyBestWorkbook Entity PK
- * @param awardedMemberId            베스트 워크북으로 선정받은 챌린저의 멤버 ID
+ * @param challengerId               베스트 워크북으로 선정받은 챌린저의 멤버 ID
+ * @param gisuId                     베스트 워크북으로 선정받은 챌린저의 기수 ID
+ * @param part                       베스트 워크북으로 선정받은 챌린저의 파트
  * @param studyGroupId               소속 스터디 그룹 ID
  * @param decidedMemberId            베스트 워크북을 선정한 운영진의 멤버 ID
  * @param reason                     선정 사유
@@ -16,7 +20,9 @@ import lombok.Builder;
 @Builder
 public record WeeklyBestWorkbookInfo(
     Long weeklyBestWorkbookEntityId,
-    Long awardedMemberId,
+    Long challengerId,
+    Long gisuId,
+    ChallengerPart part,
     Long studyGroupId,
     Long decidedMemberId,
     String reason,

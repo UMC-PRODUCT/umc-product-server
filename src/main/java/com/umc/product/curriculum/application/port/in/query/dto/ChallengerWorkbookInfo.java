@@ -2,29 +2,30 @@ package com.umc.product.curriculum.application.port.in.query.dto;
 
 import com.umc.product.curriculum.domain.enums.FeedbackResult;
 import com.umc.product.curriculum.domain.enums.MissionType;
+import lombok.Builder;
+
 import java.time.Instant;
 import java.util.List;
-import lombok.Builder;
 
 /**
  * 챌린저 워크북 상세 조회 결과 Info
  *
- * @param challengerWorkbookId  PK
- * @param originalWorkbookId    소속 원본 워크북 ID
- * @param receivedStudyGroupId  배포받은 스터디 그룹 ID (nullable)
- * @param ownerMemberId         소유 챌린저의 멤버 ID
- * @param isExcused             인정 처리 여부
- * @param excusedReason         인정 처리 사유 (nullable)
- * @param content               워크북 내용 (nullable)
- * @param isBestWorkbook        베스트 워크북 선정 여부
- * @param submissions           미션 제출물 목록
+ * @param challengerWorkbookId PK
+ * @param originalWorkbookId   소속 원본 워크북 ID
+ * @param receivedStudyGroupId 배포받은 스터디 그룹 ID (nullable)
+ * @param challengerId         소유 챌린저의 멤버 ID
+ * @param isExcused            인정 처리 여부
+ * @param excusedReason        인정 처리 사유 (nullable)
+ * @param content              워크북 내용 (nullable)
+ * @param isBestWorkbook       베스트 워크북 선정 여부
+ * @param submissions          미션 제출물 목록
  */
 @Builder
 public record ChallengerWorkbookInfo(
     Long challengerWorkbookId,
     Long originalWorkbookId,
     Long receivedStudyGroupId,
-    Long ownerMemberId,
+    Long challengerId,
     boolean isExcused,
     String excusedReason,
     String content,
