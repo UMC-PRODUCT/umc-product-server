@@ -1,14 +1,16 @@
 package com.umc.product.notice.application.service.command;
 
-import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.command.dto.*;
 import com.umc.product.notice.application.port.out.*;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
+import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
+import com.umc.product.survey.application.port.in.command.ManageVoteUseCase;
+import com.umc.product.survey.application.port.in.command.dto.CreateVoteCommand;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,26 +32,31 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     private final SaveNoticeLinkPort saveNoticeLinkPort;
     private final LoadNoticePort loadNoticePort;
 
-//    private final CreateVoteUseCase createVoteUseCase;
-//    private final DeleteVoteUseCase deleteVoteUseCase;
+    private final ManageVoteUseCase manageVoteUseCase;
 
     @Override
     public AddNoticeVoteResult addVote(AddNoticeVoteCommand command, Long noticeId) {
-        // TODO: 일을 하자 김민서
-        throw new NotImplementedException();
-//        Notice notice = findNoticeById(noticeId);
-//        notice.validateAuthorMember(command.createdMemberId());
-//
-//        if (loadNoticeVotePort.existsVoteByNoticeId(noticeId)) {
-//            throw new NoticeDomainException(NoticeErrorCode.VOTE_ALREADY_EXISTS);
-//        }
-//
-//        Long voteId = createVoteUseCase.create(command.toCreateVoteCommand());
-//
-//        NoticeVote noticeVote = NoticeVote.create(voteId, notice);
-//        NoticeVote savedVote = saveNoticeVotePort.saveVote(noticeVote);
-//
-//        return new AddNoticeVoteResult(savedVote.getId(), voteId);
+        Notice notice = findNoticeById(noticeId);
+        notice.validateAuthorMember(command.createdMemberId());
+
+        if (loadNoticeVotePort.existsVoteByNoticeId(noticeId)) {
+            throw new NoticeDomainException(NoticeErrorCode.VOTE_ALREADY_EXISTS);
+        }
+
+        Long voteId = manageVoteUseCase.createVote(
+            CreateVoteCommand.builder()
+                .createdMemberId(command.createdMemberId())
+                .title(command.title())
+                .isAnonymous(command.isAnonymous())
+                .allowMultipleChoice(command.allowMultipleChoice())
+                .options(command.options())
+                .build()
+        );
+
+        NoticeVote noticeVote = NoticeVote.create(voteId, notice, command.startsAt(), command.endsAtExclusive());
+        NoticeVote savedVote = saveNoticeVotePort.saveVote(noticeVote);
+
+        return new AddNoticeVoteResult(savedVote.getId(), voteId);
     }
 
     @Override
@@ -104,30 +111,26 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
 
     @Override
     public void deleteVote(Long noticeId, Long memberId) {
-        // TODO: 일을 하자 김민서
-        throw new NotImplementedException();
-//        Notice notice = findNoticeById(noticeId);
-//        notice.validateAuthorMember(memberId);
-//
-//        NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
-//            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
-//
-//        deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
-//        saveNoticeVotePort.deleteVote(vote);
+        Notice notice = findNoticeById(noticeId);
+        notice.validateAuthorMember(memberId);
+
+        NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
+            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
+
+        saveNoticeVotePort.deleteVote(vote);
+        manageVoteUseCase.deleteVote(vote.getVoteId());
     }
 
     @Override
     public void removeContentsByNoticeId(Long noticeId, Long memberId) {
-        // TODO: 일을 하자 김민서
-        throw new NotImplementedException();
-//        saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
-//        saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
-//
-//        loadNoticeVotePort.findVoteByNoticeId(noticeId)
-//            .ifPresent(vote -> {
-//                saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
-//                deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
-//            });
+        saveNoticeImagePort.deleteAllImagesByNoticeId(noticeId);
+        saveNoticeLinkPort.deleteAllLinksByNoticeId(noticeId);
+
+        loadNoticeVotePort.findVoteByNoticeId(noticeId)
+            .ifPresent(vote -> {
+                saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
+                manageVoteUseCase.deleteVote(vote.getVoteId());
+            });
     }
 
     @Override
