@@ -1,15 +1,23 @@
 package com.umc.product.organization.adapter.out.persistence;
 
+import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.organization.domain.QStudyGroup.studyGroup;
 import static com.umc.product.organization.domain.QStudyGroupMember.studyGroupMember;
 
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.StudyGroupViewScope;
+import com.umc.product.organization.domain.QStudyGroupMember;
+import com.umc.product.organization.domain.QStudyGroupOrganizer;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -500,4 +508,35 @@ public class StudyGroupQueryRepository {
             .stream()
             .collect(Collectors.toSet());
     }
+
+    // ---------------------------------------------------------------------
+    // Projection Records
+    // ---------------------------------------------------------------------
+
+    /**
+     * {@link #fetchGroupHeaders} 용 상위 그룹 헤더 Projection.
+     *
+     * @param groupId 스터디 그룹 ID
+     * @param name    스터디 그룹 이름
+     */
+    private record GroupHeaderRow(Long groupId, String name) {}
+
+    /**
+     * {@link #fetchMembersByGroupIds} 용 멤버 Projection.
+     * <p>
+     * 한 행에 스터디 그룹 ID와 멤버의 기본 정보(이름, 프로필 이미지 ID)를 함께 싣는다.
+     *
+     * @param groupId        소속 스터디 그룹 ID (groupingBy 키)
+     * @param memberId       멤버 ID
+     * @param isLeader       리더 여부
+     * @param memberName     멤버 이름 (Member 도메인 JOIN 결과)
+     * @param profileImageId 멤버 프로필 이미지 파일 ID (storage 도메인 식별자)
+     */
+    private record MemberRow(
+        Long groupId,
+        Long memberId,
+        Boolean isLeader,
+        String memberName,
+        String profileImageId
+    ) {}
 }
