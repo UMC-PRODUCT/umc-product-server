@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class ManageVoteService implements ManageVoteUseCase {
+public class VoteService implements ManageVoteUseCase {
 
     private final SaveFormPort saveFormPort;
     private final LoadFormPort loadFormPort;
