@@ -74,7 +74,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         }
 
         // Schedule 생성 및 저장
-        Schedule schedule = command.toEntity(authorChallengerId);
+        Schedule schedule = command.toEntity(challengerInfoWithStatus.memberId());
         Schedule savedSchedule = saveSchedulePort.save(schedule);
 
         // ScheduleParticipant 생성 및 저장
