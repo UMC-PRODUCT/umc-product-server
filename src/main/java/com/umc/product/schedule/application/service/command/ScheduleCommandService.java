@@ -65,7 +65,6 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         // 작성자의 가장 최근 기수 Challenger 상태 조회 (탈부, 제명 상태일 시 exeption)
         ChallengerInfoWithStatus challengerInfoWithStatus = getChallengerUseCase.getLatestActiveChallengerByMemberId(
             command.authorMemberId());
-        Long authorChallengerId = challengerInfoWithStatus.challengerId();
 
         // 생성하려는 일정의 날짜가 현재 기수 활동 기간에서 벗어난 경우 에러 반환
         GisuInfo activeGisu = getGisuUseCase.getActiveGisu();
