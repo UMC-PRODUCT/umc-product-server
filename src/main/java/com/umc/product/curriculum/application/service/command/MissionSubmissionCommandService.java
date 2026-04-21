@@ -1,9 +1,9 @@
 package com.umc.product.curriculum.application.service.command;
 
 import com.umc.product.curriculum.application.port.in.command.ManageMissionSubmissionUseCase;
-import com.umc.product.curriculum.application.port.in.command.dto.CreateMissionSubmissionCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.DeleteMissionSubmissionCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.EditMissionSubmissionCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.CreateMissionSubmissionCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.DeleteMissionSubmissionCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.EditMissionSubmissionCommand;
 import com.umc.product.global.exception.NotImplementedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

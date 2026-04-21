@@ -1,9 +1,9 @@
 package com.umc.product.curriculum.application.port.in.command;
 
-import com.umc.product.curriculum.application.port.in.command.dto.CreateCurriculumCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.CreateWeeklyCurriculumCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.EditCurriculumCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.EditWeeklyCurriculumCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.curriculum.CreateCurriculumCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.curriculum.CreateWeeklyCurriculumCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.curriculum.EditCurriculumCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.curriculum.EditWeeklyCurriculumCommand;
 
 /**
  * 커리큘럼 및 주차별 커리큘럼 관리 UseCase

@@ -1,8 +1,8 @@
 package com.umc.product.curriculum.application.port.in.command;
 
-import com.umc.product.curriculum.application.port.in.command.dto.ChangeOriginalWorkbookStatusCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.CreateOriginalWorkbookCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.EditOriginalWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.CreateOriginalWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.EditOriginalWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.ChangeOriginalWorkbookStatusCommand;
 
 import java.util.Set;
 

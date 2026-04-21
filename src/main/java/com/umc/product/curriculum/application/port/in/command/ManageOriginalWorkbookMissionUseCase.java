@@ -1,7 +1,7 @@
 package com.umc.product.curriculum.application.port.in.command;
 
-import com.umc.product.curriculum.application.port.in.command.dto.CreateOriginalWorkbookMissionCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.EditOriginalWorkbookMissionCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.EditOriginalWorkbookMissionCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.CreateOriginalWorkbookMissionCommand;
 
 /**
  * 원본 워크북 미션 관리 UseCase

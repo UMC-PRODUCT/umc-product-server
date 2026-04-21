@@ -1,4 +1,4 @@
-package com.umc.product.curriculum.application.port.in.command.dto;
+package com.umc.product.curriculum.application.port.in.command.dto.workbook.mission;
 
 import com.umc.product.curriculum.domain.enums.MissionType;
 import jakarta.validation.constraints.NotBlank;

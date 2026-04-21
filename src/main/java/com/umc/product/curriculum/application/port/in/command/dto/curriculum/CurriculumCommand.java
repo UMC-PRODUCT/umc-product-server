@@ -1,24 +1,25 @@
-package com.umc.product.curriculum.application.port.in.command.dto;
+package com.umc.product.curriculum.application.port.in.command.dto.curriculum;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.domain.enums.MissionType;
+
 import java.time.Instant;
 import java.util.List;
 
 public record CurriculumCommand(
-        ChallengerPart part,
-        String title,
-        List<WorkbookCommand> workbooks
+    ChallengerPart part,
+    String title,
+    List<WorkbookCommand> workbooks
 ) {
     public record WorkbookCommand(
-            Long id,
-            Integer weekNo,
-            String title,
-            String description,
-            String workbookUrl,
-            Instant startDate,
-            Instant endDate,
-            MissionType missionType
+        Long id,
+        Integer weekNo,
+        String title,
+        String description,
+        String workbookUrl,
+        Instant startDate,
+        Instant endDate,
+        MissionType missionType
     ) {
         private static final Instant DEFAULT_DATE = Instant.parse("2099-12-31T00:00:00Z");
         private static final MissionType DEFAULT_MISSION_TYPE = MissionType.LINK;

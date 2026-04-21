@@ -1,8 +1,8 @@
 package com.umc.product.curriculum.application.port.in.command;
 
-import com.umc.product.curriculum.application.port.in.command.dto.CreateMissionSubmissionCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.DeleteMissionSubmissionCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.EditMissionSubmissionCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.CreateMissionSubmissionCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.DeleteMissionSubmissionCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.EditMissionSubmissionCommand;
 
 /**
  * 미션 제출물 관리 UseCase (챌린저 전용)

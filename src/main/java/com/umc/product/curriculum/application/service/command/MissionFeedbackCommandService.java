@@ -1,9 +1,9 @@
 package com.umc.product.curriculum.application.service.command;
 
 import com.umc.product.curriculum.application.port.in.command.ManageMissionFeedbackUseCase;
-import com.umc.product.curriculum.application.port.in.command.dto.CreateMissionFeedbackCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.DeleteMissionFeedbackCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.EditMissionFeedbackCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.CreateMissionFeedbackCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.DeleteMissionFeedbackCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.EditMissionFeedbackCommand;
 import com.umc.product.global.exception.NotImplementedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -1,8 +1,8 @@
 package com.umc.product.curriculum.application.service.command;
 
 import com.umc.product.curriculum.application.port.in.command.ManageOriginalWorkbookMissionUseCase;
-import com.umc.product.curriculum.application.port.in.command.dto.CreateOriginalWorkbookMissionCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.EditOriginalWorkbookMissionCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.EditOriginalWorkbookMissionCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.mission.CreateOriginalWorkbookMissionCommand;
 import com.umc.product.global.exception.NotImplementedException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

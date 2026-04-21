@@ -1,8 +1,10 @@
-package com.umc.product.curriculum.application.port.in.command.dto;
+package com.umc.product.curriculum.application.port.in.command.dto.workbook;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
 import java.util.List;
+
 import lombok.Builder;
 
 /**

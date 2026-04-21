@@ -1,4 +1,4 @@
-package com.umc.product.curriculum.application.port.in.command.dto;
+package com.umc.product.curriculum.application.port.in.command.dto.curriculum;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import jakarta.validation.constraints.NotBlank;

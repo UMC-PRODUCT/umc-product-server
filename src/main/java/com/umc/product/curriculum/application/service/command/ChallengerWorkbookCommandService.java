@@ -2,10 +2,10 @@ package com.umc.product.curriculum.application.service.command;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.curriculum.application.port.in.command.ManageChallengerWorkbookUseCase;
-import com.umc.product.curriculum.application.port.in.command.dto.DeleteChallengerWorkbookCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.DeployChallengerWorkbookCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.EditChallengerWorkbookCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.ExcuseChallengerWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.DeleteChallengerWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.DeployChallengerWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.EditChallengerWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.ExcuseChallengerWorkbookCommand;
 import com.umc.product.curriculum.application.port.in.query.dto.ChallengerWorkbookInfo;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;

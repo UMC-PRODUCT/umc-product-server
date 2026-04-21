@@ -2,9 +2,9 @@ package com.umc.product.curriculum.application.service.command;
 
 import com.umc.product.curriculum.application.port.in.command.AutoReleaseWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.command.ManageOriginalWorkbookUseCase;
-import com.umc.product.curriculum.application.port.in.command.dto.ChangeOriginalWorkbookStatusCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.CreateOriginalWorkbookCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.EditOriginalWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.CreateOriginalWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.EditOriginalWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.ChangeOriginalWorkbookStatusCommand;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
 import com.umc.product.global.exception.NotImplementedException;

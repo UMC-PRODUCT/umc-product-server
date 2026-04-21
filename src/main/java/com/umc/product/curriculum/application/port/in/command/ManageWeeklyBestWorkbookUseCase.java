@@ -1,7 +1,7 @@
 package com.umc.product.curriculum.application.port.in.command;
 
-import com.umc.product.curriculum.application.port.in.command.dto.CreateWeeklyBestWorkbookCommand;
-import com.umc.product.curriculum.application.port.in.command.dto.EditWeeklyBestWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.CreateWeeklyBestWorkbookCommand;
+import com.umc.product.curriculum.application.port.in.command.dto.workbook.EditWeeklyBestWorkbookCommand;
 
 /**
  * 베스트 워크북 선정 관리 UseCase
