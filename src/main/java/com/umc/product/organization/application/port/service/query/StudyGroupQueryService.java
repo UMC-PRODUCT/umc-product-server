@@ -58,7 +58,6 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
      */
     @Override
     public List<StudyGroupListInfo.StudyGroupInfo> getMyStudyGroups(Long memberId, Long cursor, int size) {
-        SchoolAccessContext context = getSchoolAccessContextUseCase.getContext(memberId);
         Long schoolId = getMemberUseCase.getById(memberId).schoolId();
         Long activeGisuId = getGisuUseCase.getActiveGisuId();
 
