@@ -37,7 +37,7 @@ public class VoteQueryService implements GetVoteUseCase {
     @Override
     public VoteInfo getVoteInfo(Long formId, Long memberId) {
         Form form = loadFormPort.findById(formId)
-            .orElseThrow(() -> new IllegalArgumentException("해당 투표가 존재하지 않습니다. ID: " + formId));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
 
         // 1. 투표 통계 데이터 로드
         Map<Long, Long> counts = loadAnswerPort.countVotesByOptionId(formId);
@@ -48,11 +48,11 @@ public class VoteQueryService implements GetVoteUseCase {
         // 공식적으로는 1섹션 1질문 구조를 전제로 하지만, 확장성을 고려하여 조회
         FormSection section = loadFormSectionPort.findAllByFormId(formId).stream()
             .findFirst()
-            .orElseThrow(() -> new IllegalStateException("투표 섹션이 존재하지 않습니다. ID: " + formId));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE));
 
         Question question = loadQuestionPort.findAllByFormSectionIdIn(Set.of(section.getId())).stream()
             .findFirst()
-            .orElseThrow(() -> new IllegalStateException("투표 질문이 존재하지 않습니다. SectionID: " + section.getId()));
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE));
 
         boolean allowMultipleChoice = (question.getType() == QuestionType.CHECKBOX);
         List<QuestionOption> questionOptions = loadQuestionOptionPort.findAllByQuestionId(question.getId());
