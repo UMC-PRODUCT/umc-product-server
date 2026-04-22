@@ -5,9 +5,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import com.umc.product.organization.application.port.in.query.GetSchoolAccessContextUseCase;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
-import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
@@ -30,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class StudyGroupQueryService implements GetStudyGroupUseCase {
 
     private final LoadStudyGroupPort loadStudyGroupPort;
-    private final GetSchoolAccessContextUseCase getSchoolAccessContextUseCase;
     private final GetFileUseCase getFileUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetGisuUseCase getGisuUseCase;
@@ -107,10 +104,28 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
         return resolveStudyGroupListUrls(groups);
     }
 
+    /**
+     * 권한(역할) 기반 스터디 그룹 이름 목록 조회.
+     * <p>
+     * {@link #getMyStudyGroups} 와 동일한 Scope 해석 규칙을 사용한다.
+     * <ul>
+     *   <li>학교 회장단 → 학교 멤버가 포함된 모든 그룹의 이름</li>
+     *   <li>파트장 → 본인이 운영진인 그룹의 이름</li>
+     *   <li>권한 없음 → 빈 리스트</li>
+     * </ul>
+     * 페이징 없이 전체 결과(groupId, name)를 반환하므로 토글/드롭다운 UI에 바로 쓸 수 있다.
+     */
     @Override
     public List<StudyGroupNameInfo> getStudyGroupNames(Long memberId) {
-        SchoolAccessContext context = getSchoolAccessContextUseCase.getContext(memberId);
-        return loadStudyGroupPort.findStudyGroupNames(context.schoolId(), context.part());
+        Long schoolId = getMemberUseCase.getById(memberId).schoolId();
+        Long activeGisuId = getGisuUseCase.getActiveGisuId();
+
+        List<StudyGroupViewScope> scopes = resolveScopes(memberId, activeGisuId, schoolId);
+        if (scopes.isEmpty()) {
+            return List.of();
+        }
+
+        return loadStudyGroupPort.findStudyGroupNames(scopes, activeGisuId);
     }
 
     @Override

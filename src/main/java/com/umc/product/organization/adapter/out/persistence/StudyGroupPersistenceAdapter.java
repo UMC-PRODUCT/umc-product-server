@@ -57,8 +57,11 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
     }
 
     @Override
-    public List<StudyGroupNameInfo> findStudyGroupNames(Long schoolId, ChallengerPart part) {
-        return studyGroupQueryRepository.findStudyGroupNames(schoolId, part);
+    public List<StudyGroupNameInfo> findStudyGroupNames(List<StudyGroupViewScope> scopes, Long gisuId) {
+        if (scopes == null || scopes.isEmpty()) {
+            return List.of();
+        }
+        return studyGroupQueryRepository.findStudyGroupNames(scopes, gisuId);
     }
 
     @Override

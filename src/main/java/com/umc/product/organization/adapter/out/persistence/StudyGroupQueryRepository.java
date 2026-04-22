@@ -215,37 +215,35 @@ public class StudyGroupQueryRepository {
     }
 
     /**
-     * 스터디 그룹 이름 목록 조회 (활성 기수 기준, 학교/파트 필터)
-     * - 해당 학교 멤버가 포함된 스터디 그룹의 ID/이름만 반환
+     * 역할 Scope 기반 스터디 그룹 이름 목록 조회.
+     * <p>
+     * {@link #findMyStudyGroups} 와 동일한 Scope 합성 파이프라인을 재사용하되,
+     * 페이지네이션과 운영진/멤버 상세 조립 없이 (groupId, name) 만 Projection 한다.
+     * 드롭다운/토글 UI 용도라 전체 결과를 한 번에 내려준다.
+     * <p>
+     * Scope가 모두 비어 합성 predicate가 null 이면 빈 리스트 반환
+     *
+     * @param scopes 역할 기반 조회 범위 (비어있지 않다고 가정 — Adapter 에서 이미 단축)
+     * @param gisuId 활성 기수 ID
+     * @return Scope 범위 내 (groupId, name), id DESC 정렬
      */
-    public List<StudyGroupNameInfo> findStudyGroupNames(Long schoolId, ChallengerPart part) {
-        return null;
-//        List<Long> studyGroupIds = queryFactory
-//                .selectDistinct(studyGroup.id)
-//                .from(studyGroupMember)
-//                .join(studyGroupMember.studyGroup, studyGroup)
-//                .join(challenger).on(challenger.id.eq(studyGroupMember.challengerId))
-//                .join(member).on(member.id.eq(challenger.memberId))
-//                .where(
-//                        studyGroup.gisu.isActive.eq(true),
-//                        member.schoolId.eq(schoolId),
-//                        partCondition(part)
-//                )
-//                .fetch();
-//
-//        if (studyGroupIds.isEmpty()) {
-//            return List.of();
-//        }
-//
-//        return queryFactory
-//                .select(Projections.constructor(StudyGroupNameInfo.class,
-//                        studyGroup.id,
-//                        studyGroup.name
-//                ))
-//                .from(studyGroup)
-//                .where(studyGroup.id.in(studyGroupIds))
-//                .orderBy(studyGroup.name.asc())
-//                .fetch();
+    public List<StudyGroupNameInfo> findStudyGroupNames(List<StudyGroupViewScope> scopes, Long gisuId) {
+        BooleanExpression scopePredicate = buildScopePredicate(scopes);
+        if (scopePredicate == null) {
+            return List.of();
+        }
+
+        return queryFactory
+            .select(Projections.constructor(StudyGroupNameInfo.class,
+                studyGroup.id,
+                studyGroup.name))
+            .from(studyGroup)
+            .where(
+                studyGroup.gisuId.eq(gisuId),
+                scopePredicate
+            )
+            .orderBy(studyGroup.name.asc())
+            .fetch();
     }
 
 

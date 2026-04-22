@@ -36,7 +36,19 @@ public interface LoadStudyGroupPort {
      */
     List<StudyGroupListInfo.StudyGroupInfo> findMyStudyGroups(
         List<StudyGroupViewScope> scopes, Long gisuId, Long cursor, int size);
-    List<StudyGroupNameInfo> findStudyGroupNames(Long schoolId, ChallengerPart part);
+
+    /**
+     * 운영진(회장단/파트장) 권한에 따라 활성 기수의 스터디 그룹 이름 목록을 조회한다.
+     * <p>
+     * {@link #findMyStudyGroups} 와 동일한 Scope OR 합성 규칙을 사용하지만,
+     * 페이지네이션과 운영진/멤버 상세 조립 없이 (groupId, name) 만 반환 (토글/드롭다운 용도).
+     * scopes가 null/빈 리스트이면 구현체는 즉시 빈 리스트를 반환해야 한다.
+     *
+     * @param scopes 역할 기반 조회 범위
+     * @param gisuId 활성 기수 ID
+     * @return Scope 범위 내 스터디 그룹의 (id, name) 목록
+     */
+    List<StudyGroupNameInfo> findStudyGroupNames(List<StudyGroupViewScope> scopes, Long gisuId);
 
     /**
      * 4단계: 스터디 그룹 상세 조회
