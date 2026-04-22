@@ -76,7 +76,8 @@ public class ProjectMember extends BaseEntity {
 
     // 프로젝트 멤버의 상태를 나타냅니다. 추후 과거 참여 인원 등을 표시해주는 등의 확장성을 고려합니다.
     @Enumerated(EnumType.STRING)
-    private ProjectMemberStatus status;
+    @Column(nullable = false)
+    private ProjectMemberStatus status = ProjectMemberStatus.ACTIVE;
     private Instant statusUpdatedAt;
     private String statusChangeReason;
     private Long statusChangedMemberId;

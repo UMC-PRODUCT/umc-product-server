@@ -27,6 +27,9 @@ public class Project extends BaseEntity {
     @Column(nullable = false)
     private Long gisuId; // 프로젝트가 속한 기수
 
+    @Column(nullable = false)
+    private Long chapterId; // 프로젝트가 속한 지부
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProjectStatus status;
