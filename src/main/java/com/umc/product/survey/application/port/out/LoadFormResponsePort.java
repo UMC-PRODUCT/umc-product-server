@@ -21,7 +21,5 @@ public interface LoadFormResponsePort {
 
     int countSubmittedByFormId(Long formId);
 
-    List<Long> findMySelectedOptionIds(Long formId, Long memberId);
-
     Optional<FormResponse> findSubmittedByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId);
 }
