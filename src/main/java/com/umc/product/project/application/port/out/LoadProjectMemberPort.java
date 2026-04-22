@@ -7,10 +7,8 @@ import java.util.Map;
 
 /**
  * ProjectMember 조회 Port (Driven / Port Out).
- * <p>
- * Phase 1 범위: 보조 PM 추출(PROJECT-002/103), 파트별 인원 집계(PROJECT-001).
- * Save 성격의 팀원 CRUD는 Phase 2 이후 ManageProjectMember UseCase에서 다룹니다.
  */
+// TODO: ManageProjectMember 구현 시 SaveProjectMemberPort 추가
 public interface LoadProjectMemberPort {
 
     /**

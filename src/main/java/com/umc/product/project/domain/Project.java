@@ -153,14 +153,14 @@ public class Project extends BaseEntity {
     }
 
     /**
-     * 기수가 종료되었을 때, 프로젝트를 완료 처리 합니다. (Phase 2 이후 구현)
+     * 기수가 종료되었을 때, 프로젝트를 완료 처리 합니다.
      */
     public void complete() {
         throw new UnsupportedOperationException("TODO: complete 구현 필요");
     }
 
     /**
-     * 프로젝트가 중간에 와해되었을 때 사용합니다. 사유를 반드시 제공하여야 합니다. (Phase 2 이후 구현)
+     * 프로젝트가 중간에 와해되었을 때 사용합니다. 사유를 반드시 제공하여야 합니다.
      *
      * @param reason            와해 사유
      * @param decidedByMemberId 해당 사항을 결정한 운영진 Member ID
