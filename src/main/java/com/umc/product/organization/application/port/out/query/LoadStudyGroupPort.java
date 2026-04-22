@@ -3,6 +3,7 @@ package com.umc.product.organization.application.port.out.query;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupViewScope;
 import com.umc.product.organization.domain.StudyGroup;
@@ -49,6 +50,17 @@ public interface LoadStudyGroupPort {
      * @return Scope 범위 내 스터디 그룹의 (id, name) 목록
      */
     List<StudyGroupNameInfo> findStudyGroupNames(List<StudyGroupViewScope> scopes, Long gisuId);
+
+    /**
+     * 스터디 그룹 ID 로 해당 그룹의 스터디원(멤버) 목록을 조회한다.
+     * <p>
+     * study_group_member 테이블 기준으로 소속된 멤버를 가져오며, Member/School 도메인과 JOIN 하여
+     * (memberId, 학교명, 프로필 이미지 ID) 를 함께 싣는다. 프로필 이미지 ID → URL 치환은 Service 에서 수행한다.
+     *
+     * @param groupId 스터디 그룹 ID
+     * @return 그룹에 소속된 스터디원 목록 (소속 없으면 빈 리스트)
+     */
+    List<StudyGroupMemberInfo> findStudyGroupMembers(Long groupId);
 
     /**
      * 4단계: 스터디 그룹 상세 조회

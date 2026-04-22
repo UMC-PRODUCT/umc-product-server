@@ -2,16 +2,19 @@ package com.umc.product.organization.adapter.in.web.swagger;
 
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupMemberResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 
 /**
  * 스터디 그룹 조회 API
@@ -53,5 +56,15 @@ public interface StudyGroupQueryControllerApi {
         @ApiResponse(responseCode = "404", description = "스터디 그룹을 찾을 수 없음")
     })
     StudyGroupResponse getStudyGroupDetail(
+        @Parameter(description = "스터디 그룹 ID", required = true) Long groupId);
+
+    @Operation(summary = "스터디 그룹 스터디원 목록 조회",
+        description = "스터디 그룹 ID 로 소속 스터디원(memberId, 학교명, 프로필 이미지 URL) 목록을 조회합니다.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "조회 성공",
+            content = @Content(array = @ArraySchema(schema = @Schema(implementation = StudyGroupMemberResponse.class)))),
+        @ApiResponse(responseCode = "404", description = "스터디 그룹을 찾을 수 없음")
+    })
+    List<StudyGroupMemberResponse> getStudyGroupMembers(
         @Parameter(description = "스터디 그룹 ID", required = true) Long groupId);
 }

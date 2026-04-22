@@ -4,6 +4,7 @@ package com.umc.product.organization.adapter.out.persistence;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupViewScope;
 import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
@@ -67,6 +68,11 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
     @Override
     public StudyGroupDetailInfo findStudyGroupDetail(Long groupId) {
         return studyGroupQueryRepository.findStudyGroupDetail(groupId);
+    }
+
+    @Override
+    public List<StudyGroupMemberInfo> findStudyGroupMembers(Long groupId) {
+        return studyGroupQueryRepository.findStudyGroupMembers(groupId);
     }
 
     @Override

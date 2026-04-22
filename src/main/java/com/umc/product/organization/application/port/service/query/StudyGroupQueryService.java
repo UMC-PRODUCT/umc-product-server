@@ -9,6 +9,7 @@ import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCa
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
+import com.umc.product.organization.application.port.in.query.dto.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupViewScope;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
@@ -131,6 +132,41 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     @Override
     public List<Long> getStudyGroupIdsByParts(Long gisuId, Set<ChallengerPart> parts) {
         return loadStudyGroupPort.findIdsByGisuIdAndPartIn(gisuId, parts);
+    }
+
+    /**
+     * 스터디 그룹 ID 로 소속 스터디원 목록 조회.
+     * <p>
+     * Repository 에서 Member/School 도메인까지 JOIN 하여 (memberId, 학교명, 프로필 이미지 ID) 를 가져온 뒤,
+     * 프로필 이미지 ID 를 일괄 URL 로 치환해 반환한다. 조회 결과가 비어있으면 storage 호출 자체를 생략한다.
+     */
+    @Override
+    public List<StudyGroupMemberInfo> getStudyGroupMembers(Long groupId) {
+        List<StudyGroupMemberInfo> members = loadStudyGroupPort.findStudyGroupMembers(groupId);
+        if (members.isEmpty()) {
+            return members;
+        }
+
+        Set<String> imageIds = new LinkedHashSet<>();
+        for (StudyGroupMemberInfo m : members) {
+            if (m.profileImageUrl() != null) {
+                imageIds.add(m.profileImageUrl());
+            }
+        }
+        if (imageIds.isEmpty()) {
+            return members;
+        }
+
+        Map<String, String> urlMap = resolveProfileImageUrls(imageIds);
+        return members.stream()
+            .map(m -> new StudyGroupMemberInfo(
+                m.memberId(),
+                m.schoolName(),
+                urlMap.getOrDefault(m.profileImageUrl(), m.profileImageUrl())))
+            // Map의 Key는 fileId, Value는 URL. 치환 실패 시 원래 fileId 반환
+            // 지금은 fileId와 치환 성공한 URL이 모두 같은 profileImageUrl 필드에 담겨 있다. 구별 처리 예정
+
+            .toList();
     }
 
     @Override

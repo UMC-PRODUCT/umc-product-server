@@ -1,6 +1,7 @@
 package com.umc.product.organization.adapter.out.persistence;
 
 import static com.umc.product.member.domain.QMember.member;
+import static com.umc.product.organization.domain.QSchool.school;
 import static com.umc.product.organization.domain.QStudyGroup.studyGroup;
 import static com.umc.product.organization.domain.QStudyGroupMember.studyGroupMember;
 import static com.umc.product.organization.domain.QStudyGroupOrganizer.studyGroupOrganizer;
@@ -12,6 +13,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupViewScope;
 import com.umc.product.organization.domain.QStudyGroupMember;
@@ -518,6 +520,27 @@ public class StudyGroupQueryRepository {
 
     private BooleanExpression cursorCondition(Long cursor) {
         return cursor != null ? studyGroup.id.gt(cursor) : null;
+    }
+
+    /**
+     * 스터디 그룹 ID 로 소속 스터디원(study_group_member) 목록을 한 번의 쿼리로 조회한다.
+     * <p>
+     * Member/School 도메인과 JOIN 하여 한 행에 (memberId, 학교명, 프로필 이미지 ID) 를 실어 반환한다.
+     *
+     * @param groupId 스터디 그룹 ID
+     * @return 스터디원 Projection 목록. 소속이 없으면 빈 리스트.
+     */
+    public List<StudyGroupMemberInfo> findStudyGroupMembers(Long groupId) {
+        return queryFactory
+            .select(Projections.constructor(StudyGroupMemberInfo.class,
+                studyGroupMember.memberId,
+                school.name,
+                member.profileImageId))
+            .from(studyGroupMember)
+            .join(member).on(member.id.eq(studyGroupMember.memberId))
+            .join(school).on(school.id.eq(member.schoolId))
+            .where(studyGroupMember.studyGroup.id.eq(groupId))
+            .fetch();
     }
 
     public Set<Long> findConflictedMemberIds(Long gisuId, ChallengerPart part, Set<Long> memberIds) {

@@ -4,6 +4,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
+import com.umc.product.organization.application.port.in.query.dto.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
 import java.util.List;
 import java.util.Set;
@@ -42,8 +43,20 @@ public interface GetStudyGroupUseCase {
 
         /**
          * 스터디 그룹 상세 조회
+         * TODO: 삭제 예정
          */
         StudyGroupDetailInfo getStudyGroupDetail(Long groupId);
+
+        /**
+         * 스터디 그룹 ID 로 소속 스터디원 목록 조회.
+         * <p>
+         * 각 스터디원에 대해 memberId / 학교명 / 프로필 이미지 URL 을 반환한다.
+         * 대상은 {@code study_group_member} 테이블의 멤버이며 운영진(StudyGroupOrganizer) 테이블과는 별개다.
+         *
+         * @param groupId 스터디 그룹 ID
+         * @return 소속 스터디원 목록 (소속 없으면 빈 리스트)
+         */
+        List<StudyGroupMemberInfo> getStudyGroupMembers(Long groupId);
 
         /**
          * 특정 기수에서 해당 파트들의 스터디 그룹 ID 목록 조회 (파트장용)

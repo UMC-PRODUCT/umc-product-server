@@ -6,6 +6,7 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupMemberResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSummaryResponse;
@@ -64,11 +65,24 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
 
     /**
      * 스터디 그룹 상세 조회
+     * 삭제 예정
      */
     @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.READ)
     @Override
     @GetMapping("/{groupId}")
     public StudyGroupResponse getStudyGroupDetail(@PathVariable Long groupId) {
         return StudyGroupResponse.from(getStudyGroupUseCase.getStudyGroupDetail(groupId));
+    }
+
+    /**
+     * 스터디 그룹 스터디원 목록 조회
+     */
+    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.READ)
+    @Override
+    @GetMapping("/{groupId}/members")
+    public List<StudyGroupMemberResponse> getStudyGroupMembers(@PathVariable Long groupId) {
+        return getStudyGroupUseCase.getStudyGroupMembers(groupId).stream()
+            .map(StudyGroupMemberResponse::from)
+            .toList();
     }
 }
