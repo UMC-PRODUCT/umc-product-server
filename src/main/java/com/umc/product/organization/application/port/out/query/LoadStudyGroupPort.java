@@ -17,16 +17,9 @@ public interface LoadStudyGroupPort {
     StudyGroup findByName(String name);
 
     /**
-     * 3단계: 스터디 그룹 목록 조회 (cursor 기반, 활성 기수 기준)
-     * 페이지네이션 처리는 Controller에서 CursorResponse.of()로 수행
-     */
-    List<StudyGroupListInfo.StudyGroupInfo> findStudyGroups(Long schoolId, ChallengerPart part, Long cursor, int size);
-
-    /**
      * 운영진(회장단, 파트장)이 챌린저 스터디 그룹 목록 조회 (역할 Scope 기반).
      * <p>
      * scopes를 OR로 합쳐 EXISTS 서브쿼리로 필터링한다. scopes가 null/빈 리스트인 경우
-     * 구현체는 DB를 조회하지 않고 즉시 빈 리스트를 반환해야 한다(불필요한 풀 스캔 방지).
      * 정렬은 id DESC(신규 우선), 커서는 {@code studyGroup.id.lt(cursor)} 로 적용된다.
      *
      * @param scopes 역할 기반 조회 범위. 비어있으면 빈 리스트 반환.

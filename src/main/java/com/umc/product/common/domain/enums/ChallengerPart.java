@@ -25,7 +25,7 @@ public enum ChallengerPart {
     public static ChallengerPart from(String part) {
 
         return Arrays.stream(ChallengerPart.values())
-            .filter(challengerPart -> challengerPart.name() == part)
+            .filter(challengerPart -> challengerPart.name().equals(part))
             .findFirst()
             .orElseThrow(() -> new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND));
 

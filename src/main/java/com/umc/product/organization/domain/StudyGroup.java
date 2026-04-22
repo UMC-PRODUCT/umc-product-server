@@ -51,14 +51,14 @@ public class StudyGroup extends BaseEntity {
     private ChallengerPart part;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private StudyGroup(String name, Long gisu_id, ChallengerPart part) {
-        validate(name, gisu_id, part);
+    private StudyGroup(String name, Long gisuId, ChallengerPart part) {
+        validate(name, gisuId, part);
         this.name = name;
-        this.gisuId = gisu_id;
+        this.gisuId = gisuId;
         this.part = part;
     }
 
-    public static StudyGroup create(String name, Long gisu_id, ChallengerPart part, Set<Long> organizerIds, Set<Long> memberIds) {
+    public static StudyGroup create(String name, Long gisuId, ChallengerPart part, Set<Long> organizerIds, Set<Long> memberIds) {
         if(organizerIds == null || organizerIds.isEmpty()) {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_ORGANIZER_REQUIRED);
         }
@@ -68,7 +68,7 @@ public class StudyGroup extends BaseEntity {
 
         StudyGroup group = StudyGroup.builder()
             .name(name)
-            .gisu_id(gisu_id)
+            .gisuId(gisuId)
             .part(part)
             .build();
 
@@ -101,11 +101,11 @@ public class StudyGroup extends BaseEntity {
         this.studyGroupOrganizer.add(StudyGroupOrganizer.create(this, organizerId));
     }
 
-    private static void validate(String name, Long gisu_id, ChallengerPart part) {
+    private static void validate(String name, Long gisuId, ChallengerPart part) {
         if (name == null || name.isBlank()) {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
         }
-        if (gisu_id == null) {
+        if (gisuId == null) {
             throw new OrganizationDomainException(OrganizationErrorCode.GISU_REQUIRED);
         }
         if (part == null) {

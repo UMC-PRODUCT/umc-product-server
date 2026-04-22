@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.util.HashSet;
 import java.util.Set;
@@ -22,16 +21,16 @@ public record CreateStudyGroupRequest(
         @NotNull(message = "파트는 필수입니다")
         ChallengerPart part,
 
-        @Schema(description = "파트장 챌린저 ID", example = "101")
+        @Schema(description = "파트장 ID 목록", example = "[101, 102]")
         @NotEmpty
-        @Positive(message = "파트장 ID는 양수여야 합니다")
-        Set<Long> organizationIds,
+        Set<Long> organizerIds,
 
         @Schema(description = "스터디원 챌린저 ID 목록", example = "[102, 103, 104]")
         @NotEmpty
         Set<Long> memberIds
 ) {
     public CreateStudyGroupCommand toCommand() {
-        return new CreateStudyGroupCommand(name, part, organizationIds, memberIds != null ? memberIds : new HashSet<>());
+        return new CreateStudyGroupCommand(name, part, organizerIds,
+            memberIds != null ? memberIds : new HashSet<>());
     }
 }
