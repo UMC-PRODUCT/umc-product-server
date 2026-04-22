@@ -11,11 +11,11 @@ import lombok.Builder;
  * {@code UpdateProjectCommand}를 통해 단계적으로 저장됩니다.
  */
 @Builder
-public record CreateProjectDraftCommand(
+public record CreateDraftProjectCommand(
     Long gisuId,
     Long productOwnerMemberId
 ) {
-    public CreateProjectDraftCommand {
+    public CreateDraftProjectCommand {
         Objects.requireNonNull(gisuId, "gisuId must not be null");
         Objects.requireNonNull(productOwnerMemberId, "productOwnerMemberId must not be null");
     }
