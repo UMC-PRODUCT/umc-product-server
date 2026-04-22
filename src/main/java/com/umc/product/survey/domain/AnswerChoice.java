@@ -35,5 +35,7 @@ public class AnswerChoice {
     public AnswerChoice(Answer answer, QuestionOption questionOption) {
         this.answer = answer;
         this.questionOption = questionOption;
+        this.answeredAsContent = questionOption.getContent();
+    }
     }
 }

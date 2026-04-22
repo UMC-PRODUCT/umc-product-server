@@ -4,7 +4,6 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.survey.domain.enums.QuestionType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -61,11 +60,19 @@ public class Answer extends BaseEntity {
     @OneToMany(mappedBy = "answer", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AnswerChoice> choices = new ArrayList<>();
 
-    @Builder
-    private Answer(FormResponse formResponse, Question question, String textValue) {
-        this.formResponse = formResponse;
-        this.question = question;
-        this.textValue = textValue;
+    public static Answer create(
+        FormResponse formResponse,
+        Question question,
+        QuestionType answeredAsType,
+        String textValue
+    ) {
+        Answer answer = new Answer();
+        answer.formResponse = formResponse;
+        answer.question = question;
+        answer.answeredAsType = answeredAsType;
+        answer.textValue = textValue;
+
+        return answer;
     }
 
     // 객관식 보기 추가 편의 메서드
