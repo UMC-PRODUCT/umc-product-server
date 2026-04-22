@@ -23,7 +23,9 @@ public enum ChallengerPart {
     private final int sortOrder;
 
     public static ChallengerPart from(String part) {
-
+        if (part == null || part.isBlank()) {
+            throw new ChallengerDomainException(ChallengerErrorCode.CHALLENGER_PART_NOT_FOUND);
+        }
         return Arrays.stream(ChallengerPart.values())
             .filter(challengerPart -> challengerPart.name().equals(part))
             .findFirst()
