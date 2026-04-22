@@ -16,8 +16,8 @@ import lombok.Builder;
 @Builder
 public record ProjectPartQuotaInfo(
     ChallengerPart part,
-    int quota,        // 어드민이 PROJECT-105로 기록한 정원 (NOT NULL, 항상 ≥ 1)
-    int currentCount  // 현재 등록된 활성 멤버 수 (실시간 조회)
+    int quota,        // 어드민이 PROJECT-105로 할당
+    int currentCount  // 활성 멤버 수
 ) {
     /**
      * 현재 카운트와 정원을 비교해 모집 상태를 계산합니다.

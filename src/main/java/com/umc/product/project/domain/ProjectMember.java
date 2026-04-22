@@ -62,7 +62,7 @@ public class ProjectMember extends BaseEntity {
     @Column(nullable = false)
     private Long memberId;
 
-    // 해당 멤버가 어느 파트로 프로젝트에 참여하는지를 나타냅니다. 보조 PM은 PLAN으로 저장됩니다.
+    // 보조 PM은 PLAN 파트로 저장됩니다.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ChallengerPart part;

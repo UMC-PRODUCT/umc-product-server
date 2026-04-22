@@ -23,7 +23,7 @@ public record SearchProjectQuery(
     List<Long> schoolIds,
     List<ChallengerPart> parts,
     PartQuotaStatus partQuotaStatus,
-    List<ProjectStatus> statuses,   // 서비스 내부 필터 — 절대 null이 아니며, 비어있지 않음
+    List<ProjectStatus> statuses,
     Pageable pageable
 ) {
     public SearchProjectQuery {

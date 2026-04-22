@@ -9,8 +9,11 @@ import lombok.Builder;
 /**
  * 프로젝트 도메인 전반의 조회 UseCase가 공유하는 Info DTO (도메인 공유 DTO).
  * <p>
- * Entity + 부가 정보(파일 URL, 파트 TO, 보조 PM IDs 등)를 조합해 생성합니다.
- * Controller/Assembler가 다시 Web Response DTO로 변환합니다.
+ * Entity + 부가 정보를 조합해 생성합니다. Controller/Assembler가 다시 Web Response DTO로 변환합니다.
+ * <ul>
+ *   <li>{@code thumbnailImageUrl}/{@code logoImageUrl} — storage 도메인에서 resolve해 Service가 주입</li>
+ *   <li>{@code coProductOwnerMemberIds} — {@code project_member} 중 PLAN 파트(메인 PM 제외)로부터 추출</li>
+ * </ul>
  */
 @Builder
 public record ProjectInfo(
@@ -19,14 +22,14 @@ public record ProjectInfo(
     String name,
     String description,
     String thumbnailFileId,
-    String thumbnailImageUrl,          // storage 도메인에서 resolve한 CDN/Pre-signed URL
+    String thumbnailImageUrl,
     String logoFileId,
-    String logoImageUrl,                // 동일
+    String logoImageUrl,
     String externalLink,
     Long gisuId,
     Long chapterId,
     Long productOwnerMemberId,
-    List<Long> coProductOwnerMemberIds, // project_member WHERE part=PLAN AND member_id != productOwnerMemberId
+    List<Long> coProductOwnerMemberIds,
     List<ProjectPartQuotaInfo> partQuotas,
     Long applicationFormId,
     Instant createdAt,
