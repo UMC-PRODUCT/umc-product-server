@@ -1,5 +1,6 @@
 package com.umc.product.survey.application.port.in.query;
 
+import com.umc.product.survey.application.port.in.command.ManageFormResponseUseCase;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 
 /**
@@ -15,4 +16,11 @@ public interface GetVoteUseCase {
      * @return 투표 상세 정보 DTO
      */
     VoteInfo getVoteInfo(Long formId, Long memberId);
+
+    /**
+     * 투표(1섹션 1질문 전제)의 유일한 질문 ID를 반환합니다.
+     * 소비자 도메인이 {@link ManageFormResponseUseCase}를
+     * 직접 호출할 때 필요한 questionId를 제공.
+     */
+    Long getPrimaryQuestionId(Long voteId);
 }

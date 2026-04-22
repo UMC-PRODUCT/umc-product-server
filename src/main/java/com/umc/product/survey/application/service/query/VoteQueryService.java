@@ -9,6 +9,8 @@ import com.umc.product.survey.domain.FormSection;
 import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.enums.QuestionType;
+import com.umc.product.survey.domain.exception.SurveyDomainException;
+import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -86,6 +88,15 @@ public class VoteQueryService implements GetVoteUseCase {
             mySelections,
             optionInfos
         );
+    }
+
+    @Override
+    public Long getPrimaryQuestionId(Long voteId) {
+        List<Question> questions = loadQuestionPort.findAllByFormId(voteId);
+        if (questions.isEmpty()) {
+            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
+        }
+        return questions.get(0).getId();
     }
 
     private BigDecimal calculateVoteRate(int voteCount, int totalParticipants) {

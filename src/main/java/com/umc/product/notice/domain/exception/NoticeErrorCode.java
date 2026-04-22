@@ -32,6 +32,8 @@ public enum NoticeErrorCode implements BaseCode {
     VOTE_ALREADY_EXISTS(HttpStatus.CONFLICT, "NOTICE-CONTENTS-0008", "해당 공지사항에 이미 투표가 존재합니다."),
     INVALID_VOTE_OPTION_COUNT(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0009", "투표 항목은 2개 이상 5개 이하여야 합니다."),
     INVALID_VOTE_OPTION_CONTENT(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0010", "투표 항목에 빈 값이 포함될 수 없습니다."),
+    VOTE_NOT_STARTED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0011", "아직 투표 기간이 시작되지 않았습니다."),
+    VOTE_CLOSED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0012", "이미 종료된 투표입니다."),
 
 
     NOT_IMPLEMENTED_YET(HttpStatus.NOT_IMPLEMENTED, "NOTICE-9999", "아직 구현되지 않은 기능입니다.");
