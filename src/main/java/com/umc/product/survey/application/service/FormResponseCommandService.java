@@ -1,10 +1,7 @@
 package com.umc.product.survey.application.service;
 
 import com.umc.product.survey.application.port.in.command.ManageFormResponseUseCase;
-import com.umc.product.survey.application.port.in.command.dto.AnswerCommand;
-import com.umc.product.survey.application.port.in.command.dto.CancelFormResponseCommand;
-import com.umc.product.survey.application.port.in.command.dto.SubmitFormResponseCommand;
-import com.umc.product.survey.application.port.in.command.dto.UpdateFormResponseCommand;
+import com.umc.product.survey.application.port.in.command.dto.*;
 import com.umc.product.survey.application.port.out.*;
 import com.umc.product.survey.domain.*;
 import com.umc.product.survey.domain.enums.QuestionType;
@@ -33,7 +30,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
     private final SaveAnswerPort saveAnswerPort;
 
     @Override
-    public Long submit(SubmitFormResponseCommand command) {
+    public Long submitImmediately(SubmitFormResponseCommand command) {
         Form form = loadPublishedForm(command.formId());
 
         if (loadFormResponsePort.existsByFormIdAndMemberId(command.formId(), command.respondentMemberId())) {
@@ -71,13 +68,37 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
     }
 
     @Override
-    public void cancelResponse(CancelFormResponseCommand command) {
+    public void deleteResponse(DeleteFormResponseCommand command) {
         FormResponse existing = loadFormResponsePort
             .findSubmittedByFormIdAndRespondentMemberId(command.formId(), command.respondentMemberId())
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
 
         saveAnswerPort.deleteAllByFormResponseId(existing.getId());
         saveFormResponsePort.deleteById(existing.getId());
+    }
+
+    @Override
+    public Long createDraft(CreateDraftFormResponseCommand command) {
+        // TODO: 구현 PR 에서 실제 로직 작성 — 빈 draft 생성 + 중복 검증
+        throw new UnsupportedOperationException("Not implemented yet — Phase C 구현 PR 에서 제공");
+    }
+
+    @Override
+    public void updateDraft(UpdateDraftFormResponseCommand command) {
+        // TODO: 구현 PR 에서 실제 로직 작성 — draft answers 전체 교체
+        throw new UnsupportedOperationException("Not implemented yet — Phase C 구현 PR 에서 제공");
+    }
+
+    @Override
+    public void submitDraft(SubmitDraftFormResponseCommand command) {
+        // TODO: 구현 PR 에서 실제 로직 작성 — draft → SUBMITTED 전환
+        throw new UnsupportedOperationException("Not implemented yet — Phase C 구현 PR 에서 제공");
+    }
+
+    @Override
+    public void deleteDraft(DeleteDraftFormResponseCommand command) {
+        // TODO: 구현 PR 에서 실제 로직 작성 — draft + 연관 Answer 삭제
+        throw new UnsupportedOperationException("Not implemented yet — Phase C 구현 PR 에서 제공");
     }
 
     private Form loadPublishedForm(Long formId) {

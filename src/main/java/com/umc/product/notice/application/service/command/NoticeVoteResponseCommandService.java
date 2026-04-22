@@ -10,7 +10,7 @@ import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.survey.application.port.in.command.ManageFormResponseUseCase;
 import com.umc.product.survey.application.port.in.command.dto.AnswerCommand;
-import com.umc.product.survey.application.port.in.command.dto.CancelFormResponseCommand;
+import com.umc.product.survey.application.port.in.command.dto.DeleteFormResponseCommand;
 import com.umc.product.survey.application.port.in.command.dto.SubmitFormResponseCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateFormResponseCommand;
 import com.umc.product.survey.application.port.in.query.GetVoteUseCase;
@@ -35,7 +35,7 @@ public class NoticeVoteResponseCommandService implements ManageNoticeVoteRespons
         NoticeVote noticeVote = loadOpenNoticeVote(command.noticeId());
         Long questionId = getVoteUseCase.getPrimaryQuestionId(noticeVote.getVoteId());
 
-        return manageFormResponseUseCase.submit(
+        return manageFormResponseUseCase.submitImmediately(
             SubmitFormResponseCommand.builder()
                 .formId(noticeVote.getVoteId())
                 .respondentMemberId(command.respondentMemberId())
@@ -49,8 +49,8 @@ public class NoticeVoteResponseCommandService implements ManageNoticeVoteRespons
         NoticeVote noticeVote = loadOpenNoticeVote(command.noticeId());
 
         if (command.selectedOptionIds() == null || command.selectedOptionIds().isEmpty()) {
-            manageFormResponseUseCase.cancelResponse(
-                CancelFormResponseCommand.builder()
+            manageFormResponseUseCase.deleteResponse(
+                DeleteFormResponseCommand.builder()
                     .formId(noticeVote.getVoteId())
                     .respondentMemberId(command.respondentMemberId())
                     .build()
