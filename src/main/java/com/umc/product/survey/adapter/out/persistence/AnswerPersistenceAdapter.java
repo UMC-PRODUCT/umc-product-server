@@ -1,6 +1,8 @@
 package com.umc.product.survey.adapter.out.persistence;
 
 import com.umc.product.survey.application.port.out.LoadAnswerPort;
+import com.umc.product.survey.application.port.out.SaveAnswerPort;
+import com.umc.product.survey.domain.Answer;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -11,10 +13,11 @@ import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class AnswerPersistenceAdapter implements LoadAnswerPort {
+public class AnswerPersistenceAdapter implements LoadAnswerPort, SaveAnswerPort {
 
     private final FormResponseJpaRepository formResponseJpaRepository;
     private final AnswerChoiceJpaRepository answerChoiceJpaRepository;
+    private final AnswerJpaRepository answerJpaRepository;
 
     @Override
     public int countTotalParticipants(Long formId) {
@@ -52,5 +55,15 @@ public class AnswerPersistenceAdapter implements LoadAnswerPort {
         }
 
         return result;
+    }
+
+    @Override
+    public List<Answer> saveAll(List<Answer> answers) {
+        return answerJpaRepository.saveAll(answers);
+    }
+
+    @Override
+    public void deleteAllByFormResponseId(Long formResponseId) {
+        answerJpaRepository.deleteAllByFormResponseId(formResponseId);
     }
 }

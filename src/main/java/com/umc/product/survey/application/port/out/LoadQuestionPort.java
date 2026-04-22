@@ -14,4 +14,10 @@ public interface LoadQuestionPort {
     Optional<Question> findById(Long questionId);
 
     Optional<Question> findFirstByFormIdAndType(Long formId, QuestionType type);
+
+    /**
+     * 특정 폼에 속한 모든 질문을 조회합니다.
+     * 필수 질문 누락 검증 등에 사용.
+     */
+    List<Question> findAllByFormId(Long formId);
 }

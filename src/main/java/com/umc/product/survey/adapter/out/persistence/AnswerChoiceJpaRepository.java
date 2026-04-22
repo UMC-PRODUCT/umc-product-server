@@ -24,7 +24,7 @@ public interface AnswerChoiceJpaRepository extends JpaRepository<AnswerChoice, L
             from AnswerChoice ac
             join ac.answer a
             join a.formResponse fr
-            where fr.form.id = :formId 
+            where fr.form.id = :formId
               and fr.respondentMemberId = :memberId
               and fr.status = 'SUBMITTED'
         """)

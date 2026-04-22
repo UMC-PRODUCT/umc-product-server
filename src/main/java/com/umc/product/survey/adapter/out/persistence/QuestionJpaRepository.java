@@ -42,4 +42,14 @@ public interface QuestionJpaRepository extends JpaRepository<Question, Long> {
             """)
     Optional<Question> findFirstByFormIdAndType(@Param("formId") Long formId, @Param("type") QuestionType type);
 
+    @Query("""
+                select q
+                from Question q
+                join q.formSection fs
+                join fs.form f
+                where f.id = :formId
+                order by fs.orderNo asc, q.orderNo asc
+            """)
+    List<Question> findAllByFormId(@Param("formId") Long formId);
+
 }

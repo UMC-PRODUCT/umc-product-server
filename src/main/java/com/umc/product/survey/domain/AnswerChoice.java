@@ -37,5 +37,4 @@ public class AnswerChoice {
         this.questionOption = questionOption;
         this.answeredAsContent = questionOption.getContent();
     }
-    }
 }

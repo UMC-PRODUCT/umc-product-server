@@ -34,6 +34,7 @@ public enum SurveyErrorCode implements BaseCode {
     INVALID_VOTE_QUESTION_TYPE(HttpStatus.BAD_REQUEST, "SURVEY-0024", "투표의 질문 타입이 올바르지 않습니다."),
     INVALID_VOTE_FORM_STRUCTURE(HttpStatus.BAD_REQUEST, "SURVEY-0025", "투표의 질문 형식이 올바르지 않습니다."),
     VOTE_RESPONSE_NOT_FOUND(HttpStatus.NOT_FOUND, "SURVEY-0026", "투표 응답을 찾을 수 없습니다."),
+    FORM_RESPONSE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SURVEY-0027", "이미 제출한 응답이 있습니다."),
     ;
 
     private final HttpStatus httpStatus;
