@@ -16,7 +16,6 @@ import com.umc.product.organization.application.port.in.query.dto.StudyGroupView
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -129,12 +128,14 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
             List<StudyGroupListInfo.StudyGroupInfo> groups) {
         Set<String> imageIds = new LinkedHashSet<>();
         for (StudyGroupListInfo.StudyGroupInfo group : groups) {
-            if (group.leader() != null && group.leader().profileImageUrl() != null) {
-                imageIds.add(group.leader().profileImageUrl());
+            for (StudyGroupListInfo.StudyGroupInfo.Organizer organizer : group.organizers()) {
+                if (organizer.profileImageUrl() != null) {
+                    imageIds.add(organizer.profileImageUrl());
+                }
             }
-            for (StudyGroupListInfo.StudyGroupInfo.MemberSummaryInfo member : group.members()) {
-                if (member.profileImageUrl() != null) {
-                    imageIds.add(member.profileImageUrl());
+            for (StudyGroupListInfo.StudyGroupInfo.Member m : group.members()) {
+                if (m.profileImageUrl() != null) {
+                    imageIds.add(m.profileImageUrl());
                 }
             }
         }
@@ -149,16 +150,16 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
                 .map(group -> new StudyGroupListInfo.StudyGroupInfo(
                         group.groupId(),
                         group.name(),
-                        group.memberCount(),
-                        group.leader() == null ? null : new StudyGroupListInfo.StudyGroupInfo.LeaderInfo(
-                                group.leader().challengerId(),
-                                group.leader().name(),
-                                urlMap.getOrDefault(group.leader().profileImageUrl(),
-                                        group.leader().profileImageUrl())
-                        ),
+                        group.organizers().stream()
+                                .map(o -> new StudyGroupListInfo.StudyGroupInfo.Organizer(
+                                        o.memberId(),
+                                        o.name(),
+                                        urlMap.getOrDefault(o.profileImageUrl(), o.profileImageUrl())
+                                ))
+                                .toList(),
                         group.members().stream()
-                                .map(m -> new StudyGroupListInfo.StudyGroupInfo.MemberSummaryInfo(
-                                        m.challengerId(),
+                                .map(m -> new StudyGroupListInfo.StudyGroupInfo.Member(
+                                        m.memberId(),
                                         m.name(),
                                         urlMap.getOrDefault(m.profileImageUrl(), m.profileImageUrl())
                                 ))
@@ -215,10 +216,6 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     }
 
     private Map<String, String> resolveProfileImageUrls(Set<String> profileImageIds) {
-        Map<String, String> urlMap = new HashMap<>();
-        for (String id : profileImageIds) {
-            urlMap.put(id, getFileUseCase.getById(id).fileLink());
-        }
-        return urlMap;
+        return getFileUseCase.getFileLinks(List.copyOf(profileImageIds));
     }
 }

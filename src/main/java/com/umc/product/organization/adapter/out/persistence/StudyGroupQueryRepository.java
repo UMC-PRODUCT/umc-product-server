@@ -3,6 +3,7 @@ package com.umc.product.organization.adapter.out.persistence;
 import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.organization.domain.QStudyGroup.studyGroup;
 import static com.umc.product.organization.domain.QStudyGroupMember.studyGroupMember;
+import static com.umc.product.organization.domain.QStudyGroupOrganizer.studyGroupOrganizer;
 
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
@@ -251,19 +252,25 @@ public class StudyGroupQueryRepository {
     /**
      * 내 스터디 그룹 목록 조회 (역할 Scope 기반).
      * <p>
-     * 이 함수는 네 단계로 구성되어 있다. 본문은 단계만 호출해 "무엇을 하는지" 를 드러내고,
-     * 세부 SQL/Tuple 처리는 각 단계의 private 헬퍼에 격리했다.
+     * 이 함수는 다섯 단계로 구성되어 있다. 본문은 단계만 호출해 "무엇을 하는지" 를 드러내고,
+     * 세부 SQL 처리는 각 단계의 private 헬퍼에 격리했다.
      * <ol>
      *   <li>{@link #buildScopePredicate(List)} — 역할 Scope들을 OR로 합쳐 하나의 WHERE 조건으로 변환</li>
      *   <li>{@link #fetchGroupHeaders(Long, BooleanExpression, Long, int)} — 상위 그룹 헤더(id/name)만 커서 페이징</li>
+     *   <li>{@link #fetchOrganizersByGroupIds(List)} — 상위 그룹들의 운영진(Organizer) 행을 한 번에 조회하여 groupId 기준으로 분배</li>
      *   <li>{@link #fetchMembersByGroupIds(List)} — 상위 그룹들의 멤버 행을 한 번에 조회하여 groupId 기준으로 분배</li>
+     *   <li>헤더 + 운영진 + 멤버를 조합하여 DTO 변환</li>
      * </ol>
+     * Organizer와 Member를 각각 별도 bulk 쿼리로 가져오는 이유: 둘은 <b>다른 테이블</b>
+     * ({@code study_group_organizer}, {@code study_group_member})에 있고 독립된 엔티티다.
+     * UNION 하면 행 구조/컬럼 타입이 섞여 오히려 조립 로직이 꼬이기 때문에,
+     * 각자 projection → 자바 단에서 groupingBy 하는 편이 단순하다.
      *
      * @param scopes 역할 기반 조회 범위. Service에서 사용자 역할로 조립해 넘긴다.
      * @param gisuId 활성 기수 ID (이 기수의 스터디 그룹만 대상)
      * @param cursor 직전 페이지 마지막 groupId. 첫 페이지는 null.
      * @param size   조회 사이즈 (Service가 hasNext 판단용으로 +1 포함하여 넘김)
-     * @return 상위 스터디 그룹 정보 + 각 그룹의 리더/멤버 요약.
+     * @return 상위 스터디 그룹 정보 + 각 그룹의 운영진/멤버 요약.
      *         scope가 전부 비어있거나 조회 결과가 없으면 빈 리스트.
      */
     public List<StudyGroupListInfo.StudyGroupInfo> findMyStudyGroups(
@@ -281,12 +288,17 @@ public class StudyGroupQueryRepository {
             return List.of();
         }
 
-        // 3) 잘라낸 그룹들의 멤버만 한 쿼리로 가져와서 groupId 기준으로 재분배한다.
-        Map<Long, List<MemberRow>> membersByGroup = fetchMembersByGroupIds(extractGroupIds(groupHeaders));
+        List<Long> groupIds = extractGroupIds(groupHeaders);
 
-        // 4) 헤더 + 멤버를 조합해 DTO로 변환한다.
+        // 3) 잘라낸 그룹들의 운영진을 조회.
+        Map<Long, List<OrganizerRow>> organizersByGroup = fetchOrganizersByGroupIds(groupIds);
+
+        // 4) 잘라낸 그룹들의 멤버를 조회.
+        Map<Long, List<MemberRow>> membersByGroup = fetchMembersByGroupIds(groupIds);
+
+        // 5) 헤더 + 운영진 + 멤버를 조합해 DTO로 변환한다.
         return groupHeaders.stream()
-            .map(header -> toStudyGroupInfo(header, membersByGroup))
+            .map(header -> toStudyGroupInfo(header, organizersByGroup, membersByGroup))
             .toList();
     }
 
@@ -349,11 +361,41 @@ public class StudyGroupQueryRepository {
     }
 
     /**
-     * 주어진 groupIds에 속한 모든 멤버 행을 <b>한 번의 쿼리</b> 로 가져와
+     * 주어진 groupIds에 속한 모든 <b>운영진(Organizer)</b> 행을 한 번의 쿼리로 가져와
+     * {@code groupId → organizers} 맵으로 재분배한다.
+     * <p>
+     * 운영진은 {@code study_group_organizer} 테이블에 멤버와는 별도로 관리되는 엔티티다.
+     * 따라서 {@code StudyGroupMember.isLeader} 플래그와는 별개로, 이 테이블을 직접 JOIN 해
+     * 운영진 목록을 만든다.
+     * <p>
+     * N+1 방지를 위해 IN 절로 한 번에 묶고 자바 단에서 {@code groupingBy} 로 분배한다.
+     *
+     * @param groupIds 운영진을 채울 대상 그룹 ID 목록 (비어있지 않다고 가정)
+     * @return {groupId → 해당 그룹 운영진 리스트}. 운영진이 없는 그룹은 맵에 키가 없다.
+     */
+    private Map<Long, List<OrganizerRow>> fetchOrganizersByGroupIds(List<Long> groupIds) {
+        List<OrganizerRow> rows = queryFactory
+            .select(Projections.constructor(OrganizerRow.class,
+                studyGroupOrganizer.studyGroup.id,
+                studyGroupOrganizer.memberId,
+                member.name,
+                member.profileImageId))
+            .from(studyGroupOrganizer)
+            .join(member).on(member.id.eq(studyGroupOrganizer.memberId))
+            .where(studyGroupOrganizer.studyGroup.id.in(groupIds))
+            .fetch();
+
+        return rows.stream()
+            .collect(Collectors.groupingBy(OrganizerRow::groupId));
+    }
+
+    /**
+     * 주어진 groupIds에 속한 모든 <b>멤버</b> 행을 한 번의 쿼리로 가져와
      * {@code groupId → members} 맵으로 재분배한다.
      * <p>
-     * N개 그룹에 대해 각각 쿼리하면 N+1이 되므로, IN 절로 한 번에 묶어 가져온 뒤
-     * 자바 단에서 {@code groupingBy} 로 그룹별 버킷에 넣는다.
+     * 여기서의 "멤버"는 {@code study_group_member} 테이블의 전체 소속 멤버이며,
+     * 운영진 여부와 관계없이 그룹에 속한 모든 사람을 포함한다. 운영진은 별도
+     * {@link #fetchOrganizersByGroupIds} 에서 조회한다.
      * <p>
      *
      * @param groupIds 멤버를 채울 대상 그룹 ID 목록 (비어있지 않다고 가정)
@@ -364,7 +406,6 @@ public class StudyGroupQueryRepository {
             .select(Projections.constructor(MemberRow.class,
                 studyGroupMember.studyGroup.id,
                 studyGroupMember.memberId,
-                studyGroupMember.isLeader,
                 member.name,
                 member.profileImageId))
             .from(studyGroupMember)
@@ -377,42 +418,30 @@ public class StudyGroupQueryRepository {
     }
 
     /**
-     * 그룹 헤더 + 해당 그룹의 멤버 리스트를 조합하여 {@link StudyGroupListInfo.StudyGroupInfo} DTO 하나를 만든다.
-     * <p>
-     * 내부 동작:
-     * <ul>
-     *   <li>멤버 중 {@code isLeader=true} 인 첫 번째 row를 리더로 승격. 리더가 없는 그룹은 {@code leader=null}.</li>
-     *   <li>나머지 멤버들은 {@link StudyGroupListInfo.StudyGroupInfo.MemberSummaryInfo} 로 변환.</li>
-     *   <li>프로필 이미지는 storage 파일 ID 그대로 담아 넘긴다. 실제 URL 치환은 Service 레이어의 resolve 단계에서 일괄 수행한다
-     *       (Repository는 storage 도메인을 몰라야 하므로).</li>
-     * </ul>
+     * 그룹 헤더 + 운영진 리스트 + 멤버 리스트를 조합하여 {@link StudyGroupListInfo.StudyGroupInfo} DTO 하나를 만든다.
      *
-     * @param header  헤더 Projection 결과: (groupId, name)
-     * @param byGroup {groupId → 해당 그룹 멤버 리스트}. 해당 groupId 키가 없으면 빈 리스트로 처리.
+     * @param header            헤더 Projection 결과: (groupId, name)
+     * @param organizersByGroup {groupId → 해당 그룹 운영진 리스트}. 키가 없으면 빈 리스트로 처리.
+     * @param membersByGroup    {groupId → 해당 그룹 멤버 리스트}. 키가 없으면 빈 리스트로 처리.
      */
-    private StudyGroupListInfo.StudyGroupInfo toStudyGroupInfo(GroupHeaderRow header, Map<Long, List<MemberRow>> byGroup) {
-        List<MemberRow> members = byGroup.getOrDefault(header.groupId(), List.of());
+    private StudyGroupListInfo.StudyGroupInfo toStudyGroupInfo(
+        GroupHeaderRow header,
+        Map<Long, List<OrganizerRow>> organizersByGroup,
+        Map<Long, List<MemberRow>> membersByGroup
+    ) {
+        List<StudyGroupListInfo.StudyGroupInfo.Organizer> organizers =
+            organizersByGroup.getOrDefault(header.groupId(), List.of()).stream()
+                .map(r -> new StudyGroupListInfo.StudyGroupInfo.Organizer(
+                    r.memberId(), r.memberName(), r.profileImageId()))
+                .toList();
 
-        StudyGroupListInfo.StudyGroupInfo.LeaderInfo leader = members.stream()
-            .filter(r -> Boolean.TRUE.equals(r.isLeader()))
-            .findFirst()
-            .map(r -> new StudyGroupListInfo.StudyGroupInfo.LeaderInfo(
-                r.memberId(),
-                r.memberName(),
-                r.profileImageId()
-            ))
-            .orElse(null);
+        List<StudyGroupListInfo.StudyGroupInfo.Member> members =
+            membersByGroup.getOrDefault(header.groupId(), List.of()).stream()
+                .map(r -> new StudyGroupListInfo.StudyGroupInfo.Member(
+                    r.memberId(), r.memberName(), r.profileImageId()))
+                .toList();
 
-        List<StudyGroupListInfo.StudyGroupInfo.MemberSummaryInfo> nonLeaders = members.stream()
-            .filter(r -> !Boolean.TRUE.equals(r.isLeader()))
-            .map(r -> new StudyGroupListInfo.StudyGroupInfo.MemberSummaryInfo(
-                r.memberId(),
-                r.memberName(),
-                r.profileImageId()
-            ))
-            .toList();
-
-        return new StudyGroupListInfo.StudyGroupInfo(header.groupId(), header.name(), members.size(), leader, nonLeaders);
+        return new StudyGroupListInfo.StudyGroupInfo(header.groupId(), header.name(), organizers, members);
     }
 
     /**
@@ -528,14 +557,27 @@ public class StudyGroupQueryRepository {
      *
      * @param groupId        소속 스터디 그룹 ID (groupingBy 키)
      * @param memberId       멤버 ID
-     * @param isLeader       리더 여부
      * @param memberName     멤버 이름 (Member 도메인 JOIN 결과)
      * @param profileImageId 멤버 프로필 이미지 파일 ID (storage 도메인 식별자)
      */
     private record MemberRow(
         Long groupId,
         Long memberId,
-        Boolean isLeader,
+        String memberName,
+        String profileImageId
+    ) {}
+
+    /**
+     * {@link #fetchOrganizersByGroupIds} 용 운영진 Projection.
+     *
+     * @param groupId        소속 스터디 그룹 ID (groupingBy 키)
+     * @param memberId       운영진으로 등록된 멤버 ID
+     * @param memberName     멤버 이름 (Member 도메인 JOIN 결과)
+     * @param profileImageId 멤버 프로필 이미지 파일 ID (storage 도메인 식별자)
+     */
+    private record OrganizerRow(
+        Long groupId,
+        Long memberId,
         String memberName,
         String profileImageId
     ) {}
