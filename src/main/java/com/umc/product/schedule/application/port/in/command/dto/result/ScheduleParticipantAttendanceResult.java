@@ -1,14 +1,10 @@
 package com.umc.product.schedule.application.port.in.command.dto.result;
 
-import com.umc.product.member.application.port.in.query.dto.MemberInfo;
-import com.umc.product.schedule.domain.ScheduleParticipantAttendance;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.Instant;
-import lombok.AccessLevel;
 import lombok.Builder;
-import org.locationtech.jts.geom.Point;
 
-@Builder(access = AccessLevel.PRIVATE)
+@Builder
 public record ScheduleParticipantAttendanceResult(
     // === 위치 정보 ===
     Double latitude,
@@ -28,34 +24,7 @@ public record ScheduleParticipantAttendanceResult(
     Instant decidedAt,
     String decisionReason
 ) {
-    public static ScheduleParticipantAttendanceResult of(
-        ScheduleParticipantAttendance attendance,
-        MemberInfo decisionMakerMemberInfo // nullable!
-    ) {
-        if (attendance == null) {
-            return null;
-        }
-
-        Point location = attendance.getLocation();
-
-        return ScheduleParticipantAttendanceResult.builder()
-            .latitude(location != null ? location.getY() : null)
-            .longitude(location != null ? location.getX() : null)
-            .status(attendance.getStatus())
-            .excuseReason(attendance.getExcuseReason())
-            .isPendingDecision(attendance.getStatus().isPending())
-            .hasDecisionMakerMember(decisionMakerMemberInfo != null)
-            .decisionMakerMemberInfo(
-                decisionMakerMemberInfo != null ?
-                    DecisionMakerMemberInfo.from(decisionMakerMemberInfo)
-                    : null
-            )
-            .decidedAt(attendance.getDecidedAt())
-            .decisionReason(attendance.getDecisionReason())
-            .build();
-    }
-
-    @Builder(access = AccessLevel.PRIVATE)
+    @Builder
     public record DecisionMakerMemberInfo(
         Long memberId,
         String name,
@@ -63,18 +32,5 @@ public record ScheduleParticipantAttendanceResult(
         Long schoolId,
         String schoolName
     ) {
-
-        public static DecisionMakerMemberInfo from(MemberInfo memberInfo) {
-            if (memberInfo == null) {
-                return null;
-            }
-            return DecisionMakerMemberInfo.builder()
-                .memberId(memberInfo.id())
-                .name(memberInfo.name())
-                .nickname(memberInfo.nickname())
-                .schoolId(memberInfo.schoolId())
-                .schoolName(memberInfo.schoolName())
-                .build();
-        }
     }
 }

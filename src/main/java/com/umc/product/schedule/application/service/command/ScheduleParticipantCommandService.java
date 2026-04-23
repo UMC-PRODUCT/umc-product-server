@@ -14,6 +14,7 @@ import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.out.SaveScheduleParticipantPort;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.ScheduleParticipant;
+import com.umc.product.schedule.domain.ScheduleParticipantAttendance;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import java.util.List;
@@ -65,8 +66,21 @@ public class ScheduleParticipantCommandService implements
         // 요청 저장
         saveScheduleParticipantPort.save(scheduleParticipant);
 
-        // decisionMakerMember는 null
-        return ScheduleParticipantAttendanceResult.of(scheduleParticipant.getAttendance(), null);
+        ScheduleParticipantAttendance attendance = scheduleParticipant.getAttendance();
+        Point savedLocation = attendance.getLocation();
+
+        return ScheduleParticipantAttendanceResult.builder()
+            .latitude(savedLocation != null ? savedLocation.getY() : null)
+            .longitude(savedLocation != null ? savedLocation.getX() : null)
+            .status(attendance.getStatus())
+            .excuseReason(attendance.getExcuseReason())
+            .isPendingDecision(attendance.getStatus().isPending())
+            // 의사 결정자가 개입하지 않은 최초 출석 요청이므로 false/null 처리
+            .hasDecisionMakerMember(false)
+            .decisionMakerMemberInfo(null)
+            .decidedAt(attendance.getDecidedAt())
+            .decisionReason(attendance.getDecisionReason())
+            .build();
     }
 
     // 사유 제출
@@ -97,8 +111,22 @@ public class ScheduleParticipantCommandService implements
         // 요청 저장
         saveScheduleParticipantPort.save(scheduleParticipant);
 
+        // attendance 에서 데이터를 꺼내 DTO 직접 매핑
+        ScheduleParticipantAttendance attendance = scheduleParticipant.getAttendance();
+        Point savedLocation = attendance.getLocation();
+
         // decisionMakerMember는 null
-        return ScheduleParticipantAttendanceResult.of(scheduleParticipant.getAttendance(), null);
+        return ScheduleParticipantAttendanceResult.builder()
+            .latitude(savedLocation != null ? savedLocation.getY() : null)
+            .longitude(savedLocation != null ? savedLocation.getX() : null)
+            .status(attendance.getStatus())
+            .excuseReason(attendance.getExcuseReason())
+            .isPendingDecision(attendance.getStatus().isPending())
+            .hasDecisionMakerMember(false)
+            .decisionMakerMemberInfo(null)
+            .decidedAt(attendance.getDecidedAt())
+            .decisionReason(attendance.getDecisionReason())
+            .build();
     }
 
     // 출석 요청 승인/거절
@@ -132,7 +160,31 @@ public class ScheduleParticipantCommandService implements
         saveScheduleParticipantPort.save(scheduleParticipant);
 
         MemberInfo decisionMaker = getMemberUseCase.getById(command.decidedByMemberId());
-        return ScheduleParticipantAttendanceResult.of(scheduleParticipant.getAttendance(), decisionMaker);
+
+        ScheduleParticipantAttendance attendance = scheduleParticipant.getAttendance();
+        Point savedLocation = attendance.getLocation();
+
+        return ScheduleParticipantAttendanceResult.builder()
+            .latitude(savedLocation != null ? savedLocation.getY() : null)
+            .longitude(savedLocation != null ? savedLocation.getX() : null)
+            .status(attendance.getStatus())
+            .excuseReason(attendance.getExcuseReason())
+            .isPendingDecision(attendance.getStatus().isPending())
+            .hasDecisionMakerMember(decisionMaker != null)
+            .decisionMakerMemberInfo(
+                decisionMaker != null ?
+                    ScheduleParticipantAttendanceResult.DecisionMakerMemberInfo.builder()
+                        .memberId(decisionMaker.id())
+                        .name(decisionMaker.name())
+                        .nickname(decisionMaker.nickname())
+                        .schoolId(decisionMaker.schoolId())
+                        .schoolName(decisionMaker.schoolName())
+                        .build()
+                    : null
+            )
+            .decidedAt(attendance.getDecidedAt())
+            .decisionReason(attendance.getDecisionReason())
+            .build();
     }
 
     private ScheduleParticipant getScheduleParticipant(Long scheduleId, Long memberId) {
