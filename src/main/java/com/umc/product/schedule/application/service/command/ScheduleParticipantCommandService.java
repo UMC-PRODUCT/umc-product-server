@@ -125,13 +125,13 @@ public class ScheduleParticipantCommandService implements
 
         // 승인 or 거절로 현재 출석 상태에 맞는 status로 업데이트
         if (command.isApproved()) {
-            scheduleParticipant.approveAttendance(command.decisionMakerMemberId(), command.reason());
+            scheduleParticipant.approveAttendance(command.decidedByMemberId(), command.reason());
         } else {
-            scheduleParticipant.rejectAttendance(command.decisionMakerMemberId(), command.reason());
+            scheduleParticipant.rejectAttendance(command.decidedByMemberId(), command.reason());
         }
         saveScheduleParticipantPort.save(scheduleParticipant);
 
-        MemberInfo decisionMaker = getMemberUseCase.getById(command.decisionMakerMemberId());
+        MemberInfo decisionMaker = getMemberUseCase.getById(command.decidedByMemberId());
         return ScheduleParticipantAttendanceResult.of(scheduleParticipant.getAttendance(), decisionMaker);
     }
 

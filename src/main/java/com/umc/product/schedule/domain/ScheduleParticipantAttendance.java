@@ -32,7 +32,7 @@ public class ScheduleParticipantAttendance {
     @Enumerated(EnumType.STRING)
     private AttendanceStatus status; // 출석 상태
 
-    private Long decidedMemberId; // 출석 요청을 승인 또는 기각한 사람
+    private Long decidedByMemberId; // 출석 요청을 승인 또는 기각한 사람
 
     private Instant decidedAt;
 
@@ -47,7 +47,7 @@ public class ScheduleParticipantAttendance {
     private ScheduleParticipantAttendance(
         Point location,
         AttendanceStatus status,
-        Long decidedMemberId,
+        Long decidedByMemberId,
         Instant decidedAt,
         String decisionReason,
         boolean isLocationVerified,
@@ -55,7 +55,7 @@ public class ScheduleParticipantAttendance {
     ) {
         this.location = location;
         this.status = status;
-        this.decidedMemberId = decidedMemberId;
+        this.decidedByMemberId = decidedByMemberId;
         this.decidedAt = decidedAt;
         this.decisionReason = decisionReason;
         this.isLocationVerified = isLocationVerified;
@@ -81,7 +81,7 @@ public class ScheduleParticipantAttendance {
     // ScheduleParticipant 내부에서 래핑하여 사용됩니다.
 
     protected void approve(Long approvedByMemberId, String reason) {
-        this.decidedMemberId = approvedByMemberId;
+        this.decidedByMemberId = approvedByMemberId;
         this.decidedAt = Instant.now();
         this.decisionReason = reason;
 
@@ -100,7 +100,7 @@ public class ScheduleParticipantAttendance {
     }
 
     protected void reject(Long rejectedByMemberId, String reason) {
-        this.decidedMemberId = rejectedByMemberId;
+        this.decidedByMemberId = rejectedByMemberId;
         this.decidedAt = Instant.now();
         this.decisionReason = reason;
 
@@ -122,8 +122,8 @@ public class ScheduleParticipantAttendance {
     /**
      * 매뉴얼한 운영진의 변경입니다. 일반적인 승인/기각이 아닌 사후에 상태를 변경하고자 할 때 사용합니다.
      */
-    protected void forceChange(Long decidedMemberId, AttendanceStatus status) {
-        this.decidedMemberId = decidedMemberId;
+    protected void forceChange(Long decidedByMemberId, AttendanceStatus status) {
+        this.decidedByMemberId = decidedByMemberId;
         this.decidedAt = Instant.now();
 
         this.status = status;

@@ -24,10 +24,10 @@ public record DecideAttendanceRequest(
 
     String reason
 ) {
-    public DecideAttendanceCommand toCommand(Long scheduleId, Long decisionMakerMemberId) {
+    public DecideAttendanceCommand toCommand(Long scheduleId, Long decidedByMemberId) {
         return DecideAttendanceCommand.builder()
             .scheduleId(scheduleId)
-            .decisionMakerMemberId(decisionMakerMemberId)
+            .decidedByMemberId(decidedByMemberId)
             .participantMemberId(participantMemberId)
             .isApproved(isApproved)
             .reason(reason)
