@@ -5,11 +5,13 @@ import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
+import com.umc.product.schedule.application.port.out.LoadScheduleParticipantPort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
@@ -17,10 +19,11 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class SchedulePermissionEvaluator implements ResourcePermissionEvaluator {
 
     private final LoadSchedulePort loadSchedulePort;
-    private final SchedulePermissionHelper permissionHelper;
+    private final LoadScheduleParticipantPort loadScheduleParticipantPort;
 
     @Override
     public ResourceType supportedResourceType() {
@@ -29,36 +32,65 @@ public class SchedulePermissionEvaluator implements ResourcePermissionEvaluator 
 
     @Override
     public boolean evaluate(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
-        Long scheduleId = resourcePermission.getResourceIdAsLong();
 
-        // READ 권한: 참석 통계와 함께 일정 목록 조회 가능 여부 (운영진/총괄만 가능)
-        if (resourcePermission.permission() == PermissionType.READ) {
-            return permissionHelper.hasAnyRole(subjectAttributes);
-        }
-
-        // 나머지 권한은 특정 일정에 대한 권한 체크
-        Schedule schedule = loadSchedulePort.findById(scheduleId)
-            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
-
+        PermissionType permission = resourcePermission.permission();
         Long memberId = subjectAttributes.memberId();
 
-        return switch (resourcePermission.permission()) {
-            // 작성은 챌린저 기록이 있기만 하면 가능
-            case WRITE -> !subjectAttributes.gisuChallengerInfos().isEmpty();
+        // WRITE (일정 생성 / 출석 요청 / 사유 제출)
+        if (permission == PermissionType.WRITE) {
+            // 기본적으로 활동 중인 챌린저인지 확인
+            if (subjectAttributes.gisuChallengerInfos().isEmpty()) {
+                return false;
+            }
 
-            // 수정 및 삭제는 SUPER_ADMIN이거나 작성자면 가능
-            case EDIT, DELETE -> subjectAttributes.roleAttributes().stream().anyMatch(
-                r -> r.roleType().isSuperAdmin()
-            ) || permissionHelper.isAuthor(memberId, schedule);
+            // 만약 '출석 요청', '사유 제출'처럼 특정 일정(resourceId)에 대한 작업일 경우
+            if (resourcePermission.resourceId() != null) {
+                Long scheduleId = resourcePermission.getResourceIdAsLong();
 
-            // 출석 승인은 helper 안에 포함되어 있는 로직으로 구성
-            // TODO : 수정하기
-//            case APPROVE -> {
-//                Long gisuId = permissionHelper.getGisuIdFromSchedule(schedule);
-//                yield permissionHelper.canManageAttendance(memberId, schedule, gisuId);
-//            }
+                // 참여자 명단에 존재하는지 확인
+                return loadScheduleParticipantPort
+                    .findByScheduleIdAndMemberId(scheduleId, memberId)
+                    .isPresent();
+            }
 
-            default -> false;
-        };
+            return true; // 일정 생성 등 resourceId가 없는 WRITE는 통과
+        }
+
+        // READ (일정 조회)
+        if (permission == PermissionType.READ) {
+            return !subjectAttributes.gisuChallengerInfos().isEmpty();
+        }
+
+        // EDIT (일정 수정), DELETE (일정 삭제)
+        // 생성자 본인이나 최고 운영 관리자만 가능
+        if (permission == PermissionType.EDIT || permission == PermissionType.DELETE) {
+            log.debug("memberId {}: ", memberId);
+            // 최고 운영 관리자 권한이 있다면 즉시 통과
+            boolean isAdmin = subjectAttributes.roleAttributes().stream()
+                .anyMatch(role -> role.roleType().isSuperAdmin());
+            if (isAdmin) {
+                return true;
+            }
+
+            // 관리자가 아니라면 일정 생성자 본인인지 확인
+            if (resourcePermission.resourceId() != null) {
+                Schedule schedule = loadSchedulePort.findById(resourcePermission.getResourceIdAsLong())
+                    .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+                return schedule.getAuthorMemberId().equals(memberId);
+            }
+
+            return false;
+        }
+
+        // APPROVE(출석 승인/거절)
+        // [운영진용] 일정 출석 현황 조회
+        if (permission == PermissionType.APPROVE) {
+            return subjectAttributes.roleAttributes().stream()
+                .anyMatch(
+                    role -> role.roleType().isAtLeastCentralCore() || role.roleType().isAtLeastCentralMember()
+                        || role.roleType().isAtLeastSchoolCore() || role.roleType().isAtLeastSchoolAdmin()
+                );
+        }
+        return false;
     }
 }

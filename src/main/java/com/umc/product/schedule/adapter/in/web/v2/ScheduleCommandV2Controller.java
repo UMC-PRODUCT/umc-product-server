@@ -1,5 +1,8 @@
 package com.umc.product.schedule.adapter.in.web.v2;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.v2.dto.request.CreateScheduleRequest;
@@ -45,6 +48,11 @@ public class ScheduleCommandV2Controller {
     private final CreateScheduleParticipantUseCase createScheduleParticipantAttendanceUseCase;
     private final UpdateScheduleParticipantUseCase updateScheduleParticipantUseCase;
 
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        permission = PermissionType.WRITE,
+        message = "일정 생성은 챌린저만 가능합니다."
+    )
     @Operation(summary = "일정 생성", description = """
         일정을 생성합니다. `location` 필드를 작성하지 않으실 경우 비대면 일정으로 간주됩니다.
 
@@ -84,6 +92,12 @@ public class ScheduleCommandV2Controller {
         return createScheduleUseCase.create(command);
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.EDIT,
+        message = "일정 수정은 생성자 본인이나 최고 운영 관리자만 가능합니다."
+    )
     @Operation(summary = "일정 수정", description = """
         일정과 관련된 모든 정보를 수정합니다. 제공되지 않은 필드는 변경하지 않는 것으로 간주합니다.
 
@@ -131,6 +145,12 @@ public class ScheduleCommandV2Controller {
         return updateScheduleUseCase.update(command);
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.WRITE,
+        message = "일정에 대한 출석 요청은 참석 챌린저만 가능합니다."
+    )
     @Operation(summary = "출석 요청하기", description = """
         특정 일정에 대한 출석을 요청합니다. 반환값으로 변경된 출석 상태 및 관련된 정보들을 제공합니다.
 
@@ -169,10 +189,16 @@ public class ScheduleCommandV2Controller {
         );
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.WRITE,
+        message = "일정에 대한 출석 사유 제출은 참석 챌린저만 가능합니다."
+    )
     @Operation(summary = "출석 요청이 불가능한 경우, 사유 제출하기", description = """
         위치 인증이 안되거나, 개인 사정이 있어 결석하지만 출석 인정을 요구하는 경우 사유를 제출하기 위하여 사용합니다.
 
-        위치 정보는 클라이언트 단에서 잡히는 경우에 한하여 제공하면 됩니다. 단, 사유는 반드시 제춣하여야 합니다.
+        위치 정보는 클라이언트 단에서 잡히는 경우에 한하여 제공하면 됩니다. 단, 사유는 반드시 제출하여야 합니다.
         """
     )
     @ApiResponses(value = {
@@ -204,6 +230,12 @@ public class ScheduleCommandV2Controller {
         );
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        resourceId = "#scheduleId",
+        permission = PermissionType.APPROVE,
+        message = "일정에 대한 출석 요청 승인/거절은 일정이 생성된 기수의 운영진만 가능합니다."
+    )
     // 각 일정에 대한 출석 요청을 승인 또는 기각하는 API, Request는 list 형태로 받을 수 있어야 합니다.
     @Operation(summary = "[운영진용] 출석 요청 승인/거절", description = """
         일정에 대한 출석 요청을 승인 또는 거절합니다.

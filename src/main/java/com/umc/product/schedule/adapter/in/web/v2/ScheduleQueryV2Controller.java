@@ -1,5 +1,8 @@
 package com.umc.product.schedule.adapter.in.web.v2;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.AdminScheduleInfoResponse;
@@ -33,6 +36,11 @@ public class ScheduleQueryV2Controller {
 
     // ========================= 일정 관련 =========================
 
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        permission = PermissionType.READ,
+        message = "내 일정 조회는 챌린저만 가능합니다."
+    )
     @Operation(summary = "내 일정 조회", description = """
         로그인한 사용자가 참여하는 일정 중 Query Param의 `from`, `to` 사이에 시작일이 있는 일정을 모두 조회합니다.
 
@@ -57,6 +65,11 @@ public class ScheduleQueryV2Controller {
             .toList();
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        permission = PermissionType.READ,
+        message = "일정 상세 조회는 챌린저만 가능합니다."
+    )
     @Operation(summary = "일정 상세 조회", description = """
         단일 일정에 대한 정보를 상세하게 조회합니다.
         일정의 기본 정보 및 참여자에 대한 정보를 포함해서 전송합니다.
@@ -87,6 +100,12 @@ public class ScheduleQueryV2Controller {
     // 운영진용: 기간에 기반하여 일정에 대한 출석 현황을 조회하는 API, from-to로 기간을 조회할 수 있어야 합니다.
     // 조회 기간과 무관하게 과거 일정 중에서 출석을 승인하지 않은 일정은 계속 표시됩니다.
     // 사유는 제공된 경우에만 표시됩니다.
+    // TODO : 운영진 권한 READ 말고 다른 걸로 수정???
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        permission = PermissionType.READ,
+        message = "일정 목록 출석 현황 조회는 운영진만 가능합니다."
+    )
     @Operation(summary = "[운영진용] 일정들의 출석 현황 조회", description = """
         Query Param을 이용해서 상세한 필터링을 제공하며, 그 기준은 아래와 같습니다.
 
@@ -134,6 +153,12 @@ public class ScheduleQueryV2Controller {
 
     // 운영진용: 단일 일정에 대한 출석 현황을 조회하는 API
     // 사유는 제공된 경우에만 표시됩니다.
+    // TODO : 운영진 권한 READ 말고 다른 걸로 수정???
+    @CheckAccess(
+        resourceType = ResourceType.SCHEDULE,
+        permission = PermissionType.READ,
+        message = "일정 출석 현황 조회는 운영진만 가능합니다."
+    )
     @Operation(summary = "[운영진용] 단일 일정 출석 현황 조회", description = """
         Query Param을 이용해서 상세한 필터링을 제공하며, 그 기준은 아래와 같습니다.
 
