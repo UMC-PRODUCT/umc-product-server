@@ -30,6 +30,7 @@ public class ScheduleParticipantAttendance {
     private Point location; // 출석을 요청한 위치
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "attendance_status")
     private AttendanceStatus status; // 출석 상태
 
     private Long decidedByMemberId; // 출석 요청을 승인 또는 기각한 사람
@@ -38,7 +39,7 @@ public class ScheduleParticipantAttendance {
 
     private String decisionReason; // 출석 요청을 결정한 사유
 
-    private boolean isLocationVerified; // 클라이언트 단 판단으로, 위치 인증 여부
+    private Boolean isLocationVerified; // 클라이언트 단 판단으로, 위치 인증 여부
 
     private String excuseReason;
 

@@ -31,11 +31,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AttendancePolicy {
 
-    private long earlyCheckInMinutes;
+    private Long earlyCheckInMinutes;
 
-    private long attendanceGraceMinutes;
+    private Long attendanceGraceMinutes;
 
-    private long lateToleranceMinutes;
+    private Long lateToleranceMinutes;
 
     private AttendancePolicy(
         Long earlyCheckInMinutes,
@@ -71,9 +71,9 @@ public class AttendancePolicy {
     }
 
     protected static AttendancePolicy create(
-        long earlyCheckInMinutes,
-        long attendanceGraceMinutes,
-        long lateToleranceMinutes) {
+        Long earlyCheckInMinutes,
+        Long attendanceGraceMinutes,
+        Long lateToleranceMinutes) {
 
         return new AttendancePolicy(earlyCheckInMinutes, attendanceGraceMinutes, lateToleranceMinutes);
     }

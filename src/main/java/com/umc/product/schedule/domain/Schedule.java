@@ -182,9 +182,9 @@ public class Schedule extends BaseEntity {
     ) {
         validateAttendancePolicyTimes(checkInStartAt, onTimeEndAt, lateEndAt, startsAt, endsAt);
 
-        long earlyCheckInMinutes = ChronoUnit.MINUTES.between(checkInStartAt, startsAt);
-        long attendanceGraceMinutes = ChronoUnit.MINUTES.between(startsAt, onTimeEndAt);
-        long lateToleranceMinutes = ChronoUnit.MINUTES.between(onTimeEndAt, lateEndAt);
+        Long earlyCheckInMinutes = ChronoUnit.MINUTES.between(checkInStartAt, startsAt);
+        Long attendanceGraceMinutes = ChronoUnit.MINUTES.between(startsAt, onTimeEndAt);
+        Long lateToleranceMinutes = ChronoUnit.MINUTES.between(onTimeEndAt, lateEndAt);
 
         return AttendancePolicy.create(earlyCheckInMinutes, attendanceGraceMinutes, lateToleranceMinutes);
     }
