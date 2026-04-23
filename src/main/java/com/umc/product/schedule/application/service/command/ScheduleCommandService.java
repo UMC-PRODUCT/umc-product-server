@@ -133,7 +133,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             command.endsAt(),
             extractLocationName(command),
             extractLocation(command),
-            createPolicyFromCommand(command, schedule)
+            newPolicy
         );
 
         if (command.isParticipantsUpdateRequested()) {
