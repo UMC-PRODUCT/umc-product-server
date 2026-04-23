@@ -30,12 +30,6 @@ public class FcmPersistenceAdapter implements LoadFcmPort, SaveFcmPort {
     }
 
     @Override
-    @Deprecated(since = "token-based migration", forRemoval = true)
-    public Optional<FcmToken> findOptionalByMemberId(Long memberId) {
-        return fcmJpaRepository.findByMemberId(memberId);
-    }
-
-    @Override
     public void save(FcmToken fcmToken) {
         fcmJpaRepository.save(fcmToken);
     }

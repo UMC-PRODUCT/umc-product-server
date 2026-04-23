@@ -13,8 +13,4 @@ public interface FcmJpaRepository extends JpaRepository<FcmToken, Long> {
 
     List<FcmToken> findAllByMemberIdInAndIsActiveTrue(List<Long> memberIds);
 
-    /** @deprecated 토픽 구독 용도. 토큰 기반 전환 후 제거 예정 */
-    @Deprecated(since = "token-based migration", forRemoval = true)
-    Optional<FcmToken> findByMemberId(Long memberId);
-
 }
