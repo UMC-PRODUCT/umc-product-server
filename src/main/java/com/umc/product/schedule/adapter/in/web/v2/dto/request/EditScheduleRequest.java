@@ -7,7 +7,6 @@ import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
-import lombok.Builder;
 
 /**
  * 일정에 관련된 사항을 변경할 때 사용하는 DTO 입니다.
@@ -16,7 +15,6 @@ import lombok.Builder;
  * <p>
  * 필드에 대한 자세한 사항은 {@link CreateScheduleRequest}을 참고해주시면 됩니다.
  */
-@Builder
 public record EditScheduleRequest(
     @Schema(description = "일정 제목", example = "10기 OT")
     String name,
