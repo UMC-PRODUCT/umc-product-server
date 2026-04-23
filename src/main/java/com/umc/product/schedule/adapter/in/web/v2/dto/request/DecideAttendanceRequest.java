@@ -4,6 +4,7 @@ import com.umc.product.schedule.application.port.in.command.dto.DecideAttendance
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 /**
  * 각 출석 요청에 대해서 승인 및 거절 여부를 결정합니다.
@@ -22,6 +23,8 @@ public record DecideAttendanceRequest(
     @NotNull(message = "승인 여부는 필수입니다.")
     boolean isApproved,
 
+    @Schema(description = "출석 요청 승인/기각 사유", example = "실제로 출석했는지 확인했습니다.", maxLength = 300)
+    @Size(max = 300, message = "출석 요청 승인/기각 사유는 300자까지 입력 가능합니다.")
     String reason
 ) {
     public DecideAttendanceCommand toCommand(Long scheduleId, Long decidedByMemberId) {

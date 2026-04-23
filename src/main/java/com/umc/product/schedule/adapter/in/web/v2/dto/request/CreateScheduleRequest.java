@@ -23,8 +23,9 @@ import java.util.Set;
  * @param participantMemberIds 일정에 참여하는 사용자의 memberId의 배열입니다. 요청한 사용자는 자동으로 참여하도록 설정되며, 중복값은 자동으로 필터링 됩니다.
  */
 public record CreateScheduleRequest(
-    @Schema(description = "일정 제목", example = "10기 OT")
+    @Schema(description = "일정 제목", example = "10기 OT", maxLength = 100)
     @NotBlank(message = "일정 제목은 필수입니다")
+    @Size(max = 100, message = "일정 제목은 최대 100자까지 입력 가능합니다")
     String name,
 
     @Schema(description = "메모/설명")

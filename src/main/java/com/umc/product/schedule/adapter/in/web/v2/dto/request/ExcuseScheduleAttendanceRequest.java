@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public record ExcuseScheduleAttendanceRequest(
     // 클라이언트 측에서 받은 위치 인증 여부
@@ -25,8 +26,9 @@ public record ExcuseScheduleAttendanceRequest(
     Double longitude,
 
     // 사유, 필수 값
-    @Schema(description = "사유 출석 사유", example = "위치 인증이 안 되어서 사유 출석 제출합니다.")
+    @Schema(description = "사유 출석 사유", example = "위치 인증이 안 되어서 사유 출석 제출합니다.", maxLength = 300)
     @NotBlank(message = "사유 작성은 필수입니다")
+    @Size(max = 300, message = "사유는 300자까지 입력 가능합니다")
     String excuseReason
 ) {
 

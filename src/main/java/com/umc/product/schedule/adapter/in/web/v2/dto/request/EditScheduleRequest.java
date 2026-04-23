@@ -16,7 +16,8 @@ import java.util.Set;
  * 필드에 대한 자세한 사항은 {@link CreateScheduleRequest}을 참고해주시면 됩니다.
  */
 public record EditScheduleRequest(
-    @Schema(description = "일정 제목", example = "10기 OT")
+    @Schema(description = "일정 제목", example = "10기 OT", maxLength = 100)
+    @Size(max = 100, message = "일정 제목은 최대 100자까지 입력 가능합니다")
     String name,
 
     @Schema(description = "메모/설명")
