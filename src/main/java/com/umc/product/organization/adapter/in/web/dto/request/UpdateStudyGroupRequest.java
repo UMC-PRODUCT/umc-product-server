@@ -1,8 +1,8 @@
 package com.umc.product.organization.adapter.in.web.dto.request;
 
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -13,12 +13,9 @@ public record UpdateStudyGroupRequest(
         @Size(min = 1, max = 50, message = "그룹명은 1~50자")
         String name,
 
-        @Schema(description = "파트",
-            example = "WEB",
-            allowableValues = {"PLAN", "DESIGN", "WEB", "ANDROID", "IOS", "NODEJS", "SPRINGBOOT", "ADMIN"}
-        )
-        @NotBlank
-        String part
+        @Schema(description = "파트", example = "WEB")
+        @NotNull(message = "파트는 필수입니다")
+        ChallengerPart part
 ) {
     public UpdateStudyGroupCommand toCommand(Long groupId) {
         return new UpdateStudyGroupCommand(groupId, name, part);

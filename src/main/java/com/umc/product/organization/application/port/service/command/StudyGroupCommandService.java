@@ -45,10 +45,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
         StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
 
         studyGroup.updateName(command.name());
-
-        if(command.part() != null) {
-            studyGroup.updatePart(ChallengerPart.from((command.part())));
-        }
+        studyGroup.updatePart(command.part());
 
         manageStudyGroupPort.save(studyGroup);
     }
@@ -65,6 +62,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
         // 3. 추가 & 저장
         command.memberIds().forEach(studyGroup::addStudyGroupMember);
+        manageStudyGroupPort.save(studyGroup);
     }
 
 

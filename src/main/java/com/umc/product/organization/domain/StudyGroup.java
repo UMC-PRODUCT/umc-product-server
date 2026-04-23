@@ -122,7 +122,9 @@ public class StudyGroup extends BaseEntity {
     }
 
     public void updatePart(ChallengerPart challengerPart) {
-        this.part = challengerPart;
+        if(challengerPart != null) {
+            this.part = challengerPart;
+        }
     }
 
     public void validateMembersNotJoined(Set<Long> memberIds) {
@@ -137,8 +139,5 @@ public class StudyGroup extends BaseEntity {
             );
         }
     }
-
-    // 동일한 기수에는 동일한 파트의 스터디 그룹 2개 이상 소속될 수 없다.
-    // 스터디 그룹을 생성할 수 있는 권한은 파트장 직책을 가지고 있다면 가능하다.
 
 }
