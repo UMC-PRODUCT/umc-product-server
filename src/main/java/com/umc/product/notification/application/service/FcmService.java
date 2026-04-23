@@ -20,11 +20,11 @@ public class FcmService implements ManageFcmUseCase {
 
     @Override
     @Transactional
-    public void registerFcmToken(Long userId, FcmRegistrationRequest request) {
-        loadFcmPort.findByMemberIdAndToken(userId, request.fcmToken())
+    public void registerFcmToken(Long memberId, FcmRegistrationRequest request) {
+        loadFcmPort.findByMemberIdAndToken(memberId, request.fcmToken())
             .ifPresentOrElse(
                 FcmToken::activate,
-                () -> saveFcmPort.save(FcmToken.createFCMToken(userId, request.fcmToken()))
+                () -> saveFcmPort.save(FcmToken.createFCMToken(memberId, request.fcmToken()))
             );
     }
 

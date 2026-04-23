@@ -22,6 +22,7 @@ import com.umc.product.notice.dto.NoticeTargetPattern;
 import com.umc.product.notification.application.port.in.SendNotificationToAudienceUseCase;
 import com.umc.product.notification.application.port.in.dto.AudienceNotificationCommand;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -80,7 +81,11 @@ public class NoticeService implements ManageNoticeUseCase {
         if (savedNotice.isNotificationRequired()) {
             String title = NOTICE_TITLE_PREFIX + savedNotice.getTitle();
             sendNotificationToAudienceUseCase.sendToAudience(
-                new AudienceNotificationCommand(command.targetInfo(), title, NOTICE_BODY_SUFFIX)
+                AudienceNotificationCommand.builder()
+                    .targetInfo(command.targetInfo())
+                    .title(title)
+                    .body(NOTICE_BODY_SUFFIX)
+                    .build()
             );
             savedNotice.markAsNotified(Instant.now());
         }
@@ -123,7 +128,7 @@ public class NoticeService implements ManageNoticeUseCase {
         String title = NOTICE_REMINDER_TITLE_PREFIX + notice.getTitle();
 
         // challengerId → memberId 일괄 변환 (쿼리 1회)
-        Set<Long> challengerIdSet = new java.util.HashSet<>(command.targetIds());
+        Set<Long> challengerIdSet = new HashSet<>(command.targetIds());
         List<Long> memberIds = getChallengerUseCase.getAllByIds(challengerIdSet).stream()
             .map(info -> info.memberId())
             .toList();

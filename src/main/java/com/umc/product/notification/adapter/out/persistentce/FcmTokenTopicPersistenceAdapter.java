@@ -15,7 +15,7 @@ public class FcmTokenTopicPersistenceAdapter implements LoadFcmTopicPort, SaveFc
 
     @Override
     public List<String> findTopicNamesByFcmTokenId(Long fcmTokenId) {
-        return repository.findByFcmTokenId(fcmTokenId).stream()
+        return repository.findAllByFcmTokenId(fcmTokenId).stream()
             .map(FcmTokenTopic::getTopicName)
             .toList();
     }

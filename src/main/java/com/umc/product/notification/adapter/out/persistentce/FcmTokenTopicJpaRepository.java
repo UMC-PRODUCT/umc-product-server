@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface FcmTokenTopicJpaRepository extends JpaRepository<FcmTokenTopic, Long> {
 
-    List<FcmTokenTopic> findByFcmTokenId(Long fcmTokenId);
+    List<FcmTokenTopic> findAllByFcmTokenId(Long fcmTokenId);
 
     boolean existsByFcmTokenIdAndTopicName(Long fcmTokenId, String topicName);
 
