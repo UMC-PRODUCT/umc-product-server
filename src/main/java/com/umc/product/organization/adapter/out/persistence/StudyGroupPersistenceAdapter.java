@@ -2,7 +2,6 @@ package com.umc.product.organization.adapter.out.persistence;
 
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
@@ -36,12 +35,6 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
             () -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NOT_FOUND));
     }
 
-    @Override
-    public List<StudyGroupListInfo.StudyGroupInfo> findStudyGroups(Long schoolId, ChallengerPart part, Long cursor,
-                                                                   int size) {
-        return studyGroupQueryRepository.findStudyGroups(schoolId, part, cursor, size);
-    }
-
     /**
      * 역할 Scope 기반 "내 스터디 그룹" 조회를 위임한다.
      * <p>
@@ -65,10 +58,6 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
         return studyGroupQueryRepository.findStudyGroupNames(scopes, gisuId);
     }
 
-    @Override
-    public StudyGroupDetailInfo findStudyGroupDetail(Long groupId) {
-        return studyGroupQueryRepository.findStudyGroupDetail(groupId);
-    }
 
     @Override
     public List<StudyGroupMemberInfo> findStudyGroupMembers(Long groupId) {

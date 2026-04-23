@@ -3,9 +3,7 @@ package com.umc.product.curriculum.adapter.in.web.v1;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.AvailableWeeksResponse;
-import com.umc.product.curriculum.adapter.in.web.v1.dto.response.StudyGroupFilterResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.swagger.AdminCurriculumQueryControllerApi;
 import com.umc.product.curriculum.application.port.in.query.GetChallengerWorkbookUseCase;
@@ -89,15 +87,4 @@ public class AdminCurriculumQueryController implements AdminCurriculumQueryContr
         );
     }
 
-    @Override
-    @GetMapping("/study-groups")
-    public List<StudyGroupFilterResponse> getStudyGroupsForFilter(
-        @RequestParam Long schoolId,
-        @RequestParam ChallengerPart part
-    ) {
-        // TODO: 운영진 권한 필요하도록 수정
-        return getChallengerWorkbookUseCase.getStudyGroupsForFilter(schoolId, part).stream()
-            .map(StudyGroupFilterResponse::from)
-            .toList();
-    }
 }

@@ -20,7 +20,7 @@ public record StudyGroupSummaryResponse(
                 g.members().stream().map(Member::from).toList());
     }
 
-    @Schema(description = "운영진 요약 정보")
+    @Schema(description = "스터디 파트장 요약 정보")
     public record Organizer(
             @Schema(description = "멤버 ID", example = "101") Long memberId,
             @Schema(description = "이름", example = "홍길동") String name,

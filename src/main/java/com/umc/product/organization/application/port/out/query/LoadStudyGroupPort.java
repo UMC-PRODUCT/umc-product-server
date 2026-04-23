@@ -1,7 +1,6 @@
 package com.umc.product.organization.application.port.out.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
@@ -54,11 +53,6 @@ public interface LoadStudyGroupPort {
      * @return 그룹에 소속된 스터디원 목록 (소속 없으면 빈 리스트)
      */
     List<StudyGroupMemberInfo> findStudyGroupMembers(Long groupId);
-
-    /**
-     * 4단계: 스터디 그룹 상세 조회
-     */
-    StudyGroupDetailInfo findStudyGroupDetail(Long groupId);
 
     /**
      * 특정 기수에서 해당 파트들의 스터디 그룹 ID 목록 조회 (파트장용)

@@ -1,15 +1,12 @@
 package com.umc.product.curriculum.application.service.query;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.GetChallengerWorkbookUseCase;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
-import com.umc.product.curriculum.application.port.in.query.dto.StudyGroupFilterInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionDetailInfo;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
 import com.umc.product.curriculum.application.port.out.LoadChallengerWorkbookPort;
 import com.umc.product.curriculum.application.port.out.LoadWorkbookSubmissionPort;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.util.List;
 import java.util.Map;
@@ -60,11 +57,4 @@ public class ChallengerWorkbookQueryService implements GetChallengerWorkbookUseC
         );
     }
 
-    @Override
-    public List<StudyGroupFilterInfo> getStudyGroupsForFilter(Long schoolId, ChallengerPart part) {
-        StudyGroupListQuery query = new StudyGroupListQuery(schoolId, part, null, 100);
-        return getStudyGroupUseCase.getStudyGroups(query).stream()
-                .map(info -> new StudyGroupFilterInfo(info.groupId(), info.name()))
-                .toList();
-    }
 }

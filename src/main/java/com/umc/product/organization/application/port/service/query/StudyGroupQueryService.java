@@ -8,7 +8,6 @@ import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupListQuery;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupViewScope;
@@ -98,13 +97,6 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
         return scopes;
     }
 
-    @Override
-    public List<StudyGroupListInfo.StudyGroupInfo> getStudyGroups(StudyGroupListQuery query) {
-        List<StudyGroupListInfo.StudyGroupInfo> groups = loadStudyGroupPort.findStudyGroups(
-                query.schoolId(), query.part(), query.cursor(), query.fetchSize());
-        return resolveStudyGroupListUrls(groups);
-    }
-
     /**
      * 권한(역할) 기반 스터디 그룹 이름 목록 조회.
      * <p>
@@ -167,12 +159,6 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
             // 지금은 fileId와 치환 성공한 URL이 모두 같은 profileImageUrl 필드에 담겨 있다. 구별 처리 예정
 
             .toList();
-    }
-
-    @Override
-    public StudyGroupDetailInfo getStudyGroupDetail(Long groupId) {
-        StudyGroupDetailInfo detail = loadStudyGroupPort.findStudyGroupDetail(groupId);
-        return resolveStudyGroupDetailUrls(detail);
     }
 
     private List<StudyGroupListInfo.StudyGroupInfo> resolveStudyGroupListUrls(

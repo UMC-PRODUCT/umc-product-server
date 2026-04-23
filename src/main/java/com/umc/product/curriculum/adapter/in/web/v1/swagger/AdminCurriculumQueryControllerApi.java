@@ -1,8 +1,6 @@
 package com.umc.product.curriculum.adapter.in.web.v1.swagger;
 
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.AvailableWeeksResponse;
-import com.umc.product.curriculum.adapter.in.web.v1.dto.response.StudyGroupFilterResponse;
 import com.umc.product.curriculum.adapter.in.web.v1.dto.response.WorkbookSubmissionResponse;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
@@ -11,7 +9,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 
 /**
  * 워크북 제출 현황 조회 API (학교 운영진 전용)
@@ -62,15 +59,4 @@ public interface AdminCurriculumQueryControllerApi {
         @Parameter(hidden = true) MemberPrincipal memberPrincipal
     );
 
-    @Operation(
-        summary = "필터용 스터디 그룹 목록 조회",
-        description = "워크북 제출 현황 필터에 사용할 스터디 그룹 목록을 조회합니다. "
-    )
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "조회 성공")
-    })
-    List<StudyGroupFilterResponse> getStudyGroupsForFilter(
-        @Parameter(description = "학교 ID", required = true) Long schoolId,
-        @Parameter(description = "파트", required = true) ChallengerPart part
-    );
 }

@@ -8,7 +8,6 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupMemberResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSummaryResponse;
 import com.umc.product.organization.adapter.in.web.swagger.StudyGroupQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
@@ -61,17 +60,6 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
         return StudyGroupNameResponse.from(
             getStudyGroupUseCase.getStudyGroupNames(memberPrincipal.getMemberId())
         );
-    }
-
-    /**
-     * 스터디 그룹 상세 조회
-     * 삭제 예정
-     */
-    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.READ)
-    @Override
-    @GetMapping("/{groupId}")
-    public StudyGroupResponse getStudyGroupDetail(@PathVariable Long groupId) {
-        return StudyGroupResponse.from(getStudyGroupUseCase.getStudyGroupDetail(groupId));
     }
 
     /**
