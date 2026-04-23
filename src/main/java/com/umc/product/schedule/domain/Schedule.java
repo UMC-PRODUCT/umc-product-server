@@ -37,12 +37,13 @@ public class Schedule extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
     // 복합키로 생성되어, 별도로 PK가 없는 매핑 테이블 생성을 위해서 CollectionTable 사용
@@ -56,18 +57,19 @@ public class Schedule extends BaseEntity {
     @BatchSize(size = 100)
     private Set<ScheduleTag> tags = new HashSet<>();
 
-    @Column(nullable = false)
+    @Column(name = "author_member_id", nullable = false)
     private Long authorMemberId;
 
-    @Column(nullable = false)
+    @Column(name = "starts_at", nullable = false)
     private Instant startsAt;
 
-    @Column(nullable = false)
+    @Column(name = "ends_at", nullable = false)
     private Instant endsAt;
 
+    @Column(name = "location_name")
     private String locationName;
 
-    @Column(columnDefinition = "geometry(Point, 4326)")
+    @Column(name = "location", columnDefinition = "geometry(Point, 4326)")
     private Point location; // nullable, 비대면 일정의 경우에 없습니다!
 
     @Embedded

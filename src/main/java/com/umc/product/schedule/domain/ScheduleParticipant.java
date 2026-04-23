@@ -28,9 +28,10 @@ public class ScheduleParticipant extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "member_id", nullable = false)
     private Long memberId;
 
     // 우선은 LAZY로 두고, 추후 fetch join 등을 사용하여 필요시 최적화

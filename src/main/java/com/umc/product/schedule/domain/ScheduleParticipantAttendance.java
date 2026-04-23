@@ -26,21 +26,26 @@ import org.locationtech.jts.geom.Point;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ScheduleParticipantAttendance {
 
-    @Column(columnDefinition = "geometry(Point, 4326)")
+    @Column(name = "location", columnDefinition = "geometry(Point, 4326)")
     private Point location; // 출석을 요청한 위치
 
     @Enumerated(EnumType.STRING)
     @Column(name = "attendance_status")
     private AttendanceStatus status; // 출석 상태
 
+    @Column(name = "decided_by_member_id")
     private Long decidedByMemberId; // 출석 요청을 승인 또는 기각한 사람
 
+    @Column(name = "decided_at")
     private Instant decidedAt;
 
+    @Column(name = "decision_reason")
     private String decisionReason; // 출석 요청을 결정한 사유
 
+    @Column(name = "is_location_verified")
     private Boolean isLocationVerified; // 클라이언트 단 판단으로, 위치 인증 여부
 
+    @Column(name = "excuse_reason", length = 300)
     private String excuseReason;
 
     // 단순 생성자로 사용할 것, 실제 생성 로직은 ScheduleParticipant에 있음
