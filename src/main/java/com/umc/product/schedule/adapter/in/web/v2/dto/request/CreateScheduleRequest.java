@@ -64,6 +64,22 @@ public record CreateScheduleRequest(
             : new HashSet<>();
         participants.add(authorMemberId);  // 일정 생성자 추가
 
+        // Command의 locationInfo 생성
+        CreateScheduleCommand.LocationInfo locationInfo = this.location != null
+            ? CreateScheduleCommand.LocationInfo.builder()
+            .locationName(this.location.locationName())
+            .latitude(this.location.latitude())
+            .longitude(this.location.longitude())
+            .build() : null;
+
+        // Command의 AttendancePolicyInfo 생성
+        CreateScheduleCommand.AttendancePolicyInfo policyInfo = this.attendancePolicy != null
+            ? CreateScheduleCommand.AttendancePolicyInfo.builder()
+            .checkInStartAt(this.attendancePolicy.checkInStartAt())
+            .onTimeEndAt(this.attendancePolicy.onTimeEndAt())
+            .lateEndAt(this.attendancePolicy.lateEndAt())
+            .build() : null;
+
         return CreateScheduleCommand.builder()
             .name(name)
             .description(description)
@@ -71,8 +87,8 @@ public record CreateScheduleRequest(
             .authorMemberId(authorMemberId)
             .startsAt(startsAt)
             .endsAt(endsAt)
-            .location(location)
-            .attendancePolicy(attendancePolicy)
+            .location(locationInfo)
+            .attendancePolicy(policyInfo)
             .participantMemberIds(participants)
             .build();
     }

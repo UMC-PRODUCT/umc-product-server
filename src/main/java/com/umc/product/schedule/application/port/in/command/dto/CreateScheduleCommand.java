@@ -1,8 +1,6 @@
 package com.umc.product.schedule.application.port.in.command.dto;
 
 import com.umc.product.global.util.GeometryUtils;
-import com.umc.product.schedule.adapter.in.web.v2.dto.request.ScheduleAttendancePolicyRequest;
-import com.umc.product.schedule.adapter.in.web.v2.dto.request.ScheduleLocationRequest;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import java.time.Instant;
@@ -17,10 +15,25 @@ public record CreateScheduleCommand(
     Long authorMemberId,
     Instant startsAt,
     Instant endsAt,
-    ScheduleLocationRequest location,
-    ScheduleAttendancePolicyRequest attendancePolicy,
+    LocationInfo location,
+    AttendancePolicyInfo attendancePolicy,
     Set<Long> participantMemberIds
 ) {
+    @Builder
+    public record LocationInfo(
+        Double latitude,
+        Double longitude,
+        String locationName
+    ) {
+    }
+
+    @Builder
+    public record AttendancePolicyInfo(
+        Instant checkInStartAt,
+        Instant onTimeEndAt,
+        Instant lateEndAt
+    ) {
+    }
 
     public Schedule toEntity(Long authorMemberId) {
         return Schedule.builder()
