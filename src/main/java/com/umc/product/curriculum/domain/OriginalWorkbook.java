@@ -3,6 +3,8 @@ package com.umc.product.curriculum.domain;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
+import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
+import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -55,25 +57,80 @@ public class OriginalWorkbook extends BaseEntity {
     private OriginalWorkbook(
         WeeklyCurriculum weeklyCurriculum,
         String title, String description,
-        String url, String content, OriginalWorkbookType type
+        String url, String content,
+        OriginalWorkbookType type,
+        OriginalWorkbookStatus originalWorkbookStatus
     ) {
         this.weeklyCurriculum = weeklyCurriculum;
         this.title = title;
         this.description = description;
         this.url = url;
         this.content = content;
-        this.originalWorkbookStatus = OriginalWorkbookStatus.DRAFT;
         this.type = type;
+        this.originalWorkbookStatus = originalWorkbookStatus;
     }
 
-    public static OriginalWorkbook create(WeeklyCurriculum weeklyCurriculum, String title, String description,
-                                          String url, String content) {
+    /**
+     * 원본 워크북 생성 (임시저장: DRAFT 상태)
+     */
+    public static OriginalWorkbook createAsDraft(
+        WeeklyCurriculum weeklyCurriculum, String title, String description,
+        String url, String content, OriginalWorkbookType type
+    ) {
         return OriginalWorkbook.builder()
             .weeklyCurriculum(weeklyCurriculum)
             .title(title)
             .description(description)
             .url(url)
             .content(content)
+            .type(type)
+            .originalWorkbookStatus(OriginalWorkbookStatus.DRAFT)
             .build();
+    }
+
+    /**
+     * 원본 워크북 생성 (배포 준비: READY 상태)
+     * <p>
+     * READY 상태로 생성된 워크북은 스케줄러에 의해 배포 시점에 자동 배포될 수 있습니다.
+     */
+    public static OriginalWorkbook createAsReady(
+        WeeklyCurriculum weeklyCurriculum, String title, String description,
+        String url, String content, OriginalWorkbookType type
+    ) {
+        return OriginalWorkbook.builder()
+            .weeklyCurriculum(weeklyCurriculum)
+            .title(title)
+            .description(description)
+            .url(url)
+            .content(content)
+            .type(type)
+            .originalWorkbookStatus(OriginalWorkbookStatus.READY)
+            .build();
+    }
+
+    /**
+     * 원본 워크북 상태 전환
+     * <p>
+     * 허용된 전환만 가능합니다:
+     * <ul>
+     *   <li>DRAFT → READY (배포 준비)</li>
+     *   <li>READY → RELEASED (배포 완료, releasedAt/releasedMemberId 기록)</li>
+     *   <li>READY → DRAFT (임시저장으로 롤백)</li>
+     *   <li>RELEASED → any: 불가 (배포 완료 후 되돌리기 불가)</li>
+     * </ul>
+     *
+     * @param newStatus         전환할 목표 상태
+     * @param requestedMemberId 요청 운영진의 멤버 ID (RELEASED 전환 시 releasedMemberId로 기록)
+     * @throws CurriculumDomainException 허용되지 않는 전환인 경우
+     */
+    public void changeStatus(OriginalWorkbookStatus newStatus, Long requestedMemberId) {
+        if (!this.originalWorkbookStatus.canTransitionTo(newStatus)) {
+            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WORKBOOK_STATUS_TRANSITION);
+        }
+        this.originalWorkbookStatus = newStatus;
+        if (newStatus == OriginalWorkbookStatus.RELEASED) {
+            this.releasedAt = Instant.now();
+            this.releasedMemberId = requestedMemberId;
+        }
     }
 }

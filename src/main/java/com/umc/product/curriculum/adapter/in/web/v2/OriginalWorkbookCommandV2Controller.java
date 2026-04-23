@@ -1,17 +1,15 @@
 package com.umc.product.curriculum.adapter.in.web.v2;
 
 import com.umc.product.curriculum.adapter.in.web.v2.dto.request.ChangeOriginalWorkbookStatusRequest;
+import com.umc.product.curriculum.adapter.in.web.v2.dto.request.CreateOriginalWorkbookRequest;
 import com.umc.product.global.exception.NotImplementedException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.Set;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v2/curriculums/original-workbooks")
@@ -20,14 +18,36 @@ import org.springframework.web.bind.annotation.RestController;
 public class OriginalWorkbookCommandV2Controller {
 
     @Operation(
-        summary = "중앙파트장용: 주차별 커리큘럼에 원본 워크북 추가",
+        summary = "중앙파트장용: 원본 워크북 추가 (READY 상태)",
         description = """
-            주차별 시작 기간이 경과되지 않은 경우에만 추가가 가능합니다.
-            미션 추가는 별도의 API를 이용해 주세요.
+            주차별 커리큘럼에 원본 워크북을 추가합니다. 생성 즉시 **배포 준비(READY)** 상태가 됩니다.
+
+            READY 상태의 워크북은 배포 시점(주차 시작 2주 전)에 스케줄러에 의해 자동 배포될 수 있습니다.
+            임시저장이 필요한 경우 `/draft` 엔드포인트를 사용하세요.
             """
     )
     @PostMapping
-    public void createOriginalWorkbook() {
+    public Long createOriginalWorkbook(
+        @Valid @RequestBody CreateOriginalWorkbookRequest request
+    ) {
+        throw new NotImplementedException();
+    }
+
+    @Operation(
+        summary = "중앙파트장용: 원본 워크북 임시저장 (DRAFT 상태)",
+        description = """
+            주차별 커리큘럼에 원본 워크북을 **임시저장(DRAFT)** 상태로 추가합니다.
+
+            DRAFT 상태의 워크북은 스케줄러 자동 배포 대상에서 제외됩니다.
+            배포 준비가 완료되면 상태 변경 API로 READY 상태로 전환하세요.
+
+            상태 전환 흐름: `DRAFT` → `READY` → `RELEASED`
+            """
+    )
+    @PostMapping("/draft")
+    public Long createOriginalWorkbookAsDraft(
+        @Valid @RequestBody CreateOriginalWorkbookRequest request
+    ) {
         throw new NotImplementedException();
     }
 
@@ -59,30 +79,24 @@ public class OriginalWorkbookCommandV2Controller {
     }
 
     @Operation(
-        summary = "중앙파트장용: 원본 워크북 상태 변경 (배포 준비 완료 처리 또는 배포 처리)",
+        summary = "중앙파트장용: 원본 워크북 상태 일괄 변경",
         description = """
-            아래의 두 기능을 모두 제공하며, 여러 개의 OriginalWorkbook의 상태를 한 번에 바꿀 수 있습니다.
+            여러 원본 워크북의 상태를 한 번에 변경합니다.
+            요청 중 하나라도 실패하면 **모든 요청이 함께 롤백**됩니다.
 
-            단, 요청에 제공된 OriginalWorkbook 중 하나라도 상태 변경에 실패하거나, 변경이 불가능한 경우, 권한이 부족한 경우에는 모든 요청이 함께 실패합니다.
-
-            #### OriginalWorkbook 배포 준비 처리
-
-            원본 워크북이 배포 준비가 된 상태, 즉 `READY` 상태로 변경합니다.
-            READY 상태로 변경된 원본 워크북은 배포 시점이 되었을 때 (주차별 시작 시간 2주 전) 자동으로 스케쥴러에 의해서 배포될 수 있습니다.
-
-            #### OriginalWorkbook 배포 처리
-
-            READY 상태에서만 배포 처리할 수 있습니다. (DRAFT, RELEASED 등 그 이외의 상태에서는 불가능)
-
-            > `READY` `RELEASED`의 차이점은 아래와 같습니다.
-            > - `READY`: 배포 시점이 되었을 때 (주차별 시작 시간 2주 전) 자동으로 스케쥴러에 의해서 배포되도 괜찮은 상태
-            > - `RELEASED`: `READY` 상태에서 스케쥴러 등에 의해 자동으로 배포가 되었거나, 본 API에 의해서 수동으로 배포된 경우
+            #### 허용된 상태 전환
+            | 현재 상태 | 목표 상태 | 허용 여부 |
+            |---|---|---|
+            | DRAFT | READY | ✅ (배포 준비 등록) |
+            | READY | RELEASED | ✅ (수동 배포) |
+            | READY | DRAFT | ✅ (임시저장으로 롤백) |
+            | RELEASED | any | ❌ (배포 후 되돌리기 불가) |
+            | DRAFT | RELEASED | ❌ (READY 경유 필수) |
             """
     )
     @PatchMapping("/status")
-    public void makeOriginalWorkbookReadyForRelease(
-        // 중복 비교는 record라서 두 필드 모두 일치하는 경우
-        Set<ChangeOriginalWorkbookStatusRequest> requests
+    public void changeOriginalWorkbookStatus(
+        @Valid @RequestBody List<ChangeOriginalWorkbookStatusRequest> requests
     ) {
         throw new NotImplementedException();
     }

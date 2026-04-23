@@ -1,5 +1,6 @@
 package com.umc.product.curriculum.application.port.in.command.dto.workbook;
 
+import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -14,6 +15,7 @@ import lombok.Builder;
  * @param url                원본 워크북 URL (nullable)
  * @param content            원본 워크북 본문 내용 (nullable)
  * @param type               워크북 유형 (MAIN / EXTRA)
+ * @param initialStatus      초기 상태 (DRAFT: 임시저장, READY: 배포 준비) — RELEASED로 직접 생성 불가
  */
 @Builder
 public record CreateOriginalWorkbookCommand(
@@ -28,6 +30,9 @@ public record CreateOriginalWorkbookCommand(
     String content,
 
     @NotNull(message = "워크북 유형은 필수입니다")
-    OriginalWorkbookType type
+    OriginalWorkbookType type,
+
+    @NotNull(message = "초기 상태는 필수입니다")
+    OriginalWorkbookStatus initialStatus
 ) {
 }
