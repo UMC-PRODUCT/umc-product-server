@@ -19,9 +19,9 @@ public record ScheduleAttendanceCommand(
     Double longitude
 ) {
 
-    // 객체가 생성될 때 isVerified가 false면 에러 반환
+    // 객체가 생성될 때 locationVerified가 null이면 에러 반환
     public ScheduleAttendanceCommand {
-        if (!Boolean.TRUE.equals(locationVerified)) {
+        if (locationVerified == null) {
             throw new ScheduleDomainException(ScheduleErrorCode.LOCATION_NOT_VERIFIED);
         }
     }

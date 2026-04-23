@@ -94,8 +94,7 @@ public enum ScheduleErrorCode implements BaseCode {
         "현재 기수의 일정만 생성할 수 있습니다."),
     NOT_SCHEDULE_PARTICIPANT(HttpStatus.BAD_REQUEST, "SCHEDULE-0050", "일정의 참여자가 아닙니다."),
     ATTENDANCE_POLICY_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0051", "출석을 요하는 일정의 출석 정책은 필수입니다."),
-
-    ;
+    LOCATION_VERIFIED_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0052", "위치 인증 여부는 필수입니다.");
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;
