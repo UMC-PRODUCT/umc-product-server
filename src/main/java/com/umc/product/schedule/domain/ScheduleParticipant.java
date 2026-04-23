@@ -36,7 +36,7 @@ public class ScheduleParticipant extends BaseEntity {
 
     // 우선은 LAZY로 두고, 추후 fetch join 등을 사용하여 필요시 최적화
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "schedule_id")
+    @JoinColumn(name = "schedule_id", nullable = false)
     private Schedule schedule; // 단방향 참조
 
     // 출석 관련 정보를 모아두었음
