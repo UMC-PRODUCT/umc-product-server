@@ -9,7 +9,7 @@ import java.util.Set;
 
 public interface LoadScheduleParticipantPort {
 
-    List<ScheduleParticipant> findAllByScheduleId(Long ScheduleId);
+    List<ScheduleParticipant> findAllByScheduleId(Long scheduleId);
 
     Optional<ScheduleParticipant> findByScheduleIdAndMemberId(Long scheduleId, Long requesterMemberId);
 
