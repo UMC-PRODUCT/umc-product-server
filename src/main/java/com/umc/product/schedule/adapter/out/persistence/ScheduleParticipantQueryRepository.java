@@ -37,7 +37,7 @@ public class ScheduleParticipantQueryRepository {
                 member.profileImageId,
                 scheduleParticipant.attendance.status,
                 scheduleParticipant.attendance.excuseReason,
-                scheduleParticipant.attendance.isLocationVerified
+                scheduleParticipant.attendance.locationVerified
             ))
             .from(scheduleParticipant)
             // Participant -> Member 조인
@@ -66,7 +66,7 @@ public class ScheduleParticipantQueryRepository {
                 member.profileImageId,
                 scheduleParticipant.attendance.status,
                 scheduleParticipant.attendance.excuseReason,
-                scheduleParticipant.attendance.isLocationVerified
+                scheduleParticipant.attendance.locationVerified
             ))
             .from(scheduleParticipant)
             // Participant -> Member 조인
@@ -90,7 +90,7 @@ public class ScheduleParticipantQueryRepository {
                 member.profileImageId,
                 scheduleParticipant.attendance.status,
                 scheduleParticipant.attendance.excuseReason,
-                scheduleParticipant.attendance.isLocationVerified
+                scheduleParticipant.attendance.locationVerified
             ))
             .from(scheduleParticipant)
             // Participant -> Member 조인

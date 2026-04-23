@@ -43,7 +43,7 @@ public class ScheduleParticipantAttendance {
     private String decisionReason; // 출석 요청을 결정한 사유
 
     @Column(name = "is_location_verified")
-    private Boolean isLocationVerified; // 클라이언트 단 판단으로, 위치 인증 여부
+    private Boolean locationVerified; // 클라이언트 단 판단으로, 위치 인증 여부
 
     @Column(name = "excuse_reason", length = 300)
     private String excuseReason;
@@ -56,7 +56,7 @@ public class ScheduleParticipantAttendance {
         Long decidedByMemberId,
         Instant decidedAt,
         String decisionReason,
-        boolean isLocationVerified,
+        boolean locationVerified,
         String excuseReason
     ) {
         this.location = location;
@@ -64,7 +64,7 @@ public class ScheduleParticipantAttendance {
         this.decidedByMemberId = decidedByMemberId;
         this.decidedAt = decidedAt;
         this.decisionReason = decisionReason;
-        this.isLocationVerified = isLocationVerified;
+        this.locationVerified = locationVerified;
         this.excuseReason = excuseReason;
     }
 
@@ -77,7 +77,7 @@ public class ScheduleParticipantAttendance {
     ) {
         return ScheduleParticipantAttendance.builder()
             .location(location)
-            .isLocationVerified(isLocationVerified)
+            .locationVerified(isLocationVerified)
             .excuseReason(excuseReason)
             .status(status)
             .build();
