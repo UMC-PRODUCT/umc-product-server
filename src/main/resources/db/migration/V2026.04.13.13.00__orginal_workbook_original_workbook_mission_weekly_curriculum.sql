@@ -1,41 +1,36 @@
--- 1. 기존 FK 제약 제거
+-- 기존 FK를 제거합니다.
 ALTER TABLE original_workbook
-DROP CONSTRAINT IF EXISTS fk_org_workbook_curr_id;
+    DROP CONSTRAINT IF EXISTS fk_org_workbook_curr_id;
 
--- 2. mission_type CHECK 제약 제거
+-- mission_type enum에 대한 CHECK 제약을 제거합니다.
 ALTER TABLE original_workbook
-DROP CONSTRAINT IF EXISTS original_workbook_mission_type_check;
+    DROP CONSTRAINT IF EXISTS original_workbook_mission_type_check;
 
--- 3. 기존 컬럼 제거
+-- 불용 column을 제거합니다.
 ALTER TABLE original_workbook
-DROP COLUMN IF EXISTS week_no,
+    DROP COLUMN IF EXISTS week_no,
     DROP COLUMN IF EXISTS curriculum_id,
     DROP COLUMN IF EXISTS start_date,
     DROP COLUMN IF EXISTS end_date,
     DROP COLUMN IF EXISTS mission_type,
     DROP COLUMN IF EXISTS workbook_url;
 
--- 4. 신규 컬럼 추가
+-- 새로운 column을 추가합니다.
 ALTER TABLE original_workbook
-    ADD COLUMN weekly_curriculum_id bigint,
-    ADD COLUMN url                  varchar(255),
+    ADD COLUMN weekly_curriculum_id     bigint,
+    ADD COLUMN url                      varchar(255),
     ADD COLUMN original_workbook_status varchar(255),
-    ADD COLUMN content              text,
-    ADD COLUMN released_member_id   bigint,
-    ADD COLUMN type                 varchar(255);
+    ADD COLUMN content                  text,
+    ADD COLUMN released_member_id       bigint,
+    ADD COLUMN type                     varchar(255);
 
--- 5. 기존 데이터가 없다면 바로 NOT NULL 설정, 있다면 기본값 채운 후 설정
--- (데이터가 없는 경우 아래처럼 바로 NOT NULL 적용)
+-- 기존 데이터를 초기화합니다.
+TRUNCATE TABLE original_workbook CASCADE;
+
 ALTER TABLE original_workbook
     ALTER COLUMN original_workbook_status SET NOT NULL,
     ALTER COLUMN type SET NOT NULL,
     ALTER COLUMN weekly_curriculum_id SET NOT NULL;
-
--- 6. 신규 FK 제약 추가 (weekly_curriculum 테이블이 존재해야 함)
-ALTER TABLE original_workbook
-    ADD CONSTRAINT fk_org_workbook_weekly_curriculum_id
-        FOREIGN KEY (weekly_curriculum_id)
-            REFERENCES weekly_curriculum (id);
 
 CREATE TABLE original_workbook_mission
 (
@@ -69,3 +64,8 @@ ALTER TABLE original_workbook_mission
 
 ALTER TABLE weekly_curriculum
     ADD CONSTRAINT FK_WEEKLY_CURRICULUM_ON_CURRICULUM FOREIGN KEY (curriculum_id) REFERENCES curriculum (id);
+
+ALTER TABLE original_workbook
+    ADD CONSTRAINT fk_org_workbook_weekly_curriculum_id
+        FOREIGN KEY (weekly_curriculum_id)
+            REFERENCES weekly_curriculum (id);
