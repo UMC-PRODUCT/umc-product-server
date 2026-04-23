@@ -39,7 +39,7 @@ public class ScheduleParticipantAttendance {
     @Column(name = "decided_at")
     private Instant decidedAt;
 
-    @Column(name = "decision_reason")
+    @Column(name = "decision_reason", length = 300)
     private String decisionReason; // 출석 요청을 결정한 사유
 
     @Column(name = "is_location_verified")

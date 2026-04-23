@@ -40,7 +40,7 @@ public class Schedule extends BaseEntity {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "name", nullable = false)
+    @Column(name = "name", length = 100, nullable = false)
     private String name;
 
     @Column(name = "description", columnDefinition = "TEXT")
@@ -66,7 +66,7 @@ public class Schedule extends BaseEntity {
     @Column(name = "ends_at", nullable = false)
     private Instant endsAt;
 
-    @Column(name = "location_name")
+    @Column(name = "location_name", length = 100)
     private String locationName;
 
     @Column(name = "location", columnDefinition = "geometry(Point, 4326)")
