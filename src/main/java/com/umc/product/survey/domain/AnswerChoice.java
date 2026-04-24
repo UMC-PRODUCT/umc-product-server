@@ -1,5 +1,6 @@
 package com.umc.product.survey.domain;
 
+import com.umc.product.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -11,7 +12,7 @@ import org.hibernate.annotations.OnDeleteAction;
 @Table(name = "answer_choice")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class AnswerChoice {
+public class AnswerChoice extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
