@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,10 +37,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class NoticeService implements ManageNoticeUseCase {
 
-    private static final String NOTICE_REMINDER_TITLE_PREFIX = "[리마인드 공지] ";
-    private static final String NOTICE_TITLE_PREFIX = "[새 공지] ";
-    private static final String REMINDER_BODY_SUFFIX = " 공지를 확인해주세요.";
-    private static final String NOTICE_BODY_SUFFIX = "새로운 공지가 등록되었습니다: ";
+    // TODO: 기획단과 PREFIX 협의 후에 수정해야 합니다.
+    private static final String NOTICE_REMINDER_TITLE_PREFIX = "[⏰ 공지사항 리마인드] ";
+    private static final String NOTICE_TITLE_PREFIX = "[\uD83D\uDCE2 새로운 공지사항] "; // loudspeaker emoji
+
+    // TODO: 일단 SUFFIX는 없는걸로 ..
+    private static final String REMINDER_BODY_SUFFIX = "";
+    private static final String NOTICE_BODY_SUFFIX = "";
 
     // 도메인 내부 포트
     private final LoadNoticePort loadNoticePort;
@@ -78,16 +82,19 @@ public class NoticeService implements ManageNoticeUseCase {
             .build()
         );
 
+        // 알람을 전송하도록 설정된 공지사항인 경우 알람 전송 시도
         if (savedNotice.isNotificationRequired()) {
-            String title = NOTICE_TITLE_PREFIX + savedNotice.getTitle();
+            String alarmTitle = StringUtils.abbreviate(NOTICE_TITLE_PREFIX + savedNotice.getTitle(), 25);
+            String alarmBody = StringUtils.abbreviate(NOTICE_BODY_SUFFIX + savedNotice.getContent(), 40);
+
             sendNotificationToAudienceUseCase.sendToAudience(
                 AudienceNotificationCommand.builder()
                     .targetInfo(command.targetInfo())
-                    .title(title)
-                    .body(NOTICE_BODY_SUFFIX)
+                    .title(alarmTitle)
+                    .body(alarmBody)
                     .build()
             );
-            savedNotice.markAsNotified(Instant.now());
+            savedNotice.markAsNotified(Instant.now()); // 알람 발송 완료 처리
         }
 
         return savedNotice.getId();
@@ -97,9 +104,7 @@ public class NoticeService implements ManageNoticeUseCase {
     public void updateNoticeTitleOrContent(UpdateNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
 
-        /**
-         * 제목/내용만 수정
-         */
+        // 제목/내용만 수정
         notice.updateTitleOrContent(
             command.title(),
             command.content()
@@ -125,7 +130,9 @@ public class NoticeService implements ManageNoticeUseCase {
     @Override
     public void remindNotice(SendNoticeReminderCommand command) {
         Notice notice = findNoticeById(command.noticeId());
-        String title = NOTICE_REMINDER_TITLE_PREFIX + notice.getTitle();
+
+        String alarmTitle = NOTICE_REMINDER_TITLE_PREFIX + notice.getTitle();
+        String alarmBody = StringUtils.abbreviate(REMINDER_BODY_SUFFIX + notice.getContent(), 40);
 
         // challengerId → memberId 일괄 변환 (쿼리 1회)
         Set<Long> challengerIdSet = new HashSet<>(command.targetIds());
@@ -134,7 +141,7 @@ public class NoticeService implements ManageNoticeUseCase {
             .toList();
 
         // 대상 멤버 전체에 FCM 배치 발송 (토큰 조회 1회 + FCM 배치 전송)
-        sendNotificationToAudienceUseCase.sendToMembers(memberIds, title, REMINDER_BODY_SUFFIX);
+        sendNotificationToAudienceUseCase.sendToMembers(memberIds, alarmTitle, alarmBody);
     }
 
     @Override
