@@ -16,6 +16,7 @@ SELECT ar.id,
        ar.member_id,
        ash.schedule_id,
        CASE
+           WHEN ar.status = 'PENDING' THEN NULL
            WHEN ar.latitude IS NOT NULL AND ar.longitude IS NOT NULL
                THEN ST_SetSRID(ST_MakePoint(ar.longitude, ar.latitude), 4326)
            ELSE NULL
@@ -24,11 +25,23 @@ SELECT ar.id,
            WHEN ar.status = 'PENDING' THEN NULL
            ELSE ar.status
            END,
-       ar.confirmed_by,
-       ar.confirmed_at,
+       CASE
+           WHEN ar.status = 'PENDING' THEN NULL
+           ELSE ar.confirmed_by
+           END,
+       CASE
+           WHEN ar.status = 'PENDING' THEN NULL
+           ELSE ar.confirmed_at
+           END,
        NULL,
-       ar.location_verified,
-       ar.memo,
+       CASE
+           WHEN ar.status = 'PENDING' THEN NULL
+           ELSE ar.location_verified
+           END,
+       CASE
+           WHEN ar.status = 'PENDING' THEN NULL
+           ELSE ar.memo
+           END,
        ar.created_at,
        ar.updated_at
 FROM public.attendance_record ar
