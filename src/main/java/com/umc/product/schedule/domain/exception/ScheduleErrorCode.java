@@ -9,11 +9,11 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ScheduleErrorCode implements BaseCode {
 
-    INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "SCHEDULE-0006", "시작 시간은 종료 시간보다 이전이어야 합니다"),
+    INVALID_TIME_RANGE(HttpStatus.BAD_REQUEST, "SCHEDULE-0006", "시작 시간은 종료 시간보다 이전이어야 합니다."),
 
-    SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "SCHEDULE-0009", "일정을 찾을 수 없습니다"),
+    SCHEDULE_NOT_FOUND(HttpStatus.NOT_FOUND, "SCHEDULE-0009", "일정을 찾을 수 없습니다."),
 
-    TAG_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0010", "태그는 최소 1개 이상 선택해야 합니다"),
+    TAG_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0010", "태그는 최소 1개 이상 선택해야 합니다."),
 
     NOT_FIRST_ATTENDANCE_REQUEST(HttpStatus.BAD_REQUEST, "SCHEDULE-0011", "기존 출석 요청이 존재합니다."),
 

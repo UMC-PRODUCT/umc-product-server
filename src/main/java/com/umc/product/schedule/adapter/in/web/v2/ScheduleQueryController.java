@@ -9,6 +9,9 @@ import com.umc.product.schedule.application.port.in.query.dto.AdminScheduleInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleInfo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -61,6 +64,14 @@ public class ScheduleQueryController {
         참여자의 출석 현황 등에 대해서는 별도의 출석 현황 확인 API를 이용해 주세요.
         """
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "404", description = """
+            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            """,
+            content = @Content
+        )
+    })
     @GetMapping("/{scheduleId}")
     public ScheduleInfoResponse details(
         @PathVariable Long scheduleId,
@@ -89,6 +100,19 @@ public class ScheduleQueryController {
         제공되지 않은 경우, 모든 상태에 대해서 반환합니다.
         """
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = """
+            SCHEDULE-0026 : 일정의 참여자가 아닙니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "404", description = """
+            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            """,
+            content = @Content
+        )
+    })
     @GetMapping("/attendance")
     public List<AdminScheduleInfoResponse> getAttendanceInfoList(
         @RequestParam(required = false) Instant from,
@@ -118,6 +142,20 @@ public class ScheduleQueryController {
         제공되지 않은 경우, 모든 상태에 대해서 반환합니다.
         """
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = """
+            SCHEDULE-0021 : 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다.<br>
+            SCHEDULE-0026 : 일정의 참여자가 아닙니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "404", description = """
+            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            """,
+            content = @Content
+        )
+    })
     @GetMapping("/{scheduleId}/attendance")
     public AdminScheduleInfoResponse getAttendanceInfo(
         @RequestParam(required = false) AttendanceStatus attendanceStatus,

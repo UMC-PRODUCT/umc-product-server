@@ -19,6 +19,9 @@ import com.umc.product.schedule.application.port.in.command.dto.ExcuseScheduleAt
 import com.umc.product.schedule.application.port.in.command.dto.ScheduleAttendanceCommand;
 import com.umc.product.schedule.application.port.in.command.dto.result.ScheduleParticipantAttendanceResult;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -60,6 +63,17 @@ public class ScheduleCommandController {
         생성된 일정의 ID 값을 반환합니다.
         """
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = """
+            SCHEDULE-0006: 시작 시간은 종료 시간보다 이전이어야 합니다.<br>
+            SCHEDULE-0010: 태그는 최소 1개 이상 선택해야 합니다.<br>
+            SCHEDULE-0025: 현재 기수의 일정만 생성할 수 있습니다.<br>
+            CHALLENGER-0009: 활성 또는 수료 상태의 사용자만 일정 생성이 가능합니다.
+            """,
+            content = @Content
+        )
+    })
     @PostMapping
     public Long create(
         @Valid @RequestBody CreateScheduleRequest request,
@@ -88,6 +102,24 @@ public class ScheduleCommandController {
         * **`false`** : **출석 X** 일정으로 전환 (기존 출석 정책 데이터 삭제)
         """
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = """
+            SCHEDULE-0006 : 시작 시간은 종료 시간보다 이전이어야 합니다.<br>
+            SCHEDULE-0010 : 태그는 최소 1개 이상 선택해야 합니다.<br>
+            SCHEDULE-0020 : 대면 일정은 위치 정보가 필수입니다.<br>
+            SCHEDULE-0024 : 비대면 일정으로 변경 시 위치 정보를 포함할 수 없습니다.<br>
+            SCHEDULE-0027 : 출석을 요하는 일정의 출석 정책은 필수입니다.<br>
+            SCHEDULE-0028 : 종료된 일정은 수정이 불가합니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "404", description = """
+            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            """,
+            content = @Content
+        )
+    })
     @PatchMapping("/{scheduleId}")
     public Long edit(
         @PathVariable Long scheduleId,
@@ -99,7 +131,6 @@ public class ScheduleCommandController {
         return updateScheduleUseCase.update(command);
     }
 
-    // 사유 제출까지 여기에 묶어버리는게 맞는 판단일까에 대한 궁금증이 살짝 있음.
     @Operation(summary = "출석 요청하기", description = """
         특정 일정에 대한 출석을 요청합니다. 반환값으로 변경된 출석 상태 및 관련된 정보들을 제공합니다.
 
@@ -107,6 +138,24 @@ public class ScheduleCommandController {
         - 일정의 출석 시작 가능 시간이 아직 도래하지 않은 경우 및 일정 종료 시간이 경과된 이후에는 에러가 반환됩니다.
         """
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = """
+            SCHEDULE-0011 : 기존 출석 요청이 존재합니다.<br>
+            SCHEDULE-0018 : 종료된 일정에 대한 출석 요청은 허용되지 않습니다.<br>
+            SCHEDULE-0019 : 출석 가능한 시간 이전입니다. 출석 가능한 시간 이후에 다시 시도해주세요.<br>
+            SCHEDULE-0021 : 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다.<br>
+            SCHEDULE-0022 : 일정에 대한 참석자 정보가 존재하지 않습니다.<br>
+            SCHEDULE-0023 : 사용자의 출석 인증 범위 내의 존재 여부가 확인되지 않습니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "404", description = """
+            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            """,
+            content = @Content
+        )
+    })
     @PostMapping("/{scheduleId}/attendances/request")
     public ScheduleParticipantAttendanceInfoResponse requestAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -126,6 +175,22 @@ public class ScheduleCommandController {
         위치 정보는 클라이언트 단에서 잡히는 경우에 한하여 제공하면 됩니다. 단, 사유는 반드시 제춣하여야 합니다.
         """
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = """
+            SCHEDULE-0013 : 출석 사유 제출은 첫 요청, 결석 또는 지각 상태에서만 가능합니다.<br>
+            SCHEDULE-0016 : 출석 인정을 요청하는 사유가 제공되지 않았거나 비어있습니다.<br>
+            SCHEDULE-0021 : 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다.<br>
+            SCHEDULE-0022 : 일정에 대한 참석자 정보가 존재하지 않습니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "404", description = """
+            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            """,
+            content = @Content
+        )
+    })
     @PostMapping("/{scheduleId}/attendances/excuse")
     public ScheduleParticipantAttendanceInfoResponse excuseAttendance(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -150,6 +215,24 @@ public class ScheduleCommandController {
         모든 요청이 성공적으로 처리된 경우에만 성공으로 반환합니다. (Transaction)
         """
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "400", description = """
+            SCHEDULE-0012 : 출석 요청이 존재하지 않습니다. 출석 요청을 생성하고 다시 시도해주세요.<br>
+            SCHEDULE-0014 : 현재 출석 상태에서는 승인이 불가능합니다.<br>
+            SCHEDULE-0015 : 출석 요청에 대한 거절을 할 수 없는 상태입니다.<br>
+            SCHEDULE-0017 : 해당 출석 요청은 운영진의 승인 또는 기각을 필요로 하는 상태가 아닙니다.<br>
+            SCHEDULE-0021 : 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다.<br>
+            SCHEDULE-0022 : 일정에 대한 참석자 정보가 존재하지 않습니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "404", description = """
+            SCHEDULE-0009 : 일정을 찾을 수 없습니다.
+            """,
+            content = @Content
+        )
+    })
     @PostMapping("/{scheduleId}/attendances/decide")
     public List<ScheduleParticipantAttendanceInfoResponse> decideAttendances(
         @CurrentMember MemberPrincipal memberPrincipal,
