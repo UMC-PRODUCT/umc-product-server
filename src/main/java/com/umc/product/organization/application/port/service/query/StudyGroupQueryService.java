@@ -40,7 +40,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
      * 해당 Scope가 허용하는 스터디 그룹 목록을 커서 페이지네이션으로 반환한다.
      * <ul>
      *   <li>학교 회장단(SCHOOL_PRESIDENT/VICE) → 해당 학교 멤버가 포함된 모든 스터디 그룹</li>
-     *   <li>파트장(SCHOOL_PART_LEADER) → 본인이 운영진(Organizer)으로 등록된 스터디 그룹</li>
+     *   <li>파트장(SCHOOL_PART_LEADER) → 본인이 파트장(Mentor)로 등록된 스터디 그룹</li>
      *   <li>일반 챌린저/SCHOOL_ETC_ADMIN → 조회 권한 없음(빈 리스트 반환)</li>
      * </ul>
      * 사용자가 여러 역할을 동시에 보유할 수 있으므로 Scope는 리스트로 넘기고, Repository에서 OR로 합쳐 필터링한다.
@@ -103,7 +103,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
      * {@link #getMyStudyGroups} 와 동일한 Scope 해석 규칙을 사용한다.
      * <ul>
      *   <li>학교 회장단 → 학교 멤버가 포함된 모든 그룹의 이름</li>
-     *   <li>파트장 → 본인이 운영진인 그룹의 이름</li>
+     *   <li>파트장 → 본인이 파트장인 그룹의 이름</li>
      *   <li>권한 없음 → 빈 리스트</li>
      * </ul>
      * 페이징 없이 전체 결과(groupId, name)를 반환하므로 토글/드롭다운 UI에 바로 쓸 수 있다.
@@ -165,9 +165,9 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
             List<StudyGroupListInfo.StudyGroupInfo> groups) {
         Set<String> imageIds = new LinkedHashSet<>();
         for (StudyGroupListInfo.StudyGroupInfo group : groups) {
-            for (StudyGroupListInfo.StudyGroupInfo.Organizer organizer : group.organizers()) {
-                if (organizer.profileImageUrl() != null) {
-                    imageIds.add(organizer.profileImageUrl());
+            for (StudyGroupListInfo.StudyGroupInfo.Mentor mentor : group.mentors()) {
+                if (mentor.profileImageUrl() != null) {
+                    imageIds.add(mentor.profileImageUrl());
                 }
             }
             for (StudyGroupListInfo.StudyGroupInfo.Member m : group.members()) {
@@ -187,8 +187,8 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
                 .map(group -> new StudyGroupListInfo.StudyGroupInfo(
                         group.groupId(),
                         group.name(),
-                        group.organizers().stream()
-                                .map(o -> new StudyGroupListInfo.StudyGroupInfo.Organizer(
+                        group.mentors().stream()
+                                .map(o -> new StudyGroupListInfo.StudyGroupInfo.Mentor(
                                         o.memberId(),
                                         o.name(),
                                         urlMap.getOrDefault(o.profileImageUrl(), o.profileImageUrl())

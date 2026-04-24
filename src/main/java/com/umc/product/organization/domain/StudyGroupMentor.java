@@ -15,9 +15,9 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "study_group_organizer")
+@Table(name = "study_group_mentor")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class StudyGroupOrganizer extends BaseEntity {
+public class StudyGroupMentor extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,13 +31,13 @@ public class StudyGroupOrganizer extends BaseEntity {
     private Long memberId;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private StudyGroupOrganizer(StudyGroup studyGroup, Long memberId) {
+    private StudyGroupMentor(StudyGroup studyGroup, Long memberId) {
         this.studyGroup = studyGroup;
         this.memberId = memberId;
     }
 
-    public static StudyGroupOrganizer create(StudyGroup studyGroup, Long memberId) {
-        return StudyGroupOrganizer.builder()
+    public static StudyGroupMentor create(StudyGroup studyGroup, Long memberId) {
+        return StudyGroupMentor.builder()
             .studyGroup(studyGroup)
             .memberId(memberId)
             .build();

@@ -23,14 +23,14 @@ public record CreateStudyGroupRequest(
 
         @Schema(description = "파트장 ID 목록", example = "[101, 102]")
         @NotEmpty
-        Set<Long> organizerIds,
+        Set<Long> mentorIds,
 
         @Schema(description = "스터디원 챌린저 ID 목록", example = "[102, 103, 104]")
         @NotEmpty
         Set<Long> memberIds
 ) {
     public CreateStudyGroupCommand toCommand() {
-        return new CreateStudyGroupCommand(name, part, organizerIds,
+        return new CreateStudyGroupCommand(name, part, mentorIds,
             memberIds != null ? memberIds : new HashSet<>());
     }
 }

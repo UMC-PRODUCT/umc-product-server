@@ -8,7 +8,7 @@ import java.util.List;
 public record StudyGroupSummaryResponse(
         @Schema(description = "스터디 그룹 ID", example = "1") Long groupId,
         @Schema(description = "스터디 그룹명", example = "React A팀") String name,
-        @Schema(description = "운영진 목록") List<Organizer> organizers,
+        @Schema(description = "파트장 목록") List<Mentor> mentors,
         @Schema(description = "멤버 목록") List<Member> members) {
 
     public static StudyGroupSummaryResponse
@@ -16,18 +16,18 @@ public record StudyGroupSummaryResponse(
         return new StudyGroupSummaryResponse(
                 g.groupId(),
                 g.name(),
-                g.organizers().stream().map(Organizer::from).toList(),
+                g.mentors().stream().map(Mentor::from).toList(),
                 g.members().stream().map(Member::from).toList());
     }
 
     @Schema(description = "스터디 파트장 요약 정보")
-    public record Organizer(
+    public record Mentor(
             @Schema(description = "멤버 ID", example = "101") Long memberId,
             @Schema(description = "이름", example = "홍길동") String name,
             @Schema(description = "프로필 이미지 URL") String profileImageUrl) {
 
-        public static Organizer from(StudyGroupListInfo.StudyGroupInfo.Organizer o) {
-            return new Organizer(o.memberId(), o.name(), o.profileImageUrl());
+        public static Mentor from(StudyGroupListInfo.StudyGroupInfo.Mentor m) {
+            return new Mentor(m.memberId(), m.name(), m.profileImageUrl());
         }
     }
 

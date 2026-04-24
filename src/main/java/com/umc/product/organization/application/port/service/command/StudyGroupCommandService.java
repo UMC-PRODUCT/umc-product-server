@@ -35,7 +35,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
         validateNoPartStudyConflict(gisu.getId(), command.part(), command.memberIds());
 
         StudyGroup studyGroup = StudyGroup.create(command.name(), gisu.getId(), command.part(),
-            command.organizerIds(), command.memberIds());
+            command.mentorIds(), command.memberIds());
 
         manageStudyGroupPort.save(studyGroup);
     }

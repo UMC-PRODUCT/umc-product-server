@@ -34,7 +34,7 @@ public class StudyGroup extends BaseEntity {
     private final List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
 
     @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<StudyGroupOrganizer> studyGroupOrganizer = new ArrayList<>();
+    private final List<StudyGroupMentor> studyGroupMentor = new ArrayList<>();
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -58,9 +58,9 @@ public class StudyGroup extends BaseEntity {
         this.part = part;
     }
 
-    public static StudyGroup create(String name, Long gisuId, ChallengerPart part, Set<Long> organizerIds, Set<Long> memberIds) {
-        if(organizerIds == null || organizerIds.isEmpty()) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_ORGANIZER_REQUIRED);
+    public static StudyGroup create(String name, Long gisuId, ChallengerPart part, Set<Long> mentorIds, Set<Long> memberIds) {
+        if(mentorIds == null || mentorIds.isEmpty()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_REQUIRED);
         }
         if(memberIds == null || memberIds.isEmpty()) {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED);
@@ -72,7 +72,7 @@ public class StudyGroup extends BaseEntity {
             .part(part)
             .build();
 
-        organizerIds.forEach(group::addOrganizer);
+        mentorIds.forEach(group::addMentor);
         memberIds.forEach(group::addStudyGroupMember);
 
         return group;
@@ -94,11 +94,11 @@ public class StudyGroup extends BaseEntity {
             .anyMatch(m -> m.getMemberId().equals(memberId));
     }
 
-    private void addOrganizer(Long organizerId) {
-        if(organizerId == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_ORGANIZER_ID_REQUIRED);
+    private void addMentor(Long mentorId) {
+        if(mentorId == null) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_ID_REQUIRED);
         }
-        this.studyGroupOrganizer.add(StudyGroupOrganizer.create(this, organizerId));
+        this.studyGroupMentor.add(StudyGroupMentor.create(this, mentorId));
     }
 
     private static void validate(String name, Long gisuId, ChallengerPart part) {

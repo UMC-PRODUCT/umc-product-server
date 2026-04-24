@@ -25,7 +25,7 @@ public sealed interface StudyGroupViewScope {
     /**
      * 파트장(SCHOOL_PART_LEADER) 권한 Scope.
      * <p>
-     * 본인이 StudyGroupOrganizer(운영진)로 등록된 스터디 그룹만 볼 수 있다.
+     * 본인이 StudyGroupMentor(파트장)로 등록된 스터디 그룹만 볼 수 있다.
      *
      * @param memberId 조회 요청 주체의 memberId
      */

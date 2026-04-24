@@ -18,7 +18,7 @@ public interface GetStudyGroupUseCase {
          * memberId만으로 schoolId/활성 기수/역할을 내부에서 resolve 하여 역할 기반 Scope로 조회한다.
          * <ul>
          *   <li>학교 회장단 → 학교 멤버가 포함된 모든 그룹</li>
-         *   <li>파트장 → 본인이 운영진인 그룹</li>
+         *   <li>파트장 → 본인이 파트장인 그룹</li>
          *   <li>권한 없음 → 빈 리스트</li>
          * </ul>
          *
@@ -39,7 +39,7 @@ public interface GetStudyGroupUseCase {
          * 스터디 그룹 ID 로 소속 스터디원 목록 조회.
          * <p>
          * 각 스터디원에 대해 memberId / 학교명 / 프로필 이미지 URL 을 반환한다.
-         * 대상은 {@code study_group_member} 테이블의 멤버이며 운영진(StudyGroupOrganizer) 테이블과는 별개다.
+         * 대상은 {@code study_group_member} 테이블의 멤버이며 파트장(StudyGroupMentor) 테이블과는 별개다.
          *
          * @param groupId 스터디 그룹 ID
          * @return 소속 스터디원 목록 (소속 없으면 빈 리스트)
