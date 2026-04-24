@@ -53,7 +53,7 @@ public class Answer extends BaseEntity {
     private Set<Long> fileIds;
 
     @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "times", columnDefinition = "timestampz[]")
+    @Column(name = "times", columnDefinition = "timestamptz[]")
     private Set<Instant> times;
 
     // 다중/단일 선택 객관식 답변을 위한 1:N 양방향 매핑
