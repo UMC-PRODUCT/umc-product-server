@@ -3,6 +3,10 @@ ALTER TABLE form
     DROP COLUMN ends_at_exclusive,
     DROP COLUMN starts_at;
 
--- 투표 도메인이 분리되면서 기존의 제약 조건도 정리합니다.
+-- 투표 도메인이 분리되면서 기존의 제약 조건을 현재 QuestionType enum에 맞게 갱신합니다.
 ALTER TABLE question
     DROP CONSTRAINT IF EXISTS question_type_check;
+
+ALTER TABLE question
+    ADD CONSTRAINT question_type_check
+        CHECK (type IN ('SHORT_TEXT', 'LONG_TEXT', 'RADIO', 'CHECKBOX', 'DROPDOWN', 'SCHEDULE', 'FILE', 'PORTFOLIO'));
