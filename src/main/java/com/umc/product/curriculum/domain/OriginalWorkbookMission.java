@@ -4,11 +4,13 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.curriculum.domain.enums.MissionType;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "original_workbook_mission")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
 public class OriginalWorkbookMission extends BaseEntity {
 
     @Id

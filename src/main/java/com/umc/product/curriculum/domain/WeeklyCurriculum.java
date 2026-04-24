@@ -6,7 +6,9 @@ import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.util.StringUtils;
 
 import java.time.Instant;
 
@@ -21,6 +23,7 @@ import java.time.Instant;
     }
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
 public class WeeklyCurriculum extends BaseEntity {
 
     @Id
@@ -32,7 +35,7 @@ public class WeeklyCurriculum extends BaseEntity {
     private Curriculum curriculum;
 
     @Column(name = "is_extra", nullable = false)
-    private boolean isExtra; // 부록 관련 주차를 표기하기 위함임
+    private boolean isExtra;
 
     @Column(name = "title", nullable = false)
     private String title;
@@ -61,12 +64,51 @@ public class WeeklyCurriculum extends BaseEntity {
         validateStartBeforeEnd();
     }
 
+    public static WeeklyCurriculum create(
+        Curriculum curriculum, boolean isExtra, String title, Long weekNo,
+        Instant startsAt, Instant endsAt
+    ) {
+        return WeeklyCurriculum.builder()
+            .curriculum(curriculum)
+            .isExtra(isExtra)
+            .title(title)
+            .weekNo(weekNo)
+            .startsAt(startsAt)
+            .endsAt(endsAt)
+            .build();
+    }
+
+    public void updateTitle(String title) {
+        if (StringUtils.hasText(title)) {
+            this.title = title;
+        }
+    }
+
+    public void updateWeekNo(Long weekNo) {
+        if (weekNo != null) {
+            this.weekNo = weekNo;
+        }
+    }
+
+    public void updateIsExtra(Boolean isExtra) {
+        if (isExtra != null) {
+            this.isExtra = isExtra;
+        }
+    }
+
+    public void updatePeriod(Instant startsAt, Instant endsAt) {
+        Instant newStartsAt = startsAt != null ? startsAt : this.startsAt;
+        Instant newEndsAt = endsAt != null ? endsAt : this.endsAt;
+        if (newStartsAt.isAfter(newEndsAt)) {
+            throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WEEKLY_CURRICULUM_PERIOD);
+        }
+        this.startsAt = newStartsAt;
+        this.endsAt = newEndsAt;
+    }
+
     private void validateStartBeforeEnd() {
         if (startsAt.isAfter(endsAt)) {
             throw new CurriculumDomainException(CurriculumErrorCode.INVALID_WEEKLY_CURRICULUM_PERIOD);
         }
     }
-
-    // originalWorkbook 단위로 배포할지 주차단위로 배포할지 고민 -> orginal workbook 단위로 배포하는 것을 원칙으로 함. 이때, 주차별은 서비스단에서 제공하는 부가적인 기능을 제공
-
 }
