@@ -161,6 +161,12 @@ public class Schedule extends BaseEntity {
      * 최초 일정 출석 요청 시, 어떤 상태로 마킹해야 하는지 판단하는 메소드입니다.
      */
     public AttendanceStatus getAttendanceStatus() {
+
+        // 출석을 요하지 않는 일정이면 에러 반환
+        if (this.policy == null) {
+            throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST);
+        }
+
         Instant now = Instant.now();
 
         if (now.isAfter(this.endsAt)) {

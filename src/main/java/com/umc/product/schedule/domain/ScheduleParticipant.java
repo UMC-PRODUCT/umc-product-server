@@ -70,6 +70,9 @@ public class ScheduleParticipant extends BaseEntity {
         Point location,
         Boolean isLocationVerified
     ) {
+        // 출석을 요하지 않는 일정이면 에러 반환
+        validateScheduleAttendancePolicyExistence();
+
         // 이미 출석 요청을 한 기록이 있다면 update 하는 method를 사용해야함
         if (this.attendance != null) {
             throw new ScheduleDomainException(ScheduleErrorCode.NOT_FIRST_ATTENDANCE_REQUEST);
@@ -100,9 +103,14 @@ public class ScheduleParticipant extends BaseEntity {
         boolean isLocationVerified,
         String excuseReason
     ) {
+        // 출석을 요하지 않는 일정이면 에러 반환
+        validateScheduleAttendancePolicyExistence();
+
+        // 사유가 제출되지 않으면 에러 반환
         if (excuseReason == null || excuseReason.isEmpty()) {
             throw new ScheduleDomainException(ScheduleErrorCode.NO_EXCUSE_REASON_GIVEN);
         }
+
         // 기존에 출석 요청이 존재하지 않는 경우
         if (this.attendance == null) {
             this.attendance = ScheduleParticipantAttendance.create(
@@ -159,6 +167,8 @@ public class ScheduleParticipant extends BaseEntity {
         this.attendance.forceChange(decidedMemberId, status);
     }
 
+    // ================== Helper Method ==================
+
     private void throwIfAttendanceNotExists() {
         if (this.attendance == null) {
             throw new ScheduleDomainException(ScheduleErrorCode.NO_ATTENDANCE_RECORD);
@@ -170,6 +180,12 @@ public class ScheduleParticipant extends BaseEntity {
 
         if (!this.attendance.getStatus().isPending()) {
             throw new ScheduleDomainException(ScheduleErrorCode.ATTENDANCE_NOT_REQUIRES_CONFIRM);
+        }
+    }
+
+    private void validateScheduleAttendancePolicyExistence() {
+        if (this.schedule.getPolicy() == null) {
+            throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST);
         }
     }
 }
