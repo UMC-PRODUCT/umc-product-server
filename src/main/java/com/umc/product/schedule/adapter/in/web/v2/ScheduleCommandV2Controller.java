@@ -51,7 +51,7 @@ public class ScheduleCommandV2Controller {
     @CheckAccess(
         resourceType = ResourceType.SCHEDULE,
         permission = PermissionType.WRITE,
-        message = "일정 생성은 챌린저만 가능합니다."
+        message = "일정 생성은 활동 기록이 있는 챌린저만 가능합니다."
     )
     @Operation(summary = "일정 생성", description = """
         일정을 생성합니다. `location` 필드를 작성하지 않으실 경우 비대면 일정으로 간주됩니다.
@@ -145,11 +145,13 @@ public class ScheduleCommandV2Controller {
         return updateScheduleUseCase.update(command);
     }
 
+    // ========================= 출석 관련 =========================
+
     @CheckAccess(
-        resourceType = ResourceType.SCHEDULE,
+        resourceType = ResourceType.ATTENDANCE,
         resourceId = "#scheduleId",
         permission = PermissionType.WRITE,
-        message = "일정에 대한 출석 요청은 참석 챌린저만 가능합니다."
+        message = "해당 일정의 참여자로 등록된 챌린저만 출석 요청이 가능합니다."
     )
     @Operation(summary = "출석 요청하기", description = """
         특정 일정에 대한 출석을 요청합니다. 반환값으로 변경된 출석 상태 및 관련된 정보들을 제공합니다.
@@ -190,10 +192,10 @@ public class ScheduleCommandV2Controller {
     }
 
     @CheckAccess(
-        resourceType = ResourceType.SCHEDULE,
+        resourceType = ResourceType.ATTENDANCE,
         resourceId = "#scheduleId",
         permission = PermissionType.WRITE,
-        message = "일정에 대한 출석 사유 제출은 참석 챌린저만 가능합니다."
+        message = "해당 일정의 참여자로 등록된 챌린저만 출석 사유 제출 요청이 가능합니다."
     )
     @Operation(summary = "출석 요청이 불가능한 경우, 사유 제출하기", description = """
         위치 인증이 안되거나, 개인 사정이 있어 결석하지만 출석 인정을 요구하는 경우 사유를 제출하기 위하여 사용합니다.
@@ -231,10 +233,10 @@ public class ScheduleCommandV2Controller {
     }
 
     @CheckAccess(
-        resourceType = ResourceType.SCHEDULE,
+        resourceType = ResourceType.ATTENDANCE,
         resourceId = "#scheduleId",
         permission = PermissionType.APPROVE,
-        message = "일정에 대한 출석 요청 승인/거절은 일정이 생성된 기수의 운영진만 가능합니다."
+        message = "해당 일정이 진행되는 기수의 운영진만 출석을 승인하거나 거절할 수 있습니다."
     )
     // 각 일정에 대한 출석 요청을 승인 또는 기각하는 API, Request는 list 형태로 받을 수 있어야 합니다.
     @Operation(summary = "[운영진용] 출석 요청 승인/거절", description = """

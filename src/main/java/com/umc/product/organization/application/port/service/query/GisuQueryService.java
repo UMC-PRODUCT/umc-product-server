@@ -4,6 +4,9 @@ import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.organization.application.port.in.query.dto.GisuNameInfo;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
+import com.umc.product.organization.exception.OrganizationDomainException;
+import com.umc.product.organization.exception.OrganizationErrorCode;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -22,21 +25,21 @@ public class GisuQueryService implements GetGisuUseCase {
     @Override
     public List<GisuInfo> getList() {
         return loadGisuPort.findAll().stream()
-                .map(GisuInfo::from)
-                .toList();
+            .map(GisuInfo::from)
+            .toList();
     }
 
     @Override
     public Page<GisuInfo> getList(Pageable pageable) {
         return loadGisuPort.findAll(pageable)
-                .map(GisuInfo::from);
+            .map(GisuInfo::from);
     }
 
     @Override
     public List<GisuNameInfo> getAllGisuNames() {
         return loadGisuPort.findAll().stream()
-                .map(GisuNameInfo::from)
-                .toList();
+            .map(GisuNameInfo::from)
+            .toList();
     }
 
     @Override
@@ -47,8 +50,8 @@ public class GisuQueryService implements GetGisuUseCase {
     @Override
     public List<GisuInfo> getByIds(Set<Long> gisuIds) {
         return loadGisuPort.findByIds(gisuIds).stream()
-                .map(GisuInfo::from)
-                .toList();
+            .map(GisuInfo::from)
+            .toList();
     }
 
     @Override
@@ -59,5 +62,13 @@ public class GisuQueryService implements GetGisuUseCase {
     @Override
     public GisuInfo getActiveGisu() {
         return GisuInfo.from(loadGisuPort.findActiveGisu());
+    }
+
+    @Override
+    public GisuInfo getGisuByDate(Instant targetDate) {
+        return GisuInfo.from(
+            loadGisuPort.findGisuByDate(targetDate)
+                .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.GISU_NOT_FOUND))
+        );
     }
 }
