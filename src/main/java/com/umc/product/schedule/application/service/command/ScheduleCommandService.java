@@ -3,31 +3,25 @@ package com.umc.product.schedule.application.service.command;
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.global.exception.constant.Domain;
+import com.umc.product.global.util.GeometryUtils;
+import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
-import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
-import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleCommand;
-import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleLocationCommand;
-import com.umc.product.schedule.application.port.in.command.dto.UpdateScheduleLocationInfo;
-import com.umc.product.schedule.application.port.out.DeleteAttendanceRecordPort;
-import com.umc.product.schedule.application.port.out.DeleteAttendanceSheetPort;
-import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
-import com.umc.product.schedule.application.port.out.LoadAttendanceRecordPort;
-import com.umc.product.schedule.application.port.out.LoadAttendanceSheetPort;
+import com.umc.product.schedule.application.port.in.command.dto.EditScheduleCommand;
+import com.umc.product.schedule.application.port.out.DeleteScheduleParticipantPort;
+import com.umc.product.schedule.application.port.out.LoadScheduleParticipantPort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
-import com.umc.product.schedule.application.port.out.SaveAttendanceRecordPort;
+import com.umc.product.schedule.application.port.out.SaveScheduleParticipantPort;
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
-import com.umc.product.schedule.domain.AttendanceRecord;
-import com.umc.product.schedule.domain.AttendanceSheet;
+import com.umc.product.schedule.domain.AttendancePolicy;
 import com.umc.product.schedule.domain.Schedule;
-import com.umc.product.schedule.domain.enums.AttendanceStatus;
+import com.umc.product.schedule.domain.ScheduleParticipant;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +29,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,21 +37,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ScheduleCommandService implements CreateScheduleUseCase, UpdateScheduleUseCase, DeleteScheduleUseCase {
+public class ScheduleCommandService implements CreateScheduleUseCase, UpdateScheduleUseCase {
 
     private final SaveSchedulePort saveSchedulePort;
     private final LoadSchedulePort loadSchedulePort;
-    private final DeleteSchedulePort deleteSchedulePort;
 
-    private final LoadAttendanceSheetPort loadAttendanceSheetPort;
-    private final DeleteAttendanceSheetPort deleteAttendanceSheetPort;
-
-    private final LoadAttendanceRecordPort loadAttendanceRecordPort;
-    private final SaveAttendanceRecordPort saveAttendanceRecordPort;
-    private final DeleteAttendanceRecordPort deleteAttendanceRecordPort;
+    private final SaveScheduleParticipantPort saveScheduleParticipantPort;
+    private final DeleteScheduleParticipantPort deleteScheduleParticipantPort;
+    private final LoadScheduleParticipantPort loadScheduleParticipantPort;
 
     // 외부 도메인 UseCase
     private final GetChallengerUseCase getChallengerUseCase;
+    private final GetGisuUseCase getGisuUseCase;
 
 
     // 일정 생성
@@ -69,14 +61,31 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     )
     @Override
     public Long create(CreateScheduleCommand command) {
-        // 작성자의 Challenger 상태 조회 (탈부, 제명 상태일 시 exeption)
+
+        // 작성자의 가장 최근 기수 Challenger 상태 조회 (탈부, 제명 상태일 시 exeption)
         ChallengerInfoWithStatus challengerInfoWithStatus = getChallengerUseCase.getLatestActiveChallengerByMemberId(
             command.authorMemberId());
-        Long authorChallengerId = challengerInfoWithStatus.challengerId();
+
+        // 생성하려는 일정의 날짜가 현재 기수 활동 기간에서 벗어난 경우 에러 반환
+        GisuInfo activeGisu = getGisuUseCase.getActiveGisu();
+        if (command.startsAt().isBefore(activeGisu.startAt()) || command.endsAt().isAfter(activeGisu.endAt())) {
+            throw new ScheduleDomainException(ScheduleErrorCode.NOT_ACTIVE_GISU_SCHEDULE);
+        }
 
         // Schedule 생성 및 저장
-        Schedule schedule = command.toEntity(authorChallengerId);
+        Schedule schedule = command.toEntity(challengerInfoWithStatus.memberId());
         Schedule savedSchedule = saveSchedulePort.save(schedule);
+
+        // ScheduleParticipant 생성 및 저장
+        List<ScheduleParticipant> participants = command.participantMemberIds().stream()
+            .map(memberId -> ScheduleParticipant.builder()
+                .memberId(memberId)
+                .schedule(savedSchedule)
+                .attendance(null)
+                .build())
+            .toList();
+
+        saveScheduleParticipantPort.saveAll(participants);
 
         return savedSchedule.getId();
     }
@@ -90,170 +99,138 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         description = "'일정이 수정되었습니다.'"
     )
     @Override
-    public void update(UpdateScheduleCommand command) {
+    public Long update(EditScheduleCommand command) {
+
         Schedule schedule = loadSchedulePort.findById(command.scheduleId())
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
-        // 출석부가 있으면 조회 (없어도 일정 수정 가능)
-        var attendanceSheetOpt = loadAttendanceSheetPort.findByScheduleId(command.scheduleId());
+        command.validate();
 
-        // 변경 전 기존 일정 시작 시간
-        Instant oldStartsAt = schedule.getStartsAt();
+        if (schedule.getEndsAt().isBefore(Instant.now())) {
+            throw new ScheduleDomainException(ScheduleErrorCode.ENDED_SCHEDULE_CANT_BE_EDITED);
+        }
 
-        // 일정 정보 업데이트
+        // 대면 -> 비대면 전환 시
+        if (command.isChangingToOnline()) {
+            schedule.convertToOnline();
+        }
+
+        AttendancePolicy newPolicy = null;
+        // 출석 O -> 출석 X 전환 시
+        if (Boolean.FALSE.equals(command.isAttendanceRequired())) {
+            schedule.removeAttendancePolicy();
+        } else {
+            // 출석 해제가 아닐 때만 프론트가 보낸 데이터 파싱
+            newPolicy = createPolicyFromCommand(command, schedule);
+        }
+
+        // 일반 필드 업데이트 (대면/비대면 유지 또는 비대면 -> 대면 포함)
         schedule.update(
             command.name(),
             command.description(),
             command.tags(),
             command.startsAt(),
             command.endsAt(),
-            command.isAllDay(),
-            command.locationName(),
-            command.location()
+            extractLocationName(command),
+            extractLocation(command),
+            newPolicy
         );
 
-        // 출석부가 있으면
-        if (attendanceSheetOpt.isPresent()) {
-            AttendanceSheet sheet = attendanceSheetOpt.get();
+        if (command.isParticipantsUpdateRequested()) {
+            // DB에 있는 기존 참여자 ID 목록을 가져옴
+            Set<Long> existingParticipantIds = loadScheduleParticipantPort.findMemberIdsByScheduleId(schedule.getId());
 
-            // 1. 시간대 동기화: 일정 시간이 변경되었으면 출석부 시간대 이동
-            if (command.startsAt() != null) {
-                Duration diff = Duration.between(oldStartsAt, command.startsAt());
-                if (!diff.isZero()) {
-                    sheet.shiftWindow(diff);
-                }
-            }
-
-            // 2. 참여자 명단 동기화: participantMemberIds가 제공되었으면
-            if (command.participantMemberIds() != null) {
-                // 일정 생성자는 참여자 명단에서 제외할 수 없음
-                validateAuthorNotRemoved(schedule.getAuthorChallengerId(), command.participantMemberIds());
-                syncAttendanceRecords(sheet, command.participantMemberIds());
+            // 진짜 명단이 달라졌는지 비교
+            if (!existingParticipantIds.equals(command.participantMemberIds())) {
+                // 진짜 달라졌을 때만 권한 검증 및 업데이트 수행
+                updateParticipants(schedule, command);
             }
         }
 
+        // 일정 update
         saveSchedulePort.save(schedule);
+
+        return schedule.getId();
     }
 
-    // 일정 위치 수정
-    @Override
-    public UpdateScheduleLocationInfo updateLocation(UpdateScheduleLocationCommand command) {
-        Schedule schedule = loadSchedulePort.findById(command.scheduleId())
-            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+    // command로부터 policy 생성
+    private AttendancePolicy createPolicyFromCommand(EditScheduleCommand command, Schedule schedule) {
+        if (command.attendancePolicy() == null) {
+            return null;
+        }
 
-        // 위치 정보 업데이트
-        schedule.update(
-            null,  // name
-            null,  // description
-            null,  // tags
-            null,  // startsAt
-            null,  // endsAt
-            null,  // isAllDay
-            command.locationName(),
-            command.location()
-        );
+        // 시간이 변경되었으면 새 값, 아니면 기존 값 사용
+        Instant startsAt = command.startsAt() != null ? command.startsAt() : schedule.getStartsAt();
+        Instant endsAt = command.endsAt() != null ? command.endsAt() : schedule.getEndsAt();
 
-        saveSchedulePort.save(schedule);
-
-        return UpdateScheduleLocationInfo.of(
-            schedule.getId(),
-            schedule.getLocationName(),
-            schedule.getLocation()
+        return Schedule.createAttendancePolicy(
+            command.attendancePolicy().checkInStartAt(),
+            command.attendancePolicy().onTimeEndAt(),
+            command.attendancePolicy().lateEndAt(),
+            startsAt,
+            endsAt
         );
     }
 
-    /**
-     * 일정 생성자가 참여자 명단에서 제외되지 않았는지 검증
-     */
-    private void validateAuthorNotRemoved(Long authorChallengerId, List<Long> participantMemberIds) {
-        ChallengerInfo authorInfo = getChallengerUseCase.findByIdOrNull(authorChallengerId);
+    private String extractLocationName(EditScheduleCommand command) {
+        return command.location() != null ? command.location().locationName() : null;
+    }
 
-        // 일정 생성자가 탈퇴/제명당한 회원일 경우 관리자가 일정을 수정할 수 있도록 검증 스킵 + 로그 남김
-        if (authorInfo == null) {
-            log.warn("[Schedule] 일정 생성자 챌린저 정보를 찾을 수 없음: authorChallengerId={}", authorChallengerId);
+    private Point extractLocation(EditScheduleCommand command) {
+        if (command.location() == null) {
+            return null;
+        }
+        return GeometryUtils.createPoint(
+            command.location().latitude(),
+            command.location().longitude()
+        );
+    }
+
+    // 참여자 업데이트
+    private void updateParticipants(Schedule schedule, EditScheduleCommand command) {
+
+        // 참여자 변경 없으면 스킵
+        if (!command.isParticipantsUpdateRequested()) {
             return;
         }
 
-        if (!participantMemberIds.contains(authorInfo.memberId())) {
-            throw new ScheduleDomainException(ScheduleErrorCode.CANNOT_REMOVE_SCHEDULE_AUTHOR);
-        }
-    }
+        Set<Long> newMemberIds = command.participantMemberIds();
 
-    /**
-     * 출석부 참여자 명단 동기화
-     * <p>
-     * 제한 없음: 언제든 자유롭게 참여자 추가/삭제 가능
-     * <p>
-     * 동작: - 추가된 참여자: AttendanceRecord 생성 (PENDING 상태) - 삭제된 참여자: AttendanceRecord 삭제 (Hard Delete)
-     */
-    private void syncAttendanceRecords(AttendanceSheet sheet, List<Long> newParticipantIds) {
-        Long sheetId = sheet.getId();
-
-        // 기존 출석 기록 조회
-        List<AttendanceRecord> existingRecords = loadAttendanceRecordPort.findByAttendanceSheetId(sheetId);
-
-        // 기존 참여자 ID 목록
-        Set<Long> existingMemberIds = existingRecords.stream()
-            .map(AttendanceRecord::getMemberId)
+        // 기존 참여자 조회
+        List<ScheduleParticipant> existingParticipants = loadScheduleParticipantPort.findAllByScheduleId(
+            schedule.getId());
+        Set<Long> existingMemberIds = existingParticipants.stream()
+            .map(ScheduleParticipant::getMemberId)
             .collect(Collectors.toSet());
 
-        Set<Long> newMemberIds = new HashSet<>(newParticipantIds);
+        // 삭제되어야 할 MemberId
+        Set<Long> toDeleteIds = new HashSet<>(existingMemberIds);
+        toDeleteIds.removeAll(newMemberIds);
 
-        // 추가된 참여자: 새 기록 생성
-        Set<Long> toAdd = new HashSet<>(newMemberIds);
-        toAdd.removeAll(existingMemberIds);
+        // 추가되어야 할 MemberId
+        Set<Long> toAddIds = new HashSet<>(newMemberIds);
+        toAddIds.removeAll(existingMemberIds);
 
-        if (!toAdd.isEmpty()) {
-            List<AttendanceRecord> newRecords = toAdd.stream()
-                .map(memberId -> AttendanceRecord.builder()
-                    .attendanceSheetId(sheetId)
+        // 삭제
+        if (!toDeleteIds.isEmpty()) {
+            List<ScheduleParticipant> participantsToDelete = existingParticipants.stream()
+                .filter(p -> toDeleteIds.contains(p.getMemberId()))
+                .toList();
+
+            deleteScheduleParticipantPort.deleteAll(participantsToDelete);
+        }
+
+        // 추가
+        if (!toAddIds.isEmpty()) {
+            List<ScheduleParticipant> participantsToAdd = toAddIds.stream()
+                .map(memberId -> ScheduleParticipant.builder()
                     .memberId(memberId)
-                    .status(AttendanceStatus.PENDING)
+                    .schedule(schedule)
+                    .attendance(null)
                     .build())
                 .toList();
-            saveAttendanceRecordPort.saveAllRecords(newRecords);
+
+            saveScheduleParticipantPort.saveAll(participantsToAdd);
         }
-
-        // 삭제된 참여자: 기록 삭제 (Hard Delete)
-        Set<Long> toRemove = new HashSet<>(existingMemberIds);
-        toRemove.removeAll(newMemberIds);
-
-        if (!toRemove.isEmpty()) {
-            List<AttendanceRecord> toDelete = existingRecords.stream()
-                .filter(r -> toRemove.contains(r.getMemberId()))
-                .toList();
-
-            for (AttendanceRecord record : toDelete) {
-                deleteAttendanceRecordPort.delete(record);
-            }
-        }
-    }
-
-    // 일정 삭제
-    @Audited(
-        domain = Domain.SCHEDULE,
-        action = AuditAction.DELETE,
-        targetType = "Schedule",
-        targetId = "#scheduleId",
-        description = "'일정이 삭제되었습니다.'"
-    )
-    @Override
-    public void delete(Long scheduleId) {
-        if (!loadSchedulePort.existsById(scheduleId)) {
-            throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND);
-        }
-
-        // 해당 Schedule의 AttendanceSheet 조회
-        loadAttendanceSheetPort.findByScheduleId(scheduleId)
-            .ifPresent(sheet -> {
-                // Sheet에 연결된 모든 Record 삭제
-                deleteAttendanceRecordPort.deleteAllBySheetId(sheet.getId());
-            });
-
-        // Sheet 삭제
-        deleteAttendanceSheetPort.deleteByScheduleId(scheduleId);
-
-        // Schedule 삭제
-        deleteSchedulePort.delete(scheduleId);
     }
 }
