@@ -171,7 +171,7 @@ public class Schedule extends BaseEntity {
         }
 
         return this.policy.getAttendanceStatusByPolicy(
-            Instant.now(), this.startsAt
+            now, this.startsAt
         );
     }
 
