@@ -76,6 +76,10 @@ public class FcmOutbox extends BaseEntity {
         this.processedAt = Instant.now();
     }
 
+    public void markFailed() {
+        this.status = FcmOutboxStatus.FAILED;
+    }
+
     public void incrementRetry() {
         this.retryCount++;
         if (this.retryCount >= MAX_RETRY) {
