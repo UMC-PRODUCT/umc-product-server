@@ -1,14 +1,23 @@
 package com.umc.product.authorization.application.service.evaluator;
 
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
-import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
+import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.enums.ProjectStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
+
+    private final LoadProjectPort loadProjectPort;
 
     @Override
     public ResourceType supportedResourceType() {
@@ -17,17 +26,41 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
 
     @Override
     public boolean evaluate(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
-        // TODO: 실제 로직 구현 필요
-        // - READ: 인증된 사용자 전체 허용 (현재 true)
-        // - WRITE: PM 챌린저(PLAN 파트)만 허용 (PROJECT-101)
-        // - EDIT: DRAFT면 작성자 PM / PENDING_REVIEW·IN_PROGRESS면 Admin (PROJECT-102)
-        // - DELETE / MANAGE: Admin(중앙운영사무국)만 (PROJECT-105, 108)
-        if (resourcePermission.permission().equals(PermissionType.READ)) {
-            return true;
+        return switch (resourcePermission.permission()) {
+            case READ -> true;
+            case WRITE -> canWrite(subjectAttributes);
+            case EDIT -> canEdit(subjectAttributes, resourcePermission);
+            case MANAGE, DELETE -> isCentralCore(subjectAttributes);
+            default -> false;
+        };
+    }
+
+    private boolean canWrite(SubjectAttributes subjectAttributes) {
+        return subjectAttributes.gisuChallengerInfos().stream()
+            .anyMatch(info -> info.part() == ChallengerPart.PLAN);
+    }
+
+    private boolean canEdit(SubjectAttributes subjectAttributes, ResourcePermission resourcePermission) {
+        Long projectId = resourcePermission.getResourceIdAsLong();
+        Project project = loadProjectPort.findById(projectId)
+            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_NOT_FOUND));
+
+        boolean isOwner = project.getProductOwnerMemberId().equals(subjectAttributes.memberId());
+
+        if (project.getStatus() == ProjectStatus.DRAFT) {
+            return isOwner;
         }
 
-        // 현재는 skeleton. 임시로 중앙운영사무국 총괄만 통과.
+        if (project.getStatus() == ProjectStatus.PENDING_REVIEW
+            || project.getStatus() == ProjectStatus.IN_PROGRESS) {
+            return isOwner || isCentralCore(subjectAttributes);
+        }
+
+        return false;
+    }
+
+    private boolean isCentralCore(SubjectAttributes subjectAttributes) {
         return subjectAttributes.roleAttributes().stream()
-            .anyMatch(roleAttribute -> roleAttribute.roleType().isAtLeastCentralCore());
+            .anyMatch(role -> role.roleType().isAtLeastCentralCore());
     }
 }
