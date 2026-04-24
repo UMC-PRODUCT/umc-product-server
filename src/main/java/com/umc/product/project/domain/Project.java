@@ -2,6 +2,8 @@ package com.umc.product.project.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.project.domain.enums.ProjectStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -109,7 +111,12 @@ public class Project extends BaseEntity {
         Long chapterId,
         Long productOwnerMemberId
     ) {
-        throw new UnsupportedOperationException("TODO: createDraft 구현 필요");
+        return Project.builder()
+            .gisuId(gisuId)
+            .chapterId(chapterId)
+            .productOwnerMemberId(productOwnerMemberId)
+            .status(ProjectStatus.DRAFT)
+            .build();
     }
 
     /**
@@ -131,7 +138,24 @@ public class Project extends BaseEntity {
         String logoFileId,
         Long productOwnerMemberId
     ) {
-        throw new UnsupportedOperationException("TODO: updateBasicInfo 구현 필요");
+        if (name != null) {
+            this.name = name;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (externalLink != null) {
+            this.externalLink = externalLink;
+        }
+        if (thumbnailFileId != null) {
+            this.thumbnailFileId = thumbnailFileId;
+        }
+        if (logoFileId != null) {
+            this.logoFileId = logoFileId;
+        }
+        if (productOwnerMemberId != null) {
+            this.productOwnerMemberId = productOwnerMemberId;
+        }
     }
 
     /**
@@ -140,7 +164,9 @@ public class Project extends BaseEntity {
      * - 필수 필드(name, applicationFormId) 미입력 시 {@code PROJECT_SUBMIT_VALIDATION_FAILED}.
      */
     public void submit() {
-        throw new UnsupportedOperationException("TODO: submit 구현 필요");
+        validateStatus(ProjectStatus.DRAFT);
+        validateSubmitRequiredFields();
+        this.status = ProjectStatus.PENDING_REVIEW;
     }
 
     /**
@@ -149,14 +175,15 @@ public class Project extends BaseEntity {
      * @param applicationFormId survey 도메인의 Form ID
      */
     public void attachApplicationForm(Long applicationFormId) {
-        throw new UnsupportedOperationException("TODO: attachApplicationForm 구현 필요");
+        this.applicationFormId = applicationFormId;
     }
 
     /**
      * 기수가 종료되었을 때, 프로젝트를 완료 처리 합니다.
      */
     public void complete() {
-        throw new UnsupportedOperationException("TODO: complete 구현 필요");
+        validateStatus(ProjectStatus.IN_PROGRESS);
+        this.status = ProjectStatus.COMPLETED;
     }
 
     /**
@@ -166,7 +193,24 @@ public class Project extends BaseEntity {
      * @param decidedByMemberId 해당 사항을 결정한 운영진 Member ID
      */
     public void abort(String reason, Long decidedByMemberId) {
-        throw new UnsupportedOperationException("TODO: abort 구현 필요");
+        if (this.status == ProjectStatus.COMPLETED || this.status == ProjectStatus.ABORTED) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_ABORT_UNAVAILABLE);
+        }
+        this.status = ProjectStatus.ABORTED;
+        this.statusChangedReason = reason;
+        this.statusChangedByMemberId = decidedByMemberId;
+    }
+
+    private void validateStatus(ProjectStatus expected) {
+        if (this.status != expected) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+    }
+
+    private void validateSubmitRequiredFields() {
+        if (this.name == null || this.name.isBlank() || this.applicationFormId == null) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_SUBMIT_VALIDATION_FAILED);
+        }
     }
 
 }
