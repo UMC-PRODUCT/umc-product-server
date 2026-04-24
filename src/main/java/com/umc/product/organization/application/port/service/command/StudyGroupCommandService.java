@@ -28,9 +28,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     @Override
     public void create(CreateStudyGroupCommand command) {
-
-        // TODO: gisuInfo로 수정해야함
-        Gisu gisu = loadGisuPort.findActiveGisu();
+        Gisu gisu = loadGisuPort.findById(command.gisuId());
 
         validateNoPartStudyConflict(gisu.getId(), command.part(), command.memberIds());
 

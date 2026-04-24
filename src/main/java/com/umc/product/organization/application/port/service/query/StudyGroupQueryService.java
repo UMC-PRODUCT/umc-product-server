@@ -153,6 +153,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
         return members.stream()
             .map(m -> new StudyGroupMemberInfo(
                 m.memberId(),
+                m.schoolId(),
                 m.schoolName(),
                 urlMap.getOrDefault(m.profileImageUrl(), m.profileImageUrl())))
             // Map의 Key는 fileId, Value는 URL. 치환 실패 시 원래 fileId 반환

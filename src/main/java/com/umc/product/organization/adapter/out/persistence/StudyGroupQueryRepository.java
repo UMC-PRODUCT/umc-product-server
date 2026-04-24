@@ -351,6 +351,7 @@ public class StudyGroupQueryRepository {
         return queryFactory
             .select(Projections.constructor(StudyGroupMemberInfo.class,
                 studyGroupMember.memberId,
+                school.id,
                 school.name,
                 member.profileImageId))
             .from(studyGroupMember)

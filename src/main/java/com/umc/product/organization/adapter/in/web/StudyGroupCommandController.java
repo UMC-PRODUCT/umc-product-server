@@ -26,14 +26,20 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
 
     private final ManageStudyGroupUseCase manageStudyGroupUseCase;
 
-    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.WRITE)
+    @CheckAccess(
+        resourceType = ResourceType.STUDY_GROUP,
+        permission = PermissionType.WRITE
+    )
     @Override
     @PostMapping
     public void create(@Valid @RequestBody CreateStudyGroupRequest request) {
         manageStudyGroupUseCase.create(request.toCommand());
     }
 
-    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.EDIT)
+    @CheckAccess(
+        resourceType = ResourceType.STUDY_GROUP,
+        permission = PermissionType.EDIT
+    )
     @Override
     @PatchMapping("/{groupId}")
     public void update(
@@ -42,7 +48,10 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
         manageStudyGroupUseCase.update(request.toCommand(groupId));
     }
 
-    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.EDIT)
+    @CheckAccess(
+        resourceType = ResourceType.STUDY_GROUP,
+        permission = PermissionType.EDIT
+    )
     @Override
     @PutMapping("/{groupId}/members")
     public void addMembers(

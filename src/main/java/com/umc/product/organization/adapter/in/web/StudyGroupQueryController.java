@@ -32,7 +32,7 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
      * 내 스터디 그룹 목록 조회 - 유저의 schoolId/part 기반 자동 조회
      */
     @Override
-    @GetMapping
+    @GetMapping("/me")
     public CursorResponse<StudyGroupSummaryResponse> getStudyGroups(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam(required = false) Long cursor,
@@ -65,7 +65,10 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     /**
      * 스터디 그룹 스터디원 목록 조회
      */
-    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.READ)
+    @CheckAccess(
+        resourceType = ResourceType.STUDY_GROUP,
+        permission = PermissionType.READ
+    )
     @Override
     @GetMapping("/{groupId}/members")
     public List<StudyGroupMemberResponse> getStudyGroupMembers(@PathVariable Long groupId) {

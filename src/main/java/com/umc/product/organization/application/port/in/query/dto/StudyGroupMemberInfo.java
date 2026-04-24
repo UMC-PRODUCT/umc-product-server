@@ -7,11 +7,13 @@ package com.umc.product.organization.application.port.in.query.dto;
  * Service 단계에서 실제 접근 URL로 치환된다 (도메인 경계: Repository는 storage를 모름).
  *
  * @param memberId        멤버 ID
+ * @param schoolId        멤버 소속 학교 ID
  * @param schoolName      멤버 소속 학교명
  * @param profileImageUrl 멤버 프로필 이미지 URL (Service 치환 전에는 storage 파일 ID)
  */
 public record StudyGroupMemberInfo(
         Long memberId,
+        Long schoolId,
         String schoolName,
         String profileImageUrl
 ) {

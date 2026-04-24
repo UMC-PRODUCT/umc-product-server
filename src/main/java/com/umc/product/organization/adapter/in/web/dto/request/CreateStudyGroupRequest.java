@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import java.util.HashSet;
 import java.util.Set;
 
 @Schema(description = "스터디 그룹 생성 요청")
@@ -16,6 +15,10 @@ public record CreateStudyGroupRequest(
         @NotBlank(message = "그룹명은 필수입니다")
         @Size(min = 1, max = 50, message = "그룹명은 1~50자")
         String name,
+
+        @Schema(description = "기수 ID", example = "9")
+        @NotNull(message = "기수 ID는 필수입니다")
+        Long gisuId,
 
         @Schema(description = "파트", example = "WEB")
         @NotNull(message = "파트는 필수입니다")
@@ -30,7 +33,7 @@ public record CreateStudyGroupRequest(
         Set<Long> memberIds
 ) {
     public CreateStudyGroupCommand toCommand() {
-        return new CreateStudyGroupCommand(name, part, mentorIds,
-            memberIds != null ? memberIds : new HashSet<>());
+        return new CreateStudyGroupCommand(name, gisuId, part, mentorIds,
+            memberIds);
     }
 }
