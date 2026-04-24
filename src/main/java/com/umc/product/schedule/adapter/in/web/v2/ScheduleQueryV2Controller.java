@@ -23,11 +23,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController("scheduleQueryControllerV2")
+@RestController
 @RequestMapping("/api/v2/schedules")
 @RequiredArgsConstructor
 @Tag(name = "Schedule V2 | Query", description = "일정 및 출석 관련 내용들을 조회합니다.")
-public class ScheduleQueryController {
+public class ScheduleQueryV2Controller {
 
     private final GetScheduleUseCase getScheduleUseCase;
 

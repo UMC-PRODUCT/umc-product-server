@@ -33,11 +33,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController("scheduleCommandControllerV2")
+@RestController
 @RequestMapping("/api/v2/schedules")
 @RequiredArgsConstructor
 @Tag(name = "Schedule V2 | Command", description = "일정을 생성하거나 수정하고, 출석 관련 요청을 처리합니다.")
-public class ScheduleCommandController {
+public class ScheduleCommandV2Controller {
 
     private final CreateScheduleUseCase createScheduleUseCase;
     private final UpdateScheduleUseCase updateScheduleUseCase;
