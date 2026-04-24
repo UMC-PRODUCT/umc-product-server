@@ -94,7 +94,7 @@ public class ProjectCommandService implements
 
     private void validateOwner(Project project, Long memberId) {
         if (!project.getProductOwnerMemberId().equals(memberId)) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
     }
 }

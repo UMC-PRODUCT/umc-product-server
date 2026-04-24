@@ -152,7 +152,7 @@ class ProjectCommandServiceTest {
             assertThatThrownBy(() -> sut.update(command))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+                .isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
     }
 
@@ -195,7 +195,7 @@ class ProjectCommandServiceTest {
             assertThatThrownBy(() -> sut.submit(command))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+                .isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
     }
 

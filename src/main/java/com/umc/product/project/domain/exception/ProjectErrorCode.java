@@ -27,6 +27,7 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_INVALID_STATE(HttpStatus.BAD_REQUEST, "PROJECT-0009", "현재 상태에서 수행할 수 없는 작업입니다."),
     PROJECT_OWNER_NOT_PLAN_CHALLENGER(HttpStatus.BAD_REQUEST, "PROJECT-0010", "프로젝트 PO는 PLAN 파트 챌린저여야 합니다."),
     PROJECT_SUBMIT_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "PROJECT-0011", "제출에 필요한 필수 정보가 누락되었습니다."),
+    PROJECT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PROJECT-0012", "해당 프로젝트에 대한 접근 권한이 없습니다."),
 
     ;
 
