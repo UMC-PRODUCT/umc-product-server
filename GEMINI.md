@@ -38,7 +38,10 @@ The project strictly follows **Hexagonal Architecture** and separates concerns i
 
 ### Domain Integrity & Cross-Domain Communication
 
-- **ID Reference Only:** Never reference another domain's Entity directly (e.g., `@ManyToOne private Member member`). Always use ID reference (`private Long memberId;`).
+- **ID Reference Across Domains**: Never reference another domain's Aggregate (or Aggregate Root) directly. Always use ID reference (`private Long memberId;`) to cross domain boundaries.
+- **Restricted Object Reference (Within the Same Domain):** When working strictly within the same domain (aggregate), follow these JPA relationship rules:
+    - **✅ `@ManyToOne` is ALLOWED (Exception):** You may use `@ManyToOne(fetch = FetchType.LAZY)` to reference a parent/root entity within the same domain. This respects JPA's "owning side" paradigm and allows safe, lazy fetching without memory overhead.
+    - **❌ `@OneToMany` is STRICTLY FORBIDDEN:** Never use `@OneToMany` to hold a collection (`List`, `Set`) of child entities, even within the same domain.
 - **Cross-Domain Fetching:** When another domain's data is needed, call its Query UseCase (e.g., `getMemberInfoUseCase.getById(memberId)`).
 - **Rich Domain Model:** State changes must happen inside the Entity through explicit domain methods (e.g., `challenger.graduate()`). Do not use Anemic Domain Models.
 - **Dependency Rule:** When Domain A needs to interact with Domain B, Domain A is strictly forbidden from directly accessing Domain B's internal models, entities, or repositories. Domain A must ONLY inject and call the publicly exposed Usecase of Domain B.
