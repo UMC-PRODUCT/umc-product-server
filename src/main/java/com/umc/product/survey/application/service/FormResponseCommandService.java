@@ -105,7 +105,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
         Form form = loadFormPort.findById(formId)
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
         if (!form.isPublished()) {
-            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_DRAFT);
+            throw new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_PUBLISHED);
         }
         return form;
     }
