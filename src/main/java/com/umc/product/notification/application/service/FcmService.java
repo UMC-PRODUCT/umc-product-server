@@ -24,7 +24,7 @@ public class FcmService implements ManageFcmUseCase {
         loadFcmPort.findByMemberIdAndToken(memberId, request.fcmToken())
             .ifPresentOrElse(
                 FcmToken::activate,
-                () -> saveFcmPort.save(FcmToken.createFCMToken(memberId, request.fcmToken()))
+                () -> saveFcmPort.save(FcmToken.create(memberId, request.fcmToken()))
             );
     }
 

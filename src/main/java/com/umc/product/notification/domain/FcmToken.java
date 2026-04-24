@@ -38,7 +38,7 @@ public class FcmToken extends BaseEntity {
         this.isActive = true;
     }
 
-    public static FcmToken createFCMToken(Long memberId, String fcmToken) {
+    public static FcmToken create(Long memberId, String fcmToken) {
         return FcmToken.builder().memberId(memberId).fcmToken(fcmToken).build();
     }
 
