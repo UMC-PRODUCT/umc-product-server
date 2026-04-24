@@ -6,7 +6,9 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.AdminScheduleInfoResponse;
+import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleCapabilitiesResponse;
 import com.umc.product.schedule.adapter.in.web.v2.dto.response.ScheduleInfoResponse;
+import com.umc.product.schedule.application.port.in.query.GetScheduleCapabilitiesUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleUseCase;
 import com.umc.product.schedule.application.port.in.query.dto.AdminScheduleInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleInfo;
@@ -33,8 +35,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class ScheduleQueryV2Controller {
 
     private final GetScheduleUseCase getScheduleUseCase;
+    private final GetScheduleCapabilitiesUseCase getScheduleCapabilitiesUseCase;
 
     // ========================= 일정 관련 =========================
+
+    @Operation(summary = "[프론트엔드용] 일정 생성 권한 조회", description = """
+        현재 사용자의 일정 생성 관련 권한을 조회합니다. 일정 생성 화면에서 사용하시면 됩니다.
+
+        - `canCreateSchedule` : 일정 생성 가능 여부
+        - `canCreateAttendanceRequiredSchedule` : 출석 정책 포함 일정 생성 가능 여부 (운영진 : true, 일반 챌린저 : false)
+        - `maxParticipantCount` : 직책별 최대 초대 가능 인원
+        """
+    )
+    @GetMapping("/capabilities")
+    public ScheduleCapabilitiesResponse getCapabilities(
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
+        return ScheduleCapabilitiesResponse.from(
+            getScheduleCapabilitiesUseCase.getCapabilities(memberPrincipal.getMemberId())
+        );
+    }
 
     @CheckAccess(
         resourceType = ResourceType.SCHEDULE,
