@@ -7,6 +7,7 @@ import static com.umc.product.project.domain.QProjectPartQuota.projectPartQuota;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.JPAExpressions;
+import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
@@ -60,8 +61,7 @@ public class ProjectQueryRepository {
             .and(keywordContains(query.keyword()))
             .and(chapterIdEq(query.chapterId()))
             .and(schoolIdsIn(query.schoolIds()))
-            .and(partsIn(query.parts()))
-            .and(partQuotaStatusEq(query.partQuotaStatus()))
+            .and(partAndQuotaFilter(query.parts(), query.partQuotaStatus()))
             .and(statusIn(query.statuses()));
 
         return builder;
@@ -96,46 +96,51 @@ public class ProjectQueryRepository {
     }
 
     /**
-     * 지정된 파트 중 <b>RECRUITING 상태</b>(정원 미달)인 파트가 있는 프로젝트만 필터링합니다.
-     * api-design.md 사양: "해당 파트의 RECRUITING 상태인 프로젝트만 반환".
+     * 파트 목록과 모집 상태를 <b>상관(correlated)</b>으로 결합해 필터링합니다.
+     * <ul>
+     *   <li>{@code parts} 있고 {@code status} 있음 → 선택한 각 파트가 존재하며 해당 파트가 지정 상태 (AND)</li>
+     *   <li>{@code parts} 있고 {@code status} 없음 → 선택한 각 파트가 존재 (AND, 상태 무관)</li>
+     *   <li>{@code parts} 없고 {@code status} 있음 → 프로젝트 전체 기준 (아무 파트 하나라도 모집중 / 모든 파트 완료)</li>
+     *   <li>둘 다 없음 → 필터 미적용</li>
+     * </ul>
      */
-    private BooleanExpression partsIn(List<ChallengerPart> parts) {
-        if (parts == null || parts.isEmpty()) {
+    private BooleanExpression partAndQuotaFilter(List<ChallengerPart> parts, PartQuotaStatus status) {
+        boolean hasParts = parts != null && !parts.isEmpty();
+        if (!hasParts && status == null) {
             return null;
         }
-        return JPAExpressions
-            .selectOne()
-            .from(projectPartQuota)
-            .where(
-                projectPartQuota.project.eq(project),
-                projectPartQuota.part.in(parts),
-                projectPartQuota.quota.gt(
-                    JPAExpressions
-                        .select(projectMember.count())
-                        .from(projectMember)
-                        .where(
-                            projectMember.project.eq(project),
-                            projectMember.part.eq(projectPartQuota.part),
-                            projectMember.status.eq(ProjectMemberStatus.ACTIVE)
-                        )
-                )
-            )
-            .exists();
+        if (!hasParts) {
+            return projectWideQuotaStatus(status);
+        }
+        BooleanExpression combined = null;
+        for (ChallengerPart part : parts) {
+            BooleanExpression perPart = partExistsWithStatus(part, status);
+            combined = (combined == null) ? perPart : combined.and(perPart);
+        }
+        return combined;
     }
 
     /**
-     * 파트별 모집 상태로 필터링합니다.
-     * <ul>
-     *   <li>RECRUITING — 정원 미달 파트가 하나라도 있는 프로젝트</li>
-     *   <li>COMPLETED — 모든 파트가 정원 이상인 프로젝트</li>
-     * </ul>
+     * 특정 파트가 프로젝트에 존재하는지 + (지정 시) 해당 파트가 모집중/완료 상태인지 체크.
      */
-    private BooleanExpression partQuotaStatusEq(PartQuotaStatus partQuotaStatus) {
-        if (partQuotaStatus == null) {
-            return null;
+    private BooleanExpression partExistsWithStatus(ChallengerPart part, PartQuotaStatus status) {
+        BooleanBuilder where = new BooleanBuilder()
+            .and(projectPartQuota.project.eq(project))
+            .and(projectPartQuota.part.eq(part));
+
+        if (status != null) {
+            BooleanExpression recruiting = projectPartQuota.quota.gt(activeMemberCountForPart(part));
+            where.and(status == PartQuotaStatus.RECRUITING ? recruiting : recruiting.not());
         }
 
-        // 정원 미달인 파트가 존재하는지 서브쿼리
+        return JPAExpressions.selectOne().from(projectPartQuota).where(where).exists();
+    }
+
+    /**
+     * 프로젝트 전체 기준 모집 상태.
+     * RECRUITING = 모집중 파트가 하나라도 있음, COMPLETED = 모든 파트가 정원 이상.
+     */
+    private BooleanExpression projectWideQuotaStatus(PartQuotaStatus status) {
         BooleanExpression hasRecruitingPart = JPAExpressions
             .selectOne()
             .from(projectPartQuota)
@@ -154,9 +159,20 @@ public class ProjectQueryRepository {
             )
             .exists();
 
-        return partQuotaStatus == PartQuotaStatus.RECRUITING
+        return status == PartQuotaStatus.RECRUITING
             ? hasRecruitingPart
             : hasRecruitingPart.not();
+    }
+
+    private JPQLQuery<Long> activeMemberCountForPart(ChallengerPart part) {
+        return JPAExpressions
+            .select(projectMember.count())
+            .from(projectMember)
+            .where(
+                projectMember.project.eq(project),
+                projectMember.part.eq(part),
+                projectMember.status.eq(ProjectMemberStatus.ACTIVE)
+            );
     }
 
     private BooleanExpression statusIn(List<ProjectStatus> statuses) {
