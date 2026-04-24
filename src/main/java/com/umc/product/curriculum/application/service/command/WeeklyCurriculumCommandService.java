@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -28,6 +30,16 @@ public class WeeklyCurriculumCommandService implements ManageWeeklyCurriculumUse
         Curriculum curriculum = loadCurriculumPort.findById(command.curriculumId())
             .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.CURRICULUM_NOT_FOUND));
 
+        if (command.endsAt().isBefore(Instant.now())) {
+            throw new CurriculumDomainException(CurriculumErrorCode.WEEKLY_CURRICULUM_PERIOD_ALREADY_ENDED);
+        }
+
+        // 해당 주차별 커리큘럼에 이미 같은 타입의 커리큘럼이 존재하는지 확인
+        if (loadWeeklyCurriculumPort.existsByCurriculumIdAndWeekNoAndIsExtra(
+            command.curriculumId(), command.weekNo(), command.isExtra())) {
+            throw new CurriculumDomainException(CurriculumErrorCode.WEEKLY_CURRICULUM_ALREADY_EXISTS);
+        }
+
         WeeklyCurriculum weeklyCurriculum = WeeklyCurriculum.create(
             curriculum,
             command.weekNo(),
@@ -37,13 +49,15 @@ public class WeeklyCurriculumCommandService implements ManageWeeklyCurriculumUse
             command.endsAt()
         );
         return saveWeeklyCurriculumPort.save(weeklyCurriculum).getId();
-        // TODO: (curriculum_id, week_no, is_extra) UNIQUE 제약 위반 시 DataIntegrityViolationException 발생.
-        //  현재 커스텀 예외로 변환하지 않음. GlobalExceptionHandler에서 처리하거나 여기서 사전 중복 검사 추가 필요.
     }
 
     @Override
     public void edit(EditWeeklyCurriculumCommand command) {
         WeeklyCurriculum weeklyCurriculum = loadWeeklyCurriculumPort.getById(command.weeklyCurriculumId());
+
+        if (command.endsAt() != null && command.endsAt().isBefore(Instant.now())) {
+            throw new CurriculumDomainException(CurriculumErrorCode.WEEKLY_CURRICULUM_PERIOD_ALREADY_ENDED);
+        }
 
         // 시작/종료일 변경 요청이 있는 경우 배포된 워크북 존재 여부 확인
         if ((command.startsAt() != null || command.endsAt() != null)
@@ -52,12 +66,19 @@ public class WeeklyCurriculumCommandService implements ManageWeeklyCurriculumUse
             throw new CurriculumDomainException(CurriculumErrorCode.WEEKLY_CURRICULUM_DATE_LOCKED);
         }
 
+        // 주차 번호 또는 부록 여부 변경 시 중복 검사
+        if (command.weekNo() != null || command.isExtra() != null) {
+            long effectiveWeekNo = command.weekNo() != null ? command.weekNo() : weeklyCurriculum.getWeekNo();
+            boolean effectiveIsExtra = command.isExtra() != null ? command.isExtra() : weeklyCurriculum.isExtra();
+            if (loadWeeklyCurriculumPort.existsByCurriculumIdAndWeekNoAndIsExtraAndIdNot(
+                weeklyCurriculum.getCurriculum().getId(), effectiveWeekNo, effectiveIsExtra, command.weeklyCurriculumId())) {
+                throw new CurriculumDomainException(CurriculumErrorCode.WEEKLY_CURRICULUM_ALREADY_EXISTS);
+            }
+        }
+
         weeklyCurriculum.update(command.weekNo(), command.isExtra(), command.title(), command.startsAt(), command.endsAt());
 
         saveWeeklyCurriculumPort.save(weeklyCurriculum);
-        // TODO: EditWeeklyCurriculumRequest의 isExtra 필드가 primitive boolean이라 null 전달 불가.
-        //  "변경하지 않음" 의미를 표현하려면 Request를 Boolean(박싱)으로 변경 필요.
-        //  현재는 요청 시 항상 isExtra 값이 업데이트됨.
     }
 
     @Override
