@@ -5,6 +5,7 @@ import com.umc.product.curriculum.application.port.out.SaveChallengerWorkbookPor
 import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
+import com.umc.product.global.exception.NotImplementedException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -22,11 +23,13 @@ public class ChallengerWorkbookPersistenceAdapter implements LoadChallengerWorkb
     }
 
     @Override
-    public List<ChallengerWorkbook> findAllByChallengerIdAndOriginalWorkbookId(Long challengerId, Long originalWorkbookId) {
-        return challengerWorkbookJpaRepository.findAllByChallengerIdAndOriginalWorkbookIdOrderByIdDesc(
-            challengerId,
-            originalWorkbookId
-        );
+    public List<ChallengerWorkbook> findAllByChallengerIdAndOriginalWorkbookId(Long challengerId,
+                                                                               Long originalWorkbookId) {
+        throw new NotImplementedException();
+//        return challengerWorkbookJpaRepository.findAllByChallengerIdAndOriginalWorkbookIdOrderByIdDesc(
+//            challengerId,
+//            originalWorkbookId
+//        );
     }
 
     @Override
@@ -34,7 +37,9 @@ public class ChallengerWorkbookPersistenceAdapter implements LoadChallengerWorkb
         if (originalWorkbookIds.isEmpty()) {
             return List.of();
         }
-        return challengerWorkbookJpaRepository.findOriginalWorkbookIdsByOriginalWorkbookIdIn(originalWorkbookIds);
+
+        throw new NotImplementedException();
+//        return challengerWorkbookJpaRepository.findOriginalWorkbookIdsByOriginalWorkbookIdIn(originalWorkbookIds);
     }
 
     @Override

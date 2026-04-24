@@ -9,6 +9,7 @@ import com.umc.product.curriculum.application.port.out.SaveCurriculumPort;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
+import com.umc.product.global.exception.NotImplementedException;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +30,8 @@ public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCur
 
     @Override
     public Optional<Curriculum> findEntityByGisuIdAndPart(Long gisuId, ChallengerPart part) {
-        return curriculumJpaRepository.findByGisuIdAndPart(gisuId, part);
+        throw new NotImplementedException();
+//        return curriculumJpaRepository.findByGisuIdAndPart(gisuId, part);
     }
 
     @Override
