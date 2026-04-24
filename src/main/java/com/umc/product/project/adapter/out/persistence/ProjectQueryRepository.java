@@ -85,14 +85,19 @@ public class ProjectQueryRepository {
         if (schoolIds == null || schoolIds.isEmpty()) {
             return null;
         }
-        // project_member 중 해당 학교 소속 멤버가 있는 프로젝트
-        // 단, schoolIds는 PM이 속한 학교 기준이 아니라 chapterId 하위 학교 필터이므로
-        // project.chapterId 기반으로 이미 필터됨. 추가 필터가 필요한 경우 확장.
+        // TODO: api-design.md 사양 — "학교 필터는 PM 학교만" 적용 필요.
+        //  Project에는 PM의 schoolId가 없고 productOwnerMemberId만 있음 (member 도메인에 school 소속).
+        //  구현 방향:
+        //   (a) member 도메인 호출로 memberId→schoolId 매핑을 미리 조회 후 in-memory 필터
+        //   (b) DB view / denormalize: project.owner_school_id 컬럼 추가 (schema 변경 필요)
+        //   (c) GetMemberUseCase.findAllSchoolIdsByIds() batch 조회 후 Service 단에서 필터
+        //  헥사고날 규칙상 member Entity는 직접 JOIN 불가 → Service 레벨에서 처리 권장.
         return null;
     }
 
     /**
-     * 특정 파트의 TO가 설정된 프로젝트만 필터링합니다.
+     * 지정된 파트 중 <b>RECRUITING 상태</b>(정원 미달)인 파트가 있는 프로젝트만 필터링합니다.
+     * api-design.md 사양: "해당 파트의 RECRUITING 상태인 프로젝트만 반환".
      */
     private BooleanExpression partsIn(List<ChallengerPart> parts) {
         if (parts == null || parts.isEmpty()) {
@@ -103,7 +108,17 @@ public class ProjectQueryRepository {
             .from(projectPartQuota)
             .where(
                 projectPartQuota.project.eq(project),
-                projectPartQuota.part.in(parts)
+                projectPartQuota.part.in(parts),
+                projectPartQuota.quota.gt(
+                    JPAExpressions
+                        .select(projectMember.count())
+                        .from(projectMember)
+                        .where(
+                            projectMember.project.eq(project),
+                            projectMember.part.eq(projectPartQuota.part),
+                            projectMember.status.eq(ProjectMemberStatus.ACTIVE)
+                        )
+                )
             )
             .exists();
     }
