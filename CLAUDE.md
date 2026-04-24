@@ -1,790 +1,160 @@
-# CLAUDE.md
+# UMC PRODUCT Team Backend - AI Agent Guidelines
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This document provides specialized guidelines and instructions for AI Agents when operating within the UMC PRODUCT Team Backend repository. These instructions take absolute precedence over general workflows.
 
-## Project Overview
+## 1. Role & Persona
 
-UMC Product Team 백엔드 서버 - UMC 공식 웹사이트 및 모바일 애플리케이션(Android/iOS)을 지원하는 Spring Boot 기반 API 서버입니다.
+You are a **Senior Software Engineer and Expert Technical Collaborator** specializing in Java, Spring Boot, and Domain-Driven Design (DDD) within a strict Hexagonal Architecture (Ports & Adapters).
 
-### Tech Stack
+Your objective is to help develop, maintain, and review the UMC PRODUCT API server, ensuring robust performance, high security, and exceptional code quality while strictly adhering to established architectural rules and conventions. All your responses and code reviews must be professional, accurate, and output in **Korean** (unless code or technical identifiers require English).
 
-| Category   | Technology                                |
-|------------|-------------------------------------------|
-| Framework  | Spring Boot 3.5, Java 21                  |
-| Database   | PostgreSQL 18.x, Flyway Migration         |
-| ORM        | JPA, QueryDSL                             |
-| Auth       | JWT (io.jsonwebtoken 0.12.5)              |
-| Docs       | OpenAPI/Swagger                           |
-| Monitoring | Prometheus Metrics, OpenTelemetry Tracing |
+## 2. Architecture & Domain Rules
 
-### Endpoints
+The project strictly follows **Hexagonal Architecture** and separates concerns into `domain`, `application`, and `adapter` layers.
 
-| Endpoint     | URL                                         | Port |
-|--------------|---------------------------------------------|------|
-| Application  | `http://localhost:8080`                     | 8080 |
-| Swagger UI   | `http://localhost:8080/docs`                | 8080 |
-| OpenAPI JSON | `http://localhost:8080/docs-json`           | 8080 |
-| Actuator     | `http://localhost:9090/actuator`            | 9090 |
-| Prometheus   | `http://localhost:9090/actuator/prometheus` | 9090 |
-
----
-
-## Architecture
-
-### Hexagonal Architecture (Ports & Adapters)
+### Package Structure
 
 ```
 {domain}/
-├── domain/                    # Core Business Logic
-│   ├── {Entity}.java         # Entity (도메인 모델)
-│   ├── {Domain}{Type}.java   # Enum
-│   └── vo/                   # Value Objects
-│
-├── application/               # Application Layer
+├── domain/           # Core Business Logic (Entity, Domain Enum, VO)
+├── application/      # Application Layer
 │   ├── port/
-│   │   ├── in/               # Inbound Ports (UseCase)
-│   │   │   ├── command/      # 상태 변경 UseCase
-│   │   │   └── query/        # 조회 UseCase
-│   │   └── out/              # Outbound Ports
-│   │       ├── Load{Domain}Port.java
-│   │       └── Save{Domain}Port.java
-│   └── service/              # UseCase Implementations
-│       ├── command/
-│       │   └── {Domain}CommandService.java
-│       └── query/
-│           └── {Domain}QueryService.java
-│
-└── adapter/                   # Infrastructure Layer
-    ├── in/                   # Driving Adapters
-    │   ├── web/
-    │   │   ├── {Domain}Controller.java
-    │   │   └── dto/
-    │   │       ├── request/
-    │   │       └── response/
-    │   └── scheduler/
-    └── out/                  # Driven Adapters
-        ├── persistence/
-        │   ├── {Domain}Repository.java
-        │   ├── {Domain}QueryRepository.java
-        │   └── {Domain}PersistenceAdapter.java
-        └── external/
-            └── {Service}Adapter.java
+│   │   ├── in/       # Inbound Ports (UseCase interfaces)
+│   │   └── out/      # Outbound Ports (Repository interfaces: Load/Save)
+│   └── service/      # UseCase Implementations (Command/Query separated)
+└── adapter/          # Infrastructure Layer
+    ├── in/           # Driving Adapters (Web Controllers, Schedulers)
+    └── out/          # Driven Adapters (Persistence Repositories, External APIs)
 ```
 
-### Global Package Structure
-
-```
-com.umc.product/
-├── global/
-│   ├── config/               # Spring configurations
-│   ├── security/             # JWT, Authentication
-│   │   ├── JwtTokenProvider.java
-│   │   ├── JwtAuthenticationFilter.java
-│   │   ├── annotation/       # @Public, @CurrentUser
-│   │   └── resolver/
-│   ├── exception/            # Exception handling
-│   │   ├── GlobalExceptionHandler.java
-│   │   ├── BusinessException.java
-│   │   └── constant/         # ErrorCode, Domain
-│   └── response/             # API response
-│       ├── ApiResponse.java
-│       └── code/
-└── {domain}/                 # Feature packages
-```
-
-### Domain List & Dependencies
-
-```
-Level 0              Level 1              Level 2              Level 3
-────────────────────────────────────────────────────────────────────────
-common ◄──────────── 모든 도메인이 의존
-
-member ◄───────────── organization
-                          │
-                          ▼
-              ┌───────────┴───────────┐
-              │      challenger       │
-              └───────────┬───────────┘
-                          │
-       ┌──────────────────┼──────────────────┐
-       ▼                  ▼                  ▼
-  curriculum          schedule            notice
-                                            
-community ◄────────── member, challenger
-
-form ◄─────────────── member (독립적)
-```
-
-| Domain       | Description                     | Dependencies             |
-|--------------|---------------------------------|--------------------------|
-| common       | 공통 (BaseEntity, Exception, DTO) | 없음                       |
-| member       | 사용자, OAuth, 약관                  | common                   |
-| organization | 기수, 지부, 학교, 스터디                 | common, member           |
-| challenger   | 챌린저, 역할, 상벌점                    | member, organization     |
-| curriculum   | 커리큘럼, 워크북, 미션                   | challenger               |
-| schedule     | 일정, 출석                          | challenger, organization |
-| notice       | 공지사항, 읽음, 알림                    | challenger, organization |
-| community    | 게시글, 댓글, 번개모임                   | member, challenger       |
-| form         | 지원서 폼, 질문, 응답                   | member                   |
-
----
-
-## Naming Conventions
-
-### Quick Reference Table
-
-| Type                    | Pattern                      | Example                            |
-|-------------------------|------------------------------|------------------------------------|
-| **Entity**              | `{Domain}`                   | `User`, `Challenger`, `Notice`     |
-| **Enum**                | `{Domain}{Status\|Type}`     | `ChallengerStatus`, `ScheduleType` |
-| **Value Object**        | `{Name}`                     | `Location`, `AttendanceWindow`     |
-| **Command UseCase**     | `{Action}{Domain}UseCase`    | `RegisterChallengerUseCase`        |
-| **Query UseCase**       | `Get{Domain}UseCase`         | `GetChallengerUseCase`             |
-| **Load Port**           | `Load{Domain}Port`           | `LoadChallengerPort`               |
-| **Save Port**           | `Save{Domain}Port`           | `SaveChallengerPort`               |
-| **External Port**       | `{Action}{Domain}Port`       | `SendNotificationPort`             |
-| **Command Service**     | `{Domain}CommandService`     | `ChallengerCommandService`         |
-| **Query Service**       | `{Domain}QueryService`       | `ChallengerQueryService`           |
-| **Controller**          | `{Domain}Controller`         | `ChallengerController`             |
-| **Request DTO**         | `{Action}{Domain}Request`    | `RegisterChallengerRequest`        |
-| **Response DTO**        | `{Domain}{Purpose}Response`  | `ChallengerListResponse`           |
-| **Command DTO**         | `{Action}{Domain}Command`    | `RegisterChallengerCommand`        |
-| **Info DTO**            | `{Domain}Info`               | `ChallengerInfo`                   |
-| **JPA Repository**      | `{Entity}Repository`         | `ChallengerRepository`             |
-| **Query Repository**    | `{Domain}QueryRepository`    | `PostQueryRepository`              |
-| **Persistence Adapter** | `{Domain}PersistenceAdapter` | `ChallengerPersistenceAdapter`     |
-| **External Adapter**    | `{Provider}{Service}Adapter` | `KakaoOAuthAdapter`                |
-| **Scheduler**           | `{Domain}Scheduler`          | `AttendanceScheduler`              |
-
-### Action Verbs for UseCase
-
-| Action     | Usage     | Example                    |
-|------------|-----------|----------------------------|
-| `Register` | 회원/챌린저 등록 | `RegisterUserUseCase`      |
-| `Create`   | 리소스 생성    | `CreateNoticeUseCase`      |
-| `Update`   | 수정        | `UpdateProfileUseCase`     |
-| `Delete`   | 삭제        | `DeletePostUseCase`        |
-| `Assign`   | 할당/부여     | `AssignRoleUseCase`        |
-| `Submit`   | 제출        | `SubmitWorkbookUseCase`    |
-| `Approve`  | 승인        | `ApproveAttendanceUseCase` |
-| `Get`      | 조회        | `GetChallengerUseCase`     |
-| `Search`   | 검색        | `SearchPostUseCase`        |
-
-### Manage 통합 옵션
-
-CUD(Create, Update, Delete)를 하나의 인터페이스로 통합하고 싶다면 `Manage` 접두사를 사용할 수 있습니다.
-
-| 대상          | 개별형                                                                 | 통합형                   |
-|-------------|---------------------------------------------------------------------|-----------------------|
-| **UseCase** | `CreateSchoolUseCase`, `UpdateSchoolUseCase`, `DeleteSchoolUseCase` | `ManageSchoolUseCase` |
-| **Port**    | `SaveSchoolPort`                                                    | `ManageSchoolPort`    |
-
----
-
-## Code Examples
-
-### 1. Entity
-
-```java
-
-@Entity
-@Table(name = "challenger")
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Challenger extends BaseEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(nullable = false)
-    private Long userId;  // ID 참조만 (다른 도메인 Entity 직접 참조 금지)
-
-    @Column(nullable = false)
-    private Long gisuId;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ChallengerPart part;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ChallengerStatus status;
+### Dependency Direction Rules
+
+- **✅ Allowed:** `adapter/in` → `application/service` → `application/port/in`
+- **✅ Allowed:** `adapter/out` → `application/port/out`
+- **✅ Allowed:** `application/service` → `domain`
+- **❌ Forbidden:** `domain` depending on `application` or `adapter` (Reverse dependency).
+- **❌ Forbidden:** `application/port` depending on `application/service`.
+- **❌ Forbidden:** `adapter/in` depending directly on `adapter/out` or Repositories.
+
+### Domain Integrity & Cross-Domain Communication
+
+- **ID Reference Only:** Never reference another domain's Entity directly (e.g., `@ManyToOne private Member member`). Always use ID reference (`private Long memberId;`).
+- **Cross-Domain Fetching:** When another domain's data is needed, call its Query UseCase (e.g., `getMemberInfoUseCase.getById(memberId)`).
+- **Rich Domain Model:** State changes must happen inside the Entity through explicit domain methods (e.g., `challenger.graduate()`). Do not use Anemic Domain Models.
+- **Dependency Rule:** When Domain A needs to interact with Domain B, Domain A is strictly forbidden from directly accessing Domain B's internal models, entities, or repositories. Domain A must ONLY inject and call the publicly exposed Usecase of Domain B.
 
-    @Builder
-    private Challenger(Long userId, Long gisuId, ChallengerPart part) {
-        this.userId = userId;
-        this.gisuId = gisuId;
-        this.part = part;
-        this.status = ChallengerStatus.ACTIVE;
-    }
-
-    // Domain Logic (상태 변경은 도메인 메서드로만)
-    public void graduate() {
-        validateActive();
-        this.status = ChallengerStatus.GRADUATED;
-    }
-
-    public void expel() {
-        validateActive();
-        this.status = ChallengerStatus.EXPELLED;
-    }
-
-    private void validateActive() {
-        if (this.status != ChallengerStatus.ACTIVE) {
-            throw new BusinessException(ErrorCode.INVALID_CHALLENGER_STATUS);
-        }
-    }
-}
-```
-
-### 2. UseCase (Port In)
-
-```java
-// Command UseCase
-public interface RegisterChallengerUseCase {
-    Long register(RegisterChallengerCommand command);
-}
-
-// Query UseCase
-public interface GetChallengerUseCase {
-    ChallengerInfo getById(Long challengerId);
-
-    ChallengerInfo getByUserAndGisu(Long userId, Long gisuId);
-
-    boolean existsById(Long challengerId);
-}
-
-// Command Record
-public record RegisterChallengerCommand(
-        Long userId,
-        Long gisuId,
-        ChallengerPart part
-) {
-    public RegisterChallengerCommand {
-        Objects.requireNonNull(userId, "userId must not be null");
-        Objects.requireNonNull(gisuId, "gisuId must not be null");
-        Objects.requireNonNull(part, "part must not be null");
-    }
-
-    public Challenger toEntity() {
-        return Challenger.builder()
-                .userId(userId)
-                .gisuId(gisuId)
-                .part(part)
-                .build();
-    }
-}
-```
-
-### 3. Port (Port Out)
-
-```java
-// Load Port
-public interface LoadChallengerPort {
-    Optional<Challenger> findById(Long id);
-
-    Optional<Challenger> findByUserIdAndGisuId(Long userId, Long gisuId);
-
-    List<Challenger> findByGisuId(Long gisuId);
-
-    boolean existsByUserIdAndGisuId(Long userId, Long gisuId);
-}
-
-// Save Port
-public interface SaveChallengerPort {
-    Challenger save(Challenger challenger);
-
-    void delete(Challenger challenger);
-}
-
-// External Port
-public interface SendNotificationPort {
-    void send(Long userId, String title, String body);
-
-    void sendAll(List<Long> userIds, String title, String body);
-}
-```
-
-### 4. Service
-
-```java
-
-@Service
-@RequiredArgsConstructor
-@Transactional
-public class ChallengerCommandService implements RegisterChallengerUseCase {
-
-    private final LoadChallengerPort loadChallengerPort;
-    private final SaveChallengerPort saveChallengerPort;
-    private final GetUserInfoUseCase getUserInfoUseCase;      // 다른 도메인은 UseCase로
-    private final GetOrganizationUseCase getOrganizationUseCase;
-
-    @Override
-    public Long register(RegisterChallengerCommand command) {
-        // 1. 사용자 존재 확인 (다른 도메인)
-        if (!getUserInfoUseCase.existsById(command.userId())) {
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-        }
-
-        // 2. 기수 유효성 확인 (다른 도메인)
-        GisuInfo gisu = getOrganizationUseCase.getGisuById(command.gisuId());
-        if (!gisu.isActive()) {
-            throw new BusinessException(ErrorCode.GISU_NOT_ACTIVE);
-        }
-
-        // 3. 중복 등록 확인
-        if (loadChallengerPort.existsByUserIdAndGisuId(command.userId(), command.gisuId())) {
-            throw new BusinessException(ErrorCode.CHALLENGER_ALREADY_EXISTS);
-        }
-
-        // 4. 저장
-        Challenger challenger = command.toEntity();
-        return saveChallengerPort.save(challenger).getId();
-    }
-}
-
-@Service
-@RequiredArgsConstructor
-@Transactional(readOnly = true)  // Query는 readOnly
-public class ChallengerQueryService implements GetChallengerUseCase {
-
-    private final LoadChallengerPort loadChallengerPort;
-    private final GetUserInfoUseCase getUserInfoUseCase;
-
-    @Override
-    public ChallengerInfo getById(Long challengerId) {
-        Challenger challenger = loadChallengerPort.findById(challengerId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.CHALLENGER_NOT_FOUND));
-
-        UserInfo member = getUserInfoUseCase.getById(challenger.getUserId());
-        return ChallengerInfo.of(challenger, member);
-    }
-}
-```
-
-### 5. Adapter
-
-```java
-// Persistence Adapter
-@Component
-@RequiredArgsConstructor
-public class ChallengerPersistenceAdapter implements LoadChallengerPort, SaveChallengerPort {
-
-    private final ChallengerRepository repository;
-
-    @Override
-    public Optional<Challenger> findById(Long id) {
-        return repository.findById(id);
-    }
-
-    @Override
-    public Challenger save(Challenger challenger) {
-        return repository.save(challenger);
-    }
-
-    // ...
-}
-
-// Controller
-@RestController
-@RequestMapping("/api/v1/challengers")
-@RequiredArgsConstructor
-@Tag(name = "Challenger", description = "챌린저 관리 API")
-public class ChallengerController {
-
-    private final RegisterChallengerUseCase registerUseCase;
-    private final GetChallengerUseCase getUseCase;
-
-    @PostMapping
-    @Operation(summary = "챌린저 등록")
-    public ApiResponse<Long> register(
-            @AuthenticationPrincipal SecurityUser member,
-            @Valid @RequestBody RegisterChallengerRequest request) {
-        Long id = registerUseCase.register(request.toCommand(member.getUserId()));
-        return ApiResponse.success(id);
-    }
-
-    @GetMapping("/{challengerId}")
-    @Operation(summary = "챌린저 상세 조회")
-    public ApiResponse<ChallengerResponse> getById(@PathVariable Long challengerId) {
-        ChallengerInfo info = getUseCase.getById(challengerId);
-        return ApiResponse.success(ChallengerResponse.from(info));
-    }
-}
-```
-
-### 6. Request/Response DTO
-
-```java
-// Request
-public record RegisterChallengerRequest(
-                @NotNull(message = "기수 ID는 필수입니다")
-                Long gisuId,
-
-                @NotNull(message = "파트는 필수입니다")
-                ChallengerPart part
-        ) {
-    public RegisterChallengerCommand toCommand(Long userId) {
-        return new RegisterChallengerCommand(userId, gisuId, part);
-    }
-}
-
-// Response
-public record ChallengerResponse(
-        Long id,
-        String userName,
-        String part,
-        String status,
-        int generationNumber
-) {
-    public static ChallengerResponse from(ChallengerInfo info) {
-        return new ChallengerResponse(
-                info.id(),
-                info.userName(),
-                info.part().name(),
-                info.status().name(),
-                info.generationNumber()
-        );
-    }
-}
-```
-
----
-
-## Cross-Domain Communication
-
-### Rules
-
-1. **ID Reference Only**: 다른 도메인 Entity를 직접 참조하지 않고 ID만 저장
-2. **UseCase Call**: 다른 도메인 정보가 필요하면 해당 도메인의 Query UseCase 호출
-3. **Event Publishing**: 도메인 간 느슨한 결합이 필요하면 이벤트 사용
-
-```java
-// ❌ Bad: 다른 도메인 Entity 직접 참조
-@ManyToOne
-private User member;
-
-// ✅ Good: ID만 저장
-@Column(nullable = false)
-private Long userId;
-
-// ✅ Good: 필요시 UseCase로 조회
-UserInfo memberInfo = getUserInfoUseCase.getById(challenger.getUserId());
-```
-
-### Event-Based Communication
-
-```java
-// Publisher (schedule 도메인)
-@Service
-@RequiredArgsConstructor
-public class AttendanceCommandService {
-    private final ApplicationEventPublisher eventPublisher;
-
-    public void checkAttendance(...) {
-        attendance.check(status);
-
-        eventPublisher.publishEvent(new AttendanceCheckedEvent(
-                attendance.getChallengerId(),
-                attendance.getStatus()
-        ));
-    }
-}
-
-// Listener (challenger 도메인)
-@Component
-@RequiredArgsConstructor
-public class AttendanceEventListener {
-    private final AddRewardPenaltyUseCase addRewardPenaltyUseCase;
-
-    @EventListener
-    @Transactional
-    public void handleAttendanceChecked(AttendanceCheckedEvent event) {
-        if (event.status() == AttendanceStatus.ABSENT) {
-            addRewardPenaltyUseCase.addPenalty(
-                    event.challengerId(),
-                    RewardPenaltyType.WARNING,
-                    "무단 결석"
-            );
-        }
-    }
-}
-```
-
----
-
-## API Response Format
-
-### Success
-
-```json
-{
-    "success": true,
-    "data": {
-        ...
-    },
-    "error": null
-}
-```
-
-### Error
-
-```json
-{
-    "success": false,
-    "data": null,
-    "error": {
-        "code": "CHALLENGER_NOT_FOUND",
-        "message": "챌린저를 찾을 수 없습니다."
-    }
-}
-```
-
-### Pagination
-
-```json
-{
-    "success": true,
-    "data": {
-        "content": [
-            ...
-        ],
-        "page": 0,
-        "size": 20,
-        "totalElements": 100,
-        "totalPages": 5,
-        "hasNext": true
-    },
-    "error": null
-}
-```
-
----
-
-## Common Enums
-
-### ChallengerStatus
-
-```java
-ACTIVE,      // 활동중
-GRADUATED,   // 수료
-EXPELLED,    // 제명
-WITHDRAWN    // 자진탈부
-```
-
-### ChallengerPart
-
-```java
-PLAN,DESIGN,WEB,IOS,ANDROID,SPRINGBOOT,NODEJS
-```
-
-### RoleType
-
-```java
-// 중앙
-CENTRAL_PRESIDENT,CENTRAL_VICE_PRESIDENT,
-CENTRAL_DIRECTOR,CENTRAL_MANAGER,CENTRAL_PART_LEADER,
-
-// 지부
-CHAPTER_LEADER,CHAPTER_STAFF,
-
-// 학교
-SCHOOL_PRESIDENT,SCHOOL_VICE_PRESIDENT,
-SCHOOL_PART_LEADER,SCHOOL_STAFF,
-
-// 일반
-CHALLENGER
-```
-
-### OrganizationType
-
-```java
-CENTRAL,  // 중앙운영사무국
-CHAPTER,  // 지부
-SCHOOL    // 학교
-```
-
-### AttendanceStatus
-
-```java
-PENDING,          // 대기
-PRESENT,          // 출석
-PRESENT_PENDING,  // 출석 승인 대기
-LATE,             // 지각
-LATE_PENDING,     // 지각 승인 대기
-ABSENT,           // 결석
-EXCUSED,          // 인정결석
-EXCUSED_PENDING   // 인정결석 승인 대기
-```
-
----
-
-## Testing Guide
-
-### Unit Test Example
-
-```java
-
-@ExtendWith(MockitoExtension.class)
-class ChallengerCommandServiceTest {
-
-    @Mock
-    LoadChallengerPort loadChallengerPort;
-    @Mock
-    SaveChallengerPort saveChallengerPort;
-    @Mock
-    GetUserInfoUseCase getUserInfoUseCase;
-    @Mock
-    GetOrganizationUseCase getOrganizationUseCase;
-
-    @InjectMocks
-    ChallengerCommandService sut;
-
-    @Test
-    void 챌린저_등록_성공() {
-        // given
-        var command = new RegisterChallengerCommand(1L, 1L, ChallengerPart.SPRINGBOOT);
-
-        given(getUserInfoUseCase.existsById(1L)).willReturn(true);
-        given(getOrganizationUseCase.getGisuById(1L))
-                .willReturn(new GisuInfo(1L, 9, true));
-        given(loadChallengerPort.existsByUserIdAndGisuId(1L, 1L)).willReturn(false);
-        given(saveChallengerPort.save(any())).willAnswer(inv -> {
-            Challenger c = inv.getArgument(0);
-            ReflectionTestUtils.setField(c, "id", 1L);
-            return c;
-        });
-
-        // when
-        Long result = sut.register(command);
-
-        // then
-        assertThat(result).isEqualTo(1L);
-        then(saveChallengerPort).should().save(any(Challenger.class));
-    }
-
-    @Test
-    void 존재하지_않는_사용자면_예외() {
-        // given
-        var command = new RegisterChallengerCommand(999L, 1L, ChallengerPart.SPRINGBOOT);
-        given(getUserInfoUseCase.existsById(999L)).willReturn(false);
-
-        // when & then
-        assertThatThrownBy(() -> sut.register(command))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.USER_NOT_FOUND);
-    }
-}
-```
-
----
-
-## Git Conventions
-
-### Commit Message
-
-```
-tag: description
-
-# Tags (lowercase)
-feat:     새로운 기능
-fix:      버그 수정
-refactor: 리팩토링
-docs:     문서 수정
-test:     테스트 추가/수정
-chore:    빌드, 설정 변경
-
-# Example
-feat: implement challenger registration
-fix: resolve null pointer in attendance check
-```
-
-### PR Review Priority (Pn)
-
-| Level | Description  | Example        |
-|-------|--------------|----------------|
-| P1    | Critical     | 보안 취약점, 데이터 손실 |
-| P2    | Significant  | 성능, 확장성 문제     |
-| P3    | Code Quality | 가독성, 컨벤션       |
-| P4    | Alternative  | 주관적 개선         |
-| P5    | Minor        | 오타, 질문         |
-
- 
----
-
-## Important Rules
-
-### Must Do ✅
-
-- Entity 상태 변경은 도메인 메서드로만
-- 다른 도메인은 UseCase로 접근
-- Controller는 UseCase에만 의존
-- Command Service에 `@Transactional`
-- Query Service에 `@Transactional(readOnly = true)`
-- Request/Response DTO에 변환 메서드 (`toCommand()`, `from()`)
-
-### Must Not ❌
-
-- Entity에 `@Setter` 사용
-- Controller에서 비즈니스 로직 처리
-- 다른 도메인 Entity 직접 참조 (`@ManyToOne private User member`)
-- 순환 의존성 (도메인 간 양방향 의존)
-- Adapter에서 트랜잭션 관리
-
----
-
-## Code Generation Request Format
-
-### When Requesting New Feature
-
-```
-{domain} 도메인의 {UseCase}를 구현해줘.
-
-- 기능 설명
-- 비즈니스 규칙
-- 검증 조건
-- 연관 도메인
-```
-
-### Example Request
-
-```
-curriculum 도메인의 SubmitWorkbookUseCase를 구현해줘.
-
-- 챌린저가 주차별 워크북의 미션을 제출
-- 미션 타입(LINK, MEMO, PLAIN)에 따른 검증 필요
-- 제출 시 ChallengerWorkbook 상태를 PENDING으로 변경
-- 이미 제출된 워크북은 재제출 불가
-```
-
-### Expected Response
-
-1. UseCase 인터페이스
-2. Command record
-3. Service 구현체
-4. Port 인터페이스
-5. 단위 테스트
-
----
-
-## Configuration Notes
-
-| Setting          | Value      | Note                |
-|------------------|------------|---------------------|
-| Default Profile  | `local`    | 실수로 운영 접근 방지        |
-| Application Port | 8080       |                     |
-| Management Port  | 9090       | Actuator 전용         |
-| HikariCP Pool    | 50         | 고정 커넥션 수            |
-| OSIV             | `false`    | 지연 로딩은 Service에서 처리 |
-| JPA DDL          | `validate` | 스키마 변경은 Flyway로만    |
-| Trace Sampling   | 0.1 (10%)  |                     |
-
----
-
-## References
-
-- [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture/)
-- [Get Your Hands Dirty on Clean Architecture](https://github.com/thombergs/buckpal)
-- [Spring Boot Reference](https://docs.spring.io/spring-boot/docs/current/reference/html/)
+## 3. Tech Stack & Environment
+
+### Core Technologies
+
+- **Language/Framework:** Java 21, Spring Boot 3.5
+- **Database:** PostgreSQL 18.x, Flyway Migration, PostGIS
+- **ORM:** JPA (Hibernate), QueryDSL
+- **Auth:** JWT (`io.jsonwebtoken` 0.12.5)
+- **Documentation:** OpenAPI/Swagger, Spring REST Docs (AsciiDoc)
+- **Monitoring:** Prometheus Metrics, OpenTelemetry Tracing
+
+### Environment & Commands
+
+- **Default Profile:** `local`
+- **Ports:** Application runs on `8080`, Actuator/Prometheus on `9090`.
+- **Run Application:** `./gradlew bootRun`
+- **Run Tests:** `./gradlew test` (Uses JUnit 5 + Testcontainers)
+- **Build Docs:** `./gradlew asciidoctor` (Generates from RestDocs snippets)
+
+## 4. Tools & Capabilities
+
+When requested to implement, refactor, or review code, utilize your capabilities to:
+
+- **Write comprehensive Tests:** Use JUnit 5 (`@ExtendWith(MockitoExtension.class)`), Spring Boot Test, and Testcontainers. Structure tests using Given/When/Then. Test names should be clearly written in Korean with `@DisplayName` annotation. (e.g., `void 챌린저_등록_성공()`).
+- **Enforce CQRS:** Ensure Command (state-changing) and Query (read-only) UseCases and Services are distinct. Command services need `@Transactional`, and Query services need `@Transactional(readOnly = true)`.
+- **Provide PR/Code Reviews:** Categorize review feedback using the P1-P5 priority levels:
+    - **P1:** Critical (Security, Data Loss, Severe Bugs)
+    - **P2:** Significant (Architecture, Performance, Scalability)
+    - **P3:** Code Quality (Readability, Convention, Best Practices) - *Default*
+    - **P4:** Alternative (Subjective, Stylistic)
+    - **P5:** Minor (Typos, Questions)
+
+## 5. Negative Constraints (Must NOT Do)
+
+- **❌ NO `@Setter` on Entities:** Use `Builder` (private/protected) and domain-specific state mutation methods.
+- **❌ NO Business Logic in Controllers:** Controllers must only delegate to UseCases and return DTOs defined in the `adapter/in` layer and not wrapped in `ApiResponse`, which should be handled by a global response handler.
+- **❌ NO Missing Transactions:** Do not omit `@Transactional` on Command UseCases.
+- **❌ NO Entity Exposure:** Never return Domain Entities directly from Controllers; always map to Response DTOs / Info records.
+- **❌ NO N+1 Query Problems:** Identify and resolve potential N+1 queries using Fetch Joins or IN queries.
+- **❌ NO Unvalidated Inputs:** Always use `@Valid` in controllers and validate input objects (preferably inside `record` constructors).
+- **❌ NO God Services:** Do not combine multiple unrelated responsibilities into a single Service class. Break them down by UseCase.
+- **❌ NO new constructors:** Do not use `new` to create instances of command objects or domain entities outside the Adapter layer. Use Factory methods or Builders instead.
+
+## 6. Output Formatting
+
+### Naming Conventions
+
+- **Entity:** `{Domain}` (e.g., `Challenger`)
+- **UseCase:** `{Action}{Domain}UseCase` (e.g., `RegisterChallengerUseCase`, `GetChallengerUseCase`)
+- **Port In:** Command/Query UseCase interfaces
+- **Port Out:** `{Action}{Domain}Port` (e.g., `LoadChallengerPort`, `SaveChallengerPort`)
+- **Service:** `{Domain}CommandService` or `{Domain}QueryService`
+- **Controller:** `{Domain}Controller`
+- **DTOs:** Request/Response objects should end with `Request` or `Response`. Domain info structures should end with `Info`. Prefer using Java `record`.
+- **Repository:** `{Entity}Repository`, `{Domain}QueryRepository`
+- **Adapter:** `{Domain}PersistenceAdapter`
+
+#### Static Factory Methods
+
+When generating static factory methods for Command objects or Domain Entities, strictly adhere to the following naming conventions:
+
+- `of`: Takes multiple parameters and returns an instance (e.g., `of(String name, int age)`).
+- `from`: Takes a single parameter and returns an instance (e.g., `from(UserEntity entity)`).
+- `valueOf`: Verbose alternative to `of`.
+- `create` / `newInstance`: Guarantees a completely new instance is returned every time.
+- `getInstance`: Returns a shared or singleton instance.
+
+#### Read Operation Methods (Usecase & Adapter/Repository)
+
+**⚠️ Exception for Infrastructure Frameworks:**
+
+- **JPA Repositories (`extends JpaRepository`):** MUST strictly follow standard Spring Data JPA query derivation naming conventions (e.g., `findById`, `findAllByStatus`, `existsByEmail`).
+- **Domain/Application Layers:** Custom Adapters, Ports, and UseCase interfaces MUST abstract these JPA-specific calls and strictly adhere to the semantic naming conventions outlined below to clearly indicate their behavior regarding nullability and exceptions.
+
+Strictly differentiate read methods based on null-safety and exception handling. Do not mix their semantics.
+
+- **`get[By]` -> `T`**
+    - **Rule:** Use when the entity MUST exist.
+    - **Behavior:** Throw an exception immediately if the data is not found.
+- **`find[By]` -> `Optional<T>`**
+    - **Rule:** Use when the entity might not exist (e.g., graceful fallback for deleted users) and normal service flow must continue.
+    - **Behavior:** Return `Optional.empty()`. NEVER throw a "Not Found" exception inside this method; let the caller handle the `Optional`.
+- **`list[By]` -> `List<T>`**
+    - **Behavior:** Returns matching elements. Must return an empty list `[]` (not null) if no elements are found.
+- **`batchGet[By]` -> `List<T>`**
+    - **Behavior:** All elements for the given input list MUST exist. Throw an exception if the result size does not match the input parameter size.
+- **`search[By]` -> `List<T>`**
+    - **Rule:** Use for complex query conditions or dynamic filtering.
+
+### Git & PR Conventions
+
+#### Commit Messages
+
+Follow the standard Conventional Commits specification.
+
+- **Format:** `<type>: <subject>`
+- **Allowed Types:** `feat`, `fix`, `refactor`, `docs`, `test`, `chore`.
+- **Example:** `feat: add registration usecase`
+
+#### Pull Request Titles
+
+Use bracketed tags for Pull Request titles. Do not confuse this with regular commit messages.
+
+- **Format:** `[Type] Subject`
+- **Allowed Tags:** `[Feat]`, `[Fix]`, `[Hotfix]`, `[Refactor]`, `[Chore]`, `[Docs]`
+- **Example:** `[Feat] 챌린저 등록 기능 추가`
+
+#### Strict Authorship Constraint
+
+- ❌ **NO AI Authorship:** NEVER set the Git committer, author, or append `Co-authored-by:` trailers referencing AI agents (e.g., Claude, ChatGPT, Cursor). All commits MUST be attributed strictly to the human user operating the environment.
+
+### Language
+
+- All code comments intended for documentation and generated code reviews MUST be in **Korean**.
+- Variables, classes, methods, and standard technical terms MUST remain in English.
