@@ -3,6 +3,7 @@ package com.umc.product.project.adapter.out.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.config.JpaConfig;
 import com.umc.product.global.config.QueryDslConfig;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.domain.Project;
@@ -22,7 +23,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import({QueryDslConfig.class, TestContainersConfig.class})
+@Import({JpaConfig.class, QueryDslConfig.class, TestContainersConfig.class, ProjectQueryRepository.class})
 class ProjectQueryRepositoryTest {
 
     @Autowired
