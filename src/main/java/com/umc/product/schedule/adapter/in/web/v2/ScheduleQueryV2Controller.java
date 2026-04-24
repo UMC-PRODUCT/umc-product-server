@@ -59,7 +59,7 @@ public class ScheduleQueryV2Controller {
     @CheckAccess(
         resourceType = ResourceType.SCHEDULE,
         permission = PermissionType.READ,
-        message = "내 일정 조회는 활동 이력이 있는 챌린저만 가능합니다."
+        message = "내 일정 조회는 '챌린저 활동 기록이 있는 사용자'만 가능합니다."
     )
     @Operation(summary = "내 일정 조회", description = """
         로그인한 사용자가 참여하는 일정 중 Query Param의 `from`, `to` 사이에 시작일이 있는 일정을 모두 조회합니다.
@@ -88,7 +88,7 @@ public class ScheduleQueryV2Controller {
     @CheckAccess(
         resourceType = ResourceType.SCHEDULE,
         permission = PermissionType.READ,
-        message = "일정 상세 조회는 활동 이력이 있는 챌린저만 가능합니다."
+        message = "일정 상세 조회는 '챌린저 활동 기록이 있는 사용자'만 가능합니다."
     )
     @Operation(summary = "일정 상세 조회", description = """
         단일 일정에 대한 정보를 상세하게 조회합니다.
@@ -123,7 +123,7 @@ public class ScheduleQueryV2Controller {
     @CheckAccess(
         resourceType = ResourceType.ATTENDANCE,
         permission = PermissionType.READ,
-        message = "일정 목록 출석 현황 조회는 운영진만 가능합니다."
+        message = "일정 목록 출석 현황 조회는 '운영진 활동 이력이 있는 사용자'만 가능합니다."
     )
     @Operation(summary = "[운영진용] 일정들의 출석 현황 조회", description = """
         Query Param을 이용해서 상세한 필터링을 제공하며, 그 기준은 아래와 같습니다.
@@ -175,7 +175,7 @@ public class ScheduleQueryV2Controller {
     @CheckAccess(
         resourceType = ResourceType.ATTENDANCE,
         permission = PermissionType.READ,
-        message = "해당 일정이 진행되는 기수의 운영진만 일정의 출석 현황을 조회할 수 있습니다."
+        message = "단일 일정 출석 현황 조회는 '해당 일정이 진행되는 기수의 운영진'만 가능합니다."
     )
     @Operation(summary = "[운영진용] 단일 일정 출석 현황 조회", description = """
         Query Param을 이용해서 상세한 필터링을 제공하며, 그 기준은 아래와 같습니다.
@@ -213,5 +213,4 @@ public class ScheduleQueryV2Controller {
             )
         );
     }
-
 }
