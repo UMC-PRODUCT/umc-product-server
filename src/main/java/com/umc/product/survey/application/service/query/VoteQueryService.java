@@ -101,10 +101,10 @@ public class VoteQueryService implements GetVoteUseCase {
 
     private BigDecimal calculateVoteRate(int voteCount, int totalParticipants) {
         if (totalParticipants == 0) {
-            return BigDecimal.ZERO;
+            return BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP);
         }
         return BigDecimal.valueOf(voteCount)
-            .divide(BigDecimal.valueOf(totalParticipants), 4, RoundingMode.HALF_UP)
-            .multiply(BigDecimal.valueOf(100));
+            .multiply(BigDecimal.valueOf(100))
+            .divide(BigDecimal.valueOf(totalParticipants), 1, RoundingMode.HALF_UP);
     }
 }
