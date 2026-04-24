@@ -5,7 +5,7 @@ import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.exception.NotImplementedException;
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.UpdateAttendanceSheetRequest;
-import com.umc.product.schedule.adapter.in.web.v1.swagger.AttendanceSheetControllerApi;
+import com.umc.product.schedule.adapter.in.web.v1.swagger.AttendanceSheetControllerV1Api;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -15,10 +15,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController("attendanceSheetControllerV1")
+@RestController
 @RequestMapping("/api/v1/schedules")
 @RequiredArgsConstructor
-public class AttendanceSheetController implements AttendanceSheetControllerApi {
+@Deprecated
+public class AttendanceSheetCommandV1Controller implements AttendanceSheetControllerV1Api {
 
     @Override
     @PatchMapping("/attendance-sheets/{sheetId}")

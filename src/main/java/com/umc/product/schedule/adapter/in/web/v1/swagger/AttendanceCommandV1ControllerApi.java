@@ -14,7 +14,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 
 @Tag(name = "Schedule V1 | 출석 체크", description = "")
-public interface AttendanceControllerApi {
+@Deprecated
+public interface AttendanceCommandV1ControllerApi {
 
     @Operation(summary = "출석 체크", description = "현재 시간 기준으로 출석 체크를 수행합니다")
     Long checkAttendance(

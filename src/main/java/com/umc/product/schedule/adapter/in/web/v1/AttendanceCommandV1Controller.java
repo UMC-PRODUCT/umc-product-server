@@ -13,7 +13,7 @@ import com.umc.product.schedule.adapter.in.web.v1.dto.response.AvailableAttendan
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.MyAttendanceHistoryResponse;
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.PendingAttendanceResponse;
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.PendingAttendancesByScheduleResponse;
-import com.umc.product.schedule.adapter.in.web.v1.swagger.AttendanceControllerApi;
+import com.umc.product.schedule.adapter.in.web.v1.swagger.AttendanceCommandV1ControllerApi;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,10 +23,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController("attendanceControllerV1")
+@RestController
 @RequestMapping("/api/v1/attendances")
 @RequiredArgsConstructor
-public class AttendanceController implements AttendanceControllerApi {
+@Deprecated
+public class AttendanceCommandV1Controller implements AttendanceCommandV1ControllerApi {
 
     @Override
     @PostMapping("/check")

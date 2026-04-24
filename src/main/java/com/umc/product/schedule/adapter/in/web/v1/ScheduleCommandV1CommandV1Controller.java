@@ -12,7 +12,7 @@ import com.umc.product.schedule.adapter.in.web.v1.dto.request.CreateStudyGroupSc
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.UpdateScheduleLocationRequest;
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.UpdateScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.UpdateScheduleLocationResponse;
-import com.umc.product.schedule.adapter.in.web.v1.swagger.ScheduleControllerApi;
+import com.umc.product.schedule.adapter.in.web.v1.swagger.ScheduleCommandV1ControllerApi;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -23,10 +23,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@RestController("scheduleCommandControllerV1")
+@RestController
 @RequestMapping("/api/v1/schedules")
 @RequiredArgsConstructor
-public class ScheduleController implements ScheduleControllerApi {
+@Deprecated
+public class ScheduleCommandV1CommandV1Controller implements ScheduleCommandV1ControllerApi {
 
     @Override
     @PostMapping
