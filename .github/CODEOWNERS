@@ -4,7 +4,7 @@
 # ================================================
 
 # GitHub 및 CI/CD 관련
-.github/* @kyeoungwoon
+.github/** @kyeoungwoon
 docker @kyeoungwoon
 .gitignore @kyeoungwoon
 
