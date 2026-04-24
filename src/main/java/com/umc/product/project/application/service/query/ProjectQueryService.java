@@ -53,6 +53,8 @@ public class ProjectQueryService implements
 
     @Override
     public Page<ProjectInfo> search(SearchProjectQuery query) {
+        // TODO: N+1 — 각 Project마다 toProjectInfo가 4개 쿼리 발생 (coPM, quotas, count, file).
+        //  search 경로는 batch 조회(LoadProjectMemberPort.batchListByProjectIds 등)로 전환 필요.
         return loadProjectPort.search(query)
             .map(this::toProjectInfo);
     }
@@ -70,9 +72,13 @@ public class ProjectQueryService implements
             project,
             coPmMemberIds,
             partQuotas,
-            fileLinks.get(project.getThumbnailFileId()),
-            fileLinks.get(project.getLogoFileId())
+            resolveLink(fileLinks, project.getThumbnailFileId()),
+            resolveLink(fileLinks, project.getLogoFileId())
         );
+    }
+
+    private String resolveLink(Map<String, String> fileLinks, String fileId) {
+        return fileId == null ? null : fileLinks.get(fileId);
     }
 
     /**
