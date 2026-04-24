@@ -3,23 +3,26 @@ package com.umc.product.curriculum.adapter.in.web.v2;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.request.CreateCurriculumRequest;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.request.CreateWeeklyCurriculumRequest;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.request.EditWeeklyCurriculumRequest;
-import com.umc.product.global.exception.NotImplementedException;
+import com.umc.product.curriculum.application.port.in.command.ManageCurriculumUseCase;
+import com.umc.product.curriculum.application.port.in.command.ManageWeeklyCurriculumUseCase;
+import com.umc.product.curriculum.application.port.in.command.dto.curriculum.EditCurriculumCommand;
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v2/curriculums")
 @RequiredArgsConstructor
 @Tag(name = "Curriculum V2 | Curriculum & WeeklyCurriculum Command", description = "중앙운영사무국 교육국 소속 파트장용. 커리큘럼 및 그 주차별 내용 생성, 수정, 삭제 등")
 public class CurriculumCommandV2Controller {
+
+    private final ManageCurriculumUseCase manageCurriculumUseCase;
+    private final ManageWeeklyCurriculumUseCase manageWeeklyCurriculumUseCase;
 
     // ==== Curriculum CUD ====
 
@@ -31,11 +34,12 @@ public class CurriculumCommandV2Controller {
             단, 동일한 기수에 동일한 파트에 대한 커리큘럼은 존재할 수 없습니다.
             """
     )
+    @CheckAccess(resourceType = ResourceType.CURRICULUM, permission = PermissionType.WRITE)
     @PostMapping
-    public void createCurriculum(
-        @RequestBody CreateCurriculumRequest request
+    public Long createCurriculum(
+        @Valid @RequestBody CreateCurriculumRequest request
     ) {
-        throw new NotImplementedException();
+        return manageCurriculumUseCase.create(request.toCommand());
     }
 
     @Operation(
@@ -46,12 +50,16 @@ public class CurriculumCommandV2Controller {
             기수, 파트 등은 수정이 불가능하며 커리큘럼의 이름만 수정 가능합니다.
             """
     )
+    @CheckAccess(resourceType = ResourceType.CURRICULUM, resourceId = "#curriculumId", permission = PermissionType.WRITE)
     @PatchMapping("/{curriculumId}")
     public void editCurriculum(
         @RequestBody String title,
         @PathVariable Long curriculumId
     ) {
-        throw new NotImplementedException();
+        manageCurriculumUseCase.edit(EditCurriculumCommand.builder()
+            .curriculumId(curriculumId)
+            .title(title)
+            .build());
     }
 
     @Operation(
@@ -61,11 +69,12 @@ public class CurriculumCommandV2Controller {
             - 중앙운영사무국 총괄단 이상의 권한을 보유한 경우에만 삭제가 가능합니다.
             """
     )
+    @CheckAccess(resourceType = ResourceType.CURRICULUM, resourceId = "#curriculumId", permission = PermissionType.DELETE)
     @DeleteMapping("/{curriculumId}")
     public void deleteCurriculum(
         @PathVariable Long curriculumId
     ) {
-        throw new NotImplementedException();
+        manageCurriculumUseCase.delete(curriculumId);
     }
 
     // ==== Weekly Curriculum CUD ====
@@ -79,11 +88,12 @@ public class CurriculumCommandV2Controller {
             주차별 커리큘럼 내에 원본 워크북 수와는 다른 개념입니다!
             """
     )
+    @CheckAccess(resourceType = ResourceType.CURRICULUM, resourceId = "#request.curriculumId", permission = PermissionType.WRITE)
     @PostMapping("/weekly")
-    public void createWeeklyCurriculum(
-        @RequestBody CreateWeeklyCurriculumRequest request
+    public Long createWeeklyCurriculum(
+        @Valid @RequestBody CreateWeeklyCurriculumRequest request
     ) {
-        throw new NotImplementedException();
+        return manageWeeklyCurriculumUseCase.create(request.toCommand());
     }
 
     @Operation(
@@ -98,12 +108,13 @@ public class CurriculumCommandV2Controller {
             - UK 제약을 어기는 수정은 불허합니다. (e.g. 정규, 부록 -> 정규, 정규 불가능)
             """
     )
+    @CheckAccess(resourceType = ResourceType.CURRICULUM, resourceId = "#weeklyCurriculumId", permission = PermissionType.WRITE)
     @PatchMapping("/weekly/{weeklyCurriculumId}")
     public void editWeeklyCurriculum(
         @PathVariable Long weeklyCurriculumId,
         @RequestBody EditWeeklyCurriculumRequest request
     ) {
-        throw new NotImplementedException();
+        manageWeeklyCurriculumUseCase.edit(request.toCommand(weeklyCurriculumId));
     }
 
     @Operation(
@@ -114,10 +125,11 @@ public class CurriculumCommandV2Controller {
             - 포함된 주차별 워크북이 하나라도 존재하면 삭제가 불가능합니다.
             """
     )
+    @CheckAccess(resourceType = ResourceType.CURRICULUM, resourceId = "#weeklyCurriculumId", permission = PermissionType.DELETE)
     @DeleteMapping("/weekly/{weeklyCurriculumId}")
     public void deleteWeeklyCurriculum(
         @PathVariable Long weeklyCurriculumId
     ) {
-        throw new NotImplementedException();
+        manageWeeklyCurriculumUseCase.delete(weeklyCurriculumId);
     }
 }

@@ -22,6 +22,12 @@ public enum CurriculumErrorCode implements BaseCode {
     WORKBOOK_ACCESS_DENIED(HttpStatus.FORBIDDEN, "CURRICULUM-0011", "해당 워크북에 대한 접근 권한이 없습니다."),
     INVALID_WEEKLY_CURRICULUM_PERIOD(HttpStatus.BAD_REQUEST, "CURRICULUM-0012", "주차 커리큘럼의 시작일이 종료일보다 늦을 수 없습니다."),
     INVALID_WORKBOOK_STATUS_TRANSITION(HttpStatus.BAD_REQUEST, "CURRICULUM-0013", "유효하지 않은 워크북 상태 변경 요청입니다."),
+    WEEKLY_CURRICULUM_NOT_FOUND(HttpStatus.NOT_FOUND, "CURRICULUM-0014", "주차별 커리큘럼을 찾을 수 없습니다."),
+    CURRICULUM_HAS_WEEKLY_CURRICULUMS(HttpStatus.CONFLICT, "CURRICULUM-0015", "주차별 커리큘럼이 존재하여 커리큘럼을 삭제할 수 없습니다."),
+    WEEKLY_CURRICULUM_HAS_WORKBOOKS(HttpStatus.CONFLICT, "CURRICULUM-0016", "원본 워크북이 존재하여 주차별 커리큘럼을 삭제할 수 없습니다."),
+    WEEKLY_CURRICULUM_DATE_LOCKED(HttpStatus.CONFLICT, "CURRICULUM-0017", "배포된 워크북이 존재하여 주차 기간을 수정할 수 없습니다."),
+    WEEKLY_CURRICULUM_ALREADY_EXISTS(HttpStatus.CONFLICT, "CURRICULUM-0018", "이미 동일한 주차와 부록 여부를 가진 주차별 커리큘럼이 존재합니다."),
+    WEEKLY_CURRICULUM_PERIOD_ALREADY_ENDED(HttpStatus.BAD_REQUEST, "CURRICULUM-0019", "이미 종료된 기간으로 주차별 커리큘럼을 생성하거나 수정할 수 없습니다."),
     ;
 
     private final HttpStatus httpStatus;

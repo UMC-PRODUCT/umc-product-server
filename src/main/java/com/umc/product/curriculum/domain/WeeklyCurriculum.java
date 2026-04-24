@@ -65,17 +65,28 @@ public class WeeklyCurriculum extends BaseEntity {
     }
 
     public static WeeklyCurriculum create(
-        Curriculum curriculum, boolean isExtra, String title, Long weekNo,
+        Curriculum curriculum, Long weekNo, boolean isExtra, String title,
         Instant startsAt, Instant endsAt
     ) {
         return WeeklyCurriculum.builder()
             .curriculum(curriculum)
+            .weekNo(weekNo)
             .isExtra(isExtra)
             .title(title)
-            .weekNo(weekNo)
             .startsAt(startsAt)
             .endsAt(endsAt)
             .build();
+    }
+
+    /**
+     * 주차별 커리큘럼 전체 수정. null 필드는 기존 값을 유지한다.
+     * startsAt/endsAt 변경 시 start ≤ end 검증.
+     */
+    public void update(Long weekNo, Boolean isExtra, String title, Instant startsAt, Instant endsAt) {
+        updateWeekNo(weekNo);
+        updateIsExtra(isExtra);
+        updateTitle(title);
+        updatePeriod(startsAt, endsAt);
     }
 
     public void updateTitle(String title) {

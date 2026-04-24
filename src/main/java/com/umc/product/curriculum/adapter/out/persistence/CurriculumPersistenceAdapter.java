@@ -9,11 +9,11 @@ import com.umc.product.curriculum.application.port.out.SaveCurriculumPort;
 import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
-import com.umc.product.global.exception.NotImplementedException;
-import java.util.List;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -26,18 +26,6 @@ public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCur
     @Override
     public Optional<Curriculum> findById(Long id) {
         return curriculumJpaRepository.findById(id);
-    }
-
-    @Override
-    public Optional<Curriculum> findEntityByGisuIdAndPart(Long gisuId, ChallengerPart part) {
-        throw new NotImplementedException();
-//        return curriculumJpaRepository.findByGisuIdAndPart(gisuId, part);
-    }
-
-    @Override
-    public Curriculum getEntityByGisuIdAndPart(Long gisuId, ChallengerPart part) {
-        return findEntityByGisuIdAndPart(gisuId, part)
-            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.CURRICULUM_NOT_FOUND));
     }
 
     @Override
@@ -54,6 +42,11 @@ public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCur
     @Override
     public boolean existsById(Long id) {
         return curriculumJpaRepository.existsById(id);
+    }
+
+    @Override
+    public boolean existsByGisuIdAndPart(Long gisuId, ChallengerPart part) {
+        return curriculumJpaRepository.existsByGisuIdAndPart(gisuId, part);
     }
 
     @Override
