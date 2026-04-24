@@ -65,6 +65,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
         saveAnswerPort.saveAll(answers);
 
         existing.updateLastSavedAt(Instant.now());
+        saveFormResponsePort.save(existing);
     }
 
     @Override
