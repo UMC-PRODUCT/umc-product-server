@@ -107,7 +107,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         command.validate();
 
         if (schedule.getEndsAt().isBefore(Instant.now())) {
-            throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_ENDED, "종료된 일정은 수정 불가합니다.");
+            throw new ScheduleDomainException(ScheduleErrorCode.ENDED_SCHEDULE_CANT_BE_EDITED);
         }
 
         // 대면 -> 비대면 전환 시
