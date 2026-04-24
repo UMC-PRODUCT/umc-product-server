@@ -27,8 +27,8 @@ SELECT
     sa.response_id,
     sa.question_id,
     sa.answered_as_type,
-    sa.created_at::timestamp,
-    sa.updated_at::timestamp,
+    sa.created_at::timestamptz,
+    sa.updated_at::timestamptz,
     sa.id
 FROM single_answer sa
 WHERE sa.answered_as_type IN ('RADIO', 'DROPDOWN', 'CHECKBOX');
