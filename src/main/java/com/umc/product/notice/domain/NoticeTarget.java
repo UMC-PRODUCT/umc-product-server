@@ -2,6 +2,7 @@ package com.umc.product.notice.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -43,18 +44,25 @@ public class NoticeTarget extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private List<ChallengerPart> targetChallengerPart;
 
+    @Column(name = "target_staff_roles", columnDefinition = "text[]", nullable = false)
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Enumerated(EnumType.STRING)
+    private List<NoticeTargetRole> targetRoles;
+
     @Builder
     private NoticeTarget(
         Long noticeId,
         Long targetGisuId,
         Long targetChapterId,
         Long targetSchoolId,
-        List<ChallengerPart> targetChallengerPart) {
+        List<ChallengerPart> targetChallengerPart,
+        List<NoticeTargetRole> targetRoles) {
         this.noticeId = noticeId;
         this.targetGisuId = targetGisuId;
         this.targetChapterId = targetChapterId;
         this.targetSchoolId = targetSchoolId;
         this.targetChallengerPart = targetChallengerPart;
+        this.targetRoles = targetRoles;
     }
 
     /**
@@ -64,11 +72,20 @@ public class NoticeTarget extends BaseEntity {
         Long targetGisuId,
         Long targetChapterId,
         Long targetSchoolId,
-        List<ChallengerPart> targetChallengerPart) {
+        List<ChallengerPart> targetChallengerPart,
+        List<NoticeTargetRole> targetRoles) {
         this.targetGisuId = targetGisuId;
         this.targetChapterId = targetChapterId;
         this.targetSchoolId = targetSchoolId;
         this.targetChallengerPart = targetChallengerPart;
+        this.targetRoles = targetRoles;
+    }
+
+    /**
+     * 운영진 공지 여부 확인
+     */
+    public boolean isStaffNotice() {
+        return targetRoles != null && !targetRoles.contains(NoticeTargetRole.CHALLENGER);
     }
 
     /**
