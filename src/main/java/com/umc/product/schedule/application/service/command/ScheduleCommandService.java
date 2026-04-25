@@ -12,11 +12,13 @@ import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCas
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.in.command.dto.EditScheduleCommand;
+import com.umc.product.schedule.application.port.in.query.dto.ScheduleCapabilitiesInfo;
 import com.umc.product.schedule.application.port.out.DeleteScheduleParticipantPort;
 import com.umc.product.schedule.application.port.out.LoadScheduleParticipantPort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.out.SaveScheduleParticipantPort;
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
+import com.umc.product.schedule.application.service.query.ScheduleCapabilitiesService;
 import com.umc.product.schedule.domain.AttendancePolicy;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.ScheduleParticipant;
@@ -46,6 +48,9 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     private final DeleteScheduleParticipantPort deleteScheduleParticipantPort;
     private final LoadScheduleParticipantPort loadScheduleParticipantPort;
 
+    // 일정 생성 권한 판별 service
+    private final ScheduleCapabilitiesService capabilitiesService;
+
     // 외부 도메인 UseCase
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
@@ -61,6 +66,21 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     )
     @Override
     public Long create(CreateScheduleCommand command) {
+
+        // 사용자 capabilities 조회
+        ScheduleCapabilitiesInfo capabilitiesInfo = capabilitiesService.getCapabilities(command.authorMemberId());
+
+        // 검증 (챌린저 활동 이력, 초대 가능 최대 참여자 수, 출석 정책 생성)
+        if (!capabilitiesInfo.canCreateSchedule()) {
+            throw new ScheduleDomainException(ScheduleErrorCode.CANNOT_CREATE_SCHEDULE);
+        }
+        if (command.participantMemberIds().size() > capabilitiesInfo.maxParticipantCount()) {
+            throw new ScheduleDomainException(ScheduleErrorCode.EXCEEDED_MAX_PARTICIPANTS,
+                capabilitiesInfo.maxParticipantCount() + "명까지 초대 가능합니다.");
+        }
+        if (command.attendancePolicy() != null && !capabilitiesInfo.canCreateAttendanceRequiredSchedule()) {
+            throw new ScheduleDomainException(ScheduleErrorCode.CANNOT_CREATE_ATTENDANCE_REQUIRED_SCHEDULE);
+        }
 
         // 작성자의 가장 최근 기수 Challenger 상태 조회 (탈부, 제명 상태일 시 exeption)
         ChallengerInfoWithStatus challengerInfoWithStatus = getChallengerUseCase.getLatestActiveChallengerByMemberId(
