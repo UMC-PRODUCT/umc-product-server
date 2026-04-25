@@ -13,8 +13,8 @@ import lombok.Builder;
 @Builder
 public record PartQuotaInfo(
     ChallengerPart part,
-    int currentCount,
-    int quota,
+    long currentCount,
+    long quota,
     PartQuotaStatus status
 ) {
     public static PartQuotaInfo from(ProjectPartQuotaInfo info) {
@@ -22,7 +22,7 @@ public record PartQuotaInfo(
             .part(info.part())
             .currentCount(info.currentCount())
             .quota(info.quota())
-            .status(info.computeStatus())
+            .status(info.status())
             .build();
     }
 }

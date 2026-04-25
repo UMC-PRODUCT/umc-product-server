@@ -17,7 +17,6 @@ import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -109,11 +108,11 @@ public class ProjectQueryService implements
             .countByProjectIdGroupByPart(projectId);
 
         return quotas.stream()
-            .map(q -> ProjectPartQuotaInfo.builder()
-                .part(q.getPart())
-                .quota(q.getQuota().intValue())
-                .currentCount(currentCounts.getOrDefault(q.getPart(), 0L).intValue())
-                .build())
+            .map(q -> ProjectPartQuotaInfo.of(
+                q.getPart(),
+                q.getQuota(),
+                currentCounts.getOrDefault(q.getPart(), 0L)
+            ))
             .toList();
     }
 

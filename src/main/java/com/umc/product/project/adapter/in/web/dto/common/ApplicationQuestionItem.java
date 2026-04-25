@@ -9,7 +9,7 @@ import lombok.Builder;
  */
 @Builder
 public record ApplicationQuestionItem(
-    int order,
+    long order,
     QuestionType type,
     String title,
     boolean required,
