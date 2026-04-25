@@ -52,10 +52,11 @@ public class SchedulePermissionEvaluator implements ResourcePermissionEvaluator 
             ) || permissionHelper.isAuthor(memberId, schedule);
 
             // 출석 승인은 helper 안에 포함되어 있는 로직으로 구성
-            case APPROVE -> {
-                Long gisuId = permissionHelper.getGisuIdFromSchedule(schedule);
-                yield permissionHelper.canManageAttendance(memberId, schedule, gisuId);
-            }
+            // TODO : 수정하기
+//            case APPROVE -> {
+//                Long gisuId = permissionHelper.getGisuIdFromSchedule(schedule);
+//                yield permissionHelper.canManageAttendance(memberId, schedule, gisuId);
+//            }
 
             default -> false;
         };

@@ -14,7 +14,7 @@ public class FcmTokenFixture {
     }
 
     public FcmToken FCM_토큰(Long memberId, String token) {
-        FcmToken fcmToken = FcmToken.createFCMToken(memberId, token);
+        FcmToken fcmToken = FcmToken.create(memberId, token);
         saveFcmPort.save(fcmToken);
         return fcmToken;
     }

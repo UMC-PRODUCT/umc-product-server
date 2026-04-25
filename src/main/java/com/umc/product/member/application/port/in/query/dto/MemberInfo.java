@@ -3,6 +3,8 @@ package com.umc.product.member.application.port.in.query.dto;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.domain.Member;
+import com.umc.product.member.domain.exception.MemberDomainException;
+import com.umc.product.member.domain.exception.MemberErrorCode;
 import java.util.List;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +77,12 @@ public record MemberInfo(
             .status(member.getStatus())
             .roles(roles)
             .build();
+    }
+
+    public void validateHasSchool() {
+        if (schoolId == null) {
+            throw new MemberDomainException(MemberErrorCode.MEMBER_SCHOOL_NOT_ASSIGNED);
+        }
     }
 
     public MemberInfo toPublic() {
