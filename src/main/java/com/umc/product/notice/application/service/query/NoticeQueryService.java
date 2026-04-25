@@ -63,8 +63,11 @@ public class NoticeQueryService implements GetNoticeUseCase {
     @Override
     public Page<NoticeSummary> getAllNoticeSummaries(NoticeViewerInfo viewerInfo, NoticeClassification classification,
                                                      Pageable pageable) {
-        NoticeClassification enriched = enrichClassification(viewerInfo, classification);
-        Page<Notice> notices = loadNoticePort.findNoticesByClassification(enriched, viewerInfo.memberParts(), pageable);
+        // 운영진 공지는 chapterId/schoolId enrichment 불필요 (역할 기반 조회)
+        NoticeClassification enriched = classification.isStaffNotice()
+            ? classification
+            : enrichClassification(viewerInfo, classification);
+        Page<Notice> notices = loadNoticePort.findNoticesByClassification(enriched, viewerInfo, pageable);
         return toNoticeSummaryPage(notices);
     }
 
@@ -72,9 +75,11 @@ public class NoticeQueryService implements GetNoticeUseCase {
     public Page<NoticeSummary> searchNoticesByKeyword(String keyword, NoticeViewerInfo viewerInfo,
                                                       NoticeClassification classification,
                                                       Pageable pageable) {
-        NoticeClassification enriched = enrichClassification(viewerInfo, classification);
-        Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, enriched, viewerInfo.memberParts(),
-            pageable);
+        // 운영진 공지는 chapterId/schoolId enrichment 불필요 (역할 기반 조회)
+        NoticeClassification enriched = classification.isStaffNotice()
+            ? classification
+            : enrichClassification(viewerInfo, classification);
+        Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, enriched, viewerInfo, pageable);
         return toNoticeSummaryPage(notices);
     }
 
@@ -303,7 +308,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Long filteredSchoolId = (classification.schoolId() != null || hasPart) ? viewerInfo.schoolId() : null;
 
         return new NoticeClassification(classification.gisuId(), filteredChapterId, filteredSchoolId,
-            classification.part());
+            classification.part(), false);
     }
 
     private Page<NoticeSummary> toNoticeSummaryPage(Page<Notice> notices) {

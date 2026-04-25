@@ -7,10 +7,12 @@ import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.challenger.domain.QChallenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.QNotice;
 import com.umc.product.notice.domain.QNoticeRead;
 import com.umc.product.notice.domain.QNoticeTarget;
+import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeClassification;
@@ -70,13 +72,15 @@ public class NoticeQueryRepository {
      */
     public Page<Notice> findByClassification(
         NoticeClassification classification,
-        Set<ChallengerPart> memberParts,
+        NoticeViewerInfo viewerInfo,
         Pageable pageable) {
 
         QNotice notice = QNotice.notice;
         QNoticeTarget target = QNoticeTarget.noticeTarget;
 
-        BooleanExpression condition = buildClassificationCondition(classification, memberParts, target);
+        BooleanExpression condition = classification.isStaffNotice()
+            ? buildStaffNoticeCondition(classification, viewerInfo, target)
+            : buildClassificationCondition(classification, viewerInfo.memberParts(), target);
 
         List<Notice> content = getContentQuery(notice, target, condition, null, pageable);
         Long total = getTotalCountQuery(notice, target, condition, null);
@@ -91,13 +95,15 @@ public class NoticeQueryRepository {
     public Page<Notice> findByKeyword(
         String keyword,
         NoticeClassification classification,
-        Set<ChallengerPart> memberParts,
+        NoticeViewerInfo viewerInfo,
         Pageable pageable) {
 
         QNotice notice = QNotice.notice;
         QNoticeTarget target = QNoticeTarget.noticeTarget;
 
-        BooleanExpression condition = buildClassificationCondition(classification, memberParts, target);
+        BooleanExpression condition = classification.isStaffNotice()
+            ? buildStaffNoticeCondition(classification, viewerInfo, target)
+            : buildClassificationCondition(classification, viewerInfo.memberParts(), target);
 
         List<Notice> notices = getContentQuery(notice, target, condition, keyword, pageable);
         Long total = getTotalCountQuery(notice, target, condition, keyword);
@@ -132,6 +138,44 @@ public class NoticeQueryRepository {
     }
 
     // ========== PRIVATE ====================
+
+    /**
+     * 운영진 공지 조회 조건.
+     * viewerInfo.roles()는 readableRoles()로 이미 확장된 값이며,
+     * target_staff_roles에 해당 역할이 하나라도 포함되면 조회합니다.
+     */
+    private BooleanExpression buildStaffNoticeCondition(
+        NoticeClassification classification,
+        NoticeViewerInfo viewerInfo,
+        QNoticeTarget target
+    ) {
+        Long gisuId = classification.gisuId();
+        Set<NoticeTargetRole> roles = viewerInfo.roles();
+
+        if (roles == null || roles.isEmpty()) {
+            return Expressions.booleanTemplate("1=0");
+        }
+
+        // 기수 조건 (운영진 공지는 항상 gisuId 필수)
+        BooleanExpression gisuMatch = target.targetGisuId.eq(gisuId);
+
+        // target_staff_roles에 viewer의 readable role이 하나라도 포함되는지 (array_position 활용)
+        BooleanExpression staffRolesMatch = roles.stream()
+            .map(role -> Expressions.numberTemplate(Integer.class,
+                "coalesce(array_position({0}, {1}), 0)",
+                target.targetRoles,
+                Expressions.constant(role.name())
+            ).gt(0))
+            .reduce(BooleanExpression::or)
+            .get();
+
+        // 학교 조건 (현재 운영진 공지는 항상 null, 추후 교내공지 대비)
+        BooleanExpression schoolMatch = viewerInfo.schoolId() != null
+            ? target.targetSchoolId.isNull().or(target.targetSchoolId.eq(viewerInfo.schoolId()))
+            : target.targetSchoolId.isNull();
+
+        return gisuMatch.and(staffRolesMatch).and(schoolMatch);
+    }
 
     /**
      * 조건에 맞는 공지 반환 전체조회 : keyword = null, 키워드조회 : keyword = 검색어

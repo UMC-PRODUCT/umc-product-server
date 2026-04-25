@@ -3,10 +3,13 @@ package com.umc.product.notice.adapter.in.web.assembler;
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
+import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,7 @@ public class NoticeViewerInfoAssembler {
 
     public NoticeViewerInfo toMemberIdAndGisuId(Long memberId, Long gisuId) {
         Set<ChallengerPart> memberParts = resolveParts(memberId, gisuId);
+        Set<NoticeTargetRole> staffRoles = resolveStaffRoles(memberId, gisuId);
 
         MemberInfo memberInfo = getMemberUseCase.findAllByIds(Set.of(memberId)).get(memberId);
         Long schoolId = memberInfo != null ? memberInfo.schoolId() : null;
@@ -41,7 +45,7 @@ public class NoticeViewerInfoAssembler {
             }
         }
 
-        return new NoticeViewerInfo(memberParts, schoolId, chapterId);
+        return new NoticeViewerInfo(memberParts, schoolId, chapterId, staffRoles);
     }
 
     /**
@@ -61,5 +65,45 @@ public class NoticeViewerInfoAssembler {
                 return parts;
             })
             .orElse(Set.of());
+    }
+
+    /**
+     * 해당 기수에서 멤버가 조회할 수 있는 운영진 공지 대상 역할 목록을 반환
+     */
+    private Set<NoticeTargetRole> resolveStaffRoles(Long memberId, Long gisuId) {
+        if (memberId == null || gisuId == null) {
+            return Set.of();
+        }
+
+        if (getChallengerRoleUseCase.isCentralCoreInGisu(memberId, gisuId)) {
+            return EnumSet.of(
+                NoticeTargetRole.CENTRAL_EDUCATION_TEAM,
+                NoticeTargetRole.CENTRAL_OPERATING_TEAM,
+                NoticeTargetRole.SCHOOL_PART_LEADER,
+                NoticeTargetRole.SCHOOL_PRESIDENT_TEAM
+            );
+        }
+
+        Set<NoticeTargetRole> roles = EnumSet.noneOf(NoticeTargetRole.class);
+        getChallengerRoleUseCase.findAllByMemberId(memberId).stream()
+            .filter(role -> gisuId.equals(role.gisuId()))
+            .forEach(role -> {
+                NoticeTargetRole mapped = toNoticeTargetRole(role.roleType());
+                if (mapped != null) {
+                    roles.addAll(mapped.readableRoles());
+                }
+            });
+        return roles;
+    }
+
+    // ChallengerRoleType → NoticeTargetRole 매핑. 총괄단은 최상단에서 처리되므로 null 반환
+    private NoticeTargetRole toNoticeTargetRole(ChallengerRoleType roleType) {
+        return switch (roleType) {
+            case SCHOOL_PART_LEADER -> NoticeTargetRole.SCHOOL_PART_LEADER;
+            case SCHOOL_PRESIDENT, SCHOOL_VICE_PRESIDENT -> NoticeTargetRole.SCHOOL_PRESIDENT_TEAM;
+            case CENTRAL_EDUCATION_TEAM_MEMBER -> NoticeTargetRole.CENTRAL_EDUCATION_TEAM;
+            case CENTRAL_OPERATING_TEAM_MEMBER -> NoticeTargetRole.CENTRAL_OPERATING_TEAM;
+            default -> null;
+        };
     }
 }

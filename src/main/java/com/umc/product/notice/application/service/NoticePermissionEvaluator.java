@@ -10,13 +10,16 @@ import com.umc.product.authorization.domain.SubjectAttributes.GisuChallengerInfo
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.domain.Notice;
+import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import java.util.Objects;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -70,6 +73,11 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
             return true;
         }
 
+        // 운영진 공지는 역할 기반으로만 판별
+        if (targetInfo.isStaffNotice()) {
+            return canReadStaffNotice(subjectAttributes, targetInfo);
+        }
+
         // 기본 챌린저 권한 체크 (본인의 part, gisu, chapter 기반)
         for (GisuChallengerInfo gisuChallengerInfo : subjectAttributes.gisuChallengerInfos()) {
             if (targetInfo.isTarget(
@@ -89,6 +97,50 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
         }
 
         return false;
+    }
+
+    private boolean canReadStaffNotice(SubjectAttributes subjectAttributes, NoticeTargetInfo targetInfo) {
+        return subjectAttributes.roleAttributes().stream()
+            .anyMatch(role -> {
+                NoticeTargetRole viewerRole = toNoticeTargetRole(role.roleType());
+                if (viewerRole == null) {
+                    return false;
+                }
+                // 본인 역할이 읽을 수 있는 대상 역할에 targetRoles가 포함되는지 확인
+                Set<NoticeTargetRole> readable = viewerRole.readableRoles();
+                if (targetInfo.targetRoles().stream().noneMatch(readable::contains)) {
+                    return false;
+                }
+                // 기수 범위 확인
+                if (targetInfo.targetGisuId() != null && !targetInfo.targetGisuId().equals(role.gisuId())) {
+                    return false;
+                }
+                // 학교 범위 확인 (현재 운영진 공지는 항상 null, 추후 교내공지 대비)
+                if (targetInfo.targetSchoolId() != null
+                    && !targetInfo.targetSchoolId().equals(role.organizationId())) {
+                    return false;
+                }
+                // 파트 범위 확인: 파트장/교육국(중앙파트장)만 담당 파트로 필터링
+                boolean isPartBasedRole = viewerRole == NoticeTargetRole.SCHOOL_PART_LEADER
+                    || viewerRole == NoticeTargetRole.CENTRAL_EDUCATION_TEAM;
+                if (isPartBasedRole && targetInfo.targetParts() != null && !targetInfo.targetParts().isEmpty()) {
+                    if (role.responsiblePart() == null
+                        || !targetInfo.targetParts().contains(role.responsiblePart())) {
+                        return false;
+                    }
+                }
+                return true;
+            });
+    }
+
+    private NoticeTargetRole toNoticeTargetRole(ChallengerRoleType roleType) {
+        return switch (roleType) {
+            case SCHOOL_PART_LEADER -> NoticeTargetRole.SCHOOL_PART_LEADER;
+            case SCHOOL_PRESIDENT, SCHOOL_VICE_PRESIDENT -> NoticeTargetRole.SCHOOL_PRESIDENT_TEAM;
+            case CENTRAL_EDUCATION_TEAM_MEMBER -> NoticeTargetRole.CENTRAL_EDUCATION_TEAM;
+            case CENTRAL_OPERATING_TEAM_MEMBER -> NoticeTargetRole.CENTRAL_OPERATING_TEAM;
+            default -> null;
+        };
     }
 
     /**
