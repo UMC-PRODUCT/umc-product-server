@@ -10,8 +10,9 @@ import lombok.Builder;
 /**
  * PM이 자신의 Draft를 복원하기 위한 응답 (PROJECT-103).
  * <p>
- * 편집 재개용이라 {@code thumbnailFileId}/{@code logoFileId}(UUID)도 함께 내려줍니다.
- * 작성자 PM만 조회하므로 {@code toPublic()} 마스킹 불필요.
+ * 작성자 PM만 조회하므로 {@code toPublic()} 마스킹 불필요. 이미지는 storage 도메인 컨벤션에 따라
+ * end-user에 fileId를 노출하지 않고 access URL({@code thumbnailImageUrl}/{@code logoImageUrl})만 제공합니다.
+ * 사진 미변경은 PATCH에서 해당 fileId 필드를 null로 보내 표현합니다.
  */
 @Builder
 public record DraftProjectResponse(
@@ -19,9 +20,7 @@ public record DraftProjectResponse(
     ProjectStatus status,
     String name,
     String description,
-    String thumbnailFileId,
     String thumbnailImageUrl,
-    String logoFileId,
     String logoImageUrl,
     String externalLink,
     MemberBrief productOwner,
@@ -40,9 +39,7 @@ public record DraftProjectResponse(
             .status(info.status())
             .name(info.name())
             .description(info.description())
-            .thumbnailFileId(info.thumbnailFileId())
             .thumbnailImageUrl(info.thumbnailImageUrl())
-            .logoFileId(info.logoFileId())
             .logoImageUrl(info.logoImageUrl())
             .externalLink(info.externalLink())
             .productOwner(productOwner)
