@@ -24,4 +24,12 @@ public interface LoadScheduleParticipantPort {
 
     // 일정의 참여자들의 memnerId를 조회합니다.
     Set<Long> findMemberIdsByScheduleId(Long scheduleId);
+
+    /**
+     * 특정 사용자가 참여하는 일정 ID 목록을 조회합니다.
+     *
+     * @param memberId 참여자 memberId
+     * @return 일정 ID 목록
+     */
+    Set<Long> findScheduleIdsByMemberId(Long memberId);
 }

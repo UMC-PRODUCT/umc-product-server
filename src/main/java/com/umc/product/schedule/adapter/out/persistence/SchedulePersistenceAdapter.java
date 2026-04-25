@@ -8,6 +8,7 @@ import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -39,16 +40,21 @@ public class SchedulePersistenceAdapter implements
     }
 
     @Override
-    public List<Schedule> findAdminSchedules(Instant from, Instant to,
-                                             AttendanceStatus attendanceStatus,
-                                             Long memberId) {
-
-        return scheduleQueryRepository.findAdminSchedules(from, to, attendanceStatus, memberId);
+    public Optional<Schedule> findByIdWithTags(Long scheduleId) {
+        return scheduleQueryRepository.findByIdWithTags(scheduleId);
     }
 
     @Override
-    public Optional<Schedule> findByIdWithTags(Long scheduleId) {
-        return scheduleQueryRepository.findByIdWithTags(scheduleId);
+    public List<Schedule> findAdminSchedulesByRole(Set<Long> targetScheduleIds,
+                                                   Instant from,
+                                                   Instant to,
+                                                   AttendanceStatus attendanceStatus) {
+        return scheduleQueryRepository.findAdminSchedulesByRole(targetScheduleIds, from, to, attendanceStatus);
+    }
+
+    @Override
+    public Set<Long> findScheduleIdsByAuthor(Long authorMemberId) {
+        return scheduleQueryRepository.findScheduleIdsByAuthor(authorMemberId);
     }
 
     // ========== SaveSchedulePort ==========
