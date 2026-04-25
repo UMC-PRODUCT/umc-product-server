@@ -120,24 +120,17 @@ public class Project extends BaseEntity {
     }
 
     /**
-     * 프로젝트 기본 정보를 부분 업데이트합니다. null 필드는 무시(= 변경하지 않음).
-     * DRAFT 상태에서는 전체 필드 수정 가능하며, 공개 이후(IN_PROGRESS)의 제한 정책은 별도 확인 필요.
-     *
-     * @param name                 프로젝트명 (null이면 무시)
-     * @param description          설명 (null이면 무시)
-     * @param externalLink         외부 링크 (null이면 무시)
-     * @param thumbnailFileId      썸네일 파일 ID UUID (null이면 무시)
-     * @param logoFileId           로고 파일 ID UUID (null이면 무시)
-     * @param productOwnerMemberId 새 PO Member ID (null이면 무시, PLAN 파트여야 함)
+     * 프로젝트 기본 정보를 부분 업데이트합니다. null 필드는 변경하지 않습니다.
+     * 소유권(productOwnerMemberId)은 별도 액션({@link #transferOwnership})으로 처리합니다.
      */
     public void updateBasicInfo(
         String name,
         String description,
         String externalLink,
         String thumbnailFileId,
-        String logoFileId,
-        Long productOwnerMemberId
+        String logoFileId
     ) {
+        validateMutable();
         if (name != null) {
             this.name = name;
         }
@@ -153,8 +146,22 @@ public class Project extends BaseEntity {
         if (logoFileId != null) {
             this.logoFileId = logoFileId;
         }
-        if (productOwnerMemberId != null) {
-            this.productOwnerMemberId = productOwnerMemberId;
+    }
+
+    /**
+     * 메인 PM(소유권)을 새 멤버에게 양도합니다. 종료 상태에서는 호출 불가.
+     * <p>
+     * 새 owner가 PLAN 파트인지, 동일 기수 내 다른 프로젝트가 없는지 등의 검증은
+     * Service 레벨에서 수행합니다 (도메인은 다른 도메인 정보를 알 수 없음).
+     */
+    public void transferOwnership(Long newOwnerMemberId) {
+        validateMutable();
+        this.productOwnerMemberId = newOwnerMemberId;
+    }
+
+    private void validateMutable() {
+        if (this.status == ProjectStatus.COMPLETED || this.status == ProjectStatus.ABORTED) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
         }
     }
 

@@ -6,10 +6,12 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.project.adapter.in.web.dto.request.CreateDraftProjectRequest;
+import com.umc.product.project.adapter.in.web.dto.request.TransferProjectOwnershipRequest;
 import com.umc.product.project.adapter.in.web.dto.request.UpdateProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectStatusResponse;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
+import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
@@ -35,12 +37,13 @@ public class ProjectCommandController {
     private final CreateDraftProjectUseCase createDraftProjectUseCase;
     private final UpdateProjectUseCase updateProjectUseCase;
     private final SubmitProjectUseCase submitProjectUseCase;
+    private final TransferProjectOwnershipUseCase transferProjectOwnershipUseCase;
     private final GetProjectUseCase getProjectUseCase;
 
     @PostMapping
     @Operation(
         summary = "프로젝트 Draft 생성 (PROJECT-101)",
-        description = "PM(PLAN 파트 챌린저)이 DRAFT 상태의 프로젝트를 생성합니다. 이미 같은 기수에 프로젝트가 있으면 409를 반환합니다."
+        description = "PM(PLAN 파트 챌린저)이 빈 DRAFT 상태의 프로젝트를 생성합니다. 페이지 진입 시 GET /me/draft로 사전 확인 후 호출 권장. 동일 PM·동일 기수 중복 생성 시 409."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
@@ -59,7 +62,7 @@ public class ProjectCommandController {
     @PatchMapping("/{projectId}")
     @Operation(
         summary = "프로젝트 기본정보 수정 (PROJECT-102)",
-        description = "프로젝트 기본정보를 부분 업데이트합니다. null 필드는 수정하지 않습니다."
+        description = "프로젝트 기본정보를 부분 업데이트합니다. DRAFT/PENDING_REVIEW/IN_PROGRESS 모두 허용, 종료 상태(COMPLETED/ABORTED)는 수정 불가. 소유권 양도는 별도 엔드포인트."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
@@ -80,7 +83,7 @@ public class ProjectCommandController {
     @PostMapping("/{projectId}/submit")
     @Operation(
         summary = "프로젝트 제출 (PROJECT-107)",
-        description = "DRAFT 상태의 프로젝트를 제출하여 PENDING_REVIEW로 전이합니다."
+        description = "DRAFT 상태의 프로젝트를 제출하여 PENDING_REVIEW로 전이합니다. 작성자 PM만 호출 가능."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
@@ -97,5 +100,27 @@ public class ProjectCommandController {
             .requesterMemberId(memberPrincipal.getMemberId())
             .build());
         return ProjectStatusResponse.of(projectId, ProjectStatus.PENDING_REVIEW);
+    }
+
+    @PostMapping("/{projectId}/transfer-ownership")
+    @Operation(
+        summary = "프로젝트 소유권 양도",
+        description = "메인 PM을 다른 PLAN 파트 챌린저에게 양도합니다. 현재 PM만 호출 가능. 종료 상태에서는 호출 불가."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 소유권 양도 권한이 없습니다."
+    )
+    public ProjectStatusResponse transferOwnership(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @Valid @RequestBody TransferProjectOwnershipRequest request
+    ) {
+        transferProjectOwnershipUseCase.transfer(
+            request.toCommand(projectId, memberPrincipal.getMemberId()));
+        ProjectInfo info = getProjectUseCase.getById(projectId);
+        return ProjectStatusResponse.from(info);
     }
 }

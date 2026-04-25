@@ -4,7 +4,7 @@ import com.umc.product.project.application.port.in.command.dto.UpdateProjectComm
 import jakarta.validation.constraints.Size;
 
 /**
- * 프로젝트 기본 정보 수정 요청 (PROJECT-102). 모든 필드가 nullable인 부분 업데이트.
+ * 프로젝트 기본 정보 수정 요청 (PROJECT-102). 모든 필드 nullable 부분 갱신.
  */
 public record UpdateProjectRequest(
     @Size(max = 100, message = "프로젝트명은 100자 이하여야 합니다")
@@ -18,9 +18,7 @@ public record UpdateProjectRequest(
 
     String thumbnailFileId,
 
-    String logoFileId,
-
-    Long productOwnerMemberId
+    String logoFileId
 ) {
     public UpdateProjectCommand toCommand(Long projectId, Long requesterMemberId) {
         return UpdateProjectCommand.builder()
@@ -31,7 +29,6 @@ public record UpdateProjectRequest(
             .externalLink(externalLink)
             .thumbnailFileId(thumbnailFileId)
             .logoFileId(logoFileId)
-            .productOwnerMemberId(productOwnerMemberId)
             .build();
     }
 }

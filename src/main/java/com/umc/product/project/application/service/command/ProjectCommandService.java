@@ -10,9 +10,11 @@ import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
+import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
+import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectCommand;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectPort;
@@ -29,7 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProjectCommandService implements
     CreateDraftProjectUseCase,
     UpdateProjectUseCase,
-    SubmitProjectUseCase {
+    SubmitProjectUseCase,
+    TransferProjectOwnershipUseCase {
 
     private final LoadProjectPort loadProjectPort;
     private final SaveProjectPort saveProjectPort;
@@ -42,10 +45,8 @@ public class ProjectCommandService implements
 
     @Override
     public Long create(CreateDraftProjectCommand command) {
-        // 1. 기수 존재 확인
         getGisuUseCase.getById(command.gisuId());
 
-        // 2. 요청자의 챌린저 조회 → PLAN 파트인지 확인
         ChallengerInfo challenger = getChallengerUseCase.getByMemberIdAndGisuId(
             command.productOwnerMemberId(), command.gisuId()
         );
@@ -53,16 +54,13 @@ public class ProjectCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_OWNER_NOT_PLAN_CHALLENGER);
         }
 
-        // 3. 중복 프로젝트 체크
         if (loadProjectPort.existsByOwnerAndGisu(command.productOwnerMemberId(), command.gisuId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_DUPLICATE_IN_GISU);
         }
 
-        // 4. 멤버의 학교 → 지부 조회
         MemberInfo member = getMemberUseCase.getById(command.productOwnerMemberId());
         ChapterInfo chapter = getChapterUseCase.byGisuAndSchool(command.gisuId(), member.schoolId());
 
-        // 5. 프로젝트 생성 및 저장
         Project project = Project.createDraft(command.gisuId(), chapter.id(), command.productOwnerMemberId());
         return saveProjectPort.save(project).getId();
     }
@@ -70,16 +68,12 @@ public class ProjectCommandService implements
     @Override
     public void update(UpdateProjectCommand command) {
         Project project = loadProjectPort.getById(command.projectId());
-
-        validateOwner(project, command.requesterMemberId());
-
         project.updateBasicInfo(
             command.name(),
             command.description(),
             command.externalLink(),
             command.thumbnailFileId(),
-            command.logoFileId(),
-            command.productOwnerMemberId()
+            command.logoFileId()
         );
     }
 
@@ -87,14 +81,32 @@ public class ProjectCommandService implements
     public void submit(SubmitProjectCommand command) {
         Project project = loadProjectPort.getById(command.projectId());
 
-        validateOwner(project, command.requesterMemberId());
+        if (!project.getProductOwnerMemberId().equals(command.requesterMemberId())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
+        }
 
         project.submit();
     }
 
-    private void validateOwner(Project project, Long memberId) {
-        if (!project.getProductOwnerMemberId().equals(memberId)) {
+    @Override
+    public void transfer(TransferProjectOwnershipCommand command) {
+        Project project = loadProjectPort.getById(command.projectId());
+
+        if (!project.getProductOwnerMemberId().equals(command.requesterMemberId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
+
+        ChallengerInfo newOwner = getChallengerUseCase.getByMemberIdAndGisuId(
+            command.newOwnerMemberId(), project.getGisuId()
+        );
+        if (newOwner.part() != ChallengerPart.PLAN) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_OWNER_NOT_PLAN_CHALLENGER);
+        }
+
+        if (loadProjectPort.existsByOwnerAndGisu(command.newOwnerMemberId(), project.getGisuId())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DUPLICATE_IN_GISU);
+        }
+
+        project.transferOwnership(command.newOwnerMemberId());
     }
 }

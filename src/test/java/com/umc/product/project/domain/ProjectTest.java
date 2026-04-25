@@ -46,38 +46,81 @@ class ProjectTest {
 
         @Test
         void null이_아닌_필드만_업데이트된다() {
-            // when
-            project.updateBasicInfo("프로젝트A", null, null, null, null, null);
+            project.updateBasicInfo("프로젝트A", null, null, null, null);
 
-            // then
             assertThat(project.getName()).isEqualTo("프로젝트A");
             assertThat(project.getDescription()).isNull();
         }
 
         @Test
-        void 모든_필드를_업데이트할_수_있다() {
-            // when
-            project.updateBasicInfo("이름", "설명", "https://link.com", "thumb-uuid", "logo-uuid", 200L);
+        void 모든_기본정보_필드를_업데이트할_수_있다() {
+            project.updateBasicInfo("이름", "설명", "https://link.com", "thumb-uuid", "logo-uuid");
 
-            // then
             assertThat(project.getName()).isEqualTo("이름");
             assertThat(project.getDescription()).isEqualTo("설명");
             assertThat(project.getExternalLink()).isEqualTo("https://link.com");
             assertThat(project.getThumbnailFileId()).isEqualTo("thumb-uuid");
             assertThat(project.getLogoFileId()).isEqualTo("logo-uuid");
-            assertThat(project.getProductOwnerMemberId()).isEqualTo(200L);
         }
 
         @Test
         void 전부_null이면_아무것도_변경되지_않는다() {
-            // given
-            project.updateBasicInfo("원래이름", null, null, null, null, null);
+            project.updateBasicInfo("원래이름", null, null, null, null);
 
-            // when
-            project.updateBasicInfo(null, null, null, null, null, null);
+            project.updateBasicInfo(null, null, null, null, null);
 
-            // then
             assertThat(project.getName()).isEqualTo("원래이름");
+        }
+
+        @Test
+        void COMPLETED_상태에서는_PROJECT_INVALID_STATE() {
+            setStatus(project, ProjectStatus.COMPLETED);
+
+            assertThatThrownBy(() -> project.updateBasicInfo("새이름", null, null, null, null))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+
+        @Test
+        void ABORTED_상태에서는_PROJECT_INVALID_STATE() {
+            setStatus(project, ProjectStatus.ABORTED);
+
+            assertThatThrownBy(() -> project.updateBasicInfo("새이름", null, null, null, null))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+    }
+
+    @Nested
+    class transferOwnership {
+
+        @Test
+        void 새_PM에게_양도된다() {
+            project.transferOwnership(200L);
+
+            assertThat(project.getProductOwnerMemberId()).isEqualTo(200L);
+        }
+
+        @Test
+        void COMPLETED_상태에서는_PROJECT_INVALID_STATE() {
+            setStatus(project, ProjectStatus.COMPLETED);
+
+            assertThatThrownBy(() -> project.transferOwnership(200L))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+
+        @Test
+        void ABORTED_상태에서는_PROJECT_INVALID_STATE() {
+            setStatus(project, ProjectStatus.ABORTED);
+
+            assertThatThrownBy(() -> project.transferOwnership(200L))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
         }
     }
 
@@ -86,25 +129,20 @@ class ProjectTest {
 
         @Test
         void DRAFT에서_PENDING_REVIEW로_전이된다() {
-            // given
-            project.updateBasicInfo("프로젝트명", null, null, null, null, null);
+            project.updateBasicInfo("프로젝트명", null, null, null, null);
             project.attachApplicationForm(10L);
 
-            // when
             project.submit();
 
-            // then
             assertThat(project.getStatus()).isEqualTo(ProjectStatus.PENDING_REVIEW);
         }
 
         @Test
         void DRAFT가_아니면_PROJECT_INVALID_STATE() {
-            // given
-            project.updateBasicInfo("프로젝트명", null, null, null, null, null);
+            project.updateBasicInfo("프로젝트명", null, null, null, null);
             project.attachApplicationForm(10L);
             project.submit();
 
-            // when & then
             assertThatThrownBy(() -> project.submit())
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -113,10 +151,8 @@ class ProjectTest {
 
         @Test
         void name이_null이면_SUBMIT_VALIDATION_FAILED() {
-            // given
             project.attachApplicationForm(10L);
 
-            // when & then
             assertThatThrownBy(() -> project.submit())
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -125,11 +161,9 @@ class ProjectTest {
 
         @Test
         void name이_빈문자열이면_SUBMIT_VALIDATION_FAILED() {
-            // given
-            project.updateBasicInfo("  ", null, null, null, null, null);
+            project.updateBasicInfo("  ", null, null, null, null);
             project.attachApplicationForm(10L);
 
-            // when & then
             assertThatThrownBy(() -> project.submit())
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -138,10 +172,8 @@ class ProjectTest {
 
         @Test
         void applicationFormId가_null이면_SUBMIT_VALIDATION_FAILED() {
-            // given
-            project.updateBasicInfo("프로젝트명", null, null, null, null, null);
+            project.updateBasicInfo("프로젝트명", null, null, null, null);
 
-            // when & then
             assertThatThrownBy(() -> project.submit())
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -154,10 +186,8 @@ class ProjectTest {
 
         @Test
         void applicationFormId가_설정된다() {
-            // when
             project.attachApplicationForm(42L);
 
-            // then
             assertThat(project.getApplicationFormId()).isEqualTo(42L);
         }
     }
@@ -167,19 +197,15 @@ class ProjectTest {
 
         @Test
         void IN_PROGRESS에서_COMPLETED로_전이된다() {
-            // given
             setStatus(project, ProjectStatus.IN_PROGRESS);
 
-            // when
             project.complete();
 
-            // then
             assertThat(project.getStatus()).isEqualTo(ProjectStatus.COMPLETED);
         }
 
         @Test
         void IN_PROGRESS가_아니면_PROJECT_INVALID_STATE() {
-            // when & then (DRAFT 상태)
             assertThatThrownBy(() -> project.complete())
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -192,10 +218,8 @@ class ProjectTest {
 
         @Test
         void DRAFT에서_ABORTED로_전이된다() {
-            // when
             project.abort("사유", 999L);
 
-            // then
             assertThat(project.getStatus()).isEqualTo(ProjectStatus.ABORTED);
             assertThat(project.getStatusChangedReason()).isEqualTo("사유");
             assertThat(project.getStatusChangedByMemberId()).isEqualTo(999L);
@@ -203,24 +227,19 @@ class ProjectTest {
 
         @Test
         void PENDING_REVIEW에서_ABORTED로_전이된다() {
-            // given
-            project.updateBasicInfo("이름", null, null, null, null, null);
+            project.updateBasicInfo("이름", null, null, null, null);
             project.attachApplicationForm(10L);
             project.submit();
 
-            // when
             project.abort("사유", 999L);
 
-            // then
             assertThat(project.getStatus()).isEqualTo(ProjectStatus.ABORTED);
         }
 
         @Test
         void COMPLETED_상태에서는_abort_불가() {
-            // given
             setStatus(project, ProjectStatus.COMPLETED);
 
-            // when & then
             assertThatThrownBy(() -> project.abort("사유", 999L))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -229,10 +248,8 @@ class ProjectTest {
 
         @Test
         void ABORTED_상태에서는_abort_불가() {
-            // given
             project.abort("첫번째 사유", 999L);
 
-            // when & then
             assertThatThrownBy(() -> project.abort("두번째 사유", 888L))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
