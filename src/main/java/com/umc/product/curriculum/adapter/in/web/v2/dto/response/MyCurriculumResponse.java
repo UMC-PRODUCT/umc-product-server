@@ -1,5 +1,6 @@
 package com.umc.product.curriculum.adapter.in.web.v2.dto.response;
 
+import com.umc.product.curriculum.application.port.in.query.dto.MyCurriculumInfo;
 import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
 import java.time.Instant;
@@ -15,6 +16,47 @@ public record MyCurriculumResponse(
     String title,
     List<MyWeeklyCurriculumResponse> weeks
 ) {
+
+    public static MyCurriculumResponse from(MyCurriculumInfo info) {
+        return MyCurriculumResponse.builder()
+            .curriculumId(info.curriculumId())
+            .title(info.title())
+            .weeks(info.weeks().stream()
+                .map(w -> MyWeeklyCurriculumResponse.builder()
+                    .weeklyCurriculumId(w.weeklyCurriculumId())
+                    .weekNo(w.weekNo())
+                    .title(w.title())
+                    .isExtra(w.isExtra())
+                    .startsAt(w.startsAt())
+                    .endsAt(w.endsAt())
+                    .status(WeeklyCurriculumStatus.from(w))
+                    .originalWorkbooks(w.releasedOriginalWorkbooks().stream()
+                        .map(wb -> MyOriginalWorkbookResponse.builder()
+                            .originalWorkbookId(wb.originalWorkbookId())
+                            .title(wb.title())
+                            .description(wb.description())
+                            .url(wb.url())
+                            .type(wb.type())
+                            .missions(wb.missions().stream()
+                                .map(m -> MyOriginalWorkbookMissionResponse.builder()
+                                    .originalWorkbookMissionId(m.originalWorkbookMissionId())
+                                    .title(m.title())
+                                    .description(m.description())
+                                    .missionType(m.missionType())
+                                    .isNecessary(m.isNecessary())
+                                    // TODO: MissionSubmission 미구현 — hasSubmission=false, submission=null
+                                    .hasSubmission(false)
+                                    .submission(null)
+                                    .build())
+                                .toList())
+                            .isDeployedToMember(wb.isDeployedToMember())
+                            .challengerWorkbookId(wb.challengerWorkbookId().orElse(null))
+                            .build())
+                        .toList())
+                    .build())
+                .toList())
+            .build();
+    }
 
     /**
      * 사용자에 따른 각 주차별 커리큘럼과 관련된 내용

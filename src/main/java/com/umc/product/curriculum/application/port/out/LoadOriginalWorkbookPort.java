@@ -18,6 +18,11 @@ public interface LoadOriginalWorkbookPort {
     List<CurriculumInfo.WorkbookInfo> findWorkbookInfos(Long curriculumId, Integer weekNo);
 
     /**
+     * 해당 주차별 커리큘럼에 배포(RELEASED)된 원본 워크북 목록 조회
+     */
+    List<OriginalWorkbook> findReleasedByWeeklyCurriculumId(Long weeklyCurriculumId);
+
+    /**
      * 기수의 모든 주차 번호 조회 (드롭다운용)
      */
     List<Integer> findDistinctWeekNoByGisuId(Long gisuId);

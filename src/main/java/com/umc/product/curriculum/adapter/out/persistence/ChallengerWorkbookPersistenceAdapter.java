@@ -7,6 +7,7 @@ import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import com.umc.product.global.exception.NotImplementedException;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -30,6 +31,11 @@ public class ChallengerWorkbookPersistenceAdapter implements LoadChallengerWorkb
 //            challengerId,
 //            originalWorkbookId
 //        );
+    }
+
+    @Override
+    public Optional<ChallengerWorkbook> findByMemberIdAndOriginalWorkbookId(Long memberId, Long originalWorkbookId) {
+        return challengerWorkbookJpaRepository.findByMemberIdAndOriginalWorkbookId(memberId, originalWorkbookId);
     }
 
     @Override

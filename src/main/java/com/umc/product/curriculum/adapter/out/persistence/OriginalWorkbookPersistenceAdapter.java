@@ -6,6 +6,7 @@ import com.umc.product.curriculum.application.port.in.query.dto.CurriculumWeekIn
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
+import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
 import com.umc.product.global.exception.NotImplementedException;
@@ -37,6 +38,12 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
     public List<OriginalWorkbook> findByCurriculumIdOrderByWeekNo(Long curriculumId) {
         throw new NotImplementedException();
 //        return originalWorkbookJpaRepository.findByCurriculumIdOrderByWeekNoAsc(curriculumId);
+    }
+
+    @Override
+    public List<OriginalWorkbook> findReleasedByWeeklyCurriculumId(Long weeklyCurriculumId) {
+        return originalWorkbookJpaRepository.findByWeeklyCurriculumIdAndOriginalWorkbookStatus(
+            weeklyCurriculumId, OriginalWorkbookStatus.RELEASED);
     }
 
     @Override
