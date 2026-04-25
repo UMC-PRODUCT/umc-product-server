@@ -36,7 +36,7 @@ public class ProjectQueryController {
 
     @GetMapping
     @Operation(
-        summary = "프로젝트 목록 조회 (PROJECT-001)",
+        summary = "[PROJECT-001] 프로젝트 목록 조회",
         description = "기수/지부/파트 등으로 필터링된 프로젝트 목록을 페이지 조회합니다."
     )
     @CheckAccess(
@@ -57,7 +57,7 @@ public class ProjectQueryController {
 
     @GetMapping("/{projectId}")
     @Operation(
-        summary = "프로젝트 상세 조회 (PROJECT-002)",
+        summary = "[PROJECT-002] 프로젝트 상세 조회",
         description = "단건 프로젝트 상세 정보를 조회합니다. 권한에 따라 실명 정보가 마스킹됩니다."
     )
     @CheckAccess(
@@ -77,7 +77,7 @@ public class ProjectQueryController {
 
     @GetMapping("/me/draft")
     @Operation(
-        summary = "내 Draft 조회 (PROJECT-103)",
+        summary = "[PROJECT-103] 내 Draft 조회",
         description = "요청자(PM)가 작성 중인 Draft 프로젝트를 조회합니다. 없으면 null."
     )
     public DraftProjectResponse getMyDraft(

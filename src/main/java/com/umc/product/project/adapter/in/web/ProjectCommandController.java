@@ -39,7 +39,7 @@ public class ProjectCommandController {
 
     @PostMapping
     @Operation(
-        summary = "프로젝트 Draft 생성 (PROJECT-101)",
+        summary = "[PROJECT-101] 프로젝트 Draft 생성",
         description = "PM(PLAN 파트 챌린저)이 빈 DRAFT 상태의 프로젝트를 생성합니다. 페이지 진입 시 GET /me/draft로 사전 확인 후 호출 권장. 동일 PM·동일 기수 중복 생성 시 409."
     )
     @CheckAccess(
@@ -58,7 +58,7 @@ public class ProjectCommandController {
 
     @PatchMapping("/{projectId}")
     @Operation(
-        summary = "프로젝트 기본정보 수정 (PROJECT-102)",
+        summary = "[PROJECT-102] 프로젝트 기본정보 수정",
         description = "프로젝트 기본정보를 부분 업데이트합니다. DRAFT/PENDING_REVIEW/IN_PROGRESS 모두 허용, 종료 상태(COMPLETED/ABORTED)는 수정 불가. 소유권 양도는 별도 엔드포인트."
     )
     @CheckAccess(
@@ -79,7 +79,7 @@ public class ProjectCommandController {
 
     @PostMapping("/{projectId}/submit")
     @Operation(
-        summary = "프로젝트 제출 (PROJECT-107)",
+        summary = "[PROJECT-107] 프로젝트 제출",
         description = "DRAFT 상태의 프로젝트를 제출하여 PENDING_REVIEW로 전이합니다. 작성자 PM만 호출 가능."
     )
     @CheckAccess(
@@ -101,7 +101,7 @@ public class ProjectCommandController {
 
     @PostMapping("/{projectId}/transfer-ownership")
     @Operation(
-        summary = "프로젝트 소유권 양도",
+        summary = "[PROJECT-104] 프로젝트 소유권 양도",
         description = "메인 PM을 다른 PLAN 파트 챌린저에게 양도합니다. 현재 PM만 호출 가능. 종료 상태에서는 호출 불가."
     )
     @CheckAccess(
