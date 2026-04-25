@@ -17,6 +17,7 @@ import java.util.Optional;
 public class WeeklyCurriculumPersistenceAdapter implements LoadWeeklyCurriculumPort, SaveWeeklyCurriculumPort {
 
     private final WeeklyCurriculumJpaRepository weeklyCurriculumJpaRepository;
+    private final WeeklyCurriculumQueryRepository weeklyCurriculumQueryRepository;
 
     @Override
     public Optional<WeeklyCurriculum> findById(Long id) {
@@ -44,13 +45,12 @@ public class WeeklyCurriculumPersistenceAdapter implements LoadWeeklyCurriculumP
 
     @Override
     public boolean existsOriginalWorkbookByWeeklyCurriculumId(Long weeklyCurriculumId) {
-        return weeklyCurriculumJpaRepository.existsOriginalWorkbookByWeeklyCurriculumId(weeklyCurriculumId);
+        return weeklyCurriculumQueryRepository.existsOriginalWorkbook(weeklyCurriculumId, null);
     }
 
     @Override
     public boolean existsReleasedOriginalWorkbookByWeeklyCurriculumId(Long weeklyCurriculumId) {
-        return weeklyCurriculumJpaRepository
-            .existsOriginalWorkbookByWeeklyCurriculumIdAndStatus(weeklyCurriculumId, OriginalWorkbookStatus.RELEASED);
+        return weeklyCurriculumQueryRepository.existsOriginalWorkbook(weeklyCurriculumId, OriginalWorkbookStatus.RELEASED);
     }
 
     @Override
