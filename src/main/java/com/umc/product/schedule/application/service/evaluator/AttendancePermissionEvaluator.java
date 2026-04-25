@@ -1,4 +1,4 @@
-package com.umc.product.schedule.application.service;
+package com.umc.product.schedule.application.service.evaluator;
 
 import com.umc.product.authorization.application.port.out.ResourcePermissionEvaluator;
 import com.umc.product.authorization.domain.PermissionType;
