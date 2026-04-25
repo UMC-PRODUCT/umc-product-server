@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+// TODO: 프로젝트 전반의 QueryDSL 일관성을 위해 ProjectMemberQueryRepository로 마이그레이션 필요.
 public interface ProjectMemberJpaRepository extends JpaRepository<ProjectMember, Long> {
 
     List<ProjectMember> findByProjectIdAndPartAndStatus(Long projectId, ChallengerPart part, ProjectMemberStatus status);
