@@ -31,6 +31,7 @@ public interface NoticeQueryApi {
     @Operation(
         summary = "공지사항 전체 조회",
         description = "분류 필터별로 공지사항 목록을 페이징하여 조회합니다. "
+            + "isStaffNotice=true 시 운영진 공지를 조회합니다 (본인 역할 기반 자동 필터링)."
     )
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -51,7 +52,8 @@ public interface NoticeQueryApi {
     @Operation(
         summary = "공지사항 검색",
         description = "키워드로 공지사항을 검색합니다. 제목과 내용에서 키워드를 검색하며, "
-            + "분류 필터(classification)를 함께 사용하면 특정 범위 내에서만 검색됩니다."
+            + "분류 필터(classification)를 함께 사용하면 특정 범위 내에서만 검색됩니다. "
+            + "isStaffNotice=true 시 운영진 공지 범위 내에서 검색합니다."
     )
     @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
