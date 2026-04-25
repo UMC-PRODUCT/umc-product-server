@@ -39,7 +39,7 @@ public class ScheduleQueryV2Controller {
 
     // ========================= 일정 관련 =========================
 
-    @Operation(summary = "[프론트엔드용] 일정 생성 권한 조회", description = """
+    @Operation(summary = "[프론트엔드용] 일정 생성 관련 권한 조회", description = """
         현재 사용자의 일정 생성 관련 권한을 조회합니다. 일정 생성 화면에서 사용하시면 됩니다.
 
         - `canCreateSchedule` : 일정 생성 가능 여부
