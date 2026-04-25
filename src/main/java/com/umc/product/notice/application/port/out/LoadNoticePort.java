@@ -11,9 +11,11 @@ public interface LoadNoticePort {
     Optional<Notice> findNoticeById(Long id);
 
     /**
-     * classification.isStaffNotice()에 따라 챌린저/운영진 공지를 구분해 조회합니다.
-     * 챌린저 공지: viewerInfo.memberParts() 기반 파트 필터
-     * 운영진 공지: viewerInfo.roles() 기반 역할 overlap 필터 (roles는 readableRoles()로 확장된 값)
+     * classification.tab()에 따라 공지를 구분해 조회합니다.
+     * CHALLENGER: viewerInfo.memberParts() 기반 파트 필터
+     * CENTRAL_STAFF: viewerInfo.roles() 중 중앙 역할 기반 overlap 필터
+     * SCHOOL_STAFF: viewerInfo.roles() 중 교내 역할 기반 overlap 필터 + 소속 학교 범위
+     * (roles는 readableRoles()로 확장된 값)
      */
     Page<Notice> findNoticesByClassification(NoticeClassification classification, NoticeViewerInfo viewerInfo,
                                              Pageable pageable);

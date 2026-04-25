@@ -221,6 +221,11 @@ public enum NoticeTargetPattern {
         if (hasCentralRole) {
             return useCase.isCentralCoreInGisu(memberId, info.targetGisuId());
         }
+        // 교내 범위 운영진 공지 (targetSchoolId 있음): 중앙운영진 또는 해당 학교 운영진 모두 작성 가능
+        if (info.targetSchoolId() != null) {
+            return useCase.isCentralMemberInGisu(memberId, info.targetGisuId())
+                || useCase.isSchoolCoreInGisu(memberId, info.targetGisuId(), info.targetSchoolId());
+        }
         return useCase.isCentralMemberInGisu(memberId, info.targetGisuId());
     }
 

@@ -2,6 +2,7 @@ package com.umc.product.notice.application.service.query;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.GetNoticeContentUseCase;
@@ -22,10 +23,13 @@ import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
+import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.dto.NoticeClassification;
 import com.umc.product.notice.dto.NoticeTargetInfo;
+import com.umc.product.notice.dto.NoticeTargetPattern;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
@@ -63,10 +67,11 @@ public class NoticeQueryService implements GetNoticeUseCase {
     @Override
     public Page<NoticeSummary> getAllNoticeSummaries(NoticeViewerInfo viewerInfo, NoticeClassification classification,
                                                      Pageable pageable) {
-        // 운영진 공지는 chapterId/schoolId enrichment 불필요 (역할 기반 조회)
-        NoticeClassification enriched = classification.isStaffNotice()
-            ? classification
-            : enrichClassification(viewerInfo, classification);
+        // 운영진 공지 탭은 chapterId/schoolId enrichment 불필요 (역할 기반 조회)
+        NoticeClassification enriched = classification.tab() == NoticeTab.CHALLENGER
+            ? enrichClassification(viewerInfo, classification)
+            : classification;
+        validateClassification(enriched);
         Page<Notice> notices = loadNoticePort.findNoticesByClassification(enriched, viewerInfo, pageable);
         return toNoticeSummaryPage(notices);
     }
@@ -75,10 +80,11 @@ public class NoticeQueryService implements GetNoticeUseCase {
     public Page<NoticeSummary> searchNoticesByKeyword(String keyword, NoticeViewerInfo viewerInfo,
                                                       NoticeClassification classification,
                                                       Pageable pageable) {
-        // 운영진 공지는 chapterId/schoolId enrichment 불필요 (역할 기반 조회)
-        NoticeClassification enriched = classification.isStaffNotice()
-            ? classification
-            : enrichClassification(viewerInfo, classification);
+        // 운영진 공지 탭은 chapterId/schoolId enrichment 불필요 (역할 기반 조회)
+        NoticeClassification enriched = classification.tab() == NoticeTab.CHALLENGER
+            ? enrichClassification(viewerInfo, classification)
+            : classification;
+        validateClassification(enriched);
         Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, enriched, viewerInfo, pageable);
         return toNoticeSummaryPage(notices);
     }
@@ -198,7 +204,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         // 전체 기수 공지 여부
         if (targetInfo.targetGisuId() != null) {
-            challengers = getChallengerUseCase.getAllByGisuIdWithoutChallengerPoints(targetInfo.targetGisuId());
+            challengers = getChallengerUseCase.getAllByGisuId(targetInfo.targetGisuId());
         } else {
             // 모든 기수 대상 공지: DB 쿼리에서 멤버당 최신 기수 챌린저 1건만 조회 (읽음 현황 조회 시 혼선 방지)
             challengers = getChallengerUseCase.getAllLatestGisuPerMemberWithoutChallengerPoints();
@@ -253,7 +259,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         List<ChallengerInfo> challengers;
         if (targetInfo.targetGisuId() != null) {
-            challengers = getChallengerUseCase.getAllByGisuIdWithoutChallengerPoints(targetInfo.targetGisuId());
+            challengers = getChallengerUseCase.getAllByGisuId(targetInfo.targetGisuId());
         } else {
             challengers = getChallengerUseCase.getAllLatestGisuPerMemberWithoutChallengerPoints();
         }
@@ -291,6 +297,27 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
 
     /**
+     * NoticeTargetPattern.from()을 통해 챌린저 공지 조회 조건의 조합 유효성을 검증합니다.
+     * 운영진 공지는 역할 기반 조회이므로 건너뜁니다.
+     * 유효하지 않은 조합(예: 지부+학교 동시 지정)이면 예외가 발생합니다.
+     */
+    private void validateClassification(NoticeClassification classification) {
+        if (classification.tab() != NoticeTab.CHALLENGER) {
+            return;
+        }
+        List<ChallengerPart> parts = classification.part() != null
+            ? List.of(classification.part()) : null;
+        NoticeTargetInfo targetInfo = new NoticeTargetInfo(
+            classification.gisuId(),
+            classification.chapterId(),
+            classification.schoolId(),
+            parts,
+            List.of(NoticeTargetRole.CHALLENGER)
+        );
+        NoticeTargetPattern.from(targetInfo);
+    }
+
+    /**
      * 지부/학교/파트 필터 요청 시, 조회자의 실제 소속 정보로 chapterId/schoolId를 채웁니다. 모든 필터가 없으면 그대로 반환합니다.
      * <p>
      * 클라이언트가 넘긴 chapterId/schoolId는 "이 필터 종류로 조회"라는 의도로만 사용하고, 실제 ID 값은 viewerInfo에서 가져옵니다.
@@ -308,7 +335,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Long filteredSchoolId = (classification.schoolId() != null || hasPart) ? viewerInfo.schoolId() : null;
 
         return new NoticeClassification(classification.gisuId(), filteredChapterId, filteredSchoolId,
-            classification.part(), false);
+            classification.part(), NoticeTab.CHALLENGER);
     }
 
     private Page<NoticeSummary> toNoticeSummaryPage(Page<Notice> notices) {

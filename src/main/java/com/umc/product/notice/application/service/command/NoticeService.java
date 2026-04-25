@@ -15,6 +15,7 @@ import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTarget;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeTargetInfo;
@@ -80,6 +81,7 @@ public class NoticeService implements ManageNoticeUseCase {
             .targetSchoolId(command.targetInfo().targetSchoolId())
             .targetChallengerPart(command.targetInfo().targetParts())
             .targetRoles(command.targetInfo().targetRoles())
+            .noticeTab(resolveNoticeTab(command.memberId(), command.targetInfo()))
             .build()
         );
 
@@ -166,6 +168,19 @@ public class NoticeService implements ManageNoticeUseCase {
     private boolean validateNoticeWritePermission(NoticeTargetInfo noticeTargetInfo, Long authorMemberId) {
         NoticeTargetPattern pattern = NoticeTargetPattern.from(noticeTargetInfo);
         return pattern.validatePermission(noticeTargetInfo, authorMemberId, getChallengerRoleUseCase);
+    }
+
+    /**
+     * 작성자의 역할을 기반으로 공지 탭을 결정 - 일반 공지: CHALLENGER - 운영진 공지: 작성자가 중앙운영진이면 CENTRAL_STAFF, 아니면 SCHOOL_STAFF
+     */
+    private NoticeTab resolveNoticeTab(Long memberId, NoticeTargetInfo targetInfo) {
+        if (!targetInfo.isStaffNotice()) {
+            return NoticeTab.CHALLENGER;
+        }
+        if (getChallengerRoleUseCase.isCentralMemberInGisu(memberId, targetInfo.targetGisuId())) {
+            return NoticeTab.CENTRAL_STAFF;
+        }
+        return NoticeTab.SCHOOL_STAFF;
     }
 
 
