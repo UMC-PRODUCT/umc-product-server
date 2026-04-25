@@ -16,22 +16,7 @@ ALTER TABLE project
 ALTER TABLE project
     ADD CONSTRAINT uk_project_owner_gisu UNIQUE (product_owner_member_id, gisu_id);
 
--- 4) FileCategory CHECK 확장 — PROJECT_THUMBNAIL / PROJECT_LOGO 허용
+-- 4) FileCategory CHECK 제거 — Java enum @Enumerated(EnumType.STRING)이 이미 가드,
+--    enum 추가마다 migration 동반 비용 회피
 ALTER TABLE file_metadata
     DROP CONSTRAINT file_metadata_category_check;
-
-ALTER TABLE file_metadata
-    ADD CONSTRAINT file_metadata_category_check CHECK (
-        (category)::text = ANY (ARRAY[
-            'PROFILE_IMAGE'::character varying,
-            'POST_IMAGE'::character varying,
-            'POST_ATTACHMENT'::character varying,
-            'NOTICE_ATTACHMENT'::character varying,
-            'WORKBOOK_SUBMISSION'::character varying,
-            'SCHOOL_LOGO'::character varying,
-            'PORTFOLIO'::character varying,
-            'ETC'::character varying,
-            'PROJECT_THUMBNAIL'::character varying,
-            'PROJECT_LOGO'::character varying
-        ]::text[])
-    );
