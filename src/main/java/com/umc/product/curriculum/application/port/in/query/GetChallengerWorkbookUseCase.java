@@ -1,9 +1,6 @@
 package com.umc.product.curriculum.application.port.in.query;
 
-import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
-import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionDetailInfo;
-import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
-import java.util.List;
+import com.umc.product.curriculum.application.port.in.query.dto.ChallengerWorkbookInfo;
 
 /**
  * ChallengerWorkbook 조회 UseCase
@@ -12,21 +9,15 @@ public interface GetChallengerWorkbookUseCase {
 
     // <----------------------------- 챌린저 기능 ----------------------------->
 
-    // <----------------------------- 운영진 기능 ----------------------------->
     /**
-     * (운영진 기능) 학교, 주차, 스터디그룹별 제출된 ChallengerWorkbook 리스트 조회
-     *
-     * @param query schoolId, weekNo, studyGroupId, part, cursor, size
-     * @return 워크북 제출 현황 리스트 (cursor 페이지네이션)
-     */
-    List<WorkbookSubmissionInfo> getSubmissions(GetWorkbookSubmissionsQuery query);
-
-    /**
-     * (운영진 기능) 챌린저 워크북의 제출 URL 상세 조회
+     * 챌린저 워크북 상세 조회
+     * <p>
+     * 같은 기수에 활동한 모든 챌린저가 조회 가능합니다.
+     * 미션 제출 내역 및 피드백을 포함합니다.
      *
      * @param challengerWorkbookId 챌린저 워크북 ID
-     * @return 제출 URL 및 상태 정보
+     * @return 챌린저 워크북 상세 정보 (미션 제출물 및 피드백 포함)
      */
-    WorkbookSubmissionDetailInfo getSubmissionDetail(Long challengerWorkbookId);
+    ChallengerWorkbookInfo getById(Long challengerWorkbookId);
 
 }

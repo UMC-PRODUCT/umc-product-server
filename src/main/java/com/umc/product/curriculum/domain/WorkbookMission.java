@@ -16,9 +16,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "workbook_mission")
+@Table(name = "legacy_workbook_mission")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Deprecated
 public class WorkbookMission extends BaseEntity {
 
     @Id

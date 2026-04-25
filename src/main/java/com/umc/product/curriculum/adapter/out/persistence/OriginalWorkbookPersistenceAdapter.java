@@ -8,6 +8,7 @@ import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
+import com.umc.product.global.exception.NotImplementedException;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -28,17 +29,20 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
 
     @Override
     public List<OriginalWorkbook> findByCurriculumId(Long curriculumId) {
-        return originalWorkbookJpaRepository.findByCurriculumId(curriculumId);
+        throw new NotImplementedException();
+//        return originalWorkbookJpaRepository.findByCurriculumId(curriculumId);
     }
 
     @Override
     public List<OriginalWorkbook> findByCurriculumIdOrderByWeekNo(Long curriculumId) {
-        return originalWorkbookJpaRepository.findByCurriculumIdOrderByWeekNoAsc(curriculumId);
+        throw new NotImplementedException();
+//        return originalWorkbookJpaRepository.findByCurriculumIdOrderByWeekNoAsc(curriculumId);
     }
 
     @Override
     public List<Integer> findDistinctWeekNoByGisuId(Long gisuId) {
-        return originalWorkbookJpaRepository.findDistinctWeekNoByGisuId(gisuId);
+        throw new NotImplementedException();
+//        return originalWorkbookJpaRepository.findDistinctWeekNoByGisuId(gisuId);
     }
 
     @Override
@@ -71,6 +75,8 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
         if (curriculumIds == null || curriculumIds.isEmpty()) {
             return List.of();
         }
-        return originalWorkbookJpaRepository.findByCurriculumIdIn(curriculumIds);
+
+        throw new NotImplementedException();
+//        return originalWorkbookJpaRepository.findByCurriculumIdIn(curriculumIds);
     }
 }

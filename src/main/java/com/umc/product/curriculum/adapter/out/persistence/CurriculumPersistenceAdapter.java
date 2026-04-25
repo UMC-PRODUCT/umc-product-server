@@ -28,17 +28,6 @@ public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCur
     }
 
     @Override
-    public Optional<Curriculum> findEntityByGisuIdAndPart(Long gisuId, ChallengerPart part) {
-        return curriculumJpaRepository.findByGisuIdAndPart(gisuId, part);
-    }
-
-    @Override
-    public Curriculum getEntityByGisuIdAndPart(Long gisuId, ChallengerPart part) {
-        return findEntityByGisuIdAndPart(gisuId, part)
-            .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.CURRICULUM_NOT_FOUND));
-    }
-
-    @Override
     public Optional<CurriculumProjection> findByGisuIdAndPart(Long gisuId, ChallengerPart part) {
         return curriculumQueryRepository.findByGisuIdAndPart(gisuId, part);
     }
@@ -52,6 +41,11 @@ public class CurriculumPersistenceAdapter implements LoadCurriculumPort, LoadCur
     @Override
     public boolean existsById(Long id) {
         return curriculumJpaRepository.existsById(id);
+    }
+
+    @Override
+    public boolean existsByGisuIdAndPart(Long gisuId, ChallengerPart part) {
+        return curriculumJpaRepository.existsByGisuIdAndPart(gisuId, part);
     }
 
     @Override
