@@ -17,9 +17,10 @@ public enum WeeklyCurriculumStatus {
      *       IN_PROGRESS, AWAITING_RESULT, BEST/PASS/FAIL 판별 로직 구현 필요.
      *       현재는 배포된 워크북 존재 여부만으로 단순 판별.
      */
-    public static WeeklyCurriculumStatus from(MyCurriculumInfo.WeeklyItem weeklyItem) {
-        boolean hasDeployedWorkbook = weeklyItem.releasedOriginalWorkbooks().stream()
-            .anyMatch(wb -> wb.isDeployedToMember());
+    public static WeeklyCurriculumStatus from(MyCurriculumInfo.MyWeeklyCurriculumInfo myWeeklyCurriculumInfo) {
+        boolean hasDeployedWorkbook = myWeeklyCurriculumInfo.releasedOriginalWorkbooks()
+            .stream()
+            .anyMatch(MyCurriculumInfo.MyOriginalWorkbookInfo::isDeployedToMember);
         return hasDeployedWorkbook ? IN_PROGRESS : NOT_STARTED;
     }
 }
