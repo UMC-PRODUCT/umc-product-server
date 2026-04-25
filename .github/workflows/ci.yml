@@ -56,6 +56,7 @@ jobs:
       contents: read
       checks: write
       pull-requests: write
+      issues: write
       packages: write
       statuses: write
       deployments: write
