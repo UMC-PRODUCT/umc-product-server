@@ -42,9 +42,7 @@ public interface ManageOriginalWorkbookUseCase {
     /**
      * 원본 워크북 상태 일괄 변경 (배포 준비 또는 배포 처리)
      * <p>
-     * 요청 중 하나라도 실패하면 전체 요청이 실패합니다.
-     * - READY: 스케줄러에 의해 자동 배포 가능한 상태
-     * - RELEASED: 수동 또는 자동으로 배포 완료된 상태 (READY에서만 전환 가능)
+     * 요청 중 하나라도 실패하면 전체 요청이 실패합니다. - READY: 스케줄러에 의해 자동 배포 가능한 상태 - RELEASED: 수동 또는 자동으로 배포 완료된 상태 (READY에서만 전환 가능)
      *
      * @param commands 상태 변경 커맨드 목록 (원본 워크북 ID, 변경할 상태)
      */

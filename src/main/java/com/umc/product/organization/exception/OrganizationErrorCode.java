@@ -26,8 +26,8 @@ public enum OrganizationErrorCode implements BaseCode {
     STUDY_GROUP_LEADER_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZAITON-0011", "스터디 그룹 리더는 필수입니다."),
 
     STUDY_GROUP_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZAITON-0012", "스터디 그룹은 필수입니다."),
-    STUDY_GROUP_MEMBER_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZAITON-0013", "스터디 그룹 멤버는 필수입니다."),
-    CHALLENGER_ID_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZAITON-0014", "챌린저 ID는 필수입니다."),
+    STUDY_GROUP_MEMBER_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZAITON-0013", "스터디 그룹 멤버는 최소 1명 이상이어야 합니다."),
+    STUDY_GROUP_MEMBER_ID_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZAITON-0014", "스터디 그룹을 만들 때 Member ID는 필수입니다."),
     STUDY_GROUP_MEMBER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "ORGANIZAITON-0015", "이미 존재하는 스터디 그룹 멤버입니다."),
     STUDY_GROUP_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZAITON-0016", "스터디 그룹 멤버를 찾을 수 없습니다."),
 
@@ -49,7 +49,9 @@ public enum OrganizationErrorCode implements BaseCode {
     CHAPTER_NAME_DUPLICATED(HttpStatus.CONFLICT, "ORGANIZATION-0030", "해당 기수에 동일한 이름의 지부가 이미 존재합니다."),
     STUDY_GROUP_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORGANIZATION-0031", "스터디 그룹 조회 권한이 없습니다."),
     GISU_HAS_ASSOCIATED_CHAPTERS(HttpStatus.CONFLICT, "ORGANIZATION-0032", "해당 기수에 연결된 지부 또는 학교가 존재하여 삭제할 수 없습니다."),
-    ;
+    STUDY_GROUP_MENTOR_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0033", "스터디 그룹 파트장는 최소 1명 이상이어야 합니다."),
+    STUDY_GROUP_MENTOR_ID_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0034" , "스터디 그룹 멘토의 StudyGroupMentor ID는 필수입니다."),
+    STUDY_GROUP_MEMBER_ALREADY_IN_PART_STUDY(HttpStatus.CONFLICT, "ORGANIZATION-0035", "다른 스터디 그룹과 중복된 멤버가 있습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

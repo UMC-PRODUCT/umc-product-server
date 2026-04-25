@@ -1,9 +1,8 @@
 package com.umc.product.curriculum.application.port.in.query.dto;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import lombok.Builder;
-
 import java.util.List;
+import lombok.Builder;
 
 /**
  * 베스트 워크북 조회 결과 Info

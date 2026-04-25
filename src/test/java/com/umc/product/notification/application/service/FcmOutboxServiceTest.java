@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.umc.product.notification.application.port.in.ProcessFcmOutboxUseCase;
 import com.umc.product.notification.application.port.out.LoadFcmOutboxPort;
-import com.umc.product.notification.domain.FcmOutboxStatus;
 import com.umc.product.support.UseCaseTestSupport;
 import com.umc.product.support.fixture.FcmOutboxFixture;
 import com.umc.product.support.fixture.MemberFixture;

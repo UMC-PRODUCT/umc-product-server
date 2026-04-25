@@ -9,21 +9,20 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.util.StringUtils;
 
 @Entity
 @Getter
@@ -34,41 +33,79 @@ public class StudyGroup extends BaseEntity {
     @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
 
+    @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
+    private final List<StudyGroupMentor> studyGroupMentor = new ArrayList<>();
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "name", nullable = false)
     private String name;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "gisu_id")
-    private Gisu gisu;
+    @Column(nullable = false)
+    private Long gisuId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ChallengerPart part;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private StudyGroup(String name, Gisu gisu, ChallengerPart part) {
-        validate(name, gisu, part);
+    private StudyGroup(String name, Long gisuId, ChallengerPart part) {
+        validate(name, gisuId, part);
         this.name = name;
-        this.gisu = gisu;
+        this.gisuId = gisuId;
         this.part = part;
     }
 
-    public static StudyGroup create(String name, Gisu gisu, ChallengerPart part) {
-        return StudyGroup.builder()
+    public static StudyGroup create(String name, Long gisuId, ChallengerPart part, Set<Long> mentorIds, Set<Long> memberIds) {
+        if(mentorIds == null || mentorIds.isEmpty()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_REQUIRED);
+        }
+        if(memberIds == null || memberIds.isEmpty()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED);
+        }
+
+        StudyGroup group = StudyGroup.builder()
             .name(name)
-            .gisu(gisu)
+            .gisuId(gisuId)
             .part(part)
             .build();
+
+        mentorIds.forEach(group::addMentor);
+        memberIds.forEach(group::addStudyGroupMember);
+
+        return group;
     }
 
-    private static void validate(String name, Gisu gisu, ChallengerPart part) {
+    public void addStudyGroupMember(Long memberId) {
+        if (memberId == null) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED);
+        }
+        boolean duplicate = hasMember(memberId);
+        if (duplicate) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_DUPLICATED);
+        }
+        this.studyGroupMembers.add(StudyGroupMember.create(this, memberId));
+    }
+
+    public boolean hasMember(Long memberId) {
+        return studyGroupMembers.stream()
+            .anyMatch(m -> m.getMemberId().equals(memberId));
+    }
+
+    private void addMentor(Long mentorId) {
+        if(mentorId == null) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_ID_REQUIRED);
+        }
+        this.studyGroupMentor.add(StudyGroupMentor.create(this, mentorId));
+    }
+
+    private static void validate(String name, Long gisuId, ChallengerPart part) {
         if (name == null || name.isBlank()) {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
         }
-        if (gisu == null) {
+        if (gisuId == null) {
             throw new OrganizationDomainException(OrganizationErrorCode.GISU_REQUIRED);
         }
         if (part == null) {
@@ -78,134 +115,29 @@ public class StudyGroup extends BaseEntity {
 
     // ============ Domain Methods (Aggregate Root Pattern) ============
 
-    /**
-     * 스터디 그룹에 리더 추가
-     *
-     * @param challengerId 추가할 챌린저 ID
-     */
-    public void addLeader(Long challengerId) {
-        throwIfMemberAlreadyExists(challengerId);
-        studyGroupMembers.add(StudyGroupMember.create(this, challengerId, true));
-    }
-
-    /**
-     * 스터디 그룹에 일반 멤버 추가
-     *
-     * @param challengerId 추가할 챌린저 ID
-     */
-    public void addMember(Long challengerId) {
-        throwIfMemberAlreadyExists(challengerId);
-        studyGroupMembers.add(StudyGroupMember.create(this, challengerId, false));
-    }
-
-    /**
-     * 스터디 그룹에서 멤버 제거
-     *
-     * @param challengerId 제거할 챌린저 ID
-     */
-    public void removeMember(Long challengerId) {
-        StudyGroupMember member = findMemberByChallengerId(challengerId);
-        studyGroupMembers.remove(member);
-    }
-
-    /**
-     * 스터디 그룹 멤버 목록 전체 교체
-     *
-     * @param challengerIds 새로운 멤버 ID 목록
-     */
-    public void replaceMembersExcludingLeader(Set<Long> challengerIds) {
-        Long leaderId = getLeader().getChallengerId();
-
-        if (challengerIds.contains(leaderId)) {
-            throw new OrganizationDomainException(OrganizationErrorCode.LEADER_CANNOT_BE_MEMBER);
-        }
-
-        studyGroupMembers.clear();
-
-        addLeader(leaderId);
-        challengerIds.forEach(this::addMember);
-    }
-
-    /**
-     * 스터디 그룹 이름 변경
-     *
-     * @param newName 새로운 이름
-     */
-    public void updateName(String newName) {
-        if (newName == null || newName.isBlank()) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
-        }
-        this.name = newName;
-    }
-
-    /**
-     * 스터디 그룹 파트 변경
-     *
-     * @param newPart 새로운 파트
-     */
-    public void updatePart(ChallengerPart newPart) {
-        if (newPart == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.PART_REQUIRED);
-        }
-        this.part = newPart;
-    }
-
-    /**
-     * 리더 지정
-     *
-     * @param challengerId 리더로 지정할 챌린저 ID
-     */
-    public void assignLeader(Long challengerId) {
-        // 기존 리더 해제
-        getLeader().removeAsLeader();
-        // 새 리더 지정
-        findMemberByChallengerId(challengerId).assignAsLeader();
-    }
-
-    /**
-     * 현재 리더 조회
-     *
-     * @return 리더 멤버
-     */
-    public StudyGroupMember getLeader() {
-        return studyGroupMembers.stream()
-            .filter(StudyGroupMember::isLeader)
-            .findFirst()
-            .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_LEADER_REQUIRED));
-    }
-
-    /**
-     * 특정 챌린저가 이 그룹의 멤버인지 확인
-     *
-     * @param challengerId 확인할 챌린저 ID
-     * @return 멤버 여부
-     */
-    public boolean hasMember(Long challengerId) {
-        return studyGroupMembers.stream()
-            .anyMatch(member -> member.getChallengerId().equals(challengerId));
-    }
-
-    /**
-     * 멤버 수 조회
-     *
-     * @return 현재 멤버 수
-     */
-    public int getMemberCount() {
-        return studyGroupMembers.size();
-    }
-
-    private void throwIfMemberAlreadyExists(Long challengerId) {
-        if (hasMember(challengerId)) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_ALREADY_EXISTS);
+    public void updateName(String name) {
+        if(StringUtils.hasText(name)) {
+            this.name = name;
         }
     }
 
-    private StudyGroupMember findMemberByChallengerId(Long challengerId) {
-        return studyGroupMembers.stream()
-            .filter(member -> member.getChallengerId().equals(challengerId))
-            .findFirst()
-            .orElseThrow(
-                () -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_NOT_FOUND));
+    public void updatePart(ChallengerPart challengerPart) {
+        if(challengerPart != null) {
+            this.part = challengerPart;
+        }
+    }
+
+    public void validateMembersNotJoined(Set<Long> memberIds) {
+        Set<Long> alreadyJoined = memberIds.stream()
+            .filter(this::hasMember)
+            .collect(Collectors.toSet());
+
+        if (!alreadyJoined.isEmpty()) {
+            throw new OrganizationDomainException(
+                OrganizationErrorCode.STUDY_GROUP_MEMBER_DUPLICATED,
+                "이미 소속된 멤버: " + alreadyJoined
+            );
+        }
     }
 
 }

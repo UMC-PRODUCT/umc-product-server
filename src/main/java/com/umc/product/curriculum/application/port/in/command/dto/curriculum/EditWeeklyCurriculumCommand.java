@@ -1,9 +1,8 @@
 package com.umc.product.curriculum.application.port.in.command.dto.curriculum;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-
 import java.time.Instant;
+import lombok.Builder;
 
 /**
  * 주차별 커리큘럼 수정 커맨드

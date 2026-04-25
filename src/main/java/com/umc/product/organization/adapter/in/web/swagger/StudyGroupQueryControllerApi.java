@@ -2,16 +2,18 @@ package com.umc.product.organization.adapter.in.web.swagger;
 
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
-import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupListResponse.Summary;
+import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupMemberResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSummaryResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
 
 /**
  * 스터디 그룹 조회 API
@@ -31,11 +33,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Organization | 스터디 그룹 Query", description = "")
 public interface StudyGroupQueryControllerApi {
 
-    @Operation(summary = "내 스터디 그룹 목록 조회", description = "로그인한 유저의 학교/파트 기반으로 스터디 그룹 목록을 조회합니다. cursor 기반 무한스크롤.")
+    @Operation(summary = "내가 관리하는 스터디 그룹 목록 조회", description = "로그인한 유저의 학교/파트 기반으로 스터디 그룹 목록을 조회합니다. cursor 기반 무한스크롤.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "조회 성공")
     })
-    CursorResponse<Summary> getStudyGroups(
+    CursorResponse<StudyGroupSummaryResponse> getStudyGroups(
         @Parameter(hidden = true) MemberPrincipal memberPrincipal,
         @Parameter(description = "페이지 커서 (첫 페이지는 null)") Long cursor,
         @Parameter(description = "페이지 크기 (기본 20, 최대 100)") int size);
@@ -47,11 +49,13 @@ public interface StudyGroupQueryControllerApi {
     StudyGroupNameResponse getStudyGroupNames(
         @Parameter(hidden = true) MemberPrincipal memberPrincipal);
 
-    @Operation(summary = "스터디 그룹 상세 조회", description = "스터디 그룹의 상세 정보와 멤버 목록을 조회합니다.")
+    @Operation(summary = "스터디 그룹 스터디원 목록 조회",
+        description = "스터디원 추가 화면에서 스터디 그룹 ID로 소속 스터디원(memberId, 학교명, 프로필 이미지 URL) 목록을 조회합니다.")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupResponse.class))),
+        @ApiResponse(responseCode = "200", description = "조회 성공",
+            content = @Content(array = @ArraySchema(schema = @Schema(implementation = StudyGroupMemberResponse.class)))),
         @ApiResponse(responseCode = "404", description = "스터디 그룹을 찾을 수 없음")
     })
-    StudyGroupResponse getStudyGroupDetail(
+    List<StudyGroupMemberResponse> getStudyGroupMembers(
         @Parameter(description = "스터디 그룹 ID", required = true) Long groupId);
 }

@@ -128,6 +128,14 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
     }
 
     @Override
+    public Set<Long> findAllIdsBySchoolId(Long schoolId) {
+        if (schoolId == null) {
+            return Set.of();
+        }
+        return loadMemberPort.findAllIdsBySchoolId(schoolId);
+    }
+
+    @Override
     public boolean existsById(Long memberId) {
         return loadMemberPort.existsById(memberId);
     }

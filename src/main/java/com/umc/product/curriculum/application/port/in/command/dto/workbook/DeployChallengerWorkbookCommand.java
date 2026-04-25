@@ -2,9 +2,8 @@ package com.umc.product.curriculum.application.port.in.command.dto.workbook;
 
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-
 import java.util.List;
+import lombok.Builder;
 
 /**
  * 챌린저 워크북 배포 요청 커맨드

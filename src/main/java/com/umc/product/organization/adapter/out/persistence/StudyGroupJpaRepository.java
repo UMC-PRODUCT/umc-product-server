@@ -13,6 +13,6 @@ public interface StudyGroupJpaRepository extends JpaRepository<StudyGroup, Long>
 
     Optional<StudyGroup> findByName(String name);
 
-    @Query("SELECT sg.id FROM StudyGroup sg WHERE sg.gisu.id = :gisuId AND sg.part IN :parts")
+    @Query("SELECT sg.id FROM StudyGroup sg WHERE sg.gisuId = :gisuId AND sg.part IN :parts")
     List<Long> findIdsByGisuIdAndPartIn(@Param("gisuId") Long gisuId, @Param("parts") Set<ChallengerPart> parts);
 }

@@ -4,7 +4,7 @@ import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateStudyGroupRequest;
-import com.umc.product.organization.adapter.in.web.dto.request.UpdateStudyGroupMembersRequest;
+import com.umc.product.organization.adapter.in.web.dto.request.AddStudyGroupMembersRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateStudyGroupRequest;
 import com.umc.product.organization.adapter.in.web.swagger.StudyGroupCommandControllerApi;
 import com.umc.product.organization.application.port.in.command.ManageStudyGroupUseCase;
@@ -26,14 +26,20 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
 
     private final ManageStudyGroupUseCase manageStudyGroupUseCase;
 
-    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.WRITE)
+    @CheckAccess(
+        resourceType = ResourceType.STUDY_GROUP,
+        permission = PermissionType.WRITE
+    )
     @Override
     @PostMapping
     public void create(@Valid @RequestBody CreateStudyGroupRequest request) {
         manageStudyGroupUseCase.create(request.toCommand());
     }
 
-    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.EDIT)
+    @CheckAccess(
+        resourceType = ResourceType.STUDY_GROUP,
+        permission = PermissionType.EDIT
+    )
     @Override
     @PatchMapping("/{groupId}")
     public void update(
@@ -42,13 +48,16 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
         manageStudyGroupUseCase.update(request.toCommand(groupId));
     }
 
-    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.EDIT)
+    @CheckAccess(
+        resourceType = ResourceType.STUDY_GROUP,
+        permission = PermissionType.EDIT
+    )
     @Override
     @PutMapping("/{groupId}/members")
-    public void updateMembers(
+    public void addMembers(
         @PathVariable Long groupId,
-        @Valid @RequestBody UpdateStudyGroupMembersRequest request) {
-        manageStudyGroupUseCase.updateMembers(request.toCommand(groupId));
+        @Valid @RequestBody AddStudyGroupMembersRequest request) {
+        manageStudyGroupUseCase.addMembers(request.toCommand(groupId));
     }
 
     @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.DELETE)

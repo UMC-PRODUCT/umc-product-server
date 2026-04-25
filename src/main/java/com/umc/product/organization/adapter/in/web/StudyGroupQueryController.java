@@ -6,11 +6,12 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
-import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupListResponse.Summary;
+import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupMemberResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSummaryResponse;
 import com.umc.product.organization.adapter.in.web.swagger.StudyGroupQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
+import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo.StudyGroupInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +32,8 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
      * 내 스터디 그룹 목록 조회 - 유저의 schoolId/part 기반 자동 조회
      */
     @Override
-    @GetMapping
-    public CursorResponse<Summary> getStudyGroups(
+    @GetMapping("/me")
+    public CursorResponse<StudyGroupSummaryResponse> getStudyGroups(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam(required = false) Long cursor,
         @RequestParam(defaultValue = "20") int size) {
@@ -44,8 +45,8 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
         return CursorResponse.of(
             content,
             size,
-            StudyGroupInfo::groupId,
-            Summary::from
+            StudyGroupListInfo.StudyGroupInfo::groupId,
+            StudyGroupSummaryResponse::from
         );
     }
 
@@ -62,12 +63,17 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     }
 
     /**
-     * 스터디 그룹 상세 조회
+     * 스터디 그룹 스터디원 목록 조회
      */
-    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.READ)
+    @CheckAccess(
+        resourceType = ResourceType.STUDY_GROUP,
+        permission = PermissionType.READ
+    )
     @Override
-    @GetMapping("/{groupId}")
-    public StudyGroupResponse getStudyGroupDetail(@PathVariable Long groupId) {
-        return StudyGroupResponse.from(getStudyGroupUseCase.getStudyGroupDetail(groupId));
+    @GetMapping("/{groupId}/members")
+    public List<StudyGroupMemberResponse> getStudyGroupMembers(@PathVariable Long groupId) {
+        return getStudyGroupUseCase.getStudyGroupMembers(groupId).stream()
+            .map(StudyGroupMemberResponse::from)
+            .toList();
     }
 }

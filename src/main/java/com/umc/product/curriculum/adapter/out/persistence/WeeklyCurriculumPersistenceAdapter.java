@@ -6,11 +6,10 @@ import com.umc.product.curriculum.domain.WeeklyCurriculum;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
-
 import java.util.List;
 import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -50,7 +49,8 @@ public class WeeklyCurriculumPersistenceAdapter implements LoadWeeklyCurriculumP
 
     @Override
     public boolean existsReleasedOriginalWorkbookByWeeklyCurriculumId(Long weeklyCurriculumId) {
-        return weeklyCurriculumQueryRepository.existsOriginalWorkbook(weeklyCurriculumId, OriginalWorkbookStatus.RELEASED);
+        return weeklyCurriculumQueryRepository.existsOriginalWorkbook(weeklyCurriculumId,
+            OriginalWorkbookStatus.RELEASED);
     }
 
     @Override
@@ -59,8 +59,10 @@ public class WeeklyCurriculumPersistenceAdapter implements LoadWeeklyCurriculumP
     }
 
     @Override
-    public boolean existsByCurriculumIdAndWeekNoAndIsExtraAndIdNot(Long curriculumId, Long weekNo, boolean isExtra, Long id) {
-        return weeklyCurriculumJpaRepository.existsByCurriculumIdAndWeekNoAndIsExtraAndIdNot(curriculumId, weekNo, isExtra, id);
+    public boolean existsByCurriculumIdAndWeekNoAndIsExtraAndIdNot(Long curriculumId, Long weekNo, boolean isExtra,
+                                                                   Long id) {
+        return weeklyCurriculumJpaRepository.existsByCurriculumIdAndWeekNoAndIsExtraAndIdNot(curriculumId, weekNo,
+            isExtra, id);
     }
 
     @Override

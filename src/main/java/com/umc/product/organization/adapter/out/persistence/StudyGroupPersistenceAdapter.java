@@ -2,9 +2,10 @@ package com.umc.product.organization.adapter.out.persistence;
 
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.StudyGroupViewScope;
 import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.StudyGroup;
@@ -34,20 +35,33 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
             () -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NOT_FOUND));
     }
 
+    /**
+     * 역할 Scope 기반 "내 스터디 그룹" 조회를 위임한다.
+     * <p>
+     * scopes가 비어있으면 EXISTS 서브쿼리가 전부 false가 되어 풀 스캔을 유발할 수 있으므로,
+     * Adapter 레벨에서 짧은 회로로 빈 리스트를 반환해 DB 호출 자체를 생략한다.
+     */
     @Override
-    public List<StudyGroupListInfo.StudyGroupInfo> findStudyGroups(Long schoolId, ChallengerPart part, Long cursor,
-                                                                   int size) {
-        return studyGroupQueryRepository.findStudyGroups(schoolId, part, cursor, size);
+    public List<StudyGroupListInfo.StudyGroupInfo> findMyStudyGroups(List<StudyGroupViewScope> scopes, Long gisuId,
+                                                                     Long cursor, int size) {
+        if (scopes == null || scopes.isEmpty()) {
+            return List.of();
+        }
+        return studyGroupQueryRepository.findMyStudyGroups(scopes, gisuId, cursor, size);
     }
 
     @Override
-    public List<StudyGroupNameInfo> findStudyGroupNames(Long schoolId, ChallengerPart part) {
-        return studyGroupQueryRepository.findStudyGroupNames(schoolId, part);
+    public List<StudyGroupNameInfo> findStudyGroupNames(List<StudyGroupViewScope> scopes, Long gisuId) {
+        if (scopes == null || scopes.isEmpty()) {
+            return List.of();
+        }
+        return studyGroupQueryRepository.findStudyGroupNames(scopes, gisuId);
     }
 
+
     @Override
-    public StudyGroupDetailInfo findStudyGroupDetail(Long groupId) {
-        return studyGroupQueryRepository.findStudyGroupDetail(groupId);
+    public List<StudyGroupMemberInfo> findStudyGroupMembers(Long groupId) {
+        return studyGroupQueryRepository.findStudyGroupMembers(groupId);
     }
 
     @Override
@@ -56,6 +70,15 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
             return List.of();
         }
         return studyGroupJpaRepository.findIdsByGisuIdAndPartIn(gisuId, parts);
+    }
+
+    @Override
+    public Set<Long> findConflictedMemberIds(Long gisuId, ChallengerPart part, Set<Long> memberIds) {
+        if(memberIds == null || memberIds.isEmpty()) {
+            return Set.of();
+        }
+        return studyGroupQueryRepository.findConflictedMemberIds(gisuId, part, memberIds);
+
     }
 
     @Override

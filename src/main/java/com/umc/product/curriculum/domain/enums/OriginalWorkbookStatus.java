@@ -32,8 +32,7 @@ public enum OriginalWorkbookStatus {
     }
 
     /**
-     * 배포 완료(RELEASED) 상태인지 확인합니다.
-     * RELEASED 상태에서는 어떠한 상태 변경도 불가합니다.
+     * 배포 완료(RELEASED) 상태인지 확인합니다. RELEASED 상태에서는 어떠한 상태 변경도 불가합니다.
      */
     public boolean isReleased() {
         return this == RELEASED;

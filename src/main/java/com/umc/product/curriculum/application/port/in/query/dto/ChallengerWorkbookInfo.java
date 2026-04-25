@@ -2,10 +2,9 @@ package com.umc.product.curriculum.application.port.in.query.dto;
 
 import com.umc.product.curriculum.domain.enums.FeedbackResult;
 import com.umc.product.curriculum.domain.enums.MissionType;
-import lombok.Builder;
-
 import java.time.Instant;
 import java.util.List;
+import lombok.Builder;
 
 /**
  * 챌린저 워크북 상세 조회 결과 Info

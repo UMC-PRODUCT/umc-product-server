@@ -10,11 +10,10 @@ import com.umc.product.curriculum.domain.Curriculum;
 import com.umc.product.curriculum.domain.WeeklyCurriculum;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -71,12 +70,14 @@ public class WeeklyCurriculumCommandService implements ManageWeeklyCurriculumUse
             long effectiveWeekNo = command.weekNo() != null ? command.weekNo() : weeklyCurriculum.getWeekNo();
             boolean effectiveIsExtra = command.isExtra() != null ? command.isExtra() : weeklyCurriculum.isExtra();
             if (loadWeeklyCurriculumPort.existsByCurriculumIdAndWeekNoAndIsExtraAndIdNot(
-                weeklyCurriculum.getCurriculum().getId(), effectiveWeekNo, effectiveIsExtra, command.weeklyCurriculumId())) {
+                weeklyCurriculum.getCurriculum().getId(), effectiveWeekNo, effectiveIsExtra,
+                command.weeklyCurriculumId())) {
                 throw new CurriculumDomainException(CurriculumErrorCode.WEEKLY_CURRICULUM_ALREADY_EXISTS);
             }
         }
 
-        weeklyCurriculum.update(command.weekNo(), command.isExtra(), command.title(), command.startsAt(), command.endsAt());
+        weeklyCurriculum.update(command.weekNo(), command.isExtra(), command.title(), command.startsAt(),
+            command.endsAt());
 
         saveWeeklyCurriculumPort.save(weeklyCurriculum);
     }

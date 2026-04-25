@@ -9,13 +9,13 @@ import java.util.Set;
  * <p>
  * 다중 선택 필터를 지원하며, 제공된 값들의 카르테시안 곱으로 결과를 반환합니다.
  *
- * @param gisuId       기수 ID (필수)
- * @param schoolIds    학교 ID 목록 (nullable: 미제공 시 전체)
- * @param parts        파트 목록 (nullable: 미제공 시 전체)
- * @param weekNos      주차 번호 목록 (nullable: 미제공 시 전체)
+ * @param gisuId        기수 ID (필수)
+ * @param schoolIds     학교 ID 목록 (nullable: 미제공 시 전체)
+ * @param parts         파트 목록 (nullable: 미제공 시 전체)
+ * @param weekNos       주차 번호 목록 (nullable: 미제공 시 전체)
  * @param studyGroupIds 스터디 그룹 ID 목록 (nullable: 미제공 시 전체)
- * @param cursor       커서 ID (nullable: 첫 페이지 조회)
- * @param size         페이지 크기 (기본값: 20)
+ * @param cursor        커서 ID (nullable: 첫 페이지 조회)
+ * @param size          페이지 크기 (기본값: 20)
  */
 public record GetBestWorkbooksQuery(
     Long gisuId,
@@ -27,6 +27,8 @@ public record GetBestWorkbooksQuery(
     int size
 ) {
     public GetBestWorkbooksQuery {
-        if (size <= 0) size = 20;
+        if (size <= 0) {
+            size = 20;
+        }
     }
 }

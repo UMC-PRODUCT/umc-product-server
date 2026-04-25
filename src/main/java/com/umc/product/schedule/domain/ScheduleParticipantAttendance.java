@@ -95,8 +95,8 @@ public class ScheduleParticipantAttendance {
             case PRESENT_PENDING -> AttendanceStatus.PRESENT;
             case LATE_PENDING -> AttendanceStatus.LATE;
             case EXCUSED_PENDING,
-                ABSENT_EXCUSE_PENDING,
-                LATE_EXCUSE_PENDING -> AttendanceStatus.EXCUSED;
+                 ABSENT_EXCUSE_PENDING,
+                 LATE_EXCUSE_PENDING -> AttendanceStatus.EXCUSED;
 
             default -> throw new ScheduleDomainException(
                 ScheduleErrorCode.INVALID_ATTENDANCE_STATUS_FOR_APPROVAL
@@ -112,9 +112,9 @@ public class ScheduleParticipantAttendance {
 
         this.status = switch (this.status) {
             case PRESENT_PENDING,
-                LATE_PENDING,
-                EXCUSED_PENDING,
-                ABSENT_EXCUSE_PENDING -> AttendanceStatus.ABSENT;
+                 LATE_PENDING,
+                 EXCUSED_PENDING,
+                 ABSENT_EXCUSE_PENDING -> AttendanceStatus.ABSENT;
 
             case LATE_EXCUSE_PENDING -> AttendanceStatus.LATE;
 

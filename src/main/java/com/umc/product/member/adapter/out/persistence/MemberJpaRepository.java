@@ -3,6 +3,7 @@ package com.umc.product.member.adapter.out.persistence;
 import com.umc.product.member.domain.Member;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -16,6 +17,9 @@ public interface MemberJpaRepository extends JpaRepository<Member, Long> {
     boolean existsByEmail(String email);
 
     boolean existsByNickname(String nickname);
+
+    @Query("select m.id from Member m where m.schoolId = :schoolId")
+    Set<Long> findAllIdsBySchoolId(Long schoolId);
 
     @Query("SELECT m.id FROM Member m WHERE m.id > :lastId ORDER BY m.id ASC")
     List<Long> findIdsCursor(@Param("lastId") Long lastId, Pageable pageable);
