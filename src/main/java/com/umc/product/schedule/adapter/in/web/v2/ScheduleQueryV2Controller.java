@@ -69,6 +69,14 @@ public class ScheduleQueryV2Controller {
         운영진이 출석 승인 대기가 필요한 일정을 조회하는 부분은 다른 API를 이용해주세요.
         """
     )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "403", description = """
+            AUTHORIZATION-0001 : 권한이 없습니다.
+            """,
+            content = @Content
+        )
+    })
     @GetMapping("/me")
     public List<ScheduleInfoResponse> mySchedules(
         @RequestParam Instant from,
@@ -99,6 +107,11 @@ public class ScheduleQueryV2Controller {
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
+        @ApiResponse(responseCode = "403", description = """
+            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            """,
+            content = @Content
+        ),
         @ApiResponse(responseCode = "404", description = """
             SCHEDULE-0009 : 일정을 찾을 수 없습니다.
             """,
@@ -142,6 +155,11 @@ public class ScheduleQueryV2Controller {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "400", description = """
             SCHEDULE-0026 : 일정의 참여자가 아닙니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "403", description = """
+            AUTHORIZATION-0001 : 권한이 없습니다.
             """,
             content = @Content
         ),
@@ -190,6 +208,11 @@ public class ScheduleQueryV2Controller {
         @ApiResponse(responseCode = "400", description = """
             SCHEDULE-0021 : 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다.<br>
             SCHEDULE-0026 : 일정의 참여자가 아닙니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "403", description = """
+            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
             """,
             content = @Content
         ),

@@ -64,7 +64,7 @@ public class ScheduleCommandV2Controller {
 
         출석 요청 관련 일시 필드는 운영진만 입력 가능합니다.
         또한 일정 생성 시, 초대 가능한 챌린저 수에 제한이 존재합니다.
-        - 일반 챌린저: 50명, 회장단: 100명, 지부장: 300명, 총괄단: 2,000명
+        - 일반 챌린저: 50명, 회장단: 100명, 파트장/기타 운영진: 100명, 지부장: 300명, 중앙 운영진: 300명, 총괄단: 2,000명
 
         이 부분에 대한 사용자별 권한 확인은 '[프론트엔드용] 일정 생성 관련 권한 조회' API를 사용해주세요.
 
@@ -77,10 +77,18 @@ public class ScheduleCommandV2Controller {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "400", description = """
-            SCHEDULE-0006: 시작 시간은 종료 시간보다 이전이어야 합니다.<br>
-            SCHEDULE-0010: 태그는 최소 1개 이상 선택해야 합니다.<br>
-            SCHEDULE-0025: 현재 기수의 일정만 생성할 수 있습니다.<br>
-            CHALLENGER-0009: 활성 또는 수료 상태의 사용자만 일정 생성이 가능합니다.
+            SCHEDULE-0006 : 시작 시간은 종료 시간보다 이전이어야 합니다.<br>
+            SCHEDULE-0010 : 태그는 최소 1개 이상 선택해야 합니다.<br>
+            SCHEDULE-0025 : 현재 기수의 일정만 생성할 수 있습니다.<br>
+            SCHEDULE-0030 : 초대 가능한 최대 참여자 수를 초과했습니다.<br>
+            CHALLENGER-0009 : 활성 또는 수료 상태의 사용자만 일정 생성이 가능합니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "403", description = """
+            AUTHORIZATION-0001 : 권한이 없습니다.<br>
+            SCHEDULE-0029 : 일정을 생성할 수 없습니다. 챌린저 활동 이력이 필요합니다.<br>
+            SCHEDULE-0031 : 출석을 요하는 일정을 생성할 권한이 없습니다.
             """,
             content = @Content
         )
@@ -131,6 +139,11 @@ public class ScheduleCommandV2Controller {
             """,
             content = @Content
         ),
+        @ApiResponse(responseCode = "403", description = """
+            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            """,
+            content = @Content
+        ),
         @ApiResponse(responseCode = "404", description = """
             SCHEDULE-0009 : 일정을 찾을 수 없습니다.
             """,
@@ -175,6 +188,11 @@ public class ScheduleCommandV2Controller {
             """,
             content = @Content
         ),
+        @ApiResponse(responseCode = "403", description = """
+            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            """,
+            content = @Content
+        ),
         @ApiResponse(responseCode = "404", description = """
             SCHEDULE-0009 : 일정을 찾을 수 없습니다.
             """,
@@ -213,6 +231,11 @@ public class ScheduleCommandV2Controller {
             SCHEDULE-0016 : 출석 인정을 요청하는 사유가 제공되지 않았거나 비어있습니다.<br>
             SCHEDULE-0021 : 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다.<br>
             SCHEDULE-0022 : 일정에 대한 참석자 정보가 존재하지 않습니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "403", description = """
+            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
             """,
             content = @Content
         ),
@@ -261,6 +284,11 @@ public class ScheduleCommandV2Controller {
             SCHEDULE-0017 : 해당 출석 요청은 운영진의 승인 또는 기각을 필요로 하는 상태가 아닙니다.<br>
             SCHEDULE-0021 : 출석 정책이 존재하지 않아 출석 요청이 불가능한 일정입니다.<br>
             SCHEDULE-0022 : 일정에 대한 참석자 정보가 존재하지 않습니다.
+            """,
+            content = @Content
+        ),
+        @ApiResponse(responseCode = "403", description = """
+            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
             """,
             content = @Content
         ),
