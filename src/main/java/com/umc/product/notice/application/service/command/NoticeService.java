@@ -79,6 +79,7 @@ public class NoticeService implements ManageNoticeUseCase {
             .targetChapterId(command.targetInfo().targetChapterId())
             .targetSchoolId(command.targetInfo().targetSchoolId())
             .targetChallengerPart(command.targetInfo().targetParts())
+            .targetRoles(command.targetInfo().targetRoles())
             .build()
         );
 

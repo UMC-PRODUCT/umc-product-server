@@ -2,6 +2,7 @@ package com.umc.product.notice.dto;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.domain.NoticeTarget;
+import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
@@ -10,7 +11,8 @@ import java.util.List;
  * command에서 분리해서 공지사항 대상자 정보를 따로 관리합니다
  */
 @Schema(description = "공지 대상 범위 설정. null인 필드는 '전체'를 의미합니다. "
-    + "예) targetGisuId만 입력 → 해당 기수 전체 / targetChapterId도 입력 → 해당 지부만 / targetParts도 입력 → 해당 파트만")
+    + "예) targetGisuId만 입력 → 해당 기수 전체 / targetChapterId도 입력 → 해당 지부만 / targetParts도 입력 → 해당 파트만 / "
+    + "targetRoles에 CHALLENGER 외 값 입력 → 운영진 공지")
 public record NoticeTargetInfo(
     @Schema(description = "대상 기수 ID. null이면 전체 기수 대상", example = "9", nullable = true)
     Long targetGisuId,
@@ -24,15 +26,27 @@ public record NoticeTargetInfo(
     @Schema(description = "대상 파트 목록. 빈 배열([])이면 모든 파트 대상. "
         + "특정 파트만 지정하면 해당 파트 챌린저에게만 공지됨",
         example = "[\"SPRINGBOOT\", \"WEB\"]")
-    List<ChallengerPart> targetParts
+    List<ChallengerPart> targetParts,
+
+    @Schema(description = "대상 역할 목록. CHALLENGER면 일반 챌린저 공지, 그 외 값이 포함되면 운영진 공지. "
+        + "null이면 기본값 [CHALLENGER]로 처리",
+        example = "[\"SCHOOL_PART_LEADER\"]", nullable = true)
+    List<NoticeTargetRole> targetRoles
 ) {
     public static NoticeTargetInfo from(NoticeTarget noticeTarget) {
         return new NoticeTargetInfo(
             noticeTarget.getTargetGisuId(),
             noticeTarget.getTargetChapterId(),
             noticeTarget.getTargetSchoolId(),
-            noticeTarget.getTargetChallengerPart()
+            noticeTarget.getTargetChallengerPart(),
+            noticeTarget.getTargetRoles()
         );
+    }
+
+    public boolean isStaffNotice() {
+        return targetRoles != null
+            && !targetRoles.isEmpty()
+            && !targetRoles.contains(NoticeTargetRole.CHALLENGER);
     }
 
     public boolean isTarget(Long gisuId, Long chapterId, Long schoolId, ChallengerPart part) {

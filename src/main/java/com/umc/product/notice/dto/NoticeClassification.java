@@ -12,9 +12,11 @@ import jakarta.validation.constraints.NotNull;
  * - gisuId + chapterId: 지부 필터
  * - gisuId + schoolId: 학교 필터
  * - gisuId + part: 파트 필터
+ * isStaffNotice = true: 운영진 공지 조회 (위 필터 무시, 본인 역할 기반으로 조회)
  */
 @Schema(description = "공지 조회 필터. 조회 범위는 입력한 필드 조합으로 결정됩니다. "
-    + "전체필터 : gisuId만 입력, 지부필터 : gisuId + chapterId, 학교필터 : gisuId + schoolId, 파트필터 : gisuId + part")
+    + "전체필터 : gisuId만 입력, 지부필터 : gisuId + chapterId, 학교필터 : gisuId + schoolId, 파트필터 : gisuId + part. "
+    + "isStaffNotice = true이면 운영진 공지 조회 (본인 역할 기반)")
 public record NoticeClassification(
     @Schema(description = "기수 ID (필수). 이 기수에 해당하는 공지만 조회", example = "9")
     @NotNull(message = "기수 ID는 필수입니다")
@@ -30,6 +32,10 @@ public record NoticeClassification(
 
     @Schema(description = "파트. null이면 파트 구분 없이 조회. 값을 넣으면 해당 파트 공지만 필터링",
         example = "SPRINGBOOT", nullable = true)
-    ChallengerPart part
+    ChallengerPart part,
+
+    @Schema(description = "운영진 공지 조회 여부. true면 본인 역할 기반 운영진 공지만 조회. 기본값 false",
+        example = "false", defaultValue = "false")
+    boolean isStaffNotice
 ) {
 }
