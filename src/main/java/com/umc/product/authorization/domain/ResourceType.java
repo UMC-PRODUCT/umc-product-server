@@ -60,7 +60,7 @@ public enum ResourceType {
         Set.of(PermissionType.DELETE)),
     PROJECT("project", "프로젝트",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT,
-            PermissionType.DELETE, PermissionType.MANAGE)),
+            PermissionType.DELETE)),
     ;
 
     private final String code;

@@ -30,7 +30,7 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
             case READ -> true;
             case WRITE -> canWrite(subjectAttributes);
             case EDIT -> canEdit(subjectAttributes, resourcePermission);
-            case MANAGE, DELETE -> isCentralCore(subjectAttributes);
+            case DELETE -> isCentralCore(subjectAttributes);
             default -> false;
         };
     }

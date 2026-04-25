@@ -194,24 +194,6 @@ class ProjectPermissionEvaluatorTest {
             .isInstanceOf(ProjectDomainException.class);
     }
 
-    // --- MANAGE ---
-
-    @Test
-    void MANAGE는_중앙총괄만_허용() {
-        SubjectAttributes subject = subjectWith(1L, List.of(), List.of(centralCoreRole()));
-        ResourcePermission permission = ResourcePermission.ofType(ResourceType.PROJECT, PermissionType.MANAGE);
-
-        assertThat(sut.evaluate(subject, permission)).isTrue();
-    }
-
-    @Test
-    void MANAGE는_일반_사용자_거부() {
-        SubjectAttributes subject = subjectWith(1L, List.of(), List.of());
-        ResourcePermission permission = ResourcePermission.ofType(ResourceType.PROJECT, PermissionType.MANAGE);
-
-        assertThat(sut.evaluate(subject, permission)).isFalse();
-    }
-
     // --- DELETE ---
 
     @Test
