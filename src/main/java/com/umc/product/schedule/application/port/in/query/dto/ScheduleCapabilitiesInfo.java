@@ -13,13 +13,18 @@ public record ScheduleCapabilitiesInfo(
     int maxParticipantCount
 ) {
 
+    // 일반 챌린저
     private static final int DEFAULT_MAX_PARTICIPANTS = 50;
-    // TODO : 학교 파트장, 기타 운영진 - 일정 초대 참여자 수 확인 필요
-    private static final int SCHOOL_ADMIN_MAX_PARTICIPANTS = 50;
-    // TODO : 중앙 운영진 - 일정 초대 참여자 수 확인 필요
-    private static final int CENTRAL_MEMBER_MAX_PARTICIPANTS = 50;
+
+    // 교내
+    private static final int SCHOOL_ADMIN_MAX_PARTICIPANTS = 100;
     private static final int SCHOOL_CORE_MAX_PARTICIPANTS = 100;
+
+    // 지부장
     private static final int CHAPTER_PRESIDENT_MAX_PARTICIPANTS = 300;
+
+    // 중앙
+    private static final int CENTRAL_MEMBER_MAX_PARTICIPANTS = 300;
     private static final int CENTRAL_CORE_MAX_PARTICIPANTS = 2000;
 
     public static ScheduleCapabilitiesInfo notAllowed() {
