@@ -5,7 +5,10 @@ import static com.umc.product.project.domain.QProjectMember.projectMember;
 import static com.umc.product.project.domain.QProjectPartQuota.projectPartQuota;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -15,10 +18,12 @@ import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.enums.PartQuotaStatus;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -39,7 +44,7 @@ public class ProjectQueryRepository {
         List<Project> content = queryFactory
             .selectFrom(project)
             .where(condition)
-            .orderBy(project.createdAt.desc())
+            .orderBy(toOrderSpecifiers(query.pageable().getSort()))
             .offset(query.pageable().getOffset())
             .limit(query.pageable().getPageSize())
             .fetch();
@@ -180,5 +185,22 @@ public class ProjectQueryRepository {
         return (statuses != null && !statuses.isEmpty())
             ? project.status.in(statuses)
             : null;
+    }
+
+    /**
+     * Pageable의 Sort를 QueryDSL OrderSpecifier 배열로 변환합니다.
+     * 정렬 조건이 없으면 createdAt 내림차순을 기본으로 사용합니다.
+     */
+    private OrderSpecifier<?>[] toOrderSpecifiers(Sort sort) {
+        if (sort == null || sort.isUnsorted()) {
+            return new OrderSpecifier<?>[]{project.createdAt.desc()};
+        }
+        PathBuilder<Project> path = new PathBuilder<>(Project.class, project.getMetadata());
+        List<OrderSpecifier<?>> specifiers = new ArrayList<>();
+        for (Sort.Order order : sort) {
+            Order direction = order.isAscending() ? Order.ASC : Order.DESC;
+            specifiers.add(new OrderSpecifier<>(direction, path.getComparable(order.getProperty(), Comparable.class)));
+        }
+        return specifiers.toArray(new OrderSpecifier<?>[0]);
     }
 }
