@@ -85,14 +85,9 @@ public class ProjectQueryRepository {
         if (schoolIds == null || schoolIds.isEmpty()) {
             return null;
         }
-        // TODO: api-design.md 사양 — "학교 필터는 PM 학교만" 적용 필요.
-        //  Project에는 PM의 schoolId가 없고 productOwnerMemberId만 있음 (member 도메인에 school 소속).
-        //  구현 방향:
-        //   (a) member 도메인 호출로 memberId→schoolId 매핑을 미리 조회 후 in-memory 필터
-        //   (b) DB view / denormalize: project.owner_school_id 컬럼 추가 (schema 변경 필요)
-        //   (c) GetMemberUseCase.findAllSchoolIdsByIds() batch 조회 후 Service 단에서 필터
-        //  헥사고날 규칙상 member Entity는 직접 JOIN 불가 → Service 레벨에서 처리 권장.
-        return null;
+        // TODO: member 도메인에 memberId→schoolId 배치 조회 API 추가 후 Service 레벨에서 필터 적용.
+        throw new UnsupportedOperationException(
+            "schoolIds 필터는 아직 지원되지 않습니다. (member 도메인 연동 대기)");
     }
 
     /**
@@ -138,9 +133,15 @@ public class ProjectQueryRepository {
 
     /**
      * 프로젝트 전체 기준 모집 상태.
-     * RECRUITING = 모집중 파트가 하나라도 있음, COMPLETED = 모든 파트가 정원 이상.
+     * RECRUITING = 모집중 파트가 하나라도 있음, COMPLETED = 파트가 존재하면서 모두 정원 이상.
      */
     private BooleanExpression projectWideQuotaStatus(PartQuotaStatus status) {
+        BooleanExpression hasAnyPart = JPAExpressions
+            .selectOne()
+            .from(projectPartQuota)
+            .where(projectPartQuota.project.eq(project))
+            .exists();
+
         BooleanExpression hasRecruitingPart = JPAExpressions
             .selectOne()
             .from(projectPartQuota)
@@ -161,7 +162,7 @@ public class ProjectQueryRepository {
 
         return status == PartQuotaStatus.RECRUITING
             ? hasRecruitingPart
-            : hasRecruitingPart.not();
+            : hasAnyPart.and(hasRecruitingPart.not());
     }
 
     private JPQLQuery<Long> activeMemberCountForPart(ChallengerPart part) {

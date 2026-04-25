@@ -53,8 +53,10 @@ public class ProjectQueryService implements
 
     @Override
     public Page<ProjectInfo> search(SearchProjectQuery query) {
-        // TODO: N+1 — 각 Project마다 toProjectInfo가 4개 쿼리 발생 (coPM, quotas, count, file).
-        //  search 경로는 batch 조회(LoadProjectMemberPort.batchListByProjectIds 등)로 전환 필요.
+        // TODO: N+1 — 페이지당 (3 × size + 1) 쿼리. batch 메서드 추가 필요:
+        //  LoadProjectMemberPort.listByProjectIdsAndPart(Set<Long>, ChallengerPart)
+        //  LoadProjectMemberPort.countByProjectIdsGroupByPart(Set<Long>)
+        //  LoadProjectPartQuotaPort.listByProjectIds(Set<Long>)
         return loadProjectPort.search(query)
             .map(this::toProjectInfo);
     }

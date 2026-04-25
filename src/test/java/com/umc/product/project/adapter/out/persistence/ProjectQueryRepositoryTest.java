@@ -1,12 +1,17 @@
 package com.umc.product.project.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.config.JpaConfig;
 import com.umc.product.global.config.QueryDslConfig;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.ProjectPartQuota;
+import com.umc.product.project.domain.enums.PartQuotaStatus;
+import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.support.TestContainersConfig;
 import java.util.List;
@@ -33,15 +38,19 @@ class ProjectQueryRepositoryTest {
     ProjectQueryRepository sut;
 
     private Long gisuId;
+    private Long alphaId;
+    private Long betaId;
+    private Long gammaId;
+    private Long deltaId;
 
     @BeforeEach
     void setUp() {
         gisuId = 1L;
 
-        persistProject("프로젝트 알파", ProjectStatus.IN_PROGRESS, gisuId, 1L, 10L);
-        persistProject("프로젝트 베타", ProjectStatus.IN_PROGRESS, gisuId, 1L, 11L);
-        persistProject("프로젝트 감마", ProjectStatus.DRAFT, gisuId, 1L, 12L);
-        persistProject("프로젝트 델타", ProjectStatus.IN_PROGRESS, gisuId, 2L, 13L);
+        alphaId = persistProject("프로젝트 알파", ProjectStatus.IN_PROGRESS, gisuId, 1L, 10L).getId();
+        betaId = persistProject("프로젝트 베타", ProjectStatus.IN_PROGRESS, gisuId, 1L, 11L).getId();
+        gammaId = persistProject("프로젝트 감마", ProjectStatus.DRAFT, gisuId, 1L, 12L).getId();
+        deltaId = persistProject("프로젝트 델타", ProjectStatus.IN_PROGRESS, gisuId, 2L, 13L).getId();
         persistProject("다른기수 프로젝트", ProjectStatus.IN_PROGRESS, 2L, 1L, 14L);
 
         em.flush();
@@ -50,14 +59,11 @@ class ProjectQueryRepositoryTest {
 
     @Test
     void 기수_필터로_조회() {
-        // given
         SearchProjectQuery query = SearchProjectQuery.forChallenger(
             gisuId, null, null, null, null, null, PageRequest.of(0, 20));
 
-        // when
         Page<Project> result = sut.search(query);
 
-        // then — gisuId=1 + IN_PROGRESS만
         assertThat(result.getContent()).hasSize(3);
         assertThat(result.getContent())
             .allMatch(p -> p.getGisuId().equals(gisuId))
@@ -66,70 +72,55 @@ class ProjectQueryRepositoryTest {
 
     @Test
     void 이름_키워드_검색() {
-        // given
         SearchProjectQuery query = SearchProjectQuery.forChallenger(
             gisuId, "알파", null, null, null, null, PageRequest.of(0, 20));
 
-        // when
         Page<Project> result = sut.search(query);
 
-        // then
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getName()).isEqualTo("프로젝트 알파");
     }
 
     @Test
     void 지부_필터() {
-        // given
         SearchProjectQuery query = SearchProjectQuery.forChallenger(
             gisuId, null, 2L, null, null, null, PageRequest.of(0, 20));
 
-        // when
         Page<Project> result = sut.search(query);
 
-        // then — chapterId=2인 프로젝트만
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getName()).isEqualTo("프로젝트 델타");
     }
 
     @Test
     void 상태_필터_Admin용() {
-        // given — DRAFT 포함 조회
         SearchProjectQuery query = SearchProjectQuery.forAdmin(
             gisuId, null, null, null, null, null,
             List.of(ProjectStatus.DRAFT), PageRequest.of(0, 20));
 
-        // when
         Page<Project> result = sut.search(query);
 
-        // then
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getStatus()).isEqualTo(ProjectStatus.DRAFT);
     }
 
     @Test
     void 조합_필터_키워드와_지부() {
-        // given
         SearchProjectQuery query = SearchProjectQuery.forChallenger(
             gisuId, "프로젝트", 1L, null, null, null, PageRequest.of(0, 20));
 
-        // when
         Page<Project> result = sut.search(query);
 
-        // then — chapterId=1 + name contains "프로젝트" + IN_PROGRESS
         assertThat(result.getContent()).hasSize(2);
     }
 
     @Test
     void 페이지네이션() {
-        // given
         SearchProjectQuery query = SearchProjectQuery.forChallenger(
             gisuId, null, null, null, null, null, PageRequest.of(0, 2));
 
-        // when
         Page<Project> result = sut.search(query);
 
-        // then
         assertThat(result.getContent()).hasSize(2);
         assertThat(result.getTotalElements()).isEqualTo(3);
         assertThat(result.getTotalPages()).isEqualTo(2);
@@ -138,14 +129,11 @@ class ProjectQueryRepositoryTest {
 
     @Test
     void 정렬_createdAt_DESC() {
-        // given
         SearchProjectQuery query = SearchProjectQuery.forChallenger(
             gisuId, null, null, null, null, null, PageRequest.of(0, 20));
 
-        // when
         Page<Project> result = sut.search(query);
 
-        // then — createdAt 내림차순
         List<Project> content = result.getContent();
         for (int i = 0; i < content.size() - 1; i++) {
             assertThat(content.get(i).getCreatedAt())
@@ -155,21 +143,251 @@ class ProjectQueryRepositoryTest {
 
     @Test
     void 빈_결과() {
-        // given
         SearchProjectQuery query = SearchProjectQuery.forChallenger(
             999L, null, null, null, null, null, PageRequest.of(0, 20));
+
+        Page<Project> result = sut.search(query);
+
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isZero();
+    }
+
+    // ========== parts / partQuotaStatus 상관 필터 ==========
+
+    @Test
+    void 파트_단일_선택_해당_파트_있는_프로젝트만() {
+        // given — 알파에만 WEB quota
+        persistQuota(alphaId, ChallengerPart.WEB, 2);
+        em.flush();
+        em.clear();
+
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            gisuId, null, null, null, List.of(ChallengerPart.WEB), null, PageRequest.of(0, 20));
 
         // when
         Page<Project> result = sut.search(query);
 
         // then
-        assertThat(result.getContent()).isEmpty();
-        assertThat(result.getTotalElements()).isZero();
+        assertThat(result.getContent())
+            .extracting(Project::getName)
+            .containsExactly("프로젝트 알파");
+    }
+
+    @Test
+    void 파트_여러개_AND로_모두_포함하는_프로젝트만() {
+        // given — 알파: WEB만 / 베타: WEB+SPRINGBOOT / 델타: WEB만
+        persistQuota(alphaId, ChallengerPart.WEB, 2);
+        persistQuota(betaId, ChallengerPart.WEB, 2);
+        persistQuota(betaId, ChallengerPart.SPRINGBOOT, 1);
+        persistQuota(deltaId, ChallengerPart.WEB, 2);
+        em.flush();
+        em.clear();
+
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            gisuId, null, null, null,
+            List.of(ChallengerPart.WEB, ChallengerPart.SPRINGBOOT), null,
+            PageRequest.of(0, 20));
+
+        // when
+        Page<Project> result = sut.search(query);
+
+        // then
+        assertThat(result.getContent())
+            .extracting(Project::getName)
+            .containsExactly("프로젝트 베타");
+    }
+
+    @Test
+    void 파트_RECRUITING_해당_파트가_아직_정원_미달() {
+        // given — 알파 WEB 2/0 (recruiting), 베타 WEB 2/2 (full)
+        persistQuota(alphaId, ChallengerPart.WEB, 2);
+        persistQuota(betaId, ChallengerPart.WEB, 2);
+        persistMember(betaId, ChallengerPart.WEB, 200L);
+        persistMember(betaId, ChallengerPart.WEB, 201L);
+        em.flush();
+        em.clear();
+
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            gisuId, null, null, null,
+            List.of(ChallengerPart.WEB), PartQuotaStatus.RECRUITING,
+            PageRequest.of(0, 20));
+
+        // when
+        Page<Project> result = sut.search(query);
+
+        // then
+        assertThat(result.getContent())
+            .extracting(Project::getName)
+            .containsExactly("프로젝트 알파");
+    }
+
+    @Test
+    void 파트_COMPLETED_해당_파트가_정원_달성() {
+        // given
+        persistQuota(alphaId, ChallengerPart.WEB, 2);
+        persistQuota(betaId, ChallengerPart.WEB, 2);
+        persistMember(betaId, ChallengerPart.WEB, 200L);
+        persistMember(betaId, ChallengerPart.WEB, 201L);
+        em.flush();
+        em.clear();
+
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            gisuId, null, null, null,
+            List.of(ChallengerPart.WEB), PartQuotaStatus.COMPLETED,
+            PageRequest.of(0, 20));
+
+        // when
+        Page<Project> result = sut.search(query);
+
+        // then
+        assertThat(result.getContent())
+            .extracting(Project::getName)
+            .containsExactly("프로젝트 베타");
+    }
+
+    @Test
+    void 파트_여러개_RECRUITING_선택한_파트_모두_모집중() {
+        // given — 베타: WEB+SPRINGBOOT 둘 다 미달 / 델타: WEB만 미달, SPRINGBOOT 정원 달성
+        persistQuota(betaId, ChallengerPart.WEB, 2);
+        persistQuota(betaId, ChallengerPart.SPRINGBOOT, 1);
+        persistQuota(deltaId, ChallengerPart.WEB, 2);
+        persistQuota(deltaId, ChallengerPart.SPRINGBOOT, 1);
+        persistMember(deltaId, ChallengerPart.SPRINGBOOT, 300L);
+        em.flush();
+        em.clear();
+
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            gisuId, null, null, null,
+            List.of(ChallengerPart.WEB, ChallengerPart.SPRINGBOOT),
+            PartQuotaStatus.RECRUITING,
+            PageRequest.of(0, 20));
+
+        // when
+        Page<Project> result = sut.search(query);
+
+        // then
+        assertThat(result.getContent())
+            .extracting(Project::getName)
+            .containsExactly("프로젝트 베타");
+    }
+
+    @Test
+    void 파트_여러개_COMPLETED_선택한_파트_모두_정원_달성() {
+        // given — 베타: WEB+SPRINGBOOT 둘 다 풀 / 델타: WEB 풀, SPRINGBOOT 미달
+        persistQuota(betaId, ChallengerPart.WEB, 2);
+        persistQuota(betaId, ChallengerPart.SPRINGBOOT, 1);
+        persistMember(betaId, ChallengerPart.WEB, 200L);
+        persistMember(betaId, ChallengerPart.WEB, 201L);
+        persistMember(betaId, ChallengerPart.SPRINGBOOT, 202L);
+        persistQuota(deltaId, ChallengerPart.WEB, 2);
+        persistQuota(deltaId, ChallengerPart.SPRINGBOOT, 3);
+        persistMember(deltaId, ChallengerPart.WEB, 300L);
+        persistMember(deltaId, ChallengerPart.WEB, 301L);
+        em.flush();
+        em.clear();
+
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            gisuId, null, null, null,
+            List.of(ChallengerPart.WEB, ChallengerPart.SPRINGBOOT),
+            PartQuotaStatus.COMPLETED,
+            PageRequest.of(0, 20));
+
+        // when
+        Page<Project> result = sut.search(query);
+
+        // then
+        assertThat(result.getContent())
+            .extracting(Project::getName)
+            .containsExactly("프로젝트 베타");
+    }
+
+    @Test
+    void 파트_없이_RECRUITING_아무_파트라도_모집중이면_포함() {
+        // given — 알파: 모집중 파트 있음 / 베타: 모든 파트 풀 / 델타: 일부 풀, 일부 모집중
+        persistQuota(alphaId, ChallengerPart.WEB, 2);
+        persistQuota(betaId, ChallengerPart.WEB, 1);
+        persistMember(betaId, ChallengerPart.WEB, 200L);
+        persistQuota(deltaId, ChallengerPart.WEB, 1);
+        persistQuota(deltaId, ChallengerPart.SPRINGBOOT, 2);
+        persistMember(deltaId, ChallengerPart.WEB, 300L);
+        em.flush();
+        em.clear();
+
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            gisuId, null, null, null, null,
+            PartQuotaStatus.RECRUITING,
+            PageRequest.of(0, 20));
+
+        // when
+        Page<Project> result = sut.search(query);
+
+        // then
+        assertThat(result.getContent())
+            .extracting(Project::getName)
+            .containsExactlyInAnyOrder("프로젝트 알파", "프로젝트 델타");
+    }
+
+    @Test
+    void 파트_없이_COMPLETED_모든_파트가_정원_달성이면_포함() {
+        // given — 알파: 모집중 / 베타: 모두 풀 / 델타: 일부 모집중
+        persistQuota(alphaId, ChallengerPart.WEB, 2);
+        persistQuota(betaId, ChallengerPart.WEB, 1);
+        persistMember(betaId, ChallengerPart.WEB, 200L);
+        persistQuota(deltaId, ChallengerPart.WEB, 1);
+        persistQuota(deltaId, ChallengerPart.SPRINGBOOT, 2);
+        persistMember(deltaId, ChallengerPart.WEB, 300L);
+        em.flush();
+        em.clear();
+
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            gisuId, null, null, null, null,
+            PartQuotaStatus.COMPLETED,
+            PageRequest.of(0, 20));
+
+        // when
+        Page<Project> result = sut.search(query);
+
+        // then
+        assertThat(result.getContent())
+            .extracting(Project::getName)
+            .containsExactly("프로젝트 베타");
+    }
+
+    @Test
+    void COMPLETED_quota가_없는_프로젝트는_제외된다() {
+        // given — Admin 뷰로 DRAFT 포함. 감마는 DRAFT + quota row 없음 → 잘못된 COMPLETED 분류 회피
+        persistQuota(alphaId, ChallengerPart.WEB, 1);
+        persistMember(alphaId, ChallengerPart.WEB, 100L);
+        em.flush();
+        em.clear();
+
+        SearchProjectQuery query = SearchProjectQuery.forAdmin(
+            gisuId, null, null, null, null,
+            PartQuotaStatus.COMPLETED,
+            List.of(ProjectStatus.IN_PROGRESS, ProjectStatus.DRAFT),
+            PageRequest.of(0, 20));
+
+        // when
+        Page<Project> result = sut.search(query);
+
+        // then
+        assertThat(result.getContent())
+            .extracting(Project::getName)
+            .containsExactly("프로젝트 알파");
+    }
+
+    @Test
+    void schoolIds_필터는_아직_지원되지_않음() {
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            gisuId, null, null, List.of(1L), null, null, PageRequest.of(0, 20));
+
+        assertThatThrownBy(() -> sut.search(query))
+            .isInstanceOf(UnsupportedOperationException.class);
     }
 
     // ========== Helper ==========
 
-    private void persistProject(String name, ProjectStatus status, Long gisuId, Long chapterId, Long ownerId) {
+    private Project persistProject(String name, ProjectStatus status, Long gisuId, Long chapterId, Long ownerId) {
         Project project;
         try {
             var constructor = Project.class.getDeclaredConstructor();
@@ -184,5 +402,39 @@ class ProjectQueryRepositoryTest {
         ReflectionTestUtils.setField(project, "name", name);
         ReflectionTestUtils.setField(project, "productOwnerMemberId", ownerId);
         em.persist(project);
+        return project;
+    }
+
+    private void persistQuota(Long projectId, ChallengerPart part, long quota) {
+        Project project = em.find(Project.class, projectId);
+        ProjectPartQuota pq;
+        try {
+            var constructor = ProjectPartQuota.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            pq = constructor.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        ReflectionTestUtils.setField(pq, "project", project);
+        ReflectionTestUtils.setField(pq, "part", part);
+        ReflectionTestUtils.setField(pq, "quota", quota);
+        em.persist(pq);
+    }
+
+    private void persistMember(Long projectId, ChallengerPart part, Long memberId) {
+        Project project = em.find(Project.class, projectId);
+        ProjectMember pm;
+        try {
+            var constructor = ProjectMember.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            pm = constructor.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        ReflectionTestUtils.setField(pm, "project", project);
+        ReflectionTestUtils.setField(pm, "memberId", memberId);
+        ReflectionTestUtils.setField(pm, "part", part);
+        ReflectionTestUtils.setField(pm, "status", ProjectMemberStatus.ACTIVE);
+        em.persist(pm);
     }
 }
