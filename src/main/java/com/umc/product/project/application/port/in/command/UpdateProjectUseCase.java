@@ -1,6 +1,7 @@
 package com.umc.product.project.application.port.in.command;
 
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectCommand;
+import com.umc.product.project.domain.enums.ProjectStatus;
 
 /**
  * 프로젝트 기본 정보 수정 UseCase (PROJECT-102).
@@ -14,6 +15,7 @@ public interface UpdateProjectUseCase {
      * 프로젝트 기본 정보를 부분 업데이트합니다.
      *
      * @param command 수정 Command ({@code null} 필드는 수정 제외)
+     * @return 갱신 후 프로젝트 상태
      */
-    void update(UpdateProjectCommand command);
+    ProjectStatus update(UpdateProjectCommand command);
 }

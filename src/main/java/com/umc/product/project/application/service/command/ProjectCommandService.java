@@ -19,6 +19,7 @@ import com.umc.product.project.application.port.in.command.dto.UpdateProjectComm
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectPort;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -66,7 +67,7 @@ public class ProjectCommandService implements
     }
 
     @Override
-    public void update(UpdateProjectCommand command) {
+    public ProjectStatus update(UpdateProjectCommand command) {
         Project project = loadProjectPort.getById(command.projectId());
         project.updateBasicInfo(
             command.name(),
@@ -75,6 +76,7 @@ public class ProjectCommandService implements
             command.thumbnailFileId(),
             command.logoFileId()
         );
+        return project.getStatus();
     }
 
     @Override
@@ -89,7 +91,7 @@ public class ProjectCommandService implements
     }
 
     @Override
-    public void transfer(TransferProjectOwnershipCommand command) {
+    public ProjectStatus transfer(TransferProjectOwnershipCommand command) {
         Project project = loadProjectPort.getById(command.projectId());
 
         if (!project.getProductOwnerMemberId().equals(command.requesterMemberId())) {
@@ -108,5 +110,6 @@ public class ProjectCommandService implements
         }
 
         project.transferOwnership(command.newOwnerMemberId());
+        return project.getStatus();
     }
 }

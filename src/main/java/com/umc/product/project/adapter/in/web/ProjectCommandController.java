@@ -14,8 +14,6 @@ import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
-import com.umc.product.project.application.port.in.query.GetProjectUseCase;
-import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,7 +36,6 @@ public class ProjectCommandController {
     private final UpdateProjectUseCase updateProjectUseCase;
     private final SubmitProjectUseCase submitProjectUseCase;
     private final TransferProjectOwnershipUseCase transferProjectOwnershipUseCase;
-    private final GetProjectUseCase getProjectUseCase;
 
     @PostMapping
     @Operation(
@@ -75,9 +72,9 @@ public class ProjectCommandController {
         @PathVariable Long projectId,
         @Valid @RequestBody UpdateProjectRequest request
     ) {
-        updateProjectUseCase.update(request.toCommand(projectId, memberPrincipal.getMemberId()));
-        ProjectInfo info = getProjectUseCase.getById(projectId);
-        return ProjectStatusResponse.from(info);
+        ProjectStatus status = updateProjectUseCase.update(
+            request.toCommand(projectId, memberPrincipal.getMemberId()));
+        return ProjectStatusResponse.of(projectId, status);
     }
 
     @PostMapping("/{projectId}/submit")
@@ -118,9 +115,8 @@ public class ProjectCommandController {
         @PathVariable Long projectId,
         @Valid @RequestBody TransferProjectOwnershipRequest request
     ) {
-        transferProjectOwnershipUseCase.transfer(
+        ProjectStatus status = transferProjectOwnershipUseCase.transfer(
             request.toCommand(projectId, memberPrincipal.getMemberId()));
-        ProjectInfo info = getProjectUseCase.getById(projectId);
-        return ProjectStatusResponse.from(info);
+        return ProjectStatusResponse.of(projectId, status);
     }
 }

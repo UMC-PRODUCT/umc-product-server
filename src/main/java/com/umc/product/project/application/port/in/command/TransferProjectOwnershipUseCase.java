@@ -1,6 +1,7 @@
 package com.umc.product.project.application.port.in.command;
 
 import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
+import com.umc.product.project.domain.enums.ProjectStatus;
 
 /**
  * 프로젝트 소유권(메인 PM) 양도 UseCase.
@@ -12,6 +13,8 @@ public interface TransferProjectOwnershipUseCase {
 
     /**
      * 프로젝트 소유권을 새 PM에게 양도합니다.
+     *
+     * @return 양도 후 프로젝트 상태
      */
-    void transfer(TransferProjectOwnershipCommand command);
+    ProjectStatus transfer(TransferProjectOwnershipCommand command);
 }
