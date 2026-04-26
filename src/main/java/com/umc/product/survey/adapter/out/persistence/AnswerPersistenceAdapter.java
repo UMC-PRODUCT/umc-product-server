@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -18,6 +17,7 @@ public class AnswerPersistenceAdapter implements LoadAnswerPort, SaveAnswerPort 
 
     private final FormResponseJpaRepository formResponseJpaRepository;
     private final AnswerChoiceJpaRepository answerChoiceJpaRepository;
+    private final AnswerChoiceQueryRepository answerChoiceQueryRepository;
     private final AnswerJpaRepository answerJpaRepository;
 
     @Override
@@ -27,11 +27,7 @@ public class AnswerPersistenceAdapter implements LoadAnswerPort, SaveAnswerPort 
 
     @Override
     public Map<Long, Long> countVotesByOptionId(Long formId) {
-        return answerChoiceJpaRepository.countVotesByOptionId(formId).stream()
-            .collect(Collectors.toMap(
-                projection -> projection.optionId(),
-                projection -> projection.voteCount()
-            ));
+        return answerChoiceQueryRepository.countVotesByOptionId(formId);
     }
 
     @Override
@@ -41,11 +37,7 @@ public class AnswerPersistenceAdapter implements LoadAnswerPort, SaveAnswerPort 
 
     @Override
     public Map<Long, List<Long>> findSelectedMemberIdsByOptionId(Long formId) {
-        return answerChoiceJpaRepository.findSelectedMemberIdsByOptionId(formId).stream()
-            .collect(Collectors.groupingBy(
-                projection -> projection.optionId(),
-                Collectors.mapping(projection -> projection.memberId(), Collectors.toList())
-            ));
+        return answerChoiceQueryRepository.findSelectedMemberIdsByOptionId(formId);
     }
 
     @Override
