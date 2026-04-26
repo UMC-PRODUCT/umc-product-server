@@ -1,34 +1,23 @@
 package com.umc.product.notice.application.service.command;
 
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
-import com.umc.product.notice.application.port.in.command.dto.AddNoticeImagesCommand;
-import com.umc.product.notice.application.port.in.command.dto.AddNoticeLinksCommand;
-import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteCommand;
-import com.umc.product.notice.application.port.in.command.dto.AddNoticeVoteResult;
-import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeImagesCommand;
-import com.umc.product.notice.application.port.in.command.dto.ReplaceNoticeLinksCommand;
-import com.umc.product.notice.application.port.out.LoadNoticeImagePort;
-import com.umc.product.notice.application.port.out.LoadNoticeLinkPort;
-import com.umc.product.notice.application.port.out.LoadNoticePort;
-import com.umc.product.notice.application.port.out.LoadNoticeVotePort;
-import com.umc.product.notice.application.port.out.SaveNoticeImagePort;
-import com.umc.product.notice.application.port.out.SaveNoticeLinkPort;
-import com.umc.product.notice.application.port.out.SaveNoticeVotePort;
+import com.umc.product.notice.application.port.in.command.dto.*;
+import com.umc.product.notice.application.port.out.*;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeImage;
 import com.umc.product.notice.domain.NoticeLink;
 import com.umc.product.notice.domain.NoticeVote;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import com.umc.product.survey.application.port.in.command.CreateVoteUseCase;
-import com.umc.product.survey.application.port.in.command.DeleteVoteUseCase;
-import com.umc.product.survey.application.port.in.command.dto.DeleteVoteCommand;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import com.umc.product.survey.application.port.in.command.ManageVoteUseCase;
+import com.umc.product.survey.application.port.in.command.dto.CreateVoteCommand;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 @Service
@@ -43,8 +32,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
     private final SaveNoticeLinkPort saveNoticeLinkPort;
     private final LoadNoticePort loadNoticePort;
 
-    private final CreateVoteUseCase createVoteUseCase;
-    private final DeleteVoteUseCase deleteVoteUseCase;
+    private final ManageVoteUseCase manageVoteUseCase;
 
     @Override
     public AddNoticeVoteResult addVote(AddNoticeVoteCommand command, Long noticeId) {
@@ -55,9 +43,17 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
             throw new NoticeDomainException(NoticeErrorCode.VOTE_ALREADY_EXISTS);
         }
 
-        Long voteId = createVoteUseCase.create(command.toCreateVoteCommand());
+        Long voteId = manageVoteUseCase.createVote(
+            CreateVoteCommand.builder()
+                .createdMemberId(command.createdMemberId())
+                .title(command.title())
+                .isAnonymous(command.isAnonymous())
+                .allowMultipleChoice(command.allowMultipleChoice())
+                .options(command.options())
+                .build()
+        );
 
-        NoticeVote noticeVote = NoticeVote.create(voteId, notice);
+        NoticeVote noticeVote = NoticeVote.create(voteId, notice, command.startsAt(), command.endsAtExclusive());
         NoticeVote savedVote = saveNoticeVotePort.saveVote(noticeVote);
 
         return new AddNoticeVoteResult(savedVote.getId(), voteId);
@@ -121,8 +117,8 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         NoticeVote vote = loadNoticeVotePort.findVoteByNoticeId(noticeId)
             .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.NOTICE_VOTE_NOT_FOUND));
 
-        deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
         saveNoticeVotePort.deleteVote(vote);
+        manageVoteUseCase.deleteVote(vote.getVoteId());
     }
 
     @Override
@@ -133,7 +129,7 @@ public class NoticeContentService implements ManageNoticeContentUseCase {
         loadNoticeVotePort.findVoteByNoticeId(noticeId)
             .ifPresent(vote -> {
                 saveNoticeVotePort.deleteAllVotesByNoticeId(noticeId);
-                deleteVoteUseCase.delete(new DeleteVoteCommand(vote.getVoteId(), memberId));
+                manageVoteUseCase.deleteVote(vote.getVoteId());
             });
     }
 

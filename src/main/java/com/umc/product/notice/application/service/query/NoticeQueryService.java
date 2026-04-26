@@ -6,15 +6,7 @@ import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.GetNoticeContentUseCase;
 import com.umc.product.notice.application.port.in.query.GetNoticeUseCase;
-import com.umc.product.notice.application.port.in.query.dto.GetNoticeStatusQuery;
-import com.umc.product.notice.application.port.in.query.dto.NoticeImageInfo;
-import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
-import com.umc.product.notice.application.port.in.query.dto.NoticeLinkInfo;
-import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusInfo;
-import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResult;
-import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
-import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
-import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
+import com.umc.product.notice.application.port.in.query.dto.*;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
@@ -28,20 +20,16 @@ import com.umc.product.notice.dto.NoticeClassification;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
-import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -85,7 +73,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Notice notice = findById(noticeId);
         List<NoticeImageInfo> imageInfos = getNoticeContentUseCase.findImageByNoticeId(noticeId);
         List<NoticeLinkInfo> linkInfos = getNoticeContentUseCase.findLinkByNoticeId(noticeId);
-        VoteInfo voteInfo = getNoticeContentUseCase.findVoteByNoticeId(noticeId, memberId);
+        NoticeVoteInfo voteInfo = getNoticeContentUseCase.findVoteByNoticeId(noticeId, memberId);
 
         // NoticeTargetInfo 조회
         NoticeTarget target = loadNoticeTargetPort.findByNoticeId(noticeId).orElse(null);

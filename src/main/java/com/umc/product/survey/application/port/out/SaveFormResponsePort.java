@@ -9,8 +9,6 @@ public interface SaveFormResponsePort {
 
     void deleteById(Long formResponseId);
 
-    void deleteDraftsByFormId(Long formId);
-
     void deleteAllByIds(List<Long> ids);
 
     /**
