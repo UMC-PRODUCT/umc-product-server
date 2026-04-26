@@ -55,7 +55,7 @@ public class VoteQueryService implements GetVoteUseCase {
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE));
 
         boolean allowMultipleChoice = (question.getType() == QuestionType.CHECKBOX);
-        List<QuestionOption> questionOptions = loadQuestionOptionPort.findAllByQuestionId(question.getId());
+        List<QuestionOption> questionOptions = loadQuestionOptionPort.listByQuestionId(question.getId());
 
         // 3. 옵션별 투표자 ID 목록 로드 (익명인 경우 빈 맵)
         Map<Long, List<Long>> selectedMemberIdsByOptionId = form.isAnonymous()
@@ -92,7 +92,7 @@ public class VoteQueryService implements GetVoteUseCase {
 
     @Override
     public Long getPrimaryQuestionId(Long voteId) {
-        List<Question> questions = loadQuestionPort.findAllByFormId(voteId);
+        List<Question> questions = loadQuestionPort.listByFormId(voteId);
         if (questions.isEmpty()) {
             throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
         }

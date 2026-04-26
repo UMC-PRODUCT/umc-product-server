@@ -38,7 +38,7 @@ public class QuestionOptionPersistenceAdapter implements SaveQuestionOptionPort,
     }
 
     @Override
-    public List<QuestionOption> findAllByQuestionId(Long questionId) {
+    public List<QuestionOption> listByQuestionId(Long questionId) {
         return questionOptionJpaRepository.findAllByQuestion_IdOrderByOrderNoAsc(questionId);
     }
 }

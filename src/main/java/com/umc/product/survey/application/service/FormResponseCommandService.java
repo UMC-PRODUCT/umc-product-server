@@ -116,7 +116,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
             throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
         }
 
-        List<Question> formQuestions = loadQuestionPort.findAllByFormId(formId);
+        List<Question> formQuestions = loadQuestionPort.listByFormId(formId);
 
         Set<Long> answeredQuestionIds = new HashSet<>();
         for (AnswerCommand answerCommand : answers) {
@@ -179,7 +179,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
     }
 
     private List<Answer> buildAnswers(FormResponse formResponse, List<AnswerCommand> answers) {
-        List<Question> formQuestions = loadQuestionPort.findAllByFormId(formResponse.getForm().getId());
+        List<Question> formQuestions = loadQuestionPort.listByFormId(formResponse.getForm().getId());
 
         List<Answer> result = new ArrayList<>();
         for (AnswerCommand answerCmd : answers) {
@@ -197,7 +197,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
 
             List<Long> optionIds = answerCmd.selectedOptionIds();
             if (optionIds != null && !optionIds.isEmpty()) {
-                List<QuestionOption> options = loadQuestionOptionPort.findAllByQuestionId(question.getId());
+                List<QuestionOption> options = loadQuestionOptionPort.listByQuestionId(question.getId());
                 for (Long optionId : optionIds) {
                     QuestionOption option = options.stream()
                         .filter(o -> o.getId().equals(optionId))

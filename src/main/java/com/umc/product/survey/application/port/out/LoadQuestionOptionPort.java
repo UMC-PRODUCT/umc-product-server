@@ -8,5 +8,5 @@ public interface LoadQuestionOptionPort {
 
     boolean existsByIdAndQuestionId(Long optionId, Long questionId);
 
-    List<QuestionOption> findAllByQuestionId(Long questionId);
+    List<QuestionOption> listByQuestionId(Long questionId);
 }

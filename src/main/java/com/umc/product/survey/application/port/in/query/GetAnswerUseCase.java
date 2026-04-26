@@ -24,5 +24,5 @@ public interface GetAnswerUseCase {
     /**
      * 특정 FormResponse 에 속한 모든 답변을 반환한다. (질문 orderNo 순)
      */
-    List<AnswerInfo> getAllByFormResponseId(Long formResponseId);
+    List<AnswerInfo> listByFormResponseId(Long formResponseId);
 }

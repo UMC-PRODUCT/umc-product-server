@@ -52,7 +52,7 @@ public class QuestionPersistenceAdapter implements SaveQuestionPort, LoadQuestio
     }
 
     @Override
-    public List<Question> findAllByFormId(Long formId) {
+    public List<Question> listByFormId(Long formId) {
         return questionJpaRepository.findAllByFormId(formId);
     }
 
