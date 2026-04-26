@@ -41,7 +41,7 @@ public class VoteQueryService implements GetVoteUseCase {
 
         // 1. 투표 통계 데이터 로드
         Map<Long, Long> counts = loadAnswerPort.countVotesByOptionId(formId);
-        int totalParticipants = loadAnswerPort.countTotalParticipants(formId);
+        long totalParticipants = loadAnswerPort.countTotalParticipants(formId);
         List<Long> mySelections = loadAnswerPort.findSelectedOptionIdsByMember(formId, memberId);
 
         // 2. 투표 구조 로드 (섹션 -> 질문 -> 옵션)
@@ -65,7 +65,7 @@ public class VoteQueryService implements GetVoteUseCase {
         // 4. 옵션 정보 및 득표율 계산
         List<VoteOptionInfo> optionInfos = questionOptions.stream()
             .map(opt -> {
-                int voteCount = counts.getOrDefault(opt.getId(), 0L).intValue();
+                long voteCount = counts.getOrDefault(opt.getId(), 0L);
                 BigDecimal voteRate = calculateVoteRate(voteCount, totalParticipants);
                 List<Long> selectedMemberIds = selectedMemberIdsByOptionId.getOrDefault(opt.getId(), List.of());
 
@@ -99,8 +99,8 @@ public class VoteQueryService implements GetVoteUseCase {
         return questions.get(0).getId();
     }
 
-    private BigDecimal calculateVoteRate(int voteCount, int totalParticipants) {
-        if (totalParticipants == 0) {
+    private BigDecimal calculateVoteRate(long voteCount, long totalParticipants) {
+        if (totalParticipants == 0L) {
             return BigDecimal.ZERO.setScale(1, RoundingMode.HALF_UP);
         }
         return BigDecimal.valueOf(voteCount)

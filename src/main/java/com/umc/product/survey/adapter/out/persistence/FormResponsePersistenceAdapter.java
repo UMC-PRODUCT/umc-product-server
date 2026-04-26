@@ -73,7 +73,7 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
     }
 
     @Override
-    public int countSubmittedByFormId(Long formId) {
+    public long countSubmittedByFormId(Long formId) {
         return formResponseJpaRepository.countByFormIdAndStatus(formId, FormResponseStatus.SUBMITTED);
     }
 

@@ -11,7 +11,7 @@ public record VoteInfo(
     String title,
     boolean isAnonymous,
     boolean allowMultipleChoice,
-    int totalParticipants,
+    long totalParticipants,
     List<Long> mySelectedOptionIds,
     List<VoteOptionInfo> options
 ) {
@@ -21,7 +21,7 @@ public record VoteInfo(
     public record VoteOptionInfo(
         Long optionId,
         String content,
-        int voteCount,
+        long voteCount,
         BigDecimal voteRate,
         List<Long> selectedMemberIds
     ) {

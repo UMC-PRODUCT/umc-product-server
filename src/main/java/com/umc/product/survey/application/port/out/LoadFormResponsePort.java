@@ -19,7 +19,7 @@ public interface LoadFormResponsePort {
 
     List<Long> findIdsByFormIdAndStatus(Long formId, FormResponseStatus status);
 
-    int countSubmittedByFormId(Long formId);
+    long countSubmittedByFormId(Long formId);
 
     Optional<FormResponse> findSubmittedByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId);
 }

@@ -47,6 +47,6 @@ public interface FormResponseJpaRepository extends JpaRepository<FormResponse, L
             where fr.form.id = :formId
               and fr.status = :status
         """)
-    int countByFormIdAndStatus(@Param("formId") Long formId,
-                               @Param("status") FormResponseStatus status);
+    long countByFormIdAndStatus(@Param("formId") Long formId,
+                                @Param("status") FormResponseStatus status);
 }

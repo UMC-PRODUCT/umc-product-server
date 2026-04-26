@@ -17,7 +17,7 @@ public record NoticeVoteInfo(
     VoteStatus status,
     Instant startsAt,
     Instant endsAtExclusive,
-    int totalParticipants,
+    long totalParticipants,
     List<VoteOptionInfo> options,
     List<Long> mySelectedOptionIds) {
     /**
@@ -26,7 +26,7 @@ public record NoticeVoteInfo(
     public record VoteOptionInfo(
         Long optionId,
         String content,
-        int voteCount,
+        long voteCount,
         BigDecimal voteRate,
         List<Long> selectedMemberIds) {
     }

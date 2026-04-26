@@ -8,7 +8,7 @@ public interface LoadAnswerPort {
     /**
      * 특정 폼(투표)의 총 참여자 수를 반환합니다.
      */
-    int countTotalParticipants(Long formId);
+    long countTotalParticipants(Long formId);
 
     /**
      * 특정 폼(투표)의 옵션별 득표수를 집계하여 반환합니다.

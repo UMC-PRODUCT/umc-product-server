@@ -20,7 +20,7 @@ public class AnswerPersistenceAdapter implements LoadAnswerPort, SaveAnswerPort 
     private final AnswerJpaRepository answerJpaRepository;
 
     @Override
-    public int countTotalParticipants(Long formId) {
+    public long countTotalParticipants(Long formId) {
         return formResponseJpaRepository.countByFormIdAndStatus(formId, FormResponseStatus.SUBMITTED);
     }
 
