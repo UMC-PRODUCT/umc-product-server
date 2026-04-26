@@ -1,7 +1,5 @@
 package com.umc.product.schedule.application.port.in.command.dto;
 
-import com.umc.product.schedule.adapter.in.web.v2.dto.request.ScheduleAttendancePolicyRequest;
-import com.umc.product.schedule.adapter.in.web.v2.dto.request.ScheduleLocationRequest;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
@@ -17,12 +15,28 @@ public record EditScheduleCommand(
     Set<ScheduleTag> tags,
     Instant startsAt,
     Instant endsAt,
-    ScheduleLocationRequest location,
+    LocationInfo location,
     Boolean isOnline,
-    ScheduleAttendancePolicyRequest attendancePolicy,
+    AttendancePolicyInfo attendancePolicy,
     Boolean isAttendanceRequired,
     Set<Long> participantMemberIds
 ) {
+
+    @Builder
+    public record AttendancePolicyInfo(
+        Instant checkInStartAt,
+        Instant onTimeEndAt,
+        Instant lateEndAt
+    ) {
+    }
+
+    @Builder
+    public record LocationInfo(
+        Double latitude,
+        Double longitude,
+        String locationName
+    ) {
+    }
 
     // 참여자가 변경이 요청되었는지 확인, 즉 request의 participantMemberIds가 null이 아닌지 확인
     // 실제로 변경되었는지는 service 단에서 판별합니다.

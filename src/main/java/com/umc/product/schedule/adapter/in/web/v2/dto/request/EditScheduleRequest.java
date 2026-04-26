@@ -62,6 +62,21 @@ public record EditScheduleRequest(
             participants.add(authorMemberId);
         }
 
+        // Command의 locationInfo 생성
+        EditScheduleCommand.LocationInfo locationInfo = this.location != null
+            ? EditScheduleCommand.LocationInfo.builder()
+            .latitude(this.location.latitude())
+            .longitude(this.location.longitude())
+            .locationName(this.location.locationName())
+            .build() : null;
+
+        EditScheduleCommand.AttendancePolicyInfo policyInfo = this.attendancePolicy != null
+            ? EditScheduleCommand.AttendancePolicyInfo.builder()
+            .checkInStartAt(this.attendancePolicy.checkInStartAt())
+            .onTimeEndAt(this.attendancePolicy.onTimeEndAt())
+            .lateEndAt(this.attendancePolicy.lateEndAt())
+            .build() : null;
+
         return EditScheduleCommand.builder()
             .scheduleId(scheduleId)
             .name(name)
@@ -69,9 +84,9 @@ public record EditScheduleRequest(
             .tags(tags)
             .startsAt(startsAt)
             .endsAt(endsAt)
-            .location(location)
+            .location(locationInfo)
             .isOnline(isOnline)
-            .attendancePolicy(attendancePolicy)
+            .attendancePolicy(policyInfo)
             .isAttendanceRequired(isAttendanceRequired)
             .participantMemberIds(participants)
             .build();
