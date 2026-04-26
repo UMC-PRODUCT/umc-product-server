@@ -143,6 +143,28 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             throw new ScheduleDomainException(ScheduleErrorCode.STARTED_SCHEDULE_CANT_BE_EDITED);
         }
 
+        // capabilities 검증이 필요한 경우에만 조회 (출석 정책이 생겼거나 참여자에 변동이 있을 경우)
+        boolean needsCapabilitiesCheck = command.isChangingToAttendanceRequired()
+            || command.isParticipantsUpdateRequested();
+
+        if (needsCapabilitiesCheck) {
+            ScheduleCapabilitiesInfo capabilitiesInfo = capabilitiesService.getCapabilities(
+                schedule.getAuthorMemberId());
+
+            // 출석 정책 추가 권한 검증
+            if (command.isChangingToAttendanceRequired()
+                && !capabilitiesInfo.canCreateAttendanceRequiredSchedule()) {
+                throw new ScheduleDomainException(ScheduleErrorCode.CANNOT_CREATE_ATTENDANCE_REQUIRED_SCHEDULE);
+            }
+
+            // 최대 참여자 수 검증
+            if (command.isParticipantsUpdateRequested()
+                && command.participantMemberIds().size() > capabilitiesInfo.maxParticipantCount()) {
+                throw new ScheduleDomainException(ScheduleErrorCode.EXCEEDED_MAX_PARTICIPANTS,
+                    capabilitiesInfo.maxParticipantCount() + "명까지 초대 가능합니다.");
+            }
+        }
+
         // 대면 -> 비대면 전환 시
         if (command.isChangingToOnline()) {
             schedule.convertToOnline();
@@ -175,7 +197,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
 
             // 진짜 명단이 달라졌는지 비교
             if (!existingParticipantIds.equals(command.participantMemberIds())) {
-                // 진짜 달라졌을 때만 권한 검증 및 업데이트 수행
+                // 진짜 달라졌을 때만 업데이트 수행
                 updateParticipants(schedule, command);
             }
         }

@@ -137,12 +137,14 @@ public class ScheduleCommandV2Controller {
             SCHEDULE-0024 : 비대면 일정으로 변경 시 위치 정보를 포함할 수 없습니다.<br>
             SCHEDULE-0027 : 출석을 요하는 일정의 출석 정책은 필수입니다.<br>
             SCHEDULE-0028 : 시작된 일정은 수정이 불가합니다.<br>
+            SCHEDULE-0030 : 초대 가능한 최대 참여자 수를 초과했습니다.<br>
             SCHEDULE-0032 : 초대하려는 참여자에 유효하지 않은 사용자가 포함되어 있습니다.
             """,
             content = @Content
         ),
         @ApiResponse(responseCode = "403", description = """
-            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.
+            AUTHORIZATION-0002 : 해당 리소스에 접근할 권한이 없습니다.<br>
+            SCHEDULE-0031 : 출석을 요하는 일정을 생성할 권한이 없습니다.
             """,
             content = @Content
         ),
