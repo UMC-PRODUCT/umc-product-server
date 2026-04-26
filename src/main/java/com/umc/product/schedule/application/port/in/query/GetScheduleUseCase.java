@@ -21,6 +21,4 @@ public interface GetScheduleUseCase {
 
     AdminScheduleInfo getAdminSchedule(Long scheduleId, Long memberId,
                                        AttendanceStatus attendanceStatus);
-
-    boolean getHaveAttendancePolicy(Long scheduleId);
 }

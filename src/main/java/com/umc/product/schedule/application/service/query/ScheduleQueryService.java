@@ -162,16 +162,7 @@ public class ScheduleQueryService implements GetScheduleUseCase {
         return new AdminScheduleInfo(createBaseInfo(schedule), adminParticipants);
     }
 
-    // 일정이 출석 정책을 가졌는지 여부를 리턴
-    @Override
-    public boolean getHaveAttendancePolicy(Long scheduleId) {
-        Schedule schedule = loadSchedulePort.findById(scheduleId)
-            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
-
-        return schedule.getPolicy() != null;
-    }
-
-    // =============================== Helper Method ===============================
+    // ======= Helper Method =======
 
     // ScheduleBaseInfo 변환 메서드
     private ScheduleBaseInfo createBaseInfo(Schedule schedule) {
