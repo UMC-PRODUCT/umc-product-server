@@ -24,5 +24,4 @@ public class StudyGroupSchedule extends BaseEntity {
 
     private Long scheduleId;
 
-    private Long weeklyCurriculumId;
 }
