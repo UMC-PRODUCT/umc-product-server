@@ -20,8 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -74,13 +72,6 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
             ))
             .toList();
 
-        LocalDate startDateKst = vote.getStartsAt() != null
-            ? vote.getStartsAt().atZone(ZoneId.of("Asia/Seoul")).toLocalDate()
-            : null;
-        LocalDate endDateKst = vote.getEndsAtExclusive() != null
-            ? vote.getEndsAtExclusive().atZone(ZoneId.of("Asia/Seoul")).minusDays(1).toLocalDate()
-            : null;
-
         return new NoticeVoteInfo(
             surveyInfo.formId(),
             surveyInfo.title(),
@@ -89,8 +80,6 @@ public class NoticeContentQueryService implements GetNoticeContentUseCase {
             vote.getOpenStatus(Instant.now()),
             vote.getStartsAt(),
             vote.getEndsAtExclusive(),
-            startDateKst,
-            endDateKst,
             surveyInfo.totalParticipants(),
             options,
             surveyInfo.mySelectedOptionIds()

@@ -4,7 +4,6 @@ import com.umc.product.notice.domain.enums.VoteStatus;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -18,8 +17,6 @@ public record NoticeVoteInfo(
     VoteStatus status,
     Instant startsAt,
     Instant endsAtExclusive,
-    LocalDate startDateKst,
-    LocalDate endDateKst,
     int totalParticipants,
     List<VoteOptionInfo> options,
     List<Long> mySelectedOptionIds) {
