@@ -4,5 +4,5 @@ import com.umc.product.survey.domain.FormSection;
 
 public interface SaveFormSectionPort {
 
-    FormSection save(FormSection form);
+    FormSection save(FormSection formSection);
 }
