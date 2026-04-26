@@ -51,12 +51,19 @@ public enum OrganizationErrorCode implements BaseCode {
 
     STUDY_GROUP_ACCESS_DENIED(HttpStatus.FORBIDDEN, "ORGANIZATION-0031", "스터디 그룹 조회 권한이 없습니다."),
     GISU_HAS_ASSOCIATED_CHAPTERS(HttpStatus.CONFLICT, "ORGANIZATION-0032", "해당 기수에 연결된 지부 또는 학교가 존재하여 삭제할 수 없습니다."),
+
     STUDY_GROUP_MENTOR_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0033", "스터디 그룹 파트장은 최소 1명 이상이어야 합니다."),
     STUDY_GROUP_MENTOR_ID_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0034",
         "스터디 그룹 멘토의 ID는 필수입니다."),
     STUDY_GROUP_MEMBER_ALREADY_IN_PART_STUDY(HttpStatus.CONFLICT, "ORGANIZATION-0035", "다른 스터디 그룹과 중복된 멤버가 있습니다."),
     STUDY_GROUP_MENTOR_DUPLICATED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0036", "이미 해당 스터디에 속한 파트장입니다."),
-    STUDY_GROUP_MENTOR_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZATION-0037", "스터디 그룹의 파트장 정보를 찾을 수 없습니다.");
+    STUDY_GROUP_MENTOR_NOT_FOUND(HttpStatus.NOT_FOUND, "ORGANIZATION-0037", "스터디 그룹의 파트장 정보를 찾을 수 없습니다."),
+
+    STUDY_GROUP_SCHEDULE_ATTENDANCE_POLICY_REQUIRED(HttpStatus.BAD_REQUEST, "ORGANIZATION-0038",
+        "스터디 그룹 일정은 출석 정책이 필수입니다."),
+
+    ;
+
 
     private final HttpStatus httpStatus;
     private final String code;

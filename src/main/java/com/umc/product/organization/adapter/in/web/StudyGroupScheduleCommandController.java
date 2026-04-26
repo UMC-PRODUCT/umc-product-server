@@ -1,8 +1,8 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.organization.adapter.in.web.swagger.StudyGroupScheduleCommandControllerApi;
+import com.umc.product.organization.application.port.in.command.CreateStudyGroupScheduleUseCase;
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.CreateStudyGroupScheduleRequest;
-import com.umc.product.schedule.application.port.in.command.CreateStudyGroupScheduleUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;

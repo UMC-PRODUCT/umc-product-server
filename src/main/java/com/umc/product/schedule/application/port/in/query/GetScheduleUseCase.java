@@ -1,6 +1,7 @@
 package com.umc.product.schedule.application.port.in.query;
 
 import com.umc.product.schedule.application.port.in.query.dto.AdminScheduleInfo;
+import com.umc.product.schedule.application.port.in.query.dto.ScheduleBaseInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleInfo;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.Instant;
@@ -22,5 +23,7 @@ public interface GetScheduleUseCase {
     AdminScheduleInfo getAdminSchedule(Long scheduleId, Long memberId,
                                        AttendanceStatus attendanceStatus);
 
-    boolean getHaveAttendancePolicy(Long scheduleId);
+    boolean hasAttendancePolicy(Long scheduleId);
+
+    ScheduleBaseInfo getScheduleBaseInfo(Long scheduleId);
 }
