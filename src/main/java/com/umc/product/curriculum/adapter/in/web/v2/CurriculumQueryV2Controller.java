@@ -71,7 +71,7 @@ public class CurriculumQueryV2Controller {
         @RequestParam Long gisuId,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        MyCurriculumInfo info = getCurriculumUseCase.getMyProgressV2(memberPrincipal.getMemberId(), gisuId);
+        MyCurriculumInfo info = getCurriculumUseCase.getMyProgress(memberPrincipal.getMemberId(), gisuId);
         return MyCurriculumResponse.from(info);
     }
 }

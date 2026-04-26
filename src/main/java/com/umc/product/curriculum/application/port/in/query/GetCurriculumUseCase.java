@@ -16,5 +16,5 @@ public interface GetCurriculumUseCase {
     /**
      * V2: 내 커리큘럼 진행 상황 조회 (WeeklyCurriculum → OriginalWorkbook → Mission 구조)
      */
-    MyCurriculumInfo getMyProgressV2(Long memberId, Long gisuId);
+    MyCurriculumInfo getMyProgress(Long memberId, Long gisuId);
 }
