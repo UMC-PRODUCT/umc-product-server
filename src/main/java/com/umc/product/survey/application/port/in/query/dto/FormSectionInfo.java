@@ -8,7 +8,7 @@ import lombok.Builder;
  */
 @Builder
 public record FormSectionInfo(
-    Long id,
+    Long sectionId,
     Long formId,
     String title,
     String description,
