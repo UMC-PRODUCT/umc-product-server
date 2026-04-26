@@ -6,6 +6,7 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.util.GeometryUtils;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
@@ -54,6 +55,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     // 외부 도메인 UseCase
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
+    private final GetMemberUseCase getMemberUseCase;
 
 
     // 일정 생성
@@ -92,12 +94,23 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             throw new ScheduleDomainException(ScheduleErrorCode.NOT_ACTIVE_GISU_SCHEDULE);
         }
 
+        // 초대하려는 MemberId들이 실제로 존재하는지 검증
+        Set<Long> participants = command.participantMemberIds();
+        if (participants != null && !participants.isEmpty()) {
+            long validMemberCount = getMemberUseCase.countMembersByIds(participants);
+
+            // 요청한 id의 개수와 DB에 실제 존재하는 id의 개수가 다르다면 검증 실패
+            if (validMemberCount != participants.size()) {
+                throw new ScheduleDomainException(ScheduleErrorCode.INVALID_MEMBER_INVITE);
+            }
+        }
+
         // Schedule 생성 및 저장
         Schedule schedule = command.toEntity(challengerInfoWithStatus.memberId());
         Schedule savedSchedule = saveSchedulePort.save(schedule);
 
         // ScheduleParticipant 생성 및 저장
-        List<ScheduleParticipant> participants = command.participantMemberIds().stream()
+        List<ScheduleParticipant> participantList = participants.stream()
             .map(memberId -> ScheduleParticipant.builder()
                 .memberId(memberId)
                 .schedule(savedSchedule)
@@ -105,7 +118,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
                 .build())
             .toList();
 
-        saveScheduleParticipantPort.saveAll(participants);
+        saveScheduleParticipantPort.saveAll(participantList);
 
         return savedSchedule.getId();
     }
@@ -173,6 +186,8 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         return schedule.getId();
     }
 
+    // ============================== Helper Methods ==============================
+
     // command로부터 policy 생성
     private AttendancePolicy createPolicyFromCommand(EditScheduleCommand command, Schedule schedule) {
         if (command.attendancePolicy() == null) {
@@ -230,6 +245,15 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         // 추가되어야 할 MemberId
         Set<Long> toAddIds = new HashSet<>(newMemberIds);
         toAddIds.removeAll(existingMemberIds);
+
+        // 추가되어야 할 MemberId들이 실제로 존재하는지 검증
+        if (!toAddIds.isEmpty()) {
+            long validMemberCount = getMemberUseCase.countMembersByIds(toAddIds);
+
+            if (validMemberCount != toAddIds.size()) {
+                throw new ScheduleDomainException(ScheduleErrorCode.INVALID_MEMBER_INVITE);
+            }
+        }
 
         // 삭제
         if (!toDeleteIds.isEmpty()) {

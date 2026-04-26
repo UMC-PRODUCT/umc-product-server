@@ -81,6 +81,7 @@ public class ScheduleCommandV2Controller {
             SCHEDULE-0010 : 태그는 최소 1개 이상 선택해야 합니다.<br>
             SCHEDULE-0025 : 현재 기수의 일정만 생성할 수 있습니다.<br>
             SCHEDULE-0030 : 초대 가능한 최대 참여자 수를 초과했습니다.<br>
+            SCHEDULE-0032 : 초대하려는 참여자에 유효하지 않은 사용자가 포함되어 있습니다.<br>
             CHALLENGER-0009 : 활성 또는 수료 상태의 사용자만 일정 생성이 가능합니다.
             """,
             content = @Content
@@ -135,7 +136,8 @@ public class ScheduleCommandV2Controller {
             SCHEDULE-0020 : 대면 일정은 위치 정보가 필수입니다.<br>
             SCHEDULE-0024 : 비대면 일정으로 변경 시 위치 정보를 포함할 수 없습니다.<br>
             SCHEDULE-0027 : 출석을 요하는 일정의 출석 정책은 필수입니다.<br>
-            SCHEDULE-0028 : 시작된 일정은 수정이 불가합니다.
+            SCHEDULE-0028 : 시작된 일정은 수정이 불가합니다.<br>
+            SCHEDULE-0032 : 초대하려는 참여자에 유효하지 않은 사용자가 포함되어 있습니다.
             """,
             content = @Content
         ),

@@ -150,6 +150,11 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
         return loadMemberPort.findAllIdsCursor(lastId, PageRequest.of(0, limit));
     }
 
+    @Override
+    public long countMembersByIds(Set<Long> ids) {
+        return loadMemberPort.countMembersByIds(ids);
+    }
+
     // === Private Methods ===
 
     private Member getOrThrowMember(Long memberId) {

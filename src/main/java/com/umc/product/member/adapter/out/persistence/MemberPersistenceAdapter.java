@@ -92,4 +92,13 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     public List<Long> findAllIdsCursor(Long lastId, Pageable pageable) {
         return memberJpaRepository.findIdsCursor(lastId, pageable);
     }
+
+    @Override
+    public long countMembersByIds(Set<Long> memberIds) {
+
+        if (memberIds == null || memberIds.isEmpty()) {
+            return 0L;
+        }
+        return memberJpaRepository.countByIdIn(memberIds);
+    }
 }
