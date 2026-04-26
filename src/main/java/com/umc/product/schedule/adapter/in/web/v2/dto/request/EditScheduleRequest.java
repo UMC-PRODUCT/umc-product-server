@@ -3,6 +3,7 @@ package com.umc.product.schedule.adapter.in.web.v2.dto.request;
 import com.umc.product.schedule.application.port.in.command.dto.EditScheduleCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.HashSet;
@@ -35,12 +36,14 @@ public record EditScheduleRequest(
     // 하루종일 일정은 따로 서버측에서 저장하지 않고,
     // 클라이언트 단에서 KST 기준 Instant로 알아서 변환하도록 합니다.
 
+    @Valid
     ScheduleLocationRequest location,
 
     // patch 요청에서 대면 일정의 위치를 유지하거나, 대면 일정을 비대면 일정을 바꾸는 경우를 고려햐여, 명시적 플래그 필드를 추가합니다.
     @Schema(description = "null: 유지, true: 비대면으로 변경, false: 대면으로 변경")
     Boolean isOnline,
 
+    @Valid
     ScheduleAttendancePolicyRequest attendancePolicy,
 
     @Schema(description = "null: 유지, true: 출석 필요로 변경, false: 출석 불필요로 변경")
