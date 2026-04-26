@@ -4,7 +4,8 @@ import static com.umc.product.survey.domain.QAnswer.answer;
 import static com.umc.product.survey.domain.QAnswerChoice.answerChoice;
 import static com.umc.product.survey.domain.QFormResponse.formResponse;
 
-import com.querydsl.core.types.Projections;
+import com.querydsl.core.Tuple;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
 import lombok.RequiredArgsConstructor;
@@ -26,10 +27,10 @@ public class AnswerChoiceQueryRepository {
      * @return {optionId -> voteCount}. 득표 0인 선택지는 맵에 키가 없다.
      */
     public Map<Long, Long> countVotesByOptionId(Long formId) {
-        List<OptionVoteCountRow> rows = queryFactory
-            .select(Projections.constructor(OptionVoteCountRow.class,
-                answerChoice.questionOption.id,
-                answerChoice.id.count()))
+        NumberExpression<Long> voteCount = answerChoice.id.count();
+
+        List<Tuple> rows = queryFactory
+            .select(answerChoice.questionOption.id, voteCount)
             .from(answerChoice)
             .join(answerChoice.answer, answer)
             .join(answer.formResponse, formResponse)
@@ -42,8 +43,8 @@ public class AnswerChoiceQueryRepository {
 
         return rows.stream()
             .collect(Collectors.toMap(
-                OptionVoteCountRow::optionId,
-                OptionVoteCountRow::voteCount
+                t -> t.get(answerChoice.questionOption.id),
+                t -> t.get(voteCount)
             ));
     }
 
@@ -53,10 +54,8 @@ public class AnswerChoiceQueryRepository {
      * @return {optionId -> 투표자 memberId 리스트}. 투표자 없는 선택지는 맵에 키가 없다.
      */
     public Map<Long, List<Long>> findSelectedMemberIdsByOptionId(Long formId) {
-        List<OptionMemberIdRow> rows = queryFactory
-            .select(Projections.constructor(OptionMemberIdRow.class,
-                answerChoice.questionOption.id,
-                formResponse.respondentMemberId))
+        List<Tuple> rows = queryFactory
+            .select(answerChoice.questionOption.id, formResponse.respondentMemberId)
             .from(answerChoice)
             .join(answerChoice.answer, answer)
             .join(answer.formResponse, formResponse)
@@ -68,16 +67,11 @@ public class AnswerChoiceQueryRepository {
 
         return rows.stream()
             .collect(Collectors.groupingBy(
-                OptionMemberIdRow::optionId,
-                Collectors.mapping(OptionMemberIdRow::memberId, Collectors.toList())
+                t -> t.get(answerChoice.questionOption.id),
+                Collectors.mapping(
+                    t -> t.get(formResponse.respondentMemberId),
+                    Collectors.toList()
+                )
             ));
     }
-
-    // ---------------------------------------------------------------------
-    // Projection Records
-    // ---------------------------------------------------------------------
-
-    private record OptionVoteCountRow(Long optionId, Long voteCount) {}
-
-    private record OptionMemberIdRow(Long optionId, Long memberId) {}
 }
