@@ -8,10 +8,13 @@ import org.springframework.data.repository.query.Param;
 
 public interface AnswerJpaRepository extends JpaRepository<Answer, Long> {
 
+    /**
+     * 특정 FormResponse에 속한 모든 Answer 삭제
+     */
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-            delete from Answer a
-            where a.formResponse.id = :formResponseId
+            DELETE FROM Answer a
+            WHERE a.formResponse.id = :formResponseId
         """)
     int deleteAllByFormResponseId(@Param("formResponseId") Long formResponseId);
 }

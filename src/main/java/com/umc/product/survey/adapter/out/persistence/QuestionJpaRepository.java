@@ -12,14 +12,17 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface QuestionJpaRepository extends JpaRepository<Question, Long> {
+    /**
+     * 특정 폼에 속한 특정 질문 삭제
+     */
     @Modifying
     @Transactional
     @Query("""
-                delete from Question q
-                where q.id = :questionId
-                  and q.formSection.id in (
-                      select fs.id from FormSection fs
-                      where fs.form.id = :formId
+                DELETE FROM Question q
+                WHERE q.id = :questionId
+                  AND q.formSection.id IN (
+                      SELECT fs.id FROM FormSection fs
+                      WHERE fs.form.id = :formId
                   )
             """)
     int deleteByFormIdAndQuestionId(@Param("formId") Long formId,
@@ -31,24 +34,30 @@ public interface QuestionJpaRepository extends JpaRepository<Question, Long> {
     boolean existsByIdAndFormSection_Form_Id(Long questionId, Long formId);
 
 
+    /**
+     * 특정 폼에서 특정 타입의 첫 번째 질문 조회
+     */
     @Query("""
-                select q
-                from Question q
-                join q.formSection fs
-                join fs.form f
-                where f.id = :formId
-                  and q.type = :type
-                order by q.id asc
+                SELECT q
+                FROM Question q
+                JOIN q.formSection fs
+                JOIN fs.form f
+                WHERE f.id = :formId
+                  AND q.type = :type
+                ORDER BY q.id ASC
             """)
     Optional<Question> findFirstByFormIdAndType(@Param("formId") Long formId, @Param("type") QuestionType type);
 
+    /**
+     * 특정 폼의 모든 질문을 섹션 순서, 질문 순서대로 조회
+     */
     @Query("""
-                select q
-                from Question q
-                join q.formSection fs
-                join fs.form f
-                where f.id = :formId
-                order by fs.orderNo asc, q.orderNo asc
+                SELECT q
+                FROM Question q
+                JOIN q.formSection fs
+                JOIN fs.form f
+                WHERE f.id = :formId
+                ORDER BY fs.orderNo ASC, q.orderNo ASC
             """)
     List<Question> findAllByFormId(@Param("formId") Long formId);
 
