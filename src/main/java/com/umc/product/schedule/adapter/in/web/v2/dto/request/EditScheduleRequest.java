@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -58,12 +57,6 @@ public record EditScheduleRequest(
 ) {
 
     public EditScheduleCommand toCommand(Long scheduleId, Long authorMemberId) {
-        // 참여자 변경 시에만 요청자를 강제 추가
-        Set<Long> participants = null;
-        if (participantMemberIds != null) {
-            participants = new HashSet<>(participantMemberIds);
-            participants.add(authorMemberId);
-        }
 
         // Command의 locationInfo 생성
         EditScheduleCommand.LocationInfo locationInfo = this.location != null
@@ -91,7 +84,7 @@ public record EditScheduleRequest(
             .isOnline(isOnline)
             .attendancePolicy(policyInfo)
             .isAttendanceRequired(isAttendanceRequired)
-            .participantMemberIds(participants)
+            .participantMemberIds(participantMemberIds)
             .build();
     }
 }
