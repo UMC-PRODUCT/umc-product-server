@@ -4,6 +4,7 @@ import com.umc.product.survey.adapter.out.persistence.projection.OptionMemberIdP
 import com.umc.product.survey.adapter.out.persistence.projection.OptionVoteCountProjection;
 import com.umc.product.survey.domain.AnswerChoice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -53,4 +54,16 @@ public interface AnswerChoiceJpaRepository extends JpaRepository<AnswerChoice, L
             WHERE fr.form.id = :formId AND fr.status = 'SUBMITTED'
         """)
     List<OptionMemberIdProjection> findSelectedMemberIdsByOptionId(@Param("formId") Long formId);
+
+    /**
+     * 특정 FormResponse 에 속한 모든 Answer 의 AnswerChoice 를 일괄 삭제
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            DELETE FROM AnswerChoice ac
+            WHERE ac.answer.id IN (
+                SELECT a.id FROM Answer a WHERE a.formResponse.id = :formResponseId
+            )
+        """)
+    int deleteAllByFormResponseId(@Param("formResponseId") Long formResponseId);
 }

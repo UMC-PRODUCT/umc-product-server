@@ -3,6 +3,7 @@ package com.umc.product.survey.adapter.out.persistence;
 import com.umc.product.survey.application.port.out.LoadAnswerPort;
 import com.umc.product.survey.application.port.out.SaveAnswerPort;
 import com.umc.product.survey.domain.Answer;
+import com.umc.product.survey.domain.AnswerChoice;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -53,7 +54,13 @@ public class AnswerPersistenceAdapter implements LoadAnswerPort, SaveAnswerPort 
     }
 
     @Override
+    public List<AnswerChoice> saveAllChoices(List<AnswerChoice> choices) {
+        return answerChoiceJpaRepository.saveAll(choices);
+    }
+
+    @Override
     public void deleteAllByFormResponseId(Long formResponseId) {
+        answerChoiceJpaRepository.deleteAllByFormResponseId(formResponseId);
         answerJpaRepository.deleteAllByFormResponseId(formResponseId);
     }
 }

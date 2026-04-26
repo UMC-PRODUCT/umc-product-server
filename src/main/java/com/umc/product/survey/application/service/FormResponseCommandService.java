@@ -43,8 +43,8 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
         response.submit(Instant.now(), null);
         FormResponse saved = saveFormResponsePort.save(response);
 
-        List<Answer> answers = buildAnswers(saved, command.answers());
-        saveAnswerPort.saveAll(answers);
+        List<AnswerWithOptions> data = buildAnswerData(saved, command.answers());
+        saveAnswers(data);
 
         return saved.getId();
     }
@@ -61,8 +61,8 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
 
         saveAnswerPort.deleteAllByFormResponseId(existing.getId());
 
-        List<Answer> answers = buildAnswers(existing, command.answers());
-        saveAnswerPort.saveAll(answers);
+        List<AnswerWithOptions> data = buildAnswerData(existing, command.answers());
+        saveAnswers(data);
 
         existing.updateLastSavedAt(Instant.now());
         saveFormResponsePort.save(existing);
@@ -178,10 +178,10 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
         }
     }
 
-    private List<Answer> buildAnswers(FormResponse formResponse, List<AnswerCommand> answers) {
+    private List<AnswerWithOptions> buildAnswerData(FormResponse formResponse, List<AnswerCommand> answers) {
         List<Question> formQuestions = loadQuestionPort.listByFormId(formResponse.getForm().getId());
 
-        List<Answer> result = new ArrayList<>();
+        List<AnswerWithOptions> result = new ArrayList<>();
         for (AnswerCommand answerCmd : answers) {
             Question question = formQuestions.stream()
                 .filter(q -> q.getId().equals(answerCmd.questionId()))
@@ -195,6 +195,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
                 answerCmd.textValue()
             );
 
+            List<QuestionOption> selectedOptions = new ArrayList<>();
             List<Long> optionIds = answerCmd.selectedOptionIds();
             if (optionIds != null && !optionIds.isEmpty()) {
                 List<QuestionOption> options = loadQuestionOptionPort.listByQuestionId(question.getId());
@@ -203,12 +204,34 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
                         .filter(o -> o.getId().equals(optionId))
                         .findFirst()
                         .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.OPTION_NOT_IN_QUESTION));
-                    answer.addChoice(option);
+                    selectedOptions.add(option);
                 }
             }
 
-            result.add(answer);
+            result.add(new AnswerWithOptions(answer, selectedOptions));
         }
         return result;
+    }
+
+    private void saveAnswers(List<AnswerWithOptions> data) {
+        List<Answer> answers = data.stream().map(AnswerWithOptions::answer).toList();
+        List<Answer> savedAnswers = saveAnswerPort.saveAll(answers);
+
+        List<AnswerChoice> choices = new ArrayList<>();
+        for (int i = 0; i < savedAnswers.size(); i++) {
+            Answer savedAnswer = savedAnswers.get(i);
+            for (QuestionOption option : data.get(i).options()) {
+                choices.add(new AnswerChoice(savedAnswer, option));
+            }
+        }
+        if (!choices.isEmpty()) {
+            saveAnswerPort.saveAllChoices(choices);
+        }
+    }
+
+    private record AnswerWithOptions(
+        Answer answer,
+        List<QuestionOption> options
+    ) {
     }
 }

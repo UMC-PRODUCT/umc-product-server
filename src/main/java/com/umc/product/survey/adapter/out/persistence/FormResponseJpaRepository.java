@@ -24,7 +24,7 @@ public interface FormResponseJpaRepository extends JpaRepository<FormResponse, L
     /**
      * 특정 폼의 특정 상태 응답을 일괄 삭제
      */
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(clearAutomatically = true)
     @Query("""
             DELETE FROM FormResponse fr
             WHERE fr.form.id = :formId

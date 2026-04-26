@@ -10,8 +10,6 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -56,10 +54,6 @@ public class Answer extends BaseEntity {
     @Column(name = "times", columnDefinition = "timestamptz[]")
     private Set<Instant> times;
 
-    // 다중/단일 선택 객관식 답변을 위한 1:N 양방향 매핑
-    @OneToMany(mappedBy = "answer", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<AnswerChoice> choices = new ArrayList<>();
-
     public static Answer create(
         FormResponse formResponse,
         Question question,
@@ -73,10 +67,5 @@ public class Answer extends BaseEntity {
         answer.textValue = textValue;
 
         return answer;
-    }
-
-    // 객관식 보기 추가 편의 메서드
-    public void addChoice(QuestionOption option) {
-        this.choices.add(new AnswerChoice(this, option));
     }
 }

@@ -11,7 +11,7 @@ public interface AnswerJpaRepository extends JpaRepository<Answer, Long> {
     /**
      * 특정 FormResponse에 속한 모든 Answer 삭제
      */
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying(clearAutomatically = true)
     @Query("""
             DELETE FROM Answer a
             WHERE a.formResponse.id = :formResponseId
