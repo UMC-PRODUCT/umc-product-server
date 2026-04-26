@@ -135,7 +135,7 @@ public class ScheduleCommandV2Controller {
             SCHEDULE-0020 : 대면 일정은 위치 정보가 필수입니다.<br>
             SCHEDULE-0024 : 비대면 일정으로 변경 시 위치 정보를 포함할 수 없습니다.<br>
             SCHEDULE-0027 : 출석을 요하는 일정의 출석 정책은 필수입니다.<br>
-            SCHEDULE-0028 : 종료된 일정은 수정이 불가합니다.
+            SCHEDULE-0028 : 시작된 일정은 수정이 불가합니다.
             """,
             content = @Content
         ),
