@@ -27,8 +27,10 @@ public interface FormResponseJpaRepository extends JpaRepository<FormResponse, L
             where fr.form.id = :formId
               and fr.status = :status
         """)
-    int deleteByFormIdAndStatus(@Param("formId") Long formId,
-                                @Param("status") FormResponseStatus status);
+    int deleteByFormIdAndStatus(
+        @Param("formId") Long formId,
+        @Param("status") FormResponseStatus status
+    );
 
     @Query("""
             select fr.id
@@ -36,8 +38,10 @@ public interface FormResponseJpaRepository extends JpaRepository<FormResponse, L
             where fr.form.id = :formId
               and fr.status = :status
         """)
-    List<Long> findIdsByFormIdAndStatus(@Param("formId") Long formId,
-                                        @Param("status") FormResponseStatus status);
+    List<Long> findIdsByFormIdAndStatus(
+        @Param("formId") Long formId,
+        @Param("status") FormResponseStatus status
+    );
 
     boolean existsByForm_IdAndRespondentMemberId(Long formId, Long respondentMemberId);
 
@@ -47,6 +51,8 @@ public interface FormResponseJpaRepository extends JpaRepository<FormResponse, L
             where fr.form.id = :formId
               and fr.status = :status
         """)
-    long countByFormIdAndStatus(@Param("formId") Long formId,
-                                @Param("status") FormResponseStatus status);
+    long countByFormIdAndStatus(
+        @Param("formId") Long formId,
+        @Param("status") FormResponseStatus status
+    );
 }
