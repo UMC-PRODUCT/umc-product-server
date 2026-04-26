@@ -34,11 +34,13 @@ FROM single_answer sa
 WHERE sa.answered_as_type IN ('RADIO', 'DROPDOWN', 'CHECKBOX');
 
 -- 3-A. RADIO / DROPDOWN: value.selectedOptionId 1개 → answer_choice 1 row
-INSERT INTO answer_choice (answer_id, answered_as_content, question_option_id)
+INSERT INTO answer_choice (answer_id, answered_as_content, question_option_id, created_at, updated_at)
 SELECT
     a.id,
     qo.content,
-    qo.id
+    qo.id,
+    sa.created_at::timestamptz,
+    sa.updated_at::timestamptz
 FROM answer a
     JOIN single_answer sa ON sa.id = a.temp_legacy_single_answer_id
     JOIN question_option qo
@@ -46,11 +48,13 @@ FROM answer a
 WHERE a.answered_as_type IN ('RADIO', 'DROPDOWN');
 
 -- 3-B. CHECKBOX: value.selectedOptionIds 배열 펼쳐 answer_choice N rows
-INSERT INTO answer_choice (answer_id, answered_as_content, question_option_id)
+INSERT INTO answer_choice (answer_id, answered_as_content, question_option_id, created_at, updated_at)
 SELECT
     a.id,
     qo.content,
-    qo.id
+    qo.id,
+    sa.created_at::timestamptz,
+    sa.updated_at::timestamptz
 FROM answer a
     JOIN single_answer sa ON sa.id = a.temp_legacy_single_answer_id
     CROSS JOIN LATERAL jsonb_array_elements_text(sa.value -> 'selectedOptionIds')
