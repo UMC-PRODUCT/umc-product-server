@@ -34,6 +34,7 @@ public enum NoticeErrorCode implements BaseCode {
     INVALID_VOTE_OPTION_CONTENT(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0010", "투표 항목에 빈 값이 포함될 수 없습니다."),
     VOTE_NOT_STARTED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0011", "아직 투표 기간이 시작되지 않았습니다."),
     VOTE_CLOSED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0012", "이미 종료된 투표입니다."),
+    SELECTED_OPTION_IDS_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-CONTENTS-0013", "선택한 투표 항목 ID 목록은 필수입니다."),
 
 
     NOT_IMPLEMENTED_YET(HttpStatus.NOT_IMPLEMENTED, "NOTICE-9999", "아직 구현되지 않은 기능입니다.");

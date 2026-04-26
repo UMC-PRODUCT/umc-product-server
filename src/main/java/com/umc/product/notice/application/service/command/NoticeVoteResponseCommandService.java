@@ -46,9 +46,13 @@ public class NoticeVoteResponseCommandService implements ManageNoticeVoteRespons
 
     @Override
     public void updateOrCancel(UpdateNoticeVoteResponseCommand command) {
+        if (command.selectedOptionIds() == null) {
+            throw new NoticeDomainException(NoticeErrorCode.SELECTED_OPTION_IDS_REQUIRED);
+        }
+
         NoticeVote noticeVote = loadOpenNoticeVote(command.noticeId());
 
-        if (command.selectedOptionIds() == null || command.selectedOptionIds().isEmpty()) {
+        if (command.selectedOptionIds().isEmpty()) {
             manageFormResponseUseCase.deleteResponse(
                 DeleteFormResponseCommand.builder()
                     .formId(noticeVote.getVoteId())
