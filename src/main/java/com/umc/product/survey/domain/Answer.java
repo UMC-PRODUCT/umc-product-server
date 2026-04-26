@@ -12,6 +12,19 @@ import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 import java.util.Set;
 
+/**
+ * 한 사용자가 한 질문에 대해 작성한 답변의 루트 엔티티.
+ * <p>
+ * 질문 타입에 따라 값이 어디에 저장되는지가 다르다:
+ * <ul>
+ *   <li>SHORT_TEXT / LONG_TEXT -> {@link #textValue}</li>
+ *   <li>RADIO / DROPDOWN / CHECKBOX -> {@link AnswerChoice} (1 또는 N건)</li>
+ *   <li>SCHEDULE → {@link #times}</li>
+ *   <li>FILE → {@link #fileIds}</li>
+ *   <li>PORTFOLIO → {@link #textValue} 또는 {@link #fileIds}</li>
+ * </ul>
+ * 객관식 보기는 {@link AnswerChoice} 가 따로 들고 있다.
+ */
 @Entity
 @Table(name = "answer")
 @Getter
