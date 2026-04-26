@@ -6,6 +6,7 @@ import com.umc.product.schedule.adapter.in.web.v1.dto.request.CreateStudyGroupSc
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,7 +20,7 @@ public class StudyGroupScheduleController implements StudyGroupScheduleControlle
     // 스터디 그룹 일정 생성
     @Override
     @PostMapping
-    public Long create(@Valid CreateStudyGroupScheduleRequest request) {
-        return null;
+    public Long create(@Valid @RequestBody CreateStudyGroupScheduleRequest request) {
+        return createStudyGroupScheduleUseCase.create(request.toCommand());
     }
 }

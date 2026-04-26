@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 @Tag(name = "Organization | 스터디 그룹 일정 Command", description = "스터디 그룹 일정을 생성합니다.")
 public interface StudyGroupScheduleControllerApi {
-
     @Operation(summary = "스터디 그룹 일정 생성", description = """
         스터디 그룹 일정을 생성합니다.
         **'Schedule V2 | Command'**의 **'일정 생성 API'**를 사용하신 후 이 API를 호출해주세요.
@@ -20,10 +19,14 @@ public interface StudyGroupScheduleControllerApi {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "OK"),
         @ApiResponse(responseCode = "400", description = """
-            ~~-00 : ~~.<br>
+            SCHEDULE-0009 : 일정을 찾을 수 없습니다.<br>
+            CURRICULUM-0014 : 주차별 커리큘럼을 찾을 수 없습니다.
+            ORGANIZAITON-0023 : 스터디 그룹을 찾을 수 없습니다.<br>
+            ORGANIZATION-0036 : 스터디 그룹 일정은 출석 정책이 필수입니다.<br>
              """,
             content = @Content
         )
     })
     Long create(CreateStudyGroupScheduleRequest request);
+
 }
