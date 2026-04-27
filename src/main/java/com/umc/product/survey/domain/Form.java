@@ -4,8 +4,19 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.survey.domain.enums.FormStatus;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Builder
@@ -35,8 +46,13 @@ public class Form extends BaseEntity {
     @Column(name = "is_anonymous", nullable = false)
     private boolean isAnonymous;
 
-    public static Form createDraft(Long createdMemberId) {
+    /**
+     * Draft 생성을 위해서는 제목은 필수로 입력하여야 합니다.
+     */
+    public static Form createDraft(String title, Long createdMemberId) {
         Form form = new Form();
+
+        form.title = title;
         form.createdMemberId = createdMemberId;
         form.status = FormStatus.DRAFT;
 
