@@ -7,8 +7,8 @@ plugins {
 }
 
 group = "com.umc"
-version = "0.0.1"
-description = "umc-product"
+version = "2.0.0"
+description = "UMC PRODUCT API by Server Team"
 
 java {
     toolchain {
@@ -151,6 +151,10 @@ dependencies {
     // --- Spring REST Docs ---
     "asciidoctorExt"("org.springframework.restdocs:spring-restdocs-asciidoctor")
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
+}
+
+springBoot {
+    buildInfo()
 }
 
 tasks.withType<JavaCompile>().configureEach {
