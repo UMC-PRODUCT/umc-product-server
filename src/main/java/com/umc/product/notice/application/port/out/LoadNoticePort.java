@@ -11,7 +11,7 @@ public interface LoadNoticePort {
     Optional<Notice> findNoticeById(Long id);
 
     /**
-     * 챌린저 공지(gisu/chapter/school/part 조건)와 운영진 공지(viewerInfo.roles() overlap)를 함께 조회합니다.
+     * 챌린저 공지(gisu/chapter/school/part 조건)와 운영진 공지(minTargetRole 하한선)를 함께 조회합니다.
      */
     Page<Notice> findNoticesByClassification(NoticeClassification classification, NoticeViewerInfo viewerInfo,
                                              Pageable pageable);

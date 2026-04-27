@@ -1,41 +1,57 @@
 package com.umc.product.notice.domain.enums;
 
 import com.umc.product.common.domain.enums.ChallengerRoleType;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * 공지 대상 역할 유형.
- * CHALLENGER는 일반 챌린저 공지, 나머지는 운영진 공지 대상을 나타냅니다.
+ * CHALLENGER는 일반 챌린저 공지, 나머지는 운영진 공지의 하한선 역할을 나타냅니다.
+ * level이 낮을수록 상위 직급 (CENTRAL_MEMBER=1 > SCHOOL_CORE=2 > SCHOOL_PART_LEADER=3).
  */
-
 public enum NoticeTargetRole {
-    CHALLENGER,             // 일반 챌린저 공지
-    SCHOOL_PART_LEADER,     // 교내파트장
-    SCHOOL_PRESIDENT_TEAM,  // 교내회장단
-    CENTRAL_EDUCATION_TEAM, // 중앙운영진 교육국
-    CENTRAL_OPERATING_TEAM; // 중앙운영진 운영국
 
-    public boolean isCentralRole() {
-        return this == CENTRAL_EDUCATION_TEAM || this == CENTRAL_OPERATING_TEAM;
+    CHALLENGER(0),
+    CENTRAL_MEMBER(1),  // 교육국 + 운영국 통합
+    SCHOOL_CORE(2),     // 교내 회장단
+    SCHOOL_PART_LEADER(3);
+
+    private final int level;
+
+    NoticeTargetRole(int level) {
+        this.level = level;
     }
 
-    public boolean isSchoolRole() {
-        return this == SCHOOL_PART_LEADER || this == SCHOOL_PRESIDENT_TEAM;
+    public int getLevel() {
+        return level;
+    }
+
+    public boolean isStaffRole() {
+        return this != CHALLENGER;
     }
 
     /**
-     * 해당 역할이 읽을 수 있는 공지 대상 역할 목록.
-     * 작성 권한이 있는 대상의 공지까지 조회 가능합니다.
+     * 이 공지(minTargetRole)를 viewerRole 보유자가 읽을 수 있는지 확인합니다.
+     * viewerRole의 level이 이 역할의 level 이하이면 읽기 가능합니다.
      */
-    public Set<NoticeTargetRole> readableRoles() {
-        return switch (this) {
-            case CENTRAL_EDUCATION_TEAM -> Set.of(CENTRAL_EDUCATION_TEAM, SCHOOL_PART_LEADER, SCHOOL_PRESIDENT_TEAM);
-            case CENTRAL_OPERATING_TEAM -> Set.of(CENTRAL_OPERATING_TEAM, SCHOOL_PART_LEADER, SCHOOL_PRESIDENT_TEAM);
-            case SCHOOL_PRESIDENT_TEAM -> Set.of(SCHOOL_PRESIDENT_TEAM, SCHOOL_PART_LEADER);
-            case SCHOOL_PART_LEADER -> Set.of(SCHOOL_PART_LEADER);
-            case CHALLENGER -> Set.of(CHALLENGER);
-        };
+    public boolean includes(NoticeTargetRole viewerRole) {
+        if (viewerRole == null || viewerRole == CHALLENGER) {
+            return false;
+        }
+        return viewerRole.level <= this.level;
+    }
+
+    /**
+     * viewerRole이 읽을 수 있는 운영진 공지의 minTargetRole 목록을 반환합니다.
+     */
+    public static List<NoticeTargetRole> staffRolesReadableBy(NoticeTargetRole viewerRole) {
+        if (viewerRole == null || viewerRole == CHALLENGER) {
+            return List.of();
+        }
+        return Arrays.stream(values())
+            .filter(r -> r != CHALLENGER && viewerRole.level <= r.level)
+            .toList();
     }
 
     /**
@@ -45,9 +61,8 @@ public enum NoticeTargetRole {
     public static Optional<NoticeTargetRole> findFrom(ChallengerRoleType roleType) {
         return Optional.ofNullable(switch (roleType) {
             case SCHOOL_PART_LEADER -> SCHOOL_PART_LEADER;
-            case SCHOOL_PRESIDENT, SCHOOL_VICE_PRESIDENT -> SCHOOL_PRESIDENT_TEAM;
-            case CENTRAL_EDUCATION_TEAM_MEMBER -> CENTRAL_EDUCATION_TEAM;
-            case CENTRAL_OPERATING_TEAM_MEMBER -> CENTRAL_OPERATING_TEAM;
+            case SCHOOL_PRESIDENT, SCHOOL_VICE_PRESIDENT -> SCHOOL_CORE;
+            case CENTRAL_EDUCATION_TEAM_MEMBER, CENTRAL_OPERATING_TEAM_MEMBER -> CENTRAL_MEMBER;
             default -> null;
         });
     }

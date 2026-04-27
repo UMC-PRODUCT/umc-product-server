@@ -13,12 +13,13 @@ import java.util.Set;
  * 운영진 공지의 접근 가능 여부 판별에 사용됩니다.
  * <p>
  * - memberParts: 본인 소속 파트 + 파트장으로 담당하는 파트 합산
- * - roles: readableRoles()로 확장된 조회 가능 운영진 역할 목록
+ * - viewerRole: 조회자가 가진 최상위 운영진 역할. null이면 운영진 역할 없음.
+ *   레벨이 낮을수록 상위 직급 (CENTRAL_MEMBER=1 > SCHOOL_CORE=2 > SCHOOL_PART_LEADER=3).
  */
 public record NoticeViewerInfo(
     Set<ChallengerPart> memberParts,
     Long schoolId,
     Long chapterId,
-    Set<NoticeTargetRole> roles
+    NoticeTargetRole viewerRole
 ) {
 }

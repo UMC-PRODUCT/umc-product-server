@@ -44,10 +44,9 @@ public class NoticeTarget extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private List<ChallengerPart> targetChallengerPart;
 
-    @Column(name = "target_staff_roles", columnDefinition = "text[]", nullable = false)
-    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "min_target_role", nullable = false)
     @Enumerated(EnumType.STRING)
-    private List<NoticeTargetRole> targetRoles;
+    private NoticeTargetRole minTargetRole;
 
     @Builder
     private NoticeTarget(
@@ -56,45 +55,26 @@ public class NoticeTarget extends BaseEntity {
         Long targetChapterId,
         Long targetSchoolId,
         List<ChallengerPart> targetChallengerPart,
-        List<NoticeTargetRole> targetRoles) {
+        NoticeTargetRole minTargetRole) {
         this.noticeId = noticeId;
         this.targetGisuId = targetGisuId;
         this.targetChapterId = targetChapterId;
         this.targetSchoolId = targetSchoolId;
         this.targetChallengerPart = targetChallengerPart;
-        this.targetRoles = targetRoles;
+        this.minTargetRole = minTargetRole;
     }
 
-    /**
-     * 공지사항 권한 정보 업데이트
-     */
     public void update(
         Long targetGisuId,
         Long targetChapterId,
         Long targetSchoolId,
         List<ChallengerPart> targetChallengerPart,
-        List<NoticeTargetRole> targetRoles) {
+        NoticeTargetRole minTargetRole) {
         this.targetGisuId = targetGisuId;
         this.targetChapterId = targetChapterId;
         this.targetSchoolId = targetSchoolId;
         this.targetChallengerPart = targetChallengerPart;
-        this.targetRoles = targetRoles;
+        this.minTargetRole = minTargetRole;
     }
 
-    /**
-     * 운영진 공지 여부 확인
-     */
-    public boolean isStaffNotice() {
-        return targetRoles != null && !targetRoles.contains(NoticeTargetRole.CHALLENGER);
-    }
-
-    /**
-     * 전체 공지사항인지 확인 (모든 대상이 null)
-     */
-    public boolean isGlobalNotice() {
-        return targetGisuId == null
-            && targetChapterId == null
-            && targetSchoolId == null
-            && (targetChallengerPart == null || targetChallengerPart.isEmpty());
-    }
 }

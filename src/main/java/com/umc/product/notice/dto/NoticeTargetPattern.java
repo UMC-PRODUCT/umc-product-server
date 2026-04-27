@@ -1,7 +1,6 @@
 package com.umc.product.notice.dto;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
@@ -60,8 +59,7 @@ public enum NoticeTargetPattern {
     SPECIFIC_GISU_SPECIFIC_PART(true, false, false, true) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            return useCase.hasRoleTypeInGisu(memberId, info.targetGisuId(),
-                ChallengerRoleType.CENTRAL_EDUCATION_TEAM_MEMBER);
+            return useCase.isCentralMemberInGisu(memberId, info.targetGisuId());
         }
     },
 
@@ -106,7 +104,7 @@ public enum NoticeTargetPattern {
     // 운영진 공지 - 특정 기수 대상
     // =============================
 
-    // 특정 기수 전체 운영진
+    // 특정 기수 전체 운영진 (schoolId=null, part=null)
     STAFF_SPECIFIC_GISU(true, false, false, false, true) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
@@ -114,30 +112,20 @@ public enum NoticeTargetPattern {
         }
     },
 
-    // 특정 기수 특정 학교 운영진 (교내파트장/회장단 대상)
-    STAFF_SPECIFIC_GISU_SPECIFIC_SCHOOL(true, false, true, false, true) {
-        @Override
-        public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            validateNoSchoolForCentralRoles(info);
-            return hasStaffWritePermission(info, memberId, useCase);
-        }
-    },
-
-    // 특정 기수 특정 파트 운영진 (교내파트장 대상)
+    // 특정 기수 특정 파트 운영진 (schoolId=null, part 지정): 중앙운영진 → 파트장 공지
     STAFF_SPECIFIC_GISU_SPECIFIC_PART(true, false, false, true, true) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            validatePartApplicableRoles(info);
+            validatePartForStaff(info);
             return hasStaffWritePermission(info, memberId, useCase);
         }
     },
 
-    // 특정 기수 특정 학교 특정 파트 운영진 (교내파트장 대상)
-    STAFF_SPECIFIC_GISU_SPECIFIC_SCHOOL_WITH_PART(true, false, true, true, true) {
+    // 특정 기수 특정 학교 운영진 (schoolId 지정, part 있음/없음 모두): 교내운영진 공지
+    STAFF_SPECIFIC_GISU_SPECIFIC_SCHOOL(true, false, true, false, true) {
         @Override
         public boolean validatePermission(NoticeTargetInfo info, Long memberId, GetChallengerRoleUseCase useCase) {
-            validateNoSchoolForCentralRoles(info);
-            validatePartApplicableRoles(info);
+            validateSchoolForCentralRole(info);
             return hasStaffWritePermission(info, memberId, useCase);
         }
     };
@@ -166,9 +154,9 @@ public enum NoticeTargetPattern {
         boolean hasChapter = info.targetChapterId() != null;
         boolean hasSchool = info.targetSchoolId() != null;
         boolean hasPart = info.targetParts() != null && !info.targetParts().isEmpty();
-        boolean hasStaffRoles = info.isStaffNotice();
+        boolean isStaff = info.isStaffNotice();
 
-        if (hasStaffRoles) {
+        if (isStaff) {
             if (!hasGisu) {
                 throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
                     "운영진 공지는 기수 지정이 필수입니다.");
@@ -177,55 +165,70 @@ public enum NoticeTargetPattern {
                 throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
                     "운영진 공지에 지부를 지정할 수 없습니다.");
             }
+            // 교내운영진 공지 (schoolId 지정): part 유무와 무관하게 동일 패턴
+            if (hasSchool) {
+                log.info("매칭된 NoticeTargetPattern: STAFF_SPECIFIC_GISU_SPECIFIC_SCHOOL");
+                return STAFF_SPECIFIC_GISU_SPECIFIC_SCHOOL;
+            }
+            if (hasPart) {
+                log.info("매칭된 NoticeTargetPattern: STAFF_SPECIFIC_GISU_SPECIFIC_PART");
+                return STAFF_SPECIFIC_GISU_SPECIFIC_PART;
+            }
+            log.info("매칭된 NoticeTargetPattern: STAFF_SPECIFIC_GISU");
+            return STAFF_SPECIFIC_GISU;
         }
 
         for (NoticeTargetPattern pattern : values()) {
-            if (pattern.matches(hasGisu, hasChapter, hasSchool, hasPart, hasStaffRoles)) {
+            if (pattern.matches(hasGisu, hasChapter, hasSchool, hasPart, false)) {
                 log.info(
-                    "매칭된 NoticeTargetPattern: {}, hasGisu: {}, hasChapter: {}, hasSchool: {}, hasPart: {}, hasStaffRoles: {}",
-                    pattern.name(), hasGisu, hasChapter, hasSchool, hasPart, hasStaffRoles);
+                    "매칭된 NoticeTargetPattern: {}, hasGisu: {}, hasChapter: {}, hasSchool: {}, hasPart: {}",
+                    pattern.name(), hasGisu, hasChapter, hasSchool, hasPart);
                 return pattern;
             }
         }
 
         throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
-            "지원하지 않는 대상 설정입니다. 관리자에게 문의해주세요. hasGisu: " + hasGisu + ", hasChapter: " + hasChapter
-                + ", hasSchool: " + hasSchool + ", hasPart: " + hasPart + ", hasStaffRoles: " + hasStaffRoles);
+            "지원하지 않는 대상 설정입니다. hasGisu: " + hasGisu + ", hasChapter: " + hasChapter
+                + ", hasSchool: " + hasSchool + ", hasPart: " + hasPart);
     }
 
-    // 중앙 운영진을 대상으로 할 때 학교 지정 X
-    private static void validateNoSchoolForCentralRoles(NoticeTargetInfo info) {
-        boolean hasCentralRole = info.targetRoles().stream().anyMatch(NoticeTargetRole::isCentralRole);
-        if (hasCentralRole) {
+    // CENTRAL_MEMBER 대상 공지에는 학교 지정 불가
+    private static void validateSchoolForCentralRole(NoticeTargetInfo info) {
+        if (info.minTargetRole() == NoticeTargetRole.CENTRAL_MEMBER) {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
-                "중앙 운영진을 대상으로 하는 공지에 학교를 지정할 수 없습니다.");
+                "중앙운영진을 대상으로 하는 공지에 학교를 지정할 수 없습니다.");
         }
     }
 
-    // 파트 지정이 가능한 경우인지 확인
-    // 교육국, 교내파트장 대상 공지의 경우 파트지정 필요
-    private static void validatePartApplicableRoles(NoticeTargetInfo info) {
-        if (info.targetRoles().contains(NoticeTargetRole.SCHOOL_PRESIDENT_TEAM)) {
+    // SCHOOL_CORE 대상 공지에는 파트 지정 불가 (파트 지정은 SCHOOL_PART_LEADER/CENTRAL_MEMBER만 허용)
+    private static void validatePartForStaff(NoticeTargetInfo info) {
+        if (info.minTargetRole() == NoticeTargetRole.SCHOOL_CORE) {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
-                "교내 회장단 대상 공지에 파트를 지정할 수 없습니다.");
-        }
-        if (info.targetRoles().contains(NoticeTargetRole.CENTRAL_OPERATING_TEAM)) {
-            throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
-                "중앙 운영국 대상 공지에 파트를 지정할 수 없습니다.");
+                "교내 회장단 대상 공지에는 파트를 지정할 수 없습니다.");
         }
     }
 
     private static boolean hasStaffWritePermission(NoticeTargetInfo info, Long memberId,
                                                    GetChallengerRoleUseCase useCase) {
-        boolean hasCentralRole = info.targetRoles().stream().anyMatch(NoticeTargetRole::isCentralRole);
-        if (hasCentralRole) {
+        NoticeTargetRole minTargetRole = info.minTargetRole();
+
+        if (minTargetRole == NoticeTargetRole.CENTRAL_MEMBER) {
+            // 중앙운영진 대상 → 총괄단만 작성 가능
             return useCase.isCentralCoreInGisu(memberId, info.targetGisuId());
         }
-        // 교내 범위 운영진 공지 (targetSchoolId 있음): 중앙운영진 또는 해당 학교 운영진 모두 작성 가능
+
+        if (minTargetRole == NoticeTargetRole.SCHOOL_CORE) {
+            // 학교회장단 이상 대상 → 총괄단 + 중앙운영진 작성 가능
+            return useCase.isCentralMemberInGisu(memberId, info.targetGisuId());
+        }
+
+        // SCHOOL_PART_LEADER 대상
         if (info.targetSchoolId() != null) {
+            // 교내운영진 공지: 해당 학교 회장단 또는 중앙운영진 작성 가능
             return useCase.isCentralMemberInGisu(memberId, info.targetGisuId())
                 || useCase.isSchoolCoreInGisu(memberId, info.targetGisuId(), info.targetSchoolId());
         }
+        // 중앙에서 전체 파트장 대상 공지: 총괄단 + 중앙운영진 작성 가능
         return useCase.isCentralMemberInGisu(memberId, info.targetGisuId());
     }
 
