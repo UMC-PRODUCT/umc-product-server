@@ -8,6 +8,11 @@
 
 -- question_option 테이블에서 orderNo를 int -> bigint
 
+UPDATE form
+SET title      = 'Untitled Form',
+    updated_at = now()
+WHERE title IS NULL;
+
 ALTER TABLE form
     ALTER COLUMN title SET NOT NULL;
 
