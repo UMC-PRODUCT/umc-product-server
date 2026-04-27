@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("local | dev")
 @RestController
 @RequestMapping("/test")
-@Tag(name = "000 Test | 일반 테스트", description = "개발 및 테스트 용 API 입니다. 잘못 호출했을 떄 Dev 서버가 어떻게 되어버릴지도 몰라요")
+@Tag(name = "Test | 일반 테스트", description = "개발 및 테스트 용 API 입니다. 잘못 호출하면 우리의 작고 소중한 서버가 어떻게 되어버릴지도 몰라요 \uD83E\uDEE2")
 @Slf4j
 @Public
 public class TestController {
