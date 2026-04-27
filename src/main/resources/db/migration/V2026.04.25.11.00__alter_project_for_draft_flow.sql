@@ -20,3 +20,8 @@ ALTER TABLE project
 --    enum 추가마다 migration 동반 비용 회피
 ALTER TABLE file_metadata
     DROP CONSTRAINT file_metadata_category_check;
+
+-- 5) project_member.part 컬럼 추가 — 엔티티에는 정의되어 있으나 V2026.04.13 마이그레이션에서 누락됨.
+--    Challenger.part 스냅샷(반정규화) 의도로 ProjectMember에 직접 보관한다.
+ALTER TABLE project_member
+    ADD COLUMN part VARCHAR(255) NOT NULL;
