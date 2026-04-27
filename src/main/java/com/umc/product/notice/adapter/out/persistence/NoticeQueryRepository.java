@@ -179,7 +179,8 @@ public class NoticeQueryRepository {
                 Expressions.constant(role.name())
             ).gt(0))
             .reduce(BooleanExpression::or)
-            .get();
+            .orElseThrow(() -> new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
+                "운영진 역할 목록이 비어 있어 조회 조건을 생성할 수 없습니다."));
     }
 
     /**
