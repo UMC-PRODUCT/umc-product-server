@@ -14,7 +14,5 @@ public interface LoadCurriculumPort {
 
     CurriculumProjection getByGisuIdAndPart(Long gisuId, ChallengerPart part);
 
-    boolean existsById(Long id);
-
     boolean existsByGisuIdAndPart(Long gisuId, ChallengerPart part);
 }

@@ -1,10 +1,12 @@
 package com.umc.product.curriculum.adapter.in.web.v2.dto.response;
 
+import com.umc.product.curriculum.application.port.in.query.dto.MyCurriculumInfo;
 import com.umc.product.curriculum.domain.enums.MissionType;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookType;
+import lombok.Builder;
+
 import java.time.Instant;
 import java.util.List;
-import lombok.Builder;
 
 /**
  * 커리큘럼, 주차별 커리큘럼, 원본 워크북, 챌린저 워크북, 미션 제출물, 피드백 정보, 베스트 워크북 정보를 나타내는 DTO
@@ -15,6 +17,16 @@ public record MyCurriculumResponse(
     String title,
     List<MyWeeklyCurriculumResponse> weeks
 ) {
+
+    public static MyCurriculumResponse from(MyCurriculumInfo info) {
+        return MyCurriculumResponse.builder()
+            .curriculumId(info.curriculumId())
+            .title(info.title())
+            .weeks(info.weeks().stream()
+                .map(MyWeeklyCurriculumResponse::from)
+                .toList())
+            .build();
+    }
 
     /**
      * 사용자에 따른 각 주차별 커리큘럼과 관련된 내용
@@ -41,6 +53,21 @@ public record MyCurriculumResponse(
         WeeklyCurriculumStatus status,
         List<MyOriginalWorkbookResponse> originalWorkbooks
     ) {
+
+        static MyWeeklyCurriculumResponse from(MyCurriculumInfo.MyWeeklyCurriculumInfo w) {
+            return MyWeeklyCurriculumResponse.builder()
+                .weeklyCurriculumId(w.weeklyCurriculumId())
+                .weekNo(w.weekNo())
+                .title(w.title())
+                .isExtra(w.isExtra())
+                .startsAt(w.startsAt())
+                .endsAt(w.endsAt())
+                .status(WeeklyCurriculumStatus.from(w))
+                .originalWorkbooks(w.releasedOriginalWorkbooks().stream()
+                    .map(MyOriginalWorkbookResponse::from)
+                    .toList())
+                .build();
+        }
     }
 
     /**
@@ -67,13 +94,24 @@ public record MyCurriculumResponse(
         String url,
         OriginalWorkbookType type,
         List<MyOriginalWorkbookMissionResponse> missions,
-        // challengerWorkbook의 존재 여부
         boolean isDeployedToMember,
         Long challengerWorkbookId
     ) {
-        // 정팩메 잘 써서 isDeployedToMember 필드의 정합성 잘 맞춰줍시다 ...
-        // 그냥 challengerWorkbookId만 주고, 커리큘럼 내에서 각 워크북에 대한 정보를 알아야 할 이유가 생긴다면
-        // 그건 FE가 알아서 API 한 번 더 쏘는걸로
+
+        static MyOriginalWorkbookResponse from(MyCurriculumInfo.MyOriginalWorkbookInfo wb) {
+            return MyOriginalWorkbookResponse.builder()
+                .originalWorkbookId(wb.originalWorkbookId())
+                .title(wb.title())
+                .description(wb.description())
+                .url(wb.url())
+                .type(wb.type())
+                .missions(wb.missions().stream()
+                    .map(MyOriginalWorkbookMissionResponse::from)
+                    .toList())
+                .isDeployedToMember(wb.isDeployedToMember())
+                .challengerWorkbookId(wb.challengerWorkbookId().orElse(null))
+                .build();
+        }
     }
 
     /**
@@ -84,8 +122,8 @@ public record MyCurriculumResponse(
      * @param description               미션 설명 (nullable)
      * @param missionType               미션 유형
      * @param isNecessary               미션 필수 수행 여부
-     * @param hasSubmissions            미션 제출물이 존재하는지 여부
-     * @param missionSubmission         요청자가 제출한 미션에 대한 정보, 미션 당 제출물은 한 개로 제한됨
+     * @param hasSubmission             미션 제출물이 존재하는지 여부
+     * @param submission                요청자가 제출한 미션에 대한 정보, 미션 당 제출물은 한 개로 제한됨
      */
     @Builder
     public record MyOriginalWorkbookMissionResponse(
@@ -97,5 +135,19 @@ public record MyCurriculumResponse(
         boolean hasSubmission,
         MissionSubmissionResponse submission
     ) {
+
+        static MyOriginalWorkbookMissionResponse from(MyCurriculumInfo.MyOriginalWorkbookMissionInfo m) {
+            return MyOriginalWorkbookMissionResponse.builder()
+                .originalWorkbookMissionId(m.originalWorkbookMissionId())
+                .title(m.title())
+                .description(m.description())
+                .missionType(m.missionType())
+                .isNecessary(m.isNecessary())
+                .hasSubmission(m.hasSubmission())
+                .submission(m.submission()
+                    .map(s -> MissionSubmissionResponse.from(m.originalWorkbookMissionId(), s))
+                    .orElse(null))
+                .build();
+        }
     }
 }
