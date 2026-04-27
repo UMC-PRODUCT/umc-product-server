@@ -58,6 +58,9 @@ public enum ResourceType {
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
     FCM("fcm", "FCM 알람 관련",
         Set.of(PermissionType.DELETE)),
+    PROJECT("project", "프로젝트",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT,
+            PermissionType.DELETE)),
     ;
 
     private final String code;
