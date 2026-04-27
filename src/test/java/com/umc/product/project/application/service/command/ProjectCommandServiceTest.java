@@ -19,6 +19,7 @@ import com.umc.product.project.application.port.in.command.dto.CreateDraftProjec
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectCommand;
+import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectPort;
 import com.umc.product.project.domain.Project;
@@ -38,6 +39,7 @@ class ProjectCommandServiceTest {
 
     @Mock LoadProjectPort loadProjectPort;
     @Mock SaveProjectPort saveProjectPort;
+    @Mock LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     @Mock GetMemberUseCase getMemberUseCase;
     @Mock GetChallengerUseCase getChallengerUseCase;
     @Mock GetGisuUseCase getGisuUseCase;
@@ -180,8 +182,8 @@ class ProjectCommandServiceTest {
         void 프로젝트_제출_성공() {
             Project project = createProject(ProjectStatus.DRAFT);
             project.updateBasicInfo("프로젝트명", null, null, null, null);
-            project.attachApplicationForm(10L);
             given(loadProjectPort.getById(1L)).willReturn(project);
+            given(loadProjectApplicationFormPort.existsByProjectId(1L)).willReturn(true);
 
             sut.submit(SubmitProjectCommand.builder()
                 .projectId(1L)
@@ -203,6 +205,22 @@ class ProjectCommandServiceTest {
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
+        }
+
+        @Test
+        void 지원폼_미연결이면_SUBMIT_VALIDATION_FAILED() {
+            Project project = createProject(ProjectStatus.DRAFT);
+            project.updateBasicInfo("프로젝트명", null, null, null, null);
+            given(loadProjectPort.getById(1L)).willReturn(project);
+            given(loadProjectApplicationFormPort.existsByProjectId(1L)).willReturn(false);
+
+            assertThatThrownBy(() -> sut.submit(SubmitProjectCommand.builder()
+                    .projectId(1L)
+                    .requesterMemberId(100L)
+                    .build()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_SUBMIT_VALIDATION_FAILED);
         }
     }
 

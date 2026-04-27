@@ -130,7 +130,6 @@ class ProjectTest {
         @Test
         void DRAFT에서_PENDING_REVIEW로_전이된다() {
             project.updateBasicInfo("프로젝트명", null, null, null, null);
-            project.attachApplicationForm(10L);
 
             project.submit();
 
@@ -140,7 +139,6 @@ class ProjectTest {
         @Test
         void DRAFT가_아니면_PROJECT_INVALID_STATE() {
             project.updateBasicInfo("프로젝트명", null, null, null, null);
-            project.attachApplicationForm(10L);
             project.submit();
 
             assertThatThrownBy(() -> project.submit())
@@ -151,8 +149,6 @@ class ProjectTest {
 
         @Test
         void name이_null이면_SUBMIT_VALIDATION_FAILED() {
-            project.attachApplicationForm(10L);
-
             assertThatThrownBy(() -> project.submit())
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
@@ -162,33 +158,11 @@ class ProjectTest {
         @Test
         void name이_빈문자열이면_SUBMIT_VALIDATION_FAILED() {
             project.updateBasicInfo("  ", null, null, null, null);
-            project.attachApplicationForm(10L);
 
             assertThatThrownBy(() -> project.submit())
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_SUBMIT_VALIDATION_FAILED);
-        }
-
-        @Test
-        void applicationFormId가_null이면_SUBMIT_VALIDATION_FAILED() {
-            project.updateBasicInfo("프로젝트명", null, null, null, null);
-
-            assertThatThrownBy(() -> project.submit())
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_SUBMIT_VALIDATION_FAILED);
-        }
-    }
-
-    @Nested
-    class attachApplicationForm {
-
-        @Test
-        void applicationFormId가_설정된다() {
-            project.attachApplicationForm(42L);
-
-            assertThat(project.getApplicationFormId()).isEqualTo(42L);
         }
     }
 
@@ -228,7 +202,6 @@ class ProjectTest {
         @Test
         void PENDING_REVIEW에서_ABORTED로_전이된다() {
             project.updateBasicInfo("이름", null, null, null, null);
-            project.attachApplicationForm(10L);
             project.submit();
 
             project.abort("사유", 999L);

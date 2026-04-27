@@ -21,8 +21,7 @@ public record ProjectDetailResponse(
     MemberBrief productOwner,
     List<MemberBrief> coProductOwners,
     List<PartQuotaInfo> partQuotas,
-    PartQuotaStatus partQuotaStatus,
-    Long applicationFormId
+    PartQuotaStatus partQuotaStatus
 ) {
     public static ProjectDetailResponse from(
         ProjectInfo info,
@@ -43,7 +42,6 @@ public record ProjectDetailResponse(
             .coProductOwners(coProductOwners)
             .partQuotas(quotas)
             .partQuotaStatus(aggregateStatus(quotas))
-            .applicationFormId(info.applicationFormId())
             .build();
     }
 
@@ -59,7 +57,6 @@ public record ProjectDetailResponse(
             .coProductOwners(coProductOwners.stream().map(MemberBrief::toPublic).toList())
             .partQuotas(partQuotas)
             .partQuotaStatus(partQuotaStatus)
-            .applicationFormId(applicationFormId)
             .build();
     }
 

@@ -16,6 +16,7 @@ import com.umc.product.project.application.port.in.command.dto.CreateDraftProjec
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectCommand;
+import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectPort;
 import com.umc.product.project.domain.Project;
@@ -37,6 +38,7 @@ public class ProjectCommandService implements
 
     private final LoadProjectPort loadProjectPort;
     private final SaveProjectPort saveProjectPort;
+    private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
 
     // Cross-domain UseCases
     private final GetMemberUseCase getMemberUseCase;
@@ -85,6 +87,10 @@ public class ProjectCommandService implements
 
         if (!project.getProductOwnerMemberId().equals(command.requesterMemberId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
+        }
+
+        if (!loadProjectApplicationFormPort.existsByProjectId(project.getId())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_SUBMIT_VALIDATION_FAILED);
         }
 
         project.submit();

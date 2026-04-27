@@ -31,7 +31,6 @@ public record ProjectInfo(
     Long productOwnerMemberId,
     List<Long> coProductOwnerMemberIds,
     List<ProjectPartQuotaInfo> partQuotas,
-    Long applicationFormId,
     Instant createdAt,
     Instant updatedAt
 ) {
@@ -66,7 +65,6 @@ public record ProjectInfo(
             .productOwnerMemberId(project.getProductOwnerMemberId())
             .coProductOwnerMemberIds(coProductOwnerMemberIds)
             .partQuotas(partQuotas)
-            .applicationFormId(project.getApplicationFormId())
             .createdAt(project.getCreatedAt())
             .updatedAt(project.getUpdatedAt())
             .build();

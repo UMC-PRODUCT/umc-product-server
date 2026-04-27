@@ -61,9 +61,6 @@ public class Project extends BaseEntity {
     private Long statusChangedByMemberId; // 프로젝트 상태를 변경한 멤버의 ID입니다. (예: ABORTED로 변경한 멤버)
     private String statusChangedReason; // 프로젝트 상태를 변경한 이유입니다. (예: ABORTED로 변경한 이유)
 
-    // 연결된 지원 폼(Survey) ID. PM이 PROJECT-106으로 지원 문항을 저장할 때 연결됩니다.
-    private Long applicationFormId;
-
     // 프로젝트 지원 폼은, 파트별로 섹션을 나누어서 가지고 있어야 합니다.
     // Design, FE, BE 각각 섹션을 나누어서 가지고 있으며, 지원자의 파트에 따라서 자동으로 해당 섹션으로 렌더링해서 제공하여야 합니다.
     // 기존에는 ElementCollection, CollectionTable을 통해서 저장했으나, FormSection마다 조회 및 작성 가능한 파트를 제한하여야 하고,
@@ -168,21 +165,15 @@ public class Project extends BaseEntity {
     /**
      * DRAFT 상태에서 PENDING_REVIEW 상태로 전이합니다. PM 제출 액션.
      * - 현재 상태가 DRAFT가 아니면 {@code PROJECT_INVALID_STATE}.
-     * - 필수 필드(name, applicationFormId) 미입력 시 {@code PROJECT_SUBMIT_VALIDATION_FAILED}.
+     * - {@code name} 미입력 시 {@code PROJECT_SUBMIT_VALIDATION_FAILED}.
+     * <p>
+     * 지원 폼({@link ProjectApplicationForm}) 연결 여부는 다른 도메인 lookup이 필요하므로
+     * Service 레이어에서 {@code submit()} 호출 전 검증합니다.
      */
     public void submit() {
         validateStatus(ProjectStatus.DRAFT);
         validateSubmitRequiredFields();
         this.status = ProjectStatus.PENDING_REVIEW;
-    }
-
-    /**
-     * Survey 도메인의 지원 폼 ID를 연결합니다. PROJECT-106에서 Service가 호출합니다.
-     *
-     * @param applicationFormId survey 도메인의 Form ID
-     */
-    public void attachApplicationForm(Long applicationFormId) {
-        this.applicationFormId = applicationFormId;
     }
 
     /**
@@ -215,7 +206,7 @@ public class Project extends BaseEntity {
     }
 
     private void validateSubmitRequiredFields() {
-        if (this.name == null || this.name.isBlank() || this.applicationFormId == null) {
+        if (this.name == null || this.name.isBlank()) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_SUBMIT_VALIDATION_FAILED);
         }
     }

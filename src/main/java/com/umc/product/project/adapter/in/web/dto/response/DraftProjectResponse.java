@@ -25,7 +25,6 @@ public record DraftProjectResponse(
     String externalLink,
     MemberBrief productOwner,
     List<MemberBrief> coProductOwners,
-    Long applicationFormId,
     List<ApplicationQuestionItem> questions
 ) {
     public static DraftProjectResponse from(
@@ -44,7 +43,6 @@ public record DraftProjectResponse(
             .externalLink(info.externalLink())
             .productOwner(productOwner)
             .coProductOwners(coProductOwners)
-            .applicationFormId(info.applicationFormId())
             .questions(questions)
             .build();
     }
