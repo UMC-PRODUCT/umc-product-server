@@ -4,6 +4,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -14,7 +15,6 @@ import java.util.List;
  * null 필드는 해당 차원에서 전체 대상임을 의미합니다.
  * <p>
  * - from(NoticeTarget): 엔티티 → DTO 변환 (조회 방향)
- * - ofChallengerQuery(NoticeClassification): 쿼리 파라미터 → 챌린저 공지 유효성 검증용 변환
  */
 @Schema(description = "공지 대상 범위 설정. null인 필드는 '전체'를 의미합니다. "
     + "예) targetGisuId만 입력 → 해당 기수 전체 / targetChapterId도 입력 → 해당 지부만 / targetParts도 입력 → 해당 파트만 / "
@@ -34,9 +34,9 @@ public record NoticeTargetInfo(
         example = "[\"SPRINGBOOT\", \"WEB\"]")
     List<ChallengerPart> targetParts,
 
-    @Schema(description = "대상 역할 목록. CHALLENGER면 일반 챌린저 공지, 그 외 값이 포함되면 운영진 공지. "
-        + "null이면 기본값 [CHALLENGER]로 처리",
-        example = "[\"SCHOOL_PART_LEADER\"]", nullable = true)
+    @Schema(description = "대상 역할 목록. 필수값. CHALLENGER면 일반 챌린저 공지, 그 외 값이 포함되면 운영진 공지.",
+        example = "[\"SCHOOL_PART_LEADER\"]")
+    @NotEmpty(message = "대상 역할은 필수입니다. 챌린저 공지의 경우 [CHALLENGER]를 입력하세요.")
     List<NoticeTargetRole> targetRoles
 ) {
     /** 엔티티 → DTO 변환 (조회 방향) */
@@ -51,9 +51,7 @@ public record NoticeTargetInfo(
     }
 
     public boolean isStaffNotice() {
-        return targetRoles != null
-            && !targetRoles.isEmpty()
-            && !targetRoles.contains(NoticeTargetRole.CHALLENGER);
+        return !targetRoles.contains(NoticeTargetRole.CHALLENGER);
     }
 
     public boolean isTarget(Long gisuId, Long chapterId, Long schoolId, ChallengerPart part) {
