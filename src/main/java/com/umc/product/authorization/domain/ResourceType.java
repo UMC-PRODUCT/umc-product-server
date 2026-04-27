@@ -13,51 +13,77 @@ public enum ResourceType {
 
     AUDIT("audit", "감사",
         Set.of(PermissionType.READ)),
-    CURRICULUM("curriculum", "커리큘럼",
-        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
+
+    // Schedule 도메인
     SCHEDULE("schedule", "일정",
-        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE,
-            PermissionType.APPROVE)),
-    NOTICE("notice", "공지사항",
-        // WRITE는 Service 단에서 처리함
-        Set.of(PermissionType.READ, PermissionType.EDIT, PermissionType.DELETE, PermissionType.CHECK)),
-    CHAPTER("chapter", "지부",
-        Set.of(PermissionType.WRITE, PermissionType.DELETE)),
-    SCHOOL("school", "학교",
-        Set.of(PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
-    GISU("gisu", "기수",
-        Set.of(PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
-    STUDY_GROUP("study_group", "스터디 그룹",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
-    WORKBOOK_SUBMISSION("workbook_submission", "워크북 제출 현황",
-        Set.of(PermissionType.READ)),
-    ORIGINAL_WORKBOOK("original_workbook", "원본 워크북",
-        Set.of(PermissionType.MANAGE, PermissionType.RELEASE)),
+    ATTENDANCE("attendance", "출석",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.APPROVE)),
+
+    // Schedule 도메인 - 미사용
     ATTENDANCE_SHEET("attendance_sheet", "출석부",
         Set.of(PermissionType.APPROVE)),
     ATTENDANCE_RECORD("attendance_record", "출석 기록",
         Set.of(PermissionType.READ, PermissionType.APPROVE)),
+
+    // 공지사항 관련
+    NOTICE("notice", "공지사항",
+        // WRITE는 Service 단에서 처리함
+        Set.of(PermissionType.READ, PermissionType.EDIT, PermissionType.DELETE, PermissionType.CHECK)),
+
+    // 커리큘럼 관련
+    CURRICULUM("curriculum", "커리큘럼",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
+    WORKBOOK_SUBMISSION("workbook_submission", "워크북 제출 현황",
+        Set.of(PermissionType.READ)),
+    ORIGINAL_WORKBOOK("original_workbook", "원본 워크북",
+        Set.of(PermissionType.MANAGE, PermissionType.RELEASE)),
+
+    // 기수 - 지부 - 학교
+    GISU("gisu", "기수",
+        Set.of(PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+    CHAPTER("chapter", "지부",
+        Set.of(PermissionType.WRITE, PermissionType.DELETE)),
+    SCHOOL("school", "학교",
+        Set.of(PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+
+    // 스터디 그룹 관련
+    STUDY_GROUP("study_group", "스터디 그룹",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+
+    // 커뮤니티 도메인
     COMMUNITY_POST("community_post", "커뮤니티 게시글",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
     COMMUNITY_COMMENT("community_comment", "커뮤니티 게시글에 대한 댓글",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+
+    // UMC 모집 관련
     RECRUITMENT("recruitment", "모집",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE,
             PermissionType.APPROVE, PermissionType.MANAGE)),
-    TERM("term", "약관",
-        Set.of(PermissionType.WRITE)),
+
+    // 회원 관련
     MEMBER("member", "회원",
         Set.of(PermissionType.READ, PermissionType.DELETE)),
+    TERM("term", "약관",
+        Set.of(PermissionType.WRITE)),
+
+    // 챌린저 관련
     CHALLENGER("challenger", "챌린저",
-        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
-    CHALLENGER_POINT("challenger_point", "챌린저 상벌점",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
     CHALLENGER_ROLE("challenger_role", "운영진 기록",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+
+    CHALLENGER_POINT("challenger_point", "챌린저 상벌점",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
     CHALLENGER_RECORD("challenger_record", "챌린저 코드",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
+
+    // Notification
     FCM("fcm", "FCM 알람 관련",
         Set.of(PermissionType.DELETE)),
+
+    // UPMS, 프로젝트 관련
     PROJECT("project", "프로젝트",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT,
             PermissionType.DELETE)),

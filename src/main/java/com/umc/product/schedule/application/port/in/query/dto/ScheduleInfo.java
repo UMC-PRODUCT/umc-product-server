@@ -1,8 +1,13 @@
 package com.umc.product.schedule.application.port.in.query.dto;
 
+import com.umc.product.schedule.application.port.out.dto.ScheduleParticipantDetailDto;
+import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.util.List;
+import lombok.AccessLevel;
+import lombok.Builder;
 
+@Builder(access = AccessLevel.PRIVATE)
 public record ScheduleInfo(
 
     ScheduleBaseInfo baseInfo,
@@ -23,5 +28,42 @@ public record ScheduleInfo(
         String schoolName,
         String profileImageUrl
     ) {
+    }
+
+    public static ScheduleInfo from(
+        Schedule schedule,
+        List<ScheduleParticipantDetailDto> participants,
+        Long requesterMemberId
+    ) {
+
+        ScheduleBaseInfo baseInfo = ScheduleBaseInfo.from(schedule);
+
+        // 요청자의 출석 상태 및 참여자 여부 확인
+        AttendanceStatus myStatus = null;
+        boolean isParticipant = false;
+
+        for (ScheduleParticipantDetailDto p : participants) {
+            if (p.memberId().equals(requesterMemberId)) {
+                myStatus = p.attendanceStatus();
+                isParticipant = true;
+                break;
+            }
+        }
+
+        return ScheduleInfo.builder()
+            .baseInfo(baseInfo)
+            .attendanceStatus(myStatus)
+            .isParticipant(isParticipant)
+            .participants(mapParticipants(participants))
+            .build();
+    }
+
+    // ScheduleParticipantInfo 변환 헬퍼 메서드
+    private static List<ScheduleParticipantInfo> mapParticipants(List<ScheduleParticipantDetailDto> participants) {
+        return participants.stream()
+            .map(p -> new ScheduleParticipantInfo(
+                p.memberId(), p.name(), p.nickname(),
+                p.schoolId(), p.schoolName(), p.profileImageUrl()
+            )).toList();
     }
 }

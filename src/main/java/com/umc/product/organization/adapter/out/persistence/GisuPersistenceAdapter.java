@@ -6,6 +6,7 @@ import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Component;
 public class GisuPersistenceAdapter implements ManageGisuPort, LoadGisuPort {
 
     private final GisuJpaRepository gisuJpaRepository;
+    private final GisuQueryRepository gisuQueryRepository;
 
     public Gisu findActiveGisu() {
         return gisuJpaRepository.findByIsActiveTrue().orElseThrow(
@@ -59,6 +61,11 @@ public class GisuPersistenceAdapter implements ManageGisuPort, LoadGisuPort {
     @Override
     public boolean existsByGeneration(Long generation) {
         return gisuJpaRepository.existsByGeneration(generation);
+    }
+
+    @Override
+    public Optional<Gisu> findGisuByDate(Instant targetDate) {
+        return gisuQueryRepository.findGisuByDate(targetDate);
     }
 
     @Override

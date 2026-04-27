@@ -6,17 +6,20 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.util.GeometryUtils;
+import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.in.command.dto.EditScheduleCommand;
+import com.umc.product.schedule.application.port.in.query.dto.ScheduleCapabilitiesInfo;
 import com.umc.product.schedule.application.port.out.DeleteScheduleParticipantPort;
 import com.umc.product.schedule.application.port.out.LoadScheduleParticipantPort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.out.SaveScheduleParticipantPort;
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
+import com.umc.product.schedule.application.service.query.ScheduleCapabilitiesService;
 import com.umc.product.schedule.domain.AttendancePolicy;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.ScheduleParticipant;
@@ -46,9 +49,13 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     private final DeleteScheduleParticipantPort deleteScheduleParticipantPort;
     private final LoadScheduleParticipantPort loadScheduleParticipantPort;
 
+    // 일정 생성 권한 판별 service
+    private final ScheduleCapabilitiesService capabilitiesService;
+
     // 외부 도메인 UseCase
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetGisuUseCase getGisuUseCase;
+    private final GetMemberUseCase getMemberUseCase;
 
 
     // 일정 생성
@@ -62,6 +69,21 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     @Override
     public Long create(CreateScheduleCommand command) {
 
+        // 사용자 capabilities 조회
+        ScheduleCapabilitiesInfo capabilitiesInfo = capabilitiesService.getCapabilities(command.authorMemberId());
+
+        // 검증 (챌린저 활동 이력, 초대 가능 최대 참여자 수, 출석 정책 생성)
+        if (!capabilitiesInfo.canCreateSchedule()) {
+            throw new ScheduleDomainException(ScheduleErrorCode.CANNOT_CREATE_SCHEDULE);
+        }
+        if (command.participantMemberIds().size() > capabilitiesInfo.maxParticipantCount()) {
+            throw new ScheduleDomainException(ScheduleErrorCode.EXCEEDED_MAX_PARTICIPANTS,
+                capabilitiesInfo.maxParticipantCount() + "명까지 초대 가능합니다.");
+        }
+        if (command.attendancePolicy() != null && !capabilitiesInfo.canCreateAttendanceRequiredSchedule()) {
+            throw new ScheduleDomainException(ScheduleErrorCode.CANNOT_CREATE_ATTENDANCE_REQUIRED_SCHEDULE);
+        }
+
         // 작성자의 가장 최근 기수 Challenger 상태 조회 (탈부, 제명 상태일 시 exeption)
         ChallengerInfoWithStatus challengerInfoWithStatus = getChallengerUseCase.getLatestActiveChallengerByMemberId(
             command.authorMemberId());
@@ -72,12 +94,23 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
             throw new ScheduleDomainException(ScheduleErrorCode.NOT_ACTIVE_GISU_SCHEDULE);
         }
 
+        // 초대하려는 MemberId들이 실제로 존재하는지 검증
+        Set<Long> participants = command.participantMemberIds();
+        if (participants != null && !participants.isEmpty()) {
+            long validMemberCount = getMemberUseCase.countMembersByIds(participants);
+
+            // 요청한 id의 개수와 DB에 실제 존재하는 id의 개수가 다르다면 검증 실패
+            if (validMemberCount != participants.size()) {
+                throw new ScheduleDomainException(ScheduleErrorCode.INVALID_MEMBER_INVITE);
+            }
+        }
+
         // Schedule 생성 및 저장
         Schedule schedule = command.toEntity(challengerInfoWithStatus.memberId());
         Schedule savedSchedule = saveSchedulePort.save(schedule);
 
         // ScheduleParticipant 생성 및 저장
-        List<ScheduleParticipant> participants = command.participantMemberIds().stream()
+        List<ScheduleParticipant> participantList = participants.stream()
             .map(memberId -> ScheduleParticipant.builder()
                 .memberId(memberId)
                 .schedule(savedSchedule)
@@ -85,7 +118,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
                 .build())
             .toList();
 
-        saveScheduleParticipantPort.saveAll(participants);
+        saveScheduleParticipantPort.saveAll(participantList);
 
         return savedSchedule.getId();
     }
@@ -106,8 +139,30 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
 
         command.validate();
 
-        if (schedule.getEndsAt().isBefore(Instant.now())) {
-            throw new ScheduleDomainException(ScheduleErrorCode.ENDED_SCHEDULE_CANT_BE_EDITED);
+        if (Instant.now().isAfter(schedule.getStartsAt())) {
+            throw new ScheduleDomainException(ScheduleErrorCode.STARTED_SCHEDULE_CANT_BE_EDITED);
+        }
+
+        // capabilities 검증이 필요한 경우에만 조회 (출석 정책이 생겼거나 참여자에 변동이 있을 경우)
+        boolean needsCapabilitiesCheck = command.isChangingToAttendanceRequired()
+            || command.isParticipantsUpdateRequested();
+
+        if (needsCapabilitiesCheck) {
+            ScheduleCapabilitiesInfo capabilitiesInfo = capabilitiesService.getCapabilities(
+                schedule.getAuthorMemberId());
+
+            // 출석 정책 추가 권한 검증
+            if (command.isChangingToAttendanceRequired()
+                && !capabilitiesInfo.canCreateAttendanceRequiredSchedule()) {
+                throw new ScheduleDomainException(ScheduleErrorCode.CANNOT_CREATE_ATTENDANCE_REQUIRED_SCHEDULE);
+            }
+
+            // 최대 참여자 수 검증
+            if (command.isParticipantsUpdateRequested()
+                && command.participantMemberIds().size() > capabilitiesInfo.maxParticipantCount()) {
+                throw new ScheduleDomainException(ScheduleErrorCode.EXCEEDED_MAX_PARTICIPANTS,
+                    capabilitiesInfo.maxParticipantCount() + "명까지 초대 가능합니다.");
+            }
         }
 
         // 대면 -> 비대면 전환 시
@@ -142,7 +197,7 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
 
             // 진짜 명단이 달라졌는지 비교
             if (!existingParticipantIds.equals(command.participantMemberIds())) {
-                // 진짜 달라졌을 때만 권한 검증 및 업데이트 수행
+                // 진짜 달라졌을 때만 업데이트 수행
                 updateParticipants(schedule, command);
             }
         }
@@ -152,6 +207,8 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
 
         return schedule.getId();
     }
+
+    // ============================== Helper Methods ==============================
 
     // command로부터 policy 생성
     private AttendancePolicy createPolicyFromCommand(EditScheduleCommand command, Schedule schedule) {
@@ -210,6 +267,15 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         // 추가되어야 할 MemberId
         Set<Long> toAddIds = new HashSet<>(newMemberIds);
         toAddIds.removeAll(existingMemberIds);
+
+        // 추가되어야 할 MemberId들이 실제로 존재하는지 검증
+        if (!toAddIds.isEmpty()) {
+            long validMemberCount = getMemberUseCase.countMembersByIds(toAddIds);
+
+            if (validMemberCount != toAddIds.size()) {
+                throw new ScheduleDomainException(ScheduleErrorCode.INVALID_MEMBER_INVITE);
+            }
+        }
 
         // 삭제
         if (!toDeleteIds.isEmpty()) {

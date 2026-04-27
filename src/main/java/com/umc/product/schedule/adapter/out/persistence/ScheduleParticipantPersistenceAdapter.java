@@ -71,4 +71,9 @@ public class ScheduleParticipantPersistenceAdapter implements
     public Set<Long> findMemberIdsByScheduleId(Long scheduleId) {
         return scheduleParticipantQueryRepository.findMemberIdsByScheduleId(scheduleId);
     }
+
+    @Override
+    public Set<Long> findScheduleIdsByMemberId(Long memberId) {
+        return scheduleParticipantQueryRepository.findScheduleIdsByMemberId(memberId);
+    }
 }

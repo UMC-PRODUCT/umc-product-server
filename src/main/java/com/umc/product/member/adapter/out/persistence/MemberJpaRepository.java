@@ -1,6 +1,7 @@
 package com.umc.product.member.adapter.out.persistence;
 
 import com.umc.product.member.domain.Member;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -23,4 +24,6 @@ public interface MemberJpaRepository extends JpaRepository<Member, Long> {
 
     @Query("SELECT m.id FROM Member m WHERE m.id > :lastId ORDER BY m.id ASC")
     List<Long> findIdsCursor(@Param("lastId") Long lastId, Pageable pageable);
+
+    long countByIdIn(Collection<Long> ids);
 }

@@ -39,4 +39,10 @@ public interface GetMemberUseCase {
      * 커서 기반으로 멤버 ID 목록을 조회합니다. lastId보다 큰 ID를 가진 멤버를 최대 limit개 반환합니다. 전체 멤버를 메모리 효율적으로 순회할 때 사용합니다.
      */
     List<Long> findAllIdsCursor(Long lastId, int limit);
+
+    /**
+     * @param ids member의 id 목록의 Set
+     * @return ids 중에 실제로 존재하는 member의 개수
+     */
+    long countMembersByIds(Set<Long> ids);
 }
