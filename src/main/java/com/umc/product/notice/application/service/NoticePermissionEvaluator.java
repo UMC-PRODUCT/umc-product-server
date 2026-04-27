@@ -10,7 +10,6 @@ import com.umc.product.authorization.domain.SubjectAttributes.GisuChallengerInfo
 import com.umc.product.authorization.domain.exception.AuthorizationDomainException;
 import com.umc.product.authorization.domain.exception.AuthorizationErrorCode;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.domain.Notice;
@@ -102,7 +101,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     private boolean canReadStaffNotice(SubjectAttributes subjectAttributes, NoticeTargetInfo targetInfo) {
         return subjectAttributes.roleAttributes().stream()
             .anyMatch(role -> {
-                NoticeTargetRole viewerRole = toNoticeTargetRole(role.roleType());
+                NoticeTargetRole viewerRole = NoticeTargetRole.findFrom(role.roleType()).orElse(null);
                 if (viewerRole == null) {
                     return false;
                 }
@@ -131,16 +130,6 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
                 }
                 return true;
             });
-    }
-
-    private NoticeTargetRole toNoticeTargetRole(ChallengerRoleType roleType) {
-        return switch (roleType) {
-            case SCHOOL_PART_LEADER -> NoticeTargetRole.SCHOOL_PART_LEADER;
-            case SCHOOL_PRESIDENT, SCHOOL_VICE_PRESIDENT -> NoticeTargetRole.SCHOOL_PRESIDENT_TEAM;
-            case CENTRAL_EDUCATION_TEAM_MEMBER -> NoticeTargetRole.CENTRAL_EDUCATION_TEAM;
-            case CENTRAL_OPERATING_TEAM_MEMBER -> NoticeTargetRole.CENTRAL_OPERATING_TEAM;
-            default -> null;
-        };
     }
 
     /**

@@ -2,7 +2,6 @@ package com.umc.product.notice.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -50,10 +49,6 @@ public class NoticeTarget extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private List<NoticeTargetRole> targetRoles;
 
-    @Column(name = "notice_tab", nullable = false)
-    @Enumerated(EnumType.STRING)
-    private NoticeTab noticeTab; // targetRole로는 구분이 어려운 공지사항 탭 구분 (공지사항 조회 시 탭 구분 용도)
-
     @Builder
     private NoticeTarget(
         Long noticeId,
@@ -61,15 +56,13 @@ public class NoticeTarget extends BaseEntity {
         Long targetChapterId,
         Long targetSchoolId,
         List<ChallengerPart> targetChallengerPart,
-        List<NoticeTargetRole> targetRoles,
-        NoticeTab noticeTab) {
+        List<NoticeTargetRole> targetRoles) {
         this.noticeId = noticeId;
         this.targetGisuId = targetGisuId;
         this.targetChapterId = targetChapterId;
         this.targetSchoolId = targetSchoolId;
         this.targetChallengerPart = targetChallengerPart;
         this.targetRoles = targetRoles;
-        this.noticeTab = noticeTab;
     }
 
     /**

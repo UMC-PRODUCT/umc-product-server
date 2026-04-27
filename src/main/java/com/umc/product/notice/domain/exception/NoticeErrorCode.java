@@ -18,6 +18,7 @@ public enum NoticeErrorCode implements BaseCode {
     NOTICE_SCOPE_REQUIRED(HttpStatus.BAD_REQUEST, "NOTICE-0007", "공지사항 대상 범위는 필수입니다."),
     NOTICE_AUTHOR_MISMATCH(HttpStatus.FORBIDDEN, "NOTICE-0008", "공지사항 작성자가 아닙니다."),
     NO_WRITE_PERMISSION(HttpStatus.FORBIDDEN, "NOTICE-0009", "해당 공지사항을 작성할 권한이 없습니다."),
+    NO_READ_PERMISSION(HttpStatus.FORBIDDEN, "NOTICE-0012", "해당 공지사항을 조회할 권한이 없습니다."),
     INVALID_TARGET_SETTING(HttpStatus.BAD_REQUEST, "NOTICE-0010", "공지사항 수신자 설정이 잘못되었습니다."),
     NO_TARGET_FOUND(HttpStatus.NOT_FOUND, "NOTICE-0011", "해당 공지사항에 설정된 수신 대상이 존재하지 않습니다."),
 

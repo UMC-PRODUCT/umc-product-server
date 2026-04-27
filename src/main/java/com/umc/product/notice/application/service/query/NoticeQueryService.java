@@ -26,7 +26,6 @@ import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
 import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.dto.NoticeClassification;
 import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.notice.dto.NoticeTargetPattern;
@@ -67,10 +66,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
     @Override
     public Page<NoticeSummary> getAllNoticeSummaries(NoticeViewerInfo viewerInfo, NoticeClassification classification,
                                                      Pageable pageable) {
-        // 운영진 공지 탭은 chapterId/schoolId enrichment 불필요 (역할 기반 조회)
-        NoticeClassification enriched = classification.tab() == NoticeTab.CHALLENGER
-            ? enrichClassification(viewerInfo, classification)
-            : classification;
+        NoticeClassification enriched = enrichClassification(viewerInfo, classification);
         validateClassification(enriched);
         Page<Notice> notices = loadNoticePort.findNoticesByClassification(enriched, viewerInfo, pageable);
         return toNoticeSummaryPage(notices);
@@ -80,10 +76,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
     public Page<NoticeSummary> searchNoticesByKeyword(String keyword, NoticeViewerInfo viewerInfo,
                                                       NoticeClassification classification,
                                                       Pageable pageable) {
-        // 운영진 공지 탭은 chapterId/schoolId enrichment 불필요 (역할 기반 조회)
-        NoticeClassification enriched = classification.tab() == NoticeTab.CHALLENGER
-            ? enrichClassification(viewerInfo, classification)
-            : classification;
+        NoticeClassification enriched = enrichClassification(viewerInfo, classification);
         validateClassification(enriched);
         Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, enriched, viewerInfo, pageable);
         return toNoticeSummaryPage(notices);
@@ -297,14 +290,9 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
 
     /**
-     * NoticeTargetPattern.from()을 통해 챌린저 공지 조회 조건의 조합 유효성을 검증합니다.
-     * 운영진 공지는 역할 기반 조회이므로 건너뜁니다.
-     * 유효하지 않은 조합(예: 지부+학교 동시 지정)이면 예외가 발생합니다.
+     * NoticeTargetPattern.from()을 통해 챌린저 공지 조회 조건의 조합 유효성을 검증합니다. 유효하지 않은 조합(예: 지부+학교 동시 지정)이면 예외가 발생합니다.
      */
     private void validateClassification(NoticeClassification classification) {
-        if (classification.tab() != NoticeTab.CHALLENGER) {
-            return;
-        }
         List<ChallengerPart> parts = classification.part() != null
             ? List.of(classification.part()) : null;
         NoticeTargetInfo targetInfo = new NoticeTargetInfo(
@@ -335,7 +323,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Long filteredSchoolId = (classification.schoolId() != null || hasPart) ? viewerInfo.schoolId() : null;
 
         return new NoticeClassification(classification.gisuId(), filteredChapterId, filteredSchoolId,
-            classification.part(), NoticeTab.CHALLENGER);
+            classification.part());
     }
 
     private Page<NoticeSummary> toNoticeSummaryPage(Page<Notice> notices) {

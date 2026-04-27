@@ -1,5 +1,7 @@
 package com.umc.product.notice.domain.enums;
 
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -34,5 +36,19 @@ public enum NoticeTargetRole {
             case SCHOOL_PART_LEADER -> Set.of(SCHOOL_PART_LEADER);
             case CHALLENGER -> Set.of(CHALLENGER);
         };
+    }
+
+    /**
+     * ChallengerRoleType을 공지 대상 역할로 변환합니다.
+     * 총괄단은 최상단에서 별도 처리되므로 empty를 반환합니다.
+     */
+    public static Optional<NoticeTargetRole> findFrom(ChallengerRoleType roleType) {
+        return Optional.ofNullable(switch (roleType) {
+            case SCHOOL_PART_LEADER -> SCHOOL_PART_LEADER;
+            case SCHOOL_PRESIDENT, SCHOOL_VICE_PRESIDENT -> SCHOOL_PRESIDENT_TEAM;
+            case CENTRAL_EDUCATION_TEAM_MEMBER -> CENTRAL_EDUCATION_TEAM;
+            case CENTRAL_OPERATING_TEAM_MEMBER -> CENTRAL_OPERATING_TEAM;
+            default -> null;
+        });
     }
 }

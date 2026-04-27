@@ -12,7 +12,6 @@ import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.QNotice;
 import com.umc.product.notice.domain.QNoticeRead;
 import com.umc.product.notice.domain.QNoticeTarget;
-import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
@@ -136,84 +135,50 @@ public class NoticeQueryRepository {
     // ========== PRIVATE ====================
 
     /**
-     * tab에 따라 일반/중앙운영진/교내운영진 공지 조건을 반환합니다.
+     * 챌린저 공지와 운영진 공지 조건을 OR로 결합합니다.
+     * 운영진 역할이 없는 경우 챌린저 공지 조건만 반환합니다.
      */
     private BooleanExpression buildCombinedCondition(
         NoticeClassification classification,
         NoticeViewerInfo viewerInfo,
         QNoticeTarget target
     ) {
-        return switch (classification.tab()) {
-            case CHALLENGER -> buildClassificationCondition(classification, viewerInfo.memberParts(), target);
-            case CENTRAL_STAFF -> buildCentralStaffCondition(classification, viewerInfo, target);
-            case SCHOOL_STAFF -> buildSchoolStaffCondition(classification, viewerInfo, target);
-        };
+        BooleanExpression challengerCondition =
+            buildClassificationCondition(classification, viewerInfo.memberParts(), target);
+
+        Set<NoticeTargetRole> roles = viewerInfo.roles();
+        if (roles == null || roles.isEmpty()) {
+            return challengerCondition;
+        }
+
+        return challengerCondition.or(buildStaffCondition(classification, viewerInfo, target));
     }
 
     /**
-     * 중앙운영진 공지 조회 조건.
-     * noticeTab = CENTRAL_STAFF로 탭을 구분하고, viewerInfo.roles() 전체로 접근 가능 여부를 판단합니다.
-     * 중앙운영진 공지는 학교 범위를 갖지 않으므로 targetSchoolId는 항상 null이어야 합니다.
+     * 운영진 공지 조회 조건.
+     * targetRoles의 CHALLENGER 미포함 여부로 운영진 공지를 판별하고,
+     * viewerInfo.roles() overlap + 학교/파트 범위로 필터링합니다.
      */
-    private BooleanExpression buildCentralStaffCondition(
+    private BooleanExpression buildStaffCondition(
         NoticeClassification classification,
         NoticeViewerInfo viewerInfo,
         QNoticeTarget target
     ) {
         Set<NoticeTargetRole> roles = viewerInfo.roles();
-        if (roles == null || roles.isEmpty()) {
-            return Expressions.booleanTemplate("1=0");
-        }
 
-        BooleanExpression tabMatch = target.noticeTab.eq(NoticeTab.CENTRAL_STAFF);
+        BooleanExpression notChallengerNotice = isNotChallengerNotice(target);
         BooleanExpression gisuMatch = target.targetGisuId.eq(classification.gisuId());
         BooleanExpression rolesMatch = buildRolesOverlapCondition(roles, target);
 
-        BooleanExpression condition = tabMatch.and(gisuMatch).and(rolesMatch).and(target.targetSchoolId.isNull());
-        condition = condition.and(buildPartCondition(classification, target));
-
-        return condition;
-    }
-
-    /**
-     * 교내운영진 공지 조회 조건.
-     * noticeTab = SCHOOL_STAFF로 탭을 구분하고, viewerInfo.roles() 전체로 접근 가능 여부를 판단합니다.
-     * 조회자의 소속 학교 또는 학교 범위가 없는 공지(targetSchoolId IS NULL)를 함께 조회합니다.
-     */
-    private BooleanExpression buildSchoolStaffCondition(
-        NoticeClassification classification,
-        NoticeViewerInfo viewerInfo,
-        QNoticeTarget target
-    ) {
-        Set<NoticeTargetRole> roles = viewerInfo.roles();
-        if (roles == null || roles.isEmpty()) {
-            return Expressions.booleanTemplate("1=0");
-        }
-
-        BooleanExpression tabMatch = target.noticeTab.eq(NoticeTab.SCHOOL_STAFF);
-        BooleanExpression gisuMatch = target.targetGisuId.eq(classification.gisuId());
-        BooleanExpression rolesMatch = buildRolesOverlapCondition(roles, target);
+        // 학교 범위: 학교 미지정(기수 전체 대상) 공지 + 내 학교 공지
         BooleanExpression schoolMatch = viewerInfo.schoolId() != null
             ? target.targetSchoolId.isNull().or(target.targetSchoolId.eq(viewerInfo.schoolId()))
             : target.targetSchoolId.isNull();
 
-        BooleanExpression condition = tabMatch.and(gisuMatch).and(rolesMatch).and(schoolMatch);
+        // 파트 범위: 파트 미지정 공지 + 내 담당 파트 포함 공지
+        BooleanExpression partMatch = targetPartIsEmptyOrContainsAny(target, viewerInfo.memberParts());
 
-        condition = condition.and(buildPartCondition(classification, target));
-
-        return condition;
-    }
-
-    /**
-     * part 필터 조건.
-     * - part 없음: 파트 지정이 없는 공지만 (전체 대상)
-     * - part 있음: 파트 지정 없는 공지 OR 해당 파트 포함 공지
-     */
-    private BooleanExpression buildPartCondition(NoticeClassification classification, QNoticeTarget target) {
-        if (classification.part() != null) {
-            return targetPartIsEmptyOrContainsAny(target, Set.of(classification.part()));
-        }
-        return targetPartIsEmpty(target);
+        return notChallengerNotice.and(gisuMatch).and(rolesMatch).and(schoolMatch).and(partMatch);
     }
 
     /**
@@ -357,13 +322,20 @@ public class NoticeQueryRepository {
             "현재 입력: gisuId=" + gisuId + ", chapterId=" + chapterId + ", schoolId=" + schoolId + ", part=" + part);
     }
 
-    // target_staff_roles에 CHALLENGER가 포함된 경우 = 챌린저 공지
     private BooleanExpression isChallengerNotice(QNoticeTarget target) {
         return Expressions.numberTemplate(Integer.class,
             "coalesce(array_position({0}, {1}), 0)",
             target.targetRoles,
             Expressions.constant(NoticeTargetRole.CHALLENGER.name())
         ).gt(0);
+    }
+
+    private BooleanExpression isNotChallengerNotice(QNoticeTarget target) {
+        return Expressions.numberTemplate(Integer.class,
+            "coalesce(array_position({0}, {1}), 0)",
+            target.targetRoles,
+            Expressions.constant(NoticeTargetRole.CHALLENGER.name())
+        ).eq(0);
     }
 
     private BooleanExpression targetPartIsEmpty(QNoticeTarget target) {
