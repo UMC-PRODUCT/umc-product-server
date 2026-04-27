@@ -53,20 +53,29 @@ public class ScheduleCommandV2Controller {
         permission = PermissionType.WRITE,
         message = "일정 생성은 '챌린저 활동 기록이 있는 사용자'만 가능합니다."
     )
-    @Operation(summary = "일정 생성", description = """
+    @Operation(summary = "[SCHEDULE-C001] 일정 생성", description = """
         일정을 생성합니다. `location` 필드를 작성하지 않으실 경우 비대면 일정으로 간주됩니다.
 
         스터디 일정을 생성하고자 하는 경우에는, 반드시 별도의 API를 이용해서 생성해야 합니다.
         그렇지 않은 경우, 스터디 미진행으로 인한 벌점이 부과될 수 있습니다.
 
-        하루종일 일정의 경우, 클라이언트 단에서 KST 기준으로 시작일 00:00 ~ 종료일 00:00 을 UTC-Based ISO8601 형식으로 보내주셔야 합니다.
-        조회할 때도 반대로 KST 기준 00:00에 시작해서 23:59에 끝나는 일정의 경우에 자동으로 하루 종일로 표시해주시면 됩니다.
+        하루종일 일정의 경우, 클라이언트 단에서 KST 기준으로 시작일 00:00:000 ~ 종료일 23:59:999 을 UTC-Based ISO8601 형식으로 보내주셔야 합니다.
+
+        조회할 때도 반대로 KST 기준 00:00:000에 시작해서 23:59:999에 끝나는 일정의 경우에 자동으로 하루 종일로 표시해주시면 됩니다.
+
+        > *e.g.* 2025-12-08T15:00:00.000Z ~ 2025-12-09T14:59:59.999Z -> KST 기준 25/12/09 00:00:000~23:59:999, 하루종일로 표시!
 
         출석 요청 관련 일시 필드는 운영진만 입력 가능합니다.
         또한 일정 생성 시, 초대 가능한 챌린저 수에 제한이 존재합니다.
-        - 일반 챌린저: 50명, 회장단: 100명, 파트장/기타 운영진: 100명, 지부장: 300명, 중앙 운영진: 300명, 총괄단: 2,000명
 
-        이 부분에 대한 사용자별 권한 확인은 '[프론트엔드용] 일정 생성 관련 권한 조회' API를 사용해주세요.
+        1. 일반 챌린저: 50명
+        2. 회장단: 100명
+        3. 파트장/기타 운영진: 100명
+        4. 지부장: 300명
+        5. 중앙 운영진: 300명
+        6. 총괄단: 2,000명
+
+        이 부분에 대한 사용자별 권한 확인은 SCHEDULE-Q001 `/api/v2/schedules/capabilities` API를 사용해주세요.
 
         (생성 예정) 일정 생성 시 참여자 목록을 기반으로 해당 인원들이 참여하는 스터디 그룹이 있는지를
         검사하는 API를 토대로 사용자에게 경고 등을 띄울 것을 추천드립니다.
@@ -110,7 +119,7 @@ public class ScheduleCommandV2Controller {
         permission = PermissionType.EDIT,
         message = "생성자 본인' 또는 '해당 일정 기수의 최고 운영 관리자'만 가능합니다."
     )
-    @Operation(summary = "일정 수정", description = """
+    @Operation(summary = "[SCHEDULE-C002] 일정 수정", description = """
         일정과 관련된 모든 정보를 수정합니다. 제공되지 않은 필드는 변경하지 않는 것으로 간주합니다.
 
         ---
@@ -173,7 +182,7 @@ public class ScheduleCommandV2Controller {
         permission = PermissionType.WRITE,
         message = "출석 요청은 '챌린저 활동 기록이 있는 사용자'면서 '일정에 참여하는 사용자'만 가능합니다."
     )
-    @Operation(summary = "출석 요청하기", description = """
+    @Operation(summary = "[SCHEDULE-C003] 출석 요청하기", description = """
         특정 일정에 대한 출석을 요청합니다. 반환값으로 변경된 출석 상태 및 관련된 정보들을 제공합니다.
 
         - 이미 출석 요청을 한 경우, 에러가 반환됩니다. (사유 출석 요청 및 이미 출석/지각/결석으로 확정된 경우 등)
@@ -222,7 +231,7 @@ public class ScheduleCommandV2Controller {
         permission = PermissionType.WRITE,
         message = "출석 사유 제출은 '챌린저 활동 기록이 있는 사용자'면서 '일정에 참여하는 사용자'만 가능합니다."
     )
-    @Operation(summary = "출석 요청이 불가능한 경우, 사유 제출하기", description = """
+    @Operation(summary = "[SCHEDULE-C004] 출석 요청이 불가능한 경우, 사유 제출하기", description = """
         위치 인증이 안되거나, 개인 사정이 있어 결석하지만 출석 인정을 요구하는 경우 사유를 제출하기 위하여 사용합니다.
 
         위치 정보는 클라이언트 단에서 잡히는 경우에 한하여 제공하면 됩니다. 단, 사유는 반드시 제출하여야 합니다.
@@ -269,7 +278,7 @@ public class ScheduleCommandV2Controller {
         message = "출석 요청 승인/거절은 '해당 일정이 진행되는 기수의 운영진'만 가능합니다."
     )
     // 각 일정에 대한 출석 요청을 승인 또는 기각하는 API, Request는 list 형태로 받을 수 있어야 합니다.
-    @Operation(summary = "[운영진용] 출석 요청 승인/거절", description = """
+    @Operation(summary = "[SCHEDULE-C005] [운영진용] 출석 요청 승인/거절", description = """
         일정에 대한 출석 요청을 승인 또는 거절합니다.
 
         결정 권한은 아래와 같습니다. (기준은, 일정이 포함된 기수 기준입니다)
