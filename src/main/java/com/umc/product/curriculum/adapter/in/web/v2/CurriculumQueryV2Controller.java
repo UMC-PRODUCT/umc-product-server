@@ -3,7 +3,9 @@ package com.umc.product.curriculum.adapter.in.web.v2;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.response.CurriculumOverviewResponse;
 import com.umc.product.curriculum.adapter.in.web.v2.dto.response.MyCurriculumResponse;
-import com.umc.product.global.exception.NotImplementedException;
+import com.umc.product.curriculum.application.port.in.query.GetCurriculumUseCase;
+import com.umc.product.curriculum.application.port.in.query.dto.CurriculumOverviewInfo;
+import com.umc.product.curriculum.application.port.in.query.dto.MyCurriculumInfo;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
@@ -20,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @Tag(name = "Curriculum V2 | 커리큘럼 Query", description = "커리큘럼 및 내 진행상황 등 조회")
 public class CurriculumQueryV2Controller {
+
+    private final GetCurriculumUseCase getCurriculumUseCase;
 
     @Operation(
         summary = "특정 기수의 파트별 커리큘럼 조회",
@@ -40,7 +44,8 @@ public class CurriculumQueryV2Controller {
         @RequestParam ChallengerPart part,
         @RequestParam(required = false) Long weekNo
     ) {
-        throw new NotImplementedException();
+        CurriculumOverviewInfo info = getCurriculumUseCase.getCurriculumOverview(gisuId, part, weekNo);
+        return CurriculumOverviewResponse.from(info);
     }
 
     @Operation(
@@ -66,6 +71,7 @@ public class CurriculumQueryV2Controller {
         @RequestParam Long gisuId,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
-        throw new NotImplementedException();
+        MyCurriculumInfo info = getCurriculumUseCase.getMyProgress(memberPrincipal.getMemberId(), gisuId);
+        return MyCurriculumResponse.from(info);
     }
 }
