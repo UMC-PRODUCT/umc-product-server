@@ -2,7 +2,6 @@ package com.umc.product.notice.application.service.query;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
-import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.GetNoticeContentUseCase;
@@ -23,7 +22,6 @@ import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
-import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.notice.dto.NoticeClassification;
@@ -293,16 +291,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
      * NoticeTargetPattern.from()을 통해 챌린저 공지 조회 조건의 조합 유효성을 검증합니다. 유효하지 않은 조합(예: 지부+학교 동시 지정)이면 예외가 발생합니다.
      */
     private void validateClassification(NoticeClassification classification) {
-        List<ChallengerPart> parts = classification.part() != null
-            ? List.of(classification.part()) : null;
-        NoticeTargetInfo targetInfo = new NoticeTargetInfo(
-            classification.gisuId(),
-            classification.chapterId(),
-            classification.schoolId(),
-            parts,
-            List.of(NoticeTargetRole.CHALLENGER)
-        );
-        NoticeTargetPattern.from(targetInfo);
+        NoticeTargetPattern.from(classification.toTargetInfo());
     }
 
     /**
