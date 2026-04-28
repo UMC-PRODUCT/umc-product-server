@@ -73,7 +73,7 @@ public class CredentialAuthenticationController {
     }
 
     @Public
-    @PostMapping("/login/idpw")
+    @PostMapping("/login/id-pw")
     @Operation(summary = "ID/PW 로그인",
         description = "loginId/password 로 인증하여 AccessToken/RefreshToken 을 발급받습니다.")
     public IdPwLoginResponse loginByIdPw(
