@@ -69,7 +69,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     @Override
     public void update(UpdateStudyGroupCommand command) {
-        StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
+        StudyGroup studyGroup = loadStudyGroupPort.getById(command.groupId());
 
         studyGroup.updateName(command.name());
         studyGroup.updatePart(command.part());
@@ -79,7 +79,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     @Override
     public void addMember(AddStudyMemberCommand command) {
-        StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
+        StudyGroup studyGroup = loadStudyGroupPort.getById(command.groupId());
 
         loadStudyGroupMemberPort.throwIfMemberAlreadyInStudyGroup(command.groupId(), command.memberId());
         saveStudyGroupMemberPort.save(
@@ -89,7 +89,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     @Override
     public void addMentor(AddStudyMentorCommand command) {
-        StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
+        StudyGroup studyGroup = loadStudyGroupPort.getById(command.groupId());
 
         loadStudyGroupMentorPort.throwIfMentorAlreadyInStudyGroup(command.groupId(), command.mentorId());
         saveStudyGroupMentorPort.save(
@@ -152,7 +152,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     @Override
     public void delete(Long studyGroupId) {
-        StudyGroup studyGroup = loadStudyGroupPort.findById(studyGroupId);
+        StudyGroup studyGroup = loadStudyGroupPort.getById(studyGroupId);
 
         // orphan removal
         saveStudyGroupMemberPort.deleteAll(loadStudyGroupMemberPort.listByStudyGroupId(studyGroupId));

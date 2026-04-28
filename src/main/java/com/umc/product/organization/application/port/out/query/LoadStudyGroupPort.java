@@ -10,10 +10,11 @@ import java.util.List;
 import java.util.Set;
 
 public interface LoadStudyGroupPort {
+    // TODO: 의존성 역전 있음, 수정 필요
 
-    StudyGroup findById(Long id);
+    StudyGroup getById(Long id);
 
-    StudyGroup findByName(String name);
+    StudyGroup getByName(String name);
 
     /**
      * 운영진(회장단, 파트장)이 챌린저 스터디 그룹 목록 조회 (역할 Scope 기반).
@@ -48,10 +49,12 @@ public interface LoadStudyGroupPort {
      * study_group_member 테이블 기준으로 소속된 멤버를 가져오며, Member/School 도메인과 JOIN 하여 (memberId, 학교명, 프로필 이미지 ID) 를 함께 싣는다. 프로필
      * 이미지 ID → URL 치환은 Service 에서 수행한다.
      *
-     * @param groupId 스터디 그룹 ID
+     * @param studyGroupId 스터디 그룹 ID
      * @return 그룹에 소속된 스터디원 목록 (소속 없으면 빈 리스트)
      */
-    List<StudyGroupMemberInfo> findStudyGroupMembers(Long groupId);
+    List<StudyGroupMemberInfo> findStudyGroupMembers(Long studyGroupId);
+
+    List<StudyGroupMemberInfo> findStudyGroupMentors(Long studyGroupId);
 
     /**
      * 특정 기수에서 해당 파트들의 스터디 그룹 ID 목록 조회 (파트장용)
