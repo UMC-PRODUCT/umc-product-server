@@ -232,14 +232,13 @@ jobs:
             if (isPR) {
               const issue_number = context.issue.number;
               let existing = null;
-              await github.paginate(
+              for await (const { data: comments } of github.paginate.iterator(
                 github.rest.issues.listComments,
-                { owner, repo, issue_number, per_page: 100 },
-                (response, done) => {
-                  const found = response.data.find(c => c.body?.includes(marker));
-                  if (found) { existing = found; done(); }
-                }
-              );
+                { owner, repo, issue_number, per_page: 100 }
+              )) {
+                const found = comments.find(c => c.body?.includes(marker));
+                if (found) { existing = found; break; }
+              }
               const body = `${marker}\n\n${entry}`;
 
               if (existing) {
