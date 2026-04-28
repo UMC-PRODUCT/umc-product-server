@@ -7,7 +7,6 @@ import com.umc.product.organization.application.port.in.command.dto.AddStudyMent
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
 import com.umc.product.organization.application.port.in.command.dto.DeleteStudyMemberCommand;
 import com.umc.product.organization.application.port.in.command.dto.DeleteStudyMentorCommand;
-import com.umc.product.organization.application.port.in.command.dto.ReplaceStudyGroupMemberAndMentorCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupCommand;
 import com.umc.product.organization.application.port.out.command.SaveStudyGroupMemberPort;
 import com.umc.product.organization.application.port.out.command.SaveStudyGroupMentorPort;
@@ -18,8 +17,11 @@ import com.umc.product.organization.application.port.out.query.LoadStudyGroupMen
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.StudyGroup;
+import com.umc.product.organization.domain.StudyGroupMember;
+import com.umc.product.organization.domain.StudyGroupMentor;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
+import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,20 +39,32 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
     private final SaveStudyGroupMemberPort saveStudyGroupMemberPort;
     private final SaveStudyGroupMentorPort saveStudyGroupMentorPort;
 
-
     private final LoadGisuPort loadGisuPort;
     private final SaveStudyGroupPort saveStudyGroupPort;
 
     @Override
     public void create(CreateStudyGroupCommand command) {
+        // 생성하고자 하는 기수에 스터디를 생성
         Gisu gisu = loadGisuPort.findById(command.gisuId());
-
         validateNoPartStudyConflict(gisu.getId(), command.part(), command.memberIds());
 
-        StudyGroup studyGroup = StudyGroup.create(command.name(), gisu.getId(), command.part(),
-            command.mentorIds(), command.memberIds());
+        // 스터디 그룹 먼저 생성
+        StudyGroup studyGroup = saveStudyGroupPort.save(
+            StudyGroup.create(command.name(), gisu.getId(), command.part()));
 
-        saveStudyGroupPort.save(studyGroup);
+        // 스터디원 일괄 저장
+        saveStudyGroupMemberPort.saveAll(
+            command.memberIds().stream()
+                .map(memberId -> StudyGroupMember.create(studyGroup, memberId))
+                .toList()
+        );
+
+        // 파트장 일괄 저장
+        saveStudyGroupMentorPort.saveAll(
+            command.mentorIds().stream()
+                .map(mentorId -> StudyGroupMentor.create(studyGroup, mentorId))
+                .toList()
+        );
     }
 
     @Override
@@ -67,59 +81,58 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
     public void addMember(AddStudyMemberCommand command) {
         StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
 
-        // 다른 파트 스터디와 충돌 검증 (여러 도메인 거친 검사)
-        validateNoPartStudyConflict(studyGroup.getGisuId(), studyGroup.getPart(),
-            Set.of(command.memberId()));
-
-        // 추가 (도메인 내부에서 중복 검증)
-        studyGroup.addStudyGroupMember(command.memberId());
-
-        saveStudyGroupPort.save(studyGroup);
+        loadStudyGroupMemberPort.throwIfMemberAlreadyInStudyGroup(command.groupId(), command.memberId());
+        saveStudyGroupMemberPort.save(
+            StudyGroupMember.create(studyGroup, command.memberId())
+        );
     }
 
     @Override
     public void addMentor(AddStudyMentorCommand command) {
         StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
 
-        // 추가 (도메인 내부에서 중복 검증)
-        studyGroup.addStudyGroupMentor(command.mentorId());
-
-        saveStudyGroupPort.save(studyGroup);
+        loadStudyGroupMentorPort.throwIfMentorAlreadyInStudyGroup(command.groupId(), command.mentorId());
+        saveStudyGroupMentorPort.save(
+            StudyGroupMentor.create(studyGroup, command.mentorId())
+        );
     }
 
     @Override
     public void deleteMember(DeleteStudyMemberCommand command) {
-        StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
+        List<StudyGroupMember> currentMembers = loadStudyGroupMemberPort.listByStudyGroupId(command.groupId());
 
-        // 삭제 (도메인 내부에서 존재 여부 및 최소 인원 검증)
-        studyGroup.removeStudyGroupMember(command.memberId());
+        // 1. 삭제할 멤버가 존재하는지 검증합니다.
+        StudyGroupMember targetMember = currentMembers.stream()
+            .filter(m -> m.getMemberId().equals(command.memberId()))
+            .findFirst()
+            .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_NOT_FOUND));
 
-        saveStudyGroupPort.save(studyGroup);
+        // 2. 최소 1명은 존재해야 합니다. (스터디 그룹 삭제는 가능)
+        if (currentMembers.size() == 1) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED);
+        }
+
+        // 3. 삭제
+        saveStudyGroupMemberPort.delete(targetMember);
     }
 
     @Override
     public void deleteMentor(DeleteStudyMentorCommand command) {
-        StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
+        List<StudyGroupMentor> currentMentors = loadStudyGroupMentorPort.listByStudyGroupId(command.groupId());
 
-        // 삭제 (도메인 내부에서 존재 여부 및 최소 인원 검증)
-        studyGroup.removeStudyGroupMentor(command.mentorId());
+        // 1. 삭제할 멤버가 존재하는지 검증합니다.
+        StudyGroupMentor targetMentor = currentMentors.stream()
+            .filter(m -> m.getMemberId().equals(command.mentorId()))
+            .findFirst()
+            .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_NOT_FOUND));
 
-        saveStudyGroupPort.save(studyGroup);
-    }
+        // 2. 최소 1명은 존재해야 합니다. (스터디 그룹 삭제는 가능)
+        if (currentMentors.size() == 1) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_REQUIRED);
+        }
 
-    @Override
-    public void replaceMemberAndMentors(ReplaceStudyGroupMemberAndMentorCommand command) {
-        StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
-
-        // 1. 이미 소속된 멤버 검증 (도메인 내부 규칙)
-        studyGroup.validateMembersNotJoined(command.studyMemberIds());
-
-        // 2. 다른 파트 스터디와 충돌 검증 (여러 도메인 거친 검사)
-        validateNoPartStudyConflict(studyGroup.getGisuId(), studyGroup.getPart(), command.studyMemberIds());
-
-        // 3. 추가 & 저장
-        command.studyMemberIds().forEach(studyGroup::addStudyGroupMember);
-        saveStudyGroupPort.save(studyGroup);
+        // 3. 삭제
+        saveStudyGroupMentorPort.delete(targetMentor);
     }
 
 
@@ -138,8 +151,12 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
     }
 
     @Override
-    public void delete(Long groupId) {
-        StudyGroup studyGroup = loadStudyGroupPort.findById(groupId);
+    public void delete(Long studyGroupId) {
+        StudyGroup studyGroup = loadStudyGroupPort.findById(studyGroupId);
+
+        // orphan removal
+        saveStudyGroupMemberPort.deleteAll(loadStudyGroupMemberPort.listByStudyGroupId(studyGroupId));
+        saveStudyGroupMentorPort.deleteAll(loadStudyGroupMentorPort.listByStudyGroupId(studyGroupId));
 
         saveStudyGroupPort.delete(studyGroup);
     }

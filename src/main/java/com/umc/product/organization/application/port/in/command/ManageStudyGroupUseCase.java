@@ -5,7 +5,6 @@ import com.umc.product.organization.application.port.in.command.dto.AddStudyMent
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
 import com.umc.product.organization.application.port.in.command.dto.DeleteStudyMemberCommand;
 import com.umc.product.organization.application.port.in.command.dto.DeleteStudyMentorCommand;
-import com.umc.product.organization.application.port.in.command.dto.ReplaceStudyGroupMemberAndMentorCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupCommand;
 
 public interface ManageStudyGroupUseCase {
@@ -21,8 +20,6 @@ public interface ManageStudyGroupUseCase {
     void deleteMember(DeleteStudyMemberCommand command);
 
     void deleteMentor(DeleteStudyMentorCommand command);
-
-    void replaceMemberAndMentors(ReplaceStudyGroupMemberAndMentorCommand command);
 
     void delete(Long groupId);
 }

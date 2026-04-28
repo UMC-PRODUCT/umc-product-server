@@ -4,7 +4,6 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,10 +11,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
@@ -29,12 +25,6 @@ import org.springframework.util.StringUtils;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "study_group")
 public class StudyGroup extends BaseEntity {
-
-    @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<StudyGroupMember> studyGroupMembers = new ArrayList<>();
-
-    @OneToMany(mappedBy = "studyGroup", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final List<StudyGroupMentor> studyGroupMentor = new ArrayList<>();
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -59,27 +49,13 @@ public class StudyGroup extends BaseEntity {
     }
 
     public static StudyGroup create(
-        String name, Long gisuId, ChallengerPart part, Set<Long> mentorIds,
-        Set<Long> memberIds
+        String name, Long gisuId, ChallengerPart part
     ) {
-        if (mentorIds == null || mentorIds.isEmpty()) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_REQUIRED);
-        }
-
-        if (memberIds == null || memberIds.isEmpty()) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED);
-        }
-
-        StudyGroup group = StudyGroup.builder()
+        return StudyGroup.builder()
             .name(name)
             .gisuId(gisuId)
             .part(part)
             .build();
-
-        mentorIds.forEach(group::addStudyGroupMentor);
-        memberIds.forEach(group::addStudyGroupMember);
-
-        return group;
     }
 
     private static void validate(String name, Long gisuId, ChallengerPart part) {
@@ -94,79 +70,6 @@ public class StudyGroup extends BaseEntity {
         if (part == null) {
             throw new OrganizationDomainException(OrganizationErrorCode.PART_REQUIRED);
         }
-    }
-
-    public void addStudyGroupMember(Long memberId) {
-        if (memberId == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED);
-        }
-
-        boolean duplicate = hasMember(memberId);
-        if (duplicate) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_DUPLICATED);
-        }
-
-        this.studyGroupMembers.add(StudyGroupMember.create(this, memberId));
-    }
-
-    public boolean hasMember(Long memberId) {
-        return studyGroupMembers.stream()
-            .anyMatch(m -> m.getMemberId().equals(memberId));
-    }
-
-    public void addStudyGroupMentor(Long mentorId) {
-        if (mentorId == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_ID_REQUIRED);
-        }
-
-        if (hasMentor(mentorId)) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_DUPLICATED);
-        }
-
-        this.studyGroupMentor.add(StudyGroupMentor.create(this, mentorId));
-    }
-
-    public boolean hasMentor(Long mentorId) {
-        return studyGroupMentor.stream()
-            .anyMatch(m -> m.getMemberId().equals(mentorId));
-    }
-
-    public void removeStudyGroupMember(Long memberId) {
-        if (memberId == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_ID_REQUIRED);
-        }
-
-        StudyGroupMember target = studyGroupMembers.stream()
-            .filter(m -> m.getMemberId().equals(memberId))
-            .findFirst()
-            .orElseThrow(() -> new OrganizationDomainException(
-                OrganizationErrorCode.STUDY_GROUP_MEMBER_NOT_FOUND));
-
-        // 삭제 후 멤버가 0명이 되는 것을 방지 (스터디 그룹은 최소 1명의 멤버가 필요)
-        if (studyGroupMembers.size() <= 1) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED);
-        }
-
-        studyGroupMembers.remove(target);
-    }
-
-    public void removeStudyGroupMentor(Long mentorId) {
-        if (mentorId == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_ID_REQUIRED);
-        }
-
-        StudyGroupMentor target = studyGroupMentor.stream()
-            .filter(m -> m.getMemberId().equals(mentorId))
-            .findFirst()
-            .orElseThrow(() -> new OrganizationDomainException(
-                OrganizationErrorCode.STUDY_GROUP_MENTOR_NOT_FOUND));
-
-        // 삭제 후 멘토가 0명이 되는 것을 방지 (스터디 그룹은 최소 1명의 멘토(파트장)가 필요)
-        if (studyGroupMentor.size() <= 1) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_REQUIRED);
-        }
-
-        studyGroupMentor.remove(target);
     }
 
     // ============ Domain Methods (Aggregate Root Pattern) ============
