@@ -2,8 +2,8 @@ package com.umc.product.organization.application.port.service.command;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.command.ManageStudyGroupUseCase;
-import com.umc.product.organization.application.port.in.command.dto.AddStudyGroupMembersCommand;
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
+import com.umc.product.organization.application.port.in.command.dto.ReplaceStudyGroupMemberAndMentorCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupCommand;
 import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
@@ -49,17 +49,17 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
     }
 
     @Override
-    public void addMembers(AddStudyGroupMembersCommand command) {
+    public void replaceMemberAndMentors(ReplaceStudyGroupMemberAndMentorCommand command) {
         StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
 
         // 1. 이미 소속된 멤버 검증 (도메인 내부 규칙)
-        studyGroup.validateMembersNotJoined(command.memberIds());
+        studyGroup.validateMembersNotJoined(command.studyMemberIds());
 
         // 2. 다른 파트 스터디와 충돌 검증 (여러 도메인 거친 검사)
-        validateNoPartStudyConflict(studyGroup.getGisuId(), studyGroup.getPart(), command.memberIds());
+        validateNoPartStudyConflict(studyGroup.getGisuId(), studyGroup.getPart(), command.studyMemberIds());
 
         // 3. 추가 & 저장
-        command.memberIds().forEach(studyGroup::addStudyGroupMember);
+        command.studyMemberIds().forEach(studyGroup::addStudyGroupMember);
         manageStudyGroupPort.save(studyGroup);
     }
 
@@ -68,11 +68,13 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
         if (memberIds == null || memberIds.isEmpty()) {
             return;
         }
+
+        // memberId의 목록에 들어있는 회원이 해당 기수에, 동일한 파트의 스터디에 참여하고 있는지를 검사
         Set<Long> conflictMemberIds = loadStudyGroupPort.findConflictedMemberIds(gisuId, part, memberIds);
         if (!conflictMemberIds.isEmpty()) {
             throw new OrganizationDomainException(
                 OrganizationErrorCode.STUDY_GROUP_MEMBER_ALREADY_IN_PART_STUDY,
-                "다른 스터디 그룹과 중복된 멤버가 있습니다. 충돌하는 멤버 ID: " + conflictMemberIds);
+                "제공된 회원 중에서 동일한 기수에 동일한 파트의 스터디에 참여하고 있는 회원이 있습니다. ID LIST: " + conflictMemberIds);
         }
     }
 

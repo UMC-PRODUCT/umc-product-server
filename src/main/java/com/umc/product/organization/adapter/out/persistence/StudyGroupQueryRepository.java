@@ -17,6 +17,7 @@ import com.umc.product.organization.application.port.in.query.dto.StudyGroupName
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupViewScope;
 import com.umc.product.organization.domain.QStudyGroupMember;
 import com.umc.product.organization.domain.QStudyGroupMentor;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -32,12 +33,10 @@ public class StudyGroupQueryRepository {
     private final JPAQueryFactory queryFactory;
 
 
-
     /**
      * 역할 Scope 기반 스터디 그룹 이름 목록 조회.
      * <p>
-     * {@link #findMyStudyGroups} 와 동일한 Scope 합성 파이프라인을 재사용하되,
-     * 페이지네이션과 파트장/멤버 상세 조립 없이 (groupId, name) 만 Projection 한다.
+     * {@link #findMyStudyGroups} 와 동일한 Scope 합성 파이프라인을 재사용하되, 페이지네이션과 파트장/멤버 상세 조립 없이 (groupId, name) 만 Projection 한다.
      * 드롭다운/토글 UI 용도라 전체 결과를 한 번에 내려준다.
      * <p>
      * Scope가 모두 비어 합성 predicate가 null 이면 빈 리스트 반환
@@ -69,8 +68,7 @@ public class StudyGroupQueryRepository {
     /**
      * 내 스터디 그룹 목록 조회 (역할 Scope 기반).
      * <p>
-     * 이 함수는 다섯 단계로 구성되어 있다. 본문은 단계만 호출해 "무엇을 하는지" 를 드러내고,
-     * 세부 SQL 처리는 각 단계의 private 헬퍼에 격리했다.
+     * 이 함수는 다섯 단계로 구성되어 있다. 본문은 단계만 호출해 "무엇을 하는지" 를 드러내고, 세부 SQL 처리는 각 단계의 private 헬퍼에 격리했다.
      * <ol>
      *   <li>{@link #buildScopePredicate(List)} — 역할 Scope들을 OR로 합쳐 하나의 WHERE 조건으로 변환</li>
      *   <li>{@link #fetchGroupHeaders(Long, BooleanExpression, Long, int)} — 상위 그룹 헤더(id/name)만 커서 페이징</li>
@@ -87,8 +85,7 @@ public class StudyGroupQueryRepository {
      * @param gisuId 활성 기수 ID (이 기수의 스터디 그룹만 대상)
      * @param cursor 직전 페이지 마지막 groupId. 첫 페이지는 null.
      * @param size   조회 사이즈 (Service가 hasNext 판단용으로 +1 포함하여 넘김)
-     * @return 상위 스터디 그룹 정보 + 각 그룹의 파트장/멤버 요약.
-     *         scope가 전부 비어있거나 조회 결과가 없으면 빈 리스트.
+     * @return 상위 스터디 그룹 정보 + 각 그룹의 파트장/멤버 요약. scope가 전부 비어있거나 조회 결과가 없으면 빈 리스트.
      */
     public List<StudyGroupListInfo.StudyGroupInfo> findMyStudyGroups(
         List<StudyGroupViewScope> scopes, Long gisuId, Long cursor, int size) {
@@ -122,12 +119,11 @@ public class StudyGroupQueryRepository {
     /**
      * 역할 Scope 리스트를 하나의 {@link BooleanExpression} 으로 합친다 (OR 결합).
      * <p>
-     * 각 Scope는 {@link #toScopePredicate(StudyGroupViewScope)} 로 EXISTS 서브쿼리로 변환되는데,
-     * Scope의 입력값이 비어있는 경우(예: schoolMemberIds가 비어있는 AsSchoolCore)에는 null이 반환된다.
-     * 여기서는 그런 null Scope를 먼저 걸러낸 뒤 {@code reduce(BooleanExpression::or)} 로 OR 결합한다.
+     * 각 Scope는 {@link #toScopePredicate(StudyGroupViewScope)} 로 EXISTS 서브쿼리로 변환되는데, Scope의 입력값이 비어있는 경우(예:
+     * schoolMemberIds가 비어있는 AsSchoolCore)에는 null이 반환된다. 여기서는 그런 null Scope를 먼저 걸러낸 뒤
+     * {@code reduce(BooleanExpression::or)} 로 OR 결합한다.
      * <p>
-     * 최종 결과가 null 이면 "조회할 Scope가 하나도 없다" 는 뜻이므로 호출 측에서 빈 리스트를 반환해야 한다.
-     * 그렇지 않고 빈 WHERE 로 쿼리를 돌리면 테이블 풀 스캔이 된다.
+     * 최종 결과가 null 이면 "조회할 Scope가 하나도 없다" 는 뜻이므로 호출 측에서 빈 리스트를 반환해야 한다. 그렇지 않고 빈 WHERE 로 쿼리를 돌리면 테이블 풀 스캔이 된다.
      */
     private BooleanExpression buildScopePredicate(List<StudyGroupViewScope> scopes) {
         return scopes.stream()
@@ -140,8 +136,7 @@ public class StudyGroupQueryRepository {
     /**
      * 상위 스터디 그룹의 헤더 정보(id, name)만 커서 페이징으로 가져온다.
      * <p>
-     * 멤버 JOIN을 하지 않는 이유: 멤버가 포함되면 한 그룹이 멤버 수만큼 중복 row로 나와
-     * {@code LIMIT size} 가 "멤버 row 기준 size" 로 해석되어 페이징 의미가 붕괴된다.
+     * 멤버 JOIN을 하지 않는 이유: 멤버가 포함되면 한 그룹이 멤버 수만큼 중복 row로 나와 {@code LIMIT size} 가 "멤버 row 기준 size" 로 해석되어 페이징 의미가 붕괴된다.
      * 따라서 여기서는 그룹 단위로 size 를 정확히 자르고, 멤버는 다음 단계에서 별도 쿼리로 채운다.
      * <p>
      * 결과는 {@link GroupHeaderRow} record로 바로 Projection
@@ -152,7 +147,8 @@ public class StudyGroupQueryRepository {
      * @param size           조회 크기
      * @return (groupId, name) 헤더 리스트, id DESC 정렬
      */
-    private List<GroupHeaderRow> fetchGroupHeaders(Long gisuId, BooleanExpression scopePredicate, Long cursor, int size) {
+    private List<GroupHeaderRow> fetchGroupHeaders(Long gisuId, BooleanExpression scopePredicate, Long cursor,
+                                                   int size) {
         return queryFactory
             .select(Projections.constructor(GroupHeaderRow.class,
                 studyGroup.id,
@@ -178,12 +174,10 @@ public class StudyGroupQueryRepository {
     }
 
     /**
-     * 주어진 groupIds에 속한 모든 <b>파트장(Mentor)</b> 행을 한 번의 쿼리로 가져와
-     * {@code groupId → mentors} 맵으로 재분배한다.
+     * 주어진 groupIds에 속한 모든 <b>파트장(Mentor)</b> 행을 한 번의 쿼리로 가져와 {@code groupId → mentors} 맵으로 재분배한다.
      * <p>
-     * 파트장는 {@code study_group_mentor} 테이블에 멤버와는 별도로 관리되는 엔티티다.
-     * 따라서 {@code StudyGroupMember.isLeader} 플래그와는 별개로, 이 테이블을 직접 JOIN 해
-     * 파트장 목록을 만든다.
+     * 파트장는 {@code study_group_mentor} 테이블에 멤버와는 별도로 관리되는 엔티티다. 따라서 {@code StudyGroupMember.isLeader} 플래그와는 별개로, 이 테이블을
+     * 직접 JOIN 해 파트장 목록을 만든다.
      * <p>
      * N+1 방지를 위해 IN 절로 한 번에 묶고 자바 단에서 {@code groupingBy} 로 분배한다.
      *
@@ -207,11 +201,9 @@ public class StudyGroupQueryRepository {
     }
 
     /**
-     * 주어진 groupIds에 속한 모든 <b>멤버</b> 행을 한 번의 쿼리로 가져와
-     * {@code groupId → members} 맵으로 재분배한다.
+     * 주어진 groupIds에 속한 모든 <b>멤버</b> 행을 한 번의 쿼리로 가져와 {@code groupId → members} 맵으로 재분배한다.
      * <p>
-     * 여기서의 "멤버"는 {@code study_group_member} 테이블의 전체 소속 멤버이며,
-     * 파트장 여부와 관계없이 그룹에 속한 모든 사람을 포함한다. 파트장는 별도
+     * 여기서의 "멤버"는 {@code study_group_member} 테이블의 전체 소속 멤버이며, 파트장 여부와 관계없이 그룹에 속한 모든 사람을 포함한다. 파트장는 별도
      * {@link #fetchMentorsByGroupIds} 에서 조회한다.
      * <p>
      *
@@ -264,11 +256,11 @@ public class StudyGroupQueryRepository {
     /**
      * 각 {@link StudyGroupViewScope} 타입을 그에 맞는 EXISTS {@link BooleanExpression} 으로 변환한다.
      * <p>
-     * {@link StudyGroupViewScope} 가 sealed interface 라서 switch 표현식이 <b>exhaustive</b> 로 강제된다.
-     * 즉 새 Scope 타입을 추가하면 여기서 컴파일 에러가 나므로, 분기 누락이 원천 차단된다.
+     * {@link StudyGroupViewScope} 가 sealed interface 라서 switch 표현식이 <b>exhaustive</b> 로 강제된다. 즉 새 Scope 타입을 추가하면 여기서
+     * 컴파일 에러가 나므로, 분기 누락이 원천 차단된다.
      * <p>
-     * Scope 내부 입력값(예: 빈 schoolMemberIds, null memberId)으로 predicate를 만들 수 없으면 null을 반환하고,
-     * 호출 측의 {@link #buildScopePredicate(List)} 에서 null 은 OR 결합에서 제외된다.
+     * Scope 내부 입력값(예: 빈 schoolMemberIds, null memberId)으로 predicate를 만들 수 없으면 null을 반환하고, 호출 측의
+     * {@link #buildScopePredicate(List)} 에서 null 은 OR 결합에서 제외된다.
      *
      * @param scope 변환할 Scope
      * @return 해당 Scope의 EXISTS 서브쿼리 Expression. 생성 불가 시 null.
@@ -305,8 +297,7 @@ public class StudyGroupQueryRepository {
 
     /**
      * <b>파트장 Scope</b>: "해당 memberId가 StudyGroupMentor 로 등록된 스터디 그룹" 조건의 EXISTS 서브쿼리.
-     * 학교 회장단 Scope와 동일한 패턴
-     * 차이는 {@link QStudyGroupMentor} 를 보는 것과 단일 memberId 매칭이라는 점
+     * 학교 회장단 Scope와 동일한 패턴 차이는 {@link QStudyGroupMentor} 를 보는 것과 단일 memberId 매칭이라는 점
      *
      * @param memberId 요청 주체 memberId (파트장 본인)
      * @return EXISTS 서브쿼리. 입력이 null 이면 null.
@@ -324,8 +315,8 @@ public class StudyGroupQueryRepository {
     }
 
     /**
-     * id DESC(신규 우선) 정렬 기준 커서 조건. cursor 미만(lt)의 그룹만 다음 페이지에 포함된다.
-     * 첫 페이지는 cursor=null 이며 이 경우 조건을 반환하지 않아 where에서 무시된다.
+     * id DESC(신규 우선) 정렬 기준 커서 조건. cursor 미만(lt)의 그룹만 다음 페이지에 포함된다. 첫 페이지는 cursor=null 이며 이 경우 조건을 반환하지 않아 where에서
+     * 무시된다.
      */
     private BooleanExpression descCursorCondition(Long cursor) {
         return cursor != null ? studyGroup.id.lt(cursor) : null;
@@ -363,7 +354,7 @@ public class StudyGroupQueryRepository {
 
     public Set<Long> findConflictedMemberIds(Long gisuId, ChallengerPart part, Set<Long> memberIds) {
 
-        return queryFactory
+        return new HashSet<>(queryFactory
             .select(studyGroupMember.memberId)
             .from(studyGroupMember)
             .join(studyGroupMember.studyGroup, studyGroup)
@@ -373,8 +364,7 @@ public class StudyGroupQueryRepository {
                 studyGroupMember.memberId.in(memberIds)
             )
             .fetch()
-            .stream()
-            .collect(Collectors.toSet());
+        );
     }
 
     // ---------------------------------------------------------------------
@@ -387,7 +377,8 @@ public class StudyGroupQueryRepository {
      * @param groupId 스터디 그룹 ID
      * @param name    스터디 그룹 이름
      */
-    private record GroupHeaderRow(Long groupId, String name) {}
+    private record GroupHeaderRow(Long groupId, String name) {
+    }
 
     /**
      * {@link #fetchMembersByGroupIds} 용 멤버 Projection.
@@ -404,7 +395,8 @@ public class StudyGroupQueryRepository {
         Long memberId,
         String memberName,
         String profileImageId
-    ) {}
+    ) {
+    }
 
     /**
      * {@link #fetchMentorsByGroupIds} 용 파트장 Projection.
@@ -419,5 +411,6 @@ public class StudyGroupQueryRepository {
         Long memberId,
         String memberName,
         String profileImageId
-    ) {}
+    ) {
+    }
 }

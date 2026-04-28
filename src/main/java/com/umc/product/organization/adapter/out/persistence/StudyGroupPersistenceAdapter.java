@@ -38,8 +38,7 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
     /**
      * 역할 Scope 기반 "내 스터디 그룹" 조회를 위임한다.
      * <p>
-     * scopes가 비어있으면 EXISTS 서브쿼리가 전부 false가 되어 풀 스캔을 유발할 수 있으므로,
-     * Adapter 레벨에서 짧은 회로로 빈 리스트를 반환해 DB 호출 자체를 생략한다.
+     * scopes가 비어있으면 EXISTS 서브쿼리가 전부 false가 되어 풀 스캔을 유발할 수 있으므로, Adapter 레벨에서 짧은 회로로 빈 리스트를 반환해 DB 호출 자체를 생략한다.
      */
     @Override
     public List<StudyGroupListInfo.StudyGroupInfo> findMyStudyGroups(List<StudyGroupViewScope> scopes, Long gisuId,
@@ -74,11 +73,11 @@ public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadS
 
     @Override
     public Set<Long> findConflictedMemberIds(Long gisuId, ChallengerPart part, Set<Long> memberIds) {
-        if(memberIds == null || memberIds.isEmpty()) {
+        if (memberIds == null || memberIds.isEmpty()) {
             return Set.of();
         }
-        return studyGroupQueryRepository.findConflictedMemberIds(gisuId, part, memberIds);
 
+        return studyGroupQueryRepository.findConflictedMemberIds(gisuId, part, memberIds);
     }
 
     @Override

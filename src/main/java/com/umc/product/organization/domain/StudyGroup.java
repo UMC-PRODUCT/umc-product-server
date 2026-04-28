@@ -58,11 +58,15 @@ public class StudyGroup extends BaseEntity {
         this.part = part;
     }
 
-    public static StudyGroup create(String name, Long gisuId, ChallengerPart part, Set<Long> mentorIds, Set<Long> memberIds) {
-        if(mentorIds == null || mentorIds.isEmpty()) {
+    public static StudyGroup create(
+        String name, Long gisuId, ChallengerPart part, Set<Long> mentorIds,
+        Set<Long> memberIds
+    ) {
+        if (mentorIds == null || mentorIds.isEmpty()) {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_REQUIRED);
         }
-        if(memberIds == null || memberIds.isEmpty()) {
+
+        if (memberIds == null || memberIds.isEmpty()) {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED);
         }
 
@@ -78,14 +82,30 @@ public class StudyGroup extends BaseEntity {
         return group;
     }
 
+    private static void validate(String name, Long gisuId, ChallengerPart part) {
+        if (name == null || name.isBlank()) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
+        }
+
+        if (gisuId == null) {
+            throw new OrganizationDomainException(OrganizationErrorCode.GISU_REQUIRED);
+        }
+
+        if (part == null) {
+            throw new OrganizationDomainException(OrganizationErrorCode.PART_REQUIRED);
+        }
+    }
+
     public void addStudyGroupMember(Long memberId) {
         if (memberId == null) {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED);
         }
+
         boolean duplicate = hasMember(memberId);
         if (duplicate) {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_DUPLICATED);
         }
+
         this.studyGroupMembers.add(StudyGroupMember.create(this, memberId));
     }
 
@@ -95,34 +115,23 @@ public class StudyGroup extends BaseEntity {
     }
 
     private void addMentor(Long mentorId) {
-        if(mentorId == null) {
+        if (mentorId == null) {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_ID_REQUIRED);
         }
-        this.studyGroupMentor.add(StudyGroupMentor.create(this, mentorId));
-    }
 
-    private static void validate(String name, Long gisuId, ChallengerPart part) {
-        if (name == null || name.isBlank()) {
-            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NAME_REQUIRED);
-        }
-        if (gisuId == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.GISU_REQUIRED);
-        }
-        if (part == null) {
-            throw new OrganizationDomainException(OrganizationErrorCode.PART_REQUIRED);
-        }
+        this.studyGroupMentor.add(StudyGroupMentor.create(this, mentorId));
     }
 
     // ============ Domain Methods (Aggregate Root Pattern) ============
 
     public void updateName(String name) {
-        if(StringUtils.hasText(name)) {
+        if (StringUtils.hasText(name)) {
             this.name = name;
         }
     }
 
     public void updatePart(ChallengerPart challengerPart) {
-        if(challengerPart != null) {
+        if (challengerPart != null) {
             this.part = challengerPart;
         }
     }
