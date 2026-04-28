@@ -15,7 +15,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "Organization | 스터디 그룹 Command", description = "")
 public interface StudyGroupCommandControllerApi {
 
-    @Operation(summary = "스터디 그룹 생성", description = "새로운 스터디 그룹을 생성합니다.")
+    @Operation(summary = "스터디 그룹 생성", description = """
+        스터디 그룹을 생성합니다. 스터디 그룹은 특정 기수에 속해야 하며, 파트를 명시해야 합니다.
+
+        스터디원 및 담당 파트장은 모두 `memberId` 로 명시해주시면 됩니다.
+
+        스터디원의 경우, 같은 기수에 동일한 파트의 다른 스터디에 속해있지 않아야 합니다. (e.g. 9기에 SpringBoot 스터디 2개에 들어가는 것은 불가능)
+        파트장은 관계 없습니다.
+        """)
     @ApiResponses(value = {
         @ApiResponse(responseCode = "400", description = "잘못된 요청"),
         @ApiResponse(responseCode = "404", description = "기수를 찾을 수 없음")
