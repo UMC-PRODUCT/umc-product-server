@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface StudyGroupMentorJpaRepository extends JpaRepository<StudyGroupMentor, Long> {
 
     List<StudyGroupMentor> findByStudyGroup_Id(Long studyGroupId);
+
+    boolean existsByStudyGroup_IdAndMemberId(Long studyGroupId, Long mentorId);
 }

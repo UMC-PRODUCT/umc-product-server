@@ -11,4 +11,6 @@ public interface SaveStudyGroupMentorPort {
     List<StudyGroupMentor> saveAll(List<StudyGroupMentor> studyGroupMentors);
 
     void delete(StudyGroupMentor studyGroupMentor);
+
+    void deleteAll(List<StudyGroupMentor> studyGroupMentors);
 }

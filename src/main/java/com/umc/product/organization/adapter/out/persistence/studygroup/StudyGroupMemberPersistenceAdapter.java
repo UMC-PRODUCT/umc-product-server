@@ -4,6 +4,8 @@ package com.umc.product.organization.adapter.out.persistence.studygroup;
 import com.umc.product.organization.application.port.out.command.SaveStudyGroupMemberPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupMemberPort;
 import com.umc.product.organization.domain.StudyGroupMember;
+import com.umc.product.organization.exception.OrganizationDomainException;
+import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +33,11 @@ public class StudyGroupMemberPersistenceAdapter implements SaveStudyGroupMemberP
     }
 
     @Override
+    public void deleteAll(List<StudyGroupMember> studyGroupMember) {
+        jpaRepository.deleteAll(studyGroupMember);
+    }
+
+    @Override
     public Optional<StudyGroupMember> findById(Long id) {
         return jpaRepository.findById(id);
     }
@@ -38,5 +45,12 @@ public class StudyGroupMemberPersistenceAdapter implements SaveStudyGroupMemberP
     @Override
     public List<StudyGroupMember> listByStudyGroupId(Long studyGroupId) {
         return jpaRepository.findByStudyGroup_Id(studyGroupId);
+    }
+
+    @Override
+    public void throwIfMemberAlreadyInStudyGroup(Long studyGroupId, Long memberId) {
+        if (jpaRepository.existsByStudyGroup_IdAndMemberId(studyGroupId, memberId)) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_DUPLICATED);
+        }
     }
 }

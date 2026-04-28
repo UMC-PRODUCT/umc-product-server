@@ -11,4 +11,5 @@ public interface StudyGroupMemberJpaRepository extends JpaRepository<StudyGroupM
 
     List<StudyGroupMember> findByStudyGroup_Id(Long studyGroupId);
 
+    boolean existsByStudyGroup_IdAndMemberId(Long studyGroupId, Long memberId);
 }

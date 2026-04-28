@@ -9,4 +9,6 @@ public interface LoadStudyGroupMentorPort {
     Optional<StudyGroupMentor> findById(Long id);
 
     List<StudyGroupMentor> listByStudyGroupId(Long studyGroupId);
+
+    void throwIfMentorAlreadyInStudyGroup(Long studyGroupId, Long mentorId);
 }
