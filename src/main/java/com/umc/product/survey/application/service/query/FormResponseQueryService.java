@@ -1,8 +1,12 @@
 package com.umc.product.survey.application.service.query;
 
+import com.umc.product.survey.application.port.in.query.GetAnswerUseCase;
 import com.umc.product.survey.application.port.in.query.GetFormResponseUseCase;
+import com.umc.product.survey.application.port.in.query.dto.AnswerInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormResponseInfo;
+import com.umc.product.survey.application.port.in.query.dto.FormResponseWithAnswersInfo;
 import com.umc.product.survey.application.port.out.LoadFormResponsePort;
+import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +22,7 @@ import java.util.Optional;
 public class FormResponseQueryService implements GetFormResponseUseCase {
 
     private final LoadFormResponsePort loadFormResponsePort;
+    private final GetAnswerUseCase getAnswerUseCase;
 
     @Override
     public Optional<FormResponseInfo> findById(Long formResponseId) {
@@ -63,5 +68,14 @@ public class FormResponseQueryService implements GetFormResponseUseCase {
     public Optional<FormResponseInfo> findSubmittedByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId) {
         return loadFormResponsePort.findSubmittedByFormIdAndRespondentMemberId(formId, respondentMemberId)
             .map(FormResponseInfo::from);
+    }
+
+    @Override
+    public FormResponseWithAnswersInfo getResponseWithAnswers(Long formResponseId) {
+        FormResponse formResponse = loadFormResponsePort.findById(formResponseId)
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+
+        List<AnswerInfo> answers = getAnswerUseCase.listByFormResponseId(formResponseId);
+        return FormResponseWithAnswersInfo.from(formResponse, answers);
     }
 }

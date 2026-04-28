@@ -1,6 +1,7 @@
 package com.umc.product.survey.application.port.in.query;
 
 import com.umc.product.survey.application.port.in.query.dto.FormResponseInfo;
+import com.umc.product.survey.application.port.in.query.dto.FormResponseWithAnswersInfo;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,4 +49,10 @@ public interface GetFormResponseUseCase {
      * 특정 폼에 대한 특정 사용자의 SUBMITTED 응답을 조회. 없으면 Optional.empty.
      */
     Optional<FormResponseInfo> findSubmittedByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId);
+
+    /**
+     * 특정 응답의 메타 + 모든 답변을 한 번에 조회 (facade).
+     * 응답 상세 화면 (응답자 본인 / 폼 작성자) 용도. 없으면 FORM_RESPONSE_NOT_FOUND 예외.
+     */
+    FormResponseWithAnswersInfo getResponseWithAnswers(Long formResponseId);
 }
