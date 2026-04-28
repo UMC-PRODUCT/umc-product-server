@@ -1,4 +1,4 @@
-package com.umc.product.organization.adapter.out.persistence;
+package com.umc.product.organization.adapter.out.persistence.school;
 
 
 import com.umc.product.organization.application.port.in.query.dto.SchoolChapterInfo;

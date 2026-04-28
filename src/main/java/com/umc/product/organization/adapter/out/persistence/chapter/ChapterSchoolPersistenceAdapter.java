@@ -1,4 +1,4 @@
-package com.umc.product.organization.adapter.out.persistence;
+package com.umc.product.organization.adapter.out.persistence.chapter;
 
 
 import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
@@ -41,8 +41,8 @@ public class ChapterSchoolPersistenceAdapter implements LoadChapterSchoolPort, M
     @Override
     public ChapterSchool findByChapterIdAndSchoolId(Long chapterId, Long schoolId) {
         return chapterSchoolQueryRepository
-                .findByChapterIdAndSchoolId(chapterId, schoolId)
-                .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.NO_SUCH_CHAPTER_SCHOOL));
+            .findByChapterIdAndSchoolId(chapterId, schoolId)
+            .orElseThrow(() -> new OrganizationDomainException(OrganizationErrorCode.NO_SUCH_CHAPTER_SCHOOL));
     }
 
     @Override

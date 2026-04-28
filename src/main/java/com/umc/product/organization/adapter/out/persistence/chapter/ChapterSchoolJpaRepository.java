@@ -1,4 +1,4 @@
-package com.umc.product.organization.adapter.out.persistence;
+package com.umc.product.organization.adapter.out.persistence.chapter;
 
 import com.umc.product.organization.domain.ChapterSchool;
 import java.util.List;
@@ -18,8 +18,8 @@ public interface ChapterSchoolJpaRepository extends JpaRepository<ChapterSchool,
     void deleteAllByChapterId(@Param("chapterId") Long chapterId);
 
     @Query("SELECT cs FROM ChapterSchool cs " +
-            "JOIN FETCH cs.chapter " +
-            "JOIN FETCH cs.school " +
-            "WHERE cs.chapter.gisu.id = :gisuId")
+        "JOIN FETCH cs.chapter " +
+        "JOIN FETCH cs.school " +
+        "WHERE cs.chapter.gisu.id = :gisuId")
     List<ChapterSchool> findByGisuIdWithChapterAndSchool(@Param("gisuId") Long gisuId);
 }

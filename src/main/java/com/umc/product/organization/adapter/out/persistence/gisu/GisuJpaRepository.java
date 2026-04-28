@@ -1,4 +1,4 @@
-package com.umc.product.organization.adapter.out.persistence;
+package com.umc.product.organization.adapter.out.persistence.gisu;
 
 import com.umc.product.organization.domain.Gisu;
 import jakarta.persistence.LockModeType;

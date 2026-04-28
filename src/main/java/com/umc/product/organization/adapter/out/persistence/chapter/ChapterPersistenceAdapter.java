@@ -1,4 +1,4 @@
-package com.umc.product.organization.adapter.out.persistence;
+package com.umc.product.organization.adapter.out.persistence.chapter;
 
 
 import com.umc.product.organization.application.port.out.command.ManageChapterPort;

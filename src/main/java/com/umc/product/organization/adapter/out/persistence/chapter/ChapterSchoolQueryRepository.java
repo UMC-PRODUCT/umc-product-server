@@ -1,4 +1,4 @@
-package com.umc.product.organization.adapter.out.persistence;
+package com.umc.product.organization.adapter.out.persistence.chapter;
 
 import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
 
@@ -21,24 +21,24 @@ public class ChapterSchoolQueryRepository {
 
     public Optional<ChapterSchool> findByChapterIdAndSchoolId(Long chapterId, Long schoolId) {
         return Optional.ofNullable(
-                jpaQueryFactory
-                        .selectFrom(chapterSchool)
-                        .where(chapterSchool.chapter.id.eq(chapterId),
-                                chapterSchool.school.id.eq(schoolId))
-                        .fetchOne()
+            jpaQueryFactory
+                .selectFrom(chapterSchool)
+                .where(chapterSchool.chapter.id.eq(chapterId),
+                    chapterSchool.school.id.eq(schoolId))
+                .fetchOne()
         );
     }
 
     public List<ChapterSchool> findBySchoolId(Long schoolId) {
         return jpaQueryFactory
-                .selectFrom(chapterSchool)
-                .where(chapterSchool.school.id.eq(schoolId))
-                .fetch();
+            .selectFrom(chapterSchool)
+            .where(chapterSchool.school.id.eq(schoolId))
+            .fetch();
     }
 
     /**
-     * 여러 gisuId와 schoolId 조합에 해당하는 ChapterSchool을 1번 쿼리로 일괄 조회
-     * chapter, chapter.gisu, school을 fetch join하여 lazy load 방지
+     * 여러 gisuId와 schoolId 조합에 해당하는 ChapterSchool을 1번 쿼리로 일괄 조회 chapter, chapter.gisu, school을 fetch join하여 lazy load
+     * 방지
      */
     public List<ChapterSchool> findByGisuIdInAndSchoolIdIn(Set<Long> gisuIds, Set<Long> schoolIds) {
         QChapter chapter = QChapter.chapter;
@@ -46,14 +46,14 @@ public class ChapterSchoolQueryRepository {
         QSchool school = QSchool.school;
 
         return jpaQueryFactory
-                .selectFrom(chapterSchool)
-                .join(chapterSchool.chapter, chapter).fetchJoin()
-                .join(chapter.gisu, gisu).fetchJoin()
-                .join(chapterSchool.school, school).fetchJoin()
-                .where(
-                        gisu.id.in(gisuIds),
-                        school.id.in(schoolIds)
-                )
-                .fetch();
+            .selectFrom(chapterSchool)
+            .join(chapterSchool.chapter, chapter).fetchJoin()
+            .join(chapter.gisu, gisu).fetchJoin()
+            .join(chapterSchool.school, school).fetchJoin()
+            .where(
+                gisu.id.in(gisuIds),
+                school.id.in(schoolIds)
+            )
+            .fetch();
     }
 }

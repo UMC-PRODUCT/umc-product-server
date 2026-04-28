@@ -1,4 +1,4 @@
-package com.umc.product.organization.adapter.out.persistence;
+package com.umc.product.organization.adapter.out.persistence.studygroup;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.domain.StudyGroup;

@@ -1,4 +1,4 @@
-package com.umc.product.organization.adapter.out.persistence;
+package com.umc.product.organization.adapter.out.persistence.school;
 
 import static com.umc.product.organization.domain.QChapter.chapter;
 import static com.umc.product.organization.domain.QChapterSchool.chapterSchool;
@@ -14,11 +14,11 @@ import com.querydsl.jpa.JPQLQuery;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.organization.application.port.in.query.dto.SchoolChapterInfo;
-import com.umc.product.organization.domain.School;
 import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
+import com.umc.product.organization.domain.School;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -180,7 +180,9 @@ public class SchoolQueryRepository {
     }
 
     public Map<Long, List<SchoolDetailInfo.SchoolLinkItem>> findLinksBySchoolIds(List<Long> schoolIds) {
-        if (schoolIds.isEmpty()) return Map.of();
+        if (schoolIds.isEmpty()) {
+            return Map.of();
+        }
 
         List<Tuple> tuples = queryFactory
             .select(schoolLink.school.id, schoolLink.title, schoolLink.type, schoolLink.url)

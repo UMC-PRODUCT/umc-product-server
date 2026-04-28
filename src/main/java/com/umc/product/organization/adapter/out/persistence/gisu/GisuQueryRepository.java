@@ -1,4 +1,4 @@
-package com.umc.product.organization.adapter.out.persistence;
+package com.umc.product.organization.adapter.out.persistence.gisu;
 
 import static com.umc.product.organization.domain.QGisu.gisu;
 
