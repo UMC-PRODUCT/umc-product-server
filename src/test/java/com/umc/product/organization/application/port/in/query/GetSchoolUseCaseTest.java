@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.umc.product.global.exception.BusinessException;
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
-import com.umc.product.organization.application.port.in.query.dto.UnassignedSchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.UnassignedSchoolInfo;
 import com.umc.product.organization.application.port.out.command.SaveChapterPort;
 import com.umc.product.organization.application.port.out.command.SaveChapterSchoolPort;
 import com.umc.product.organization.application.port.out.command.SaveSchoolPort;

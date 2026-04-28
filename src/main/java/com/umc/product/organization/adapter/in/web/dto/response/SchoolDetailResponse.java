@@ -1,6 +1,6 @@
 package com.umc.product.organization.adapter.in.web.dto.response;
 
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.organization.domain.enums.SchoolLinkType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
@@ -41,8 +41,8 @@ public record SchoolDetailResponse(
     public static SchoolDetailResponse of(SchoolDetailInfo info) {
         List<SchoolLinkItem> linkItems = info.links() != null
             ? info.links().stream()
-            .map(link -> new SchoolLinkItem(link.title(), link.type(), link.url()))
-            .toList()
+              .map(link -> new SchoolLinkItem(link.title(), link.type(), link.url()))
+              .toList()
             : List.of();
 
         return new SchoolDetailResponse(

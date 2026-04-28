@@ -1,4 +1,4 @@
-package com.umc.product.organization.application.port.in.query.dto;
+package com.umc.product.organization.application.port.in.query.dto.school;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 
@@ -15,7 +15,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
  * @param part     조회 대상 파트 (null이면 모든 파트)
  */
 public record SchoolAccessContext(
-        Long schoolId,
-        ChallengerPart part
+    Long schoolId,
+    ChallengerPart part
 ) {
 }

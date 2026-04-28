@@ -11,8 +11,8 @@ import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameRe
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSummaryResponse;
 import com.umc.product.organization.adapter.in.web.swagger.StudyGroupQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo.StudyGroupInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupListInfo.StudyGroupInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,7 +36,8 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     public CursorResponse<StudyGroupSummaryResponse> getStudyGroups(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam(required = false) Long cursor,
-        @RequestParam(defaultValue = "20") int size) {
+        @RequestParam(defaultValue = "20") int size
+    ) {
 
         List<StudyGroupInfo> content = getStudyGroupUseCase.getMyStudyGroups(
             memberPrincipal.getMemberId(), cursor, size
@@ -56,7 +57,8 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     @Override
     @GetMapping("/names")
     public StudyGroupNameResponse getStudyGroupNames(
-        @CurrentMember MemberPrincipal memberPrincipal) {
+        @CurrentMember MemberPrincipal memberPrincipal
+    ) {
         return StudyGroupNameResponse.from(
             getStudyGroupUseCase.getStudyGroupNames(memberPrincipal.getMemberId())
         );

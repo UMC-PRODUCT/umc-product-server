@@ -2,8 +2,8 @@ package com.umc.product.organization.application.port.in.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
-import com.umc.product.organization.application.port.in.query.dto.ChapterWithSchoolsInfo;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import com.umc.product.organization.application.port.out.command.SaveChapterPort;
 import com.umc.product.organization.application.port.out.command.SaveChapterSchoolPort;
 import com.umc.product.organization.application.port.out.command.SaveSchoolPort;

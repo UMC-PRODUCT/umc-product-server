@@ -1,6 +1,6 @@
 package com.umc.product.organization.adapter.in.web.dto.response;
 
-import com.umc.product.organization.application.port.in.query.dto.SchoolLinkInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolLinkInfo;
 import com.umc.product.organization.domain.enums.SchoolLinkType;
 import java.util.List;
 

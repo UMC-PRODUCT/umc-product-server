@@ -6,11 +6,11 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupMemberInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupViewScope;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.util.ArrayList;
@@ -36,8 +36,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     /**
      * 내 스터디 그룹 목록 조회 UseCase 구현.
      * <p>
-     * 사용자의 활성 기수에서의 역할(Role)을 바탕으로 조회 범위(Scope)를 조립하여,
-     * 해당 Scope가 허용하는 스터디 그룹 목록을 커서 페이지네이션으로 반환한다.
+     * 사용자의 활성 기수에서의 역할(Role)을 바탕으로 조회 범위(Scope)를 조립하여, 해당 Scope가 허용하는 스터디 그룹 목록을 커서 페이지네이션으로 반환한다.
      * <ul>
      *   <li>학교 회장단(SCHOOL_PRESIDENT/VICE) → 해당 학교 멤버가 포함된 모든 스터디 그룹</li>
      *   <li>파트장(SCHOOL_PART_LEADER) → 본인이 파트장(Mentor)로 등록된 스터디 그룹</li>
@@ -71,9 +70,8 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     /**
      * 사용자의 활성 기수 내 역할을 검사하여 조회 가능한 Scope 리스트를 구성한다.
      * <p>
-     * 새로운 역할이 추가될 경우 이 메서드에만 분기를 더하면 되어 확장 지점이 단일화된다.
-     * 학교 회장단 Scope 구성 시 Member 도메인에서 학교 멤버 ID 집합을 조회하는데,
-     * 집합이 비어있다면 EXISTS 서브쿼리에서 항상 false가 되므로 Scope 자체를 추가하지 않아 쿼리 비용을 절감한다.
+     * 새로운 역할이 추가될 경우 이 메서드에만 분기를 더하면 되어 확장 지점이 단일화된다. 학교 회장단 Scope 구성 시 Member 도메인에서 학교 멤버 ID 집합을 조회하는데, 집합이 비어있다면
+     * EXISTS 서브쿼리에서 항상 false가 되므로 Scope 자체를 추가하지 않아 쿼리 비용을 절감한다.
      *
      * @param memberId 요청 주체 memberId
      * @param gisuId   활성 기수 ID
@@ -129,8 +127,8 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     /**
      * 스터디 그룹 ID 로 소속 스터디원 목록 조회.
      * <p>
-     * Repository 에서 Member/School 도메인까지 JOIN 하여 (memberId, 학교명, 프로필 이미지 ID) 를 가져온 뒤,
-     * 프로필 이미지 ID 를 일괄 URL 로 치환해 반환한다. 조회 결과가 비어있으면 storage 호출 자체를 생략한다.
+     * Repository 에서 Member/School 도메인까지 JOIN 하여 (memberId, 학교명, 프로필 이미지 ID) 를 가져온 뒤, 프로필 이미지 ID 를 일괄 URL 로 치환해 반환한다. 조회
+     * 결과가 비어있으면 storage 호출 자체를 생략한다.
      */
     @Override
     public List<StudyGroupMemberInfo> getStudyGroupMembers(Long groupId) {
@@ -163,7 +161,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     }
 
     private List<StudyGroupListInfo.StudyGroupInfo> resolveStudyGroupListUrls(
-            List<StudyGroupListInfo.StudyGroupInfo> groups) {
+        List<StudyGroupListInfo.StudyGroupInfo> groups) {
         Set<String> imageIds = new LinkedHashSet<>();
         for (StudyGroupListInfo.StudyGroupInfo group : groups) {
             for (StudyGroupListInfo.StudyGroupInfo.Mentor mentor : group.mentors()) {
@@ -185,25 +183,25 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
         Map<String, String> urlMap = resolveProfileImageUrls(imageIds);
 
         return groups.stream()
-                .map(group -> new StudyGroupListInfo.StudyGroupInfo(
-                        group.groupId(),
-                        group.name(),
-                        group.mentors().stream()
-                                .map(o -> new StudyGroupListInfo.StudyGroupInfo.Mentor(
-                                        o.memberId(),
-                                        o.name(),
-                                        urlMap.getOrDefault(o.profileImageUrl(), o.profileImageUrl())
-                                ))
-                                .toList(),
-                        group.members().stream()
-                                .map(m -> new StudyGroupListInfo.StudyGroupInfo.Member(
-                                        m.memberId(),
-                                        m.name(),
-                                        urlMap.getOrDefault(m.profileImageUrl(), m.profileImageUrl())
-                                ))
-                                .toList()
-                ))
-                .toList();
+            .map(group -> new StudyGroupListInfo.StudyGroupInfo(
+                group.groupId(),
+                group.name(),
+                group.mentors().stream()
+                    .map(o -> new StudyGroupListInfo.StudyGroupInfo.Mentor(
+                        o.memberId(),
+                        o.name(),
+                        urlMap.getOrDefault(o.profileImageUrl(), o.profileImageUrl())
+                    ))
+                    .toList(),
+                group.members().stream()
+                    .map(m -> new StudyGroupListInfo.StudyGroupInfo.Member(
+                        m.memberId(),
+                        m.name(),
+                        urlMap.getOrDefault(m.profileImageUrl(), m.profileImageUrl())
+                    ))
+                    .toList()
+            ))
+            .toList();
     }
 
     private StudyGroupDetailInfo resolveStudyGroupDetailUrls(StudyGroupDetailInfo detail) {
@@ -224,32 +222,32 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
         Map<String, String> urlMap = resolveProfileImageUrls(imageIds);
 
         StudyGroupDetailInfo.MemberInfo resolvedLeader = detail.leader() == null ? null
-                : new StudyGroupDetailInfo.MemberInfo(
-                        detail.leader().challengerId(),
-                        detail.leader().memberId(),
-                        detail.leader().name(),
-                        urlMap.getOrDefault(detail.leader().profileImageUrl(),
-                                detail.leader().profileImageUrl())
-                );
+            : new StudyGroupDetailInfo.MemberInfo(
+                detail.leader().challengerId(),
+                detail.leader().memberId(),
+                detail.leader().name(),
+                urlMap.getOrDefault(detail.leader().profileImageUrl(),
+                    detail.leader().profileImageUrl())
+            );
 
         List<StudyGroupDetailInfo.MemberInfo> resolvedMembers = detail.members().stream()
-                .map(m -> new StudyGroupDetailInfo.MemberInfo(
-                        m.challengerId(),
-                        m.memberId(),
-                        m.name(),
-                        urlMap.getOrDefault(m.profileImageUrl(), m.profileImageUrl())
-                ))
-                .toList();
+            .map(m -> new StudyGroupDetailInfo.MemberInfo(
+                m.challengerId(),
+                m.memberId(),
+                m.name(),
+                urlMap.getOrDefault(m.profileImageUrl(), m.profileImageUrl())
+            ))
+            .toList();
 
         return new StudyGroupDetailInfo(
-                detail.groupId(),
-                detail.name(),
-                detail.part(),
-                detail.schools(),
-                detail.createdAt(),
-                detail.memberCount(),
-                resolvedLeader,
-                resolvedMembers
+            detail.groupId(),
+            detail.name(),
+            detail.part(),
+            detail.schools(),
+            detail.createdAt(),
+            detail.memberCount(),
+            resolvedLeader,
+            resolvedMembers
         );
     }
 

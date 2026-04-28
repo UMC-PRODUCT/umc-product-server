@@ -1,12 +1,12 @@
-package com.umc.product.organization.application.port.in.query.dto;
+package com.umc.product.organization.application.port.in.query.dto.studygroup;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 
 public record StudyGroupListQuery(
-        Long schoolId,
-        ChallengerPart part,
-        Long cursor,
-        int size
+    Long schoolId,
+    ChallengerPart part,
+    Long cursor,
+    int size
 ) {
     public StudyGroupListQuery {
         if (size <= 0) {

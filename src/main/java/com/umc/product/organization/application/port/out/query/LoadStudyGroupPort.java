@@ -1,10 +1,10 @@
 package com.umc.product.organization.application.port.out.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupMemberInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupViewScope;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
 import com.umc.product.organization.domain.StudyGroup;
 import java.util.List;
 import java.util.Set;

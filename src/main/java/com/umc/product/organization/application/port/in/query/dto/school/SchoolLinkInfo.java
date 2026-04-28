@@ -1,4 +1,4 @@
-package com.umc.product.organization.application.port.in.query.dto;
+package com.umc.product.organization.application.port.in.query.dto.school;
 
 import com.umc.product.organization.domain.School;
 import com.umc.product.organization.domain.enums.SchoolLinkType;

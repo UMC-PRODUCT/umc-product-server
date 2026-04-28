@@ -1,4 +1,4 @@
-package com.umc.product.organization.application.port.in.query.dto;
+package com.umc.product.organization.application.port.in.query.dto.gisu;
 
 import com.umc.product.organization.domain.Gisu;
 

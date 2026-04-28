@@ -1,4 +1,4 @@
-package com.umc.product.organization.application.port.in.query.dto;
+package com.umc.product.organization.application.port.in.query.dto.chapter;
 
 import com.umc.product.organization.domain.Chapter;
 

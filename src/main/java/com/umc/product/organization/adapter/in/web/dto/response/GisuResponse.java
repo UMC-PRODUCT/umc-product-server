@@ -1,6 +1,6 @@
 package com.umc.product.organization.adapter.in.web.dto.response;
 
-import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 

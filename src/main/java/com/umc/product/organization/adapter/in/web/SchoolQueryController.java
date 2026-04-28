@@ -7,7 +7,7 @@ import com.umc.product.organization.adapter.in.web.dto.response.SchoolNameListRe
 import com.umc.product.organization.adapter.in.web.dto.response.UnassignedSchoolListResponse;
 import com.umc.product.organization.adapter.in.web.swagger.SchoolQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
