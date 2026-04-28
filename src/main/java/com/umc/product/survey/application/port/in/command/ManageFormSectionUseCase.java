@@ -8,8 +8,10 @@ import com.umc.product.survey.application.port.in.command.dto.UpdateFormSectionC
 /**
  * FormSection(폼 섹션) 관리 UseCase.
  * <p>
- * 섹션은 폼 안에서 질문들을 묶는 논리적 단위. 발행된 폼의 섹션 구조 변경은
- * 응답 일관성을 해칠 수 있으므로 DRAFT 상태에서만 수정/삭제/재정렬 가능.
+ * 권한 검증과 발행 상태 검증은 호출 측 (consumer 도메인) 책임. 본 UseCase 는 단순 동작만 보장.
+ * 응답 무결성은 {@code AnswerChoice.answeredAsContent} 스냅샷이 보장.
+ * <p>
+ * TODO: 발행된 폼 / 응답이 들어온 폼 의 섹션 구조 변경 차단 정책 합의 시 분기 추가.
  */
 public interface ManageFormSectionUseCase {
 
@@ -22,8 +24,8 @@ public interface ManageFormSectionUseCase {
     Long createSection(CreateFormSectionCommand command);
 
     /**
-     * 섹션의 title/description을 수정한다.
-     * 발행된 폼의 섹션은 수정 불가 — SURVEY_NOT_DRAFT 예외. TODO: 관련 로직 확정 시 수정 필요
+     * 섹션의 title/description 부분 업데이트.
+     * null 인 필드는 기존 값 유지.
      */
     void updateSection(UpdateFormSectionCommand command);
 
@@ -35,7 +37,7 @@ public interface ManageFormSectionUseCase {
     /**
      * 폼 내 섹션들의 순서를 재배치한다.
      * 입력 리스트 순서대로 orderNo가 1부터 재부여된다.
-     * 리스트에 포함되지 않은 섹션이 있으면 예외.
+     * 폼의 모든 섹션 ID 가 누락 / 중복 / 외부 ID 없이 정확히 일치해야 한다.
      */
     void reorderSections(ReorderFormSectionsCommand command);
 }
