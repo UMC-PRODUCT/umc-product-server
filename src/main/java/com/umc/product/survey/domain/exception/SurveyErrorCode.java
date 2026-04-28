@@ -31,6 +31,7 @@ public enum SurveyErrorCode implements BaseCode {
     FORM_RESPONSE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SURVEY-0027", "이미 제출한 응답이 있습니다."),
     SURVEY_NOT_PUBLISHED(HttpStatus.CONFLICT, "SURVEY-0028", "발행된 폼만 응답할 수 있습니다."),
     QUESTION_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "SURVEY-0029", "선택지를 찾을 수 없습니다."),
+    ANSWER_NOT_FOUND(HttpStatus.NOT_FOUND, "SURVEY-0030", "답변을 찾을 수 없습니다."),
     ;
 
     private final HttpStatus httpStatus;

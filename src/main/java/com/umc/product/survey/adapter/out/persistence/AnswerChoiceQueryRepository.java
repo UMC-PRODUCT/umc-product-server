@@ -7,12 +7,15 @@ import static com.umc.product.survey.domain.QFormResponse.formResponse;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.umc.product.survey.domain.AnswerChoice;
+import com.umc.product.survey.domain.QQuestionOption;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Repository
@@ -73,5 +76,22 @@ public class AnswerChoiceQueryRepository {
                     Collectors.toList()
                 )
             ));
+    }
+
+    /**
+     * 여러 답변의 AnswerChoice 를 벌크 조회.
+     * 정렬: 선택지(questionOption) orderNo asc — 삭제된 선택지 (questionOption == null) 는 뒤로.
+     */
+    public List<AnswerChoice> findAllByAnswerIdIn(Set<Long> answerIds) {
+        if (answerIds.isEmpty()) {
+            return List.of();
+        }
+        QQuestionOption qo = QQuestionOption.questionOption;
+        return queryFactory
+            .selectFrom(answerChoice)
+            .leftJoin(answerChoice.questionOption, qo)
+            .where(answerChoice.answer.id.in(answerIds))
+            .orderBy(qo.orderNo.asc().nullsLast())
+            .fetch();
     }
 }

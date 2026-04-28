@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -19,6 +21,22 @@ public class AnswerPersistenceAdapter implements LoadAnswerPort, SaveAnswerPort 
     private final AnswerChoiceJpaRepository answerChoiceJpaRepository;
     private final AnswerChoiceQueryRepository answerChoiceQueryRepository;
     private final AnswerJpaRepository answerJpaRepository;
+    private final AnswerQueryRepository answerQueryRepository;
+
+    @Override
+    public Optional<Answer> findById(Long answerId) {
+        return answerJpaRepository.findById(answerId);
+    }
+
+    @Override
+    public List<Answer> listByFormResponseId(Long formResponseId) {
+        return answerQueryRepository.findAllByFormResponseId(formResponseId);
+    }
+
+    @Override
+    public List<AnswerChoice> listChoicesByAnswerIdIn(Set<Long> answerIds) {
+        return answerChoiceQueryRepository.findAllByAnswerIdIn(answerIds);
+    }
 
     @Override
     public long countTotalParticipants(Long formId) {
