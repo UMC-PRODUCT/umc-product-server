@@ -56,10 +56,13 @@ public class MemberCommandController {
     @Public
     @Operation(summary = "OAuth 회원가입",
         description = """
+            ### ⚠️ `register/oauth` 엔드포인트를 사용해주셔야 합니다. 기존 엔트포인트는 `v2.0.0`이 Production에 배포될 때 제거될 예정입니다.
+
+
             OAuth2 로그인을 통해서 oAuthVerificationToken 및 Email 인증을 통한 emailVerificationToken을 발급받은 후,
             해당 토큰들을 첨부해서 회원가입을 진행해주세요.
             """)
-    @PostMapping("/register/oauth")
+    @PostMapping({"/register", "/register/oauth"})
     @WebhookAlarm(
         title = "'새로운 회원이 가입했어요!'",
         content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
