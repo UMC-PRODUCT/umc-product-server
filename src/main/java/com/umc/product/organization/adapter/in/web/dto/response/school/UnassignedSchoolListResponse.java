@@ -1,4 +1,4 @@
-package com.umc.product.organization.adapter.in.web.dto.response;
+package com.umc.product.organization.adapter.in.web.dto.response.school;
 
 import com.umc.product.organization.application.port.in.query.dto.school.UnassignedSchoolInfo;
 import io.swagger.v3.oas.annotations.media.Schema;

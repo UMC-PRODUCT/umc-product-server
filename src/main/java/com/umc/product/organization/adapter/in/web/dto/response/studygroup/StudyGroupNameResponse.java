@@ -1,4 +1,4 @@
-package com.umc.product.organization.adapter.in.web.dto.response;
+package com.umc.product.organization.adapter.in.web.dto.response.studygroup;
 
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
 import io.swagger.v3.oas.annotations.media.Schema;

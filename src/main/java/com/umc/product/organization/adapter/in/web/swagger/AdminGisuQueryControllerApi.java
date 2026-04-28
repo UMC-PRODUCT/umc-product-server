@@ -1,10 +1,10 @@
 package com.umc.product.organization.adapter.in.web.swagger;
 
 import com.umc.product.global.security.annotation.Public;
-import com.umc.product.organization.adapter.in.web.dto.response.ActiveGisuResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.GisuNameListResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.GisuPageResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.GisuResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.gisu.ActiveGisuResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.gisu.GisuNameListResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.gisu.GisuPageResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.gisu.GisuResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

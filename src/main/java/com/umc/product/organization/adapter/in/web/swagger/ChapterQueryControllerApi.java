@@ -1,8 +1,8 @@
 package com.umc.product.organization.adapter.in.web.swagger;
 
-import com.umc.product.organization.adapter.in.web.dto.response.ChapterListResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.ChapterListResponse.ChapterItem;
-import com.umc.product.organization.adapter.in.web.dto.response.ChapterWithSchoolsResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.chapter.ChapterListResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.chapter.ChapterListResponse.ChapterItem;
+import com.umc.product.organization.adapter.in.web.dto.response.chapter.ChapterWithSchoolsResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

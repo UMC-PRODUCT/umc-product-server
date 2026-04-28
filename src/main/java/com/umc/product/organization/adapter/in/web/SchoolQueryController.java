@@ -1,10 +1,10 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.global.security.annotation.Public;
-import com.umc.product.organization.adapter.in.web.dto.response.SchoolDetailResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.SchoolLinkResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.SchoolNameListResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.UnassignedSchoolListResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.school.SchoolDetailResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.school.SchoolLinkResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.school.SchoolNameListResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.school.UnassignedSchoolListResponse;
 import com.umc.product.organization.adapter.in.web.swagger.SchoolQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
