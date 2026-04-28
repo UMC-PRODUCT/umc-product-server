@@ -57,7 +57,7 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     )
     @Override
     @GetMapping("/{studyGroupId}")
-    public StudyGroupResponse getStudyGroupMembers(@PathVariable Long studyGroupId) {
+    public StudyGroupResponse getStudyGroupInfo(@PathVariable Long studyGroupId) {
         return StudyGroupResponse.from(
             getStudyGroupUseCase.getById(studyGroupId)
         );

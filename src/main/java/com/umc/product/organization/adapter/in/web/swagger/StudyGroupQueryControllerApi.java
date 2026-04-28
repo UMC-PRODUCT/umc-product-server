@@ -40,13 +40,13 @@ public interface StudyGroupQueryControllerApi {
         @Parameter(description = "페이지 커서 (첫 페이지는 null)") Long cursor,
         @Parameter(description = "페이지 크기 (기본 20, 최대 100)") int size);
 
-    @Operation(summary = "스터디 그룹 스터디원 목록 조회",
-        description = "스터디원 추가 화면에서 스터디 그룹 ID로 소속 스터디원(memberId, 학교명, 프로필 이미지 URL) 목록을 조회합니다.")
+    @Operation(summary = "스터디 그룹 정보 조회",
+        description = "`studyGroupId` 에 해당하는 스터디 그룹의 정보를 조회합니다. (그룹명, 파트, 기수, 스터디원, 파트장 정보)")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "조회 성공",
             content = @Content(array = @ArraySchema(schema = @Schema(implementation = StudyGroupMemberResponse.class)))),
         @ApiResponse(responseCode = "404", description = "스터디 그룹을 찾을 수 없음")
     })
-    StudyGroupResponse getStudyGroupMembers(
+    StudyGroupResponse getStudyGroupInfo(
         @Parameter(description = "스터디 그룹 ID", required = true) Long groupId);
 }
