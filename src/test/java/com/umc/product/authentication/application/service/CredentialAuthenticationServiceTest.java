@@ -55,6 +55,8 @@ class CredentialAuthenticationServiceTest {
     GetMemberCredentialUseCase getMemberCredentialUseCase;
     @Mock
     ManageMemberCredentialUseCase manageMemberCredentialUseCase;
+    @Mock
+    CredentialRehashService rehashService;
     @InjectMocks
     CredentialAuthenticationService service;
 
@@ -175,14 +177,13 @@ class CredentialAuthenticationServiceTest {
     class LoginByIdPw {
 
         @Test
-        @DisplayName("정상 로그인 시 토큰을 발급하고, 정책 갱신이 불필요하면 rehash 하지 않는다")
-        void 로그인_성공_rehash_불필요() {
+        @DisplayName("정상 로그인 시 토큰을 발급하고, 별도 트랜잭션의 rehashService.rehashIfNeeded 를 호출한다")
+        void 로그인_성공_rehash호출_확인() {
             // given
             MemberCredentialInfo credential = new MemberCredentialInfo(MEMBER_ID, LOGIN_ID, ENCODED_PASSWORD);
             given(getMemberCredentialUseCase.findCredentialByLoginId(LOGIN_ID))
                 .willReturn(Optional.of(credential));
             given(passwordEncoder.matches(RAW_PASSWORD, ENCODED_PASSWORD)).willReturn(true);
-            given(passwordEncoder.upgradeEncoding(ENCODED_PASSWORD)).willReturn(false);
             given(jwtTokenProvider.createAccessToken(eq(MEMBER_ID), anyList())).willReturn("access-token");
             given(jwtTokenProvider.createRefreshToken(MEMBER_ID)).willReturn("refresh-token");
 
@@ -193,58 +194,7 @@ class CredentialAuthenticationServiceTest {
             assertThat(result.memberId()).isEqualTo(MEMBER_ID);
             assertThat(result.accessToken()).isEqualTo("access-token");
             assertThat(result.refreshToken()).isEqualTo("refresh-token");
-            then(manageMemberCredentialUseCase).should(never()).changePassword(any());
-        }
-
-        @Test
-        @DisplayName("upgradeEncoding 이 true 이면 새 해시로 점진적 rehash 를 수행한다")
-        void 로그인_성공시_정책_갱신_필요하면_rehash() {
-            // given
-            String legacyHash = "{bcrypt}$2a$10$abcdefghijklmnopqrstuv";
-            MemberCredentialInfo credential = new MemberCredentialInfo(MEMBER_ID, LOGIN_ID, legacyHash);
-            given(getMemberCredentialUseCase.findCredentialByLoginId(LOGIN_ID))
-                .willReturn(Optional.of(credential));
-            given(passwordEncoder.matches(RAW_PASSWORD, legacyHash)).willReturn(true);
-            given(passwordEncoder.upgradeEncoding(legacyHash)).willReturn(true);
-            given(passwordEncoder.encode(RAW_PASSWORD)).willReturn(ENCODED_PASSWORD);
-            given(jwtTokenProvider.createAccessToken(eq(MEMBER_ID), anyList())).willReturn("access-token");
-            given(jwtTokenProvider.createRefreshToken(MEMBER_ID)).willReturn("refresh-token");
-
-            // when
-            IdPwLoginResult result = service.loginByIdPw(LoginByIdPwCommand.of(LOGIN_ID, RAW_PASSWORD));
-
-            // then
-            assertThat(result.accessToken()).isEqualTo("access-token");
-            ArgumentCaptor<ChangeMemberPasswordCommand> captor =
-                ArgumentCaptor.forClass(ChangeMemberPasswordCommand.class);
-            then(manageMemberCredentialUseCase).should().changePassword(captor.capture());
-            assertThat(captor.getValue().memberId()).isEqualTo(MEMBER_ID);
-            assertThat(captor.getValue().encodedPassword()).isEqualTo(ENCODED_PASSWORD);
-        }
-
-        @Test
-        @DisplayName("rehash 저장 실패는 로그인 자체에 영향을 주지 않는다")
-        void rehash_실패해도_로그인_성공() {
-            // given
-            String legacyHash = "{bcrypt}$2a$10$abcdefghijklmnopqrstuv";
-            MemberCredentialInfo credential = new MemberCredentialInfo(MEMBER_ID, LOGIN_ID, legacyHash);
-            given(getMemberCredentialUseCase.findCredentialByLoginId(LOGIN_ID))
-                .willReturn(Optional.of(credential));
-            given(passwordEncoder.matches(RAW_PASSWORD, legacyHash)).willReturn(true);
-            given(passwordEncoder.upgradeEncoding(legacyHash)).willReturn(true);
-            given(passwordEncoder.encode(RAW_PASSWORD)).willReturn(ENCODED_PASSWORD);
-            given(jwtTokenProvider.createAccessToken(eq(MEMBER_ID), anyList())).willReturn("access-token");
-            given(jwtTokenProvider.createRefreshToken(MEMBER_ID)).willReturn("refresh-token");
-            // rehash 시도 시 예외 발생
-            org.mockito.BDDMockito.willThrow(new RuntimeException("DB error"))
-                .given(manageMemberCredentialUseCase).changePassword(any());
-
-            // when
-            IdPwLoginResult result = service.loginByIdPw(LoginByIdPwCommand.of(LOGIN_ID, RAW_PASSWORD));
-
-            // then: 토큰은 정상 발급되어야 한다
-            assertThat(result.accessToken()).isEqualTo("access-token");
-            assertThat(result.refreshToken()).isEqualTo("refresh-token");
+            then(rehashService).should().rehashIfNeeded(credential, RAW_PASSWORD);
         }
 
         @Test
