@@ -6,7 +6,7 @@ import lombok.*;
 
 @Entity
 @Getter
-@Builder
+@Builder(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "question_option")
@@ -31,23 +31,28 @@ public class QuestionOption extends BaseEntity {
     private boolean isOther;
 
     public static QuestionOption create(String content, long orderNo, boolean isOther) {
-        QuestionOption questionOption = new QuestionOption();
-        questionOption.content = content;
-        questionOption.orderNo = orderNo;
-        questionOption.isOther = isOther;
-        return questionOption;
+        return QuestionOption.builder()
+            .content(content)
+            .orderNo(orderNo)
+            .isOther(isOther)
+            .build();
     }
 
-    public void changeContent(String content) {
-        this.content = content;
+    /**
+     * 선택지 속성 부분 업데이트.
+     * null 인 필드는 기존 값 유지.
+     */
+    public void update(String content, Boolean isOther) {
+        if (content != null) {
+            this.content = content;
+        }
+        if (isOther != null) {
+            this.isOther = isOther;
+        }
     }
 
-    public void changeOrderNo(long orderNo) {
+    public void updateOrderNo(long orderNo) {
         this.orderNo = orderNo;
-    }
-
-    public void changeIsOther(boolean isOther) {
-        this.isOther = isOther;
     }
 
     public void assignTo(Question question) {
