@@ -42,11 +42,13 @@ public class VoteService implements ManageVoteUseCase {
         Form savedForm = saveFormPort.save(form);
 
         // 2. 단일 섹션 생성
-        FormSection section = FormSection.builder()
-            .form(savedForm)
-            .title(command.title())
-            .orderNo(1L)
-            .build();
+        FormSection section = FormSection.create(
+            savedForm,
+            command.title(),
+            null,
+            1L
+        );
+
         FormSection savedSection = saveFormSectionPort.save(section);
 
         // 3. 단일 질문 생성
