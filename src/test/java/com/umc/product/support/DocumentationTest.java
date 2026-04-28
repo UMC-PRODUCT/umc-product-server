@@ -41,7 +41,6 @@ import org.springframework.test.web.servlet.MockMvc;
 @WebMvcTest(controllers = {
     SchoolCommandController.class,
     SchoolQueryController.class,
-    AdminSchoolQueryController.class,
     ChapterCommandController.class,
     ChapterQueryController.class,
     GisuCommandController.class,
