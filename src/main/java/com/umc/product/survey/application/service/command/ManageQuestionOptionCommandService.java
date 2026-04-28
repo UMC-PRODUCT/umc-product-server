@@ -42,8 +42,13 @@ public class ManageQuestionOptionCommandService implements ManageQuestionOptionU
             .max()
             .orElse(0L) + 1L;
 
-        QuestionOption option = QuestionOption.create(command.content(), nextOrderNo, command.isOther());
+        QuestionOption option = QuestionOption.create(
+            command.content(),
+            nextOrderNo,
+            command.isOther()
+        );
         option.assignTo(question);
+
         return saveQuestionOptionPort.save(option).getId();
     }
 
@@ -71,7 +76,10 @@ public class ManageQuestionOptionCommandService implements ManageQuestionOptionU
         Set<Long> requestedIds = new HashSet<>(command.orderedOptionIds());
 
         if (!existingIds.equals(requestedIds)) {
-            throw new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE);
+            throw new SurveyDomainException(
+                SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE,
+                "재배치 요청의 선택지 ID 셋이 실제 질문의 선택지 ID 셋과 일치하지 않습니다."
+            );
         }
 
         Map<Long, QuestionOption> byId = options.stream()
