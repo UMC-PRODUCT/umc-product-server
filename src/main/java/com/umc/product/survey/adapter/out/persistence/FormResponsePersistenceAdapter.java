@@ -16,10 +16,21 @@ import java.util.Optional;
 public class FormResponsePersistenceAdapter implements LoadFormResponsePort, SaveFormResponsePort {
 
     private final FormResponseJpaRepository formResponseJpaRepository;
+    private final FormResponseQueryRepository formResponseQueryRepository;
 
     @Override
     public Optional<FormResponse> findById(Long formResponseId) {
         return formResponseJpaRepository.findById(formResponseId);
+    }
+
+    @Override
+    public List<FormResponse> listByFormId(Long formId) {
+        return formResponseQueryRepository.findAllByFormId(formId);
+    }
+
+    @Override
+    public List<FormResponse> listSubmittedByFormId(Long formId) {
+        return formResponseQueryRepository.findAllSubmittedByFormId(formId);
     }
 
     @Override
