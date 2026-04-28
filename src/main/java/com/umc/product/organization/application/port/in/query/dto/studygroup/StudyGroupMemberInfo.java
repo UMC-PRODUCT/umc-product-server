@@ -25,7 +25,7 @@ public record StudyGroupMemberInfo(
     String profileImageId,
     String profileImageUrl
 ) {
-    // Projection용
+    // Projection용 (왜 no usages로 뜨는진 모르겠지만 아무튼 사용중임)
     public StudyGroupMemberInfo(
         Long studyGroupId,
         Long memberId, String memberName,

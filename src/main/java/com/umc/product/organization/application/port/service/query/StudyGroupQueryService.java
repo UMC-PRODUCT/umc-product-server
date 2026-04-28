@@ -5,12 +5,16 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
+import com.umc.product.organization.application.port.out.query.LoadStudyGroupMemberPort;
+import com.umc.product.organization.application.port.out.query.LoadStudyGroupMentorPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
+import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -26,12 +30,16 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class StudyGroupQueryService implements GetStudyGroupUseCase {
 
-    private final LoadStudyGroupPort loadStudyGroupPort;
 
+    private final GetGisuUseCase getGisuUseCase;
     private final GetFileUseCase getFileUseCase;
     private final GetMemberUseCase getMemberUseCase;
-    private final GetGisuUseCase getGisuUseCase;
+    private final GetSchoolUseCase getSchoolUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+
+    private final LoadStudyGroupPort loadStudyGroupPort;
+    private final LoadStudyGroupMemberPort loadStudyGroupMemberPort;
+    private final LoadStudyGroupMentorPort loadStudyGroupMentorPort;
 
     /**
      * 내 스터디 그룹 목록 조회 UseCase 구현.
@@ -117,6 +125,20 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
         }
 
         return loadStudyGroupPort.findStudyGroupNames(scopes, activeGisuId);
+    }
+
+    @Override
+    public StudyGroupInfo getById(Long studyGroupId) {
+        StudyGroup group = loadStudyGroupPort.getById(studyGroupId);
+
+        return StudyGroupInfo.create(
+            group.getId(),
+            group.getName(),
+            group.getGisuId(),
+            group.getPart(),
+            loadStudyGroupPort.findStudyGroupMentors(studyGroupId),
+            loadStudyGroupPort.findStudyGroupMembers(studyGroupId)
+        );
     }
 
     @Override

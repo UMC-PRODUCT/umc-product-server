@@ -24,13 +24,13 @@ public class StudyGroupPersistenceAdapter implements SaveStudyGroupPort, LoadStu
     private final StudyGroupQueryRepository studyGroupQueryRepository;
 
     @Override
-    public StudyGroup findById(Long id) {
+    public StudyGroup getById(Long id) {
         return studyGroupJpaRepository.findById(id).orElseThrow(
             () -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NOT_FOUND));
     }
 
     @Override
-    public StudyGroup findByName(String name) {
+    public StudyGroup getByName(String name) {
         return studyGroupJpaRepository.findByName(name).orElseThrow(
             () -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NOT_FOUND));
     }
@@ -61,8 +61,13 @@ public class StudyGroupPersistenceAdapter implements SaveStudyGroupPort, LoadStu
 
 
     @Override
-    public List<StudyGroupMemberInfo> findStudyGroupMembers(Long groupId) {
-        return studyGroupQueryRepository.findStudyGroupMembers(groupId);
+    public List<StudyGroupMemberInfo> findStudyGroupMembers(Long studyGroupId) {
+        return studyGroupQueryRepository.findStudyGroupMembers(studyGroupId);
+    }
+
+    @Override
+    public List<StudyGroupMemberInfo> findStudyGroupMentors(Long studyGroupId) {
+        return studyGroupQueryRepository.findStudyGroupMentors(studyGroupId);
     }
 
     @Override

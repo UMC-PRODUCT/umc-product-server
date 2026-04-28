@@ -34,6 +34,7 @@ public interface GetStudyGroupUseCase {
      */
     List<StudyGroupNameInfo> getStudyGroupNames(Long memberId);
 
+    StudyGroupInfo getById(Long studyGroupId);
 
     /**
      * 스터디 그룹 ID 로 소속 스터디원 목록 조회.
