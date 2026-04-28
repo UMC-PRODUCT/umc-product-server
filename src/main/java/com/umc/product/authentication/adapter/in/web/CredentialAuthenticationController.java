@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Authentication | 로그인, 회원가입", description = "ID/PW 최초 등록, 변경, ID 중복확인, OAuth 로그인, AT 갱신 등")
+@Tag(name = "Authentication | 로그인", description = "ID/PW 최초 등록, 변경, ID 중복확인, OAuth 로그인, AT 갱신 등")
 public class CredentialAuthenticationController {
 
     private final CredentialAuthenticationUseCase credentialAuthenticationUseCase;

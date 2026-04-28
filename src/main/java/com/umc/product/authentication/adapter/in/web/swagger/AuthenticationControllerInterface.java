@@ -8,7 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "Authentication | 로그인, 회원가입")
+@Tag(name = "Authentication | 로그인")
 public interface AuthenticationControllerInterface {
     @Operation(summary = "Google 로그인",
         description = """
