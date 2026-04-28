@@ -1,16 +1,13 @@
 package com.umc.product.organization.adapter.in.web.swagger;
 
 import com.umc.product.organization.adapter.in.web.dto.request.CreateStudyGroupRequest;
-import com.umc.product.organization.adapter.in.web.dto.request.EditStudyGroupMemberOrMentorRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateStudyGroupRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Organization | 스터디 그룹 Command", description = "")
 public interface StudyGroupCommandControllerApi {
@@ -41,25 +38,25 @@ public interface StudyGroupCommandControllerApi {
     @Operation(summary = "스터디 그룹에 스터디원 추가", description = "스터디 그룹에 스터디원을 추가합니다.")
     void addMember(
         @PathVariable Long studyGroupId,
-        @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
+        @PathVariable Long memberId
     );
 
     @Operation(summary = "스터디 그룹에 담당 파트장 추가", description = "스터디 그룹에 파트장을 추가합니다.")
     void addMentor(
         @PathVariable Long studyGroupId,
-        @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
+        @PathVariable Long mentorId
     );
 
     @Operation(summary = "스터디 그룹에 스터디원 제거", description = "스터디 그룹에서 스터디원을 제거합니다.")
     void deleteMember(
-        @PathVariable Long groupId,
-        @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
+        @PathVariable Long studyGroupId,
+        @PathVariable Long memberId
     );
 
     @Operation(summary = "스터디 그룹에 담당 파트장 제거", description = "스터디 그룹에서 파트장을 제거합니다.")
     void deleteMentor(
         @PathVariable Long studyGroupId,
-        @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
+        @PathVariable Long mentorId
     );
 
     @Operation(summary = "스터디 그룹 삭제", description = "스터디 그룹을 삭제합니다.")

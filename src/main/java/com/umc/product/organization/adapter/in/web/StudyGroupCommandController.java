@@ -4,10 +4,13 @@ import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateStudyGroupRequest;
-import com.umc.product.organization.adapter.in.web.dto.request.EditStudyGroupMemberOrMentorRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateStudyGroupRequest;
 import com.umc.product.organization.adapter.in.web.swagger.StudyGroupCommandControllerApi;
 import com.umc.product.organization.application.port.in.command.ManageStudyGroupUseCase;
+import com.umc.product.organization.application.port.in.command.dto.AddStudyMemberCommand;
+import com.umc.product.organization.application.port.in.command.dto.AddStudyMentorCommand;
+import com.umc.product.organization.application.port.in.command.dto.DeleteStudyMemberCommand;
+import com.umc.product.organization.application.port.in.command.dto.DeleteStudyMentorCommand;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -55,13 +58,13 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
         permission = PermissionType.EDIT,
         message = "해당 스터디 그룹 구성원을 수정할 권한이 없습니다."
     )
-    @PatchMapping("/{studyGroupId}/members")
+    @PatchMapping("/{studyGroupId}/members/{memberId}")
     @Override
     public void addMember(
         @PathVariable Long studyGroupId,
-        @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
+        @PathVariable Long memberId
     ) {
-        manageStudyGroupUseCase.addMember(request.toAddStudyMemberCommand(studyGroupId));
+        manageStudyGroupUseCase.addMember(AddStudyMemberCommand.of(studyGroupId, memberId));
     }
 
     @CheckAccess(
@@ -69,13 +72,13 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
         permission = PermissionType.EDIT,
         message = "해당 스터디 그룹 구성원을 수정할 권한이 없습니다."
     )
-    @PatchMapping("/{studyGroupId}/mentors")
+    @PatchMapping("/{studyGroupId}/mentors/{mentorId}")
     @Override
     public void addMentor(
         @PathVariable Long studyGroupId,
-        @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
+        @PathVariable Long mentorId
     ) {
-        manageStudyGroupUseCase.addMentor(request.toAddStudyMentorCommand(studyGroupId));
+        manageStudyGroupUseCase.addMentor(AddStudyMentorCommand.of(studyGroupId, mentorId));
     }
 
     @CheckAccess(
@@ -83,13 +86,13 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
         permission = PermissionType.EDIT,
         message = "해당 스터디 그룹 구성원을 수정할 권한이 없습니다."
     )
-    @DeleteMapping("/{groupId}/members")
+    @DeleteMapping("/{studyGroupId}/members/{memberId}")
     @Override
     public void deleteMember(
-        @PathVariable Long groupId,
-        @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
+        @PathVariable Long studyGroupId,
+        @PathVariable Long memberId
     ) {
-        manageStudyGroupUseCase.deleteMember(request.toDeleteStudyMemberCommand(groupId));
+        manageStudyGroupUseCase.deleteMember(DeleteStudyMemberCommand.of(studyGroupId, memberId));
     }
 
     @CheckAccess(
@@ -97,13 +100,13 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
         permission = PermissionType.EDIT,
         message = "해당 스터디 그룹 구성원을 수정할 권한이 없습니다."
     )
-    @DeleteMapping("/{studyGroupId}/mentors")
+    @DeleteMapping("/{studyGroupId}/mentors/{mentorId}")
     @Override
     public void deleteMentor(
         @PathVariable Long studyGroupId,
-        @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
+        @PathVariable Long mentorId
     ) {
-        manageStudyGroupUseCase.deleteMentor(request.toDeleteStudyMentorCommand(studyGroupId));
+        manageStudyGroupUseCase.deleteMentor(DeleteStudyMentorCommand.of(studyGroupId, mentorId));
     }
 
     @CheckAccess(
