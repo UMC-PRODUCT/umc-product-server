@@ -76,7 +76,7 @@ public class StudyGroup extends BaseEntity {
             .part(part)
             .build();
 
-        mentorIds.forEach(group::addMentor);
+        mentorIds.forEach(group::addStudyGroupMentor);
         memberIds.forEach(group::addStudyGroupMember);
 
         return group;
@@ -114,12 +114,59 @@ public class StudyGroup extends BaseEntity {
             .anyMatch(m -> m.getMemberId().equals(memberId));
     }
 
-    private void addMentor(Long mentorId) {
+    public void addStudyGroupMentor(Long mentorId) {
         if (mentorId == null) {
             throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_ID_REQUIRED);
         }
 
+        if (hasMentor(mentorId)) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_DUPLICATED);
+        }
+
         this.studyGroupMentor.add(StudyGroupMentor.create(this, mentorId));
+    }
+
+    public boolean hasMentor(Long mentorId) {
+        return studyGroupMentor.stream()
+            .anyMatch(m -> m.getMemberId().equals(mentorId));
+    }
+
+    public void removeStudyGroupMember(Long memberId) {
+        if (memberId == null) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_ID_REQUIRED);
+        }
+
+        StudyGroupMember target = studyGroupMembers.stream()
+            .filter(m -> m.getMemberId().equals(memberId))
+            .findFirst()
+            .orElseThrow(() -> new OrganizationDomainException(
+                OrganizationErrorCode.STUDY_GROUP_MEMBER_NOT_FOUND));
+
+        // 삭제 후 멤버가 0명이 되는 것을 방지 (스터디 그룹은 최소 1명의 멤버가 필요)
+        if (studyGroupMembers.size() <= 1) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MEMBER_REQUIRED);
+        }
+
+        studyGroupMembers.remove(target);
+    }
+
+    public void removeStudyGroupMentor(Long mentorId) {
+        if (mentorId == null) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_ID_REQUIRED);
+        }
+
+        StudyGroupMentor target = studyGroupMentor.stream()
+            .filter(m -> m.getMemberId().equals(mentorId))
+            .findFirst()
+            .orElseThrow(() -> new OrganizationDomainException(
+                OrganizationErrorCode.STUDY_GROUP_MENTOR_NOT_FOUND));
+
+        // 삭제 후 멘토가 0명이 되는 것을 방지 (스터디 그룹은 최소 1명의 멘토(파트장)가 필요)
+        if (studyGroupMentor.size() <= 1) {
+            throw new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_MENTOR_REQUIRED);
+        }
+
+        studyGroupMentor.remove(target);
     }
 
     // ============ Domain Methods (Aggregate Root Pattern) ============

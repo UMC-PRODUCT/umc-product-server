@@ -2,11 +2,19 @@ package com.umc.product.organization.application.port.service.command;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.command.ManageStudyGroupUseCase;
+import com.umc.product.organization.application.port.in.command.dto.AddStudyMemberCommand;
+import com.umc.product.organization.application.port.in.command.dto.AddStudyMentorCommand;
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
+import com.umc.product.organization.application.port.in.command.dto.DeleteStudyMemberCommand;
+import com.umc.product.organization.application.port.in.command.dto.DeleteStudyMentorCommand;
 import com.umc.product.organization.application.port.in.command.dto.ReplaceStudyGroupMemberAndMentorCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupCommand;
+import com.umc.product.organization.application.port.out.command.SaveStudyGroupMemberPort;
+import com.umc.product.organization.application.port.out.command.SaveStudyGroupMentorPort;
 import com.umc.product.organization.application.port.out.command.SaveStudyGroupPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
+import com.umc.product.organization.application.port.out.query.LoadStudyGroupMemberPort;
+import com.umc.product.organization.application.port.out.query.LoadStudyGroupMentorPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.StudyGroup;
@@ -23,6 +31,13 @@ import org.springframework.transaction.annotation.Transactional;
 public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     private final LoadStudyGroupPort loadStudyGroupPort;
+    private final LoadStudyGroupMemberPort loadStudyGroupMemberPort;
+    private final LoadStudyGroupMentorPort loadStudyGroupMentorPort;
+
+    private final SaveStudyGroupMemberPort saveStudyGroupMemberPort;
+    private final SaveStudyGroupMentorPort saveStudyGroupMentorPort;
+
+
     private final LoadGisuPort loadGisuPort;
     private final SaveStudyGroupPort saveStudyGroupPort;
 
@@ -44,6 +59,50 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
         studyGroup.updateName(command.name());
         studyGroup.updatePart(command.part());
+
+        saveStudyGroupPort.save(studyGroup);
+    }
+
+    @Override
+    public void addMember(AddStudyMemberCommand command) {
+        StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
+
+        // 다른 파트 스터디와 충돌 검증 (여러 도메인 거친 검사)
+        validateNoPartStudyConflict(studyGroup.getGisuId(), studyGroup.getPart(),
+            Set.of(command.memberId()));
+
+        // 추가 (도메인 내부에서 중복 검증)
+        studyGroup.addStudyGroupMember(command.memberId());
+
+        saveStudyGroupPort.save(studyGroup);
+    }
+
+    @Override
+    public void addMentor(AddStudyMentorCommand command) {
+        StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
+
+        // 추가 (도메인 내부에서 중복 검증)
+        studyGroup.addStudyGroupMentor(command.mentorId());
+
+        saveStudyGroupPort.save(studyGroup);
+    }
+
+    @Override
+    public void deleteMember(DeleteStudyMemberCommand command) {
+        StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
+
+        // 삭제 (도메인 내부에서 존재 여부 및 최소 인원 검증)
+        studyGroup.removeStudyGroupMember(command.memberId());
+
+        saveStudyGroupPort.save(studyGroup);
+    }
+
+    @Override
+    public void deleteMentor(DeleteStudyMentorCommand command) {
+        StudyGroup studyGroup = loadStudyGroupPort.findById(command.groupId());
+
+        // 삭제 (도메인 내부에서 존재 여부 및 최소 인원 검증)
+        studyGroup.removeStudyGroupMentor(command.mentorId());
 
         saveStudyGroupPort.save(studyGroup);
     }

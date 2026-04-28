@@ -8,4 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface StudyGroupMemberJpaRepository extends JpaRepository<StudyGroupMember, Long> {
 
     List<StudyGroupMember> findByStudyGroup(StudyGroup studyGroup);
+
+    List<StudyGroupMember> findByStudyGroup_Id(Long studyGroupId);
+
 }

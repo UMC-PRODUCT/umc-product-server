@@ -36,7 +36,7 @@ public class StudyGroupMentorPersistenceAdapter
     }
 
     @Override
-    public List<StudyGroupMentor> findByStudyGroupId(Long studyGroupId) {
+    public List<StudyGroupMentor> listByStudyGroupId(Long studyGroupId) {
         return jpaRepository.findByStudyGroup_Id(studyGroupId);
     }
 }

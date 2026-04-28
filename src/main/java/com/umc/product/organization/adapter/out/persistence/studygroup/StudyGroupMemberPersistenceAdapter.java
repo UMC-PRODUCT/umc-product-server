@@ -3,7 +3,6 @@ package com.umc.product.organization.adapter.out.persistence.studygroup;
 
 import com.umc.product.organization.application.port.out.command.SaveStudyGroupMemberPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupMemberPort;
-import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.organization.domain.StudyGroupMember;
 import java.util.List;
 import java.util.Optional;
@@ -37,7 +36,7 @@ public class StudyGroupMemberPersistenceAdapter implements SaveStudyGroupMemberP
     }
 
     @Override
-    public List<StudyGroupMember> findByStudyGroup(StudyGroup studyGroup) {
-        return jpaRepository.findByStudyGroup(studyGroup);
+    public List<StudyGroupMember> listByStudyGroupId(Long studyGroupId) {
+        return jpaRepository.findByStudyGroup_Id(studyGroupId);
     }
 }

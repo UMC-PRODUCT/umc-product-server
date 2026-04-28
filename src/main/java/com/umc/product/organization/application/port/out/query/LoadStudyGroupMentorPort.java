@@ -8,5 +8,5 @@ public interface LoadStudyGroupMentorPort {
 
     Optional<StudyGroupMentor> findById(Long id);
 
-    List<StudyGroupMentor> findByStudyGroupId(Long studyGroupId);
+    List<StudyGroupMentor> listByStudyGroupId(Long studyGroupId);
 }
