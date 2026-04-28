@@ -3,7 +3,6 @@ package com.umc.product.organization.adapter.in.web.swagger;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.organization.adapter.in.web.dto.response.studygroup.StudyGroupMemberResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.studygroup.StudyGroupNameResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.studygroup.StudyGroupResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,7 +12,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 
 /**
  * 스터디 그룹 조회 API
@@ -42,13 +40,6 @@ public interface StudyGroupQueryControllerApi {
         @Parameter(description = "페이지 커서 (첫 페이지는 null)") Long cursor,
         @Parameter(description = "페이지 크기 (기본 20, 최대 100)") int size);
 
-    @Operation(summary = "권한에 따라 스터디 그룹 이름 목록 조회", description = "로그인한 유저의 학교/파트 기반으로 스터디 그룹의 ID와 이름 목록을 조회합니다. 토글/드롭다운 용도.")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "조회 성공", content = @Content(schema = @Schema(implementation = StudyGroupNameResponse.class)))
-    })
-    StudyGroupNameResponse getStudyGroupNames(
-        @Parameter(hidden = true) MemberPrincipal memberPrincipal);
-
     @Operation(summary = "스터디 그룹 스터디원 목록 조회",
         description = "스터디원 추가 화면에서 스터디 그룹 ID로 소속 스터디원(memberId, 학교명, 프로필 이미지 URL) 목록을 조회합니다.")
     @ApiResponses(value = {
@@ -56,6 +47,6 @@ public interface StudyGroupQueryControllerApi {
             content = @Content(array = @ArraySchema(schema = @Schema(implementation = StudyGroupMemberResponse.class)))),
         @ApiResponse(responseCode = "404", description = "스터디 그룹을 찾을 수 없음")
     })
-    List<StudyGroupMemberResponse> getStudyGroupMembers(
+    StudyGroupResponse getStudyGroupMembers(
         @Parameter(description = "스터디 그룹 ID", required = true) Long groupId);
 }

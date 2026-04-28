@@ -6,8 +6,6 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
-import com.umc.product.organization.adapter.in.web.dto.response.studygroup.StudyGroupMemberResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.studygroup.StudyGroupNameResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.studygroup.StudyGroupResponse;
 import com.umc.product.organization.adapter.in.web.swagger.StudyGroupQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
@@ -51,19 +49,6 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     }
 
     /**
-     * 권한에 따라 스터디 그룹 이름 목록 조회 - 토글/드롭다운 용도
-     */
-    @Override
-    @GetMapping("/names")
-    public StudyGroupNameResponse getStudyGroupNames(
-        @CurrentMember MemberPrincipal memberPrincipal
-    ) {
-        return StudyGroupNameResponse.from(
-            getStudyGroupUseCase.getStudyGroupNames(memberPrincipal.getMemberId())
-        );
-    }
-
-    /**
      * 스터디 그룹 스터디원 목록 조회
      */
     @CheckAccess(
@@ -71,10 +56,10 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
         permission = PermissionType.READ
     )
     @Override
-    @GetMapping("/{groupId}")
-    public List<StudyGroupMemberResponse> getStudyGroupMembers(@PathVariable Long groupId) {
-        return getStudyGroupUseCase.getStudyGroupMembers(groupId).stream()
-            .map(StudyGroupMemberResponse::from)
-            .toList();
+    @GetMapping("/{studyGroupId}")
+    public StudyGroupResponse getStudyGroupMembers(@PathVariable Long studyGroupId) {
+        return StudyGroupResponse.from(
+            getStudyGroupUseCase.getById(studyGroupId)
+        );
     }
 }
