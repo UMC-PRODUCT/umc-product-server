@@ -1,7 +1,7 @@
 package com.umc.product.organization.adapter.out.persistence.chapter;
 
 
-import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
+import com.umc.product.organization.application.port.out.command.SaveChapterSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.exception.OrganizationDomainException;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ChapterSchoolPersistenceAdapter implements LoadChapterSchoolPort, ManageChapterSchoolPort {
+public class ChapterSchoolPersistenceAdapter implements LoadChapterSchoolPort, SaveChapterSchoolPort {
 
     private final ChapterSchoolJpaRepository chapterSchoolJpaRepository;
     private final ChapterSchoolQueryRepository chapterSchoolQueryRepository;

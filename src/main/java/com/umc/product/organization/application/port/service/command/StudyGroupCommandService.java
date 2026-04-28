@@ -5,7 +5,7 @@ import com.umc.product.organization.application.port.in.command.ManageStudyGroup
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
 import com.umc.product.organization.application.port.in.command.dto.ReplaceStudyGroupMemberAndMentorCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupCommand;
-import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
+import com.umc.product.organization.application.port.out.command.SaveStudyGroupPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.Gisu;
@@ -24,7 +24,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
     private final LoadStudyGroupPort loadStudyGroupPort;
     private final LoadGisuPort loadGisuPort;
-    private final ManageStudyGroupPort manageStudyGroupPort;
+    private final SaveStudyGroupPort saveStudyGroupPort;
 
     @Override
     public void create(CreateStudyGroupCommand command) {
@@ -35,7 +35,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
         StudyGroup studyGroup = StudyGroup.create(command.name(), gisu.getId(), command.part(),
             command.mentorIds(), command.memberIds());
 
-        manageStudyGroupPort.save(studyGroup);
+        saveStudyGroupPort.save(studyGroup);
     }
 
     @Override
@@ -45,7 +45,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
         studyGroup.updateName(command.name());
         studyGroup.updatePart(command.part());
 
-        manageStudyGroupPort.save(studyGroup);
+        saveStudyGroupPort.save(studyGroup);
     }
 
     @Override
@@ -60,7 +60,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
 
         // 3. 추가 & 저장
         command.studyMemberIds().forEach(studyGroup::addStudyGroupMember);
-        manageStudyGroupPort.save(studyGroup);
+        saveStudyGroupPort.save(studyGroup);
     }
 
 
@@ -82,7 +82,7 @@ public class StudyGroupCommandService implements ManageStudyGroupUseCase {
     public void delete(Long groupId) {
         StudyGroup studyGroup = loadStudyGroupPort.findById(groupId);
 
-        manageStudyGroupPort.delete(studyGroup);
+        saveStudyGroupPort.delete(studyGroup);
     }
 
 }

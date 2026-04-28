@@ -1,6 +1,6 @@
 package com.umc.product.organization.application.port.in.query;
 
-import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
+import com.umc.product.organization.application.port.out.command.SaveSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.support.UseCaseTestSupport;
 import com.umc.product.support.fixture.ChallengerFixture;
@@ -15,7 +15,7 @@ class GetStudyGroupUseCaseTest extends UseCaseTestSupport {
     private GetStudyGroupUseCase getStudyGroupUseCase;
 
     @Autowired
-    private ManageSchoolPort manageSchoolPort;
+    private SaveSchoolPort saveSchoolPort;
 
     @Autowired
     private GisuFixture gisuFixture;

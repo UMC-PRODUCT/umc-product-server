@@ -4,7 +4,7 @@ package com.umc.product.organization.application.port.out.command;
 import com.umc.product.organization.domain.School;
 import java.util.List;
 
-public interface ManageSchoolPort {
+public interface SaveSchoolPort {
 
     School save(School school);
 

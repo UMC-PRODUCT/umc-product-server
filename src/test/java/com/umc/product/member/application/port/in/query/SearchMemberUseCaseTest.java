@@ -12,9 +12,9 @@ import com.umc.product.member.application.port.in.query.dto.SearchMemberQuery;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberResult;
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
-import com.umc.product.organization.application.port.out.command.ManageChapterPort;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
-import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
+import com.umc.product.organization.application.port.out.command.SaveChapterPort;
+import com.umc.product.organization.application.port.out.command.SaveGisuPort;
+import com.umc.product.organization.application.port.out.command.SaveSchoolPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.domain.School;
@@ -42,13 +42,13 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
     private SaveChallengerRolePort saveChallengerRolePort;
 
     @Autowired
-    private ManageGisuPort manageGisuPort;
+    private SaveGisuPort saveGisuPort;
 
     @Autowired
-    private ManageSchoolPort manageSchoolPort;
+    private SaveSchoolPort saveSchoolPort;
 
     @Autowired
-    private ManageChapterPort manageChapterPort;
+    private SaveChapterPort saveChapterPort;
 
     private Gisu gisu7;
     private Gisu gisu8;
@@ -58,21 +58,21 @@ class SearchMemberUseCaseTest extends UseCaseTestSupport {
 
     @BeforeEach
     void setUp() {
-        gisu7 = manageGisuPort.save(Gisu.create(7L,
+        gisu7 = saveGisuPort.save(Gisu.create(7L,
             Instant.parse("2024-03-01T00:00:00Z"),
             Instant.parse("2024-08-31T23:59:59Z"),
             true));
-        gisu8 = manageGisuPort.save(Gisu.create(8L,
+        gisu8 = saveGisuPort.save(Gisu.create(8L,
             Instant.parse("2024-09-01T00:00:00Z"),
             Instant.parse("2025-02-28T23:59:59Z"),
             true));
 
-        school1 = manageSchoolPort.save(School.create("한양대학교 ERICA", null));
-        school2 = manageSchoolPort.save(School.create("한성대학교", null));
+        school1 = saveSchoolPort.save(School.create("한양대학교 ERICA", null));
+        school2 = saveSchoolPort.save(School.create("한성대학교", null));
 
-        chapter = manageChapterPort.save(Chapter.create(gisu8, "Scorpio"));
+        chapter = saveChapterPort.save(Chapter.create(gisu8, "Scorpio"));
         school1.updateChapterSchool(chapter);
-        manageSchoolPort.save(school1);
+        saveSchoolPort.save(school1);
     }
 
     private Member saveMember(String name, String nickname, String email, Long schoolId) {

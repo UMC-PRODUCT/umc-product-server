@@ -6,7 +6,7 @@ import com.umc.product.organization.application.port.in.query.dto.SchoolDetailIn
 import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
-import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
+import com.umc.product.organization.application.port.out.command.SaveSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.School;
 import com.umc.product.organization.exception.OrganizationDomainException;
@@ -20,7 +20,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class SchoolPersistenceAdapter implements ManageSchoolPort, LoadSchoolPort {
+public class SchoolPersistenceAdapter implements SaveSchoolPort, LoadSchoolPort {
 
     private final SchoolJpaRepository schoolJpaRepository;
     private final SchoolLinkJpaRepository schoolLinkJpaRepository;

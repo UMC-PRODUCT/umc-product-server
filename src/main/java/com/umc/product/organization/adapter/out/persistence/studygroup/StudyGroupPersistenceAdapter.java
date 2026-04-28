@@ -6,7 +6,7 @@ import com.umc.product.organization.application.port.in.query.dto.StudyGroupList
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.StudyGroupViewScope;
-import com.umc.product.organization.application.port.out.command.ManageStudyGroupPort;
+import com.umc.product.organization.application.port.out.command.SaveStudyGroupPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.organization.exception.OrganizationDomainException;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class StudyGroupPersistenceAdapter implements ManageStudyGroupPort, LoadStudyGroupPort {
+public class StudyGroupPersistenceAdapter implements SaveStudyGroupPort, LoadStudyGroupPort {
 
     private final StudyGroupJpaRepository studyGroupJpaRepository;
     private final StudyGroupQueryRepository studyGroupQueryRepository;

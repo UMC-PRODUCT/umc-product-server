@@ -4,7 +4,7 @@ package com.umc.product.organization.application.port.out.command;
 import com.umc.product.organization.domain.StudyGroupMember;
 import java.util.List;
 
-public interface ManageStudyGroupMemberPort {
+public interface SaveStudyGroupMemberPort {
 
     StudyGroupMember save(StudyGroupMember studyGroupMember);
 

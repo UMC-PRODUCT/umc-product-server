@@ -1,7 +1,7 @@
 package com.umc.product.organization.adapter.out.persistence.gisu;
 
 
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
+import com.umc.product.organization.application.port.out.command.SaveGisuPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
 import com.umc.product.organization.exception.OrganizationDomainException;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class GisuPersistenceAdapter implements ManageGisuPort, LoadGisuPort {
+public class GisuPersistenceAdapter implements SaveGisuPort, LoadGisuPort {
 
     private final GisuJpaRepository gisuJpaRepository;
     private final GisuQueryRepository gisuQueryRepository;
