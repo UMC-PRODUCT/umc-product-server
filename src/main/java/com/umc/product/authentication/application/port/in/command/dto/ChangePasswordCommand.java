@@ -19,4 +19,10 @@ public record ChangePasswordCommand(
     public static ChangePasswordCommand of(Long memberId, String currentRawPassword, String newRawPassword) {
         return new ChangePasswordCommand(memberId, currentRawPassword, newRawPassword);
     }
+
+    @Override
+    public String toString() {
+        return "ChangePasswordCommand[memberId=" + memberId
+            + ", currentRawPassword=***, newRawPassword=***]";
+    }
 }

@@ -13,4 +13,9 @@ public record LoginByIdPwCommand(
     public static LoginByIdPwCommand of(String loginId, String rawPassword) {
         return new LoginByIdPwCommand(loginId, rawPassword);
     }
+
+    @Override
+    public String toString() {
+        return "LoginByIdPwCommand[loginId=" + loginId + ", rawPassword=***]";
+    }
 }

@@ -21,4 +21,11 @@ public record RegisterCredentialCommand(
     public static RegisterCredentialCommand of(Long memberId, String loginId, String rawPassword) {
         return new RegisterCredentialCommand(memberId, loginId, rawPassword);
     }
+
+    @Override
+    public String toString() {
+        // rawPassword 가 우연히 로그에 노출되지 않도록 마스킹한다.
+        return "RegisterCredentialCommand[memberId=" + memberId
+            + ", loginId=" + loginId + ", rawPassword=***]";
+    }
 }

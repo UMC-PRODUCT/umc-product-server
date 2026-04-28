@@ -20,4 +20,11 @@ public record MemberCredentialInfo(
             member.getPasswordHash()
         );
     }
+
+    @Override
+    public String toString() {
+        // 해시 자체도 민감 정보로 보고 마스킹한다.
+        return "MemberCredentialInfo[memberId=" + memberId
+            + ", loginId=" + loginId + ", passwordHash=***]";
+    }
 }
