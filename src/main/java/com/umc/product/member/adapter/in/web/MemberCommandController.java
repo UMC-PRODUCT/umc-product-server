@@ -1,5 +1,6 @@
 package com.umc.product.member.adapter.in.web;
 
+import com.umc.product.authentication.application.service.CredentialAuthenticationService;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -12,6 +13,7 @@ import com.umc.product.member.adapter.in.web.assembler.MemberInfoResponseAssembl
 import com.umc.product.member.adapter.in.web.dto.request.DeleteMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberInfoRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberProfileRequest;
+import com.umc.product.member.adapter.in.web.dto.request.IdPwRegisterMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.request.RegisterMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
@@ -45,6 +47,8 @@ public class MemberCommandController {
     private final ManageMemberUseCase manageMemberUseCase;
     private final ManageMemberProfileUseCase manageMemberProfileUseCase;
 
+    private final CredentialAuthenticationService credentialAuthenticationService;
+
 
     // 로그인은 OAuth를 통해서만 진행됨!!
     @Public
@@ -53,7 +57,7 @@ public class MemberCommandController {
             OAuth2 로그인을 통해서 oAuthVerificationToken 및 Email 인증을 통한 emailVerificationToken을 발급받은 후,
             해당 토큰들을 첨부해서 회원가입을 진행해주세요.
             """)
-    @PostMapping("register")
+    @PostMapping({"/register", "register/oauth"})
     @WebhookAlarm(
         title = "'새로운 회원이 가입했어요!'",
         content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
@@ -85,6 +89,12 @@ public class MemberCommandController {
             .accessToken(accessToken)
             .refreshToken(refreshToken)
             .build();
+    }
+
+    @PostMapping("/register/id-pw")
+    RegisterResponse registerMemberByIdPw(@RequestBody IdPwRegisterMemberRequest request) {
+
+        return null;
     }
 
     @Operation(summary = "내 회원 정보 수정")
