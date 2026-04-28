@@ -8,4 +8,5 @@ public interface ManageStudyGroupPort {
     StudyGroup save(StudyGroup studyGroup);
 
     void delete(StudyGroup studyGroup);
+
 }
