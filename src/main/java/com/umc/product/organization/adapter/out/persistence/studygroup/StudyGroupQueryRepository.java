@@ -227,6 +227,7 @@ public class StudyGroupQueryRepository {
                 .select(studyGroupMemberInfoProjection(studyGroupMember.studyGroup.id))
                 .from(studyGroupMember)
                 .join(member).on(member.id.eq(studyGroupMember.memberId))
+                .join(school).on(member.schoolId.eq(school.id))
                 .where(studyGroupMember.studyGroup.id.in(groupIds))
                 .fetch();
 
@@ -354,7 +355,7 @@ public class StudyGroupQueryRepository {
             .from(studyGroupMentor)
             .join(member).on(member.id.eq(studyGroupMentor.memberId))
             .join(school).on(school.id.eq(member.schoolId))
-            .where(studyGroupMember.studyGroup.id.eq(studyGroupId))
+            .where(studyGroupMentor.studyGroup.id.eq(studyGroupId))
             .fetch();
     }
 
@@ -382,7 +383,8 @@ public class StudyGroupQueryRepository {
      * 파라미터로 받습니다.
      */
     private ConstructorExpression<StudyGroupMemberInfo> studyGroupMemberInfoProjection(
-        NumberPath<Long> studyGroupIdPath) {
+        NumberPath<Long> studyGroupIdPath
+    ) {
         return Projections.constructor(
             StudyGroupMemberInfo.class,
             studyGroupIdPath,
