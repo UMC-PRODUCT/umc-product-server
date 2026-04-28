@@ -1,8 +1,8 @@
 package com.umc.product.organization.application.port.in.command;
 
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupCommand;
+import com.umc.product.organization.application.port.in.command.dto.ReplaceStudyGroupMemberAndMentorCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateStudyGroupCommand;
-import com.umc.product.organization.application.port.in.command.dto.AddStudyGroupMembersCommand;
 
 public interface ManageStudyGroupUseCase {
 
@@ -10,7 +10,7 @@ public interface ManageStudyGroupUseCase {
 
     void update(UpdateStudyGroupCommand command);
 
-    void addMembers(AddStudyGroupMembersCommand command);
+    void replaceMemberAndMentors(ReplaceStudyGroupMemberAndMentorCommand command);
 
     void delete(Long groupId);
 }

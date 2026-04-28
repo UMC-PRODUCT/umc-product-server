@@ -4,7 +4,7 @@ import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.organization.adapter.in.web.dto.request.CreateStudyGroupRequest;
-import com.umc.product.organization.adapter.in.web.dto.request.AddStudyGroupMembersRequest;
+import com.umc.product.organization.adapter.in.web.dto.request.ReplaceStudyGroupMemberAndMentorRequest;
 import com.umc.product.organization.adapter.in.web.dto.request.UpdateStudyGroupRequest;
 import com.umc.product.organization.adapter.in.web.swagger.StudyGroupCommandControllerApi;
 import com.umc.product.organization.application.port.in.command.ManageStudyGroupUseCase;
@@ -28,7 +28,8 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
 
     @CheckAccess(
         resourceType = ResourceType.STUDY_GROUP,
-        permission = PermissionType.WRITE
+        permission = PermissionType.WRITE,
+        message = "스터디 그룹을 생성할 권한이 없습니다."
     )
     @Override
     @PostMapping
@@ -38,29 +39,37 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
 
     @CheckAccess(
         resourceType = ResourceType.STUDY_GROUP,
-        permission = PermissionType.EDIT
+        permission = PermissionType.EDIT,
+        message = "해당 스터디 그룹을 수정할 권한이 없습니다."
     )
     @Override
     @PatchMapping("/{groupId}")
     public void update(
         @PathVariable Long groupId,
-        @Valid @RequestBody UpdateStudyGroupRequest request) {
+        @Valid @RequestBody UpdateStudyGroupRequest request
+    ) {
         manageStudyGroupUseCase.update(request.toCommand(groupId));
     }
 
     @CheckAccess(
         resourceType = ResourceType.STUDY_GROUP,
-        permission = PermissionType.EDIT
+        permission = PermissionType.EDIT,
+        message = "해당 스터디 그룹 구성원을 수정할 권한이 없습니다."
     )
     @Override
-    @PutMapping("/{groupId}/members")
-    public void addMembers(
+    @PutMapping("/{groupId}/members-mentors")
+    public void replaceStudyGroupMemberAndMentors(
         @PathVariable Long groupId,
-        @Valid @RequestBody AddStudyGroupMembersRequest request) {
-        manageStudyGroupUseCase.addMembers(request.toCommand(groupId));
+        @Valid @RequestBody ReplaceStudyGroupMemberAndMentorRequest request
+    ) {
+        manageStudyGroupUseCase.replaceMemberAndMentors(request.toCommand(groupId));
     }
 
-    @CheckAccess(resourceType = ResourceType.STUDY_GROUP, permission = PermissionType.DELETE)
+    @CheckAccess(
+        resourceType = ResourceType.STUDY_GROUP,
+        permission = PermissionType.DELETE,
+        message = "해당 스터디 그룹을 삭제할 권한이 없습니다."
+    )
     @Override
     @DeleteMapping("/{groupId}")
     public void delete(@PathVariable Long groupId) {
