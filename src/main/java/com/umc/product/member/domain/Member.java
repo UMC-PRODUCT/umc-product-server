@@ -75,6 +75,16 @@ public class Member extends BaseEntity {
         this.status = MemberStatus.ACTIVE;
     }
 
+    public static Member create(String name, String nickname, String email, Long schoolId, String profileImageId) {
+        return Member.builder()
+            .name(name)
+            .nickname(nickname)
+            .email(email)
+            .schoolId(schoolId)
+            .profileImageId(profileImageId)
+            .build();
+    }
+
     // Domain Logic: 프로필 업데이트
     public void updateProfile(String nickname, String profileImageId) {
         validateActive();

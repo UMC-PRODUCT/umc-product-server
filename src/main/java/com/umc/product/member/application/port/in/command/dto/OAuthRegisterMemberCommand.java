@@ -19,7 +19,7 @@ import lombok.Builder;
  * @param profileImageId
  */
 @Builder
-public record RegisterMemberCommand(
+public record OAuthRegisterMemberCommand(
     OAuthProvider provider,
     String providerId,
     String name,

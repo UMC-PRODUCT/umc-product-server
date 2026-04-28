@@ -1,5 +1,7 @@
 package com.umc.product.member.adapter.in.web.dto.request;
 
+import com.umc.product.member.application.port.in.command.dto.IdPwRegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -43,4 +45,16 @@ public record IdPwRegisterMemberRequest(
     @Valid
     List<TermConsentStatus> termsAgreements
 ) {
+    public IdPwRegisterMemberCommand toCommand(String email, List<TermConsentStatus> termsAgreements) {
+        return IdPwRegisterMemberCommand.builder()
+            .loginId(loginId)
+            .rawPassword(rawPassword)
+            .name(name)
+            .nickname(nickname)
+            .email(email) // 이메일은 OAuth 회원가입 때만 받도록 변경
+            .schoolId(schoolId)
+            .termConsents(termsAgreements.stream().map(TermConsents::fromRequest).toList())
+            .build();
+    }
+
 }

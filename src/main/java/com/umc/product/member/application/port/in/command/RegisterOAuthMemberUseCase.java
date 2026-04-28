@@ -1,6 +1,6 @@
 package com.umc.product.member.application.port.in.command;
 
-import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMemberCommand;
 import java.util.List;
 
 public interface RegisterOAuthMemberUseCase {
@@ -9,7 +9,7 @@ public interface RegisterOAuthMemberUseCase {
      * <p>
      * register complete라고 보시면 됩니다.
      */
-    Long register(RegisterMemberCommand command);
+    Long register(OAuthRegisterMemberCommand command);
 
-    List<Long> batchRegister(List<RegisterMemberCommand> commands);
+    List<Long> batchRegister(List<OAuthRegisterMemberCommand> commands);
 }
