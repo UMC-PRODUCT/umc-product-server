@@ -1,11 +1,8 @@
 package com.umc.product.organization.adapter.in.web;
 
-import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.delete;
 import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.post;
 import static org.springframework.restdocs.payload.PayloadDocumentation.fieldWithPath;
 import static org.springframework.restdocs.payload.PayloadDocumentation.requestFields;
-import static org.springframework.restdocs.request.RequestDocumentation.parameterWithName;
-import static org.springframework.restdocs.request.RequestDocumentation.pathParameters;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.umc.product.organization.adapter.in.web.dto.request.CreateChapterRequest;
@@ -16,7 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
 
-class AdminChapterControllerTest extends DocumentationTest {
+class ChapterCommandControllerTest extends DocumentationTest {
 
     @Test
     void 신규_지부를_생성한다() throws Exception {
@@ -25,13 +22,13 @@ class AdminChapterControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                post("/api/v1/chapters").content(objectMapper.writeValueAsString(request))
-                        .contentType(MediaType.APPLICATION_JSON));
+            post("/api/v1/chapters").content(objectMapper.writeValueAsString(request))
+                .contentType(MediaType.APPLICATION_JSON));
 
         // then
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(
-                requestFields(fieldWithPath("gisuId").type(JsonFieldType.STRING).description("기수 ID"),
-                        fieldWithPath("name").type(JsonFieldType.STRING).description("지부명"),
-                        fieldWithPath("schoolIds").type(JsonFieldType.ARRAY).description("소속 학교 ID 목록").optional())));
+            requestFields(fieldWithPath("gisuId").type(JsonFieldType.STRING).description("기수 ID"),
+                fieldWithPath("name").type(JsonFieldType.STRING).description("지부명"),
+                fieldWithPath("schoolIds").type(JsonFieldType.ARRAY).description("소속 학교 ID 목록").optional())));
     }
 }

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/gisu")
 @RequiredArgsConstructor
-public class AdminGisuQueryController implements AdminGisuQueryControllerApi {
+public class GisuQueryController implements AdminGisuQueryControllerApi {
 
     private final GetGisuUseCase getGisuUseCase;
 

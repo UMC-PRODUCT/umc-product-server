@@ -18,25 +18,37 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/gisu")
 @RequiredArgsConstructor
-public class AdminGisuController implements AdminGisuControllerApi {
+public class GisuCommandController implements AdminGisuControllerApi {
 
     private final ManageGisuUseCase manageGisuUseCase;
 
-    @CheckAccess(resourceType = ResourceType.GISU, permission = PermissionType.WRITE)
+    @CheckAccess(
+        resourceType = ResourceType.GISU,
+        permission = PermissionType.WRITE,
+        message = "기수를 생성할 권한이 없습니다."
+    )
     @Override
     @PostMapping
     public Long createGisu(@Valid @RequestBody CreateGisuRequest request) {
         return manageGisuUseCase.create(request.toCommand());
     }
 
-    @CheckAccess(resourceType = ResourceType.GISU, permission = PermissionType.DELETE)
+    @CheckAccess(
+        resourceType = ResourceType.GISU,
+        permission = PermissionType.DELETE,
+        message = "기수를 삭제할 권한이 없습니다."
+    )
     @Override
     @DeleteMapping("/{gisuId}")
     public void deleteGisu(@PathVariable Long gisuId) {
         manageGisuUseCase.deleteGisu(gisuId);
     }
 
-    @CheckAccess(resourceType = ResourceType.GISU, permission = PermissionType.EDIT)
+    @CheckAccess(
+        resourceType = ResourceType.GISU,
+        permission = PermissionType.EDIT,
+        message = "기수를 수정할 권한이 없습니다."
+    )
     @Override
     @PostMapping("/{gisuId}/active")
     public void updateActiveGisu(@PathVariable Long gisuId) {

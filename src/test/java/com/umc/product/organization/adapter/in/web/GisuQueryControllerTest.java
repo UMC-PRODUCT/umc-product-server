@@ -21,7 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
 
-class AdminGisuQueryControllerTest extends DocumentationTest {
+class GisuQueryControllerTest extends DocumentationTest {
 
     @Test
     void 기수_목록을_페이징_조회한다() throws Exception {
@@ -110,7 +110,8 @@ class AdminGisuQueryControllerTest extends DocumentationTest {
     @Test
     void 활성화된_기수를_조회한다() throws Exception {
         // given
-        GisuInfo activeGisu = gisuInfo(3L, 9L, Instant.parse("2025-03-01T00:00:00Z"), Instant.parse("2025-08-31T23:59:59Z"), true);
+        GisuInfo activeGisu = gisuInfo(3L, 9L, Instant.parse("2025-03-01T00:00:00Z"),
+            Instant.parse("2025-08-31T23:59:59Z"), true);
         given(getGisuUseCase.getActiveGisu()).willReturn(activeGisu);
 
         // when

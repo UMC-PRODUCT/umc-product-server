@@ -19,18 +19,26 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/chapters")
 @RequiredArgsConstructor
-public class AdminChapterController implements AdminChapterControllerApi {
+public class ChapterCommandController implements AdminChapterControllerApi {
 
     private final ManageChapterUseCase manageChapterUseCase;
 
-    @CheckAccess(resourceType = ResourceType.CHAPTER, permission = PermissionType.WRITE)
+    @CheckAccess(
+        resourceType = ResourceType.CHAPTER,
+        permission = PermissionType.WRITE,
+        message = "지부를 생성할 권한이 없습니다."
+    )
     @Override
     @PostMapping
     public Long createChapter(@RequestBody @Valid CreateChapterRequest request) {
         return manageChapterUseCase.create(request.toCommand());
     }
 
-    @CheckAccess(resourceType = ResourceType.CHAPTER, permission = PermissionType.WRITE)
+    @CheckAccess(
+        resourceType = ResourceType.CHAPTER,
+        permission = PermissionType.WRITE,
+        message = "지부를 생성할 권한이 없습니다."
+    )
     @Override
     @PostMapping("/bulk")
     public List<Long> createChapterBulk(@RequestBody List<CreateChapterRequest> requests) {
@@ -40,7 +48,11 @@ public class AdminChapterController implements AdminChapterControllerApi {
             .toList();
     }
 
-    @CheckAccess(resourceType = ResourceType.CHAPTER, permission = PermissionType.DELETE)
+    @CheckAccess(
+        resourceType = ResourceType.CHAPTER,
+        permission = PermissionType.DELETE,
+        message = "지부를 삭제할 권한이 없습니다."
+    )
     @Override
     @DeleteMapping("/{chapterId}")
     public void deleteChapter(@PathVariable Long chapterId) {

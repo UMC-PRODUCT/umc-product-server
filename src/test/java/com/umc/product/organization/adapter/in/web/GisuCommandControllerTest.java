@@ -18,7 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
 
-class AdminGisuControllerTest extends DocumentationTest {
+class GisuCommandControllerTest extends DocumentationTest {
 
     private static final Instant START_AT = Instant.parse("2025-03-01T00:00:00Z");
     private static final Instant END_AT = Instant.parse("2025-08-31T23:59:59Z");
@@ -32,16 +32,16 @@ class AdminGisuControllerTest extends DocumentationTest {
 
         // when
         ResultActions result = mockMvc.perform(
-                post("/api/v1/gisu")
-                        .content(objectMapper.writeValueAsString(request))
-                        .contentType(MediaType.APPLICATION_JSON));
+            post("/api/v1/gisu")
+                .content(objectMapper.writeValueAsString(request))
+                .contentType(MediaType.APPLICATION_JSON));
 
         // then
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(
-                requestFields(
-                        fieldWithPath("generation").type(JsonFieldType.STRING).description("기수 번호"),
-                        fieldWithPath("startAt").type(JsonFieldType.STRING).description("기수 시작일시"),
-                        fieldWithPath("endAt").type(JsonFieldType.STRING).description("기수 종료일시"))));
+            requestFields(
+                fieldWithPath("generation").type(JsonFieldType.STRING).description("기수 번호"),
+                fieldWithPath("startAt").type(JsonFieldType.STRING).description("기수 시작일시"),
+                fieldWithPath("endAt").type(JsonFieldType.STRING).description("기수 종료일시"))));
     }
 
     @Test
@@ -54,7 +54,7 @@ class AdminGisuControllerTest extends DocumentationTest {
 
         // then
         result.andExpect(status().isOk())
-                .andDo(restDocsHandler.document(pathParameters(parameterWithName("gisuId").description("기수 ID"))));
+            .andDo(restDocsHandler.document(pathParameters(parameterWithName("gisuId").description("기수 ID"))));
     }
 
     @Test
@@ -67,6 +67,6 @@ class AdminGisuControllerTest extends DocumentationTest {
 
         // then
         result.andExpect(status().isOk()).andDo(restDocsHandler.document(
-                pathParameters(parameterWithName("gisuId").description("현재 기수로 설정할 기수 ID"))));
+            pathParameters(parameterWithName("gisuId").description("현재 기수로 설정할 기수 ID"))));
     }
 }

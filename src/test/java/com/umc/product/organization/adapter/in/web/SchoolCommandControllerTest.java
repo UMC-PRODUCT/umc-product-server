@@ -20,7 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.restdocs.payload.JsonFieldType;
 import org.springframework.test.web.servlet.ResultActions;
 
-public class AdminSchoolControllerTest extends DocumentationTest {
+public class SchoolCommandControllerTest extends DocumentationTest {
 
 
     @Test

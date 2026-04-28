@@ -23,39 +23,59 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/schools")
 @RequiredArgsConstructor
-public class AdminSchoolController implements AdminSchoolControllerApi {
+public class SchoolCommandController implements AdminSchoolControllerApi {
 
     private final ManageSchoolUseCase manageSchoolUseCase;
 
-    @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.WRITE)
+    @CheckAccess(
+        resourceType = ResourceType.SCHOOL,
+        permission = PermissionType.WRITE,
+        message = "학교를 생성할 권한이 없습니다."
+    )
     @Override
     @PostMapping
     public void createSchool(@RequestBody @Valid CreateSchoolRequest request) {
         manageSchoolUseCase.create(request.toCommand());
     }
 
-    @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.EDIT)
+    @CheckAccess(
+        resourceType = ResourceType.SCHOOL,
+        permission = PermissionType.EDIT,
+        message = "학교를 수정할 권한이 없습니다."
+    )
     @Override
     @PatchMapping("/{schoolId}")
     public void updateSchool(@PathVariable Long schoolId, @RequestBody @Valid UpdateSchoolRequest request) {
         manageSchoolUseCase.updateSchool(schoolId, request.toCommand());
     }
 
-    @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.DELETE)
+    @CheckAccess(
+        resourceType = ResourceType.SCHOOL,
+        permission = PermissionType.DELETE,
+        message = "학교를 삭제할 권한이 없습니다."
+    )
     @Override
     @DeleteMapping
     public void deleteSchools(@RequestBody @Valid DeleteSchoolsRequest request) {
         manageSchoolUseCase.deleteSchools(request.schoolIds());
     }
 
-    @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.EDIT)
+    @CheckAccess(
+        resourceType = ResourceType.SCHOOL,
+        permission = PermissionType.EDIT,
+        message = "학교를 지부에 할당할 권한이 없습니다."
+    )
     @Override
     @PatchMapping("/{schoolId}/assign")
     public void assignToChapter(@PathVariable Long schoolId, @RequestBody @Valid AssignSchoolRequest request) {
         manageSchoolUseCase.assignToChapter(request.toCommand(schoolId));
     }
 
-    @CheckAccess(resourceType = ResourceType.SCHOOL, permission = PermissionType.EDIT)
+    @CheckAccess(
+        resourceType = ResourceType.SCHOOL,
+        permission = PermissionType.EDIT,
+        message = "학교를 지부에서 할당 해제할 권한이 없습니다."
+    )
     @Override
     @PatchMapping("/{schoolId}/unassign")
     public void unassignFromChapter(@PathVariable Long schoolId, @RequestBody @Valid UnassignSchoolRequest request) {
