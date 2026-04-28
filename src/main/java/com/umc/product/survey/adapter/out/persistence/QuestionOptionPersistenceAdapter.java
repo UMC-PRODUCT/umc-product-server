@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -62,5 +63,10 @@ public class QuestionOptionPersistenceAdapter implements SaveQuestionOptionPort,
     @Override
     public List<QuestionOption> listByQuestionId(Long questionId) {
         return questionOptionQueryRepository.findAllByQuestionId(questionId);
+    }
+
+    @Override
+    public List<QuestionOption> listByQuestionIdIn(Set<Long> questionIds) {
+        return questionOptionQueryRepository.findAllByQuestionIdIn(questionIds);
     }
 }

@@ -1,5 +1,6 @@
 package com.umc.product.survey.application.port.in.query.dto;
 
+import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.enums.FormStatus;
 import java.time.Instant;
 import lombok.Builder;
@@ -18,4 +19,17 @@ public record FormInfo(
     Instant createdAt,
     Instant updatedAt
 ) {
+
+    public static FormInfo from(Form form) {
+        return FormInfo.builder()
+            .id(form.getId())
+            .createdMemberId(form.getCreatedMemberId())
+            .title(form.getTitle())
+            .description(form.getDescription())
+            .status(form.getStatus())
+            .isAnonymous(form.isAnonymous())
+            .createdAt(form.getCreatedAt())
+            .updatedAt(form.getUpdatedAt())
+            .build();
+    }
 }

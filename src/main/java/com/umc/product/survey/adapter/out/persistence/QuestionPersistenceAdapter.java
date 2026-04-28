@@ -73,6 +73,11 @@ public class QuestionPersistenceAdapter implements SaveQuestionPort, LoadQuestio
     }
 
     @Override
+    public List<Question> listBySectionIdIn(Set<Long> sectionIds) {
+        return questionQueryRepository.findAllBySectionIdIn(sectionIds);
+    }
+
+    @Override
     public Question save(Question question) {
         return questionJpaRepository.save(question);
     }

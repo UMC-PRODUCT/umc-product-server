@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -22,6 +23,21 @@ public class QuestionOptionQueryRepository {
         return queryFactory
             .selectFrom(o)
             .where(o.question.id.eq(questionId))
+            .orderBy(o.orderNo.asc())
+            .fetch();
+    }
+
+    /**
+     * 여러 질문의 모든 선택지를 벌크 조회. orderNo 오름차순 정렬.
+     */
+    public List<QuestionOption> findAllByQuestionIdIn(Set<Long> questionIds) {
+        if (questionIds.isEmpty()) {
+            return List.of();
+        }
+        QQuestionOption o = QQuestionOption.questionOption;
+        return queryFactory
+            .selectFrom(o)
+            .where(o.question.id.in(questionIds))
             .orderBy(o.orderNo.asc())
             .fetch();
     }
