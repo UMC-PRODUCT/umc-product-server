@@ -23,5 +23,5 @@ public interface GetFormSectionUseCase {
     /**
      * 폼에 속한 모든 섹션을 orderNo 오름차순으로 조회.
      */
-    List<FormSectionInfo> getAllByFormId(Long formId);
+    List<FormSectionInfo> listByFormId(Long formId);
 }

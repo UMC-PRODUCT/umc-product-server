@@ -1,5 +1,6 @@
 package com.umc.product.survey.application.port.in.query.dto;
 
+import com.umc.product.survey.domain.QuestionOption;
 import java.time.Instant;
 import lombok.Builder;
 
@@ -16,4 +17,16 @@ public record QuestionOptionInfo(
     Instant createdAt,
     Instant updatedAt
 ) {
+
+    public static QuestionOptionInfo from(QuestionOption option) {
+        return QuestionOptionInfo.builder()
+            .id(option.getId())
+            .questionId(option.getQuestion().getId())
+            .content(option.getContent())
+            .orderNo(option.getOrderNo())
+            .isOther(option.isOther())
+            .createdAt(option.getCreatedAt())
+            .updatedAt(option.getUpdatedAt())
+            .build();
+    }
 }

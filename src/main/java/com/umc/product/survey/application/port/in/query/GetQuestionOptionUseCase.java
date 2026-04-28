@@ -22,5 +22,5 @@ public interface GetQuestionOptionUseCase {
     /**
      * 질문에 속한 모든 선택지를 orderNo 오름차순으로 조회.
      */
-    List<QuestionOptionInfo> getAllByQuestionId(Long questionId);
+    List<QuestionOptionInfo> listByQuestionId(Long questionId);
 }
