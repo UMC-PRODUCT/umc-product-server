@@ -29,24 +29,24 @@ public interface StudyGroupCommandControllerApi {
     })
     void create(CreateStudyGroupRequest request);
 
-    @Operation(summary = "스터디 그룹 수정", description = "스터디 그룹의 이름, 파트장, 멤버를 수정합니다.")
+    @Operation(summary = "스터디 그룹 수정 (이름만 가능)", description = "스터디 그룹의 이름을 수정합니다. 파트 수정은 별도로 불가능하며, 스터디원 및 파트장 수정은 별도의 API 사용 바랍니다.")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "400", description = "잘못된 요청"),
         @ApiResponse(responseCode = "404", description = "스터디 그룹을 찾을 수 없음")
     })
     void update(
-        @Parameter(description = "스터디 그룹 ID", required = true) Long groupId,
+        @Parameter(description = "스터디 그룹 ID", required = true) Long studyGroupId,
         UpdateStudyGroupRequest request);
 
     @Operation(summary = "스터디 그룹에 스터디원 추가", description = "스터디 그룹에 스터디원을 추가합니다.")
     void addMember(
-        @PathVariable Long groupId,
+        @PathVariable Long studyGroupId,
         @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
     );
 
     @Operation(summary = "스터디 그룹에 담당 파트장 추가", description = "스터디 그룹에 파트장을 추가합니다.")
     void addMentor(
-        @PathVariable Long groupId,
+        @PathVariable Long studyGroupId,
         @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
     );
 
@@ -58,7 +58,7 @@ public interface StudyGroupCommandControllerApi {
 
     @Operation(summary = "스터디 그룹에 담당 파트장 제거", description = "스터디 그룹에서 파트장을 제거합니다.")
     void deleteMentor(
-        @PathVariable Long groupId,
+        @PathVariable Long studyGroupId,
         @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
     );
 
@@ -67,5 +67,5 @@ public interface StudyGroupCommandControllerApi {
         @ApiResponse(responseCode = "204", description = "삭제 성공"),
         @ApiResponse(responseCode = "404", description = "스터디 그룹을 찾을 수 없음")
     })
-    void delete(@Parameter(description = "스터디 그룹 ID", required = true) Long groupId);
+    void delete(@Parameter(description = "스터디 그룹 ID", required = true) Long studyGroupId);
 }

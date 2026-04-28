@@ -42,12 +42,12 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
         message = "해당 스터디 그룹을 수정할 권한이 없습니다."
     )
     @Override
-    @PatchMapping("/{groupId}")
+    @PatchMapping("/{studyGroupId}")
     public void update(
-        @PathVariable Long groupId,
+        @PathVariable Long studyGroupId,
         @Valid @RequestBody UpdateStudyGroupRequest request
     ) {
-        manageStudyGroupUseCase.update(request.toCommand(groupId));
+        manageStudyGroupUseCase.update(request.toCommand(studyGroupId));
     }
 
     @CheckAccess(
@@ -55,13 +55,13 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
         permission = PermissionType.EDIT,
         message = "해당 스터디 그룹 구성원을 수정할 권한이 없습니다."
     )
-    @PatchMapping("/{groupId}/members")
+    @PatchMapping("/{studyGroupId}/members")
     @Override
     public void addMember(
-        @PathVariable Long groupId,
+        @PathVariable Long studyGroupId,
         @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
     ) {
-        manageStudyGroupUseCase.addMember(request.toAddStudyMemberCommand(groupId));
+        manageStudyGroupUseCase.addMember(request.toAddStudyMemberCommand(studyGroupId));
     }
 
     @CheckAccess(
@@ -69,13 +69,13 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
         permission = PermissionType.EDIT,
         message = "해당 스터디 그룹 구성원을 수정할 권한이 없습니다."
     )
-    @PatchMapping("/{groupId}/mentors")
+    @PatchMapping("/{studyGroupId}/mentors")
     @Override
     public void addMentor(
-        @PathVariable Long groupId,
+        @PathVariable Long studyGroupId,
         @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
     ) {
-        manageStudyGroupUseCase.addMentor(request.toAddStudyMentorCommand(groupId));
+        manageStudyGroupUseCase.addMentor(request.toAddStudyMentorCommand(studyGroupId));
     }
 
     @CheckAccess(
@@ -97,13 +97,13 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
         permission = PermissionType.EDIT,
         message = "해당 스터디 그룹 구성원을 수정할 권한이 없습니다."
     )
-    @DeleteMapping("/{groupId}/mentors")
+    @DeleteMapping("/{studyGroupId}/mentors")
     @Override
     public void deleteMentor(
-        @PathVariable Long groupId,
+        @PathVariable Long studyGroupId,
         @Valid @RequestBody EditStudyGroupMemberOrMentorRequest request
     ) {
-        manageStudyGroupUseCase.deleteMentor(request.toDeleteStudyMentorCommand(groupId));
+        manageStudyGroupUseCase.deleteMentor(request.toDeleteStudyMentorCommand(studyGroupId));
     }
 
     @CheckAccess(
@@ -112,8 +112,8 @@ public class StudyGroupCommandController implements StudyGroupCommandControllerA
         message = "해당 스터디 그룹을 삭제할 권한이 없습니다."
     )
     @Override
-    @DeleteMapping("/{groupId}")
-    public void delete(@PathVariable Long groupId) {
-        manageStudyGroupUseCase.delete(groupId);
+    @DeleteMapping("/{studyGroupId}")
+    public void delete(@PathVariable Long studyGroupId) {
+        manageStudyGroupUseCase.delete(studyGroupId);
     }
 }
