@@ -37,6 +37,7 @@ public class CredentialAuthenticationService implements CredentialAuthentication
     private final JwtTokenProvider jwtTokenProvider;
     private final GetMemberCredentialUseCase getMemberCredentialUseCase;
     private final ManageMemberCredentialUseCase manageMemberCredentialUseCase;
+    private final CredentialRehashService rehashService;
 
     @Override
     public void registerCredential(RegisterCredentialCommand command) {
@@ -71,6 +72,7 @@ public class CredentialAuthenticationService implements CredentialAuthentication
     }
 
     @Override
+    @Transactional(readOnly = true)
     public IdPwLoginResult loginByIdPw(LoginByIdPwCommand command) {
         // 1) 자격증명 조회: 부재 / 실패 모두 동일 메시지로 처리하여 사용자 열거 공격을 방지한다.
         Optional<MemberCredentialInfo> credentialOpt =
@@ -88,7 +90,8 @@ public class CredentialAuthenticationService implements CredentialAuthentication
         }
 
         // 3) 점진적 rehash: 해시 정책이 갱신되었으면 최신 정책으로 재저장한다.
-        rehashIfNeeded(credential, command.rawPassword());
+        // 별도 트랜잭션(REQUIRES_NEW)에서 수행하여 실패가 로그인에 영향을 주지 않도록 한다.
+        rehashService.rehashIfNeeded(credential, command.rawPassword());
 
         // 4) 토큰 발급
         Long memberId = credential.memberId();
@@ -100,20 +103,5 @@ public class CredentialAuthenticationService implements CredentialAuthentication
             .accessToken(accessToken)
             .refreshToken(refreshToken)
             .build();
-    }
-
-    private void rehashIfNeeded(MemberCredentialInfo credential, String rawPassword) {
-        if (passwordEncoder.upgradeEncoding(credential.passwordHash())) {
-            String upgraded = passwordEncoder.encode(rawPassword);
-            try {
-                manageMemberCredentialUseCase.changePassword(
-                    ChangeMemberPasswordCommand.of(credential.memberId(), upgraded)
-                );
-                log.info("[ID/PW 로그인] 비밀번호 해시 정책 갱신 완료: memberId={}", credential.memberId());
-            } catch (Exception e) {
-                // rehash 실패는 로그인 자체에는 영향을 주지 않는다.
-                log.warn("[ID/PW 로그인] 비밀번호 해시 정책 갱신 실패: memberId={}", credential.memberId(), e);
-            }
-        }
     }
 }
