@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <title>UMC PRODUCT API</title>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1" name="viewport"/>
+    <style>body {
+        margin: 0;
+        padding: 0;
+    }</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
+
+<script>
+    Scalar.createApiReference(document.getElementById('app'), {
+        spec: {
+            url: '/docs-json'
+        },
+
+        // --- UI / 테마 설정 ---
+        theme: "kepler",
+        layout: 'modern',      // modern(3단) / classic(2단)
+        hideModels: false,     // 하단 스키마 모델 숨기기
+
+        defaultOpenFirstTag: 'false',
+        tagsSorter: 'alpha',
+        operationsSorter: 'alpha',
+
+        showOperationId: true, // operationId 표시 여부
+        showDeveloperTools: "never",
+
+        favicon: '/umc-logo.svg'
+    });
+</script>
+</body>
+</html>

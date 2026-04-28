@@ -43,14 +43,16 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @Slf4j
 public class SecurityConfig {
 
-    private static final String[] SWAGGER_PATHS = {
+    private static final String[] STATIC_FILE_PATHS = {
         "/swagger-ui/**",
         "/docs/**",
         "/v3/api-docs/**",
         "/docs-json/**",
         "/swagger-resources/**",
-        "/webjars/**"
+        "/webjars/**",
+        "/umc-logo.svg"
     };
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ApiAuthenticationEntryPoint authenticationEntryPoint;
     private final ApiAccessDeniedHandler accessDeniedHandler;
@@ -73,7 +75,7 @@ public class SecurityConfig {
     @Profile("dev")
     public SecurityFilterChain swaggerSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher(SWAGGER_PATHS)
+            .securityMatcher(STATIC_FILE_PATHS)
             .cors(Customizer.withDefaults())
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session ->
@@ -148,7 +150,7 @@ public class SecurityConfig {
                 ).permitAll();
 
                 // Swagger
-                auth.requestMatchers(SWAGGER_PATHS).permitAll();
+                auth.requestMatchers(STATIC_FILE_PATHS).permitAll();
 
                 // @Public 어노테이션이 달린 엔드포인트 (HTTP 메서드 포함)
                 for (PublicEndpointCollector.EndpointMatcher endpoint : publicEndpoints) {
@@ -214,7 +216,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         log.info("Allowed Origin Patterns for CORS: {}", allowedOriginPatterns);
-        
+
         // Swagger CORS 설정
         configuration.setAllowedOriginPatterns(allowedOriginPatterns);
 
