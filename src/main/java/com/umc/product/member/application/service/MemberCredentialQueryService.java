@@ -27,6 +27,16 @@ public class MemberCredentialQueryService implements GetMemberCredentialUseCase 
     }
 
     @Override
+    public Optional<MemberCredentialInfo> findCredentialByMemberId(Long memberId) {
+        if (memberId == null) {
+            return Optional.empty();
+        }
+        return loadMemberPort.findById(memberId)
+            .filter(member -> member.getLoginId() != null && member.getPasswordHash() != null)
+            .map(MemberCredentialInfo::from);
+    }
+
+    @Override
     public boolean existsByLoginId(String loginId) {
         if (loginId == null || loginId.isBlank()) {
             return false;

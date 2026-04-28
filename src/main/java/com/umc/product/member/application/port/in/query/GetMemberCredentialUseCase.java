@@ -20,6 +20,13 @@ public interface GetMemberCredentialUseCase {
     Optional<MemberCredentialInfo> findCredentialByLoginId(String loginId);
 
     /**
+     * memberId 로 자격증명을 조회한다. 자격증명이 등록되지 않은 회원은 {@link Optional#empty()}.
+     * <p>
+     * 비밀번호 변경 등 인증된 사용자 흐름에서 사용한다.
+     */
+    Optional<MemberCredentialInfo> findCredentialByMemberId(Long memberId);
+
+    /**
      * loginId 가 이미 사용 중인지 확인한다. (회원가입 / 자격증명 등록 시 중복 방지)
      */
     boolean existsByLoginId(String loginId);
