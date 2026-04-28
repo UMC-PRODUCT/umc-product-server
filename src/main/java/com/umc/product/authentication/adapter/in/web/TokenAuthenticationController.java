@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Authentication | 토큰", description = "OAuth 로그인 및 JWT 토큰 관련")
+@Tag(name = "Authentication | 로그인, 회원가입")
 public class TokenAuthenticationController {
 
     private final ManageAuthenticationUseCase manageAuthenticationUseCase;
