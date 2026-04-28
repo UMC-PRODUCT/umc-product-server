@@ -222,47 +222,39 @@ jobs:
             const entry = [
               `## ${icon} CI 상태: ${stateText}`,
               '',
-              `- 워크플로우: \`${context.workflow}\``,
-              `- 브랜치/Ref: \`${context.ref}\``,
-              `- 커밋: \`${sha.substring(0, 7)}\``,
-              `- 업데이트 시각(KST): ${kstTime}`,
-              `- 상세 로그: [GitHub Actions](${runUrl})`
+              `- Workflow: \`${context.workflow}\``,
+              `- Branch: \`${context.ref}\``,
+              `- Commit: \`${sha.substring(0, 7)}\``,
+              `- Update Time (KST): ${kstTime}`,
+              `- Action Logs: [GitHub Actions](${runUrl})`
             ].join('\n');
 
             if (isPR) {
               const issue_number = context.issue.number;
-              const { data: comments } = await github.rest.issues.listComments({
-                owner,
-                repo,
-                issue_number,
-                per_page: 100
-              });
-
-              const existing = comments.find(c => c.body && c.body.includes(marker));
+              let existing = null;
+              await github.paginate(
+                github.rest.issues.listComments,
+                { owner, repo, issue_number, per_page: 100 },
+                (response, done) => {
+                  const found = response.data.find(c => c.body?.includes(marker));
+                  if (found) { existing = found; done(); }
+                }
+              );
+              const body = `${marker}\n\n${entry}`;
 
               if (existing) {
-                const prev = (existing.body || '').replace(marker, '').trim();
-                const updatedBody = [
-                  marker,
-                  prev,
-                  '---',
-                  entry
-                ]
-                  .filter(Boolean)
-                  .join('\n\n');
-
                 await github.rest.issues.updateComment({
                   owner,
                   repo,
                   comment_id: existing.id,
-                  body: updatedBody
+                  body
                 });
               } else {
                 await github.rest.issues.createComment({
                   owner,
                   repo,
                   issue_number,
-                  body: `${marker}\n${entry}`
+                  body
                 });
               }
             }
