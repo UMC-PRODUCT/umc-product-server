@@ -8,11 +8,10 @@ import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupMemberResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSummaryResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupResponse;
 import com.umc.product.organization.adapter.in.web.swagger.StudyGroupQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupListInfo;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupListInfo.StudyGroupInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,7 +32,7 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
      */
     @Override
     @GetMapping("/me")
-    public CursorResponse<StudyGroupSummaryResponse> getStudyGroups(
+    public CursorResponse<StudyGroupResponse> getStudyGroups(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam(required = false) Long cursor,
         @RequestParam(defaultValue = "20") int size
@@ -46,8 +45,8 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
         return CursorResponse.of(
             content,
             size,
-            StudyGroupListInfo.StudyGroupInfo::groupId,
-            StudyGroupSummaryResponse::from
+            StudyGroupInfo::groupId,
+            StudyGroupResponse::from
         );
     }
 
@@ -72,7 +71,7 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
         permission = PermissionType.READ
     )
     @Override
-    @GetMapping("/{groupId}/members")
+    @GetMapping("/{groupId}")
     public List<StudyGroupMemberResponse> getStudyGroupMembers(@PathVariable Long groupId) {
         return getStudyGroupUseCase.getStudyGroupMembers(groupId).stream()
             .map(StudyGroupMemberResponse::from)

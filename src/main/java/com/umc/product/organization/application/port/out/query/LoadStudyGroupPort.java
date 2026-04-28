@@ -1,7 +1,7 @@
 package com.umc.product.organization.application.port.out.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
@@ -27,7 +27,7 @@ public interface LoadStudyGroupPort {
      * @param size   조회 사이즈 (hasNext 판단용 +1 포함)
      * @return Scope 범위 내의 스터디 그룹 목록
      */
-    List<StudyGroupListInfo.StudyGroupInfo> findMyStudyGroups(
+    List<StudyGroupInfo> findMyStudyGroups(
         List<StudyGroupViewScope> scopes, Long gisuId, Long cursor, int size);
 
     /**

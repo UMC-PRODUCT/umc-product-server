@@ -1,7 +1,7 @@
 package com.umc.product.organization.application.port.in.query;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
 import java.util.List;
@@ -27,7 +27,7 @@ public interface GetStudyGroupUseCase {
      * @param size     페이지 크기
      * @return 조회된 스터디 그룹 요약 목록 (권한 없으면 빈 리스트)
      */
-    List<StudyGroupListInfo.StudyGroupInfo> getMyStudyGroups(Long memberId, Long cursor, int size);
+    List<StudyGroupInfo> getMyStudyGroups(Long memberId, Long cursor, int size);
 
     /**
      * 스터디 그룹 이름 목록 조회 - memberId 기반으로 schoolId/part를 자동 resolve

@@ -6,8 +6,7 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupDetailInfo;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
@@ -28,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class StudyGroupQueryService implements GetStudyGroupUseCase {
 
     private final LoadStudyGroupPort loadStudyGroupPort;
+
     private final GetFileUseCase getFileUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetGisuUseCase getGisuUseCase;
@@ -52,7 +52,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
      * @return 스터디 그룹 목록. 권한 scope가 하나도 없으면 빈 리스트.
      */
     @Override
-    public List<StudyGroupListInfo.StudyGroupInfo> getMyStudyGroups(Long memberId, Long cursor, int size) {
+    public List<StudyGroupInfo> getMyStudyGroups(Long memberId, Long cursor, int size) {
         Long schoolId = getMemberUseCase.getById(memberId).schoolId();
         Long activeGisuId = getGisuUseCase.getActiveGisuId();
 
@@ -61,7 +61,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
             return List.of();
         }
 
-        List<StudyGroupListInfo.StudyGroupInfo> groups =
+        List<StudyGroupInfo> groups =
             loadStudyGroupPort.findMyStudyGroups(scopes, activeGisuId, cursor, size + 1);
 
         return resolveStudyGroupListUrls(groups);
@@ -137,118 +137,73 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
             return members;
         }
 
+        return resolveMemberProfileUrls(members);
+
+        // Map의 Key는 fileId, Value는 URL. 치환 실패 시 원래 fileId 반환
+        // 지금은 fileId와 치환 성공한 URL이 모두 같은 profileImageUrl 필드에 담겨 있다. 구별 처리 예정
+    }
+
+    private List<StudyGroupMemberInfo> resolveMemberProfileUrls(List<StudyGroupMemberInfo> members) {
         Set<String> imageIds = new LinkedHashSet<>();
-        for (StudyGroupMemberInfo m : members) {
-            if (m.profileImageUrl() != null) {
-                imageIds.add(m.profileImageUrl());
+        for (StudyGroupMemberInfo member : members) {
+            if (member.profileImageId() != null) {
+                imageIds.add(member.profileImageId());
             }
         }
+
         if (imageIds.isEmpty()) {
             return members;
         }
 
-        Map<String, String> urlMap = resolveProfileImageUrls(imageIds);
         return members.stream()
-            .map(m -> new StudyGroupMemberInfo(
-                m.memberId(),
-                m.schoolId(),
-                m.schoolName(),
-                urlMap.getOrDefault(m.profileImageUrl(), m.profileImageUrl())))
-            // Map의 Key는 fileId, Value는 URL. 치환 실패 시 원래 fileId 반환
-            // 지금은 fileId와 치환 성공한 URL이 모두 같은 profileImageUrl 필드에 담겨 있다. 구별 처리 예정
-
+            .map(member -> {
+                String imageId = member.profileImageId();
+                String imageUrl = resolveProfileImageUrls(imageIds).getOrDefault(imageId, "");
+                return StudyGroupMemberInfo.create(
+                    member.studyGroupId(),
+                    member.memberId(), member.memberName(),
+                    member.schoolId(), member.schoolName(),
+                    imageId, imageUrl
+                );
+            })
             .toList();
     }
 
-    private List<StudyGroupListInfo.StudyGroupInfo> resolveStudyGroupListUrls(
-        List<StudyGroupListInfo.StudyGroupInfo> groups) {
+    private List<StudyGroupInfo> resolveStudyGroupListUrls(
+        List<StudyGroupInfo> studyGroups
+    ) {
         Set<String> imageIds = new LinkedHashSet<>();
-        for (StudyGroupListInfo.StudyGroupInfo group : groups) {
-            for (StudyGroupListInfo.StudyGroupInfo.Mentor mentor : group.mentors()) {
+
+        for (StudyGroupInfo group : studyGroups) {
+            for (StudyGroupMemberInfo mentor : group.mentors()) {
                 if (mentor.profileImageUrl() != null) {
                     imageIds.add(mentor.profileImageUrl());
                 }
             }
-            for (StudyGroupListInfo.StudyGroupInfo.Member m : group.members()) {
-                if (m.profileImageUrl() != null) {
-                    imageIds.add(m.profileImageUrl());
+
+            for (StudyGroupMemberInfo member : group.members()) {
+                if (member.profileImageUrl() != null) {
+                    imageIds.add(member.profileImageUrl());
                 }
             }
         }
 
         if (imageIds.isEmpty()) {
-            return groups;
+            return studyGroups;
         }
 
-        Map<String, String> urlMap = resolveProfileImageUrls(imageIds);
-
-        return groups.stream()
-            .map(group -> new StudyGroupListInfo.StudyGroupInfo(
-                group.groupId(),
-                group.name(),
-                group.mentors().stream()
-                    .map(o -> new StudyGroupListInfo.StudyGroupInfo.Mentor(
-                        o.memberId(),
-                        o.name(),
-                        urlMap.getOrDefault(o.profileImageUrl(), o.profileImageUrl())
-                    ))
-                    .toList(),
-                group.members().stream()
-                    .map(m -> new StudyGroupListInfo.StudyGroupInfo.Member(
-                        m.memberId(),
-                        m.name(),
-                        urlMap.getOrDefault(m.profileImageUrl(), m.profileImageUrl())
-                    ))
-                    .toList()
-            ))
+        return studyGroups.stream()
+            .map(studyGroup ->
+                StudyGroupInfo.create(
+                    studyGroup.groupId(),
+                    studyGroup.name(),
+                    studyGroup.gisuId(),
+                    studyGroup.part(),
+                    resolveMemberProfileUrls(studyGroup.mentors()),
+                    resolveMemberProfileUrls(studyGroup.members())
+                )
+            )
             .toList();
-    }
-
-    private StudyGroupDetailInfo resolveStudyGroupDetailUrls(StudyGroupDetailInfo detail) {
-        Set<String> imageIds = new LinkedHashSet<>();
-        if (detail.leader() != null && detail.leader().profileImageUrl() != null) {
-            imageIds.add(detail.leader().profileImageUrl());
-        }
-        for (StudyGroupDetailInfo.MemberInfo member : detail.members()) {
-            if (member.profileImageUrl() != null) {
-                imageIds.add(member.profileImageUrl());
-            }
-        }
-
-        if (imageIds.isEmpty()) {
-            return detail;
-        }
-
-        Map<String, String> urlMap = resolveProfileImageUrls(imageIds);
-
-        StudyGroupDetailInfo.MemberInfo resolvedLeader = detail.leader() == null ? null
-            : new StudyGroupDetailInfo.MemberInfo(
-                detail.leader().challengerId(),
-                detail.leader().memberId(),
-                detail.leader().name(),
-                urlMap.getOrDefault(detail.leader().profileImageUrl(),
-                    detail.leader().profileImageUrl())
-            );
-
-        List<StudyGroupDetailInfo.MemberInfo> resolvedMembers = detail.members().stream()
-            .map(m -> new StudyGroupDetailInfo.MemberInfo(
-                m.challengerId(),
-                m.memberId(),
-                m.name(),
-                urlMap.getOrDefault(m.profileImageUrl(), m.profileImageUrl())
-            ))
-            .toList();
-
-        return new StudyGroupDetailInfo(
-            detail.groupId(),
-            detail.name(),
-            detail.part(),
-            detail.schools(),
-            detail.createdAt(),
-            detail.memberCount(),
-            resolvedLeader,
-            resolvedMembers
-        );
     }
 
     private Map<String, String> resolveProfileImageUrls(Set<String> profileImageIds) {

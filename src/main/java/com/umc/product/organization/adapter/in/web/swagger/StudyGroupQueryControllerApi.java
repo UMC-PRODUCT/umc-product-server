@@ -4,7 +4,7 @@ import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupMemberResponse;
 import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSummaryResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -37,7 +37,7 @@ public interface StudyGroupQueryControllerApi {
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "조회 성공")
     })
-    CursorResponse<StudyGroupSummaryResponse> getStudyGroups(
+    CursorResponse<StudyGroupResponse> getStudyGroups(
         @Parameter(hidden = true) MemberPrincipal memberPrincipal,
         @Parameter(description = "페이지 커서 (첫 페이지는 null)") Long cursor,
         @Parameter(description = "페이지 크기 (기본 20, 최대 100)") int size);

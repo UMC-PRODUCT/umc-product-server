@@ -6,12 +6,14 @@ import static com.umc.product.organization.domain.QStudyGroup.studyGroup;
 import static com.umc.product.organization.domain.QStudyGroupMember.studyGroupMember;
 import static com.umc.product.organization.domain.QStudyGroupMentor.studyGroupMentor;
 
+import com.querydsl.core.types.ConstructorExpression;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
@@ -32,7 +34,6 @@ public class StudyGroupQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-
     /**
      * 역할 Scope 기반 스터디 그룹 이름 목록 조회.
      * <p>
@@ -52,9 +53,12 @@ public class StudyGroupQueryRepository {
         }
 
         return queryFactory
-            .select(Projections.constructor(StudyGroupNameInfo.class,
-                studyGroup.id,
-                studyGroup.name))
+            .select(Projections.constructor(
+                    StudyGroupNameInfo.class,
+                    studyGroup.id,
+                    studyGroup.name
+                )
+            )
             .from(studyGroup)
             .where(
                 studyGroup.gisuId.eq(gisuId),
@@ -87,8 +91,10 @@ public class StudyGroupQueryRepository {
      * @param size   조회 사이즈 (Service가 hasNext 판단용으로 +1 포함하여 넘김)
      * @return 상위 스터디 그룹 정보 + 각 그룹의 파트장/멤버 요약. scope가 전부 비어있거나 조회 결과가 없으면 빈 리스트.
      */
-    public List<StudyGroupListInfo.StudyGroupInfo> findMyStudyGroups(
-        List<StudyGroupViewScope> scopes, Long gisuId, Long cursor, int size) {
+    public List<StudyGroupInfo> findMyStudyGroups(
+        List<StudyGroupViewScope> scopes, Long gisuId,
+        Long cursor, int size
+    ) {
 
         // 1) 역할 Scope들을 WHERE 조건 한 덩어리로 합친다. 빈 predicate면 즉시 종료(풀 스캔 방지).
         BooleanExpression scopePredicate = buildScopePredicate(scopes);
@@ -97,21 +103,21 @@ public class StudyGroupQueryRepository {
         }
 
         // 2) 상위 그룹 헤더만 커서 페이징으로 자른다. 여기서 size 의미가 지켜진다.
-        List<GroupHeaderRow> groupHeaders = fetchGroupHeaders(gisuId, scopePredicate, cursor, size);
-        if (groupHeaders.isEmpty()) {
+        List<StudyGroupHeaderRow> studyGroupHeaders = fetchGroupHeaders(gisuId, scopePredicate, cursor, size);
+        if (studyGroupHeaders.isEmpty()) {
             return List.of();
         }
 
-        List<Long> groupIds = extractGroupIds(groupHeaders);
+        List<Long> studyGroupIds = extractStudyGroupIds(studyGroupHeaders);
 
-        // 3) 잘라낸 그룹들의 파트장를 조회.
-        Map<Long, List<MentorRow>> mentorsByGroup = fetchMentorsByGroupIds(groupIds);
+        // 3) 잘라낸 그룹들의 파트장들을 조회.
+        Map<Long, List<StudyGroupMemberInfo>> mentorsByGroup = fetchMentorsByGroupIds(studyGroupIds);
 
         // 4) 잘라낸 그룹들의 멤버를 조회.
-        Map<Long, List<MemberRow>> membersByGroup = fetchMembersByGroupIds(groupIds);
+        Map<Long, List<StudyGroupMemberInfo>> membersByGroup = fetchMembersByGroupIds(studyGroupIds);
 
         // 5) 헤더 + 파트장 + 멤버를 조합해 DTO로 변환한다.
-        return groupHeaders.stream()
+        return studyGroupHeaders.stream()
             .map(header -> toStudyGroupInfo(header, mentorsByGroup, membersByGroup))
             .toList();
     }
@@ -139,7 +145,7 @@ public class StudyGroupQueryRepository {
      * 멤버 JOIN을 하지 않는 이유: 멤버가 포함되면 한 그룹이 멤버 수만큼 중복 row로 나와 {@code LIMIT size} 가 "멤버 row 기준 size" 로 해석되어 페이징 의미가 붕괴된다.
      * 따라서 여기서는 그룹 단위로 size 를 정확히 자르고, 멤버는 다음 단계에서 별도 쿼리로 채운다.
      * <p>
-     * 결과는 {@link GroupHeaderRow} record로 바로 Projection
+     * 결과는 {@link StudyGroupHeaderRow} record로 바로 Projection
      *
      * @param gisuId         활성 기수 필터
      * @param scopePredicate {@link #buildScopePredicate(List)} 가 만든 역할 Scope WHERE 조건 (null 아님)
@@ -147,12 +153,20 @@ public class StudyGroupQueryRepository {
      * @param size           조회 크기
      * @return (groupId, name) 헤더 리스트, id DESC 정렬
      */
-    private List<GroupHeaderRow> fetchGroupHeaders(Long gisuId, BooleanExpression scopePredicate, Long cursor,
-                                                   int size) {
+    private List<StudyGroupHeaderRow> fetchGroupHeaders(
+        Long gisuId, BooleanExpression scopePredicate,
+        Long cursor, int size
+    ) {
         return queryFactory
-            .select(Projections.constructor(GroupHeaderRow.class,
-                studyGroup.id,
-                studyGroup.name))
+            .select(
+                Projections.constructor(
+                    StudyGroupHeaderRow.class,
+                    studyGroup.id,
+                    studyGroup.name,
+                    studyGroup.gisuId,
+                    studyGroup.part
+                )
+            )
             .from(studyGroup)
             .where(
                 studyGroup.gisuId.eq(gisuId),
@@ -167,9 +181,9 @@ public class StudyGroupQueryRepository {
     /**
      * 헤더 리스트에서 groupId만 뽑아낸다. 다음 단계(멤버 조회)의 IN 절 입력으로 쓰인다.
      */
-    private List<Long> extractGroupIds(List<GroupHeaderRow> headers) {
+    private List<Long> extractStudyGroupIds(List<StudyGroupHeaderRow> headers) {
         return headers.stream()
-            .map(GroupHeaderRow::groupId)
+            .map(StudyGroupHeaderRow::groupId)
             .toList();
     }
 
@@ -184,20 +198,17 @@ public class StudyGroupQueryRepository {
      * @param groupIds 파트장를 채울 대상 그룹 ID 목록 (비어있지 않다고 가정)
      * @return {groupId → 해당 그룹 파트장 리스트}. 파트장가 없는 그룹은 맵에 키가 없다.
      */
-    private Map<Long, List<MentorRow>> fetchMentorsByGroupIds(List<Long> groupIds) {
-        List<MentorRow> rows = queryFactory
-            .select(Projections.constructor(MentorRow.class,
-                studyGroupMentor.studyGroup.id,
-                studyGroupMentor.memberId,
-                member.name,
-                member.profileImageId))
+    private Map<Long, List<StudyGroupMemberInfo>> fetchMentorsByGroupIds(List<Long> groupIds) {
+        List<StudyGroupMemberInfo> rows = queryFactory
+            .select(studyGroupMemberInfoProjection(studyGroupMentor.studyGroup.id))
             .from(studyGroupMentor)
             .join(member).on(member.id.eq(studyGroupMentor.memberId))
+            .join(school).on(member.schoolId.eq(school.id))
             .where(studyGroupMentor.studyGroup.id.in(groupIds))
             .fetch();
 
         return rows.stream()
-            .collect(Collectors.groupingBy(MentorRow::groupId));
+            .collect(Collectors.groupingBy(StudyGroupMemberInfo::studyGroupId));
     }
 
     /**
@@ -210,47 +221,36 @@ public class StudyGroupQueryRepository {
      * @param groupIds 멤버를 채울 대상 그룹 ID 목록 (비어있지 않다고 가정)
      * @return {groupId → 해당 그룹 멤버 리스트}. 멤버가 없는 그룹은 맵에 키가 없다.
      */
-    private Map<Long, List<MemberRow>> fetchMembersByGroupIds(List<Long> groupIds) {
-        List<MemberRow> rows = queryFactory
-            .select(Projections.constructor(MemberRow.class,
-                studyGroupMember.studyGroup.id,
-                studyGroupMember.memberId,
-                member.name,
-                member.profileImageId))
-            .from(studyGroupMember)
-            .join(member).on(member.id.eq(studyGroupMember.memberId))
-            .where(studyGroupMember.studyGroup.id.in(groupIds))
-            .fetch();
+    private Map<Long, List<StudyGroupMemberInfo>> fetchMembersByGroupIds(List<Long> groupIds) {
+        List<StudyGroupMemberInfo> rows =
+            queryFactory
+                .select(studyGroupMemberInfoProjection(studyGroupMember.studyGroup.id))
+                .from(studyGroupMember)
+                .join(member).on(member.id.eq(studyGroupMember.memberId))
+                .where(studyGroupMember.studyGroup.id.in(groupIds))
+                .fetch();
 
         return rows.stream()
-            .collect(Collectors.groupingBy(MemberRow::groupId));
+            .collect(Collectors.groupingBy(StudyGroupMemberInfo::studyGroupId));
     }
 
     /**
-     * 그룹 헤더 + 파트장 리스트 + 멤버 리스트를 조합하여 {@link StudyGroupListInfo.StudyGroupInfo} DTO 하나를 만든다.
+     * 그룹 헤더 + 파트장 리스트 + 멤버 리스트를 조합하여 {@link StudyGroupInfo} DTO 하나를 만든다.
      *
      * @param header         헤더 Projection 결과: (groupId, name)
      * @param mentorsByGroup {groupId → 해당 그룹 파트장 리스트}. 키가 없으면 빈 리스트로 처리.
      * @param membersByGroup {groupId → 해당 그룹 멤버 리스트}. 키가 없으면 빈 리스트로 처리.
      */
-    private StudyGroupListInfo.StudyGroupInfo toStudyGroupInfo(
-        GroupHeaderRow header,
-        Map<Long, List<MentorRow>> mentorsByGroup,
-        Map<Long, List<MemberRow>> membersByGroup
+    private StudyGroupInfo toStudyGroupInfo(
+        StudyGroupHeaderRow header,
+        Map<Long, List<StudyGroupMemberInfo>> mentorsByGroup,
+        Map<Long, List<StudyGroupMemberInfo>> membersByGroup
     ) {
-        List<StudyGroupListInfo.StudyGroupInfo.Mentor> mentors =
-            mentorsByGroup.getOrDefault(header.groupId(), List.of()).stream()
-                .map(r -> new StudyGroupListInfo.StudyGroupInfo.Mentor(
-                    r.memberId(), r.memberName(), r.profileImageId()))
-                .toList();
-
-        List<StudyGroupListInfo.StudyGroupInfo.Member> members =
-            membersByGroup.getOrDefault(header.groupId(), List.of()).stream()
-                .map(r -> new StudyGroupListInfo.StudyGroupInfo.Member(
-                    r.memberId(), r.memberName(), r.profileImageId()))
-                .toList();
-
-        return new StudyGroupListInfo.StudyGroupInfo(header.groupId(), header.name(), mentors, members);
+        return StudyGroupInfo.create(
+            header.groupId(), header.name(),
+            header.gisuId(), header.part(),
+            mentorsByGroup.get(header.groupId()), membersByGroup.get(header.groupId())
+        );
     }
 
     /**
@@ -340,11 +340,7 @@ public class StudyGroupQueryRepository {
      */
     public List<StudyGroupMemberInfo> findStudyGroupMembers(Long groupId) {
         return queryFactory
-            .select(Projections.constructor(StudyGroupMemberInfo.class,
-                studyGroupMember.memberId,
-                school.id,
-                school.name,
-                member.profileImageId))
+            .select(studyGroupMemberInfoProjection(studyGroupMember.studyGroup.id))
             .from(studyGroupMember)
             .join(member).on(member.id.eq(studyGroupMember.memberId))
             .join(school).on(school.id.eq(member.schoolId))
@@ -372,45 +368,31 @@ public class StudyGroupQueryRepository {
     // ---------------------------------------------------------------------
 
     /**
+     * StudyGroupMemberInfo 생성을 위한 공통 ConstructorExpression. 파트장(Mentor)과 멤버(Member)의 테이블이 다르므로, groupId를 뽑아낼 Path만
+     * 파라미터로 받습니다.
+     */
+    private ConstructorExpression<StudyGroupMemberInfo> studyGroupMemberInfoProjection(
+        NumberPath<Long> studyGroupIdPath) {
+        return Projections.constructor(
+            StudyGroupMemberInfo.class,
+            studyGroupIdPath,
+            member.id,
+            member.name,
+            school.id,
+            school.name,
+            member.profileImageId
+        );
+    }
+
+    /**
      * {@link #fetchGroupHeaders} 용 상위 그룹 헤더 Projection.
      *
      * @param groupId 스터디 그룹 ID
      * @param name    스터디 그룹 이름
      */
-    private record GroupHeaderRow(Long groupId, String name) {
-    }
-
-    /**
-     * {@link #fetchMembersByGroupIds} 용 멤버 Projection.
-     * <p>
-     * 한 행에 스터디 그룹 ID와 멤버의 기본 정보(이름, 프로필 이미지 ID)를 함께 싣는다.
-     *
-     * @param groupId        소속 스터디 그룹 ID (groupingBy 키)
-     * @param memberId       멤버 ID
-     * @param memberName     멤버 이름 (Member 도메인 JOIN 결과)
-     * @param profileImageId 멤버 프로필 이미지 파일 ID (storage 도메인 식별자)
-     */
-    private record MemberRow(
-        Long groupId,
-        Long memberId,
-        String memberName,
-        String profileImageId
-    ) {
-    }
-
-    /**
-     * {@link #fetchMentorsByGroupIds} 용 파트장 Projection.
-     *
-     * @param groupId        소속 스터디 그룹 ID (groupingBy 키)
-     * @param memberId       파트장으로 등록된 멤버 ID
-     * @param memberName     멤버 이름 (Member 도메인 JOIN 결과)
-     * @param profileImageId 멤버 프로필 이미지 파일 ID (storage 도메인 식별자)
-     */
-    private record MentorRow(
-        Long groupId,
-        Long memberId,
-        String memberName,
-        String profileImageId
+    private record StudyGroupHeaderRow(
+        Long groupId, String name,
+        Long gisuId, ChallengerPart part
     ) {
     }
 }

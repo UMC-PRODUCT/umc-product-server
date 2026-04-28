@@ -2,7 +2,7 @@ package com.umc.product.organization.adapter.out.persistence.studygroup;
 
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupListInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
@@ -41,8 +41,10 @@ public class StudyGroupPersistenceAdapter implements SaveStudyGroupPort, LoadStu
      * scopes가 비어있으면 EXISTS 서브쿼리가 전부 false가 되어 풀 스캔을 유발할 수 있으므로, Adapter 레벨에서 짧은 회로로 빈 리스트를 반환해 DB 호출 자체를 생략한다.
      */
     @Override
-    public List<StudyGroupListInfo.StudyGroupInfo> findMyStudyGroups(List<StudyGroupViewScope> scopes, Long gisuId,
-                                                                     Long cursor, int size) {
+    public List<StudyGroupInfo> findMyStudyGroups(
+        List<StudyGroupViewScope> scopes, Long gisuId,
+        Long cursor, int size
+    ) {
         if (scopes == null || scopes.isEmpty()) {
             return List.of();
         }
