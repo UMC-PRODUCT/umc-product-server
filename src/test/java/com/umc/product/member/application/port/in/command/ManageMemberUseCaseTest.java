@@ -95,7 +95,7 @@ class ManageMemberUseCaseTest {
         });
 
         // when
-        Long memberId = memberService.registerMember(command);
+        Long memberId = memberService.register(command);
 
         // then
         assertThat(memberId).isEqualTo(1L);
@@ -114,7 +114,7 @@ class ManageMemberUseCaseTest {
         given(loadSchoolPort.existsById(999L)).willReturn(false);
 
         // when & then
-        assertThatThrownBy(() -> memberService.registerMember(command))
+        assertThatThrownBy(() -> memberService.register(command))
             .isInstanceOf(OrganizationDomainException.class)
             .extracting("baseCode")
             .isEqualTo(OrganizationErrorCode.SCHOOL_NOT_FOUND);
@@ -134,7 +134,7 @@ class ManageMemberUseCaseTest {
         given(loadFileMetadataPort.existsByFileId("profile_image_id")).willReturn(false);
 
         // when & then
-        assertThatThrownBy(() -> memberService.registerMember(command))
+        assertThatThrownBy(() -> memberService.register(command))
             .isInstanceOf(StorageException.class)
             .extracting("baseCode")
             .isEqualTo(StorageErrorCode.FILE_NOT_FOUND);
@@ -158,7 +158,7 @@ class ManageMemberUseCaseTest {
         });
 
         // when
-        Long memberId = memberService.registerMember(command);
+        Long memberId = memberService.register(command);
 
         // then
         assertThat(memberId).isEqualTo(1L);
@@ -177,7 +177,7 @@ class ManageMemberUseCaseTest {
         given(getTermUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));
 
         // when & then
-        assertThatThrownBy(() -> memberService.registerMember(command))
+        assertThatThrownBy(() -> memberService.register(command))
             .isInstanceOf(TermDomainException.class)
             .extracting("baseCode")
             .isEqualTo(TermErrorCode.MANDATORY_TERMS_NOT_AGREED);
@@ -197,7 +197,7 @@ class ManageMemberUseCaseTest {
         given(getTermUseCase.getRequiredTermIds()).willReturn(Set.of(1L, 2L));
 
         // when & then
-        assertThatThrownBy(() -> memberService.registerMember(command))
+        assertThatThrownBy(() -> memberService.register(command))
             .isInstanceOf(TermDomainException.class)
             .extracting("baseCode")
             .isEqualTo(TermErrorCode.MANDATORY_TERMS_NOT_AGREED);
@@ -223,10 +223,37 @@ class ManageMemberUseCaseTest {
         });
 
         // when
-        Long memberId = memberService.registerMember(command);
+        Long memberId = memberService.register(command);
 
         // then
         assertThat(memberId).isEqualTo(1L);
+    }
+
+    private Member createMember(Long id) {
+        Member member = Member.builder()
+            .name("홍길동")
+            .nickname("길동")
+            .email("test@example.com")
+            .schoolId(1L)
+            .profileImageId("old_image_id")
+            .build();
+        ReflectionTestUtils.setField(member, "id", id);
+        return member;
+    }
+
+    // ── 헬퍼 메서드 ──
+
+    private RegisterMemberCommand createCommand(Long schoolId, String profileImageId, List<TermConsents> termConsents) {
+        return RegisterMemberCommand.builder()
+            .provider(OAuthProvider.KAKAO)
+            .providerId("some_kakao_provider_id")
+            .name("홍길동")
+            .nickname("길동")
+            .email("test@example.com")
+            .schoolId(schoolId)
+            .profileImageId(profileImageId)
+            .termConsents(termConsents)
+            .build();
     }
 
     @Nested
@@ -293,32 +320,5 @@ class ManageMemberUseCaseTest {
             // then
             then(getFileUseCase).should(never()).existsById(any());
         }
-    }
-
-    // ── 헬퍼 메서드 ──
-
-    private Member createMember(Long id) {
-        Member member = Member.builder()
-            .name("홍길동")
-            .nickname("길동")
-            .email("test@example.com")
-            .schoolId(1L)
-            .profileImageId("old_image_id")
-            .build();
-        ReflectionTestUtils.setField(member, "id", id);
-        return member;
-    }
-
-    private RegisterMemberCommand createCommand(Long schoolId, String profileImageId, List<TermConsents> termConsents) {
-        return RegisterMemberCommand.builder()
-            .provider(OAuthProvider.KAKAO)
-            .providerId("some_kakao_provider_id")
-            .name("홍길동")
-            .nickname("길동")
-            .email("test@example.com")
-            .schoolId(schoolId)
-            .profileImageId(profileImageId)
-            .termConsents(termConsents)
-            .build();
     }
 }

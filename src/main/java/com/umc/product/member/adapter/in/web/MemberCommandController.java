@@ -19,6 +19,7 @@ import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
 import com.umc.product.member.application.port.in.command.ManageMemberProfileUseCase;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
+import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
@@ -45,6 +46,7 @@ public class MemberCommandController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final ManageMemberUseCase manageMemberUseCase;
+    private final RegisterOAuthMemberUseCase registerOAuthMemberUseCase;
     private final ManageMemberProfileUseCase manageMemberProfileUseCase;
 
     private final CredentialAuthenticationService credentialAuthenticationService;
@@ -79,7 +81,7 @@ public class MemberCommandController {
             .appleRefreshToken(request.appleRefreshToken())
             .build();
 
-        Long createdMemberId = manageMemberUseCase.registerMember(command);
+        Long createdMemberId = registerOAuthMemberUseCase.register(command);
 
         String accessToken = jwtTokenProvider.createAccessToken(createdMemberId, null);
         String refreshToken = jwtTokenProvider.createRefreshToken(createdMemberId);

@@ -9,6 +9,7 @@ import com.umc.product.authentication.application.port.in.query.GetMemberOAuthUs
 import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
+import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
@@ -39,7 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class MemberService implements ManageMemberUseCase {
+public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUseCase {
 
     private final LoadMemberPort loadMemberPort;
     private final SaveMemberPort saveMemberPort;
@@ -57,7 +58,7 @@ public class MemberService implements ManageMemberUseCase {
 
     @Override
     @Transactional
-    public Long registerMember(RegisterMemberCommand command) {
+    public Long register(RegisterMemberCommand command) {
         validateSchoolExists(command.schoolId());
         validateProfileImageExists(command.profileImageId());
         validateMandatoryTermsAgreed(command);
@@ -108,7 +109,7 @@ public class MemberService implements ManageMemberUseCase {
 
     @Override
     @Transactional
-    public List<Long> registerMembers(List<RegisterMemberCommand> commands) {
+    public List<Long> batchRegister(List<RegisterMemberCommand> commands) {
         commands.forEach(command -> {
             validateSchoolExists(command.schoolId());
             validateProfileImageExists(command.profileImageId());
