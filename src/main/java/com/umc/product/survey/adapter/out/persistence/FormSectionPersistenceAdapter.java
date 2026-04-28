@@ -14,6 +14,7 @@ import java.util.Optional;
 public class FormSectionPersistenceAdapter implements SaveFormSectionPort, LoadFormSectionPort {
 
     private final FormSectionJpaRepository formSectionJpaRepository;
+    private final FormSectionQueryRepository formSectionQueryRepository;
 
     @Override
     public FormSection save(FormSection formSection) {
@@ -32,7 +33,7 @@ public class FormSectionPersistenceAdapter implements SaveFormSectionPort, LoadF
 
     @Override
     public List<FormSection> listByFormId(Long formId) {
-        return formSectionJpaRepository.findAllByFormId(formId);
+        return formSectionQueryRepository.findAllByFormId(formId);
     }
 
     @Override

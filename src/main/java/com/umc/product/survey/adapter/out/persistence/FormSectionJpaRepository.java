@@ -6,11 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
-
 public interface FormSectionJpaRepository extends JpaRepository<FormSection, Long> {
-
-    List<FormSection> findAllByFormId(Long formId);
 
     /**
      * 특정 폼에 속한 모든 섹션 삭제 (deleteForm cascade 용)

@@ -7,8 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 public interface QuestionOptionJpaRepository extends JpaRepository<QuestionOption, Long> {
 
     /**
@@ -46,6 +44,4 @@ public interface QuestionOptionJpaRepository extends JpaRepository<QuestionOptio
     int deleteBySectionId(@Param("sectionId") Long sectionId);
 
     boolean existsByIdAndQuestion_Id(Long optionId, Long questionId);
-
-    List<QuestionOption> findAllByQuestion_IdOrderByOrderNoAsc(Long questionId);
 }

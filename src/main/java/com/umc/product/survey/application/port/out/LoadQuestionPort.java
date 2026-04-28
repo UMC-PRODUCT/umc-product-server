@@ -20,4 +20,9 @@ public interface LoadQuestionPort {
      * 필수 질문 누락 검증 등에 사용.
      */
     List<Question> listByFormId(Long formId);
+
+    /**
+     * 특정 섹션에 속한 모든 질문을 orderNo 오름차순으로 조회.
+     */
+    List<Question> listBySectionId(Long sectionId);
 }

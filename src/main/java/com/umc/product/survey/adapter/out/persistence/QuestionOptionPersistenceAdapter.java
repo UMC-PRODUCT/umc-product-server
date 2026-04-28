@@ -14,6 +14,7 @@ import java.util.Optional;
 public class QuestionOptionPersistenceAdapter implements SaveQuestionOptionPort, LoadQuestionOptionPort {
 
     private final QuestionOptionJpaRepository questionOptionJpaRepository;
+    private final QuestionOptionQueryRepository questionOptionQueryRepository;
 
     @Override
     public QuestionOption save(QuestionOption option) {
@@ -60,6 +61,6 @@ public class QuestionOptionPersistenceAdapter implements SaveQuestionOptionPort,
 
     @Override
     public List<QuestionOption> listByQuestionId(Long questionId) {
-        return questionOptionJpaRepository.findAllByQuestion_IdOrderByOrderNoAsc(questionId);
+        return questionOptionQueryRepository.findAllByQuestionId(questionId);
     }
 }
