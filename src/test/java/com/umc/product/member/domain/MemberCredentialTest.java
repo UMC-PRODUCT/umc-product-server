@@ -72,6 +72,34 @@ class MemberCredentialTest {
                 .extracting("baseCode")
                 .isEqualTo(MemberErrorCode.MEMBER_NOT_ACTIVE);
         }
+
+        @Test
+        @DisplayName("loginId 가 null 이나 blank 이면 등록을 거부한다")
+        void loginId_유효성_검증() {
+            assertThatThrownBy(() -> member.registerCredential(null, ENCODED_PASSWORD))
+                .isInstanceOf(MemberDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(MemberErrorCode.INVALID_LOGIN_ID);
+
+            assertThatThrownBy(() -> member.registerCredential(" ", ENCODED_PASSWORD))
+                .isInstanceOf(MemberDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(MemberErrorCode.INVALID_LOGIN_ID);
+        }
+
+        @Test
+        @DisplayName("encodedPassword 가 null 이나 blank 이면 등록을 거부한다")
+        void password_유효성_검증() {
+            assertThatThrownBy(() -> member.registerCredential(LOGIN_ID, null))
+                .isInstanceOf(MemberDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(MemberErrorCode.INVALID_PASSWORD);
+
+            assertThatThrownBy(() -> member.registerCredential(LOGIN_ID, ""))
+                .isInstanceOf(MemberDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(MemberErrorCode.INVALID_PASSWORD);
+        }
     }
 
     @Nested
@@ -116,6 +144,24 @@ class MemberCredentialTest {
                 .isInstanceOf(MemberDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(MemberErrorCode.MEMBER_NOT_ACTIVE);
+        }
+
+        @Test
+        @DisplayName("변경할 비밀번호가 null 이나 blank 이면 거부한다")
+        void password_유효성_검증() {
+            // given
+            member.registerCredential(LOGIN_ID, ENCODED_PASSWORD);
+
+            // when & then
+            assertThatThrownBy(() -> member.changePassword(null))
+                .isInstanceOf(MemberDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(MemberErrorCode.INVALID_PASSWORD);
+
+            assertThatThrownBy(() -> member.changePassword("  "))
+                .isInstanceOf(MemberDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(MemberErrorCode.INVALID_PASSWORD);
         }
     }
 
