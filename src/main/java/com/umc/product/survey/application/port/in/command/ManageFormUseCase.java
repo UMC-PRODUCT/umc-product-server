@@ -11,6 +11,9 @@ import com.umc.product.survey.application.port.in.command.dto.UpdateFormCommand;
  * 생성 흐름: {@link #createDraft} 로 DRAFT 상태로 시작 -> {@link #updateForm}으로 임시저장 업데이트 -> {@link #publishForm} 로 PUBLISHED 전환 시 응답 수집 가능.
  * <p>
  * 삭제는 {@link #deleteForm} — 연관된 FormSection / Question / QuestionOption / FormResponse / Answer 모두 cascade 삭제.
+ * <p>
+ * 권한 검증과 발행 상태 검증은 호출 측 (consumer 도메인) 책임. 본 UseCase 는 단순 동작만 보장한다.
+ * 응답 무결성은 {@code AnswerChoice.answeredAsContent} 스냅샷이 보장.
  */
 public interface ManageFormUseCase {
 
@@ -22,9 +25,10 @@ public interface ManageFormUseCase {
     Long createDraft(CreateDraftFormCommand command);
 
     /**
-     * DRAFT 상태의 폼 메타데이터(title/description/isAnonymous)를 업데이트한다. (임시저장 용도)
-     * 발행된 폼은 수정 불가 — SURVEY_ALREADY_PUBLISHED 예외. TODO: 관련 로직 확정 시 수정
-     * 요청자가 작성자가 아니면 권한 예외.
+     * 폼 메타데이터(title/description/isAnonymous) 부분 업데이트.
+     * null 인 필드는 기존 값 유지.
+     * 발행된 폼도 수정 가능하도록 구현.
+     * TODO: 관련 정책 확정 시 수정
      */
     void updateForm(UpdateFormCommand command);
 
@@ -35,8 +39,7 @@ public interface ManageFormUseCase {
     void publishForm(PublishFormCommand command);
 
     /**
-     * 폼과 연관 구조(섹션/질문/옵션/응답/답변) 전부 삭제.
-     * 요청자가 작성자가 아니면 권한 예외.
+     * 폼과 연관 구조(섹션/질문/옵션/응답/답변) 전부 cascade 삭제.
      */
     void deleteForm(DeleteFormCommand command);
 }

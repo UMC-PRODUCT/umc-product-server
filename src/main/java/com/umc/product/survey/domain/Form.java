@@ -80,4 +80,14 @@ public class Form extends BaseEntity {
 
         this.status = FormStatus.PUBLISHED;
     }
+
+    /**
+     * 폼 메타데이터 부분 업데이트.
+     * null 인 필드는 기존 값 유지. 임시저장 단계에서 어느 필드든 부분 변경 가능하도록 모든 파라미터 nullable.
+     */
+    public void update(String title, String description, Boolean isAnonymous) {
+        if (title != null) this.title = title;
+        if (description != null) this.description = description;
+        if (isAnonymous != null) this.isAnonymous = isAnonymous;
+    }
 }
