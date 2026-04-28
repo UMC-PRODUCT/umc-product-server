@@ -14,7 +14,7 @@ import com.umc.product.member.adapter.in.web.dto.request.DeleteMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberInfoRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberProfileRequest;
 import com.umc.product.member.adapter.in.web.dto.request.IdPwRegisterMemberRequest;
-import com.umc.product.member.adapter.in.web.dto.request.RegisterMemberRequest;
+import com.umc.product.member.adapter.in.web.dto.request.OAuthRegisterMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
 import com.umc.product.member.application.port.in.command.ManageMemberProfileUseCase;
@@ -62,7 +62,7 @@ public class MemberCommandController {
         title = "'새로운 회원이 가입했어요!'",
         content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
     )
-    RegisterResponse registerMember(@RequestBody RegisterMemberRequest request) {
+    RegisterResponse registerMemberByOAuth(@RequestBody OAuthRegisterMemberRequest request) {
         OAuthVerificationClaims claims = jwtTokenProvider.parseOAuthVerificationToken(request.oAuthVerificationToken());
         String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
 
@@ -91,6 +91,13 @@ public class MemberCommandController {
             .build();
     }
 
+    @Operation(summary = "ID/PW 이용 회원가입",
+        description = """
+            OAuth가 아닌, ID/PW를 이용해서 하는 회원가입 입니다.
+
+            OAuth Provider 및 Provider ID를 받지 않는 부분을 제외하면 동일하게 동작합니다.
+            회원가입 전 ID 중복 검사를 진행할 수 있도록 해주세요.
+            """)
     @PostMapping("/register/id-pw")
     RegisterResponse registerMemberByIdPw(@RequestBody IdPwRegisterMemberRequest request) {
 
