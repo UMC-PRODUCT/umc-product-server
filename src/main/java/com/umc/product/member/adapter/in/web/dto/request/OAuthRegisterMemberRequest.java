@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 @Schema(description = "회원가입 요청")
-public record RegisterMemberRequest(
+public record OAuthRegisterMemberRequest(
 
     @Schema(description = "OAuth 인증 토큰", example = "YOUR_JWT_TOKEN")
     @NotBlank(message = "OAuth 인증 토큰은 필수입니다")

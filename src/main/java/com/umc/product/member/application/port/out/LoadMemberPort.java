@@ -15,6 +15,8 @@ public interface LoadMemberPort {
 
     Optional<Member> findByNickname(String nickname);
 
+    Optional<Member> findByLoginId(String loginId);
+
     List<Member> findAllByIds(Set<Long> ids);
 
     Set<Long> findAllIdsBySchoolId(Long schoolId);
@@ -24,6 +26,8 @@ public interface LoadMemberPort {
     boolean existsByEmail(String email);
 
     boolean existsByNickname(String nickname);
+
+    boolean existsByLoginId(String loginId);
 
     List<Long> findAllIdsCursor(Long lastId, Pageable pageable);
 

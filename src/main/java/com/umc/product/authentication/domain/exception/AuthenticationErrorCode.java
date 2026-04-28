@@ -26,10 +26,6 @@ public enum AuthenticationErrorCode implements BaseCode {
         "이메일 인증 정보가 일치하지 않습니다."),
     UNSUPPORTED_EMAIL_VERIFICATION_METHOD(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0005",
         "지원하지 않는 이메일 인증 방식입니다."),
-    ALREADY_VERIFIED_EMAIL(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0017",
-        "이미 인증이 완료된 이메일 인증 세션입니다."),
-    EMAIL_VERIFICATION_SESSION_EXPIRED(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0018",
-        "만료된 이메일 인증 세션입니다. 새로운 인증을 요청해주세요."),
 
     // OAUTH 관련 에러
     OAUTH_SUCCESS_BUT_NO_MEMBER(HttpStatus.NOT_FOUND, "AUTHENTICATION-0006",
@@ -48,6 +44,22 @@ public enum AuthenticationErrorCode implements BaseCode {
     NOT_VALID_MEMBER(HttpStatus.FORBIDDEN, "AUTHENTICATION-0015", "해당 작업을 할 권한이 없는 사용자입니다."),
     OAUTH_CANNOT_UNLINK_LAST_PROVIDER(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0016",
         "게정과 연동된 유일한 OAuth는 연동 해제할 수 없습니다. 회원 탈퇴를 이용해주세요."),
+
+    // 이메일 인증 관련
+    ALREADY_VERIFIED_EMAIL(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0017",
+        "이미 인증이 완료된 이메일 인증 세션입니다."),
+    EMAIL_VERIFICATION_SESSION_EXPIRED(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0018",
+        "만료된 이메일 인증 세션입니다. 새로운 인증을 요청해주세요."),
+
+    // ID/PW 자격증명 관련 에러
+    LOGIN_ID_ALREADY_EXISTS(HttpStatus.CONFLICT, "AUTHENTICATION-0019", "이미 사용 중인 로그인 ID입니다."),
+    INVALID_LOGIN_ID_FORMAT(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0020",
+        "로그인 ID 형식이 올바르지 않습니다. 영문/숫자/._- 5~20자로 입력해주세요."),
+    PASSWORD_POLICY_VIOLATION(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0021",
+        "비밀번호는 8~64자이며 영문/숫자/특수문자 중 2종류 이상을 포함해야 합니다."),
+    // ID 존재 여부 / 비밀번호 오류 / 자격증명 미등록 등을 외부에 구분 노출하지 않기 위한 단일 에러
+    INVALID_LOGIN_CREDENTIAL(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0022",
+        "로그인 ID 또는 비밀번호가 올바르지 않습니다."),
     ;
 
     private final HttpStatus httpStatus;

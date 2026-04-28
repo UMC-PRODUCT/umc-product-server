@@ -8,4 +8,11 @@ public record RegisterResponse(
     String accessToken,
     String refreshToken
 ) {
+    public static RegisterResponse of(Long memberId, String accessToken, String refreshToken) {
+        return RegisterResponse.builder()
+            .memberId(memberId)
+            .accessToken(accessToken)
+            .refreshToken(refreshToken)
+            .build();
+    }
 }

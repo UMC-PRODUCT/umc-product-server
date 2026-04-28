@@ -12,13 +12,16 @@ import com.umc.product.member.adapter.in.web.assembler.MemberInfoResponseAssembl
 import com.umc.product.member.adapter.in.web.dto.request.DeleteMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberInfoRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberProfileRequest;
-import com.umc.product.member.adapter.in.web.dto.request.RegisterMemberRequest;
+import com.umc.product.member.adapter.in.web.dto.request.IdPwRegisterMemberRequest;
+import com.umc.product.member.adapter.in.web.dto.request.OAuthRegisterMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
 import com.umc.product.member.application.port.in.command.ManageMemberProfileUseCase;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
+import com.umc.product.member.application.port.in.command.RegisterIdPwMemberUseCase;
+import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
-import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
 import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
@@ -42,27 +45,33 @@ public class MemberCommandController {
     private final MemberInfoResponseAssembler assembler;
 
     private final JwtTokenProvider jwtTokenProvider;
+
     private final ManageMemberUseCase manageMemberUseCase;
     private final ManageMemberProfileUseCase manageMemberProfileUseCase;
 
+    private final RegisterOAuthMemberUseCase registerOAuthMemberUseCase;
+    private final RegisterIdPwMemberUseCase registerIdPwMemberUseCase;
 
-    // 로그인은 OAuth를 통해서만 진행됨!!
+
     @Public
-    @Operation(summary = "회원가입",
+    @Operation(summary = "OAuth 회원가입",
         description = """
+            ### ⚠️ `register/oauth` 엔드포인트를 사용해주셔야 합니다. 기존 엔트포인트는 `v2.0.0`이 Production에 배포될 때 제거될 예정입니다.
+
+
             OAuth2 로그인을 통해서 oAuthVerificationToken 및 Email 인증을 통한 emailVerificationToken을 발급받은 후,
             해당 토큰들을 첨부해서 회원가입을 진행해주세요.
             """)
-    @PostMapping("register")
+    @PostMapping({"/register", "/register/oauth"})
     @WebhookAlarm(
         title = "'새로운 회원이 가입했어요!'",
         content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
     )
-    RegisterResponse registerMember(@RequestBody RegisterMemberRequest request) {
+    RegisterResponse registerMemberByOAuth(@RequestBody OAuthRegisterMemberRequest request) {
         OAuthVerificationClaims claims = jwtTokenProvider.parseOAuthVerificationToken(request.oAuthVerificationToken());
         String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
 
-        RegisterMemberCommand command = RegisterMemberCommand
+        OAuthRegisterMemberCommand command = OAuthRegisterMemberCommand
             .builder()
             .provider(claims.provider())
             .providerId(claims.providerId())
@@ -75,16 +84,34 @@ public class MemberCommandController {
             .appleRefreshToken(request.appleRefreshToken())
             .build();
 
-        Long createdMemberId = manageMemberUseCase.registerMember(command);
+        Long createdMemberId = registerOAuthMemberUseCase.register(command);
 
         String accessToken = jwtTokenProvider.createAccessToken(createdMemberId, null);
         String refreshToken = jwtTokenProvider.createRefreshToken(createdMemberId);
 
-        return RegisterResponse.builder()
-            .memberId(createdMemberId)
-            .accessToken(accessToken)
-            .refreshToken(refreshToken)
-            .build();
+        return RegisterResponse.of(createdMemberId, accessToken, refreshToken);
+    }
+
+    @Operation(summary = "ID/PW 이용 회원가입",
+        description = """
+            OAuth가 아닌, ID/PW를 이용해서 하는 회원가입 입니다.
+
+            OAuth Provider 및 Provider ID를 받지 않는 부분을 제외하면 동일하게 동작합니다.
+            회원가입 전 ID 중복 검사를 진행할 수 있도록 해주세요.
+            """)
+    @PostMapping("/register/id-pw")
+    @Public
+    RegisterResponse registerMemberByIdPw(@RequestBody IdPwRegisterMemberRequest request) {
+        String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
+
+        Long createdMemberId = registerIdPwMemberUseCase.register(
+            request.toCommand(email, request.termsAgreements())
+        );
+
+        String accessToken = jwtTokenProvider.createAccessToken(createdMemberId, null);
+        String refreshToken = jwtTokenProvider.createRefreshToken(createdMemberId);
+
+        return RegisterResponse.of(createdMemberId, accessToken, refreshToken);
     }
 
     @Operation(summary = "내 회원 정보 수정")

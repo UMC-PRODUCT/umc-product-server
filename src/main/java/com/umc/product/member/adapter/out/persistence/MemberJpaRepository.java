@@ -15,9 +15,13 @@ public interface MemberJpaRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findByNickname(String nickname);
 
+    Optional<Member> findByLoginId(String loginId);
+
     boolean existsByEmail(String email);
 
     boolean existsByNickname(String nickname);
+
+    boolean existsByLoginId(String loginId);
 
     @Query("select m.id from Member m where m.schoolId = :schoolId")
     Set<Long> findAllIdsBySchoolId(Long schoolId);
