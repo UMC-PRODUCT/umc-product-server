@@ -12,8 +12,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -85,18 +83,4 @@ public class StudyGroup extends BaseEntity {
             this.part = challengerPart;
         }
     }
-
-    public void validateMembersNotJoined(Set<Long> memberIds) {
-        Set<Long> alreadyJoined = memberIds.stream()
-            .filter(this::hasMember)
-            .collect(Collectors.toSet());
-
-        if (!alreadyJoined.isEmpty()) {
-            throw new OrganizationDomainException(
-                OrganizationErrorCode.STUDY_GROUP_MEMBER_DUPLICATED,
-                "이미 소속된 멤버: " + alreadyJoined
-            );
-        }
-    }
-
 }
