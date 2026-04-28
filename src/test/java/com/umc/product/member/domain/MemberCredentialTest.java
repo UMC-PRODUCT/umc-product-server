@@ -32,7 +32,7 @@ class MemberCredentialTest {
     }
 
     @Nested
-    @DisplayName("registerCredential")
+    @DisplayName("회원 자격 증명 등록 (ID/PW)")
     class RegisterCredential {
 
         @Test
@@ -120,7 +120,7 @@ class MemberCredentialTest {
     }
 
     @Nested
-    @DisplayName("hasCredential")
+    @DisplayName("회원 자격 증명 보유 관련 검증")
     class HasCredential {
 
         @Test

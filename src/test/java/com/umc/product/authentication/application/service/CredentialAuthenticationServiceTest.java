@@ -37,34 +37,29 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 /**
  * CredentialAuthenticationService 단위 테스트.
  * <p>
- * 외부 협력자(PasswordEncoder, JwtTokenProvider, Member 측 UseCase)는 모두 mock 으로 두고
- * Service 내부의 분기/사용자 열거 방지 / rehash 정책을 검증한다.
+ * 외부 협력자(PasswordEncoder, JwtTokenProvider, Member 측 UseCase)는 모두 mock 으로 두고 Service 내부의 분기/사용자 열거 방지 / rehash 정책을
+ * 검증한다.
  */
 @ExtendWith(MockitoExtension.class)
 class CredentialAuthenticationServiceTest {
-
-    @Mock
-    PasswordEncoder passwordEncoder;
-
-    @Mock
-    JwtTokenProvider jwtTokenProvider;
-
-    @Mock
-    GetMemberCredentialUseCase getMemberCredentialUseCase;
-
-    @Mock
-    ManageMemberCredentialUseCase manageMemberCredentialUseCase;
-
-    @InjectMocks
-    CredentialAuthenticationService service;
 
     private static final Long MEMBER_ID = 1L;
     private static final String LOGIN_ID = "alice01";
     private static final String RAW_PASSWORD = "Strong-Pw-2026";
     private static final String ENCODED_PASSWORD = "{argon2}$argon2id$v=19$m=16384,t=2,p=1$abc$def";
+    @Mock
+    PasswordEncoder passwordEncoder;
+    @Mock
+    JwtTokenProvider jwtTokenProvider;
+    @Mock
+    GetMemberCredentialUseCase getMemberCredentialUseCase;
+    @Mock
+    ManageMemberCredentialUseCase manageMemberCredentialUseCase;
+    @InjectMocks
+    CredentialAuthenticationService service;
 
     @Nested
-    @DisplayName("registerCredential")
+    @DisplayName("자격 증명 등록")
     class RegisterCredential {
 
         @Test
@@ -176,7 +171,7 @@ class CredentialAuthenticationServiceTest {
     }
 
     @Nested
-    @DisplayName("loginByIdPw")
+    @DisplayName("ID/PW 로그인")
     class LoginByIdPw {
 
         @Test
