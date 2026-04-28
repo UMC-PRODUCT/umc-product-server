@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -20,7 +21,27 @@ public class FormSectionPersistenceAdapter implements SaveFormSectionPort, LoadF
     }
 
     @Override
-    public List<FormSection> findAllByFormId(Long formId) {
+    public List<FormSection> saveAll(List<FormSection> sections) {
+        return formSectionJpaRepository.saveAll(sections);
+    }
+
+    @Override
+    public Optional<FormSection> findById(Long sectionId) {
+        return formSectionJpaRepository.findById(sectionId);
+    }
+
+    @Override
+    public List<FormSection> listByFormId(Long formId) {
         return formSectionJpaRepository.findAllByFormId(formId);
+    }
+
+    @Override
+    public void deleteById(Long sectionId) {
+        formSectionJpaRepository.deleteById(sectionId);
+    }
+
+    @Override
+    public void deleteByFormId(Long formId) {
+        formSectionJpaRepository.deleteByFormId(formId);
     }
 }

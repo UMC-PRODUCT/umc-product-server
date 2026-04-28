@@ -83,4 +83,10 @@ public class FormResponsePersistenceAdapter implements LoadFormResponsePort, Sav
             formId, respondentMemberId, FormResponseStatus.SUBMITTED
         );
     }
+
+    @Override
+    @Transactional
+    public void deleteByFormId(Long formId) {
+        formResponseJpaRepository.deleteByFormId(formId);
+    }
 }

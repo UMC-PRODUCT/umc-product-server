@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -15,16 +16,13 @@ public class QuestionOptionPersistenceAdapter implements SaveQuestionOptionPort,
     private final QuestionOptionJpaRepository questionOptionJpaRepository;
 
     @Override
-    public void deleteAllByQuestionId(Long questionId) {
-        questionOptionJpaRepository.deleteAllByQuestionId(questionId);
+    public QuestionOption save(QuestionOption option) {
+        return questionOptionJpaRepository.save(option);
     }
 
     @Override
-    public boolean existsByIdAndQuestionId(Long optionId, Long questionId) {
-        if (optionId == null || questionId == null) {
-            return false;
-        }
-        return questionOptionJpaRepository.existsByIdAndQuestion_Id(optionId, questionId);
+    public List<QuestionOption> saveAll(List<QuestionOption> questionOptions) {
+        return questionOptionJpaRepository.saveAll(questionOptions);
     }
 
     @Override
@@ -33,8 +31,31 @@ public class QuestionOptionPersistenceAdapter implements SaveQuestionOptionPort,
     }
 
     @Override
-    public List<QuestionOption> saveAll(List<QuestionOption> questionOptions) {
-        return questionOptionJpaRepository.saveAll(questionOptions);
+    public void deleteAllByQuestionId(Long questionId) {
+        questionOptionJpaRepository.deleteAllByQuestionId(questionId);
+    }
+
+    @Override
+    public void deleteByFormId(Long formId) {
+        questionOptionJpaRepository.deleteByFormId(formId);
+    }
+
+    @Override
+    public void deleteBySectionId(Long sectionId) {
+        questionOptionJpaRepository.deleteBySectionId(sectionId);
+    }
+
+    @Override
+    public Optional<QuestionOption> findById(Long optionId) {
+        return questionOptionJpaRepository.findById(optionId);
+    }
+
+    @Override
+    public boolean existsByIdAndQuestionId(Long optionId, Long questionId) {
+        if (optionId == null || questionId == null) {
+            return false;
+        }
+        return questionOptionJpaRepository.existsByIdAndQuestion_Id(optionId, questionId);
     }
 
     @Override

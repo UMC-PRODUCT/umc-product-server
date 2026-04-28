@@ -55,4 +55,11 @@ public class AnswerPersistenceAdapter implements LoadAnswerPort, SaveAnswerPort 
         answerChoiceJpaRepository.deleteAllByFormResponseId(formResponseId);
         answerJpaRepository.deleteAllByFormResponseId(formResponseId);
     }
+
+    @Override
+    public void deleteByFormId(Long formId) {
+        // FK 의존성 거꾸로: AnswerChoice -> Answer 순으로 삭제
+        answerChoiceJpaRepository.deleteByFormId(formId);
+        answerJpaRepository.deleteByFormId(formId);
+    }
 }

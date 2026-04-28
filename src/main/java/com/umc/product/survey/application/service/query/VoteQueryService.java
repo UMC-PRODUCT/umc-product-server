@@ -46,7 +46,7 @@ public class VoteQueryService implements GetVoteUseCase {
 
         // 2. 투표 구조 로드 (섹션 -> 질문 -> 옵션)
         // 공식적으로는 1섹션 1질문 구조를 전제로 하지만, 확장성을 고려하여 조회
-        FormSection section = loadFormSectionPort.findAllByFormId(formId).stream()
+        FormSection section = loadFormSectionPort.listByFormId(formId).stream()
             .findFirst()
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.INVALID_VOTE_FORM_STRUCTURE));
 

@@ -17,4 +17,10 @@ public interface SaveAnswerPort {
      * AnswerChoice -> Answer 순서로 삭제하여 FK 제약을 만족시킨다.
      */
     void deleteAllByFormResponseId(Long formResponseId);
+
+    /**
+     * 특정 폼에 속한 모든 Answer 와 그에 딸린 AnswerChoice 를 삭제 (deleteForm cascade 용).
+     * AnswerChoice -> Answer 순서로 삭제하여 FK 제약을 만족시킨다.
+     */
+    void deleteByFormId(Long formId);
 }

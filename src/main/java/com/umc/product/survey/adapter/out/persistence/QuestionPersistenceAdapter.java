@@ -42,6 +42,16 @@ public class QuestionPersistenceAdapter implements SaveQuestionPort, LoadQuestio
     }
 
     @Override
+    public void deleteByFormId(Long formId) {
+        questionJpaRepository.deleteByFormId(formId);
+    }
+
+    @Override
+    public void deleteBySectionId(Long sectionId) {
+        questionJpaRepository.deleteBySectionId(sectionId);
+    }
+
+    @Override
     public Optional<Question> findById(Long questionId) {
         return questionJpaRepository.findById(questionId);
     }
