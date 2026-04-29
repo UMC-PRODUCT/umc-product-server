@@ -3,7 +3,6 @@ package com.umc.product.project.adapter.in.web.assembler;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
-import com.umc.product.project.adapter.in.web.dto.common.ApplicationQuestionItem;
 import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
@@ -69,7 +68,8 @@ public class ProjectResponseAssembler {
             .map(id -> toBrief(memberMap.get(id)))
             .toList();
 
-        ProjectDetailResponse response = ProjectDetailResponse.from(info, owner, coOwners);
+        // TODO: applicationFormId hydrate from LoadProjectApplicationFormPort.findByProjectId
+        ProjectDetailResponse response = ProjectDetailResponse.from(info, owner, coOwners, null);
         return canSeeFullInfo ? response : response.toPublic();
     }
 
@@ -90,10 +90,8 @@ public class ProjectResponseAssembler {
             .map(id -> toBrief(memberMap.get(id)))
             .toList();
 
-        // TODO: 지원 문항(questions)은 Survey 도메인 GetFormDefinitionUseCase 연동 필요
-        List<ApplicationQuestionItem> questions = List.of();
-
-        return DraftProjectResponse.from(info, owner, coOwners, questions);
+        // TODO: applicationFormId hydrate from LoadProjectApplicationFormPort.findByProjectId
+        return DraftProjectResponse.from(info, owner, coOwners, null);
     }
 
     private Map<Long, MemberInfo> loadMembers(ProjectInfo info) {

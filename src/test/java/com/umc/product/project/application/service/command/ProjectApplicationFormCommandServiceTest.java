@@ -587,7 +587,6 @@ class ProjectApplicationFormCommandServiceTest {
      * 응답 조립
      * ===================================================== */
 
-    @SuppressWarnings("unchecked")
     @Test
     void upsert_후_응답에_업데이트된_구조가_담겨야() {
         Project project = createProject(42L, ProjectStatus.DRAFT, "Triple");
@@ -596,13 +595,13 @@ class ProjectApplicationFormCommandServiceTest {
         given(loadProjectPort.getById(42L)).willReturn(project);
         given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
         given(getFormUseCase.getById(500L)).willReturn(formInfo("Triple", null));
-        given(getFormUseCase.getFormWithStructure(eq(500L))).willReturn(emptyStructure(), structure(List.of(
-            existingSection(1000L, "공통", null, 1L, List.of())
-        )));
-        given(loadPolicyPort.listByApplicationFormId(100L)).willReturn(
-            List.<ProjectApplicationFormPolicy>of(),
-            List.of(ProjectApplicationFormPolicy.createCommon(form, 1000L))
-        );
+        // service 가 두 번 호출 — 1) applyDiff 시점, 2) assembleResponse 시점
+        given(getFormUseCase.getFormWithStructure(eq(500L)))
+            .willReturn(emptyStructure())
+            .willReturn(structure(List.of(existingSection(1000L, "공통", null, 1L, List.of()))));
+        given(loadPolicyPort.listByApplicationFormId(100L))
+            .willReturn(List.of())
+            .willReturn(List.of(ProjectApplicationFormPolicy.createCommon(form, 1000L)));
         given(manageFormSectionUseCase.createSection(any())).willReturn(1000L);
 
         UpsertApplicationFormCommand cmd = commandWithSections(42L, List.of(
