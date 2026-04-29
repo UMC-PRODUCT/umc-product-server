@@ -61,9 +61,9 @@ public class ProjectApplicationForm extends BaseEntity {
     }
 
     /**
-     * TODO: 특정 프로젝트에 속한 지원용 폼인지 검증하는 메소드입니다.
+     * 본 지원 폼이 인자로 전달된 프로젝트에 속하는지 검증한다.
      */
     public boolean belongsTo(Project project) {
-        return false;
+        return this.project.getId().equals(project.getId());
     }
 }

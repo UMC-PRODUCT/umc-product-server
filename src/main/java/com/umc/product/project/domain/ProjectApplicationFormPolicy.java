@@ -2,6 +2,7 @@ package com.umc.product.project.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.domain.enums.FormSectionType;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import jakarta.persistence.Column;
@@ -26,13 +27,15 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 /**
- * 프로젝트에 지원하기 위한 폼 내에 포함된 특정 섹션이 어떤 파트에 의해서 접근이 가능한지를 나타내는 엔티티입니다.
+ * 지원 폼 내 특정 섹션의 가시성 정책.
  * <p>
- * 프로젝트 지원용 폼 조회 시, 본 엔티티를 반드시 거쳐서 접근 권한이 있는 사용자에게만 노출되도록 하여야 하며,
- * <p>
- * Form 내에 있는 FormSection 중에서 본 Policy가 명시되지 않은 Section은 어떠한 파트에게도 노출되지 않습니다.
- * <p>
- * 단, 운영진이나 프로젝트 Plan은 반드시 해당 사항을 조회할 수 있어야 합니다.
+ * 각 섹션은 {@link FormSectionType#COMMON COMMON} 또는 {@link FormSectionType#PART PART} 중 하나로 분류되며,
+ * 챌린저가 폼을 조회할 때 본인 파트가 해당 섹션을 볼 수 있는지 결정한다.
+ * <ul>
+ *   <li>{@code COMMON} — 모든 파트 노출, {@code allowedParts} 무시</li>
+ *   <li>{@code PART} — {@code allowedParts} 명시 1개 이상</li>
+ * </ul>
+ * 운영진이나 프로젝트 PM 은 본 정책을 우회하고 전체 섹션을 조회한다.
  */
 @Entity
 @Table(name = "project_application_form_policy")
@@ -49,54 +52,95 @@ public class ProjectApplicationFormPolicy extends BaseEntity {
     private ProjectApplicationForm applicationForm;
 
     @Column(nullable = false)
-    private Long formSectionId; // 접근 권한 제한을 받을 FormSection의 ID
+    private Long formSectionId;
 
-    @Enumerated(EnumType.STRING) // Enum 값이므로 String으로 저장
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private FormSectionType type;
+
+    @Enumerated(EnumType.STRING)
     @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "allowed_parts", columnDefinition = "text[]", nullable = false)
+    @Column(name = "allowed_parts", columnDefinition = "text[]")
     private List<ChallengerPart> allowedParts = new ArrayList<>();
 
     @Builder(access = AccessLevel.PRIVATE)
     private ProjectApplicationFormPolicy(
         ProjectApplicationForm applicationForm,
         Long formSectionId,
-        Set<ChallengerPart> allowedParts
+        FormSectionType type,
+        List<ChallengerPart> allowedParts
     ) {
         this.applicationForm = applicationForm;
         this.formSectionId = formSectionId;
-        this.allowedParts = allowedParts.stream().toList();
+        this.type = type;
+        this.allowedParts = allowedParts;
     }
 
-    public static ProjectApplicationFormPolicy create(
-        ProjectApplicationForm form, Long formSectionId,
-        Set<ChallengerPart> allowedParts
+    /**
+     * 모든 파트에게 노출되는 공통 섹션 정책을 생성한다.
+     */
+    public static ProjectApplicationFormPolicy createCommon(
+        ProjectApplicationForm form, Long formSectionId
     ) {
         return ProjectApplicationFormPolicy.builder()
             .applicationForm(form)
             .formSectionId(formSectionId)
-            .allowedParts(allowedParts)
+            .type(FormSectionType.COMMON)
+            .allowedParts(new ArrayList<>())
             .build();
     }
 
     /**
-     * FormSection에 접근 가능한 파트를 설정합니다.
+     * 특정 파트에게만 노출되는 섹션 정책을 생성한다.
+     * {@code allowedParts} 는 1개 이상이어야 한다.
      */
-    public void upsertAllowedParts(Set<ChallengerPart> parts) {
-        this.allowedParts = parts.stream().toList();
+    public static ProjectApplicationFormPolicy createForParts(
+        ProjectApplicationForm form, Long formSectionId, Set<ChallengerPart> allowedParts
+    ) {
+        if (allowedParts == null || allowedParts.isEmpty()) {
+            throw new ProjectDomainException(ProjectErrorCode.APPLICATION_FORM_POLICY_PARTS_EMPTY);
+        }
+        return ProjectApplicationFormPolicy.builder()
+            .applicationForm(form)
+            .formSectionId(formSectionId)
+            .type(FormSectionType.PART)
+            .allowedParts(new ArrayList<>(allowedParts))
+            .build();
     }
 
     /**
-     * 특정 파트가 FormSection에 접근이 가능한지를 판단합니다.
+     * 정책 타입과 노출 파트 목록을 갱신한다.
+     * <p>
+     * {@code COMMON} 으로 변경하면 {@code allowedParts} 는 비워진다.
+     * {@code PART} 로 변경 시 {@code allowedParts} 가 비어있으면 도메인 예외를 던진다.
+     */
+    public void updatePolicy(FormSectionType type, Set<ChallengerPart> allowedParts) {
+        if (type == FormSectionType.PART && (allowedParts == null || allowedParts.isEmpty())) {
+            throw new ProjectDomainException(ProjectErrorCode.APPLICATION_FORM_POLICY_PARTS_EMPTY);
+        }
+        this.type = type;
+        this.allowedParts = (type == FormSectionType.COMMON)
+            ? new ArrayList<>()
+            : new ArrayList<>(allowedParts);
+    }
+
+    /**
+     * 특정 파트가 본 섹션을 조회할 수 있는지 판단한다.
+     * <p>
+     * {@code COMMON} 이면 항상 true (ChallengerPart enum 추가에도 안전).
+     * {@code PART} 이면 {@code allowedParts} 매칭.
      */
     public boolean canAccess(ChallengerPart part) {
-        return this.allowedParts.contains(part);
+        if (type == FormSectionType.COMMON) {
+            return true;
+        }
+        return allowedParts.contains(part);
     }
 
     public void validateSectionAccessPermission(ChallengerPart part) {
         if (canAccess(part)) {
             return;
         }
-
         throw new ProjectDomainException(ProjectErrorCode.APPLICATION_FORM_ACCESS_NOT_ALLOWED);
     }
 }
