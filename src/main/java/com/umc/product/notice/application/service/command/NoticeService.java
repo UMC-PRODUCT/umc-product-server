@@ -167,8 +167,4 @@ public class NoticeService implements ManageNoticeUseCase {
         NoticeTargetPattern pattern = NoticeTargetPattern.from(noticeTargetInfo);
         return pattern.validatePermission(noticeTargetInfo, authorMemberId, getChallengerRoleUseCase);
     }
-
-    /**
-     * 작성자의 역할을 기반으로 공지 탭을 결정 - 일반 공지: CHALLENGER - 운영진 공지: 작성자가 중앙운영진이면 CENTRAL_STAFF, 아니면 SCHOOL_STAFF
-     */
 }
