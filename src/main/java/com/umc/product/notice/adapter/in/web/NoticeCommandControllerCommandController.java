@@ -10,7 +10,7 @@ import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.SendNoticeReminderRequest;
 import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.response.command.CreateNoticeResponse;
-import com.umc.product.notice.adapter.in.web.swagger.NoticeApi;
+import com.umc.product.notice.adapter.in.web.swagger.NoticeCommandControllerApi;
 import com.umc.product.notice.application.port.in.command.ManageNoticeReadUseCase;
 import com.umc.product.notice.application.port.in.command.ManageNoticeUseCase;
 import com.umc.product.notice.application.port.in.command.dto.DeleteNoticeCommand;
@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/notices")
 @RequiredArgsConstructor
-public class NoticeController implements NoticeApi {
+public class NoticeCommandControllerCommandController implements NoticeCommandControllerApi {
 
     private final ManageNoticeUseCase manageNoticeUseCase;
     private final ManageNoticeReadUseCase manageNoticeReadUseCase;

@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.notice.adapter.in.web.NoticeCommandControllerCommandController;
 import com.umc.product.notice.adapter.in.web.NoticeContentController;
-import com.umc.product.notice.adapter.in.web.NoticeController;
 import com.umc.product.notice.adapter.in.web.NoticeQueryController;
 import com.umc.product.notice.adapter.in.web.assembler.NoticeViewerInfoAssembler;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
@@ -47,7 +47,7 @@ import org.springframework.test.web.servlet.MockMvc;
     ChapterQueryController.class,
     AdminGisuController.class,
     AdminGisuQueryController.class,
-    NoticeController.class,
+    NoticeCommandControllerCommandController.class,
     NoticeQueryController.class,
     NoticeContentController.class,
 })
@@ -63,6 +63,38 @@ public class DocumentationTest {
     // =================================================
 
     protected static final Long TEST_MEMBER_ID = 1L;
+    @Autowired
+    protected MockMvc mockMvc;
+    @Autowired
+    protected RestDocumentationResultHandler restDocsHandler;
+    @Autowired
+    protected ObjectMapper objectMapper;
+    @MockitoBean
+    protected JwtTokenProvider jwtTokenProvider;
+    @MockitoBean
+    protected ManageSchoolUseCase manageSchoolUseCase;
+    @MockitoBean
+    protected GetSchoolUseCase getSchoolUseCase;
+    @MockitoBean
+    protected ManageChapterUseCase manageChapterUseCase;
+    @MockitoBean
+    protected GetChapterUseCase getChapterUseCase;
+    @MockitoBean
+    protected ManageGisuUseCase manageGisuUseCase;
+    @MockitoBean
+    protected GetGisuUseCase getGisuUseCase;
+    @MockitoBean
+    protected GetFileUseCase getFileUseCase;
+    @MockitoBean
+    protected ManageNoticeUseCase manageNoticeUseCase;
+    @MockitoBean
+    protected ManageNoticeReadUseCase manageNoticeReadUseCase;
+    @MockitoBean
+    protected ManageNoticeContentUseCase manageNoticeContentUseCase;
+    @MockitoBean
+    protected GetNoticeUseCase getNoticeUseCase;
+    @MockitoBean
+    protected NoticeViewerInfoAssembler noticeViewerInfoAssembler;
 
     @BeforeEach
     void setUpSecurityContext() {
@@ -73,52 +105,4 @@ public class DocumentationTest {
             new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
-
-    @Autowired
-    protected MockMvc mockMvc;
-
-    @Autowired
-    protected RestDocumentationResultHandler restDocsHandler;
-
-    @Autowired
-    protected ObjectMapper objectMapper;
-
-    @MockitoBean
-    protected JwtTokenProvider jwtTokenProvider;
-
-    @MockitoBean
-    protected ManageSchoolUseCase manageSchoolUseCase;
-
-    @MockitoBean
-    protected GetSchoolUseCase getSchoolUseCase;
-
-    @MockitoBean
-    protected ManageChapterUseCase manageChapterUseCase;
-
-    @MockitoBean
-    protected GetChapterUseCase getChapterUseCase;
-
-    @MockitoBean
-    protected ManageGisuUseCase manageGisuUseCase;
-
-    @MockitoBean
-    protected GetGisuUseCase getGisuUseCase;
-
-    @MockitoBean
-    protected GetFileUseCase getFileUseCase;
-
-    @MockitoBean
-    protected ManageNoticeUseCase manageNoticeUseCase;
-
-    @MockitoBean
-    protected ManageNoticeReadUseCase manageNoticeReadUseCase;
-
-    @MockitoBean
-    protected ManageNoticeContentUseCase manageNoticeContentUseCase;
-
-    @MockitoBean
-    protected GetNoticeUseCase getNoticeUseCase;
-
-    @MockitoBean
-    protected NoticeViewerInfoAssembler noticeViewerInfoAssembler;
 }

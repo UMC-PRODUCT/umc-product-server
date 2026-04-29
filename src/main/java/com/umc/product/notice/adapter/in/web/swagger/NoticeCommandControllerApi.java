@@ -15,8 +15,8 @@ import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "Notice | 공지사항 Command", description = "")
-public interface NoticeApi {
+@Tag(name = "Notice | 공지사항 Command", description = "공지사항 생성, 수정, 삭제")
+public interface NoticeCommandControllerApi {
 
     @Operation(
         summary = "공지사항 생성",
