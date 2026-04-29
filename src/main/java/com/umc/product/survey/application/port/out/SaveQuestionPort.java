@@ -2,9 +2,13 @@ package com.umc.product.survey.application.port.out;
 
 import com.umc.product.survey.domain.Question;
 
+import java.util.List;
+
 public interface SaveQuestionPort {
 
     Question save(Question question);
+
+    List<Question> saveAll(List<Question> questions);
 
     void deleteById(Long questionId);
 

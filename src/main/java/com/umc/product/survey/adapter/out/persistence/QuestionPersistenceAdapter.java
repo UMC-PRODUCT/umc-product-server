@@ -81,4 +81,9 @@ public class QuestionPersistenceAdapter implements SaveQuestionPort, LoadQuestio
     public Question save(Question question) {
         return questionJpaRepository.save(question);
     }
+
+    @Override
+    public List<Question> saveAll(List<Question> questions) {
+        return questionJpaRepository.saveAll(questions);
+    }
 }

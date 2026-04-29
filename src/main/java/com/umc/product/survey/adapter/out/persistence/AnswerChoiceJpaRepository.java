@@ -49,4 +49,16 @@ public interface AnswerChoiceJpaRepository extends JpaRepository<AnswerChoice, L
             )
         """)
     int deleteByFormId(@Param("formId") Long formId);
+
+    /**
+     * 특정 질문에 속한 모든 AnswerChoice 삭제 (deleteQuestion cascade 용)
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            DELETE FROM AnswerChoice ac
+            WHERE ac.answer.id IN (
+                SELECT a.id FROM Answer a WHERE a.question.id = :questionId
+            )
+        """)
+    int deleteByQuestionId(@Param("questionId") Long questionId);
 }
