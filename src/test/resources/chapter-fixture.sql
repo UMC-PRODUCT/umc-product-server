@@ -1,20 +1,22 @@
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.243300 +00:00', 3, 14, '2026-02-27 20:39:25.243300 +00:00', 'Ain');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.273329 +00:00', 3, 15, '2026-02-27 20:39:25.273329 +00:00', 'Sirius');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.297351 +00:00', 3, 16, '2026-02-27 20:39:25.297351 +00:00', 'Vega');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.326378 +00:00', 3, 17, '2026-02-27 20:39:25.326378 +00:00', 'Betelgeuse');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.354403 +00:00', 3, 18, '2026-02-27 20:39:25.354403 +00:00', 'Deneb');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.379887 +00:00', 3, 19, '2026-02-27 20:39:25.379887 +00:00', 'Maru');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.400037 +00:00', 4, 20, '2026-02-27 20:39:25.400037 +00:00', 'Nova');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.424601 +00:00', 4, 21, '2026-02-27 20:39:25.424601 +00:00', 'Aquarius');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.451634 +00:00', 4, 22, '2026-02-27 20:39:25.451634 +00:00', 'Cetus');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.477658 +00:00', 4, 23, '2026-02-27 20:39:25.477658 +00:00', 'Pegasus');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.504093 +00:00', 4, 24, '2026-02-27 20:39:25.504093 +00:00', 'Leo');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.532587 +00:00', 4, 25, '2026-02-27 20:39:25.532587 +00:00', 'Scorpio');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.563044 +00:00', 4, 26, '2026-02-27 20:39:25.563044 +00:00', 'Cassiopeia');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.593587 +00:00', 5, 27, '2026-02-27 20:39:25.593587 +00:00', 'Neon');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.625452 +00:00', 5, 28, '2026-02-27 20:39:25.625452 +00:00', 'Xenon');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.655479 +00:00', 5, 29, '2026-02-27 20:39:25.655479 +00:00', 'Chromium');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.681954 +00:00', 5, 30, '2026-02-27 20:39:25.681954 +00:00', 'Ferrum');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.718657 +00:00', 5, 31, '2026-02-27 20:39:25.718657 +00:00', 'Platinum');
-INSERT INTO public.chapter (created_at, gisu_id, id, updated_at, name) VALUES ('2026-02-27 20:39:25.742045 +00:00', 5, 32, '2026-02-27 20:39:25.742045 +00:00', 'Selenium');
-SELECT setval('public.chapter_id_seq', 32, true);
+INSERT INTO chapter (created_at, gisu_id, id, updated_at, name)
+VALUES ('2026-02-27 20:39:25.243300 +00:00', 3, 14, '2026-02-27 20:39:25.243300 +00:00', 'Ain'),
+       ('2026-02-27 20:39:25.273329 +00:00', 3, 15, '2026-02-27 20:39:25.273329 +00:00', 'Sirius'),
+       ('2026-02-27 20:39:25.297351 +00:00', 3, 16, '2026-02-27 20:39:25.297351 +00:00', 'Vega'),
+       ('2026-02-27 20:39:25.326378 +00:00', 3, 17, '2026-02-27 20:39:25.326378 +00:00', 'Betelgeuse'),
+       ('2026-02-27 20:39:25.354403 +00:00', 3, 18, '2026-02-27 20:39:25.354403 +00:00', 'Deneb'),
+       ('2026-02-27 20:39:25.379887 +00:00', 3, 19, '2026-02-27 20:39:25.379887 +00:00', 'Maru'),
+       ('2026-02-27 20:39:25.400037 +00:00', 4, 20, '2026-02-27 20:39:25.400037 +00:00', 'Nova'),
+       ('2026-02-27 20:39:25.424601 +00:00', 4, 21, '2026-02-27 20:39:25.424601 +00:00', 'Aquarius'),
+       ('2026-02-27 20:39:25.451634 +00:00', 4, 22, '2026-02-27 20:39:25.451634 +00:00', 'Cetus'),
+       ('2026-02-27 20:39:25.477658 +00:00', 4, 23, '2026-02-27 20:39:25.477658 +00:00', 'Pegasus'),
+       ('2026-02-27 20:39:25.504093 +00:00', 4, 24, '2026-02-27 20:39:25.504093 +00:00', 'Leo'),
+       ('2026-02-27 20:39:25.532587 +00:00', 4, 25, '2026-02-27 20:39:25.532587 +00:00', 'Scorpio'),
+       ('2026-02-27 20:39:25.563044 +00:00', 4, 26, '2026-02-27 20:39:25.563044 +00:00', 'Cassiopeia'),
+       ('2026-02-27 20:39:25.593587 +00:00', 5, 27, '2026-02-27 20:39:25.593587 +00:00', 'Neon'),
+       ('2026-02-27 20:39:25.625452 +00:00', 5, 28, '2026-02-27 20:39:25.625452 +00:00', 'Xenon'),
+       ('2026-02-27 20:39:25.655479 +00:00', 5, 29, '2026-02-27 20:39:25.655479 +00:00', 'Chromium'),
+       ('2026-02-27 20:39:25.681954 +00:00', 5, 30, '2026-02-27 20:39:25.681954 +00:00', 'Ferrum'),
+       ('2026-02-27 20:39:25.718657 +00:00', 5, 31, '2026-02-27 20:39:25.718657 +00:00', 'Platinum'),
+       ('2026-02-27 20:39:25.742045 +00:00', 5, 32, '2026-02-27 20:39:25.742045 +00:00', 'Selenium');
+
+\i sequence-reset.sql
