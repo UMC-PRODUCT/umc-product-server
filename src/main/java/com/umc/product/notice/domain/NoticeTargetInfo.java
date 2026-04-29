@@ -1,7 +1,6 @@
-package com.umc.product.notice.dto;
+package com.umc.product.notice.domain;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -10,12 +9,9 @@ import java.util.List;
 /**
  * 역할: "이 공지는 누구를 대상으로 하는가"를 표현하는 공지 대상 범위 데이터.
  * <p>
- * 공지 생성/수정 시 Request에 담겨 들어오고(입력),
- * 공지 조회 시 Response에 담겨 나갑니다(출력).
- * null 필드는 해당 차원에서 전체 대상임을 의미합니다.
+ * 공지 생성/수정 시 Request에 담겨 들어오고(입력), 공지 조회 시 Response에 담겨 나갑니다(출력). null 필드는 해당 차원에서 전체 대상임을 의미합니다.
  * <p>
- * - minTargetRole: 운영진 공지의 하한선 역할. CHALLENGER면 일반 챌린저 공지.
- * - from(NoticeTarget): 엔티티 → DTO 변환 (조회 방향)
+ * - minTargetRole: 운영진 공지의 하한선 역할. CHALLENGER면 일반 챌린저 공지. - from(NoticeTarget): 엔티티 → DTO 변환 (조회 방향)
  */
 @Schema(description = "공지 대상 범위 설정. null인 필드는 '전체'를 의미합니다. "
     + "예) targetGisuId만 입력 → 해당 기수 전체 / targetChapterId도 입력 → 해당 지부만 / targetParts도 입력 → 해당 파트만 / "
@@ -41,7 +37,9 @@ public record NoticeTargetInfo(
     @NotNull(message = "대상 역할은 필수입니다. 챌린저 공지의 경우 CHALLENGER를 입력하세요.")
     NoticeTargetRole minTargetRole
 ) {
-    /** 엔티티 → DTO 변환 (조회 방향) */
+    /**
+     * 엔티티 → DTO 변환 (조회 방향)
+     */
     public static NoticeTargetInfo from(NoticeTarget noticeTarget) {
         return new NoticeTargetInfo(
             noticeTarget.getTargetGisuId(),

@@ -19,15 +19,15 @@ import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
+import com.umc.product.notice.domain.NoticeClassification;
 import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.domain.NoticeTarget;
+import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
+import com.umc.product.notice.domain.enums.NoticeTargetPattern;
 import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import com.umc.product.notice.dto.NoticeClassification;
-import com.umc.product.notice.dto.NoticeTargetInfo;
-import com.umc.product.notice.dto.NoticeTargetPattern;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
@@ -309,10 +309,8 @@ public class NoticeQueryService implements GetNoticeUseCase {
     /**
      * 챌린저 공지 한정으로 파트 필터 시 지부/학교 ID를 보완합니다.
      * <p>
-     * - chapterId/schoolId가 이미 명시된 경우: 그대로 사용 (총괄단 등이 특정 범위 지정 가능)
-     * - 챌린저 공지에서 part만 있고 chapterId/schoolId 없는 경우: viewerInfo로 보완
-     * - 운영진 공지는 schoolId를 자동 보완하지 않습니다.
-     *   schoolId 유무로 중앙공지/교내공지를 명확히 구분하므로, 반드시 클라이언트가 명시해야 합니다.
+     * - chapterId/schoolId가 이미 명시된 경우: 그대로 사용 (총괄단 등이 특정 범위 지정 가능) - 챌린저 공지에서 part만 있고 chapterId/schoolId 없는 경우:
+     * viewerInfo로 보완 - 운영진 공지는 schoolId를 자동 보완하지 않습니다. schoolId 유무로 중앙공지/교내공지를 명확히 구분하므로, 반드시 클라이언트가 명시해야 합니다.
      */
     private NoticeClassification enrichClassification(NoticeViewerInfo viewerInfo,
                                                       NoticeClassification classification) {

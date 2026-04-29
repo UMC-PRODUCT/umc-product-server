@@ -10,7 +10,7 @@ import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeDetailR
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeReadStatusResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeStaticsResponse;
 import com.umc.product.notice.adapter.in.web.dto.response.query.GetNoticeSummaryResponse;
-import com.umc.product.notice.dto.NoticeClassification;
+import com.umc.product.notice.domain.NoticeClassification;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

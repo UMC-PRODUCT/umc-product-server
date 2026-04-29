@@ -9,7 +9,7 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.global.config.FcmProperties;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
-import com.umc.product.notice.dto.NoticeTargetInfo;
+import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notification.application.port.in.SendNotificationToAudienceUseCase;
 import com.umc.product.notification.application.port.in.dto.AudienceNotificationCommand;
 import com.umc.product.notification.application.port.in.dto.NotificationCommand;

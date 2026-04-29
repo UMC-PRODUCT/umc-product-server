@@ -13,10 +13,10 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.domain.Notice;
+import com.umc.product.notice.domain.NoticeClassification;
 import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import com.umc.product.notice.dto.NoticeClassification;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -107,8 +107,7 @@ public class NoticeQueryRepository {
     }
 
     /**
-     * 운영진 공지 조회 조건.
-     * minTargetRole 하한선 방식으로, viewerRole이 읽을 수 있는 역할 목록을 IN 조건으로 처리합니다.
+     * 운영진 공지 조회 조건. minTargetRole 하한선 방식으로, viewerRole이 읽을 수 있는 역할 목록을 IN 조건으로 처리합니다.
      */
     private BooleanExpression buildStaffCondition(
         NoticeClassification classification,
@@ -130,12 +129,11 @@ public class NoticeQueryRepository {
     }
 
     /**
-     * 운영진 공지 파트 조건.
-     * - classification.part() 명시 시: 해당 파트 또는 파트 미지정 공지
-     * - 회장단 이상(CENTRAL_MEMBER, SCHOOL_CORE): 파트 미지정 시 전체 파트 조회
-     * - 파트장: 담당 파트로만 필터링
+     * 운영진 공지 파트 조건. - classification.part() 명시 시: 해당 파트 또는 파트 미지정 공지 - 회장단 이상(CENTRAL_MEMBER, SCHOOL_CORE): 파트 미지정 시 전체
+     * 파트 조회 - 파트장: 담당 파트로만 필터링
      */
-    private BooleanExpression buildStaffPartCondition(NoticeClassification classification, NoticeViewerInfo viewerInfo) {
+    private BooleanExpression buildStaffPartCondition(NoticeClassification classification,
+                                                      NoticeViewerInfo viewerInfo) {
         // 파트 지정 시: 역할 무관하게 해당 파트 공지만 (파트 미지정 공지 제외)
         if (classification.part() != null) {
             return targetPartContains(classification.part());

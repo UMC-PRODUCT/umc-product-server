@@ -1,7 +1,7 @@
-package com.umc.product.notice.dto;
+package com.umc.product.notice.domain.enums;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
-import com.umc.product.notice.domain.enums.NoticeTargetRole;
+import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import lombok.extern.slf4j.Slf4j;

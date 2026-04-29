@@ -3,7 +3,7 @@ package com.umc.product.notice.adapter.in.web.dto.response.query;
 import com.umc.product.notice.application.port.in.query.dto.NoticeImageInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeLinkInfo;
-import com.umc.product.notice.dto.NoticeTargetInfo;
+import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
 import java.time.Instant;
 import java.util.List;
