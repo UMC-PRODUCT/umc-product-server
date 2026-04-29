@@ -1,8 +1,8 @@
 package com.umc.product.organization.application.port.service.query;
 
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
-import com.umc.product.organization.application.port.in.query.dto.GisuNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuNameInfo;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;

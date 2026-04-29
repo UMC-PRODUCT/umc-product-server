@@ -13,8 +13,8 @@ import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
-import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.TransferProjectOwnershipCommand;
@@ -37,15 +37,52 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class ProjectCommandServiceTest {
 
-    @Mock LoadProjectPort loadProjectPort;
-    @Mock SaveProjectPort saveProjectPort;
-    @Mock LoadProjectApplicationFormPort loadProjectApplicationFormPort;
-    @Mock GetMemberUseCase getMemberUseCase;
-    @Mock GetChallengerUseCase getChallengerUseCase;
-    @Mock GetGisuUseCase getGisuUseCase;
-    @Mock GetChapterUseCase getChapterUseCase;
+    @Mock
+    LoadProjectPort loadProjectPort;
+    @Mock
+    SaveProjectPort saveProjectPort;
+    @Mock
+    LoadProjectApplicationFormPort loadProjectApplicationFormPort;
+    @Mock
+    GetMemberUseCase getMemberUseCase;
+    @Mock
+    GetChallengerUseCase getChallengerUseCase;
+    @Mock
+    GetGisuUseCase getGisuUseCase;
+    @Mock
+    GetChapterUseCase getChapterUseCase;
 
-    @InjectMocks ProjectCommandService sut;
+    @InjectMocks
+    ProjectCommandService sut;
+
+    private Project createProject(ProjectStatus status) {
+        Project project = Project.createDraft(1L, 2L, 100L);
+        ReflectionTestUtils.setField(project, "id", 1L);
+        ReflectionTestUtils.setField(project, "status", status);
+        return project;
+    }
+
+    private ChallengerInfo challengerInfo(Long memberId, ChallengerPart part) {
+        return ChallengerInfo.builder()
+            .challengerId(1L)
+            .memberId(memberId)
+            .gisuId(1L)
+            .part(part)
+            .build();
+    }
+
+    private MemberInfo memberInfo(Long schoolId) {
+        return MemberInfo.builder()
+            .id(100L)
+            .schoolId(schoolId)
+            .build();
+    }
+
+    private GisuInfo gisuInfo() {
+        return new GisuInfo(1L, 9L, null, null, true);
+    }
+
+    // --- helpers ---
 
     @Nested
     class create {
@@ -199,9 +236,9 @@ class ProjectCommandServiceTest {
             given(loadProjectPort.getById(1L)).willReturn(project);
 
             assertThatThrownBy(() -> sut.submit(SubmitProjectCommand.builder()
-                    .projectId(1L)
-                    .requesterMemberId(999L)
-                    .build()))
+                .projectId(1L)
+                .requesterMemberId(999L)
+                .build()))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
@@ -215,9 +252,9 @@ class ProjectCommandServiceTest {
             given(loadProjectApplicationFormPort.existsByProjectId(1L)).willReturn(false);
 
             assertThatThrownBy(() -> sut.submit(SubmitProjectCommand.builder()
-                    .projectId(1L)
-                    .requesterMemberId(100L)
-                    .build()))
+                .projectId(1L)
+                .requesterMemberId(100L)
+                .build()))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_SUBMIT_VALIDATION_FAILED);
@@ -299,34 +336,5 @@ class ProjectCommandServiceTest {
                 .newOwnerMemberId(newOwner)
                 .build();
         }
-    }
-
-    // --- helpers ---
-
-    private Project createProject(ProjectStatus status) {
-        Project project = Project.createDraft(1L, 2L, 100L);
-        ReflectionTestUtils.setField(project, "id", 1L);
-        ReflectionTestUtils.setField(project, "status", status);
-        return project;
-    }
-
-    private ChallengerInfo challengerInfo(Long memberId, ChallengerPart part) {
-        return ChallengerInfo.builder()
-            .challengerId(1L)
-            .memberId(memberId)
-            .gisuId(1L)
-            .part(part)
-            .build();
-    }
-
-    private MemberInfo memberInfo(Long schoolId) {
-        return MemberInfo.builder()
-            .id(100L)
-            .schoolId(schoolId)
-            .build();
-    }
-
-    private GisuInfo gisuInfo() {
-        return new GisuInfo(1L, 9L, null, null, true);
     }
 }

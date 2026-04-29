@@ -5,13 +5,16 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
+import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupDetailInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupMemberInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupNameInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupViewScope;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
+import com.umc.product.organization.application.port.out.query.LoadStudyGroupMemberPort;
+import com.umc.product.organization.application.port.out.query.LoadStudyGroupMentorPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
+import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -27,17 +30,21 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class StudyGroupQueryService implements GetStudyGroupUseCase {
 
-    private final LoadStudyGroupPort loadStudyGroupPort;
+
+    private final GetGisuUseCase getGisuUseCase;
     private final GetFileUseCase getFileUseCase;
     private final GetMemberUseCase getMemberUseCase;
-    private final GetGisuUseCase getGisuUseCase;
+    private final GetSchoolUseCase getSchoolUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
+
+    private final LoadStudyGroupPort loadStudyGroupPort;
+    private final LoadStudyGroupMemberPort loadStudyGroupMemberPort;
+    private final LoadStudyGroupMentorPort loadStudyGroupMentorPort;
 
     /**
      * 내 스터디 그룹 목록 조회 UseCase 구현.
      * <p>
-     * 사용자의 활성 기수에서의 역할(Role)을 바탕으로 조회 범위(Scope)를 조립하여,
-     * 해당 Scope가 허용하는 스터디 그룹 목록을 커서 페이지네이션으로 반환한다.
+     * 사용자의 활성 기수에서의 역할(Role)을 바탕으로 조회 범위(Scope)를 조립하여, 해당 Scope가 허용하는 스터디 그룹 목록을 커서 페이지네이션으로 반환한다.
      * <ul>
      *   <li>학교 회장단(SCHOOL_PRESIDENT/VICE) → 해당 학교 멤버가 포함된 모든 스터디 그룹</li>
      *   <li>파트장(SCHOOL_PART_LEADER) → 본인이 파트장(Mentor)로 등록된 스터디 그룹</li>
@@ -53,7 +60,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
      * @return 스터디 그룹 목록. 권한 scope가 하나도 없으면 빈 리스트.
      */
     @Override
-    public List<StudyGroupListInfo.StudyGroupInfo> getMyStudyGroups(Long memberId, Long cursor, int size) {
+    public List<StudyGroupInfo> getMyStudyGroups(Long memberId, Long cursor, int size) {
         Long schoolId = getMemberUseCase.getById(memberId).schoolId();
         Long activeGisuId = getGisuUseCase.getActiveGisuId();
 
@@ -62,7 +69,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
             return List.of();
         }
 
-        List<StudyGroupListInfo.StudyGroupInfo> groups =
+        List<StudyGroupInfo> groups =
             loadStudyGroupPort.findMyStudyGroups(scopes, activeGisuId, cursor, size + 1);
 
         return resolveStudyGroupListUrls(groups);
@@ -71,9 +78,8 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     /**
      * 사용자의 활성 기수 내 역할을 검사하여 조회 가능한 Scope 리스트를 구성한다.
      * <p>
-     * 새로운 역할이 추가될 경우 이 메서드에만 분기를 더하면 되어 확장 지점이 단일화된다.
-     * 학교 회장단 Scope 구성 시 Member 도메인에서 학교 멤버 ID 집합을 조회하는데,
-     * 집합이 비어있다면 EXISTS 서브쿼리에서 항상 false가 되므로 Scope 자체를 추가하지 않아 쿼리 비용을 절감한다.
+     * 새로운 역할이 추가될 경우 이 메서드에만 분기를 더하면 되어 확장 지점이 단일화된다. 학교 회장단 Scope 구성 시 Member 도메인에서 학교 멤버 ID 집합을 조회하는데, 집합이 비어있다면
+     * EXISTS 서브쿼리에서 항상 false가 되므로 Scope 자체를 추가하지 않아 쿼리 비용을 절감한다.
      *
      * @param memberId 요청 주체 memberId
      * @param gisuId   활성 기수 ID
@@ -122,6 +128,20 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     }
 
     @Override
+    public StudyGroupInfo getById(Long studyGroupId) {
+        StudyGroup group = loadStudyGroupPort.getById(studyGroupId);
+
+        return StudyGroupInfo.create(
+            group.getId(),
+            group.getName(),
+            group.getGisuId(),
+            group.getPart(),
+            loadStudyGroupPort.findStudyGroupMentors(studyGroupId),
+            loadStudyGroupPort.findStudyGroupMembers(studyGroupId)
+        );
+    }
+
+    @Override
     public List<Long> getStudyGroupIdsByParts(Long gisuId, Set<ChallengerPart> parts) {
         return loadStudyGroupPort.findIdsByGisuIdAndPartIn(gisuId, parts);
     }
@@ -129,8 +149,8 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     /**
      * 스터디 그룹 ID 로 소속 스터디원 목록 조회.
      * <p>
-     * Repository 에서 Member/School 도메인까지 JOIN 하여 (memberId, 학교명, 프로필 이미지 ID) 를 가져온 뒤,
-     * 프로필 이미지 ID 를 일괄 URL 로 치환해 반환한다. 조회 결과가 비어있으면 storage 호출 자체를 생략한다.
+     * Repository 에서 Member/School 도메인까지 JOIN 하여 (memberId, 학교명, 프로필 이미지 ID) 를 가져온 뒤, 프로필 이미지 ID 를 일괄 URL 로 치환해 반환한다. 조회
+     * 결과가 비어있으면 storage 호출 자체를 생략한다.
      */
     @Override
     public List<StudyGroupMemberInfo> getStudyGroupMembers(Long groupId) {
@@ -139,118 +159,73 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
             return members;
         }
 
+        return resolveMemberProfileUrls(members);
+
+        // Map의 Key는 fileId, Value는 URL. 치환 실패 시 원래 fileId 반환
+        // 지금은 fileId와 치환 성공한 URL이 모두 같은 profileImageUrl 필드에 담겨 있다. 구별 처리 예정
+    }
+
+    private List<StudyGroupMemberInfo> resolveMemberProfileUrls(List<StudyGroupMemberInfo> members) {
         Set<String> imageIds = new LinkedHashSet<>();
-        for (StudyGroupMemberInfo m : members) {
-            if (m.profileImageUrl() != null) {
-                imageIds.add(m.profileImageUrl());
+        for (StudyGroupMemberInfo member : members) {
+            if (member.profileImageId() != null) {
+                imageIds.add(member.profileImageId());
             }
         }
+
         if (imageIds.isEmpty()) {
             return members;
         }
 
-        Map<String, String> urlMap = resolveProfileImageUrls(imageIds);
         return members.stream()
-            .map(m -> new StudyGroupMemberInfo(
-                m.memberId(),
-                m.schoolId(),
-                m.schoolName(),
-                urlMap.getOrDefault(m.profileImageUrl(), m.profileImageUrl())))
-            // Map의 Key는 fileId, Value는 URL. 치환 실패 시 원래 fileId 반환
-            // 지금은 fileId와 치환 성공한 URL이 모두 같은 profileImageUrl 필드에 담겨 있다. 구별 처리 예정
-
+            .map(member -> {
+                String imageId = member.profileImageId();
+                String imageUrl = resolveProfileImageUrls(imageIds).getOrDefault(imageId, "");
+                return StudyGroupMemberInfo.create(
+                    member.studyGroupId(),
+                    member.memberId(), member.memberName(),
+                    member.schoolId(), member.schoolName(),
+                    imageId, imageUrl
+                );
+            })
             .toList();
     }
 
-    private List<StudyGroupListInfo.StudyGroupInfo> resolveStudyGroupListUrls(
-            List<StudyGroupListInfo.StudyGroupInfo> groups) {
+    private List<StudyGroupInfo> resolveStudyGroupListUrls(
+        List<StudyGroupInfo> studyGroups
+    ) {
         Set<String> imageIds = new LinkedHashSet<>();
-        for (StudyGroupListInfo.StudyGroupInfo group : groups) {
-            for (StudyGroupListInfo.StudyGroupInfo.Mentor mentor : group.mentors()) {
+
+        for (StudyGroupInfo group : studyGroups) {
+            for (StudyGroupMemberInfo mentor : group.mentors()) {
                 if (mentor.profileImageUrl() != null) {
                     imageIds.add(mentor.profileImageUrl());
                 }
             }
-            for (StudyGroupListInfo.StudyGroupInfo.Member m : group.members()) {
-                if (m.profileImageUrl() != null) {
-                    imageIds.add(m.profileImageUrl());
+
+            for (StudyGroupMemberInfo member : group.members()) {
+                if (member.profileImageUrl() != null) {
+                    imageIds.add(member.profileImageUrl());
                 }
             }
         }
 
         if (imageIds.isEmpty()) {
-            return groups;
+            return studyGroups;
         }
 
-        Map<String, String> urlMap = resolveProfileImageUrls(imageIds);
-
-        return groups.stream()
-                .map(group -> new StudyGroupListInfo.StudyGroupInfo(
-                        group.groupId(),
-                        group.name(),
-                        group.mentors().stream()
-                                .map(o -> new StudyGroupListInfo.StudyGroupInfo.Mentor(
-                                        o.memberId(),
-                                        o.name(),
-                                        urlMap.getOrDefault(o.profileImageUrl(), o.profileImageUrl())
-                                ))
-                                .toList(),
-                        group.members().stream()
-                                .map(m -> new StudyGroupListInfo.StudyGroupInfo.Member(
-                                        m.memberId(),
-                                        m.name(),
-                                        urlMap.getOrDefault(m.profileImageUrl(), m.profileImageUrl())
-                                ))
-                                .toList()
-                ))
-                .toList();
-    }
-
-    private StudyGroupDetailInfo resolveStudyGroupDetailUrls(StudyGroupDetailInfo detail) {
-        Set<String> imageIds = new LinkedHashSet<>();
-        if (detail.leader() != null && detail.leader().profileImageUrl() != null) {
-            imageIds.add(detail.leader().profileImageUrl());
-        }
-        for (StudyGroupDetailInfo.MemberInfo member : detail.members()) {
-            if (member.profileImageUrl() != null) {
-                imageIds.add(member.profileImageUrl());
-            }
-        }
-
-        if (imageIds.isEmpty()) {
-            return detail;
-        }
-
-        Map<String, String> urlMap = resolveProfileImageUrls(imageIds);
-
-        StudyGroupDetailInfo.MemberInfo resolvedLeader = detail.leader() == null ? null
-                : new StudyGroupDetailInfo.MemberInfo(
-                        detail.leader().challengerId(),
-                        detail.leader().memberId(),
-                        detail.leader().name(),
-                        urlMap.getOrDefault(detail.leader().profileImageUrl(),
-                                detail.leader().profileImageUrl())
-                );
-
-        List<StudyGroupDetailInfo.MemberInfo> resolvedMembers = detail.members().stream()
-                .map(m -> new StudyGroupDetailInfo.MemberInfo(
-                        m.challengerId(),
-                        m.memberId(),
-                        m.name(),
-                        urlMap.getOrDefault(m.profileImageUrl(), m.profileImageUrl())
-                ))
-                .toList();
-
-        return new StudyGroupDetailInfo(
-                detail.groupId(),
-                detail.name(),
-                detail.part(),
-                detail.schools(),
-                detail.createdAt(),
-                detail.memberCount(),
-                resolvedLeader,
-                resolvedMembers
-        );
+        return studyGroups.stream()
+            .map(studyGroup ->
+                StudyGroupInfo.create(
+                    studyGroup.groupId(),
+                    studyGroup.name(),
+                    studyGroup.gisuId(),
+                    studyGroup.part(),
+                    resolveMemberProfileUrls(studyGroup.mentors()),
+                    resolveMemberProfileUrls(studyGroup.members())
+                )
+            )
+            .toList();
     }
 
     private Map<String, String> resolveProfileImageUrls(Set<String> profileImageIds) {

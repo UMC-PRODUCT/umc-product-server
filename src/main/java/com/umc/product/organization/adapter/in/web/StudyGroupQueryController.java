@@ -6,13 +6,10 @@ import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
-import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupMemberResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupNameResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.StudyGroupSummaryResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.studygroup.StudyGroupResponse;
 import com.umc.product.organization.adapter.in.web.swagger.StudyGroupQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo;
-import com.umc.product.organization.application.port.in.query.dto.StudyGroupListInfo.StudyGroupInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,10 +30,11 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
      */
     @Override
     @GetMapping("/me")
-    public CursorResponse<StudyGroupSummaryResponse> getStudyGroups(
+    public CursorResponse<StudyGroupResponse> getStudyGroups(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam(required = false) Long cursor,
-        @RequestParam(defaultValue = "20") int size) {
+        @RequestParam(defaultValue = "20") int size
+    ) {
 
         List<StudyGroupInfo> content = getStudyGroupUseCase.getMyStudyGroups(
             memberPrincipal.getMemberId(), cursor, size
@@ -45,20 +43,8 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
         return CursorResponse.of(
             content,
             size,
-            StudyGroupListInfo.StudyGroupInfo::groupId,
-            StudyGroupSummaryResponse::from
-        );
-    }
-
-    /**
-     * 권한에 따라 스터디 그룹 이름 목록 조회 - 토글/드롭다운 용도
-     */
-    @Override
-    @GetMapping("/names")
-    public StudyGroupNameResponse getStudyGroupNames(
-        @CurrentMember MemberPrincipal memberPrincipal) {
-        return StudyGroupNameResponse.from(
-            getStudyGroupUseCase.getStudyGroupNames(memberPrincipal.getMemberId())
+            StudyGroupInfo::groupId,
+            StudyGroupResponse::from
         );
     }
 
@@ -70,10 +56,10 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
         permission = PermissionType.READ
     )
     @Override
-    @GetMapping("/{groupId}/members")
-    public List<StudyGroupMemberResponse> getStudyGroupMembers(@PathVariable Long groupId) {
-        return getStudyGroupUseCase.getStudyGroupMembers(groupId).stream()
-            .map(StudyGroupMemberResponse::from)
-            .toList();
+    @GetMapping("/{studyGroupId}")
+    public StudyGroupResponse getStudyGroupInfo(@PathVariable Long studyGroupId) {
+        return StudyGroupResponse.from(
+            getStudyGroupUseCase.getById(studyGroupId)
+        );
     }
 }
