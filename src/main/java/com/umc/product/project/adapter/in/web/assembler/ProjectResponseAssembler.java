@@ -11,6 +11,8 @@ import com.umc.product.project.application.port.in.query.GetProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
+import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
+import com.umc.product.project.domain.ProjectApplicationForm;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +33,7 @@ public class ProjectResponseAssembler {
     private final GetProjectUseCase getProjectUseCase;
     private final SearchProjectUseCase searchProjectUseCase;
     private final GetMemberUseCase getMemberUseCase;
+    private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
 
     /**
      * PROJECT-001 프로젝트 목록 조회.
@@ -68,8 +71,8 @@ public class ProjectResponseAssembler {
             .map(id -> toBrief(memberMap.get(id)))
             .toList();
 
-        // TODO: applicationFormId hydrate from LoadProjectApplicationFormPort.findByProjectId
-        ProjectDetailResponse response = ProjectDetailResponse.from(info, owner, coOwners, null);
+        ProjectDetailResponse response =
+            ProjectDetailResponse.from(info, owner, coOwners, resolveApplicationFormId(projectId));
         return canSeeFullInfo ? response : response.toPublic();
     }
 
@@ -90,8 +93,13 @@ public class ProjectResponseAssembler {
             .map(id -> toBrief(memberMap.get(id)))
             .toList();
 
-        // TODO: applicationFormId hydrate from LoadProjectApplicationFormPort.findByProjectId
-        return DraftProjectResponse.from(info, owner, coOwners, null);
+        return DraftProjectResponse.from(info, owner, coOwners, resolveApplicationFormId(info.id()));
+    }
+
+    private Long resolveApplicationFormId(Long projectId) {
+        return loadProjectApplicationFormPort.findByProjectId(projectId)
+            .map(ProjectApplicationForm::getId)
+            .orElse(null);
     }
 
     private Map<Long, MemberInfo> loadMembers(ProjectInfo info) {
