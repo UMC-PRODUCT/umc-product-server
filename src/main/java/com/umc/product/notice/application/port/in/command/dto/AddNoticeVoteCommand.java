@@ -1,9 +1,13 @@
 package com.umc.product.notice.application.port.in.command.dto;
 
-import com.umc.product.survey.application.port.in.command.dto.CreateVoteCommand;
+import com.umc.product.notice.domain.exception.NoticeDomainException;
+import com.umc.product.notice.domain.exception.NoticeErrorCode;
+import lombok.Builder;
+
 import java.time.Instant;
 import java.util.List;
 
+@Builder
 public record AddNoticeVoteCommand(
     Long createdMemberId,
     String title,
@@ -13,15 +17,12 @@ public record AddNoticeVoteCommand(
     Instant endsAtExclusive,
     List<String> options
 ) {
-    public CreateVoteCommand toCreateVoteCommand() {
-        return new CreateVoteCommand(
-            createdMemberId,
-            title,
-            isAnonymous,
-            allowMultipleChoice,
-            startsAt,
-            endsAtExclusive,
-            options
-        );
+    public AddNoticeVoteCommand {
+        if (options == null || options.size() < 2 || options.size() > 5) {
+            throw new NoticeDomainException(NoticeErrorCode.INVALID_VOTE_OPTION_COUNT);
+        }
+        if (options.stream().anyMatch(s -> s == null || s.trim().isEmpty())) {
+            throw new NoticeDomainException(NoticeErrorCode.INVALID_VOTE_OPTION_CONTENT);
+        }
     }
 }

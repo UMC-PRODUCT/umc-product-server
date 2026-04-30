@@ -4,7 +4,7 @@ import com.umc.product.authorization.domain.ChallengerRole;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
-import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import lombok.Builder;
 
 /**

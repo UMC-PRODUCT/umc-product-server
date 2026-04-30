@@ -1,10 +1,10 @@
 package com.umc.product.organization.application.port.out.query;
 
-import com.umc.product.organization.application.port.in.query.dto.SchoolChapterInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolListItemInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolSearchCondition;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolListItemInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolSearchCondition;
 import com.umc.product.organization.domain.School;
 import java.util.List;
 import java.util.Map;

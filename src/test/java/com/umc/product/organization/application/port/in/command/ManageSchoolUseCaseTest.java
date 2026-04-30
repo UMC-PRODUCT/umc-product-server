@@ -8,9 +8,9 @@ import com.umc.product.organization.application.port.in.command.dto.AssignSchool
 import com.umc.product.organization.application.port.in.command.dto.CreateSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.UnassignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateSchoolCommand;
-import com.umc.product.organization.application.port.out.command.ManageChapterPort;
-import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
-import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
+import com.umc.product.organization.application.port.out.command.SaveChapterPort;
+import com.umc.product.organization.application.port.out.command.SaveChapterSchoolPort;
+import com.umc.product.organization.application.port.out.command.SaveSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
@@ -34,16 +34,16 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     private GisuFixture gisuFixture;
 
     @Autowired
-    private ManageChapterPort manageChapterPort;
+    private SaveChapterPort saveChapterPort;
 
     @Autowired
-    private ManageSchoolPort manageSchoolPort;
+    private SaveSchoolPort saveSchoolPort;
 
     @Autowired
     private LoadSchoolPort loadSchoolPort;
 
     @Autowired
-    private ManageChapterSchoolPort manageChapterSchoolPort;
+    private SaveChapterSchoolPort saveChapterSchoolPort;
 
     @Test
     void 학교를_등록한다() {
@@ -65,7 +65,8 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         // given
         List<CreateSchoolCommand.SchoolLinkCommand> links = List.of(
             new CreateSchoolCommand.SchoolLinkCommand("카카오톡", SchoolLinkType.KAKAO, "https://open.kakao.com/o/example"),
-            new CreateSchoolCommand.SchoolLinkCommand("인스타그램", SchoolLinkType.INSTAGRAM, "https://instagram.com/example"),
+            new CreateSchoolCommand.SchoolLinkCommand("인스타그램", SchoolLinkType.INSTAGRAM,
+                "https://instagram.com/example"),
             new CreateSchoolCommand.SchoolLinkCommand("유튜브", SchoolLinkType.YOUTUBE, "https://youtube.com/@example")
         );
         CreateSchoolCommand command = new CreateSchoolCommand("한성대", "비고", null, links);
@@ -144,7 +145,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 학교_이름과_비고를_수정한다() {
         // given
-        School school = manageSchoolPort.save(School.create("한성대", "비고"));
+        School school = saveSchoolPort.save(School.create("한성대", "비고"));
 
         UpdateSchoolCommand command = new UpdateSchoolCommand("동국대", null, "수정된 비고", null, null);
 
@@ -161,7 +162,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Transactional
     void 학교_수정_시_링크도_함께_수정한다() {
         // given
-        School school = manageSchoolPort.save(School.create("한성대", "비고"));
+        School school = saveSchoolPort.save(School.create("한성대", "비고"));
 
         List<CreateSchoolCommand.SchoolLinkCommand> initialLinks = List.of(
             new CreateSchoolCommand.SchoolLinkCommand("카카오톡", SchoolLinkType.KAKAO, "https://open.kakao.com/o/old")
@@ -192,10 +193,10 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 학교의_지부를_수정한다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(8L);
-        Chapter scorpioChapter = manageChapterPort.save(Chapter.create(gisu, "Scorpio"));
-        Chapter leoChapter = manageChapterPort.save(Chapter.create(gisu, "Leo"));
+        Chapter scorpioChapter = saveChapterPort.save(Chapter.create(gisu, "Scorpio"));
+        Chapter leoChapter = saveChapterPort.save(Chapter.create(gisu, "Leo"));
 
-        School school = manageSchoolPort.save(School.create("한성대", "비고"));
+        School school = saveSchoolPort.save(School.create("한성대", "비고"));
 
         UpdateSchoolCommand command = new UpdateSchoolCommand("한성대", leoChapter.getId(), "비고", null, null);
 
@@ -221,8 +222,8 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 학교를_삭제한다() {
         // given
-        School school1 = manageSchoolPort.save(School.create("한성대", "비고1"));
-        School school2 = manageSchoolPort.save(School.create("동국대", "비고2"));
+        School school1 = saveSchoolPort.save(School.create("한성대", "비고1"));
+        School school2 = saveSchoolPort.save(School.create("동국대", "비고2"));
 
         // when
         manageSchoolUseCase.deleteSchools(List.of(school1.getId()));
@@ -238,9 +239,9 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 여러_학교를_한번에_삭제한다() {
         // given
-        School school1 = manageSchoolPort.save(School.create("한성대", "비고1"));
-        School school2 = manageSchoolPort.save(School.create("동국대", "비고2"));
-        School school3 = manageSchoolPort.save(School.create("중앙대", "비고3"));
+        School school1 = saveSchoolPort.save(School.create("한성대", "비고1"));
+        School school2 = saveSchoolPort.save(School.create("동국대", "비고2"));
+        School school3 = saveSchoolPort.save(School.create("중앙대", "비고3"));
 
         // when
         manageSchoolUseCase.deleteSchools(List.of(school1.getId(), school2.getId()));
@@ -259,8 +260,8 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 학교를_지부에_배정한다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(9L);
-        Chapter chapter = manageChapterPort.save(Chapter.create(gisu, "Scorpio"));
-        School school = manageSchoolPort.save(School.create("한성대", null));
+        Chapter chapter = saveChapterPort.save(Chapter.create(gisu, "Scorpio"));
+        School school = saveSchoolPort.save(School.create("한성대", null));
 
         AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), chapter.getId());
 
@@ -277,11 +278,11 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 이미_배정된_학교를_다른_지부로_이동한다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(9L);
-        Chapter scorpioChapter = manageChapterPort.save(Chapter.create(gisu, "Scorpio"));
-        Chapter leoChapter = manageChapterPort.save(Chapter.create(gisu, "Leo"));
+        Chapter scorpioChapter = saveChapterPort.save(Chapter.create(gisu, "Scorpio"));
+        Chapter leoChapter = saveChapterPort.save(Chapter.create(gisu, "Leo"));
 
-        School school = manageSchoolPort.save(School.create("한성대", null));
-        manageChapterSchoolPort.save(ChapterSchool.create(scorpioChapter, school));
+        School school = saveSchoolPort.save(School.create("한성대", null));
+        saveChapterSchoolPort.save(ChapterSchool.create(scorpioChapter, school));
 
         AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), leoChapter.getId());
 
@@ -300,11 +301,11 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         Gisu gisu9 = gisuFixture.활성_기수(9L);
         Gisu gisu10 = gisuFixture.활성_기수(10L);
 
-        Chapter chapter9 = manageChapterPort.save(Chapter.create(gisu9, "Scorpio"));
-        Chapter chapter10 = manageChapterPort.save(Chapter.create(gisu10, "Leo"));
+        Chapter chapter9 = saveChapterPort.save(Chapter.create(gisu9, "Scorpio"));
+        Chapter chapter10 = saveChapterPort.save(Chapter.create(gisu10, "Leo"));
 
-        School school = manageSchoolPort.save(School.create("한성대", null));
-        manageChapterSchoolPort.save(ChapterSchool.create(chapter10, school));
+        School school = saveSchoolPort.save(School.create("한성대", null));
+        saveChapterSchoolPort.save(ChapterSchool.create(chapter10, school));
 
         AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), chapter9.getId());
 
@@ -323,10 +324,10 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 학교의_지부_배정을_해제한다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(9L);
-        Chapter chapter = manageChapterPort.save(Chapter.create(gisu, "Scorpio"));
+        Chapter chapter = saveChapterPort.save(Chapter.create(gisu, "Scorpio"));
 
-        School school = manageSchoolPort.save(School.create("한성대", null));
-        manageChapterSchoolPort.save(ChapterSchool.create(chapter, school));
+        School school = saveSchoolPort.save(School.create("한성대", null));
+        saveChapterSchoolPort.save(ChapterSchool.create(chapter, school));
 
         UnassignSchoolCommand command = new UnassignSchoolCommand(school.getId(), gisu.getId());
 
@@ -344,12 +345,12 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         Gisu gisu9 = gisuFixture.활성_기수(9L);
         Gisu gisu10 = gisuFixture.활성_기수(10L);
 
-        Chapter chapter9 = manageChapterPort.save(Chapter.create(gisu9, "Scorpio"));
-        Chapter chapter10 = manageChapterPort.save(Chapter.create(gisu10, "Leo"));
+        Chapter chapter9 = saveChapterPort.save(Chapter.create(gisu9, "Scorpio"));
+        Chapter chapter10 = saveChapterPort.save(Chapter.create(gisu10, "Leo"));
 
-        School school = manageSchoolPort.save(School.create("한성대", null));
-        manageChapterSchoolPort.save(ChapterSchool.create(chapter9, school));
-        manageChapterSchoolPort.save(ChapterSchool.create(chapter10, school));
+        School school = saveSchoolPort.save(School.create("한성대", null));
+        saveChapterSchoolPort.save(ChapterSchool.create(chapter9, school));
+        saveChapterSchoolPort.save(ChapterSchool.create(chapter10, school));
 
         UnassignSchoolCommand command = new UnassignSchoolCommand(school.getId(), gisu9.getId());
 
@@ -366,7 +367,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 존재하지_않는_학교를_배정하면_예외가_발생한다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(9L);
-        Chapter chapter = manageChapterPort.save(Chapter.create(gisu, "Scorpio"));
+        Chapter chapter = saveChapterPort.save(Chapter.create(gisu, "Scorpio"));
 
         AssignSchoolCommand command = new AssignSchoolCommand(999L, chapter.getId());
 
@@ -378,7 +379,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     @Test
     void 존재하지_않는_지부에_배정하면_예외가_발생한다() {
         // given
-        School school = manageSchoolPort.save(School.create("한성대", null));
+        School school = saveSchoolPort.save(School.create("한성대", null));
 
         AssignSchoolCommand command = new AssignSchoolCommand(school.getId(), 999L);
 

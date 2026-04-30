@@ -15,19 +15,24 @@ import org.springframework.web.servlet.ModelAndView;
 /**
  * HTTP 요청/응답 로깅 인터셉터
  *
- * <p>모든 HTTP 요청의 메서드, URI, 응답 상태 코드, 처리 시간을 로깅합니다.
+ * <p>모든 HTTP 요청의 메서드, URI, 응답 상태 코드, 처리 시간, 쿼리 통계, 클라이언트 IP를 로깅합니다.
  */
 @Slf4j
 @Component
 public class LoggingInterceptor implements HandlerInterceptor {
 
     private static final String START_TIME_ATTR = "startTime";
+    private static final String CLIENT_IP_ATTR = "clientIp";
     private static final String TRACE_ID_HEADER = "X-Trace-Id";
     private static final String TRACE_ID = "traceId";
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+
         request.setAttribute(START_TIME_ATTR, Instant.now());
+        request.setAttribute(CLIENT_IP_ATTR, extractClientIp(request));
+
+        QueryStatsHolder.init();
 
         // URI와 Query String 조합
         String requestUri = request.getRequestURI();
@@ -53,32 +58,56 @@ public class LoggingInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public void postHandle(HttpServletRequest request, HttpServletResponse response,
-                           Object handler, ModelAndView modelAndView) {
+    public void postHandle(
+        HttpServletRequest request, HttpServletResponse response,
+        Object handler, ModelAndView modelAndView
+    ) {
         // Controller 실행 후, View 렌더링 전
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response,
-                                Object handler, Exception ex) {
+    public void afterCompletion(
+        HttpServletRequest request, HttpServletResponse response,
+        Object handler, Exception ex
+    ) {
         Instant startTime = (Instant) request.getAttribute(START_TIME_ATTR);
         if (startTime == null) {
             return;
         }
 
-        Duration duration = Duration.between(startTime, Instant.now());
+        long durationMs = Duration.between(startTime, Instant.now()).toMillis();
+        long queryCount = QueryStatsHolder.getQueryCount();
+        long queryTimeMs = QueryStatsHolder.getTotalTimeMs();
+        String clientIp = (String) request.getAttribute(CLIENT_IP_ATTR);
+
+        QueryStatsHolder.clear();
 
         String status = getStatusEmoji(response.getStatus());
 
-        log.info("[RES] {} {} {} {}ms",
+        log.info("[RES] {} {} {} {}ms | Query Count: {}, Time: {}ms | IP: {}",
             status,
             response.getStatus(),
             request.getRequestURI(),
-            duration.toMillis());
+            durationMs,
+            queryCount,
+            queryTimeMs,
+            clientIp
+        );
 
         if (ex != null) {
             log.error("  └─ Exception: {}", ex.getMessage());
         }
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+
+        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+            // 다중 프록시 경유 시 첫 번째 IP가 실제 클라이언트 IP
+            return xForwardedFor.split(",")[0].trim();
+        }
+
+        return request.getRemoteAddr();
     }
 
     private String getStatusEmoji(int status) {

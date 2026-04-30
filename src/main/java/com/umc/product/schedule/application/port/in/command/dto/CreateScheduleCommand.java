@@ -19,22 +19,6 @@ public record CreateScheduleCommand(
     AttendancePolicyInfo attendancePolicy,
     Set<Long> participantMemberIds
 ) {
-    @Builder
-    public record LocationInfo(
-        Double latitude,
-        Double longitude,
-        String locationName
-    ) {
-    }
-
-    @Builder
-    public record AttendancePolicyInfo(
-        Instant checkInStartAt,
-        Instant onTimeEndAt,
-        Instant lateEndAt
-    ) {
-    }
-
     public Schedule toEntity(Long authorMemberId) {
         return Schedule.builder()
             .name(this.name)
@@ -57,5 +41,21 @@ public record CreateScheduleCommand(
                     this.endsAt
                 ) : null)
             .build();
+    }
+
+    @Builder
+    public record LocationInfo(
+        Double latitude,
+        Double longitude,
+        String locationName
+    ) {
+    }
+
+    @Builder
+    public record AttendancePolicyInfo(
+        Instant checkInStartAt,
+        Instant onTimeEndAt,
+        Instant lateEndAt
+    ) {
     }
 }

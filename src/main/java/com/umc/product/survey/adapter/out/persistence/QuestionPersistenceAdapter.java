@@ -6,11 +6,12 @@ import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
@@ -48,5 +49,15 @@ public class QuestionPersistenceAdapter implements SaveQuestionPort, LoadQuestio
     @Override
     public Optional<Question> findFirstByFormIdAndType(Long formId, QuestionType type) {
         return questionJpaRepository.findFirstByFormIdAndType(formId, type);
+    }
+
+    @Override
+    public List<Question> listByFormId(Long formId) {
+        return questionJpaRepository.findAllByFormId(formId);
+    }
+
+    @Override
+    public Question save(Question question) {
+        return questionJpaRepository.save(question);
     }
 }

@@ -1,5 +1,6 @@
 package com.umc.product.curriculum.domain.enums;
 
+@Deprecated
 public enum WorkbookStatus {
     PENDING,       // 배포됨, 미제출
     SUBMITTED,     // 제출됨, 심사 대기

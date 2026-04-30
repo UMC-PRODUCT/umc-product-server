@@ -51,6 +51,14 @@ public class AttendancePolicy {
         this.lateToleranceMinutes = lateToleranceMinutes;
     }
 
+    protected static AttendancePolicy create(
+        Long earlyCheckInMinutes,
+        Long attendanceGraceMinutes,
+        Long lateToleranceMinutes) {
+
+        return new AttendancePolicy(earlyCheckInMinutes, attendanceGraceMinutes, lateToleranceMinutes);
+    }
+
     /**
      * 매개변수로 제공된 checkInTime 및 scheduleStartTime을 기반으로 현재 상태를 판단합니다.
      * <p>
@@ -72,13 +80,5 @@ public class AttendancePolicy {
         } else {
             return AttendanceStatus.ABSENT;
         }
-    }
-
-    protected static AttendancePolicy create(
-        Long earlyCheckInMinutes,
-        Long attendanceGraceMinutes,
-        Long lateToleranceMinutes) {
-
-        return new AttendancePolicy(earlyCheckInMinutes, attendanceGraceMinutes, lateToleranceMinutes);
     }
 }

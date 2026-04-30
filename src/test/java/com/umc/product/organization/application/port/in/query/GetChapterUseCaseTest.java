@@ -2,11 +2,11 @@ package com.umc.product.organization.application.port.in.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
-import com.umc.product.organization.application.port.in.query.dto.ChapterWithSchoolsInfo;
-import com.umc.product.organization.application.port.out.command.ManageChapterPort;
-import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
-import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
+import com.umc.product.organization.application.port.out.command.SaveChapterPort;
+import com.umc.product.organization.application.port.out.command.SaveChapterSchoolPort;
+import com.umc.product.organization.application.port.out.command.SaveSchoolPort;
 import com.umc.product.organization.domain.Chapter;
 import com.umc.product.organization.domain.ChapterSchool;
 import com.umc.product.organization.domain.Gisu;
@@ -26,22 +26,22 @@ class GetChapterUseCaseTest extends UseCaseTestSupport {
     private GisuFixture gisuFixture;
 
     @Autowired
-    private ManageChapterPort manageChapterPort;
+    private SaveChapterPort saveChapterPort;
 
     @Autowired
-    private ManageSchoolPort manageSchoolPort;
+    private SaveSchoolPort saveSchoolPort;
 
     @Autowired
-    private ManageChapterSchoolPort manageChapterSchoolPort;
+    private SaveChapterSchoolPort saveChapterSchoolPort;
 
     @Test
     void 전체_지부_목록을_조회한다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(8L);
 
-        manageChapterPort.save(Chapter.create(gisu, "서울"));
-        manageChapterPort.save(Chapter.create(gisu, "경기"));
-        manageChapterPort.save(Chapter.create(gisu, "인천"));
+        saveChapterPort.save(Chapter.create(gisu, "서울"));
+        saveChapterPort.save(Chapter.create(gisu, "경기"));
+        saveChapterPort.save(Chapter.create(gisu, "인천"));
 
         // when
         List<ChapterInfo> result = getChapterUseCase.getAllChapters();
@@ -57,17 +57,17 @@ class GetChapterUseCaseTest extends UseCaseTestSupport {
         Gisu gisu9 = gisuFixture.활성_기수(9L);
         Gisu gisu10 = gisuFixture.활성_기수(10L);
 
-        Chapter scorpioChapter = manageChapterPort.save(Chapter.create(gisu9, "Scorpio"));
-        Chapter leoChapter = manageChapterPort.save(Chapter.create(gisu9, "Leo"));
-        manageChapterPort.save(Chapter.create(gisu10, "Ain"));
+        Chapter scorpioChapter = saveChapterPort.save(Chapter.create(gisu9, "Scorpio"));
+        Chapter leoChapter = saveChapterPort.save(Chapter.create(gisu9, "Leo"));
+        saveChapterPort.save(Chapter.create(gisu10, "Ain"));
 
-        School school1 = manageSchoolPort.save(School.create("한성대", null));
-        School school2 = manageSchoolPort.save(School.create("동국대", null));
-        School school3 = manageSchoolPort.save(School.create("중앙대", null));
+        School school1 = saveSchoolPort.save(School.create("한성대", null));
+        School school2 = saveSchoolPort.save(School.create("동국대", null));
+        School school3 = saveSchoolPort.save(School.create("중앙대", null));
 
-        manageChapterSchoolPort.save(ChapterSchool.create(scorpioChapter, school1));
-        manageChapterSchoolPort.save(ChapterSchool.create(scorpioChapter, school2));
-        manageChapterSchoolPort.save(ChapterSchool.create(leoChapter, school3));
+        saveChapterSchoolPort.save(ChapterSchool.create(scorpioChapter, school1));
+        saveChapterSchoolPort.save(ChapterSchool.create(scorpioChapter, school2));
+        saveChapterSchoolPort.save(ChapterSchool.create(leoChapter, school3));
 
         // when
         List<ChapterWithSchoolsInfo> result = getChapterUseCase.getChaptersWithSchoolsByGisuId(gisu9.getId());
@@ -94,8 +94,8 @@ class GetChapterUseCaseTest extends UseCaseTestSupport {
     void 학교가_없는_지부도_조회된다() {
         // given
         Gisu gisu = gisuFixture.활성_기수(9L);
-        manageChapterPort.save(Chapter.create(gisu, "Scorpio"));
-        manageChapterPort.save(Chapter.create(gisu, "Leo"));
+        saveChapterPort.save(Chapter.create(gisu, "Scorpio"));
+        saveChapterPort.save(Chapter.create(gisu, "Leo"));
 
         // when
         List<ChapterWithSchoolsInfo> result = getChapterUseCase.getChaptersWithSchoolsByGisuId(gisu.getId());

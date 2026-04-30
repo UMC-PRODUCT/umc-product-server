@@ -1,13 +1,13 @@
 package com.umc.product.organization.adapter.in.web;
 
 import com.umc.product.global.security.annotation.Public;
-import com.umc.product.organization.adapter.in.web.dto.response.ChapterListResponse;
-import com.umc.product.organization.adapter.in.web.dto.response.ChapterListResponse.ChapterItem;
-import com.umc.product.organization.adapter.in.web.dto.response.ChapterWithSchoolsResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.chapter.ChapterListResponse;
+import com.umc.product.organization.adapter.in.web.dto.response.chapter.ChapterListResponse.ChapterItem;
+import com.umc.product.organization.adapter.in.web.dto.response.chapter.ChapterWithSchoolsResponse;
 import com.umc.product.organization.adapter.in.web.swagger.ChapterQueryControllerApi;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
-import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
-import com.umc.product.organization.application.port.in.query.dto.ChapterWithSchoolsInfo;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

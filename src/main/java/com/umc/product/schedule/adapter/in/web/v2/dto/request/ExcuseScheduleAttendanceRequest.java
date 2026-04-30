@@ -5,13 +5,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 public record ExcuseScheduleAttendanceRequest(
     // 클라이언트 측에서 받은 위치 인증 여부
-    @Schema(description = "클라이언트 측의 위치 인증 여부, 비대면 일정일 경우 false", example = "true")
-    @NotNull(message = "위치 인증 여부는 필수입니다.")
+    @Schema(description = "(필수 값) 클라이언트 측의 위치 인증 여부, 비대면 일정일 경우 false", example = "true")
     boolean isVerified,
 
     // === 위치 정보, nullable ===

@@ -1,8 +1,8 @@
 package com.umc.product.organization.application.port.service.query;
 
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
-import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
-import com.umc.product.organization.application.port.in.query.dto.ChapterWithSchoolsInfo;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterWithSchoolsInfo;
 import com.umc.product.organization.application.port.out.query.LoadChapterPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterSchoolPort;
 import com.umc.product.organization.domain.Chapter;
@@ -101,7 +101,7 @@ public class ChapterQueryService implements GetChapterUseCase {
             Long gisuId = cs.getChapter().getGisu().getId();
             Long schoolId = cs.getSchool().getId();
             result.computeIfAbsent(gisuId, k -> new HashMap<>())
-                  .put(schoolId, ChapterInfo.from(cs.getChapter()));
+                .put(schoolId, ChapterInfo.from(cs.getChapter()));
         }
         return result;
     }

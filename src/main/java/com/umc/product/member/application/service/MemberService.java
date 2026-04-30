@@ -9,9 +9,9 @@ import com.umc.product.authentication.application.port.in.query.GetMemberOAuthUs
 import com.umc.product.authentication.application.port.in.query.dto.MemberOAuthInfo;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.member.application.port.in.command.ManageMemberUseCase;
+import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.DeleteMemberCommand;
-import com.umc.product.member.application.port.in.command.dto.RegisterMemberCommand;
-import com.umc.product.member.application.port.in.command.dto.TermConsents;
+import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.UpdateMemberCommand;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.application.port.out.SaveMemberPort;
@@ -22,16 +22,9 @@ import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.notification.application.port.in.dto.SendWebhookAlarmCommand;
 import com.umc.product.notification.domain.WebhookPlatform;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
-import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
-import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.term.application.port.in.command.ManageTermAgreementUseCase;
-import com.umc.product.term.application.port.in.query.GetTermUseCase;
-import com.umc.product.term.domain.exception.TermDomainException;
-import com.umc.product.term.domain.exception.TermErrorCode;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -39,28 +32,27 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class MemberService implements ManageMemberUseCase {
+public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUseCase {
 
     private final LoadMemberPort loadMemberPort;
     private final SaveMemberPort saveMemberPort;
-    private final LoadSchoolPort loadSchoolPort;
 
-    private final GetFileUseCase getFileUseCase;
+    private final MemberRegistrationValidator registrationValidator;
+
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;
     private final GetMemberOAuthUseCase getMemberOAuthUseCase;
     private final ManageTermAgreementUseCase manageTermAgreementUseCase;
-    private final GetTermUseCase getTermUseCase;
+    private final GetSchoolUseCase getSchoolUseCase;
 
     private final ApplicationEventPublisher eventPublisher;
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
-    private final GetSchoolUseCase getSchoolUseCase;
 
     @Override
     @Transactional
-    public Long registerMember(RegisterMemberCommand command) {
-        validateSchoolExists(command.schoolId());
-        validateProfileImageExists(command.profileImageId());
-        validateMandatoryTermsAgreed(command);
+    public Long register(OAuthRegisterMemberCommand command) {
+        registrationValidator.validateSchoolExists(command.schoolId());
+        registrationValidator.validateProfileImageExists(command.profileImageId());
+        registrationValidator.validateMandatoryTermsAgreed(command.termConsents());
 
         Member savedMember = saveMemberPort.save(command.toEntity());
 
@@ -108,15 +100,15 @@ public class MemberService implements ManageMemberUseCase {
 
     @Override
     @Transactional
-    public List<Long> registerMembers(List<RegisterMemberCommand> commands) {
+    public List<Long> batchRegister(List<OAuthRegisterMemberCommand> commands) {
         commands.forEach(command -> {
-            validateSchoolExists(command.schoolId());
-            validateProfileImageExists(command.profileImageId());
-            validateMandatoryTermsAgreed(command);
+            registrationValidator.validateSchoolExists(command.schoolId());
+            registrationValidator.validateProfileImageExists(command.profileImageId());
+            registrationValidator.validateMandatoryTermsAgreed(command.termConsents());
         });
 
         List<Member> savedMembers = saveMemberPort.saveAll(commands.stream()
-            .map(RegisterMemberCommand::toEntity)
+            .map(OAuthRegisterMemberCommand::toEntity)
             .toList()
         );
 
@@ -124,7 +116,7 @@ public class MemberService implements ManageMemberUseCase {
         List<LinkOAuthCommand> oAuthCommands = new ArrayList<>();
         for (int i = 0; i < savedMembers.size(); i++) {
             Member savedMember = savedMembers.get(i);
-            RegisterMemberCommand command = commands.get(i);
+            OAuthRegisterMemberCommand command = commands.get(i);
 
             oAuthCommands.add(
                 LinkOAuthCommand.builder()
@@ -153,7 +145,7 @@ public class MemberService implements ManageMemberUseCase {
     public void updateMember(UpdateMemberCommand command) {
         Member member = findById(command.memberId());
 
-        validateProfileImageExists(command.newProfileImageId());
+        registrationValidator.validateProfileImageExists(command.newProfileImageId());
 
         member.updateProfile(command.newProfileImageId());
     }
@@ -197,34 +189,8 @@ public class MemberService implements ManageMemberUseCase {
         );
     }
 
-    private void validateMandatoryTermsAgreed(RegisterMemberCommand command) {
-        Set<Long> requiredTermIds = getTermUseCase.getRequiredTermIds();
-
-        Set<Long> agreedTermIds = command.termConsents().stream()
-            .filter(TermConsents::isAgreed)
-            .map(TermConsents::termId)
-            .collect(Collectors.toSet());
-
-        if (!agreedTermIds.containsAll(requiredTermIds)) {
-            throw new TermDomainException(TermErrorCode.MANDATORY_TERMS_NOT_AGREED);
-        }
-    }
-
     private Member findById(Long memberId) {
         return loadMemberPort.findById(memberId).orElseThrow(
             () -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
-    }
-
-    /**
-     * 사진 ID가 주어진 경우 해당 파일이 존재하는지 확인
-     */
-    private void validateProfileImageExists(String profileImageId) {
-        if (profileImageId != null) {
-            getFileUseCase.throwIfNotExists(profileImageId);
-        }
-    }
-
-    private void validateSchoolExists(Long schoolId) {
-        loadSchoolPort.throwIfNotExists(schoolId);
     }
 }

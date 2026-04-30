@@ -53,7 +53,18 @@ public enum ScheduleErrorCode implements BaseCode {
 
     ATTENDANCE_POLICY_REQUIRED(HttpStatus.BAD_REQUEST, "SCHEDULE-0027", "출석을 요하는 일정의 출석 정책은 필수입니다."),
 
-    ENDED_SCHEDULE_CANT_BE_EDITED(HttpStatus.BAD_REQUEST, "SCHEDULE-0028", "종료된 일정은 수정이 불가합니다.");
+    STARTED_SCHEDULE_CANT_BE_EDITED(HttpStatus.BAD_REQUEST, "SCHEDULE-0028", "시작된 일정은 수정이 불가합니다."),
+
+    CANNOT_CREATE_SCHEDULE(HttpStatus.FORBIDDEN, "SCHEDULE-0029", "일정을 생성할 수 없습니다. 챌린저 활동 이력이 필요합니다."),
+
+    EXCEEDED_MAX_PARTICIPANTS(HttpStatus.BAD_REQUEST, "SCHEDULE-0030", "초대 가능한 최대 참여자 수를 초과했습니다."),
+
+    CANNOT_CREATE_ATTENDANCE_REQUIRED_SCHEDULE(HttpStatus.FORBIDDEN, "SCHEDULE-0031", "출석을 요하는 일정을 생성할 권한이 없습니다."),
+
+    INVALID_MEMBER_INVITE(HttpStatus.BAD_REQUEST, "SCHEDULE-0032", "초대하려는 참여자에 유효하지 않은 사용자가 포함되어 있습니다."),
+
+    ;
+
     private final HttpStatus httpStatus;
     private final String code;
     private final String message;
