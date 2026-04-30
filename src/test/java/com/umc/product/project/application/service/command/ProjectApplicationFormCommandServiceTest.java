@@ -44,7 +44,6 @@ import com.umc.product.survey.application.port.in.command.dto.UpdateFormCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateFormSectionCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateQuestionOptionCommand;
 import com.umc.product.survey.application.port.in.query.GetFormUseCase;
-import com.umc.product.survey.application.port.in.query.dto.FormInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo.Option;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo.QuestionWithOptions;
@@ -211,7 +210,6 @@ class ProjectApplicationFormCommandServiceTest {
 
             given(loadProjectPort.getById(42L)).willReturn(project);
             given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
-            given(getFormUseCase.getById(500L)).willReturn(formInfo("Triple", null));
             given(getFormUseCase.getFormWithStructure(500L)).willReturn(emptyStructure());
             given(loadPolicyPort.listByApplicationFormId(100L)).willReturn(List.of());
             given(manageFormSectionUseCase.createSection(any())).willReturn(1000L);
@@ -256,7 +254,6 @@ class ProjectApplicationFormCommandServiceTest {
 
             given(loadProjectPort.getById(42L)).willReturn(project);
             given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
-            given(getFormUseCase.getById(500L)).willReturn(formInfo("Triple", null));
 
             // 기존: 섹션 1 (COMMON) — title="공통"
             given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
@@ -285,7 +282,6 @@ class ProjectApplicationFormCommandServiceTest {
 
             given(loadProjectPort.getById(42L)).willReturn(project);
             given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
-            given(getFormUseCase.getById(500L)).willReturn(formInfo("Triple", null));
             given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
                 existingSection(1000L, "예전 이름", null, 1L, List.of())
             )));
@@ -313,7 +309,6 @@ class ProjectApplicationFormCommandServiceTest {
 
             given(loadProjectPort.getById(42L)).willReturn(project);
             given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
-            given(getFormUseCase.getById(500L)).willReturn(formInfo("Triple", null));
             given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
                 existingSection(1000L, "공통", null, 1L, List.of())
             )));
@@ -337,7 +332,6 @@ class ProjectApplicationFormCommandServiceTest {
 
             given(loadProjectPort.getById(42L)).willReturn(project);
             given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
-            given(getFormUseCase.getById(500L)).willReturn(formInfo("Triple", null));
             given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
                 existingSection(1000L, "공통", null, 1L, List.of()),
                 existingSection(1001L, "지울 섹션", null, 2L, List.of())
@@ -371,7 +365,6 @@ class ProjectApplicationFormCommandServiceTest {
 
             given(loadProjectPort.getById(42L)).willReturn(project);
             given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
-            given(getFormUseCase.getById(500L)).willReturn(formInfo("Triple", null));
             given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
                 existingSection(1000L, "공통", null, 1L, List.of(
                     existingQuestion(2000L, QuestionType.SHORT_TEXT, "남길 질문", null, true, 1L, List.of()),
@@ -402,7 +395,6 @@ class ProjectApplicationFormCommandServiceTest {
 
             given(loadProjectPort.getById(42L)).willReturn(project);
             given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
-            given(getFormUseCase.getById(500L)).willReturn(formInfo("Triple", null));
             given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
                 existingSection(1000L, "공통", null, 1L, List.of(
                     existingQuestion(2000L, QuestionType.RADIO, "선호도", null, true, 1L, List.of(
@@ -435,7 +427,6 @@ class ProjectApplicationFormCommandServiceTest {
 
             given(loadProjectPort.getById(42L)).willReturn(project);
             given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
-            given(getFormUseCase.getById(500L)).willReturn(formInfo("Triple", null));
             given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
                 existingSection(1000L, "공통", null, 1L, List.of(
                     existingQuestion(2000L, QuestionType.RADIO, "선호도", null, true, 1L, List.of(
@@ -511,7 +502,6 @@ class ProjectApplicationFormCommandServiceTest {
 
             given(loadProjectPort.getById(42L)).willReturn(project);
             given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
-            given(getFormUseCase.getById(500L)).willReturn(formInfo("Triple", null));
             given(getFormUseCase.getFormWithStructure(500L)).willReturn(emptyStructure());
             given(loadPolicyPort.listByApplicationFormId(100L)).willReturn(List.of());
 
@@ -532,7 +522,6 @@ class ProjectApplicationFormCommandServiceTest {
 
             given(loadProjectPort.getById(42L)).willReturn(project);
             given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
-            given(getFormUseCase.getById(500L)).willReturn(formInfo("Triple", null));
             given(getFormUseCase.getFormWithStructure(500L)).willReturn(emptyStructure());
             given(loadPolicyPort.listByApplicationFormId(100L)).willReturn(List.of());
 
@@ -555,7 +544,6 @@ class ProjectApplicationFormCommandServiceTest {
 
             given(loadProjectPort.getById(42L)).willReturn(project);
             given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
-            given(getFormUseCase.getById(500L)).willReturn(formInfo("Triple", null));
             given(getFormUseCase.getFormWithStructure(500L)).willReturn(structure(List.of(
                 existingSection(1000L, "A", null, 1L, List.of(
                     existingQuestion(2000L, QuestionType.SHORT_TEXT, "Q1", null, true, 1L, List.of())
@@ -594,8 +582,7 @@ class ProjectApplicationFormCommandServiceTest {
 
         given(loadProjectPort.getById(42L)).willReturn(project);
         given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
-        given(getFormUseCase.getById(500L)).willReturn(formInfo("Triple", null));
-        // service 가 두 번 호출 — 1) applyDiff 시점, 2) assembleResponse 시점
+        // service 가 두 번 호출 — 1) syncFormMetaIfChanged + applyDiff 시점, 2) assembleResponse 시점
         given(getFormUseCase.getFormWithStructure(eq(500L)))
             .willReturn(emptyStructure())
             .willReturn(structure(List.of(existingSection(1000L, "공통", null, 1L, List.of()))));
@@ -665,13 +652,6 @@ class ProjectApplicationFormCommandServiceTest {
             .build();
     }
 
-    private FormInfo formInfo(String title, String description) {
-        return FormInfo.builder()
-            .id(500L).createdMemberId(99L).title(title).description(description)
-            .status(FormStatus.DRAFT).isAnonymous(false)
-            .build();
-    }
-
     private FormWithStructureInfo emptyStructure() {
         return structure(List.of());
     }
@@ -717,9 +697,19 @@ class ProjectApplicationFormCommandServiceTest {
 
         given(loadProjectPort.getById(projectId)).willReturn(project);
         given(loadApplicationFormPort.findByProjectId(projectId)).willReturn(Optional.of(form));
-        given(getFormUseCase.getById(surveyFormId)).willReturn(formInfo(formTitle, formDescription));
-        given(getFormUseCase.getFormWithStructure(surveyFormId)).willReturn(emptyStructure());
+        given(getFormUseCase.getFormWithStructure(surveyFormId))
+            .willReturn(structureWithMeta(surveyFormId, formTitle, formDescription, List.of()));
         given(loadPolicyPort.listByApplicationFormId(formRowId)).willReturn(List.of());
+    }
+
+    private FormWithStructureInfo structureWithMeta(
+        Long formId, String title, String description, List<SectionWithQuestions> sections
+    ) {
+        return FormWithStructureInfo.builder()
+            .formId(formId).title(title).description(description)
+            .status(FormStatus.DRAFT).isAnonymous(false)
+            .sections(sections)
+            .build();
     }
 
     private Project createProject(Long id, ProjectStatus status, String name) {

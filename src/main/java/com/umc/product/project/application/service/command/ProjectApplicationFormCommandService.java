@@ -36,7 +36,6 @@ import com.umc.product.survey.application.port.in.command.dto.UpdateFormSectionC
 import com.umc.product.survey.application.port.in.command.dto.UpdateQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateQuestionOptionCommand;
 import com.umc.product.survey.application.port.in.query.GetFormUseCase;
-import com.umc.product.survey.application.port.in.query.dto.FormInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo.Option;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo.QuestionWithOptions;
@@ -90,16 +89,31 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
         Project project = loadProjectPort.getById(command.projectId());
         project.validateApplicationFormEditable();
 
-        ProjectApplicationForm applicationForm = loadApplicationFormPort.findByProjectId(command.projectId())
-            .map(existing -> {
-                syncFormMetaIfChanged(existing, project, command);
-                return existing;
-            })
-            .orElseGet(() -> createApplicationForm(project, command));
+        ProjectApplicationForm applicationForm;
+        FormWithStructureInfo existingStructure;
 
-        applyDiff(applicationForm, command);
+        var maybeExisting = loadApplicationFormPort.findByProjectId(command.projectId());
+        if (maybeExisting.isPresent()) {
+            applicationForm = maybeExisting.get();
+            // 메타 + 구조를 한 번에 가져와 syncFormMetaIfChanged / applyDiff 둘 다 재사용 (cross-domain 호출 1회 절감)
+            existingStructure = getFormUseCase.getFormWithStructure(applicationForm.getFormId());
+            syncFormMetaIfChanged(applicationForm, existingStructure, project, command);
+        } else {
+            applicationForm = createApplicationForm(project, command);
+            // 신규 폼은 비어있는 구조 — 호출 없이 직접 생성
+            existingStructure = emptyStructureFor(applicationForm.getFormId());
+        }
+
+        applyDiff(applicationForm, existingStructure, command);
 
         return assembleResponse(applicationForm);
+    }
+
+    private FormWithStructureInfo emptyStructureFor(Long formId) {
+        return FormWithStructureInfo.builder()
+            .formId(formId)
+            .sections(List.of())
+            .build();
     }
 
     /* =====================================================
@@ -120,10 +134,10 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
 
     private void syncFormMetaIfChanged(
         ProjectApplicationForm applicationForm,
+        FormWithStructureInfo existing,
         Project project,
         UpsertApplicationFormCommand command
     ) {
-        FormInfo existing = getFormUseCase.getById(applicationForm.getFormId());
         String resolvedTitle = resolveTitle(project, command);
 
         if (Objects.equals(existing.title(), resolvedTitle)
@@ -156,8 +170,11 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
      * 2) 3계층 diff (section -> question -> option)
      * ===================================================== */
 
-    private void applyDiff(ProjectApplicationForm applicationForm, UpsertApplicationFormCommand command) {
-        FormWithStructureInfo existing = getFormUseCase.getFormWithStructure(applicationForm.getFormId());
+    private void applyDiff(
+        ProjectApplicationForm applicationForm,
+        FormWithStructureInfo existing,
+        UpsertApplicationFormCommand command
+    ) {
         Map<Long, SectionWithQuestions> existingSectionById = existing.sections().stream()
             .collect(Collectors.toMap(SectionWithQuestions::sectionId, Function.identity()));
         Map<Long, ProjectApplicationFormPolicy> policyByFormSectionId =
