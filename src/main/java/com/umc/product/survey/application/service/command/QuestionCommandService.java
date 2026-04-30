@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class ManageQuestionCommandService implements ManageQuestionUseCase {
+public class QuestionCommandService implements ManageQuestionUseCase {
 
     private final LoadFormSectionPort loadFormSectionPort;
     private final LoadQuestionPort loadQuestionPort;

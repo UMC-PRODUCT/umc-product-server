@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class ManageFormCommandService implements ManageFormUseCase {
+public class FormCommandService implements ManageFormUseCase {
 
     private final LoadFormPort loadFormPort;
     private final SaveFormPort saveFormPort;

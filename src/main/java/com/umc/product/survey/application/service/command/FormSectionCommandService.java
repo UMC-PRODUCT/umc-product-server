@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class ManageFormSectionCommandService implements ManageFormSectionUseCase {
+public class FormSectionCommandService implements ManageFormSectionUseCase {
 
     private final LoadFormPort loadFormPort;
     private final LoadFormSectionPort loadFormSectionPort;

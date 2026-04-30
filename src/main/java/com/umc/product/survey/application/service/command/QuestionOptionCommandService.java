@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class ManageQuestionOptionCommandService implements ManageQuestionOptionUseCase {
+public class QuestionOptionCommandService implements ManageQuestionOptionUseCase {
 
     private final LoadQuestionPort loadQuestionPort;
     private final LoadQuestionOptionPort loadQuestionOptionPort;
