@@ -351,8 +351,19 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
                 .build()
         );
 
+        // 본문 순서대로 reorder 명시 호출 — Survey 단의 자동 orderNo 부여 정책에 의존하지 않음
+        List<Long> newOptionIds = new ArrayList<>();
         for (ApplicationQuestionOptionEntry optionEntry : entry.options()) {
-            createNewOption(questionId, optionEntry, requesterMemberId);
+            newOptionIds.add(createNewOption(questionId, optionEntry, requesterMemberId));
+        }
+        if (!newOptionIds.isEmpty()) {
+            manageQuestionOptionUseCase.reorderOptions(
+                ReorderQuestionOptionsCommand.builder()
+                    .questionId(questionId)
+                    .requesterMemberId(requesterMemberId)
+                    .orderedOptionIds(newOptionIds)
+                    .build()
+            );
         }
 
         return questionId;
