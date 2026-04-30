@@ -56,14 +56,14 @@ public enum NoticeTargetRole {
 
     /**
      * ChallengerRoleType을 공지 대상 역할로 변환합니다.
-     * 총괄단은 최상단에서 별도 처리되므로 empty를 반환합니다.
+     * 총괄단/지부장은 최상단에서 별도 처리되므로 empty를 반환합니다.
      */
     public static Optional<NoticeTargetRole> findFrom(ChallengerRoleType roleType) {
         return Optional.ofNullable(switch (roleType) {
-            case SCHOOL_PART_LEADER -> SCHOOL_PART_LEADER;
-            case SCHOOL_PRESIDENT, SCHOOL_VICE_PRESIDENT -> SCHOOL_CORE;
+            case SCHOOL_PART_LEADER, SCHOOL_ETC_ADMIN -> SCHOOL_PART_LEADER;
+            case SCHOOL_PRESIDENT, SCHOOL_VICE_PRESIDENT, CHAPTER_PRESIDENT -> SCHOOL_CORE;
             case CENTRAL_EDUCATION_TEAM_MEMBER, CENTRAL_OPERATING_TEAM_MEMBER -> CENTRAL_MEMBER;
-            default -> null;
+            case SUPER_ADMIN, CENTRAL_PRESIDENT, CENTRAL_VICE_PRESIDENT -> null;
         });
     }
 }

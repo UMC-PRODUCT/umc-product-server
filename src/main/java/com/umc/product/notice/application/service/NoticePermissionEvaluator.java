@@ -111,10 +111,12 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
                     return false;
                 }
                 // 파트 범위 확인: 파트장만 담당 파트로 필터링 (회장단/중앙운영진은 파트 무관)
+                // ADMIN 파트(기타 교내 운영진)는 파트 구분 없이 열람 가능
                 if (viewerRole == NoticeTargetRole.SCHOOL_PART_LEADER
                     && targetInfo.targetParts() != null && !targetInfo.targetParts().isEmpty()) {
-                    if (role.responsiblePart() == null
-                        || !targetInfo.targetParts().contains(role.responsiblePart())) {
+                    boolean isPartFree = role.responsiblePart() == null
+                        || role.responsiblePart() == ChallengerPart.ADMIN;
+                    if (!isPartFree && !targetInfo.targetParts().contains(role.responsiblePart())) {
                         return false;
                     }
                 }
