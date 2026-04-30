@@ -19,7 +19,7 @@ public record ApplicationQuestionOptionItem(
     String content,
 
     @PositiveOrZero(message = "orderNo는 0 이상이어야 합니다")
-    int orderNo,
+    long orderNo,
 
     boolean isOther
 ) {
@@ -37,7 +37,7 @@ public record ApplicationQuestionOptionItem(
         return ApplicationQuestionOptionItem.builder()
             .optionId(info.optionId())
             .content(info.content())
-            .orderNo((int) info.orderNo())
+            .orderNo(info.orderNo())
             .isOther(info.isOther())
             .build();
     }

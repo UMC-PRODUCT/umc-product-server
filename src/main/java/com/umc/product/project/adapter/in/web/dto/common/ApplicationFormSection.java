@@ -33,7 +33,7 @@ public record ApplicationFormSection(
     String description,
 
     @PositiveOrZero(message = "orderNo는 0 이상이어야 합니다")
-    int orderNo,
+    long orderNo,
 
     @NotNull(message = "질문 리스트는 null 일 수 없습니다 (빈 리스트는 허용)")
     @Valid
@@ -59,7 +59,7 @@ public record ApplicationFormSection(
             .allowedParts(info.allowedParts())
             .title(info.title())
             .description(info.description())
-            .orderNo((int) info.orderNo())
+            .orderNo(info.orderNo())
             .questions(info.questions().stream().map(ApplicationQuestionItem::from).toList())
             .build();
     }

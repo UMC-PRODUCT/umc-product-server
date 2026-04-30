@@ -50,7 +50,7 @@ public record UpsertApplicationFormCommand(
         Set<ChallengerPart> allowedParts,
         String title,
         String description,
-        int orderNo,
+        long orderNo,
         List<ApplicationQuestionEntry> questions
     ) {
         public ApplicationFormSectionEntry {
@@ -71,7 +71,7 @@ public record UpsertApplicationFormCommand(
         String title,
         String description,
         boolean isRequired,
-        int orderNo,
+        long orderNo,
         List<ApplicationQuestionOptionEntry> options
     ) {
         public ApplicationQuestionEntry {
@@ -88,7 +88,7 @@ public record UpsertApplicationFormCommand(
     public record ApplicationQuestionOptionEntry(
         Long optionId,
         String content,
-        int orderNo,
+        long orderNo,
         boolean isOther
     ) {
         public ApplicationQuestionOptionEntry {

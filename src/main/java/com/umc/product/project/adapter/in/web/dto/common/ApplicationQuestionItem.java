@@ -31,7 +31,7 @@ public record ApplicationQuestionItem(
     boolean isRequired,
 
     @PositiveOrZero(message = "orderNo는 0 이상이어야 합니다")
-    int orderNo,
+    long orderNo,
 
     @NotNull(message = "옵션 리스트는 null 일 수 없습니다 (빈 리스트는 허용)")
     @Valid
@@ -57,7 +57,7 @@ public record ApplicationQuestionItem(
             .title(info.title())
             .description(info.description())
             .isRequired(info.isRequired())
-            .orderNo((int) info.orderNo())
+            .orderNo(info.orderNo())
             .options(info.options().stream().map(ApplicationQuestionOptionItem::from).toList())
             .build();
     }
