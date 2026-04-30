@@ -81,4 +81,13 @@ public class Answer extends BaseEntity {
 
         return answer;
     }
+
+    /**
+     * 답변 내용(textValue) 갱신. 객관식 답변의 AnswerChoice 갈아끼움은 Service 책임.
+     * <p>
+     * 질문 type 변경은 {@code ManageQuestionUseCase}가 다루므로 본 메서드에서 type 변경 안 함.
+     */
+    public void updateTextValue(String textValue) {
+        this.textValue = textValue;
+    }
 }

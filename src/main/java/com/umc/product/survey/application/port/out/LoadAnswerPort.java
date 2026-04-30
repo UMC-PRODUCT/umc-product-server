@@ -13,6 +13,11 @@ public interface LoadAnswerPort {
     Optional<Answer> findById(Long answerId);
 
     /**
+     * 특정 FormResponse + 특정 Question 의 답변 존재 여부 (createAnswer의 중복 검증 용).
+     */
+    boolean existsByFormResponseIdAndQuestionId(Long formResponseId, Long questionId);
+
+    /**
      * 특정 FormResponse 에 속한 모든 답변을 질문 orderNo 오름차순으로 반환.
      */
     List<Answer> listByFormResponseId(Long formResponseId);

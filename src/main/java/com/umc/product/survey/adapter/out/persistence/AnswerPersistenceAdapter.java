@@ -29,6 +29,11 @@ public class AnswerPersistenceAdapter implements LoadAnswerPort, SaveAnswerPort 
     }
 
     @Override
+    public boolean existsByFormResponseIdAndQuestionId(Long formResponseId, Long questionId) {
+        return answerQueryRepository.existsByFormResponseIdAndQuestionId(formResponseId, questionId);
+    }
+
+    @Override
     public List<Answer> listByFormResponseId(Long formResponseId) {
         return answerQueryRepository.findAllByFormResponseId(formResponseId);
     }
@@ -59,6 +64,11 @@ public class AnswerPersistenceAdapter implements LoadAnswerPort, SaveAnswerPort 
     }
 
     @Override
+    public Answer save(Answer answer) {
+        return answerJpaRepository.save(answer);
+    }
+
+    @Override
     public List<Answer> saveAll(List<Answer> answers) {
         return answerJpaRepository.saveAll(answers);
     }
@@ -86,5 +96,17 @@ public class AnswerPersistenceAdapter implements LoadAnswerPort, SaveAnswerPort 
         // FK 의존성 거꾸로: AnswerChoice -> Answer 순으로 삭제
         answerChoiceJpaRepository.deleteByQuestionId(questionId);
         answerJpaRepository.deleteByQuestionId(questionId);
+    }
+
+    @Override
+    public void deleteByAnswerId(Long answerId) {
+        // FK 의존성 거꾸로: AnswerChoice (bulk @Query) -> Answer (단건 deleteById) 순
+        answerChoiceJpaRepository.deleteByAnswerId(answerId);
+        answerJpaRepository.deleteById(answerId);
+    }
+
+    @Override
+    public void deleteChoicesByAnswerId(Long answerId) {
+        answerChoiceJpaRepository.deleteByAnswerId(answerId);
     }
 }

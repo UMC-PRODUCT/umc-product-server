@@ -32,4 +32,20 @@ public class AnswerQueryRepository {
             .orderBy(s.orderNo.asc(), q.orderNo.asc())
             .fetch();
     }
+
+    /**
+     * 특정 FormResponse 에 특정 Question의 답변이 이미 있는지 검사 (createAnswer 중복 검증 용).
+     */
+    public boolean existsByFormResponseIdAndQuestionId(Long formResponseId, Long questionId) {
+        QAnswer a = QAnswer.answer;
+        Integer one = queryFactory
+            .selectOne()
+            .from(a)
+            .where(
+                a.formResponse.id.eq(formResponseId),
+                a.question.id.eq(questionId)
+            )
+            .fetchFirst();
+        return one != null;
+    }
 }
