@@ -238,8 +238,19 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
 
         savePolicyPort.save(buildPolicy(applicationForm, sectionId, entry));
 
+        // 본문 순서대로 reorder 명시 호출 — Survey 단의 자동 orderNo 부여 정책에 의존하지 않음
+        List<Long> newQuestionIds = new ArrayList<>();
         for (ApplicationQuestionEntry questionEntry : entry.questions()) {
-            createNewQuestion(sectionId, questionEntry, requesterMemberId);
+            newQuestionIds.add(createNewQuestion(sectionId, questionEntry, requesterMemberId));
+        }
+        if (!newQuestionIds.isEmpty()) {
+            manageQuestionUseCase.reorderQuestions(
+                ReorderQuestionsCommand.builder()
+                    .sectionId(sectionId)
+                    .requesterMemberId(requesterMemberId)
+                    .orderedQuestionIds(newQuestionIds)
+                    .build()
+            );
         }
 
         return sectionId;
