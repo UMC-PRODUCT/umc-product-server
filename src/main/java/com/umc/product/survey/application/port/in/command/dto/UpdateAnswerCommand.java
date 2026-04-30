@@ -16,7 +16,7 @@ public record UpdateAnswerCommand(
     Long requesterMemberId,
     String textValue,
     List<Long> selectedOptionIds,
-    List<Long> fileIds,
+    List<String> fileIds,
     List<Instant> times
 ) {
 }

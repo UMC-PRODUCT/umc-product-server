@@ -1,5 +1,6 @@
 package com.umc.product.survey.application.service.command;
 
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.survey.application.port.in.command.ManageFormResponseUseCase;
 import com.umc.product.survey.application.port.in.command.dto.*;
 import com.umc.product.survey.application.port.out.*;
@@ -31,6 +32,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
     private final LoadAnswerPort loadAnswerPort;
     private final SaveFormResponsePort saveFormResponsePort;
     private final SaveAnswerPort saveAnswerPort;
+    private final GetFileUseCase getFileUseCase;
 
     @Override
     public Long submitImmediately(SubmitFormResponseCommand command) {
@@ -227,8 +229,31 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
                     validateOptionBelongsToQuestion(optionId, question.getId());
                 }
             }
-            case SCHEDULE, FILE, PORTFOLIO ->
-                // TODO: 다음 PR에서 Answer 엔티티에 fileIds/times setter 확장 후 구현
+            case FILE -> {
+                List<String> fileIds = answerCommand.fileIds();
+                if (fileIds == null || fileIds.isEmpty()) {
+                    throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                }
+                for (String fileId : fileIds) {
+                    getFileUseCase.throwIfNotExists(fileId);
+                }
+            }
+            case PORTFOLIO -> {
+                String text = answerCommand.textValue();
+                List<String> fileIds = answerCommand.fileIds();
+                boolean hasText = text != null && !text.isBlank();
+                boolean hasFiles = fileIds != null && !fileIds.isEmpty();
+                if (!hasText && !hasFiles) {
+                    throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                }
+                if (hasFiles) {
+                    for (String fileId : fileIds) {
+                        getFileUseCase.throwIfNotExists(fileId);
+                    }
+                }
+            }
+            case SCHEDULE ->
+                // 후속 PR 에서 지원
                 throw new UnsupportedOperationException(
                     "Question type " + type + " is not supported yet");
         }
@@ -250,11 +275,15 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
                 .findFirst()
                 .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND));
 
+            Set<String> fileIdSet = (answerCmd.fileIds() == null || answerCmd.fileIds().isEmpty())
+                ? null
+                : new HashSet<>(answerCmd.fileIds());
             Answer answer = Answer.create(
                 formResponse,
                 question,
                 question.getType(),
-                answerCmd.textValue()
+                answerCmd.textValue(),
+                fileIdSet
             );
 
             List<QuestionOption> selectedOptions = new ArrayList<>();

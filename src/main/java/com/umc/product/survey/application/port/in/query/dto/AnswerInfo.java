@@ -26,7 +26,7 @@ public record AnswerInfo(
     QuestionType answeredAsType,
     String textValue,
     List<SelectedOption> selectedOptions,
-    Set<Long> fileIds,
+    Set<String> fileIds,
     Set<Instant> times,
     Instant createdAt,
     Instant updatedAt

@@ -10,6 +10,7 @@ import com.umc.product.survey.application.port.out.LoadQuestionOptionPort;
 import com.umc.product.survey.application.port.out.LoadQuestionPort;
 import com.umc.product.survey.application.port.out.SaveAnswerPort;
 import com.umc.product.survey.application.port.out.SaveFormResponsePort;
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.survey.domain.Answer;
 import com.umc.product.survey.domain.AnswerChoice;
 import com.umc.product.survey.domain.FormResponse;
@@ -25,7 +26,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Transactional
@@ -38,6 +41,7 @@ public class AnswerCommandService implements ManageAnswerUseCase {
     private final LoadAnswerPort loadAnswerPort;
     private final SaveAnswerPort saveAnswerPort;
     private final SaveFormResponsePort saveFormResponsePort;
+    private final GetFileUseCase getFileUseCase;
 
     @Override
     public Long createAnswer(CreateAnswerCommand command) {
@@ -49,9 +53,13 @@ public class AnswerCommandService implements ManageAnswerUseCase {
             throw new SurveyDomainException(SurveyErrorCode.ANSWER_ALREADY_EXISTS);
         }
 
-        validateAnswerContent(question, command.textValue(), command.selectedOptionIds());
+        validateAnswerContent(question, command.textValue(), command.selectedOptionIds(), command.fileIds());
 
-        Answer answer = Answer.create(draft, question, question.getType(), command.textValue());
+        Answer answer = Answer.create(
+            draft, question, question.getType(),
+            command.textValue(),
+            toFileIdSet(command.fileIds())
+        );
         Answer saved = saveAnswerPort.save(answer);
 
         // 객관식이면 AnswerChoice도 같이 저장
@@ -77,13 +85,16 @@ public class AnswerCommandService implements ManageAnswerUseCase {
         }
 
         Question question = existing.getQuestion();
-        validateAnswerContent(question, command.textValue(), command.selectedOptionIds());
+        validateAnswerContent(question, command.textValue(), command.selectedOptionIds(), command.fileIds());
 
         // 1. 기존 AnswerChoice 만 삭제 (Answer 는 PK 유지하며 update)
         saveAnswerPort.deleteChoicesByAnswerId(existing.getId());
 
-        // 2. Answer.textValue 갱신 (도메인 메서드)
-        existing.updateTextValue(command.textValue());
+        // 2. Answer 의 textValue / fileIds 갱신 (PATCH 시맨틱 — null 은 기존 값 유지)
+        Set<String> requestedFileIds = command.fileIds() == null
+            ? null  // null = keep
+            : new HashSet<>(command.fileIds());  // empty = clear, non-empty = set
+        existing.update(command.textValue(), requestedFileIds);
         saveAnswerPort.save(existing);
 
         // 3. 새 AnswerChoice 저장 (객관식인 경우)
@@ -138,7 +149,12 @@ public class AnswerCommandService implements ManageAnswerUseCase {
     /**
      * 질문 type 별 답변 형식 검증.
      */
-    private void validateAnswerContent(Question question, String textValue, List<Long> selectedOptionIds) {
+    private void validateAnswerContent(
+        Question question,
+        String textValue,
+        List<Long> selectedOptionIds,
+        List<String> fileIds
+    ) {
         switch (question.getType()) {
             case SHORT_TEXT, LONG_TEXT -> {
                 if (textValue == null || textValue.isBlank()) {
@@ -159,8 +175,28 @@ public class AnswerCommandService implements ManageAnswerUseCase {
                     validateOptionBelongsToQuestion(optionId, question.getId());
                 }
             }
-            case SCHEDULE, FILE, PORTFOLIO ->
-                // FormResponseCommandService 와 동일 정책 — 후속 PR 에서 지원
+            case FILE -> {
+                if (fileIds == null || fileIds.isEmpty()) {
+                    throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                }
+                for (String fileId : fileIds) {
+                    getFileUseCase.throwIfNotExists(fileId);
+                }
+            }
+            case PORTFOLIO -> {
+                boolean hasText = textValue != null && !textValue.isBlank();
+                boolean hasFiles = fileIds != null && !fileIds.isEmpty();
+                if (!hasText && !hasFiles) {
+                    throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                }
+                if (hasFiles) {
+                    for (String fileId : fileIds) {
+                        getFileUseCase.throwIfNotExists(fileId);
+                    }
+                }
+            }
+            case SCHEDULE ->
+                // 후속 PR 에서 지원
                 throw new UnsupportedOperationException(
                     "Question type " + question.getType() + " is not supported yet");
         }
@@ -170,6 +206,16 @@ public class AnswerCommandService implements ManageAnswerUseCase {
         if (!loadQuestionOptionPort.existsByIdAndQuestionId(optionId, questionId)) {
             throw new SurveyDomainException(SurveyErrorCode.OPTION_NOT_IN_QUESTION);
         }
+    }
+
+    /**
+     * fileIds List를 Set 으로 변환. null이면 null 반환 (Answer.fileIds 도 null 허용 컬럼).
+     */
+    private static Set<String> toFileIdSet(List<String> fileIds) {
+        if (fileIds == null || fileIds.isEmpty()) {
+            return null;
+        }
+        return new HashSet<>(fileIds);
     }
 
     /**
