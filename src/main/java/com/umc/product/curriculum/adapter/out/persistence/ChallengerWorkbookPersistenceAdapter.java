@@ -5,6 +5,7 @@ import com.umc.product.curriculum.application.port.out.SaveChallengerWorkbookPor
 import com.umc.product.curriculum.domain.ChallengerWorkbook;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,6 +25,14 @@ public class ChallengerWorkbookPersistenceAdapter implements LoadChallengerWorkb
     @Override
     public Optional<ChallengerWorkbook> findByMemberIdAndOriginalWorkbookId(Long memberId, Long originalWorkbookId) {
         return challengerWorkbookJpaRepository.findByMemberIdAndOriginalWorkbookId(memberId, originalWorkbookId);
+    }
+
+    @Override
+    public List<ChallengerWorkbook> findByMemberIdAndOriginalWorkbookIdIn(Long memberId, List<Long> originalWorkbookIds) {
+        if (originalWorkbookIds.isEmpty()) {
+            return List.of();
+        }
+        return challengerWorkbookJpaRepository.findByMemberIdAndOriginalWorkbookIdIn(memberId, originalWorkbookIds);
     }
 
     @Override

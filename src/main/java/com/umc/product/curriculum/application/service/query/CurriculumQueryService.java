@@ -56,76 +56,89 @@ public class CurriculumQueryService implements GetCurriculumUseCase {
     /**
      * 특정 멤버의 커리큘럼 진행 현황을 반환합니다.
      * <p>
-     * 커리큘럼 내 전체 주차에 대해 배포된 워크북, 미션, 제출물, 피드백을 포함합니다.
-     * 챌린저 파트를 기반으로 커리큘럼을 식별합니다.
+     * 워크북·미션·제출물·피드백을 모두 IN 쿼리로 일괄 조회한 뒤 메모리에서 조립하여
+     * DB 접근을 총 6회로 고정합니다 (주차→워크북→미션·챌린저워크북→제출물→피드백).
      */
     @Override
     public MyCurriculumInfo getMyProgress(Long memberId, Long gisuId) {
         ChallengerInfo challengerInfo = getChallengerUseCase.getByMemberIdAndGisuId(memberId, gisuId);
         CurriculumProjection projection = loadCurriculumPort.getByGisuIdAndPart(gisuId, challengerInfo.part());
-
         List<WeeklyCurriculum> weeklyCurriculums = loadWeeklyCurriculumPort.findByCurriculumId(projection.id(), null);
 
+        if (weeklyCurriculums.isEmpty()) {
+            return MyCurriculumInfo.of(projection, List.of());
+        }
+
+        // 전체 주차 ID로 배포된 원본 워크북 일괄 조회
+        List<Long> weeklyCurriculumIds = weeklyCurriculums.stream().map(WeeklyCurriculum::getId).toList();
+        List<OriginalWorkbook> allWorkbooks = loadOriginalWorkbookPort.findReleasedByWeeklyCurriculumIdIn(weeklyCurriculumIds);
+
+        List<Long> originalWorkbookIds = allWorkbooks.stream().map(OriginalWorkbook::getId).toList();
+
+        // 미션과 챌린저 워크북 일괄 조회
+        List<OriginalWorkbookMission> allMissions = loadOriginalWorkbookMissionPort.findByOriginalWorkbookIdIn(originalWorkbookIds);
+        List<ChallengerWorkbook> allChallengerWorkbooks = loadChallengerWorkbookPort.findByMemberIdAndOriginalWorkbookIdIn(memberId, originalWorkbookIds);
+
+        // 제출물과 피드백 일괄 조회
+        List<Long> challengerWorkbookIds = allChallengerWorkbooks.stream().map(ChallengerWorkbook::getId).toList();
+        List<MissionSubmission> allSubmissions = loadMissionSubmissionPort.findByChallengerWorkbookIdIn(challengerWorkbookIds);
+        List<Long> submissionIds = allSubmissions.stream().map(MissionSubmission::getId).toList();
+        List<MissionFeedback> allFeedbacks = loadMissionFeedbackPort.findByMissionSubmissionIdIn(submissionIds);
+
+        // 조회 결과를 ID 기준으로 그룹핑
+        Map<Long, List<OriginalWorkbook>> workbooksByWcId = allWorkbooks.stream()
+            .collect(Collectors.groupingBy(wb -> wb.getWeeklyCurriculum().getId()));
+        Map<Long, List<OriginalWorkbookMission>> missionsByWbId = allMissions.stream()
+            .collect(Collectors.groupingBy(m -> m.getOriginalWorkbook().getId()));
+        Map<Long, ChallengerWorkbook> cwByWbId = allChallengerWorkbooks.stream()
+            .collect(Collectors.toMap(cw -> cw.getOriginalWorkbook().getId(), cw -> cw));
+        Map<Long, MissionSubmissionInfo> submissionInfoByMissionId = buildSubmissionInfoMap(allSubmissions, allFeedbacks);
+
         List<MyWeeklyCurriculumInfo> weeks = weeklyCurriculums.stream()
-            .map(wc -> buildWeeklyCurriculumInfo(wc, memberId))
+            .map(wc -> {
+                List<MyOriginalWorkbookInfo> workbookInfos = workbooksByWcId.getOrDefault(wc.getId(), List.of()).stream()
+                    .map(wb -> buildMyOriginalWorkbookInfo(wb, missionsByWbId, cwByWbId, submissionInfoByMissionId))
+                    .toList();
+                return MyWeeklyCurriculumInfo.of(wc, workbookInfos);
+            })
             .toList();
 
         return MyCurriculumInfo.of(projection, weeks);
     }
 
     /**
-     * 주차별 커리큘럼에서 배포된 원본 워크북 목록을 조회하고 멤버 관점의 진행 정보를 구성합니다.
-     */
-    private MyWeeklyCurriculumInfo buildWeeklyCurriculumInfo(WeeklyCurriculum wc, Long memberId) {
-        List<OriginalWorkbook> releasedWorkbooks = loadOriginalWorkbookPort.findReleasedByWeeklyCurriculumId(wc.getId());
-
-        List<MyOriginalWorkbookInfo> workbookItems = releasedWorkbooks.stream()
-            .map(wb -> buildMyOriginalWorkbookInfo(wb, memberId))
-            .toList();
-
-        return MyWeeklyCurriculumInfo.of(wc, workbookItems);
-    }
-
-    /**
      * 원본 워크북에 대한 멤버의 진행 정보를 구성합니다.
      * <p>
-     * 미션 제출 여부와 챌린저 워크북 배포 여부를 함께 반영합니다.
+     * 사전 조회된 Map에서 O(1)으로 조회하여 추가 DB 접근 없이 조립합니다.
      */
-    private MyOriginalWorkbookInfo buildMyOriginalWorkbookInfo(OriginalWorkbook wb, Long memberId) {
-        List<OriginalWorkbookMission> missions = loadOriginalWorkbookMissionPort.findByOriginalWorkbookId(wb.getId());
-
-        Optional<ChallengerWorkbook> challengerWorkbook = loadChallengerWorkbookPort
-            .findByMemberIdAndOriginalWorkbookId(memberId, wb.getId());
-
-        Map<Long, MissionSubmissionInfo> submissionByMissionId = buildSubmissionMap(challengerWorkbook);
+    private MyOriginalWorkbookInfo buildMyOriginalWorkbookInfo(
+        OriginalWorkbook wb,
+        Map<Long, List<OriginalWorkbookMission>> missionsByWbId,
+        Map<Long, ChallengerWorkbook> cwByWbId,
+        Map<Long, MissionSubmissionInfo> submissionInfoByMissionId
+    ) {
+        List<OriginalWorkbookMission> missions = missionsByWbId.getOrDefault(wb.getId(), List.of());
+        Optional<ChallengerWorkbook> challengerWorkbook = Optional.ofNullable(cwByWbId.get(wb.getId()));
 
         List<MyOriginalWorkbookMissionInfo> missionInfos = missions.stream()
-            .map(m -> MyOriginalWorkbookMissionInfo.of(m, submissionByMissionId.get(m.getId())))
+            .map(m -> MyOriginalWorkbookMissionInfo.of(m, submissionInfoByMissionId.get(m.getId())))
             .toList();
 
         return MyOriginalWorkbookInfo.of(wb, missionInfos, challengerWorkbook.map(ChallengerWorkbook::getId));
     }
 
     /**
-     * 챌린저 워크북에 속한 제출물과 피드백을 일괄 조회해 미션 ID 기준 Map으로 반환합니다.
+     * 전체 제출물과 피드백을 받아 미션 ID 기준 Map으로 변환합니다.
      * <p>
-     * 제출물별로 피드백을 개별 조회하지 않고 한 번에 불러온 뒤 그룹핑하여 N+1 문제를 방지합니다.
-     * 챌린저 워크북이 없거나 제출물이 없으면 빈 Map을 반환합니다.
+     * 피드백은 제출물 ID 기준으로 먼저 그룹핑한 뒤, 제출물 단위로 MissionSubmissionInfo를 생성합니다.
      */
-    private Map<Long, MissionSubmissionInfo> buildSubmissionMap(Optional<ChallengerWorkbook> challengerWorkbook) {
-        if (challengerWorkbook.isEmpty()) {
-            return Map.of();
-        }
-
-        List<MissionSubmission> submissions = loadMissionSubmissionPort
-            .findByChallengerWorkbookId(challengerWorkbook.get().getId());
-
+    private Map<Long, MissionSubmissionInfo> buildSubmissionInfoMap(
+        List<MissionSubmission> submissions,
+        List<MissionFeedback> allFeedbacks
+    ) {
         if (submissions.isEmpty()) {
             return Map.of();
         }
-
-        List<Long> submissionIds = submissions.stream().map(MissionSubmission::getId).toList();
-        List<MissionFeedback> allFeedbacks = loadMissionFeedbackPort.findByMissionSubmissionIdIn(submissionIds);
 
         Map<Long, List<MissionFeedback>> feedbacksBySubmissionId = allFeedbacks.stream()
             .collect(Collectors.groupingBy(f -> f.getMissionSubmission().getId()));
