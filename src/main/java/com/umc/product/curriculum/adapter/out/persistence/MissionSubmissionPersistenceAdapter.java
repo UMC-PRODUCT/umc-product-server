@@ -1,12 +1,15 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
+import com.umc.product.curriculum.adapter.out.persistence.repository.MissionFeedbackJpaRepository;
+import com.umc.product.curriculum.adapter.out.persistence.repository.MissionSubmissionJpaRepository;
 import com.umc.product.curriculum.application.port.out.LoadMissionFeedbackPort;
 import com.umc.product.curriculum.application.port.out.LoadMissionSubmissionPort;
 import com.umc.product.curriculum.domain.MissionFeedback;
 import com.umc.product.curriculum.domain.MissionSubmission;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor

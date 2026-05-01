@@ -1,15 +1,18 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
+import com.umc.product.curriculum.adapter.out.persistence.repository.OriginalWorkbookJpaRepository;
+import com.umc.product.curriculum.adapter.out.persistence.repository.query.CurriculumQueryRepository;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookPort;
 import com.umc.product.curriculum.application.port.out.SaveOriginalWorkbookPort;
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
 import com.umc.product.curriculum.domain.exception.CurriculumDomainException;
 import com.umc.product.curriculum.domain.exception.CurriculumErrorCode;
-import java.time.Instant;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor

@@ -1,6 +1,8 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.curriculum.adapter.out.persistence.repository.CurriculumJpaRepository;
+import com.umc.product.curriculum.adapter.out.persistence.repository.query.CurriculumQueryRepository;
 import com.umc.product.curriculum.application.port.in.query.dto.CurriculumProjection;
 import com.umc.product.curriculum.application.port.out.LoadCurriculumPort;
 import com.umc.product.curriculum.application.port.out.SaveCurriculumPort;

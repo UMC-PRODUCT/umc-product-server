@@ -1,5 +1,7 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
+import com.umc.product.curriculum.adapter.out.persistence.repository.WeeklyCurriculumJpaRepository;
+import com.umc.product.curriculum.adapter.out.persistence.repository.query.WeeklyCurriculumQueryRepository;
 import com.umc.product.curriculum.application.port.out.LoadWeeklyCurriculumPort;
 import com.umc.product.curriculum.application.port.out.SaveWeeklyCurriculumPort;
 import com.umc.product.curriculum.domain.WeeklyCurriculum;

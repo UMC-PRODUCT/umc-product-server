@@ -1,10 +1,12 @@
 package com.umc.product.curriculum.adapter.out.persistence;
 
+import com.umc.product.curriculum.adapter.out.persistence.repository.OriginalWorkbookMissionJpaRepository;
 import com.umc.product.curriculum.application.port.out.LoadOriginalWorkbookMissionPort;
 import com.umc.product.curriculum.domain.OriginalWorkbookMission;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
