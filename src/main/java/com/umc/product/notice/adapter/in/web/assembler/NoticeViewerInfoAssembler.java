@@ -6,7 +6,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
-import com.umc.product.notice.domain.enums.NoticeTargetRole;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -30,7 +30,7 @@ public class NoticeViewerInfoAssembler {
 
     public NoticeViewerInfo toMemberIdAndGisuId(Long memberId, Long gisuId) {
         Set<ChallengerPart> memberParts = resolveParts(memberId, gisuId);
-        NoticeTargetRole viewerRole = resolveViewerRole(memberId, gisuId);
+        NoticeTab viewerRole = resolveViewerRole(memberId, gisuId);
 
         MemberInfo memberInfo = getMemberUseCase.findAllByIds(Set.of(memberId)).get(memberId);
         Long schoolId = memberInfo != null ? memberInfo.schoolId() : null;
@@ -63,11 +63,9 @@ public class NoticeViewerInfoAssembler {
     }
 
     /**
-     * 조회자의 최상위 운영진 역할을 반환합니다.
-     * 총괄단 및 중앙운영진은 CENTRAL_MEMBER(레벨 1)로 통합됩니다.
-     * 여러 역할을 가진 경우 레벨이 가장 낮은(상위) 역할을 반환합니다.
+     * 조회자의 최상위 운영진 역할을 반환합니다. 총괄단 및 중앙운영진은 CENTRAL_MEMBER(레벨 1)로 통합됩니다. 여러 역할을 가진 경우 레벨이 가장 낮은(상위) 역할을 반환합니다.
      */
-    private NoticeTargetRole resolveViewerRole(Long memberId, Long gisuId) {
+    private NoticeTab resolveViewerRole(Long memberId, Long gisuId) {
         if (memberId == null || gisuId == null) {
             return null;
         }
@@ -78,12 +76,12 @@ public class NoticeViewerInfoAssembler {
                 || role.roleType().isAtLeastSchoolAdmin())
             .map(role -> {
                 if (role.roleType().isAtLeastCentralMember()) {
-                    return NoticeTargetRole.CENTRAL_MEMBER;
+                    return NoticeTab.CENTRAL_MEMBER;
                 }
-                return NoticeTargetRole.findFrom(role.roleType()).orElse(null);
+                return NoticeTab.findFrom(role.roleType()).orElse(null);
             })
             .filter(role -> role != null && role.isStaffRole())
-            .min(Comparator.comparingInt(NoticeTargetRole::getLevel))
+            .min(Comparator.comparingInt(NoticeTab::getLevel))
             .orElse(null);
     }
 }

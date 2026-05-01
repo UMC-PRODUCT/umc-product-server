@@ -14,7 +14,7 @@ import com.umc.product.notice.application.port.in.query.GetNoticeTargetUseCase;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTargetInfo;
-import com.umc.product.notice.domain.enums.NoticeTargetRole;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import java.util.Objects;
@@ -93,7 +93,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
     private boolean canReadStaffNotice(SubjectAttributes subjectAttributes, NoticeTargetInfo targetInfo) {
         return subjectAttributes.roleAttributes().stream()
             .anyMatch(role -> {
-                NoticeTargetRole viewerRole = NoticeTargetRole.findFrom(role.roleType()).orElse(null);
+                NoticeTab viewerRole = NoticeTab.findFrom(role.roleType()).orElse(null);
                 if (viewerRole == null) {
                     return false;
                 }
@@ -112,7 +112,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
                 }
                 // 파트 범위 확인: 파트장만 담당 파트로 필터링 (회장단/중앙운영진은 파트 무관)
                 // ADMIN 파트(기타 교내 운영진)는 파트 구분 없이 열람 가능
-                if (viewerRole == NoticeTargetRole.SCHOOL_PART_LEADER
+                if (viewerRole == NoticeTab.SCHOOL_PART_LEADER
                     && targetInfo.targetParts() != null && !targetInfo.targetParts().isEmpty()) {
                     boolean isPartFree = role.responsiblePart() == null
                         || role.responsiblePart() == ChallengerPart.ADMIN;

@@ -14,7 +14,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeClassification;
-import com.umc.product.notice.domain.enums.NoticeTargetRole;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import java.util.List;
@@ -113,8 +113,8 @@ public class NoticeQueryRepository {
         NoticeClassification classification,
         NoticeViewerInfo viewerInfo
     ) {
-        NoticeTargetRole viewerRole = viewerInfo.viewerRole();
-        List<NoticeTargetRole> readableRoles = NoticeTargetRole.staffRolesReadableBy(viewerRole);
+        NoticeTab viewerRole = viewerInfo.viewerRole();
+        List<NoticeTab> readableRoles = NoticeTab.staffRolesReadableBy(viewerRole);
 
         BooleanExpression gisuMatch = noticeTarget.targetGisuId.eq(classification.gisuId());
         BooleanExpression rolesMatch = noticeTarget.minTargetRole.in(readableRoles);
@@ -138,9 +138,9 @@ public class NoticeQueryRepository {
         if (classification.part() != null) {
             return targetPartContains(classification.part());
         }
-        NoticeTargetRole viewerRole = viewerInfo.viewerRole();
+        NoticeTab viewerRole = viewerInfo.viewerRole();
         // 총괄/중운/회장단 파트 미지정: 전체 보임
-        if (viewerRole == NoticeTargetRole.CENTRAL_MEMBER || viewerRole == NoticeTargetRole.SCHOOL_CORE) {
+        if (viewerRole == NoticeTab.CENTRAL_MEMBER || viewerRole == NoticeTab.SCHOOL_CORE) {
             return Expressions.TRUE;
         }
         // 파트장 파트 미지정: 담당 파트 + 파트 미지정 공지
@@ -225,11 +225,11 @@ public class NoticeQueryRepository {
     }
 
     private BooleanExpression isChallengerNotice() {
-        return noticeTarget.minTargetRole.eq(NoticeTargetRole.CHALLENGER);
+        return noticeTarget.minTargetRole.eq(NoticeTab.CHALLENGER);
     }
 
     private BooleanExpression isNotChallengerNotice() {
-        return noticeTarget.minTargetRole.ne(NoticeTargetRole.CHALLENGER);
+        return noticeTarget.minTargetRole.ne(NoticeTab.CHALLENGER);
     }
 
     private BooleanExpression targetPartIsEmpty() {

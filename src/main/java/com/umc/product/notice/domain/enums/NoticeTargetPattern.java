@@ -194,7 +194,7 @@ public enum NoticeTargetPattern {
 
     // CENTRAL_MEMBER 대상 공지에는 학교 지정 불가
     private static void validateSchoolForCentralRole(NoticeTargetInfo info) {
-        if (info.minTargetRole() == NoticeTargetRole.CENTRAL_MEMBER) {
+        if (info.minTargetRole() == NoticeTab.CENTRAL_MEMBER) {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
                 "중앙운영진을 대상으로 하는 공지에 학교를 지정할 수 없습니다.");
         }
@@ -202,7 +202,7 @@ public enum NoticeTargetPattern {
 
     // SCHOOL_CORE 대상 공지에는 파트 지정 불가 (파트 지정은 SCHOOL_PART_LEADER/CENTRAL_MEMBER만 허용)
     private static void validatePartForStaff(NoticeTargetInfo info) {
-        if (info.minTargetRole() == NoticeTargetRole.SCHOOL_CORE) {
+        if (info.minTargetRole() == NoticeTab.SCHOOL_CORE) {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
                 "교내 회장단 대상 공지에는 파트를 지정할 수 없습니다.");
         }
@@ -210,14 +210,14 @@ public enum NoticeTargetPattern {
 
     private static boolean hasStaffWritePermission(NoticeTargetInfo info, Long memberId,
                                                    GetChallengerRoleUseCase useCase) {
-        NoticeTargetRole minTargetRole = info.minTargetRole();
+        NoticeTab minTargetRole = info.minTargetRole();
 
-        if (minTargetRole == NoticeTargetRole.CENTRAL_MEMBER) {
+        if (minTargetRole == NoticeTab.CENTRAL_MEMBER) {
             // 중앙운영진 대상 → 총괄단만 작성 가능
             return useCase.isCentralCoreInGisu(memberId, info.targetGisuId());
         }
 
-        if (minTargetRole == NoticeTargetRole.SCHOOL_CORE) {
+        if (minTargetRole == NoticeTab.SCHOOL_CORE) {
             // 학교회장단 이상 대상 → 총괄단 + 중앙운영진 작성 가능
             return useCase.isCentralMemberInGisu(memberId, info.targetGisuId());
         }

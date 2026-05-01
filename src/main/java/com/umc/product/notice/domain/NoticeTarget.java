@@ -2,7 +2,7 @@ package com.umc.product.notice.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.notice.domain.enums.NoticeTargetRole;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -46,7 +46,7 @@ public class NoticeTarget extends BaseEntity {
 
     @Column(name = "min_target_role", nullable = false)
     @Enumerated(EnumType.STRING)
-    private NoticeTargetRole minTargetRole;
+    private NoticeTab minTargetRole;
 
     @Builder
     private NoticeTarget(
@@ -55,7 +55,7 @@ public class NoticeTarget extends BaseEntity {
         Long targetChapterId,
         Long targetSchoolId,
         List<ChallengerPart> targetChallengerPart,
-        NoticeTargetRole minTargetRole) {
+        NoticeTab minTargetRole) {
         this.noticeId = noticeId;
         this.targetGisuId = targetGisuId;
         this.targetChapterId = targetChapterId;
@@ -69,7 +69,7 @@ public class NoticeTarget extends BaseEntity {
         Long targetChapterId,
         Long targetSchoolId,
         List<ChallengerPart> targetChallengerPart,
-        NoticeTargetRole minTargetRole) {
+        NoticeTab minTargetRole) {
         this.targetGisuId = targetGisuId;
         this.targetChapterId = targetChapterId;
         this.targetSchoolId = targetSchoolId;

@@ -1,7 +1,7 @@
 package com.umc.product.notice.domain;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.notice.domain.enums.NoticeTargetRole;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
@@ -32,10 +32,10 @@ public record NoticeClassification(
     @Schema(description = "대상 역할 하한선. CHALLENGER면 일반 공지, 그 외 값이면 운영진 공지.",
         example = "CHALLENGER")
     @NotNull(message = "대상 역할은 필수입니다.")
-    NoticeTargetRole minTargetRole
+    NoticeTab minTargetRole
 ) {
     public boolean isChallengerQuery() {
-        return minTargetRole == NoticeTargetRole.CHALLENGER;
+        return minTargetRole == NoticeTab.CHALLENGER;
     }
 
     /**
@@ -45,7 +45,7 @@ public record NoticeClassification(
         return new NoticeTargetInfo(
             gisuId, null, null,
             part != null ? List.of(part) : null,
-            NoticeTargetRole.CHALLENGER
+            NoticeTab.CHALLENGER
         );
     }
 }

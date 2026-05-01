@@ -24,8 +24,8 @@ import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.domain.NoticeTarget;
 import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.enums.NoticeTargetPattern;
-import com.umc.product.notice.domain.enums.NoticeTargetRole;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
@@ -294,7 +294,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             NoticeTargetPattern.from(classification.toTargetInfo());
         } else {
             // 운영진 공지: 조회자 역할이 요청 역할 이상인지 검증
-            NoticeTargetRole viewerRole = viewerInfo.viewerRole();
+            NoticeTab viewerRole = viewerInfo.viewerRole();
             if (viewerRole == null) {
                 throw new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION,
                     "운영진 공지를 조회할 권한이 없습니다.");

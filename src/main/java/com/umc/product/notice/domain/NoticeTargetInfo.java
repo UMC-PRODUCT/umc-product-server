@@ -1,7 +1,7 @@
 package com.umc.product.notice.domain;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.notice.domain.enums.NoticeTargetRole;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
@@ -35,7 +35,7 @@ public record NoticeTargetInfo(
         + "CENTRAL_MEMBER/SCHOOL_CORE/SCHOOL_PART_LEADER면 운영진 공지.",
         example = "CHALLENGER")
     @NotNull(message = "대상 역할은 필수입니다. 챌린저 공지의 경우 CHALLENGER를 입력하세요.")
-    NoticeTargetRole minTargetRole
+    NoticeTab minTargetRole
 ) {
     /**
      * 엔티티 → DTO 변환 (조회 방향)
@@ -51,7 +51,7 @@ public record NoticeTargetInfo(
     }
 
     public boolean isStaffNotice() {
-        return minTargetRole != null && minTargetRole != NoticeTargetRole.CHALLENGER;
+        return minTargetRole != null && minTargetRole != NoticeTab.CHALLENGER;
     }
 
     public boolean isTarget(Long gisuId, Long chapterId, Long schoolId, ChallengerPart part) {
