@@ -16,7 +16,7 @@ class ProjectTest {
 
     @BeforeEach
     void setUp() {
-        project = Project.createDraft(1L, 2L, 100L);
+        project = Project.createDraft(1L, 2L, 100L, 7L);
     }
 
     @Nested
@@ -32,6 +32,7 @@ class ProjectTest {
             assertThat(project.getGisuId()).isEqualTo(1L);
             assertThat(project.getChapterId()).isEqualTo(2L);
             assertThat(project.getProductOwnerMemberId()).isEqualTo(100L);
+            assertThat(project.getProductOwnerSchoolId()).isEqualTo(7L);
         }
 
         @Test
@@ -98,16 +99,17 @@ class ProjectTest {
 
         @Test
         void 새_PM에게_양도된다() {
-            project.transferOwnership(200L);
+            project.transferOwnership(200L, 8L);
 
             assertThat(project.getProductOwnerMemberId()).isEqualTo(200L);
+            assertThat(project.getProductOwnerSchoolId()).isEqualTo(8L);
         }
 
         @Test
         void COMPLETED_상태에서는_PROJECT_INVALID_STATE() {
             setStatus(project, ProjectStatus.COMPLETED);
 
-            assertThatThrownBy(() -> project.transferOwnership(200L))
+            assertThatThrownBy(() -> project.transferOwnership(200L, 8L))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
@@ -117,7 +119,7 @@ class ProjectTest {
         void ABORTED_상태에서는_PROJECT_INVALID_STATE() {
             setStatus(project, ProjectStatus.ABORTED);
 
-            assertThatThrownBy(() -> project.transferOwnership(200L))
+            assertThatThrownBy(() -> project.transferOwnership(200L, 8L))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);

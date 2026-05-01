@@ -65,7 +65,7 @@ public class ProjectQueryRepository {
             .and(gisuIdEq(query.gisuId()))
             .and(keywordContains(query.keyword()))
             .and(chapterIdEq(query.chapterId()))
-            .and(schoolIdsIn(query.schoolIds()))
+            .and(productOwnerSchoolIdsIn(query.productOwnerSchoolIds()))
             .and(productOwnerMemberIdEq(query.productOwnerMemberId()))
             .and(partAndQuotaFilter(query.parts(), query.partQuotaStatus()))
             .and(statusIn(query.statuses()));
@@ -91,13 +91,10 @@ public class ProjectQueryRepository {
         return chapterId != null ? project.chapterId.eq(chapterId) : null;
     }
 
-    private BooleanExpression schoolIdsIn(List<Long> schoolIds) {
-        if (schoolIds == null || schoolIds.isEmpty()) {
-            return null;
-        }
-        // TODO: member 도메인에 memberId→schoolId 배치 조회 API 추가 후 Service 레벨에서 필터 적용.
-        throw new UnsupportedOperationException(
-            "schoolIds 필터는 아직 지원되지 않습니다. (member 도메인 연동 대기)");
+    private BooleanExpression productOwnerSchoolIdsIn(List<Long> schoolIds) {
+        return (schoolIds == null || schoolIds.isEmpty())
+            ? null
+            : project.productOwnerSchoolId.in(schoolIds);
     }
 
     /**

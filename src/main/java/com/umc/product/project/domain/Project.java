@@ -58,6 +58,16 @@ public class Project extends BaseEntity {
     @Column(nullable = false)
     private Long productOwnerMemberId;
 
+    /**
+     * 메인 PM의 학교 ID 비정규화 사본.
+     * <p>
+     * 학교 운영진 scope (PROJECT-006 SchoolScoped) 및 학교 단위 검색 필터 (PROJECT-001) 에서 단순 SQL 로
+     * 풀어내기 위함. Project 자체가 학교에 소속된 게 아니라, 메인 PM 의 학교를 캐시하는 의미.
+     * 양도 (PROJECT-104) 시점에 Service 가 새 PM 의 학교로 동기화한다.
+     */
+    @Column(nullable = false, name = "product_owner_school_id")
+    private Long productOwnerSchoolId;
+
     private Long statusChangedByMemberId; // 프로젝트 상태를 변경한 멤버의 ID입니다. (예: ABORTED로 변경한 멤버)
     private String statusChangedReason; // 프로젝트 상태를 변경한 이유입니다. (예: ABORTED로 변경한 이유)
 
@@ -81,7 +91,8 @@ public class Project extends BaseEntity {
         String externalLink,
         String logoFileId,
         String thumbnailFileId,
-        Long productOwnerMemberId
+        Long productOwnerMemberId,
+        Long productOwnerSchoolId
     ) {
         this.gisuId = gisuId;
         this.chapterId = chapterId;
@@ -92,6 +103,7 @@ public class Project extends BaseEntity {
         this.logoFileId = logoFileId;
         this.thumbnailFileId = thumbnailFileId;
         this.productOwnerMemberId = productOwnerMemberId;
+        this.productOwnerSchoolId = productOwnerSchoolId;
     }
 
     /**
@@ -101,17 +113,20 @@ public class Project extends BaseEntity {
      * @param gisuId               프로젝트가 속한 기수 ID
      * @param chapterId            프로젝트가 속한 지부 ID (PO의 소속 지부에서 결정)
      * @param productOwnerMemberId PO Member ID (PLAN 파트 챌린저여야 함)
+     * @param productOwnerSchoolId PO 의 학교 ID 비정규화 (학교 운영진 scope 및 학교 필터에서 사용)
      * @return DRAFT 상태의 프로젝트
      */
     public static Project createDraft(
         Long gisuId,
         Long chapterId,
-        Long productOwnerMemberId
+        Long productOwnerMemberId,
+        Long productOwnerSchoolId
     ) {
         return Project.builder()
             .gisuId(gisuId)
             .chapterId(chapterId)
             .productOwnerMemberId(productOwnerMemberId)
+            .productOwnerSchoolId(productOwnerSchoolId)
             .status(ProjectStatus.DRAFT)
             .build();
     }
@@ -150,10 +165,13 @@ public class Project extends BaseEntity {
      * <p>
      * 새 owner가 PLAN 파트인지, 동일 기수 내 다른 프로젝트가 없는지 등의 검증은
      * Service 레벨에서 수행합니다 (도메인은 다른 도메인 정보를 알 수 없음).
+     * <p>
+     * {@code productOwnerSchoolId} 도 새 PM 의 학교로 동기화한다.
      */
-    public void transferOwnership(Long newOwnerMemberId) {
+    public void transferOwnership(Long newOwnerMemberId, Long newOwnerSchoolId) {
         validateMutable();
         this.productOwnerMemberId = newOwnerMemberId;
+        this.productOwnerSchoolId = newOwnerSchoolId;
     }
 
     /**

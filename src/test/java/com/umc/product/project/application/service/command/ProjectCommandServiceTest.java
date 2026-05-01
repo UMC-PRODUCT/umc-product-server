@@ -56,7 +56,7 @@ class ProjectCommandServiceTest {
     ProjectCommandService sut;
 
     private Project createProject(ProjectStatus status) {
-        Project project = Project.createDraft(1L, 2L, 100L);
+        Project project = Project.createDraft(1L, 2L, 100L, 7L);
         ReflectionTestUtils.setField(project, "id", 1L);
         ReflectionTestUtils.setField(project, "status", status);
         return project;
@@ -271,10 +271,12 @@ class ProjectCommandServiceTest {
             given(getChallengerUseCase.getByMemberIdAndGisuId(200L, 1L))
                 .willReturn(challengerInfo(200L, ChallengerPart.PLAN));
             given(loadProjectPort.existsByOwnerAndGisu(200L, 1L)).willReturn(false);
+            given(getMemberUseCase.getById(200L)).willReturn(memberInfo(8L));
 
             sut.transfer(transferCommand(100L, 200L));
 
             assertThat(project.getProductOwnerMemberId()).isEqualTo(200L);
+            assertThat(project.getProductOwnerSchoolId()).isEqualTo(8L);
         }
 
         @Test

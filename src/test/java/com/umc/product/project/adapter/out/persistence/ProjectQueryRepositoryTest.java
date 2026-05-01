@@ -1,7 +1,6 @@
 package com.umc.product.project.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.config.JpaConfig;
@@ -377,17 +376,28 @@ class ProjectQueryRepositoryTest {
     }
 
     @Test
-    void schoolIds_필터는_아직_지원되지_않음() {
-        SearchProjectQuery query = SearchProjectQuery.forChallenger(
-            gisuId, null, null, List.of(1L), null, null, PageRequest.of(0, 20));
+    void productOwnerSchoolIds_필터로_조회() {
+        // 한양대(7L) 1건, 인하대(8L) 1건 추가
+        persistProject("한양대 프로젝트", ProjectStatus.IN_PROGRESS, gisuId, 1L, 20L, 7L);
+        persistProject("인하대 프로젝트", ProjectStatus.IN_PROGRESS, gisuId, 1L, 21L, 8L);
 
-        assertThatThrownBy(() -> sut.search(query))
-            .isInstanceOf(UnsupportedOperationException.class);
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            gisuId, null, null, List.of(7L), null, null, PageRequest.of(0, 20));
+
+        Page<Project> result = sut.search(query);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getName()).isEqualTo("한양대 프로젝트");
     }
 
     // ========== Helper ==========
 
     private Project persistProject(String name, ProjectStatus status, Long gisuId, Long chapterId, Long ownerId) {
+        return persistProject(name, status, gisuId, chapterId, ownerId, 1L);
+    }
+
+    private Project persistProject(String name, ProjectStatus status, Long gisuId, Long chapterId,
+                                   Long ownerId, Long ownerSchoolId) {
         Project project;
         try {
             var constructor = Project.class.getDeclaredConstructor();
@@ -401,6 +411,7 @@ class ProjectQueryRepositoryTest {
         ReflectionTestUtils.setField(project, "status", status);
         ReflectionTestUtils.setField(project, "name", name);
         ReflectionTestUtils.setField(project, "productOwnerMemberId", ownerId);
+        ReflectionTestUtils.setField(project, "productOwnerSchoolId", ownerSchoolId);
         em.persist(project);
         return project;
     }

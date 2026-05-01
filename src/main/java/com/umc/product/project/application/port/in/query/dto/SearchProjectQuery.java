@@ -26,7 +26,7 @@ public record SearchProjectQuery(
     Long gisuId,
     String keyword,
     Long chapterId,
-    List<Long> schoolIds,
+    List<Long> productOwnerSchoolIds,
     Long productOwnerMemberId,
     List<ChallengerPart> parts,
     PartQuotaStatus partQuotaStatus,
@@ -49,7 +49,7 @@ public record SearchProjectQuery(
         Long gisuId,
         String keyword,
         Long chapterId,
-        List<Long> schoolIds,
+        List<Long> productOwnerSchoolIds,
         List<ChallengerPart> parts,
         PartQuotaStatus partQuotaStatus,
         Pageable pageable
@@ -58,7 +58,7 @@ public record SearchProjectQuery(
             .gisuId(gisuId)
             .keyword(keyword)
             .chapterId(chapterId)
-            .schoolIds(schoolIds)
+            .productOwnerSchoolIds(productOwnerSchoolIds)
             .parts(parts)
             .partQuotaStatus(partQuotaStatus)
             .statuses(List.of(ProjectStatus.IN_PROGRESS))
@@ -74,7 +74,7 @@ public record SearchProjectQuery(
         Long gisuId,
         String keyword,
         Long chapterId,
-        List<Long> schoolIds,
+        List<Long> productOwnerSchoolIds,
         List<ChallengerPart> parts,
         PartQuotaStatus partQuotaStatus,
         List<ProjectStatus> statuses,
@@ -87,7 +87,7 @@ public record SearchProjectQuery(
             .gisuId(gisuId)
             .keyword(keyword)
             .chapterId(chapterId)
-            .schoolIds(schoolIds)
+            .productOwnerSchoolIds(productOwnerSchoolIds)
             .parts(parts)
             .partQuotaStatus(partQuotaStatus)
             .statuses(effectiveStatuses)
@@ -113,7 +113,7 @@ public record SearchProjectQuery(
     /** scope 적용 — 학교 한정 + 상태 교체. */
     public SearchProjectQuery withSchoolFilter(Long schoolId, Set<ProjectStatus> newStatuses) {
         return copyBuilder()
-            .schoolIds(List.of(schoolId))
+            .productOwnerSchoolIds(List.of(schoolId))
             .statuses(toList(newStatuses))
             .build();
     }
@@ -131,7 +131,7 @@ public record SearchProjectQuery(
             .gisuId(gisuId)
             .keyword(keyword)
             .chapterId(chapterId)
-            .schoolIds(schoolIds)
+            .productOwnerSchoolIds(productOwnerSchoolIds)
             .productOwnerMemberId(productOwnerMemberId)
             .parts(parts)
             .partQuotaStatus(partQuotaStatus)

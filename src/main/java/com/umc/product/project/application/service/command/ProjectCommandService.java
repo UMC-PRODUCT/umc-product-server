@@ -64,7 +64,12 @@ public class ProjectCommandService implements
         MemberInfo member = getMemberUseCase.getById(command.productOwnerMemberId());
         ChapterInfo chapter = getChapterUseCase.byGisuAndSchool(command.gisuId(), member.schoolId());
 
-        Project project = Project.createDraft(command.gisuId(), chapter.id(), command.productOwnerMemberId());
+        Project project = Project.createDraft(
+            command.gisuId(),
+            chapter.id(),
+            command.productOwnerMemberId(),
+            member.schoolId()
+        );
         return saveProjectPort.save(project).getId();
     }
 
@@ -115,7 +120,11 @@ public class ProjectCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_DUPLICATE_IN_GISU);
         }
 
-        project.transferOwnership(command.newOwnerMemberId());
+        // 도메인 가드 fail-fast — COMPLETED/ABORTED 시 cross-domain 호출 회피
+        project.validateMutable();
+
+        MemberInfo newOwnerMember = getMemberUseCase.getById(command.newOwnerMemberId());
+        project.transferOwnership(command.newOwnerMemberId(), newOwnerMember.schoolId());
         return project.getStatus();
     }
 }

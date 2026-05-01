@@ -38,7 +38,7 @@ public record SearchProjectRequest(
             .gisuId(gisuId)
             .keyword(keyword)
             .chapterId(chapterId)
-            .schoolIds(schoolIds)
+            .productOwnerSchoolIds(schoolIds)
             .parts(parts)
             .partQuotaStatus(partQuotaStatus)
             .statuses(effectiveStatuses)
