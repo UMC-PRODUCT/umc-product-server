@@ -7,6 +7,7 @@ import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,11 @@ import org.springframework.stereotype.Component;
 public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort {
 
     private final ProjectMemberJpaRepository repository;
+
+    @Override
+    public List<ProjectMember> listByProjectId(Long projectId) {
+        return repository.findByProjectIdAndStatus(projectId, ProjectMemberStatus.ACTIVE);
+    }
 
     @Override
     public List<ProjectMember> listByProjectIdAndPart(Long projectId, ChallengerPart part) {
@@ -30,5 +36,10 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort {
             result.put((ChallengerPart) row[0], (Long) row[1]);
         }
         return result;
+    }
+
+    @Override
+    public Optional<ProjectMember> findByProjectIdAndMemberId(Long projectId, Long memberId) {
+        return repository.findByProjectIdAndMemberId(projectId, memberId);
     }
 }

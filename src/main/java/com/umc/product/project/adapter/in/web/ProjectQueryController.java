@@ -10,6 +10,7 @@ import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler
 import com.umc.product.project.adapter.in.web.dto.request.SearchProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
+import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import io.swagger.v3.oas.annotations.Operation;
@@ -69,6 +70,24 @@ public class ProjectQueryController {
         @PathVariable Long projectId
     ) {
         return assembler.detailFor(projectId, memberPrincipal.getMemberId());
+    }
+
+    @GetMapping("/{projectId}/members")
+    @Operation(
+        summary = "[PROJECT-003] 프로젝트 팀원 구성 조회",
+        description = "프로젝트의 PM/보조 PM/파트별 멤버를 조회합니다. 권한에 따라 실명이 마스킹됩니다."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.READ,
+        message = "프로젝트 조회 권한이 없습니다."
+    )
+    public ProjectMembersResponse getMembers(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId
+    ) {
+        return assembler.membersFor(projectId, memberPrincipal.getMemberId());
     }
 
     @GetMapping("/me/draft")
