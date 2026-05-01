@@ -19,13 +19,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * 호출 컨텍스트(공개 검색 vs 관리 화면) + 사용자 역할에 따라 {@link ProjectAccessScope} 를 결정한다 (L3-A).
+ * 호출 컨텍스트(공개 검색 vs 관리 화면) + 사용자 역할에 따라 {@link ProjectAccessScope} 를 결정한다.
  * <p>
  * 같은 사용자라도 호출 의도에 따라 결과가 달라야 하므로 {@code resolveForPublicSearch} /
  * {@code resolveForManagement} 두 메서드로 명시적으로 분기한다.
- * <p>
- * 다른 도메인(schedule/organization 등)과 동일하게 raw {@code memberId} 만 받고,
- * 역할 정보는 {@link GetChallengerRoleUseCase} 로 직접 조회한다.
  */
 @Component
 @RequiredArgsConstructor

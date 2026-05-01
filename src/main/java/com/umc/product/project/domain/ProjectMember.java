@@ -89,7 +89,7 @@ public class ProjectMember extends BaseEntity {
     private Long statusChangedMemberId;
 
     /**
-     * 신규 활성 멤버를 생성합니다 (PROJECT-004 팀원 추가).
+     * 활성 상태의 신규 멤버를 생성합니다.
      */
     public static ProjectMember create(Project project, Long memberId, ChallengerPart part, Long decidedByMemberId) {
         ProjectMember pm = new ProjectMember();
@@ -103,9 +103,8 @@ public class ProjectMember extends BaseEntity {
     }
 
     /**
-     * 멤버를 강제 퇴출 처리합니다 (PROJECT-005, IN_PROGRESS 이상 단계의 soft delete).
-     * <p>
-     * DRAFT/PENDING_REVIEW 단계의 정정 삭제는 hard delete 로 처리되어 본 메서드는 호출되지 않습니다.
+     * 멤버를 강제 퇴출 처리합니다 (soft delete).
+     * status 를 {@link ProjectMemberStatus#DISMISSED} 로 바꾸고 변경 메타데이터를 기록합니다.
      */
     public void dismiss(String reason, Long removedByMemberId) {
         this.status = ProjectMemberStatus.DISMISSED;

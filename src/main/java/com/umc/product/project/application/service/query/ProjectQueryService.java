@@ -10,9 +10,11 @@ import com.umc.product.project.application.access.ProjectAccessScope.PublicOnly;
 import com.umc.product.project.application.access.ProjectAccessScope.SchoolScoped;
 import com.umc.product.project.application.access.ProjectAccessScopeResolver;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
+import com.umc.product.project.application.port.in.query.SearchManagedProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectPartQuotaInfo;
+import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
@@ -39,7 +41,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ProjectQueryService implements
     GetProjectUseCase,
-    SearchProjectUseCase {
+    SearchProjectUseCase,
+    SearchManagedProjectUseCase {
 
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
@@ -62,6 +65,31 @@ public class ProjectQueryService implements
             .map(this::toProjectInfo);
     }
 
+    /**
+     * 관리 화면 검색 (PROJECT-006). 호출자 역할에 따라 자동 scope 적용.
+     * <p>
+     * 노출 상태: PENDING_REVIEW / IN_PROGRESS / COMPLETED / ABORTED. DRAFT 는 제외.
+     */
+    @Override
+    public Page<ProjectInfo> searchManaged(SearchManagedProjectQuery query, Long memberId) {
+        Set<ProjectStatus> requested = Set.of(
+            ProjectStatus.PENDING_REVIEW,
+            ProjectStatus.IN_PROGRESS,
+            ProjectStatus.COMPLETED,
+            ProjectStatus.ABORTED
+        );
+        ProjectAccessScope scope = scopeResolver.resolveForManagement(
+            memberId, query.gisuId(), requested);
+
+        SearchProjectQuery base = SearchProjectQuery.builder()
+            .gisuId(query.gisuId())
+            .keyword(query.keyword())
+            .statuses(new ArrayList<>(requested))
+            .pageable(query.pageable())
+            .build();
+        return applyScope(scope, base).map(this::toProjectInfo);
+    }
+
     @Override
     public Page<ProjectInfo> search(SearchProjectQuery query, Long memberId) {
         // TODO: N+1 — 페이지당 (3 × size + 1) 쿼리. batch 메서드 추가 필요:
@@ -77,9 +105,6 @@ public class ProjectQueryService implements
 
     /**
      * 결정된 {@link ProjectAccessScope} 를 {@link SearchProjectQuery} 에 반영해 어댑터에 위임한다.
-     * <p>
-     * PR3a 시점엔 PROJECT-001(공개 검색)만 호출하므로 실제 도달 경로는 {@code All} / {@code PublicOnly}.
-     * 나머지 case 는 PR3b 의 PROJECT-006(관리 화면)에서 활성화된다.
      */
     private Page<Project> applyScope(ProjectAccessScope scope, SearchProjectQuery query) {
         return switch (scope) {

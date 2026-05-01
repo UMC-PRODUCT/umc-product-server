@@ -16,9 +16,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 프로젝트 멤버 관리 Command 서비스 (PROJECT-004/005).
- */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -31,11 +28,8 @@ public class ProjectMemberCommandService implements AddProjectMemberUseCase, Rem
     @Override
     public Long add(AddProjectMemberCommand command) {
         Project project = loadProjectPort.getById(command.projectId());
-
-        // L5 도메인 가드 — COMPLETED/ABORTED 차단
         project.validateMutable();
 
-        // 동일 (projectId, memberId) row 존재 시 차단 (status 무관 — uk_project_member_project_member)
         loadProjectMemberPort.findByProjectIdAndMemberId(command.projectId(), command.memberId())
             .ifPresent(existing -> {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_ALREADY_EXISTS);
@@ -46,11 +40,19 @@ public class ProjectMemberCommandService implements AddProjectMemberUseCase, Rem
         return saveProjectMemberPort.save(member).getId();
     }
 
+    /**
+     * 멤버 제거. status 에 따라 hard / soft delete 가 갈린다.
+     * <ul>
+     *   <li>DRAFT / PENDING_REVIEW: hard delete (실수 정정)</li>
+     *   <li>IN_PROGRESS: soft delete (status = DISMISSED, 매칭/출석 등 외부 도메인 무결성)</li>
+     *   <li>COMPLETED / ABORTED: 거부</li>
+     * </ul>
+     * 메인 PM 은 양도 API 로 변경해야 하므로 본 메서드에서 거부한다.
+     */
     @Override
     public void remove(RemoveProjectMemberCommand command) {
         Project project = loadProjectPort.getById(command.projectId());
 
-        // 메인 PM 제거 거부 — 소유권 양도 API 로 유도
         if (Objects.equals(project.getProductOwnerMemberId(), command.memberId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER);
         }
@@ -59,10 +61,6 @@ public class ProjectMemberCommandService implements AddProjectMemberUseCase, Rem
             .findByProjectIdAndMemberId(command.projectId(), command.memberId())
             .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_NOT_FOUND));
 
-        // status 별 분기:
-        //   DRAFT/PENDING_REVIEW → hard delete (실수 정정 단계)
-        //   IN_PROGRESS         → soft delete (히스토리 보존, 매칭/출석 도메인 무결성)
-        //   COMPLETED/ABORTED   → 거부 (도메인 가드)
         switch (project.getStatus()) {
             case DRAFT, PENDING_REVIEW -> saveProjectMemberPort.hardDelete(member.getId());
             case IN_PROGRESS -> {

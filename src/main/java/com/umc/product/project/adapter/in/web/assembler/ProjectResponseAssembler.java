@@ -7,13 +7,16 @@ import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
+import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummaryResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse.PartGroup;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
+import com.umc.product.project.application.port.in.query.SearchManagedProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
+import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
@@ -41,6 +44,7 @@ public class ProjectResponseAssembler {
 
     private final GetProjectUseCase getProjectUseCase;
     private final SearchProjectUseCase searchProjectUseCase;
+    private final SearchManagedProjectUseCase searchManagedProjectUseCase;
     private final GetMemberUseCase getMemberUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
@@ -94,6 +98,36 @@ public class ProjectResponseAssembler {
         boolean canSeeFullInfo = Objects.equals(requesterMemberId, info.productOwnerMemberId())
             || getChallengerRoleUseCase.isCentralCoreInGisu(requesterMemberId, info.gisuId());
         return canSeeFullInfo ? response : response.toPublic();
+    }
+
+    /**
+     * PROJECT-006 관리 화면 프로젝트 목록.
+     * <p>
+     * 호출자 역할에 따라 자동 scope 적용. 본인이 PM 인 row 또는 Central Core 호출 시 실명 노출, 그 외 마스킹.
+     */
+    public PageResponse<ManagedProjectSummaryResponse> searchManagedFor(
+        SearchManagedProjectQuery query,
+        Long requesterMemberId
+    ) {
+        Page<ProjectInfo> page = searchManagedProjectUseCase.searchManaged(query, requesterMemberId);
+
+        Set<Long> ownerIds = page.getContent().stream()
+            .map(ProjectInfo::productOwnerMemberId)
+            .collect(Collectors.toSet());
+        Map<Long, MemberInfo> memberMap = ownerIds.isEmpty()
+            ? Map.of()
+            : getMemberUseCase.findAllByIds(ownerIds);
+
+        boolean isCentralCore = getChallengerRoleUseCase.isCentralCoreInGisu(
+            requesterMemberId, query.gisuId());
+
+        return PageResponse.of(page, info -> {
+            MemberBrief owner = toBrief(memberMap.get(info.productOwnerMemberId()));
+            ManagedProjectSummaryResponse response = ManagedProjectSummaryResponse.from(info, owner);
+            boolean canSeeFullInfo = isCentralCore
+                || Objects.equals(requesterMemberId, info.productOwnerMemberId());
+            return canSeeFullInfo ? response : response.toPublic();
+        });
     }
 
     /**

@@ -5,15 +5,19 @@ import static org.mockito.BDDMockito.given;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.global.response.PageResponse;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
+import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummaryResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
+import com.umc.product.project.application.port.in.query.SearchManagedProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
+import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.domain.Project;
@@ -38,6 +42,8 @@ class ProjectResponseAssemblerTest {
     GetProjectUseCase getProjectUseCase;
     @Mock
     SearchProjectUseCase searchProjectUseCase;
+    @Mock
+    SearchManagedProjectUseCase searchManagedProjectUseCase;
     @Mock
     GetMemberUseCase getMemberUseCase;
     @Mock
@@ -167,6 +173,58 @@ class ProjectResponseAssemblerTest {
 
         List<String> nicknames = response.coProductOwners().stream().map(MemberBrief::nickname).toList();
         assertThat(nicknames).containsExactly("가람", "나무", "다람쥐");
+    }
+
+    @Test
+    void searchManagedFor_총괄단이면_status_필드_포함_실명_노출() {
+        ProjectInfo info = projectInfoWithStatus(42L, ProjectStatus.PENDING_REVIEW);
+        SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
+            .gisuId(1L).pageable(org.springframework.data.domain.PageRequest.of(0, 20)).build();
+
+        given(searchManagedProjectUseCase.searchManaged(query, 99L))
+            .willReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of(info),
+                query.pageable(), 1));
+        given(getMemberUseCase.findAllByIds(java.util.Set.of(99L)))
+            .willReturn(Map.of(99L, memberInfo(99L)));
+        given(getChallengerRoleUseCase.isCentralCoreInGisu(99L, 1L)).willReturn(true);
+
+        PageResponse<ManagedProjectSummaryResponse> response = sut.searchManagedFor(query, 99L);
+
+        assertThat(response.content()).hasSize(1);
+        assertThat(response.content().get(0).status()).isEqualTo(ProjectStatus.PENDING_REVIEW);
+        assertThat(response.content().get(0).productOwner().name()).isEqualTo("이예원");
+    }
+
+    @Test
+    void searchManagedFor_외부인이면_마스킹() {
+        ProjectInfo info = projectInfoWithStatus(42L, ProjectStatus.IN_PROGRESS);
+        SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
+            .gisuId(1L).pageable(org.springframework.data.domain.PageRequest.of(0, 20)).build();
+
+        given(searchManagedProjectUseCase.searchManaged(query, 200L))
+            .willReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of(info),
+                query.pageable(), 1));
+        given(getMemberUseCase.findAllByIds(java.util.Set.of(99L)))
+            .willReturn(Map.of(99L, memberInfo(99L)));
+        given(getChallengerRoleUseCase.isCentralCoreInGisu(200L, 1L)).willReturn(false);
+
+        PageResponse<ManagedProjectSummaryResponse> response = sut.searchManagedFor(query, 200L);
+
+        assertThat(response.content().get(0).productOwner().name()).isNull();
+    }
+
+    private ProjectInfo projectInfoWithStatus(Long projectId, ProjectStatus status) {
+        return ProjectInfo.builder()
+            .id(projectId)
+            .status(status)
+            .name("Triple")
+            .description(null)
+            .gisuId(1L)
+            .chapterId(1L)
+            .productOwnerMemberId(99L)
+            .coProductOwnerMemberIds(List.of())
+            .partQuotas(List.of())
+            .build();
     }
 
     private MemberInfo memberInfoOf(Long memberId, String nickname, String name) {

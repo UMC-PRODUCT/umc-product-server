@@ -59,11 +59,10 @@ public class Project extends BaseEntity {
     private Long productOwnerMemberId;
 
     /**
-     * 메인 PM의 학교 ID 비정규화 사본.
+     * 메인 PM 의 학교 ID 비정규화 사본.
      * <p>
-     * 학교 운영진 scope (PROJECT-006 SchoolScoped) 및 학교 단위 검색 필터 (PROJECT-001) 에서 단순 SQL 로
-     * 풀어내기 위함. Project 자체가 학교에 소속된 게 아니라, 메인 PM 의 학교를 캐시하는 의미.
-     * 양도 (PROJECT-104) 시점에 Service 가 새 PM 의 학교로 동기화한다.
+     * 학교 단위 scope/필터에서 단순 SQL 로 풀어내기 위함. Project 자체가 학교에 소속된 게 아니라
+     * 메인 PM 의 학교를 캐시하는 의미. 양도 시점에 Service 가 새 PM 의 학교로 동기화한다.
      */
     @Column(nullable = false, name = "product_owner_school_id")
     private Long productOwnerSchoolId;

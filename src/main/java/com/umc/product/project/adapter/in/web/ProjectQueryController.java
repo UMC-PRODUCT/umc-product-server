@@ -9,9 +9,11 @@ import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler;
 import com.umc.product.project.adapter.in.web.dto.request.SearchProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
+import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummaryResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
+import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -88,6 +90,25 @@ public class ProjectQueryController {
         @PathVariable Long projectId
     ) {
         return assembler.membersFor(projectId, memberPrincipal.getMemberId());
+    }
+
+    @GetMapping("/me/managed")
+    @Operation(
+        summary = "[PROJECT-006] 내가 관리하는 프로젝트 목록",
+        description = "역할별 자동 scope: 중앙 총괄단은 전체, 지부장은 본인 지부, 학교 회장단은 본인 학교, PM 챌린저는 본인 owner 프로젝트. 일반 챌린저는 빈 페이지."
+    )
+    public PageResponse<ManagedProjectSummaryResponse> searchManaged(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @RequestParam Long gisuId,
+        @RequestParam(required = false) String keyword,
+        @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
+            .gisuId(gisuId)
+            .keyword(keyword)
+            .pageable(pageable)
+            .build();
+        return assembler.searchManagedFor(query, memberPrincipal.getMemberId());
     }
 
     @GetMapping("/me/draft")

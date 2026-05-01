@@ -7,9 +7,8 @@ import java.util.Optional;
  * 프로젝트 지원 폼 조회 UseCase (PROJECT-106-GET).
  * <p>
  * 폼이 없으면 {@link Optional#empty()} 를 반환하며, Controller 단에서 {@code ApiResponse.result = null} 로 매핑된다.
- * 챌린저 호출 시 본인 파트 + 공통 섹션만 노출하는 마스킹 로직은 PR3b 에서 도입 예정이며,
- * 본 UseCase 는 raw 정보를 그대로 반환한다.
  */
+// TODO: 챌린저 호출 시 본인 파트 + 공통 섹션만 노출하는 마스킹 로직 추가
 public interface GetProjectApplicationFormUseCase {
 
     /**

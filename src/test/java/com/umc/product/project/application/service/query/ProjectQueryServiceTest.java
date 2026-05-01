@@ -9,6 +9,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.access.ProjectAccessScope;
 import com.umc.product.project.application.access.ProjectAccessScopeResolver;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
+import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
@@ -201,6 +202,45 @@ class ProjectQueryServiceTest {
         Page<ProjectInfo> result = sut.search(query, 99L);
 
         // then
+        assertThat(result.getContent()).isEmpty();
+        assertThat(result.getTotalElements()).isZero();
+    }
+
+    @Test
+    void searchManaged_총괄단이면_전체_노출() {
+        Project project = createProject(1L, ProjectStatus.PENDING_REVIEW);
+        PageRequest pageable = PageRequest.of(0, 20);
+        SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
+            .gisuId(1L).keyword(null).pageable(pageable).build();
+
+        given(scopeResolver.resolveForManagement(any(), any(), anySet()))
+            .willReturn(new ProjectAccessScope.All(
+                java.util.Set.of(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS,
+                    ProjectStatus.COMPLETED, ProjectStatus.ABORTED)));
+        given(loadProjectPort.search(any(SearchProjectQuery.class)))
+            .willReturn(new PageImpl<>(List.of(project), pageable, 1));
+        given(loadProjectMemberPort.listByProjectIdAndPart(1L, ChallengerPart.PLAN))
+            .willReturn(List.of());
+        given(loadProjectPartQuotaPort.listByProjectId(1L)).willReturn(List.of());
+        given(getFileUseCase.getFileLinks(List.of("thumb-1")))
+            .willReturn(Map.of("thumb-1", "https://cdn.example.com/thumb-1"));
+
+        Page<ProjectInfo> result = sut.searchManaged(query, 99L);
+
+        assertThat(result.getContent()).hasSize(1);
+    }
+
+    @Test
+    void searchManaged_일반_챌린저는_빈_페이지() {
+        PageRequest pageable = PageRequest.of(0, 20);
+        SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
+            .gisuId(1L).keyword(null).pageable(pageable).build();
+
+        given(scopeResolver.resolveForManagement(any(), any(), anySet()))
+            .willReturn(new ProjectAccessScope.None());
+
+        Page<ProjectInfo> result = sut.searchManaged(query, 99L);
+
         assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isZero();
     }
