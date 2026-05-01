@@ -6,6 +6,7 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.schedule.application.port.in.query.GetScheduleUseCase;
 import com.umc.product.schedule.application.port.in.query.dto.AdminScheduleInfo;
+import com.umc.product.schedule.application.port.in.query.dto.ScheduleBaseInfo;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleInfo;
 import com.umc.product.schedule.application.port.out.LoadScheduleParticipantPort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
@@ -166,7 +167,7 @@ public class ScheduleQueryService implements GetScheduleUseCase {
         Schedule schedule = loadSchedulePort.findById(scheduleId)
             .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
-        return createBaseInfo(schedule);
+        return ScheduleBaseInfo.from(schedule);
     }
 
     // ============================= Helper Method ===================================
