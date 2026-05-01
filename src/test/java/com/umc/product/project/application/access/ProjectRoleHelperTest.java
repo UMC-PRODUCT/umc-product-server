@@ -155,37 +155,33 @@ class ProjectRoleHelperTest {
 
     @Test
     void canSeeFullInfo_는_총괄단이면_true() {
-        Project project = project(100L, 10L, ProjectStatus.IN_PROGRESS);
         SubjectAttributes subject = subjectWith(20L,
             List.of(role(ChallengerRoleType.CENTRAL_PRESIDENT, OrganizationType.CENTRAL, null, 1L)));
 
-        assertThat(ProjectRoleHelper.canSeeFullInfo(subject, project)).isTrue();
+        assertThat(ProjectRoleHelper.canSeeFullInfo(subject, 10L)).isTrue();
     }
 
     @Test
     void canSeeFullInfo_는_PM_본인이면_true() {
         Long memberId = 10L;
-        Project project = project(100L, memberId, ProjectStatus.IN_PROGRESS);
         SubjectAttributes subject = subjectWith(memberId, List.of());
 
-        assertThat(ProjectRoleHelper.canSeeFullInfo(subject, project)).isTrue();
+        assertThat(ProjectRoleHelper.canSeeFullInfo(subject, memberId)).isTrue();
     }
 
     @Test
     void canSeeFullInfo_는_외부인이면_false() {
-        Project project = project(100L, 10L, ProjectStatus.IN_PROGRESS);
         SubjectAttributes subject = subjectWith(20L, List.of());
 
-        assertThat(ProjectRoleHelper.canSeeFullInfo(subject, project)).isFalse();
+        assertThat(ProjectRoleHelper.canSeeFullInfo(subject, 10L)).isFalse();
     }
 
     @Test
     void canSeeFullInfo_는_운영국원이면_false() {
-        Project project = project(100L, 10L, ProjectStatus.IN_PROGRESS);
         SubjectAttributes subject = subjectWith(20L,
             List.of(role(ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, OrganizationType.CENTRAL, null, 1L)));
 
-        assertThat(ProjectRoleHelper.canSeeFullInfo(subject, project)).isFalse();
+        assertThat(ProjectRoleHelper.canSeeFullInfo(subject, 10L)).isFalse();
     }
 
     // --- helpers ---

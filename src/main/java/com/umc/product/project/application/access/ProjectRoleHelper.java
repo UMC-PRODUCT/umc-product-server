@@ -59,10 +59,10 @@ public final class ProjectRoleHelper {
      * 현 시점에는 PM 본인 + Central Core 만 권한자로 본다.
      * 보조 PM / 다른 파트 팀원도 권한자에 포함하려면 별도 멤버 조회가 필요하므로 후속 PR 에서 확장.
      */
-    public static boolean canSeeFullInfo(SubjectAttributes subject, Project project) {
+    public static boolean canSeeFullInfo(SubjectAttributes subject, Long productOwnerMemberId) {
         if (isCentralCore(subject)) {
             return true;
         }
-        return isOwner(subject, project);
+        return Objects.equals(subject.memberId(), productOwnerMemberId);
     }
 }

@@ -1,9 +1,15 @@
 package com.umc.product.project.application.service.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.BDDMockito.given;
 
+import com.umc.product.authorization.domain.SubjectAttributes;
+import com.umc.product.authorization.domain.SubjectAttributes.GisuChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.application.access.ProjectAccessScope;
+import com.umc.product.project.application.access.ProjectAccessScopeResolver;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
@@ -38,6 +44,8 @@ class ProjectQueryServiceTest {
     LoadProjectPartQuotaPort loadProjectPartQuotaPort;
     @Mock
     GetFileUseCase getFileUseCase;
+    @Mock
+    ProjectAccessScopeResolver scopeResolver;
 
     @InjectMocks
     ProjectQueryService sut;
@@ -160,7 +168,9 @@ class ProjectQueryServiceTest {
         SearchProjectQuery query = SearchProjectQuery.forChallenger(
             1L, null, null, null, null, null, pageable);
 
-        given(loadProjectPort.search(query))
+        given(scopeResolver.resolveForPublicSearch(any(), any(), anySet()))
+            .willReturn(new ProjectAccessScope.PublicOnly());
+        given(loadProjectPort.search(any(SearchProjectQuery.class)))
             .willReturn(new PageImpl<>(List.of(project), pageable, 1));
         given(loadProjectMemberPort.listByProjectIdAndPart(1L, ChallengerPart.PLAN))
             .willReturn(List.of());
@@ -169,7 +179,7 @@ class ProjectQueryServiceTest {
             .willReturn(Map.of("thumb-1", "https://cdn.example.com/thumb-1"));
 
         // when
-        Page<ProjectInfo> result = sut.search(query);
+        Page<ProjectInfo> result = sut.search(query, anonymousSubject());
 
         // then
         assertThat(result.getContent()).hasSize(1);
@@ -184,15 +194,26 @@ class ProjectQueryServiceTest {
         SearchProjectQuery query = SearchProjectQuery.forChallenger(
             1L, null, null, null, null, null, pageable);
 
-        given(loadProjectPort.search(query))
+        given(scopeResolver.resolveForPublicSearch(any(), any(), anySet()))
+            .willReturn(new ProjectAccessScope.PublicOnly());
+        given(loadProjectPort.search(any(SearchProjectQuery.class)))
             .willReturn(new PageImpl<>(List.of(), pageable, 0));
 
         // when
-        Page<ProjectInfo> result = sut.search(query);
+        Page<ProjectInfo> result = sut.search(query, anonymousSubject());
 
         // then
         assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isZero();
+    }
+
+    private SubjectAttributes anonymousSubject() {
+        return SubjectAttributes.builder()
+            .memberId(99L)
+            .schoolId(1L)
+            .gisuChallengerInfos(List.<GisuChallengerInfo>of())
+            .roleAttributes(List.of())
+            .build();
     }
 
     // ========== Helper Methods ==========

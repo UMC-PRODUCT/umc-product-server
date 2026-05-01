@@ -1,8 +1,10 @@
 package com.umc.product.project.adapter.in.web;
 
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.application.port.in.query.GetSubjectAttributesUseCase;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
+import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -11,6 +13,7 @@ import com.umc.product.project.adapter.in.web.dto.request.SearchProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
+import com.umc.product.project.application.access.ProjectRoleHelper;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProjectQueryController {
 
     private final ProjectResponseAssembler assembler;
+    private final GetSubjectAttributesUseCase getSubjectAttributesUseCase;
 
     @GetMapping
     @Operation(
@@ -49,10 +53,9 @@ public class ProjectQueryController {
         @ParameterObject @Valid SearchProjectRequest request,
         @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        // TODO: 실제 Admin 권한 체크 로직 구현 (GetChallengerRoleUseCase 연동)
-        boolean isAdmin = false;
-        SearchProjectQuery query = request.toQuery(isAdmin, pageable);
-        return assembler.searchFor(query, isAdmin);
+        SubjectAttributes subject = getSubjectAttributesUseCase.getByMemberId(memberPrincipal.getMemberId());
+        SearchProjectQuery query = request.toQuery(ProjectRoleHelper.isCentralCore(subject), pageable);
+        return assembler.searchFor(query, subject);
     }
 
     @GetMapping("/{projectId}")
@@ -70,9 +73,8 @@ public class ProjectQueryController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId
     ) {
-        // TODO: 실제 마스킹 정책 체크 (PM/Admin/팀원 여부)
-        boolean canSeeFullInfo = false;
-        return assembler.detailFor(projectId, canSeeFullInfo);
+        SubjectAttributes subject = getSubjectAttributesUseCase.getByMemberId(memberPrincipal.getMemberId());
+        return assembler.detailFor(projectId, subject);
     }
 
     @GetMapping("/me/draft")
