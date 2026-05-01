@@ -29,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/notices")
 @RequiredArgsConstructor
-public class NoticeCommandControllerCommandController implements NoticeCommandControllerApi {
+public class NoticeCommandController implements NoticeCommandControllerApi {
 
     private final ManageNoticeUseCase manageNoticeUseCase;
     private final ManageNoticeReadUseCase manageNoticeReadUseCase;
