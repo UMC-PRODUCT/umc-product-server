@@ -5,19 +5,19 @@ import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.common.domain.enums.ChallengerPart;
-import com.umc.product.project.application.access.ProjectRoleHelper;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
  * Project 도메인 단건 액션의 권한 판정 (L2). status × 역할 binary 매트릭스만 다룬다.
  * <p>
- * 가시 범위(scoping)는 {@code ProjectAccessScopeResolver}, 응답 마스킹은
- * {@code ProjectRoleHelper#canSeeFullInfo} + Service 분기에서 처리.
+ * 가시 범위(scoping)는 {@code ProjectAccessScopeResolver} 가, 응답 마스킹은
+ * Service/Assembler 의 분기에서 처리.
  */
 @Component
 @RequiredArgsConstructor
@@ -36,7 +36,7 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
             case READ -> canRead(subject, permission);
             case WRITE -> canWrite(subject);
             case EDIT -> canEdit(subject, permission);
-            case DELETE -> ProjectRoleHelper.isCentralCore(subject);
+            case DELETE -> isCentralCore(subject);
             default -> false;
         };
     }
@@ -53,9 +53,8 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
         Project project = loadProject(permission);
         return switch (project.getStatus()) {
             case IN_PROGRESS, COMPLETED -> true;
-            case DRAFT -> ProjectRoleHelper.isOwner(subject, project);
-            case PENDING_REVIEW, ABORTED ->
-                ProjectRoleHelper.isOwner(subject, project) || ProjectRoleHelper.isCentralCore(subject);
+            case DRAFT -> isOwner(subject, project);
+            case PENDING_REVIEW, ABORTED -> isOwner(subject, project) || isCentralCore(subject);
         };
     }
 
@@ -72,16 +71,25 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
      */
     private boolean canEdit(SubjectAttributes subject, ResourcePermission permission) {
         Project project = loadProject(permission);
-        if (ProjectRoleHelper.isOwner(subject, project)) {
+        if (isOwner(subject, project)) {
             return switch (project.getStatus()) {
                 case DRAFT, PENDING_REVIEW, IN_PROGRESS -> true;
                 case COMPLETED, ABORTED -> false;
             };
         }
         return switch (project.getStatus()) {
-            case PENDING_REVIEW, IN_PROGRESS -> ProjectRoleHelper.isCentralCore(subject);
+            case PENDING_REVIEW, IN_PROGRESS -> isCentralCore(subject);
             case DRAFT, COMPLETED, ABORTED -> false;
         };
+    }
+
+    private boolean isCentralCore(SubjectAttributes subject) {
+        return subject.roleAttributes().stream()
+            .anyMatch(role -> role.roleType().isAtLeastCentralCore());
+    }
+
+    private boolean isOwner(SubjectAttributes subject, Project project) {
+        return Objects.equals(subject.memberId(), project.getProductOwnerMemberId());
     }
 
     private Project loadProject(ResourcePermission permission) {

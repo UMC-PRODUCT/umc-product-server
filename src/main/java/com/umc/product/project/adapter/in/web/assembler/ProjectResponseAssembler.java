@@ -1,6 +1,6 @@
 package com.umc.product.project.adapter.in.web.assembler;
 
-import com.umc.product.authorization.domain.SubjectAttributes;
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
@@ -8,7 +8,6 @@ import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
-import com.umc.product.project.application.access.ProjectRoleHelper;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
@@ -18,6 +17,7 @@ import com.umc.product.project.domain.ProjectApplicationForm;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -35,18 +35,19 @@ public class ProjectResponseAssembler {
     private final GetProjectUseCase getProjectUseCase;
     private final SearchProjectUseCase searchProjectUseCase;
     private final GetMemberUseCase getMemberUseCase;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
 
     /**
      * PROJECT-001 프로젝트 목록 조회.
      * <p>
-     * 마스킹은 row 별로 결정한다 — 본인이 PM 인 row 는 실명, 그 외는 마스킹. Central Core 는 전체 실명.
+     * 마스킹: 본인이 PM 인 row 는 실명, Central Core 는 전체 실명, 그 외는 마스킹.
      */
     public PageResponse<ProjectSummaryResponse> searchFor(
         SearchProjectQuery query,
-        SubjectAttributes subject
+        Long requesterMemberId
     ) {
-        Page<ProjectInfo> page = searchProjectUseCase.search(query, subject);
+        Page<ProjectInfo> page = searchProjectUseCase.search(query, requesterMemberId);
 
         Set<Long> ownerIds = page.getContent().stream()
             .map(ProjectInfo::productOwnerMemberId)
@@ -55,19 +56,21 @@ public class ProjectResponseAssembler {
             ? Map.of()
             : getMemberUseCase.findAllByIds(ownerIds);
 
+        boolean isCentralCore = getChallengerRoleUseCase.isCentralCoreInGisu(requesterMemberId, query.gisuId());
+
         return PageResponse.of(page, info -> {
             MemberBrief owner = toBrief(memberMap.get(info.productOwnerMemberId()));
             ProjectSummaryResponse response = ProjectSummaryResponse.from(info, owner);
-            return ProjectRoleHelper.canSeeFullInfo(subject, info.productOwnerMemberId())
-                ? response
-                : response.toPublic();
+            boolean canSeeFullInfo = isCentralCore
+                || Objects.equals(requesterMemberId, info.productOwnerMemberId());
+            return canSeeFullInfo ? response : response.toPublic();
         });
     }
 
     /**
      * PROJECT-002 프로젝트 상세 조회.
      */
-    public ProjectDetailResponse detailFor(Long projectId, SubjectAttributes subject) {
+    public ProjectDetailResponse detailFor(Long projectId, Long requesterMemberId) {
         ProjectInfo info = getProjectUseCase.getById(projectId);
 
         Map<Long, MemberInfo> memberMap = loadMembers(info);
@@ -79,9 +82,10 @@ public class ProjectResponseAssembler {
 
         ProjectDetailResponse response =
             ProjectDetailResponse.from(info, owner, coOwners, resolveApplicationFormId(projectId));
-        return ProjectRoleHelper.canSeeFullInfo(subject, info.productOwnerMemberId())
-            ? response
-            : response.toPublic();
+
+        boolean canSeeFullInfo = Objects.equals(requesterMemberId, info.productOwnerMemberId())
+            || getChallengerRoleUseCase.isCentralCoreInGisu(requesterMemberId, info.gisuId());
+        return canSeeFullInfo ? response : response.toPublic();
     }
 
     /**

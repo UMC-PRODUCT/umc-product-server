@@ -3,8 +3,7 @@ package com.umc.product.project.adapter.in.web.assembler;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
-import com.umc.product.authorization.domain.SubjectAttributes;
-import com.umc.product.authorization.domain.SubjectAttributes.GisuChallengerInfo;
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
@@ -36,6 +35,8 @@ class ProjectResponseAssemblerTest {
     @Mock
     GetMemberUseCase getMemberUseCase;
     @Mock
+    GetChallengerRoleUseCase getChallengerRoleUseCase;
+    @Mock
     LoadProjectApplicationFormPort loadProjectApplicationFormPort;
 
     @InjectMocks
@@ -52,7 +53,7 @@ class ProjectResponseAssemblerTest {
         ProjectApplicationForm form = applicationForm(project, 100L, 500L);
         given(loadProjectApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
 
-        ProjectDetailResponse response = sut.detailFor(42L, ownerSubject(99L));
+        ProjectDetailResponse response = sut.detailFor(42L, 99L);
 
         assertThat(response.applicationFormId()).isEqualTo(100L);
     }
@@ -65,7 +66,7 @@ class ProjectResponseAssemblerTest {
             .willReturn(Map.of(99L, memberInfo(99L)));
         given(loadProjectApplicationFormPort.findByProjectId(42L)).willReturn(Optional.empty());
 
-        ProjectDetailResponse response = sut.detailFor(42L, ownerSubject(99L));
+        ProjectDetailResponse response = sut.detailFor(42L, 99L);
 
         assertThat(response.applicationFormId()).isNull();
     }
@@ -106,15 +107,6 @@ class ProjectResponseAssemblerTest {
             .productOwnerMemberId(99L)
             .coProductOwnerMemberIds(List.of())
             .partQuotas(List.of())
-            .build();
-    }
-
-    private SubjectAttributes ownerSubject(long memberId) {
-        return SubjectAttributes.builder()
-            .memberId(memberId)
-            .schoolId(1L)
-            .gisuChallengerInfos(List.<GisuChallengerInfo>of())
-            .roleAttributes(List.of())
             .build();
     }
 

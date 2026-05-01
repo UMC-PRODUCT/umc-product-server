@@ -1,6 +1,5 @@
 package com.umc.product.project.application.port.in.query;
 
-import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import org.springframework.data.domain.Page;
@@ -16,9 +15,9 @@ public interface SearchProjectUseCase {
     /**
      * 조건에 맞는 프로젝트 목록을 페이징하여 반환합니다.
      *
-     * @param query   검색 조건 ({@code Pageable} 포함)
-     * @param subject 호출자 정보 — scope 결정에 사용
+     * @param query    검색 조건 ({@code Pageable} 포함)
+     * @param memberId 호출자 ID — scope 결정에 사용
      * @return ProjectInfo 페이지
      */
-    Page<ProjectInfo> search(SearchProjectQuery query, SubjectAttributes subject);
+    Page<ProjectInfo> search(SearchProjectQuery query, Long memberId);
 }

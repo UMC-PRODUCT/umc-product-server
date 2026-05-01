@@ -5,8 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.BDDMockito.given;
 
-import com.umc.product.authorization.domain.SubjectAttributes;
-import com.umc.product.authorization.domain.SubjectAttributes.GisuChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.access.ProjectAccessScope;
 import com.umc.product.project.application.access.ProjectAccessScopeResolver;
@@ -179,7 +177,7 @@ class ProjectQueryServiceTest {
             .willReturn(Map.of("thumb-1", "https://cdn.example.com/thumb-1"));
 
         // when
-        Page<ProjectInfo> result = sut.search(query, anonymousSubject());
+        Page<ProjectInfo> result = sut.search(query, 99L);
 
         // then
         assertThat(result.getContent()).hasSize(1);
@@ -200,20 +198,11 @@ class ProjectQueryServiceTest {
             .willReturn(new PageImpl<>(List.of(), pageable, 0));
 
         // when
-        Page<ProjectInfo> result = sut.search(query, anonymousSubject());
+        Page<ProjectInfo> result = sut.search(query, 99L);
 
         // then
         assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isZero();
-    }
-
-    private SubjectAttributes anonymousSubject() {
-        return SubjectAttributes.builder()
-            .memberId(99L)
-            .schoolId(1L)
-            .gisuChallengerInfos(List.<GisuChallengerInfo>of())
-            .roleAttributes(List.of())
-            .build();
     }
 
     // ========== Helper Methods ==========

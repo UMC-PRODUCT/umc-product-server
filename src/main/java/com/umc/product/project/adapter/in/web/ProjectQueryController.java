@@ -1,10 +1,8 @@
 package com.umc.product.project.adapter.in.web;
 
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
-import com.umc.product.authorization.application.port.in.query.GetSubjectAttributesUseCase;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -13,7 +11,6 @@ import com.umc.product.project.adapter.in.web.dto.request.SearchProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
-import com.umc.product.project.application.access.ProjectRoleHelper;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -36,7 +33,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProjectQueryController {
 
     private final ProjectResponseAssembler assembler;
-    private final GetSubjectAttributesUseCase getSubjectAttributesUseCase;
 
     @GetMapping
     @Operation(
@@ -53,9 +49,8 @@ public class ProjectQueryController {
         @ParameterObject @Valid SearchProjectRequest request,
         @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        SubjectAttributes subject = getSubjectAttributesUseCase.getByMemberId(memberPrincipal.getMemberId());
-        SearchProjectQuery query = request.toQuery(ProjectRoleHelper.isCentralCore(subject), pageable);
-        return assembler.searchFor(query, subject);
+        SearchProjectQuery query = request.toQuery(pageable);
+        return assembler.searchFor(query, memberPrincipal.getMemberId());
     }
 
     @GetMapping("/{projectId}")
@@ -73,8 +68,7 @@ public class ProjectQueryController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId
     ) {
-        SubjectAttributes subject = getSubjectAttributesUseCase.getByMemberId(memberPrincipal.getMemberId());
-        return assembler.detailFor(projectId, subject);
+        return assembler.detailFor(projectId, memberPrincipal.getMemberId());
     }
 
     @GetMapping("/me/draft")

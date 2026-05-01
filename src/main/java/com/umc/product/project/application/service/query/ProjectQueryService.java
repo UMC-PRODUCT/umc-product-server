@@ -1,6 +1,5 @@
 package com.umc.product.project.application.service.query;
 
-import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.access.ProjectAccessScope;
 import com.umc.product.project.application.access.ProjectAccessScope.All;
@@ -64,14 +63,14 @@ public class ProjectQueryService implements
     }
 
     @Override
-    public Page<ProjectInfo> search(SearchProjectQuery query, SubjectAttributes subject) {
+    public Page<ProjectInfo> search(SearchProjectQuery query, Long memberId) {
         // TODO: N+1 — 페이지당 (3 × size + 1) 쿼리. batch 메서드 추가 필요:
         //  LoadProjectMemberPort.listByProjectIdsAndPart(Set<Long>, ChallengerPart)
         //  LoadProjectMemberPort.countByProjectIdsGroupByPart(Set<Long>)
         //  LoadProjectPartQuotaPort.listByProjectIds(Set<Long>)
         Set<ProjectStatus> requestedStatuses = new HashSet<>(query.statuses());
         ProjectAccessScope scope = scopeResolver.resolveForPublicSearch(
-            subject, query.gisuId(), requestedStatuses);
+            memberId, query.gisuId(), requestedStatuses);
         return applyScope(scope, query)
             .map(this::toProjectInfo);
     }
