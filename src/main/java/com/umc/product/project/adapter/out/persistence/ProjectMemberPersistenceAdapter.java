@@ -2,6 +2,7 @@ package com.umc.product.project.adapter.out.persistence;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
+import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import java.util.EnumMap;
@@ -13,9 +14,19 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort {
+public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, SaveProjectMemberPort {
 
     private final ProjectMemberJpaRepository repository;
+
+    @Override
+    public ProjectMember save(ProjectMember member) {
+        return repository.save(member);
+    }
+
+    @Override
+    public void hardDelete(Long projectMemberId) {
+        repository.deleteById(projectMemberId);
+    }
 
     @Override
     public List<ProjectMember> listByProjectId(Long projectId) {
