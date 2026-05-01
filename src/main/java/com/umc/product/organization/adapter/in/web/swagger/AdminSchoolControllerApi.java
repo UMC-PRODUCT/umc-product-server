@@ -44,6 +44,7 @@ public interface AdminSchoolControllerApi {
         @ApiResponse(responseCode = "200", description = "배정 성공"),
         @ApiResponse(responseCode = "404", description = "학교 또는 지부를 찾을 수 없음")
     })
+    @Deprecated(since = "v2.0.0", forRemoval = true)
     void assignToChapter(
         @Parameter(description = "학교 ID", required = true) Long schoolId,
         AssignSchoolRequest request
@@ -54,6 +55,7 @@ public interface AdminSchoolControllerApi {
         @ApiResponse(responseCode = "200", description = "배정 해제 성공"),
         @ApiResponse(responseCode = "404", description = "학교를 찾을 수 없음")
     })
+    @Deprecated(since = "v2.0.0", forRemoval = true)
     void unassignFromChapter(
         @Parameter(description = "학교 ID", required = true) Long schoolId,
         UnassignSchoolRequest request

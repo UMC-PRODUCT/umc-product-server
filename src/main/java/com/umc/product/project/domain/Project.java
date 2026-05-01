@@ -2,6 +2,8 @@ package com.umc.product.project.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.project.domain.enums.ProjectStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,6 +13,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -35,14 +38,16 @@ public class Project extends BaseEntity {
     private ProjectStatus status;
     // ABORTED로 status를 변경하고자 하는 경우 반드시 ProjectMember 또한 변경하여야 합니다.
 
-    @Column(length = 100, nullable = false)
+    // DRAFT 단계에서는 미입력 상태가 허용되므로 nullable.
+    @Column(length = 100)
     private String name; // 프로젝트명
 
     @Column(length = 200)
     private String description; // 프로젝트 설명
 
-    private Long logoFileId; // 로고 ID
-    private Long thumbnailFileId; // 프로젝트 썸네일 이미지 파일 ID
+    // storage 도메인 file_metadata.id는 UUID(VARCHAR)라 String으로 저장합니다.
+    private String logoFileId; // 로고 파일 ID (UUID)
+    private String thumbnailFileId; // 프로젝트 썸네일 이미지 파일 ID (UUID)
 
 
     @Column(length = 300)
@@ -66,53 +71,117 @@ public class Project extends BaseEntity {
     // 추후 확장성을 고려하여 분리하는 방향으로 결정하였습니다.
     // (다음 기수부터 Web-Server 통합 가능성 고려)
 
+    @Builder(access = AccessLevel.PRIVATE)
+    private Project(
+        Long gisuId,
+        Long chapterId,
+        ProjectStatus status,
+        String name,
+        String description,
+        String externalLink,
+        String logoFileId,
+        String thumbnailFileId,
+        Long productOwnerMemberId
+    ) {
+        this.gisuId = gisuId;
+        this.chapterId = chapterId;
+        this.status = status;
+        this.name = name;
+        this.description = description;
+        this.externalLink = externalLink;
+        this.logoFileId = logoFileId;
+        this.thumbnailFileId = thumbnailFileId;
+        this.productOwnerMemberId = productOwnerMemberId;
+    }
+
     /**
-     * 프로젝트를 생성하는 정팩메 입니다.
+     * DRAFT 상태로 프로젝트를 생성합니다. 최초 생성 시 기수/지부/PO만 확정하고,
+     * 나머지 정보(name, description 등)는 이후 updateBasicInfo로 단계별 저장합니다.
      *
      * @param gisuId               프로젝트가 속한 기수 ID
-     * @param name                 프로젝트명 (100자 이내)
-     * @param description          프로젝트 설명 (200자 이내)
-     * @param productOwnerMemberId PO Member ID
-     * @return 생성된 프로젝트를 반환합니다.
+     * @param chapterId            프로젝트가 속한 지부 ID (PO의 소속 지부에서 결정)
+     * @param productOwnerMemberId PO Member ID (PLAN 파트 챌린저여야 함)
+     * @return DRAFT 상태의 프로젝트
      */
-    public static Project create(
-        Long gisuId, String name, String description, String externalLink,
-        Long productOwnerMemberId,
-        Long statusChangedByMemberId, String statusChangedReason
+    public static Project createDraft(
+        Long gisuId,
+        Long chapterId,
+        Long productOwnerMemberId
     ) {
-        // 로그로 생성 이력 남겨주세요
-
-        return null;
+        return Project.builder()
+            .gisuId(gisuId)
+            .chapterId(chapterId)
+            .productOwnerMemberId(productOwnerMemberId)
+            .status(ProjectStatus.DRAFT)
+            .build();
     }
 
     /**
-     * 프로젝트명을 변경합니다.
-     *
-     * @param name 변경하고자 하는 이름
+     * 프로젝트 기본 정보를 부분 업데이트합니다. null 필드는 변경하지 않습니다.
+     * 소유권(productOwnerMemberId)은 별도 액션({@link #transferOwnership})으로 처리합니다.
      */
-    public void rename(String name) {
+    public void updateBasicInfo(
+        String name,
+        String description,
+        String externalLink,
+        String thumbnailFileId,
+        String logoFileId
+    ) {
+        validateMutable();
+        if (name != null) {
+            this.name = name;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (externalLink != null) {
+            this.externalLink = externalLink;
+        }
+        if (thumbnailFileId != null) {
+            this.thumbnailFileId = thumbnailFileId;
+        }
+        if (logoFileId != null) {
+            this.logoFileId = logoFileId;
+        }
     }
 
     /**
-     * 프로젝트 설명을 변경합니다. null을 제공하면 삭제합니다.
-     *
-     * @param description 변경하고자 하는 프로젝트 설명
+     * 메인 PM(소유권)을 새 멤버에게 양도합니다. 종료 상태에서는 호출 불가.
+     * <p>
+     * 새 owner가 PLAN 파트인지, 동일 기수 내 다른 프로젝트가 없는지 등의 검증은
+     * Service 레벨에서 수행합니다 (도메인은 다른 도메인 정보를 알 수 없음).
      */
-    public void updateDescription(String description) {
+    public void transferOwnership(Long newOwnerMemberId) {
+        validateMutable();
+        this.productOwnerMemberId = newOwnerMemberId;
+    }
+
+    private void validateMutable() {
+        if (this.status == ProjectStatus.COMPLETED || this.status == ProjectStatus.ABORTED) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
     }
 
     /**
-     * 프로젝트 PO를 변경합니다.
-     *
-     * @param newOwnerMemberId 새로운 PO ID
+     * DRAFT 상태에서 PENDING_REVIEW 상태로 전이합니다. PM 제출 액션.
+     * - 현재 상태가 DRAFT가 아니면 {@code PROJECT_INVALID_STATE}.
+     * - {@code name} 미입력 시 {@code PROJECT_SUBMIT_VALIDATION_FAILED}.
+     * <p>
+     * 지원 폼({@link ProjectApplicationForm}) 연결 여부는 다른 도메인 lookup이 필요하므로
+     * Service 레이어에서 {@code submit()} 호출 전 검증합니다.
      */
-    public void changeProductOwner(Long newOwnerMemberId) {
+    public void submit() {
+        validateStatus(ProjectStatus.DRAFT);
+        validateSubmitRequiredFields();
+        this.status = ProjectStatus.PENDING_REVIEW;
     }
 
     /**
      * 기수가 종료되었을 때, 프로젝트를 완료 처리 합니다.
      */
     public void complete() {
+        validateStatus(ProjectStatus.IN_PROGRESS);
+        this.status = ProjectStatus.COMPLETED;
     }
 
     /**
@@ -122,6 +191,24 @@ public class Project extends BaseEntity {
      * @param decidedByMemberId 해당 사항을 결정한 운영진 Member ID
      */
     public void abort(String reason, Long decidedByMemberId) {
+        if (this.status == ProjectStatus.COMPLETED || this.status == ProjectStatus.ABORTED) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_ABORT_UNAVAILABLE);
+        }
+        this.status = ProjectStatus.ABORTED;
+        this.statusChangedReason = reason;
+        this.statusChangedByMemberId = decidedByMemberId;
+    }
+
+    private void validateStatus(ProjectStatus expected) {
+        if (this.status != expected) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+    }
+
+    private void validateSubmitRequiredFields() {
+        if (this.name == null || this.name.isBlank()) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_SUBMIT_VALIDATION_FAILED);
+        }
     }
 
 }

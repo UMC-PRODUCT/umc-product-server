@@ -1,6 +1,7 @@
 package com.umc.product.project.domain;
 
 import com.umc.product.common.BaseEntity;
+import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -60,6 +61,11 @@ public class ProjectMember extends BaseEntity {
 
     @Column(nullable = false)
     private Long memberId;
+
+    // 보조 PM은 PLAN 파트로 저장됩니다.
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ChallengerPart part;
 
     // 리더 여부를 나타냅니다. 추후 리더에 대해서 특정 권한을 부여하거나, 뱃지 등을 필요로 할 때 활용될 수 있습니다.
     @Column(nullable = false)

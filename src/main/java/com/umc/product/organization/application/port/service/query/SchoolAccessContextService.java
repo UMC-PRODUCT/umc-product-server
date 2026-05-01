@@ -6,7 +6,7 @@ import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolAccessContextUseCase;
-import com.umc.product.organization.application.port.in.query.dto.SchoolAccessContext;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolAccessContext;
 import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class SchoolAccessContextService implements GetSchoolAccessContextUseCase
         ChallengerPart part = getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, activeGisuId, schoolId)
             ? null
             : getChallengerRoleUseCase.getAllResponsiblePartByMemberIdAndGisuId(memberId, activeGisuId)
-                .stream().findFirst().orElse(null);
+              .stream().findFirst().orElse(null);
 
         return new SchoolAccessContext(schoolId, part);
     }

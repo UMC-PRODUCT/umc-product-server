@@ -16,7 +16,7 @@ import com.umc.product.notification.application.port.in.dto.NotificationCommand;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.domain.FcmToken;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
-import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;

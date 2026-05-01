@@ -19,8 +19,7 @@ public record DecideAttendanceRequest(
     @Min(value = 1, message = "1 이상인 수여야 합니다.")
     Long participantMemberId,
 
-    @Schema(description = "출석 요청 승인 여부", example = "true")
-    @NotNull(message = "승인 여부는 필수입니다.")
+    @Schema(description = "(필수 값) 출석 요청 승인 여부", example = "true")
     boolean isApproved,
 
     @Schema(description = "출석 요청 승인/기각 사유", example = "실제로 출석했는지 확인했습니다.", maxLength = 300)

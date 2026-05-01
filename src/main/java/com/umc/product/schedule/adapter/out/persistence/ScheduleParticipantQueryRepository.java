@@ -114,4 +114,17 @@ public class ScheduleParticipantQueryRepository {
                 .fetch()
         );
     }
+
+    /**
+     * 특정 사용자가 참여하는 일정 ID 목록 조회
+     */
+    public Set<Long> findScheduleIdsByMemberId(Long memberId) {
+        return new HashSet<>(
+            queryFactory
+                .select(scheduleParticipant.schedule.id)
+                .from(scheduleParticipant)
+                .where(scheduleParticipant.memberId.eq(memberId))
+                .fetch()
+        );
+    }
 }

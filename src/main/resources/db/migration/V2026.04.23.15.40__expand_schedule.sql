@@ -11,5 +11,7 @@ ALTER TABLE public.schedule
     ADD COLUMN late_tolerance_minutes bigint;
 
 -- 컬럼 길이 변경
-ALTER TABLE public.schedule ALTER COLUMN name TYPE varchar(100);
-ALTER TABLE public.schedule ALTER COLUMN location_name TYPE varchar(100);
+ALTER TABLE public.schedule
+    ALTER COLUMN name TYPE varchar(100);
+ALTER TABLE public.schedule
+    ALTER COLUMN location_name TYPE varchar(100);

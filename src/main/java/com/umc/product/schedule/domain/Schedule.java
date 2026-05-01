@@ -147,40 +147,6 @@ public class Schedule extends BaseEntity {
         }
     }
 
-    public boolean isInProgress(Instant referenceTime) {
-        return referenceTime.isAfter(startsAt) && referenceTime.isBefore(endsAt);
-    }
-
-    public boolean isEnded(Instant referenceTime) {
-        return referenceTime.isAfter(endsAt);
-    }
-
-    // 요청을 받은 시각이 어떤 AttendanceStatus에 해당하는지 판단하는 메소드
-
-    /**
-     * 최초 일정 출석 요청 시, 어떤 상태로 마킹해야 하는지 판단하는 메소드입니다.
-     */
-    public AttendanceStatus getAttendanceStatus() {
-
-        // 출석을 요하지 않는 일정이면 에러 반환
-        if (this.policy == null) {
-            throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST);
-        }
-
-        Instant now = Instant.now();
-
-        if (now.isAfter(this.endsAt)) {
-            throw new ScheduleDomainException(
-                ScheduleErrorCode.SCHEDULE_ENDED,
-                this.name + " 일정은 " + this.endsAt + " 에 이미 종료된 일정입니다."
-            );
-        }
-
-        return this.policy.getAttendanceStatusByPolicy(
-            now, this.startsAt
-        );
-    }
-
     public static AttendancePolicy createAttendancePolicy(
         Instant checkInStartAt, // 출석 요청 시작 가능 시점
         Instant onTimeEndAt, // 출석으로 인정하는 마감 시간
@@ -212,6 +178,40 @@ public class Schedule extends BaseEntity {
         ) {
             throw new ScheduleDomainException(ScheduleErrorCode.INVALID_TIME_RANGE);
         }
+    }
+
+    // 요청을 받은 시각이 어떤 AttendanceStatus에 해당하는지 판단하는 메소드
+
+    public boolean isInProgress(Instant referenceTime) {
+        return referenceTime.isAfter(startsAt) && referenceTime.isBefore(endsAt);
+    }
+
+    public boolean isEnded(Instant referenceTime) {
+        return referenceTime.isAfter(endsAt);
+    }
+
+    /**
+     * 최초 일정 출석 요청 시, 어떤 상태로 마킹해야 하는지 판단하는 메소드입니다.
+     */
+    public AttendanceStatus getAttendanceStatus() {
+
+        // 출석을 요하지 않는 일정이면 에러 반환
+        if (this.policy == null) {
+            throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST);
+        }
+
+        Instant now = Instant.now();
+
+        if (now.isAfter(this.endsAt)) {
+            throw new ScheduleDomainException(
+                ScheduleErrorCode.SCHEDULE_ENDED,
+                this.name + " 일정은 " + this.endsAt + " 에 이미 종료된 일정입니다."
+            );
+        }
+
+        return this.policy.getAttendanceStatusByPolicy(
+            now, this.startsAt
+        );
     }
 
     // 일정 수정 메서드

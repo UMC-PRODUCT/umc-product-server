@@ -8,8 +8,10 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.schedule.domain.Schedule;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -38,15 +40,6 @@ public class ScheduleQueryRepository {
             .fetch();
     }
 
-    // 동적 쿼리 처리 헬퍼 메서드
-    private BooleanExpression isAttendanceRequiredEq(Boolean isAttendanceRequired) {
-        if (Boolean.TRUE.equals(isAttendanceRequired)) {
-            return schedule.policy.isNotNull(); // 출석 정책이 있는 일정만
-        }
-        return null; // 조건 무시하고 전체 일정 조회
-    }
-
-
     public Optional<Schedule> findByIdWithTags(Long scheduleId) {
         return Optional.ofNullable(queryFactory
             .selectFrom(schedule)
@@ -55,27 +48,52 @@ public class ScheduleQueryRepository {
             .fetchOne());
     }
 
-    public List<Schedule> findAdminSchedules(Instant from, Instant to,
-                                             AttendanceStatus attendanceStatus,
-                                             Long memberId) {
+    // 역할 기반 운영진 일정 조회
+    // targetScheduleIds에 포함되면서 기간 조건 또는 승인 대기 조건을 만족하는 일정 조회
+    public List<Schedule> findAdminSchedulesByRole(Set<Long> targetScheduleIds,
+                                                   Instant from,
+                                                   Instant to,
+                                                   AttendanceStatus attendanceStatus) {
+        if (targetScheduleIds.isEmpty()) {
+            return List.of();
+        }
+
         return queryFactory
             .selectFrom(schedule)
-            // scheduleParticipant -> Schedule 조인
             .leftJoin(scheduleParticipant).on(scheduleParticipant.schedule.id.eq(schedule.id))
             .leftJoin(schedule.tags).fetchJoin()
             .where(
-                // 기본 조건 : 요청한 운영진 본인이 참여하는 일정
-                scheduleParticipant.memberId.eq(memberId),
-
-                // 추가 조건 : 기간 필터 or 승인 대기(Pending) 상태 필터
+                // 역할 기반 일정 ID 필터
+                schedule.id.in(targetScheduleIds),
+                // 출석 정책이 존재하는 일정만
+                schedule.policy.isNotNull(),
+                // 기간 필터 or 승인 대기 상태 필터
                 createDateOrPendingCondition(from, to, attendanceStatus)
             )
-            // 중복 제거
             .distinct()
             .fetch();
     }
 
-    // ======= 동적 조건 Helper Method =======
+    // 특정 사용자가 생성한 일정 ID 목록 조회
+    public Set<Long> findScheduleIdsByAuthor(Long authorMemberId) {
+        List<Long> ids = queryFactory
+            .select(schedule.id)
+            .from(schedule)
+            .where(schedule.authorMemberId.eq(authorMemberId))
+            .fetch();
+
+        return new HashSet<>(ids);
+    }
+
+    // ========================== 동적 조건 Helper Method ==========================
+
+    // 동적 쿼리 처리 헬퍼 메서드
+    private BooleanExpression isAttendanceRequiredEq(Boolean isAttendanceRequired) {
+        if (Boolean.TRUE.equals(isAttendanceRequired)) {
+            return schedule.policy.isNotNull(); // 출석 정책이 있는 일정만
+        }
+        return null; // 조건 무시하고 전체 일정 조회
+    }
 
     // 기간 조건, 상태 필터, 승인 대기 건 표시 로직 조합 메서드
     private BooleanExpression createDateOrPendingCondition(Instant from, Instant to,

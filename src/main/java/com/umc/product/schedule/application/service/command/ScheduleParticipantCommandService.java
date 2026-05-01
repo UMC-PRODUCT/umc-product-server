@@ -37,6 +37,11 @@ public class ScheduleParticipantCommandService implements
 
     private final GetMemberUseCase getMemberUseCase;
 
+    private static void checkSchedulePolicyExists(Schedule schedule) {
+        if (schedule.getPolicy() == null) {
+            throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST);
+        }
+    }
 
     // 출석 요청
     @Override
@@ -49,7 +54,7 @@ public class ScheduleParticipantCommandService implements
         // 출석을 요하지 않는, 즉 출석 정책이 없는 일정이면 에러 반환
         checkSchedulePolicyExists(schedule);
 
-        // ScheduleParticipant 정보가 없으면 에러 반환
+        // ScheduleParticipant 정보 가져오기
         ScheduleParticipant scheduleParticipant = getScheduleParticipant(
             command.scheduleId(),
             command.requesterMemberId()
@@ -94,7 +99,7 @@ public class ScheduleParticipantCommandService implements
         // 출석을 요하지 않는, 즉 출석 정책이 없는 일정이면 에러 반환
         checkSchedulePolicyExists(schedule);
 
-        // ScheduleParticipant 정보가 없으면 에러 반환
+        // ScheduleParticipant 정보 가져오기
         ScheduleParticipant scheduleParticipant = getScheduleParticipant(
             command.scheduleId(),
             command.requesterMemberId()
@@ -174,12 +179,12 @@ public class ScheduleParticipantCommandService implements
             .decisionMakerMemberInfo(
                 decisionMaker != null ?
                     ScheduleParticipantAttendanceResult.DecisionMakerMemberInfo.builder()
-                        .memberId(decisionMaker.id())
-                        .name(decisionMaker.name())
-                        .nickname(decisionMaker.nickname())
-                        .schoolId(decisionMaker.schoolId())
-                        .schoolName(decisionMaker.schoolName())
-                        .build()
+                    .memberId(decisionMaker.id())
+                    .name(decisionMaker.name())
+                    .nickname(decisionMaker.nickname())
+                    .schoolId(decisionMaker.schoolId())
+                    .schoolName(decisionMaker.schoolName())
+                    .build()
                     : null
             )
             .decidedAt(attendance.getDecidedAt())
@@ -198,11 +203,5 @@ public class ScheduleParticipantCommandService implements
             return GeometryUtils.createPoint(latitude, longitude);
         }
         return null;
-    }
-
-    private static void checkSchedulePolicyExists(Schedule schedule) {
-        if (schedule.getPolicy() == null) {
-            throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_ATTENDANCE_POLICY_NOT_EXIST);
-        }
     }
 }

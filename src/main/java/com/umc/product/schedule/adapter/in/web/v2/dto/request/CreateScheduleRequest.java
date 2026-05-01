@@ -3,6 +3,7 @@ package com.umc.product.schedule.adapter.in.web.v2.dto.request;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.domain.enums.ScheduleTag;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -46,8 +47,10 @@ public record CreateScheduleRequest(
     // 하루종일 일정은 따로 서버측에서 저장하지 않고,
     // 클라이언트 단에서 KST 기준 Instant로 알아서 변환하도록 합니다.
 
+    @Valid
     ScheduleLocationRequest location,
 
+    @Valid
     ScheduleAttendancePolicyRequest attendancePolicy,
 
     // 참여자는 중복되지 않도록 Set으로 받습니다.
@@ -62,7 +65,6 @@ public record CreateScheduleRequest(
         Set<Long> participants = participantMemberIds != null
             ? new HashSet<>(participantMemberIds)
             : new HashSet<>();
-        participants.add(authorMemberId);  // 일정 생성자 추가
 
         // Command의 locationInfo 생성
         CreateScheduleCommand.LocationInfo locationInfo = this.location != null
