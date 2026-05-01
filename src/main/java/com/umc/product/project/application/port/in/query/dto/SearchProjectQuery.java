@@ -3,8 +3,10 @@ package com.umc.product.project.application.port.in.query.dto;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.enums.PartQuotaStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import lombok.Builder;
 import org.springframework.data.domain.Pageable;
 
@@ -13,7 +15,11 @@ import org.springframework.data.domain.Pageable;
  * <p>
  * 권한(챌린저 vs Admin)에 따라 노출되는 상태 범위가 다릅니다.
  * 직접 {@code builder()}/생성자로 만들지 말고 {@link #forChallenger} 또는 {@link #forAdmin}을 사용하세요.
- * Controller는 분기 로직을 가지지 않고, Request DTO의 {@code toQuery(isAdmin, pageable)}에서 팩토리를 선택합니다.
+ * Controller는 분기 로직을 가지지 않고, Request DTO의 {@code toQuery(...)}에서 팩토리를 선택합니다.
+ * <p>
+ * Service 계층에서 {@link com.umc.product.project.application.access.ProjectAccessScope} 적용 시
+ * {@link #withStatuses}, {@link #withChapterFilter}, {@link #withSchoolFilter}, {@link #withOwnerFilter}
+ * 헬퍼로 새 인스턴스를 만들어 어댑터에 전달합니다.
  */
 @Builder
 public record SearchProjectQuery(
@@ -21,6 +27,7 @@ public record SearchProjectQuery(
     String keyword,
     Long chapterId,
     List<Long> schoolIds,
+    Long productOwnerMemberId,
     List<ChallengerPart> parts,
     PartQuotaStatus partQuotaStatus,
     List<ProjectStatus> statuses,
@@ -86,5 +93,56 @@ public record SearchProjectQuery(
             .statuses(effectiveStatuses)
             .pageable(pageable)
             .build();
+    }
+
+    /** scope 적용 — 상태 필터만 교체. */
+    public SearchProjectQuery withStatuses(Set<ProjectStatus> newStatuses) {
+        return copyBuilder()
+            .statuses(toList(newStatuses))
+            .build();
+    }
+
+    /** scope 적용 — 지부 한정 + 상태 교체. */
+    public SearchProjectQuery withChapterFilter(Long chapterId, Set<ProjectStatus> newStatuses) {
+        return copyBuilder()
+            .chapterId(chapterId)
+            .statuses(toList(newStatuses))
+            .build();
+    }
+
+    /** scope 적용 — 학교 한정 + 상태 교체. */
+    public SearchProjectQuery withSchoolFilter(Long schoolId, Set<ProjectStatus> newStatuses) {
+        return copyBuilder()
+            .schoolIds(List.of(schoolId))
+            .statuses(toList(newStatuses))
+            .build();
+    }
+
+    /** scope 적용 — owner 한정 + 상태 교체. */
+    public SearchProjectQuery withOwnerFilter(Long memberId, Set<ProjectStatus> newStatuses) {
+        return copyBuilder()
+            .productOwnerMemberId(memberId)
+            .statuses(toList(newStatuses))
+            .build();
+    }
+
+    private SearchProjectQueryBuilder copyBuilder() {
+        return SearchProjectQuery.builder()
+            .gisuId(gisuId)
+            .keyword(keyword)
+            .chapterId(chapterId)
+            .schoolIds(schoolIds)
+            .productOwnerMemberId(productOwnerMemberId)
+            .parts(parts)
+            .partQuotaStatus(partQuotaStatus)
+            .statuses(statuses)
+            .pageable(pageable);
+    }
+
+    private static List<ProjectStatus> toList(Set<ProjectStatus> set) {
+        if (set == null || set.isEmpty()) {
+            return List.of(ProjectStatus.IN_PROGRESS);
+        }
+        return new ArrayList<>(set);
     }
 }

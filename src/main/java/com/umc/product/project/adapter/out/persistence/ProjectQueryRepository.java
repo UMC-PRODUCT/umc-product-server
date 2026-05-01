@@ -66,10 +66,15 @@ public class ProjectQueryRepository {
             .and(keywordContains(query.keyword()))
             .and(chapterIdEq(query.chapterId()))
             .and(schoolIdsIn(query.schoolIds()))
+            .and(productOwnerMemberIdEq(query.productOwnerMemberId()))
             .and(partAndQuotaFilter(query.parts(), query.partQuotaStatus()))
             .and(statusIn(query.statuses()));
 
         return builder;
+    }
+
+    private BooleanExpression productOwnerMemberIdEq(Long memberId) {
+        return memberId != null ? project.productOwnerMemberId.eq(memberId) : null;
     }
 
     private BooleanExpression gisuIdEq(Long gisuId) {
