@@ -30,7 +30,7 @@ public class StudyGroupScheduleService implements CreateStudyGroupScheduleUseCas
     public Long create(CreateStudyGroupScheduleCommand command) {
 
         // studyGroup 없으면 에러 반환
-        loadStudyGroupPort.findById(command.studyGroupId());
+        loadStudyGroupPort.getById(command.studyGroupId());
 
         // schedule 없으면 에러 반환
         getScheduleUseCase.getScheduleBaseInfo(command.scheduleId());
