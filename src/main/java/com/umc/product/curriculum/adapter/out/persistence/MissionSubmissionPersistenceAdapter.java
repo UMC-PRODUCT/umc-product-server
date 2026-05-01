@@ -16,11 +16,6 @@ public class MissionSubmissionPersistenceAdapter implements LoadMissionSubmissio
     private final MissionFeedbackJpaRepository missionFeedbackJpaRepository;
 
     @Override
-    public List<MissionSubmission> findByChallengerWorkbookId(Long challengerWorkbookId) {
-        return missionSubmissionJpaRepository.findByChallengerWorkbook_Id(challengerWorkbookId);
-    }
-
-    @Override
     public List<MissionSubmission> findByChallengerWorkbookIdIn(List<Long> challengerWorkbookIds) {
         if (challengerWorkbookIds.isEmpty()) {
             return List.of();

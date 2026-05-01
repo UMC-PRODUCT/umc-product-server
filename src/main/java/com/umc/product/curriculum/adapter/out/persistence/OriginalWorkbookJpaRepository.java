@@ -7,9 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface OriginalWorkbookJpaRepository extends JpaRepository<OriginalWorkbook, Long> {
 
-    List<OriginalWorkbook> findByWeeklyCurriculumIdAndOriginalWorkbookStatus(
-        Long weeklyCurriculumId, OriginalWorkbookStatus originalWorkbookStatus);
-
     List<OriginalWorkbook> findByWeeklyCurriculumIdInAndOriginalWorkbookStatus(
         List<Long> weeklyCurriculumIds, OriginalWorkbookStatus originalWorkbookStatus);
 

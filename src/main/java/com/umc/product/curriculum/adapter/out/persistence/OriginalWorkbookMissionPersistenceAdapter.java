@@ -13,11 +13,6 @@ public class OriginalWorkbookMissionPersistenceAdapter implements LoadOriginalWo
     private final OriginalWorkbookMissionJpaRepository originalWorkbookMissionJpaRepository;
 
     @Override
-    public List<OriginalWorkbookMission> findByOriginalWorkbookId(Long originalWorkbookId) {
-        return originalWorkbookMissionJpaRepository.findByOriginalWorkbookId(originalWorkbookId);
-    }
-
-    @Override
     public List<OriginalWorkbookMission> findByOriginalWorkbookIdIn(List<Long> originalWorkbookIds) {
         if (originalWorkbookIds.isEmpty()) {
             return List.of();

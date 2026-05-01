@@ -25,12 +25,6 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
     }
 
     @Override
-    public List<OriginalWorkbook> findReleasedByWeeklyCurriculumId(Long weeklyCurriculumId) {
-        return originalWorkbookJpaRepository.findByWeeklyCurriculumIdAndOriginalWorkbookStatus(
-            weeklyCurriculumId, OriginalWorkbookStatus.RELEASED);
-    }
-
-    @Override
     public List<OriginalWorkbook> findReleasedByWeeklyCurriculumIdIn(List<Long> weeklyCurriculumIds) {
         if (weeklyCurriculumIds.isEmpty()) {
             return List.of();
