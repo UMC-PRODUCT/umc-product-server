@@ -1,7 +1,9 @@
 package com.umc.product.project.application.service.command;
 
 import com.umc.product.project.application.port.in.command.AddProjectMemberUseCase;
+import com.umc.product.project.application.port.in.command.RemoveProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.dto.AddProjectMemberCommand;
+import com.umc.product.project.application.port.in.command.dto.RemoveProjectMemberCommand;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
@@ -9,6 +11,7 @@ import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ProjectMemberCommandService implements AddProjectMemberUseCase {
+public class ProjectMemberCommandService implements AddProjectMemberUseCase, RemoveProjectMemberUseCase {
 
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
@@ -41,5 +44,33 @@ public class ProjectMemberCommandService implements AddProjectMemberUseCase {
         ProjectMember member = ProjectMember.create(
             project, command.memberId(), command.part(), command.requesterMemberId());
         return saveProjectMemberPort.save(member).getId();
+    }
+
+    @Override
+    public void remove(RemoveProjectMemberCommand command) {
+        Project project = loadProjectPort.getById(command.projectId());
+
+        // 메인 PM 제거 거부 — 소유권 양도 API 로 유도
+        if (Objects.equals(project.getProductOwnerMemberId(), command.memberId())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER);
+        }
+
+        ProjectMember member = loadProjectMemberPort
+            .findByProjectIdAndMemberId(command.projectId(), command.memberId())
+            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_MEMBER_NOT_FOUND));
+
+        // status 별 분기:
+        //   DRAFT/PENDING_REVIEW → hard delete (실수 정정 단계)
+        //   IN_PROGRESS         → soft delete (히스토리 보존, 매칭/출석 도메인 무결성)
+        //   COMPLETED/ABORTED   → 거부 (도메인 가드)
+        switch (project.getStatus()) {
+            case DRAFT, PENDING_REVIEW -> saveProjectMemberPort.hardDelete(member.getId());
+            case IN_PROGRESS -> {
+                member.dismiss(command.reason(), command.requesterMemberId());
+                saveProjectMemberPort.save(member);
+            }
+            case COMPLETED, ABORTED ->
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
     }
 }

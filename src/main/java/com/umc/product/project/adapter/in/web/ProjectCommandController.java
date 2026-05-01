@@ -12,20 +12,24 @@ import com.umc.product.project.adapter.in.web.dto.request.UpdateProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectStatusResponse;
 import com.umc.product.project.application.port.in.command.AddProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
+import com.umc.product.project.application.port.in.command.RemoveProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
+import com.umc.product.project.application.port.in.command.dto.RemoveProjectMemberCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -39,6 +43,7 @@ public class ProjectCommandController {
     private final SubmitProjectUseCase submitProjectUseCase;
     private final TransferProjectOwnershipUseCase transferProjectOwnershipUseCase;
     private final AddProjectMemberUseCase addProjectMemberUseCase;
+    private final RemoveProjectMemberUseCase removeProjectMemberUseCase;
 
     @PostMapping
     @Operation(
@@ -141,5 +146,30 @@ public class ProjectCommandController {
     ) {
         return addProjectMemberUseCase.add(
             request.toCommand(projectId, memberPrincipal.getMemberId()));
+    }
+
+    @DeleteMapping("/{projectId}/members/{memberId}")
+    @Operation(
+        summary = "[PROJECT-005] 프로젝트 팀원 제거",
+        description = "프로젝트에서 멤버를 제거합니다. DRAFT/PENDING_REVIEW 단계는 hard delete (실수 정정), IN_PROGRESS 단계는 soft delete (히스토리 보존). 메인 PM 은 양도 API 로 변경해야 합니다."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 팀원 제거 권한이 없습니다."
+    )
+    public void removeMember(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @PathVariable Long memberId,
+        @RequestParam(required = false) String reason
+    ) {
+        removeProjectMemberUseCase.remove(RemoveProjectMemberCommand.builder()
+            .projectId(projectId)
+            .memberId(memberId)
+            .reason(reason)
+            .requesterMemberId(memberPrincipal.getMemberId())
+            .build());
     }
 }
