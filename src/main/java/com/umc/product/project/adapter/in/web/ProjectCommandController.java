@@ -5,10 +5,12 @@ import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.project.adapter.in.web.dto.request.AddProjectMemberRequest;
 import com.umc.product.project.adapter.in.web.dto.request.CreateDraftProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.request.TransferProjectOwnershipRequest;
 import com.umc.product.project.adapter.in.web.dto.request.UpdateProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectStatusResponse;
+import com.umc.product.project.application.port.in.command.AddProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
@@ -36,6 +38,7 @@ public class ProjectCommandController {
     private final UpdateProjectUseCase updateProjectUseCase;
     private final SubmitProjectUseCase submitProjectUseCase;
     private final TransferProjectOwnershipUseCase transferProjectOwnershipUseCase;
+    private final AddProjectMemberUseCase addProjectMemberUseCase;
 
     @PostMapping
     @Operation(
@@ -118,5 +121,25 @@ public class ProjectCommandController {
         ProjectStatus status = transferProjectOwnershipUseCase.transfer(
             request.toCommand(projectId, memberPrincipal.getMemberId()));
         return ProjectStatusResponse.of(projectId, status);
+    }
+
+    @PostMapping("/{projectId}/members")
+    @Operation(
+        summary = "[PROJECT-004] 프로젝트 팀원 추가",
+        description = "프로젝트에 멤버를 추가합니다. 보조 PM 추가는 part = PLAN. DRAFT 단계에선 PM 본인만, IN_PROGRESS 에선 운영진(중앙 총괄단)도 호출 가능."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 팀원 추가 권한이 없습니다."
+    )
+    public Long addMember(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @Valid @RequestBody AddProjectMemberRequest request
+    ) {
+        return addProjectMemberUseCase.add(
+            request.toCommand(projectId, memberPrincipal.getMemberId()));
     }
 }
