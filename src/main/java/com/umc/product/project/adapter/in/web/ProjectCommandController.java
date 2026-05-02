@@ -180,7 +180,7 @@ public class ProjectCommandController {
     @PutMapping("/{projectId}/part-quotas")
     @Operation(
         summary = "[PROJECT-105] 파트별 정원 일괄 갱신",
-        description = "PUT 시멘틱 — 본문이 곧 새 상태가 된다. 본문에 없는 기존 파트는 삭제. iOS+DESIGN 조합 금지, quota ≥ 1."
+        description = "PUT 시멘틱 — 본문이 곧 새 상태가 된다. 본문에 없는 기존 파트는 삭제. quota ≥ 1."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
