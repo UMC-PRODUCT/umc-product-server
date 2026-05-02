@@ -13,7 +13,6 @@ import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -72,7 +71,6 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
 
     private void validateEntries(List<Entry> entries) {
         Set<ChallengerPart> seen = EnumSet.noneOf(ChallengerPart.class);
-        Set<ChallengerPart> parts = new HashSet<>();
         for (Entry entry : entries) {
             if (entry.quota() < 1) {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_INVALID);
@@ -80,11 +78,6 @@ public class ProjectPartQuotaCommandService implements UpdatePartQuotasUseCase {
             if (!seen.add(entry.part())) {
                 throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_QUOTA_DUPLICATE);
             }
-            parts.add(entry.part());
-        }
-        // iOS + DESIGN 동시 보유 금지 (기획 정책)
-        if (parts.contains(ChallengerPart.IOS) && parts.contains(ChallengerPart.DESIGN)) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_PART_COMBINATION_FORBIDDEN);
         }
     }
 }

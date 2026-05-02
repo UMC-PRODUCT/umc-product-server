@@ -13,11 +13,13 @@ import com.umc.product.project.adapter.in.web.dto.request.UpdateProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectStatusResponse;
 import com.umc.product.project.application.port.in.command.AddProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
+import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
 import com.umc.product.project.application.port.in.command.RemoveProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
 import com.umc.product.project.application.port.in.command.UpdatePartQuotasUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
+import com.umc.product.project.application.port.in.command.dto.PublishProjectCommand;
 import com.umc.product.project.application.port.in.command.dto.RemoveProjectMemberCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.domain.enums.ProjectStatus;
@@ -48,6 +50,7 @@ public class ProjectCommandController {
     private final AddProjectMemberUseCase addProjectMemberUseCase;
     private final RemoveProjectMemberUseCase removeProjectMemberUseCase;
     private final UpdatePartQuotasUseCase updatePartQuotasUseCase;
+    private final PublishProjectUseCase publishProjectUseCase;
 
     @PostMapping
     @Operation(
@@ -150,6 +153,28 @@ public class ProjectCommandController {
     ) {
         return addProjectMemberUseCase.add(
             request.toCommand(projectId, memberPrincipal.getMemberId()));
+    }
+
+    @PostMapping("/{projectId}/publish")
+    @Operation(
+        summary = "[PROJECT-108] 프로젝트 공개",
+        description = "PENDING_REVIEW → IN_PROGRESS 전이. 같은 트랜잭션에서 지원 폼도 PUBLISHED 로 전환. 파트별 정원 1개 이상 + 지원 폼 등록 필수."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 공개 권한이 없습니다."
+    )
+    public ProjectStatusResponse publish(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId
+    ) {
+        ProjectStatus status = publishProjectUseCase.publish(PublishProjectCommand.builder()
+            .projectId(projectId)
+            .requesterMemberId(memberPrincipal.getMemberId())
+            .build());
+        return ProjectStatusResponse.of(projectId, status);
     }
 
     @PutMapping("/{projectId}/part-quotas")

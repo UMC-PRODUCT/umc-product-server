@@ -42,7 +42,6 @@ public enum ProjectErrorCode implements BaseCode {
 
     // ProjectPartQuota / Publish (PROJECT-105/108)
     PROJECT_PART_QUOTA_INVALID(HttpStatus.BAD_REQUEST, "PROJECT-0200", "파트 정원은 1 이상이어야 합니다."),
-    PROJECT_PART_COMBINATION_FORBIDDEN(HttpStatus.BAD_REQUEST, "PROJECT-0201", "허용되지 않는 파트 조합입니다."),
     PROJECT_PART_QUOTA_REQUIRED(HttpStatus.BAD_REQUEST, "PROJECT-0202", "공개하려면 파트별 정원이 1개 이상 등록되어 있어야 합니다."),
     PROJECT_PART_QUOTA_DUPLICATE(HttpStatus.BAD_REQUEST, "PROJECT-0203", "동일 파트가 중복으로 입력되었습니다."),
 

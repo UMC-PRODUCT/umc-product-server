@@ -111,25 +111,6 @@ class ProjectPartQuotaCommandServiceTest {
     }
 
     @Test
-    void update_iOS_DESIGN_조합은_금지() {
-        Long projectId = 42L;
-        Project project = project(projectId, ProjectStatus.PENDING_REVIEW);
-        given(loadProjectPort.getById(projectId)).willReturn(project);
-
-        assertThatThrownBy(() -> sut.update(UpdatePartQuotasCommand.builder()
-                .projectId(projectId)
-                .entries(List.of(
-                    Entry.builder().part(ChallengerPart.IOS).quota(2L).build(),
-                    Entry.builder().part(ChallengerPart.DESIGN).quota(2L).build()
-                ))
-                .requesterMemberId(99L)
-                .build()))
-            .isInstanceOf(ProjectDomainException.class)
-            .extracting("baseCode")
-            .isEqualTo(ProjectErrorCode.PROJECT_PART_COMBINATION_FORBIDDEN);
-    }
-
-    @Test
     void update_quota_0_이하면_거부() {
         Long projectId = 42L;
         Project project = project(projectId, ProjectStatus.PENDING_REVIEW);
