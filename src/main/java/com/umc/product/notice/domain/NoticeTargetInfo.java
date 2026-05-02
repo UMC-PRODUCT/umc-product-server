@@ -1,5 +1,6 @@
 package com.umc.product.notice.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.notice.domain.enums.NoticeTab;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -50,6 +51,7 @@ public record NoticeTargetInfo(
         );
     }
 
+    @JsonIgnore
     public boolean isStaffNotice() {
         return targetNoticeTab != null && targetNoticeTab != NoticeTab.CHALLENGER;
     }
