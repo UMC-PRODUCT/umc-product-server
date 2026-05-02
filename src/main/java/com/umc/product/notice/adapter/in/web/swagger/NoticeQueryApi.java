@@ -1,6 +1,5 @@
 package com.umc.product.notice.adapter.in.web.swagger;
 
-import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.MemberPrincipal;
@@ -58,7 +57,7 @@ public interface NoticeQueryApi {
             description = "보유하지 않은 운영진 역할 요청"
         )
     })
-    ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(
+    PageResponse<GetNoticeSummaryResponse> getAllNotices(
         @ParameterObject @Valid NoticeClassification classification,
 
         @Parameter(description = "페이징 정보. page=페이지 번호(0부터), size=페이지 크기, sort=정렬 기준(기본: createdAt,DESC)")
@@ -86,7 +85,7 @@ public interface NoticeQueryApi {
             description = "보유하지 않은 운영진 역할 요청"
         )
     })
-    ApiResponse<PageResponse<GetNoticeSummaryResponse>> searchNotices(
+    PageResponse<GetNoticeSummaryResponse> searchNotices(
         @Parameter(description = "검색 키워드. 공지 제목/내용에서 검색", required = true, example = "erica")
         @RequestParam String keyword,
 
@@ -117,7 +116,7 @@ public interface NoticeQueryApi {
             description = "공지사항을 찾을 수 없음"
         )
     })
-    ApiResponse<GetNoticeDetailResponse> getNotice(
+    GetNoticeDetailResponse getNotice(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -127,7 +126,7 @@ public interface NoticeQueryApi {
         summary = "공지사항 읽음 통계 조회",
         description = "공지사항의 전체 대상자 수, 읽은 수, 안 읽은 수 통계를 조회합니다."
     )
-    ApiResponse<GetNoticeStaticsResponse> getNoticeReadStatics(
+    GetNoticeStaticsResponse getNoticeReadStatics(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId
     );
@@ -148,7 +147,7 @@ public interface NoticeQueryApi {
             description = "조회 성공"
         )
     })
-    ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus(
+    CursorResponse<GetNoticeReadStatusResponse> getNoticeReadStatus(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
 

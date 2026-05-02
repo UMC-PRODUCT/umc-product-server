@@ -1,6 +1,5 @@
 package com.umc.product.notice.adapter.in.web.swagger;
 
-import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
@@ -9,6 +8,7 @@ import com.umc.product.notice.adapter.in.web.dto.request.UpdateNoticeRequest;
 import com.umc.product.notice.adapter.in.web.dto.response.command.CreateNoticeResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -25,16 +25,16 @@ public interface NoticeCommandControllerApi {
             + "이미지/링크/투표는 공지 생성 후 별도 API로 추가해야 합니다."
     )
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "200",
             description = "생성 성공"
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "400",
             description = "잘못된 요청"
         )
     })
-    ApiResponse<CreateNoticeResponse> createNotice(
+    CreateNoticeResponse createNotice(
         @RequestBody @Valid CreateNoticeRequest request,
 
         @Parameter(hidden = true)
@@ -47,11 +47,11 @@ public interface NoticeCommandControllerApi {
         description = "공지사항을 삭제합니다."
     )
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "200",
             description = "삭제 성공"
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "404",
             description = "공지사항을 찾을 수 없음"
         )
@@ -69,15 +69,15 @@ public interface NoticeCommandControllerApi {
         description = "공지사항 내용을 수정합니다."
     )
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "200",
             description = "수정 성공"
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "404",
             description = "공지사항을 찾을 수 없음"
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "400",
             description = "잘못된 요청"
         )
@@ -100,15 +100,15 @@ public interface NoticeCommandControllerApi {
             + "리마인드할 챌린저 ID들을 targetIds로 전달하세요."
     )
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "200",
             description = "발송 성공"
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "404",
             description = "공지사항을 찾을 수 없음"
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "400",
             description = "잘못된 요청"
         )
@@ -128,16 +128,16 @@ public interface NoticeCommandControllerApi {
         description = "공지사항을 읽음 처리합니다."
     )
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "200",
             description = "처리 성공"
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "404",
             description = "공지사항을 찾을 수 없음"
         )
     })
-    ApiResponse<Void> recordNoticeRead(
+    void recordNoticeRead(
         @Parameter(description = "공지사항 ID", required = true)
         @PathVariable Long noticeId,
 

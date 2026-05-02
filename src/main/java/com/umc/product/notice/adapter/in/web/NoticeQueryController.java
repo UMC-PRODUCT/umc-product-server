@@ -3,7 +3,6 @@ package com.umc.product.notice.adapter.in.web;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.response.CursorResponse;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.global.security.MemberPrincipal;
@@ -52,7 +51,7 @@ public class NoticeQueryController implements NoticeQueryApi {
      * 공지 전체 조회
      */
     @GetMapping
-    public ApiResponse<PageResponse<GetNoticeSummaryResponse>> getAllNotices(
+    public PageResponse<GetNoticeSummaryResponse> getAllNotices(
         @ParameterObject @Valid NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
         @ParameterObject Pageable pageable,
@@ -62,14 +61,14 @@ public class NoticeQueryController implements NoticeQueryApi {
             classification.gisuId());
         Page<NoticeSummary> notices = getNoticeUseCase.getAllNoticeSummaries(viewerInfo, classification, pageable);
 
-        return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
+        return PageResponse.of(notices, GetNoticeSummaryResponse::from);
     }
 
     /*
      * 검색어 기반 공지 전체 조회
      */
     @GetMapping("/search")
-    public ApiResponse<PageResponse<GetNoticeSummaryResponse>> searchNotices(
+    public PageResponse<GetNoticeSummaryResponse> searchNotices(
         @RequestParam String keyword,
         @ParameterObject @Valid NoticeClassification classification,
         @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC)
@@ -82,7 +81,7 @@ public class NoticeQueryController implements NoticeQueryApi {
         Page<NoticeSummary> notices = getNoticeUseCase.searchNoticesByKeyword(keyword, viewerInfo, classification,
             pageable);
 
-        return ApiResponse.onSuccess(PageResponse.of(notices, GetNoticeSummaryResponse::from));
+        return PageResponse.of(notices, GetNoticeSummaryResponse::from);
     }
 
     /*
@@ -94,13 +93,13 @@ public class NoticeQueryController implements NoticeQueryApi {
         permission = PermissionType.READ
     )
     @GetMapping("/{noticeId}")
-    public ApiResponse<GetNoticeDetailResponse> getNotice(
+    public GetNoticeDetailResponse getNotice(
         @PathVariable Long noticeId,
         @CurrentMember MemberPrincipal memberPrincipal) {
 
         NoticeInfo noticeDetail = getNoticeUseCase.getNoticeDetail(noticeId, memberPrincipal.getMemberId());
         manageNoticeUseCase.incrementViewCount(noticeId);
-        return ApiResponse.onSuccess(GetNoticeDetailResponse.from(noticeDetail));
+        return GetNoticeDetailResponse.from(noticeDetail);
     }
 
     /*
@@ -112,10 +111,10 @@ public class NoticeQueryController implements NoticeQueryApi {
         permission = PermissionType.CHECK
     )
     @GetMapping("/{noticeId}/read-statics")
-    public ApiResponse<GetNoticeStaticsResponse> getNoticeReadStatics(@PathVariable("noticeId") Long noticeId) {
+    public GetNoticeStaticsResponse getNoticeReadStatics(@PathVariable("noticeId") Long noticeId) {
 
         NoticeReadStatusSummary statistics = getNoticeUseCase.getReadStatistics(noticeId);
-        return ApiResponse.onSuccess(GetNoticeStaticsResponse.from(statistics));
+        return GetNoticeStaticsResponse.from(statistics);
     }
 
     /*
@@ -127,7 +126,7 @@ public class NoticeQueryController implements NoticeQueryApi {
         permission = PermissionType.CHECK
     )
     @GetMapping("/{noticeId}/read-status")
-    public ApiResponse<CursorResponse<GetNoticeReadStatusResponse>> getNoticeReadStatus(
+    public CursorResponse<GetNoticeReadStatusResponse> getNoticeReadStatus(
         @PathVariable("noticeId") Long noticeId,
         @ParameterObject @Valid GetNoticeStatusRequest request) {
 
@@ -140,6 +139,6 @@ public class NoticeQueryController implements NoticeQueryApi {
             result.hasNext()
         );
 
-        return ApiResponse.onSuccess(response);
+        return response;
     }
 }

@@ -3,7 +3,6 @@ package com.umc.product.notice.adapter.in.web;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notice.adapter.in.web.dto.request.CreateNoticeRequest;
@@ -38,7 +37,7 @@ public class NoticeCommandController implements NoticeCommandControllerApi {
      * 공지사항 생성
      */
     @PostMapping
-    public ApiResponse<CreateNoticeResponse> createNotice(
+    public CreateNoticeResponse createNotice(
         @RequestBody @Valid CreateNoticeRequest request,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
@@ -46,7 +45,7 @@ public class NoticeCommandController implements NoticeCommandControllerApi {
         Long memberId = memberPrincipal.getMemberId();
         Long noticeId = manageNoticeUseCase.createNotice(request.toCommand(memberId));
 
-        return ApiResponse.onSuccess(new CreateNoticeResponse(noticeId));
+        return new CreateNoticeResponse(noticeId);
     }
 
     /*
@@ -109,12 +108,11 @@ public class NoticeCommandController implements NoticeCommandControllerApi {
         resourceId = "#noticeId",
         permission = PermissionType.READ
     )
-    public ApiResponse<Void> recordNoticeRead(
+    public void recordNoticeRead(
         @PathVariable Long noticeId,
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         manageNoticeReadUseCase.recordRead(noticeId, memberPrincipal.getMemberId());
-        return ApiResponse.onSuccess(null);
     }
 
 }
