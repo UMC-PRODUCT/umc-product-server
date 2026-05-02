@@ -21,6 +21,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.util.StringUtils;
 
 @Entity
 @Table(name = "original_workbook")
@@ -115,6 +116,26 @@ public class OriginalWorkbook extends BaseEntity {
             .type(type)
             .originalWorkbookStatus(OriginalWorkbookStatus.READY)
             .build();
+    }
+
+    public void edit(
+        String title,
+        String description,
+        String url,
+        String content
+    ) {
+        if (StringUtils.hasText(title)) {
+            this.title = title;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (url != null) {
+            this.url = url;
+        }
+        if (content != null) {
+            this.content = content;
+        }
     }
 
     /**
