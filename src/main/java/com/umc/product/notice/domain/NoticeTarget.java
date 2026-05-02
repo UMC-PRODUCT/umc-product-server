@@ -46,7 +46,7 @@ public class NoticeTarget extends BaseEntity {
 
     @Column(name = "min_target_role", nullable = false)
     @Enumerated(EnumType.STRING)
-    private NoticeTab minTargetRole;
+    private NoticeTab targetNoticeTab;
 
     @Builder
     private NoticeTarget(
@@ -55,13 +55,13 @@ public class NoticeTarget extends BaseEntity {
         Long targetChapterId,
         Long targetSchoolId,
         List<ChallengerPart> targetChallengerPart,
-        NoticeTab minTargetRole) {
+        NoticeTab targetNoticeTab) {
         this.noticeId = noticeId;
         this.targetGisuId = targetGisuId;
         this.targetChapterId = targetChapterId;
         this.targetSchoolId = targetSchoolId;
         this.targetChallengerPart = targetChallengerPart;
-        this.minTargetRole = minTargetRole;
+        this.targetNoticeTab = targetNoticeTab;
     }
 
     public void update(
@@ -74,7 +74,7 @@ public class NoticeTarget extends BaseEntity {
         this.targetChapterId = targetChapterId;
         this.targetSchoolId = targetSchoolId;
         this.targetChallengerPart = targetChallengerPart;
-        this.minTargetRole = minTargetRole;
+        this.targetNoticeTab = minTargetRole;
     }
 
 }

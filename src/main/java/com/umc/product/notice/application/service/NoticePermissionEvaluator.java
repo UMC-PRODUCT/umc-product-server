@@ -98,7 +98,7 @@ public class NoticePermissionEvaluator implements ResourcePermissionEvaluator {
                     return false;
                 }
                 // 역할 레벨 확인: 공지의 minTargetRole이 viewerRole을 포함하는지 (하한선 체크)
-                if (!targetInfo.minTargetRole().includes(viewerRole)) {
+                if (!targetInfo.targetNoticeTab().includes(viewerRole)) {
                     return false;
                 }
                 // 기수 범위 확인

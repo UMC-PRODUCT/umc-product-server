@@ -25,7 +25,7 @@ public enum NoticeTab {
     }
 
     /**
-     * viewerRole이 읽을 수 있는 운영진 공지의 minTargetRole 목록을 반환합니다.
+     * viewerRole이 읽을 수 있는 운영진 공지의 targetNoticeTab 목록을 반환합니다.
      */
     public static List<NoticeTab> staffRolesReadableBy(NoticeTab viewerRole) {
         if (viewerRole == null || viewerRole == CHALLENGER) {
@@ -53,7 +53,7 @@ public enum NoticeTab {
     }
 
     /**
-     * 이 공지(minTargetRole)를 viewerRole 보유자가 읽을 수 있는지 확인합니다. viewerRole의 level이 이 역할의 level 이하이면 읽기 가능합니다.
+     * 이 공지(targetNoticeTab)를 viewerRole 보유자가 읽을 수 있는지 확인합니다. viewerRole의 level이 이 역할의 level 이하이면 읽기 가능합니다.
      */
     public boolean includes(NoticeTab viewerRole) {
         if (viewerRole == null || viewerRole == CHALLENGER) {

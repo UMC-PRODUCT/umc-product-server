@@ -107,7 +107,7 @@ public class NoticeQueryRepository {
     }
 
     /**
-     * 운영진 공지 조회 조건. minTargetRole 하한선 방식으로, viewerRole이 읽을 수 있는 역할 목록을 IN 조건으로 처리합니다.
+     * 운영진 공지 조회 조건. targetNoticeTab 하한선 방식으로, viewerRole이 읽을 수 있는 역할 목록을 IN 조건으로 처리합니다.
      */
     private BooleanExpression buildStaffCondition(
         NoticeClassification classification,

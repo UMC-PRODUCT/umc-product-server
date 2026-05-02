@@ -11,7 +11,7 @@ import java.util.List;
  * <p>
  * Swagger 문서화, @NotNull 입력 검증, @ParameterObject 바인딩을 위해 NoticeTargetInfo와 분리합니다.
  * <p>
- * - minTargetRole = CHALLENGER: 일반 챌린저 공지 조회. chapterId/schoolId/part 필터 적용 가능. - minTargetRole =
+ * - targetNoticeTab = CHALLENGER: 일반 챌린저 공지 조회. chapterId/schoolId/part 필터 적용 가능. - targetNoticeTab =
  * CENTRAL_MEMBER/SCHOOL_CORE/SCHOOL_PART_LEADER: 운영진 공지 조회. 요청 역할은 조회자 보유 역할 이하이어야 합니다.
  */
 @Schema(description = "공지 조회 필터.")
