@@ -32,10 +32,10 @@ public record NoticeClassification(
     @Schema(description = "대상 역할 하한선. CHALLENGER면 일반 공지, 그 외 값이면 운영진 공지.",
         example = "CHALLENGER")
     @NotNull(message = "대상 역할은 필수입니다.")
-    NoticeTab minTargetRole
+    NoticeTab noticeTab
 ) {
     public boolean isChallengerQuery() {
-        return minTargetRole == NoticeTab.CHALLENGER;
+        return noticeTab == NoticeTab.CHALLENGER;
     }
 
     /**

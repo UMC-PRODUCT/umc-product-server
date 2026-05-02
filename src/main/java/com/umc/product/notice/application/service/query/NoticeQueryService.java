@@ -299,7 +299,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
                 throw new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION,
                     "운영진 공지를 조회할 권한이 없습니다.");
             }
-            if (!classification.minTargetRole().includes(viewerRole)) {
+            if (!classification.noticeTab().includes(viewerRole)) {
                 throw new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION,
                     "조회자의 역할이 요청한 공지 대상 역할보다 낮습니다.");
             }
@@ -331,7 +331,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             : (hasPart && isChallengerQuery ? viewerInfo.schoolId() : null);
 
         return new NoticeClassification(classification.gisuId(), filteredChapterId, filteredSchoolId,
-            classification.part(), classification.minTargetRole());
+            classification.part(), classification.noticeTab());
     }
 
     private Page<NoticeSummary> toNoticeSummaryPage(Page<Notice> notices) {
