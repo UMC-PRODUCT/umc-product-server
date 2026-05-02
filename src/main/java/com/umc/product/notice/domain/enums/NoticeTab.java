@@ -4,11 +4,13 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import lombok.Getter;
 
 /**
  * 공지 대상 역할 유형. CHALLENGER는 일반 챌린저 공지, 나머지는 운영진 공지의 하한선 역할을 나타냅니다. level이 낮을수록 상위 직급 (CENTRAL_MEMBER=1 > SCHOOL_CORE=2 >
  * SCHOOL_PART_LEADER=3).
  */
+@Getter
 public enum NoticeTab {
 
     CHALLENGER(0),
@@ -44,10 +46,6 @@ public enum NoticeTab {
             case CENTRAL_EDUCATION_TEAM_MEMBER, CENTRAL_OPERATING_TEAM_MEMBER -> CENTRAL_MEMBER;
             case SUPER_ADMIN, CENTRAL_PRESIDENT, CENTRAL_VICE_PRESIDENT -> null;
         });
-    }
-
-    public int getLevel() {
-        return level;
     }
 
     public boolean isStaffRole() {
