@@ -49,4 +49,18 @@ public class ProjectPartQuota extends BaseEntity {
     private Long quota;
 
     private Long lastEditedMemberId;
+
+    public static ProjectPartQuota create(Project project, ChallengerPart part, Long quota, Long editedByMemberId) {
+        ProjectPartQuota q = new ProjectPartQuota();
+        q.project = project;
+        q.part = part;
+        q.quota = quota;
+        q.lastEditedMemberId = editedByMemberId;
+        return q;
+    }
+
+    public void updateQuota(Long newQuota, Long editedByMemberId) {
+        this.quota = newQuota;
+        this.lastEditedMemberId = editedByMemberId;
+    }
 }

@@ -211,6 +211,16 @@ public class Project extends BaseEntity {
     }
 
     /**
+     * Admin 검토 후 프로젝트를 공개 상태로 전이한다 (PENDING_REVIEW → IN_PROGRESS).
+     * <p>
+     * 파트별 TO/지원 폼 등 외부 도메인 의존 검증은 Service 레이어에서 호출 전 수행한다.
+     */
+    public void publish() {
+        validateStatus(ProjectStatus.PENDING_REVIEW);
+        this.status = ProjectStatus.IN_PROGRESS;
+    }
+
+    /**
      * 기수가 종료되었을 때, 프로젝트를 완료 처리 합니다.
      */
     public void complete() {
