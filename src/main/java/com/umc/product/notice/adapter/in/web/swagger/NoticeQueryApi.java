@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -32,12 +33,12 @@ public interface NoticeQueryApi {
         description = """
             공지사항 목록을 페이징하여 조회합니다.
 
-            **minTargetRole 필드로 조회 대상을 명시해야 합니다.**
-            - `minTargetRole=CHALLENGER` → 일반 챌린저 공지 조회
-            - `minTargetRole=SCHOOL_PART_LEADER` 등 운영진 역할 → 해당 대상 운영진 공지 조회
+            **targetNoticeTab 필드로 조회 대상을 명시해야 합니다.**
+            - `targetNoticeTab=CHALLENGER` → 일반 챌린저 공지 조회
+            - `targetNoticeTab=SCHOOL_PART_LEADER` 등 운영진 역할 → 해당 대상 운영진 공지 조회
               (조회자 역할이 요청 역할보다 낮으면 403 반환)
 
-            **챌린저 공지 필터 (minTargetRole=CHALLENGER 일 때만 적용)**
+            **챌린저 공지 필터 (targetNoticeTab=CHALLENGER 일 때만 적용)**
             - `chapterId` 지정 → 해당 지부 공지만 조회
             - `schoolId` 지정 → 해당 학교 공지만 조회
             - `part` 지정 → 해당 파트 공지만 조회
@@ -47,12 +48,12 @@ public interface NoticeQueryApi {
             """
     )
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "200",
             description = "조회 성공",
             content = @Content(schema = @Schema(implementation = PageResponse.class))
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "403",
             description = "보유하지 않은 운영진 역할 요청"
         )
@@ -72,15 +73,15 @@ public interface NoticeQueryApi {
         description = """
             키워드로 공지사항을 검색합니다. 제목과 내용에서 검색합니다.
 
-            **minTargetRole 필드 및 필터 조건은 전체 조회와 동일하게 적용됩니다.**
+            **targetNoticeTab 필드 및 필터 조건은 전체 조회와 동일하게 적용됩니다.**
             """
     )
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "200",
             description = "검색 성공"
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "403",
             description = "보유하지 않은 운영진 역할 요청"
         )
@@ -103,15 +104,15 @@ public interface NoticeQueryApi {
         description = "특정 공지사항의 상세 정보를 조회합니다. READ 권한이 없으면 403을 반환합니다."
     )
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "200",
             description = "조회 성공"
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "403",
             description = "조회 권한 없음"
         ),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "404",
             description = "공지사항을 찾을 수 없음"
         )
@@ -142,7 +143,7 @@ public interface NoticeQueryApi {
             """
     )
     @ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(
+        @ApiResponse(
             responseCode = "200",
             description = "조회 성공"
         )
