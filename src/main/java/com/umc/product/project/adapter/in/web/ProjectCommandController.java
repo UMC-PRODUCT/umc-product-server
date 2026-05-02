@@ -8,6 +8,7 @@ import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.project.adapter.in.web.dto.request.AddProjectMemberRequest;
 import com.umc.product.project.adapter.in.web.dto.request.CreateDraftProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.request.TransferProjectOwnershipRequest;
+import com.umc.product.project.adapter.in.web.dto.request.UpdatePartQuotasRequest;
 import com.umc.product.project.adapter.in.web.dto.request.UpdateProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectStatusResponse;
 import com.umc.product.project.application.port.in.command.AddProjectMemberUseCase;
@@ -15,6 +16,7 @@ import com.umc.product.project.application.port.in.command.CreateDraftProjectUse
 import com.umc.product.project.application.port.in.command.RemoveProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
+import com.umc.product.project.application.port.in.command.UpdatePartQuotasUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
 import com.umc.product.project.application.port.in.command.dto.RemoveProjectMemberCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -44,6 +47,7 @@ public class ProjectCommandController {
     private final TransferProjectOwnershipUseCase transferProjectOwnershipUseCase;
     private final AddProjectMemberUseCase addProjectMemberUseCase;
     private final RemoveProjectMemberUseCase removeProjectMemberUseCase;
+    private final UpdatePartQuotasUseCase updatePartQuotasUseCase;
 
     @PostMapping
     @Operation(
@@ -145,6 +149,26 @@ public class ProjectCommandController {
         @Valid @RequestBody AddProjectMemberRequest request
     ) {
         return addProjectMemberUseCase.add(
+            request.toCommand(projectId, memberPrincipal.getMemberId()));
+    }
+
+    @PutMapping("/{projectId}/part-quotas")
+    @Operation(
+        summary = "[PROJECT-105] 파트별 정원 일괄 갱신",
+        description = "PUT 시멘틱 — 본문이 곧 새 상태가 된다. 본문에 없는 기존 파트는 삭제. iOS+DESIGN 조합 금지, quota ≥ 1."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 파트 정원 갱신 권한이 없습니다."
+    )
+    public void updatePartQuotas(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @Valid @RequestBody UpdatePartQuotasRequest request
+    ) {
+        updatePartQuotasUseCase.update(
             request.toCommand(projectId, memberPrincipal.getMemberId()));
     }
 
