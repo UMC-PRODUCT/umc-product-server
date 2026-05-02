@@ -276,11 +276,13 @@ class ProjectCommandServiceTest {
                 .willReturn(challengerInfo(200L, ChallengerPart.PLAN));
             given(loadProjectPort.existsByOwnerAndGisu(200L, 1L)).willReturn(false);
             given(getMemberUseCase.getById(200L)).willReturn(memberInfo(8L));
+            given(getChapterUseCase.byGisuAndSchool(1L, 8L)).willReturn(new ChapterInfo(3L, "인천"));
 
             sut.transfer(transferCommand(100L, 200L));
 
             assertThat(project.getProductOwnerMemberId()).isEqualTo(200L);
             assertThat(project.getProductOwnerSchoolId()).isEqualTo(8L);
+            assertThat(project.getChapterId()).isEqualTo(3L);
         }
 
         @Test

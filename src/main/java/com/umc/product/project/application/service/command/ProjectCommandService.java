@@ -135,7 +135,10 @@ public class ProjectCommandService implements
         project.validateMutable();
 
         MemberInfo newOwnerMember = getMemberUseCase.getById(command.newOwnerMemberId());
-        project.transferOwnership(command.newOwnerMemberId(), newOwnerMember.schoolId());
+        ChapterInfo newChapter = getChapterUseCase.byGisuAndSchool(
+            project.getGisuId(), newOwnerMember.schoolId());
+        project.transferOwnership(
+            command.newOwnerMemberId(), newOwnerMember.schoolId(), newChapter.id());
         return project.getStatus();
     }
 

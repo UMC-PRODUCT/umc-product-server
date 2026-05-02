@@ -165,12 +165,14 @@ public class Project extends BaseEntity {
      * 새 owner가 PLAN 파트인지, 동일 기수 내 다른 프로젝트가 없는지 등의 검증은
      * Service 레벨에서 수행합니다 (도메인은 다른 도메인 정보를 알 수 없음).
      * <p>
-     * {@code productOwnerSchoolId} 도 새 PM 의 학교로 동기화한다.
+     * {@code productOwnerSchoolId} 와 {@code chapterId} 도 새 PM 기준으로 동기화한다.
+     * 새 owner 가 다른 지부 소속이면 프로젝트도 새 지부로 이동한다 (권한/scope 정합성).
      */
-    public void transferOwnership(Long newOwnerMemberId, Long newOwnerSchoolId) {
+    public void transferOwnership(Long newOwnerMemberId, Long newOwnerSchoolId, Long newChapterId) {
         validateMutable();
         this.productOwnerMemberId = newOwnerMemberId;
         this.productOwnerSchoolId = newOwnerSchoolId;
+        this.chapterId = newChapterId;
     }
 
     /**

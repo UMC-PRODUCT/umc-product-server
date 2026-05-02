@@ -99,17 +99,18 @@ class ProjectTest {
 
         @Test
         void 새_PM에게_양도된다() {
-            project.transferOwnership(200L, 8L);
+            project.transferOwnership(200L, 8L, 3L);
 
             assertThat(project.getProductOwnerMemberId()).isEqualTo(200L);
             assertThat(project.getProductOwnerSchoolId()).isEqualTo(8L);
+            assertThat(project.getChapterId()).isEqualTo(3L);
         }
 
         @Test
         void COMPLETED_상태에서는_PROJECT_INVALID_STATE() {
             setStatus(project, ProjectStatus.COMPLETED);
 
-            assertThatThrownBy(() -> project.transferOwnership(200L, 8L))
+            assertThatThrownBy(() -> project.transferOwnership(200L, 8L, 3L))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
@@ -119,7 +120,7 @@ class ProjectTest {
         void ABORTED_상태에서는_PROJECT_INVALID_STATE() {
             setStatus(project, ProjectStatus.ABORTED);
 
-            assertThatThrownBy(() -> project.transferOwnership(200L, 8L))
+            assertThatThrownBy(() -> project.transferOwnership(200L, 8L, 3L))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
