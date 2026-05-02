@@ -408,6 +408,70 @@ class ProjectPermissionEvaluatorTest {
             .isInstanceOf(ProjectDomainException.class);
     }
 
+    // --- MANAGE (publish/abort/complete 등 운영진 전용 상태 전이) ---
+
+    @Test
+    void MANAGE는_PENDING_REVIEW에서_PM이라도_거부() {
+        Long memberId = 10L;
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, memberId, ProjectStatus.PENDING_REVIEW)));
+
+        SubjectAttributes subject = subjectWith(memberId, List.of(), List.of());
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.MANAGE);
+
+        assertThat(sut.evaluate(subject, permission)).isFalse();
+    }
+
+    @Test
+    void MANAGE는_PENDING_REVIEW에서_중앙총괄_허용() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.PENDING_REVIEW)));
+
+        SubjectAttributes subject = subjectWith(20L, List.of(), List.of(centralCoreRole()));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.MANAGE);
+
+        assertThat(sut.evaluate(subject, permission)).isTrue();
+    }
+
+    @Test
+    void MANAGE는_PENDING_REVIEW에서_본인_지부장_허용() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.PENDING_REVIEW)));
+
+        SubjectAttributes subject = subjectWith(20L, List.of(),
+            List.of(chapterPresidentRole(1L, 1L)));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.MANAGE);
+
+        assertThat(sut.evaluate(subject, permission)).isTrue();
+    }
+
+    @Test
+    void MANAGE는_DRAFT에서는_누구도_거부() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.DRAFT)));
+
+        SubjectAttributes subject = subjectWith(20L, List.of(), List.of(centralCoreRole()));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.MANAGE);
+
+        assertThat(sut.evaluate(subject, permission)).isFalse();
+    }
+
+    @Test
+    void MANAGE는_COMPLETED에서는_누구도_거부() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.COMPLETED)));
+
+        SubjectAttributes subject = subjectWith(20L, List.of(), List.of(centralCoreRole()));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.MANAGE);
+
+        assertThat(sut.evaluate(subject, permission)).isFalse();
+    }
+
     // --- DELETE ---
 
     @Test

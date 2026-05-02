@@ -158,12 +158,12 @@ public class ProjectCommandController {
     @PostMapping("/{projectId}/publish")
     @Operation(
         summary = "[PROJECT-108] 프로젝트 공개",
-        description = "PENDING_REVIEW → IN_PROGRESS 전이. 같은 트랜잭션에서 지원 폼도 PUBLISHED 로 전환. 파트별 정원 1개 이상 + 지원 폼 등록 필수."
+        description = "PENDING_REVIEW → IN_PROGRESS 전이. 같은 트랜잭션에서 지원 폼도 PUBLISHED 로 전환. 파트별 정원 1개 이상 + 지원 폼 등록 필수. 운영진(본인 지부장 또는 Central Core)만 호출 가능 — PM 도 차단."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
-        permission = PermissionType.EDIT,
+        permission = PermissionType.MANAGE,
         message = "프로젝트 공개 권한이 없습니다."
     )
     public ProjectStatusResponse publish(
