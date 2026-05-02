@@ -14,15 +14,15 @@ public class ChallengerFixture {
         this.saveChallengerPort = saveChallengerPort;
     }
 
-    public Challenger 챌린저(Long memberId, ChallengerPart part, Long gisuId) {
+    public Challenger normal(Long memberId, ChallengerPart part, Long gisuId) {
         return saveChallengerPort.save(new Challenger(memberId, part, gisuId));
     }
 
-    public Challenger 웹_챌린저(Long memberId, Long gisuId) {
+    public Challenger web(Long memberId, Long gisuId) {
         return saveChallengerPort.save(new Challenger(memberId, ChallengerPart.WEB, gisuId));
     }
 
-    public Challenger 스프링_챌린저(Long memberId, Long gisuId) {
+    public Challenger springBoot(Long memberId, Long gisuId) {
         return saveChallengerPort.save(new Challenger(memberId, ChallengerPart.SPRINGBOOT, gisuId));
     }
 }

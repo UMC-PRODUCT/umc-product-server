@@ -13,20 +13,11 @@ public class MemberFixture {
         this.saveMemberPort = saveMemberPort;
     }
 
-    public Member 일반_멤버(String name) {
+    public Member normalMember(String name) {
         return saveMemberPort.save(Member.builder()
             .name(name)
             .nickname(name)
             .email(name + "@test.com")
-            .build());
-    }
-
-    public Member 학교_소속_멤버(String name, Long schoolId) {
-        return saveMemberPort.save(Member.builder()
-            .name(name)
-            .nickname(name)
-            .email(name + "@test.com")
-            .schoolId(schoolId)
             .build());
     }
 }

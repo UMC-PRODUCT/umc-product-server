@@ -15,46 +15,46 @@ public class ChallengerRoleFixture {
         this.saveChallengerRolePort = saveChallengerRolePort;
     }
 
-    public ChallengerRole 총괄(Long challengerId, Long gisuId) {
+    public ChallengerRole centralPresident(Long challengerId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.CENTRAL_PRESIDENT, null, null, gisuId));
     }
 
-    public ChallengerRole 부총괄(Long challengerId, Long gisuId) {
+    public ChallengerRole viceCentralPresident(Long challengerId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.CENTRAL_VICE_PRESIDENT, null, null, gisuId));
     }
 
-    public ChallengerRole 중앙_운영국원(Long challengerId, Long gisuId) {
+    public ChallengerRole centralMember(Long challengerId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, null, null, gisuId));
     }
 
     // 지부
 
-    public ChallengerRole 지부장(Long challengerId, Long chapterId, Long gisuId) {
+    public ChallengerRole chapterLead(Long challengerId, Long chapterId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.CHAPTER_PRESIDENT, chapterId, null, gisuId));
     }
 
     // 학교
 
-    public ChallengerRole 학교_회장(Long challengerId, Long schoolId, Long gisuId) {
+    public ChallengerRole schoolPresident(Long challengerId, Long schoolId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.SCHOOL_PRESIDENT, schoolId, null, gisuId));
     }
 
-    public ChallengerRole 학교_부회장(Long challengerId, Long schoolId, Long gisuId) {
+    public ChallengerRole schoolVicePresident(Long challengerId, Long schoolId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.SCHOOL_VICE_PRESIDENT, schoolId, null, gisuId));
     }
 
-    public ChallengerRole 학교_파트장(Long challengerId, ChallengerPart part, Long schoolId, Long gisuId) {
+    public ChallengerRole schoolPartLead(Long challengerId, ChallengerPart part, Long schoolId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.SCHOOL_PART_LEADER, schoolId, part, gisuId));
     }
 
-    public ChallengerRole 학교_운영진(Long challengerId, ChallengerPart part, Long schoolId, Long gisuId) {
+    public ChallengerRole schoolEtcAdmin(Long challengerId, ChallengerPart part, Long schoolId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.SCHOOL_ETC_ADMIN, schoolId, part, gisuId));
     }

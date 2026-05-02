@@ -29,7 +29,7 @@ class FcmOutboxServiceTest extends UseCaseTestSupport {
     @Test
     void SUBSCRIBE_이벤트는_토픽_기반_비활성화로_인해_즉시_FAILED_처리된다() {
         // given
-        Long memberId = memberFixture.일반_멤버("테스터").getId();
+        Long memberId = memberFixture.normalMember("테스터").getId();
         fcmOutboxFixture.구독_이벤트(memberId);
 
         // when
@@ -42,7 +42,7 @@ class FcmOutboxServiceTest extends UseCaseTestSupport {
     @Test
     void UNSUBSCRIBE_이벤트는_토픽_기반_비활성화로_인해_즉시_FAILED_처리된다() {
         // given
-        Long memberId = memberFixture.일반_멤버("테스터").getId();
+        Long memberId = memberFixture.normalMember("테스터").getId();
         fcmOutboxFixture.구독해제_이벤트(memberId, "old-token");
 
         // when
@@ -62,7 +62,7 @@ class FcmOutboxServiceTest extends UseCaseTestSupport {
     @Test
     void 여러_PENDING_이벤트가_있으면_모두_FAILED_처리된다() {
         // given
-        Long memberId = memberFixture.일반_멤버("테스터").getId();
+        Long memberId = memberFixture.normalMember("테스터").getId();
         fcmOutboxFixture.구독_이벤트(memberId);
         fcmOutboxFixture.구독_이벤트(memberId);
         fcmOutboxFixture.구독해제_이벤트(memberId, "some-token");

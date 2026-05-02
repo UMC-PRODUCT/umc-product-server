@@ -32,7 +32,7 @@ class FcmServiceTest extends UseCaseTestSupport {
     @Test
     void 신규_토큰_등록_시_FCM_토큰이_활성_상태로_저장된다() {
         // given
-        Long memberId = memberFixture.일반_멤버("테스터").getId();
+        Long memberId = memberFixture.normalMember("테스터").getId();
         FcmRegistrationRequest request = new FcmRegistrationRequest("new-token");
 
         // when
@@ -48,7 +48,7 @@ class FcmServiceTest extends UseCaseTestSupport {
     @Test
     void 동일_토큰_재등록_시_INSERT_없이_활성화만_된다() {
         // given
-        Long memberId = memberFixture.일반_멤버("테스터").getId();
+        Long memberId = memberFixture.normalMember("테스터").getId();
         FcmToken existing = fcmTokenFixture.FCM_토큰(memberId, "existing-token");
         existing.deactivate();
 
@@ -65,7 +65,7 @@ class FcmServiceTest extends UseCaseTestSupport {
     @Test
     void 새_기기_토큰_등록_시_기존_토큰과_함께_저장된다() {
         // given
-        Long memberId = memberFixture.일반_멤버("테스터").getId();
+        Long memberId = memberFixture.normalMember("테스터").getId();
         fcmTokenFixture.FCM_토큰(memberId, "old-token");
 
         // when
