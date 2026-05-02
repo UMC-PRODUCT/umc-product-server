@@ -117,7 +117,7 @@ public class NoticeQueryRepository {
         List<NoticeTab> readableRoles = NoticeTab.staffRolesReadableBy(viewerRole);
 
         BooleanExpression gisuMatch = noticeTarget.targetGisuId.eq(classification.gisuId());
-        BooleanExpression rolesMatch = noticeTarget.minTargetRole.in(readableRoles);
+        BooleanExpression rolesMatch = noticeTarget.targetNoticeTab.in(readableRoles);
         BooleanExpression partMatch = buildStaffPartCondition(classification, viewerInfo);
 
         // schoolId 있음 → 교내공지: 해당 학교 공지만 / 없음 → 중앙공지: school null만 (총괄/중운도 동일)
@@ -225,11 +225,11 @@ public class NoticeQueryRepository {
     }
 
     private BooleanExpression isChallengerNotice() {
-        return noticeTarget.minTargetRole.eq(NoticeTab.CHALLENGER);
+        return noticeTarget.targetNoticeTab.eq(NoticeTab.CHALLENGER);
     }
 
     private BooleanExpression isNotChallengerNotice() {
-        return noticeTarget.minTargetRole.ne(NoticeTab.CHALLENGER);
+        return noticeTarget.targetNoticeTab.ne(NoticeTab.CHALLENGER);
     }
 
     private BooleanExpression targetPartIsEmpty() {

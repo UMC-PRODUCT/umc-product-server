@@ -44,7 +44,7 @@ public class NoticeTarget extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private List<ChallengerPart> targetChallengerPart;
 
-    @Column(name = "min_target_role", nullable = false)
+    @Column(name = "target_notice_tab", nullable = false)
     @Enumerated(EnumType.STRING)
     private NoticeTab targetNoticeTab;
 
