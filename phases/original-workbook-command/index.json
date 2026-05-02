@@ -7,7 +7,8 @@
       "name": "domain-edit-method",
       "status": "completed",
       "started_at": "2026-05-02T13:03:12+0900",
-      "summary": "OriginalWorkbook.edit(title, description, url, content) 도메인 메서드 추가 — blank/null 필드는 기존 값 유지"
+      "summary": "OriginalWorkbook.edit(title, description, url, content) 도메인 메서드 추가 — blank/null 필드는 기존 값 유지",
+      "completed_at": "2026-05-02T13:06:09+0900"
     },
     {
       "step": 1,
