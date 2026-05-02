@@ -5,6 +5,7 @@ import com.umc.product.authorization.domain.ResourcePermission;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -65,9 +66,12 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
     }
 
     /**
-     * 단건 EDIT 분기 — 정책 A (작성자 + Central Core).
-     * <p>
-     * COMPLETED / ABORTED 는 종료 상태라 절대 차단 (도메인 레벨 가드 {@code Project#validateMutable} 와 정합).
+     * 단건 EDIT 분기.
+     * <ul>
+     *   <li>작성자: DRAFT / PENDING_REVIEW / IN_PROGRESS 단계 모두 허용</li>
+     *   <li>외부 운영진: PENDING_REVIEW / IN_PROGRESS 단계에서 본인 지부장 또는 Central Core</li>
+     *   <li>COMPLETED / ABORTED: 절대 차단 (도메인 레벨 가드 {@code Project#validateMutable} 와 정합)</li>
+     * </ul>
      */
     private boolean canEdit(SubjectAttributes subject, ResourcePermission permission) {
         Project project = loadProject(permission);
@@ -78,9 +82,18 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
             };
         }
         return switch (project.getStatus()) {
-            case PENDING_REVIEW, IN_PROGRESS -> isCentralCore(subject);
+            case PENDING_REVIEW, IN_PROGRESS ->
+                isCentralCore(subject)
+                    || isChapterPresidentOf(subject, project.getChapterId(), project.getGisuId());
             case DRAFT, COMPLETED, ABORTED -> false;
         };
+    }
+
+    private boolean isChapterPresidentOf(SubjectAttributes subject, Long chapterId, Long gisuId) {
+        return subject.roleAttributes().stream()
+            .anyMatch(role -> role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
+                && Objects.equals(role.gisuId(), gisuId)
+                && Objects.equals(role.organizationId(), chapterId));
     }
 
     private boolean isCentralCore(SubjectAttributes subject) {
