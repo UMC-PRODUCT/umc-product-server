@@ -21,6 +21,12 @@ public enum ProjectErrorCode implements BaseCode {
     // ProjectApplicationForm
     APPLICATION_FORM_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0006", "프로젝트에서 해당 지원용 폼을 찾을 수 없습니다."),
     APPLICATION_FORM_ACCESS_NOT_ALLOWED(HttpStatus.FORBIDDEN, "PROJECT-0007", "요청하신 지원용 폼 섹션에 접근 권한이 없습니다."),
+    APPLICATION_FORM_POLICY_PARTS_EMPTY(HttpStatus.BAD_REQUEST, "PROJECT-0013", "PART 타입 섹션은 1개 이상의 파트를 지정해야 합니다."),
+    APPLICATION_FORM_INVALID_SECTION_ID(HttpStatus.BAD_REQUEST, "PROJECT-0014", "현재 폼에 존재하지 않는 sectionId 입니다."),
+    APPLICATION_FORM_INVALID_QUESTION_ID(HttpStatus.BAD_REQUEST, "PROJECT-0015", "해당 섹션에 속하지 않는 questionId 입니다."),
+    APPLICATION_FORM_INVALID_OPTION_ID(HttpStatus.BAD_REQUEST, "PROJECT-0016", "해당 질문에 속하지 않는 optionId 입니다."),
+    APPLICATION_FORM_OPTIONS_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT-0017", "선택지 타입(RADIO/CHECKBOX/DROPDOWN)이 아닌 질문에는 옵션을 지정할 수 없습니다."),
+    APPLICATION_FORM_OPTIONS_REQUIRED(HttpStatus.BAD_REQUEST, "PROJECT-0018", "선택지 타입 질문에는 1개 이상의 옵션이 필요합니다."),
 
     // Project Draft flow (PROJECT-101, 102, 107)
     PROJECT_DUPLICATE_IN_GISU(HttpStatus.CONFLICT, "PROJECT-0008", "이미 해당 기수에 등록한 프로젝트가 있습니다."),

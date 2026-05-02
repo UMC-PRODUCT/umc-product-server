@@ -3,7 +3,6 @@ package com.umc.product.project.adapter.in.web.assembler;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
-import com.umc.product.project.adapter.in.web.dto.common.ApplicationQuestionItem;
 import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
@@ -12,6 +11,8 @@ import com.umc.product.project.application.port.in.query.GetProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
 import com.umc.product.project.application.port.in.query.dto.ProjectInfo;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
+import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
+import com.umc.product.project.domain.ProjectApplicationForm;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ public class ProjectResponseAssembler {
     private final GetProjectUseCase getProjectUseCase;
     private final SearchProjectUseCase searchProjectUseCase;
     private final GetMemberUseCase getMemberUseCase;
+    private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
 
     /**
      * PROJECT-001 프로젝트 목록 조회.
@@ -69,7 +71,8 @@ public class ProjectResponseAssembler {
             .map(id -> toBrief(memberMap.get(id)))
             .toList();
 
-        ProjectDetailResponse response = ProjectDetailResponse.from(info, owner, coOwners);
+        ProjectDetailResponse response =
+            ProjectDetailResponse.from(info, owner, coOwners, resolveApplicationFormId(projectId));
         return canSeeFullInfo ? response : response.toPublic();
     }
 
@@ -90,10 +93,13 @@ public class ProjectResponseAssembler {
             .map(id -> toBrief(memberMap.get(id)))
             .toList();
 
-        // TODO: 지원 문항(questions)은 Survey 도메인 GetFormDefinitionUseCase 연동 필요
-        List<ApplicationQuestionItem> questions = List.of();
+        return DraftProjectResponse.from(info, owner, coOwners, resolveApplicationFormId(info.id()));
+    }
 
-        return DraftProjectResponse.from(info, owner, coOwners, questions);
+    private Long resolveApplicationFormId(Long projectId) {
+        return loadProjectApplicationFormPort.findByProjectId(projectId)
+            .map(ProjectApplicationForm::getId)
+            .orElse(null);
     }
 
     private Map<Long, MemberInfo> loadMembers(ProjectInfo info) {

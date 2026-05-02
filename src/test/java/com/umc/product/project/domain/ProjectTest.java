@@ -230,6 +230,53 @@ class ProjectTest {
         }
     }
 
+    @Nested
+    class validateApplicationFormEditable {
+
+        @Test
+        void DRAFT_상태에서는_통과() {
+            // setUp 의 project 가 DRAFT
+            project.validateApplicationFormEditable();
+        }
+
+        @Test
+        void PENDING_REVIEW_상태에서는_통과() {
+            setStatus(project, ProjectStatus.PENDING_REVIEW);
+
+            project.validateApplicationFormEditable();
+        }
+
+        @Test
+        void IN_PROGRESS_상태에서는_PROJECT_INVALID_STATE() {
+            setStatus(project, ProjectStatus.IN_PROGRESS);
+
+            assertThatThrownBy(() -> project.validateApplicationFormEditable())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+
+        @Test
+        void COMPLETED_상태에서는_PROJECT_INVALID_STATE() {
+            setStatus(project, ProjectStatus.COMPLETED);
+
+            assertThatThrownBy(() -> project.validateApplicationFormEditable())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+
+        @Test
+        void ABORTED_상태에서는_PROJECT_INVALID_STATE() {
+            setStatus(project, ProjectStatus.ABORTED);
+
+            assertThatThrownBy(() -> project.validateApplicationFormEditable())
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+    }
+
     private void setStatus(Project project, ProjectStatus status) {
         try {
             var field = Project.class.getDeclaredField("status");

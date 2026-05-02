@@ -156,8 +156,25 @@ public class Project extends BaseEntity {
         this.productOwnerMemberId = newOwnerMemberId;
     }
 
-    private void validateMutable() {
+    /**
+     * 프로젝트 본체(이름·소개·소유권 등)를 변경 가능한 상태인지 검증한다.
+     * 종료 상태({@code COMPLETED}, {@code ABORTED})에서는 변경 불가.
+     */
+    public void validateMutable() {
         if (this.status == ProjectStatus.COMPLETED || this.status == ProjectStatus.ABORTED) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+    }
+
+    /**
+     * 지원 폼을 편집 가능한 상태인지 검증한다.
+     * <p>
+     * Form 은 Project 가 IN_PROGRESS 로 전이되는 시점(PROJECT-108)에 PUBLISHED 로 같이 전이되므로,
+     * 편집은 {@code DRAFT} / {@code PENDING_REVIEW} 단계에서만 허용된다.
+     * Survey 단의 {@code SURVEY_ALREADY_PUBLISHED} 가드와 2단 방어 관계.
+     */
+    public void validateApplicationFormEditable() {
+        if (this.status != ProjectStatus.DRAFT && this.status != ProjectStatus.PENDING_REVIEW) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
         }
     }

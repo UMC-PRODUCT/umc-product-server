@@ -9,6 +9,9 @@ import lombok.Builder;
 
 /**
  * 프로젝트 상세 응답 (PROJECT-002).
+ * <p>
+ * {@code applicationFormId} 가 null 이 아니면 PM이 PROJECT-106 으로 폼을 1회 이상 작성한 상태.
+ * 폼 전체 구조는 별도 PROJECT-106-GET 호출로 조회한다.
  */
 @Builder
 public record ProjectDetailResponse(
@@ -21,12 +24,14 @@ public record ProjectDetailResponse(
     MemberBrief productOwner,
     List<MemberBrief> coProductOwners,
     List<PartQuotaInfo> partQuotas,
-    PartQuotaStatus partQuotaStatus
+    PartQuotaStatus partQuotaStatus,
+    Long applicationFormId
 ) {
     public static ProjectDetailResponse from(
         ProjectInfo info,
         MemberBrief productOwner,
-        List<MemberBrief> coProductOwners
+        List<MemberBrief> coProductOwners,
+        Long applicationFormId
     ) {
         List<PartQuotaInfo> quotas = info.partQuotas().stream()
             .map(PartQuotaInfo::from)
@@ -42,6 +47,7 @@ public record ProjectDetailResponse(
             .coProductOwners(coProductOwners)
             .partQuotas(quotas)
             .partQuotaStatus(aggregateStatus(quotas))
+            .applicationFormId(applicationFormId)
             .build();
     }
 
@@ -57,6 +63,7 @@ public record ProjectDetailResponse(
             .coProductOwners(coProductOwners.stream().map(MemberBrief::toPublic).toList())
             .partQuotas(partQuotas)
             .partQuotaStatus(partQuotaStatus)
+            .applicationFormId(applicationFormId)
             .build();
     }
 
