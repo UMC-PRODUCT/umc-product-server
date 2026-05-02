@@ -64,4 +64,11 @@ public interface FormResponseJpaRepository extends JpaRepository<FormResponse, L
         @Param("formId") Long formId,
         @Param("status") FormResponseStatus status
     );
+
+    /**
+     * 특정 폼의 모든 응답 삭제 (deleteForm cascade 용)
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM FormResponse fr WHERE fr.form.id = :formId")
+    int deleteByFormId(@Param("formId") Long formId);
 }

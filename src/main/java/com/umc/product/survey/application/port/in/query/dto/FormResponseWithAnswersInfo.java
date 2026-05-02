@@ -2,17 +2,19 @@ package com.umc.product.survey.application.port.in.query.dto;
 
 import com.umc.product.survey.domain.FormResponse;
 import com.umc.product.survey.domain.enums.FormResponseStatus;
-import java.time.Instant;
 import lombok.Builder;
 
+import java.time.Instant;
+import java.util.List;
+
 /**
- * FormResponse 단건 조회 결과 DTO.
+ * FormResponse 메타 + 모든 Answer 를 합성한 facade DTO.
  * <p>
- * {@code submittedAt} / {@code submittedIp} 는 SUBMITTED 상태에서만 의미 있고, DRAFT 면 null.
- * {@code lastSavedAt} 은 모든 상태에서 최종 저장 시각.
+ * 응답 상세 화면 (응답자가 자기 응답 다시 보기 / 폼 작성자가 개별 응답 확인) 용도로
+ * 한 번의 호출로 메타 + 답변 트리를 받기 위한 합성 정보. N+1 회피 책임은 Service 가 짐.
  */
 @Builder
-public record FormResponseInfo(
+public record FormResponseWithAnswersInfo(
     Long id,
     Long formId,
     Long respondentMemberId,
@@ -21,11 +23,12 @@ public record FormResponseInfo(
     String submittedIp,
     Instant lastSavedAt,
     Instant createdAt,
-    Instant updatedAt
+    Instant updatedAt,
+    List<AnswerInfo> answers
 ) {
 
-    public static FormResponseInfo from(FormResponse formResponse) {
-        return FormResponseInfo.builder()
+    public static FormResponseWithAnswersInfo from(FormResponse formResponse, List<AnswerInfo> answers) {
+        return FormResponseWithAnswersInfo.builder()
             .id(formResponse.getId())
             .formId(formResponse.getForm().getId())
             .respondentMemberId(formResponse.getRespondentMemberId())
@@ -35,6 +38,7 @@ public record FormResponseInfo(
             .lastSavedAt(formResponse.getLastSavedAt())
             .createdAt(formResponse.getCreatedAt())
             .updatedAt(formResponse.getUpdatedAt())
+            .answers(answers)
             .build();
     }
 }

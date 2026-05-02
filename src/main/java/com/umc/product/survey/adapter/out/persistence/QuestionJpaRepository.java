@@ -61,4 +61,22 @@ public interface QuestionJpaRepository extends JpaRepository<Question, Long> {
             """)
     List<Question> findAllByFormId(@Param("formId") Long formId);
 
+    /**
+     * 특정 폼에 속한 모든 질문 삭제 (deleteForm cascade 용)
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            DELETE FROM Question q
+            WHERE q.formSection.id IN (
+                SELECT fs.id FROM FormSection fs WHERE fs.form.id = :formId
+            )
+        """)
+    int deleteByFormId(@Param("formId") Long formId);
+
+    /**
+     * 특정 섹션에 속한 모든 질문 삭제 (deleteSection cascade 용)
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Question q WHERE q.formSection.id = :sectionId")
+    int deleteBySectionId(@Param("sectionId") Long sectionId);
 }

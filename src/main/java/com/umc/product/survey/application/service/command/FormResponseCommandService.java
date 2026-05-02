@@ -1,9 +1,11 @@
-package com.umc.product.survey.application.service;
+package com.umc.product.survey.application.service.command;
 
+import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.survey.application.port.in.command.ManageFormResponseUseCase;
 import com.umc.product.survey.application.port.in.command.dto.*;
 import com.umc.product.survey.application.port.out.*;
 import com.umc.product.survey.domain.*;
+import com.umc.product.survey.domain.enums.FormResponseStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -26,8 +29,10 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
     private final LoadQuestionPort loadQuestionPort;
     private final LoadQuestionOptionPort loadQuestionOptionPort;
     private final LoadFormResponsePort loadFormResponsePort;
+    private final LoadAnswerPort loadAnswerPort;
     private final SaveFormResponsePort saveFormResponsePort;
     private final SaveAnswerPort saveAnswerPort;
+    private final GetFileUseCase getFileUseCase;
 
     @Override
     public Long submitImmediately(SubmitFormResponseCommand command) {
@@ -38,6 +43,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
         }
 
         validateAnswers(command.formId(), command.answers());
+        validateAllRequiredAnswered(command.formId(), extractQuestionIds(command.answers()));
 
         FormResponse response = FormResponse.createDraft(form, command.respondentMemberId());
         response.submit(Instant.now(), null);
@@ -58,6 +64,7 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
 
         validateAnswers(command.formId(), command.answers());
+        validateAllRequiredAnswered(command.formId(), extractQuestionIds(command.answers()));
 
         saveAnswerPort.deleteAllByFormResponseId(existing.getId());
 
@@ -80,26 +87,71 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
 
     @Override
     public Long createDraft(CreateDraftFormResponseCommand command) {
-        // TODO: 구현 PR 에서 실제 로직 작성 — 빈 draft 생성 + 중복 검증
-        throw new UnsupportedOperationException("Not implemented yet — Phase C 구현 PR 에서 제공");
+        Form form = loadPublishedForm(command.formId());
+
+        // 같은 폼에 같은 멤버의 응답 (DRAFT/SUBMITTED) 이 이미 있으면 예외
+        if (loadFormResponsePort.existsByFormIdAndMemberId(command.formId(), command.respondentMemberId())) {
+            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_ALREADY_EXISTS);
+        }
+
+        FormResponse draft = FormResponse.createDraft(form, command.respondentMemberId());
+        return saveFormResponsePort.save(draft).getId();
     }
 
     @Override
     public void updateDraft(UpdateDraftFormResponseCommand command) {
-        // TODO: 구현 PR 에서 실제 로직 작성 — draft answers 전체 교체
-        throw new UnsupportedOperationException("Not implemented yet — Phase C 구현 PR 에서 제공");
+        FormResponse draft = loadDraft(command.formResponseId());
+
+        // 형식 검증만 수행 — 작성 중이라 필수 누락은 정상
+        validateAnswers(draft.getForm().getId(), command.answers());
+
+        // 기존 답변 전체 교체
+        saveAnswerPort.deleteAllByFormResponseId(draft.getId());
+        List<AnswerWithOptions> data = buildAnswerData(draft, command.answers());
+        saveAnswers(data);
+
+        draft.updateLastSavedAt(Instant.now());
+        saveFormResponsePort.save(draft);
     }
 
     @Override
     public void submitDraft(SubmitDraftFormResponseCommand command) {
-        // TODO: 구현 PR 에서 실제 로직 작성 — draft → SUBMITTED 전환
-        throw new UnsupportedOperationException("Not implemented yet — Phase C 구현 PR 에서 제공");
+        FormResponse draft = loadDraft(command.formResponseId());
+
+        // 저장된 답변에서 questionId 추출 -> 필수 누락 검증
+        Set<Long> answeredQuestionIds = loadAnswerPort.listByFormResponseId(draft.getId()).stream()
+            .map(answer -> answer.getQuestion().getId())
+            .collect(Collectors.toSet());
+        validateAllRequiredAnswered(draft.getForm().getId(), answeredQuestionIds);
+
+        draft.submit(Instant.now(), command.submittedIp());
+        saveFormResponsePort.save(draft);
     }
 
     @Override
     public void deleteDraft(DeleteDraftFormResponseCommand command) {
-        // TODO: 구현 PR 에서 실제 로직 작성 — draft + 연관 Answer 삭제
-        throw new UnsupportedOperationException("Not implemented yet — Phase C 구현 PR 에서 제공");
+        FormResponse draft = loadDraft(command.formResponseId());
+
+        saveAnswerPort.deleteAllByFormResponseId(draft.getId());
+        saveFormResponsePort.deleteById(draft.getId());
+    }
+
+    /**
+     * 응답 ID 로 DRAFT 응답 로드. 없으면 NOT_FOUND, DRAFT 가 아니면 NOT_DRAFT 예외.
+     */
+    private FormResponse loadDraft(Long formResponseId) {
+        FormResponse formResponse = loadFormResponsePort.findById(formResponseId)
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_FOUND));
+        if (formResponse.getStatus() != FormResponseStatus.DRAFT) {
+            throw new SurveyDomainException(SurveyErrorCode.FORM_RESPONSE_NOT_DRAFT);
+        }
+        return formResponse;
+    }
+
+    private static Set<Long> extractQuestionIds(List<AnswerCommand> answers) {
+        return answers.stream()
+            .map(AnswerCommand::questionId)
+            .collect(Collectors.toSet());
     }
 
     private Form loadPublishedForm(Long formId) {
@@ -111,6 +163,12 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
         return form;
     }
 
+    /**
+     * 답변 형식 / 질문 소속 / 옵션 소속 등 형식 검증만 수행. 필수 답변 누락 검증은 별도.
+     * <p>
+     * draft 작성 중 (updateDraft) 에는 필수 누락이 정상이라 형식만 검증.
+     * 제출 시점 (submitImmediately, updateResponse, submitDraft) 에는 별도로 {@link #validateAllRequiredAnswered} 호출 필요.
+     */
     private void validateAnswers(Long formId, List<AnswerCommand> answers) {
         if (answers == null) {
             throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
@@ -133,7 +191,13 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
 
             validateAnswerAgainstQuestion(answerCommand, question);
         }
+    }
 
+    /**
+     * 폼의 모든 필수 질문이 답변에 포함됐는지 검증. 제출 시점에만 호출.
+     */
+    private void validateAllRequiredAnswered(Long formId, Set<Long> answeredQuestionIds) {
+        List<Question> formQuestions = loadQuestionPort.listByFormId(formId);
         for (Question q : formQuestions) {
             if (Boolean.TRUE.equals(q.getIsRequired()) && !answeredQuestionIds.contains(q.getId())) {
                 throw new SurveyDomainException(SurveyErrorCode.REQUIRED_QUESTION_NOT_ANSWERED);
@@ -165,8 +229,31 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
                     validateOptionBelongsToQuestion(optionId, question.getId());
                 }
             }
-            case SCHEDULE, FILE, PORTFOLIO ->
-                // TODO: 다음 PR에서 Answer 엔티티에 fileIds/times setter 확장 후 구현
+            case FILE -> {
+                List<String> fileIds = answerCommand.fileIds();
+                if (fileIds == null || fileIds.isEmpty()) {
+                    throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                }
+                for (String fileId : fileIds) {
+                    getFileUseCase.throwIfNotExists(fileId);
+                }
+            }
+            case PORTFOLIO -> {
+                String text = answerCommand.textValue();
+                List<String> fileIds = answerCommand.fileIds();
+                boolean hasText = text != null && !text.isBlank();
+                boolean hasFiles = fileIds != null && !fileIds.isEmpty();
+                if (!hasText && !hasFiles) {
+                    throw new SurveyDomainException(SurveyErrorCode.INVALID_ANSWER_FORMAT);
+                }
+                if (hasFiles) {
+                    for (String fileId : fileIds) {
+                        getFileUseCase.throwIfNotExists(fileId);
+                    }
+                }
+            }
+            case SCHEDULE ->
+                // 후속 PR 에서 지원
                 throw new UnsupportedOperationException(
                     "Question type " + type + " is not supported yet");
         }
@@ -188,11 +275,15 @@ public class FormResponseCommandService implements ManageFormResponseUseCase {
                 .findFirst()
                 .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND));
 
+            Set<String> fileIdSet = (answerCmd.fileIds() == null || answerCmd.fileIds().isEmpty())
+                ? null
+                : new HashSet<>(answerCmd.fileIds());
             Answer answer = Answer.create(
                 formResponse,
                 question,
                 question.getType(),
-                answerCmd.textValue()
+                answerCmd.textValue(),
+                fileIdSet
             );
 
             List<QuestionOption> selectedOptions = new ArrayList<>();

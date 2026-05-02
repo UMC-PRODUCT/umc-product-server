@@ -30,6 +30,10 @@ public enum SurveyErrorCode implements BaseCode {
     // SURVEY-0026 (VOTE_RESPONSE_NOT_FOUND): notice 도메인으로 이관
     FORM_RESPONSE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SURVEY-0027", "이미 제출한 응답이 있습니다."),
     SURVEY_NOT_PUBLISHED(HttpStatus.CONFLICT, "SURVEY-0028", "발행된 폼만 응답할 수 있습니다."),
+    QUESTION_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "SURVEY-0029", "선택지를 찾을 수 없습니다."),
+    ANSWER_NOT_FOUND(HttpStatus.NOT_FOUND, "SURVEY-0030", "답변을 찾을 수 없습니다."),
+    FORM_RESPONSE_NOT_DRAFT(HttpStatus.CONFLICT, "SURVEY-0031", "임시저장 상태의 응답에만 가능한 작업입니다."),
+    ANSWER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SURVEY-0032", "이미 해당 질문에 대한 답변이 존재합니다."),
     ;
 
     private final HttpStatus httpStatus;

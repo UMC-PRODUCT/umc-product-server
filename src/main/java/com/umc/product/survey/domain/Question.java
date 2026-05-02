@@ -7,7 +7,7 @@ import lombok.*;
 
 @Entity
 @Getter
-@Builder
+@Builder(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "question")
@@ -38,40 +38,47 @@ public class Question extends BaseEntity {
     private Long orderNo;
 
     public static Question create(
-        String questionText,
+        String title,
         QuestionType type,
         boolean isRequired,
         long orderNo
     ) {
-        Question q = new Question();
-        q.title = questionText;
-        q.type = type;
-        q.isRequired = isRequired;
-        q.orderNo = orderNo;
-        return q;
+        return Question.builder()
+            .title(title)
+            .type(type)
+            .isRequired(isRequired)
+            .orderNo(orderNo)
+            .build();
     }
 
     public void assignTo(FormSection section) {
         this.formSection = section;
     }
 
-    public void changeFormSection(FormSection section) {
-        this.formSection = section;
+    /**
+     * 질문 속성 부분 업데이트 (PATCH semantics).
+     * null 인 필드는 기존 값 유지. type 변경은 별도 {@link #changeType} 사용.
+     */
+    public void update(String title, String description, Boolean isRequired) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (isRequired != null) {
+            this.isRequired = isRequired;
+        }
     }
 
-    public void changeQuestionText(String text) {
-        this.title = text;
-    }
-
+    /**
+     * 질문 타입 변경. 호출 측 Service 가 옵션 / 응답 cascade 정리 책임.
+     */
     public void changeType(QuestionType type) {
         this.type = type;
     }
 
-    public void changeRequired(boolean required) {
-        this.isRequired = required;
-    }
-
-    public void changeOrderNo(long orderNo) {
+    public void updateOrderNo(long orderNo) {
         this.orderNo = orderNo;
     }
 

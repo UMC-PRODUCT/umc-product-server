@@ -9,6 +9,16 @@ public interface LoadFormResponsePort {
 
     Optional<FormResponse> findById(Long formResponseId);
 
+    /**
+     * 특정 폼의 모든 응답 (DRAFT + SUBMITTED) 을 id 내림차순으로 반환.
+     */
+    List<FormResponse> listByFormId(Long formId);
+
+    /**
+     * 특정 폼의 SUBMITTED 응답 목록을 id 내림차순으로 반환.
+     */
+    List<FormResponse> listSubmittedByFormId(Long formId);
+
     Optional<FormResponse> findDraftByFormIdAndRespondentMemberId(Long formId, Long respondentMemberId);
 
     List<FormResponse> findAllDraftByRespondentMemberId(Long respondentMemberId);

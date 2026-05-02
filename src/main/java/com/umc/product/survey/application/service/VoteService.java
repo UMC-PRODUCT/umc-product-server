@@ -1,15 +1,15 @@
 package com.umc.product.survey.application.service;
 
+import com.umc.product.survey.application.port.in.command.ManageFormUseCase;
 import com.umc.product.survey.application.port.in.command.ManageVoteUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateVoteCommand;
+import com.umc.product.survey.application.port.in.command.dto.DeleteFormCommand;
 import com.umc.product.survey.application.port.out.*;
 import com.umc.product.survey.domain.Form;
 import com.umc.product.survey.domain.FormSection;
 import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.enums.QuestionType;
-import com.umc.product.survey.domain.exception.SurveyDomainException;
-import com.umc.product.survey.domain.exception.SurveyErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,10 +26,10 @@ import java.util.stream.Collectors;
 public class VoteService implements ManageVoteUseCase {
 
     private final SaveFormPort saveFormPort;
-    private final LoadFormPort loadFormPort;
     private final SaveFormSectionPort saveFormSectionPort;
     private final SaveQuestionPort saveQuestionPort;
     private final SaveQuestionOptionPort saveQuestionOptionPort;
+    private final ManageFormUseCase manageFormUseCase;
 
     @Override
     public Long createVote(CreateVoteCommand command) {
@@ -42,11 +42,13 @@ public class VoteService implements ManageVoteUseCase {
         Form savedForm = saveFormPort.save(form);
 
         // 2. 단일 섹션 생성
-        FormSection section = FormSection.builder()
-            .form(savedForm)
-            .title(command.title())
-            .orderNo(1L)
-            .build();
+        FormSection section = FormSection.create(
+            savedForm,
+            command.title(),
+            null,
+            1L
+        );
+
         FormSection savedSection = saveFormSectionPort.save(section);
 
         // 3. 단일 질문 생성
@@ -76,11 +78,10 @@ public class VoteService implements ManageVoteUseCase {
 
     @Override
     public void deleteVote(Long formId) {
-        Form form = loadFormPort.findById(formId)
-            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.SURVEY_NOT_FOUND));
-
-        // TODO: 향후 Cascade 정책 혹은 응답(FormResponse, Answer) 삭제 로직 보완 필요
-
-        saveFormPort.deleteById(form.getId());
+        manageFormUseCase.deleteForm(
+            DeleteFormCommand.builder()
+                .formId(formId)
+                .build()
+        );
     }
 }

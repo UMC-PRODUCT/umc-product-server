@@ -1,5 +1,6 @@
 package com.umc.product.survey.application.port.in.query.dto;
 
+import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.enums.QuestionType;
 import java.time.Instant;
 import lombok.Builder;
@@ -19,4 +20,18 @@ public record QuestionInfo(
     Instant createdAt,
     Instant updatedAt
 ) {
+
+    public static QuestionInfo from(Question question) {
+        return QuestionInfo.builder()
+            .id(question.getId())
+            .sectionId(question.getFormSection().getId())
+            .type(question.getType())
+            .title(question.getTitle())
+            .description(question.getDescription())
+            .isRequired(Boolean.TRUE.equals(question.getIsRequired()))
+            .orderNo(question.getOrderNo())
+            .createdAt(question.getCreatedAt())
+            .updatedAt(question.getUpdatedAt())
+            .build();
+    }
 }

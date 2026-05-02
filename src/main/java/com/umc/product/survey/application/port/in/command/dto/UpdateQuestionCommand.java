@@ -4,8 +4,9 @@ import com.umc.product.survey.domain.enums.QuestionType;
 import lombok.Builder;
 
 /**
- * 질문 속성 업데이트 Command.
- * type 변경 시 Service가 관련 QuestionOption/AnswerChoice 정리 책임.
+ * 질문 속성 부분 업데이트 Command.
+ * null 인 필드는 기존 값 유지 (PATCH semantics).
+ * type 변경 시 Service가 관련 QuestionOption / 응답 cascade 정리 책임.
  */
 @Builder
 public record UpdateQuestionCommand(
@@ -14,6 +15,6 @@ public record UpdateQuestionCommand(
     QuestionType type,
     String title,
     String description,
-    boolean isRequired
+    Boolean isRequired
 ) {
 }

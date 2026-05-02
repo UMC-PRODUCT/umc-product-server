@@ -17,4 +17,23 @@ public interface AnswerJpaRepository extends JpaRepository<Answer, Long> {
             WHERE a.formResponse.id = :formResponseId
         """)
     int deleteAllByFormResponseId(@Param("formResponseId") Long formResponseId);
+
+    /**
+     * 특정 폼에 속한 모든 Answer 삭제 (deleteForm cascade 용)
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("""
+            DELETE FROM Answer a
+            WHERE a.formResponse.id IN (
+                SELECT fr.id FROM FormResponse fr WHERE fr.form.id = :formId
+            )
+        """)
+    int deleteByFormId(@Param("formId") Long formId);
+
+    /**
+     * 특정 질문에 속한 모든 Answer 삭제 (deleteQuestion cascade 용)
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Answer a WHERE a.question.id = :questionId")
+    int deleteByQuestionId(@Param("questionId") Long questionId);
 }

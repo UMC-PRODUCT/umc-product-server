@@ -22,5 +22,5 @@ public interface GetQuestionUseCase {
     /**
      * 섹션에 속한 모든 질문을 orderNo 오름차순으로 조회.
      */
-    List<QuestionInfo> getAllBySectionId(Long sectionId);
+    List<QuestionInfo> listBySectionId(Long sectionId);
 }

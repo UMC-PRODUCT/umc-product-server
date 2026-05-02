@@ -6,8 +6,7 @@ import lombok.*;
 
 @Entity
 @Getter
-// TODO: Builder는 엔티티 단에서 정팩메에 붙여서 사용하도록 하고, 따로 엔티티 단에 붙이지 않는게 어떤지
-@Builder
+@Builder(access = AccessLevel.PRIVATE)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "form_section")
@@ -29,4 +28,30 @@ public class FormSection extends BaseEntity {
 
     @Column(name = "order_no")
     private Long orderNo;
+
+    public static FormSection create(Form form, String title, String description, Long orderNo) {
+        return FormSection.builder()
+            .form(form)
+            .title(title)
+            .description(description)
+            .orderNo(orderNo)
+            .build();
+    }
+
+    /**
+     * 섹션 메타데이터 부분 업데이트.
+     * null 인 필드는 기존 값 유지.
+     */
+    public void update(String title, String description) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+    }
+
+    public void updateOrderNo(Long orderNo) {
+        this.orderNo = orderNo;
+    }
 }

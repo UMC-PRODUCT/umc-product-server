@@ -1,5 +1,8 @@
 package com.umc.product.survey.application.port.in.query.dto;
 
+import com.umc.product.survey.domain.Answer;
+import com.umc.product.survey.domain.AnswerChoice;
+import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.enums.QuestionType;
 import lombok.Builder;
 
@@ -23,11 +26,34 @@ public record AnswerInfo(
     QuestionType answeredAsType,
     String textValue,
     List<SelectedOption> selectedOptions,
-    Set<Long> fileIds,
+    Set<String> fileIds,
     Set<Instant> times,
     Instant createdAt,
     Instant updatedAt
 ) {
+
+    /**
+     * Answer + 해당 답변의 AnswerChoice 리스트로부터 DTO 조립.
+     * 객관식이 아닌 답변의 경우 {@code choices} 는 빈 리스트.
+     */
+    public static AnswerInfo from(Answer answer, List<AnswerChoice> choices) {
+        List<SelectedOption> selectedOptions = choices.stream()
+            .map(SelectedOption::from)
+            .toList();
+
+        return AnswerInfo.builder()
+            .id(answer.getId())
+            .formResponseId(answer.getFormResponse().getId())
+            .questionId(answer.getQuestion().getId())
+            .answeredAsType(answer.getAnsweredAsType())
+            .textValue(answer.getTextValue())
+            .selectedOptions(selectedOptions)
+            .fileIds(answer.getFileIds())
+            .times(answer.getTimes())
+            .createdAt(answer.getCreatedAt())
+            .updatedAt(answer.getUpdatedAt())
+            .build();
+    }
 
     /**
      * AnswerChoice 를 조회용으로 펼친 뷰.
@@ -39,5 +65,14 @@ public record AnswerInfo(
         Long questionOptionId,
         String answeredAsContent
     ) {
+
+        public static SelectedOption from(AnswerChoice choice) {
+            QuestionOption option = choice.getQuestionOption();
+
+            return SelectedOption.builder()
+                .questionOptionId(option != null ? option.getId() : null)
+                .answeredAsContent(choice.getAnsweredAsContent())
+                .build();
+        }
     }
 }

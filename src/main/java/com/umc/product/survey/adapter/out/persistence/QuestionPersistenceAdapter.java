@@ -17,6 +17,7 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class QuestionPersistenceAdapter implements SaveQuestionPort, LoadQuestionPort {
     private final QuestionJpaRepository questionJpaRepository;
+    private final QuestionQueryRepository questionQueryRepository;
 
     @Override
     public void deleteByFormIdAndQuestionId(Long formId, Long questionId) {
@@ -42,6 +43,16 @@ public class QuestionPersistenceAdapter implements SaveQuestionPort, LoadQuestio
     }
 
     @Override
+    public void deleteByFormId(Long formId) {
+        questionJpaRepository.deleteByFormId(formId);
+    }
+
+    @Override
+    public void deleteBySectionId(Long sectionId) {
+        questionJpaRepository.deleteBySectionId(sectionId);
+    }
+
+    @Override
     public Optional<Question> findById(Long questionId) {
         return questionJpaRepository.findById(questionId);
     }
@@ -57,7 +68,22 @@ public class QuestionPersistenceAdapter implements SaveQuestionPort, LoadQuestio
     }
 
     @Override
+    public List<Question> listBySectionId(Long sectionId) {
+        return questionQueryRepository.findAllBySectionId(sectionId);
+    }
+
+    @Override
+    public List<Question> listBySectionIdIn(Set<Long> sectionIds) {
+        return questionQueryRepository.findAllBySectionIdIn(sectionIds);
+    }
+
+    @Override
     public Question save(Question question) {
         return questionJpaRepository.save(question);
+    }
+
+    @Override
+    public List<Question> saveAll(List<Question> questions) {
+        return questionJpaRepository.saveAll(questions);
     }
 }
