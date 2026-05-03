@@ -218,10 +218,6 @@ class ProjectApplicationFormQueryServiceTest {
         ProjectApplicationForm applicationForm = createApplicationForm(project);
 
         given(loadApplicationFormPort.findByProjectId(PROJECT_ID)).willReturn(Optional.of(applicationForm));
-        given(getFormUseCase.getFormWithStructure(FORM_ID)).willReturn(buildFormStructure());
-        given(loadPolicyPort.listByApplicationFormId(APPLICATION_FORM_ID)).willReturn(List.of(
-            ProjectApplicationFormPolicy.createCommon(applicationForm, COMMON_SECTION_ID)
-        ));
         given(getChallengerRoleUseCase.isCentralCoreInGisu(requesterMemberId, GISU_ID)).willReturn(false);
         given(getChallengerRoleUseCase.isChapterPresidentInGisu(requesterMemberId, GISU_ID, CHAPTER_ID))
             .willReturn(false);
@@ -232,6 +228,10 @@ class ProjectApplicationFormQueryServiceTest {
         assertThatThrownBy(() -> sut.findByProjectId(PROJECT_ID, requesterMemberId))
             .isInstanceOf(ProjectDomainException.class)
             .hasFieldOrPropertyWithValue("baseCode", ProjectErrorCode.APPLICATION_FORM_ACCESS_NOT_ALLOWED);
+
+        // 외부 사용자는 권한 검증 단계에서 차단되어 폼/정책 조회는 발생하지 않음
+        then(getFormUseCase).should(never()).getFormWithStructure(any());
+        then(loadPolicyPort).should(never()).listByApplicationFormId(any());
     }
 
     @Test

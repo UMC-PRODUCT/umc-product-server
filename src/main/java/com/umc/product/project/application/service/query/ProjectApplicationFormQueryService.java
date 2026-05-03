@@ -48,20 +48,26 @@ public class ProjectApplicationFormQueryService implements GetProjectApplication
 
     private ApplicationFormInfo assemble(ProjectApplicationForm applicationForm, Long requesterMemberId) {
         Project project = applicationForm.getProject();
+
+        // 권한 체크를 먼저 수행하여 불필요한 데이터 조회를 방지
+        boolean isFullViewAllowed = canViewFullForm(project, requesterMemberId);
+        ChallengerPart applicantPart = null;
+
+        if (!isFullViewAllowed) {
+            applicantPart = getChallengerUseCase
+                .findByMemberIdAndGisuId(requesterMemberId, project.getGisuId())
+                .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.APPLICATION_FORM_ACCESS_NOT_ALLOWED))
+                .part();
+        }
+
+        // 권한 확인이 완료된 경우에만 데이터 조회
         FormWithStructureInfo formStructure = getFormUseCase.getFormWithStructure(applicationForm.getFormId());
         List<ProjectApplicationFormPolicy> policies =
             loadPolicyPort.listByApplicationFormId(applicationForm.getId());
 
-        if (canViewFullForm(project, requesterMemberId)) {
-            return ApplicationFormInfo.of(applicationForm, formStructure, policies);
-        }
-
-        ChallengerPart applicantPart = getChallengerUseCase
-            .findByMemberIdAndGisuId(requesterMemberId, project.getGisuId())
-            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.APPLICATION_FORM_ACCESS_NOT_ALLOWED))
-            .part();
-
-        return ApplicationFormInfo.forApplicant(applicationForm, formStructure, policies, applicantPart);
+        return isFullViewAllowed
+            ? ApplicationFormInfo.of(applicationForm, formStructure, policies)
+            : ApplicationFormInfo.forApplicant(applicationForm, formStructure, policies, applicantPart);
     }
 
     /**
