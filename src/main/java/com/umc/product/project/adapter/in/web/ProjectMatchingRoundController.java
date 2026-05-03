@@ -2,7 +2,8 @@ package com.umc.product.project.adapter.in.web;
 
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
-import com.umc.product.project.adapter.in.web.dto.request.ProjectMatchingRoundRequest;
+import com.umc.product.project.adapter.in.web.dto.request.CreateProjectMatchingRoundRequest;
+import com.umc.product.project.adapter.in.web.dto.request.UpdateProjectMatchingRoundRequest;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMatchingRoundCreateResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMatchingRoundResponse;
 import com.umc.product.project.application.port.in.command.CreateProjectMatchingRoundUseCase;
@@ -73,7 +74,7 @@ public class ProjectMatchingRoundController {
     )
     public ProjectMatchingRoundCreateResponse create(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @Valid @RequestBody ProjectMatchingRoundRequest request
+        @Valid @RequestBody CreateProjectMatchingRoundRequest request
     ) {
         Long matchingRoundId = createProjectMatchingRoundUseCase.create(
             request.toCreateCommand(memberPrincipal.getMemberId()));
@@ -84,21 +85,23 @@ public class ProjectMatchingRoundController {
     @Operation(
         summary = "[PROJECT-MATCHING-102] 매칭 차수 수정",
         description = """
-            매칭 차수를 수정합니다.
+            매칭 차수 정보를 부분 수정합니다.
             - 중앙운영사무국 총괄단 이상은 모든 지부의 매칭 차수를 수정할 수 있습니다.
             - 지부장은 본인 지부의 매칭 차수만 수정할 수 있습니다.
-            - 매칭 차수가 소속된 chapterId는 수정할 수 없으며, 기간 중복 검증도 기존 chapterId 기준으로 수행합니다.
-            - startsAt < endsAt < decisionDeadline 순서를 만족해야 합니다.
+            - 수정 요청 본문에는 chapterId를 포함하지 않습니다.
+            - 매칭 차수가 소속된 chapterId는 수정할 수 없으며, 권한 및 기간 중복 검증도 기존 chapterId 기준으로 수행합니다.
+            - 요청 본문에 제공되지 않은 필드는 기존 매칭 차수 값을 유지합니다.
+            - 기존 값과 요청 값을 병합한 최종 결과가 startsAt < endsAt < decisionDeadline 순서를 만족해야 합니다.
             - 같은 지부 내 다른 매칭 차수와 startsAt ~ decisionDeadline 기간이 중복되면 409를 반환합니다.
             """
     )
     public void update(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long matchingRoundId,
-        @Valid @RequestBody ProjectMatchingRoundRequest request
+        @Valid @RequestBody UpdateProjectMatchingRoundRequest request
     ) {
         updateProjectMatchingRoundUseCase.update(
-            request.toUpdateCommand(matchingRoundId, memberPrincipal.getMemberId()));
+            request.toCommand(matchingRoundId, memberPrincipal.getMemberId()));
     }
 
     @DeleteMapping("/{matchingRoundId}")

@@ -12,6 +12,8 @@ import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.SaveProjectMatchingRoundPort;
 import com.umc.product.project.domain.ProjectMatchingRound;
+import com.umc.product.project.domain.enums.MatchingPhase;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.time.Instant;
@@ -61,23 +63,33 @@ public class ProjectMatchingRoundCommandService implements
     public void update(UpdateProjectMatchingRoundCommand command) {
         ProjectMatchingRound matchingRound = loadProjectMatchingRoundPort.getById(command.matchingRoundId());
 
+        String name = command.name() != null ? command.name() : matchingRound.getName();
+        String description = command.description() != null ? command.description() : matchingRound.getDescription();
+        MatchingType type = command.type() != null ? command.type() : matchingRound.getType();
+        MatchingPhase phase = command.phase() != null ? command.phase() : matchingRound.getPhase();
+        Instant startsAt = command.startsAt() != null ? command.startsAt() : matchingRound.getStartsAt();
+        Instant endsAt = command.endsAt() != null ? command.endsAt() : matchingRound.getEndsAt();
+        Instant decisionDeadline = command.decisionDeadline() != null
+            ? command.decisionDeadline()
+            : matchingRound.getDecisionDeadline();
+
         validateManageAccess(command.requesterMemberId(), matchingRound.getChapterId());
         validateNoOverlapExceptId(
             matchingRound.getId(),
             matchingRound.getChapterId(),
-            command.startsAt(),
-            command.endsAt(),
-            command.decisionDeadline()
+            startsAt,
+            endsAt,
+            decisionDeadline
         );
 
         matchingRound.update(
-            command.name(),
-            command.description(),
-            command.type(),
-            command.phase(),
-            command.startsAt(),
-            command.endsAt(),
-            command.decisionDeadline()
+            name,
+            description,
+            type,
+            phase,
+            startsAt,
+            endsAt,
+            decisionDeadline
         );
     }
 

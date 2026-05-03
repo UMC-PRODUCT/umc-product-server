@@ -1,7 +1,6 @@
 package com.umc.product.project.adapter.in.web.dto.request;
 
 import com.umc.product.project.application.port.in.command.dto.CreateProjectMatchingRoundCommand;
-import com.umc.product.project.application.port.in.command.dto.UpdateProjectMatchingRoundCommand;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import jakarta.validation.constraints.NotBlank;
@@ -9,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
 
-public record ProjectMatchingRoundRequest(
+public record CreateProjectMatchingRoundRequest(
     @NotBlank(message = "매칭 차수 이름은 필수입니다")
     @Size(max = 255, message = "매칭 차수 이름은 255자 이하여야 합니다")
     String name,
@@ -43,22 +42,6 @@ public record ProjectMatchingRoundRequest(
             .type(type)
             .phase(phase)
             .chapterId(chapterId)
-            .startsAt(startsAt)
-            .endsAt(endsAt)
-            .decisionDeadline(decisionDeadline)
-            .build();
-    }
-
-    public UpdateProjectMatchingRoundCommand toUpdateCommand(
-        Long matchingRoundId, Long requesterMemberId
-    ) {
-        return UpdateProjectMatchingRoundCommand.builder()
-            .matchingRoundId(matchingRoundId)
-            .requesterMemberId(requesterMemberId)
-            .name(name)
-            .description(description)
-            .type(type)
-            .phase(phase)
             .startsAt(startsAt)
             .endsAt(endsAt)
             .decisionDeadline(decisionDeadline)

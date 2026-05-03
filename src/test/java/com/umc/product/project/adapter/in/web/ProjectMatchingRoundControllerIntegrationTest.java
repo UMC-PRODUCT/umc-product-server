@@ -220,8 +220,8 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
     }
 
     @Test
-    @DisplayName("매칭 차수를 수정해도 chapterId는 변경되지 않는다")
-    void 매칭_차수를_수정해도_chapterId는_변경되지_않는다() throws Exception {
+    @DisplayName("매칭 차수를 부분 수정하면 제공되지 않은 값은 기존 값을 유지한다")
+    void 매칭_차수를_부분_수정하면_제공되지_않은_값은_기존_값을_유지한다() throws Exception {
         // given
         OperatorContext context = chapterPresidentContext();
         ProjectMatchingRound matchingRound = saveMatchingRound(
@@ -239,16 +239,12 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
         // when
         mockMvc.perform(patch(BASE_URL + "/{matchingRoundId}", matchingRound.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(matchingRoundRequest(
-                    "기획-디자인 1차 매칭 수정",
-                    "운영 일정 변경으로 기간 수정",
-                    MatchingType.PLAN_DESIGN,
-                    MatchingPhase.FIRST,
-                    999L,
-                    "2026-05-20T00:00:00Z",
-                    "2026-05-22T00:00:00Z",
-                    "2026-05-23T00:00:00Z"
-                )))
+                .content(requestBody(Map.of(
+                    "name", "기획-디자인 1차 매칭 수정",
+                    "startsAt", "2026-05-20T00:00:00Z",
+                    "endsAt", "2026-05-22T00:00:00Z",
+                    "decisionDeadline", "2026-05-23T00:00:00Z"
+                ))))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true));
 
@@ -256,11 +252,73 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
         entityManager.clear();
         ProjectMatchingRound updated = loadProjectMatchingRoundPort.getById(matchingRound.getId());
         assertThat(updated.getName()).isEqualTo("기획-디자인 1차 매칭 수정");
-        assertThat(updated.getDescription()).isEqualTo("운영 일정 변경으로 기간 수정");
+        assertThat(updated.getDescription()).isEqualTo("수정 전");
+        assertThat(updated.getType()).isEqualTo(MatchingType.PLAN_DESIGN);
+        assertThat(updated.getPhase()).isEqualTo(MatchingPhase.FIRST);
         assertThat(updated.getStartsAt()).isEqualTo(Instant.parse("2026-05-20T00:00:00Z"));
         assertThat(updated.getEndsAt()).isEqualTo(Instant.parse("2026-05-22T00:00:00Z"));
         assertThat(updated.getDecisionDeadline()).isEqualTo(Instant.parse("2026-05-23T00:00:00Z"));
         assertThat(updated.getChapterId()).isEqualTo(context.chapter().getId());
+    }
+
+    @Test
+    @DisplayName("매칭 차수 부분 수정 결과의 기간 순서가 잘못되면 실패한다")
+    void 매칭_차수_부분_수정_결과의_기간_순서가_잘못되면_실패한다() throws Exception {
+        // given
+        OperatorContext context = chapterPresidentContext();
+        ProjectMatchingRound matchingRound = saveMatchingRound(
+            "기획-디자인 1차 매칭",
+            "수정 전",
+            MatchingType.PLAN_DESIGN,
+            MatchingPhase.FIRST,
+            context.chapter().getId(),
+            "2026-05-10T00:00:00Z",
+            "2026-05-12T00:00:00Z",
+            "2026-05-13T00:00:00Z"
+        );
+        authenticate(context.member().getId());
+
+        // when & then
+        mockMvc.perform(patch(BASE_URL + "/{matchingRoundId}", matchingRound.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody(Map.of("startsAt", "2026-05-14T00:00:00Z"))))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("PROJECT-0301"));
+    }
+
+    @Test
+    @DisplayName("매칭 차수 수정 요청에 chapterId를 포함하면 실패한다")
+    void 매칭_차수_수정_요청에_chapterId를_포함하면_실패한다() throws Exception {
+        // given
+        OperatorContext context = chapterPresidentContext();
+        ProjectMatchingRound matchingRound = saveMatchingRound(
+            "기획-디자인 1차 매칭",
+            "수정 전",
+            MatchingType.PLAN_DESIGN,
+            MatchingPhase.FIRST,
+            context.chapter().getId(),
+            "2026-05-10T00:00:00Z",
+            "2026-05-12T00:00:00Z",
+            "2026-05-13T00:00:00Z"
+        );
+        authenticate(context.member().getId());
+
+        // when & then
+        mockMvc.perform(patch(BASE_URL + "/{matchingRoundId}", matchingRound.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(matchingRoundRequest(
+                    "기획-디자인 1차 매칭 수정",
+                    "chapterId를 포함한 잘못된 수정 요청",
+                    MatchingType.PLAN_DESIGN,
+                    MatchingPhase.FIRST,
+                    999L,
+                    "2026-05-20T00:00:00Z",
+                    "2026-05-22T00:00:00Z",
+                    "2026-05-23T00:00:00Z"
+                )))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
@@ -466,6 +524,10 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
             "endsAt", endsAt,
             "decisionDeadline", decisionDeadline
         ));
+    }
+
+    private String requestBody(Map<String, Object> body) throws Exception {
+        return objectMapper.writeValueAsString(body);
     }
 
     private record OperatorContext(
