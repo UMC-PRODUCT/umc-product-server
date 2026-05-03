@@ -52,11 +52,14 @@ public class ProjectApplicationFormController {
         return UpsertApplicationFormResponse.from(info);
     }
 
-    // TODO: 챌린저 호출 시 본인 파트 + COMMON 섹션 마스킹 적용 (response.forApplicant(applicantPart))
     @GetMapping("/{projectId}/application-form")
     @Operation(
         summary = "[PROJECT-106-GET] 지원 폼 조회",
-        description = "프로젝트의 지원 폼 전체 구조를 조회한다. 폼이 없으면 ApiResponse.result = null."
+        description = """
+            프로젝트의 지원 폼 구조를 조회한다.
+            호출자가 PM/총괄단/프로젝트 지부의 지부장이면 전체 섹션, 일반 챌린저이면 본인 파트가 매칭된 PART 섹션과 COMMON 섹션만 노출된다.
+            프로젝트 기수에 챌린저 레코드가 없는 외부 사용자는 403. 폼이 없으면 ApiResponse.result = null.
+            """
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
@@ -68,7 +71,8 @@ public class ProjectApplicationFormController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId
     ) {
-        return getProjectApplicationFormUseCase.findByProjectId(projectId)
+        return getProjectApplicationFormUseCase
+            .findByProjectId(projectId, memberPrincipal.getMemberId())
             .map(GetApplicationFormResponse::from)
             .orElse(null);
     }
