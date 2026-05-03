@@ -1,6 +1,6 @@
 package com.umc.product.notification.application.port.in.dto;
 
-import com.umc.product.notice.dto.NoticeTargetInfo;
+import com.umc.product.notice.domain.NoticeTargetInfo;
 import lombok.Builder;
 
 @Builder

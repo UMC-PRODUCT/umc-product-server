@@ -1,6 +1,6 @@
 package com.umc.product.notice.application.port.in.query;
 
-import com.umc.product.notice.dto.NoticeTargetInfo;
+import com.umc.product.notice.domain.NoticeTargetInfo;
 
 public interface GetNoticeTargetUseCase {
     /**

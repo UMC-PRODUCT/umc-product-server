@@ -10,13 +10,18 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @Validated
 @RestController
 @RequestMapping("/api/v1/notices")
 @RequiredArgsConstructor
-@Tag(name = "Notice Vote Response | 공지사항 투표 응답", description = "공지사항 투표에 응답 제출/수정/취소")
+@Tag(name = "Notice | 공지사항 투표", description = "공지사항 투표에 응답 제출/수정/취소")
 public class NoticeVoteResponseController {
 
     private final ManageNoticeVoteResponseUseCase manageNoticeVoteResponseUseCase;

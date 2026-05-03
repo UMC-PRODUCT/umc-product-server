@@ -2,6 +2,7 @@ package com.umc.product.notice.domain;
 
 import com.umc.product.common.BaseEntity;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -43,41 +44,37 @@ public class NoticeTarget extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private List<ChallengerPart> targetChallengerPart;
 
+    @Column(name = "target_notice_tab", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private NoticeTab targetNoticeTab;
+
     @Builder
     private NoticeTarget(
         Long noticeId,
         Long targetGisuId,
         Long targetChapterId,
         Long targetSchoolId,
-        List<ChallengerPart> targetChallengerPart) {
+        List<ChallengerPart> targetChallengerPart,
+        NoticeTab targetNoticeTab) {
         this.noticeId = noticeId;
         this.targetGisuId = targetGisuId;
         this.targetChapterId = targetChapterId;
         this.targetSchoolId = targetSchoolId;
         this.targetChallengerPart = targetChallengerPart;
+        this.targetNoticeTab = targetNoticeTab;
     }
 
-    /**
-     * 공지사항 권한 정보 업데이트
-     */
     public void update(
         Long targetGisuId,
         Long targetChapterId,
         Long targetSchoolId,
-        List<ChallengerPart> targetChallengerPart) {
+        List<ChallengerPart> targetChallengerPart,
+        NoticeTab minTargetRole) {
         this.targetGisuId = targetGisuId;
         this.targetChapterId = targetChapterId;
         this.targetSchoolId = targetSchoolId;
         this.targetChallengerPart = targetChallengerPart;
+        this.targetNoticeTab = minTargetRole;
     }
 
-    /**
-     * 전체 공지사항인지 확인 (모든 대상이 null)
-     */
-    public boolean isGlobalNotice() {
-        return targetGisuId == null
-            && targetChapterId == null
-            && targetSchoolId == null
-            && (targetChallengerPart == null || targetChallengerPart.isEmpty());
-    }
 }

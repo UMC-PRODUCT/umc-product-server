@@ -1,6 +1,5 @@
 package com.umc.product.notice.adapter.in.web.swagger;
 
-import com.umc.product.global.response.ApiResponse;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.notice.adapter.in.web.dto.request.AddNoticeImagesRequest;
@@ -25,7 +24,7 @@ public interface NoticeContentApi {
         summary = "공지사항 이미지 추가",
         description = "첫 공지 생성 시 공지사항 이미지를 추가하는 API입니다. 파일 업로드 API로 먼저 이미지를 업로드한 뒤, 받은 이미지 ID를 전달하세요."
     )
-    ApiResponse<AddNoticeImagesResponse> addNoticeImages(
+    AddNoticeImagesResponse addNoticeImages(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
 
@@ -37,7 +36,7 @@ public interface NoticeContentApi {
     @Operation(
         summary = "첫 공지 생성 시 공지사항 링크를 추가하는 API입니다. "
     )
-    ApiResponse<AddNoticeLinksResponse> addNoticeLinks(
+    AddNoticeLinksResponse addNoticeLinks(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
 
@@ -50,7 +49,7 @@ public interface NoticeContentApi {
         summary = "공지사항 투표 추가",
         description = "공지사항에 투표를 1개 생성하여 연결합니다. 투표 생성과 공지 연결이 한 번에 처리됩니다."
     )
-    ApiResponse<AddNoticeVoteResponse> addNoticeVote(
+    AddNoticeVoteResponse addNoticeVote(
         @Parameter(description = "공지사항 ID", required = true, example = "1")
         @PathVariable Long noticeId,
 

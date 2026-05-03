@@ -15,10 +15,10 @@ import com.umc.product.notice.application.port.out.SaveNoticeReadPort;
 import com.umc.product.notice.application.port.out.SaveNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
 import com.umc.product.notice.domain.NoticeTarget;
+import com.umc.product.notice.domain.NoticeTargetInfo;
+import com.umc.product.notice.domain.enums.NoticeTargetPattern;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import com.umc.product.notice.dto.NoticeTargetInfo;
-import com.umc.product.notice.dto.NoticeTargetPattern;
 import com.umc.product.notification.application.port.in.SendNotificationToAudienceUseCase;
 import com.umc.product.notification.application.port.in.dto.AudienceNotificationCommand;
 import java.time.Instant;
@@ -79,6 +79,7 @@ public class NoticeService implements ManageNoticeUseCase {
             .targetChapterId(command.targetInfo().targetChapterId())
             .targetSchoolId(command.targetInfo().targetSchoolId())
             .targetChallengerPart(command.targetInfo().targetParts())
+            .targetNoticeTab(command.targetInfo().targetNoticeTab())
             .build()
         );
 
@@ -166,6 +167,4 @@ public class NoticeService implements ManageNoticeUseCase {
         NoticeTargetPattern pattern = NoticeTargetPattern.from(noticeTargetInfo);
         return pattern.validatePermission(noticeTargetInfo, authorMemberId, getChallengerRoleUseCase);
     }
-
-
 }

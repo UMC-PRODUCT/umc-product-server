@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.notice.adapter.in.web.NoticeCommandController;
 import com.umc.product.notice.adapter.in.web.NoticeContentController;
-import com.umc.product.notice.adapter.in.web.NoticeController;
 import com.umc.product.notice.adapter.in.web.NoticeQueryController;
 import com.umc.product.notice.adapter.in.web.assembler.NoticeViewerInfoAssembler;
 import com.umc.product.notice.application.port.in.command.ManageNoticeContentUseCase;
@@ -45,7 +45,8 @@ import org.springframework.test.web.servlet.MockMvc;
     ChapterQueryController.class,
     GisuCommandController.class,
     GisuQueryController.class,
-    NoticeController.class,
+    NoticeCommandController.class,
+    NoticeQueryController.class,
     NoticeQueryController.class,
     NoticeContentController.class,
 })
