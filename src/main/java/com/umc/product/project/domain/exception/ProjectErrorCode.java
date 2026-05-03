@@ -45,6 +45,19 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_PART_QUOTA_REQUIRED(HttpStatus.BAD_REQUEST, "PROJECT-0202", "공개하려면 파트별 정원이 1개 이상 등록되어 있어야 합니다."),
     PROJECT_PART_QUOTA_DUPLICATE(HttpStatus.BAD_REQUEST, "PROJECT-0203", "동일 파트가 중복으로 입력되었습니다."),
 
+    // ProjectMatchingRound
+    PROJECT_MATCHING_ROUND_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0300", "매칭 차수를 찾을 수 없습니다."),
+    PROJECT_MATCHING_ROUND_INVALID_PERIOD(HttpStatus.BAD_REQUEST, "PROJECT-0301",
+        "매칭 차수 기간은 startsAt < endsAt < decisionDeadline 순서여야 합니다."),
+    PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED(HttpStatus.CONFLICT, "PROJECT-0302",
+        "같은 지부 내에서는 매칭 차수 기간이 중복될 수 없습니다."),
+    PROJECT_MATCHING_ROUND_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PROJECT-0303",
+        "해당 매칭 차수에 대한 관리 권한이 없습니다."),
+    PROJECT_MATCHING_ROUND_DELETE_CONFLICT(HttpStatus.CONFLICT, "PROJECT-0304",
+        "연관된 지원서가 있는 매칭 차수는 삭제할 수 없습니다."),
+    PROJECT_MATCHING_ROUND_TIME_REQUIRES_CHAPTER(HttpStatus.BAD_REQUEST, "PROJECT-0305",
+        "time 기준 조회는 chapterId와 함께 요청해야 합니다."),
+
     ;
 
     private final HttpStatus httpStatus;
