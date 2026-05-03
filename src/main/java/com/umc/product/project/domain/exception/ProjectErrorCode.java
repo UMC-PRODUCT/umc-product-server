@@ -35,6 +35,16 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_SUBMIT_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "PROJECT-0011", "제출에 필요한 필수 정보가 누락되었습니다."),
     PROJECT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "PROJECT-0012", "해당 프로젝트에 대한 접근 권한이 없습니다."),
 
+    // ProjectMember (PROJECT-003/004/005)
+    PROJECT_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0100", "프로젝트 멤버를 찾을 수 없습니다."),
+    PROJECT_MEMBER_ALREADY_EXISTS(HttpStatus.CONFLICT, "PROJECT-0101", "이미 해당 프로젝트의 멤버입니다."),
+    PROJECT_MAIN_PM_REMOVAL_REQUIRES_TRANSFER(HttpStatus.BAD_REQUEST, "PROJECT-0102", "메인 PM 은 팀원 제거가 아닌 소유권 양도 API 로 변경해야 합니다."),
+
+    // ProjectPartQuota / Publish (PROJECT-105/108)
+    PROJECT_PART_QUOTA_INVALID(HttpStatus.BAD_REQUEST, "PROJECT-0200", "파트 정원은 1 이상이어야 합니다."),
+    PROJECT_PART_QUOTA_REQUIRED(HttpStatus.BAD_REQUEST, "PROJECT-0202", "공개하려면 파트별 정원이 1개 이상 등록되어 있어야 합니다."),
+    PROJECT_PART_QUOTA_DUPLICATE(HttpStatus.BAD_REQUEST, "PROJECT-0203", "동일 파트가 중복으로 입력되었습니다."),
+
     ;
 
     private final HttpStatus httpStatus;

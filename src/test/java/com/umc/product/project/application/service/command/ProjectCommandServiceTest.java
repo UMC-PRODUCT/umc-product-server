@@ -44,6 +44,8 @@ class ProjectCommandServiceTest {
     @Mock
     LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     @Mock
+    com.umc.product.project.application.port.out.LoadProjectPartQuotaPort loadProjectPartQuotaPort;
+    @Mock
     GetMemberUseCase getMemberUseCase;
     @Mock
     GetChallengerUseCase getChallengerUseCase;
@@ -51,12 +53,14 @@ class ProjectCommandServiceTest {
     GetGisuUseCase getGisuUseCase;
     @Mock
     GetChapterUseCase getChapterUseCase;
+    @Mock
+    com.umc.product.survey.application.port.in.command.ManageFormUseCase manageFormUseCase;
 
     @InjectMocks
     ProjectCommandService sut;
 
     private Project createProject(ProjectStatus status) {
-        Project project = Project.createDraft(1L, 2L, 100L);
+        Project project = Project.createDraft(1L, 2L, 100L, 7L);
         ReflectionTestUtils.setField(project, "id", 1L);
         ReflectionTestUtils.setField(project, "status", status);
         return project;
@@ -271,10 +275,14 @@ class ProjectCommandServiceTest {
             given(getChallengerUseCase.getByMemberIdAndGisuId(200L, 1L))
                 .willReturn(challengerInfo(200L, ChallengerPart.PLAN));
             given(loadProjectPort.existsByOwnerAndGisu(200L, 1L)).willReturn(false);
+            given(getMemberUseCase.getById(200L)).willReturn(memberInfo(8L));
+            given(getChapterUseCase.byGisuAndSchool(1L, 8L)).willReturn(new ChapterInfo(3L, "인천"));
 
             sut.transfer(transferCommand(100L, 200L));
 
             assertThat(project.getProductOwnerMemberId()).isEqualTo(200L);
+            assertThat(project.getProductOwnerSchoolId()).isEqualTo(8L);
+            assertThat(project.getChapterId()).isEqualTo(3L);
         }
 
         @Test
@@ -335,6 +343,85 @@ class ProjectCommandServiceTest {
                 .requesterMemberId(requester)
                 .newOwnerMemberId(newOwner)
                 .build();
+        }
+    }
+
+    @Nested
+    class publish {
+
+        @Test
+        void PENDING_REVIEW에서_IN_PROGRESS로_전이_및_Form_동반_publish() {
+            Project project = createProject(ProjectStatus.PENDING_REVIEW);
+            given(loadProjectPort.getById(1L)).willReturn(project);
+            given(loadProjectPartQuotaPort.listByProjectId(1L)).willReturn(java.util.List.of(
+                com.umc.product.project.domain.ProjectPartQuota.create(
+                    project, ChallengerPart.WEB, 3L, 99L)
+            ));
+            com.umc.product.project.domain.ProjectApplicationForm form =
+                com.umc.product.project.domain.ProjectApplicationForm.create(project, 500L);
+            given(loadProjectApplicationFormPort.findByProjectId(1L))
+                .willReturn(java.util.Optional.of(form));
+
+            ProjectStatus status = sut.publish(
+                com.umc.product.project.application.port.in.command.dto.PublishProjectCommand.builder()
+                    .projectId(1L).requesterMemberId(99L).build());
+
+            assertThat(status).isEqualTo(ProjectStatus.IN_PROGRESS);
+            org.mockito.BDDMockito.then(manageFormUseCase).should().publishForm(any());
+        }
+
+        @Test
+        void DRAFT_상태는_publish_불가() {
+            Project project = createProject(ProjectStatus.DRAFT);
+            given(loadProjectPort.getById(1L)).willReturn(project);
+            given(loadProjectPartQuotaPort.listByProjectId(1L)).willReturn(java.util.List.of(
+                com.umc.product.project.domain.ProjectPartQuota.create(
+                    project, ChallengerPart.WEB, 3L, 99L)
+            ));
+            com.umc.product.project.domain.ProjectApplicationForm form =
+                com.umc.product.project.domain.ProjectApplicationForm.create(project, 500L);
+            given(loadProjectApplicationFormPort.findByProjectId(1L))
+                .willReturn(java.util.Optional.of(form));
+
+            assertThatThrownBy(() -> sut.publish(
+                com.umc.product.project.application.port.in.command.dto.PublishProjectCommand.builder()
+                    .projectId(1L).requesterMemberId(99L).build()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+
+        @Test
+        void 파트_quota가_없으면_거부() {
+            Project project = createProject(ProjectStatus.PENDING_REVIEW);
+            given(loadProjectPort.getById(1L)).willReturn(project);
+            given(loadProjectPartQuotaPort.listByProjectId(1L)).willReturn(java.util.List.of());
+
+            assertThatThrownBy(() -> sut.publish(
+                com.umc.product.project.application.port.in.command.dto.PublishProjectCommand.builder()
+                    .projectId(1L).requesterMemberId(99L).build()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_PART_QUOTA_REQUIRED);
+        }
+
+        @Test
+        void 지원_폼이_없으면_거부() {
+            Project project = createProject(ProjectStatus.PENDING_REVIEW);
+            given(loadProjectPort.getById(1L)).willReturn(project);
+            given(loadProjectPartQuotaPort.listByProjectId(1L)).willReturn(java.util.List.of(
+                com.umc.product.project.domain.ProjectPartQuota.create(
+                    project, ChallengerPart.WEB, 3L, 99L)
+            ));
+            given(loadProjectApplicationFormPort.findByProjectId(1L))
+                .willReturn(java.util.Optional.empty());
+
+            assertThatThrownBy(() -> sut.publish(
+                com.umc.product.project.application.port.in.command.dto.PublishProjectCommand.builder()
+                    .projectId(1L).requesterMemberId(99L).build()))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.APPLICATION_FORM_NOT_FOUND);
         }
     }
 }

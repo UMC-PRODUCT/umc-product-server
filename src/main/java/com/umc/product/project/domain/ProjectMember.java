@@ -87,4 +87,29 @@ public class ProjectMember extends BaseEntity {
     private Instant statusUpdatedAt;
     private String statusChangeReason;
     private Long statusChangedMemberId;
+
+    /**
+     * 활성 상태의 신규 멤버를 생성합니다.
+     */
+    public static ProjectMember create(Project project, Long memberId, ChallengerPart part, Long decidedByMemberId) {
+        ProjectMember pm = new ProjectMember();
+        pm.project = project;
+        pm.memberId = memberId;
+        pm.part = part;
+        pm.status = ProjectMemberStatus.ACTIVE;
+        pm.decidedMemberId = decidedByMemberId;
+        pm.decidedAt = Instant.now();
+        return pm;
+    }
+
+    /**
+     * 멤버를 강제 퇴출 처리합니다 (soft delete).
+     * status 를 {@link ProjectMemberStatus#DISMISSED} 로 바꾸고 변경 메타데이터를 기록합니다.
+     */
+    public void dismiss(String reason, Long removedByMemberId) {
+        this.status = ProjectMemberStatus.DISMISSED;
+        this.statusUpdatedAt = Instant.now();
+        this.statusChangeReason = reason;
+        this.statusChangedMemberId = removedByMemberId;
+    }
 }

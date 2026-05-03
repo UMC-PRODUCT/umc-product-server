@@ -9,8 +9,11 @@ import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.project.adapter.in.web.assembler.ProjectResponseAssembler;
 import com.umc.product.project.adapter.in.web.dto.request.SearchProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.DraftProjectResponse;
+import com.umc.product.project.adapter.in.web.dto.response.ManagedProjectSummaryResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse;
+import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
+import com.umc.product.project.application.port.in.query.dto.SearchManagedProjectQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -49,10 +52,8 @@ public class ProjectQueryController {
         @ParameterObject @Valid SearchProjectRequest request,
         @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        // TODO: 실제 Admin 권한 체크 로직 구현 (GetChallengerRoleUseCase 연동)
-        boolean isAdmin = false;
-        SearchProjectQuery query = request.toQuery(isAdmin, pageable);
-        return assembler.searchFor(query, isAdmin);
+        SearchProjectQuery query = request.toQuery(pageable);
+        return assembler.searchFor(query, memberPrincipal.getMemberId());
     }
 
     @GetMapping("/{projectId}")
@@ -70,9 +71,44 @@ public class ProjectQueryController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId
     ) {
-        // TODO: 실제 마스킹 정책 체크 (PM/Admin/팀원 여부)
-        boolean canSeeFullInfo = false;
-        return assembler.detailFor(projectId, canSeeFullInfo);
+        return assembler.detailFor(projectId, memberPrincipal.getMemberId());
+    }
+
+    @GetMapping("/{projectId}/members")
+    @Operation(
+        summary = "[PROJECT-003] 프로젝트 팀원 구성 조회",
+        description = "프로젝트의 PM/보조 PM/파트별 멤버를 조회합니다. 권한에 따라 실명이 마스킹됩니다."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.READ,
+        message = "프로젝트 조회 권한이 없습니다."
+    )
+    public ProjectMembersResponse getMembers(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId
+    ) {
+        return assembler.membersFor(projectId, memberPrincipal.getMemberId());
+    }
+
+    @GetMapping("/me/managed")
+    @Operation(
+        summary = "[PROJECT-006] 내가 관리하는 프로젝트 목록",
+        description = "역할별 자동 scope: 중앙 총괄단은 전체, 지부장은 본인 지부, 학교 회장단은 본인 학교, PM 챌린저는 본인 owner 프로젝트. 일반 챌린저는 빈 페이지."
+    )
+    public PageResponse<ManagedProjectSummaryResponse> searchManaged(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @RequestParam Long gisuId,
+        @RequestParam(required = false) String keyword,
+        @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
+            .gisuId(gisuId)
+            .keyword(keyword)
+            .pageable(pageable)
+            .build();
+        return assembler.searchManagedFor(query, memberPrincipal.getMemberId());
     }
 
     @GetMapping("/me/draft")

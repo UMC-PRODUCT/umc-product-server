@@ -5,25 +5,36 @@ import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.project.adapter.in.web.dto.request.AddProjectMemberRequest;
 import com.umc.product.project.adapter.in.web.dto.request.CreateDraftProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.request.TransferProjectOwnershipRequest;
+import com.umc.product.project.adapter.in.web.dto.request.UpdatePartQuotasRequest;
 import com.umc.product.project.adapter.in.web.dto.request.UpdateProjectRequest;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectStatusResponse;
+import com.umc.product.project.application.port.in.command.AddProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectUseCase;
+import com.umc.product.project.application.port.in.command.PublishProjectUseCase;
+import com.umc.product.project.application.port.in.command.RemoveProjectMemberUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectUseCase;
 import com.umc.product.project.application.port.in.command.TransferProjectOwnershipUseCase;
+import com.umc.product.project.application.port.in.command.UpdatePartQuotasUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectUseCase;
+import com.umc.product.project.application.port.in.command.dto.PublishProjectCommand;
+import com.umc.product.project.application.port.in.command.dto.RemoveProjectMemberCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectCommand;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -36,6 +47,10 @@ public class ProjectCommandController {
     private final UpdateProjectUseCase updateProjectUseCase;
     private final SubmitProjectUseCase submitProjectUseCase;
     private final TransferProjectOwnershipUseCase transferProjectOwnershipUseCase;
+    private final AddProjectMemberUseCase addProjectMemberUseCase;
+    private final RemoveProjectMemberUseCase removeProjectMemberUseCase;
+    private final UpdatePartQuotasUseCase updatePartQuotasUseCase;
+    private final PublishProjectUseCase publishProjectUseCase;
 
     @PostMapping
     @Operation(
@@ -118,5 +133,92 @@ public class ProjectCommandController {
         ProjectStatus status = transferProjectOwnershipUseCase.transfer(
             request.toCommand(projectId, memberPrincipal.getMemberId()));
         return ProjectStatusResponse.of(projectId, status);
+    }
+
+    @PostMapping("/{projectId}/members")
+    @Operation(
+        summary = "[PROJECT-004] 프로젝트 팀원 추가",
+        description = "프로젝트에 멤버를 추가합니다. 보조 PM 추가는 part = PLAN. DRAFT 단계에선 PM 본인만, IN_PROGRESS 에선 운영진(중앙 총괄단)도 호출 가능."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 팀원 추가 권한이 없습니다."
+    )
+    public Long addMember(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @Valid @RequestBody AddProjectMemberRequest request
+    ) {
+        return addProjectMemberUseCase.add(
+            request.toCommand(projectId, memberPrincipal.getMemberId()));
+    }
+
+    @PostMapping("/{projectId}/publish")
+    @Operation(
+        summary = "[PROJECT-108] 프로젝트 공개",
+        description = "PENDING_REVIEW → IN_PROGRESS 전이. 같은 트랜잭션에서 지원 폼도 PUBLISHED 로 전환. 파트별 정원 1개 이상 + 지원 폼 등록 필수. 운영진(본인 지부장 또는 Central Core)만 호출 가능 — PM 도 차단."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.MANAGE,
+        message = "프로젝트 공개 권한이 없습니다."
+    )
+    public ProjectStatusResponse publish(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId
+    ) {
+        ProjectStatus status = publishProjectUseCase.publish(PublishProjectCommand.builder()
+            .projectId(projectId)
+            .requesterMemberId(memberPrincipal.getMemberId())
+            .build());
+        return ProjectStatusResponse.of(projectId, status);
+    }
+
+    @PutMapping("/{projectId}/part-quotas")
+    @Operation(
+        summary = "[PROJECT-105] 파트별 정원 일괄 갱신",
+        description = "PUT 시멘틱 — 본문이 곧 새 상태가 된다. 본문에 없는 기존 파트는 삭제. quota ≥ 1."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 파트 정원 갱신 권한이 없습니다."
+    )
+    public void updatePartQuotas(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @Valid @RequestBody UpdatePartQuotasRequest request
+    ) {
+        updatePartQuotasUseCase.update(
+            request.toCommand(projectId, memberPrincipal.getMemberId()));
+    }
+
+    @DeleteMapping("/{projectId}/members/{memberId}")
+    @Operation(
+        summary = "[PROJECT-005] 프로젝트 팀원 제거",
+        description = "프로젝트에서 멤버를 제거합니다. DRAFT/PENDING_REVIEW 단계는 hard delete (실수 정정), IN_PROGRESS 단계는 soft delete (히스토리 보존). 메인 PM 은 양도 API 로 변경해야 합니다."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.EDIT,
+        message = "프로젝트 팀원 제거 권한이 없습니다."
+    )
+    public void removeMember(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @PathVariable Long memberId,
+        @RequestParam(required = false) String reason
+    ) {
+        removeProjectMemberUseCase.remove(RemoveProjectMemberCommand.builder()
+            .projectId(projectId)
+            .memberId(memberId)
+            .reason(reason)
+            .requesterMemberId(memberPrincipal.getMemberId())
+            .build());
     }
 }

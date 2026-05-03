@@ -11,8 +11,8 @@ import org.springframework.data.domain.Pageable;
 /**
  * 프로젝트 목록 검색 요청 (PROJECT-001).
  * <p>
- * {@link #toQuery(boolean, Pageable)}에서 요청자 권한(Admin 여부)에 따라
- * {@link SearchProjectQuery#forChallenger} 또는 {@link SearchProjectQuery#forAdmin}을 선택합니다.
+ * statuses 의 자유도는 Service 레벨의 {@link com.umc.product.project.application.access.ProjectAccessScope}
+ * 가 결정한다. 일반 챌린저가 statuses 를 자유 입력해도 PublicOnly scope 에서 IN_PROGRESS 로 덮어쓰여진다.
  */
 public record SearchProjectRequest(
     @NotNull(message = "기수 ID는 필수입니다")
@@ -30,13 +30,19 @@ public record SearchProjectRequest(
 
     List<ProjectStatus> statuses
 ) {
-    public SearchProjectQuery toQuery(boolean isAdmin, Pageable pageable) {
-        return isAdmin
-            ? SearchProjectQuery.forAdmin(
-                gisuId, keyword, chapterId, schoolIds,
-                parts, partQuotaStatus, statuses, pageable)
-            : SearchProjectQuery.forChallenger(
-                gisuId, keyword, chapterId, schoolIds,
-                parts, partQuotaStatus, pageable);
+    public SearchProjectQuery toQuery(Pageable pageable) {
+        List<ProjectStatus> effectiveStatuses = (statuses == null || statuses.isEmpty())
+            ? List.of(ProjectStatus.IN_PROGRESS)
+            : statuses;
+        return SearchProjectQuery.builder()
+            .gisuId(gisuId)
+            .keyword(keyword)
+            .chapterId(chapterId)
+            .productOwnerSchoolIds(schoolIds)
+            .parts(parts)
+            .partQuotaStatus(partQuotaStatus)
+            .statuses(effectiveStatuses)
+            .pageable(pageable)
+            .build();
     }
 }

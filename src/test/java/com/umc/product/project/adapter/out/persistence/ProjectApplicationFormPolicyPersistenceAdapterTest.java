@@ -131,6 +131,7 @@ class ProjectApplicationFormPolicyPersistenceAdapterTest {
         ReflectionTestUtils.setField(project, "status", ProjectStatus.DRAFT);
         ReflectionTestUtils.setField(project, "name", name);
         ReflectionTestUtils.setField(project, "productOwnerMemberId", ownerId);
+        ReflectionTestUtils.setField(project, "productOwnerSchoolId", 1L);
         em.persist(project);
         return project;
     }
