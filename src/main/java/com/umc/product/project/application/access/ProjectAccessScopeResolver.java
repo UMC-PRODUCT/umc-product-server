@@ -104,7 +104,9 @@ public class ProjectAccessScopeResolver {
         }
 
         if (loadProjectPort.existsByOwnerAndGisu(memberId, gisuId)) {
-            Set<ProjectStatus> withDraft = EnumSet.copyOf(requestedStatuses);
+            Set<ProjectStatus> withDraft = requestedStatuses.isEmpty()
+                ? EnumSet.allOf(ProjectStatus.class)
+                : EnumSet.copyOf(requestedStatuses);
             withDraft.add(ProjectStatus.DRAFT);
             return new OwnerOnly(memberId, withDraft);
         }
