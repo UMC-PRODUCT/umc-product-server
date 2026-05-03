@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  * 본 Fixture 는 프로필 자체의 영속화만 책임진다. 회원과 연결이 필요하다면 호출 측에서 명시적으로 수행한다.</p>
  */
 @Component
-public class MemberProfileFixture {
+public class MemberProfileFixture extends FixtureSupport {
 
     private final SaveMemberProfilePort saveMemberProfilePort;
 
@@ -34,7 +34,10 @@ public class MemberProfileFixture {
      */
     public MemberProfile 깃허브_프로필(String githubUrl) {
         return saveMemberProfilePort.save(MemberProfile.fromLinks(
-            List.of(new LinkTypeAndLink(MemberProfileLinkType.GITHUB, githubUrl))
+            List.of(new LinkTypeAndLink(
+                MemberProfileLinkType.GITHUB,
+                valueOrFixture(githubUrl, "github", 100)
+            ))
         ));
     }
 

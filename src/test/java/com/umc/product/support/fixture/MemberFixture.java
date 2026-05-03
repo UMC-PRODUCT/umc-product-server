@@ -1,11 +1,13 @@
 package com.umc.product.support.fixture;
 
+import static com.umc.product.support.CommonFixture.MONKEY;
+
 import com.umc.product.member.application.port.out.SaveMemberPort;
 import com.umc.product.member.domain.Member;
 import org.springframework.stereotype.Component;
 
 @Component
-public class MemberFixture {
+public class MemberFixture extends FixtureSupport {
 
     private final SaveMemberPort saveMemberPort;
 
@@ -14,10 +16,18 @@ public class MemberFixture {
     }
 
     public Member normalMember(String name) {
-        return saveMemberPort.save(Member.builder()
-            .name(name)
-            .nickname(name)
-            .email(name + "@test.com")
-            .build());
+        String fixtureName = valueOrFixture(name, "member", 10);
+        Member member = MONKEY.giveMeBuilder(Member.class)
+            .set("name", fixtureName)
+            .set("nickname", fixtureName)
+            .set("email", fixtureName + "@test.com")
+            .set("schoolId", null)
+            .set("profileImageId", null)
+            .sample();
+        return saveMemberPort.save(member);
+    }
+
+    public Member normalMember() {
+        return normalMember(fixtureString("member", 10));
     }
 }

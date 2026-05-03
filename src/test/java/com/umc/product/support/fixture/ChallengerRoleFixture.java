@@ -7,7 +7,7 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ChallengerRoleFixture {
+public class ChallengerRoleFixture extends FixtureSupport {
 
     private final SaveChallengerRolePort saveChallengerRolePort;
 

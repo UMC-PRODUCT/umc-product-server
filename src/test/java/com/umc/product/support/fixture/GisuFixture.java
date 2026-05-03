@@ -6,7 +6,7 @@ import java.time.Instant;
 import org.springframework.stereotype.Component;
 
 @Component
-public class GisuFixture {
+public class GisuFixture extends FixtureSupport {
 
     private final SaveGisuPort saveGisuPort;
 
@@ -33,5 +33,13 @@ public class GisuFixture {
             END_AT,
             false
         ));
+    }
+
+    public Gisu 활성_기수() {
+        return 활성_기수(Math.abs(com.umc.product.support.CommonFixture.MONKEY.giveMeOne(Long.class)));
+    }
+
+    public Gisu 비활성_기수() {
+        return 비활성_기수(Math.abs(com.umc.product.support.CommonFixture.MONKEY.giveMeOne(Long.class)));
     }
 }
