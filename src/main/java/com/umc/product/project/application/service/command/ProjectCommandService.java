@@ -35,7 +35,6 @@ import com.umc.product.survey.application.port.in.command.ManageFormUseCase;
 import com.umc.product.survey.application.port.in.command.dto.PublishFormCommand;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -119,26 +118,18 @@ public class ProjectCommandService implements
             return;
         }
 
-        Optional<Long> chapterId = requesterRoles.stream()
+        boolean hasChapterAuthority = requesterRoles.stream()
             .filter(r -> r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT)
-            .map(ChallengerRoleInfo::organizationId)
-            .findFirst();
-        if (chapterId.isPresent()) {
-            if (!Objects.equals(chapterId.get(), targetChapterId)) {
-                throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
-            }
+            .anyMatch(r -> Objects.equals(r.organizationId(), targetChapterId));
+        if (hasChapterAuthority) {
             return;
         }
 
-        Optional<Long> schoolId = requesterRoles.stream()
+        boolean hasSchoolAuthority = requesterRoles.stream()
             .filter(r -> r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
                 || r.roleType() == ChallengerRoleType.SCHOOL_VICE_PRESIDENT)
-            .map(ChallengerRoleInfo::organizationId)
-            .findFirst();
-        if (schoolId.isPresent()) {
-            if (!Objects.equals(schoolId.get(), targetSchoolId)) {
-                throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
-            }
+            .anyMatch(r -> Objects.equals(r.organizationId(), targetSchoolId));
+        if (hasSchoolAuthority) {
             return;
         }
 
