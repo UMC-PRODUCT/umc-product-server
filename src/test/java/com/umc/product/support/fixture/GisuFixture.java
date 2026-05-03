@@ -2,6 +2,7 @@ package com.umc.product.support.fixture;
 
 import com.umc.product.organization.application.port.out.command.SaveGisuPort;
 import com.umc.product.organization.domain.Gisu;
+import com.umc.product.support.CommonFixture;
 import java.time.Instant;
 import org.springframework.stereotype.Component;
 
@@ -36,10 +37,16 @@ public class GisuFixture extends FixtureSupport {
     }
 
     public Gisu 활성_기수() {
-        return 활성_기수(Math.abs(com.umc.product.support.CommonFixture.MONKEY.giveMeOne(Long.class)));
+        return 활성_기수(fixtureGeneration());
     }
 
     public Gisu 비활성_기수() {
-        return 비활성_기수(Math.abs(com.umc.product.support.CommonFixture.MONKEY.giveMeOne(Long.class)));
+        return 비활성_기수(fixtureGeneration());
+    }
+
+    private Long fixtureGeneration() {
+        Long sampled = CommonFixture.MONKEY.giveMeOne(Long.class);
+        long value = sampled != null ? sampled : 1L;
+        return Math.floorMod(value, 10_000L) + 1;
     }
 }
