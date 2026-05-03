@@ -180,12 +180,12 @@ public class ProjectCommandController {
     @PutMapping("/{projectId}/part-quotas")
     @Operation(
         summary = "[PROJECT-105] 파트별 정원 일괄 갱신",
-        description = "PUT 시멘틱 — 본문이 곧 새 상태가 된다. 본문에 없는 기존 파트는 삭제. quota ≥ 1."
+        description = "PUT 시멘틱 — 본문이 곧 새 상태가 된다. 본문에 없는 기존 파트는 삭제. quota ≥ 1. 운영진 검토 단계 액션 — 본인 지부장 또는 총괄단만 호출 가능."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
         resourceId = "#projectId",
-        permission = PermissionType.EDIT,
+        permission = PermissionType.MANAGE,
         message = "프로젝트 파트 정원 갱신 권한이 없습니다."
     )
     public void updatePartQuotas(
