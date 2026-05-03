@@ -18,9 +18,9 @@ public class CommonFixture {
     /**
      * 테스트 코드를 작성하는 메서드에서 호출하여 사용할 수 있도록 static Field로 구성
      * <p>
-     * <code>FixtureMonkeyUtils.fixtureMonkey</code> 와 같이 공통 설정에 대해서 사용하도록 합니다.
+     * <code>CommonFixture.fixtureMonkey</code> 와 같이 공통 설정에 대해서 사용하도록 합니다.
      */
-    public static FixtureMonkey MONKEY = FixtureMonkey.builder()
+    public static final FixtureMonkey MONKEY = FixtureMonkey.builder()
         // Validation을 읽어서 동작하도록 반영
         .plugin(new JakartaValidationPlugin())
         // 생성되는 문자를 한글 또는 영어로 한정 (나중에 빡세게 테스트할 때는 제거할 것)
