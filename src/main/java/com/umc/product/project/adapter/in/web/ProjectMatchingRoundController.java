@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/project-matching-rounds")
+@RequestMapping("/api/v1/project/matching-rounds")
 @RequiredArgsConstructor
 @Tag(name = "Project | 매칭 차수", description = "프로젝트 매칭 차수 조회, 생성, 수정, 삭제")
 public class ProjectMatchingRoundController {
