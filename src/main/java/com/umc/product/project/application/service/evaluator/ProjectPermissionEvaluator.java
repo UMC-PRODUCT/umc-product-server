@@ -8,6 +8,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.util.Objects;
@@ -86,8 +87,9 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
     /**
      * 단건 EDIT 분기.
      * <ul>
-     *   <li>작성자: DRAFT / PENDING_REVIEW / IN_PROGRESS 단계 모두 허용</li>
-     *   <li>외부 운영진: PENDING_REVIEW / IN_PROGRESS 단계에서 본인 지부장 또는 Central Core</li>
+     *   <li>PO: DRAFT / PENDING_REVIEW / IN_PROGRESS 단계 모두 허용</li>
+     *   <li>Creator (운영진이 만든 경우): DRAFT 단계만 허용 (작성 보조). 제출 후엔 PO 만 관리.</li>
+     *   <li>그 외: 거부. 외부 운영진 분기 없음 — 정책상 기본정보 수정은 PO 전용.</li>
      *   <li>COMPLETED / ABORTED: 절대 차단 (도메인 레벨 가드 {@code Project#validateMutable} 와 정합)</li>
      * </ul>
      */
@@ -99,12 +101,14 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
                 case COMPLETED, ABORTED -> false;
             };
         }
-        return switch (project.getStatus()) {
-            case PENDING_REVIEW, IN_PROGRESS ->
-                isCentralCore(subject)
-                    || isChapterPresidentOf(subject, project.getChapterId(), project.getGisuId());
-            case DRAFT, COMPLETED, ABORTED -> false;
-        };
+        if (project.getStatus() == ProjectStatus.DRAFT && isCreator(subject, project)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isCreator(SubjectAttributes subject, Project project) {
+        return Objects.equals(subject.memberId(), project.getCreatedByMemberId());
     }
 
     /**
@@ -118,13 +122,6 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
             case PENDING_REVIEW, IN_PROGRESS -> isCentralCore(subject);
             case DRAFT, COMPLETED, ABORTED -> false;
         };
-    }
-
-    private boolean isChapterPresidentOf(SubjectAttributes subject, Long chapterId, Long gisuId) {
-        return subject.roleAttributes().stream()
-            .anyMatch(role -> role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
-                && Objects.equals(role.gisuId(), gisuId)
-                && Objects.equals(role.organizationId(), chapterId));
     }
 
     private boolean isCentralCore(SubjectAttributes subject) {

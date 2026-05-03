@@ -323,7 +323,7 @@ class ProjectPermissionEvaluatorTest {
     }
 
     @Test
-    void EDIT은_PENDING_REVIEW에서_중앙총괄_허용() {
+    void EDIT은_PENDING_REVIEW에서_중앙총괄도_거부() {
         Long projectId = 100L;
         given(loadProjectPort.findById(projectId))
             .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.PENDING_REVIEW)));
@@ -331,7 +331,7 @@ class ProjectPermissionEvaluatorTest {
         SubjectAttributes subject = subjectWith(20L, List.of(), List.of(centralCoreRole()));
         ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.EDIT);
 
-        assertThat(sut.evaluate(subject, permission)).isTrue();
+        assertThat(sut.evaluate(subject, permission)).isFalse();
     }
 
     @Test
@@ -348,7 +348,7 @@ class ProjectPermissionEvaluatorTest {
     }
 
     @Test
-    void EDIT은_IN_PROGRESS에서_중앙총괄_허용() {
+    void EDIT은_IN_PROGRESS에서_중앙총괄도_거부() {
         Long projectId = 100L;
         given(loadProjectPort.findById(projectId))
             .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.IN_PROGRESS)));
@@ -356,11 +356,11 @@ class ProjectPermissionEvaluatorTest {
         SubjectAttributes subject = subjectWith(20L, List.of(), List.of(centralCoreRole()));
         ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.EDIT);
 
-        assertThat(sut.evaluate(subject, permission)).isTrue();
+        assertThat(sut.evaluate(subject, permission)).isFalse();
     }
 
     @Test
-    void EDIT은_PENDING_REVIEW에서_본인_지부장_허용() {
+    void EDIT은_PENDING_REVIEW에서_지부장도_거부() {
         Long projectId = 100L;
         given(loadProjectPort.findById(projectId))
             .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.PENDING_REVIEW)));
@@ -369,50 +369,41 @@ class ProjectPermissionEvaluatorTest {
             List.of(chapterPresidentRole(1L, 1L)));
         ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.EDIT);
 
-        assertThat(sut.evaluate(subject, permission)).isTrue();
+        assertThat(sut.evaluate(subject, permission)).isFalse();
     }
 
     @Test
-    void EDIT은_IN_PROGRESS에서_본인_지부장_허용() {
+    void EDIT은_DRAFT에서_creator_허용() {
+        Long ownerId = 10L;
+        Long creatorId = 20L;
         Long projectId = 100L;
-        given(loadProjectPort.findById(projectId))
-            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.IN_PROGRESS)));
+        Project p = project(projectId, ownerId, ProjectStatus.DRAFT);
+        ReflectionTestUtils.setField(p, "createdByMemberId", creatorId);
+        given(loadProjectPort.findById(projectId)).willReturn(Optional.of(p));
 
-        SubjectAttributes subject = subjectWith(20L, List.of(),
-            List.of(chapterPresidentRole(1L, 1L)));
+        SubjectAttributes subject = subjectWith(creatorId, List.of(), List.of());
         ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.EDIT);
 
         assertThat(sut.evaluate(subject, permission)).isTrue();
     }
 
     @Test
-    void EDIT은_다른_지부의_지부장이면_거부() {
+    void EDIT은_PENDING_REVIEW에서_creator는_거부() {
+        Long ownerId = 10L;
+        Long creatorId = 20L;
         Long projectId = 100L;
-        given(loadProjectPort.findById(projectId))
-            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.IN_PROGRESS)));
+        Project p = project(projectId, ownerId, ProjectStatus.PENDING_REVIEW);
+        ReflectionTestUtils.setField(p, "createdByMemberId", creatorId);
+        given(loadProjectPort.findById(projectId)).willReturn(Optional.of(p));
 
-        SubjectAttributes subject = subjectWith(20L, List.of(),
-            List.of(chapterPresidentRole(2L, 1L)));   // 본 프로젝트의 chapterId=1, 지부장은 2
+        SubjectAttributes subject = subjectWith(creatorId, List.of(), List.of());
         ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.EDIT);
 
         assertThat(sut.evaluate(subject, permission)).isFalse();
     }
 
     @Test
-    void EDIT은_다른_기수의_지부장이면_거부() {
-        Long projectId = 100L;
-        given(loadProjectPort.findById(projectId))
-            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.IN_PROGRESS)));
-
-        SubjectAttributes subject = subjectWith(20L, List.of(),
-            List.of(chapterPresidentRole(1L, 2L)));   // 본 프로젝트의 gisuId=1, 지부장 gisuId=2
-        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.EDIT);
-
-        assertThat(sut.evaluate(subject, permission)).isFalse();
-    }
-
-    @Test
-    void EDIT은_DRAFT에서는_지부장도_거부() {
+    void EDIT은_DRAFT에서는_creator_아니면_거부() {
         Long projectId = 100L;
         given(loadProjectPort.findById(projectId))
             .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.DRAFT)));
