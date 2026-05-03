@@ -3,6 +3,8 @@ package com.umc.product.project.domain;
 import com.umc.product.common.BaseEntity;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -143,14 +145,45 @@ public class ProjectMatchingRound extends BaseEntity {
         ProjectMatchingRound newRound,
         ProjectMatchingRound existingRound
     ) {
-        // throw some ProjectDomainExceptions ,,,!!
+        if (existingRound == null || newRound == null) {
+            return;
+        }
+        boolean sameChapter = newRound.chapterId.equals(existingRound.chapterId);
+        boolean overlapped = !newRound.decisionDeadline.isBefore(existingRound.startsAt)
+            && !existingRound.decisionDeadline.isBefore(newRound.startsAt);
+
+        if (sameChapter && overlapped) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED);
+        }
     }
 
     /**
      * 매칭 차수의 날짜가 유효한지 검증합니다.
      */
     public static void validateDates(Instant startsAt, Instant endsAt, Instant decisionDeadline) {
-        // throw some ProjectDomainExceptions ,,,!!
+        if (startsAt == null || endsAt == null || decisionDeadline == null
+            || !startsAt.isBefore(endsAt)
+            || !endsAt.isBefore(decisionDeadline)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_INVALID_PERIOD);
+        }
+    }
+
+    /**
+     * 매칭 차수 기본 정보와 일정을 변경합니다.
+     */
+    public void update(
+        String name, String description, MatchingType type, MatchingPhase phase,
+        Instant startsAt, Instant endsAt, Instant decisionDeadline
+    ) {
+        validateDates(startsAt, endsAt, decisionDeadline);
+
+        this.name = name;
+        this.description = description;
+        this.type = type;
+        this.phase = phase;
+        this.startsAt = startsAt;
+        this.endsAt = endsAt;
+        this.decisionDeadline = decisionDeadline;
     }
 
     /**
@@ -159,6 +192,11 @@ public class ProjectMatchingRound extends BaseEntity {
      * 각 매개변수에 대한 설명은 {@link #create}를 참조해주세요.
      */
     public void reschedule(Instant startsAt, Instant endsAt, Instant decisionDeadline) {
+        validateDates(startsAt, endsAt, decisionDeadline);
+
+        this.startsAt = startsAt;
+        this.endsAt = endsAt;
+        this.decisionDeadline = decisionDeadline;
     }
 
     /**
@@ -167,6 +205,8 @@ public class ProjectMatchingRound extends BaseEntity {
      * @param executedByMemberId 실행한 지부장 ID
      */
     public void executeAutoDecision(Long executedByMemberId) {
+        this.autoDecisionExecutedAt = Instant.now();
+        this.autoDecisionExecutedMemberId = executedByMemberId;
     }
 
     /*
@@ -184,7 +224,7 @@ public class ProjectMatchingRound extends BaseEntity {
      * @return 제공된 시점을 기준으로 매칭 차수가 활성화되었는지 여부
      */
     public boolean isOpenAt(Instant now) {
-        return false;
+        return !startsAt.isAfter(now) && !endsAt.isBefore(now);
     }
 
     /**
@@ -198,6 +238,6 @@ public class ProjectMatchingRound extends BaseEntity {
      * @return 선발 마감 기한 경과 여부
      */
     public boolean isDecisionDeadlinePassed(Instant now) {
-        return false;
+        return decisionDeadline.isBefore(now);
     }
 }
