@@ -15,7 +15,7 @@ public class MemberFixture extends FixtureSupport {
         this.saveMemberPort = saveMemberPort;
     }
 
-    public Member normalMember(String name) {
+    public Member 일반(String name) {
         String fixtureName = valueOrFixture(name, "member", 10);
         Member member = MONKEY.giveMeBuilder(Member.class)
             .set("name", fixtureName)
@@ -27,7 +27,7 @@ public class MemberFixture extends FixtureSupport {
         return saveMemberPort.save(member);
     }
 
-    public Member normalMember() {
-        return normalMember(fixtureString("member", 10));
+    public Member 일반() {
+        return 일반(fixtureString("member", 10));
     }
 }

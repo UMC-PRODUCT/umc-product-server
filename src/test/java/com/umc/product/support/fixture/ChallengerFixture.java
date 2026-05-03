@@ -16,7 +16,7 @@ public class ChallengerFixture extends FixtureSupport {
         this.saveChallengerPort = saveChallengerPort;
     }
 
-    public Challenger normal(Long memberId, ChallengerPart part, Long gisuId) {
+    public Challenger 챌린저(Long memberId, ChallengerPart part, Long gisuId) {
         Challenger challenger = MONKEY.giveMeBuilder(Challenger.class)
             .set("memberId", memberId)
             .set("part", part)

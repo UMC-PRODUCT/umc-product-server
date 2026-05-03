@@ -49,7 +49,7 @@ class TermAgreementIntegrationTest extends IntegrationTestSupport {
     @Test
     void 회원이_약관에_동의하면_동의_정보가_저장되고_조회된다() {
         // given
-        Member member = memberFixture.normalMember("길동");
+        Member member = memberFixture.일반("길동");
         Term term = termFixture.필수_약관(TermType.SERVICE);
 
         CreateTermConsentCommand command = CreateTermConsentCommand.builder()
@@ -75,7 +75,7 @@ class TermAgreementIntegrationTest extends IntegrationTestSupport {
     @Test
     void 동일_약관에_중복_동의하면_TERMS_CONSENT_ALREADY_EXISTS_예외가_발생한다() {
         // given
-        Member member = memberFixture.normalMember("이몽룡");
+        Member member = memberFixture.일반("이몽룡");
         Term term = termFixture.필수_약관(TermType.PRIVACY);
         termFixture.약관_동의(member.getId(), TermType.PRIVACY);
 
@@ -95,7 +95,7 @@ class TermAgreementIntegrationTest extends IntegrationTestSupport {
     @Test
     void 존재하지_않는_약관_ID로_동의를_시도하면_TERMS_NOT_FOUND_예외가_발생한다() {
         // given
-        Member member = memberFixture.normalMember("성춘향");
+        Member member = memberFixture.일반("성춘향");
         Long nonExistentTermId = 9_999L;
 
         CreateTermConsentCommand command = CreateTermConsentCommand.builder()
