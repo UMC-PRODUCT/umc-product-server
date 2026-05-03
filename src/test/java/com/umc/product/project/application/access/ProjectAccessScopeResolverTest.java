@@ -184,10 +184,35 @@ class ProjectAccessScopeResolverTest {
         given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of());
         given(loadProjectPort.existsByOwnerAndGisu(memberId, gisuId)).willReturn(true);
 
-        ProjectAccessScope scope = sut.resolveForManagement(memberId, gisuId, Set.of(ProjectStatus.DRAFT));
+        Set<ProjectStatus> requested = Set.of(
+            ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS,
+            ProjectStatus.COMPLETED, ProjectStatus.ABORTED);
+        ProjectAccessScope scope = sut.resolveForManagement(memberId, gisuId, requested);
 
         assertThat(scope).isInstanceOf(OwnerOnly.class);
         assertThat(((OwnerOnly) scope).memberId()).isEqualTo(memberId);
+        // PO 본인은 DRAFT 도 노출 — 요청 status 에 DRAFT union
+        assertThat(((OwnerOnly) scope).visibleStatuses()).contains(ProjectStatus.DRAFT);
+        assertThat(((OwnerOnly) scope).visibleStatuses())
+            .containsAll(requested);
+    }
+
+    @Test
+    void management_은_운영진_분기는_DRAFT_제외() {
+        Long memberId = 10L;
+        Long gisuId = 1L;
+        given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, 5L, gisuId)
+        ));
+
+        Set<ProjectStatus> requested = Set.of(
+            ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS,
+            ProjectStatus.COMPLETED, ProjectStatus.ABORTED);
+        ProjectAccessScope scope = sut.resolveForManagement(memberId, gisuId, requested);
+
+        assertThat(scope).isInstanceOf(ChapterScoped.class);
+        assertThat(((ChapterScoped) scope).visibleStatuses())
+            .doesNotContain(ProjectStatus.DRAFT);
     }
 
     @Test

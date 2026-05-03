@@ -11,6 +11,7 @@ import com.umc.product.project.application.access.ProjectAccessScope.PublicOnly;
 import com.umc.product.project.application.access.ProjectAccessScope.SchoolScoped;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.enums.ProjectStatus;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -62,12 +63,14 @@ public class ProjectAccessScopeResolver {
     /**
      * 관리 화면(PROJECT-006) 컨텍스트. 역할별 scope 차등 적용.
      * <ol>
-     *   <li>Central Core → 전체 (요청 상태 그대로)</li>
-     *   <li>지부장 → 본인 지부</li>
-     *   <li>학교 회장단 → 본인 학교</li>
-     *   <li>PM 챌린저 → 본인이 owner 인 프로젝트만</li>
+     *   <li>Central Core → 전체 (DRAFT 제외)</li>
+     *   <li>지부장 → 본인 지부 (DRAFT 제외)</li>
+     *   <li>학교 회장단 → 본인 학교 (DRAFT 제외)</li>
+     *   <li>PM 챌린저 → 본인이 owner 인 프로젝트만 (DRAFT 포함)</li>
      *   <li>그 외 → 관리 대상 0건</li>
      * </ol>
+     * <p>
+     * {@code requestedStatuses} 는 운영진 분기에 그대로 전달되며, PO 분기에서는 DRAFT 가 union 된다.
      */
     public ProjectAccessScope resolveForManagement(
         Long memberId, Long gisuId, Set<ProjectStatus> requestedStatuses
@@ -91,7 +94,9 @@ public class ProjectAccessScopeResolver {
         }
 
         if (loadProjectPort.existsByOwnerAndGisu(memberId, gisuId)) {
-            return new OwnerOnly(memberId, requestedStatuses);
+            Set<ProjectStatus> withDraft = EnumSet.copyOf(requestedStatuses);
+            withDraft.add(ProjectStatus.DRAFT);
+            return new OwnerOnly(memberId, withDraft);
         }
 
         return new None();
