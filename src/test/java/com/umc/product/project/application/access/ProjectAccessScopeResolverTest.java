@@ -104,20 +104,32 @@ class ProjectAccessScopeResolverTest {
     }
 
     @Test
-    void publicSearch_은_운영진이_DRAFT_요청해도_DRAFT_제외() {
+    void publicSearch_은_운영진이_DRAFT_요청하면_거부() {
         Long memberId = 10L;
         Long gisuId = 1L;
         given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of(
             roleInfo(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, 5L, gisuId)
         ));
 
-        ProjectAccessScope scope = sut.resolveForPublicSearch(memberId, gisuId,
-            Set.of(ProjectStatus.DRAFT, ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS));
+        Set<ProjectStatus> requested = Set.of(
+            ProjectStatus.DRAFT, ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS);
 
-        assertThat(scope).isInstanceOf(All.class);
-        assertThat(((All) scope).visibleStatuses())
-            .doesNotContain(ProjectStatus.DRAFT)
-            .containsExactlyInAnyOrder(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS);
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                sut.resolveForPublicSearch(memberId, gisuId, requested))
+            .isInstanceOf(com.umc.product.project.domain.exception.ProjectDomainException.class);
+    }
+
+    @Test
+    void publicSearch_은_일반_챌린저가_PR_요청하면_거부() {
+        Long memberId = 10L;
+        Long gisuId = 1L;
+        given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of());
+
+        Set<ProjectStatus> requested = Set.of(ProjectStatus.PENDING_REVIEW);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
+                sut.resolveForPublicSearch(memberId, gisuId, requested))
+            .isInstanceOf(com.umc.product.project.domain.exception.ProjectDomainException.class);
     }
 
     // --- resolveForManagement ---

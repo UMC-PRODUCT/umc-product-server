@@ -11,12 +11,13 @@ import com.umc.product.project.application.access.ProjectAccessScope.PublicOnly;
 import com.umc.product.project.application.access.ProjectAccessScope.SchoolScoped;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.enums.ProjectStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -36,9 +37,12 @@ public class ProjectAccessScopeResolver {
     /**
      * 공개 검색(PROJECT-001) 컨텍스트.
      * <p>
-     * 총괄단(SUPER_ADMIN/총괄/부총괄) 또는 지부장이면 비공개 status 까지 전체 노출. 단 DRAFT 는 운영진도 일반 조회로
-     * 못 보므로 강제 제외 — PO 본인은 단건 또는 {@code /me/draft} 로 접근. 그 외(학교 회장단 포함)는 공개 status
-     * (IN_PROGRESS / COMPLETED) 만 노출.
+     * 권한 별 노출 가능 status:
+     * <ul>
+     *   <li>총괄단(SUPER_ADMIN/총괄/부총괄) ∪ 지부장: DRAFT 제외 전체 (PR/IP/COMPLETED/ABORTED)</li>
+     *   <li>그 외(일반 챌린저, 학교 회장단): 공개 status (IN_PROGRESS / COMPLETED)</li>
+     * </ul>
+     * 호출자가 본인 권한 외 status 를 요청하면 {@link ProjectErrorCode#PROJECT_ACCESS_DENIED} 로 거부한다.
      */
     public ProjectAccessScope resolveForPublicSearch(
         Long memberId, Long gisuId, Set<ProjectStatus> requestedStatuses
@@ -52,10 +56,16 @@ public class ProjectAccessScopeResolver {
                 || role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT);
 
         if (isStaff) {
-            Set<ProjectStatus> nonDraft = requestedStatuses.stream()
-                .filter(status -> status != ProjectStatus.DRAFT)
-                .collect(Collectors.toUnmodifiableSet());
-            return new All(nonDraft);
+            if (requestedStatuses.contains(ProjectStatus.DRAFT)) {
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
+            }
+            return new All(requestedStatuses);
+        }
+
+        boolean publicAllowed = requestedStatuses.stream()
+            .allMatch(s -> s == ProjectStatus.IN_PROGRESS || s == ProjectStatus.COMPLETED);
+        if (!publicAllowed) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
         return new PublicOnly();
     }
