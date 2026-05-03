@@ -476,7 +476,7 @@ class ProjectPermissionEvaluatorTest {
     }
 
     @Test
-    void MANAGE는_PENDING_REVIEW에서_본인_지부장_허용() {
+    void MANAGE는_PENDING_REVIEW에서_지부장도_거부() {
         Long projectId = 100L;
         given(loadProjectPort.findById(projectId))
             .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.PENDING_REVIEW)));
@@ -485,7 +485,7 @@ class ProjectPermissionEvaluatorTest {
             List.of(chapterPresidentRole(1L, 1L)));
         ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.MANAGE);
 
-        assertThat(sut.evaluate(subject, permission)).isTrue();
+        assertThat(sut.evaluate(subject, permission)).isFalse();
     }
 
     @Test

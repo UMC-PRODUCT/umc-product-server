@@ -97,14 +97,12 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
     /**
      * 운영진 전용 상태 전이 액션 (publish/abort/complete 등). PM 도 차단된다 — Admin 검토 우회 방지.
      * <p>
-     * 본인 지부장 또는 Central Core 만 통과. 종료 상태(COMPLETED/ABORTED)는 절대 차단.
+     * 총괄단(SUPER_ADMIN/총괄/부총괄) 만 통과. 종료 상태(COMPLETED/ABORTED)는 절대 차단.
      */
     private boolean canManage(SubjectAttributes subject, ResourcePermission permission) {
         Project project = loadProject(permission);
         return switch (project.getStatus()) {
-            case PENDING_REVIEW, IN_PROGRESS ->
-                isCentralCore(subject)
-                    || isChapterPresidentOf(subject, project.getChapterId(), project.getGisuId());
+            case PENDING_REVIEW, IN_PROGRESS -> isCentralCore(subject);
             case DRAFT, COMPLETED, ABORTED -> false;
         };
     }
