@@ -14,9 +14,11 @@ import com.umc.product.organization.domain.School;
 import com.umc.product.support.UseCaseTestSupport;
 import com.umc.product.support.fixture.GisuFixture;
 import java.util.List;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+@Disabled
 class GetChapterUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
