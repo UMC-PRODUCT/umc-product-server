@@ -81,7 +81,7 @@ public class ProjectApplication extends BaseEntity {
         this.formResponseId = formResponseId;
         this.applicantMemberId = applicantMemberId;
         this.appliedMatchingRound = appliedMatchingRound;
-        this.status = ProjectApplicationStatus.PENDING;
+        this.status = ProjectApplicationStatus.DRAFT;
     }
 
     public static ProjectApplication create(
@@ -134,7 +134,7 @@ public class ProjectApplication extends BaseEntity {
 //        validateIsSubmitted("지원서가 제출된 상태에서만 철회할 수 있습니다.");
 
         // HARD DELETE 로직
-        // PENDING일 떄, 즉 임시저장본 일 때 삭제하는 로직 또한 필요할 것 같음
+        // Draft일 떄, 즉 임시저장본 일 때 삭제하는 로직 또한 필요할 것 같음
 
         // TODO: 악악악...
     }
@@ -143,15 +143,15 @@ public class ProjectApplication extends BaseEntity {
      * 지원서 제출 처리 (임시저장에서만 이동 가능)
      */
     public void submit() {
-        if (!this.isPending()) {
+        if (!this.isDraft()) {
             throw new ProjectDomainException(ProjectErrorCode.APPLICATION_NOT_SUBMITTED);
         }
 
         this.status = ProjectApplicationStatus.SUBMITTED;
     }
 
-    public boolean isPending() {
-        return this.status == ProjectApplicationStatus.PENDING;
+    public boolean isDraft() {
+        return this.status == ProjectApplicationStatus.DRAFT;
     }
 
     public boolean isSubmitted() {
