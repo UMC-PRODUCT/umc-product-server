@@ -22,12 +22,10 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * FileCommandService 통합 테스트
  */
-@Transactional
 class FileCommandServiceTest extends UseCaseTestSupport {
 
     @Autowired
