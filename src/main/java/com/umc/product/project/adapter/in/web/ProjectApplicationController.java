@@ -24,7 +24,7 @@ public class ProjectApplicationController {
     @PostMapping("/{projectId}/applications")
     @Operation(
         summary = "[APPLY-001] 챌린저 지원서 Draft 생성",
-        description = "챌린저가 특정 프로젝트의 지원서를 PENDING 상태로 생성합니다. 이미 PENDING 지원서가 있으면 기존 application 정보 반환."
+        description = "챌린저가 특정 프로젝트의 지원서를 DRAFT 상태로 생성합니다. 이미 DRAFT 지원서가 있으면 기존 application 정보 반환."
     )
     public ProjectApplicationStatusResponse createDraft(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -36,7 +36,7 @@ public class ProjectApplicationController {
     @PutMapping("/{projectId}/applications/me")
     @Operation(
         summary = "[APPLY-002] 챌린저 지원서 임시저장",
-        description = "본문이 곧 답변의 새 전체 상태가 된다. 본인의 PENDING 지원서에서만 호출 가능."
+        description = "본문이 곧 답변의 새 전체 상태가 된다. 본인의 DRAFT 지원서에서만 호출 가능."
     )
     public ProjectApplicationStatusResponse updateDraft(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -49,7 +49,7 @@ public class ProjectApplicationController {
     @PostMapping("/{projectId}/applications/me/submit")
     @Operation(
         summary = "[APPLY-003] 챌린저 지원서 최종 제출",
-        description = "PENDING -> SUBMITTED 전이. 필수 답변 누락 시 400. 본인의 PENDING 지원서에서만 호출 가능."
+        description = "DRAFT -> SUBMITTED 전이. 필수 답변 누락 시 400. 본인의 DRAFT 지원서에서만 호출 가능."
     )
     public ProjectApplicationStatusResponse submit(
         @CurrentMember MemberPrincipal memberPrincipal,
