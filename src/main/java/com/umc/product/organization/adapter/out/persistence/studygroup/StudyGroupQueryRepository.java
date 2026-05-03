@@ -13,6 +13,7 @@ import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.organization.adapter.out.persistence.studygroup.projection.StudyGroupHeaderRow;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
@@ -164,7 +165,8 @@ public class StudyGroupQueryRepository {
                     studyGroup.id,
                     studyGroup.name,
                     studyGroup.gisuId,
-                    studyGroup.part
+                    studyGroup.part,
+                    studyGroup.createdAt
                 )
             )
             .from(studyGroup)
@@ -250,6 +252,7 @@ public class StudyGroupQueryRepository {
         return StudyGroupInfo.create(
             header.groupId(), header.name(),
             header.gisuId(), header.part(),
+            header.createdAt(),
             mentorsByGroup.get(header.groupId()), membersByGroup.get(header.groupId())
         );
     }
@@ -394,17 +397,5 @@ public class StudyGroupQueryRepository {
             school.name,
             member.profileImageId
         );
-    }
-
-    /**
-     * {@link #fetchGroupHeaders} 용 상위 그룹 헤더 Projection.
-     *
-     * @param groupId 스터디 그룹 ID
-     * @param name    스터디 그룹 이름
-     */
-    private record StudyGroupHeaderRow(
-        Long groupId, String name,
-        Long gisuId, ChallengerPart part
-    ) {
     }
 }
