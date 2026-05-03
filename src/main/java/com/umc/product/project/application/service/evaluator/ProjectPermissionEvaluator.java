@@ -64,10 +64,23 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
         };
     }
 
-    /** PLAN 파트 챌린저는 신규 프로젝트 작성 가능. */
+    /**
+     * 신규 프로젝트 작성 진입 권한 체크. PLAN 챌린저(본인 PO 등록) 또는
+     * 운영진(학교 회장단/지부장/총괄단 — 본인 scope 안의 PLAN 챌린저 임명) 통과.
+     * <p>
+     * PO target 이 호출자와 다른 경우의 scope 검증은 Service 레벨에서 수행한다.
+     */
     private boolean canWrite(SubjectAttributes subject) {
-        return subject.gisuChallengerInfos().stream()
+        boolean isPlanChallenger = subject.gisuChallengerInfos().stream()
             .anyMatch(info -> info.part() == ChallengerPart.PLAN);
+        if (isPlanChallenger) {
+            return true;
+        }
+        return subject.roleAttributes().stream()
+            .anyMatch(role -> role.roleType().isAtLeastCentralCore()
+                || role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
+                || role.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
+                || role.roleType() == ChallengerRoleType.SCHOOL_VICE_PRESIDENT);
     }
 
     /**

@@ -244,6 +244,32 @@ class ProjectPermissionEvaluatorTest {
         assertThat(sut.evaluate(subject, permission)).isFalse();
     }
 
+    @Test
+    void WRITE는_총괄단_허용() {
+        SubjectAttributes subject = subjectWith(1L, List.of(), List.of(centralCoreRole()));
+        ResourcePermission permission = ResourcePermission.ofType(ResourceType.PROJECT, PermissionType.WRITE);
+
+        assertThat(sut.evaluate(subject, permission)).isTrue();
+    }
+
+    @Test
+    void WRITE는_지부장_허용() {
+        SubjectAttributes subject = subjectWith(1L, List.of(),
+            List.of(chapterPresidentRole(1L, 1L)));
+        ResourcePermission permission = ResourcePermission.ofType(ResourceType.PROJECT, PermissionType.WRITE);
+
+        assertThat(sut.evaluate(subject, permission)).isTrue();
+    }
+
+    @Test
+    void WRITE는_학교_회장단_허용() {
+        SubjectAttributes subject = subjectWith(1L, List.of(),
+            List.of(schoolPresidentRole(1L, 1L)));
+        ResourcePermission permission = ResourcePermission.ofType(ResourceType.PROJECT, PermissionType.WRITE);
+
+        assertThat(sut.evaluate(subject, permission)).isTrue();
+    }
+
     // --- EDIT ---
 
     @Test

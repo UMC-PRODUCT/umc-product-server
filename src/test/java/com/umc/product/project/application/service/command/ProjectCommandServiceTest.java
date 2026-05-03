@@ -6,9 +6,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
@@ -50,6 +54,8 @@ class ProjectCommandServiceTest {
     @Mock
     GetChallengerUseCase getChallengerUseCase;
     @Mock
+    GetChallengerRoleUseCase getChallengerRoleUseCase;
+    @Mock
     GetGisuUseCase getGisuUseCase;
     @Mock
     GetChapterUseCase getChapterUseCase;
@@ -84,6 +90,18 @@ class ProjectCommandServiceTest {
 
     private GisuInfo gisuInfo() {
         return new GisuInfo(1L, 9L, null, null, true);
+    }
+
+    private ChallengerRoleInfo roleInfo(ChallengerRoleType type, OrganizationType orgType, Long orgId, Long gisuId) {
+        return ChallengerRoleInfo.builder()
+            .id(1L)
+            .challengerId(1L)
+            .roleType(type)
+            .organizationType(orgType)
+            .organizationId(orgId)
+            .responsiblePart(null)
+            .gisuId(gisuId)
+            .build();
     }
 
     // --- helpers ---
@@ -152,6 +170,160 @@ class ProjectCommandServiceTest {
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_DUPLICATE_IN_GISU);
+        }
+
+        @Test
+        void 총괄단이_다른_PLAN_챌린저를_PO로_지정하면_성공() {
+            var command = CreateDraftProjectCommand.builder()
+                .gisuId(1L)
+                .productOwnerMemberId(100L)
+                .requesterMemberId(200L)
+                .build();
+
+            given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
+            given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
+                .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
+            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(false);
+            given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
+            given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
+            given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of(
+                roleInfo(ChallengerRoleType.CENTRAL_PRESIDENT, OrganizationType.CENTRAL, null, 1L)
+            ));
+            given(saveProjectPort.save(any())).willAnswer(inv -> {
+                Project p = inv.getArgument(0);
+                ReflectionTestUtils.setField(p, "id", 99L);
+                return p;
+            });
+
+            Long result = sut.create(command);
+
+            assertThat(result).isEqualTo(99L);
+        }
+
+        @Test
+        void 지부장이_본인_지부_PLAN_챌린저를_PO로_지정하면_성공() {
+            var command = CreateDraftProjectCommand.builder()
+                .gisuId(1L)
+                .productOwnerMemberId(100L)
+                .requesterMemberId(200L)
+                .build();
+
+            given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
+            given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
+                .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
+            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(false);
+            given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
+            given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
+            given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of(
+                roleInfo(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, 5L, 1L)
+            ));
+            given(saveProjectPort.save(any())).willAnswer(inv -> {
+                Project p = inv.getArgument(0);
+                ReflectionTestUtils.setField(p, "id", 99L);
+                return p;
+            });
+
+            Long result = sut.create(command);
+
+            assertThat(result).isEqualTo(99L);
+        }
+
+        @Test
+        void 지부장이_다른_지부의_PLAN_챌린저를_PO로_지정하면_거부() {
+            var command = CreateDraftProjectCommand.builder()
+                .gisuId(1L)
+                .productOwnerMemberId(100L)
+                .requesterMemberId(200L)
+                .build();
+
+            given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
+            given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
+                .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
+            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(false);
+            given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
+            given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
+            given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of(
+                roleInfo(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, 99L, 1L)
+            ));
+
+            assertThatThrownBy(() -> sut.create(command))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
+        }
+
+        @Test
+        void 학교_회장이_본인_학교_PLAN_챌린저를_PO로_지정하면_성공() {
+            var command = CreateDraftProjectCommand.builder()
+                .gisuId(1L)
+                .productOwnerMemberId(100L)
+                .requesterMemberId(200L)
+                .build();
+
+            given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
+            given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
+                .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
+            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(false);
+            given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
+            given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
+            given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of(
+                roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, 10L, 1L)
+            ));
+            given(saveProjectPort.save(any())).willAnswer(inv -> {
+                Project p = inv.getArgument(0);
+                ReflectionTestUtils.setField(p, "id", 99L);
+                return p;
+            });
+
+            Long result = sut.create(command);
+
+            assertThat(result).isEqualTo(99L);
+        }
+
+        @Test
+        void 학교_회장이_다른_학교의_PLAN_챌린저를_PO로_지정하면_거부() {
+            var command = CreateDraftProjectCommand.builder()
+                .gisuId(1L)
+                .productOwnerMemberId(100L)
+                .requesterMemberId(200L)
+                .build();
+
+            given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
+            given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
+                .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
+            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(false);
+            given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
+            given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
+            given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of(
+                roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, 99L, 1L)
+            ));
+
+            assertThatThrownBy(() -> sut.create(command))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
+        }
+
+        @Test
+        void 일반_PLAN_챌린저가_다른_PLAN_챌린저를_PO로_지정하면_거부() {
+            var command = CreateDraftProjectCommand.builder()
+                .gisuId(1L)
+                .productOwnerMemberId(100L)
+                .requesterMemberId(200L)
+                .build();
+
+            given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
+            given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
+                .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
+            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(false);
+            given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
+            given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
+            given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of());
+
+            assertThatThrownBy(() -> sut.create(command))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
     }
 
