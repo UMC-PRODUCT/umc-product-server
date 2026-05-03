@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -24,4 +25,15 @@ public class StudyGroupSchedule extends BaseEntity {
 
     private Long scheduleId;
 
+    private Long weeklyCurriculumId;
+
+    @Builder
+    private StudyGroupSchedule(
+        Long studyGroupId, Long scheduleId,
+        Long weeklyCurriculumId
+    ) {
+        this.studyGroupId = studyGroupId;
+        this.scheduleId = scheduleId;
+        this.weeklyCurriculumId = weeklyCurriculumId;
+    }
 }
