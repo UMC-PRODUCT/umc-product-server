@@ -25,11 +25,11 @@ public class ChallengerFixture extends FixtureSupport {
         return saveChallengerPort.save(challenger);
     }
 
-    public Challenger web(Long memberId, Long gisuId) {
+    public Challenger 웹(Long memberId, Long gisuId) {
         return saveChallengerPort.save(new Challenger(memberId, ChallengerPart.WEB, gisuId));
     }
 
-    public Challenger springBoot(Long memberId, Long gisuId) {
+    public Challenger 스프링(Long memberId, Long gisuId) {
         return saveChallengerPort.save(new Challenger(memberId, ChallengerPart.SPRINGBOOT, gisuId));
     }
 }
