@@ -412,6 +412,7 @@ class ProjectQueryRepositoryTest {
         ReflectionTestUtils.setField(project, "name", name);
         ReflectionTestUtils.setField(project, "productOwnerMemberId", ownerId);
         ReflectionTestUtils.setField(project, "productOwnerSchoolId", ownerSchoolId);
+        ReflectionTestUtils.setField(project, "createdByMemberId", ownerId);
         em.persist(project);
         return project;
     }

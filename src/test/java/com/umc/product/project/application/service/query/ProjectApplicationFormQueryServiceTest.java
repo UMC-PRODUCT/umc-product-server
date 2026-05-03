@@ -131,6 +131,7 @@ class ProjectApplicationFormQueryServiceTest {
         ReflectionTestUtils.setField(project, "status", ProjectStatus.DRAFT);
         ReflectionTestUtils.setField(project, "name", "Triple");
         ReflectionTestUtils.setField(project, "productOwnerMemberId", 10L);
+        ReflectionTestUtils.setField(project, "createdByMemberId", 10L);
         return project;
     }
 

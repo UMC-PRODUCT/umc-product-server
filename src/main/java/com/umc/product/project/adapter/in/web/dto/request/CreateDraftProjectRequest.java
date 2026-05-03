@@ -14,6 +14,7 @@ public record CreateDraftProjectRequest(
         return CreateDraftProjectCommand.builder()
             .gisuId(gisuId)
             .productOwnerMemberId(requesterMemberId)
+            .requesterMemberId(requesterMemberId)
             .build();
     }
 }

@@ -60,7 +60,7 @@ class ProjectCommandServiceTest {
     ProjectCommandService sut;
 
     private Project createProject(ProjectStatus status) {
-        Project project = Project.createDraft(1L, 2L, 100L, 7L);
+        Project project = Project.createDraft(1L, 2L, 100L, 7L, 100L);
         ReflectionTestUtils.setField(project, "id", 1L);
         ReflectionTestUtils.setField(project, "status", status);
         return project;
@@ -96,6 +96,7 @@ class ProjectCommandServiceTest {
             var command = CreateDraftProjectCommand.builder()
                 .gisuId(1L)
                 .productOwnerMemberId(100L)
+                .requesterMemberId(100L)
                 .build();
 
             given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
@@ -121,6 +122,7 @@ class ProjectCommandServiceTest {
             var command = CreateDraftProjectCommand.builder()
                 .gisuId(1L)
                 .productOwnerMemberId(100L)
+                .requesterMemberId(100L)
                 .build();
 
             given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
@@ -138,6 +140,7 @@ class ProjectCommandServiceTest {
             var command = CreateDraftProjectCommand.builder()
                 .gisuId(1L)
                 .productOwnerMemberId(100L)
+                .requesterMemberId(100L)
                 .build();
 
             given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());

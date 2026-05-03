@@ -79,7 +79,8 @@ public class ProjectCommandService implements
             command.gisuId(),
             chapter.id(),
             command.productOwnerMemberId(),
-            member.schoolId()
+            member.schoolId(),
+            command.requesterMemberId()
         );
         return saveProjectPort.save(project).getId();
     }
