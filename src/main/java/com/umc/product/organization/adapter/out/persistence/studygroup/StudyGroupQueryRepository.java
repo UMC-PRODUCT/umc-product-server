@@ -165,7 +165,8 @@ public class StudyGroupQueryRepository {
                     studyGroup.id,
                     studyGroup.name,
                     studyGroup.gisuId,
-                    studyGroup.part
+                    studyGroup.part,
+                    studyGroup.createdAt
                 )
             )
             .from(studyGroup)
@@ -251,6 +252,7 @@ public class StudyGroupQueryRepository {
         return StudyGroupInfo.create(
             header.groupId(), header.name(),
             header.gisuId(), header.part(),
+            header.createdAt(),
             mentorsByGroup.get(header.groupId()), membersByGroup.get(header.groupId())
         );
     }
