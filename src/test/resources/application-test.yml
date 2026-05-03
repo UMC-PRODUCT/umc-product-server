@@ -1,9 +1,4 @@
 spring:
-  config:
-    import: "classpath:application-test.yml"  # main의 설정을 가져옴
-  profiles:
-    active: test
-
   mail:
     host: some_mail_host
     port: 587
@@ -56,6 +51,11 @@ logging:
     testcontainers:
       level: DEBUG
 
+sentry:
+  dsn:
+  logging:
+    enabled: false
+
 app:
   base-url: http://localhost:8080
   cors:
@@ -71,5 +71,6 @@ app:
 
 
   oauth2:
+    frontend-redirect-url: about:blank
     google:
       client-id-list: apps.googleusercontent.com
