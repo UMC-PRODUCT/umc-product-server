@@ -2,9 +2,9 @@ package com.umc.product.schedule.adapter.in.web.v1.swagger;
 
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.organization.adapter.in.web.dto.request.CreateStudyGroupScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.CreateScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.CreateScheduleWithAttendanceRequest;
-import com.umc.product.schedule.adapter.in.web.v1.dto.request.CreateStudyGroupScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.UpdateScheduleLocationRequest;
 import com.umc.product.schedule.adapter.in.web.v1.dto.request.UpdateScheduleRequest;
 import com.umc.product.schedule.adapter.in.web.v1.dto.response.UpdateScheduleLocationResponse;

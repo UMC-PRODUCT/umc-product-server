@@ -1,6 +1,6 @@
 package com.umc.product.organization.adapter.in.web.swagger;
 
-import com.umc.product.schedule.adapter.in.web.v1.dto.request.CreateStudyGroupScheduleRequest;
+import com.umc.product.organization.adapter.in.web.dto.request.CreateStudyGroupScheduleRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,7 +23,7 @@ public interface StudyGroupScheduleControllerApi {
             CURRICULUM-0014 : 주차별 커리큘럼을 찾을 수 없습니다.
             ORGANIZAITON-0023 : 스터디 그룹을 찾을 수 없습니다.<br>
             ORGANIZATION-0036 : 스터디 그룹 일정은 출석 정책이 필수입니다.<br>
-             """,
+            """,
             content = @Content
         )
     })

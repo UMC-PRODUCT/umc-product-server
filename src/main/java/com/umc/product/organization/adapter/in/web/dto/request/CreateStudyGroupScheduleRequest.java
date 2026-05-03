@@ -1,4 +1,4 @@
-package com.umc.product.schedule.adapter.in.web.v1.dto.request;
+package com.umc.product.organization.adapter.in.web.dto.request;
 
 import com.umc.product.organization.application.port.in.command.dto.CreateStudyGroupScheduleCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
