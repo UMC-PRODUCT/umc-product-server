@@ -151,6 +151,33 @@ class ProjectPermissionEvaluatorTest {
     }
 
     @Test
+    void READ는_PENDING_REVIEW_프로젝트를_지부장_허용_scope_무관() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.PENDING_REVIEW)));
+
+        // 본 프로젝트의 chapterId=1 인데 지부장은 다른 지부(2) — 일반 조회는 scope 무관 통과
+        SubjectAttributes subject = subjectWith(20L, List.of(),
+            List.of(chapterPresidentRole(2L, 1L)));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.READ);
+
+        assertThat(sut.evaluate(subject, permission)).isTrue();
+    }
+
+    @Test
+    void READ는_PENDING_REVIEW_프로젝트를_학교_회장단_거부() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.PENDING_REVIEW)));
+
+        SubjectAttributes subject = subjectWith(20L, List.of(),
+            List.of(schoolPresidentRole(1L, 1L)));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.READ);
+
+        assertThat(sut.evaluate(subject, permission)).isFalse();
+    }
+
+    @Test
     void READ는_ABORTED_프로젝트를_작성자_또는_중앙총괄_허용() {
         Long projectId = 100L;
         given(loadProjectPort.findById(projectId))
@@ -172,6 +199,19 @@ class ProjectPermissionEvaluatorTest {
         ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.READ);
 
         assertThat(sut.evaluate(subject, permission)).isFalse();
+    }
+
+    @Test
+    void READ는_ABORTED_프로젝트를_지부장_허용_scope_무관() {
+        Long projectId = 100L;
+        given(loadProjectPort.findById(projectId))
+            .willReturn(Optional.of(project(projectId, 10L, ProjectStatus.ABORTED)));
+
+        SubjectAttributes subject = subjectWith(20L, List.of(),
+            List.of(chapterPresidentRole(2L, 1L)));
+        ResourcePermission permission = ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.READ);
+
+        assertThat(sut.evaluate(subject, permission)).isTrue();
     }
 
     // --- WRITE ---
@@ -526,6 +566,14 @@ class ProjectPermissionEvaluatorTest {
             ChallengerRoleType.CHAPTER_PRESIDENT,
             OrganizationType.CHAPTER,
             chapterId, null, gisuId
+        );
+    }
+
+    private RoleAttribute schoolPresidentRole(Long schoolId, Long gisuId) {
+        return new RoleAttribute(
+            ChallengerRoleType.SCHOOL_PRESIDENT,
+            OrganizationType.SCHOOL,
+            schoolId, null, gisuId
         );
     }
 

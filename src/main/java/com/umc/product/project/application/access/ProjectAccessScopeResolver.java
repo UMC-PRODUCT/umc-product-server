@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -34,13 +35,26 @@ public class ProjectAccessScopeResolver {
     /**
      * 공개 검색(PROJECT-001) 컨텍스트.
      * <p>
-     * 운영진(지부장/학교 회장단)도 일반 챌린저와 동일하게 IN_PROGRESS 만 노출. Central Core 만 전체 노출.
+     * 총괄단(SUPER_ADMIN/총괄/부총괄) 또는 지부장이면 비공개 status 까지 전체 노출. 단 DRAFT 는 운영진도 일반 조회로
+     * 못 보므로 강제 제외 — PO 본인은 단건 또는 {@code /me/draft} 로 접근. 그 외(학교 회장단 포함)는 공개 status
+     * (IN_PROGRESS / COMPLETED) 만 노출.
      */
     public ProjectAccessScope resolveForPublicSearch(
         Long memberId, Long gisuId, Set<ProjectStatus> requestedStatuses
     ) {
-        if (getChallengerRoleUseCase.isCentralCoreInGisu(memberId, gisuId)) {
-            return new All(requestedStatuses);
+        List<ChallengerRoleInfo> rolesInGisu = getChallengerRoleUseCase.findAllByMemberId(memberId).stream()
+            .filter(role -> Objects.equals(role.gisuId(), gisuId))
+            .toList();
+
+        boolean isStaff = rolesInGisu.stream()
+            .anyMatch(role -> role.roleType().isAtLeastCentralCore()
+                || role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT);
+
+        if (isStaff) {
+            Set<ProjectStatus> nonDraft = requestedStatuses.stream()
+                .filter(status -> status != ProjectStatus.DRAFT)
+                .collect(Collectors.toUnmodifiableSet());
+            return new All(nonDraft);
         }
         return new PublicOnly();
     }

@@ -117,7 +117,8 @@ public class ProjectQueryService implements
             case OwnerOnly(Long memberId, Set<ProjectStatus> statuses) ->
                 loadProjectPort.search(query.withOwnerFilter(memberId, statuses));
             case PublicOnly() ->
-                loadProjectPort.search(query.withStatuses(Set.of(ProjectStatus.IN_PROGRESS)));
+                loadProjectPort.search(query.withStatuses(
+                    Set.of(ProjectStatus.IN_PROGRESS, ProjectStatus.COMPLETED)));
             case None() ->
                 new PageImpl<>(List.of(), query.pageable(), 0L);
         };

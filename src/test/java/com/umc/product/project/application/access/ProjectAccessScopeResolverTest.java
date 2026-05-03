@@ -41,7 +41,9 @@ class ProjectAccessScopeResolverTest {
     void publicSearch_은_총괄단이면_All() {
         Long memberId = 10L;
         Long gisuId = 1L;
-        given(getChallengerRoleUseCase.isCentralCoreInGisu(memberId, gisuId)).willReturn(true);
+        given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.CENTRAL_PRESIDENT, OrganizationType.CENTRAL, null, gisuId)
+        ));
         Set<ProjectStatus> requested = Set.of(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS);
 
         ProjectAccessScope scope = sut.resolveForPublicSearch(memberId, gisuId, requested);
@@ -51,10 +53,24 @@ class ProjectAccessScopeResolverTest {
     }
 
     @Test
+    void publicSearch_은_지부장이면_All() {
+        Long memberId = 10L;
+        Long gisuId = 1L;
+        given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, 5L, gisuId)
+        ));
+        Set<ProjectStatus> requested = Set.of(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS);
+
+        ProjectAccessScope scope = sut.resolveForPublicSearch(memberId, gisuId, requested);
+
+        assertThat(scope).isInstanceOf(All.class);
+    }
+
+    @Test
     void publicSearch_은_일반_챌린저면_PublicOnly() {
         Long memberId = 10L;
         Long gisuId = 1L;
-        given(getChallengerRoleUseCase.isCentralCoreInGisu(memberId, gisuId)).willReturn(false);
+        given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of());
 
         ProjectAccessScope scope = sut.resolveForPublicSearch(memberId, gisuId, Set.of(ProjectStatus.IN_PROGRESS));
 
@@ -62,14 +78,46 @@ class ProjectAccessScopeResolverTest {
     }
 
     @Test
-    void publicSearch_은_지부장이라도_PublicOnly() {
+    void publicSearch_은_학교_회장단이면_PublicOnly() {
         Long memberId = 10L;
         Long gisuId = 1L;
-        given(getChallengerRoleUseCase.isCentralCoreInGisu(memberId, gisuId)).willReturn(false);
+        given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.SCHOOL_PRESIDENT, OrganizationType.SCHOOL, 7L, gisuId)
+        ));
 
         ProjectAccessScope scope = sut.resolveForPublicSearch(memberId, gisuId, Set.of(ProjectStatus.IN_PROGRESS));
 
         assertThat(scope).isInstanceOf(PublicOnly.class);
+    }
+
+    @Test
+    void publicSearch_은_타_기수_지부장이면_PublicOnly() {
+        Long memberId = 10L;
+        Long gisuId = 1L;
+        given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, 5L, 2L)
+        ));
+
+        ProjectAccessScope scope = sut.resolveForPublicSearch(memberId, gisuId, Set.of(ProjectStatus.IN_PROGRESS));
+
+        assertThat(scope).isInstanceOf(PublicOnly.class);
+    }
+
+    @Test
+    void publicSearch_은_운영진이_DRAFT_요청해도_DRAFT_제외() {
+        Long memberId = 10L;
+        Long gisuId = 1L;
+        given(getChallengerRoleUseCase.findAllByMemberId(memberId)).willReturn(List.of(
+            roleInfo(ChallengerRoleType.CHAPTER_PRESIDENT, OrganizationType.CHAPTER, 5L, gisuId)
+        ));
+
+        ProjectAccessScope scope = sut.resolveForPublicSearch(memberId, gisuId,
+            Set.of(ProjectStatus.DRAFT, ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS));
+
+        assertThat(scope).isInstanceOf(All.class);
+        assertThat(((All) scope).visibleStatuses())
+            .doesNotContain(ProjectStatus.DRAFT)
+            .containsExactlyInAnyOrder(ProjectStatus.PENDING_REVIEW, ProjectStatus.IN_PROGRESS);
     }
 
     // --- resolveForManagement ---

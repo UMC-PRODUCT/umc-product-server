@@ -47,6 +47,7 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
      * 단건 READ 분기. 비공개 상태(DRAFT/PENDING_REVIEW/ABORTED)는 권한자만 노출.
      * <p>
      * 목록 조회는 {@code resourceId} 가 없어 이 분기를 타지 않고 단순 통과 후 L3-A scope 에서 거른다.
+     * PR/ABORTED 는 PO + 총괄단(SUPER_ADMIN/총괄/부총괄) ∪ 지부장(scope 무관).
      */
     private boolean canRead(SubjectAttributes subject, ResourcePermission permission) {
         if (permission.resourceId() == null) {
@@ -56,7 +57,10 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
         return switch (project.getStatus()) {
             case IN_PROGRESS, COMPLETED -> true;
             case DRAFT -> isOwner(subject, project);
-            case PENDING_REVIEW, ABORTED -> isOwner(subject, project) || isCentralCore(subject);
+            case PENDING_REVIEW, ABORTED -> isOwner(subject, project)
+                || subject.roleAttributes().stream()
+                    .anyMatch(role -> role.roleType().isAtLeastCentralCore()
+                        || role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT);
         };
     }
 
