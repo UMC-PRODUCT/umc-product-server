@@ -41,19 +41,6 @@ public record ManagedProjectSummaryResponse(
             .build();
     }
 
-    public ManagedProjectSummaryResponse toPublic() {
-        return ManagedProjectSummaryResponse.builder()
-            .id(id)
-            .name(name)
-            .description(description)
-            .thumbnailImageUrl(thumbnailImageUrl)
-            .status(status)
-            .productOwner(productOwner == null ? null : productOwner.toPublic())
-            .partQuotas(partQuotas)
-            .partQuotaStatus(partQuotaStatus)
-            .build();
-    }
-
     private static PartQuotaStatus aggregateStatus(List<PartQuotaInfo> quotas) {
         if (quotas.isEmpty()) return null;
         boolean anyRecruiting = quotas.stream()

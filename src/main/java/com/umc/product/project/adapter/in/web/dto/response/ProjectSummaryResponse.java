@@ -35,18 +35,6 @@ public record ProjectSummaryResponse(
             .build();
     }
 
-    public ProjectSummaryResponse toPublic() {
-        return ProjectSummaryResponse.builder()
-            .id(id)
-            .name(name)
-            .description(description)
-            .thumbnailImageUrl(thumbnailImageUrl)
-            .productOwner(productOwner.toPublic())
-            .partQuotas(partQuotas)
-            .partQuotaStatus(partQuotaStatus)
-            .build();
-    }
-
     private static PartQuotaStatus aggregateStatus(List<PartQuotaInfo> quotas) {
         if (quotas.isEmpty()) return null;
         boolean anyRecruiting = quotas.stream()

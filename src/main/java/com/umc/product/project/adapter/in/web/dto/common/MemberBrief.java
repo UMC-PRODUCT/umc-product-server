@@ -5,8 +5,6 @@ import lombok.Builder;
 
 /**
  * 멤버 간략 정보. 여러 Response에 embedded되는 공용 값 객체.
- * <p>
- * {@link #toPublic()} 호출 시 실명({@code name})은 {@code null}로 마스킹됩니다.
  */
 @Builder
 public record MemberBrief(
@@ -15,10 +13,6 @@ public record MemberBrief(
     String name,
     String schoolName
 ) {
-    public MemberBrief toPublic() {
-        return new MemberBrief(memberId, nickname, null, schoolName);
-    }
-
     public static MemberBrief from(MemberInfo info) {
         return MemberBrief.builder()
             .memberId(info.id())

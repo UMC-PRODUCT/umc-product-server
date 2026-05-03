@@ -1,6 +1,5 @@
 package com.umc.product.project.adapter.in.web.assembler;
 
-import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -46,14 +45,11 @@ public class ProjectResponseAssembler {
     private final SearchProjectUseCase searchProjectUseCase;
     private final SearchManagedProjectUseCase searchManagedProjectUseCase;
     private final GetMemberUseCase getMemberUseCase;
-    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
 
     /**
      * PROJECT-001 프로젝트 목록 조회.
-     * <p>
-     * 마스킹: 본인이 PM 인 row 는 실명, Central Core 는 전체 실명, 그 외는 마스킹.
      */
     public PageResponse<ProjectSummaryResponse> searchFor(
         SearchProjectQuery query,
@@ -68,21 +64,16 @@ public class ProjectResponseAssembler {
             ? Map.of()
             : getMemberUseCase.findAllByIds(ownerIds);
 
-        boolean isCentralCore = getChallengerRoleUseCase.isCentralCoreInGisu(requesterMemberId, query.gisuId());
-
         return PageResponse.of(page, info -> {
             MemberBrief owner = toBrief(memberMap.get(info.productOwnerMemberId()));
-            ProjectSummaryResponse response = ProjectSummaryResponse.from(info, owner);
-            boolean canSeeFullInfo = isCentralCore
-                || Objects.equals(requesterMemberId, info.productOwnerMemberId());
-            return canSeeFullInfo ? response : response.toPublic();
+            return ProjectSummaryResponse.from(info, owner);
         });
     }
 
     /**
      * PROJECT-002 프로젝트 상세 조회.
      */
-    public ProjectDetailResponse detailFor(Long projectId, Long requesterMemberId) {
+    public ProjectDetailResponse detailFor(Long projectId) {
         ProjectInfo info = getProjectUseCase.getById(projectId);
 
         Map<Long, MemberInfo> memberMap = loadMembers(info);
@@ -92,18 +83,13 @@ public class ProjectResponseAssembler {
             .map(id -> toBrief(memberMap.get(id)))
             .toList();
 
-        ProjectDetailResponse response =
-            ProjectDetailResponse.from(info, owner, coOwners, resolveApplicationFormId(projectId));
-
-        boolean canSeeFullInfo = Objects.equals(requesterMemberId, info.productOwnerMemberId())
-            || getChallengerRoleUseCase.isCentralCoreInGisu(requesterMemberId, info.gisuId());
-        return canSeeFullInfo ? response : response.toPublic();
+        return ProjectDetailResponse.from(info, owner, coOwners, resolveApplicationFormId(projectId));
     }
 
     /**
      * PROJECT-006 관리 화면 프로젝트 목록.
      * <p>
-     * 호출자 역할에 따라 자동 scope 적용. 본인이 PM 인 row 또는 Central Core 호출 시 실명 노출, 그 외 마스킹.
+     * 호출자 역할에 따라 자동 scope 적용 (Service 단 {@code resolveForManagement}).
      */
     public PageResponse<ManagedProjectSummaryResponse> searchManagedFor(
         SearchManagedProjectQuery query,
@@ -118,15 +104,9 @@ public class ProjectResponseAssembler {
             ? Map.of()
             : getMemberUseCase.findAllByIds(ownerIds);
 
-        boolean isCentralCore = getChallengerRoleUseCase.isCentralCoreInGisu(
-            requesterMemberId, query.gisuId());
-
         return PageResponse.of(page, info -> {
             MemberBrief owner = toBrief(memberMap.get(info.productOwnerMemberId()));
-            ManagedProjectSummaryResponse response = ManagedProjectSummaryResponse.from(info, owner);
-            boolean canSeeFullInfo = isCentralCore
-                || Objects.equals(requesterMemberId, info.productOwnerMemberId());
-            return canSeeFullInfo ? response : response.toPublic();
+            return ManagedProjectSummaryResponse.from(info, owner);
         });
     }
 
@@ -135,7 +115,7 @@ public class ProjectResponseAssembler {
      * <p>
      * 메인 PM 별도 노출 + 보조 PM(PLAN 파트의 다른 멤버) + 그 외 파트별 그룹. 각 그룹은 닉네임 가나다순 정렬.
      */
-    public ProjectMembersResponse membersFor(Long projectId, Long requesterMemberId) {
+    public ProjectMembersResponse membersFor(Long projectId) {
         ProjectInfo info = getProjectUseCase.getById(projectId);
         List<ProjectMember> members = loadProjectMemberPort.listByProjectId(projectId);
 
@@ -169,16 +149,12 @@ public class ProjectResponseAssembler {
             .filter(g -> !g.members().isEmpty())
             .toList();
 
-        ProjectMembersResponse response = ProjectMembersResponse.builder()
+        return ProjectMembersResponse.builder()
             .projectId(projectId)
             .productOwner(productOwner)
             .coProductOwners(coProductOwners)
             .partGroups(partGroups)
             .build();
-
-        boolean canSeeFullInfo = Objects.equals(requesterMemberId, info.productOwnerMemberId())
-            || getChallengerRoleUseCase.isCentralCoreInGisu(requesterMemberId, info.gisuId());
-        return canSeeFullInfo ? response : response.toPublic();
     }
 
     /**
