@@ -6,7 +6,7 @@ import com.umc.product.organization.domain.School;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SchoolFixture {
+public class SchoolFixture extends FixtureSupport {
 
     private final SaveSchoolPort saveSchoolPort;
 
@@ -15,12 +15,20 @@ public class SchoolFixture {
     }
 
     public School 학교(String name) {
-        return saveSchoolPort.save(School.create(name, null));
+        return saveSchoolPort.save(School.create(valueOrFixture(name, "school", 50), null));
+    }
+
+    public School 학교() {
+        return 학교(fixtureString("school", 50));
     }
 
     public School 지부에_소속된_학교(String name, Chapter chapter) {
-        School school = School.create(name, null);
+        School school = School.create(valueOrFixture(name, "school", 50), null);
         school.assignToChapter(chapter);
         return saveSchoolPort.save(school);
+    }
+
+    public School 지부에_소속된_학교(Chapter chapter) {
+        return 지부에_소속된_학교(fixtureString("school", 50), chapter);
     }
 }

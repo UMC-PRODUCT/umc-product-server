@@ -13,7 +13,7 @@ import java.time.Instant;
 import org.springframework.stereotype.Component;
 
 @Component
-public class CurriculumFixture {
+public class CurriculumFixture extends FixtureSupport {
 
     private static final Instant DEFAULT_START = Instant.parse("2024-03-01T00:00:00Z");
     private static final Instant DEFAULT_END = Instant.parse("2024-03-07T23:59:59Z");
@@ -33,25 +33,48 @@ public class CurriculumFixture {
     }
 
     public Curriculum 커리큘럼(Long gisuId, ChallengerPart part) {
-        return saveCurriculumPort.save(Curriculum.create(gisuId, part, "9기 " + part.name()));
+        return saveCurriculumPort.save(Curriculum.create(
+            gisuId,
+            part,
+            fixtureString("curriculum-" + part.name() + "-", 100)
+        ));
     }
 
     public WeeklyCurriculum 주차별_커리큘럼(Curriculum curriculum, Long weekNo, String title) {
         return saveWeeklyCurriculumPort.save(
-            WeeklyCurriculum.create(curriculum, weekNo, false, title, DEFAULT_START, DEFAULT_END)
+            WeeklyCurriculum.create(
+                curriculum,
+                weekNo,
+                false,
+                valueOrFixture(title, "weekly", 100),
+                DEFAULT_START,
+                DEFAULT_END
+            )
         );
     }
 
     public OriginalWorkbook 워크북(WeeklyCurriculum weeklyCurriculum, String title) {
         return saveOriginalWorkbookPort.save(
-            OriginalWorkbook.createAsDraft(weeklyCurriculum, title, null, null, null, OriginalWorkbookType.MAIN)
+            OriginalWorkbook.createAsDraft(
+                weeklyCurriculum,
+                valueOrFixture(title, "workbook", 100),
+                fixtureString("description", 100),
+                fixtureUrl("workbook"),
+                fixtureString("content", 100),
+                OriginalWorkbookType.MAIN
+            )
         );
     }
 
     public OriginalWorkbook 배포된_워크북(WeeklyCurriculum weeklyCurriculum, String title) {
         // TODO: ChallengerWorkbook 배포 시 챌린저 워크북 생성 로직도 함께 구현 필요
         OriginalWorkbook workbook = OriginalWorkbook.createAsReady(
-            weeklyCurriculum, title, null, null, null, OriginalWorkbookType.MAIN
+            weeklyCurriculum,
+            valueOrFixture(title, "workbook", 100),
+            fixtureString("description", 100),
+            fixtureUrl("workbook"),
+            fixtureString("content", 100),
+            OriginalWorkbookType.MAIN
         );
         workbook.changeStatus(OriginalWorkbookStatus.RELEASED, null);
         return saveOriginalWorkbookPort.save(workbook);

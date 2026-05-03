@@ -5,7 +5,7 @@ import com.umc.product.notification.domain.FcmOutbox;
 import org.springframework.stereotype.Component;
 
 @Component
-public class FcmOutboxFixture {
+public class FcmOutboxFixture extends FixtureSupport {
 
     private final SaveFcmOutboxPort saveFcmOutboxPort;
 
@@ -20,7 +20,10 @@ public class FcmOutboxFixture {
     }
 
     public FcmOutbox 구독해제_이벤트(Long memberId, String oldToken) {
-        FcmOutbox event = FcmOutbox.unsubscribeEvent(memberId, oldToken);
+        FcmOutbox event = FcmOutbox.unsubscribeEvent(
+            memberId,
+            valueOrFixture(oldToken, "fcm-token", 100)
+        );
         saveFcmOutboxPort.save(event);
         return event;
     }

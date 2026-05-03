@@ -1,9 +1,4 @@
 spring:
-  config:
-    import: "classpath:application.yml"  # main의 설정을 가져옴
-  profiles:
-    active: test
-
   mail:
     host: some_mail_host
     port: 587
@@ -12,7 +7,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
@@ -20,7 +15,8 @@ spring:
         show_sql: false
 
   flyway:
-    enabled: false
+    enabled: true
+    out-of-order: true
 
   security:
     oauth2:
@@ -55,12 +51,17 @@ logging:
     testcontainers:
       level: DEBUG
 
+sentry:
+  dsn:
+  logging:
+    enabled: false
+
 app:
   base-url: http://localhost:8080
   cors:
     allowed-origin-patterns: ""
   fcm:
-    outbox-interval-ms : 30000
+    outbox-interval-ms: 30000
     firebase-configuration: |
       {
           "type": "service_account",
@@ -70,5 +71,6 @@ app:
 
 
   oauth2:
+    frontend-redirect-url: about:blank
     google:
       client-id-list: apps.googleusercontent.com

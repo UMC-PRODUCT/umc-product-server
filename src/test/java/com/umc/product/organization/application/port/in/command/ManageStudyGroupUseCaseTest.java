@@ -7,9 +7,7 @@ import com.umc.product.support.fixture.GisuFixture;
 import com.umc.product.support.fixture.MemberFixture;
 import com.umc.product.support.fixture.StudyGroupFixture;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
-@Transactional
 class ManageStudyGroupUseCaseTest extends UseCaseTestSupport {
 
     @Autowired
