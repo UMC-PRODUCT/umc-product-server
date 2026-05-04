@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface OriginalWorkbookMissionJpaRepository extends JpaRepository<OriginalWorkbookMission, Long> {
 
     List<OriginalWorkbookMission> findByOriginalWorkbookId(Long originalWorkbookId);
+
+    List<OriginalWorkbookMission> findByOriginalWorkbookIdIn(List<Long> originalWorkbookIds);
 }

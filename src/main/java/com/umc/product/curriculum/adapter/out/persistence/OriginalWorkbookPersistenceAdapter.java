@@ -19,15 +19,33 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
     private final CurriculumQueryRepository curriculumQueryRepository;
 
     @Override
-    public OriginalWorkbook findById(Long id) {
+    public OriginalWorkbook getById(Long id) {
         return originalWorkbookJpaRepository.findById(id)
             .orElseThrow(() -> new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_NOT_FOUND));
+    }
+
+    @Override
+    public List<OriginalWorkbook> batchGetByIds(List<Long> ids) {
+        List<OriginalWorkbook> result = originalWorkbookJpaRepository.findAllById(ids);
+        if (result.size() != ids.size()) {
+            throw new CurriculumDomainException(CurriculumErrorCode.WORKBOOK_NOT_FOUND);
+        }
+        return result;
     }
 
     @Override
     public List<OriginalWorkbook> findReleasedByWeeklyCurriculumId(Long weeklyCurriculumId) {
         return originalWorkbookJpaRepository.findByWeeklyCurriculumIdAndOriginalWorkbookStatus(
             weeklyCurriculumId, OriginalWorkbookStatus.RELEASED);
+    }
+
+    @Override
+    public List<OriginalWorkbook> findReleasedByWeeklyCurriculumIdIn(List<Long> weeklyCurriculumIds) {
+        if (weeklyCurriculumIds.isEmpty()) {
+            return List.of();
+        }
+        return originalWorkbookJpaRepository.findByWeeklyCurriculumIdInAndOriginalWorkbookStatus(
+            weeklyCurriculumIds, OriginalWorkbookStatus.RELEASED);
     }
 
     @Override
@@ -38,5 +56,15 @@ public class OriginalWorkbookPersistenceAdapter implements LoadOriginalWorkbookP
     @Override
     public OriginalWorkbook save(OriginalWorkbook workbook) {
         return originalWorkbookJpaRepository.save(workbook);
+    }
+
+    @Override
+    public List<OriginalWorkbook> saveAll(List<OriginalWorkbook> workbooks) {
+        return originalWorkbookJpaRepository.saveAll(workbooks);
+    }
+
+    @Override
+    public void delete(OriginalWorkbook workbook) {
+        originalWorkbookJpaRepository.delete(workbook);
     }
 }
