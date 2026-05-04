@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Authentication | 로그인")
 public interface AuthenticationControllerInterface {
-    @Operation(summary = "Google 로그인",
+    @Operation(summary = "[LOGIN-001] Google 로그인",
         description = """
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 
@@ -28,7 +28,7 @@ public interface AuthenticationControllerInterface {
         @RequestBody GoogleLoginRequest request
     );
 
-    @Operation(summary = "Kakao 로그인",
+    @Operation(summary = "[LOGIN-002] Kakao 로그인",
         description = """
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 
@@ -46,7 +46,7 @@ public interface AuthenticationControllerInterface {
         @RequestBody KakaoLoginRequest request
     );
 
-    @Operation(summary = "Apple 로그인",
+    @Operation(summary = "[LOGIN-003] Apple 로그인",
         description = """
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 

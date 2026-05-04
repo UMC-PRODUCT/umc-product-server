@@ -30,7 +30,7 @@ public class EmailAuthenticationController {
     private final VerifyOAuthTokenPort verifyOAuthTokenPort;
     private final JwtTokenProvider jwtTokenProvider;
 
-    @Operation(summary = "6자리 인증코드로 이메일 인증",
+    @Operation(summary = "[AUTHENTICATION-001] 6자리 인증코드로 이메일 인증",
         description = """
             이메일로 발송된 인증코드를 통해서 이메일 인증을 완료합니다.
 
