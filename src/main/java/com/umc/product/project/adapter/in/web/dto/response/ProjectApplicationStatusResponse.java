@@ -1,5 +1,6 @@
 package com.umc.product.project.adapter.in.web.dto.response;
 
+import com.umc.product.project.application.port.in.query.dto.ProjectApplicationInfo;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import lombok.Builder;
 
@@ -13,4 +14,8 @@ public record ProjectApplicationStatusResponse(
     Long applicationId,
     ProjectApplicationStatus status
 ) {
+
+    public static ProjectApplicationStatusResponse from(ProjectApplicationInfo info) {
+        return new ProjectApplicationStatusResponse(info.applicationId(), info.status());
+    }
 }

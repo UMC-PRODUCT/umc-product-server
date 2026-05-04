@@ -58,6 +58,9 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_MATCHING_ROUND_TIME_REQUIRES_CHAPTER(HttpStatus.BAD_REQUEST, "PROJECT-0305",
         "time 기준 조회는 chapterId와 함께 요청해야 합니다."),
 
+    // ProjectApplication (APPLY-001/002/003)
+    PROJECT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없습니다."),
+
     ;
 
     private final HttpStatus httpStatus;
