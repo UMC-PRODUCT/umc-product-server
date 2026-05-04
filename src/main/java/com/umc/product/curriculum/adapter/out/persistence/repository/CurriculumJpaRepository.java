@@ -1,9 +1,10 @@
-package com.umc.product.curriculum.adapter.out.persistence;
+package com.umc.product.curriculum.adapter.out.persistence.repository;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.domain.Curriculum;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
 
 public interface CurriculumJpaRepository extends JpaRepository<Curriculum, Long> {
 

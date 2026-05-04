@@ -1,10 +1,11 @@
-package com.umc.product.curriculum.adapter.out.persistence;
+package com.umc.product.curriculum.adapter.out.persistence.repository;
 
 import com.umc.product.curriculum.domain.OriginalWorkbookMission;
-import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
 
 public interface OriginalWorkbookMissionJpaRepository extends JpaRepository<OriginalWorkbookMission, Long> {
 
-    List<OriginalWorkbookMission> findByOriginalWorkbookId(Long originalWorkbookId);
+    List<OriginalWorkbookMission> findByOriginalWorkbookIdIn(List<Long> originalWorkbookIds);
 }

@@ -1,14 +1,15 @@
-package com.umc.product.curriculum.adapter.out.persistence;
+package com.umc.product.curriculum.adapter.out.persistence.repository;
 
 import com.umc.product.curriculum.domain.OriginalWorkbook;
 import com.umc.product.curriculum.domain.enums.OriginalWorkbookStatus;
-import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
 
 public interface OriginalWorkbookJpaRepository extends JpaRepository<OriginalWorkbook, Long> {
 
-    List<OriginalWorkbook> findByWeeklyCurriculumIdAndOriginalWorkbookStatus(
-        Long weeklyCurriculumId, OriginalWorkbookStatus originalWorkbookStatus);
+    List<OriginalWorkbook> findByWeeklyCurriculumIdInAndOriginalWorkbookStatus(
+        List<Long> weeklyCurriculumIds, OriginalWorkbookStatus originalWorkbookStatus);
 
 //    List<OriginalWorkbook> findByCurriculumId(Long curriculumId);
 //

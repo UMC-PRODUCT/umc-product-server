@@ -5,5 +5,8 @@ import java.util.List;
 
 public interface LoadOriginalWorkbookMissionPort {
 
-    List<OriginalWorkbookMission> findByOriginalWorkbookId(Long originalWorkbookId);
+    /**
+     * 여러 원본 워크북에 속한 미션 일괄 조회
+     */
+    List<OriginalWorkbookMission> findByOriginalWorkbookIdIn(List<Long> originalWorkbookIds);
 }

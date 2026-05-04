@@ -1,9 +1,4 @@
-package com.umc.product.curriculum.adapter.out.persistence;
-
-import static com.umc.product.challenger.domain.QChallenger.challenger;
-import static com.umc.product.curriculum.domain.QChallengerWorkbook.challengerWorkbook;
-import static com.umc.product.member.domain.QMember.member;
-import static com.umc.product.organization.domain.QStudyGroupMember.studyGroupMember;
+package com.umc.product.curriculum.adapter.out.persistence.repository.query;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -11,9 +6,15 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.application.port.in.query.dto.GetWorkbookSubmissionsQuery;
 import com.umc.product.curriculum.application.port.in.query.dto.WorkbookSubmissionInfo;
 import com.umc.product.global.exception.NotImplementedException;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
+
+import static com.umc.product.challenger.domain.QChallenger.challenger;
+import static com.umc.product.curriculum.domain.QChallengerWorkbook.challengerWorkbook;
+import static com.umc.product.member.domain.QMember.member;
+import static com.umc.product.organization.domain.QStudyGroupMember.studyGroupMember;
 
 @Repository
 @RequiredArgsConstructor
