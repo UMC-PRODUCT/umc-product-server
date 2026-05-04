@@ -53,4 +53,9 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     public Optional<ProjectMember> findByProjectIdAndMemberId(Long projectId, Long memberId) {
         return repository.findByProjectIdAndMemberId(projectId, memberId);
     }
+
+    @Override
+    public boolean existsByGisuAndMember(Long gisuId, Long memberId) {
+        return repository.existsByProject_GisuIdAndMemberIdAndStatus(gisuId, memberId, ProjectMemberStatus.ACTIVE);
+    }
 }

@@ -13,6 +13,8 @@ public interface ProjectPartQuotaJpaRepository extends JpaRepository<ProjectPart
 
     List<ProjectPartQuota> findByProjectId(Long projectId);
 
+    boolean existsByProjectIdAndPart(Long projectId, ChallengerPart part);
+
     @Modifying
     @Query("DELETE FROM ProjectPartQuota q "
         + "WHERE q.project.id = :projectId AND q.part IN :parts")

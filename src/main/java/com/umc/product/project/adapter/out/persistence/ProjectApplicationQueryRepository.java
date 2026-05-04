@@ -15,6 +15,21 @@ public class ProjectApplicationQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
+    /** 동일 차수에 특정 상태의 지원서가 존재하는지 확인. */
+    public boolean existsByRoundAndApplicantAndStatus(
+        Long roundId, Long applicantMemberId, ProjectApplicationStatus status
+    ) {
+        return queryFactory
+            .selectOne()
+            .from(projectApplication)
+            .where(
+                projectApplication.appliedMatchingRound.id.eq(roundId),
+                projectApplication.applicantMemberId.eq(applicantMemberId),
+                projectApplication.status.eq(status)
+            )
+            .fetchFirst() != null;
+    }
+
     /**
      * (projectId, applicantMemberId, status) 조합으로 단건 조회.
      * applicationForm.project.id 를 통해 projectId 까지 타고 들어간다.
