@@ -71,7 +71,7 @@ public class ProjectQueryController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId
     ) {
-        return assembler.detailFor(projectId, memberPrincipal.getMemberId());
+        return assembler.detailFor(projectId);
     }
 
     @GetMapping("/{projectId}/members")
@@ -89,7 +89,7 @@ public class ProjectQueryController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId
     ) {
-        return assembler.membersFor(projectId, memberPrincipal.getMemberId());
+        return assembler.membersFor(projectId);
     }
 
     @GetMapping("/me/managed")
