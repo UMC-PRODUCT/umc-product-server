@@ -19,4 +19,11 @@ public interface LoadProjectApplicationPort {
     Optional<ProjectApplication> findByProjectIdAndApplicantMemberIdAndStatus(
         Long projectId, Long applicantMemberId, ProjectApplicationStatus status
     );
+
+    /**
+     * 동일 차수에 이미 제출된 지원서가 있는지 확인합니다. (중복 제출 방지용)
+     */
+    boolean existsByRoundAndApplicantAndStatus(
+        Long roundId, Long applicantMemberId, ProjectApplicationStatus status
+    );
 }

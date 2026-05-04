@@ -34,6 +34,19 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     }
 
     @Override
+    public boolean existsByRoundAndApplicantAndStatus(
+        Long roundId,
+        Long applicantMemberId,
+        ProjectApplicationStatus status
+    ) {
+        return projectApplicationQueryRepository.existsByRoundAndApplicantAndStatus(
+            roundId,
+            applicantMemberId,
+            status
+        );
+    }
+
+    @Override
     public ProjectApplication save(ProjectApplication application) {
         return projectApplicationJpaRepository.save(application);
     }
