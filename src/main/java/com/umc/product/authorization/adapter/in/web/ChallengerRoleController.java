@@ -42,7 +42,7 @@ public class ChallengerRoleController {
         permission = PermissionType.WRITE
     )
     @PostMapping
-    @Operation(summary = "운영진 기록 생성", description = "ChallengerRole, 즉 운영진 기록을 생성합니다. 총괄단만 가능합니다.")
+    @Operation(summary = "[STAFF-001] 운영진 기록 생성", description = "ChallengerRole, 즉 운영진 기록을 생성합니다. 총괄단만 가능합니다.")
     public CreateChallengerRoleResponse createChallengerRole(
         @RequestBody CreateChallengerRoleRequest request) {
         Long createdId =
@@ -58,7 +58,7 @@ public class ChallengerRoleController {
         permission = PermissionType.READ
     )
     @Deprecated(since = "v2.0.0", forRemoval = true)
-    @Operation(summary = "운영진 기록 조회", description = "deprecate: 내 프로필 조회 등에서 확인할 수 있는 정보인 관계로 중복 API를 제거합니다.")
+    @Operation(summary = "[STAFF-101] 운영진 기록 조회", description = "deprecate: 내 프로필 조회 등에서 확인할 수 있는 정보인 관계로 중복 API를 제거합니다.")
     @GetMapping("{challengerRoleId}")
     public ChallengerRoleResponse getChallengerRole(
         @PathVariable Long challengerRoleId
@@ -74,7 +74,7 @@ public class ChallengerRoleController {
         resourceType = ResourceType.CHALLENGER_ROLE,
         permission = PermissionType.DELETE
     )
-    @Operation(summary = "운영진 기록 삭제", description = "부여된 운영진 권한(기록)을 삭제합니다.")
+    @Operation(summary = "[STAFF-002] 운영진 기록 삭제", description = "부여된 운영진 권한(기록)을 삭제합니다.")
     @DeleteMapping("{challengerRoleId}")
     public void deleteChallengerRole(
         @PathVariable Long challengerRoleId
