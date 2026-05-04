@@ -11,7 +11,7 @@ import com.umc.product.member.domain.Member;
 import com.umc.product.member.domain.exception.MemberDomainException;
 import com.umc.product.member.domain.exception.MemberErrorCode;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import java.util.HashMap;
@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -122,7 +123,16 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
         }
 
         return loadMemberPort.findAllByIds(memberIds).stream()
+            .filter(m -> m.getSchoolId() != null)
             .collect(java.util.stream.Collectors.toMap(Member::getId, Member::getSchoolId));
+    }
+
+    @Override
+    public Set<Long> findAllIdsBySchoolId(Long schoolId) {
+        if (schoolId == null) {
+            return Set.of();
+        }
+        return loadMemberPort.findAllIdsBySchoolId(schoolId);
     }
 
     @Override
@@ -133,6 +143,16 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
     @Override
     public boolean existsByEmail(String email) {
         return loadMemberPort.existsByEmail(email);
+    }
+
+    @Override
+    public List<Long> findAllIdsCursor(Long lastId, int limit) {
+        return loadMemberPort.findAllIdsCursor(lastId, PageRequest.of(0, limit));
+    }
+
+    @Override
+    public long countMembersByIds(Set<Long> ids) {
+        return loadMemberPort.countMembersByIds(ids);
     }
 
     // === Private Methods ===

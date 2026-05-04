@@ -43,9 +43,19 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     }
 
     @Override
+    public Optional<Member> findByLoginId(String loginId) {
+        return memberJpaRepository.findByLoginId(loginId);
+    }
+
+    @Override
     public List<Member> findAllByIds(Set<Long> ids) {
         return memberJpaRepository.findAllById(ids)
             .stream().toList();
+    }
+
+    @Override
+    public Set<Long> findAllIdsBySchoolId(Long schoolId) {
+        return memberJpaRepository.findAllIdsBySchoolId(schoolId);
     }
 
     @Override
@@ -61,6 +71,11 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     @Override
     public boolean existsByNickname(String nickname) {
         return memberJpaRepository.existsByNickname(nickname);
+    }
+
+    @Override
+    public boolean existsByLoginId(String loginId) {
+        return memberJpaRepository.existsByLoginId(loginId);
     }
 
     @Override
@@ -81,5 +96,19 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
     @Override
     public Page<Challenger> search(SearchMemberQuery query, Pageable pageable) {
         return memberQueryRepository.searchBy(query, pageable);
+    }
+
+    @Override
+    public List<Long> findAllIdsCursor(Long lastId, Pageable pageable) {
+        return memberJpaRepository.findIdsCursor(lastId, pageable);
+    }
+
+    @Override
+    public long countMembersByIds(Set<Long> memberIds) {
+
+        if (memberIds == null || memberIds.isEmpty()) {
+            return 0L;
+        }
+        return memberJpaRepository.countByIdIn(memberIds);
     }
 }

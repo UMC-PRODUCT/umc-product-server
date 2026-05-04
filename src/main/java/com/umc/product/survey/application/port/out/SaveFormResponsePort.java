@@ -9,12 +9,15 @@ public interface SaveFormResponsePort {
 
     void deleteById(Long formResponseId);
 
-    void deleteDraftsByFormId(Long formId);
-
     void deleteAllByIds(List<Long> ids);
 
     /**
      * @return 삭제된 row 수
      */
     int deleteByFormIdAndStatus(Long formId, FormResponseStatus status);
+
+    /**
+     * 특정 폼에 속한 모든 응답 삭제 (deleteForm cascade 용)
+     */
+    void deleteByFormId(Long formId);
 }

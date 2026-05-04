@@ -17,12 +17,10 @@ import com.umc.product.storage.domain.exception.StorageException;
 import com.umc.product.support.UseCaseTestSupport;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
  * FileQueryService 통합 테스트
  */
-@Transactional
 class FileQueryServiceTest extends UseCaseTestSupport {
     // Autowired = 실제 서비스 주입
     // MockitoBean = Mock 객체 주입

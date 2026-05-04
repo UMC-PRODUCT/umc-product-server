@@ -1,19 +1,22 @@
 package com.umc.product.notice.adapter.out.persistence;
 
+import static com.umc.product.challenger.domain.QChallenger.challenger;
+import static com.umc.product.notice.domain.QNotice.notice;
+import static com.umc.product.notice.domain.QNoticeRead.noticeRead;
+import static com.umc.product.notice.domain.QNoticeTarget.noticeTarget;
+
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.product.challenger.domain.QChallenger;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
 import com.umc.product.notice.domain.Notice;
-import com.umc.product.notice.domain.QNotice;
-import com.umc.product.notice.domain.QNoticeRead;
-import com.umc.product.notice.domain.QNoticeTarget;
+import com.umc.product.notice.domain.NoticeClassification;
+import com.umc.product.notice.domain.enums.NoticeTab;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import com.umc.product.notice.dto.NoticeClassification;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,14 +35,32 @@ public class NoticeQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    /*
-     *  안 읽은 챌린저 조회
-     * @return 안 읽은 챌린저 ID 리스트
-     */
-    public List<Long> findUnreadChallengerIdByNoticeId(Long noticeId) {
-        QNoticeRead noticeRead = QNoticeRead.noticeRead;
-        QChallenger challenger = QChallenger.challenger;
+    public Page<Notice> findByClassification(
+        NoticeClassification classification,
+        NoticeViewerInfo viewerInfo,
+        Pageable pageable) {
 
+        BooleanExpression condition = buildCombinedCondition(classification, viewerInfo);
+        List<Notice> content = getContentQuery(condition, null, pageable);
+        Long total = getTotalCountQuery(condition, null);
+
+        return new PageImpl<>(content, pageable, total != null ? total : 0L);
+    }
+
+    public Page<Notice> findByKeyword(
+        String keyword,
+        NoticeClassification classification,
+        NoticeViewerInfo viewerInfo,
+        Pageable pageable) {
+
+        BooleanExpression condition = buildCombinedCondition(classification, viewerInfo);
+        List<Notice> notices = getContentQuery(condition, keyword, pageable);
+        Long total = getTotalCountQuery(condition, keyword);
+
+        return new PageImpl<>(notices, pageable, total != null ? total : 0L);
+    }
+
+    public List<Long> findUnreadChallengerIdByNoticeId(Long noticeId) {
         return queryFactory
             .select(challenger.id)
             .from(challenger)
@@ -54,68 +75,10 @@ public class NoticeQueryRepository {
             .fetch();
     }
 
-    /*
-     * 분류 (전체, 지부, 학교, 파트) 별 조회
-     *
-     * 조회자의 소속 정보를 기반으로 해당하는 공지를 조회합니다.
-     * 각 레벨에서는 해당 레벨의 공지 + 전체 대상 공지를 함께 조회합니다.
-     *
-     * 조회 조건:
-     * - 전체 조회 (gisuId만): 기수 전체 대상 공지 (지부/학교/파트 모두 NULL)
-     * - 지부 조회 (gisuId + chapterId): 해당 지부 공지 + 전체 지부 대상 공지
-     * - 학교 조회 (+ schoolId): 해당 학교 공지 + 전체 학교 대상 공지
-     * - 파트 조회 (+ part): 해당 파트 공지 + 전체 파트 대상 공지
-     *
-     * @return Notice 페이지
-     */
-    public Page<Notice> findByClassification(
-        NoticeClassification classification,
-        Set<ChallengerPart> memberParts,
-        Pageable pageable) {
-
-        QNotice notice = QNotice.notice;
-        QNoticeTarget target = QNoticeTarget.noticeTarget;
-
-        BooleanExpression condition = buildClassificationCondition(classification, memberParts, target);
-
-        List<Notice> content = getContentQuery(notice, target, condition, null, pageable);
-        Long total = getTotalCountQuery(notice, target, condition, null);
-
-        return new PageImpl<>(content, pageable, total != null ? total : 0L);
-    }
-
-    /*
-     * 검색어 기반 조회
-     * @return Notice 페이지
-     * */
-    public Page<Notice> findByKeyword(
-        String keyword,
-        NoticeClassification classification,
-        Set<ChallengerPart> memberParts,
-        Pageable pageable) {
-
-        QNotice notice = QNotice.notice;
-        QNoticeTarget target = QNoticeTarget.noticeTarget;
-
-        BooleanExpression condition = buildClassificationCondition(classification, memberParts, target);
-
-        List<Notice> notices = getContentQuery(notice, target, condition, keyword, pageable);
-        Long total = getTotalCountQuery(notice, target, condition, keyword);
-
-        return new PageImpl<>(notices, pageable, total != null ? total : 0L);
-    }
-
-
-    /*
-     * 여러 공지사항의 읽은 사람 수를 한 번에 조회
-     * @return noticeId → 읽음 수 Map
-     */
     public Map<Long, Long> countReadsByNoticeIds(List<Long> noticeIds) {
         if (noticeIds == null || noticeIds.isEmpty()) {
             return Map.of();
         }
-
-        QNoticeRead noticeRead = QNoticeRead.noticeRead;
 
         List<Tuple> results = queryFactory
             .select(noticeRead.notice.id, noticeRead.count())
@@ -133,51 +96,61 @@ public class NoticeQueryRepository {
 
     // ========== PRIVATE ====================
 
-    /**
-     * 조건에 맞는 공지 반환 전체조회 : keyword = null, 키워드조회 : keyword = 검색어
-     */
-    private List<Notice> getContentQuery(QNotice notice, QNoticeTarget target,
-                                         BooleanExpression condition, String keyword, Pageable pageable) {
-
-        return queryFactory
-            .selectFrom(notice)
-            .join(target).on(target.noticeId.eq(notice.id))
-            .where(condition,
-                keywordContains(keyword))
-            .orderBy(notice.createdAt.desc())
-            .offset(pageable.getOffset())
-            .limit(pageable.getPageSize())
-            .fetch();
+    private BooleanExpression buildCombinedCondition(
+        NoticeClassification classification,
+        NoticeViewerInfo viewerInfo
+    ) {
+        if (classification.isChallengerQuery()) {
+            return buildClassificationCondition(classification, viewerInfo.memberParts());
+        }
+        return buildStaffCondition(classification, viewerInfo);
     }
 
     /**
-     * 조건에 맞는 공지 총 개수 전체조회 : keyword = null, 키워드조회 : keyword = 검색어
+     * 운영진 공지 조회 조건. targetNoticeTab 하한선 방식으로, viewerRole이 읽을 수 있는 역할 목록을 IN 조건으로 처리합니다.
      */
-    private Long getTotalCountQuery(QNotice notice, QNoticeTarget target,
-                                    BooleanExpression condition, String keyword) {
-        return queryFactory
-            .select(notice.count())
-            .from(notice)
-            .join(target).on(target.noticeId.eq(notice.id))
-            .where(condition, keywordContains(keyword))
-            .fetchOne();
+    private BooleanExpression buildStaffCondition(
+        NoticeClassification classification,
+        NoticeViewerInfo viewerInfo
+    ) {
+        NoticeTab viewerRole = viewerInfo.viewerRole();
+        List<NoticeTab> readableRoles = NoticeTab.staffRolesReadableBy(viewerRole);
+
+        BooleanExpression gisuMatch = noticeTarget.targetGisuId.eq(classification.gisuId());
+        BooleanExpression rolesMatch = noticeTarget.targetNoticeTab.in(readableRoles);
+        BooleanExpression partMatch = buildStaffPartCondition(classification, viewerInfo);
+
+        // schoolId 있음 → 교내공지: 해당 학교 공지만 / 없음 → 중앙공지: school null만 (총괄/중운도 동일)
+        BooleanExpression schoolMatch = classification.schoolId() != null
+            ? noticeTarget.targetSchoolId.eq(classification.schoolId())
+            : noticeTarget.targetSchoolId.isNull();
+
+        return isNotChallengerNotice().and(gisuMatch).and(rolesMatch).and(schoolMatch).and(partMatch);
     }
 
-    /*
-     * 전체조회 시 사용
-     *
-     * 조회 조건:
-     * - 전체 조회 (gisuId만): 기수 전체 대상 공지 (지부/학교/파트 모두 NULL)
-     * - 지부 조회 (gisuId + chapterId): 해당 지부 공지 + 전체 지부 대상 공지
-     * - 학교 조회 (+ schoolId): 해당 학교 공지 + 전체 학교 대상 공지
-     * - 파트 조회 (+ part): 해당 파트 공지 + 전체 파트 대상 공지
+    /**
+     * 운영진 공지 파트 조건. - classification.part() 명시 시: 해당 파트 또는 파트 미지정 공지 - 회장단 이상(CENTRAL_MEMBER, SCHOOL_CORE): 파트 미지정 시 전체
+     * 파트 조회 - 파트장: 담당 파트로만 필터링
      */
+    private BooleanExpression buildStaffPartCondition(NoticeClassification classification,
+                                                      NoticeViewerInfo viewerInfo) {
+        // 파트 지정 시: 역할 무관하게 해당 파트 공지만 (파트 미지정 공지 제외)
+        if (classification.part() != null) {
+            return targetPartContains(classification.part());
+        }
+        NoticeTab viewerRole = viewerInfo.viewerRole();
+        // 총괄/중운/회장단 파트 미지정: 전체 보임
+        if (viewerRole == NoticeTab.CENTRAL_MEMBER || viewerRole == NoticeTab.SCHOOL_CORE) {
+            return Expressions.TRUE;
+        }
+        // 파트장 파트 미지정: 담당 파트 + 파트 미지정 공지
+        return targetPartIsEmptyOrContainsAny(viewerInfo.memberParts());
+    }
+
     private BooleanExpression buildClassificationCondition(
         NoticeClassification classification,
-        Set<ChallengerPart> memberParts,
-        QNoticeTarget target
+        Set<ChallengerPart> memberParts
     ) {
-
         Long gisuId = classification.gisuId();
         Long chapterId = classification.chapterId();
         Long schoolId = classification.schoolId();
@@ -187,118 +160,131 @@ public class NoticeQueryRepository {
         boolean hasSchool = schoolId != null;
         boolean hasPart = part != null;
 
-        // 기수 ID는 모든 조회에서 필수 조건이므로 null이면 예외 처리
         if (gisuId == null) {
             throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING, "기수 ID는 필수입니다");
         }
 
-        log.info("공지사항 조회 조건 제작: gisuId={}, chapterId={}, schoolId={}, part={}, memberParts={}",
+        log.debug("공지사항 조회 조건 제작: gisuId={}, chapterId={}, schoolId={}, part={}, memberParts={}",
             gisuId, chapterId, schoolId, part, memberParts);
 
-        // 특정 기수 공지 혹은 모든 기수 공지(targetGisuId=null)
-        BooleanExpression gisuMatch = target.targetGisuId.eq(gisuId)
-            .or(target.targetGisuId.isNull());
+        BooleanExpression challengerNoticeOnly = isChallengerNotice();
+        BooleanExpression gisuMatch = noticeTarget.targetGisuId.eq(gisuId)
+            .or(noticeTarget.targetGisuId.isNull());
 
-        // 전체 필터: 특정 기수 전체 대상 + 모든 기수 전체 대상(ALL_GISU_ALL_TARGET)
         if (!hasChapter && !hasSchool && !hasPart) {
-            return gisuMatch
-                .and(target.targetChapterId.isNull())
-                .and(target.targetSchoolId.isNull())
-                .and(targetPartIsEmpty(target));
+            return challengerNoticeOnly
+                .and(gisuMatch)
+                .and(noticeTarget.targetChapterId.isNull())
+                .and(noticeTarget.targetSchoolId.isNull())
+                .and(targetPartIsEmpty());
         }
 
-        // 지부 필터: 특정 기수 특정 지부 + (파트 없는 공지 OR 멤버 파트 공지)
         if (hasChapter && !hasSchool && !hasPart) {
-            return target.targetGisuId.eq(gisuId)
-                .and(target.targetChapterId.eq(chapterId))
-                .and(target.targetSchoolId.isNull())
-                .and(targetPartIsEmptyOrContainsAny(target, memberParts));
+            return challengerNoticeOnly
+                .and(noticeTarget.targetGisuId.eq(gisuId))
+                .and(noticeTarget.targetChapterId.eq(chapterId))
+                .and(noticeTarget.targetSchoolId.isNull())
+                .and(targetPartIsEmptyOrContainsAny(memberParts));
         }
 
-        // 학교 필터: 특정 기수 특정 학교 + (파트 없는 공지 OR 멤버 파트 공지)
         if (!hasChapter && hasSchool && !hasPart) {
-            return gisuMatch
-                .and(target.targetChapterId.isNull())
-                .and(target.targetSchoolId.eq(schoolId))
-                .and(targetPartIsEmptyOrContainsAny(target, memberParts));
+            return challengerNoticeOnly
+                .and(gisuMatch)
+                .and(noticeTarget.targetChapterId.isNull())
+                .and(noticeTarget.targetSchoolId.eq(schoolId))
+                .and(targetPartIsEmptyOrContainsAny(memberParts));
         }
 
-        // 파트 필터: 기수+파트 / 기수+지부+파트 / 기수+학교+파트 세 패턴을 OR로 묶어 조회
-        // chapterId, schoolId는 Service에서 호출자 소속 정보로 채워짐 (없으면 null)
         if (hasPart) {
-            BooleanExpression gisuAndPartMatch = target.targetGisuId.eq(gisuId)
-                .and(targetPartContains(target, part));
+            BooleanExpression gisuAndPartMatch = challengerNoticeOnly
+                .and(noticeTarget.targetGisuId.eq(gisuId))
+                .and(targetPartContains(part));
 
-            // 특정 기수 + 특정 파트 (지부/학교 대상 없는 공지)
-            BooleanExpression scopeCondition = target.targetChapterId.isNull()
-                .and(target.targetSchoolId.isNull());
+            BooleanExpression scopeCondition = noticeTarget.targetChapterId.isNull()
+                .and(noticeTarget.targetSchoolId.isNull());
 
-            // 특정 기수 + 특정 지부 + 특정 파트
             if (chapterId != null) {
                 scopeCondition = scopeCondition.or(
-                    target.targetChapterId.eq(chapterId)
-                        .and(target.targetSchoolId.isNull())
+                    noticeTarget.targetChapterId.eq(chapterId)
+                        .and(noticeTarget.targetSchoolId.isNull())
                 );
             }
 
-            // 특정 기수 + 특정 학교 + 특정 파트
             if (schoolId != null) {
                 scopeCondition = scopeCondition.or(
-                    target.targetChapterId.isNull()
-                        .and(target.targetSchoolId.eq(schoolId))
+                    noticeTarget.targetChapterId.isNull()
+                        .and(noticeTarget.targetSchoolId.eq(schoolId))
                 );
             }
 
             return gisuAndPartMatch.and(scopeCondition);
         }
 
-        // 그 외의 조건 조합은 허용되지 않음
         throw new NoticeDomainException(NoticeErrorCode.INVALID_TARGET_SETTING,
             "현재 입력: gisuId=" + gisuId + ", chapterId=" + chapterId + ", schoolId=" + schoolId + ", part=" + part);
     }
 
-    private BooleanExpression targetPartIsEmpty(QNoticeTarget target) {
+    private BooleanExpression isChallengerNotice() {
+        return noticeTarget.targetNoticeTab.eq(NoticeTab.CHALLENGER);
+    }
+
+    private BooleanExpression isNotChallengerNotice() {
+        return noticeTarget.targetNoticeTab.ne(NoticeTab.CHALLENGER);
+    }
+
+    private BooleanExpression targetPartIsEmpty() {
         return Expressions.numberTemplate(Integer.class,
             "coalesce(cardinality({0}), 0)",
-            target.targetChallengerPart
+            noticeTarget.targetChallengerPart
         ).eq(0);
     }
 
-    private BooleanExpression targetPartContains(QNoticeTarget target, ChallengerPart part) {
-        // HQL 파서가 = ANY(collection) 를 서브쿼리 한정자로 오해하므로
-        // array_position 으로 대체 (NULL이면 미포함, 양수면 포함)
+    private BooleanExpression targetPartContains(ChallengerPart part) {
         return Expressions.numberTemplate(Integer.class,
             "coalesce(array_position({0}, {1}), 0)",
-            target.targetChallengerPart,
+            noticeTarget.targetChallengerPart,
             Expressions.constant(part.name())
         ).gt(0);
     }
 
-    /**
-     * 파트 조건이 없는 공지 OR 멤버가 보유한 파트 중 하나라도 포함된 공지 memberParts가 비어 있으면 파트 없는 공지만 반환합니다.
-     */
-    private BooleanExpression targetPartIsEmptyOrContainsAny(QNoticeTarget target, Set<ChallengerPart> memberParts) {
-        BooleanExpression isEmpty = targetPartIsEmpty(target);
+    private BooleanExpression targetPartIsEmptyOrContainsAny(Set<ChallengerPart> memberParts) {
+        BooleanExpression isEmpty = targetPartIsEmpty();
         if (memberParts == null || memberParts.isEmpty()) {
             return isEmpty;
         }
         BooleanExpression containsAny = memberParts.stream()
-            .map(part -> targetPartContains(target, part))
+            .map(this::targetPartContains)
             .reduce(BooleanExpression::or)
             .get();
 
         return isEmpty.or(containsAny);
     }
 
+    private List<Notice> getContentQuery(BooleanExpression condition, String keyword, Pageable pageable) {
+        return queryFactory
+            .selectFrom(notice)
+            .join(noticeTarget).on(noticeTarget.noticeId.eq(notice.id))
+            .where(condition, keywordContains(keyword))
+            .orderBy(notice.createdAt.desc())
+            .offset(pageable.getOffset())
+            .limit(pageable.getPageSize())
+            .fetch();
+    }
+
+    private Long getTotalCountQuery(BooleanExpression condition, String keyword) {
+        return queryFactory
+            .select(notice.count())
+            .from(notice)
+            .join(noticeTarget).on(noticeTarget.noticeId.eq(notice.id))
+            .where(condition, keywordContains(keyword))
+            .fetchOne();
+    }
+
     private BooleanExpression keywordContains(String keyword) {
         if (keyword == null || keyword.isBlank()) {
-            return null;  // 조건 무시
+            return null;
         }
-
-        QNotice notice = QNotice.notice;
-
         return notice.title.containsIgnoreCase(keyword)
             .or(notice.content.containsIgnoreCase(keyword));
     }
-
 }

@@ -56,6 +56,7 @@ jobs:
       contents: read
       checks: write
       pull-requests: write
+      issues: write
       packages: write
       statuses: write
       deployments: write
@@ -194,37 +195,76 @@ jobs:
           # 캐시는 추후 빌드 성능 최적화를 통해 개선, 현재는 네트워크 비용이 더 많이 들어서 비활성화 합니다.
 
       - name: 📝 PR Comment & Commit Status
-        if: always()  # 성공/실패 모두 실행
+        if: always()
         uses: actions/github-script@v8
         with:
           script: |
             const testFailed = '${{ steps.test.outcome }}' === 'failure';
             const isPR = context.eventName === 'pull_request';
 
-            // PR이면 head commit SHA, 아니면 일반 SHA
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
             const sha = isPR
               ? context.payload.pull_request.head.sha
               : context.sha;
 
-            // 테스트 실패 + PR이면 코멘트 작성
-            if (testFailed && isPR) {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: '⚠️ 테스트가 실패했습니다. 테스트 결과를 확인해주세요.'
-              });
+            const marker = '<!-- umc-product-ci-status -->';
+            const stateText = testFailed ? '실패' : '성공';
+            const icon = testFailed ? '❌' : '✅';
+            const kstTime = new Intl.DateTimeFormat('ko-KR', {
+              timeZone: 'Asia/Seoul',
+              dateStyle: 'medium',
+              timeStyle: 'medium'
+            }).format(new Date());
+
+            const runUrl = `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`;
+            const entry = [
+              `## ${icon} CI 상태: ${stateText}`,
+              '',
+              `- Workflow: \`${context.workflow}\``,
+              `- Branch: \`${context.ref}\``,
+              `- Commit: \`${sha.substring(0, 7)}\``,
+              `- Update Time (KST): ${kstTime}`,
+              `- Action Logs: [GitHub Actions](${runUrl})`
+            ].join('\n');
+
+            if (isPR) {
+              const issue_number = context.issue.number;
+              let existing = null;
+              for await (const { data: comments } of github.paginate.iterator(
+                github.rest.issues.listComments,
+                { owner, repo, issue_number, per_page: 100 }
+              )) {
+                const found = comments.find(c => c.body?.includes(marker));
+                if (found) { existing = found; break; }
+              }
+              const body = `${marker}\n\n${entry}`;
+
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: existing.id,
+                  body
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number,
+                  body
+                });
+              }
             }
 
-            // 커밋 상태 생성
-            // status는 다음 중 하나: 'error', 'failure', 'pending', 'success'
             await github.rest.repos.createCommitStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
+              owner,
+              repo,
+              sha,
               state: testFailed ? 'failure' : 'success',
-              target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
-              description: testFailed ? '테스트가 실패했습니다' : '빌드가 성공했습니다!',
+              target_url: runUrl,
+              description: testFailed ? `테스트 실패 (${kstTime})` : `테스트 성공 (${kstTime})`,
               context: 'Product Team Server CI'
             });
 

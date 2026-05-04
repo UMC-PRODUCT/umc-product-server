@@ -2,7 +2,7 @@ package com.umc.product.organization.application.port.service.command;
 
 import com.umc.product.organization.application.port.in.command.ManageGisuUseCase;
 import com.umc.product.organization.application.port.in.command.dto.CreateGisuCommand;
-import com.umc.product.organization.application.port.out.command.ManageGisuPort;
+import com.umc.product.organization.application.port.out.command.SaveGisuPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterPort;
 import com.umc.product.organization.application.port.out.query.LoadGisuPort;
 import com.umc.product.organization.domain.Gisu;
@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class GisuService implements ManageGisuUseCase {
 
     private final LoadGisuPort loadGisuPort;
-    private final ManageGisuPort manageGisuPort;
+    private final SaveGisuPort saveGisuPort;
     private final LoadChapterPort loadChapterPort;
 
     @Override
@@ -28,7 +28,7 @@ public class GisuService implements ManageGisuUseCase {
 
         Gisu gisu = Gisu.create(command.generation(), command.startAt(), command.endAt(), false);
 
-        return manageGisuPort.save(gisu).getId();
+        return saveGisuPort.save(gisu).getId();
     }
 
 
@@ -38,7 +38,7 @@ public class GisuService implements ManageGisuUseCase {
         if (loadChapterPort.existsByGisuId(gisuId)) {
             throw new OrganizationDomainException(OrganizationErrorCode.GISU_HAS_ASSOCIATED_CHAPTERS);
         }
-        manageGisuPort.delete(gisu);
+        saveGisuPort.delete(gisu);
     }
 
     @Override

@@ -4,14 +4,10 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.curriculum.domain.Curriculum;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 public interface CurriculumJpaRepository extends JpaRepository<Curriculum, Long> {
 
-    @Query("SELECT c FROM Curriculum c left join fetch c.originalWorkbooks WHERE c.part = :part AND c.gisuId = :gisuId")
-    Optional<Curriculum> findByGisuIdAndPart(@Param("gisuId") Long gisuId, @Param("part") ChallengerPart part);
+    Optional<Curriculum> findByGisuIdAndPart(Long gisuId, ChallengerPart part);
 
-    @Query("SELECT c FROM Curriculum c left join fetch c.originalWorkbooks WHERE c.id = :id")
-    Optional<Curriculum> findById(Long id);
+    boolean existsByGisuIdAndPart(Long gisuId, ChallengerPart part);
 }

@@ -11,7 +11,7 @@ import com.umc.product.member.application.port.in.query.dto.SearchMemberQuery;
 import com.umc.product.member.application.port.in.query.dto.SearchMemberResult;
 import com.umc.product.member.application.port.out.SearchMemberPort;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
-import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;

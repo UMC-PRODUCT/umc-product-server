@@ -1,7 +1,8 @@
 package com.umc.product.organization.application.port.in.query;
 
-import com.umc.product.organization.application.port.in.query.dto.GisuInfo;
-import com.umc.product.organization.application.port.in.query.dto.GisuNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
+import com.umc.product.organization.application.port.in.query.dto.gisu.GisuNameInfo;
+import java.time.Instant;
 import java.util.List;
 import java.util.Set;
 import org.springframework.data.domain.Page;
@@ -22,4 +23,6 @@ public interface GetGisuUseCase {
     Long getActiveGisuId();
 
     GisuInfo getActiveGisu();
+
+    GisuInfo getGisuByDate(Instant targetDate);
 }

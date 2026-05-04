@@ -39,6 +39,14 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 100)
     private String email;
 
+    // ID/PW 로그인용 식별자. OAuth 전용 회원은 null 가능
+    @Column(name = "login_id", length = 20, unique = true)
+    private String loginId;
+
+    // DelegatingPasswordEncoder 의 "{id}encoded" prefix 를 포함한 단일 해시 컬럼
+    @Column(name = "password_hash", length = 255)
+    private String passwordHash;
+
     @Column(name = "school_id")
     private Long schoolId;  // ID 참조만 (organization 도메인 의존 방지)
 
@@ -65,6 +73,16 @@ public class Member extends BaseEntity {
         this.schoolId = schoolId;
         this.profileImageId = profileImageId;
         this.status = MemberStatus.ACTIVE;
+    }
+
+    public static Member create(String name, String nickname, String email, Long schoolId, String profileImageId) {
+        return Member.builder()
+            .name(name)
+            .nickname(nickname)
+            .email(email)
+            .schoolId(schoolId)
+            .profileImageId(profileImageId)
+            .build();
     }
 
     // Domain Logic: 프로필 업데이트
@@ -100,6 +118,59 @@ public class Member extends BaseEntity {
 
     public void removeProfile() {
         this.profile = null;
+    }
+
+    /**
+     * ID/PW 자격증명을 최초 등록한다.
+     * <p>
+     * 이미 자격증명이 등록되어 있는 경우 변경 흐름({@link #changePassword})을 사용해야 하며, 여기서는 중복 등록을 막는다. {@code encodedPassword} 는 반드시
+     * DelegatingPasswordEncoder 로 인코딩된 "{id}encoded" 형식이어야 한다.
+     * <p>
+     * 이미 CredentialPolicy에서 형식 관련 검증은 하고 들어오고 있으므로 최소한의 검증인 NULL CHECK만 실시하도록 한다.
+     * <p>
+     * 비밀번호와 관련된 정책은 Member가 아닌 Authentication 도메인이 알고 있는 것이 맞다.
+     */
+    public void registerCredential(String loginId, String encodedPassword) {
+        validateActive();
+        validateLoginId(loginId);
+        validatePassword(encodedPassword);
+
+        if (hasCredential()) {
+            throw new MemberDomainException(MemberErrorCode.CREDENTIAL_ALREADY_REGISTERED);
+        }
+        this.loginId = loginId;
+        this.passwordHash = encodedPassword;
+    }
+
+    /**
+     * 비밀번호를 변경한다. 자격증명이 등록되어 있지 않으면 거부한다.
+     * <p>
+     * 로그인 성공 시점의 점진적 rehash(transparent rehash) 호출 경로에서도 사용된다.
+     */
+    public void changePassword(String encodedPassword) {
+        validateActive();
+        validatePassword(encodedPassword);
+
+        if (!hasCredential()) {
+            throw new MemberDomainException(MemberErrorCode.CREDENTIAL_NOT_REGISTERED);
+        }
+        this.passwordHash = encodedPassword;
+    }
+
+    private void validateLoginId(String loginId) {
+        if (loginId == null || loginId.isBlank()) {
+            throw new MemberDomainException(MemberErrorCode.INVALID_LOGIN_ID);
+        }
+    }
+
+    private void validatePassword(String encodedPassword) {
+        if (encodedPassword == null || encodedPassword.isBlank()) {
+            throw new MemberDomainException(MemberErrorCode.INVALID_PASSWORD);
+        }
+    }
+
+    public boolean hasCredential() {
+        return this.loginId != null && this.passwordHash != null;
     }
 
     // TODO: 탈퇴 및 휴면 처리에 대한 도메인 로직은 추후 추가

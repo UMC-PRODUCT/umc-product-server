@@ -1,15 +1,18 @@
 package com.umc.product.survey.application.port.in.command.dto;
 
-import java.time.Instant;
+import lombok.Builder;
+
 import java.util.List;
 
+/**
+ * 투표용 설문 생성 명령 DTO
+ */
+@Builder
 public record CreateVoteCommand(
     Long createdMemberId,
     String title,
     boolean isAnonymous,
     boolean allowMultipleChoice,
-    Instant startsAt,
-    Instant endsAtExclusive,
     List<String> options
 ) {
 }

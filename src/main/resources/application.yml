@@ -245,8 +245,10 @@ app:
   base-url: ${APP_BASE_URL:http://localhost:${SERVER_PORT:8080}}
 
   fcm:
+    enabled: ${FCM_ENABLED:false}
     outbox-interval-ms: ${FCM_OUTBOX_INTERVAL_MS:60000}
     firebase-configuration: ${FIREBASE_CONFIGURATION}
+    topic-prefix: ${SPRING_PROFILES_ACTIVE:local}
 
   cors:
     allowed-origin-patterns: ${CORS_ALLOWED_ORIGIN_PATTERNS:}

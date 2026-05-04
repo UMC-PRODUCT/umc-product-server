@@ -8,7 +8,9 @@ import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 import com.umc.product.global.security.JwtAuthenticationFilter;
 import com.umc.product.global.security.util.PublicEndpointCollector;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +29,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.argon2.Argon2PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.DelegatingPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
@@ -43,14 +47,16 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 @Slf4j
 public class SecurityConfig {
 
-    private static final String[] SWAGGER_PATHS = {
+    private static final String[] STATIC_FILE_PATHS = {
         "/swagger-ui/**",
         "/docs/**",
         "/v3/api-docs/**",
         "/docs-json/**",
         "/swagger-resources/**",
-        "/webjars/**"
+        "/webjars/**",
+        "/umc-logo.svg"
     };
+
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ApiAuthenticationEntryPoint authenticationEntryPoint;
     private final ApiAccessDeniedHandler accessDeniedHandler;
@@ -73,7 +79,7 @@ public class SecurityConfig {
     @Profile("dev")
     public SecurityFilterChain swaggerSecurityFilterChain(HttpSecurity http) throws Exception {
         http
-            .securityMatcher(SWAGGER_PATHS)
+            .securityMatcher(STATIC_FILE_PATHS)
             .cors(Customizer.withDefaults())
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session ->
@@ -148,7 +154,7 @@ public class SecurityConfig {
                 ).permitAll();
 
                 // Swagger
-                auth.requestMatchers(SWAGGER_PATHS).permitAll();
+                auth.requestMatchers(STATIC_FILE_PATHS).permitAll();
 
                 // @Public 어노테이션이 달린 엔드포인트 (HTTP 메서드 포함)
                 for (PublicEndpointCollector.EndpointMatcher endpoint : publicEndpoints) {
@@ -204,9 +210,21 @@ public class SecurityConfig {
         };
     }
 
+    /**
+     * 비밀번호 해시는 password_hash 단일 컬럼에 "{id}encoded" prefix 형태로 저장한다.
+     * <p>
+     * 신규 저장은 Argon2 를 기본으로 하고, 기존/외부 호환을 위해 bcrypt 검증도 함께 등록한다.
+     * 알고리즘/파라미터가 갱신되더라도 기존 해시를 그대로 검증할 수 있으며,
+     * 로그인 성공 시 {@link PasswordEncoder#upgradeEncoding} 으로 점진적 rehash 를 수행한다.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
+        final String defaultEncodingId = "argon2";
+        Map<String, PasswordEncoder> encoders = new HashMap<>();
+        encoders.put(defaultEncodingId, Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8());
+        encoders.put("bcrypt", new BCryptPasswordEncoder());
+
+        return new DelegatingPasswordEncoder(defaultEncodingId, encoders);
     }
 
     @Bean
@@ -214,7 +232,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         log.info("Allowed Origin Patterns for CORS: {}", allowedOriginPatterns);
-        
+
         // Swagger CORS 설정
         configuration.setAllowedOriginPatterns(allowedOriginPatterns);
 

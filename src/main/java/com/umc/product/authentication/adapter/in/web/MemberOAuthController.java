@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/member-oauth")
 @RequiredArgsConstructor
-@Tag(name = "Authentication | OAuth 연동", description = "Member에 OAuth 계정을 연동하거나 제거하는 API")
+@Tag(name = "Authentication | OAuth 정보 조회, 추가, 삭제", description = "새롭게 OAuth 계정 연동, 제거, 조회")
 public class MemberOAuthController {
 
     private final OAuthAuthenticationUseCase oAuthAuthenticationUseCase;

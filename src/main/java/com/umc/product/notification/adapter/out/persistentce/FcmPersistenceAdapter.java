@@ -3,8 +3,7 @@ package com.umc.product.notification.adapter.out.persistentce;
 import com.umc.product.notification.application.port.out.LoadFcmPort;
 import com.umc.product.notification.application.port.out.SaveFcmPort;
 import com.umc.product.notification.domain.FcmToken;
-import com.umc.product.notification.domain.exception.FcmDomainException;
-import com.umc.product.notification.domain.exception.FcmErrorCode;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -16,14 +15,18 @@ public class FcmPersistenceAdapter implements LoadFcmPort, SaveFcmPort {
     private final FcmJpaRepository fcmJpaRepository;
 
     @Override
-    public FcmToken findByMemberId(Long memberId) {
-        return fcmJpaRepository.findByMemberId(memberId)
-            .orElseThrow(() -> new FcmDomainException(FcmErrorCode.USER_FCM_NOT_FOUND));
+    public Optional<FcmToken> findByMemberIdAndToken(Long memberId, String fcmToken) {
+        return fcmJpaRepository.findByMemberIdAndFcmToken(memberId, fcmToken);
     }
 
     @Override
-    public Optional<FcmToken> findOptionalByMemberId(Long memberId) {
-        return fcmJpaRepository.findByMemberId(memberId);
+    public List<FcmToken> findAllActiveByMemberId(Long memberId) {
+        return fcmJpaRepository.findAllByMemberIdAndIsActiveTrue(memberId);
+    }
+
+    @Override
+    public List<FcmToken> findAllActiveByMemberIds(List<Long> memberIds) {
+        return fcmJpaRepository.findAllByMemberIdInAndIsActiveTrue(memberIds);
     }
 
     @Override

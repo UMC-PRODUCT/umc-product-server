@@ -5,8 +5,8 @@ import com.umc.product.organization.application.port.in.command.dto.AssignSchool
 import com.umc.product.organization.application.port.in.command.dto.CreateSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.UnassignSchoolCommand;
 import com.umc.product.organization.application.port.in.command.dto.UpdateSchoolCommand;
-import com.umc.product.organization.application.port.out.command.ManageChapterSchoolPort;
-import com.umc.product.organization.application.port.out.command.ManageSchoolPort;
+import com.umc.product.organization.application.port.out.command.SaveChapterSchoolPort;
+import com.umc.product.organization.application.port.out.command.SaveSchoolPort;
 import com.umc.product.organization.application.port.out.query.LoadChapterPort;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.Chapter;
@@ -24,8 +24,8 @@ public class SchoolService implements ManageSchoolUseCase {
 
     private final LoadChapterPort loadChapterPort;
     private final LoadSchoolPort loadSchoolPort;
-    private final ManageSchoolPort manageSchoolPort;
-    private final ManageChapterSchoolPort manageChapterSchoolPort;
+    private final SaveSchoolPort saveSchoolPort;
+    private final SaveChapterSchoolPort saveChapterSchoolPort;
 
     @Override
     public Long create(CreateSchoolCommand command) {
@@ -34,12 +34,12 @@ public class SchoolService implements ManageSchoolUseCase {
         newSchool.updateLogoImageId(command.logoImageId());
 
         List<SchoolLink> links = command.links().stream()
-                .map(linkCommand -> linkCommand.toEntity(newSchool))
-                .toList();
+            .map(linkCommand -> linkCommand.toEntity(newSchool))
+            .toList();
 
         newSchool.updateLinks(links);
 
-        School savedSchool = manageSchoolPort.save(newSchool);
+        School savedSchool = saveSchoolPort.save(newSchool);
 
         return savedSchool.getId();
     }
@@ -54,8 +54,8 @@ public class SchoolService implements ManageSchoolUseCase {
 
         if (command.links() != null) {
             List<SchoolLink> newLinks = command.links().stream()
-                    .map(linkCommand -> linkCommand.toEntity(school))
-                    .toList();
+                .map(linkCommand -> linkCommand.toEntity(school))
+                .toList();
             school.updateLinks(newLinks);
         }
 
@@ -69,14 +69,13 @@ public class SchoolService implements ManageSchoolUseCase {
     @Override
     public void deleteSchools(List<Long> schoolIds) {
 
-
         if (schoolIds == null || schoolIds.isEmpty()) {
             return;
         }
 
-        manageChapterSchoolPort.deleteAllBySchoolIds(schoolIds);
-        manageSchoolPort.deleteAllLinksBySchoolIds(schoolIds);
-        manageSchoolPort.deleteAllByIds(schoolIds);
+        saveChapterSchoolPort.deleteAllBySchoolIds(schoolIds);
+        saveSchoolPort.deleteAllLinksBySchoolIds(schoolIds);
+        saveSchoolPort.deleteAllByIds(schoolIds);
     }
 
     @Override

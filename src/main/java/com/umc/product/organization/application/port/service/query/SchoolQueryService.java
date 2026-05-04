@@ -1,18 +1,16 @@
 package com.umc.product.organization.application.port.service.query;
 
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
-import com.umc.product.organization.application.port.in.query.dto.SchoolChapterInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolDetailInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolLinkInfo;
-import com.umc.product.organization.application.port.in.query.dto.SchoolNameInfo;
-import com.umc.product.organization.application.port.in.query.dto.UnassignedSchoolInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolChapterInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolDetailInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolLinkInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.SchoolNameInfo;
+import com.umc.product.organization.application.port.in.query.dto.school.UnassignedSchoolInfo;
 import com.umc.product.organization.application.port.out.query.LoadSchoolPort;
 import com.umc.product.organization.domain.School;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import com.umc.product.storage.application.port.in.query.dto.FileInfo;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +34,8 @@ public class SchoolQueryService implements GetSchoolUseCase {
     @Override
     public SchoolDetailInfo getSchoolDetail(Long schoolId) {
 
-        SchoolChapterInfo schoolInfoWithoutSchoolLinkItem = loadSchoolPort.findSchoolDetailByIdWithActiveChapter(schoolId);
+        SchoolChapterInfo schoolInfoWithoutSchoolLinkItem = loadSchoolPort.findSchoolDetailByIdWithActiveChapter(
+            schoolId);
 
         String logoImageUrl = null;
         if (schoolInfoWithoutSchoolLinkItem.logoImageId() != null) {
@@ -70,7 +69,9 @@ public class SchoolQueryService implements GetSchoolUseCase {
     public List<SchoolDetailInfo> getSchoolListByGisuId(Long gisuId) {
 
         List<SchoolChapterInfo> schools = loadSchoolPort.findSchoolDetailsByGisuId(gisuId);
-        if (schools.isEmpty()) return List.of();
+        if (schools.isEmpty()) {
+            return List.of();
+        }
 
         List<Long> schoolIds = schools.stream().map(SchoolChapterInfo::schoolId).toList();
 
@@ -94,7 +95,8 @@ public class SchoolQueryService implements GetSchoolUseCase {
             .toList();
     }
 
-    private SchoolDetailInfo toSchoolDetailInfo(SchoolChapterInfo info, String logoImageUrl, List<SchoolDetailInfo.SchoolLinkItem> links) {
+    private SchoolDetailInfo toSchoolDetailInfo(SchoolChapterInfo info, String logoImageUrl,
+                                                List<SchoolDetailInfo.SchoolLinkItem> links) {
         return new SchoolDetailInfo(
             info.chapterId(),
             info.chapterName(),

@@ -1,8 +1,7 @@
 package com.umc.product.notice.application.port.in.query.dto;
 
 
-import com.umc.product.notice.dto.NoticeTargetInfo;
-import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
+import com.umc.product.notice.domain.NoticeTargetInfo;
 import java.time.Instant;
 import java.util.List;
 
@@ -14,7 +13,7 @@ public record NoticeInfo(
     String title,
     String content,
     Long authorMemberId,
-    VoteInfo vote,
+    NoticeVoteInfo vote,
     List<NoticeImageInfo> images,
     List<NoticeLinkInfo> links,
     // 수신 대상

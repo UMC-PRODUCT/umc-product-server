@@ -24,7 +24,7 @@
 
     <appender class="ch.qos.logback.core.ConsoleAppender" name="ECS_CONSOLE">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>WARN</level>
+            <level>INFO</level>
         </filter>
 
         <encoder>

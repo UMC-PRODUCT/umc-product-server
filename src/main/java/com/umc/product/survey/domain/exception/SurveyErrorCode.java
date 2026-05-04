@@ -23,17 +23,17 @@ public enum SurveyErrorCode implements BaseCode {
     OPTION_NOT_IN_QUESTION(HttpStatus.BAD_REQUEST, "SURVEY-0013", "선택지가 해당 질문의 선택지에 포함되지 않습니다."),
     OPTION_TEXT_REQUIRED(HttpStatus.BAD_REQUEST, "SURVEY-0014", "'기타' 선택지의 텍스트는 필수입니다."),
     INVALID_FORM_ACTIVE_PERIOD(HttpStatus.BAD_REQUEST, "SURVEY-0015", "폼의 응답 가능 기간이 올바르지 않습니다."),
-    INVALID_VOTE_OPTION_COUNT(HttpStatus.BAD_REQUEST, "SURVEY-0016", "투표 항목은 2개 이상 5개 이하여야 합니다."),
-    INVALID_VOTE_OPTION_CONTENT(HttpStatus.BAD_REQUEST, "SURVEY-0017", "투표 항목에 빈 값이 포함될 수 없습니다."),
-    INVALID_VOTE_START_DATE(HttpStatus.BAD_REQUEST, "SURVEY-0018", "투표 시작일은 오늘부터 선택 가능합니다."),
-    INVALID_VOTE_END_DATE(HttpStatus.BAD_REQUEST, "SURVEY-0019", "투표 마감일은 시작일 하루 뒤부터 선택 가능합니다."),
-    VOTE_NOT_STARTED(HttpStatus.BAD_REQUEST, "SURVEY-0020", "아직 투표 기간이 아닙니다."),
-    VOTE_CLOSED(HttpStatus.BAD_REQUEST, "SURVEY-0021", "이미 종료된 투표입니다."),
-    VOTE_ALREADY_RESPONDED(HttpStatus.BAD_REQUEST, "SURVEY-0022", "이미 답변한 투표입니다."),
+    // SURVEY-0016 ~ SURVEY-0022 (투표 항목/기간/상태 관련): notice 도메인으로 이관
     INVALID_VOTE_SELECTION(HttpStatus.BAD_REQUEST, "SURVEY-0023", "선택이 올바르지 않습니다."),
-    INVALID_VOTE_QUESTION_TYPE(HttpStatus.BAD_REQUEST, "SURVEY-0024", "투표의 질문 타입이 올바르지 않습니다."),
+    // SURVEY-0024 (INVALID_VOTE_QUESTION_TYPE): notice 도메인으로 이관
     INVALID_VOTE_FORM_STRUCTURE(HttpStatus.BAD_REQUEST, "SURVEY-0025", "투표의 질문 형식이 올바르지 않습니다."),
-    VOTE_RESPONSE_NOT_FOUND(HttpStatus.NOT_FOUND, "SURVEY-0026", "투표 응답을 찾을 수 없습니다."),
+    // SURVEY-0026 (VOTE_RESPONSE_NOT_FOUND): notice 도메인으로 이관
+    FORM_RESPONSE_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SURVEY-0027", "이미 제출한 응답이 있습니다."),
+    SURVEY_NOT_PUBLISHED(HttpStatus.CONFLICT, "SURVEY-0028", "발행된 폼만 응답할 수 있습니다."),
+    QUESTION_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "SURVEY-0029", "선택지를 찾을 수 없습니다."),
+    ANSWER_NOT_FOUND(HttpStatus.NOT_FOUND, "SURVEY-0030", "답변을 찾을 수 없습니다."),
+    FORM_RESPONSE_NOT_DRAFT(HttpStatus.CONFLICT, "SURVEY-0031", "임시저장 상태의 응답에만 가능한 작업입니다."),
+    ANSWER_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "SURVEY-0032", "이미 해당 질문에 대한 답변이 존재합니다."),
     ;
 
     private final HttpStatus httpStatus;

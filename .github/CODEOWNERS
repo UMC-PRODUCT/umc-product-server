@@ -1,20 +1,49 @@
-.github @kyeoungwoon
-docker @kyeoungwoon
+# ================================================
+# CODEOWNERS는 도메인의 주요 기여자를 표기하는데 사용됩니다.
+# 여러 명이 있는 경우 기여도 순으로 정렬하여 표기합니다.
+# ================================================
+
+# 상세 명시되어 있지 않더라도 모든 코드는 UMC PRODUCT 서버팀 소속입니다.
+* @UMC-PRODUCT/server-team
+
+# GitHub 및 CI/CD 관련
+.github/** @kyeoungwoon
+docker/** @kyeoungwoon
 .gitignore @kyeoungwoon
 
-src/main/java/com/umc/product/authentication/* @kyeoungwoon
-src/main/java/com/umc/product/authorization/* @kyeoungwoon
-src/main/java/com/umc/product/challenger/* @kyeoungwoon
-src/main/java/com/umc/product/common/* @kyeoungwoon
-src/main/java/com/umc/product/community/* @sopp1313
-src/main/java/com/umc/product/curriculum/* @wlgusqkr
-src/main/java/com/umc/product/global/* @kyeoungwoon
-src/main/java/com/umc/product/member/* @kyeoungwoon
-src/main/java/com/umc/product/notice/* @kanghana1
-src/main/java/com/umc/product/notification/* @wlgusqkr @kanghana1
-src/main/java/com/umc/product/organization/* @wlgusqkr
-src/main/java/com/umc/product/recruitment/* @galllee
-src/main/java/com/umc/product/schedule/* @sopp1313 @ParkSenn
-src/main/java/com/umc/product/storage/* @kyeoungwoon
-src/main/java/com/umc/product/survey/* @galllee
-src/main/java/com/umc/product/term/* @kyeoungwoon
+# 공통
+src/main/java/com/umc/product/common/** @kyeoungwoon
+src/main/java/com/umc/product/global/** @kyeoungwoon
+
+# 인증/인가
+src/main/java/com/umc/product/authentication/** @kyeoungwoon
+src/main/java/com/umc/product/authorization/** @kyeoungwoon
+
+# 회원 관련
+src/main/java/com/umc/product/member/** @kyeoungwoon
+src/main/java/com/umc/product/challenger/** @kyeoungwoon
+src/main/java/com/umc/product/term/** @kyeoungwoon @ParkSenn
+
+# 파일 업로드
+src/main/java/com/umc/product/storage/** @kyeoungwoon
+
+# 커뮤니티
+src/main/java/com/umc/product/community/** @sopp1313
+
+# 커리큘럼, 조직 관련
+src/main/java/com/umc/product/curriculum/** @wlgusqkr @kyeoungwoon @psb3707
+src/main/java/com/umc/product/organization/** @wlgusqkr @kyeoungwoon @psb3707
+
+# 공지사항
+src/main/java/com/umc/product/notice/** @kanghana1 @seamooll @kyeoungwoon
+
+# 알림
+src/main/java/com/umc/product/notification/** @kanghana1 @seamooll @wlgusqkr
+
+# 모집 및 프로젝트 관련
+src/main/java/com/umc/product/survey/** @galllee @kyeoungwoon
+src/main/java/com/umc/product/project/** @kyeoungwoon @wooodypark
+src/main/java/com/umc/product/recruitment/** @galllee
+
+# 일정/출석
+src/main/java/com/umc/product/schedule/** @sopp1313 @ParkSenn @kyeoungwoon

@@ -6,16 +6,18 @@ import com.umc.product.survey.domain.Question;
 import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class QuestionPersistenceAdapter implements SaveQuestionPort, LoadQuestionPort {
     private final QuestionJpaRepository questionJpaRepository;
+    private final QuestionQueryRepository questionQueryRepository;
 
     @Override
     public void deleteByFormIdAndQuestionId(Long formId, Long questionId) {
@@ -41,6 +43,16 @@ public class QuestionPersistenceAdapter implements SaveQuestionPort, LoadQuestio
     }
 
     @Override
+    public void deleteByFormId(Long formId) {
+        questionJpaRepository.deleteByFormId(formId);
+    }
+
+    @Override
+    public void deleteBySectionId(Long sectionId) {
+        questionJpaRepository.deleteBySectionId(sectionId);
+    }
+
+    @Override
     public Optional<Question> findById(Long questionId) {
         return questionJpaRepository.findById(questionId);
     }
@@ -48,5 +60,30 @@ public class QuestionPersistenceAdapter implements SaveQuestionPort, LoadQuestio
     @Override
     public Optional<Question> findFirstByFormIdAndType(Long formId, QuestionType type) {
         return questionJpaRepository.findFirstByFormIdAndType(formId, type);
+    }
+
+    @Override
+    public List<Question> listByFormId(Long formId) {
+        return questionJpaRepository.findAllByFormId(formId);
+    }
+
+    @Override
+    public List<Question> listBySectionId(Long sectionId) {
+        return questionQueryRepository.findAllBySectionId(sectionId);
+    }
+
+    @Override
+    public List<Question> listBySectionIdIn(Set<Long> sectionIds) {
+        return questionQueryRepository.findAllBySectionIdIn(sectionIds);
+    }
+
+    @Override
+    public Question save(Question question) {
+        return questionJpaRepository.save(question);
+    }
+
+    @Override
+    public List<Question> saveAll(List<Question> questions) {
+        return questionJpaRepository.saveAll(questions);
     }
 }

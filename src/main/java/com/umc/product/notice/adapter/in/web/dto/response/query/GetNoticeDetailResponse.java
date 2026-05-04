@@ -3,8 +3,8 @@ package com.umc.product.notice.adapter.in.web.dto.response.query;
 import com.umc.product.notice.application.port.in.query.dto.NoticeImageInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeInfo;
 import com.umc.product.notice.application.port.in.query.dto.NoticeLinkInfo;
-import com.umc.product.notice.dto.NoticeTargetInfo;
-import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
+import com.umc.product.notice.application.port.in.query.dto.NoticeVoteInfo;
+import com.umc.product.notice.domain.NoticeTargetInfo;
 import java.time.Instant;
 import java.util.List;
 import lombok.Builder;
@@ -21,7 +21,7 @@ public record GetNoticeDetailResponse(
     Long authorMemberId,
 
     // 공지사항 부가 내용들
-    VoteInfo vote,
+    NoticeVoteInfo vote,
     List<NoticeImageInfo> images,
     List<NoticeLinkInfo> links,
 
@@ -32,6 +32,7 @@ public record GetNoticeDetailResponse(
     Long viewCount,
     Instant createdAt
 ) {
+
     public static GetNoticeDetailResponse from(
         NoticeInfo noticeInfo
     ) {
@@ -49,4 +50,5 @@ public record GetNoticeDetailResponse(
             .createdAt(noticeInfo.createdAt())
             .build();
     }
+
 }

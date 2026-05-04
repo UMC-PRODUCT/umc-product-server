@@ -10,8 +10,8 @@ import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
-import com.umc.product.notification.application.port.in.ManageFcmUseCase;
 import com.umc.product.notification.application.port.in.SendEmailUseCase;
+import com.umc.product.notification.application.port.in.SendNotificationToAudienceUseCase;
 import com.umc.product.notification.application.port.in.SendWebhookAlarmUseCase;
 import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
 import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
@@ -40,7 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Profile("local | dev")
 @RestController
 @RequestMapping("/test")
-@Tag(name = "000 Test | 일반 테스트", description = "개발 및 테스트 용 API 입니다. 잘못 호출했을 떄 Dev 서버가 어떻게 되어버릴지도 몰라요")
+@Tag(name = "Test | 일반 테스트", description = "개발 및 테스트 용 API 입니다. 잘못 호출하면 우리의 작고 소중한 서버가 어떻게 되어버릴지도 몰라요 \uD83E\uDEE2")
 @Slf4j
 @Public
 public class TestController {
@@ -50,7 +50,7 @@ public class TestController {
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
     private final GetFileUseCase getFileUseCase;
     private final SendEmailUseCase sendEmailUseCase;
-    private final ManageFcmUseCase manageFcmUseCase;
+    private final SendNotificationToAudienceUseCase sendNotificationToAudienceUseCase;
 
     /**
      * 파일 정보 및 접근 URL을 조회합니다.
@@ -70,7 +70,7 @@ public class TestController {
     @Operation(summary = "FCM 푸시 알림 테스트 전송")
     @PostMapping("/fcm/test-send")
     public void sendTestNotification(@RequestBody FcmTestSendRequest request) {
-        manageFcmUseCase.sendMessageByToken(request.toCommand());
+        sendNotificationToAudienceUseCase.sendToMember(request.toCommand());
     }
 
     @PostMapping("/email/send-test")

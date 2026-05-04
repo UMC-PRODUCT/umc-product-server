@@ -7,8 +7,8 @@ plugins {
 }
 
 group = "com.umc"
-version = "0.0.1"
-description = "umc-product"
+version = "2.0.0"
+description = "UMC PRODUCT API by Server Team"
 
 java {
     toolchain {
@@ -101,9 +101,11 @@ dependencies {
     // --- Utils ---
     // 서버 시작 시 자동으로 Docker Compose 실행
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
+
     // 다들 잘 아는 그 lombok
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
+
     // SQL 출력용 P6Spy
     implementation("com.github.gavlyukovskiy:p6spy-spring-boot-starter:1.10.0")
 
@@ -147,10 +149,18 @@ dependencies {
     testImplementation("org.testcontainers:testcontainers")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
+    testImplementation("com.navercorp.fixturemonkey:fixture-monkey-starter:1.1.19") // Fixture 생성에 도움을 주는 친구
+
+    testCompileOnly("org.projectlombok:lombok")
+    testAnnotationProcessor("org.projectlombok:lombok")
 
     // --- Spring REST Docs ---
     "asciidoctorExt"("org.springframework.restdocs:spring-restdocs-asciidoctor")
     testImplementation("org.springframework.restdocs:spring-restdocs-mockmvc")
+}
+
+springBoot {
+    buildInfo()
 }
 
 tasks.withType<JavaCompile>().configureEach {

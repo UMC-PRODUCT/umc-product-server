@@ -15,20 +15,22 @@ import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusResu
 import com.umc.product.notice.application.port.in.query.dto.NoticeReadStatusSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeSummary;
 import com.umc.product.notice.application.port.in.query.dto.NoticeViewerInfo;
+import com.umc.product.notice.application.port.in.query.dto.NoticeVoteInfo;
 import com.umc.product.notice.application.port.out.LoadNoticePort;
 import com.umc.product.notice.application.port.out.LoadNoticeReadPort;
 import com.umc.product.notice.application.port.out.LoadNoticeTargetPort;
 import com.umc.product.notice.domain.Notice;
+import com.umc.product.notice.domain.NoticeClassification;
 import com.umc.product.notice.domain.NoticeRead;
 import com.umc.product.notice.domain.NoticeTarget;
+import com.umc.product.notice.domain.NoticeTargetInfo;
 import com.umc.product.notice.domain.enums.NoticeReadStatusFilterType;
+import com.umc.product.notice.domain.enums.NoticeTab;
+import com.umc.product.notice.domain.enums.NoticeTargetPattern;
 import com.umc.product.notice.domain.exception.NoticeDomainException;
 import com.umc.product.notice.domain.exception.NoticeErrorCode;
-import com.umc.product.notice.dto.NoticeClassification;
-import com.umc.product.notice.dto.NoticeTargetInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
-import com.umc.product.organization.application.port.in.query.dto.ChapterInfo;
-import com.umc.product.survey.application.port.in.query.dto.VoteInfo;
+import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,8 +65,9 @@ public class NoticeQueryService implements GetNoticeUseCase {
     @Override
     public Page<NoticeSummary> getAllNoticeSummaries(NoticeViewerInfo viewerInfo, NoticeClassification classification,
                                                      Pageable pageable) {
+        validateClassification(classification, viewerInfo);
         NoticeClassification enriched = enrichClassification(viewerInfo, classification);
-        Page<Notice> notices = loadNoticePort.findNoticesByClassification(enriched, viewerInfo.memberParts(), pageable);
+        Page<Notice> notices = loadNoticePort.findNoticesByClassification(enriched, viewerInfo, pageable);
         return toNoticeSummaryPage(notices);
     }
 
@@ -72,9 +75,9 @@ public class NoticeQueryService implements GetNoticeUseCase {
     public Page<NoticeSummary> searchNoticesByKeyword(String keyword, NoticeViewerInfo viewerInfo,
                                                       NoticeClassification classification,
                                                       Pageable pageable) {
+        validateClassification(classification, viewerInfo);
         NoticeClassification enriched = enrichClassification(viewerInfo, classification);
-        Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, enriched, viewerInfo.memberParts(),
-            pageable);
+        Page<Notice> notices = loadNoticePort.findNoticesByKeyword(keyword, enriched, viewerInfo, pageable);
         return toNoticeSummaryPage(notices);
     }
 
@@ -85,7 +88,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
         Notice notice = findById(noticeId);
         List<NoticeImageInfo> imageInfos = getNoticeContentUseCase.findImageByNoticeId(noticeId);
         List<NoticeLinkInfo> linkInfos = getNoticeContentUseCase.findLinkByNoticeId(noticeId);
-        VoteInfo voteInfo = getNoticeContentUseCase.findVoteByNoticeId(noticeId, memberId);
+        NoticeVoteInfo voteInfo = getNoticeContentUseCase.findVoteByNoticeId(noticeId, memberId);
 
         // NoticeTargetInfo 조회
         NoticeTarget target = loadNoticeTargetPort.findByNoticeId(noticeId).orElse(null);
@@ -193,7 +196,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         // 전체 기수 공지 여부
         if (targetInfo.targetGisuId() != null) {
-            challengers = getChallengerUseCase.getAllByGisuIdWithoutChallengerPoints(targetInfo.targetGisuId());
+            challengers = getChallengerUseCase.getAllByGisuId(targetInfo.targetGisuId());
         } else {
             // 모든 기수 대상 공지: DB 쿼리에서 멤버당 최신 기수 챌린저 1건만 조회 (읽음 현황 조회 시 혼선 방지)
             challengers = getChallengerUseCase.getAllLatestGisuPerMemberWithoutChallengerPoints();
@@ -248,7 +251,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         List<ChallengerInfo> challengers;
         if (targetInfo.targetGisuId() != null) {
-            challengers = getChallengerUseCase.getAllByGisuIdWithoutChallengerPoints(targetInfo.targetGisuId());
+            challengers = getChallengerUseCase.getAllByGisuId(targetInfo.targetGisuId());
         } else {
             challengers = getChallengerUseCase.getAllLatestGisuPerMemberWithoutChallengerPoints();
         }
@@ -285,10 +288,29 @@ public class NoticeQueryService implements GetNoticeUseCase {
     }
 
 
+    private void validateClassification(NoticeClassification classification, NoticeViewerInfo viewerInfo) {
+        if (classification.isChallengerQuery()) {
+            // 챌린저 공지: 필드 조합 유효성 검증 (지부+학교 동시 지정 등 불가 조합 차단)
+            NoticeTargetPattern.from(classification.toTargetInfo());
+        } else {
+            // 운영진 공지: 조회자 역할이 요청 역할 이상인지 검증
+            NoticeTab viewerRole = viewerInfo.viewerRole();
+            if (viewerRole == null) {
+                throw new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION,
+                    "운영진 공지를 조회할 권한이 없습니다.");
+            }
+            if (!classification.noticeTab().includes(viewerRole)) {
+                throw new NoticeDomainException(NoticeErrorCode.NO_READ_PERMISSION,
+                    "조회자의 역할이 요청한 공지 대상 역할보다 낮습니다.");
+            }
+        }
+    }
+
     /**
-     * 지부/학교/파트 필터 요청 시, 조회자의 실제 소속 정보로 chapterId/schoolId를 채웁니다. 모든 필터가 없으면 그대로 반환합니다.
+     * 챌린저 공지 한정으로 파트 필터 시 지부/학교 ID를 보완합니다.
      * <p>
-     * 클라이언트가 넘긴 chapterId/schoolId는 "이 필터 종류로 조회"라는 의도로만 사용하고, 실제 ID 값은 viewerInfo에서 가져옵니다.
+     * - chapterId/schoolId가 이미 명시된 경우: 그대로 사용 (총괄단 등이 특정 범위 지정 가능) - 챌린저 공지에서 part만 있고 chapterId/schoolId 없는 경우:
+     * viewerInfo로 보완 - 운영진 공지는 schoolId를 자동 보완하지 않습니다. schoolId 유무로 중앙공지/교내공지를 명확히 구분하므로, 반드시 클라이언트가 명시해야 합니다.
      */
     private NoticeClassification enrichClassification(NoticeViewerInfo viewerInfo,
                                                       NoticeClassification classification) {
@@ -299,11 +321,17 @@ public class NoticeQueryService implements GetNoticeUseCase {
         }
 
         boolean hasPart = classification.part() != null;
-        Long filteredChapterId = (classification.chapterId() != null || hasPart) ? viewerInfo.chapterId() : null;
-        Long filteredSchoolId = (classification.schoolId() != null || hasPart) ? viewerInfo.schoolId() : null;
+        boolean isChallengerQuery = classification.isChallengerQuery();
+
+        Long filteredChapterId = classification.chapterId() != null
+            ? classification.chapterId()
+            : (hasPart && isChallengerQuery ? viewerInfo.chapterId() : null);
+        Long filteredSchoolId = classification.schoolId() != null
+            ? classification.schoolId()
+            : (hasPart && isChallengerQuery ? viewerInfo.schoolId() : null);
 
         return new NoticeClassification(classification.gisuId(), filteredChapterId, filteredSchoolId,
-            classification.part());
+            classification.part(), classification.noticeTab());
     }
 
     private Page<NoticeSummary> toNoticeSummaryPage(Page<Notice> notices) {
