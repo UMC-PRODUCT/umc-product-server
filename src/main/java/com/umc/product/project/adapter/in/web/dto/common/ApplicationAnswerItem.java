@@ -1,5 +1,6 @@
 package com.umc.product.project.adapter.in.web.dto.common;
 
+import com.umc.product.project.application.port.in.command.dto.UpdateProjectApplicationDraftCommand.AnswerEntry;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import lombok.Builder;
@@ -24,4 +25,13 @@ public record ApplicationAnswerItem(
     List<Long> selectedOptionIds,
     List<String> fileIds
 ) {
+
+    public AnswerEntry toEntry() {
+        return AnswerEntry.builder()
+            .questionId(questionId)
+            .textValue(textValue)
+            .selectedOptionIds(selectedOptionIds == null ? List.of() : selectedOptionIds)
+            .fileIds(fileIds == null ? List.of() : fileIds)
+            .build();
+    }
 }

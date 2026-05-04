@@ -1,6 +1,7 @@
 package com.umc.product.project.adapter.in.web.dto.request;
 
 import com.umc.product.project.adapter.in.web.dto.common.ApplicationAnswerItem;
+import com.umc.product.project.application.port.in.command.dto.UpdateProjectApplicationDraftCommand;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
@@ -18,4 +19,12 @@ public record UpdateApplicationAnswersRequest(
     @Valid
     List<ApplicationAnswerItem> answers
 ) {
+
+    public UpdateProjectApplicationDraftCommand toCommand(Long projectId, Long requesterMemberId) {
+        return UpdateProjectApplicationDraftCommand.builder()
+            .projectId(projectId)
+            .requesterMemberId(requesterMemberId)
+            .answers(answers.stream().map(ApplicationAnswerItem::toEntry).toList())
+            .build();
+    }
 }
