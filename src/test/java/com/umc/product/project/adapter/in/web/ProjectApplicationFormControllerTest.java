@@ -138,7 +138,7 @@ class ProjectApplicationFormControllerTest {
 
     @Test
     void GET_폼이_있으면_구조_반환() throws Exception {
-        given(getProjectApplicationFormUseCase.findByProjectId(42L)).willReturn(Optional.of(
+        given(getProjectApplicationFormUseCase.findByProjectId(42L, TEST_MEMBER_ID)).willReturn(Optional.of(
             ApplicationFormInfo.builder()
                 .projectId(42L).applicationFormId(100L)
                 .title("Triple 지원서").description(null)
@@ -153,7 +153,7 @@ class ProjectApplicationFormControllerTest {
 
     @Test
     void GET_폼이_없으면_result_null() throws Exception {
-        given(getProjectApplicationFormUseCase.findByProjectId(42L)).willReturn(Optional.empty());
+        given(getProjectApplicationFormUseCase.findByProjectId(42L, TEST_MEMBER_ID)).willReturn(Optional.empty());
 
         mockMvc.perform(get("/api/v1/projects/42/application-form"))
             .andExpect(status().isOk())
