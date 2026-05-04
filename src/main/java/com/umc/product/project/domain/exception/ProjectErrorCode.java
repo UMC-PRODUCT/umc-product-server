@@ -58,6 +58,12 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_MATCHING_ROUND_TIME_REQUIRES_CHAPTER(HttpStatus.BAD_REQUEST, "PROJECT-0305",
         "time 기준 조회는 chapterId와 함께 요청해야 합니다."),
 
+    // ProjectApplication (APPLY-001/002/003)
+    PROJECT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없습니다."),
+    PROJECT_APPLICATION_PART_NOT_ALLOWED(HttpStatus.FORBIDDEN, "PROJECT-0205", "해당 프로젝트에 지원 가능한 파트가 아닙니다."),
+    PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM(HttpStatus.CONFLICT, "PROJECT-0206", "이미 해당 기수에 소속된 팀이 있어 지원할 수 없습니다."),
+    PROJECT_APPLICATION_DUPLICATE_SUBMISSION(HttpStatus.CONFLICT, "PROJECT-0207", "동일한 매칭 차수에 이미 제출된 지원서가 있습니다."),
+
     ;
 
     private final HttpStatus httpStatus;

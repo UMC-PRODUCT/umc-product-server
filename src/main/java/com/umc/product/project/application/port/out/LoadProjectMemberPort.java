@@ -36,4 +36,9 @@ public interface LoadProjectMemberPort {
      * PROJECT-005(멤버 제거)에서 사용 — 이미 비활성화된 row 도 idempotent 처리하기 위함.
      */
     Optional<ProjectMember> findByProjectIdAndMemberId(Long projectId, Long memberId);
+
+    /**
+     * 해당 기수에서 이미 ACTIVE 팀원인지 확인합니다. (중복 지원 방지용)
+     */
+    boolean existsByGisuAndMember(Long gisuId, Long memberId);
 }
