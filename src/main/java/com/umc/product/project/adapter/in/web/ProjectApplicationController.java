@@ -1,5 +1,8 @@
 package com.umc.product.project.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.project.adapter.in.web.dto.request.UpdateApplicationAnswersRequest;
@@ -35,6 +38,12 @@ public class ProjectApplicationController {
         summary = "[APPLY-001] 챌린저 지원서 Draft 생성",
         description = "챌린저가 특정 프로젝트의 지원서를 DRAFT 상태로 생성합니다. 이미 DRAFT 지원서가 있으면 기존 application 정보 반환."
     )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.APPLY,
+        message = "지원서 생성 권한이 없습니다."
+    )
     public ProjectApplicationStatusResponse createDraft(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId
@@ -54,6 +63,12 @@ public class ProjectApplicationController {
         summary = "[APPLY-002] 챌린저 지원서 임시저장",
         description = "본문이 곧 답변의 새 전체 상태가 된다. 본인의 DRAFT 지원서에서만 호출 가능."
     )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.APPLY,
+        message = "지원서 임시저장 권한이 없습니다."
+    )
     public ProjectApplicationStatusResponse updateDraft(
         @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId,
@@ -70,6 +85,12 @@ public class ProjectApplicationController {
     @Operation(
         summary = "[APPLY-003] 챌린저 지원서 최종 제출",
         description = "DRAFT -> SUBMITTED 전이. 필수 답변 누락 시 400. 본인의 DRAFT 지원서에서만 호출 가능."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        resourceId = "#projectId",
+        permission = PermissionType.APPLY,
+        message = "지원서 제출 권한이 없습니다."
     )
     public ProjectApplicationStatusResponse submit(
         @CurrentMember MemberPrincipal memberPrincipal,

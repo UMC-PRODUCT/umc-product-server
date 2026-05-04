@@ -39,6 +39,7 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
             case EDIT -> canEdit(subject, permission);
             case MANAGE -> canManage(subject, permission);
             case DELETE -> isCentralCore(subject);
+            case APPLY -> canApply(subject, permission);
             default -> false;
         };
     }
@@ -102,6 +103,15 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
                 isCentralCore(subject)
                     || isChapterPresidentOf(subject, project.getChapterId(), project.getGisuId());
             case DRAFT, COMPLETED, ABORTED -> false;
+        };
+    }
+
+    /** 챌린저 신분인 사용자만 IN_PROGRESS 프로젝트에 지원 가능. COMPLETED 포함 그 외 상태는 차단. */
+    private boolean canApply(SubjectAttributes subject, ResourcePermission permission) {
+        Project project = loadProject(permission);
+        return switch (project.getStatus()) {
+            case IN_PROGRESS -> !subject.gisuChallengerInfos().isEmpty();
+            default -> false;
         };
     }
 
