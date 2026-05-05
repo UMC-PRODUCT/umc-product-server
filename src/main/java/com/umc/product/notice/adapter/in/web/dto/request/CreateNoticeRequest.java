@@ -21,12 +21,15 @@ public record CreateNoticeRequest(
     @NotNull(message = "알림 발송 여부는 필수입니다.")
     Boolean shouldNotify,
 
+    @Schema(description = "UPMS 필독 공지시 사용. true로 설정하면 공지 목록 최상단에 고정됩니다.", defaultValue = "false")
+    boolean mustRead,
+
     @Schema(description = "공지 대상 범위 설정. 어떤 기수/지부/학교/파트에 공지를 보낼지 지정")
     @Valid
     @NotNull(message = "대상 정보는 필수입니다")
     NoticeTargetInfo targetInfo
 ) {
     public CreateNoticeCommand toCommand(Long memberId) {
-        return new CreateNoticeCommand(memberId, title, content, shouldNotify, targetInfo);
+        return new CreateNoticeCommand(memberId, title, content, shouldNotify, mustRead, targetInfo);
     }
 }
