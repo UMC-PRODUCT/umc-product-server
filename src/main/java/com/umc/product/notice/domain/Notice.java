@@ -46,18 +46,26 @@ public class Notice extends BaseEntity {
     /* 알림발송 시각 */
     private Instant notifiedAt;
 
-    public static Notice create(String title, String content, Long authorMemberId, boolean shouldNotify) {
+    @Column(name = "must_read", nullable = false)
+    private boolean mustRead;
+
+    public static Notice create(String title, String content, Long authorMemberId, boolean shouldNotify, boolean mustRead) {
         return Notice.builder()
             .title(title)
             .content(content)
             .authorMemberId(authorMemberId)
             .shouldSendNotification(shouldNotify)
+            .mustRead(mustRead)
             .build();
     }
 
     public void updateTitleOrContent(String title, String content) {
         this.title = title;
         this.content = content;
+    }
+
+    public void updateMustRead(boolean mustRead) {
+        this.mustRead = mustRead;
     }
 
     /**
