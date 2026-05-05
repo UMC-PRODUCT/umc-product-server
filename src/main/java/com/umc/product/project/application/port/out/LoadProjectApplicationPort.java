@@ -29,6 +29,12 @@ public interface LoadProjectApplicationPort {
     );
 
     /**
+     * 본인의 DRAFT 지원서를 반드시 존재하는 것으로 조회합니다. 없으면 {@code PROJECT_APPLICATION_NOT_FOUND} 예외.
+     * update / submit 에서 사용합니다.
+     */
+    ProjectApplication getDraftByProjectAndMember(Long projectId, Long memberId);
+
+    /**
      * 동일 차수에 이미 제출된 지원서가 있는지 확인합니다. (중복 제출 방지용)
      */
     boolean existsByRoundAndApplicantAndStatus(

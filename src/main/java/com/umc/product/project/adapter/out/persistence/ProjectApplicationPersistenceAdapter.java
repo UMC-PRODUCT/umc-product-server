@@ -4,6 +4,8 @@ import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -46,6 +48,16 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
             roundId,
             status
         );
+    }
+
+    @Override
+    public ProjectApplication getDraftByProjectAndMember(Long projectId, Long memberId) {
+        return projectApplicationQueryRepository
+            .findByProjectIdAndApplicantMemberIdAndStatus(
+                projectId,
+                memberId,
+                ProjectApplicationStatus.DRAFT
+            ).orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND));
     }
 
     @Override

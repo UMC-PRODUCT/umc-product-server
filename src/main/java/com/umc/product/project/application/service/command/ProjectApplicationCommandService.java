@@ -116,7 +116,8 @@ public class ProjectApplicationCommandService implements
 
     @Override
     public ProjectApplicationInfo update(UpdateProjectApplicationDraftCommand command) {
-        ProjectApplication application = getDraftOrThrow(command.projectId(), command.requesterMemberId());
+        ProjectApplication application = loadProjectApplicationPort
+            .getDraftByProjectAndMember(command.projectId(), command.requesterMemberId());
 
         manageFormResponseUseCase.updateDraft(
             UpdateDraftFormResponseCommand.builder()
@@ -131,7 +132,8 @@ public class ProjectApplicationCommandService implements
 
     @Override
     public ProjectApplicationInfo submit(SubmitProjectApplicationCommand command) {
-        ProjectApplication application = getDraftOrThrow(command.projectId(), command.requesterMemberId());
+        ProjectApplication application = loadProjectApplicationPort
+            .getDraftByProjectAndMember(command.projectId(), command.requesterMemberId());
 
         // 차수 마감 여부 체크 - 제출 시점에 차수가 닫혀있으면 불가
         if (application.getAppliedMatchingRound() != null
@@ -160,12 +162,6 @@ public class ProjectApplicationCommandService implements
         saveProjectApplicationPort.save(application);
 
         return ProjectApplicationInfo.of(application.getId(), application.getStatus());
-    }
-
-    private ProjectApplication getDraftOrThrow(Long projectId, Long memberId) {
-        return loadProjectApplicationPort
-            .findByProjectIdAndApplicantMemberIdAndStatus(projectId, memberId, ProjectApplicationStatus.DRAFT)
-            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND));
     }
 
     private List<AnswerCommand> toAnswerCommands(List<UpdateProjectApplicationDraftCommand.AnswerEntry> entries) {
