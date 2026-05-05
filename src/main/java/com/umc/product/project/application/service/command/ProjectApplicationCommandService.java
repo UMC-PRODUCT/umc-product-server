@@ -133,6 +133,12 @@ public class ProjectApplicationCommandService implements
     public ProjectApplicationInfo submit(SubmitProjectApplicationCommand command) {
         ProjectApplication application = getDraftOrThrow(command.projectId(), command.requesterMemberId());
 
+        // 차수 마감 여부 체크 - 제출 시점에 차수가 닫혀있으면 불가
+        if (application.getAppliedMatchingRound() != null
+            && !application.getAppliedMatchingRound().isOpenAt(Instant.now())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_ROUND_CLOSED);
+        }
+
         // 동일 차수 중복 제출 체크
         if (application.getAppliedMatchingRound() != null
             && loadProjectApplicationPort.existsByRoundAndApplicantAndStatus(
