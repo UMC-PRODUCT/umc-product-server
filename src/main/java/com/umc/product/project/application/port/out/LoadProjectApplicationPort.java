@@ -21,6 +21,14 @@ public interface LoadProjectApplicationPort {
     );
 
     /**
+     * (projectId, applicantMemberId, roundId, status) 조합으로 조회합니다.
+     * 현재 오픈된 차수 기준으로 기존 DRAFT를 찾을 때 사용합니다.
+     */
+    Optional<ProjectApplication> findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(
+        Long projectId, Long applicantMemberId, Long roundId, ProjectApplicationStatus status
+    );
+
+    /**
      * 동일 차수에 이미 제출된 지원서가 있는지 확인합니다. (중복 제출 방지용)
      */
     boolean existsByRoundAndApplicantAndStatus(

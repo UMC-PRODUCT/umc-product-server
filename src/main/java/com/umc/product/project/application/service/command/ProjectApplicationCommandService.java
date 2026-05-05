@@ -57,15 +57,6 @@ public class ProjectApplicationCommandService implements
         ProjectApplicationForm form = loadProjectApplicationFormPort.findByProjectId(command.projectId())
             .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.APPLICATION_FORM_NOT_FOUND));
 
-        // 멱등 처리 — 기존 DRAFT 있으면 그대로 반환
-        return loadProjectApplicationPort
-            .findByProjectIdAndApplicantMemberIdAndStatus(
-                command.projectId(), command.applicantMemberId(), ProjectApplicationStatus.DRAFT)
-            .map(existing -> ProjectApplicationInfo.of(existing.getId(), existing.getStatus()))
-            .orElseGet(() -> createNew(form, command));
-    }
-
-    private ProjectApplicationInfo createNew(ProjectApplicationForm form, CreateDraftProjectApplicationCommand command) {
         Project project = form.getProject();
 
         // 1. 챌린저 정보 조회 (현재 기수 챌린저 신분 + 파트 확인)
@@ -95,16 +86,29 @@ public class ProjectApplicationCommandService implements
             .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FOUND,
                 "현재 지원 가능한 매칭 차수가 없습니다."));
 
-        // 5. Survey FormResponse 생성 (DRAFT)
+        // 5. 멱등 처리 - 현재 오픈된 차수 기준으로 기존 DRAFT 조회
+        return loadProjectApplicationPort
+            .findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(
+                command.projectId(),
+                command.applicantMemberId(),
+                round.getId(),
+                ProjectApplicationStatus.DRAFT
+            ).map(existing -> ProjectApplicationInfo.of(existing.getId(), existing.getStatus()))
+            .orElseGet(() -> createNew(form, command.applicantMemberId(), round));
+    }
+
+    private ProjectApplicationInfo createNew(
+        ProjectApplicationForm form, Long applicantMemberId, ProjectMatchingRound round
+    ) {
         Long formResponseId = manageFormResponseUseCase.createDraft(
             CreateDraftFormResponseCommand.builder()
                 .formId(form.getFormId())
-                .respondentMemberId(command.applicantMemberId())
+                .respondentMemberId(applicantMemberId)
                 .build()
         );
 
         ProjectApplication saved = saveProjectApplicationPort.save(
-            ProjectApplication.create(form, formResponseId, command.applicantMemberId(), round)
+            ProjectApplication.create(form, formResponseId, applicantMemberId, round)
         );
 
         return ProjectApplicationInfo.of(saved.getId(), saved.getStatus());
