@@ -5,6 +5,7 @@ import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, SaveProjectMemberPort {
 
     private final ProjectMemberJpaRepository repository;
+    private final ProjectMemberQueryRepository queryRepository;
 
     @Override
     public ProjectMember save(ProjectMember member) {
@@ -47,6 +49,13 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
             result.put((ChallengerPart) row[0], (Long) row[1]);
         }
         return result;
+    }
+
+    @Override
+    public Map<Long, Map<ChallengerPart, Long>> countByProjectIdsGroupByProjectIdAndPart(
+        Collection<Long> projectIds
+    ) {
+        return queryRepository.countByProjectIdsGroupByProjectIdAndPart(projectIds);
     }
 
     @Override
