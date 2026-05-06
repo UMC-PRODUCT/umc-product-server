@@ -54,7 +54,9 @@ public interface AuthenticationControllerInterface {
             [Development](https://dev.api.umc.it.kr/api/v1/auth/oauth2/authorization/apple)
             [Production](https://api.umc.it.kr/api/v1/auth/oauth2/authorization/apple)
 
-            Apple 로그인은 제옹과 협의 후에 구현 예정입니다.
+            Apple 측에서 받은 authorization code와 함께 클라이언트 플랫폼(`clientType`)을 전달해주세요.
+            Apple은 플랫폼별로 서로 다른 client_id(iOS Bundle ID vs Web Services ID)를 사용하므로
+            `clientType`(ANDROID, IOS, WEB)을 정확히 명시해야 토큰 교환이 가능합니다.
             """)
     OAuthLoginResponse appleOAuthLogin(
         @RequestBody AppleLoginRequest request

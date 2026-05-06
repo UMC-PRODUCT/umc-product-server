@@ -2,7 +2,9 @@ package com.umc.product.test.controller;
 
 import com.umc.product.audit.application.port.in.annotation.Audited;
 import com.umc.product.audit.domain.AuditAction;
+import com.umc.product.authentication.adapter.out.external.AppleOAuthProperties;
 import com.umc.product.authentication.adapter.out.external.AppleTokenVerifier;
+import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.exception.constant.Domain;
 import com.umc.product.global.response.ApiResponse;
@@ -47,6 +49,7 @@ public class TestController {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final AppleTokenVerifier appleTokenVerifier;
+    private final AppleOAuthProperties appleOAuthProperties;
     private final SendWebhookAlarmUseCase sendWebhookAlarmUseCase;
     private final GetFileUseCase getFileUseCase;
     private final SendEmailUseCase sendEmailUseCase;
@@ -145,8 +148,8 @@ public class TestController {
 
     @GetMapping("apple-client-secret")
     @Operation(summary = "[TEST-006] Apple Client Secret 생성")
-    String getAppleClientSecret() {
-        return appleTokenVerifier.generateClientSecret();
+    String getAppleClientSecret(@RequestParam ClientType clientType) {
+        return appleTokenVerifier.generateClientSecret(appleOAuthProperties.resolveClientId(clientType));
     }
 
     @Public

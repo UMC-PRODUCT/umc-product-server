@@ -63,6 +63,7 @@ public class MemberService implements ManageMemberUseCase, RegisterOAuthMemberUs
                 .provider(command.provider())
                 .providerId(command.providerId())
                 .appleRefreshToken(command.appleRefreshToken())
+                .appleClientId(command.appleClientId())
                 .build()
         );
 

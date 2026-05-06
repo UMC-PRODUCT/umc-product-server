@@ -1,6 +1,7 @@
 package com.umc.product.authentication.application.port.out;
 
 import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
+import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 
 /**
@@ -21,10 +22,14 @@ public interface VerifyOAuthTokenPort {
 
     /**
      * Apple Authorization Code를 교환하여 사용자 정보를 추출합니다.
+     * <p>
+     * Apple은 플랫폼별로 다른 client_id(Bundle ID vs Services ID)를 사용하므로
+     * code 교환 시 클라이언트 플랫폼 정보가 필요합니다.
      *
      * @param authorizationCode Apple에서 발급받은 authorization code
-     * @return OAuth2Attributes
+     * @param clientType        클라이언트 플랫폼
+     * @return Apple authorization code 교환 결과 (사용자 정보 + refresh token + 사용된 client_id)
      * @throws com.umc.product.authentication.domain.exception.AuthenticationDomainException 코드 교환 또는 토큰 검증 실패 시
      */
-    AppleAuthorizationCodeResult verifyAppleAuthorizationCode(String authorizationCode);
+    AppleAuthorizationCodeResult verifyAppleAuthorizationCode(String authorizationCode, ClientType clientType);
 }

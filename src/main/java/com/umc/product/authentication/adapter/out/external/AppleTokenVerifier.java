@@ -5,6 +5,7 @@ import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import com.umc.product.common.domain.enums.ClientType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.Jwts.SIG;
@@ -38,6 +39,9 @@ import org.springframework.web.client.RestClient;
  * Apple Sign-In 토큰 검증 Adapter
  * <p>
  * Apple ID Token(JWT) 서명 검증과 Authorization Code 교환을 담당합니다.
+ * <p>
+ * Apple Sign-In은 플랫폼별로 다른 client_id를 사용하므로(iOS Bundle ID vs Web Services ID),
+ * authorization code 교환 / token revoke 시 클라이언트 플랫폼에 맞는 client_id를 사용해야 합니다.
  */
 @Slf4j
 @Component
@@ -58,12 +62,13 @@ public class AppleTokenVerifier {
      * <p>
      * Apple JWKS 공개키로 서명을 검증하고, issuer/audience를 확인합니다.
      *
-     * @param idToken Apple에서 발급받은 identity token (JWT)
+     * @param idToken  Apple에서 발급받은 identity token (JWT)
+     * @param clientId audience 검증에 사용할 client_id (플랫폼별로 다름)
      * @return OAuth2Attributes
      * @throws AuthenticationDomainException 토큰 검증 실패 시
      */
-    public OAuth2Attributes verifyIdToken(String idToken) {
-        log.debug("Apple ID Token 검증 시작");
+    public OAuth2Attributes verifyIdToken(String idToken, String clientId) {
+        log.debug("Apple ID Token 검증 시작: clientId={}", clientId);
 
         try {
             // 1. ID Token의 header에서 kid 추출
@@ -76,7 +81,7 @@ public class AppleTokenVerifier {
             Claims claims = Jwts.parser()
                 .verifyWith(publicKey)
                 .requireIssuer(APPLE_ISSUER)
-                .requireAudience(appleProperties.clientId())
+                .requireAudience(clientId)
                 .build()
                 .parseSignedClaims(idToken)
                 .getPayload();
@@ -106,19 +111,22 @@ public class AppleTokenVerifier {
      * Authorization Code로 Apple token endpoint에 요청하여 id_token을 받은 뒤, 해당 토큰을 검증합니다.
      *
      * @param authorizationCode Apple에서 발급받은 authorization code
-     * @return OAuth2Attributes
+     * @param clientType        클라이언트 플랫폼 (Apple client_id 매칭용)
+     * @return OAuth2Attributes, refresh token, 그리고 사용된 client_id (DB에 저장하기 위함)
      * @throws AuthenticationDomainException 코드 교환 또는 토큰 검증 실패 시
      */
-    public AppleAuthorizationCodeResult verifyAuthorizationCode(String authorizationCode) {
-        log.debug("Apple Authorization Code 교환 시작");
+    public AppleAuthorizationCodeResult verifyAuthorizationCode(String authorizationCode, ClientType clientType) {
+        log.debug("Apple Authorization Code 교환 시작: clientType={}", clientType);
 
         try {
+            String clientId = appleProperties.resolveClientId(clientType);
+
             // 1. client_secret 생성
-            String clientSecret = generateClientSecret();
+            String clientSecret = generateClientSecret(clientId);
 
             // 2. Apple token endpoint에 authorization code 교환 요청
             MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-            formData.add("client_id", appleProperties.clientId());
+            formData.add("client_id", clientId);
             formData.add("client_secret", clientSecret);
             formData.add("code", authorizationCode);
             formData.add("grant_type", "authorization_code");
@@ -143,8 +151,8 @@ public class AppleTokenVerifier {
             log.info("Apple Authorization Code 교환 성공, ID Token 검증 진행");
 
             // 3. 받은 id_token을 검증
-            OAuth2Attributes attrs = verifyIdToken(response.idToken());
-            return new AppleAuthorizationCodeResult(attrs, response.refreshToken());
+            OAuth2Attributes attrs = verifyIdToken(response.idToken(), clientId);
+            return new AppleAuthorizationCodeResult(attrs, response.refreshToken(), clientId);
 
         } catch (AuthenticationDomainException e) {
             throw e;
@@ -158,15 +166,16 @@ public class AppleTokenVerifier {
      * Apple refresh token을 revoke합니다.
      *
      * @param refreshToken Apple에서 발급받은 refresh token
+     * @param clientId     해당 refresh token을 발급받을 때 사용한 client_id (DB에 저장된 값)
      */
-    public void revokeToken(String refreshToken) {
-        log.info("Apple token revoke 시작");
+    public void revokeToken(String refreshToken, String clientId) {
+        log.info("Apple token revoke 시작: clientId={}", clientId);
 
         try {
-            String clientSecret = generateClientSecret();
+            String clientSecret = generateClientSecret(clientId);
 
             MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-            formData.add("client_id", appleProperties.clientId());
+            formData.add("client_id", clientId);
             formData.add("client_secret", clientSecret);
             formData.add("token", refreshToken);
             formData.add("token_type_hint", "refresh_token");
@@ -177,7 +186,8 @@ public class AppleTokenVerifier {
                 .body(formData)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.error("Apple token revoke 실패: status={}", res.getStatusCode());
+                    String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
+                    log.error("Apple token revoke 실패: status={}, body={}", res.getStatusCode(), body);
                     throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
                 })
                 .toBodilessEntity();
@@ -195,13 +205,15 @@ public class AppleTokenVerifier {
     /**
      * Apple client_secret JWT를 생성합니다.
      * <p>
-     * Apple Developer 문서에 따라 ES256으로 서명된 JWT를 생성합니다.
+     * Apple Developer 문서에 따라 ES256으로 서명된 JWT를 생성하며,
+     * subject claim에는 호출 시 전달된 client_id가 들어갑니다.
      *
+     * @param clientId client_secret JWT의 subject claim으로 사용할 client_id
      * @see <a
      * href="https://developer.apple.com/documentation/accountorganizationaldatasharing/creating-a-client-secret">Creating
      * a client secret</a>
      */
-    public String generateClientSecret() {
+    public String generateClientSecret(String clientId) {
         try {
             Instant now = Instant.now();
             Instant expiration = now.plusSeconds(3600);
@@ -213,7 +225,7 @@ public class AppleTokenVerifier {
                 .issuer(appleProperties.teamId())
                 .issuedAt(Date.from(now)).expiration(Date.from(expiration))
                 .audience().add(APPLE_ISSUER).and()
-                .subject(appleProperties.clientId())
+                .subject(clientId)
                 .signWith(getPrivateKey(), SIG.ES256)
                 .compact();
 
