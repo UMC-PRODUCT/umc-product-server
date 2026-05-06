@@ -33,7 +33,7 @@ public class ChallengerRecordController {
     private final ManageChallengerRecordUseCase manageChallengerRecordUseCase;
 
     // 코드를 이용해서 Member에 챌린저 기록을 추가하는 API
-    @Operation(summary = "6자리 코드를 이용해서 회원(계정)에 챌린저 기록 추가",
+    @Operation(summary = "[CHALLENGER-RECORD-001] 6자리 코드를 이용해서 회원(계정)에 챌린저 기록 추가",
         description = """
             각 챌린저 활동 기록에 대해서 발급된 6자리 코드를 입력하여,
             현재 로그인한 계정에 챌린저 기록 및 권한을 추가하는 기능입니다.
@@ -62,7 +62,7 @@ public class ChallengerRecordController {
         permission = PermissionType.READ
     )
     @GetMapping("code/{code}")
-    @Operation(summary = "코드로 ChallengerRecord 조회")
+    @Operation(summary = "[CHALLENGER-RECORD-101] 코드로 ChallengerRecord 조회")
     public ChallengerRecordResponse getChallengerRecordByCode(
         @PathVariable String code
     ) {
@@ -74,7 +74,7 @@ public class ChallengerRecordController {
         permission = PermissionType.READ
     )
     @GetMapping("id/{id}")
-    @Operation(summary = "ID로 ChallengerRecord 조회")
+    @Operation(summary = "[CHALLENGER-RECORD-102] ID로 ChallengerRecord 조회")
     public ChallengerRecordResponse getChallengerRecordById(
         @PathVariable Long id
     ) {
@@ -86,7 +86,7 @@ public class ChallengerRecordController {
         resourceType = ResourceType.CHALLENGER_RECORD,
         permission = PermissionType.WRITE
     )
-    @Operation(summary = "[ADMIN] 과거 챌린저 기록을 위한 코드 생성 기능",
+    @Operation(summary = "[CHALLENGER-RECORD-002] [ADMIN] 과거 챌린저 기록을 위한 코드 생성 기능",
         description = """
             중앙운영사무국 총괄단만 사용 가능한 기능입니다. 9기 이전 기수의 챌린저 기록을 업로드하고,
             각 기록을 모든 회원이 추가할 수 있도록 6자리 코드를 생성하여 발급합니다.
@@ -113,7 +113,7 @@ public class ChallengerRecordController {
         return assembler.from(id);
     }
 
-    @Operation(summary = "[ADMIN] 챌린저 기록용 코드 벌크 추가",
+    @Operation(summary = "[CHALLENGER-RECORD-003] [ADMIN] 챌린저 기록용 코드 벌크 추가",
         description = """
             Response는 생성된 챌린저 기록의 ID 리스트입니다. (성능 상 이슈로 각각에 대해서는 id 및 code로 조회하는 API 이용)
 

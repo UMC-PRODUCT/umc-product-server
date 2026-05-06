@@ -39,7 +39,7 @@ public class CredentialAuthenticationController {
 
     @Public
     @GetMapping("/login-id/availability")
-    @Operation(summary = "로그인 ID 사용 가능 여부 조회",
+    @Operation(summary = "[CREDENTIAL-001] 로그인 ID 사용 가능 여부 조회",
         description = "loginId 가 형식에 맞고 아직 사용되지 않았는지 확인합니다. 형식이 잘못되면 400 응답입니다.")
     public LoginIdAvailabilityResponse checkLoginIdAvailability(
         @RequestParam String loginId
@@ -49,8 +49,9 @@ public class CredentialAuthenticationController {
     }
 
     @PostMapping("/credentials")
-    @Operation(summary = "ID/PW 자격증명 최초 등록",
-        description = "OAuth 로 가입한 회원이 ID/PW 자격증명을 추가하거나 자격증명만으로 가입한 회원이 사용합니다.")
+    @Operation(summary = "[CREDENTIAL-002] ID/PW 최초 등록",
+        description = "OAuth 로 가입한 회원이 ID/PW로 로그인할 수 있도록 새롭게 추가할 수 있습니다. "
+            + "기본적으로 ID는 한 번 등록하면 변경할 수 없으며, 향후 서비스 내에서 친구 추가 등 범용적으로 사용되므로 신중하게 결정하여야 합니다.")
     public void registerCredential(
         @CurrentMember MemberPrincipal memberPrincipal,
         @Valid @RequestBody RegisterCredentialRequest request
@@ -61,7 +62,7 @@ public class CredentialAuthenticationController {
     }
 
     @PatchMapping("/password")
-    @Operation(summary = "비밀번호 변경",
+    @Operation(summary = "[CREDENTIAL-003] 비밀번호 변경",
         description = "현재 비밀번호 검증 후 새 비밀번호로 교체합니다.")
     public void changePassword(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -74,7 +75,7 @@ public class CredentialAuthenticationController {
 
     @Public
     @PostMapping("/login/id-pw")
-    @Operation(summary = "ID/PW 로그인",
+    @Operation(summary = "[LOGIN-004] ID/PW 로그인",
         description = "loginId/password 로 인증하여 AccessToken/RefreshToken 을 발급받습니다.")
     public IdPwLoginResponse loginByIdPw(
         @Valid @RequestBody LoginByIdPwRequest request

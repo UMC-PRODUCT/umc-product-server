@@ -25,7 +25,7 @@ public class ResourcePermissionController {
     private final ResourcePermissionUseCase resourcePermissionUseCase;
 
     @GetMapping
-    @Operation(summary = "리소스 권한 조회", description = "특정 리소스에 대해 현재 사용자가 가진 권한 목록을 조회합니다.")
+    @Operation(summary = "[PERMISSION-001] 리소스 권한 조회", description = "특정 리소스에 대해 현재 사용자가 가진 권한 목록을 조회합니다.")
     ResourcePermissionResponse getResourcePermission(
         @RequestParam ResourceType resourceType,
         @RequestParam(required = false) Long resourceId,
