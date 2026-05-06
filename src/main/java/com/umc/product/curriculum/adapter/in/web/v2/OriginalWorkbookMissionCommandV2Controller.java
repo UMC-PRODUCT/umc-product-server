@@ -23,7 +23,7 @@ public class OriginalWorkbookMissionCommandV2Controller {
     // TODO: @CheckAccess 반드시 추가할 것
 
     @Operation(
-        summary = "중앙파트장용: 원본 워크북에 미션 추가",
+        summary = "[ORIGINAL-WORKBOOK-MISSION-001] 중앙파트장용: 원본 워크북에 미션 추가",
         description = """
             미션을 추가합니다.
 
@@ -40,7 +40,7 @@ public class OriginalWorkbookMissionCommandV2Controller {
 
 
     @Operation(
-        summary = "중앙파트장용: 원본 워크북의 미션 수정",
+        summary = "[ORIGINAL-WORKBOOK-MISSION-002] 중앙파트장용: 원본 워크북의 미션 수정",
         description = """
             미션을 수정합니다.
 
@@ -59,7 +59,7 @@ public class OriginalWorkbookMissionCommandV2Controller {
     }
 
     @Operation(
-        summary = "중앙파트장용: 원본 워크북의 미션 삭제",
+        summary = "[ORIGINAL-WORKBOOK-MISSION-003] 중앙파트장용: 원본 워크북의 미션 삭제",
         description = """
             미션을 삭제합니다.
 
