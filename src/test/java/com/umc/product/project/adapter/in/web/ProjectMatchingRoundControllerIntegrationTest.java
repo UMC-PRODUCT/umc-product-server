@@ -490,7 +490,8 @@ class ProjectMatchingRoundControllerIntegrationTest extends IntegrationTestSuppo
             context.gisu().getId(),
             context.chapter().getId(),
             context.member().getId(),
-            1L
+            1L,
+            context.member().getId()
         ));
         ProjectApplicationForm applicationForm = saveProjectApplicationFormPort.save(
             ProjectApplicationForm.create(project, 10_000L)

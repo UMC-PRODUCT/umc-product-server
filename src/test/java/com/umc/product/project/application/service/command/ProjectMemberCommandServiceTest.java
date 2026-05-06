@@ -220,6 +220,7 @@ class ProjectMemberCommandServiceTest {
             ReflectionTestUtils.setField(p, "gisuId", 1L);
             ReflectionTestUtils.setField(p, "chapterId", 1L);
             ReflectionTestUtils.setField(p, "productOwnerMemberId", 99L);
+            ReflectionTestUtils.setField(p, "createdByMemberId", 99L);
             return p;
         } catch (Exception e) {
             throw new RuntimeException(e);

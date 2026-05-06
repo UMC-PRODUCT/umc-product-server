@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class WorkbookQueryV2Controller {
 
     @Operation(
-        summary = "OriginalWorkbook 상세 조회",
+        summary = "[WORKBOOK-101] OriginalWorkbook 상세 조회",
         description = """
             원본 워크북을 조회합니다. 원본 워크북의 파트와 기수에 해당 파트의 스터디 그룹에 속해 있어야 합니다.
             """
@@ -36,7 +36,7 @@ public class WorkbookQueryV2Controller {
     }
 
     @Operation(
-        summary = "ChallengerWorkbook 상세 조회",
+        summary = "[WORKBOOK-102] ChallengerWorkbook 상세 조회",
         description = """
             챌린저 워크북과 그에 연관된 미션 제출물 및 피드백을 조회합니다.
 
@@ -52,7 +52,7 @@ public class WorkbookQueryV2Controller {
     }
 
     @Operation(
-        summary = "베스트 워크북 조회",
+        summary = "[WORKBOOK-103] 베스트 워크북 조회",
         description = """
             베스트 워크북을 조회합니다. Cursor Pagination이 적용되었습니다.
 

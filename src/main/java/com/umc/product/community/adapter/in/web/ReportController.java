@@ -29,7 +29,7 @@ public class ReportController {
 
     @PostMapping("/posts/{postId}/reports")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "게시글 신고", description = "게시글을 신고합니다. 중복 신고는 불가능합니다.")
+    @Operation(summary = "[REPORT-001] 게시글 신고", description = "게시글을 신고합니다. 중복 신고는 불가능합니다.")
     public void reportPost(
         @PathVariable Long postId,
         @CurrentMember MemberPrincipal memberPrincipal
@@ -41,7 +41,7 @@ public class ReportController {
 
     @PostMapping("/comments/{commentId}/reports")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "댓글 신고", description = "댓글을 신고합니다. 중복 신고는 불가능합니다.")
+    @Operation(summary = "[REPORT-002] 댓글 신고", description = "댓글을 신고합니다. 중복 신고는 불가능합니다.")
     public void reportComment(
         @PathVariable Long commentId,
         @CurrentMember MemberPrincipal memberPrincipal

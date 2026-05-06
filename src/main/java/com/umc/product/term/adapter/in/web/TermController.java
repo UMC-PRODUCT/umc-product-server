@@ -32,20 +32,20 @@ public class TermController {
 
     @GetMapping("type/{termType}")
     @Public
-    @Operation(summary = "약관 유형으로 약관 조회")
+    @Operation(summary = "[TERM-101] 약관 유형으로 약관 조회")
     TermResponse getTerms(@PathVariable TermType termType) {
         return TermResponse.from(getTermUseCase.getTermsByType(termType));
     }
 
     @GetMapping("{termsId}")
     @Public
-    @Operation(summary = "약관 ID로 약관 조회")
+    @Operation(summary = "[TERM-102] 약관 ID로 약관 조회")
     TermResponse getTermsById(@PathVariable Long termsId) {
         return TermResponse.from(getTermUseCase.getTermsById(termsId));
     }
 
     @PostMapping
-    @Operation(summary = "약관 생성", description = "약관 삭제는 지원하지 않습니다. 새로운 약관을 생성하면 기존 약관이 비활성화됩니다.")
+    @Operation(summary = "[TERM-001] 약관 생성", description = "약관 삭제는 지원하지 않습니다. 새로운 약관을 생성하면 기존 약관이 비활성화됩니다.")
     @CheckAccess(
         resourceType = ResourceType.TERM,
         permission = PermissionType.WRITE

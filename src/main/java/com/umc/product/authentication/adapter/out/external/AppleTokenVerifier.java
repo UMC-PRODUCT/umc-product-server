@@ -137,7 +137,9 @@ public class AppleTokenVerifier {
                 .body(formData)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (req, res) -> {
-                    log.error("Apple token endpoint 호출 실패: status={}", res.getStatusCode());
+                    String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
+                    log.error("Apple token endpoint 호출 실패: status={}, headers={}, body={}",
+                        res.getStatusCode(), res.getHeaders(), body);
                     throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
                 })
                 .body(AppleTokenResponse.class);

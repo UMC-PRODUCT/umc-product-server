@@ -28,7 +28,7 @@ public class NoticeVoteResponseController {
 
     @PostMapping("/{noticeId}/votes/responses")
     @Operation(
-        summary = "공지사항 투표 응답 제출",
+        summary = "[NOTICE-VOTE-001] 공지사항 투표 응답 제출",
         description = """
             공지사항 투표에 응답을 제출합니다.
             - 투표 기간(OPEN) 내에서만 가능합니다. 시작 전이면 `VOTE_NOT_STARTED`, 종료 후면 `VOTE_CLOSED`.
@@ -48,7 +48,7 @@ public class NoticeVoteResponseController {
 
     @PutMapping("/{noticeId}/votes/responses")
     @Operation(
-        summary = "공지사항 투표 응답 수정/취소",
+        summary = "[NOTICE-VOTE-002] 공지사항 투표 응답 수정/취소",
         description = """
             기존에 제출한 공지사항 투표 응답의 선택지를 교체하거나 취소합니다.
             - 투표 기간(OPEN) 내에서만 가능합니다.

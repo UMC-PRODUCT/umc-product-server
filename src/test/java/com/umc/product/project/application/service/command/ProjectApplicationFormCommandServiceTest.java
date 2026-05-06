@@ -727,6 +727,7 @@ class ProjectApplicationFormCommandServiceTest {
         ReflectionTestUtils.setField(project, "status", status);
         ReflectionTestUtils.setField(project, "name", name);
         ReflectionTestUtils.setField(project, "productOwnerMemberId", 99L);
+        ReflectionTestUtils.setField(project, "createdByMemberId", 99L);
         return project;
     }
 

@@ -16,7 +16,7 @@ class ProjectTest {
 
     @BeforeEach
     void setUp() {
-        project = Project.createDraft(1L, 2L, 100L, 7L);
+        project = Project.createDraft(1L, 2L, 100L, 7L, 100L);
     }
 
     @Nested
