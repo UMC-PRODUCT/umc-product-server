@@ -210,25 +210,15 @@ public enum NoticeTargetPattern {
 
     private static boolean hasStaffWritePermission(NoticeTargetInfo info, Long memberId,
                                                    GetChallengerRoleUseCase useCase) {
-        NoticeTab minTargetRole = info.targetNoticeTab();
-
-        if (minTargetRole == NoticeTab.CENTRAL_MEMBER) {
-            // 중앙운영진 대상 → 총괄단만 작성 가능
+        if (info.targetNoticeTab() == NoticeTab.CENTRAL_MEMBER) {
+            // 중앙운영진 대상 공지: 총괄단만 작성 가능
             return useCase.isCentralCoreInGisu(memberId, info.targetGisuId());
         }
-
-        if (minTargetRole == NoticeTab.SCHOOL_CORE) {
-            // 학교회장단 이상 대상 → 총괄단 + 중앙운영진 작성 가능
-            return useCase.isCentralMemberInGisu(memberId, info.targetGisuId());
-        }
-
-        // SCHOOL_PART_LEADER 대상
         if (info.targetSchoolId() != null) {
-            // 교내운영진 공지: 해당 학교 회장단 또는 중앙운영진 작성 가능
-            return useCase.isCentralMemberInGisu(memberId, info.targetGisuId())
-                || useCase.isSchoolCoreInGisu(memberId, info.targetGisuId(), info.targetSchoolId());
+            // 교내운영진 공지 (SCHOOL_PART_LEADER + schoolId): 해당 학교 회장단만 작성 가능
+            return useCase.isSchoolCoreInGisu(memberId, info.targetGisuId(), info.targetSchoolId());
         }
-        // 중앙에서 전체 파트장 대상 공지: 총괄단 + 중앙운영진 작성 가능
+        // 학교 운영진 대상 중앙 공지 (SCHOOL_CORE / SCHOOL_PART_LEADER + schoolId=null): 중앙운영진 작성 가능
         return useCase.isCentralMemberInGisu(memberId, info.targetGisuId());
     }
 

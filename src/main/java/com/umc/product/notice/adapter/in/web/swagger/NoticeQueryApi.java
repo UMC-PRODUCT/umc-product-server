@@ -31,20 +31,28 @@ public interface NoticeQueryApi {
     @Operation(
         summary = "공지사항 전체 조회",
         description = """
-            공지사항 목록을 페이징하여 조회합니다.
+            `noticeTab` 값으로 챌린저 공지(`CHALLENGER`)와 운영진 공지(`CHALLENGER` 외)를 구분
+            CHALLENGER 공지는 운영진 공지가 아닌 일반공지를 의미함. 운영진 공지가 아닌 이상 `noticeTab`은 항상 `CHALLENGER`로 고정되어야 함.
+            운영진 공지를 조회할 때에는 조회자의 ROLE에 따라 CENTRAL_MEMBER, SCHOOL_CORE, SCHOOL_PART_LEADER 중 하나로 요청해야 하며, 이 값에 따라 조회 가능한 공지의 범위가 달라짐.
+            - CHALLENGER -> 챌린저 공지
+            - CENTRAL_MEMBER -> 중앙운영사무국 공지
+            - SCHOOL_CORE -> 학교회장단 공지
+            - SCHOOL_PART_LEADER -> 파트장 공지
 
-            **targetNoticeTab 필드로 조회 대상을 명시해야 합니다.**
-            - `targetNoticeTab=CHALLENGER` → 일반 챌린저 공지 조회
-            - `targetNoticeTab=SCHOOL_PART_LEADER` 등 운영진 역할 → 해당 대상 운영진 공지 조회
-              (조회자 역할이 요청 역할보다 낮으면 403 반환)
+            자기 role보다 상위 tab 요청시 오류 (403)
 
-            **챌린저 공지 필터 (targetNoticeTab=CHALLENGER 일 때만 적용)**
-            - `chapterId` 지정 → 해당 지부 공지만 조회
-            - `schoolId` 지정 → 해당 학교 공지만 조회
-            - `part` 지정 → 해당 파트 공지만 조회
-              (chapterId/schoolId 미지정 시 조회자 소속 지부/학교로 자동 보완)
 
-            **총괄단**은 임의의 chapterId/schoolId를 지정하여 다른 지부/학교 공지를 조회할 수 있습니다.
+            운영진 공지는 중앙운영사무국 공지 / 교내 운영진 공지 이렇게 나뉘고, 기준은 `schoolId` 파라미터의 입력 여부
+            (gisuId: O / chapterId: X / schoolId: 분류기준이 됨)
+
+            - schoolId 입력 -> 교내 운영진 공지로 구분됨, 교내 회장단이 작성 가능
+                - schoolId 입력 + noticeTab은 SCHOOL_PART_LEADER로 입력 → 해당 학교 모든 파트장 대상 공지
+                - schoolId 입력 + noticeTab은 SCHOOL_PART_LEADER로 입력 + targetParts 특정 파트 지정 → 해당 학교 특정 파트장 대상 공지
+
+            - schoolId 미입력 -> 중앙운영사무국 공지로 구분됨, 총괄단과 중앙운영진이 작성 가능
+                - schoolId 미입력 + noticeTab이 CENTRAL_MEMBER인 경우 → 중앙운영진 대상 공지, 총괄단 작성 가능
+                - schoolId 미입력 + noticeTab이 SCHOOL_CORE인 경우 → 학교회장단 대상 공지, 총괄단과 중앙운영진 작성 가능
+                - schoolId 미입력 + noticeTab이 SCHOOL_PART_LEADER인 경우 → 학교 파트장 대상 공지, 총괄단과 중앙운영진 작성 가능
             """
     )
     @ApiResponses({
