@@ -1,8 +1,11 @@
 package com.umc.product.project.application.service.command;
 
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetChapterUseCase;
@@ -31,6 +34,7 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 import com.umc.product.survey.application.port.in.command.ManageFormUseCase;
 import com.umc.product.survey.application.port.in.command.dto.PublishFormCommand;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +57,7 @@ public class ProjectCommandService implements
     // Cross-domain UseCases
     private final GetMemberUseCase getMemberUseCase;
     private final GetChallengerUseCase getChallengerUseCase;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetGisuUseCase getGisuUseCase;
     private final GetChapterUseCase getChapterUseCase;
     private final ManageFormUseCase manageFormUseCase;
@@ -75,13 +80,60 @@ public class ProjectCommandService implements
         MemberInfo member = getMemberUseCase.getById(command.productOwnerMemberId());
         ChapterInfo chapter = getChapterUseCase.byGisuAndSchool(command.gisuId(), member.schoolId());
 
+        // 호출자 != target 인 경우 운영진 권한 + scope 검증
+        if (!Objects.equals(command.requesterMemberId(), command.productOwnerMemberId())) {
+            validateRequesterCanAssignTarget(
+                command.requesterMemberId(), command.gisuId(),
+                member.schoolId(), chapter.id()
+            );
+        }
+
         Project project = Project.createDraft(
             command.gisuId(),
             chapter.id(),
             command.productOwnerMemberId(),
-            member.schoolId()
+            member.schoolId(),
+            command.requesterMemberId()
         );
         return saveProjectPort.save(project).getId();
+    }
+
+    /**
+     * 호출자가 다른 챌린저를 PO 로 지정하는 경우 — 호출자의 운영진 role 과 target 의 scope 일치를 검증한다.
+     * <ul>
+     *   <li>총괄단 이상(SUPER_ADMIN/총괄/부총괄): scope 무관 통과</li>
+     *   <li>지부장(CHAPTER_PRESIDENT): target 의 chapter 가 본인 지부와 일치해야 함</li>
+     *   <li>학교 회장단(회장/부회장): target 의 school 이 본인 학교와 일치해야 함</li>
+     *   <li>그 외(일반 PLAN 챌린저 등): 다른 사람 임명 권한 없음 — 거부</li>
+     * </ul>
+     */
+    private void validateRequesterCanAssignTarget(
+        Long requesterId, Long gisuId, Long targetSchoolId, Long targetChapterId
+    ) {
+        List<ChallengerRoleInfo> requesterRoles = getChallengerRoleUseCase.findAllByMemberId(requesterId).stream()
+            .filter(r -> Objects.equals(r.gisuId(), gisuId))
+            .toList();
+
+        if (requesterRoles.stream().anyMatch(r -> r.roleType().isAtLeastCentralCore())) {
+            return;
+        }
+
+        boolean hasChapterAuthority = requesterRoles.stream()
+            .filter(r -> r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT)
+            .anyMatch(r -> Objects.equals(r.organizationId(), targetChapterId));
+        if (hasChapterAuthority) {
+            return;
+        }
+
+        boolean hasSchoolAuthority = requesterRoles.stream()
+            .filter(r -> r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
+                || r.roleType() == ChallengerRoleType.SCHOOL_VICE_PRESIDENT)
+            .anyMatch(r -> Objects.equals(r.organizationId(), targetSchoolId));
+        if (hasSchoolAuthority) {
+            return;
+        }
+
+        throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
     }
 
     @Override

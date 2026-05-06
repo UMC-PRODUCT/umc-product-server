@@ -172,6 +172,7 @@ class ProjectPartQuotaCommandServiceTest {
             ReflectionTestUtils.setField(p, "chapterId", 1L);
             ReflectionTestUtils.setField(p, "productOwnerMemberId", 100L);
             ReflectionTestUtils.setField(p, "productOwnerSchoolId", 7L);
+            ReflectionTestUtils.setField(p, "createdByMemberId", 100L);
             return p;
         } catch (Exception e) {
             throw new RuntimeException(e);
