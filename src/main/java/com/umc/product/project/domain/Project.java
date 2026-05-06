@@ -67,6 +67,13 @@ public class Project extends BaseEntity {
     @Column(nullable = false, name = "product_owner_school_id")
     private Long productOwnerSchoolId;
 
+    /**
+     * 프로젝트를 처음 생성한 멤버 ID. 운영진이 다른 PLAN 챌린저를 PO 로 지정해 만든 경우
+     * {@code productOwnerMemberId} 와 다를 수 있다. DRAFT 단계 EDIT 권한 분기 + audit 용도.
+     */
+    @Column(nullable = false, name = "created_by_member_id")
+    private Long createdByMemberId;
+
     private Long statusChangedByMemberId; // 프로젝트 상태를 변경한 멤버의 ID입니다. (예: ABORTED로 변경한 멤버)
     private String statusChangedReason; // 프로젝트 상태를 변경한 이유입니다. (예: ABORTED로 변경한 이유)
 
@@ -91,7 +98,8 @@ public class Project extends BaseEntity {
         String logoFileId,
         String thumbnailFileId,
         Long productOwnerMemberId,
-        Long productOwnerSchoolId
+        Long productOwnerSchoolId,
+        Long createdByMemberId
     ) {
         this.gisuId = gisuId;
         this.chapterId = chapterId;
@@ -103,29 +111,34 @@ public class Project extends BaseEntity {
         this.thumbnailFileId = thumbnailFileId;
         this.productOwnerMemberId = productOwnerMemberId;
         this.productOwnerSchoolId = productOwnerSchoolId;
+        this.createdByMemberId = createdByMemberId;
     }
 
     /**
-     * DRAFT 상태로 프로젝트를 생성합니다. 최초 생성 시 기수/지부/PO만 확정하고,
+     * DRAFT 상태로 프로젝트를 생성합니다. 최초 생성 시 기수/지부/PO/creator 만 확정하고,
      * 나머지 정보(name, description 등)는 이후 updateBasicInfo로 단계별 저장합니다.
      *
      * @param gisuId               프로젝트가 속한 기수 ID
      * @param chapterId            프로젝트가 속한 지부 ID (PO의 소속 지부에서 결정)
      * @param productOwnerMemberId PO Member ID (PLAN 파트 챌린저여야 함)
      * @param productOwnerSchoolId PO 의 학교 ID 비정규화 (학교 운영진 scope 및 학교 필터에서 사용)
+     * @param createdByMemberId    호출자(생성자) Member ID. PM 본인 등록 시엔 PO 와 동일,
+     *                             운영진이 다른 챌린저를 PO 로 지정한 경우엔 다름.
      * @return DRAFT 상태의 프로젝트
      */
     public static Project createDraft(
         Long gisuId,
         Long chapterId,
         Long productOwnerMemberId,
-        Long productOwnerSchoolId
+        Long productOwnerSchoolId,
+        Long createdByMemberId
     ) {
         return Project.builder()
             .gisuId(gisuId)
             .chapterId(chapterId)
             .productOwnerMemberId(productOwnerMemberId)
             .productOwnerSchoolId(productOwnerSchoolId)
+            .createdByMemberId(createdByMemberId)
             .status(ProjectStatus.DRAFT)
             .build();
     }

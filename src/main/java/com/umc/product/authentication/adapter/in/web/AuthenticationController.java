@@ -53,16 +53,16 @@ public class AuthenticationController implements AuthenticationControllerInterfa
     public OAuthLoginResponse appleOAuthLogin(
         @RequestBody AppleLoginRequest request
     ) {
-        // Authorization Code 방식
+        // Authorization Code 방식. Apple은 플랫폼별로 다른 client_id를 사용하므로 clientType을 함께 전달한다.
         AppleAuthorizationCodeResult codeResult = verifyOAuthTokenPort.verifyAppleAuthorizationCode(
-            request.authorizationCode()
+            request.authorizationCode(), request.clientType()
         );
         OAuthTokenLoginResult result = oAuthAuthenticationUseCase.loginWithOAuth2Attributes(codeResult.attrs());
 
         if (result.isExistingMember() && codeResult.refreshToken() != null) {
-            // 기존 회원: MemberOAuth에 appleRefreshToken 바로 업데이트
+            // 기존 회원: MemberOAuth에 appleRefreshToken과 appleClientId 갱신
             oAuthAuthenticationUseCase.updateAppleRefreshToken(
-                OAuthProvider.APPLE, result.providerId(), codeResult.refreshToken()
+                OAuthProvider.APPLE, result.providerId(), codeResult.refreshToken(), codeResult.clientId()
             );
         }
 

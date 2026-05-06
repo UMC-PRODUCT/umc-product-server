@@ -24,7 +24,7 @@ public sealed interface ProjectAccessScope {
     /** 본인이 PM 인 프로젝트만 노출 (PM 챌린저, 관리 화면). */
     record OwnerOnly(Long memberId, Set<ProjectStatus> visibleStatuses) implements ProjectAccessScope {}
 
-    /** 일반 챌린저용 공개 목록 ({@link ProjectStatus#IN_PROGRESS} 만). */
+    /** 일반 챌린저용 공개 목록 ({@link ProjectStatus#IN_PROGRESS} / {@link ProjectStatus#COMPLETED}). */
     record PublicOnly() implements ProjectAccessScope {}
 
     /** 관리 대상 0건 (일반 챌린저가 관리 화면 호출 시 등). */

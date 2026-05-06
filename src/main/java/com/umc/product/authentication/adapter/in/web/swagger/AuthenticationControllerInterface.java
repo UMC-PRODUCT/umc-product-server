@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Authentication | 로그인")
 public interface AuthenticationControllerInterface {
-    @Operation(summary = "Google 로그인",
+    @Operation(summary = "[LOGIN-001] Google 로그인",
         description = """
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 
@@ -28,7 +28,7 @@ public interface AuthenticationControllerInterface {
         @RequestBody GoogleLoginRequest request
     );
 
-    @Operation(summary = "Kakao 로그인",
+    @Operation(summary = "[LOGIN-002] Kakao 로그인",
         description = """
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 
@@ -46,7 +46,7 @@ public interface AuthenticationControllerInterface {
         @RequestBody KakaoLoginRequest request
     );
 
-    @Operation(summary = "Apple 로그인",
+    @Operation(summary = "[LOGIN-003] Apple 로그인",
         description = """
             Web에서 Redirect 방식으로 사용하려면 아래의 Link를 참고해주세요.
 
@@ -54,7 +54,9 @@ public interface AuthenticationControllerInterface {
             [Development](https://dev.api.umc.it.kr/api/v1/auth/oauth2/authorization/apple)
             [Production](https://api.umc.it.kr/api/v1/auth/oauth2/authorization/apple)
 
-            Apple 로그인은 제옹과 협의 후에 구현 예정입니다.
+            Apple 측에서 받은 authorization code와 함께 클라이언트 플랫폼(`clientType`)을 전달해주세요.
+            Apple은 플랫폼별로 서로 다른 client_id(iOS Bundle ID vs Web Services ID)를 사용하므로
+            `clientType`(ANDROID, IOS, WEB)을 정확히 명시해야 토큰 교환이 가능합니다.
             """)
     OAuthLoginResponse appleOAuthLogin(
         @RequestBody AppleLoginRequest request

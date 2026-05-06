@@ -13,6 +13,10 @@ public record StudyGroupInfo(
     List<StudyGroupMemberInfo> mentors,
     List<StudyGroupMemberInfo> members
 ) {
+    public StudyGroupInfo {
+        mentors = mentors == null ? List.of() : List.copyOf(mentors);
+        members = members == null ? List.of() : List.copyOf(members);
+    }
     public static StudyGroupInfo create(
         Long groupId, String name,
         Long gisuId, ChallengerPart part,

@@ -51,22 +51,6 @@ public record ProjectDetailResponse(
             .build();
     }
 
-    public ProjectDetailResponse toPublic() {
-        return ProjectDetailResponse.builder()
-            .id(id)
-            .name(name)
-            .description(description)
-            .thumbnailImageUrl(thumbnailImageUrl)
-            .logoImageUrl(logoImageUrl)
-            .externalLink(externalLink)
-            .productOwner(productOwner.toPublic())
-            .coProductOwners(coProductOwners.stream().map(MemberBrief::toPublic).toList())
-            .partQuotas(partQuotas)
-            .partQuotaStatus(partQuotaStatus)
-            .applicationFormId(applicationFormId)
-            .build();
-    }
-
     private static PartQuotaStatus aggregateStatus(List<PartQuotaInfo> quotas) {
         if (quotas.isEmpty()) return null;
         boolean anyRecruiting = quotas.stream()

@@ -17,6 +17,8 @@ import lombok.Builder;
  * @param email
  * @param schoolId
  * @param profileImageId
+ * @param appleRefreshToken Apple 회원가입 시 전달되는 refresh token
+ * @param appleClientId     Apple 회원가입 시 전달되는 client_id (Bundle ID 또는 Services ID)
  */
 @Builder
 public record OAuthRegisterMemberCommand(
@@ -28,7 +30,8 @@ public record OAuthRegisterMemberCommand(
     Long schoolId,
     String profileImageId,
     List<TermConsents> termConsents,
-    String appleRefreshToken
+    String appleRefreshToken,
+    String appleClientId
 ) {
 
     public Member toEntity() {

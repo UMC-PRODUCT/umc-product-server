@@ -3,7 +3,6 @@ package com.umc.product.project.adapter.in.web.assembler;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
-import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -47,8 +46,6 @@ class ProjectResponseAssemblerTest {
     @Mock
     GetMemberUseCase getMemberUseCase;
     @Mock
-    GetChallengerRoleUseCase getChallengerRoleUseCase;
-    @Mock
     LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     @Mock
     LoadProjectMemberPort loadProjectMemberPort;
@@ -67,7 +64,7 @@ class ProjectResponseAssemblerTest {
         ProjectApplicationForm form = applicationForm(project, 100L, 500L);
         given(loadProjectApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
 
-        ProjectDetailResponse response = sut.detailFor(42L, 99L);
+        ProjectDetailResponse response = sut.detailFor(42L);
 
         assertThat(response.applicationFormId()).isEqualTo(100L);
     }
@@ -80,7 +77,7 @@ class ProjectResponseAssemblerTest {
             .willReturn(Map.of(99L, memberInfo(99L)));
         given(loadProjectApplicationFormPort.findByProjectId(42L)).willReturn(Optional.empty());
 
-        ProjectDetailResponse response = sut.detailFor(42L, 99L);
+        ProjectDetailResponse response = sut.detailFor(42L);
 
         assertThat(response.applicationFormId()).isNull();
     }
@@ -111,7 +108,7 @@ class ProjectResponseAssemblerTest {
     }
 
     @Test
-    void membersFor_PM이_본인이면_실명_노출() {
+    void membersFor_PM과_보조PM_그룹화_및_실명_노출() {
         ProjectInfo info = projectInfo(42L);
         given(getProjectUseCase.getById(42L)).willReturn(info);
         given(loadProjectMemberPort.listByProjectId(42L)).willReturn(List.of(
@@ -125,7 +122,7 @@ class ProjectResponseAssemblerTest {
             102L, memberInfoOf(102L, "백엔드", "이다라")
         ));
 
-        ProjectMembersResponse response = sut.membersFor(42L, 99L);
+        ProjectMembersResponse response = sut.membersFor(42L);
 
         assertThat(response.productOwner().memberId()).isEqualTo(99L);
         assertThat(response.productOwner().name()).isEqualTo("김메인");
@@ -134,23 +131,6 @@ class ProjectResponseAssemblerTest {
         assertThat(response.coProductOwners().get(0).name()).isEqualTo("박가나");
         assertThat(response.partGroups()).hasSize(1);
         assertThat(response.partGroups().get(0).part()).isEqualTo(ChallengerPart.SPRINGBOOT);
-    }
-
-    @Test
-    void membersFor_외부인이면_실명_마스킹() {
-        ProjectInfo info = projectInfo(42L);
-        given(getProjectUseCase.getById(42L)).willReturn(info);
-        given(loadProjectMemberPort.listByProjectId(42L)).willReturn(List.of(
-            projectMember(99L, ChallengerPart.PLAN)
-        ));
-        given(getMemberUseCase.findAllByIds(Set.of(99L))).willReturn(Map.of(
-            99L, memberInfoOf(99L, "메인PM", "김메인")
-        ));
-        given(getChallengerRoleUseCase.isCentralCoreInGisu(200L, 1L)).willReturn(false);
-
-        ProjectMembersResponse response = sut.membersFor(42L, 200L);
-
-        assertThat(response.productOwner().name()).isNull();
     }
 
     @Test
@@ -169,14 +149,14 @@ class ProjectResponseAssemblerTest {
             103L, memberInfoOf(103L, "나무", "최나무")
         ));
 
-        ProjectMembersResponse response = sut.membersFor(42L, 99L);
+        ProjectMembersResponse response = sut.membersFor(42L);
 
         List<String> nicknames = response.coProductOwners().stream().map(MemberBrief::nickname).toList();
         assertThat(nicknames).containsExactly("가람", "나무", "다람쥐");
     }
 
     @Test
-    void searchManagedFor_총괄단이면_status_필드_포함_실명_노출() {
+    void searchManagedFor_status_필드_포함_실명_노출() {
         ProjectInfo info = projectInfoWithStatus(42L, ProjectStatus.PENDING_REVIEW);
         SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
             .gisuId(1L).pageable(org.springframework.data.domain.PageRequest.of(0, 20)).build();
@@ -186,31 +166,12 @@ class ProjectResponseAssemblerTest {
                 query.pageable(), 1));
         given(getMemberUseCase.findAllByIds(java.util.Set.of(99L)))
             .willReturn(Map.of(99L, memberInfo(99L)));
-        given(getChallengerRoleUseCase.isCentralCoreInGisu(99L, 1L)).willReturn(true);
 
         PageResponse<ManagedProjectSummaryResponse> response = sut.searchManagedFor(query, 99L);
 
         assertThat(response.content()).hasSize(1);
         assertThat(response.content().get(0).status()).isEqualTo(ProjectStatus.PENDING_REVIEW);
         assertThat(response.content().get(0).productOwner().name()).isEqualTo("이예원");
-    }
-
-    @Test
-    void searchManagedFor_외부인이면_마스킹() {
-        ProjectInfo info = projectInfoWithStatus(42L, ProjectStatus.IN_PROGRESS);
-        SearchManagedProjectQuery query = SearchManagedProjectQuery.builder()
-            .gisuId(1L).pageable(org.springframework.data.domain.PageRequest.of(0, 20)).build();
-
-        given(searchManagedProjectUseCase.searchManaged(query, 200L))
-            .willReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of(info),
-                query.pageable(), 1));
-        given(getMemberUseCase.findAllByIds(java.util.Set.of(99L)))
-            .willReturn(Map.of(99L, memberInfo(99L)));
-        given(getChallengerRoleUseCase.isCentralCoreInGisu(200L, 1L)).willReturn(false);
-
-        PageResponse<ManagedProjectSummaryResponse> response = sut.searchManagedFor(query, 200L);
-
-        assertThat(response.content().get(0).productOwner().name()).isNull();
     }
 
     private ProjectInfo projectInfoWithStatus(Long projectId, ProjectStatus status) {

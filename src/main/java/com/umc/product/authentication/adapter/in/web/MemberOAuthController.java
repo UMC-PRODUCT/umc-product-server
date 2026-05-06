@@ -34,7 +34,7 @@ public class MemberOAuthController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping
-    @Operation(summary = "로그인용 OAuth 수단 추가",
+    @Operation(summary = "[OAUTH-001] 로그인용 OAuth 수단 추가",
         description = "같은 OAuth Provider도 여러 개 추가할 수 있습니다. 단, Provider+ProviderId 조합은 시스템 전체에서 고유하여야 합니다.")
     List<MemberOAuthInfo> addMemberOAuth(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -55,7 +55,7 @@ public class MemberOAuthController {
     }
 
     @DeleteMapping("{memberOAuthId}")
-    @Operation(summary = "로그인용 OAuth 수단 제거",
+    @Operation(summary = "[OAUTH-002] 로그인용 OAuth 수단 제거",
         description = """
                 memberOAuthId로 식별해서 제거 처리를 진행합니다.
                 Google/Kakao OAuth의 경우 해당 Provider의 Access Token을 함께 전달하면 OAuth Provider측 연결도 해제됩니다.
@@ -78,7 +78,7 @@ public class MemberOAuthController {
     }
 
     @GetMapping("me")
-    @Operation(summary = "현재 회원 계정과 연동된 OAuth 정보 조회")
+    @Operation(summary = "[OAUTH-101] 현재 회원 계정과 연동된 OAuth 정보 조회")
     List<MemberOAuthInfo> getMyOAuthInfos(@CurrentMember MemberPrincipal memberPrincipal) {
         return oAuthListUseCase.getOAuthList(memberPrincipal.getMemberId());
     }

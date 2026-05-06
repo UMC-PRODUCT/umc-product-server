@@ -44,16 +44,30 @@ public class MemberOAuth extends BaseEntity {
     @Column(name = "apple_refresh_token", length = 512)
     private String appleRefreshToken;
 
+    /**
+     * Apple Sign-In 시 사용된 client_id (Bundle ID 또는 Services ID).
+     * <p>
+     * Apple은 플랫폼별로 서로 다른 client_id를 사용하므로 revoke 시 발급 시점과 동일한 값이 필요해 보관한다.
+     */
+    @Column(name = "apple_client_id", length = 255)
+    private String appleClientId;
+
     @Builder
-    private MemberOAuth(Long memberId, OAuthProvider provider, String providerId, String appleRefreshToken) {
+    private MemberOAuth(Long memberId, OAuthProvider provider, String providerId, String appleRefreshToken,
+                        String appleClientId) {
         this.memberId = memberId;
         this.provider = provider;
         this.providerId = providerId;
         this.appleRefreshToken = appleRefreshToken;
+        this.appleClientId = appleClientId;
     }
 
-    public void updateRefreshToken(String refreshToken) {
+    /**
+     * Apple 재로그인 시 refresh token과 client_id를 함께 갱신한다. 사용자가 다른 플랫폼(Web ↔ iOS)에서 다시 로그인하면 client_id가 바뀔 수 있다.
+     */
+    public void updateAppleCredentials(String refreshToken, String clientId) {
         this.appleRefreshToken = refreshToken;
+        this.appleClientId = clientId;
     }
 
     /**

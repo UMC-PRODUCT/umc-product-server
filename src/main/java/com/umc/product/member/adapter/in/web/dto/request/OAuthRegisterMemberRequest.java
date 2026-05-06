@@ -44,6 +44,9 @@ public record OAuthRegisterMemberRequest(
     List<TermConsentStatus> termsAgreements,
 
     @Schema(description = "Apple OAuth refresh token (Apple 로그인 회원가입 시 전달)")
-    String appleRefreshToken
+    String appleRefreshToken,
+
+    @Schema(description = "Apple OAuth client_id (Apple 로그인 회원가입 시 전달, Bundle ID 또는 Services ID)")
+    String appleClientId
 ) {
 }

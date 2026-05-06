@@ -54,7 +54,7 @@ public class MemberCommandController {
 
 
     @Public
-    @Operation(summary = "OAuth 회원가입",
+    @Operation(summary = "[REGISTER-001] OAuth 회원가입",
         description = """
             ### ⚠️ `register/oauth` 엔드포인트를 사용해주셔야 합니다. 기존 엔트포인트는 `v2.0.0`이 Production에 배포될 때 제거될 예정입니다.
 
@@ -82,6 +82,7 @@ public class MemberCommandController {
             .profileImageId(request.profileImageId())
             .termConsents(request.termsAgreements().stream().map(TermConsents::fromRequest).toList())
             .appleRefreshToken(request.appleRefreshToken())
+            .appleClientId(request.appleClientId())
             .build();
 
         Long createdMemberId = registerOAuthMemberUseCase.register(command);
@@ -92,7 +93,7 @@ public class MemberCommandController {
         return RegisterResponse.of(createdMemberId, accessToken, refreshToken);
     }
 
-    @Operation(summary = "ID/PW 이용 회원가입",
+    @Operation(summary = "[REGISTER-002] ID/PW 이용 회원가입",
         description = """
             OAuth가 아닌, ID/PW를 이용해서 하는 회원가입 입니다.
 
@@ -114,7 +115,7 @@ public class MemberCommandController {
         return RegisterResponse.of(createdMemberId, accessToken, refreshToken);
     }
 
-    @Operation(summary = "내 회원 정보 수정")
+    @Operation(summary = "[MEMBER-001] 내 회원 정보 수정")
     @PatchMapping
     MemberInfoResponse editMemberInfo(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -128,7 +129,7 @@ public class MemberCommandController {
         return assembler.fromMemberId(memberPrincipal.getMemberId());
     }
 
-    @Operation(summary = "내 회원 프로필 링크 수정")
+    @Operation(summary = "[MEMBER-002] 내 회원 프로필 링크 수정")
     @PatchMapping("/profile/links")
     MemberInfoResponse editMemberProfile(
         @CurrentMember MemberPrincipal memberPrincipal,
@@ -142,7 +143,7 @@ public class MemberCommandController {
     }
 
     @DeleteMapping
-    @Operation(summary = "회원 탈퇴",
+    @Operation(summary = "[MEMBER-003] 회원 탈퇴",
         description = "Google/Kakao OAuth 연동이 있는 경우 해당 Provider의 Access Token을 함께 전달하면 Provider측 연결도 해제됩니다.")
     @WebhookAlarm(
         title = "'회원이 탈퇴하였습니다'",
@@ -155,7 +156,7 @@ public class MemberCommandController {
         return deleteMemberById(memberPrincipal.getMemberId(), request);
     }
 
-    @Operation(summary = "관리자 권한으로 회원 게정 삭제 (Hard Delete)", description = "총괄단 권한이 필요합니다. (적용 전)")
+    @Operation(summary = "[MEMBER-004] 관리자 권한으로 회원 게정 삭제 (Hard Delete)", description = "총괄단 권한이 필요합니다. (적용 전)")
     @DeleteMapping("{memberId}")
     @CheckAccess(
         resourceType = ResourceType.MEMBER,
