@@ -32,7 +32,7 @@ public class StorageController {
      * 파일 업로드를 위한 Signed URL을 생성합니다.
      */
     @PostMapping("/prepare-upload")
-    @Operation(summary = "파일 업로드를 위한 Signed URL을 생성합니다.", description = """
+    @Operation(summary = "[STORAGE-001] 파일 업로드를 위한 Signed URL을 생성합니다.", description = """
         파일 카테고리는 Schema를 참고하세요. (추후 변경 가능)
 
         업로드 완료 후 반드시 "파일 업로드 완료" API를 호출해야 정상적으로 파일 등록이 완료됩니다.
@@ -54,7 +54,7 @@ public class StorageController {
      * 파일 업로드 완료를 확인합니다.
      */
     @PostMapping("/{fileId}/confirm")
-    @Operation(summary = "파일 업로드 완료 처리")
+    @Operation(summary = "[STORAGE-002] 파일 업로드 완료 처리")
     public ApiResponse<Void> confirmUpload(@PathVariable String fileId) {
         manageFileUseCase.confirmUpload(fileId);
         return ApiResponse.onSuccess(null);
@@ -64,7 +64,7 @@ public class StorageController {
      * 파일을 삭제합니다.
      */
     @DeleteMapping("/{fileId}")
-    @Operation(summary = "파일 삭제")
+    @Operation(summary = "[STORAGE-003] 파일 삭제")
     public ApiResponse<Void> deleteFile(@PathVariable String fileId) {
         manageFileUseCase.deleteFile(fileId);
         return ApiResponse.onSuccess(null);
