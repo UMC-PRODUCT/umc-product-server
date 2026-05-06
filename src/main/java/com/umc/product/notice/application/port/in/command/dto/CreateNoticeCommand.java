@@ -7,6 +7,7 @@ public record CreateNoticeCommand(
     String title,
     String content,
     Boolean shouldNotify, /* 알림 발송 여부 */
+    boolean mustRead, /* 필독 여부 */
     NoticeTargetInfo targetInfo
 ) {
 }

@@ -22,6 +22,7 @@ public interface NoticeCommandControllerApi {
         summary = "[NOTICE-201] 공지사항 생성",
         description = "새로운 공지사항을 생성합니다. targetInfo로 대상 범위(기수/지부/학교/파트)를 지정하고, "
             + "shouldNotify=true로 설정하면 대상자에게 즉시 푸시 알림이 발송됩니다. "
+            + "mustRead=true로 설정하면 UPMS 필독 공지로 지정되어 공지 목록 최상단에 고정됩니다. "
             + "이미지/링크/투표는 공지 생성 후 별도 API로 추가해야 합니다."
     )
     @ApiResponses({
@@ -65,8 +66,13 @@ public interface NoticeCommandControllerApi {
     );
 
     @Operation(
+<<<<<<< docs/#817-api-ids
         summary = "[NOTICE-203] 공지사항 수정",
         description = "공지사항 내용을 수정합니다."
+=======
+        summary = "공지사항 수정",
+        description = "공지사항 내용을 수정합니다. mustRead=true로 설정하면 UPMS 필독 공지로 지정되어 목록 최상단에 고정되며, false로 변경하면 고정이 해제됩니다."
+>>>>>>> develop
     )
     @ApiResponses({
         @ApiResponse(

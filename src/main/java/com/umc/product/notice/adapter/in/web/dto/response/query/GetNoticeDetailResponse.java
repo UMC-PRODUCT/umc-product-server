@@ -19,6 +19,7 @@ public record GetNoticeDetailResponse(
     String content,
     Long authorChallengerId,
     Long authorMemberId,
+    boolean mustRead,
 
     // 공지사항 부가 내용들
     NoticeVoteInfo vote,
@@ -42,6 +43,7 @@ public record GetNoticeDetailResponse(
             .content(noticeInfo.content())
             .authorChallengerId(null)
             .authorMemberId(noticeInfo.authorMemberId())
+            .mustRead(noticeInfo.mustRead())
             .vote(noticeInfo.vote())
             .images(noticeInfo.images())
             .links(noticeInfo.links())
