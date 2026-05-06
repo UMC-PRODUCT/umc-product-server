@@ -35,7 +35,10 @@ public interface OAuthAuthenticationUseCase {
     void unlinkOAuth(UnlinkOAuthCommand command);
 
     /**
-     * Apple OAuth의 refresh token을 업데이트합니다.
+     * Apple OAuth의 refresh token과 client_id를 업데이트합니다.
+     * <p>
+     * Apple은 플랫폼별로 다른 client_id를 사용하기 때문에 refresh token과 함께 발급 시 사용된
+     * client_id도 저장하여 추후 revoke 시 동일한 client_id를 사용할 수 있도록 합니다.
      */
-    void updateAppleRefreshToken(OAuthProvider provider, String providerId, String refreshToken);
+    void updateAppleRefreshToken(OAuthProvider provider, String providerId, String refreshToken, String clientId);
 }

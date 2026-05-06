@@ -4,6 +4,7 @@ import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.application.port.out.RevokeOAuthTokenPort;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
+import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort, Revo
     private final GoogleTokenVerifier googleTokenVerifier;
     private final KakaoTokenVerifier kakaoTokenVerifier;
     private final AppleTokenVerifier appleTokenVerifier;
+    private final AppleOAuthProperties appleOAuthProperties;
 
     @Override
     public OAuth2Attributes verify(OAuthProvider provider, String token) {
@@ -30,20 +32,22 @@ public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort, Revo
         return switch (provider) {
             case GOOGLE -> googleTokenVerifier.verifyAccessToken(token);
             case KAKAO -> kakaoTokenVerifier.verifyAccessToken(token);
-            case APPLE -> appleTokenVerifier.verifyIdToken(token);
+            // Apple은 일반 verify가 아닌 verifyAppleAuthorizationCode 사용을 권장하지만,
+            // ID Token 직접 검증이 필요한 경우를 위해 web Services ID 기준으로 audience를 검증한다.
+            case APPLE -> appleTokenVerifier.verifyIdToken(token, appleOAuthProperties.webClientId());
         };
     }
 
     @Override
-    public AppleAuthorizationCodeResult verifyAppleAuthorizationCode(String authorizationCode) {
-        log.info("Apple Authorization Code 교환 시작");
-        return appleTokenVerifier.verifyAuthorizationCode(authorizationCode);
+    public AppleAuthorizationCodeResult verifyAppleAuthorizationCode(String authorizationCode, ClientType clientType) {
+        log.info("Apple Authorization Code 교환 시작: clientType={}", clientType);
+        return appleTokenVerifier.verifyAuthorizationCode(authorizationCode, clientType);
     }
 
     @Override
-    public void revokeAppleToken(String refreshToken) {
-        log.info("Apple token revoke 시작");
-        appleTokenVerifier.revokeToken(refreshToken);
+    public void revokeAppleToken(String refreshToken, String clientId) {
+        log.info("Apple token revoke 시작: clientId={}", clientId);
+        appleTokenVerifier.revokeToken(refreshToken, clientId);
     }
 
     @Override

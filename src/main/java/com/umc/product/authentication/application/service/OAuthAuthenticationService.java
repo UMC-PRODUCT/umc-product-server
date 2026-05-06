@@ -177,11 +177,17 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
     private void revokeProviderToken(MemberOAuth memberOAuth, UnlinkOAuthCommand command) {
         switch (memberOAuth.getProvider()) {
             case APPLE -> {
-                if (memberOAuth.getAppleRefreshToken() != null) {
-                    revokeOAuthTokenPort.revokeAppleToken(memberOAuth.getAppleRefreshToken());
+                if (memberOAuth.getAppleRefreshToken() != null && memberOAuth.getAppleClientId() != null) {
+                    revokeOAuthTokenPort.revokeAppleToken(
+                            memberOAuth.getAppleRefreshToken(),
+                            memberOAuth.getAppleClientId()
+                    );
                 } else {
-                    log.warn("[Apple 계정 연동 해제] refresh token이 없어 revoke를 skip합니다: memberId={} memberOAuthId={}",
-                        memberOAuth.getMemberId(), memberOAuth.getId());
+                    log.warn("[Apple 계정 연동 해제] refresh token 또는 client_id가 없어 revoke를 skip합니다: "
+                                    + "memberId={} memberOAuthId={} hasRefreshToken={} hasClientId={}",
+                            memberOAuth.getMemberId(), memberOAuth.getId(),
+                            memberOAuth.getAppleRefreshToken() != null,
+                            memberOAuth.getAppleClientId() != null);
                 }
             }
             case KAKAO -> {
@@ -204,11 +210,12 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
     }
 
     @Override
-    public void updateAppleRefreshToken(OAuthProvider provider, String providerId, String refreshToken) {
+    public void updateAppleRefreshToken(OAuthProvider provider, String providerId, String refreshToken,
+                                        String clientId) {
         MemberOAuth memberOAuth = loadMemberOAuthPort.findByProviderAndProviderId(provider, providerId)
             .orElseThrow(() -> new AuthenticationDomainException(AuthenticationErrorCode.MEMBER_OAUTH_NOT_FOUND));
 
-        memberOAuth.updateRefreshToken(refreshToken);
+        memberOAuth.updateAppleCredentials(refreshToken, clientId);
         saveMemberOAuthPort.save(memberOAuth);
     }
 }
