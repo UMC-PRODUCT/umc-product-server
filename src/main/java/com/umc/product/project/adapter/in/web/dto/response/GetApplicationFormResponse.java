@@ -9,8 +9,8 @@ import lombok.Builder;
  * 지원 폼 조회 응답 (PROJECT-106-GET).
  * <p>
  * 폼이 존재하지 않으면 Controller 가 {@code ApiResponse.result = null} 로 반환한다.
+ * 마스킹(파트별 섹션 가시성)은 Service 단의 {@code ApplicationFormInfo.forApplicant} 에서 이미 적용된 상태로 전달된다.
  */
-// TODO: 챌린저 호출 시 본인 파트 + COMMON 섹션만 노출하는 forApplicant(part) 마스킹 메서드 추가
 @Builder
 public record GetApplicationFormResponse(
     Long projectId,

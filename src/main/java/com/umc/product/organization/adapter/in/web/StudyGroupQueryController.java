@@ -26,10 +26,10 @@ public class StudyGroupQueryController implements StudyGroupQueryControllerApi {
     private final GetStudyGroupUseCase getStudyGroupUseCase;
 
     /**
-     * 내 스터디 그룹 목록 조회 - 유저의 schoolId/part 기반 자동 조회
+     * 사용자의 schoolId/part 기반으로, 내가 관리할 수 있는 스터디 그룹의 목록을 반환
      */
     @Override
-    @GetMapping("/me")
+    @GetMapping("/managed")
     public CursorResponse<StudyGroupResponse> getStudyGroups(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam(required = false) Long cursor,

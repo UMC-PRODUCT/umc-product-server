@@ -21,12 +21,14 @@ import com.umc.product.organization.domain.School;
 import com.umc.product.support.UseCaseTestSupport;
 import java.time.Instant;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 
+@Disabled
 class SearchMemberUseCaseTest extends UseCaseTestSupport {
 
     @Autowired

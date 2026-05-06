@@ -62,36 +62,52 @@ public class DocumentationTest {
     // =================================================
 
     protected static final Long TEST_MEMBER_ID = 1L;
+
     @Autowired
     protected MockMvc mockMvc;
+
     @Autowired
     protected RestDocumentationResultHandler restDocsHandler;
+
     @Autowired
     protected ObjectMapper objectMapper;
+
     @MockitoBean
     protected JwtTokenProvider jwtTokenProvider;
+
     @MockitoBean
     protected ManageSchoolUseCase manageSchoolUseCase;
+
     @MockitoBean
     protected GetSchoolUseCase getSchoolUseCase;
+
     @MockitoBean
     protected ManageChapterUseCase manageChapterUseCase;
+
     @MockitoBean
     protected GetChapterUseCase getChapterUseCase;
+
     @MockitoBean
     protected ManageGisuUseCase manageGisuUseCase;
+
     @MockitoBean
     protected GetGisuUseCase getGisuUseCase;
+
     @MockitoBean
     protected GetFileUseCase getFileUseCase;
+
     @MockitoBean
     protected ManageNoticeUseCase manageNoticeUseCase;
+
     @MockitoBean
     protected ManageNoticeReadUseCase manageNoticeReadUseCase;
+
     @MockitoBean
     protected ManageNoticeContentUseCase manageNoticeContentUseCase;
+
     @MockitoBean
     protected GetNoticeUseCase getNoticeUseCase;
+    
     @MockitoBean
     protected NoticeViewerInfoAssembler noticeViewerInfoAssembler;
 

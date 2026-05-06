@@ -136,6 +136,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
             group.getName(),
             group.getGisuId(),
             group.getPart(),
+            group.getCreatedAt(),
             loadStudyGroupPort.findStudyGroupMentors(studyGroupId),
             loadStudyGroupPort.findStudyGroupMembers(studyGroupId)
         );
@@ -221,6 +222,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
                     studyGroup.name(),
                     studyGroup.gisuId(),
                     studyGroup.part(),
+                    studyGroup.createdAt(),
                     resolveMemberProfileUrls(studyGroup.mentors()),
                     resolveMemberProfileUrls(studyGroup.members())
                 )

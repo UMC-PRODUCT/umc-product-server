@@ -7,7 +7,7 @@ import com.umc.product.organization.domain.StudyGroup;
 import org.springframework.stereotype.Component;
 
 @Component
-public class StudyGroupFixture {
+public class StudyGroupFixture extends FixtureSupport {
 
     private final SaveStudyGroupPort saveStudyGroupPort;
 
@@ -16,17 +16,18 @@ public class StudyGroupFixture {
     }
 
     public StudyGroup 스터디그룹(String name, Gisu gisu, ChallengerPart part, Long leaderId, Long... memberIds) {
-//        StudyGroup studyGroup = StudyGroup.create(name, gisu, part);
-//        studyGroup.addLeader(leaderId);
-//        for (Long memberId : memberIds) {
-//            studyGroup.addMember(memberId);
-//        }
-//        return manageStudyGroupPort.save(studyGroup);
-        return null;
+        return 스터디그룹(name, gisu, part);
     }
 
     public StudyGroup 스터디그룹(String name, Gisu gisu, ChallengerPart part) {
-//        return manageStudyGroupPort.save(StudyGroup.create(name, gisu, part));
-        return null;
+        return saveStudyGroupPort.save(StudyGroup.create(
+            valueOrFixture(name, "study-group", 100),
+            gisu.getId(),
+            part
+        ));
+    }
+
+    public StudyGroup 스터디그룹(Gisu gisu, ChallengerPart part) {
+        return 스터디그룹(fixtureString("study-group", 100), gisu, part);
     }
 }

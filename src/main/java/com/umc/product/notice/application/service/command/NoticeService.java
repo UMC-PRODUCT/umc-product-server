@@ -68,7 +68,8 @@ public class NoticeService implements ManageNoticeUseCase {
             command.title(),
             command.content(),
             command.memberId(),
-            command.shouldNotify()
+            command.shouldNotify(),
+            command.mustRead()
         );
 
         Notice savedNotice = saveNoticePort.save(notice);
@@ -105,11 +106,8 @@ public class NoticeService implements ManageNoticeUseCase {
     public void updateNoticeTitleOrContent(UpdateNoticeCommand command) {
         Notice notice = findNoticeById(command.noticeId());
 
-        // 제목/내용만 수정
-        notice.updateTitleOrContent(
-            command.title(),
-            command.content()
-        );
+        notice.updateTitleOrContent(command.title(), command.content());
+        notice.updateMustRead(command.mustRead());
 
     }
 

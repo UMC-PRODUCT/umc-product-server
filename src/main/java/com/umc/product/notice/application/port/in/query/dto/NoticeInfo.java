@@ -13,6 +13,7 @@ public record NoticeInfo(
     String title,
     String content,
     Long authorMemberId,
+    boolean mustRead,
     NoticeVoteInfo vote,
     List<NoticeImageInfo> images,
     List<NoticeLinkInfo> links,

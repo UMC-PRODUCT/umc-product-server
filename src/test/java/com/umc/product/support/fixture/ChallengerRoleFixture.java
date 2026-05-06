@@ -7,7 +7,7 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ChallengerRoleFixture {
+public class ChallengerRoleFixture extends FixtureSupport {
 
     private final SaveChallengerRolePort saveChallengerRolePort;
 
@@ -15,17 +15,17 @@ public class ChallengerRoleFixture {
         this.saveChallengerRolePort = saveChallengerRolePort;
     }
 
-    public ChallengerRole 총괄(Long challengerId, Long gisuId) {
+    public ChallengerRole 중앙운영사무국_총괄(Long challengerId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.CENTRAL_PRESIDENT, null, null, gisuId));
     }
 
-    public ChallengerRole 부총괄(Long challengerId, Long gisuId) {
+    public ChallengerRole 중앙운영사무국_부총괄(Long challengerId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.CENTRAL_VICE_PRESIDENT, null, null, gisuId));
     }
 
-    public ChallengerRole 중앙_운영국원(Long challengerId, Long gisuId) {
+    public ChallengerRole 중앙운영사무국_일반_운영진(Long challengerId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.CENTRAL_OPERATING_TEAM_MEMBER, null, null, gisuId));
     }
@@ -54,7 +54,7 @@ public class ChallengerRoleFixture {
             ChallengerRole.create(challengerId, ChallengerRoleType.SCHOOL_PART_LEADER, schoolId, part, gisuId));
     }
 
-    public ChallengerRole 학교_운영진(Long challengerId, ChallengerPart part, Long schoolId, Long gisuId) {
+    public ChallengerRole 학교_기타_운영진(Long challengerId, ChallengerPart part, Long schoolId, Long gisuId) {
         return saveChallengerRolePort.save(
             ChallengerRole.create(challengerId, ChallengerRoleType.SCHOOL_ETC_ADMIN, schoolId, part, gisuId));
     }

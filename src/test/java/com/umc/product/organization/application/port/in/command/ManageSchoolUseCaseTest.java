@@ -22,7 +22,6 @@ import com.umc.product.support.fixture.GisuFixture;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 
 
 class ManageSchoolUseCaseTest extends UseCaseTestSupport {
@@ -60,7 +59,6 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     }
 
     @Test
-    @Transactional
     void 외부링크와_함께_학교를_등록한다() {
         // given
         List<CreateSchoolCommand.SchoolLinkCommand> links = List.of(
@@ -76,15 +74,15 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
 
         // then
         School savedSchool = loadSchoolPort.findSchoolDetailById(schoolId);
+        var savedLinks = loadSchoolPort.findLinksBySchoolId(schoolId);
         assertThat(savedSchool.getName()).isEqualTo("한성대");
-        assertThat(savedSchool.getSchoolLinks()).hasSize(3);
-        assertThat(savedSchool.getSchoolLinks())
-            .extracting(link -> link.getType())
+        assertThat(savedLinks).hasSize(3);
+        assertThat(savedLinks)
+            .extracting(link -> link.type())
             .containsExactlyInAnyOrder(SchoolLinkType.KAKAO, SchoolLinkType.INSTAGRAM, SchoolLinkType.YOUTUBE);
     }
 
     @Test
-    @Transactional
     void 같은_타입의_링크를_여러개_등록할_수_있다() {
         // given
         List<CreateSchoolCommand.SchoolLinkCommand> links = List.of(
@@ -97,18 +95,17 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         Long schoolId = manageSchoolUseCase.create(command);
 
         // then
-        School savedSchool = loadSchoolPort.findSchoolDetailById(schoolId);
-        assertThat(savedSchool.getSchoolLinks()).hasSize(2);
-        assertThat(savedSchool.getSchoolLinks())
-            .extracting(link -> link.getType())
+        var savedLinks = loadSchoolPort.findLinksBySchoolId(schoolId);
+        assertThat(savedLinks).hasSize(2);
+        assertThat(savedLinks)
+            .extracting(link -> link.type())
             .containsOnly(SchoolLinkType.INSTAGRAM);
-        assertThat(savedSchool.getSchoolLinks())
-            .extracting(link -> link.getUrl())
+        assertThat(savedLinks)
+            .extracting(link -> link.url())
             .containsExactlyInAnyOrder("https://instagram.com/main", "https://instagram.com/sub");
     }
 
     @Test
-    @Transactional
     void 같은_타입의_링크가_등록된_상태에서_수정할_수_있다() {
         // given
         List<CreateSchoolCommand.SchoolLinkCommand> initialLinks = List.of(
@@ -128,13 +125,13 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         manageSchoolUseCase.updateSchool(schoolId, updateCommand);
 
         // then
-        School updatedSchool = loadSchoolPort.findSchoolDetailById(schoolId);
-        assertThat(updatedSchool.getSchoolLinks()).hasSize(3);
-        assertThat(updatedSchool.getSchoolLinks())
-            .extracting(link -> link.getType())
+        var savedUpdatedLinks = loadSchoolPort.findLinksBySchoolId(schoolId);
+        assertThat(savedUpdatedLinks).hasSize(3);
+        assertThat(savedUpdatedLinks)
+            .extracting(link -> link.type())
             .containsExactlyInAnyOrder(SchoolLinkType.INSTAGRAM, SchoolLinkType.INSTAGRAM, SchoolLinkType.KAKAO);
-        assertThat(updatedSchool.getSchoolLinks())
-            .extracting(link -> link.getUrl())
+        assertThat(savedUpdatedLinks)
+            .extracting(link -> link.url())
             .containsExactlyInAnyOrder(
                 "https://instagram.com/new1",
                 "https://instagram.com/new2",
@@ -159,7 +156,6 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     }
 
     @Test
-    @Transactional
     void 학교_수정_시_링크도_함께_수정한다() {
         // given
         School school = saveSchoolPort.save(School.create("한성대", "비고"));
@@ -179,13 +175,13 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
         manageSchoolUseCase.updateSchool(school.getId(), command);
 
         // then
-        School updatedSchool = loadSchoolPort.findSchoolDetailById(school.getId());
-        assertThat(updatedSchool.getSchoolLinks()).hasSize(2);
-        assertThat(updatedSchool.getSchoolLinks())
-            .extracting(link -> link.getType())
+        var savedUpdatedLinks = loadSchoolPort.findLinksBySchoolId(school.getId());
+        assertThat(savedUpdatedLinks).hasSize(2);
+        assertThat(savedUpdatedLinks)
+            .extracting(link -> link.type())
             .containsExactlyInAnyOrder(SchoolLinkType.INSTAGRAM, SchoolLinkType.YOUTUBE);
-        assertThat(updatedSchool.getSchoolLinks())
-            .extracting(link -> link.getUrl())
+        assertThat(savedUpdatedLinks)
+            .extracting(link -> link.url())
             .containsExactlyInAnyOrder("https://instagram.com/new", "https://youtube.com/@new");
     }
 
@@ -299,7 +295,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 다른_기수_배정은_유지하면서_특정_기수_지부로_배정한다() {
         // given
         Gisu gisu9 = gisuFixture.활성_기수(9L);
-        Gisu gisu10 = gisuFixture.활성_기수(10L);
+        Gisu gisu10 = gisuFixture.비활성_기수(10L);
 
         Chapter chapter9 = saveChapterPort.save(Chapter.create(gisu9, "Scorpio"));
         Chapter chapter10 = saveChapterPort.save(Chapter.create(gisu10, "Leo"));
@@ -343,7 +339,7 @@ class ManageSchoolUseCaseTest extends UseCaseTestSupport {
     void 특정_기수의_배정만_해제하고_다른_기수는_유지한다() {
         // given
         Gisu gisu9 = gisuFixture.활성_기수(9L);
-        Gisu gisu10 = gisuFixture.활성_기수(10L);
+        Gisu gisu10 = gisuFixture.비활성_기수(10L);
 
         Chapter chapter9 = saveChapterPort.save(Chapter.create(gisu9, "Scorpio"));
         Chapter chapter10 = saveChapterPort.save(Chapter.create(gisu10, "Leo"));

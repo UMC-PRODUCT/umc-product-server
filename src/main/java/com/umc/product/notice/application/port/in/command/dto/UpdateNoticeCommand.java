@@ -5,6 +5,7 @@ public record UpdateNoticeCommand(
     Long memberId,
     Long noticeId,
     String title,
-    String content
+    String content,
+    boolean mustRead /* 필독 여부 */
 ) {
 }
