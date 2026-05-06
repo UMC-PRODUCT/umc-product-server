@@ -17,6 +17,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -72,6 +73,13 @@ public class ProjectApplication extends BaseEntity {
     private Long statusChangedMemberId;
     private String statusChangeReason;
 
+    // PM/운영진 화면의 "지원시각" 컬럼에 노출되는 시각. submit() 시 기록되며, 임시저장 단계에서는 null.
+    private Instant submittedAt;
+
+    // PM/운영진 화면의 "처리시각" 컬럼에 노출되는 시각. approve()/reject() 등 상태 전이 시 갱신되며,
+    // 단순 임시저장본 갱신과 구분되어야 하므로 BaseEntity.updatedAt 과 별개 필드로 둔다.
+    private Instant statusChangedAt;
+
     @Builder(access = AccessLevel.PRIVATE)
     private ProjectApplication(
         ProjectApplicationForm applicationForm, Long formResponseId,
@@ -108,6 +116,7 @@ public class ProjectApplication extends BaseEntity {
         this.status = ProjectApplicationStatus.APPROVED;
         this.statusChangedMemberId = decidedByMemberId;
         this.statusChangeReason = reason;
+        this.statusChangedAt = Instant.now();
     }
 
     /**
@@ -122,6 +131,7 @@ public class ProjectApplication extends BaseEntity {
         this.status = ProjectApplicationStatus.REJECTED;
         this.statusChangedMemberId = decidedByMemberId;
         this.statusChangeReason = reason;
+        this.statusChangedAt = Instant.now();
     }
 
     /**
@@ -148,6 +158,7 @@ public class ProjectApplication extends BaseEntity {
         }
 
         this.status = ProjectApplicationStatus.SUBMITTED;
+        this.submittedAt = Instant.now();
     }
 
     public boolean isDraft() {
