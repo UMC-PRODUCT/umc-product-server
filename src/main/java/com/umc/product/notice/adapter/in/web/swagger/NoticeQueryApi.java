@@ -133,7 +133,7 @@ public interface NoticeQueryApi {
     );
 
     @Operation(
-        summary = "공지사항 읽음 현황 상세 조회",
+        summary = "[NOTICE-005] 공지사항 읽음 현황 상세 조회",
         description = """
             공지사항을 읽은/안읽은 사용자 목록을 커서 기반 페이징으로 조회합니다.
 
