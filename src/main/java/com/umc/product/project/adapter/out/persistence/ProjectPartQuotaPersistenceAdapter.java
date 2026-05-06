@@ -6,6 +6,7 @@ import com.umc.product.project.application.port.out.SaveProjectPartQuotaPort;
 import com.umc.product.project.domain.ProjectPartQuota;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +16,7 @@ public class ProjectPartQuotaPersistenceAdapter
     implements LoadProjectPartQuotaPort, SaveProjectPartQuotaPort {
 
     private final ProjectPartQuotaJpaRepository repository;
+    private final ProjectPartQuotaQueryRepository queryRepository;
 
     @Override
     public List<ProjectPartQuota> listByProjectId(Long projectId) {
@@ -24,6 +26,13 @@ public class ProjectPartQuotaPersistenceAdapter
     @Override
     public boolean existsByProjectIdAndPart(Long projectId, ChallengerPart part) {
         return repository.existsByProjectIdAndPart(projectId, part);
+    }
+
+    @Override
+    public Map<Long, List<ProjectPartQuota>> listByProjectIdsGroupedByProjectId(
+        Collection<Long> projectIds
+    ) {
+        return queryRepository.listByProjectIdsGroupedByProjectId(projectIds);
     }
 
     @Override
