@@ -10,6 +10,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -78,8 +79,9 @@ public class ProjectApplicationQueryRepository {
     /**
      * 본인 지원 내역을 조회한다.
      * <p>
-     * applicationForm -> project, appliedMatchingRound 를 fetch join 으로 함께 로드한다. 정렬: matching round startsAt ASC ->
-     * application updatedAt DESC.
+     * applicationForm -> project, appliedMatchingRound 를 fetch join 으로 함께 로드한다.
+     * <p>
+     * 정렬: matching round startsAt ASC -> application updatedAt DESC.
      */
     public List<ProjectApplication> searchMyApplications(
         Long applicantMemberId,
@@ -100,6 +102,52 @@ public class ProjectApplicationQueryRepository {
             )
             .orderBy(projectMatchingRound.startsAt.asc(), projectApplication.updatedAt.desc())
             .fetch();
+    }
+
+    /**
+     * PM/운영진용 단일 프로젝트의 지원자 목록을 조회한다.
+     * <p>
+     * applicationForm 을 통해 projectId 로 필터하고, appliedMatchingRound 를 fetch join 한다. 임시저장(PENDING)은 항상 제외된다.
+     * <p>
+     * 정렬: matchingRound.phase ASC -> projectApplication.submittedAt ASC.
+     */
+    public List<ProjectApplication> searchProjectApplications(
+        Long projectId,
+        Long matchingRoundId,
+        ProjectApplicationStatus status
+    ) {
+        return queryFactory
+            .selectFrom(projectApplication)
+            .innerJoin(projectApplication.applicationForm, projectApplicationForm)
+            .innerJoin(projectApplication.appliedMatchingRound, projectMatchingRound).fetchJoin()
+            .where(
+                projectApplicationForm.project.id.eq(projectId),
+                matchingRoundIdEq(matchingRoundId),
+                managedStatusCond(status)
+            )
+            .orderBy(projectMatchingRound.phase.asc(), projectApplication.submittedAt.asc())
+            .fetch();
+    }
+
+    private BooleanExpression matchingRoundIdEq(Long matchingRoundId) {
+        return matchingRoundId == null ? null : projectMatchingRound.id.eq(matchingRoundId);
+    }
+
+    /**
+     * PM/운영진 영역 status 필터.
+     * <ul>
+     *   <li>null -> SUBMITTED/APPROVED/REJECTED 전체 (PENDING 제외)</li>
+     *   <li>명시 -> 해당 상태 단일</li>
+     * </ul>
+     * Query 단에서 PENDING 은 사전 차단되므로 (도메인 invariant), 여기서는 그대로 eq 만 적용한다.
+     */
+    private BooleanExpression managedStatusCond(ProjectApplicationStatus status) {
+        return status == null
+            ? projectApplication.status.in(Arrays.asList(
+            ProjectApplicationStatus.SUBMITTED,
+            ProjectApplicationStatus.APPROVED,
+            ProjectApplicationStatus.REJECTED))
+            : projectApplication.status.eq(status);
     }
 
     /**

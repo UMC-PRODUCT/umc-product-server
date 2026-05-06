@@ -67,4 +67,23 @@ public interface LoadProjectApplicationPort {
         MatchingType matchingType,
         ProjectApplicationStatus status
     );
+
+    /**
+     * PM/운영진용 단일 프로젝트의 지원자 목록을 조회한다.
+     * <p>
+     * appliedMatchingRound 를 fetch join 으로 함께 로드한다. 임시저장(PENDING)은 결과에서 제외된다.
+     * <p>
+     * 정렬: matchingRound.phase ASC -> submittedAt ASC.
+     * <p>
+     * 파트 필터는 challenger 도메인 속성이라 본 port 에서 다루지 않는다 -- 호출자(Service) 가 challenger 정보를 enrich 한 뒤 in-memory 로 필터링한다.
+     *
+     * @param projectId       대상 프로젝트 ID
+     * @param matchingRoundId 매칭 차수 필터 (선택). null 이면 전체.
+     * @param status          상태 필터 (선택). null 이면 PENDING 제외 전체.
+     */
+    List<ProjectApplication> searchProjectApplications(
+        Long projectId,
+        Long matchingRoundId,
+        ProjectApplicationStatus status
+    );
 }

@@ -94,4 +94,13 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     ) {
         return projectApplicationQueryRepository.searchMyApplications(applicantMemberId, gisuId, matchingType, status);
     }
+
+    @Override
+    public List<ProjectApplication> searchProjectApplications(
+        Long projectId,
+        Long matchingRoundId,
+        ProjectApplicationStatus status
+    ) {
+        return queryRepository.searchProjectApplications(projectId, matchingRoundId, status);
+    }
 }
