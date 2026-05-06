@@ -1,14 +1,23 @@
 package com.umc.product.project.adapter.out.persistence;
 
+import static com.umc.product.project.domain.QProject.project;
 import static com.umc.product.project.domain.QProjectApplication.projectApplication;
+import static com.umc.product.project.domain.QProjectApplicationForm.projectApplicationForm;
+import static com.umc.product.project.domain.QProjectMatchingRound.projectMatchingRound;
 
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+/**
+ * ProjectApplication QueryDSL 동적 검색 구현.
+ */
 @Repository
 @RequiredArgsConstructor
 public class ProjectApplicationQueryRepository {
@@ -64,5 +73,41 @@ public class ProjectApplicationQueryRepository {
                 )
                 .fetchOne()
         );
+    }
+
+    /**
+     * 본인 지원 내역을 조회한다.
+     * <p>
+     * applicationForm -> project, appliedMatchingRound 를 fetch join 으로 함께 로드한다. 정렬: matching round startsAt ASC ->
+     * application updatedAt DESC.
+     */
+    public List<ProjectApplication> searchMyApplications(
+        Long applicantMemberId,
+        Long gisuId,
+        MatchingType matchingType,
+        ProjectApplicationStatus status
+    ) {
+        return queryFactory
+            .selectFrom(projectApplication)
+            .innerJoin(projectApplication.applicationForm, projectApplicationForm).fetchJoin()
+            .innerJoin(projectApplicationForm.project, project).fetchJoin()
+            .innerJoin(projectApplication.appliedMatchingRound, projectMatchingRound).fetchJoin()
+            .where(
+                projectApplication.applicantMemberId.eq(applicantMemberId),
+                project.gisuId.eq(gisuId),
+                projectMatchingRound.type.eq(matchingType),
+                statusCond(status)
+            )
+            .orderBy(projectMatchingRound.startsAt.asc(), projectApplication.updatedAt.desc())
+            .fetch();
+    }
+
+    /**
+     * status null -> PENDING(임시저장) 제외, 명시 시 정확히 그 상태.
+     */
+    private BooleanExpression statusCond(ProjectApplicationStatus status) {
+        return status == null
+            ? projectApplication.status.ne(ProjectApplicationStatus.PENDING)
+            : projectApplication.status.eq(status);
     }
 }

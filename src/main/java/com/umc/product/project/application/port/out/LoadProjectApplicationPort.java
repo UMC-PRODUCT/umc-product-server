@@ -1,7 +1,9 @@
 package com.umc.product.project.application.port.out;
 
 import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -44,5 +46,25 @@ public interface LoadProjectApplicationPort {
      */
     boolean existsByRoundAndApplicantAndStatus(
         Long roundId, Long applicantMemberId, ProjectApplicationStatus status
+    );
+
+    /**
+     * 본인 지원 내역을 조회한다.
+     * <p>
+     * applicationForm/project/matchingRound 를 fetch join 으로 함께 로드하므로 호출자는
+     * {@code application.getApplicationForm().getProject()} 등을 추가 쿼리 없이 사용할 수 있다.
+     * <p>
+     * 정렬: 매칭 라운드 시작일 ASC -> 지원서 갱신일 DESC.
+     *
+     * @param applicantMemberId 지원자 Member ID
+     * @param gisuId            기수 ID (해당 기수 프로젝트만 조회)
+     * @param matchingType      매칭 종류 (사용자 파트 기준 자동 결정)
+     * @param status            상태 필터. {@code null} 이면 PENDING 제외 전체.
+     */
+    List<ProjectApplication> searchMyApplications(
+        Long applicantMemberId,
+        Long gisuId,
+        MatchingType matchingType,
+        ProjectApplicationStatus status
     );
 }
