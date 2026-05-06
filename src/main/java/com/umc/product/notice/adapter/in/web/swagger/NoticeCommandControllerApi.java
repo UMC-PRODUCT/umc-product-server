@@ -20,10 +20,35 @@ public interface NoticeCommandControllerApi {
 
     @Operation(
         summary = "[NOTICE-201] 공지사항 생성",
-        description = "새로운 공지사항을 생성합니다. targetInfo로 대상 범위(기수/지부/학교/파트)를 지정하고, "
-            + "shouldNotify=true로 설정하면 대상자에게 즉시 푸시 알림이 발송됩니다. "
-            + "mustRead=true로 설정하면 UPMS 필독 공지로 지정되어 공지 목록 최상단에 고정됩니다. "
-            + "이미지/링크/투표는 공지 생성 후 별도 API로 추가해야 합니다."
+        description = """
+            - `mustRead=true`: 필독 공지로 지정 → 목록 최상단 고정 (UPMS에서 사용, 앱공지에서는 false로 설정)
+
+            ---
+
+            ## 운영진 공지 작성 방법
+
+            `targetInfo.targetNoticeTab`을 `CHALLENGER` 이외의 값으로 설정하면 운영진 공지로 생성
+
+            > **공통 제약**
+            > - `targetGisuId` 는 항상 필수
+            > - `targetChapterId` 지정 불가 (운영진 공지는 지부 단위 미지원)
+
+            ### 중앙운영진 공지 (`targetSchoolId = null`)
+
+            | 열람 대상 | targetNoticeTab | targetSchoolId | targetParts | 작성 권한 |
+            |---|---|---|---|---|
+            | 중앙운영진 전체 | `CENTRAL_MEMBER` | null | null | 총괄단 |
+            | 중앙운영진 + 모든 학교회장단 | `SCHOOL_CORE` | null | null | 중앙운영진 |
+            | 중앙운영진 + 모든 학교회장단 + 모든 파트장 | `SCHOOL_PART_LEADER` | null | null 또는 `[]` | 중앙운영진 |
+            | 중앙운영진 + 모든 학교회장단 + 특정 파트 파트장 | `SCHOOL_PART_LEADER` | null | `["SPRINGBOOT"]` | 중앙운영진 |
+
+            ### 교내운영진 공지 (`targetSchoolId` 지정 필수)
+
+            | 열람 대상 | targetNoticeTab | targetSchoolId | targetParts | 작성 권한 |
+            |---|---|---|---|---|
+            | 해당 학교 파트장 전체 + 상위 운영진 | `SCHOOL_PART_LEADER` | schoolId | null 또는 `[]` | 해당 학교 회장단 |
+            | 해당 학교 특정 파트 파트장 + 상위 운영진 | `SCHOOL_PART_LEADER` | schoolId | `["SPRINGBOOT"]` | 해당 학교 회장단 |
+            """
     )
     @ApiResponses({
         @ApiResponse(
@@ -66,13 +91,8 @@ public interface NoticeCommandControllerApi {
     );
 
     @Operation(
-<<<<<<< docs/#817-api-ids
         summary = "[NOTICE-203] 공지사항 수정",
-        description = "공지사항 내용을 수정합니다."
-=======
-        summary = "공지사항 수정",
         description = "공지사항 내용을 수정합니다. mustRead=true로 설정하면 UPMS 필독 공지로 지정되어 목록 최상단에 고정되며, false로 변경하면 고정이 해제됩니다."
->>>>>>> develop
     )
     @ApiResponses({
         @ApiResponse(
