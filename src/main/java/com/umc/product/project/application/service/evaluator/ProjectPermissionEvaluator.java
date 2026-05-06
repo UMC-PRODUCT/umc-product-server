@@ -48,7 +48,7 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
      * 단건 READ 분기. 비공개 상태(DRAFT/PENDING_REVIEW/ABORTED)는 권한자만 노출.
      * <p>
      * 목록 조회는 {@code resourceId} 가 없어 이 분기를 타지 않고 단순 통과 후 L3-A scope 에서 거른다.
-     * PR/ABORTED 는 PO + 총괄단(SUPER_ADMIN/총괄/부총괄) ∪ 지부장(scope 무관).
+     * PR/ABORTED 는 PO + 해당 기수의 총괄단(SUPER_ADMIN 은 글로벌) ∪ 해당 기수의 지부장(chapter 무관).
      */
     private boolean canRead(SubjectAttributes subject, ResourcePermission permission) {
         if (permission.resourceId() == null) {
@@ -59,9 +59,8 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
             case IN_PROGRESS, COMPLETED -> true;
             case DRAFT -> isOwner(subject, project);
             case PENDING_REVIEW, ABORTED -> isOwner(subject, project)
-                || subject.roleAttributes().stream()
-                    .anyMatch(role -> role.roleType().isAtLeastCentralCore()
-                        || role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT);
+                || isCentralCoreInGisu(subject, project.getGisuId())
+                || isChapterPresidentInGisu(subject, project.getGisuId());
         };
     }
 
@@ -114,13 +113,14 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
     /**
      * 운영진 전용 액션 (publish / abort / complete / 정원 설정 등). PM 은 차단 — Admin 검토 우회 방지.
      * <p>
-     * 총괄단(SUPER_ADMIN/총괄/부총괄) 또는 본인 지부장만 통과. 종료 상태(COMPLETED/ABORTED)는 절대 차단.
+     * 해당 기수의 총괄단(SUPER_ADMIN 은 글로벌) 또는 본인 지부장(해당 기수)만 통과.
+     * 종료 상태(COMPLETED/ABORTED)는 절대 차단.
      */
     private boolean canManage(SubjectAttributes subject, ResourcePermission permission) {
         Project project = loadProject(permission);
         return switch (project.getStatus()) {
             case PENDING_REVIEW, IN_PROGRESS ->
-                isCentralCore(subject)
+                isCentralCoreInGisu(subject, project.getGisuId())
                     || isChapterPresidentOf(subject, project.getChapterId(), project.getGisuId());
             case DRAFT, COMPLETED, ABORTED -> false;
         };
@@ -133,9 +133,21 @@ public class ProjectPermissionEvaluator implements ResourcePermissionEvaluator {
                 && Objects.equals(role.organizationId(), chapterId));
     }
 
+    private boolean isChapterPresidentInGisu(SubjectAttributes subject, Long gisuId) {
+        return subject.roleAttributes().stream()
+            .anyMatch(role -> role.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
+                && Objects.equals(role.gisuId(), gisuId));
+    }
+
     private boolean isCentralCore(SubjectAttributes subject) {
         return subject.roleAttributes().stream()
             .anyMatch(role -> role.roleType().isAtLeastCentralCore());
+    }
+
+    private boolean isCentralCoreInGisu(SubjectAttributes subject, Long gisuId) {
+        return subject.roleAttributes().stream()
+            .anyMatch(role -> role.roleType().isSuperAdmin()
+                || (role.roleType().isAtLeastCentralCore() && Objects.equals(role.gisuId(), gisuId)));
     }
 
     private boolean isOwner(SubjectAttributes subject, Project project) {
