@@ -74,7 +74,7 @@ public class ChallengerRecordController {
         permission = PermissionType.READ
     )
     @GetMapping("id/{id}")
-    @Operation(summary = "ID로 ChallengerRecord 조회")
+    @Operation(summary = "[CHALLENGER-RECORD-102] ID로 ChallengerRecord 조회")
     public ChallengerRecordResponse getChallengerRecordById(
         @PathVariable Long id
     ) {
