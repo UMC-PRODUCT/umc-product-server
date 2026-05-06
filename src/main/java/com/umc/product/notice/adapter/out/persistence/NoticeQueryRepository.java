@@ -265,7 +265,7 @@ public class NoticeQueryRepository {
             .selectFrom(notice)
             .join(noticeTarget).on(noticeTarget.noticeId.eq(notice.id))
             .where(condition, keywordContains(keyword))
-            .orderBy(notice.createdAt.desc())
+            .orderBy(notice.mustRead.desc(), notice.createdAt.desc())
             .offset(pageable.getOffset())
             .limit(pageable.getPageSize())
             .fetch();

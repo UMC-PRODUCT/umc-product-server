@@ -99,6 +99,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
             notice.getTitle(),
             notice.getContent(),
             notice.getAuthorMemberId(),
+            notice.isMustRead(),
             voteInfo,
             imageInfos,
             linkInfos,
@@ -366,7 +367,7 @@ public class NoticeQueryService implements GetNoticeUseCase {
 
         return new NoticeSummary(
             notice.getId(), notice.getTitle(), notice.getContent(),
-            notice.isShouldSendNotification(), viewCount, notice.getCreatedAt(),
+            notice.isShouldSendNotification(), notice.isMustRead(), viewCount, notice.getCreatedAt(),
             targetInfo, notice.getAuthorMemberId(),
             memberInfo != null ? memberInfo.nickname() : null,
             memberInfo != null ? memberInfo.name() : null
