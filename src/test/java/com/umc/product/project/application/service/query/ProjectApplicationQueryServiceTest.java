@@ -1,6 +1,7 @@
 package com.umc.product.project.application.service.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
@@ -14,11 +15,15 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
+import com.umc.product.project.application.port.in.query.dto.ManagedProjectApplicationCardStatus;
 import com.umc.product.project.application.port.in.query.dto.MyProjectApplicationCardInfo;
 import com.umc.product.project.application.port.in.query.dto.MyProjectApplicationCardStatus;
+import com.umc.product.project.application.port.in.query.dto.ProjectApplicationCardInfo;
+import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
+import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
@@ -28,10 +33,12 @@ import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,6 +58,8 @@ class ProjectApplicationQueryServiceTest {
     LoadProjectPartQuotaPort loadProjectPartQuotaPort;
     @Mock
     LoadProjectMemberPort loadProjectMemberPort;
+    @Mock
+    LoadProjectPort loadProjectPort;
     @Mock
     GetChallengerUseCase getChallengerUseCase;
     @Mock
@@ -331,5 +340,164 @@ class ProjectApplicationQueryServiceTest {
         ReflectionTestUtils.setField(pq, "part", part);
         ReflectionTestUtils.setField(pq, "quota", quota);
         return pq;
+    }
+
+    // ============================================================
+    //          searchByProject (PM/운영진 지원자 목록 조회) 테스트
+    // ============================================================
+
+    @Test
+    @DisplayName("searchByProject_PENDING_상태_필터를_사용하면_도메인_예외")
+    void searchByProject_PENDING_필터_금지() {
+        // given & when & then -- Query record compact constructor 에서 차단된다
+        assertThatThrownBy(() -> SearchProjectApplicationsQuery.builder()
+            .projectId(1L)
+            .status(ProjectApplicationStatus.PENDING)
+            .build())
+            .isInstanceOf(ProjectDomainException.class);
+    }
+
+    @Test
+    @DisplayName("searchByProject_지원서가_없으면_챌린저_조회_없이_빈_리스트")
+    void searchByProject_빈_지원서_빈_리스트() {
+        // given
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .projectId(1L).build();
+
+        given(loadProjectPort.getById(1L)).willReturn(project);
+        given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
+            .willReturn(List.of());
+
+        // when
+        List<ProjectApplicationCardInfo> result = sut.searchByProject(query);
+
+        // then
+        assertThat(result).isEmpty();
+        verify(getChallengerUseCase, never())
+            .batchGetByMemberIdsAndGisuId(any(), any());
+    }
+
+    @Test
+    @DisplayName("searchByProject_지원자_정보_조립_정상_파트_상태_시각_매핑")
+    void searchByProject_정상_조립() {
+        // given
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST);
+        ProjectApplication application = createSubmittedApplication(
+            55L, project, round, 200L, ProjectApplicationStatus.APPROVED);
+
+        SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .projectId(1L).build();
+
+        given(loadProjectPort.getById(1L)).willReturn(project);
+        given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
+            .willReturn(List.of(application));
+        given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(eq(Set.of(200L)), eq(GISU_ID)))
+            .willReturn(Map.of(200L, challengerInfoOf(200L, ChallengerPart.WEB)));
+
+        // when
+        List<ProjectApplicationCardInfo> result = sut.searchByProject(query);
+
+        // then
+        assertThat(result).hasSize(1);
+        ProjectApplicationCardInfo card = result.get(0);
+        assertThat(card.applicationId()).isEqualTo(55L);
+        assertThat(card.applicantMemberId()).isEqualTo(200L);
+        assertThat(card.applicantPart()).isEqualTo(ChallengerPart.WEB);
+        assertThat(card.matchingRoundId()).isEqualTo(7L);
+        assertThat(card.matchingRoundType()).isEqualTo(MatchingType.PLAN_DEVELOPER);
+        assertThat(card.matchingRoundPhase()).isEqualTo(MatchingPhase.FIRST);
+        assertThat(card.status()).isEqualTo(ManagedProjectApplicationCardStatus.APPROVED);
+    }
+
+    @Test
+    @DisplayName("searchByProject_part_필터를_지정하면_해당_파트_지원자만_반환")
+    void searchByProject_part_필터() {
+        // given
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST);
+        ProjectApplication webApp = createSubmittedApplication(
+            55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED);
+        ProjectApplication androidApp = createSubmittedApplication(
+            56L, project, round, 201L, ProjectApplicationStatus.SUBMITTED);
+
+        SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .projectId(1L)
+            .part(ChallengerPart.WEB)
+            .build();
+
+        given(loadProjectPort.getById(1L)).willReturn(project);
+        given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
+            .willReturn(List.of(webApp, androidApp));
+        given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), eq(GISU_ID)))
+            .willReturn(Map.of(
+                200L, challengerInfoOf(200L, ChallengerPart.WEB),
+                201L, challengerInfoOf(201L, ChallengerPart.ANDROID)
+            ));
+
+        // when
+        List<ProjectApplicationCardInfo> result = sut.searchByProject(query);
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).applicantMemberId()).isEqualTo(200L);
+        assertThat(result.get(0).applicantPart()).isEqualTo(ChallengerPart.WEB);
+    }
+
+    @Test
+    @DisplayName("searchByProject_matchingRoundId_status_필터는_repository_로_그대로_전달")
+    void searchByProject_필터_전달() {
+        // given
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .projectId(1L)
+            .matchingRoundId(7L)
+            .status(ProjectApplicationStatus.APPROVED)
+            .build();
+
+        given(loadProjectPort.getById(1L)).willReturn(project);
+        given(loadProjectApplicationPort.searchProjectApplications(
+            1L, 7L, ProjectApplicationStatus.APPROVED))
+            .willReturn(List.of());
+
+        // when
+        sut.searchByProject(query);
+
+        // then
+        verify(loadProjectApplicationPort).searchProjectApplications(
+            1L, 7L, ProjectApplicationStatus.APPROVED);
+    }
+
+    private ChallengerInfo challengerInfoOf(Long memberId, ChallengerPart part) {
+        return ChallengerInfo.builder()
+            .challengerId(memberId * 10)
+            .memberId(memberId)
+            .gisuId(GISU_ID)
+            .part(part)
+            .build();
+    }
+
+    private ProjectApplication createSubmittedApplication(
+        Long id, Project project, ProjectMatchingRound round,
+        Long applicantMemberId, ProjectApplicationStatus status
+    ) {
+        ProjectApplicationForm form = newInstance(ProjectApplicationForm.class);
+        ReflectionTestUtils.setField(form, "project", project);
+
+        ProjectApplication application = newInstance(ProjectApplication.class);
+        ReflectionTestUtils.setField(application, "id", id);
+        ReflectionTestUtils.setField(application, "applicationForm", form);
+        ReflectionTestUtils.setField(application, "appliedMatchingRound", round);
+        ReflectionTestUtils.setField(application, "applicantMemberId", applicantMemberId);
+        ReflectionTestUtils.setField(application, "status", status);
+        ReflectionTestUtils.setField(application, "submittedAt", java.time.Instant.parse("2026-04-22T01:30:00Z"));
+        if (status == ProjectApplicationStatus.APPROVED || status == ProjectApplicationStatus.REJECTED) {
+            ReflectionTestUtils.setField(application, "statusChangedAt",
+                java.time.Instant.parse("2026-04-22T03:33:00Z"));
+        }
+        return application;
     }
 }

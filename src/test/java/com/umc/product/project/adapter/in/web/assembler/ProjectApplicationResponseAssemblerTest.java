@@ -12,14 +12,20 @@ import com.umc.product.common.domain.enums.MemberStatus;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.project.adapter.in.web.dto.response.MyProjectApplicationResponse;
+import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicantResponse;
 import com.umc.product.project.application.port.in.query.GetMyProjectApplicationsUseCase;
+import com.umc.product.project.application.port.in.query.SearchProjectApplicationsUseCase;
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
+import com.umc.product.project.application.port.in.query.dto.ManagedProjectApplicationCardStatus;
 import com.umc.product.project.application.port.in.query.dto.MyProjectApplicationCardInfo;
 import com.umc.product.project.application.port.in.query.dto.MyProjectApplicationCardStatus;
+import com.umc.product.project.application.port.in.query.dto.ProjectApplicationCardInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectPartQuotaInfo;
+import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.PartQuotaStatus;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +40,8 @@ class ProjectApplicationResponseAssemblerTest {
 
     @Mock
     GetMyProjectApplicationsUseCase getMyProjectApplicationsUseCase;
+    @Mock
+    SearchProjectApplicationsUseCase searchProjectApplicationsUseCase;
     @Mock
     GetMemberUseCase getMemberUseCase;
 
@@ -142,6 +150,100 @@ class ProjectApplicationResponseAssemblerTest {
             .name(name)
             .schoolName(schoolName)
             .status(MemberStatus.ACTIVE)
+            .build();
+    }
+
+    // ============================================================
+    //          applicantsFor (PM/운영진 지원자 목록) 테스트
+    // ============================================================
+
+    @Test
+    @DisplayName("applicantsFor_지원자_member_정보가_닉네임_실명_학교명을_포함해_응답에_조립된다")
+    void applicantsFor_정상_조립() {
+        // given
+        SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .projectId(1L).build();
+        ProjectApplicationCardInfo card = applicantCardOf(55L, 200L, ChallengerPart.WEB);
+
+        given(searchProjectApplicationsUseCase.searchByProject(query))
+            .willReturn(List.of(card));
+        given(getMemberUseCase.findAllByIds(any()))
+            .willReturn(Map.of(200L, memberOf(200L, "벨라", "황지원", "중앙대")));
+
+        // when
+        List<ProjectApplicantResponse> result = sut.applicantsFor(query);
+
+        // then
+        assertThat(result).hasSize(1);
+        ProjectApplicantResponse response = result.get(0);
+        assertThat(response.applicationId()).isEqualTo(55L);
+        assertThat(response.applicant().memberId()).isEqualTo(200L);
+        assertThat(response.applicant().nickname()).isEqualTo("벨라");
+        assertThat(response.applicant().name()).isEqualTo("황지원");
+        assertThat(response.applicant().schoolName()).isEqualTo("중앙대");
+        assertThat(response.applicant().part()).isEqualTo(ChallengerPart.WEB);
+        assertThat(response.matchingRound().id()).isEqualTo(7L);
+        assertThat(response.matchingRound().type()).isEqualTo(MatchingType.PLAN_DEVELOPER);
+        assertThat(response.matchingRound().phase()).isEqualTo(MatchingPhase.FIRST);
+        assertThat(response.status()).isEqualTo(ManagedProjectApplicationCardStatus.SUBMITTED);
+    }
+
+    @Test
+    @DisplayName("applicantsFor_지원자가_없으면_member_조회_없이_빈_리스트")
+    void applicantsFor_빈_리스트() {
+        // given
+        SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .projectId(1L).build();
+        given(searchProjectApplicationsUseCase.searchByProject(query))
+            .willReturn(List.of());
+
+        // when
+        List<ProjectApplicantResponse> result = sut.applicantsFor(query);
+
+        // then
+        assertThat(result).isEmpty();
+        verify(getMemberUseCase, never()).findAllByIds(anySet());
+    }
+
+    @Test
+    @DisplayName("applicantsFor_member_조회_누락_시_applicant_의_닉네임_실명_학교명은_null")
+    void applicantsFor_member_누락_시_null() {
+        // given
+        SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .projectId(1L).build();
+        ProjectApplicationCardInfo card = applicantCardOf(55L, 200L, ChallengerPart.WEB);
+
+        given(searchProjectApplicationsUseCase.searchByProject(query))
+            .willReturn(List.of(card));
+        given(getMemberUseCase.findAllByIds(any())).willReturn(Map.of());
+
+        // when
+        List<ProjectApplicantResponse> result = sut.applicantsFor(query);
+
+        // then
+        assertThat(result).hasSize(1);
+        ProjectApplicantResponse response = result.get(0);
+        assertThat(response.applicant().memberId()).isEqualTo(200L);
+        assertThat(response.applicant().nickname()).isNull();
+        assertThat(response.applicant().name()).isNull();
+        assertThat(response.applicant().schoolName()).isNull();
+        // part 는 challenger 도메인 -> Service 단에서 채워서 옴 (member 누락과 무관)
+        assertThat(response.applicant().part()).isEqualTo(ChallengerPart.WEB);
+    }
+
+    private ProjectApplicationCardInfo applicantCardOf(
+        Long applicationId, Long applicantMemberId, ChallengerPart part
+    ) {
+        return ProjectApplicationCardInfo.builder()
+            .applicationId(applicationId)
+            .applicantMemberId(applicantMemberId)
+            .applicantPart(part)
+            .matchingRoundId(7L)
+            .matchingRoundType(MatchingType.PLAN_DEVELOPER)
+            .matchingRoundPhase(MatchingPhase.FIRST)
+            .status(ManagedProjectApplicationCardStatus.SUBMITTED)
+            .submittedAt(Instant.parse("2026-04-22T01:30:00Z"))
+            .statusChangedAt(null)
             .build();
     }
 }
