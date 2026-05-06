@@ -40,7 +40,7 @@ public interface FcmControllerApi {
     );
 
     @Operation(
-        summary = "FCM Topic 재구독 처리",
+        summary = "[FCM-003] FCM Topic 재구독 처리",
         description = "요청 시점 기준으로 회원이 구독해야 하는 Topic들을 다시 구독처리합니다."
     )
     void resubscribeAllMemberLegacyTopics();
