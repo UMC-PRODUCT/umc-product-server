@@ -59,6 +59,9 @@ public class ProjectApplicationCommandService implements
 
         Project project = form.getProject();
 
+        // 0. 부모 프로젝트가 모집 단계인지 검증 (도메인 규칙)
+        project.validateApplicable();
+
         // 1. 챌린저 정보 조회 (현재 기수 챌린저 신분 + 파트 확인)
         ChallengerInfo challenger = getChallengerUseCase.getByMemberIdAndGisuId(
             command.applicantMemberId(), project.getGisuId()

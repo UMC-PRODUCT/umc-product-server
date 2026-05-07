@@ -212,6 +212,17 @@ public class Project extends BaseEntity {
     }
 
     /**
+     * 챌린저가 본 프로젝트에 지원 가능한 상태인지 검증한다.
+     * 모집 단계({@link ProjectStatus#IN_PROGRESS})에서만 허용한다.
+     * 권한 레이어({@code ProjectApplicationPermissionEvaluator}) 와 분리된 도메인 가드 — 스케줄러 등 권한 우회 경로에서도 invariant 보호.
+     */
+    public void validateApplicable() {
+        if (this.status != ProjectStatus.IN_PROGRESS) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+    }
+
+    /**
      * DRAFT 상태에서 PENDING_REVIEW 상태로 전이합니다. PM 제출 액션.
      * - 현재 상태가 DRAFT가 아니면 {@code PROJECT_INVALID_STATE}.
      * - {@code name} 미입력 시 {@code PROJECT_SUBMIT_VALIDATION_FAILED}.

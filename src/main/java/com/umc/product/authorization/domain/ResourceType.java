@@ -86,7 +86,11 @@ public enum ResourceType {
     // UPMS, 프로젝트 관련
     PROJECT("project", "프로젝트",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT,
-            PermissionType.DELETE, PermissionType.MANAGE, PermissionType.APPLY)),
+            PermissionType.DELETE, PermissionType.MANAGE)),
+
+    // 프로젝트 지원서 관련
+    PROJECT_APPLICATION("project_application", "프로젝트 지원서",
+        Set.of(PermissionType.WRITE)),
     ;
 
     private final String code;
