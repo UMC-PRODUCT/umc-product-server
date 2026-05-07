@@ -21,6 +21,9 @@ public enum FigmaErrorCode implements BaseCode {
     DISCORD_MENTION_SEND_FAILED(HttpStatus.BAD_GATEWAY, "FIGMA-0010", "Discord 멘션 전송에 실패했습니다."),
     PART_ROUTE_NOT_FOUND(HttpStatus.NOT_FOUND, "FIGMA-0011", "등록된 Figma 파트 라우트가 아닙니다."),
     PART_ROUTE_ALREADY_EXISTS(HttpStatus.CONFLICT, "FIGMA-0012", "동일한 fileKey/pageName 조합의 라우트가 이미 등록되어 있습니다."),
+    ROUTING_DOMAIN_NOT_FOUND(HttpStatus.NOT_FOUND, "FIGMA-0013", "등록된 Figma 라우팅 도메인이 아닙니다."),
+    ROUTING_DOMAIN_ALREADY_EXISTS(HttpStatus.CONFLICT, "FIGMA-0014", "동일한 domain_key 의 라우팅 도메인이 이미 등록되어 있습니다."),
+    ROUTING_DOMAIN_MENTION_NOT_FOUND(HttpStatus.NOT_FOUND, "FIGMA-0015", "해당 라우팅 도메인의 mention 이 아닙니다."),
     ;
 
     private final HttpStatus httpStatus;

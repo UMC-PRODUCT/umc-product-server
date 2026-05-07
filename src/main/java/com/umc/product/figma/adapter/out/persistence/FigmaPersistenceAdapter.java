@@ -2,12 +2,16 @@ package com.umc.product.figma.adapter.out.persistence;
 
 import com.umc.product.figma.application.port.out.LoadFigmaIntegrationPort;
 import com.umc.product.figma.application.port.out.LoadFigmaPartRoutePort;
+import com.umc.product.figma.application.port.out.LoadFigmaRoutingDomainPort;
 import com.umc.product.figma.application.port.out.LoadFigmaWatchedFilePort;
 import com.umc.product.figma.application.port.out.SaveFigmaIntegrationPort;
 import com.umc.product.figma.application.port.out.SaveFigmaPartRoutePort;
+import com.umc.product.figma.application.port.out.SaveFigmaRoutingDomainPort;
 import com.umc.product.figma.application.port.out.SaveFigmaWatchedFilePort;
 import com.umc.product.figma.domain.FigmaIntegration;
 import com.umc.product.figma.domain.FigmaPartRoute;
+import com.umc.product.figma.domain.FigmaRoutingDomain;
+import com.umc.product.figma.domain.FigmaRoutingDomainMention;
 import com.umc.product.figma.domain.FigmaWatchedFile;
 import java.util.List;
 import java.util.Optional;
@@ -23,11 +27,15 @@ public class FigmaPersistenceAdapter implements
     LoadFigmaWatchedFilePort,
     SaveFigmaWatchedFilePort,
     LoadFigmaPartRoutePort,
-    SaveFigmaPartRoutePort {
+    SaveFigmaPartRoutePort,
+    LoadFigmaRoutingDomainPort,
+    SaveFigmaRoutingDomainPort {
 
     private final FigmaIntegrationJpaRepository figmaIntegrationJpaRepository;
     private final FigmaWatchedFileJpaRepository figmaWatchedFileJpaRepository;
     private final FigmaPartRouteJpaRepository figmaPartRouteJpaRepository;
+    private final FigmaRoutingDomainJpaRepository figmaRoutingDomainJpaRepository;
+    private final FigmaRoutingDomainMentionJpaRepository figmaRoutingDomainMentionJpaRepository;
 
     @Override
     public Optional<FigmaIntegration> findActive() {
@@ -92,5 +100,60 @@ public class FigmaPersistenceAdapter implements
     @Override
     public void delete(FigmaPartRoute partRoute) {
         figmaPartRouteJpaRepository.delete(partRoute);
+    }
+
+    @Override
+    public Optional<FigmaRoutingDomain> findDomainById(Long id) {
+        return figmaRoutingDomainJpaRepository.findById(id);
+    }
+
+    @Override
+    public Optional<FigmaRoutingDomain> findDomainByKey(String domainKey) {
+        return figmaRoutingDomainJpaRepository.findByDomainKey(domainKey);
+    }
+
+    @Override
+    public boolean existsDomainByKey(String domainKey) {
+        return figmaRoutingDomainJpaRepository.existsByDomainKey(domainKey);
+    }
+
+    @Override
+    public List<FigmaRoutingDomain> listAllDomains() {
+        return figmaRoutingDomainJpaRepository.findAllByOrderByDomainKeyAsc();
+    }
+
+    @Override
+    public Optional<FigmaRoutingDomain> findFallbackDomain() {
+        return figmaRoutingDomainJpaRepository.findFirstByFallbackTrue();
+    }
+
+    @Override
+    public List<FigmaRoutingDomainMention> listMentionsByDomainId(Long domainId) {
+        return figmaRoutingDomainMentionJpaRepository.findAllByDomainId(domainId);
+    }
+
+    @Override
+    public Optional<FigmaRoutingDomainMention> findMentionById(Long mentionId) {
+        return figmaRoutingDomainMentionJpaRepository.findById(mentionId);
+    }
+
+    @Override
+    public FigmaRoutingDomain saveDomain(FigmaRoutingDomain domain) {
+        return figmaRoutingDomainJpaRepository.save(domain);
+    }
+
+    @Override
+    public void deleteDomain(FigmaRoutingDomain domain) {
+        figmaRoutingDomainJpaRepository.delete(domain);
+    }
+
+    @Override
+    public FigmaRoutingDomainMention saveMention(FigmaRoutingDomainMention mention) {
+        return figmaRoutingDomainMentionJpaRepository.save(mention);
+    }
+
+    @Override
+    public void deleteMention(FigmaRoutingDomainMention mention) {
+        figmaRoutingDomainMentionJpaRepository.delete(mention);
     }
 }
