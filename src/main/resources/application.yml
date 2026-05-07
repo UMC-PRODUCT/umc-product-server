@@ -119,16 +119,19 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
-  # Spring AI provider 설정 - 실제 활성 provider 는 app.llm.provider 가 결정한다.
+  # Spring AI provider 설정 - LLM_PROVIDER 한 변수가 다음 두 키를 동시에 결정한다.
+  #   - app.llm.provider           : 활성 어댑터 (ConditionalOnProperty 매칭 키)
+  #   - spring.ai.model.chat       : ChatModel 자동구성 활성화 키
+  # LLM_PROVIDER 후보값:
+  #   - mock              : MockChatCompletionAdapter (기본값, 외부 호출 없음)
+  #   - openai            : OpenAI ChatModel
+  #   - vertexai-gemini   : Vertex AI Gemini (service account 인증)
+  #   - google-genai      : Google AI Studio API key 또는 Vertex AI 모드 (Gemini Developer API)
+  # mock 일 때 spring.ai.model.chat=mock 은 어떤 자동구성에도 매칭되지 않아 ChatModel 빈은 만들어지지 않는다.
+  # 본 시스템은 chat 카테고리만 사용하므로 다른 모델 자동구성은 항상 비활성화한다.
   ai:
-    # 운영 활성화 시 LLM_AI_MODEL_CHAT 을 다음 중 하나로 주입한다.
-    #  - openai           : OpenAI ChatModel
-    #  - vertexai-gemini  : Vertex AI Gemini (service account 인증)
-    #  - google-genai     : Google AI Studio API key 또는 Vertex AI 모드 (Gemini Developer API)
-    # 기본값 none 은 ChatModel 자동구성을 모두 비활성화하여 mock 어댑터만 활성화되도록 한다.
-    # 본 시스템은 chat 만 사용하므로 다른 모델 카테고리는 항상 비활성화한다.
     model:
-      chat: ${LLM_AI_MODEL_CHAT:none}
+      chat: ${LLM_PROVIDER:mock}
       embedding: none
       image: none
       moderation: none

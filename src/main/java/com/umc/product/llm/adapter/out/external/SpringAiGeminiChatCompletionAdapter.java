@@ -17,19 +17,21 @@ import org.springframework.stereotype.Component;
 /**
  * Spring AI ChatClient 위에 얹은 Vertex AI Gemini 어댑터.
  * <p>
- * application property 의 {@code app.llm.provider=gemini} 일 때만 활성화된다.
- * 응답 파싱은 OpenAI 어댑터와 동일하게 {@link ChatPromptHelper} 를 재사용한다.
+ * application property 의 {@code app.llm.provider=vertexai-gemini} 일 때만 활성화된다.
+ * provider 키는 Spring AI 의 {@code spring.ai.model.chat=vertexai-gemini} 자동구성 키와
+ * 동일한 값으로 맞춰, 두 property 가 한 환경 변수로 일관되게 주입되도록 한다.
  * <p>
+ * 응답 파싱은 OpenAI 어댑터와 동일하게 {@link ChatPromptHelper} 를 재사용한다.
  * 인증 자격은 {@code GOOGLE_APPLICATION_CREDENTIALS} 환경 변수의 service account 또는
  * Spring AI 의 Vertex 자동구성이 인식하는 다른 자격 경로로 주입된다.
  */
 @Slf4j
 @Component
-@ConditionalOnProperty(name = "app.llm.provider", havingValue = "gemini")
+@ConditionalOnProperty(name = "app.llm.provider", havingValue = "vertexai-gemini")
 @ConditionalOnBean(VertexAiGeminiChatModel.class)
 public class SpringAiGeminiChatCompletionAdapter implements ChatCompletionPort {
 
-    private static final String PROVIDER_NAME = "gemini";
+    private static final String PROVIDER_NAME = "vertexai-gemini";
 
     private final VertexAiGeminiChatModel chatModel;
     private final LlmProperties properties;
