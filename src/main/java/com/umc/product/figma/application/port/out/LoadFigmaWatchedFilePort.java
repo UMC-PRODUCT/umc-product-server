@@ -11,4 +11,9 @@ public interface LoadFigmaWatchedFilePort {
     Optional<FigmaWatchedFile> findByFileKey(String fileKey);
 
     List<FigmaWatchedFile> listEnabled(int limit);
+
+    /**
+     * 운영 화면용 전체 조회. {@code enabledFilter} 가 {@code null} 이면 전체, {@code true|false} 면 해당 상태로 필터링한다.
+     */
+    List<FigmaWatchedFile> listAll(Boolean enabledFilter);
 }

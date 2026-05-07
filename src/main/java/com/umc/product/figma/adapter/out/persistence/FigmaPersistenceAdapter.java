@@ -62,6 +62,14 @@ public class FigmaPersistenceAdapter implements
     }
 
     @Override
+    public List<FigmaWatchedFile> listAll(Boolean enabledFilter) {
+        if (enabledFilter == null) {
+            return figmaWatchedFileJpaRepository.findAllByOrderByIdAsc();
+        }
+        return figmaWatchedFileJpaRepository.findAllByEnabledOrderByIdAsc(enabledFilter);
+    }
+
+    @Override
     public FigmaWatchedFile save(FigmaWatchedFile watchedFile) {
         return figmaWatchedFileJpaRepository.save(watchedFile);
     }

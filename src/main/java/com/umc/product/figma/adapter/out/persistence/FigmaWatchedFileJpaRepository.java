@@ -12,5 +12,9 @@ public interface FigmaWatchedFileJpaRepository extends JpaRepository<FigmaWatche
 
     List<FigmaWatchedFile> findAllByEnabledTrueOrderByIdAsc(Pageable pageable);
 
+    List<FigmaWatchedFile> findAllByOrderByIdAsc();
+
+    List<FigmaWatchedFile> findAllByEnabledOrderByIdAsc(boolean enabled);
+
     boolean existsByFileKey(String fileKey);
 }
