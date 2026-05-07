@@ -97,7 +97,7 @@ public class ProjectApplicationQueryService
      *   <li>application fetch join 단건 로드 (form/project/matchingRound 한 번에)</li>
      *   <li>정합성 검증: application 의 form.project.id 가 path 의 projectId 와 일치해야 함.
      *       위반/미존재 모두 PROJECT_APPLICATION_NOT_FOUND 로 통일하여 다른 프로젝트의 지원서 존재 여부를 은닉</li>
-     *   <li>도메인 비즈니스 규칙: PENDING(임시저장)은 지원자 본인만 조회 가능. PO/Sub-PO/지부장/CC 등 다른 호출자에게는
+     *   <li>도메인 비즈니스 규칙: DRAFT(임시저장)은 지원자 본인만 조회 가능. PO/Sub-PO/지부장/CC 등 다른 호출자에게는
      *       not-found 로 위장하여 임시저장본의 존재 자체를 은닉</li>
      *   <li>지원자 파트 단건 조회 (해당 기수 챌린저 invariant -- 누락 시 not-found 로 통일)</li>
      *   <li>폼 구조/정책/응답 본문/첨부 파일 raw 데이터 cross-domain 조회 (storage 만 IN 쿼리 batch)</li>
@@ -153,7 +153,7 @@ public class ProjectApplicationQueryService
      * 흐름:
      * <ol>
      *   <li>프로젝트 단건 조회 (없으면 PROJECT_NOT_FOUND)</li>
-     *   <li>지원서 동적 검색 (matchingRoundId / status 필터, PENDING 제외)</li>
+     *   <li>지원서 동적 검색 (matchingRoundId / status 필터, DRAFT 제외)</li>
      *   <li>지원자들의 challenger.part batch 조회 (해당 기수 invariant)</li>
      *   <li>part 필터를 in-memory 로 적용 -- challenger.part 는 ProjectApplication 컬럼이 아니므로
      *       repository 단에서 다루지 않는다 (도메인 분리)</li>
@@ -216,7 +216,7 @@ public class ProjectApplicationQueryService
      * <p>
      * 데이터 원천:
      * <ul>
-     *   <li>application 카드 -- 본인이 제출한 {@code ProjectApplication} (PENDING/SUBMITTED/APPROVED/REJECTED)</li>
+     *   <li>application 카드 -- 본인이 제출한 {@code ProjectApplication} (DRAFT/SUBMITTED/APPROVED/REJECTED)</li>
      *   <li>랜덤 매칭 카드 -- 본인이 ACTIVE 멤버이면서 {@code application=null} 인 케이스 (자동 랜덤 매칭 / 운영진 강제 배정).
      *       도메인 정책상 한 챌린저는 한 기수에 한 프로젝트에만 합류 가능하므로 0 또는 1 건이며, status 는 ProjectMember 의 ACTIVE 가 곧 합격 의미이므로 APPROVED 로
      *       표시한다. 정상 합격(application APPROVED + ProjectMember 양쪽 존재) 케이스의 중복 노출은 application=null 필터로 자연스럽게 차단된다.</li>
@@ -226,7 +226,7 @@ public class ProjectApplicationQueryService
      * 영향을 주지 않는다 -- 운영진이면서 개발 파트 챌린저인 사용자도 본인 파트({@code WEB} 등) 기준으로 정상 조회된다.
      * <p>
      * 랜덤 매칭 카드는 status 필터({@code query.status})와 무관하게 노출 여부가 결정된다 -- application 도메인 외부의 데이터원이라 application status 필터의
-     * 시맨틱이 적용되지 않으며, 클라이언트가 SUBMITTED/REJECTED/PENDING 등 좁은 필터로 호출했을 때 RANDOM_MATCHING 카드까지 끼는 것을 막기 위해
+     * 시맨틱이 적용되지 않으며, 클라이언트가 SUBMITTED/REJECTED/DRAFT 등 좁은 필터로 호출했을 때 RANDOM_MATCHING 카드까지 끼는 것을 막기 위해
      * {@code status} 가 명시된 호출에서는 랜덤 매칭 카드를 합성하지 않는다.
      */
     @Override

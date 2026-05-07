@@ -12,6 +12,7 @@ import com.umc.product.project.application.port.in.query.dto.GetProjectApplicati
 import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +47,7 @@ public class ProjectApplicationQueryController {
             <p>
             `status` 파라미터 :
             <ul>
-              <li>미지정 -> PENDING(임시저장) 제외 application 전체 + RANDOM_MATCHING 카드 합성</li>
+              <li>미지정 -> DRAFT(임시저장) 제외 application 전체 + RANDOM_MATCHING 카드 합성</li>
               <li>명시 시 해당 상태의 application 만 조회. RANDOM_MATCHING 카드는 application status 시맨틱 외부 데이터원이므로 합성하지 않는다.</li>
             </ul>
             <p>
@@ -56,6 +57,7 @@ public class ProjectApplicationQueryController {
     public List<MyProjectApplicationResponse> getMyApplications(
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam Long gisuId,
+        @Parameter(description = "지원 상태 필터 (선택). 미지정 시 DRAFT 제외 전체. 허용 값: DRAFT / SUBMITTED / APPROVED / REJECTED.")
         @RequestParam(required = false) ProjectApplicationStatus status
     ) {
         GetMyProjectApplicationsQuery query = GetMyProjectApplicationsQuery.builder()
@@ -71,7 +73,7 @@ public class ProjectApplicationQueryController {
     @Operation(
         summary = "[APPLY-101] PM/운영진 단일 프로젝트 지원자 목록 조회",
         description = """
-            단일 프로젝트의 지원자 목록을 조회한다. 임시저장(PENDING) 지원서는 제외되며, SUBMITTED/APPROVED/REJECTED 만 노출.
+            단일 프로젝트의 지원자 목록을 조회한다. 임시저장(DRAFT) 지원서는 제외되며, SUBMITTED/APPROVED/REJECTED 만 노출.
 
             정렬: matchingRound.phase ASC -> submittedAt ASC. 같은 파트끼리 묶기는 클라이언트가 처리한다.
             <p>
@@ -79,7 +81,7 @@ public class ProjectApplicationQueryController {
             <ul>
               <li>matchingRoundId -- 매칭 차수 단일 필터</li>
               <li>part -- 지원자(챌린저) 의 파트 필터</li>
-              <li>status -- 지원 상태 (SUBMITTED / APPROVED / REJECTED). 미지정 시 전체. PENDING 입력 시 도메인 예외(APPLICATION_PENDING_FILTER_NOT_ALLOWED) 발생.</li>
+              <li>status -- 지원 상태 (SUBMITTED / APPROVED / REJECTED). 미지정 시 전체. DRAFT 입력 시 도메인 예외(APPLICATION_DRAFT_FILTER_NOT_ALLOWED) 발생.</li>
             </ul>
             <p>
             TODO: 권한 검사 (@CheckAccess) 미적용. 운영 배포 전 PM/Sub-PO/지부장/학교장/Central Core 분기 추가 필요.
@@ -90,6 +92,7 @@ public class ProjectApplicationQueryController {
         @PathVariable Long projectId,
         @RequestParam(required = false) Long matchingRoundId,
         @RequestParam(required = false) ChallengerPart part,
+        @Parameter(description = "지원 상태 필터 (선택). 허용 값: SUBMITTED / APPROVED / REJECTED. DRAFT 입력 시 도메인 예외(APPLICATION_DRAFT_FILTER_NOT_ALLOWED).")
         @RequestParam(required = false) ProjectApplicationStatus status
     ) {
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
@@ -111,7 +114,7 @@ public class ProjectApplicationQueryController {
             노출 규칙:
             <ul>
               <li>SUBMITTED/APPROVED/REJECTED -- 4종 호출자(PO/Sub-PO/지부장/CC/지원자 본인) 모두 동일 응답</li>
-              <li>PENDING(임시저장) -- 지원자 본인만 조회 가능. 그 외 호출자에게는 404(PROJECT-0021) 로 위장하여 임시저장본의 존재 자체를 은닉</li>
+              <li>DRAFT(임시저장) -- 지원자 본인만 조회 가능. 그 외 호출자에게는 404(PROJECT-0021) 로 위장하여 임시저장본의 존재 자체를 은닉</li>
             </ul>
             <p>
             정합성: path 의 projectId 와 application 의 form.project.id 가 다르면 404(PROJECT-0021) 로 위장하여 다른 프로젝트의 지원서 존재 여부를 은닉한다.

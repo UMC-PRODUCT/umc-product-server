@@ -17,10 +17,10 @@ public enum ProjectErrorCode implements BaseCode {
     // ProjectApplication
     APPLICATION_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "PROJECT-0004", "요청하신 조작은 지원서가 제출된 상태에서만 가능합니다."),
     APPLICATION_SUBMIT_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "PROJECT-0005", "이미 지원서가 제출되었거나 평가가 완료된 상태입니다."),
-    APPLICATION_PENDING_NOT_EXPOSABLE(HttpStatus.INTERNAL_SERVER_ERROR, "PROJECT-0019",
+    APPLICATION_DRAFT_NOT_EXPOSABLE(HttpStatus.INTERNAL_SERVER_ERROR, "PROJECT-0019",
         "임시저장 상태의 지원서는 PM/운영진 응답에 매핑할 수 없습니다."),
-    APPLICATION_PENDING_FILTER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT-0020",
-        "임시저장(PENDING)은 PM/운영진 지원자 목록 조회 필터로 사용할 수 없습니다."),
+    APPLICATION_DRAFT_FILTER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT-0020",
+        "임시저장(DRAFT)은 PM/운영진 지원자 목록 조회 필터로 사용할 수 없습니다."),
     PROJECT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0021", "지원서를 찾을 수 없습니다."),
 
     // ProjectApplicationForm

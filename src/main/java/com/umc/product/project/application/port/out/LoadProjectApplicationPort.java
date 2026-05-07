@@ -71,7 +71,7 @@ public interface LoadProjectApplicationPort {
      * @param applicantMemberId 지원자 Member ID
      * @param gisuId            기수 ID (해당 기수 프로젝트만 조회)
      * @param matchingType      매칭 종류 (사용자 파트 기준 자동 결정)
-     * @param status            상태 필터. {@code null} 이면 PENDING 제외 전체.
+     * @param status            상태 필터. {@code null} 이면 DRAFT 제외 전체.
      */
     List<ProjectApplication> searchMyApplications(
         Long applicantMemberId,
@@ -83,7 +83,7 @@ public interface LoadProjectApplicationPort {
     /**
      * PM/운영진용 단일 프로젝트의 지원자 목록을 조회한다.
      * <p>
-     * appliedMatchingRound 를 fetch join 으로 함께 로드한다. 임시저장(PENDING)은 결과에서 제외된다.
+     * appliedMatchingRound 를 fetch join 으로 함께 로드한다. 임시저장(DRAFT)은 결과에서 제외된다.
      * <p>
      * 정렬: matchingRound.phase ASC -> submittedAt ASC.
      * <p>
@@ -91,7 +91,7 @@ public interface LoadProjectApplicationPort {
      *
      * @param projectId       대상 프로젝트 ID
      * @param matchingRoundId 매칭 차수 필터 (선택). null 이면 전체.
-     * @param status          상태 필터 (선택). null 이면 PENDING 제외 전체.
+     * @param status          상태 필터 (선택). null 이면 DRAFT 제외 전체.
      */
     List<ProjectApplication> searchProjectApplications(
         Long projectId,

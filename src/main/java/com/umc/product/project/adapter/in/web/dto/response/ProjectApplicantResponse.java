@@ -16,6 +16,8 @@ import lombok.Builder;
  * 지원시각(submittedAt).
  * <p>
  * formResponseId 는 보안상 노출하지 않는다 -- 단건 답안 조회는 별도 API.
+ *
+ * @param status 표시용 지원 상태. {@code SUBMITTED / APPROVED / REJECTED} 만 노출되며 임시저장(DRAFT)은 사전 필터링되어 본 응답에 포함되지 않는다.
  */
 @Builder
 public record ProjectApplicantResponse(

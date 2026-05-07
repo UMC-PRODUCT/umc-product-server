@@ -31,8 +31,8 @@ import lombok.Builder;
  * @param matchingRoundId     매칭 차수 ID
  * @param matchingRoundType   매칭 종류
  * @param matchingRoundPhase  매칭 차수
- * @param status              표시용 상태 (PENDING 포함)
- * @param submittedAt         지원시각 (PENDING 이면 null)
+ * @param status              표시용 상태 (DRAFT 포함)
+ * @param submittedAt         지원시각 (DRAFT 이면 null)
  * @param statusChangedAt     처리시각 (합/불 결정 전이면 null)
  * @param formStructure       마스킹된 폼 구조 (COMMON + applicantPart 의 PART 섹션만 포함)
  * @param formResponse        FormResponse 메타 (제출 시각 / 마지막 저장 시각 등)

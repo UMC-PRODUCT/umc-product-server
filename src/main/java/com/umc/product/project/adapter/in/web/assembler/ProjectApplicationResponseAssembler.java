@@ -78,7 +78,7 @@ public class ProjectApplicationResponseAssembler {
     /**
      * 지원서 단건 상세 조회. cross-domain 컨테이너에서 트리(섹션/질문/답변) 합성은 Response DTO 가 처리하고, Assembler 는 지원자(member) 닉네임/실명/학교만 합성한다.
      * <p>
-     * 도메인 비즈니스 규칙(PENDING 은 지원자 본인만 조회 가능)은 Service 단 ({@code getDetail}) 에서 처리되므로 Assembler 는 응답 조립에만 집중한다.
+     * 도메인 비즈니스 규칙(DRAFT 는 지원자 본인만 조회 가능)은 Service 단 ({@code getDetail}) 에서 처리되므로 Assembler 는 응답 조립에만 집중한다.
      * <p>
      * TODO: 4종 호출자(@CheckAccess) 자격 검증은 후속 권한 PR 에서 추가된다 -- 본 메서드는 호출 자격이 검증된 호출자에 한해 응답을 조립한다.
      */

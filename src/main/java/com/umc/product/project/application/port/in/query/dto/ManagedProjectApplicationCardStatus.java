@@ -7,7 +7,7 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 /**
  * PM/운영진용 지원자 목록 카드의 표시용 status enum.
  * <p>
- * 도메인 ENUM ({@link ProjectApplicationStatus}) 에서 임시저장(PENDING)을 의도적으로 제외한다 -- 본 응답에는 제출 완료된 지원서만 노출되어야 하기 때문. PENDING 까지 포함하는
+ * 도메인 ENUM ({@link ProjectApplicationStatus}) 에서 임시저장(DRAFT)을 의도적으로 제외한다 -- 본 응답에는 제출 완료된 지원서만 노출되어야 하기 때문. DRAFT 까지 포함하는
  * {@link ProjectApplicationViewStatus} 와는 시맨틱이 달라 별도 enum 으로 분리한다.
  * <p>
  * 라벨 매핑:
@@ -23,7 +23,7 @@ public enum ManagedProjectApplicationCardStatus {
     REJECTED;
 
     /**
-     * 도메인 ENUM 으로부터 표시용 status 를 도출한다. PENDING(임시저장)은 본 enum 에 매핑되지 않으므로 호출자(Repository/Service)가 사전 필터링하지 않은 것은 도메인
+     * 도메인 ENUM 으로부터 표시용 status 를 도출한다. DRAFT(임시저장)은 본 enum 에 매핑되지 않으므로 호출자(Repository/Service)가 사전 필터링하지 않은 것은 도메인
      * invariant 위반으로 간주하고 예외를 던진다.
      */
     public static ManagedProjectApplicationCardStatus from(ProjectApplicationStatus status) {
@@ -32,7 +32,7 @@ public enum ManagedProjectApplicationCardStatus {
             case APPROVED -> APPROVED;
             case REJECTED -> REJECTED;
             case DRAFT -> throw new ProjectDomainException(
-                ProjectErrorCode.APPLICATION_PENDING_NOT_EXPOSABLE);
+                ProjectErrorCode.APPLICATION_DRAFT_NOT_EXPOSABLE);
         };
     }
 }

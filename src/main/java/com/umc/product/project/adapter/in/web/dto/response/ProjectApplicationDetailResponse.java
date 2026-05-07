@@ -27,6 +27,10 @@ import lombok.Builder;
  * {@link ApplicationFormInfo} 가 이미 처리한 상태(COMMON + 지원자 파트의 PART 만)로 들어온다.
  * <p>
  * 답변이 없는 질문은 {@code answer} 필드가 {@code null}. 첨부 파일은 storage 메타에서 누락된 fileId 는 응답에서 제외된다.
+ *
+ * @param status      표시용 지원 상태. {@code DRAFT(임시저장) / SUBMITTED / APPROVED / REJECTED}.
+ *                    DRAFT 는 지원자 본인 호출 시에만 노출되며, 그 외 호출자에게는 not-found 로 위장되어 본 응답 자체가 반환되지 않는다.
+ * @param submittedAt DRAFT 상태이면 {@code null}.
  */
 @Builder
 public record ProjectApplicationDetailResponse(

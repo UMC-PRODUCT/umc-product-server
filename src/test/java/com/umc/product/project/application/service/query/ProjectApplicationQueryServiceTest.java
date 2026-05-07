@@ -300,7 +300,7 @@ class ProjectApplicationQueryServiceTest {
         // then
         assertThat(result).hasSize(1);
         assertThat(result.get(0).projectThumbnailImageUrl()).isNull();
-        assertThat(result.get(0).status()).isEqualTo(ProjectApplicationViewStatus.PENDING);
+        assertThat(result.get(0).status()).isEqualTo(ProjectApplicationViewStatus.DRAFT);
         verify(getFileUseCase, never()).getFileLinks(anyList());
     }
 
@@ -589,8 +589,8 @@ class ProjectApplicationQueryServiceTest {
     // ============================================================
 
     @Test
-    @DisplayName("searchByProject_PENDING_상태_필터를_사용하면_도메인_예외")
-    void searchByProject_PENDING_필터_금지() {
+    @DisplayName("searchByProject_DRAFT_상태_필터를_사용하면_도메인_예외")
+    void searchByProject_DRAFT_필터_금지() {
         // given & when & then -- Query record compact constructor 에서 차단된다
         assertThatThrownBy(() -> SearchProjectApplicationsQuery.builder()
             .projectId(1L)
@@ -891,8 +891,8 @@ class ProjectApplicationQueryServiceTest {
     }
 
     @Test
-    @DisplayName("getDetail_PENDING_상태인데_지원자_본인이_아니면_NOT_FOUND_위장")
-    void getDetail_PENDING_타인_차단() {
+    @DisplayName("getDetail_DRAFT_상태인데_지원자_본인이_아니면_NOT_FOUND_위장")
+    void getDetail_DRAFT_타인_차단() {
         // given - 지원자 본인은 200L, 호출자는 300L (다른 챌린저/운영진)
         Project project = createProject(1L, "프로젝트A", null, 99L);
         ProjectMatchingRound round = createMatchingRound(
@@ -912,8 +912,8 @@ class ProjectApplicationQueryServiceTest {
     }
 
     @Test
-    @DisplayName("getDetail_PENDING_상태이지만_지원자_본인_호출이면_정상_조회")
-    void getDetail_PENDING_본인_허용() {
+    @DisplayName("getDetail_DRAFT_상태이지만_지원자_본인_호출이면_정상_조회")
+    void getDetail_DRAFT_본인_허용() {
         // given - applicantMemberId 와 requesterMemberId 가 동일
         Project project = createProject(1L, "프로젝트A", null, 99L);
         ProjectMatchingRound round = createMatchingRound(
@@ -942,7 +942,7 @@ class ProjectApplicationQueryServiceTest {
 
         // then
         assertThat(result.applicationId()).isEqualTo(55L);
-        assertThat(result.status()).isEqualTo(ProjectApplicationViewStatus.PENDING);
+        assertThat(result.status()).isEqualTo(ProjectApplicationViewStatus.DRAFT);
     }
 
     @Test

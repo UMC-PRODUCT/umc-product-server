@@ -107,7 +107,7 @@ public class ProjectApplicationQueryRepository {
     /**
      * PM/운영진용 단일 프로젝트의 지원자 목록을 조회한다.
      * <p>
-     * applicationForm 을 통해 projectId 로 필터하고, appliedMatchingRound 를 fetch join 한다. 임시저장(PENDING)은 항상 제외된다.
+     * applicationForm 을 통해 projectId 로 필터하고, appliedMatchingRound 를 fetch join 한다. 임시저장(DRAFT)은 항상 제외된다.
      * <p>
      * 정렬: matchingRound.phase ASC -> projectApplication.submittedAt ASC.
      */
@@ -152,10 +152,10 @@ public class ProjectApplicationQueryRepository {
     /**
      * PM/운영진 영역 status 필터.
      * <ul>
-     *   <li>null -> SUBMITTED/APPROVED/REJECTED 전체 (PENDING 제외)</li>
+     *   <li>null -> SUBMITTED/APPROVED/REJECTED 전체 (DRAFT 제외)</li>
      *   <li>명시 -> 해당 상태 단일</li>
      * </ul>
-     * Query 단에서 PENDING 은 사전 차단되므로 (도메인 invariant), 여기서는 그대로 eq 만 적용한다.
+     * Query 단에서 DRAFT 는 사전 차단되므로 (도메인 invariant), 여기서는 그대로 eq 만 적용한다.
      */
     private BooleanExpression managedStatusCond(ProjectApplicationStatus status) {
         return status == null
@@ -167,7 +167,7 @@ public class ProjectApplicationQueryRepository {
     }
 
     /**
-     * status null -> PENDING(임시저장) 제외, 명시 시 정확히 그 상태.
+     * status null -> DRAFT(임시저장) 제외, 명시 시 정확히 그 상태.
      */
     private BooleanExpression statusCond(ProjectApplicationStatus status) {
         return status == null
