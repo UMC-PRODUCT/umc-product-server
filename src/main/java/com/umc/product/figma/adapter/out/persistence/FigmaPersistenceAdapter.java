@@ -4,6 +4,7 @@ import com.umc.product.figma.application.port.out.LoadFigmaIntegrationPort;
 import com.umc.product.figma.application.port.out.LoadFigmaPartRoutePort;
 import com.umc.product.figma.application.port.out.LoadFigmaWatchedFilePort;
 import com.umc.product.figma.application.port.out.SaveFigmaIntegrationPort;
+import com.umc.product.figma.application.port.out.SaveFigmaPartRoutePort;
 import com.umc.product.figma.application.port.out.SaveFigmaWatchedFilePort;
 import com.umc.product.figma.domain.FigmaIntegration;
 import com.umc.product.figma.domain.FigmaPartRoute;
@@ -21,7 +22,8 @@ public class FigmaPersistenceAdapter implements
     SaveFigmaIntegrationPort,
     LoadFigmaWatchedFilePort,
     SaveFigmaWatchedFilePort,
-    LoadFigmaPartRoutePort {
+    LoadFigmaPartRoutePort,
+    SaveFigmaPartRoutePort {
 
     private final FigmaIntegrationJpaRepository figmaIntegrationJpaRepository;
     private final FigmaWatchedFileJpaRepository figmaWatchedFileJpaRepository;
@@ -63,6 +65,16 @@ public class FigmaPersistenceAdapter implements
     }
 
     @Override
+    public Optional<FigmaPartRoute> findRouteById(Long id) {
+        return figmaPartRouteJpaRepository.findById(id);
+    }
+
+    @Override
+    public boolean existsByFileKeyAndPageName(String fileKey, String pageName) {
+        return figmaPartRouteJpaRepository.existsByFileKeyAndPageName(fileKey, pageName);
+    }
+
+    @Override
     public List<FigmaPartRoute> listByFileKey(String fileKey) {
         return figmaPartRouteJpaRepository.findAllByFileKey(fileKey);
     }
@@ -70,5 +82,15 @@ public class FigmaPersistenceAdapter implements
     @Override
     public Optional<FigmaPartRoute> findFallbackByFileKey(String fileKey) {
         return figmaPartRouteJpaRepository.findFirstByFileKeyAndFallbackTrue(fileKey);
+    }
+
+    @Override
+    public FigmaPartRoute save(FigmaPartRoute partRoute) {
+        return figmaPartRouteJpaRepository.save(partRoute);
+    }
+
+    @Override
+    public void delete(FigmaPartRoute partRoute) {
+        figmaPartRouteJpaRepository.delete(partRoute);
     }
 }

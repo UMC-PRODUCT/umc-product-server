@@ -6,6 +6,10 @@ import java.util.Optional;
 
 public interface LoadFigmaPartRoutePort {
 
+    Optional<FigmaPartRoute> findRouteById(Long id);
+
+    boolean existsByFileKeyAndPageName(String fileKey, String pageName);
+
     /**
      * 해당 파일의 전체 매핑 (페이지명 → 라우트, fallback 포함).
      */
