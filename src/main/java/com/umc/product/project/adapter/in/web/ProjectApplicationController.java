@@ -10,12 +10,13 @@ import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicationSta
 import com.umc.product.project.application.port.in.command.CreateDraftProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectApplicationDraftUseCase;
-import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectApplicationCommand;
+import com.umc.product.project.adapter.in.web.dto.request.CreateProjectApplicationRequest;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectApplicationCommand;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -46,14 +47,12 @@ public class ProjectApplicationController {
     )
     public ProjectApplicationStatusResponse createDraft(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @PathVariable Long projectId
+        @PathVariable Long projectId,
+        @Valid @RequestBody CreateProjectApplicationRequest request
     ) {
         return ProjectApplicationStatusResponse.from(
             createDraftProjectApplicationUseCase.create(
-                CreateDraftProjectApplicationCommand.builder()
-                    .projectId(projectId)
-                    .applicantMemberId(memberPrincipal.getMemberId())
-                    .build()
+                request.toCommand(projectId, memberPrincipal.getMemberId())
             )
         );
     }

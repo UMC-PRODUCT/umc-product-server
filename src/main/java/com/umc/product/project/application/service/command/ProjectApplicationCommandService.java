@@ -74,17 +74,19 @@ public class ProjectApplicationCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM);
         }
 
-        // 4. 현재 open 매칭 차수 조회
-        MatchingType matchingType = challenger.part() == ChallengerPart.DESIGN
+        // 4. FE가 지정한 매칭 차수 조회 + 검증
+        ProjectMatchingRound round = loadProjectMatchingRoundPort.getById(command.matchingRoundId());
+
+        if (!round.isOpenAt(Instant.now())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_ROUND_NOT_OPEN);
+        }
+
+        MatchingType expectedType = challenger.part() == ChallengerPart.DESIGN
             ? MatchingType.PLAN_DESIGN
             : MatchingType.PLAN_DEVELOPER;
-        ProjectMatchingRound round = loadProjectMatchingRoundPort
-            .listOpenAt(project.getChapterId(), Instant.now())
-            .stream()
-            .filter(r -> r.getType() == matchingType)
-            .findFirst()
-            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_NOT_FOUND,
-                "현재 지원 가능한 매칭 차수가 없습니다."));
+        if (round.getType() != expectedType) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_ROUND_TYPE_MISMATCH);
+        }
 
         // 5. 멱등 처리 - 현재 오픈된 차수 기준으로 기존 DRAFT 조회
         return loadProjectApplicationPort
@@ -138,7 +140,7 @@ public class ProjectApplicationCommandService implements
         // 차수 마감 여부 체크 - 제출 시점에 차수가 닫혀있으면 불가
         if (application.getAppliedMatchingRound() != null
             && !application.getAppliedMatchingRound().isOpenAt(Instant.now())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_ROUND_CLOSED);
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_ROUND_NOT_OPEN);
         }
 
         // 동일 차수 중복 제출 체크
