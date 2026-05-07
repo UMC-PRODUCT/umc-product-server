@@ -3,8 +3,6 @@ package com.umc.product.figma.application.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyCollection;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -22,7 +20,6 @@ import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
 import com.umc.product.llm.domain.exception.LlmDomainException;
 import com.umc.product.llm.domain.exception.LlmErrorCode;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -291,11 +288,10 @@ class FigmaCommentDomainClassifierTest {
         ArgumentCaptor<ChatCompleteCommand> captor = ArgumentCaptor.forClass(ChatCompleteCommand.class);
         verify(chatCompleteUseCase, times(1)).complete(captor.capture());
         ChatCompleteCommand sent = captor.getValue();
+        // figma 도메인이 system prompt 안에 후보 제약과 후보 목록을 모두 담아 보낸다.
+        // LLM 도메인 추상은 분류 모드 메타데이터를 알지 않는다.
         assertThat(sent.systemPrompt()).contains("후보 도메인 키").contains("정확히 하나만");
         assertThat(sent.userPrompt()).contains("auth, challenger, figma");
-        // 분류 의미는 figma 측이 prompt 안에 담는다. LLM 도메인 추상에는 분류 메타데이터를 흘리지 않는다.
-        assertThat(sent.candidates()).isEmpty();
-        assertThat(sent.isClassification()).isFalse();
     }
 
     @Test

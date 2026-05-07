@@ -5,7 +5,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
-import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.metadata.ChatResponseMetadata;
@@ -14,28 +13,6 @@ import org.springframework.ai.chat.model.ChatResponse;
 
 @DisplayName("ChatPromptHelper")
 class ChatPromptHelperTest {
-
-    @Test
-    @DisplayName("분류 호출이면 system prompt 끝에 후보 제약을 추가한다")
-    void 분류_호출_후보_제약_추가() {
-        ChatCompleteCommand command = ChatCompleteCommand.classify("기본", "본문", List.of("a", "b", "c"));
-
-        String prompt = ChatPromptHelper.buildSystemPrompt(command);
-
-        assertThat(prompt).contains("기본");
-        assertThat(prompt).contains("a, b, c");
-        assertThat(prompt).contains("정확히 하나만");
-    }
-
-    @Test
-    @DisplayName("자유 응답 호출이면 system prompt 를 변형 없이 그대로 반환한다")
-    void 자유_응답_호출_원본_유지() {
-        ChatCompleteCommand command = ChatCompleteCommand.freeForm("기본", "본문");
-
-        String prompt = ChatPromptHelper.buildSystemPrompt(command);
-
-        assertThat(prompt).isEqualTo("기본");
-    }
 
     @Test
     @DisplayName("응답 정규화는 앞뒤 공백을 제거하고 null 은 빈 문자열로 처리한다")
@@ -69,5 +46,17 @@ class ChatPromptHelperTest {
         ChatResponse response = mock(ChatResponse.class);
         when(response.getMetadata()).thenReturn(null);
         assertThat(ChatPromptHelper.extractPromptTokens(response)).isNull();
+    }
+
+    @Test
+    @DisplayName("max-tokens override 가 있으면 그 값을, 없으면 properties 기본값을 반환한다")
+    void max_tokens_해석() {
+        LlmProperties properties = new LlmProperties("mock", "model", 0.0, 32, null, null, null);
+
+        ChatCompleteCommand withOverride = ChatCompleteCommand.freeFormWithMaxTokens("s", "u", 256);
+        ChatCompleteCommand withoutOverride = ChatCompleteCommand.freeForm("s", "u");
+
+        assertThat(ChatPromptHelper.resolveMaxOutputTokens(withOverride, properties)).isEqualTo(256);
+        assertThat(ChatPromptHelper.resolveMaxOutputTokens(withoutOverride, properties)).isEqualTo(32);
     }
 }

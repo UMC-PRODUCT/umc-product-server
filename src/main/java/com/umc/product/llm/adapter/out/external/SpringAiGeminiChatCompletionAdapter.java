@@ -45,7 +45,7 @@ public class SpringAiGeminiChatCompletionAdapter implements ChatCompletionPort {
             .maxOutputTokens(ChatPromptHelper.resolveMaxOutputTokens(command, properties))
             .build();
 
-        String systemPrompt = ChatPromptHelper.buildSystemPrompt(command);
+        String systemPrompt = command.systemPrompt() == null ? "" : command.systemPrompt();
         String userPrompt = command.userPrompt() == null ? "" : command.userPrompt();
 
         try {
@@ -64,8 +64,8 @@ public class SpringAiGeminiChatCompletionAdapter implements ChatCompletionPort {
             String normalized = ChatPromptHelper.normalizeResponse(content);
             Long promptTokens = ChatPromptHelper.extractPromptTokens(response);
             Long completionTokens = ChatPromptHelper.extractCompletionTokens(response);
-            log.debug("Gemini 호출 성공: model={}, classification={}, length={}, promptTokens={}, completionTokens={}",
-                properties.model(), command.isClassification(), normalized.length(), promptTokens, completionTokens);
+            log.debug("Gemini 호출 성공: model={}, length={}, promptTokens={}, completionTokens={}",
+                properties.model(), normalized.length(), promptTokens, completionTokens);
             return ChatCompletionResult.of(normalized, PROVIDER_NAME, promptTokens, completionTokens);
         } catch (Exception e) {
             log.warn("Gemini 호출 실패: model={}, error={}", properties.model(), e.toString());

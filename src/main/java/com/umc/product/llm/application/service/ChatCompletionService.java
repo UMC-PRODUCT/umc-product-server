@@ -83,8 +83,7 @@ public class ChatCompletionService implements ChatCompleteUseCase {
         try {
             ChatCompletionResult result = chatCompletionPort.complete(command);
             Duration latency = Duration.between(start, clock.instant());
-            String status = resolveSuccessStatus(command, result);
-            metrics.recordCall(result.provider(), status, latency);
+            metrics.recordCall(result.provider(), LlmMetrics.STATUS_SUCCESS, latency);
             metrics.recordTokens(result.provider(), result.promptTokens(), result.completionTokens());
             callGuard.recordSuccess();
             return result;
@@ -98,16 +97,5 @@ public class ChatCompletionService implements ChatCompleteUseCase {
             log.warn("LLM 호출 중 예기치 못한 예외: {}", e.toString());
             throw new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED, e.getMessage());
         }
-    }
-
-    private String resolveSuccessStatus(ChatCompleteCommand command, ChatCompletionResult result) {
-        if (!command.isClassification()) {
-            return LlmMetrics.STATUS_SUCCESS;
-        }
-        String text = result.text();
-        if (text == null || !command.candidates().contains(text)) {
-            return LlmMetrics.STATUS_OUT_OF_CANDIDATES;
-        }
-        return LlmMetrics.STATUS_SUCCESS;
     }
 }

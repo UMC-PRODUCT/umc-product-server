@@ -20,7 +20,6 @@ import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.time.Clock;
 import java.time.Instant;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -86,20 +85,20 @@ class ChatCompletionServiceTest {
             ChatCompletionResult.of("a", PROVIDER, 10L, 1L)
         );
 
-        service.complete(ChatCompleteCommand.classify("s", "u", List.of("a")));
+        service.complete(ChatCompleteCommand.freeForm("s", "u"));
 
         verify(rateLimiter, times(1)).acquire();
     }
 
     @Test
-    @DisplayName("정상 응답이고 분류 후보 안에 있으면 success 메트릭과 토큰 카운터를 증가시킨다")
-    void 분류_정상_응답() {
+    @DisplayName("정상 응답이면 success 메트릭과 토큰 카운터를 증가시킨다 (응답 의미 검증은 호출자 책임)")
+    void 정상_응답() {
         when(guard.allow()).thenReturn(true);
         when(port.complete(any())).thenReturn(
             ChatCompletionResult.of("a", PROVIDER, 100L, 5L)
         );
 
-        ChatCompleteCommand command = ChatCompleteCommand.classify("s", "u", List.of("a", "b"));
+        ChatCompleteCommand command = ChatCompleteCommand.freeForm("s", "u");
         ChatCompletionResult result = service.complete(command);
 
         assertThat(result.text()).isEqualTo("a");
@@ -113,26 +112,6 @@ class ChatCompletionServiceTest {
             .tag("provider", PROVIDER).tag("type", "in").counter().count()).isEqualTo(100.0);
         assertThat(registry.find("llm.chat.completion.tokens.total")
             .tag("provider", PROVIDER).tag("type", "out").counter().count()).isEqualTo(5.0);
-        verify(guard, times(1)).recordSuccess();
-    }
-
-    @Test
-    @DisplayName("분류 응답이 후보 외 값이면 out-of-candidates 메트릭으로 기록한다")
-    void 분류_후보_외_응답() {
-        when(guard.allow()).thenReturn(true);
-        when(port.complete(any())).thenReturn(
-            ChatCompletionResult.of("zzz", PROVIDER, 50L, 3L)
-        );
-
-        ChatCompleteCommand command = ChatCompleteCommand.classify("s", "u", List.of("a", "b"));
-        service.complete(command);
-
-        Counter counter = registry.find("llm.chat.completion.total")
-            .tag("provider", PROVIDER)
-            .tag("status", LlmMetrics.STATUS_OUT_OF_CANDIDATES)
-            .counter();
-        assertThat(counter).isNotNull();
-        assertThat(counter.count()).isEqualTo(1.0);
         verify(guard, times(1)).recordSuccess();
     }
 

@@ -21,7 +21,6 @@ import org.springframework.stereotype.Component;
 public class LlmMetrics {
 
     public static final String STATUS_SUCCESS = "success";
-    public static final String STATUS_OUT_OF_CANDIDATES = "out-of-candidates";
     public static final String STATUS_FAILED = "failed";
     public static final String STATUS_CIRCUIT_OPEN = "circuit-open";
 

@@ -48,7 +48,7 @@ public class SpringAiGoogleGenAiChatCompletionAdapter implements ChatCompletionP
             .maxOutputTokens(ChatPromptHelper.resolveMaxOutputTokens(command, properties))
             .build();
 
-        String systemPrompt = ChatPromptHelper.buildSystemPrompt(command);
+        String systemPrompt = command.systemPrompt() == null ? "" : command.systemPrompt();
         String userPrompt = command.userPrompt() == null ? "" : command.userPrompt();
 
         try {
@@ -68,8 +68,8 @@ public class SpringAiGoogleGenAiChatCompletionAdapter implements ChatCompletionP
             Long promptTokens = ChatPromptHelper.extractPromptTokens(response);
             Long completionTokens = ChatPromptHelper.extractCompletionTokens(response);
             log.debug(
-                "Google GenAI 호출 성공: model={}, classification={}, length={}, promptTokens={}, completionTokens={}",
-                properties.model(), command.isClassification(), normalized.length(), promptTokens, completionTokens);
+                "Google GenAI 호출 성공: model={}, length={}, promptTokens={}, completionTokens={}",
+                properties.model(), normalized.length(), promptTokens, completionTokens);
             return ChatCompletionResult.of(normalized, PROVIDER_NAME, promptTokens, completionTokens);
         } catch (Exception e) {
             log.warn("Google GenAI 호출 실패: model={}, error={}", properties.model(), e.toString());

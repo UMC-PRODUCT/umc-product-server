@@ -3,8 +3,6 @@ package com.umc.product.llm.adapter.out.external;
 import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
 import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
 import com.umc.product.llm.application.port.out.ChatCompletionPort;
-import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
@@ -12,11 +10,10 @@ import org.springframework.stereotype.Component;
 /**
  * 실제 LLM 호출을 대체하는 mock 어댑터.
  * <p>
- * 분류 입력 (candidates 가 비어 있지 않은 경우) → 후보 중 하나를 무작위 선택해 반환한다.
- * 자유 응답 입력 → userPrompt 의 앞 일부를 그대로 echo 한다.
- * <p>
- * 추후 OpenAI / Gemini / Spring AI 어댑터가 추가되면 application property 의
- * {@code app.llm.provider} 값을 바꾸는 것만으로 활성 어댑터가 교체된다.
+ * userPrompt 의 앞 일부를 그대로 echo 한다. 어떤 사용처 의미도 알지 않으므로 분류 같은 호출에서는
+ * 결과가 후보에 매칭되지 않아 호출자(예: figma classifier) 가 fallback 채널로 흡수한다.
+ * 운영자는 mock 모드로 figma flow 의 fallback path 만 검증하고, 분류 정확도는 실 provider 활성화
+ * 후 검증한다.
  */
 @Slf4j
 @Component
@@ -24,18 +21,15 @@ import org.springframework.stereotype.Component;
 public class MockChatCompletionAdapter implements ChatCompletionPort {
 
     private static final String PROVIDER_NAME = "mock";
+    private static final int ECHO_PREVIEW_LIMIT = 80;
 
     @Override
     public ChatCompletionResult complete(ChatCompleteCommand command) {
-        if (command.isClassification()) {
-            List<String> candidates = command.candidates();
-            String picked = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
-            log.debug("Mock LLM classification: candidates={}, picked={}", candidates, picked);
-            return ChatCompletionResult.of(picked, PROVIDER_NAME);
-        }
-
         String prompt = command.userPrompt() == null ? "" : command.userPrompt();
-        String echoed = prompt.length() <= 80 ? prompt : prompt.substring(0, 80) + "...";
+        String echoed = prompt.length() <= ECHO_PREVIEW_LIMIT
+            ? prompt
+            : prompt.substring(0, ECHO_PREVIEW_LIMIT) + "...";
+        log.debug("Mock LLM echo: length={}", prompt.length());
         return ChatCompletionResult.of("[mock] " + echoed, PROVIDER_NAME);
     }
 
