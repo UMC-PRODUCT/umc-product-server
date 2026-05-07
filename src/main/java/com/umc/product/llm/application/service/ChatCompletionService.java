@@ -6,6 +6,7 @@ import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
 import com.umc.product.llm.application.port.out.ChatCompletionPort;
 import com.umc.product.llm.domain.exception.LlmDomainException;
 import com.umc.product.llm.domain.exception.LlmErrorCode;
+import jakarta.annotation.PostConstruct;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -50,6 +51,17 @@ public class ChatCompletionService implements ChatCompleteUseCase {
         this.callGuard = callGuard;
         this.metrics = metrics;
         this.clock = clock;
+    }
+
+    /**
+     * 부팅 시 실제로 활성화된 어댑터를 INFO 로 한 줄 출력해 운영자가 LLM_PROVIDER 설정과
+     * 실제 활성 provider 의 일치 여부를 즉시 확인할 수 있게 한다.
+     */
+    @PostConstruct
+    void logActiveProvider() {
+        log.info("LLM 활성 provider={} (어댑터={})",
+            chatCompletionPort.providerName(),
+            chatCompletionPort.getClass().getSimpleName());
     }
 
     @Override
