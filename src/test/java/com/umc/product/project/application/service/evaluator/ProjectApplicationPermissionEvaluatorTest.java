@@ -10,8 +10,15 @@ import com.umc.product.authorization.domain.RoleAttribute;
 import com.umc.product.authorization.domain.SubjectAttributes;
 import com.umc.product.authorization.domain.SubjectAttributes.GisuChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.ProjectApplicationForm;
+import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import java.util.List;
 import java.util.Optional;
@@ -30,9 +37,14 @@ class ProjectApplicationPermissionEvaluatorTest {
     private static final Long PROJECT_ID = 100L;
     private static final Long PO_MEMBER_ID = 10L;
     private static final Long APPLICANT_MEMBER_ID = 20L;
+    private static final Long APPLICATION_ID = 500L;
 
     @Mock
     LoadProjectPort loadProjectPort;
+    @Mock
+    LoadProjectApplicationPort loadProjectApplicationPort;
+    @Mock
+    LoadProjectMemberPort loadProjectMemberPort;
 
     @InjectMocks
     ProjectApplicationPermissionEvaluator sut;
@@ -82,6 +94,244 @@ class ProjectApplicationPermissionEvaluatorTest {
         assertThat(sut.evaluate(subject, writePermission())).isFalse();
     }
 
+    // --- READ (resourceId 없으면 통과 / 있으면 단건 검증) ---
+
+    @Test
+    void READ는_resourceId_없으면_무조건_허용() {
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+        ResourcePermission permission = ResourcePermission.ofType(ResourceType.PROJECT_APPLICATION,
+            PermissionType.READ);
+
+        assertThat(sut.evaluate(subject, permission)).isTrue();
+    }
+
+    @Test
+    void READ는_DRAFT_지원서를_본인_허용() {
+        givenApplication(ProjectApplicationStatus.DRAFT);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, readPermission())).isTrue();
+    }
+
+    @Test
+    void READ는_DRAFT_지원서를_PO여도_거부() {
+        givenApplication(ProjectApplicationStatus.DRAFT);
+        SubjectAttributes subject = subjectWith(PO_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, readPermission())).isFalse();
+    }
+
+    @Test
+    void READ는_SUBMITTED_지원서를_본인_허용() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, readPermission())).isTrue();
+    }
+
+    @Test
+    void READ는_SUBMITTED_지원서를_부모_PO_허용() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        SubjectAttributes subject = subjectWith(PO_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, readPermission())).isTrue();
+    }
+
+    @Test
+    void READ는_SUBMITTED_지원서를_보조PM_허용() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        Long subPmId = 30L;
+        given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, subPmId)).willReturn(true);
+        SubjectAttributes subject = subjectWith(subPmId, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, readPermission())).isTrue();
+    }
+
+    @Test
+    void READ는_SUBMITTED_지원서를_외부인_거부() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        Long outsiderId = 30L;
+        given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, outsiderId)).willReturn(false);
+        SubjectAttributes subject = subjectWith(outsiderId, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, readPermission())).isFalse();
+    }
+
+    @Test
+    void READ는_SUBMITTED_지원서를_해당_기수_총괄단_허용() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        Long outsiderId = 30L;
+        given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, outsiderId)).willReturn(false);
+        SubjectAttributes subject = subjectWith(outsiderId, List.of(),
+            List.of(centralCoreRoleInGisu(PROJECT_GISU_ID)));
+
+        assertThat(sut.evaluate(subject, readPermission())).isTrue();
+    }
+
+    @Test
+    void READ는_SUBMITTED_지원서를_다른_기수_총괄단_거부() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        Long outsiderId = 30L;
+        given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, outsiderId)).willReturn(false);
+        SubjectAttributes subject = subjectWith(outsiderId, List.of(),
+            List.of(centralCoreRoleInGisu(99L)));
+
+        assertThat(sut.evaluate(subject, readPermission())).isFalse();
+    }
+
+    @Test
+    void READ는_SUBMITTED_지원서를_SUPER_ADMIN_허용_기수_무관() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        Long outsiderId = 30L;
+        given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, outsiderId)).willReturn(false);
+        SubjectAttributes subject = subjectWith(outsiderId, List.of(),
+            List.of(superAdminRoleInGisu(99L)));
+
+        assertThat(sut.evaluate(subject, readPermission())).isTrue();
+    }
+
+    @Test
+    void READ는_SUBMITTED_지원서를_해당_기수_해당_지부_지부장_허용() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        Long outsiderId = 30L;
+        given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, outsiderId)).willReturn(false);
+        SubjectAttributes subject = subjectWith(outsiderId, List.of(),
+            List.of(chapterPresidentRole(PROJECT_CHAPTER_ID, PROJECT_GISU_ID)));
+
+        assertThat(sut.evaluate(subject, readPermission())).isTrue();
+    }
+
+    @Test
+    void READ는_SUBMITTED_지원서를_다른_지부_지부장_거부() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        Long outsiderId = 30L;
+        given(loadProjectMemberPort.isActivePlanMember(PROJECT_ID, outsiderId)).willReturn(false);
+        SubjectAttributes subject = subjectWith(outsiderId, List.of(),
+            List.of(chapterPresidentRole(2L, PROJECT_GISU_ID)));
+
+        assertThat(sut.evaluate(subject, readPermission())).isFalse();
+    }
+
+    @Test
+    void READ는_APPROVED_지원서를_본인_허용() {
+        givenApplication(ProjectApplicationStatus.APPROVED);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, readPermission())).isTrue();
+    }
+
+    // --- EDIT ---
+
+    @Test
+    void EDIT는_DRAFT_지원서를_본인_허용() {
+        givenApplication(ProjectApplicationStatus.DRAFT);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, editPermission())).isTrue();
+    }
+
+    @Test
+    void EDIT는_SUBMITTED_지원서를_본인이라도_거부() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, editPermission())).isFalse();
+    }
+
+    @Test
+    void EDIT는_DRAFT_지원서를_타인_거부() {
+        givenApplication(ProjectApplicationStatus.DRAFT);
+        SubjectAttributes subject = subjectWith(PO_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, editPermission())).isFalse();
+    }
+
+    // --- DELETE ---
+
+    @Test
+    void DELETE는_본인_DRAFT_허용() {
+        givenApplication(ProjectApplicationStatus.DRAFT);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, deletePermission())).isTrue();
+    }
+
+    @Test
+    void DELETE는_본인_SUBMITTED_허용() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, deletePermission())).isTrue();
+    }
+
+    @Test
+    void DELETE는_본인_APPROVED_거부() {
+        givenApplication(ProjectApplicationStatus.APPROVED);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, deletePermission())).isFalse();
+    }
+
+    @Test
+    void DELETE는_본인_REJECTED_거부() {
+        givenApplication(ProjectApplicationStatus.REJECTED);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, deletePermission())).isFalse();
+    }
+
+    @Test
+    void DELETE는_타인_거부() {
+        givenApplication(ProjectApplicationStatus.DRAFT);
+        SubjectAttributes subject = subjectWith(PO_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, deletePermission())).isFalse();
+    }
+
+    // --- APPROVE ---
+
+    @Test
+    void APPROVE는_부모_PO_SUBMITTED_허용() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        SubjectAttributes subject = subjectWith(PO_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, approvePermission())).isTrue();
+    }
+
+    @Test
+    void APPROVE는_부모_PO_DRAFT_거부() {
+        givenApplication(ProjectApplicationStatus.DRAFT);
+        SubjectAttributes subject = subjectWith(PO_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, approvePermission())).isFalse();
+    }
+
+    @Test
+    void APPROVE는_부모_PO_APPROVED_거부_재승인_차단() {
+        givenApplication(ProjectApplicationStatus.APPROVED);
+        SubjectAttributes subject = subjectWith(PO_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, approvePermission())).isFalse();
+    }
+
+    @Test
+    void APPROVE는_보조PM_거부_PO만_가능() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        Long subPmId = 30L;
+        SubjectAttributes subject = subjectWith(subPmId, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, approvePermission())).isFalse();
+    }
+
+    @Test
+    void APPROVE는_총괄단도_거부_자동매칭은_권한_외() {
+        givenApplication(ProjectApplicationStatus.SUBMITTED);
+        SubjectAttributes subject = subjectWith(30L, List.of(),
+            List.of(centralCoreRoleInGisu(PROJECT_GISU_ID)));
+
+        assertThat(sut.evaluate(subject, approvePermission())).isFalse();
+    }
+
     // --- helpers ---
 
     private void givenProject(ProjectStatus status) {
@@ -89,8 +339,31 @@ class ProjectApplicationPermissionEvaluatorTest {
             .willReturn(Optional.of(project(PROJECT_ID, PO_MEMBER_ID, status)));
     }
 
+    private void givenApplication(ProjectApplicationStatus status) {
+        Project project = project(PROJECT_ID, PO_MEMBER_ID, ProjectStatus.IN_PROGRESS);
+        ProjectApplicationForm form = applicationForm(project);
+        ProjectApplication application = application(APPLICATION_ID, APPLICANT_MEMBER_ID, status, form);
+        given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+    }
+
     private ResourcePermission writePermission() {
         return ResourcePermission.of(ResourceType.PROJECT_APPLICATION, PROJECT_ID, PermissionType.WRITE);
+    }
+
+    private ResourcePermission readPermission() {
+        return ResourcePermission.of(ResourceType.PROJECT_APPLICATION, APPLICATION_ID, PermissionType.READ);
+    }
+
+    private ResourcePermission editPermission() {
+        return ResourcePermission.of(ResourceType.PROJECT_APPLICATION, APPLICATION_ID, PermissionType.EDIT);
+    }
+
+    private ResourcePermission deletePermission() {
+        return ResourcePermission.of(ResourceType.PROJECT_APPLICATION, APPLICATION_ID, PermissionType.DELETE);
+    }
+
+    private ResourcePermission approvePermission() {
+        return ResourcePermission.of(ResourceType.PROJECT_APPLICATION, APPLICATION_ID, PermissionType.APPROVE);
     }
 
     private SubjectAttributes subjectWith(Long memberId,
@@ -114,6 +387,30 @@ class ProjectApplicationPermissionEvaluatorTest {
             .build();
     }
 
+    private RoleAttribute centralCoreRoleInGisu(Long gisuId) {
+        return new RoleAttribute(
+            ChallengerRoleType.CENTRAL_PRESIDENT,
+            OrganizationType.CENTRAL,
+            null, null, gisuId
+        );
+    }
+
+    private RoleAttribute superAdminRoleInGisu(Long gisuId) {
+        return new RoleAttribute(
+            ChallengerRoleType.SUPER_ADMIN,
+            OrganizationType.CENTRAL,
+            null, null, gisuId
+        );
+    }
+
+    private RoleAttribute chapterPresidentRole(Long chapterId, Long gisuId) {
+        return new RoleAttribute(
+            ChallengerRoleType.CHAPTER_PRESIDENT,
+            OrganizationType.CHAPTER,
+            chapterId, null, gisuId
+        );
+    }
+
     private Project project(Long id, Long ownerMemberId, ProjectStatus status) {
         try {
             var constructor = Project.class.getDeclaredConstructor();
@@ -126,6 +423,37 @@ class ProjectApplicationPermissionEvaluatorTest {
             ReflectionTestUtils.setField(project, "gisuId", PROJECT_GISU_ID);
             ReflectionTestUtils.setField(project, "chapterId", PROJECT_CHAPTER_ID);
             return project;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private ProjectApplicationForm applicationForm(Project project) {
+        try {
+            var constructor = ProjectApplicationForm.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            ProjectApplicationForm form = constructor.newInstance();
+            ReflectionTestUtils.setField(form, "id", 200L);
+            ReflectionTestUtils.setField(form, "project", project);
+            ReflectionTestUtils.setField(form, "formId", 300L);
+            return form;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private ProjectApplication application(Long id, Long applicantMemberId,
+                                           ProjectApplicationStatus status,
+                                           ProjectApplicationForm form) {
+        try {
+            var constructor = ProjectApplication.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            ProjectApplication application = constructor.newInstance();
+            ReflectionTestUtils.setField(application, "id", id);
+            ReflectionTestUtils.setField(application, "applicantMemberId", applicantMemberId);
+            ReflectionTestUtils.setField(application, "status", status);
+            ReflectionTestUtils.setField(application, "applicationForm", form);
+            return application;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

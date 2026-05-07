@@ -58,4 +58,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     public boolean existsByGisuAndMember(Long gisuId, Long memberId) {
         return repository.existsByProject_GisuIdAndMemberIdAndStatus(gisuId, memberId, ProjectMemberStatus.ACTIVE);
     }
+
+    @Override
+    public boolean isActivePlanMember(Long projectId, Long memberId) {
+        return repository.existsByProjectIdAndMemberIdAndPartAndStatus(
+            projectId, memberId, ChallengerPart.PLAN, ProjectMemberStatus.ACTIVE
+        );
+    }
 }
