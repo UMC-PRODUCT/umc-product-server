@@ -282,6 +282,9 @@ app:
       admin-key: ${KAKAO_ADMIN_KEY:}
     frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT_URL}
 
+  llm:
+    provider: ${LLM_PROVIDER:mock}
+
   figma:
     oauth:
       client-id: ${FIGMA_OAUTH_CLIENT_ID:}
