@@ -59,7 +59,7 @@ public class FigmaCommentPreviewQueryService implements PreviewFigmaCommentsUseC
 
         List<FigmaCommentPreviewInfo.Item> items = new ArrayList<>(newComments.size());
         for (FigmaCommentInfo c : newComments) {
-            String pageName = nodeIdToPageName.get(c.nodeId());
+            String pageName = c.nodeId() != null ? nodeIdToPageName.get(c.nodeId()) : null;
             FigmaPartRoute matched = pageName != null ? pageNameToRoute.get(pageName) : null;
             FigmaPartRoute applied = matched != null ? matched : fallback.orElse(null);
 
