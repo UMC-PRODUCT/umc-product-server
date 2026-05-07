@@ -19,11 +19,10 @@ public enum FigmaErrorCode implements BaseCode {
     OAUTH_STATE_MISMATCH(HttpStatus.BAD_REQUEST, "FIGMA-0008", "Figma OAuth state 값이 일치하지 않습니다."),
     TOKEN_ENCRYPTION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FIGMA-0009", "Figma 토큰 암복호화에 실패했습니다."),
     DISCORD_MENTION_SEND_FAILED(HttpStatus.BAD_GATEWAY, "FIGMA-0010", "Discord 멘션 전송에 실패했습니다."),
-    PART_ROUTE_NOT_FOUND(HttpStatus.NOT_FOUND, "FIGMA-0011", "등록된 Figma 파트 라우트가 아닙니다."),
-    PART_ROUTE_ALREADY_EXISTS(HttpStatus.CONFLICT, "FIGMA-0012", "동일한 fileKey/pageName 조합의 라우트가 이미 등록되어 있습니다."),
     ROUTING_DOMAIN_NOT_FOUND(HttpStatus.NOT_FOUND, "FIGMA-0013", "등록된 Figma 라우팅 도메인이 아닙니다."),
     ROUTING_DOMAIN_ALREADY_EXISTS(HttpStatus.CONFLICT, "FIGMA-0014", "동일한 domain_key 의 라우팅 도메인이 이미 등록되어 있습니다."),
     ROUTING_DOMAIN_MENTION_NOT_FOUND(HttpStatus.NOT_FOUND, "FIGMA-0015", "해당 라우팅 도메인의 mention 이 아닙니다."),
+    ROUTING_DOMAIN_NOT_REGISTERED(HttpStatus.PRECONDITION_FAILED, "FIGMA-0016", "라우팅 도메인이 한 건도 등록되어 있지 않습니다."),
     ;
 
     private final HttpStatus httpStatus;

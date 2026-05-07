@@ -4,10 +4,11 @@ import com.umc.product.figma.application.port.in.PreviewFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.dto.FigmaCommentPreviewInfo;
 import com.umc.product.figma.application.port.out.FetchFigmaCommentPort;
 import com.umc.product.figma.application.port.out.FetchFigmaFileMetadataPort;
-import com.umc.product.figma.application.port.out.LoadFigmaPartRoutePort;
+import com.umc.product.figma.application.port.out.LoadFigmaRoutingDomainPort;
 import com.umc.product.figma.application.port.out.LoadFigmaWatchedFilePort;
 import com.umc.product.figma.application.port.out.dto.FigmaCommentInfo;
-import com.umc.product.figma.domain.FigmaPartRoute;
+import com.umc.product.figma.domain.FigmaRoutingDomain;
+import com.umc.product.figma.domain.FigmaRoutingDomainMention;
 import com.umc.product.figma.domain.FigmaWatchedFile;
 import com.umc.product.figma.domain.exception.FigmaDomainException;
 import com.umc.product.figma.domain.exception.FigmaErrorCode;
@@ -24,8 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Discord 발송 / sync 상태 갱신 없이 신규 댓글과 매칭될 라우트만 조회하는 read-only 유즈케이스.
- * 운영진이 "지금 sync 하면 무엇이 어디로 갈까?" 를 미리 확인할 수 있다.
+ * Discord 발송 / sync 상태 갱신 없이 신규 댓글과 LLM 분류 결과를 반환하는 read-only 유즈케이스.
  */
 @Slf4j
 @Service
@@ -34,10 +34,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class FigmaCommentPreviewQueryService implements PreviewFigmaCommentsUseCase {
 
     private final LoadFigmaWatchedFilePort loadFigmaWatchedFilePort;
-    private final LoadFigmaPartRoutePort loadFigmaPartRoutePort;
+    private final LoadFigmaRoutingDomainPort loadFigmaRoutingDomainPort;
     private final FetchFigmaCommentPort fetchFigmaCommentPort;
     private final FetchFigmaFileMetadataPort fetchFigmaFileMetadataPort;
     private final FigmaIntegrationCommandService figmaIntegrationCommandService;
+    private final FigmaCommentDomainClassifier figmaCommentDomainClassifier;
 
     @Override
     public FigmaCommentPreviewInfo preview(Long watchedFileId) {
@@ -50,18 +51,26 @@ public class FigmaCommentPreviewQueryService implements PreviewFigmaCommentsUseC
         List<FigmaCommentInfo> newComments = filterNewComments(comments, watchedFile.getLastSyncedCommentId());
 
         Map<String, String> nodeIdToPageName = resolvePageNames(watchedFile.getFileKey(), accessToken, newComments);
-        List<FigmaPartRoute> routes = loadFigmaPartRoutePort.listByFileKey(watchedFile.getFileKey());
-        Map<String, FigmaPartRoute> pageNameToRoute = routes.stream()
-            .filter(route -> !route.isFallback())
-            .collect(Collectors.toMap(FigmaPartRoute::getPageName, route -> route, (a, b) -> a));
-        Optional<FigmaPartRoute> fallback = routes.stream().filter(FigmaPartRoute::isFallback).findFirst()
-            .or(() -> loadFigmaPartRoutePort.findFallbackByFileKey(watchedFile.getFileKey()));
+        List<FigmaRoutingDomain> domains = loadFigmaRoutingDomainPort.listAllDomains();
+        Map<String, FigmaRoutingDomain> domainByKey = domains.stream()
+            .collect(Collectors.toMap(FigmaRoutingDomain::getDomainKey, d -> d, (a, b) -> a));
+        Optional<FigmaRoutingDomain> fallback = domains.stream()
+            .filter(FigmaRoutingDomain::isFallback)
+            .findFirst()
+            .or(loadFigmaRoutingDomainPort::findFallbackDomain);
+        List<String> candidateKeys = domains.stream().map(FigmaRoutingDomain::getDomainKey).toList();
 
         List<FigmaCommentPreviewInfo.Item> items = new ArrayList<>(newComments.size());
         for (FigmaCommentInfo c : newComments) {
             String pageName = c.nodeId() != null ? nodeIdToPageName.get(c.nodeId()) : null;
-            FigmaPartRoute matched = pageName != null ? pageNameToRoute.get(pageName) : null;
-            FigmaPartRoute applied = matched != null ? matched : fallback.orElse(null);
+            String classified = candidateKeys.isEmpty() ? null : figmaCommentDomainClassifier.classify(c, candidateKeys);
+            FigmaRoutingDomain matched = classified != null ? domainByKey.get(classified) : null;
+            FigmaRoutingDomain applied = matched != null ? matched : fallback.orElse(null);
+
+            List<String> mentionRenders = applied != null
+                ? loadFigmaRoutingDomainPort.listMentionsByDomainId(applied.getId()).stream()
+                    .map(FigmaRoutingDomainMention::render).toList()
+                : List.of();
 
             items.add(new FigmaCommentPreviewInfo.Item(
                 c.commentId(),
@@ -69,9 +78,10 @@ public class FigmaCommentPreviewQueryService implements PreviewFigmaCommentsUseC
                 c.authorName(),
                 c.nodeId(),
                 pageName,
-                applied != null ? applied.getPartKey() : null,
-                applied != null ? applied.getDiscordRoleId() : null,
+                classified,
+                applied != null ? applied.getDomainKey() : null,
                 applied != null ? applied.getDiscordWebhookUrl() : null,
+                mentionRenders,
                 applied != null && applied.isFallback(),
                 applied == null
             ));
@@ -117,7 +127,7 @@ public class FigmaCommentPreviewQueryService implements PreviewFigmaCommentsUseC
         try {
             return fetchFigmaFileMetadataPort.resolvePageNames(fileKey, accessToken, nodeIds);
         } catch (FigmaDomainException e) {
-            log.warn("페이지명 해석 실패. 매칭은 fallback 으로 표시됩니다. fileKey={}", fileKey);
+            log.warn("페이지명 해석 실패. preview 의 pageName 필드는 비워집니다. fileKey={}", fileKey);
             return Map.of();
         }
     }
