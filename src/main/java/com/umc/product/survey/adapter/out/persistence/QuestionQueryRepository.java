@@ -16,19 +16,20 @@ public class QuestionQueryRepository {
     private final JPAQueryFactory queryFactory;
 
     /**
-     * 섹션에 속한 모든 질문을 orderNo 오름차순으로 조회.
+     * 섹션에 속한 Active 질문을 orderNo 오름차순으로 조회.
      */
     public List<Question> findAllBySectionId(Long sectionId) {
         QQuestion q = QQuestion.question;
         return queryFactory
             .selectFrom(q)
-            .where(q.formSection.id.eq(sectionId))
+            .where(q.formSection.id.eq(sectionId)
+                .and(q.isActive.isTrue()))
             .orderBy(q.orderNo.asc())
             .fetch();
     }
 
     /**
-     * 여러 섹션의 모든 질문을 벌크 조회. orderNo 오름차순 정렬.
+     * 여러 섹션의 Active 질문을 벌크 조회. orderNo 오름차순 정렬.
      */
     public List<Question> findAllBySectionIdIn(Set<Long> sectionIds) {
         if (sectionIds.isEmpty()) {
@@ -37,7 +38,8 @@ public class QuestionQueryRepository {
         QQuestion q = QQuestion.question;
         return queryFactory
             .selectFrom(q)
-            .where(q.formSection.id.in(sectionIds))
+            .where(q.formSection.id.in(sectionIds)
+                .and(q.isActive.isTrue()))
             .orderBy(q.orderNo.asc())
             .fetch();
     }
