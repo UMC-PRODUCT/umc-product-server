@@ -86,7 +86,15 @@ public class FigmaCommentDomainClassifier {
         this.cache = Caffeine.newBuilder()
             .maximumSize(CACHE_MAX_SIZE)
             .expireAfterWrite(CACHE_TTL)
+            .recordStats()
             .build();
+    }
+
+    /**
+     * L1 Caffeine 캐시 인스턴스를 메트릭 binder 에 노출하기 위한 패키지-비공개 getter. 외부에서는 메트릭/관측 목적으로만 사용해야 하며, 캐시를 직접 조작하지 않는다.
+     */
+    Cache<String, Optional<String>> getCache() {
+        return cache;
     }
 
     /**
