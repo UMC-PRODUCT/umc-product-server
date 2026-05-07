@@ -44,6 +44,11 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
     private static final int EMBEDS_PER_MESSAGE = 10;
     private static final int FIELD_NAME_MAX = 256;
     private static final int FIELD_VALUE_MAX = 1024;
+    /**
+     * 댓글 사이 시각적 여백을 위해 각 field value 끝에 붙이는 zero-width space 라인. Discord 가 non-inline field 들을 거의 붙여서 렌더링해 가독성이 떨어지므로,
+     * 마지막 줄 다음에 빈 줄 한 칸을 강제로 추가한다 (field 수를 늘리지 않으므로 25 댓글/embed 수용은 유지).
+     */
+    private static final String FIELD_VALUE_TRAILING_GAP = "\n\u200B";
     private static final ZoneId FOOTER_ZONE = ZoneId.of("Asia/Seoul");
     private static final DateTimeFormatter FOOTER_FORMAT =
         DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(FOOTER_ZONE);
@@ -122,8 +127,8 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
     ) {
         Map<String, Object> embed = new LinkedHashMap<>();
         String titleSuffix = totalPages == 1 ? "" : " (" + pageIndex + "/" + totalPages + ")";
-        embed.put("title", "[Figma] " + message.domainKey() + " 신규 댓글 "
-            + message.comments().size() + "건" + titleSuffix);
+        embed.put("title", message.domainKey() + " 관련 새로운 논의사항이 "
+            + message.comments().size() + "건 있어요! " + titleSuffix);
         embed.put("color", EMBED_COLOR_FIGMA);
 
         List<Map<String, Object>> fields = new ArrayList<>(chunk.size());
@@ -149,13 +154,15 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
     private Map<String, Object> buildField(CommentEntry c) {
         String pageSuffix = (c.pageName() == null || c.pageName().isBlank()) ? "" : " / " + c.pageName();
         String name = truncate(
-            "👤 " + safe(c.authorName()) + " · " + safe(c.fileDisplayName()) + pageSuffix,
+            "\uD83C\uDF38 " + safe(c.authorName()) + " · " + safe(c.fileDisplayName()) + pageSuffix,
             FIELD_NAME_MAX
         );
-        String value = truncate(
-            safe(c.message()) + "\n🔗 [열기](" + safe(c.commentLink()) + ")",
-            FIELD_VALUE_MAX
+        // 본문 + 링크 길이를 1024 - GAP 길이까지 자른 뒤 끝에 GAP 을 붙여 댓글 사이 빈 줄을 강제한다.
+        String body = truncate(
+            safe(c.message()) + "\n🔗 [바로가기](" + safe(c.commentLink()) + ")",
+            FIELD_VALUE_MAX - FIELD_VALUE_TRAILING_GAP.length()
         );
+        String value = body + FIELD_VALUE_TRAILING_GAP;
 
         Map<String, Object> field = new LinkedHashMap<>();
         field.put("name", name);
