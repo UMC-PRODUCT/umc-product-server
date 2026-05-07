@@ -14,6 +14,7 @@ import com.umc.product.figma.domain.exception.FigmaDomainException;
 import com.umc.product.figma.domain.exception.FigmaErrorCode;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Discord 발송 / sync 상태 갱신 없이 신규 댓글과 LLM 분류 결과를 반환하는 read-only 유즈케이스.
+ * Discord 발송 / sync 상태 갱신 없이 신규 댓글을 분류해 도메인별로 묶은 결과를 반환한다.
+ * 발송 경로(sync / digest) 와 동일한 grouping 형태로 응답해 운영진이 일관된 모양으로 검증할 수 있다.
  */
 @Slf4j
 @Service
@@ -60,30 +62,47 @@ public class FigmaCommentPreviewQueryService implements PreviewFigmaCommentsUseC
             .or(loadFigmaRoutingDomainPort::findFallbackDomain);
         List<String> candidateKeys = domains.stream().map(FigmaRoutingDomain::getDomainKey).toList();
 
-        List<FigmaCommentPreviewInfo.Item> items = new ArrayList<>(newComments.size());
+        Map<Long, List<FigmaCommentPreviewInfo.Comment>> grouped = new LinkedHashMap<>();
+        Map<Long, FigmaRoutingDomain> appliedById = new LinkedHashMap<>();
+        int unmatched = 0;
+
         for (FigmaCommentInfo c : newComments) {
             String pageName = c.nodeId() != null ? nodeIdToPageName.get(c.nodeId()) : null;
-            String classified = candidateKeys.isEmpty() ? null : figmaCommentDomainClassifier.classify(c, candidateKeys);
+            String classified = candidateKeys.isEmpty() ? null
+                : figmaCommentDomainClassifier.classify(c, candidateKeys);
             FigmaRoutingDomain matched = classified != null ? domainByKey.get(classified) : null;
             FigmaRoutingDomain applied = matched != null ? matched : fallback.orElse(null);
 
-            List<String> mentionRenders = applied != null
-                ? loadFigmaRoutingDomainPort.listMentionsByDomainId(applied.getId()).stream()
-                    .map(FigmaRoutingDomainMention::render).toList()
-                : List.of();
+            if (applied == null) {
+                unmatched++;
+                continue;
+            }
+            grouped
+                .computeIfAbsent(applied.getId(), k -> new ArrayList<>())
+                .add(new FigmaCommentPreviewInfo.Comment(
+                    c.commentId(),
+                    c.message(),
+                    c.authorName(),
+                    c.nodeId(),
+                    pageName,
+                    classified,
+                    c.createdAt()
+                ));
+            appliedById.putIfAbsent(applied.getId(), applied);
+        }
 
-            items.add(new FigmaCommentPreviewInfo.Item(
-                c.commentId(),
-                c.message(),
-                c.authorName(),
-                c.nodeId(),
-                pageName,
-                classified,
-                applied != null ? applied.getDomainKey() : null,
-                applied != null ? applied.getDiscordWebhookUrl() : null,
+        List<FigmaCommentPreviewInfo.DomainGroup> domainGroups = new ArrayList<>(grouped.size());
+        for (Map.Entry<Long, List<FigmaCommentPreviewInfo.Comment>> entry : grouped.entrySet()) {
+            FigmaRoutingDomain applied = appliedById.get(entry.getKey());
+            List<String> mentionRenders = loadFigmaRoutingDomainPort.listMentionsByDomainId(applied.getId()).stream()
+                .map(FigmaRoutingDomainMention::render)
+                .toList();
+            domainGroups.add(new FigmaCommentPreviewInfo.DomainGroup(
+                applied.getDomainKey(),
+                applied.getDiscordWebhookUrl(),
+                applied.isFallback(),
                 mentionRenders,
-                applied != null && applied.isFallback(),
-                applied == null
+                entry.getValue()
             ));
         }
 
@@ -92,8 +111,9 @@ public class FigmaCommentPreviewQueryService implements PreviewFigmaCommentsUseC
             watchedFile.getDisplayName(),
             watchedFile.getLastSyncedCommentId(),
             watchedFile.getLastSyncedAt(),
-            items.size(),
-            items
+            newComments.size(),
+            unmatched,
+            domainGroups
         );
     }
 
