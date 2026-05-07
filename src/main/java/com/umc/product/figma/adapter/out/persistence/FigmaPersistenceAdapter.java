@@ -1,15 +1,12 @@
 package com.umc.product.figma.adapter.out.persistence;
 
 import com.umc.product.figma.application.port.out.LoadFigmaIntegrationPort;
-import com.umc.product.figma.application.port.out.LoadFigmaPartRoutePort;
 import com.umc.product.figma.application.port.out.LoadFigmaRoutingDomainPort;
 import com.umc.product.figma.application.port.out.LoadFigmaWatchedFilePort;
 import com.umc.product.figma.application.port.out.SaveFigmaIntegrationPort;
-import com.umc.product.figma.application.port.out.SaveFigmaPartRoutePort;
 import com.umc.product.figma.application.port.out.SaveFigmaRoutingDomainPort;
 import com.umc.product.figma.application.port.out.SaveFigmaWatchedFilePort;
 import com.umc.product.figma.domain.FigmaIntegration;
-import com.umc.product.figma.domain.FigmaPartRoute;
 import com.umc.product.figma.domain.FigmaRoutingDomain;
 import com.umc.product.figma.domain.FigmaRoutingDomainMention;
 import com.umc.product.figma.domain.FigmaWatchedFile;
@@ -26,14 +23,11 @@ public class FigmaPersistenceAdapter implements
     SaveFigmaIntegrationPort,
     LoadFigmaWatchedFilePort,
     SaveFigmaWatchedFilePort,
-    LoadFigmaPartRoutePort,
-    SaveFigmaPartRoutePort,
     LoadFigmaRoutingDomainPort,
     SaveFigmaRoutingDomainPort {
 
     private final FigmaIntegrationJpaRepository figmaIntegrationJpaRepository;
     private final FigmaWatchedFileJpaRepository figmaWatchedFileJpaRepository;
-    private final FigmaPartRouteJpaRepository figmaPartRouteJpaRepository;
     private final FigmaRoutingDomainJpaRepository figmaRoutingDomainJpaRepository;
     private final FigmaRoutingDomainMentionJpaRepository figmaRoutingDomainMentionJpaRepository;
 
@@ -70,36 +64,6 @@ public class FigmaPersistenceAdapter implements
     @Override
     public FigmaWatchedFile save(FigmaWatchedFile watchedFile) {
         return figmaWatchedFileJpaRepository.save(watchedFile);
-    }
-
-    @Override
-    public Optional<FigmaPartRoute> findRouteById(Long id) {
-        return figmaPartRouteJpaRepository.findById(id);
-    }
-
-    @Override
-    public boolean existsByFileKeyAndPageName(String fileKey, String pageName) {
-        return figmaPartRouteJpaRepository.existsByFileKeyAndPageName(fileKey, pageName);
-    }
-
-    @Override
-    public List<FigmaPartRoute> listByFileKey(String fileKey) {
-        return figmaPartRouteJpaRepository.findAllByFileKey(fileKey);
-    }
-
-    @Override
-    public Optional<FigmaPartRoute> findFallbackByFileKey(String fileKey) {
-        return figmaPartRouteJpaRepository.findFirstByFileKeyAndFallbackTrue(fileKey);
-    }
-
-    @Override
-    public FigmaPartRoute save(FigmaPartRoute partRoute) {
-        return figmaPartRouteJpaRepository.save(partRoute);
-    }
-
-    @Override
-    public void delete(FigmaPartRoute partRoute) {
-        figmaPartRouteJpaRepository.delete(partRoute);
     }
 
     @Override

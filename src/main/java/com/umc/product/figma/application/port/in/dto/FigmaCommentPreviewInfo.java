@@ -20,9 +20,10 @@ public record FigmaCommentPreviewInfo(
         String authorName,
         String nodeId,
         String pageName,
-        String matchedPartKey,
-        String matchedRoleId,
-        String matchedWebhookUrl,
+        String classifiedDomainKey,
+        String appliedDomainKey,
+        String appliedWebhookUrl,
+        List<String> mentionRenders,
         boolean fallback,
         boolean unmatched
     ) {
