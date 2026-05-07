@@ -1,8 +1,11 @@
 package com.umc.product.global.seed;
 
+import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.member.application.port.in.command.dto.IdPwRegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import com.umc.product.term.application.port.in.query.GetTermUseCase;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -30,6 +33,13 @@ public class AlphaDummyMemberFactory {
 
     private final Faker faker = new Faker(Locale.KOREAN);
 
+    private static final String APPLE_DEFAULT_CLIENT_ID = "com.umc.product";
+    private static final OAuthProvider[] PROVIDER_ROTATION = {
+        OAuthProvider.GOOGLE,
+        OAuthProvider.APPLE,
+        OAuthProvider.KAKAO
+    };
+
     /**
      * ID/PW 회원가입용 Command 를 만든다. loginId 는 alpha_user_0001 형식(CredentialPolicy 정규식 만족).
      */
@@ -44,6 +54,41 @@ public class AlphaDummyMemberFactory {
             .email(email)
             .schoolId(randomSchoolId())
             .termConsents(allMandatoryConsents())
+            .build();
+    }
+
+    /**
+     * OAuth 회원가입용 Command 를 total 개 만든다. provider 는 GOOGLE → APPLE → KAKAO 라운드로빈으로
+     * 분배되어 균등에 가까운 분포를 만든다. APPLE 은 appleRefreshToken 과 appleClientId 를 함께 채운다.
+     * <p>
+     * providerId 는 (provider, sequence) 조합으로 만들어 uk_member_oauth_provider_provider_id UNIQUE 제약을
+     * 자연스럽게 만족시킨다.
+     */
+    public List<OAuthRegisterMemberCommand> nextOAuthCommands(int total) {
+        List<OAuthRegisterMemberCommand> commands = new ArrayList<>(total);
+        for (int seq = 1; seq <= total; seq++) {
+            OAuthProvider provider = PROVIDER_ROTATION[(seq - 1) % PROVIDER_ROTATION.length];
+            commands.add(buildOAuthCommand(seq, provider));
+        }
+        return commands;
+    }
+
+    private OAuthRegisterMemberCommand buildOAuthCommand(int sequence, OAuthProvider provider) {
+        String providerTag = provider.name().toLowerCase(Locale.ROOT);
+        String providerId = "alpha_%s_%04d".formatted(providerTag, sequence);
+        String email = "alpha_oauth_%04d@%s".formatted(sequence, properties.emailDomain());
+        boolean isApple = provider == OAuthProvider.APPLE;
+        return OAuthRegisterMemberCommand.builder()
+            .provider(provider)
+            .providerId(providerId)
+            .name(faker.name().fullName())
+            .nickname(safeNickname(faker.name().firstName(), sequence))
+            .email(email)
+            .schoolId(randomSchoolId())
+            .profileImageId(null)
+            .termConsents(allMandatoryConsents())
+            .appleRefreshToken(isApple ? "alpha_apple_refresh_%04d".formatted(sequence) : null)
+            .appleClientId(isApple ? APPLE_DEFAULT_CLIENT_ID : null)
             .build();
     }
 

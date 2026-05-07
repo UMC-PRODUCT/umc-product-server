@@ -1,7 +1,10 @@
 package com.umc.product.global.seed;
 
 import com.umc.product.member.application.port.in.command.RegisterIdPwMemberUseCase;
+import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
+import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMemberCommand;
 import com.umc.product.member.application.port.out.LoadMemberPort;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -31,6 +34,7 @@ public class AlphaSeedRunner implements ApplicationRunner {
     private final AlphaSeedProperties properties;
     private final LoadMemberPort loadMemberPort;
     private final RegisterIdPwMemberUseCase registerIdPwMemberUseCase;
+    private final RegisterOAuthMemberUseCase registerOAuthMemberUseCase;
     private final AlphaDummyMemberFactory dummyMemberFactory;
 
     @Override
@@ -52,9 +56,13 @@ public class AlphaSeedRunner implements ApplicationRunner {
         );
 
         int idPwCreated = seedIdPwMembers();
+        int oauthCreated = seedOAuthMembers();
 
         long elapsedMs = System.currentTimeMillis() - startedAt;
-        log.info("alpha seed completed in {}ms (idPw={})", elapsedMs, idPwCreated);
+        log.info(
+            "alpha seed completed in {}ms (idPw={}, oauth={})",
+            elapsedMs, idPwCreated, oauthCreated
+        );
     }
 
     /**
@@ -73,5 +81,24 @@ public class AlphaSeedRunner implements ApplicationRunner {
             }
         }
         return created;
+    }
+
+    /**
+     * OAuth 회원을 properties.oauthMemberCount() 만큼 batchRegister 로 일괄 등록한다.
+     * batchRegister 는 단일 트랜잭션이므로 한 명이라도 실패하면 전체 롤백된다 — 의도된 보수 동작.
+     */
+    private int seedOAuthMembers() {
+        int target = properties.oauthMemberCount();
+        if (target <= 0) {
+            return 0;
+        }
+        try {
+            List<OAuthRegisterMemberCommand> commands = dummyMemberFactory.nextOAuthCommands(target);
+            List<Long> registeredIds = registerOAuthMemberUseCase.batchRegister(commands);
+            return registeredIds.size();
+        } catch (Exception e) {
+            log.error("alpha seed failed at oauth batch ({} members): {}", target, e.toString());
+            return 0;
+        }
     }
 }
