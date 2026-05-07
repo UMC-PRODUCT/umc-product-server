@@ -133,6 +133,9 @@ spring:
   #   ├────────────────────┼──────────────────────────────────────────────────────────┤
   #   │ mock (기본)        │ 없음 (외부 호출 없음, 운영 활성화 전 검증용)            │
   #   │ openai             │ LLM_OPENAI_API_KEY                                       │
+  #   │                    │ OPENAI_BASE_URL (선택, 기본값 https://api.openai.com)    │
+  #   │                    │  → LMStudio: http://localhost:1234                       │
+  #   │                    │  → Ollama:   http://localhost:11434/v1                   │
   #   │ vertexai-gemini    │ VERTEX_PROJECT_ID, VERTEX_LOCATION,                      │
   #   │                    │ GOOGLE_APPLICATION_CREDENTIALS (service account JSON)    │
   #   │ google-genai       │ LLM_GEMINI_API_KEY (Google AI Studio 무료 티어)         │
@@ -157,6 +160,9 @@ spring:
         speech: none
         transcription: none
     openai:
+      # LMStudio (http://localhost:1234) 또는 Ollama (http://localhost:11434/v1) 사용 시
+      # OPENAI_BASE_URL 환경변수를 해당 주소로 설정한다. api-key 는 임의 문자열을 주입하면 된다.
+      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
       api-key: ${LLM_OPENAI_API_KEY:}
     vertex:
       ai:
