@@ -287,7 +287,7 @@ app:
       client-id: ${FIGMA_OAUTH_CLIENT_ID:}
       client-secret: ${FIGMA_OAUTH_CLIENT_SECRET:}
       redirect-uri: ${FIGMA_OAUTH_REDIRECT_URI:http://localhost:8080/api/v1/admin/figma/oauth/callback}
-      scope: ${FIGMA_OAUTH_SCOPE:file_read,file_comments:read}
+      scope: ${FIGMA_OAUTH_SCOPE:current_user:read,file_metadata:read,file_comments:read}
       authorize-uri: https://www.figma.com/oauth
       token-uri: https://api.figma.com/v1/oauth/token
       refresh-uri: https://api.figma.com/v1/oauth/refresh
