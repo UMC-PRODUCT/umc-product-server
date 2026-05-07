@@ -121,7 +121,10 @@ spring:
 
   # Spring AI provider 설정 - 실제 활성 provider 는 app.llm.provider 가 결정한다.
   ai:
-    # 운영 활성화 시 LLM_AI_MODEL_CHAT=openai 또는 vertexai-gemini 를 주입한다.
+    # 운영 활성화 시 LLM_AI_MODEL_CHAT 을 다음 중 하나로 주입한다.
+    #  - openai           : OpenAI ChatModel
+    #  - vertexai-gemini  : Vertex AI Gemini (service account 인증)
+    #  - google-genai     : Google AI Studio API key 또는 Vertex AI 모드 (Gemini Developer API)
     # 기본값 none 은 ChatModel 자동구성을 모두 비활성화하여 mock 어댑터만 활성화되도록 한다.
     # 본 시스템은 chat 만 사용하므로 다른 모델 카테고리는 항상 비활성화한다.
     model:
@@ -140,6 +143,14 @@ spring:
           project-id: ${VERTEX_PROJECT_ID:}
           location: ${VERTEX_LOCATION:asia-northeast3}
           # 인증 자격은 GOOGLE_APPLICATION_CREDENTIALS 환경 변수를 통해 주입한다.
+    google:
+      genai:
+        # Google AI Studio (Gemini Developer API) 무료 티어 사용 시 api-key 만 주입한다.
+        # Vertex AI 모드로 전환하려면 vertex-ai=true + project-id/location/credentials 를 주입한다.
+        api-key: ${LLM_GEMINI_API_KEY:}
+        vertex-ai: ${LLM_GOOGLE_GENAI_VERTEX_AI:false}
+        project-id: ${VERTEX_PROJECT_ID:}
+        location: ${VERTEX_LOCATION:asia-northeast3}
     # 일시 실패 retry 는 Spring AI 자동구성된 RetryTemplate 에 위임한다.
     # app.llm.retry 와 동일한 환경변수를 공유해 두 곳의 정책이 어긋나지 않도록 한다.
     retry:
