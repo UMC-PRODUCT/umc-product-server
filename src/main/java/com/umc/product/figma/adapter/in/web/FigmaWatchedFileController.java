@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/figma/watched-files")
 @RequiredArgsConstructor
-@Tag(name = "Figma Watched File | 폴링 대상 파일 관리", description = "Figma 댓글을 Discord로 포워딩할 파일 등록/해제 / 조회")
+@Tag(name = "Figma | 대상 파일 관리", description = "업데이트 대상 Figma 파일 관리")
 public class FigmaWatchedFileController {
 
     private final ManageFigmaWatchedFileUseCase manageFigmaWatchedFileUseCase;
