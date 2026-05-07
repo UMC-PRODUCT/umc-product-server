@@ -166,8 +166,10 @@ public class FigmaCommentDomainClassifier {
     private String doClassify(FigmaCommentInfo comment, List<String> candidateDomainKeys) {
         String userPrompt = buildUserPrompt(comment, candidateDomainKeys);
         try {
+            // figma 도메인이 system/user prompt 모두 완성해 LLM 도메인에 보낸다.
+            // 후보 제약은 SYSTEM_PROMPT 자체에 명시되어 있고 후보 목록은 user prompt 에 그대로 들어 있다.
             ChatCompletionResult result = chatCompleteUseCase.complete(
-                ChatCompleteCommand.classify(SYSTEM_PROMPT, userPrompt, candidateDomainKeys)
+                ChatCompleteCommand.freeForm(SYSTEM_PROMPT, userPrompt)
             );
             String picked = result.text() == null ? null : result.text().trim();
             if (picked == null || !candidateDomainKeys.contains(picked)) {

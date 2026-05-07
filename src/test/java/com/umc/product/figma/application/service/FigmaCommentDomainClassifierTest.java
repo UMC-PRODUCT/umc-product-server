@@ -279,6 +279,26 @@ class FigmaCommentDomainClassifierTest {
     }
 
     @Test
+    @DisplayName("classify 단일 호출은 LLM 도메인에 분류 모드를 노출하지 않는다 (freeForm 형태로 전달)")
+    void 단일_호출_freeForm_으로_전달() {
+        FigmaCommentInfo comment = comment("c-form", "auth 댓글");
+        when(chatCompleteUseCase.complete(any())).thenReturn(
+            ChatCompletionResult.of("auth", "openai", 0L, 0L)
+        );
+
+        classifier.classify(comment, CANDIDATES);
+
+        ArgumentCaptor<ChatCompleteCommand> captor = ArgumentCaptor.forClass(ChatCompleteCommand.class);
+        verify(chatCompleteUseCase, times(1)).complete(captor.capture());
+        ChatCompleteCommand sent = captor.getValue();
+        assertThat(sent.systemPrompt()).contains("후보 도메인 키").contains("정확히 하나만");
+        assertThat(sent.userPrompt()).contains("auth, challenger, figma");
+        // 분류 의미는 figma 측이 prompt 안에 담는다. LLM 도메인 추상에는 분류 메타데이터를 흘리지 않는다.
+        assertThat(sent.candidates()).isEmpty();
+        assertThat(sent.isClassification()).isFalse();
+    }
+
+    @Test
     @DisplayName("후보 외 응답은 영구 캐시에 저장하지 않는다 (운영 시점 후보 변경에 안전)")
     void 후보_외_응답_영구_캐시_미저장() {
         FigmaCommentInfo comment = comment("c-out", "?");
