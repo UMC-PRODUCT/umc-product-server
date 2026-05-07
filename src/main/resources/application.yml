@@ -377,6 +377,11 @@ app:
       enabled: ${FIGMA_SYNC_ENABLED:false}
       poll-interval: ${FIGMA_SYNC_POLL_INTERVAL:PT5M}
       max-files-per-run: ${FIGMA_SYNC_MAX_FILES_PER_RUN:50}
+    summary:
+      # ADR-004 §Implementation Plan §7: dispatch 회수 보존 기간 (90일 기본)
+      dispatch-retention: ${FIGMA_DISPATCH_RETENTION:P90D}
+      # 회수 잡 실행 주기 (기본 24시간)
+      retention-poll-interval: ${FIGMA_RETENTION_POLL_INTERVAL:PT24H}
 
 storage:
   provider: ${STORAGE_PROVIDER:s3}
