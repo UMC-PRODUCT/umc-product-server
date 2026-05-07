@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
@@ -27,6 +28,7 @@ public class LlmCallGuard {
     private final AtomicInteger consecutiveFailures = new AtomicInteger(0);
     private final AtomicReference<Instant> skipUntil = new AtomicReference<>(Instant.EPOCH);
 
+    @Autowired
     public LlmCallGuard(LlmProperties properties) {
         this(properties, Clock.systemUTC());
     }
