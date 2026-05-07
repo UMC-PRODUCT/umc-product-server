@@ -74,7 +74,8 @@ public class FigmaSingleFileSyncProcessor {
                         watchedFile.getFileKey(), comment.commentId());
                     continue;
                 }
-                trySendMention(watchedFile, comment, nodeIdToPageName.get(comment.nodeId()), route);
+                String pageName = comment.nodeId() != null ? nodeIdToPageName.get(comment.nodeId()) : null;
+                trySendMention(watchedFile, comment, pageName, route);
             }
 
             FigmaCommentInfo last = newComments.get(newComments.size() - 1);
@@ -128,7 +129,7 @@ public class FigmaSingleFileSyncProcessor {
         Map<String, FigmaPartRoute> pageNameToRoute,
         Optional<FigmaPartRoute> fallback
     ) {
-        String pageName = nodeIdToPageName.get(comment.nodeId());
+        String pageName = comment.nodeId() != null ? nodeIdToPageName.get(comment.nodeId()) : null;
         if (pageName != null) {
             FigmaPartRoute matched = pageNameToRoute.get(pageName);
             if (matched != null) {
