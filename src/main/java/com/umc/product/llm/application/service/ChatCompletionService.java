@@ -79,6 +79,12 @@ public class ChatCompletionService implements ChatCompleteUseCase {
             throw new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED, "회로 차단 상태");
         }
         rateLimiter.acquire();
+
+        int systemPromptLen = command.systemPrompt() == null ? 0 : command.systemPrompt().length();
+        int userPromptLen = command.userPrompt() == null ? 0 : command.userPrompt().length();
+        log.info("LLM 호출 시작: provider={}, systemPromptLen={}, userPromptLen={}, maxOutputTokensOverride={}",
+            provider, systemPromptLen, userPromptLen, command.maxOutputTokensOverride());
+
         Instant start = clock.instant();
         try {
             ChatCompletionResult result = chatCompletionPort.complete(command);
@@ -86,15 +92,26 @@ public class ChatCompletionService implements ChatCompleteUseCase {
             metrics.recordCall(result.provider(), LlmMetrics.STATUS_SUCCESS, latency);
             metrics.recordTokens(result.provider(), result.promptTokens(), result.completionTokens());
             callGuard.recordSuccess();
+            log.info("LLM 호출 완료: provider={}, latencyMs={}, promptTokens={}, completionTokens={}, responseLen={}",
+                result.provider(),
+                latency.toMillis(),
+                result.promptTokens(),
+                result.completionTokens(),
+                result.text() == null ? 0 : result.text().length());
             return result;
         } catch (LlmDomainException e) {
-            metrics.recordCall(provider, LlmMetrics.STATUS_FAILED, Duration.between(start, clock.instant()));
+            Duration latency = Duration.between(start, clock.instant());
+            metrics.recordCall(provider, LlmMetrics.STATUS_FAILED, latency);
             callGuard.recordFailure();
+            log.warn("LLM 호출 실패: provider={}, latencyMs={}, baseCode={}, message={}",
+                provider, latency.toMillis(), e.getBaseCode(), e.getMessage());
             throw e;
         } catch (RuntimeException e) {
-            metrics.recordCall(provider, LlmMetrics.STATUS_FAILED, Duration.between(start, clock.instant()));
+            Duration latency = Duration.between(start, clock.instant());
+            metrics.recordCall(provider, LlmMetrics.STATUS_FAILED, latency);
             callGuard.recordFailure();
-            log.warn("LLM 호출 중 예기치 못한 예외: {}", e.toString());
+            log.warn("LLM 호출 중 예기치 못한 예외: provider={}, latencyMs={}, error={}",
+                provider, latency.toMillis(), e.toString());
             throw new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED, e.getMessage());
         }
     }
