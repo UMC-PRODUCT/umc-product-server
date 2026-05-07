@@ -9,11 +9,7 @@ import com.umc.product.figma.application.port.out.dto.FigmaTokenInfo;
 import com.umc.product.figma.domain.FigmaIntegration;
 import com.umc.product.figma.domain.exception.FigmaDomainException;
 import com.umc.product.figma.domain.exception.FigmaErrorCode;
-import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.Base64;
-import java.util.HashSet;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
  * Figma OAuth 위임 통합의 Command 서비스.
  * - authorization code → token 교환 후 영속화
  * - access token 만료 시 refresh
- * - state 발급/검증 (CSRF 방지)
+ * - state 발급/검증은 {@link FigmaOAuthStateStore} 에 위임 (memberId 바인딩 + single-use)
  */
 @Slf4j
 @Service
@@ -31,14 +27,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class FigmaIntegrationCommandService implements RegisterFigmaIntegrationUseCase {
 
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
-
     private final FigmaOAuthPort figmaOAuthPort;
     private final FigmaTokenCipher figmaTokenCipher;
+    private final FigmaOAuthStateStore figmaOAuthStateStore;
     private final LoadFigmaIntegrationPort loadFigmaIntegrationPort;
     private final SaveFigmaIntegrationPort saveFigmaIntegrationPort;
-
-    private final Set<String> issuedStates = java.util.Collections.synchronizedSet(new HashSet<>());
 
     @Override
     public Long register(RegisterFigmaIntegrationCommand command) {
@@ -70,19 +63,13 @@ public class FigmaIntegrationCommandService implements RegisterFigmaIntegrationU
     }
 
     @Override
-    public String issueState() {
-        byte[] bytes = new byte[32];
-        SECURE_RANDOM.nextBytes(bytes);
-        String state = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-        issuedStates.add(state);
-        return state;
+    public String issueState(Long ownerMemberId) {
+        return figmaOAuthStateStore.issue(ownerMemberId);
     }
 
     @Override
-    public void verifyState(String state) {
-        if (state == null || !issuedStates.remove(state)) {
-            throw new FigmaDomainException(FigmaErrorCode.OAUTH_STATE_MISMATCH);
-        }
+    public Long consumeState(String state) {
+        return figmaOAuthStateStore.consume(state);
     }
 
     /**

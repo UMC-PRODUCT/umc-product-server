@@ -13,12 +13,14 @@ public interface RegisterFigmaIntegrationUseCase {
     Long register(RegisterFigmaIntegrationCommand command);
 
     /**
-     * OAuth state 값을 검증한다. 일치하지 않으면 예외를 던진다.
+     * 인증된 운영진의 memberId 를 묶어 신규 state 를 발급한다.
+     * authorize URL 에 함께 실어 보낸 뒤 콜백에서 {@link #consumeState(String)} 으로 검증/소비한다.
      */
-    void verifyState(String state);
+    String issueState(Long ownerMemberId);
 
     /**
-     * authorize URL로 redirect 시킬 때 사용할 state를 생성하고 보관한다.
+     * state 를 검증함과 동시에 원자적으로 제거하고, 발급 시 묶여 있던 ownerMemberId 를 반환한다.
+     * 검증 실패(미발급/만료/이미 사용됨)면 예외를 던진다.
      */
-    String issueState();
+    Long consumeState(String state);
 }
