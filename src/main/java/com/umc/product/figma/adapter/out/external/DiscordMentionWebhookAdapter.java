@@ -1,9 +1,11 @@
 package com.umc.product.figma.adapter.out.external;
 
 import com.umc.product.figma.application.port.out.SendDiscordMentionPort;
-import com.umc.product.figma.application.port.out.dto.DiscordMentionMessage;
+import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage;
+import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage.CommentEntry;
 import com.umc.product.figma.domain.exception.FigmaDomainException;
 import com.umc.product.figma.domain.exception.FigmaErrorCode;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,93 +18,155 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
 /**
- * Figma 댓글을 Discord 로 포워딩하는 webhook 어댑터.
+ * 도메인 단위로 묶인 댓글 batch 를 Discord 로 발송하는 webhook 어댑터.
  *
- * 메시지 구조:
+ * Discord embed 제약:
  * <ul>
- *   <li>{@code content}: 멘션 문자열 모음만 — 알림이 발생하는 영역</li>
- *   <li>{@code embeds}: title / description / url / color / fields / footer / timestamp 로
- *       포맷된 1건의 embed — 가독성 영역</li>
+ *   <li>embed 1건당 fields 최대 25</li>
+ *   <li>메시지 1건당 embeds 최대 10</li>
+ *   <li>embed 1건의 합산 문자수 ≤ 6000</li>
+ *   <li>field name ≤ 256, field value ≤ 1024</li>
+ *   <li>embed description ≤ 4096</li>
  * </ul>
- * embed 본문에 들어간 mention 문자열은 알림이 발생하지 않으므로,
- * 멘션은 반드시 외부 {@code content} 에 두고 embed 는 시각 표현 전담.
+ *
+ * 본 어댑터는 댓글 1건 = field 1개 로 매핑하고, 25개씩 chunk 해 embed 를 만든다.
+ * embed 가 10개를 넘으면 메시지를 분할 발송한다 (Discord rate limit 까지 자동 분할).
+ * 멘션은 첫 메시지의 외부 content 에만 포함되어 알림이 한 번만 울리도록 한다.
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
 
-    /** Figma brand color (hex 0xF24E1E → decimal). embed 좌측 strip 색상으로 노출된다. */
     private static final int EMBED_COLOR_FIGMA = 0xF24E1E;
-    private static final int EMBED_TITLE_MAX = 256;
-    private static final int EMBED_DESCRIPTION_MAX = 4096;
-    private static final int EMBED_FIELD_VALUE_MAX = 1024;
+    private static final int FIELDS_PER_EMBED = 25;
+    private static final int EMBEDS_PER_MESSAGE = 10;
+    private static final int FIELD_NAME_MAX = 256;
+    private static final int FIELD_VALUE_MAX = 1024;
+    private static final DateTimeFormatter FOOTER_FORMAT = DateTimeFormatter.ISO_INSTANT;
 
     private final RestClient restClient;
 
     @Override
-    public void send(DiscordMentionMessage message) {
-        String mentionLine = message.mentionRenders() == null || message.mentionRenders().isEmpty()
-            ? ""
-            : String.join(" ", message.mentionRenders());
+    public void send(DiscordDomainBatchMessage message) {
+        if (message.comments() == null || message.comments().isEmpty()) {
+            return;
+        }
 
-        Map<String, Object> embed = buildEmbed(message);
+        String mentionLine = renderMentionLine(message.mentionRenders());
+        List<List<Map<String, Object>>> embedPages = buildEmbedPages(message);
 
-        Map<String, Object> payload = Map.of(
-            "content", mentionLine,
-            "embeds", List.of(embed),
-            "allowed_mentions", Map.of("parse", List.of("roles", "users"))
-        );
+        for (int i = 0; i < embedPages.size(); i++) {
+            boolean firstMessage = (i == 0);
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("content", firstMessage ? mentionLine : "");
+            payload.put("embeds", embedPages.get(i));
+            payload.put("allowed_mentions", Map.of("parse", List.of("roles", "users")));
 
-        try {
-            restClient.post()
-                .uri(message.webhookUrl())
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(payload)
-                .retrieve()
-                .toBodilessEntity();
-            log.debug("Discord embed 멘션 전송 완료: domainKey={}, mentions={}",
-                message.domainKey(), message.mentionRenders() == null ? 0 : message.mentionRenders().size());
-        } catch (RestClientResponseException e) {
-            log.error("Discord embed 멘션 전송 실패: status={}, body={}",
-                e.getStatusCode(), e.getResponseBodyAsString());
-            throw new FigmaDomainException(FigmaErrorCode.DISCORD_MENTION_SEND_FAILED);
+            try {
+                restClient.post()
+                    .uri(message.webhookUrl())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(payload)
+                    .retrieve()
+                    .toBodilessEntity();
+                log.debug("Discord domain batch 전송 완료: domainKey={}, page={}/{}, comments={}",
+                    message.domainKey(), i + 1, embedPages.size(), message.comments().size());
+            } catch (RestClientResponseException e) {
+                log.error("Discord domain batch 전송 실패: domainKey={}, page={}/{}, status={}, body={}",
+                    message.domainKey(), i + 1, embedPages.size(),
+                    e.getStatusCode(), e.getResponseBodyAsString());
+                throw new FigmaDomainException(FigmaErrorCode.DISCORD_MENTION_SEND_FAILED);
+            }
         }
     }
 
-    private Map<String, Object> buildEmbed(DiscordMentionMessage message) {
-        Map<String, Object> embed = new LinkedHashMap<>();
-        embed.put("title", truncate("[Figma] " + safe(message.fileDisplayName()) + " 새 댓글", EMBED_TITLE_MAX));
-        embed.put("description", truncate(safe(message.message()), EMBED_DESCRIPTION_MAX));
-        embed.put("url", safe(message.commentLink()));
-        embed.put("color", EMBED_COLOR_FIGMA);
+    private String renderMentionLine(List<String> mentionRenders) {
+        if (mentionRenders == null || mentionRenders.isEmpty()) {
+            return "";
+        }
+        return String.join(" ", mentionRenders);
+    }
 
-        Map<String, Object> author = new LinkedHashMap<>();
-        author.put("name", safe(message.authorName()));
-        embed.put("author", author);
+    /**
+     * 댓글 리스트를 25개씩 묶어 embed 들을 만들고, 다시 10개씩 묶어 메시지(payload) 단위로 분할한다.
+     */
+    private List<List<Map<String, Object>>> buildEmbedPages(DiscordDomainBatchMessage message) {
+        List<CommentEntry> comments = message.comments();
+        int totalComments = comments.size();
+        int totalEmbeds = (totalComments + FIELDS_PER_EMBED - 1) / FIELDS_PER_EMBED;
 
-        List<Map<String, Object>> fields = new ArrayList<>();
-        fields.add(field("Domain", message.domainKey() == null ? "(unmatched)" : message.domainKey(), true));
-        fields.add(field("Page", message.pageName() == null ? "-" : message.pageName(), true));
-        embed.put("fields", fields);
-
-        if (message.createdAt() != null) {
-            embed.put("timestamp", message.createdAt().toString());
+        List<Map<String, Object>> allEmbeds = new ArrayList<>(totalEmbeds);
+        for (int e = 0; e < totalEmbeds; e++) {
+            int from = e * FIELDS_PER_EMBED;
+            int to = Math.min(from + FIELDS_PER_EMBED, totalComments);
+            allEmbeds.add(buildEmbed(message, comments.subList(from, to), e + 1, totalEmbeds));
         }
 
+        List<List<Map<String, Object>>> pages = new ArrayList<>();
+        for (int p = 0; p < allEmbeds.size(); p += EMBEDS_PER_MESSAGE) {
+            pages.add(new ArrayList<>(allEmbeds.subList(p, Math.min(p + EMBEDS_PER_MESSAGE, allEmbeds.size()))));
+        }
+        return pages;
+    }
+
+    private Map<String, Object> buildEmbed(
+        DiscordDomainBatchMessage message,
+        List<CommentEntry> chunk,
+        int pageIndex,
+        int totalPages
+    ) {
+        Map<String, Object> embed = new LinkedHashMap<>();
+        String titleSuffix = totalPages == 1 ? "" : " (" + pageIndex + "/" + totalPages + ")";
+        embed.put("title", "[Figma] " + message.domainKey() + " 신규 댓글 "
+            + message.comments().size() + "건" + titleSuffix);
+        embed.put("color", EMBED_COLOR_FIGMA);
+
+        List<Map<String, Object>> fields = new ArrayList<>(chunk.size());
+        for (CommentEntry c : chunk) {
+            fields.add(buildField(c));
+        }
+        embed.put("fields", fields);
+
         Map<String, Object> footer = new LinkedHashMap<>();
-        footer.put("text", "Figma comment forwarder");
+        footer.put("text", buildFooter(message));
         embed.put("footer", footer);
+
+        // 가장 최근 댓글 시각을 embed timestamp 로 노출
+        chunk.stream()
+            .map(CommentEntry::createdAt)
+            .filter(java.util.Objects::nonNull)
+            .max(java.time.Instant::compareTo)
+            .ifPresent(t -> embed.put("timestamp", t.toString()));
 
         return embed;
     }
 
-    private Map<String, Object> field(String name, String value, boolean inline) {
+    private Map<String, Object> buildField(CommentEntry c) {
+        String pageSuffix = (c.pageName() == null || c.pageName().isBlank()) ? "" : " / " + c.pageName();
+        String name = truncate(
+            "👤 " + safe(c.authorName()) + " · " + safe(c.fileDisplayName()) + pageSuffix,
+            FIELD_NAME_MAX
+        );
+        String value = truncate(
+            safe(c.message()) + "\n🔗 [열기](" + safe(c.commentLink()) + ")",
+            FIELD_VALUE_MAX
+        );
+
         Map<String, Object> field = new LinkedHashMap<>();
         field.put("name", name);
-        field.put("value", truncate(safe(value), EMBED_FIELD_VALUE_MAX));
-        field.put("inline", inline);
+        field.put("value", value);
+        field.put("inline", false);
         return field;
+    }
+
+    private String buildFooter(DiscordDomainBatchMessage message) {
+        if (message.windowFrom() == null && message.windowTo() == null) {
+            return "Figma comment forwarder";
+        }
+        String from = message.windowFrom() == null ? "-" : FOOTER_FORMAT.format(message.windowFrom());
+        String to = message.windowTo() == null ? "-" : FOOTER_FORMAT.format(message.windowTo());
+        return "Figma · " + from + " ~ " + to;
     }
 
     private String safe(String value) {
