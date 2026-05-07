@@ -5,6 +5,7 @@ import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage;
 import com.umc.product.figma.application.port.out.dto.DiscordDomainBatchMessage.CommentEntry;
 import com.umc.product.figma.domain.exception.FigmaDomainException;
 import com.umc.product.figma.domain.exception.FigmaErrorCode;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -43,7 +44,10 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
     private static final int EMBEDS_PER_MESSAGE = 10;
     private static final int FIELD_NAME_MAX = 256;
     private static final int FIELD_VALUE_MAX = 1024;
-    private static final DateTimeFormatter FOOTER_FORMAT = DateTimeFormatter.ISO_INSTANT;
+    private static final ZoneId FOOTER_ZONE = ZoneId.of("Asia/Seoul");
+    private static final DateTimeFormatter FOOTER_FORMAT =
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm").withZone(FOOTER_ZONE);
+    private static final String FOOTER_ZONE_LABEL = "KST";
 
     private final RestClient restClient;
 
@@ -166,7 +170,7 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
         }
         String from = message.windowFrom() == null ? "-" : FOOTER_FORMAT.format(message.windowFrom());
         String to = message.windowTo() == null ? "-" : FOOTER_FORMAT.format(message.windowTo());
-        return "Figma · " + from + " ~ " + to;
+        return "Figma · " + from + " ~ " + to + " " + FOOTER_ZONE_LABEL;
     }
 
     private String safe(String value) {
