@@ -70,7 +70,6 @@ public class FigmaCommentPreviewQueryService implements PreviewFigmaCommentsUseC
         return new FigmaCommentPreviewInfo(
             watchedFile.getFileKey(),
             watchedFile.getDisplayName(),
-            watchedFile.getLastSyncedCommentId(),
             watchedFile.getLastSyncedAt(),
             result.totalComments(),
             result.unmatchedCount(),

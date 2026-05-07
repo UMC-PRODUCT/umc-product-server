@@ -8,7 +8,6 @@ public record FigmaWatchedFileResponse(
     String fileKey,
     String displayName,
     boolean enabled,
-    String lastSyncedCommentId,
     Instant lastSyncedAt,
     String lastError
 ) {
@@ -19,7 +18,6 @@ public record FigmaWatchedFileResponse(
             info.fileKey(),
             info.displayName(),
             info.enabled(),
-            info.lastSyncedCommentId(),
             info.lastSyncedAt(),
             info.lastError()
         );

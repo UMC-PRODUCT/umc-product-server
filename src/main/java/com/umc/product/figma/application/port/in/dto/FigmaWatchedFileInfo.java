@@ -8,7 +8,6 @@ public record FigmaWatchedFileInfo(
     String fileKey,
     String displayName,
     boolean enabled,
-    String lastSyncedCommentId,
     Instant lastSyncedAt,
     String lastError
 ) {
@@ -19,7 +18,6 @@ public record FigmaWatchedFileInfo(
             watchedFile.getFileKey(),
             watchedFile.getDisplayName(),
             watchedFile.isEnabled(),
-            watchedFile.getLastSyncedCommentId(),
             watchedFile.getLastSyncedAt(),
             watchedFile.getLastError()
         );

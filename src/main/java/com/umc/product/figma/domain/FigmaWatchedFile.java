@@ -15,7 +15,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 폴링 대상 Figma 파일과 sync 상태. 마지막으로 처리한 comment 식별자를 보관해 다음 폴링에서 신규 댓글만 필터링한다.
+ * 폴링 대상 Figma 파일과 fetch 모니터링 메타데이터 (ADR-003 §Decision 2 + ADR-004 §Decision 5).
+ * <p>
+ * 시간창 시맨틱 도입 (ADR-004) 이후 본 엔티티는 "어디까지 발송했는가" 를 더 이상 보관하지 않는다. 그 책임은 figma_summary_cursor / figma_comment_dispatch 가 담당하며, 본
+ * 엔티티의 last_synced_at / last_error 는 fetch 모니터링 메트릭으로만 의미를 가진다.
  */
 @Entity
 @Getter
@@ -38,9 +41,6 @@ public class FigmaWatchedFile extends BaseEntity {
     @Column(nullable = false)
     private boolean enabled;
 
-    @Column(name = "last_synced_comment_id", length = 100)
-    private String lastSyncedCommentId;
-
     @Column(name = "last_synced_at")
     private Instant lastSyncedAt;
 
@@ -55,8 +55,10 @@ public class FigmaWatchedFile extends BaseEntity {
             .build();
     }
 
-    public void markSynced(String latestCommentId, Instant syncedAt) {
-        this.lastSyncedCommentId = latestCommentId;
+    /**
+     * fetch 가 정상 완료된 시각을 기록한다 (ADR-004 §Decision 5 이후 last_synced_at / last_error 만 갱신).
+     */
+    public void markFetched(Instant syncedAt) {
         this.lastSyncedAt = syncedAt;
         this.lastError = null;
     }
