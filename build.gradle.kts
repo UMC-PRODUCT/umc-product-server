@@ -33,7 +33,7 @@ val springDocVersion = "2.8.14"
 val queryDslVersion = "5.0.0"
 val jwtVersion = "0.12.5"
 val awsVersion = "2.40.12"
-val springAiVersion = "1.0.0"
+val springAiVersion = "1.1.5"
 
 // REST DOCS
 val snippetsDir = file("build/generated-snippets")
@@ -147,8 +147,9 @@ dependencies {
     implementation(platform("org.springframework.ai:spring-ai-bom:${springAiVersion}"))
     implementation("org.springframework.ai:spring-ai-starter-model-openai")
     implementation("org.springframework.ai:spring-ai-starter-model-vertex-ai-gemini")
+    implementation("org.springframework.ai:spring-ai-starter-model-google-genai")
 
-    // --- Cache (figma classifier 단기 캐시 등) ---
+    // --- Cache ---
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("com.github.ben-manes.caffeine:caffeine")
 

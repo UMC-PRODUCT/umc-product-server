@@ -3,11 +3,10 @@ package com.umc.product.llm.adapter.out.external;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * LLM provider 활성화 설정.
- * provider 값에 따라 ConditionalOnProperty 를 통해 단일 어댑터만 로드된다.
+ * LLM provider 활성화 설정. provider 값에 따라 ConditionalOnProperty 를 통해 단일 어댑터만 로드된다.
  * <p>
- * model / temperature / maxOutputTokens 는 활성 어댑터가 Spring AI ChatClient 호출 시
- * 적용할 모델 파라미터이고, retry / circuitBreaker 는 LLM 도메인 차원의 호출 신뢰성 보강 설정이다.
+ * model / temperature / maxOutputTokens 는 활성 어댑터가 Spring AI ChatClient 호출 시 적용할 모델 파라미터이고, retry / circuitBreaker 는 LLM
+ * 도메인 차원의 호출 신뢰성 보강 설정이다.
  */
 @ConfigurationProperties(prefix = "app.llm")
 public record LlmProperties(
@@ -19,7 +18,7 @@ public record LlmProperties(
     CircuitBreaker circuitBreaker
 ) {
     private static final String DEFAULT_PROVIDER = "mock";
-    private static final String DEFAULT_MODEL = "gemini-1.5-flash";
+    private static final String DEFAULT_MODEL = "gemini-2.5-flash-lite";
     private static final double DEFAULT_TEMPERATURE = 0.0;
     private static final int DEFAULT_MAX_OUTPUT_TOKENS = 32;
 
