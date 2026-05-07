@@ -1,5 +1,8 @@
 package com.umc.product.figma.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.figma.adapter.in.web.dto.request.AddFigmaRoutingMentionRequest;
 import com.umc.product.figma.adapter.in.web.dto.request.RegisterFigmaRoutingDomainRequest;
 import com.umc.product.figma.adapter.in.web.dto.response.AddFigmaRoutingMentionResponse;
@@ -25,6 +28,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * LLM 분류 결과(domain_key) 단위 라우팅 도메인 + 담당자 mention 관리. 운영진이 화면에서 도메인을 등록하고, 도메인별로 담당자 (Discord role/user) 를 추가/제거한다.
+ * <p>
+ * ADR-007 에 따라 모든 endpoint 는 SUPER_ADMIN 만 접근 가능하다.
  */
 @RestController
 @RequestMapping("/api/v1/admin/figma/routing-domains")
@@ -37,6 +42,7 @@ public class FigmaRoutingDomainController {
 
     @Operation(summary = "[FIGMA-011] 라우팅 도메인 등록")
     @PostMapping
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public RegisterFigmaRoutingDomainResponse registerDomain(
         @RequestBody @Valid RegisterFigmaRoutingDomainRequest request
     ) {
@@ -47,12 +53,14 @@ public class FigmaRoutingDomainController {
     @Operation(summary = "[FIGMA-012] 라우팅 도메인 삭제 (mention 도 cascade)")
     @DeleteMapping("/{domainId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public void deleteDomain(@PathVariable Long domainId) {
         manageFigmaRoutingDomainUseCase.deleteDomain(domainId);
     }
 
     @Operation(summary = "[FIGMA-013] 라우팅 도메인에 담당자 mention 추가")
     @PostMapping("/{domainId}/mentions")
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public AddFigmaRoutingMentionResponse addMention(
         @PathVariable Long domainId,
         @RequestBody @Valid AddFigmaRoutingMentionRequest request
@@ -64,12 +72,14 @@ public class FigmaRoutingDomainController {
     @Operation(summary = "[FIGMA-014] 담당자 mention 삭제")
     @DeleteMapping("/mentions/{mentionId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public void removeMention(@PathVariable Long mentionId) {
         manageFigmaRoutingDomainUseCase.removeMention(mentionId);
     }
 
     @Operation(summary = "[FIGMA-018] 라우팅 도메인 목록 조회 (mention 본문 미포함)")
     @GetMapping
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.READ)
     public List<FigmaRoutingDomainResponse> listDomains() {
         return getFigmaRoutingDomainUseCase.listDomains().stream()
             .map(FigmaRoutingDomainResponse::from)
@@ -78,12 +88,14 @@ public class FigmaRoutingDomainController {
 
     @Operation(summary = "[FIGMA-019] 라우팅 도메인 단건 조회 (mention 포함)")
     @GetMapping("/{domainId}")
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.READ)
     public FigmaRoutingDomainResponse getDomain(@PathVariable Long domainId) {
         return FigmaRoutingDomainResponse.from(getFigmaRoutingDomainUseCase.getDomainById(domainId));
     }
 
     @Operation(summary = "[FIGMA-020] 라우팅 도메인의 담당자 mention 목록 조회")
     @GetMapping("/{domainId}/mentions")
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.READ)
     public List<FigmaRoutingDomainMentionResponse> listMentions(@PathVariable Long domainId) {
         return getFigmaRoutingDomainUseCase.listMentionsByDomainId(domainId).stream()
             .map(FigmaRoutingDomainMentionResponse::from)

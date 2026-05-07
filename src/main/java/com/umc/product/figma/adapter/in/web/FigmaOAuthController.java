@@ -1,5 +1,8 @@
 package com.umc.product.figma.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.figma.adapter.in.web.dto.response.FigmaOAuthAuthorizeResponse;
 import com.umc.product.figma.adapter.in.web.dto.response.FigmaOAuthCallbackResponse;
 import com.umc.product.figma.application.port.in.RegisterFigmaIntegrationUseCase;
@@ -30,6 +33,7 @@ public class FigmaOAuthController {
      */
     @Operation(summary = "[FIGMA-001] Figma OAuth authorize URL 발급")
     @GetMapping
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public FigmaOAuthAuthorizeResponse start(
         @CurrentMember MemberPrincipal memberPrincipal
     ) {

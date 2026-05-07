@@ -1,5 +1,8 @@
 package com.umc.product.figma.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.figma.application.port.in.DigestFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.dto.DigestFigmaCommentsCommand;
 import com.umc.product.figma.application.port.in.dto.FigmaDigestSummary;
@@ -17,6 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
  * <p>
  * 정기 sync 와 달리 last_synced_comment_id 를 갱신하지 않으므로, 동일 시간창을 여러 번 호출해도 Discord 에는 그때마다 다시 발송된다 (운영진이 의도한 catch-up /
  * 회고용).
+ * <p>
+ * ADR-007 에 따라 SUPER_ADMIN 만 접근 가능하다.
  */
 @RestController
 @RequestMapping("/api/v1/admin/figma/digest")
@@ -28,6 +33,7 @@ public class FigmaDigestController {
 
     @Operation(summary = "[FIGMA-015] 시간창 catch-up 발송")
     @PostMapping
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public FigmaDigestSummary digest(
         @RequestParam("from") Instant from,
         @RequestParam("to") Instant to

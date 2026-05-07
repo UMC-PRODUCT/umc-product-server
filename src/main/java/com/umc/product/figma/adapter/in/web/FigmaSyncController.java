@@ -1,5 +1,8 @@
 package com.umc.product.figma.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.figma.application.port.in.PreviewFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.SyncFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.dto.FigmaCommentPreviewInfo;
@@ -16,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 운영진이 스케줄러 주기를 기다리지 않고 Figma 댓글 동기화를 즉시 트리거하거나, Discord 발송 없이 신규 댓글 / 매칭될 라우트만 미리 확인할 수 있는 admin API.
+ * <p>
+ * ADR-007 에 따라 모든 endpoint 는 SUPER_ADMIN 만 접근 가능하다.
  */
 @RestController
 @RequestMapping("/api/v1/admin/figma/sync")
@@ -29,6 +34,7 @@ public class FigmaSyncController {
     @Operation(summary = "[FIGMA-006] 활성 파일 전체 즉시 동기화")
     @PostMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public void syncAll() {
         syncFigmaCommentsUseCase.syncAll();
     }
@@ -36,12 +42,14 @@ public class FigmaSyncController {
     @Operation(summary = "[FIGMA-007] 특정 파일 즉시 동기화 (enabled 무관)")
     @PostMapping("/watched-files/{watchedFileId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
     public void syncOne(@PathVariable Long watchedFileId) {
         syncFigmaCommentsUseCase.syncOne(watchedFileId);
     }
 
     @Operation(summary = "[FIGMA-010] 특정 파일의 신규 댓글 미리보기 (Discord 발송 X, sync 상태 갱신 X)")
     @GetMapping("/watched-files/{watchedFileId}/preview")
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.READ)
     public FigmaCommentPreviewInfo preview(@PathVariable Long watchedFileId) {
         return previewFigmaCommentsUseCase.preview(watchedFileId);
     }
