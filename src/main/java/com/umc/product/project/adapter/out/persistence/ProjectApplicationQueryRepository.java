@@ -129,6 +129,22 @@ public class ProjectApplicationQueryRepository {
             .fetch();
     }
 
+    /**
+     * 단건 상세 조회 — applicationForm/project, appliedMatchingRound 를 fetch join 한다.
+     * <p>
+     * formResponse 는 별도 도메인이라 본 쿼리에서 fetch 하지 않는다 — 호출자가 cross-domain UseCase 로 로드한다.
+     */
+    public Optional<ProjectApplication> findByIdWithDetails(Long applicationId) {
+        ProjectApplication result = queryFactory
+            .selectFrom(projectApplication)
+            .innerJoin(projectApplication.applicationForm, projectApplicationForm).fetchJoin()
+            .innerJoin(projectApplicationForm.project, project).fetchJoin()
+            .innerJoin(projectApplication.appliedMatchingRound, projectMatchingRound).fetchJoin()
+            .where(projectApplication.id.eq(applicationId))
+            .fetchOne();
+        return Optional.ofNullable(result);
+    }
+
     private BooleanExpression matchingRoundIdEq(Long matchingRoundId) {
         return matchingRoundId == null ? null : projectMatchingRound.id.eq(matchingRoundId);
     }

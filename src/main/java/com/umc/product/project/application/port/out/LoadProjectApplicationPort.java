@@ -49,6 +49,18 @@ public interface LoadProjectApplicationPort {
     );
 
     /**
+     * 지원서 단건을 fetch join 으로 조회한다.
+     * <p>
+     * applicationForm -> project, appliedMatchingRound 를 한 번에 로드하여 호출자가 lazy 프록시 traversal 없이
+     * {@code application.getApplicationForm().getProject()} / {@code application.getAppliedMatchingRound()} 를 사용할 수 있게
+     * 한다.
+     * <p>
+     * 미존재는 {@link Optional#empty()} 로 반환한다 — 정합성(요청 projectId 와 application 의 form.project.id 일치 여부) 검증은 호출자(Service)의
+     * 책임.
+     */
+    Optional<ProjectApplication> findByIdWithDetails(Long applicationId);
+
+    /**
      * 본인 지원 내역을 조회한다.
      * <p>
      * applicationForm/project/matchingRound 를 fetch join 으로 함께 로드하므로 호출자는

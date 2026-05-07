@@ -86,6 +86,11 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     }
 
     @Override
+    public Optional<ProjectApplication> findByIdWithDetails(Long applicationId) {
+        return queryRepository.findByIdWithDetails(applicationId);
+    }
+
+    @Override
     public List<ProjectApplication> searchMyApplications(
         Long applicantMemberId,
         Long gisuId,

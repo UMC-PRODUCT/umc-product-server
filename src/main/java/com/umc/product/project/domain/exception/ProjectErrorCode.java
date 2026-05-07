@@ -21,6 +21,7 @@ public enum ProjectErrorCode implements BaseCode {
         "임시저장 상태의 지원서는 PM/운영진 응답에 매핑할 수 없습니다."),
     APPLICATION_PENDING_FILTER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT-0020",
         "임시저장(PENDING)은 PM/운영진 지원자 목록 조회 필터로 사용할 수 없습니다."),
+    PROJECT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0021", "지원서를 찾을 수 없습니다."),
 
     // ProjectApplicationForm
     APPLICATION_FORM_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0006", "프로젝트에서 해당 지원용 폼을 찾을 수 없습니다."),
