@@ -111,4 +111,9 @@ public class MemberPersistenceAdapter implements LoadMemberPort, SaveMemberPort,
         }
         return memberJpaRepository.countByIdIn(memberIds);
     }
+
+    @Override
+    public long countAllMembers() {
+        return memberJpaRepository.count();
+    }
 }

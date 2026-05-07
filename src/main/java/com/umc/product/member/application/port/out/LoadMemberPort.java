@@ -32,4 +32,6 @@ public interface LoadMemberPort {
     List<Long> findAllIdsCursor(Long lastId, Pageable pageable);
 
     long countMembersByIds(Set<Long> memberIds);
+
+    long countAllMembers();
 }
