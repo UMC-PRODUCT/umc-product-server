@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-05-07): 4 개 커밋(ResourceType.FIGMA · evaluator · 컨트롤러 어노테이션 일괄 적용 · 단위 테스트) 으로 본 ADR 의 결정을 그대로 구현 완료.
 
 ## Context
 
