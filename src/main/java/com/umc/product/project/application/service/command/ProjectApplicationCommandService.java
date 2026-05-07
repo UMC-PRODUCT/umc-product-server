@@ -59,8 +59,13 @@ public class ProjectApplicationCommandService implements
 
         Project project = form.getProject();
 
-        // 0. 부모 프로젝트가 모집 단계인지 검증 (도메인 규칙)
+        // 0-a. 부모 프로젝트가 모집 단계인지 검증 (도메인 규칙)
         project.validateApplicable();
+
+        // 0-b. 자기지원 차단 — PM 본인은 자기 프로젝트에 지원할 수 없다 (도메인 규칙: PO ↔ applicant 역할 충돌 방지)
+        if (project.getProductOwnerMemberId().equals(command.applicantMemberId())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_SELF_APPLY_NOT_ALLOWED);
+        }
 
         // 1. 챌린저 정보 조회 (현재 기수 챌린저 신분 + 파트 확인)
         ChallengerInfo challenger = getChallengerUseCase.getByMemberIdAndGisuId(

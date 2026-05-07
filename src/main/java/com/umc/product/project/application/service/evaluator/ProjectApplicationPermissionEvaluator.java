@@ -55,19 +55,13 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
     }
 
     /**
-     * 지원서 생성/임시저장/제출 진입 권한.
-     * <ul>
-     *   <li>부모 프로젝트의 기수에 챌린저 레코드가 있어야 함</li>
-     *   <li>호출자가 부모 프로젝트의 PO 본인이면 차단 (자기지원 방지)</li>
-     * </ul>
+     * 지원서 생성/임시저장/제출 진입 권한. subject 가 부모 프로젝트의 기수에 챌린저 레코드를 가져야 한다.
+     * <p>
+     * IN_PROGRESS 검사 / 자기지원 차단 / 매칭 라운드 OPEN / 폼 정책 파트 / 기수 ACTIVE 멤버 / 중복 등은
+     * 도메인 규칙으로 분류되어 {@code Project.validateApplicable()} 와 {@code ProjectApplicationCommandService} 가 검증한다.
      */
     private boolean canWrite(SubjectAttributes subject, ResourcePermission permission) {
         Project project = loadProject(permission);
-
-        if (Objects.equals(subject.memberId(), project.getProductOwnerMemberId())) {
-            return false;
-        }
-
         return subject.gisuChallengerInfos().stream()
             .anyMatch(info -> Objects.equals(info.gisuId(), project.getGisuId()));
     }

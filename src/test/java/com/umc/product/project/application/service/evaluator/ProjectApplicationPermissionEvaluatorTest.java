@@ -67,13 +67,13 @@ class ProjectApplicationPermissionEvaluatorTest {
     }
 
     @Test
-    void WRITE는_PO_본인이면_거부_자기지원_차단() {
+    void WRITE는_PO_본인이라도_기수_매칭하면_evaluator는_통과_자기지원_차단은_도메인에서() {
         givenProject(ProjectStatus.IN_PROGRESS);
         SubjectAttributes subject = subjectWith(PO_MEMBER_ID,
             List.of(gisuInfo(PROJECT_GISU_ID, PROJECT_CHAPTER_ID, ChallengerPart.PLAN, 99L)),
             List.of());
 
-        assertThat(sut.evaluate(subject, writePermission())).isFalse();
+        assertThat(sut.evaluate(subject, writePermission())).isTrue();
     }
 
     @Test
