@@ -129,6 +129,12 @@ spring:
           project-id: ${VERTEX_PROJECT_ID:}
           location: ${VERTEX_LOCATION:asia-northeast3}
           # 인증 자격은 GOOGLE_APPLICATION_CREDENTIALS 환경 변수를 통해 주입한다.
+    # 일시 실패 retry 는 Spring AI 자동구성된 RetryTemplate 에 위임한다.
+    # app.llm.retry 와 동일한 환경변수를 공유해 두 곳의 정책이 어긋나지 않도록 한다.
+    retry:
+      max-attempts: ${LLM_RETRY_MAX_ATTEMPTS:3}
+      backoff:
+        initial-interval: ${LLM_RETRY_BACKOFF_MILLIS:200}
 
 jwt:
   access-token-secret: ${JWT_ACCESS_TOKEN_SECRET}
