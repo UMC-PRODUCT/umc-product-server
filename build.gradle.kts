@@ -33,6 +33,7 @@ val springDocVersion = "2.8.14"
 val queryDslVersion = "5.0.0"
 val jwtVersion = "0.12.5"
 val awsVersion = "2.40.12"
+val springAiVersion = "1.0.0"
 
 // REST DOCS
 val snippetsDir = file("build/generated-snippets")
@@ -141,6 +142,15 @@ dependencies {
 
     // Firebase Admin SDK
     implementation("com.google.firebase:firebase-admin:9.7.1")
+
+    // --- Spring AI (LLM provider 통합) ---
+    implementation(platform("org.springframework.ai:spring-ai-bom:${springAiVersion}"))
+    implementation("org.springframework.ai:spring-ai-starter-model-openai")
+    implementation("org.springframework.ai:spring-ai-starter-model-vertex-ai-gemini")
+
+    // --- Cache (figma classifier 단기 캐시 등) ---
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+    implementation("com.github.ben-manes.caffeine:caffeine")
 
     // --- Test ---
     testImplementation("org.springframework.boot:spring-boot-starter-test")
