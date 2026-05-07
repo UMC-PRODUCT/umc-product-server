@@ -27,7 +27,7 @@ public record MyProjectApplicationCardInfo(
     Long matchingRoundId,
     MatchingType matchingRoundType,
     MatchingPhase matchingRoundPhase,
-    MyProjectApplicationCardStatus status
+    ProjectApplicationViewStatus status
 ) {
     /**
      * ProjectApplication 과 부가 조회 결과를 조립해 카드 Info 를 만든다.
@@ -54,7 +54,7 @@ public record MyProjectApplicationCardInfo(
             .matchingRoundId(round.getId())
             .matchingRoundType(round.getType())
             .matchingRoundPhase(round.getPhase())
-            .status(MyProjectApplicationCardStatus.from(application.getStatus()))
+            .status(ProjectApplicationViewStatus.from(application.getStatus()))
             .build();
     }
 }

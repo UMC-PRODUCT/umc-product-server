@@ -3,7 +3,7 @@ package com.umc.product.project.adapter.in.web.dto.response;
 import com.umc.product.project.adapter.in.web.dto.common.MemberBrief;
 import com.umc.product.project.adapter.in.web.dto.common.PartQuotaInfo;
 import com.umc.product.project.application.port.in.query.dto.MyProjectApplicationCardInfo;
-import com.umc.product.project.application.port.in.query.dto.MyProjectApplicationCardStatus;
+import com.umc.product.project.application.port.in.query.dto.ProjectApplicationViewStatus;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import java.util.List;
@@ -18,7 +18,7 @@ public record MyProjectApplicationResponse(
     Long projectId,
     ProjectBrief project,
     MatchingRoundBrief matchingRound,
-    MyProjectApplicationCardStatus status
+    ProjectApplicationViewStatus status
 ) {
     public static MyProjectApplicationResponse from(MyProjectApplicationCardInfo info, MemberBrief productOwner) {
         List<PartQuotaInfo> quotas = info.partQuotas().stream()

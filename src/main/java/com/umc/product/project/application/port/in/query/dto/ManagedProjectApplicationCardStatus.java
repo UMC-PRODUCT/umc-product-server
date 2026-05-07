@@ -7,8 +7,8 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 /**
  * PM/운영진용 지원자 목록 카드의 표시용 status enum.
  * <p>
- * 도메인 ENUM ({@link ProjectApplicationStatus}) 에서 임시저장(PENDING)을 의도적으로 제외한다 -- 본 응답에는 제출 완료된 지원서만 노출되어야 하기 때문. 본인 조회용인
- * {@code MyProjectApplicationCardStatus} 와는 시맨틱이 달라 별도 enum 으로 분리한다.
+ * 도메인 ENUM ({@link ProjectApplicationStatus}) 에서 임시저장(PENDING)을 의도적으로 제외한다 -- 본 응답에는 제출 완료된 지원서만 노출되어야 하기 때문. PENDING 까지 포함하는
+ * {@link ProjectApplicationViewStatus} 와는 시맨틱이 달라 별도 enum 으로 분리한다.
  * <p>
  * 라벨 매핑:
  * <ul>
