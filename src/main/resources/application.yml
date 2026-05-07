@@ -119,6 +119,17 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
+  # Spring AI provider 설정 - 실제 활성 provider 는 app.llm.provider 가 결정한다.
+  ai:
+    openai:
+      api-key: ${LLM_OPENAI_API_KEY:}
+    vertex:
+      ai:
+        gemini:
+          project-id: ${VERTEX_PROJECT_ID:}
+          location: ${VERTEX_LOCATION:asia-northeast3}
+          # 인증 자격은 GOOGLE_APPLICATION_CREDENTIALS 환경 변수를 통해 주입한다.
+
 jwt:
   access-token-secret: ${JWT_ACCESS_TOKEN_SECRET}
   refresh-token-secret: ${JWT_REFRESH_TOKEN_SECRET}
@@ -284,6 +295,15 @@ app:
 
   llm:
     provider: ${LLM_PROVIDER:mock}
+    model: ${LLM_MODEL:gemini-1.5-flash}
+    temperature: ${LLM_TEMPERATURE:0.0}
+    max-output-tokens: ${LLM_MAX_OUTPUT_TOKENS:32}
+    retry:
+      max-attempts: ${LLM_RETRY_MAX_ATTEMPTS:3}
+      backoff-millis: ${LLM_RETRY_BACKOFF_MILLIS:200}
+    circuit-breaker:
+      failure-threshold: ${LLM_CIRCUIT_BREAKER_FAILURE_THRESHOLD:5}
+      open-duration-millis: ${LLM_CIRCUIT_BREAKER_OPEN_DURATION_MILLIS:60000}
 
   figma:
     oauth:
