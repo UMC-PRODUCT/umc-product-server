@@ -285,6 +285,9 @@ app:
       allowed-redirect-uris: ${KAKAO_ALLOWED_REDIRECT_URIS:}
     frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT_URL}
 
+  llm:
+    provider: ${LLM_PROVIDER:mock}
+
   figma:
     oauth:
       client-id: ${FIGMA_OAUTH_CLIENT_ID:}
