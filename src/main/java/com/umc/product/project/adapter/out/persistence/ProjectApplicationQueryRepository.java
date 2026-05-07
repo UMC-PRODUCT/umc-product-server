@@ -10,7 +10,6 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +24,9 @@ public class ProjectApplicationQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    /** (projectId, applicantMemberId, roundId, status) 조합으로 단건 조회. */
+    /**
+     * (projectId, applicantMemberId, roundId, status) 조합으로 단건 조회.
+     */
     public Optional<ProjectApplication> findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(
         Long projectId, Long applicantMemberId, Long roundId, ProjectApplicationStatus status
     ) {
@@ -42,7 +43,9 @@ public class ProjectApplicationQueryRepository {
         );
     }
 
-    /** 동일 차수에 특정 상태의 지원서가 존재하는지 확인. */
+    /**
+     * 동일 차수에 특정 상태의 지원서가 존재하는지 확인.
+     */
     public boolean existsByRoundAndApplicantAndStatus(
         Long roundId, Long applicantMemberId, ProjectApplicationStatus status
     ) {
@@ -58,8 +61,7 @@ public class ProjectApplicationQueryRepository {
     }
 
     /**
-     * (projectId, applicantMemberId, status) 조합으로 단건 조회.
-     * applicationForm.project.id 를 통해 projectId 까지 타고 들어간다.
+     * (projectId, applicantMemberId, status) 조합으로 단건 조회. applicationForm.project.id 를 통해 projectId 까지 타고 들어간다.
      */
     public Optional<ProjectApplication> findByProjectIdAndApplicantMemberIdAndStatus(
         Long projectId, Long applicantMemberId, ProjectApplicationStatus status
@@ -159,7 +161,7 @@ public class ProjectApplicationQueryRepository {
      */
     private BooleanExpression managedStatusCond(ProjectApplicationStatus status) {
         return status == null
-            ? projectApplication.status.in(Arrays.asList(
+            ? projectApplication.status.in(List.of(
             ProjectApplicationStatus.SUBMITTED,
             ProjectApplicationStatus.APPROVED,
             ProjectApplicationStatus.REJECTED))
