@@ -21,9 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Figma 댓글 본문을 LLM 으로 분석해 등록된 라우팅 도메인 키 중 하나로 분류한다.
- * 후보 도메인 리스트는 운영진이 figma_routing_domain 에 등록한 도메인 키들에서 가져오며,
- * LLM 응답이 후보 외 값이거나 호출이 실패하면 null 을 반환해 호출자가 fallback 처리하도록 한다.
+ * Figma 댓글 본문을 LLM 으로 분석해 등록된 라우팅 도메인 키 중 하나로 분류한다. 후보 도메인 리스트는 운영진이 figma_routing_domain 에 등록한 도메인 키들에서 가져오며, LLM 응답이
+ * 후보 외 값이거나 호출이 실패하면 null 을 반환해 호출자가 fallback 처리하도록 한다.
  * <p>
  * 3-tier 캐시 전략으로 LLM 호출 횟수를 최소화한다 (ADR-006 §Decision 5):
  * <ol>
@@ -59,9 +58,13 @@ public class FigmaCommentDomainClassifier {
         """;
 
     private static final String MOCK_PROVIDER = "mock";
-    /** batch 응답 한 항목의 보수적 토큰 추정값 (JSON 키/값 + 구분자 포함). */
+    /**
+     * batch 응답 한 항목의 보수적 토큰 추정값 (JSON 키/값 + 구분자 포함).
+     */
     private static final int BATCH_TOKENS_PER_ITEM = 40;
-    /** batch 응답 JSON 외곽 (배열 괄호, 공백 등) 토큰 여유분. */
+    /**
+     * batch 응답 JSON 외곽 (배열 괄호, 공백 등) 토큰 여유분.
+     */
     private static final int BATCH_TOKENS_OVERHEAD = 32;
 
     private final ChatCompleteUseCase chatCompleteUseCase;
@@ -87,6 +90,21 @@ public class FigmaCommentDomainClassifier {
             .expireAfterWrite(cacheProps.ttl())
             .recordStats()
             .build();
+    }
+
+    private static String stripMarkdownFence(String raw) {
+        String trimmed = raw.trim();
+        if (trimmed.startsWith("```")) {
+            int firstNewline = trimmed.indexOf('\n');
+            if (firstNewline > 0) {
+                trimmed = trimmed.substring(firstNewline + 1);
+            }
+            if (trimmed.endsWith("```")) {
+                trimmed = trimmed.substring(0, trimmed.length() - 3);
+            }
+            trimmed = trimmed.trim();
+        }
+        return trimmed;
     }
 
     /**
@@ -125,8 +143,7 @@ public class FigmaCommentDomainClassifier {
     }
 
     /**
-     * 댓글 N개를 한 번의 LLM 호출로 분류한다. L1 캐시 hit / L2 DB 히트 댓글은 LLM 호출에서 제외되며,
-     * 그래도 남은 미캐시 댓글만 batch prompt 에 포함된다.
+     * 댓글 N개를 한 번의 LLM 호출로 분류한다. L1 캐시 hit / L2 DB 히트 댓글은 LLM 호출에서 제외되며, 그래도 남은 미캐시 댓글만 batch prompt 에 포함된다.
      *
      * @return commentId → 매칭된 domain_key 의 Map (분류 실패/후보 외 응답인 댓글은 Map 에 없음)
      */
@@ -234,15 +251,15 @@ public class FigmaCommentDomainClassifier {
 
     private String buildUserPrompt(FigmaCommentInfo comment, List<String> candidates) {
         return String.format("""
-            [후보 도메인 키]
-            %s
+                [후보 도메인 키]
+                %s
 
-            [댓글 작성자]
-            %s
+                [댓글 작성자]
+                %s
 
-            [댓글 본문]
-            %s
-            """,
+                [댓글 본문]
+                %s
+                """,
             String.join(", ", candidates),
             comment.authorName(),
             comment.message() == null ? "" : comment.message()
@@ -289,21 +306,6 @@ public class FigmaCommentDomainClassifier {
             log.warn("LLM batch 분류 응답 JSON 파싱 실패: {}", e.toString());
             return Map.of();
         }
-    }
-
-    private static String stripMarkdownFence(String raw) {
-        String trimmed = raw.trim();
-        if (trimmed.startsWith("```")) {
-            int firstNewline = trimmed.indexOf('\n');
-            if (firstNewline > 0) {
-                trimmed = trimmed.substring(firstNewline + 1);
-            }
-            if (trimmed.endsWith("```")) {
-                trimmed = trimmed.substring(0, trimmed.length() - 3);
-            }
-            trimmed = trimmed.trim();
-        }
-        return trimmed;
     }
 
     private record BulkClassifyOutcome(Map<String, String> results, String provider) {

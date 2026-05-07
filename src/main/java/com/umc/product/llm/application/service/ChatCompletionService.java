@@ -16,12 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * LLM 호출 진입점. 활성화된 단일 ChatCompletionPort 구현체에 위임한다.
- * provider 교체 (mock → openai → gemini → spring-ai) 는 어댑터 레벨에서만 일어난다.
+ * LLM 호출 진입점. 활성화된 단일 ChatCompletionPort 구현체에 위임한다. provider 교체 (mock → openai → gemini → spring-ai) 는 어댑터 레벨에서만 일어난다.
  * <p>
- * 호출 전후로 {@link LlmCallGuard} (회로 차단), {@link LlmRateLimiter} (사전 페이싱),
- * {@link LlmMetrics} (관측) 를 적용한다. 일시적 실패의 retry 는 Spring AI 자동구성에
- * 위임하고, 본 서비스는 retry 가 모두 소진된 뒤의 최종 결과만 가드/메트릭에 반영한다.
+ * 호출 전후로 {@link LlmCallGuard} (회로 차단), {@link LlmRateLimiter} (사전 페이싱), {@link LlmMetrics} (관측) 를 적용한다. 일시적 실패의 retry 는
+ * Spring AI 자동구성에 위임하고, 본 서비스는 retry 가 모두 소진된 뒤의 최종 결과만 가드/메트릭에 반영한다.
  */
 @Slf4j
 @Service

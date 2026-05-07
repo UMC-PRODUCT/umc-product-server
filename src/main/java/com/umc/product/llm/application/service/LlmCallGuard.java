@@ -12,11 +12,9 @@ import org.springframework.stereotype.Component;
 /**
  * LLM 호출 회로 차단 가드.
  * <p>
- * 연속 실패 카운터가 임계치를 넘으면 일정 시간 동안 호출을 차단한다 (in-memory).
- * 다중 인스턴스 운영 시 인스턴스 단위로 격리되며, 분산 락은 도입하지 않는다 (ADR-006 §Decision 4).
+ * 연속 실패 카운터가 임계치를 넘으면 일정 시간 동안 호출을 차단한다 (in-memory). 다중 인스턴스 운영 시 인스턴스 단위로 격리되며, 분산 락은 도입하지 않는다 (ADR-006 §Decision 4).
  * <p>
- * 일시적 호출 실패의 retry 는 Spring AI 자동구성된 RetryTemplate 에 위임하고,
- * 본 가드는 retry 가 모두 소진된 뒤의 최종 실패 신호만 카운팅한다.
+ * 일시적 호출 실패의 retry 는 Spring AI 자동구성된 RetryTemplate 에 위임하고, 본 가드는 retry 가 모두 소진된 뒤의 최종 실패 신호만 카운팅한다.
  */
 @Slf4j
 @Component

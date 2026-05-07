@@ -72,8 +72,7 @@ public record LlmProperties(
     }
 
     /**
-     * provider 별 rate limit 정책. token bucket 기반으로 분당 호출 수와 burst 크기를 제한한다.
-     * {@code requestsPerMinute=0} 이면 페이싱 비활성화.
+     * provider 별 rate limit 정책. token bucket 기반으로 분당 호출 수와 burst 크기를 제한한다. {@code requestsPerMinute=0} 이면 페이싱 비활성화.
      */
     public record RateLimit(
         int requestsPerMinute,

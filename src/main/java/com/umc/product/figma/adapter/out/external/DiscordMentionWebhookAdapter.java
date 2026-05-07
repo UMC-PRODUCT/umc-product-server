@@ -58,14 +58,15 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
     private static final int EMBEDS_PER_MESSAGE = 10;
     private static final int FIELD_NAME_MAX_CHARS = 256;
     private static final int FIELD_VALUE_MAX_CHARS = 1024;
-    /** embed 한 건의 모든 텍스트 필드 합산 한도. 초과 시 400 BAD_REQUEST. */
+    /**
+     * embed 한 건의 모든 텍스트 필드 합산 한도. 초과 시 400 BAD_REQUEST.
+     */
     private static final int EMBED_TOTAL_SIZE_MAX = 6000;
 
     /* ===== 우리 packing 마진 ===== */
 
     /**
-     * Title / footer / 분할 표기 등 fields 외 영역의 가변 길이를 흡수하는 마진.
-     * packing 은 (6000 − 500 = 5500) 까지만 사용한다.
+     * Title / footer / 분할 표기 등 fields 외 영역의 가변 길이를 흡수하는 마진. packing 은 (6000 − 500 = 5500) 까지만 사용한다.
      */
     private static final int EMBED_SAFETY_MARGIN = 500;
     private static final int EMBED_USABLE_SIZE = EMBED_TOTAL_SIZE_MAX - EMBED_SAFETY_MARGIN;
@@ -74,8 +75,7 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
 
     private static final int EMBED_COLOR_FIGMA = 0x5DADE2;
     /**
-     * 댓글 사이 시각적 여백. Discord 가 non-inline field 들을 거의 붙여 렌더링해 가독성이 떨어지므로
-     * 마지막 줄 다음에 빈 줄 한 칸을 강제한다 (field 수에 영향 없음).
+     * 댓글 사이 시각적 여백. Discord 가 non-inline field 들을 거의 붙여 렌더링해 가독성이 떨어지므로 마지막 줄 다음에 빈 줄 한 칸을 강제한다 (field 수에 영향 없음).
      */
     private static final String FIELD_VALUE_TRAILING_GAP = "\n​";
     private static final ZoneId FOOTER_ZONE = ZoneId.of("Asia/Seoul");
@@ -85,8 +85,8 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
 
     private final RestClient restClient;
     /**
-     * Discord embed footer 의 [ENV: ...] 라벨로 강제 표시되는 환경 식별자. dev / staging / prod 등 운영자가 footer 만 보고 메시지 출처 환경을 즉시 식별할 수 있도록 한다.
-     * Figma_댓글_dev_prod_중복_방지_계획 §L4.
+     * Discord embed footer 의 [ENV: ...] 라벨로 강제 표시되는 환경 식별자. dev / staging / prod 등 운영자가 footer 만 보고 메시지 출처 환경을 즉시 식별할 수
+     * 있도록 한다. Figma_댓글_dev_prod_중복_방지_계획 §L4.
      */
     private final String environment;
 
@@ -102,6 +102,59 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
     /*                              Public API                               */
     /* ===================================================================== */
 
+    private static int byteSizeOfField(Map<String, Object> field) {
+        return byteSizeOf((String) field.get("name")) + byteSizeOf((String) field.get("value"));
+    }
+
+    /* ===================================================================== */
+    /*                        1. 빌드 (comments → embeds)                     */
+    /* ===================================================================== */
+
+    /**
+     * Discord 6000 한도에 합산되는 embed 텍스트 필드의 총 UTF-8 byte 수. timestamp / color / image / thumbnail 은 한도에 포함되지 않으므로 제외한다.
+     */
+    private static int byteSizeOfEmbed(Map<String, Object> embed) {
+        int total = 0;
+        total += byteSizeOf((String) embed.get("title"));
+        total += byteSizeOf((String) embed.get("description"));
+        if (embed.get("author") instanceof Map<?, ?> author) {
+            total += byteSizeOf((String) author.get("name"));
+        }
+        if (embed.get("footer") instanceof Map<?, ?> footer) {
+            total += byteSizeOf((String) footer.get("text"));
+        }
+        if (embed.get("fields") instanceof List<?> list) {
+            for (Object o : list) {
+                if (o instanceof Map<?, ?> field) {
+                    total += byteSizeOf((String) field.get("name"));
+                    total += byteSizeOf((String) field.get("value"));
+                }
+            }
+        }
+        return total;
+    }
+
+    private static int byteSizeOf(String s) {
+        return s == null ? 0 : s.getBytes(StandardCharsets.UTF_8).length;
+    }
+
+    private static String safe(String value) {
+        return value == null ? "" : value;
+    }
+
+    /**
+     * Discord 의 per-field char 한도(name 256, value 1024)에 맞춰 char 수 기준으로 자른다. 6000 합산 한도는 별도로 byte 기준으로 검증한다.
+     */
+    private static String truncateChars(String value, int max) {
+        if (value == null) {
+            return "";
+        }
+        if (value.length() <= max) {
+            return value;
+        }
+        return value.substring(0, max - 1) + "…";
+    }
+
     @Override
     public void send(DiscordDomainBatchMessage message) {
         if (message.comments() == null || message.comments().isEmpty()) {
@@ -113,10 +166,6 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
         ensureWithinDiscordLimit(message.domainKey(), pages);
         sendPages(message, renderMentionLine(message.mentionRenders()), pages);
     }
-
-    /* ===================================================================== */
-    /*                        1. 빌드 (comments → embeds)                     */
-    /* ===================================================================== */
 
     private List<Map<String, Object>> buildEmbeds(DiscordDomainBatchMessage message) {
         List<CommentEntry> comments = message.comments();
@@ -140,6 +189,10 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
         }
         return embeds;
     }
+
+    /* ===================================================================== */
+    /*                        2. Chunking (greedy packing)                    */
+    /* ===================================================================== */
 
     private List<Map<String, Object>> buildFields(List<CommentEntry> comments) {
         List<Map<String, Object>> fields = new ArrayList<>(comments.size());
@@ -167,6 +220,10 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
         field.put("inline", false);
         return field;
     }
+
+    /* ===================================================================== */
+    /*           3. 빌드 후 실측 검증 + 한도 초과 chunk 자동 재분할             */
+    /* ===================================================================== */
 
     private Map<String, Object> buildEmbed(
         DiscordDomainBatchMessage message,
@@ -202,6 +259,10 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
             + suffix;
     }
 
+    /* ===================================================================== */
+    /*                4. 페이지네이션 (embed 10개 + size 합산 한도)             */
+    /* ===================================================================== */
+
     private String buildFooterText(DiscordDomainBatchMessage message) {
         // Figma_댓글_dev_prod_중복_방지_계획 §L4: 환경 라벨을 모든 footer 에 강제 prefix.
         // dev/staging 메시지가 prod 채널로 잘못 가더라도 운영자가 footer 만 보고 즉시 식별 가능.
@@ -215,7 +276,7 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
     }
 
     /* ===================================================================== */
-    /*                        2. Chunking (greedy packing)                    */
+    /*                        5. 발송 직전 최종 단언                           */
     /* ===================================================================== */
 
     /**
@@ -256,9 +317,13 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
         return chunks;
     }
 
+    /* ===================================================================== */
+    /*                        6. 발송 (webhook POST)                          */
+    /* ===================================================================== */
+
     /**
-     * title + footer + 분할 표기 등 fields 외 영역의 UTF-8 byte 길이를 보수적으로 추정한다.
-     * domainKey 가 길수록(한국어/이모지 포함) byte 수가 늘어나므로 기본값에 더해 실제 length 의 3배를 함께 본다.
+     * title + footer + 분할 표기 등 fields 외 영역의 UTF-8 byte 길이를 보수적으로 추정한다. domainKey 가 길수록(한국어/이모지 포함) byte 수가 늘어나므로 기본값에
+     * 더해 실제 length 의 3배를 함께 본다.
      */
     private int estimateFixedOverhead(DiscordDomainBatchMessage message) {
         // "{domainKey} 관련 새로운 논의사항이 N개 있어요! (M/M)" — 한국어 ~25자 × 3 byte + domainKey × 3 + suffix
@@ -269,13 +334,12 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
     }
 
     /* ===================================================================== */
-    /*           3. 빌드 후 실측 검증 + 한도 초과 chunk 자동 재분할             */
+    /*                              헬퍼                                     */
     /* ===================================================================== */
 
     /**
-     * 빌드 결과의 실측 byte 합이 6000 한도를 넘는 chunk 는 fields 를 절반씩 재귀 분할한다.
-     * fields 가 1개로 줄어도 한도 초과면(buildField 가 char 단위로 자르므로 byte 로는 최대 5120 byte,
-     * fixedOverhead 포함해도 5500 byte 미만이라 정상 흐름에서 발생 X) 그대로 두고 발송 직전
+     * 빌드 결과의 실측 byte 합이 6000 한도를 넘는 chunk 는 fields 를 절반씩 재귀 분할한다. fields 가 1개로 줄어도 한도 초과면(buildField 가 char 단위로 자르므로
+     * byte 로는 최대 5120 byte, fixedOverhead 포함해도 5500 byte 미만이라 정상 흐름에서 발생 X) 그대로 두고 발송 직전
      * {@link #ensureWithinDiscordLimit} 가 최종 차단한다.
      */
     private List<int[]> repackOversizedChunks(
@@ -320,10 +384,6 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
         return result;
     }
 
-    /* ===================================================================== */
-    /*                4. 페이지네이션 (embed 10개 + size 합산 한도)             */
-    /* ===================================================================== */
-
     /**
      * embeds 를 두 가지 한도 안에서 greedy 로 페이지(=메시지) 단위로 분할한다.
      * <ul>
@@ -356,10 +416,6 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
         return pages;
     }
 
-    /* ===================================================================== */
-    /*                        5. 발송 직전 최종 단언                           */
-    /* ===================================================================== */
-
     /**
      * 두 가지 한도를 동시에 단언한다.
      * <ol>
@@ -389,10 +445,6 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
             }
         }
     }
-
-    /* ===================================================================== */
-    /*                        6. 발송 (webhook POST)                          */
-    /* ===================================================================== */
 
     private void sendPages(
         DiscordDomainBatchMessage message,
@@ -424,65 +476,10 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
         }
     }
 
-    /* ===================================================================== */
-    /*                              헬퍼                                     */
-    /* ===================================================================== */
-
     private String renderMentionLine(List<String> mentionRenders) {
         if (mentionRenders == null || mentionRenders.isEmpty()) {
             return "";
         }
         return String.join(" ", mentionRenders);
-    }
-
-    private static int byteSizeOfField(Map<String, Object> field) {
-        return byteSizeOf((String) field.get("name")) + byteSizeOf((String) field.get("value"));
-    }
-
-    /**
-     * Discord 6000 한도에 합산되는 embed 텍스트 필드의 총 UTF-8 byte 수.
-     * timestamp / color / image / thumbnail 은 한도에 포함되지 않으므로 제외한다.
-     */
-    private static int byteSizeOfEmbed(Map<String, Object> embed) {
-        int total = 0;
-        total += byteSizeOf((String) embed.get("title"));
-        total += byteSizeOf((String) embed.get("description"));
-        if (embed.get("author") instanceof Map<?, ?> author) {
-            total += byteSizeOf((String) author.get("name"));
-        }
-        if (embed.get("footer") instanceof Map<?, ?> footer) {
-            total += byteSizeOf((String) footer.get("text"));
-        }
-        if (embed.get("fields") instanceof List<?> list) {
-            for (Object o : list) {
-                if (o instanceof Map<?, ?> field) {
-                    total += byteSizeOf((String) field.get("name"));
-                    total += byteSizeOf((String) field.get("value"));
-                }
-            }
-        }
-        return total;
-    }
-
-    private static int byteSizeOf(String s) {
-        return s == null ? 0 : s.getBytes(StandardCharsets.UTF_8).length;
-    }
-
-    private static String safe(String value) {
-        return value == null ? "" : value;
-    }
-
-    /**
-     * Discord 의 per-field char 한도(name 256, value 1024)에 맞춰 char 수 기준으로 자른다.
-     * 6000 합산 한도는 별도로 byte 기준으로 검증한다.
-     */
-    private static String truncateChars(String value, int max) {
-        if (value == null) {
-            return "";
-        }
-        if (value.length() <= max) {
-            return value;
-        }
-        return value.substring(0, max - 1) + "…";
     }
 }

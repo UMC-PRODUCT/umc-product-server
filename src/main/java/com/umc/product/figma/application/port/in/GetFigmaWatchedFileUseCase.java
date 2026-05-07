@@ -6,7 +6,8 @@ import java.util.List;
 public interface GetFigmaWatchedFileUseCase {
 
     /**
-     * 등록된 watched file 단건 조회. 미존재 시 {@link com.umc.product.figma.domain.exception.FigmaErrorCode#WATCHED_FILE_NOT_FOUND} 예외.
+     * 등록된 watched file 단건 조회. 미존재 시
+     * {@link com.umc.product.figma.domain.exception.FigmaErrorCode#WATCHED_FILE_NOT_FOUND} 예외.
      */
     FigmaWatchedFileInfo getById(Long watchedFileId);
 

@@ -20,8 +20,8 @@ public record FigmaClassifierProperties(
     }
 
     /**
-     * @param maxSize       최대 항목 수. 초과 시 W-TinyLFU 정책으로 eviction.
-     * @param ttl           {@code expireAfterWrite} TTL. positive / negative 응답 모두 동일 TTL 적용.
+     * @param maxSize 최대 항목 수. 초과 시 W-TinyLFU 정책으로 eviction.
+     * @param ttl     {@code expireAfterWrite} TTL. positive / negative 응답 모두 동일 TTL 적용.
      */
     public record Cache(
         long maxSize,

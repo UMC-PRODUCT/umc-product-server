@@ -10,10 +10,8 @@ import org.springframework.stereotype.Component;
 /**
  * 실제 LLM 호출을 대체하는 mock 어댑터.
  * <p>
- * userPrompt 의 앞 일부를 그대로 echo 한다. 어떤 사용처 의미도 알지 않으므로 분류 같은 호출에서는
- * 결과가 후보에 매칭되지 않아 호출자(예: figma classifier) 가 fallback 채널로 흡수한다.
- * 운영자는 mock 모드로 figma flow 의 fallback path 만 검증하고, 분류 정확도는 실 provider 활성화
- * 후 검증한다.
+ * userPrompt 의 앞 일부를 그대로 echo 한다. 어떤 사용처 의미도 알지 않으므로 분류 같은 호출에서는 결과가 후보에 매칭되지 않아 호출자(예: figma classifier) 가 fallback
+ * 채널로 흡수한다. 운영자는 mock 모드로 figma flow 의 fallback path 만 검증하고, 분류 정확도는 실 provider 활성화 후 검증한다.
  */
 @Slf4j
 @Component

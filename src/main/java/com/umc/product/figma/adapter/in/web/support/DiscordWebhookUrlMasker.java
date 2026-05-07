@@ -3,8 +3,8 @@ package com.umc.product.figma.adapter.in.web.support;
 /**
  * Discord webhook URL 의 ID / token 마지막 4자만 노출하고 나머지는 별표로 가린다. ADR-005 마스킹 정책에 따라 응답 매핑 시점에 적용한다.
  * <p>
- * 예: {@code https://discord.com/api/webhooks/123456789012345678/abcdef...xyz123} → {@code
- * https://discord.com/api/webhooks/****5678/****z123}
+ * 예: {@code https://discord.com/api/webhooks/123456789012345678/abcdef...xyz123} →
+ * {@code https://discord.com/api/webhooks/****5678/****z123}
  */
 public final class DiscordWebhookUrlMasker {
 

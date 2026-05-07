@@ -8,8 +8,7 @@ import org.springframework.ai.chat.model.ChatResponse;
 /**
  * Spring AI 어댑터들이 공유하는 응답 정규화 / 토큰 추출 헬퍼.
  * <p>
- * prompt 자체에는 손대지 않는다. system/user prompt 의 의미는 호출자가 완성해 보내며
- * LLM 어댑터는 ChatModel 호출과 응답 파싱만 담당한다.
+ * prompt 자체에는 손대지 않는다. system/user prompt 의 의미는 호출자가 완성해 보내며 LLM 어댑터는 ChatModel 호출과 응답 파싱만 담당한다.
  */
 final class ChatPromptHelper {
 

@@ -19,9 +19,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 /**
  * 시간창 기반 figma 댓글 동기화의 단일 행 전역 cursor (ADR-004 §Decision 4).
  * <p>
- * 스케줄러는 매 사이클 (last_window_end, now] 시간창을 처리하고, 발송 성공 시
- * last_window_end 를 now 로 advance 한다. 다중 인스턴스 환경에서는 SELECT FOR UPDATE
- * 또는 ShedLock 으로 직렬화하며, 단일 row 불변은 application 코드가 보장한다.
+ * 스케줄러는 매 사이클 (last_window_end, now] 시간창을 처리하고, 발송 성공 시 last_window_end 를 now 로 advance 한다. 다중 인스턴스 환경에서는 SELECT FOR
+ * UPDATE 또는 ShedLock 으로 직렬화하며, 단일 row 불변은 application 코드가 보장한다.
  */
 @Entity
 @Getter
@@ -44,8 +43,7 @@ public class FigmaSummaryCursor {
     private Instant updatedAt;
 
     /**
-     * cursor 부재 시 최초 1회 호출되는 부트스트랩 팩토리. 안전 fallback 으로
-     * (now - pollInterval × N) 시각을 initialEnd 로 받는다.
+     * cursor 부재 시 최초 1회 호출되는 부트스트랩 팩토리. 안전 fallback 으로 (now - pollInterval × N) 시각을 initialEnd 로 받는다.
      */
     public static FigmaSummaryCursor bootstrap(Instant initialEnd) {
         return FigmaSummaryCursor.builder()

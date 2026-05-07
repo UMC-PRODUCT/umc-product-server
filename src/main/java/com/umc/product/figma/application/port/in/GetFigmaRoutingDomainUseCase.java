@@ -7,8 +7,8 @@ import java.util.List;
 public interface GetFigmaRoutingDomainUseCase {
 
     /**
-     * 라우팅 도메인 단건 조회. mention 까지 함께 채워서 반환한다. 미존재 시 {@link com.umc.product.figma.domain.exception.FigmaErrorCode#ROUTING_DOMAIN_NOT_FOUND}
-     * 예외를 던진다.
+     * 라우팅 도메인 단건 조회. mention 까지 함께 채워서 반환한다. 미존재 시
+     * {@link com.umc.product.figma.domain.exception.FigmaErrorCode#ROUTING_DOMAIN_NOT_FOUND} 예외를 던진다.
      */
     FigmaRoutingDomainSummaryInfo getDomainById(Long domainId);
 

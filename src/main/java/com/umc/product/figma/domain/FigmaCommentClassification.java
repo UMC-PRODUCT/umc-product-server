@@ -14,11 +14,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * Figma 댓글의 LLM 분류 결과 영구 캐시. 동일 commentId 재분류를 막아 재시작/다중 인스턴스
- * 환경에서도 LLM 호출 횟수를 0회로 수렴시킨다.
+ * Figma 댓글의 LLM 분류 결과 영구 캐시. 동일 commentId 재분류를 막아 재시작/다중 인스턴스 환경에서도 LLM 호출 횟수를 0회로 수렴시킨다.
  * <p>
- * mock provider 응답이나 후보 외 응답은 본 테이블에 저장하지 않고 in-memory 캐시에만 두어,
- * 검증 단계의 임시 분류가 운영에 영구 누적되지 않게 한다.
+ * mock provider 응답이나 후보 외 응답은 본 테이블에 저장하지 않고 in-memory 캐시에만 두어, 검증 단계의 임시 분류가 운영에 영구 누적되지 않게 한다.
  */
 @Entity
 @Getter
@@ -44,7 +42,8 @@ public class FigmaCommentClassification {
     @Column(name = "classified_at", nullable = false)
     private Instant classifiedAt;
 
-    public static FigmaCommentClassification of(String commentId, String domainKey, String provider, Instant classifiedAt) {
+    public static FigmaCommentClassification of(String commentId, String domainKey, String provider,
+                                                Instant classifiedAt) {
         return FigmaCommentClassification.builder()
             .commentId(commentId)
             .domainKey(domainKey)

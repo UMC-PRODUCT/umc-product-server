@@ -17,8 +17,8 @@ import lombok.NoArgsConstructor;
 /**
  * 폴링 대상 Figma 파일과 fetch 모니터링 메타데이터 (ADR-003 §Decision 2 + ADR-004 §Decision 5).
  * <p>
- * 시간창 시맨틱 도입 (ADR-004) 이후 본 엔티티는 "어디까지 발송했는가" 를 더 이상 보관하지 않는다. 그 책임은 figma_summary_cursor / figma_comment_dispatch 가 담당하며, 본
- * 엔티티의 last_synced_at / last_error 는 fetch 모니터링 메트릭으로만 의미를 가진다.
+ * 시간창 시맨틱 도입 (ADR-004) 이후 본 엔티티는 "어디까지 발송했는가" 를 더 이상 보관하지 않는다. 그 책임은 figma_summary_cursor / figma_comment_dispatch 가
+ * 담당하며, 본 엔티티의 last_synced_at / last_error 는 fetch 모니터링 메트릭으로만 의미를 가진다.
  */
 @Entity
 @Getter
