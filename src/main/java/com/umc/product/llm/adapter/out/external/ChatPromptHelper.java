@@ -1,6 +1,9 @@
 package com.umc.product.llm.adapter.out.external;
 
 import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
+import org.springframework.ai.chat.metadata.ChatResponseMetadata;
+import org.springframework.ai.chat.metadata.Usage;
+import org.springframework.ai.chat.model.ChatResponse;
 
 /**
  * Spring AI 어댑터들이 공유하는 프롬프트 / 응답 정규화 헬퍼.
@@ -32,5 +35,38 @@ final class ChatPromptHelper {
             return "";
         }
         return raw.trim();
+    }
+
+    /**
+     * Spring AI ChatResponse 메타데이터에서 입력 토큰 수를 추출한다. 부재 시 null.
+     */
+    static Long extractPromptTokens(ChatResponse response) {
+        Usage usage = extractUsage(response);
+        if (usage == null || usage.getPromptTokens() == null) {
+            return null;
+        }
+        return usage.getPromptTokens().longValue();
+    }
+
+    /**
+     * Spring AI ChatResponse 메타데이터에서 출력 토큰 수를 추출한다. 부재 시 null.
+     */
+    static Long extractCompletionTokens(ChatResponse response) {
+        Usage usage = extractUsage(response);
+        if (usage == null || usage.getCompletionTokens() == null) {
+            return null;
+        }
+        return usage.getCompletionTokens().longValue();
+    }
+
+    private static Usage extractUsage(ChatResponse response) {
+        if (response == null) {
+            return null;
+        }
+        ChatResponseMetadata metadata = response.getMetadata();
+        if (metadata == null) {
+            return null;
+        }
+        return metadata.getUsage();
     }
 }

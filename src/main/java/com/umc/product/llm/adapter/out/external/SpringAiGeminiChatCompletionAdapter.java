@@ -7,6 +7,7 @@ import com.umc.product.llm.domain.exception.LlmDomainException;
 import com.umc.product.llm.domain.exception.LlmErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatModel;
 import org.springframework.ai.vertexai.gemini.VertexAiGeminiChatOptions;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -50,18 +51,23 @@ public class SpringAiGeminiChatCompletionAdapter implements ChatCompletionPort {
         String userPrompt = command.userPrompt() == null ? "" : command.userPrompt();
 
         try {
-            String content = ChatClient.builder(chatModel)
+            ChatResponse response = ChatClient.builder(chatModel)
                 .build()
                 .prompt()
                 .system(systemPrompt)
                 .user(userPrompt)
                 .options(options)
                 .call()
-                .content();
+                .chatResponse();
+            String content = response == null || response.getResult() == null || response.getResult().getOutput() == null
+                ? ""
+                : response.getResult().getOutput().getText();
             String normalized = ChatPromptHelper.normalizeResponse(content);
-            log.debug("Gemini 호출 성공: model={}, classification={}, length={}",
-                properties.model(), command.isClassification(), normalized.length());
-            return ChatCompletionResult.of(normalized, PROVIDER_NAME);
+            Long promptTokens = ChatPromptHelper.extractPromptTokens(response);
+            Long completionTokens = ChatPromptHelper.extractCompletionTokens(response);
+            log.debug("Gemini 호출 성공: model={}, classification={}, length={}, promptTokens={}, completionTokens={}",
+                properties.model(), command.isClassification(), normalized.length(), promptTokens, completionTokens);
+            return ChatCompletionResult.of(normalized, PROVIDER_NAME, promptTokens, completionTokens);
         } catch (Exception e) {
             log.warn("Gemini 호출 실패: model={}, error={}", properties.model(), e.toString());
             throw new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED, e.getMessage());
