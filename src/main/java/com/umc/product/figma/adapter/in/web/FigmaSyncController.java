@@ -47,7 +47,12 @@ public class FigmaSyncController {
         syncFigmaCommentsUseCase.syncOne(watchedFileId);
     }
 
-    @Operation(summary = "[FIGMA-010] 특정 파일의 신규 댓글 미리보기 (Discord 발송 X, sync 상태 갱신 X)")
+    /**
+     * @deprecated 시간창 시맨틱의 generic preview {@link FigmaPreviewController} 로 대체된다 (ADR-004 §Implementation Plan §6). 본 endpoint 는 단일 파일
+     * preview 호환을 위해 한시 유지된다.
+     */
+    @Deprecated
+    @Operation(summary = "[FIGMA-010] (deprecated) 특정 파일의 최근 시간창 댓글 미리보기 — /api/v1/admin/figma/preview 사용 권장")
     @GetMapping("/watched-files/{watchedFileId}/preview")
     @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.READ)
     public FigmaCommentPreviewInfo preview(@PathVariable Long watchedFileId) {

@@ -61,7 +61,8 @@ public class FigmaCommentPreviewQueryService implements PreviewFigmaCommentsUseC
                         c.nodeId(),
                         c.pageName(),
                         c.classifiedDomainKey(),
-                        c.createdAt()
+                        c.createdAt(),
+                        c.alreadyDispatched()
                     ))
                     .toList()
             ))

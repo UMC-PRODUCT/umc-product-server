@@ -26,6 +26,10 @@ public record FigmaCommentPreviewInfo(
     ) {
     }
 
+    /**
+     * @param alreadyDispatched 본 댓글이 이미 figma_comment_dispatch 에 기록된 (= 과거에 발송된) 댓글인지. true 면
+     *                          force=false 인 다음 sync 에서는 발송 대상에서 제외된다.
+     */
     public record Comment(
         String commentId,
         String message,
@@ -33,7 +37,8 @@ public record FigmaCommentPreviewInfo(
         String nodeId,
         String pageName,
         String classifiedDomainKey,
-        Instant createdAt
+        Instant createdAt,
+        boolean alreadyDispatched
     ) {
     }
 }

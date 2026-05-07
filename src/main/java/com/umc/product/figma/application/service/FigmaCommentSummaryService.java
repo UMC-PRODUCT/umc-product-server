@@ -137,7 +137,9 @@ public class FigmaCommentSummaryService implements SummarizeFigmaCommentsUseCase
             }
         }
 
-        Set<String> alreadyDispatched = (command.dryRun() || command.force())
+        // dispatch 조회는 항상 수행해 응답의 alreadyDispatched 플래그를 채운다.
+        // 발송 단계에서 실제로 제외할지는 force / dryRun 플래그에 따라 다르다.
+        Set<String> alreadyDispatched = commentsByDomainId.isEmpty()
             ? Set.of()
             : loadFigmaCommentDispatchPort.findDispatchedCommentIds(allCommentIds(commentsByDomainId));
 
@@ -151,7 +153,9 @@ public class FigmaCommentSummaryService implements SummarizeFigmaCommentsUseCase
             List<EnrichedComment> bucket = entry.getValue();
             List<EnrichedComment> sendable = new ArrayList<>(bucket.size());
             for (EnrichedComment ec : bucket) {
-                if (alreadyDispatched.contains(ec.comment.commentId())) {
+                boolean isDispatched = alreadyDispatched.contains(ec.comment.commentId());
+                // force=true 면 dispatch 무관하게 발송 대상에 포함 (catch-up 시맨틱)
+                if (isDispatched && !command.force()) {
                     skippedAlreadyDispatched++;
                 } else {
                     sendable.add(ec);
