@@ -253,7 +253,8 @@ public class StudyGroupQueryRepository {
             header.groupId(), header.name(),
             header.gisuId(), header.part(),
             header.createdAt(),
-            mentorsByGroup.get(header.groupId()), membersByGroup.get(header.groupId())
+            mentorsByGroup.getOrDefault(header.groupId(), List.of()),
+            membersByGroup.getOrDefault(header.groupId(), List.of())
         );
     }
 
@@ -362,7 +363,9 @@ public class StudyGroupQueryRepository {
             .fetch();
     }
 
-    public Set<Long> findConflictedMemberIds(Long gisuId, ChallengerPart part, Set<Long> memberIds) {
+    public Set<Long> findConflictedMemberIds(
+        Long gisuId, ChallengerPart part, Set<Long> memberIds, Long excludedStudyGroupId
+    ) {
 
         return new HashSet<>(queryFactory
             .select(studyGroupMember.memberId)
@@ -371,10 +374,15 @@ public class StudyGroupQueryRepository {
             .where(
                 studyGroup.gisuId.eq(gisuId),
                 studyGroup.part.eq(part),
-                studyGroupMember.memberId.in(memberIds)
+                studyGroupMember.memberId.in(memberIds),
+                excludedStudyGroupCondition(excludedStudyGroupId)
             )
             .fetch()
         );
+    }
+
+    private BooleanExpression excludedStudyGroupCondition(Long excludedStudyGroupId) {
+        return excludedStudyGroupId != null ? studyGroup.id.ne(excludedStudyGroupId) : null;
     }
 
     // ---------------------------------------------------------------------

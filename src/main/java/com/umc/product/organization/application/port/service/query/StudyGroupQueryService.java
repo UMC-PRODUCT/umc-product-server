@@ -11,8 +11,6 @@ import com.umc.product.organization.application.port.in.query.dto.studygroup.Stu
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
-import com.umc.product.organization.application.port.out.query.LoadStudyGroupMemberPort;
-import com.umc.product.organization.application.port.out.query.LoadStudyGroupMentorPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
@@ -38,8 +36,6 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
 
     private final LoadStudyGroupPort loadStudyGroupPort;
-    private final LoadStudyGroupMemberPort loadStudyGroupMemberPort;
-    private final LoadStudyGroupMentorPort loadStudyGroupMentorPort;
 
     /**
      * 내 스터디 그룹 목록 조회 UseCase 구현.

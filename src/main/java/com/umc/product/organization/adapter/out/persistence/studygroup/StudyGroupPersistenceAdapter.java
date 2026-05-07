@@ -79,12 +79,14 @@ public class StudyGroupPersistenceAdapter implements SaveStudyGroupPort, LoadStu
     }
 
     @Override
-    public Set<Long> findConflictedMemberIds(Long gisuId, ChallengerPart part, Set<Long> memberIds) {
+    public Set<Long> findConflictedMemberIds(
+        Long gisuId, ChallengerPart part, Set<Long> memberIds, Long excludedStudyGroupId
+    ) {
         if (memberIds == null || memberIds.isEmpty()) {
             return Set.of();
         }
 
-        return studyGroupQueryRepository.findConflictedMemberIds(gisuId, part, memberIds);
+        return studyGroupQueryRepository.findConflictedMemberIds(gisuId, part, memberIds, excludedStudyGroupId);
     }
 
     @Override

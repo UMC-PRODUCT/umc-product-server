@@ -66,10 +66,12 @@ public interface LoadStudyGroupPort {
      * <p>
      * 스터디 그룹 생성/멤버 추가 시 "동일 기수+파트 내 중복 소속" 여부를 서비스가 검증하기 위한 조회이다. 반환 집합이 비어있으면 모두 신규 가입 가능한 멤버이다.
      *
-     * @param id        기수 ID
-     * @param part      파트
-     * @param memberIds 검사 대상 memberId 집합
+     * @param id                   기수 ID
+     * @param part                 파트
+     * @param memberIds            검사 대상 memberId 집합
+     * @param excludedStudyGroupId 중복 검사에서 제외할 스터디 그룹 ID
      * @return 이미 다른 그룹에 소속된 memberId 집합 (비어있으면 충돌 없음)
      */
-    Set<Long> findConflictedMemberIds(Long id, ChallengerPart part, Set<Long> memberIds);
+    Set<Long> findConflictedMemberIds(
+        Long id, ChallengerPart part, Set<Long> memberIds, Long excludedStudyGroupId);
 }
