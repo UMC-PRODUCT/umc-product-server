@@ -2,12 +2,19 @@ package com.umc.product.figma.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.figma.application.port.out.LoadFigmaCommentClassificationPort;
+import com.umc.product.figma.application.port.out.SaveFigmaCommentClassificationPort;
 import com.umc.product.figma.application.port.out.dto.FigmaCommentInfo;
 import com.umc.product.llm.application.port.in.ChatCompleteUseCase;
 import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
@@ -15,6 +22,7 @@ import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
 import com.umc.product.llm.domain.exception.LlmDomainException;
 import com.umc.product.llm.domain.exception.LlmErrorCode;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,11 +42,22 @@ class FigmaCommentDomainClassifierTest {
     @Mock
     private ChatCompleteUseCase chatCompleteUseCase;
 
+    @Mock
+    private LoadFigmaCommentClassificationPort loadClassificationPort;
+
+    @Mock
+    private SaveFigmaCommentClassificationPort saveClassificationPort;
+
     private FigmaCommentDomainClassifier classifier;
 
     @BeforeEach
     void setUp() {
-        classifier = new FigmaCommentDomainClassifier(chatCompleteUseCase, new ObjectMapper());
+        classifier = new FigmaCommentDomainClassifier(
+            chatCompleteUseCase, new ObjectMapper(),
+            loadClassificationPort, saveClassificationPort
+        );
+        // 기본은 DB 미스 (영구 캐시 비어 있음)
+        lenient().when(loadClassificationPort.findClassifications(anyCollection())).thenReturn(Map.of());
     }
 
     @Test
@@ -190,6 +209,86 @@ class FigmaCommentDomainClassifierTest {
 
         assertThat(results).containsOnlyKeys("c-ok");
         assertThat(results.get("c-ok")).isEqualTo("auth");
+    }
+
+    @Test
+    @DisplayName("DB 영구 캐시 히트면 LLM 을 호출하지 않고 그 값을 반환한다")
+    void DB_캐시_히트_시_LLM_미호출() {
+        FigmaCommentInfo comment = comment("c-db-hit", "msg");
+        when(loadClassificationPort.findClassifications(anyCollection()))
+            .thenReturn(Map.of("c-db-hit", "challenger"));
+
+        String first = classifier.classify(comment, CANDIDATES);
+        // 두 번째 호출은 L1 캐시 hit 으로 DB 도 안 거침
+        String second = classifier.classify(comment, CANDIDATES);
+
+        assertThat(first).isEqualTo("challenger");
+        assertThat(second).isEqualTo("challenger");
+        verify(chatCompleteUseCase, never()).complete(any());
+    }
+
+    @Test
+    @DisplayName("classifyBatch 에서 일부 댓글이 DB 영구 캐시에 있으면 그것만 제외하고 LLM 에 보낸다")
+    void batch_분류_DB_부분_히트() {
+        FigmaCommentInfo persisted = comment("c-persisted", "이전");
+        FigmaCommentInfo fresh = comment("c-fresh", "신규");
+        when(loadClassificationPort.findClassifications(anyCollection()))
+            .thenReturn(Map.of("c-persisted", "auth"));
+        when(chatCompleteUseCase.complete(any())).thenReturn(
+            ChatCompletionResult.of(
+                "[{\"commentId\":\"c-fresh\",\"domainKey\":\"figma\"}]",
+                "openai", 0L, 0L)
+        );
+
+        Map<String, String> results = classifier.classifyBatch(List.of(persisted, fresh), CANDIDATES);
+
+        ArgumentCaptor<ChatCompleteCommand> captor = ArgumentCaptor.forClass(ChatCompleteCommand.class);
+        verify(chatCompleteUseCase, times(1)).complete(captor.capture());
+        assertThat(captor.getValue().userPrompt())
+            .contains("c-fresh")
+            .doesNotContain("c-persisted");
+        assertThat(results)
+            .containsEntry("c-persisted", "auth")
+            .containsEntry("c-fresh", "figma");
+    }
+
+    @Test
+    @DisplayName("정상 분류는 영구 캐시에 저장된다 (실 provider)")
+    void 정상_분류_영구_캐시_저장() {
+        FigmaCommentInfo comment = comment("c-save", "auth 댓글");
+        when(chatCompleteUseCase.complete(any())).thenReturn(
+            ChatCompletionResult.of("auth", "openai", 0L, 0L)
+        );
+
+        classifier.classify(comment, CANDIDATES);
+
+        verify(saveClassificationPort, times(1)).save("c-save", "auth", "openai");
+    }
+
+    @Test
+    @DisplayName("mock provider 응답은 영구 캐시에 저장하지 않는다 (검증 단계 임시 분류 누적 방지)")
+    void mock_provider_영구_캐시_미저장() {
+        FigmaCommentInfo comment = comment("c-mock", "msg");
+        when(chatCompleteUseCase.complete(any())).thenReturn(
+            ChatCompletionResult.of("auth", "mock", 0L, 0L)
+        );
+
+        classifier.classify(comment, CANDIDATES);
+
+        verify(saveClassificationPort, never()).save(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("후보 외 응답은 영구 캐시에 저장하지 않는다 (운영 시점 후보 변경에 안전)")
+    void 후보_외_응답_영구_캐시_미저장() {
+        FigmaCommentInfo comment = comment("c-out", "?");
+        when(chatCompleteUseCase.complete(any())).thenReturn(
+            ChatCompletionResult.of("unknown-key", "openai", 0L, 0L)
+        );
+
+        classifier.classify(comment, CANDIDATES);
+
+        verify(saveClassificationPort, never()).save(any(), any(), any());
     }
 
     private FigmaCommentInfo comment(String id, String message) {

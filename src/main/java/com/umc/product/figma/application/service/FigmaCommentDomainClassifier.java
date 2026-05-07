@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.umc.product.figma.application.port.out.LoadFigmaCommentClassificationPort;
+import com.umc.product.figma.application.port.out.SaveFigmaCommentClassificationPort;
 import com.umc.product.figma.application.port.out.dto.FigmaCommentInfo;
 import com.umc.product.llm.application.port.in.ChatCompleteUseCase;
 import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
@@ -24,9 +26,14 @@ import org.springframework.stereotype.Component;
  * 후보 도메인 리스트는 운영진이 figma_routing_domain 에 등록한 도메인 키들에서 가져오며,
  * LLM 응답이 후보 외 값이거나 호출이 실패하면 null 을 반환해 호출자가 fallback 처리하도록 한다.
  * <p>
- * sync → preview 같은 짧은 시간 내 동일 댓글 중복 호출을 흡수하기 위해 commentId 키로
- * 단기 캐시 (5분 TTL, max 10k) 를 둔다 (ADR-006 §Decision 5).
- * <p>
+ * 3-tier 캐시 전략으로 LLM 호출 횟수를 최소화한다 (ADR-006 §Decision 5):
+ * <ol>
+ *   <li>L1 - in-memory Caffeine 캐시 (5분 TTL): sync→preview 같은 짧은 시간 내 중복 호출 흡수.
+ *       모든 분류(positive/negative/mock 결과) 를 보관.</li>
+ *   <li>L2 - DB 영구 캐시 (figma_comment_classification): 재시작/다중 인스턴스 환경에서도
+ *       동일 commentId 재호출 방지. mock 응답과 후보 외 응답은 보관하지 않음.</li>
+ *   <li>L3 - LLM 호출 (마지막 수단).</li>
+ * </ol>
  * batch 호출 ({@link #classifyBatch}) 은 한 파일의 댓글 N개를 단일 LLM 호출에 묶어
  * provider 의 RPM 한도 압박을 근본적으로 줄인다.
  */
@@ -52,6 +59,7 @@ public class FigmaCommentDomainClassifier {
         - 어떤 후보에도 명확히 들어맞지 않으면 가장 가까운 키를 선택한다 (null 금지).
         """;
 
+    private static final String MOCK_PROVIDER = "mock";
     private static final Duration CACHE_TTL = Duration.ofMinutes(5);
     private static final long CACHE_MAX_SIZE = 10_000L;
     /** batch 응답 한 항목의 보수적 토큰 추정값 (JSON 키/값 + 구분자 포함). */
@@ -61,11 +69,20 @@ public class FigmaCommentDomainClassifier {
 
     private final ChatCompleteUseCase chatCompleteUseCase;
     private final ObjectMapper objectMapper;
+    private final LoadFigmaCommentClassificationPort loadClassificationPort;
+    private final SaveFigmaCommentClassificationPort saveClassificationPort;
     private final Cache<String, Optional<String>> cache;
 
-    public FigmaCommentDomainClassifier(ChatCompleteUseCase chatCompleteUseCase, ObjectMapper objectMapper) {
+    public FigmaCommentDomainClassifier(
+        ChatCompleteUseCase chatCompleteUseCase,
+        ObjectMapper objectMapper,
+        LoadFigmaCommentClassificationPort loadClassificationPort,
+        SaveFigmaCommentClassificationPort saveClassificationPort
+    ) {
         this.chatCompleteUseCase = chatCompleteUseCase;
         this.objectMapper = objectMapper;
+        this.loadClassificationPort = loadClassificationPort;
+        this.saveClassificationPort = saveClassificationPort;
         this.cache = Caffeine.newBuilder()
             .maximumSize(CACHE_MAX_SIZE)
             .expireAfterWrite(CACHE_TTL)
@@ -81,8 +98,15 @@ public class FigmaCommentDomainClassifier {
         }
         Optional<String> cached = cache.getIfPresent(comment.commentId());
         if (cached != null) {
-            log.debug("LLM 분류 캐시 히트: commentId={}, cached={}", comment.commentId(), cached.orElse(null));
+            log.debug("LLM 분류 L1 캐시 히트: commentId={}, cached={}", comment.commentId(), cached.orElse(null));
             return cached.orElse(null);
+        }
+        Map<String, String> persisted = loadClassificationPort.findClassifications(List.of(comment.commentId()));
+        String fromDb = persisted.get(comment.commentId());
+        if (fromDb != null) {
+            log.debug("LLM 분류 L2 DB 히트: commentId={}, domainKey={}", comment.commentId(), fromDb);
+            cache.put(comment.commentId(), Optional.of(fromDb));
+            return fromDb;
         }
         String picked = doClassify(comment, candidateDomainKeys);
         cache.put(comment.commentId(), Optional.ofNullable(picked));
@@ -90,8 +114,8 @@ public class FigmaCommentDomainClassifier {
     }
 
     /**
-     * 댓글 N개를 한 번의 LLM 호출로 분류한다. 캐시 hit 댓글은 LLM 호출에서 제외되며
-     * 캐시 miss 댓글만 batch prompt 에 포함된다.
+     * 댓글 N개를 한 번의 LLM 호출로 분류한다. L1 캐시 hit / L2 DB 히트 댓글은 LLM 호출에서 제외되며,
+     * 그래도 남은 미캐시 댓글만 batch prompt 에 포함된다.
      *
      * @return commentId → 매칭된 domain_key 의 Map (분류 실패/후보 외 응답인 댓글은 Map 에 없음)
      */
@@ -101,26 +125,39 @@ public class FigmaCommentDomainClassifier {
         }
 
         Map<String, String> results = new LinkedHashMap<>();
-        List<FigmaCommentInfo> uncached = new ArrayList<>();
+        List<FigmaCommentInfo> afterMemoryCache = new ArrayList<>();
         for (FigmaCommentInfo c : comments) {
             Optional<String> cached = cache.getIfPresent(c.commentId());
             if (cached != null) {
                 cached.ifPresent(domain -> results.put(c.commentId(), domain));
             } else {
-                uncached.add(c);
+                afterMemoryCache.add(c);
             }
         }
 
-        if (uncached.isEmpty()) {
-            return results;
-        }
-
-        Map<String, String> bulkResults = doBulkClassify(uncached, candidateDomainKeys);
-        for (FigmaCommentInfo c : uncached) {
-            String domain = bulkResults.get(c.commentId());
-            cache.put(c.commentId(), Optional.ofNullable(domain));
-            if (domain != null) {
-                results.put(c.commentId(), domain);
+        if (!afterMemoryCache.isEmpty()) {
+            List<String> ids = afterMemoryCache.stream().map(FigmaCommentInfo::commentId).toList();
+            Map<String, String> fromDb = loadClassificationPort.findClassifications(ids);
+            List<FigmaCommentInfo> uncached = new ArrayList<>();
+            for (FigmaCommentInfo c : afterMemoryCache) {
+                String dbDomain = fromDb.get(c.commentId());
+                if (dbDomain != null) {
+                    cache.put(c.commentId(), Optional.of(dbDomain));
+                    results.put(c.commentId(), dbDomain);
+                } else {
+                    uncached.add(c);
+                }
+            }
+            if (!uncached.isEmpty()) {
+                BulkClassifyOutcome bulk = doBulkClassify(uncached, candidateDomainKeys);
+                for (FigmaCommentInfo c : uncached) {
+                    String domain = bulk.results().get(c.commentId());
+                    cache.put(c.commentId(), Optional.ofNullable(domain));
+                    if (domain != null) {
+                        results.put(c.commentId(), domain);
+                        persistIfEligible(c.commentId(), domain, bulk.provider());
+                    }
+                }
             }
         }
         return results;
@@ -139,6 +176,7 @@ public class FigmaCommentDomainClassifier {
             }
             log.debug("LLM 분류 성공: commentId={}, picked={}, provider={}",
                 comment.commentId(), picked, result.provider());
+            persistIfEligible(comment.commentId(), picked, result.provider());
             return picked;
         } catch (LlmDomainException e) {
             log.warn("LLM 분류 호출 실패: commentId={}, error={}", comment.commentId(), e.getMessage());
@@ -146,17 +184,29 @@ public class FigmaCommentDomainClassifier {
         }
     }
 
-    private Map<String, String> doBulkClassify(List<FigmaCommentInfo> comments, List<String> candidates) {
+    private BulkClassifyOutcome doBulkClassify(List<FigmaCommentInfo> comments, List<String> candidates) {
         String userPrompt = buildBatchUserPrompt(comments, candidates);
         int maxTokens = BATCH_TOKENS_PER_ITEM * comments.size() + BATCH_TOKENS_OVERHEAD;
         try {
             ChatCompletionResult result = chatCompleteUseCase.complete(
                 ChatCompleteCommand.freeFormWithMaxTokens(BATCH_SYSTEM_PROMPT, userPrompt, maxTokens)
             );
-            return parseBatchResponse(result.text(), candidates);
+            Map<String, String> parsed = parseBatchResponse(result.text(), candidates);
+            return new BulkClassifyOutcome(parsed, result.provider());
         } catch (LlmDomainException e) {
             log.warn("LLM batch 분류 호출 실패: count={}, error={}", comments.size(), e.getMessage());
-            return Map.of();
+            return new BulkClassifyOutcome(Map.of(), null);
+        }
+    }
+
+    private void persistIfEligible(String commentId, String domainKey, String provider) {
+        if (provider == null || MOCK_PROVIDER.equalsIgnoreCase(provider)) {
+            return;
+        }
+        try {
+            saveClassificationPort.save(commentId, domainKey, provider);
+        } catch (RuntimeException e) {
+            log.warn("LLM 분류 결과 영구 캐시 저장 실패 (분류 자체는 성공). commentId={}, error={}", commentId, e.toString());
         }
     }
 
@@ -232,5 +282,8 @@ public class FigmaCommentDomainClassifier {
             trimmed = trimmed.trim();
         }
         return trimmed;
+    }
+
+    private record BulkClassifyOutcome(Map<String, String> results, String provider) {
     }
 }
