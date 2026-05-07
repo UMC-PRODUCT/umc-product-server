@@ -18,10 +18,9 @@ import org.springframework.stereotype.Service;
  * LLM 호출 진입점. 활성화된 단일 ChatCompletionPort 구현체에 위임한다.
  * provider 교체 (mock → openai → gemini → spring-ai) 는 어댑터 레벨에서만 일어난다.
  * <p>
- * 호출 전후로 {@link LlmCallGuard} 를 통해 회로 차단 상태를 확인하고 결과를 기록하며,
- * {@link LlmMetrics} 로 latency / status / 토큰 사용량을 관측한다.
- * 일시적 실패의 retry 는 Spring AI 자동구성에 위임하고, 본 서비스는 retry 가 모두 소진된
- * 뒤의 최종 결과만 가드/메트릭에 반영한다.
+ * 호출 전후로 {@link LlmCallGuard} (회로 차단), {@link LlmRateLimiter} (사전 페이싱),
+ * {@link LlmMetrics} (관측) 를 적용한다. 일시적 실패의 retry 는 Spring AI 자동구성에
+ * 위임하고, 본 서비스는 retry 가 모두 소진된 뒤의 최종 결과만 가드/메트릭에 반영한다.
  */
 @Slf4j
 @Service
@@ -29,6 +28,7 @@ public class ChatCompletionService implements ChatCompleteUseCase {
 
     private final ChatCompletionPort chatCompletionPort;
     private final LlmCallGuard callGuard;
+    private final LlmRateLimiter rateLimiter;
     private final LlmMetrics metrics;
     private final Clock clock;
 
@@ -36,19 +36,22 @@ public class ChatCompletionService implements ChatCompleteUseCase {
     public ChatCompletionService(
         ChatCompletionPort chatCompletionPort,
         LlmCallGuard callGuard,
+        LlmRateLimiter rateLimiter,
         LlmMetrics metrics
     ) {
-        this(chatCompletionPort, callGuard, metrics, Clock.systemUTC());
+        this(chatCompletionPort, callGuard, rateLimiter, metrics, Clock.systemUTC());
     }
 
     ChatCompletionService(
         ChatCompletionPort chatCompletionPort,
         LlmCallGuard callGuard,
+        LlmRateLimiter rateLimiter,
         LlmMetrics metrics,
         Clock clock
     ) {
         this.chatCompletionPort = chatCompletionPort;
         this.callGuard = callGuard;
+        this.rateLimiter = rateLimiter;
         this.metrics = metrics;
         this.clock = clock;
     }
@@ -75,6 +78,7 @@ public class ChatCompletionService implements ChatCompleteUseCase {
             metrics.recordCall(provider, LlmMetrics.STATUS_CIRCUIT_OPEN, Duration.ZERO);
             throw new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED, "회로 차단 상태");
         }
+        rateLimiter.acquire();
         Instant start = clock.instant();
         try {
             ChatCompletionResult result = chatCompletionPort.complete(command);

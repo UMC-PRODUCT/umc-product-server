@@ -15,7 +15,8 @@ public record LlmProperties(
     Double temperature,
     Integer maxOutputTokens,
     Retry retry,
-    CircuitBreaker circuitBreaker
+    CircuitBreaker circuitBreaker,
+    RateLimit rateLimit
 ) {
     private static final String DEFAULT_PROVIDER = "mock";
     private static final String DEFAULT_MODEL = "gemini-2.5-flash-lite";
@@ -41,6 +42,9 @@ public record LlmProperties(
         if (circuitBreaker == null) {
             circuitBreaker = CircuitBreaker.defaults();
         }
+        if (rateLimit == null) {
+            rateLimit = RateLimit.defaults();
+        }
     }
 
     public record Retry(
@@ -64,6 +68,35 @@ public record LlmProperties(
 
         public static CircuitBreaker defaults() {
             return new CircuitBreaker(DEFAULT_FAILURE_THRESHOLD, DEFAULT_OPEN_DURATION_MILLIS);
+        }
+    }
+
+    /**
+     * provider 별 rate limit 정책. token bucket 기반으로 분당 호출 수와 burst 크기를 제한한다.
+     * {@code requestsPerMinute=0} 이면 페이싱 비활성화.
+     */
+    public record RateLimit(
+        int requestsPerMinute,
+        int burst
+    ) {
+        private static final int DEFAULT_REQUESTS_PER_MINUTE = 10;
+        private static final int DEFAULT_BURST = 5;
+
+        public RateLimit {
+            if (requestsPerMinute < 0) {
+                requestsPerMinute = 0;
+            }
+            if (burst <= 0) {
+                burst = Math.max(1, requestsPerMinute);
+            }
+        }
+
+        public static RateLimit defaults() {
+            return new RateLimit(DEFAULT_REQUESTS_PER_MINUTE, DEFAULT_BURST);
+        }
+
+        public boolean enabled() {
+            return requestsPerMinute > 0;
         }
     }
 }

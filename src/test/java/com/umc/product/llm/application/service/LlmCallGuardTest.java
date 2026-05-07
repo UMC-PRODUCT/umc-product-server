@@ -28,7 +28,8 @@ class LlmCallGuardTest {
     void setUp() {
         LlmProperties properties = new LlmProperties(
             "mock", "model", 0.0, 32, null,
-            new LlmProperties.CircuitBreaker(3, 60_000L)
+            new LlmProperties.CircuitBreaker(3, 60_000L),
+            null
         );
         when(clock.instant()).thenReturn(T0);
         guard = new LlmCallGuard(properties, clock);

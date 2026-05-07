@@ -42,6 +42,9 @@ class ChatCompletionServiceTest {
     private LlmCallGuard guard;
 
     @Mock
+    private LlmRateLimiter rateLimiter;
+
+    @Mock
     private Clock clock;
 
     private MeterRegistry registry;
@@ -54,11 +57,11 @@ class ChatCompletionServiceTest {
         metrics = new LlmMetrics(registry);
         lenient().when(clock.instant()).thenReturn(T0, T0.plusMillis(120));
         when(port.providerName()).thenReturn(PROVIDER);
-        service = new ChatCompletionService(port, guard, metrics, clock);
+        service = new ChatCompletionService(port, guard, rateLimiter, metrics, clock);
     }
 
     @Test
-    @DisplayName("가드가 차단 상태이면 즉시 실패하고 circuit-open 메트릭을 기록한다")
+    @DisplayName("가드가 차단 상태이면 즉시 실패하고 circuit-open 메트릭을 기록한다 (rate limiter 미호출)")
     void 가드_차단_즉시_실패() {
         when(guard.allow()).thenReturn(false);
 
@@ -72,6 +75,20 @@ class ChatCompletionServiceTest {
         assertThat(counter).isNotNull();
         assertThat(counter.count()).isEqualTo(1.0);
         verify(port, never()).complete(any());
+        verify(rateLimiter, never()).acquire();
+    }
+
+    @Test
+    @DisplayName("정상 호출 시 rate limiter 의 acquire 가 호출된다")
+    void 정상_호출_시_rate_limiter_적용() {
+        when(guard.allow()).thenReturn(true);
+        when(port.complete(any())).thenReturn(
+            ChatCompletionResult.of("a", PROVIDER, 10L, 1L)
+        );
+
+        service.complete(ChatCompleteCommand.classify("s", "u", List.of("a")));
+
+        verify(rateLimiter, times(1)).acquire();
     }
 
     @Test

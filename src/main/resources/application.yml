@@ -356,6 +356,12 @@ app:
     circuit-breaker:
       failure-threshold: ${LLM_CIRCUIT_BREAKER_FAILURE_THRESHOLD:5}
       open-duration-millis: ${LLM_CIRCUIT_BREAKER_OPEN_DURATION_MILLIS:60000}
+    # token bucket 기반 사전 페이싱.
+    # Google AI Studio 무료 티어 (gemini-2.5-flash-lite, ~15 RPM) 기준 안전 마진으로 기본값 10 RPM / burst 5.
+    # 0 으로 설정하면 페이싱 비활성화.
+    rate-limit:
+      requests-per-minute: ${LLM_RATE_LIMIT_RPM:10}
+      burst: ${LLM_RATE_LIMIT_BURST:5}
 
   figma:
     oauth:
