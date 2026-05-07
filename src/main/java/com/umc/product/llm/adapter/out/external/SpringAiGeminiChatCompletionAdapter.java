@@ -42,7 +42,7 @@ public class SpringAiGeminiChatCompletionAdapter implements ChatCompletionPort {
         VertexAiGeminiChatOptions options = VertexAiGeminiChatOptions.builder()
             .model(properties.model())
             .temperature(properties.temperature())
-            .maxOutputTokens(properties.maxOutputTokens())
+            .maxOutputTokens(ChatPromptHelper.resolveMaxOutputTokens(command, properties))
             .build();
 
         String systemPrompt = ChatPromptHelper.buildSystemPrompt(command);

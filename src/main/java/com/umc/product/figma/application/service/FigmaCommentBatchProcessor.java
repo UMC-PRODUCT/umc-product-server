@@ -94,9 +94,10 @@ public class FigmaCommentBatchProcessor {
                     continue;
                 }
                 Map<String, String> nodeIdToPageName = resolvePageNames(file.getFileKey(), accessToken, filtered);
+                Map<String, String> classifications = figmaCommentDomainClassifier.classifyBatch(filtered, candidateKeys);
 
                 for (FigmaCommentInfo c : filtered) {
-                    String classified = figmaCommentDomainClassifier.classify(c, candidateKeys);
+                    String classified = classifications.get(c.commentId());
                     FigmaRoutingDomain matched = classified != null ? domainByKey.get(classified) : null;
                     FigmaRoutingDomain applied = matched != null ? matched : fallback.orElse(null);
                     if (applied == null) {

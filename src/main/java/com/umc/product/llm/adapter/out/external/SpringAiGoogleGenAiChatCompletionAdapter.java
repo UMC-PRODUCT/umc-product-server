@@ -45,7 +45,7 @@ public class SpringAiGoogleGenAiChatCompletionAdapter implements ChatCompletionP
         GoogleGenAiChatOptions options = GoogleGenAiChatOptions.builder()
             .model(properties.model())
             .temperature(properties.temperature())
-            .maxOutputTokens(properties.maxOutputTokens())
+            .maxOutputTokens(ChatPromptHelper.resolveMaxOutputTokens(command, properties))
             .build();
 
         String systemPrompt = ChatPromptHelper.buildSystemPrompt(command);

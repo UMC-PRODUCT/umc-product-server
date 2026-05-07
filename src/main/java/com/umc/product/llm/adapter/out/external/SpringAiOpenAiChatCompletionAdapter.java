@@ -41,7 +41,7 @@ public class SpringAiOpenAiChatCompletionAdapter implements ChatCompletionPort {
         OpenAiChatOptions options = OpenAiChatOptions.builder()
             .model(properties.model())
             .temperature(properties.temperature())
-            .maxTokens(properties.maxOutputTokens())
+            .maxTokens(ChatPromptHelper.resolveMaxOutputTokens(command, properties))
             .build();
 
         String systemPrompt = ChatPromptHelper.buildSystemPrompt(command);

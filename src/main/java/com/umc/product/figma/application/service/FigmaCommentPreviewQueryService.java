@@ -66,10 +66,13 @@ public class FigmaCommentPreviewQueryService implements PreviewFigmaCommentsUseC
         Map<Long, FigmaRoutingDomain> appliedById = new LinkedHashMap<>();
         int unmatched = 0;
 
+        Map<String, String> classifications = candidateKeys.isEmpty()
+            ? Map.of()
+            : figmaCommentDomainClassifier.classifyBatch(newComments, candidateKeys);
+
         for (FigmaCommentInfo c : newComments) {
             String pageName = c.nodeId() != null ? nodeIdToPageName.get(c.nodeId()) : null;
-            String classified = candidateKeys.isEmpty() ? null
-                : figmaCommentDomainClassifier.classify(c, candidateKeys);
+            String classified = classifications.get(c.commentId());
             FigmaRoutingDomain matched = classified != null ? domainByKey.get(classified) : null;
             FigmaRoutingDomain applied = matched != null ? matched : fallback.orElse(null);
 

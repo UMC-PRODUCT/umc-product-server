@@ -28,6 +28,17 @@ final class ChatPromptHelper {
     }
 
     /**
+     * 호출 단위 max-tokens 해석. command 의 override 가 있으면 그 값을, 없으면 properties 기본값을 반환한다.
+     */
+    static int resolveMaxOutputTokens(ChatCompleteCommand command, LlmProperties properties) {
+        Integer override = command.maxOutputTokensOverride();
+        if (override != null && override > 0) {
+            return override;
+        }
+        return properties.maxOutputTokens();
+    }
+
+    /**
      * 모델 응답에서 앞뒤 공백/개행을 제거한다. 후보 매칭은 호출자 책임.
      */
     static String normalizeResponse(String raw) {
