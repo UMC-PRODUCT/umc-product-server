@@ -16,7 +16,6 @@ import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -78,12 +77,12 @@ public class ProjectApplicationAccessScopeResolver {
             return new AllInGisu(gisuId);
         }
 
-        Optional<Long> chapterId = rolesInGisu.stream()
+        List<Long> chapterIds = rolesInGisu.stream()
             .filter(r -> r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT)
             .map(ChallengerRoleInfo::organizationId)
-            .findFirst();
-        if (chapterId.isPresent()) {
-            return new ChapterScoped(chapterId.get(), gisuId);
+            .toList();
+        if (!chapterIds.isEmpty()) {
+            return new ChapterScoped(chapterIds, gisuId);
         }
 
         return new None();
