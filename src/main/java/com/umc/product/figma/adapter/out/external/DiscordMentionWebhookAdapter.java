@@ -14,8 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -50,7 +50,6 @@ import org.springframework.web.client.RestClientResponseException;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
 
     /* ===== Discord 명세 한도 ===== */
@@ -85,6 +84,19 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
     private static final String FOOTER_ZONE_LABEL = "KST";
 
     private final RestClient restClient;
+    /**
+     * Discord embed footer 의 [ENV: ...] 라벨로 강제 표시되는 환경 식별자. dev / staging / prod 등 운영자가 footer 만 보고 메시지 출처 환경을 즉시 식별할 수 있도록 한다.
+     * Figma_댓글_dev_prod_중복_방지_계획 §L4.
+     */
+    private final String environment;
+
+    public DiscordMentionWebhookAdapter(
+        RestClient restClient,
+        @Value("${app.environment:local}") String environment
+    ) {
+        this.restClient = restClient;
+        this.environment = environment;
+    }
 
     /* ===================================================================== */
     /*                              Public API                               */
@@ -191,12 +203,15 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
     }
 
     private String buildFooterText(DiscordDomainBatchMessage message) {
+        // Figma_댓글_dev_prod_중복_방지_계획 §L4: 환경 라벨을 모든 footer 에 강제 prefix.
+        // dev/staging 메시지가 prod 채널로 잘못 가더라도 운영자가 footer 만 보고 즉시 식별 가능.
+        String envPrefix = "[ENV: " + environment + "] ";
         if (message.windowFrom() == null && message.windowTo() == null) {
-            return "Figma comment forwarder";
+            return envPrefix + "Figma comment forwarder";
         }
         String from = message.windowFrom() == null ? "-" : FOOTER_FORMAT.format(message.windowFrom());
         String to = message.windowTo() == null ? "-" : FOOTER_FORMAT.format(message.windowTo());
-        return "Figma · " + from + " ~ " + to + " " + FOOTER_ZONE_LABEL;
+        return envPrefix + "Figma · " + from + " ~ " + to + " " + FOOTER_ZONE_LABEL;
     }
 
     /* ===================================================================== */

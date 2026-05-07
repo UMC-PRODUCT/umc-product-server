@@ -303,6 +303,9 @@ management:
 
 app:
   base-url: ${APP_BASE_URL:http://localhost:${SERVER_PORT:8080}}
+  # Figma_댓글_dev_prod_중복_방지_계획 §L4: Discord embed footer 의 환경 라벨 ([ENV: ...]) 으로 노출됨.
+  # spring.profiles.active 가 콤마 구분 다중 profile 일 수 있으므로 운영자가 단일 라벨을 명시적으로 override 가능.
+  environment: ${APP_ENVIRONMENT:${SPRING_PROFILES_ACTIVE:local}}
 
   fcm:
     enabled: ${FCM_ENABLED:false}

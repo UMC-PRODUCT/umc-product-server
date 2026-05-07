@@ -200,16 +200,27 @@ boring by default 원칙 위반. 인프라 결합도를 높이는 대가가 cros
 - 단위 테스트 1 건 추가: `discord_disabled_시_분류_캐시는_적재되지만_발송_dispatch_cursor_미변경`.
 - 영향 파일: `FigmaCommentSummaryService.java`, `FigmaCommentSummaryServiceTest.java`.
 
-### Commit 3 — `feat: Discord embed footer 에 환경 라벨 강제 표시 (L4)`
+### Commit 3 — `feat: Discord embed footer 에 환경 라벨 강제 표시 (L4)` ✅ 완료
 
-- `DiscordMentionWebhookAdapter` 에 `app.environment` 주입.
-- `buildFooterText` 의 결과 prefix 에 `[ENV: dev|staging|prod]` 추가:
+> 머지된 commit: 본 보고서의 §4 4-commit 계획 중 L4 만 먼저 단독 진행 — 코드 변경이 좁고 다른 레이어 (L1/L3) 의 가드와 독립적으로 가치를 주므로 분리해 머지함.
+
+실제 적용 결과:
+
+- `application.yml` 에 `app.environment: ${APP_ENVIRONMENT:${SPRING_PROFILES_ACTIVE:local}}` 추가. `spring.profiles.active` 가 콤마 구분 다중 profile 일 수 있어 운영자가 단일 라벨로 override 가능하도록 `APP_ENVIRONMENT` 환경변수 우선.
+- `DiscordMentionWebhookAdapter` 가 `@Value("${app.environment:local}")` 로 environment 를 주입받도록 명시적 생성자 도입 (`@RequiredArgsConstructor` 제거).
+- `buildFooterText` 가 모든 footer 결과에 `[ENV: {environment}] ` prefix 를 강제 부착:
   ```
   [ENV: dev] Figma · 2026-05-08 12:34 ~ 2026-05-08 12:39 KST
+  [ENV: prod] Figma · ...
+  [ENV: staging] Figma comment forwarder         # windowFrom/To 모두 null 인 경우
   ```
-- prod 환경에서도 라벨이 항상 노출되어 운영자가 채널의 환경 출처를 즉시 식별.
-- 단위 테스트: footer 문자열에 환경 라벨이 prefix 됐는지 검증.
-- 영향 파일: `DiscordMentionWebhookAdapter.java`, properties 주입 관련 config 1 곳, 테스트.
+- 신규 단위 테스트 `DiscordMentionWebhookAdapterFooterTest` 3 건:
+  - 환경=dev 면 footer 가 `[ENV: dev] ` 로 시작
+  - 환경=prod 면 footer 가 `[ENV: prod] ` 로 시작
+  - windowFrom/To 가 모두 null 이어도 환경 라벨은 항상 prefix
+- 영향 파일: `application.yml`, `DiscordMentionWebhookAdapter.java`, `DiscordMentionWebhookAdapterFooterTest.java` (신규).
+
+**남은 commit (1, 2, 4) 은 별도 PR 로 진행 예정.**
 
 ### Commit 4 — `docs: 환경별 figma sync 운영 가이드 + dev/prod 격리 정책 추가`
 
