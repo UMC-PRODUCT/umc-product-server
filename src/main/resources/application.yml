@@ -338,6 +338,17 @@ app:
     username: ${SWAGGER_AUTH_USERNAME:username}
     password: ${SWAGGER_AUTH_PASSWORD:password}
 
+  # alpha 환경 전용 더미 데이터 시딩. ADR-007 참조.
+  # 기본값은 비활성. profile=alpha 일 때 하단 multi-document 섹션이 enabled=true 로 오버라이드한다.
+  seed:
+    alpha:
+      enabled: ${APP_SEED_ALPHA_ENABLED:false}
+      skip-if-member-count-greater-than: ${APP_SEED_ALPHA_SKIP_THRESHOLD:0}
+      id-pw-member-count: ${APP_SEED_ALPHA_IDPW_COUNT:20}
+      oauth-member-count: ${APP_SEED_ALPHA_OAUTH_COUNT:30}
+      email-domain: ${APP_SEED_ALPHA_EMAIL_DOMAIN:alpha.umc.test}
+      default-password: ${APP_SEED_ALPHA_DEFAULT_PASSWORD:Alpha!Pass2026}
+
   oauth2:
     google:
       client-id-list: ${GOOGLE_CLIENT_ID_LIST:}
@@ -428,3 +439,19 @@ sentry:
   max-request-body-size: none
   send-default-pii: false
   traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:0.1}
+
+# ==================================================================
+# profile=alpha 전용 오버라이드. ADR-007 참조.
+# .gitignore 가 application-{profile}.yml 을 제외하므로 multi-document 로 둔다.
+# ==================================================================
+---
+spring:
+  config:
+    activate:
+      on-profile: alpha
+
+app:
+  seed:
+    alpha:
+      # alpha 에서는 기본 활성. 일시 비활성하고 싶다면 APP_SEED_ALPHA_ENABLED=false 로 설정.
+      enabled: ${APP_SEED_ALPHA_ENABLED:true}
