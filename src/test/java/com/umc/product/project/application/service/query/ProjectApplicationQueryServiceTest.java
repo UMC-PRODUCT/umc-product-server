@@ -17,6 +17,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
 import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
 import com.umc.product.project.application.port.in.query.dto.ManagedProjectApplicationCardStatus;
+import com.umc.product.project.application.port.in.query.dto.MatchingRoundPhaseView;
 import com.umc.product.project.application.port.in.query.dto.MyProjectApplicationCardInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationCardInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationDetailInfo;
@@ -31,10 +32,12 @@ import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectMatchingRound;
+import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
@@ -261,7 +264,7 @@ class ProjectApplicationQueryServiceTest {
         assertThat(card.productOwnerMemberId()).isEqualTo(99L);
         assertThat(card.matchingRoundId()).isEqualTo(7L);
         assertThat(card.matchingRoundType()).isEqualTo(MatchingType.PLAN_DEVELOPER);
-        assertThat(card.matchingRoundPhase()).isEqualTo(MatchingPhase.FIRST);
+        assertThat(card.matchingRoundPhase()).isEqualTo(MatchingRoundPhaseView.FIRST);
         assertThat(card.status()).isEqualTo(ProjectApplicationViewStatus.SUBMITTED);
         assertThat(card.partQuotas())
             .extracting("part", "quota", "currentCount")
@@ -359,6 +362,226 @@ class ProjectApplicationQueryServiceTest {
         ReflectionTestUtils.setField(pq, "part", part);
         ReflectionTestUtils.setField(pq, "quota", quota);
         return pq;
+    }
+
+    private ProjectMember createRandomMatchingMember(Long id, Project project, ChallengerPart part) {
+        ProjectMember member = newInstance(ProjectMember.class);
+        ReflectionTestUtils.setField(member, "id", id);
+        ReflectionTestUtils.setField(member, "project", project);
+        ReflectionTestUtils.setField(member, "memberId", REQUESTER_ID);
+        ReflectionTestUtils.setField(member, "part", part);
+        ReflectionTestUtils.setField(member, "status", ProjectMemberStatus.ACTIVE);
+        // application=null 은 ManyToOne 미설정으로 자연스럽게 만들어진다.
+        return member;
+    }
+
+    // ============================================================
+    //   getMyApplications - 랜덤 매칭/운영진 강제 배정 카드 합성 (APPLY-004 확장)
+    // ============================================================
+
+    @Test
+    @DisplayName("getMyApplications_application_0건_랜덤매칭_멤버_1건이면_RANDOM_MATCHING_카드_1건만_반환")
+    void 랜덤매칭_단독_카드() {
+        // given
+        Project randomProject = createProject(2L, "프로젝트B", "thumb-2", 88L);
+        ProjectMember member = createRandomMatchingMember(401L, randomProject, ChallengerPart.WEB);
+
+        GetMyProjectApplicationsQuery query = queryOf(null);
+        given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
+            .willReturn(Optional.of(challengerOf(ChallengerPart.WEB)));
+        given(loadProjectApplicationPort.searchMyApplications(any(), any(), any(), any()))
+            .willReturn(List.of());
+        given(loadProjectMemberPort
+            .findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+                REQUESTER_ID, GISU_ID, MatchingType.PLAN_DEVELOPER))
+            .willReturn(Optional.of(member));
+
+        ProjectPartQuota webQuota = createPartQuota(randomProject, ChallengerPart.WEB, 3L);
+        given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+            .willReturn(Map.of(2L, List.of(webQuota)));
+        given(loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(any()))
+            .willReturn(Map.of(2L, Map.of(ChallengerPart.WEB, 1L)));
+        given(getFileUseCase.getFileLinks(anyList()))
+            .willReturn(Map.of("thumb-2", "https://cdn.example.com/thumb-2"));
+
+        // when
+        List<MyProjectApplicationCardInfo> result = sut.getMyApplications(query);
+
+        // then
+        assertThat(result).hasSize(1);
+        MyProjectApplicationCardInfo card = result.get(0);
+        assertThat(card.applicationId()).isNull();
+        assertThat(card.projectId()).isEqualTo(2L);
+        assertThat(card.projectName()).isEqualTo("프로젝트B");
+        assertThat(card.projectThumbnailImageUrl()).isEqualTo("https://cdn.example.com/thumb-2");
+        assertThat(card.productOwnerMemberId()).isEqualTo(88L);
+        assertThat(card.matchingRoundId()).isNull();
+        assertThat(card.matchingRoundType()).isEqualTo(MatchingType.PLAN_DEVELOPER);
+        assertThat(card.matchingRoundPhase()).isEqualTo(MatchingRoundPhaseView.RANDOM_MATCHING);
+        assertThat(card.status()).isEqualTo(ProjectApplicationViewStatus.APPROVED);
+        assertThat(card.partQuotas())
+            .extracting("part", "quota", "currentCount")
+            .containsExactly(tuple(ChallengerPart.WEB, 3L, 1L));
+    }
+
+    @Test
+    @DisplayName("getMyApplications_application_2건_랜덤매칭_멤버_1건이면_RANDOM_MATCHING_카드는_마지막에_append")
+    void 랜덤매칭_카드_끝에_append() {
+        // given - 서로 다른 프로젝트의 application 2건 + 또 다른 프로젝트의 랜덤 매칭 멤버 1건
+        Project projectA = createProject(1L, "프로젝트A", null, 99L);
+        Project projectB = createProject(2L, "프로젝트B", null, 99L);
+        Project projectC = createProject(3L, "프로젝트C", null, 88L);
+
+        ProjectMatchingRound roundFirst = createMatchingRound(7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST);
+        ProjectMatchingRound roundSecond = createMatchingRound(8L, MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND);
+        ProjectApplication appA = createApplication(55L, projectA, roundFirst, ProjectApplicationStatus.REJECTED);
+        ProjectApplication appB = createApplication(56L, projectB, roundSecond, ProjectApplicationStatus.SUBMITTED);
+
+        ProjectMember member = createRandomMatchingMember(401L, projectC, ChallengerPart.WEB);
+
+        GetMyProjectApplicationsQuery query = queryOf(null);
+        given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
+            .willReturn(Optional.of(challengerOf(ChallengerPart.WEB)));
+        // port 가 startsAt ASC -> updatedAt DESC 정렬 후 반환한다고 가정
+        given(loadProjectApplicationPort.searchMyApplications(any(), any(), any(), any()))
+            .willReturn(List.of(appA, appB));
+        given(loadProjectMemberPort
+            .findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+                REQUESTER_ID, GISU_ID, MatchingType.PLAN_DEVELOPER))
+            .willReturn(Optional.of(member));
+        given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+            .willReturn(Map.of());
+        given(loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(any()))
+            .willReturn(Map.of());
+
+        // when
+        List<MyProjectApplicationCardInfo> result = sut.getMyApplications(query);
+
+        // then
+        assertThat(result).hasSize(3);
+        assertThat(result)
+            .extracting(MyProjectApplicationCardInfo::projectId)
+            .containsExactly(1L, 2L, 3L);
+        assertThat(result.get(0).matchingRoundPhase()).isEqualTo(MatchingRoundPhaseView.FIRST);
+        assertThat(result.get(1).matchingRoundPhase()).isEqualTo(MatchingRoundPhaseView.SECOND);
+        // 마지막이 RANDOM_MATCHING 카드
+        MyProjectApplicationCardInfo last = result.get(2);
+        assertThat(last.applicationId()).isNull();
+        assertThat(last.matchingRoundId()).isNull();
+        assertThat(last.matchingRoundPhase()).isEqualTo(MatchingRoundPhaseView.RANDOM_MATCHING);
+        assertThat(last.status()).isEqualTo(ProjectApplicationViewStatus.APPROVED);
+    }
+
+    @Test
+    @DisplayName("getMyApplications_같은_프로젝트에_application_APPROVED와_ProjectMember가_둘다_있으면_application_카드만_노출")
+    void 같은_프로젝트_중복_방지() {
+        // given - 같은 프로젝트(id=1) 에 application APPROVED + ProjectMember 양쪽 존재.
+        // port 가 application=null 만 반환하므로 단건 결과는 비어 있다 (랜덤 매칭 카드 미합성).
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST);
+        ProjectApplication application = createApplication(55L, project, round, ProjectApplicationStatus.APPROVED);
+
+        GetMyProjectApplicationsQuery query = queryOf(null);
+        given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
+            .willReturn(Optional.of(challengerOf(ChallengerPart.WEB)));
+        given(loadProjectApplicationPort.searchMyApplications(any(), any(), any(), any()))
+            .willReturn(List.of(application));
+        given(loadProjectMemberPort
+            .findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+                REQUESTER_ID, GISU_ID, MatchingType.PLAN_DEVELOPER))
+            .willReturn(Optional.empty());
+        given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+            .willReturn(Map.of());
+        given(loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(any()))
+            .willReturn(Map.of());
+
+        // when
+        List<MyProjectApplicationCardInfo> result = sut.getMyApplications(query);
+
+        // then -- application 카드 1건만
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).applicationId()).isEqualTo(55L);
+        assertThat(result.get(0).matchingRoundPhase()).isEqualTo(MatchingRoundPhaseView.FIRST);
+    }
+
+    @Test
+    @DisplayName("getMyApplications_DISMISSED_멤버는_port가_ACTIVE_필터링하므로_응답에서_제외된다")
+    void DISMISSED_제외() {
+        // given - port 계약상 DISMISSED 는 절대 반환되지 않으므로, port 가 empty 를 반환한다는 사실로 표현한다.
+        GetMyProjectApplicationsQuery query = queryOf(null);
+        given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
+            .willReturn(Optional.of(challengerOf(ChallengerPart.WEB)));
+        given(loadProjectApplicationPort.searchMyApplications(any(), any(), any(), any()))
+            .willReturn(List.of());
+        given(loadProjectMemberPort
+            .findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+                REQUESTER_ID, GISU_ID, MatchingType.PLAN_DEVELOPER))
+            .willReturn(Optional.empty());
+
+        // when
+        List<MyProjectApplicationCardInfo> result = sut.getMyApplications(query);
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("getMyApplications_status_명시_호출에서는_랜덤매칭_조회를_수행하지_않는다")
+    void status_명시시_랜덤매칭_조회_생략() {
+        // given
+        GetMyProjectApplicationsQuery query = queryOf(ProjectApplicationStatus.SUBMITTED);
+        given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
+            .willReturn(Optional.of(challengerOf(ChallengerPart.WEB)));
+        given(loadProjectApplicationPort.searchMyApplications(any(), any(), any(), any()))
+            .willReturn(List.of());
+
+        // when
+        List<MyProjectApplicationCardInfo> result = sut.getMyApplications(query);
+
+        // then
+        assertThat(result).isEmpty();
+        verify(loadProjectMemberPort, never())
+            .findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("getMyApplications_application과_랜덤매칭_카드의_썸네일은_통합_projectId_집합으로_1회_batch")
+    void 썸네일_통합_batch() {
+        // given - application 의 thumb-x 와 랜덤 매칭 카드의 thumb-y 가 한 번에 batch 되는지 확인
+        Project projectA = createProject(1L, "프로젝트A", "thumb-x", 99L);
+        Project projectC = createProject(3L, "프로젝트C", "thumb-y", 88L);
+        ProjectMatchingRound round = createMatchingRound(7L, MatchingType.PLAN_DEVELOPER, MatchingPhase.FIRST);
+        ProjectApplication appA = createApplication(55L, projectA, round, ProjectApplicationStatus.SUBMITTED);
+        ProjectMember member = createRandomMatchingMember(401L, projectC, ChallengerPart.WEB);
+
+        GetMyProjectApplicationsQuery query = queryOf(null);
+        given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
+            .willReturn(Optional.of(challengerOf(ChallengerPart.WEB)));
+        given(loadProjectApplicationPort.searchMyApplications(any(), any(), any(), any()))
+            .willReturn(List.of(appA));
+        given(loadProjectMemberPort
+            .findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+                REQUESTER_ID, GISU_ID, MatchingType.PLAN_DEVELOPER))
+            .willReturn(Optional.of(member));
+        given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+            .willReturn(Map.of());
+        given(loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(any()))
+            .willReturn(Map.of());
+        given(getFileUseCase.getFileLinks(anyList()))
+            .willReturn(Map.of(
+                "thumb-x", "https://cdn/thumb-x",
+                "thumb-y", "https://cdn/thumb-y"
+            ));
+
+        // when
+        List<MyProjectApplicationCardInfo> result = sut.getMyApplications(query);
+
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).projectThumbnailImageUrl()).isEqualTo("https://cdn/thumb-x");
+        assertThat(result.get(1).projectThumbnailImageUrl()).isEqualTo("https://cdn/thumb-y");
+        // 통합 batch -- getFileLinks 가 정확히 1회 호출
+        verify(getFileUseCase, org.mockito.Mockito.times(1)).getFileLinks(anyList());
     }
 
     // ============================================================

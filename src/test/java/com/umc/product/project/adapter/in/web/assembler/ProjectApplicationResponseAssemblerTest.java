@@ -21,6 +21,7 @@ import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
 import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
 import com.umc.product.project.application.port.in.query.dto.ManagedProjectApplicationCardStatus;
+import com.umc.product.project.application.port.in.query.dto.MatchingRoundPhaseView;
 import com.umc.product.project.application.port.in.query.dto.MyProjectApplicationCardInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationCardInfo;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationDetailInfo;
@@ -82,7 +83,7 @@ class ProjectApplicationResponseAssemblerTest {
         assertThat(response.project().productOwner().schoolName()).isEqualTo("한양대 ERICA");
         assertThat(response.matchingRound().id()).isEqualTo(7L);
         assertThat(response.matchingRound().type()).isEqualTo(MatchingType.PLAN_DEVELOPER);
-        assertThat(response.matchingRound().phase()).isEqualTo(MatchingPhase.FIRST);
+        assertThat(response.matchingRound().phase()).isEqualTo(MatchingRoundPhaseView.FIRST);
         assertThat(response.status()).isEqualTo(ProjectApplicationViewStatus.SUBMITTED);
         assertThat(response.project().partQuotas())
             .extracting("part", "quota", "currentCount", "status")
@@ -106,6 +107,35 @@ class ProjectApplicationResponseAssemblerTest {
         // then
         assertThat(result).isEmpty();
         verify(getMemberUseCase, never()).findAllByIds(anySet());
+    }
+
+    @Test
+    @DisplayName("myApplicationsFor_RANDOM_MATCHING_카드도_PM_닉네임_실명_학교명을_동일하게_합성한다")
+    void RANDOM_MATCHING_카드_PM_정보_합성() {
+        // given - applicationId/matchingRoundId 가 null 인 카드도 회귀 없이 합성되는지
+        GetMyProjectApplicationsQuery query = queryOf();
+        MyProjectApplicationCardInfo card = randomMatchingCardOf(2L, 88L);
+
+        given(getMyProjectApplicationsUseCase.getMyApplications(query))
+            .willReturn(List.of(card));
+        given(getMemberUseCase.findAllByIds(any()))
+            .willReturn(Map.of(88L, memberOf(88L, "랜덤피엠", "박서은", "이화여대")));
+
+        // when
+        List<MyProjectApplicationResponse> result = sut.myApplicationsFor(query);
+
+        // then
+        assertThat(result).hasSize(1);
+        MyProjectApplicationResponse response = result.get(0);
+        assertThat(response.applicationId()).isNull();
+        assertThat(response.projectId()).isEqualTo(2L);
+        assertThat(response.matchingRound().id()).isNull();
+        assertThat(response.matchingRound().type()).isEqualTo(MatchingType.PLAN_DEVELOPER);
+        assertThat(response.matchingRound().phase()).isEqualTo(MatchingRoundPhaseView.RANDOM_MATCHING);
+        assertThat(response.status()).isEqualTo(ProjectApplicationViewStatus.APPROVED);
+        assertThat(response.project().productOwner().nickname()).isEqualTo("랜덤피엠");
+        assertThat(response.project().productOwner().name()).isEqualTo("박서은");
+        assertThat(response.project().productOwner().schoolName()).isEqualTo("이화여대");
     }
 
     @Test
@@ -147,8 +177,23 @@ class ProjectApplicationResponseAssemblerTest {
             .partQuotas(List.of(ProjectPartQuotaInfo.of(ChallengerPart.WEB, 3L, 1L)))
             .matchingRoundId(7L)
             .matchingRoundType(MatchingType.PLAN_DEVELOPER)
-            .matchingRoundPhase(MatchingPhase.FIRST)
+            .matchingRoundPhase(MatchingRoundPhaseView.FIRST)
             .status(ProjectApplicationViewStatus.SUBMITTED)
+            .build();
+    }
+
+    private MyProjectApplicationCardInfo randomMatchingCardOf(Long projectId, Long ownerMemberId) {
+        return MyProjectApplicationCardInfo.builder()
+            .applicationId(null)
+            .projectId(projectId)
+            .projectName("프로젝트B")
+            .projectThumbnailImageUrl(null)
+            .productOwnerMemberId(ownerMemberId)
+            .partQuotas(List.of())
+            .matchingRoundId(null)
+            .matchingRoundType(MatchingType.PLAN_DEVELOPER)
+            .matchingRoundPhase(MatchingRoundPhaseView.RANDOM_MATCHING)
+            .status(ProjectApplicationViewStatus.APPROVED)
             .build();
     }
 
