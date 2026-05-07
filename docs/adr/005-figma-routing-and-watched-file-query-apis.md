@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed
+Accepted (2026-05-07): 6 개 커밋(query usecase/service · API 노출 · 테스트) 으로 본 ADR 의 결정을 그대로 구현 완료.
 
 ## Context
 
