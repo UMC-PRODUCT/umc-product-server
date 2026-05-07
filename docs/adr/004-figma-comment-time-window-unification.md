@@ -393,71 +393,74 @@ app:
 
 각 커밋은 단독으로 빌드/테스트 통과해야 하며, Conventional Commits 규칙(`<type>: <subject>`)을 따른다. PR 은 의미 단위로 묶어 `[Refactor] Figma 댓글 동기화를 시간창 단일 유즈케이스로 통합` 등의 제목으로 한다.
 
-> 1번부터 9번까지 순서대로 적용. 각 단계 종료 시점에 운영 관찰 가능 시간을 두는 것을 권장 (특히 5번 이후).
+> **실행 시 ordering 정정 (2026-05-07)**: `application.yml` / 테스트 프로필 모두 `spring.jpa.hibernate.ddl-auto: validate` 로 설정되어 있어 신규 엔티티를 먼저 추가하면 부트/통합 테스트가 깨진다. 따라서 원안의 §1 (엔티티 추가) 과 §4 (마이그레이션 병합) 의 순서를 swap 해 마이그레이션을 먼저 적용한다. 기능 산출물은 동일하지만 중간 커밋 구간의 빌드/테스트 통과를 보장한다.
 
-1. `feat: figma summary cursor / comment dispatch 도메인 추가 (마이그레이션 미포함)`
-   - `FigmaSummaryCursor`, `FigmaCommentDispatch` 엔티티 + Builder + 도메인 메서드 (`advance(Instant)`, `recordDispatched(...)`).
-   - JPA Repository, Persistence Adapter, Save/Load Port (`LoadFigmaSummaryCursorPort`, `SaveFigmaSummaryCursorPort`, `LoadFigmaCommentDispatchPort`, `SaveFigmaCommentDispatchPort`).
-   - **본 커밋에서는 마이그레이션 파일을 만들거나 수정하지 않는다.** figma 도메인 마이그레이션 4종은 4번 커밋에서 단일 파일로 한 번에 병합한다 (자세한 내용은 4번 커밋 참조).
-   - 본 커밋은 어떤 호출 경로도 신규 테이블을 사용하지 않으며, 빌드/테스트는 entity 단독 검증 수준에서 통과한다 (entity → schema 매핑 검증을 위한 `@DataJpaTest` 는 4번 커밋 이후 같이 활성화).
-   - 스케폴딩 전용.
+> 1번부터 10번까지 순서대로 적용. 각 단계 종료 시점에 운영 관찰 가능 시간을 두는 것을 권장 (특히 6번 이후).
 
-2. `feat: SummarizeFigmaCommentsUseCase 와 단일 본체 service 추가`
-   - 신규 `SummarizeFigmaCommentsUseCase` (in port) + `SummarizeFigmaCommentsCommand` record + `FigmaSummaryResult` record (도메인 묶음 응답).
-   - 신규 `FigmaCommentSummaryService` 구현. 기존 `FigmaCommentBatchProcessor` 의 본체를 시간창 + dryRun/force/advanceCursor 플래그 기반 단일 경로로 옮긴다.
-   - 분류 호출은 기존 `FigmaCommentDomainClassifier.classifyBatch` 그대로 재사용 (3-tier 캐시 변경 없음).
-   - 발송 시 `figma_comment_dispatch` 에 commentId 가 있고 `force=false` 면 send 대상에서 제외. 발송 성공 후 dispatch insert.
-   - 본 커밋 시점에는 새 진입점은 호출되지 않는다. 기존 sync / digest / preview 는 그대로 둔다.
-
-3. `feat: 기존 sync / digest / preview 를 SummarizeFigmaCommentsUseCase 위로 위임`
-   - `FigmaCommentSyncCommandService` → 내부적으로 `SummarizeFigmaCommentsUseCase.summarize(scheduledSync(...))` 호출하는 thin shim 으로 축소. cursor advance + dispatch 기록은 본체가 담당.
-   - `FigmaCommentDigestService` → `summarize(digest(...))` 위임.
-   - `FigmaCommentPreviewQueryService` → `summarize(preview(now-Δ, now))` 위임. 본 커밋에서 preview 의 시간창 기본값은 `now - pollInterval` ~ `now` 로 정한다.
-   - `FigmaCommentBatchProcessor` 의 `Mode` 분기와 `processSyncCycle` / `processDigestWindow` 메서드 제거.
-   - 본 커밋 시점부터 `last_synced_comment_id` 는 read 만 일어나고, write 는 일어나지 않는다.
-
-4. `chore: figma 마이그레이션 4종을 단일 파일로 병합하고 last_synced_comment_id 폐기`
+1. `chore: figma 마이그레이션 4종을 단일 파일로 병합하고 ADR-004 신규 테이블 추가`
    - **figma 도메인 마이그레이션 4종 병합** (모두 develop/main 미머지 feature 브랜치 한정 변경):
      - 보존 + 통합 대상: [`V2026.05.07.10.00__create_figma_tables.sql`](../../src/main/resources/db/migration/V2026.05.07.10.00__create_figma_tables.sql) — 본 파일 1개에 figma 도메인 전체 스키마를 통합.
-     - 삭제 대상: [`V2026.05.07.10.10__create_figma_routing_domain_tables.sql`](../../src/main/resources/db/migration/V2026.05.07.10.10__create_figma_routing_domain_tables.sql), [`V2026.05.07.10.20__drop_figma_part_route.sql`](../../src/main/resources/db/migration/V2026.05.07.10.20__drop_figma_part_route.sql), [`V2026.05.07.21.30__create_figma_comment_classification.sql`](../../src/main/resources/db/migration/V2026.05.07.21.30__create_figma_comment_classification.sql) — 본 커밋에서 git rm.
-   - 통합 파일 작성 규칙 (실제 본문은 §Implementation Notes › 데이터 모델 SQL 블록 참조):
-     - 파일 상단 헤더 주석으로 "ADR-003 + ADR-004 통합 / 4개 마이그레이션 병합 사유 (develop 미머지)" 명시.
-     - 각 테이블 CREATE 블록 위에 책임 ADR / Decision 번호를 한 줄 주석으로 남김 (예: `-- ADR-004 §Decision 4: 단일 행 전역 cursor`).
-     - `figma_watched_file` 정의에서 `last_synced_comment_id VARCHAR(100)` 컬럼 라인을 처음부터 제외 (드롭 마이그레이션 없이 자연 소멸).
-     - `figma_part_route` 는 처음부터 만들지 않음 (V10.20 의 DROP 도 자연 소멸).
-     - `figma_summary_cursor`, `figma_comment_dispatch` 두 신규 테이블도 같은 파일 안에 정의.
-   - **엔티티/서비스 측 정리** (마이그레이션 변경과 한 커밋에 묶음 — 빌드 깨짐 방지):
-     - `FigmaWatchedFile` 엔티티에서 `lastSyncedCommentId` 필드와 관련 getter/builder 항목 삭제.
-     - `FigmaWatchedFile.markSynced(latestCommentId, syncedAt)` 를 `markFetched(syncedAt)` 으로 단순화 (commentId 인자 제거).
-     - `FigmaWatchedFileStateUpdater.advance(...)` 의 commentId 파라미터 제거 또는 메서드 자체 제거 (호출부 정리).
-   - 단위 테스트의 `last_synced_comment_id` fixture 정리. Testcontainers 통합 테스트로 통합 마이그레이션이 정상 적용되는지 검증.
+     - 삭제 대상: `V2026.05.07.10.10__create_figma_routing_domain_tables.sql`, `V2026.05.07.10.20__drop_figma_part_route.sql`, `V2026.05.07.21.30__create_figma_comment_classification.sql` — 본 커밋에서 git rm.
+   - 통합 파일에 `figma_summary_cursor`, `figma_comment_dispatch` 두 신규 테이블도 함께 정의해 이후 커밋의 엔티티 추가가 ddl-auto=validate 환경에서 부트되도록 한다.
+   - `last_synced_comment_id` 컬럼은 본 커밋에서 정의를 유지한다 — 기존 sync / preview 코드가 본 컬럼을 참조하므로 진입점 위임 (4번 커밋) 이후 5번 커밋에서 제거한다.
+   - 각 테이블 CREATE 블록 위에 책임 ADR/Decision 번호를 한 줄 주석으로 남김.
+   - `figma_part_route` 는 amendment 1차에서 폐기되었으므로 통합본에 포함하지 않음 (V10.20 의 DROP 도 자연 소멸).
 
-5. `feat: figma 스케줄러를 시간창 + cursor 기반으로 전환`
-   - `FigmaCommentSyncScheduler.poll()` 가 `figma_summary_cursor` 를 SELECT FOR UPDATE 로 잠그고, `from = cursor.lastWindowEnd ?? now - pollInterval × 2`, `to = now` 로 `summarize(scheduledSync(from, to))` 호출.
-   - 발송 성공 시 cursor advance. 실패 시 cursor 비변경 (다음 사이클이 같은 창을 재시도).
-   - 다중 인스턴스 락이 이미 있다면 재사용, 없다면 application property 로 단일 인스턴스 가정 + 운영 가이드에 명시.
-   - 본 커밋 시점에 운영 환경에서 첫 cursor row 를 수동 insert (`now` 로) 하거나, 부트 시 자동 부트스트랩 (커서 부재 → `now - pollInterval × 2` 로 시작) 정책 둘 중 자동 부트스트랩 채택.
+2. `feat: figma summary cursor / comment dispatch 도메인과 Port/Adapter 추가`
+   - `FigmaSummaryCursor`, `FigmaCommentDispatch` 엔티티 + Builder + 도메인 메서드 (`bootstrap(initialEnd)`, `advance(Instant)`, `of(commentId, domainId, dispatchedAt)`).
+   - JPA Repository, Persistence Adapter, Save/Load Port (`LoadFigmaSummaryCursorPort`, `SaveFigmaSummaryCursorPort`, `LoadFigmaCommentDispatchPort`, `SaveFigmaCommentDispatchPort`).
+   - cursor 의 advance 는 `newEnd >= lastWindowEnd` 일 때만 적용해 같은 시간창의 재발송을 방어한다.
+   - dispatch 어댑터는 unique 제약 race 를 조용히 흡수한다 (기존 `figma_comment_classification` 패턴 동일).
+   - 본 커밋 시점에는 어떤 호출 경로도 신규 Port 를 사용하지 않는다.
 
-6. `feat: figma digest / preview API 를 시간창 시맨틱으로 노출`
-   - `FigmaDigestController.digest` 의 `from/to` 가 그대로 `summarize(digest(from, to))` 로 전달되도록 정리 (이미 그러하지만, force 의미를 응답 DTO 에 명시).
-   - `FigmaSyncController.preview` 를 `GET /api/v1/admin/figma/sync/watched-files/{id}/preview` 에서 `GET /api/v1/admin/figma/preview?from=&to=&watchedFileId=(optional)` 로 재정의. 기존 endpoint 는 deprecated 로 유지 + 동일 동작.
-   - preview 응답이 dispatch 여부도 함께 노출하도록 `FigmaCommentPreviewInfo.Comment` 에 `boolean alreadyDispatched` 추가.
+3. `feat: SummarizeFigmaCommentsUseCase 와 단일 본체 service 추가`
+   - 신규 `SummarizeFigmaCommentsUseCase` (in port) + `SummarizeFigmaCommentsCommand` record (정적 팩토리: scheduledSync / singleFileSync / digest / preview / previewSingleFile) + `FigmaSummaryResult` record (도메인 묶음 응답 + alreadyDispatched 정보).
+   - 신규 `FigmaCommentSummaryService` 구현. 기존 `FigmaCommentBatchProcessor` 의 Mode 이중 분기를 단일 시간창 필터로 축소.
+   - 분류 호출은 기존 `FigmaCommentDomainClassifier.classifyBatch` 그대로 재사용 (3-tier 캐시 변경 없음).
+   - 발송 시 `figma_comment_dispatch` 에 commentId 가 있고 `force=false` 면 send 대상에서 제외. 발송 성공 후 dispatch insert + (advanceCursor=true 면) cursor advance.
+   - 본 커밋 시점에는 새 진입점은 호출되지 않는다.
 
-7. `feat: figma_comment_dispatch 회수 스케줄러 추가`
-   - 일 1회 또는 N시간 주기로 `dispatched_at < now - app.figma.summary.dispatch-retention` 인 행을 DELETE.
-   - 별도 lock 으로 보호. 운영 모니터링용 로그 (회수 건수) 출력.
+4. `refactor: 기존 sync / digest / preview 를 SummarizeFigmaCommentsUseCase 로 위임`
+   - `FigmaCommentSyncCommandService` → 내부적으로 `SummarizeFigmaCommentsUseCase.summarize(scheduledSync(...))` 호출하는 thin shim 으로 축소. syncOne 은 singleFileSync 팩토리로 cursor 비변경 단일 파일 trace 모드로 동작.
+   - `FigmaCommentDigestService` → `summarize(digest(...))` 위임 후 응답을 `FigmaDigestSummary` 로 매핑.
+   - `FigmaCommentPreviewQueryService` → `summarize(previewSingleFile(...))` 위임. 시간창 기본값은 `now - pollInterval × 2 ~ now`.
+   - `FigmaCommentBatchProcessor` 삭제 (Mode 분기 본체).
+   - 본 커밋 시점부터 `last_synced_comment_id` 는 read 만 일어나고 write 는 일어나지 않는다.
 
-8. `test: figma 시간창 통합 시나리오 단위/통합 테스트 추가`
-   - Given/When/Then, `@DisplayName` 한국어.
-   - 케이스: (a) 같은 시간창 두 번 호출 시 두 번째는 dispatch 로 인해 발송 0건, (b) digest 의 force=true 는 dispatch 무시하고 재발송, (c) preview 는 dispatch / cursor 비변경, (d) cursor 락 경합 시 한쪽만 advance 성공, (e) 분류 캐시 (L1/L2) 와의 상호작용.
-   - Testcontainers 로 PostgreSQL 띄워 unique index / cursor 직렬화 검증.
+5. `refactor: figma_watched_file.last_synced_comment_id 컬럼/엔티티 필드 제거`
+   - 1번 커밋의 통합 마이그레이션에서 `last_synced_comment_id` 컬럼 라인 삭제.
+   - `FigmaWatchedFile` 엔티티에서 `lastSyncedCommentId` 필드 삭제 + `markSynced(commentId, syncedAt)` → `markFetched(syncedAt)` 단순화.
+   - `FigmaWatchedFileStateUpdater.advance(...)` 메서드 자체 제거. dispatch / cursor 갱신은 본체 service 가 담당하므로 불필요.
+   - `FigmaCommentPreviewInfo` / `FigmaWatchedFileInfo` / `FigmaWatchedFileResponse` DTO 에서 `lastSyncedCommentId` 필드 제거.
+   - 관련 javadoc / 컨트롤러 주석을 시간창 / dispatch / cursor 시맨틱으로 갱신.
 
-9. `docs: ADR-003 amendment 3차 + 운영 가이드 갱신`
-   - ADR-003 본문에 "Superseded for sync filter semantics by ADR-004" 표기 추가 (전체 supersede 는 아님 — OAuth/분류/멘션/embed 결정은 그대로 유효).
-   - `docs/guides/Figma_댓글_Discord_포워딩_보고서.md` 의 sync state / preview / digest 섹션을 시간창 시맨틱으로 갱신.
-   - 운영 메뉴얼: cursor 수동 조정, dispatch 강제 삭제, 90일 보존 정책 운영 시 주의사항 추가.
+6. `feat: figma 스케줄러를 시간창 + cursor 기반으로 전환`
+   - `FigmaCommentSyncScheduler.poll()` 가 `figma_summary_cursor.last_window_end` 를 from 으로, `now` 를 to 로 하는 시간창으로 `summarize(scheduledSync(from, to))` 호출. cursor 부재 시 안전 fallback 으로 `now - pollInterval × 2` 사용.
+   - `FigmaCommentSyncCommandService.syncAll()` 도 동일 cursor 기반 로직을 사용해 운영자 수동 트리거가 스케줄러와 시맨틱을 통일.
+   - 다중 인스턴스 환경에서는 두 인스턴스가 같은 시간창을 둘 다 처리할 수 있지만, dispatch unique(comment_id) + cursor 의 방어적 advance 로 중복 발송이 차단된다. ShedLock 도입은 후속 작업.
 
-> 본 9개 커밋이 모두 머지된 시점부터 신규 문서/PR 에서는 `last_synced_comment_id` / `figma_part_route` 표현을 사용하지 않는다. 두 정의는 4번 커밋의 마이그레이션 4종 단일 파일 병합 과정에서 자연 소멸하며, 별도 DROP 마이그레이션이나 운영 안정화 기간이 필요하지 않다 (figma 도메인 마이그레이션 4종이 모두 develop/main 미머지 상태이기 때문).
+7. `feat: figma preview API 를 시간창 시맨틱으로 노출하고 alreadyDispatched 정보 추가`
+   - 신규 `FigmaPreviewController` — `GET /api/v1/admin/figma/preview?from=&to=&watchedFileId=` 로 시간창 / 단일 파일 / 전체 활성 파일 preview 를 모두 처리. 응답은 `FigmaSummaryResult` 통일 포맷.
+   - 기존 `GET /api/v1/admin/figma/sync/watched-files/{id}/preview` 는 `@Deprecated` 로 유지 (호환).
+   - `FigmaCommentPreviewInfo.Comment` 에 `boolean alreadyDispatched` 필드 추가.
+   - `FigmaCommentSummaryService` 의 dispatch 조회를 항상 수행하도록 수정 (기존: `dryRun || force` 시 빈 Set → 응답의 alreadyDispatched 가 잘못 false 였던 버그 수정).
+
+8. `feat: figma_comment_dispatch 회수 스케줄러 추가`
+   - `FigmaSummaryProperties` (app.figma.summary.dispatch-retention=P90D, retention-poll-interval=PT24H).
+   - `FigmaCommentDispatchRetentionScheduler` — 일 1회 보존 기간 초과 행을 DELETE. `figma.sync.enabled=false` 면 회수도 건너뜀.
+
+9. `test: figma 시간창 통합 시나리오 단위 테스트 추가`
+   - `FigmaSummaryCursorTest` — advance 방어 로직 (미래/과거/null/idempotent) 검증.
+   - `FigmaCommentSummaryServiceTest` — 핵심 시나리오 4종: sync 첫 호출 발송+dispatch+cursor advance / sync 재호출 dedup / digest force 무시 / preview dryRun 부수효과 0.
+   - Testcontainers 기반 cursor 락 경합 통합 테스트는 ShedLock 도입과 함께 후속 작업으로 분리.
+
+10. `docs: ADR-003 amendment 3차 + ADR-004 ordering 정정 + 운영 가이드`
+    - ADR-003 본문 상단에 "ADR-004 가 sync 필터 시맨틱 + 중복 발송 가드 부분만 supersede" 표기 추가.
+    - ADR-004 본문 (이 문서) Implementation Plan 의 ordering 정정 반영 (ddl-auto=validate 제약).
+    - `docs/guides/Figma_댓글_Discord_포워딩_보고서.md` 의 sync state / preview / digest 섹션을 시간창 시맨틱으로 갱신.
+    - 운영 메뉴얼: cursor 수동 조정, dispatch 강제 삭제, 90일 보존 정책 운영 주의사항 추가.
+
+> 본 10개 커밋이 모두 머지된 시점부터 신규 문서/PR 에서는 `last_synced_comment_id` / `figma_part_route` 표현을 사용하지 않는다. 두 정의는 1·5번 커밋 (마이그레이션 통합 + 컬럼 제거) 과정에서 자연 소멸하며, 별도 DROP 마이그레이션이나 운영 안정화 기간이 필요하지 않다 (figma 도메인 마이그레이션 4종이 모두 develop/main 미머지 상태이기 때문).
 
 ## References
 

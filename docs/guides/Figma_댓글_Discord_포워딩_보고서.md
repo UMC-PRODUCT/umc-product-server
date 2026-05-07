@@ -1,8 +1,19 @@
 # Figma 댓글 Discord 포워딩 시스템 설계/구현 보고서
 
+> **2026-05-08 갱신 (ADR-004 시간창 시맨틱 도입)**: 본 문서의 sync state 관련 서술 (`last_synced_comment_id`, `figma_part_route` 등) 은 [ADR-004](../adr/004-figma-comment-time-window-unification.md) 도입으로 다음과 같이 변경되었다.
+> - 동기화 boundary 였던 `figma_watched_file.last_synced_comment_id` 는 폐기. "어디까지 봤는가" 는 단일 행 `figma_summary_cursor.last_window_end` 로, "어느 댓글이 발송됐는가" 는 `figma_comment_dispatch (comment_id UNIQUE, dispatched_at)` 로 분리되었다.
+> - sync / digest / preview 세 진입점이 단일 `SummarizeFigmaCommentsUseCase` 로 통합되었으며, 입력은 모두 시간창 `[from, to]` + 플래그 (dryRun / force / advanceCursor) 조합이다.
+> - 스케줄러는 매 사이클 `(cursor.lastWindowEnd, now]` 시간창을 처리한다. cursor 부재 시 안전 fallback 으로 `now - pollInterval × 2` 를 사용한다.
+> - preview API 는 `GET /api/v1/admin/figma/preview?from=&to=&watchedFileId=` 로 generic 화되었다. 기존 `/api/v1/admin/figma/sync/watched-files/{id}/preview` 는 `@Deprecated`. 응답의 각 댓글에는 `alreadyDispatched` 플래그가 포함되어 \"다음 sync 에서 무엇이 실제로 발송될지\" 사전 검증이 가능하다.
+> - dispatch 테이블은 90일 보존이며 `FigmaCommentDispatchRetentionScheduler` 가 일 1회 회수한다. `app.figma.summary.dispatch-retention` / `retention-poll-interval` 로 조정.
+> - 다중 인스턴스 환경에서 cursor 동기화 가드는 dispatch unique 제약 + cursor 의 방어적 advance 에 의존한다 (ShedLock 도입은 후속 작업).
+> - 운영 시 자주 쓰는 SQL: cursor 강제 조정 `UPDATE figma_summary_cursor SET last_window_end = '<ts>'`, 특정 댓글 강제 재발송 `DELETE FROM figma_comment_dispatch WHERE comment_id = '<id>'`.
+>
+> 본문 중 `last_synced_comment_id` / `figma_part_route` 표기를 보면 위 시맨틱으로 치환해 읽는다. 본문 자체의 전면 재작성은 별도 작업으로 분리된다.
+
 ## 1. 개요
 
-본 문서는 [ADR-003: Figma 파일 댓글을 OAuth 기반으로 폴링해 담당 파트별 Discord 멘션으로 전달](../adr/003-figma-comment-discord-forwarder.md) 결정에 따라 신설된 `figma` 도메인의 설계 의도, 아키텍처, 운영 흐름, API, 데이터 모델, 핵심 용어를 정리한다.
+본 문서는 [ADR-003: Figma 파일 댓글을 OAuth 기반으로 폴링해 담당 파트별 Discord 멘션으로 전달](../adr/003-figma-comment-discord-forwarder.md) 결정 (및 [ADR-004 시간창 단일 유즈케이스 통합](../adr/004-figma-comment-time-window-unification.md) 후속 정정) 에 따라 신설된 `figma` 도메인의 설계 의도, 아키텍처, 운영 흐름, API, 데이터 모델, 핵심 용어를 정리한다.
 실제 구현은 `com.umc.product.figma` 패키지에 위치하며, 본 문서는 운영진이 시스템을 사용/관리/디버깅할 수 있도록 도메인 지식 + 사용 절차를 한 곳에 모은 운영 가이드 성격을 갖는다.
 
 ## 2. 육하원칙(6W1H) 정리
