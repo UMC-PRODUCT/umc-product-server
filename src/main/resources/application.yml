@@ -119,16 +119,34 @@ spring:
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
 
-  # Spring AI provider 설정 - LLM_PROVIDER 한 변수가 다음 두 키를 동시에 결정한다.
+  # ====================================================================
+  # Spring AI / LLM provider 설정
+  # ====================================================================
+  # 단 하나의 환경 변수 LLM_PROVIDER 가 다음 두 키를 동시에 결정한다.
   #   - app.llm.provider           : 활성 어댑터 (ConditionalOnProperty 매칭 키)
   #   - spring.ai.model.chat       : ChatModel 자동구성 활성화 키
-  # LLM_PROVIDER 후보값:
-  #   - mock              : MockChatCompletionAdapter (기본값, 외부 호출 없음)
-  #   - openai            : OpenAI ChatModel
-  #   - vertexai-gemini   : Vertex AI Gemini (service account 인증)
-  #   - google-genai      : Google AI Studio API key 또는 Vertex AI 모드 (Gemini Developer API)
-  # mock 일 때 spring.ai.model.chat=mock 은 어떤 자동구성에도 매칭되지 않아 ChatModel 빈은 만들어지지 않는다.
-  # 본 시스템은 chat 카테고리만 사용하므로 다른 모델 자동구성은 항상 비활성화한다.
+  # 따라서 두 키를 따로 신경 쓸 필요 없이 LLM_PROVIDER 만 정확히 주입하면 된다.
+  #
+  # LLM_PROVIDER 후보값과 함께 주입해야 하는 환경 변수:
+  #   ┌────────────────────┬──────────────────────────────────────────────────────────┐
+  #   │ LLM_PROVIDER       │ 추가로 주입해야 하는 환경 변수                           │
+  #   ├────────────────────┼──────────────────────────────────────────────────────────┤
+  #   │ mock (기본)        │ 없음 (외부 호출 없음, 운영 활성화 전 검증용)            │
+  #   │ openai             │ LLM_OPENAI_API_KEY                                       │
+  #   │ vertexai-gemini    │ VERTEX_PROJECT_ID, VERTEX_LOCATION,                      │
+  #   │                    │ GOOGLE_APPLICATION_CREDENTIALS (service account JSON)    │
+  #   │ google-genai       │ LLM_GEMINI_API_KEY (Google AI Studio 무료 티어)         │
+  #   │                    │ ── 또는 ──                                               │
+  #   │                    │ LLM_GOOGLE_GENAI_VERTEX_AI=true + VERTEX_PROJECT_ID +    │
+  #   │                    │ VERTEX_LOCATION + GOOGLE_APPLICATION_CREDENTIALS         │
+  #   └────────────────────┴──────────────────────────────────────────────────────────┘
+  #
+  # LLM_PROVIDER 가 위 후보값이 아니거나 활성 provider 의 ChatModel 빈이 만들어지지 않으면
+  # LlmFallbackConfig 가 mock 어댑터로 fallback 하고 WARN 로그를 남긴다 (부팅 자체는 성공).
+  # 부팅 직후 INFO 로그 "LLM 활성 provider=..." 를 통해 실제 활성 provider 를 확인할 수 있다.
+  #
+  # 본 시스템은 chat 카테고리만 사용하므로 embedding/image/moderation/audio 자동구성은 항상 비활성화한다.
+  # ====================================================================
   ai:
     model:
       chat: ${LLM_PROVIDER:mock}
@@ -329,7 +347,7 @@ app:
 
   llm:
     provider: ${LLM_PROVIDER:mock}
-    model: ${LLM_MODEL:gemini-1.5-flash}
+    model: ${LLM_MODEL:gemini-2.5-flash-lite}
     temperature: ${LLM_TEMPERATURE:0.0}
     max-output-tokens: ${LLM_MAX_OUTPUT_TOKENS:32}
     retry:
