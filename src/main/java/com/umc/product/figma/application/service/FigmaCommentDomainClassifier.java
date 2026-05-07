@@ -108,9 +108,13 @@ public class FigmaCommentDomainClassifier {
             cache.put(comment.commentId(), Optional.of(fromDb));
             return fromDb;
         }
-        String picked = doClassify(comment, candidateDomainKeys);
-        cache.put(comment.commentId(), Optional.ofNullable(picked));
-        return picked;
+        SingleClassifyOutcome outcome = doClassify(comment, candidateDomainKeys);
+        // 호출 자체가 성공한 경우에만 결과를 캐싱한다 (positive 든 후보 외 응답이든).
+        // 호출이 transient 예외로 실패한 경우는 캐싱하지 않아 다음 호출에서 즉시 재시도된다.
+        if (outcome.callSucceeded()) {
+            cache.put(comment.commentId(), Optional.ofNullable(outcome.picked()));
+        }
+        return outcome.picked();
     }
 
     /**
@@ -150,9 +154,14 @@ public class FigmaCommentDomainClassifier {
             }
             if (!uncached.isEmpty()) {
                 BulkClassifyOutcome bulk = doBulkClassify(uncached, candidateDomainKeys);
+                // bulk.provider() == null 은 doBulkClassify 의 catch 분기 (LLM 호출 자체 실패) 를 의미한다.
+                // 호출 실패 시 negative 캐시를 박지 않아 다음 사이클에서 즉시 재시도되도록 한다 (P1 fix).
+                boolean callSucceeded = bulk.provider() != null;
                 for (FigmaCommentInfo c : uncached) {
                     String domain = bulk.results().get(c.commentId());
-                    cache.put(c.commentId(), Optional.ofNullable(domain));
+                    if (callSucceeded) {
+                        cache.put(c.commentId(), Optional.ofNullable(domain));
+                    }
                     if (domain != null) {
                         results.put(c.commentId(), domain);
                         persistIfEligible(c.commentId(), domain, bulk.provider());
@@ -163,7 +172,10 @@ public class FigmaCommentDomainClassifier {
         return results;
     }
 
-    private String doClassify(FigmaCommentInfo comment, List<String> candidateDomainKeys) {
+    /**
+     * 단건 LLM 분류. 호출 자체가 transient 예외로 실패하면 {@code callSucceeded=false} 를 반환해 호출자가 negative cache 박지 않도록 한다 (P1 fix).
+     */
+    private SingleClassifyOutcome doClassify(FigmaCommentInfo comment, List<String> candidateDomainKeys) {
         String userPrompt = buildUserPrompt(comment, candidateDomainKeys);
         try {
             // figma 도메인이 system/user prompt 모두 완성해 LLM 도메인에 보낸다.
@@ -174,15 +186,16 @@ public class FigmaCommentDomainClassifier {
             String picked = result.text() == null ? null : result.text().trim();
             if (picked == null || !candidateDomainKeys.contains(picked)) {
                 log.warn("LLM 분류 응답이 후보 외 값입니다. response={}, candidates={}", picked, candidateDomainKeys);
-                return null;
+                // 호출은 성공했으나 응답이 후보에 매칭되지 않음 → callSucceeded=true 로 negative 캐싱 허용.
+                return new SingleClassifyOutcome(null, true);
             }
             log.debug("LLM 분류 성공: commentId={}, picked={}, provider={}",
                 comment.commentId(), picked, result.provider());
             persistIfEligible(comment.commentId(), picked, result.provider());
-            return picked;
+            return new SingleClassifyOutcome(picked, true);
         } catch (LlmDomainException e) {
             log.warn("LLM 분류 호출 실패: commentId={}, error={}", comment.commentId(), e.getMessage());
-            return null;
+            return new SingleClassifyOutcome(null, false);
         }
     }
 
@@ -287,5 +300,11 @@ public class FigmaCommentDomainClassifier {
     }
 
     private record BulkClassifyOutcome(Map<String, String> results, String provider) {
+    }
+
+    /**
+     * 단건 분류 결과. {@code callSucceeded=false} 는 LLM 호출 자체가 transient 예외로 실패한 케이스를 표현해 호출자가 negative cache 박지 않도록 한다.
+     */
+    private record SingleClassifyOutcome(String picked, boolean callSucceeded) {
     }
 }

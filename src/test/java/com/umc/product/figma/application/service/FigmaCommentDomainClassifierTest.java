@@ -90,8 +90,8 @@ class FigmaCommentDomainClassifierTest {
     }
 
     @Test
-    @DisplayName("LLM 호출이 실패하면 null 을 반환하고 negative 캐시한다")
-    void LLM_실패_시_null_negative_캐시() {
+    @DisplayName("LLM 호출 자체가 실패하면 null 을 반환하지만 negative 캐시는 박지 않아 다음 호출이 LLM 을 재시도한다")
+    void LLM_호출_실패_시_negative_캐시_미설정_재시도() {
         FigmaCommentInfo comment = comment("c-3", "msg");
         when(chatCompleteUseCase.complete(any()))
             .thenThrow(new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED));
@@ -101,7 +101,25 @@ class FigmaCommentDomainClassifierTest {
 
         assertThat(first).isNull();
         assertThat(second).isNull();
-        verify(chatCompleteUseCase, times(1)).complete(any());
+        // P1 fix: transient 호출 실패는 캐시되지 않으므로 두 번째 호출이 LLM 을 다시 시도해야 한다.
+        verify(chatCompleteUseCase, times(2)).complete(any());
+    }
+
+    @Test
+    @DisplayName("classifyBatch 도 LLM 호출 자체 실패면 negative 캐시를 박지 않고 다음 호출이 재시도된다")
+    void classifyBatch_호출_실패_시_negative_캐시_미설정_재시도() {
+        FigmaCommentInfo c1 = comment("c-batch-fail-1", "msg1");
+        FigmaCommentInfo c2 = comment("c-batch-fail-2", "msg2");
+        when(chatCompleteUseCase.complete(any()))
+            .thenThrow(new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED));
+
+        Map<String, String> first = classifier.classifyBatch(List.of(c1, c2), CANDIDATES);
+        Map<String, String> second = classifier.classifyBatch(List.of(c1, c2), CANDIDATES);
+
+        assertThat(first).isEmpty();
+        assertThat(second).isEmpty();
+        // P1 fix: bulk 호출 실패도 캐시되지 않아 다음 사이클에 LLM batch 가 다시 호출되어야 한다.
+        verify(chatCompleteUseCase, times(2)).complete(any());
     }
 
     @Test
