@@ -1,5 +1,6 @@
 package com.umc.product.llm.application.service;
 
+import com.umc.product.llm.adapter.out.external.LlmProperties;
 import com.umc.product.llm.application.port.in.ChatCompleteUseCase;
 import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
 import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
@@ -26,10 +27,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class ChatCompletionService implements ChatCompleteUseCase {
 
+    private static final String MOCK_PROVIDER = "mock";
+
     private final ChatCompletionPort chatCompletionPort;
     private final LlmCallGuard callGuard;
     private final LlmRateLimiter rateLimiter;
     private final LlmMetrics metrics;
+    private final LlmProperties properties;
     private final Clock clock;
 
     @Autowired
@@ -37,9 +41,10 @@ public class ChatCompletionService implements ChatCompleteUseCase {
         ChatCompletionPort chatCompletionPort,
         LlmCallGuard callGuard,
         LlmRateLimiter rateLimiter,
-        LlmMetrics metrics
+        LlmMetrics metrics,
+        LlmProperties properties
     ) {
-        this(chatCompletionPort, callGuard, rateLimiter, metrics, Clock.systemUTC());
+        this(chatCompletionPort, callGuard, rateLimiter, metrics, properties, Clock.systemUTC());
     }
 
     ChatCompletionService(
@@ -47,24 +52,33 @@ public class ChatCompletionService implements ChatCompleteUseCase {
         LlmCallGuard callGuard,
         LlmRateLimiter rateLimiter,
         LlmMetrics metrics,
+        LlmProperties properties,
         Clock clock
     ) {
         this.chatCompletionPort = chatCompletionPort;
         this.callGuard = callGuard;
         this.rateLimiter = rateLimiter;
         this.metrics = metrics;
+        this.properties = properties;
         this.clock = clock;
     }
 
     /**
-     * 부팅 시 실제로 활성화된 어댑터를 INFO 로 한 줄 출력해 운영자가 LLM_PROVIDER 설정과
-     * 실제 활성 provider 의 일치 여부를 즉시 확인할 수 있게 한다.
+     * 부팅 시 실제로 활성화된 어댑터를 INFO 로 한 줄 출력하고, 활성 provider / fallback 진입 여부를 항상 노출되는 gauge 로 등록한다 (LLM_분류_캐시_점검_보고서 §3.6).
      */
     @PostConstruct
     void logActiveProvider() {
-        log.info("LLM 활성 provider={} (어댑터={})",
-            chatCompletionPort.providerName(),
-            chatCompletionPort.getClass().getSimpleName());
+        String activeProvider = chatCompletionPort.providerName();
+        String configuredProvider = properties.provider();
+        // 설정상 mock 이 아닌데 실제 활성 provider 가 mock 이면 LlmFallbackConfig 가 진입한 것.
+        boolean fallbackEngaged = !MOCK_PROVIDER.equalsIgnoreCase(configuredProvider)
+            && MOCK_PROVIDER.equalsIgnoreCase(activeProvider);
+        log.info("LLM 활성 provider={} (어댑터={}, configured={}, fallbackEngaged={})",
+            activeProvider,
+            chatCompletionPort.getClass().getSimpleName(),
+            configuredProvider,
+            fallbackEngaged);
+        metrics.registerProviderInfo(activeProvider, fallbackEngaged);
     }
 
     @Override

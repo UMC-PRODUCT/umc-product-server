@@ -9,6 +9,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.umc.product.llm.adapter.out.external.LlmProperties;
 import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
 import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
 import com.umc.product.llm.application.port.out.ChatCompletionPort;
@@ -56,7 +57,8 @@ class ChatCompletionServiceTest {
         metrics = new LlmMetrics(registry);
         lenient().when(clock.instant()).thenReturn(T0, T0.plusMillis(120));
         when(port.providerName()).thenReturn(PROVIDER);
-        service = new ChatCompletionService(port, guard, rateLimiter, metrics, clock);
+        LlmProperties properties = new LlmProperties(PROVIDER, null, null, null, null, null, null);
+        service = new ChatCompletionService(port, guard, rateLimiter, metrics, properties, clock);
     }
 
     @Test
