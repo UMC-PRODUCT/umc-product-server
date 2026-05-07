@@ -31,6 +31,17 @@ public interface GetFileUseCase {
     Map<String, String> getFileLinks(List<String> fileIds);
 
     /**
+     * 파일 ID 목록으로 파일 메타(원본 파일명/contentType/size 등)와 접근 URL을 일괄 조회합니다.
+     * <p>
+     * DB 조회를 IN 쿼리 1회로 수행하여 N+1 문제를 방지합니다. 누락된 fileId 는 결과 Map 에서 제외되므로(SaveAll 시맨틱이 아닌 graceful lookup), 호출자는 누락 가능성을
+     * 가정해야 합니다.
+     *
+     * @param fileIds 파일 ID 목록
+     * @return fileId -> {@link FileInfo} 매핑 (누락 fileId 는 빠짐)
+     */
+    Map<String, FileInfo> findAllByIds(List<String> fileIds);
+
+    /**
      * 파일이 존재하는지 확인합니다. Helper method 입니다.
      *
      * @param fileId 파일 ID
