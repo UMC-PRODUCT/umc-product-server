@@ -22,6 +22,11 @@ public class ProjectPartQuotaPersistenceAdapter
     }
 
     @Override
+    public boolean existsByProjectIdAndPart(Long projectId, ChallengerPart part) {
+        return repository.existsByProjectIdAndPart(projectId, part);
+    }
+
+    @Override
     public ProjectPartQuota save(ProjectPartQuota quota) {
         return repository.save(quota);
     }
