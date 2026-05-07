@@ -203,14 +203,14 @@ management:
 
   otlp:
     tracing:
-      endpoint: ${TEMPO_URL:http://localhost:4318}
+      endpoint: ${TEMPO_URL:http://localhost:4318/v1/traces}
       headers:
-        Authorization: "Basic ${TEMPO_AUTH}"
+        Authorization: "Basic ${TEMPO_AUTH:}"
     metrics:
       export:
-        url: ${PROM_URL}
+        url: ${PROM_URL:http://localhost:4318/v1/metrics}
         headers:
-          Authorization: "Basic ${PROM_AUTH}"
+          Authorization: "Basic ${PROM_AUTH:}"
         step: 30s
 
   metrics:

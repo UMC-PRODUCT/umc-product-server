@@ -1,4 +1,4 @@
-<configuration>
+<configuration debug="true">
     <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
     <!-- ========== Custom Converter ========== -->
@@ -34,6 +34,8 @@
 
     <!-- Loki -->
     <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <batchMaxItems>1</batchMaxItems>
+        <batchTimeoutMs>1000</batchTimeoutMs>
         <http>
             <url>${LOKI_URL:-http://localhost:3100/loki/api/v1/push}</url>
             <auth>
