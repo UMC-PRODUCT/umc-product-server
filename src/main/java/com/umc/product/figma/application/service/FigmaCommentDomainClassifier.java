@@ -1,12 +1,15 @@
 package com.umc.product.figma.application.service;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.umc.product.figma.application.port.out.dto.FigmaCommentInfo;
 import com.umc.product.llm.application.port.in.ChatCompleteUseCase;
 import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
 import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
 import com.umc.product.llm.domain.exception.LlmDomainException;
+import java.time.Duration;
 import java.util.List;
-import lombok.RequiredArgsConstructor;
+import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -14,10 +17,12 @@ import org.springframework.stereotype.Component;
  * Figma 댓글 본문을 LLM 으로 분석해 등록된 라우팅 도메인 키 중 하나로 분류한다.
  * 후보 도메인 리스트는 운영진이 figma_routing_domain 에 등록한 도메인 키들에서 가져오며,
  * LLM 응답이 후보 외 값이거나 호출이 실패하면 null 을 반환해 호출자가 fallback 처리하도록 한다.
+ * <p>
+ * sync → preview 같은 짧은 시간 내 동일 댓글 중복 호출을 흡수하기 위해 commentId 키로
+ * 단기 캐시 (5분 TTL, max 10k) 를 둔다 (ADR-006 §Decision 5).
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class FigmaCommentDomainClassifier {
 
     private static final String SYSTEM_PROMPT = """
@@ -26,7 +31,19 @@ public class FigmaCommentDomainClassifier {
         다른 설명 없이 그 키 문자열만 반환하라.
         """;
 
+    private static final Duration CACHE_TTL = Duration.ofMinutes(5);
+    private static final long CACHE_MAX_SIZE = 10_000L;
+
     private final ChatCompleteUseCase chatCompleteUseCase;
+    private final Cache<String, Optional<String>> cache;
+
+    public FigmaCommentDomainClassifier(ChatCompleteUseCase chatCompleteUseCase) {
+        this.chatCompleteUseCase = chatCompleteUseCase;
+        this.cache = Caffeine.newBuilder()
+            .maximumSize(CACHE_MAX_SIZE)
+            .expireAfterWrite(CACHE_TTL)
+            .build();
+    }
 
     /**
      * @return 매칭된 domain_key, 분류 실패 또는 후보 외 응답이면 null
@@ -35,6 +52,17 @@ public class FigmaCommentDomainClassifier {
         if (candidateDomainKeys == null || candidateDomainKeys.isEmpty()) {
             return null;
         }
+        Optional<String> cached = cache.getIfPresent(comment.commentId());
+        if (cached != null) {
+            log.debug("LLM 분류 캐시 히트: commentId={}, cached={}", comment.commentId(), cached.orElse(null));
+            return cached.orElse(null);
+        }
+        String picked = doClassify(comment, candidateDomainKeys);
+        cache.put(comment.commentId(), Optional.ofNullable(picked));
+        return picked;
+    }
+
+    private String doClassify(FigmaCommentInfo comment, List<String> candidateDomainKeys) {
         String userPrompt = buildUserPrompt(comment, candidateDomainKeys);
         try {
             ChatCompletionResult result = chatCompleteUseCase.complete(
