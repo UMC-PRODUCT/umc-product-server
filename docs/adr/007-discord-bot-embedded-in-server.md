@@ -39,6 +39,74 @@ Proposed
 - ADR-006 으로 WebSocket + STOMP (서버 ↔ 클라이언트) 도입이 검토되고 있다 — Discord Gateway 연결과는 별개의 WebSocket 이지만 운영 측면에서 "한 프로세스 안에 두 개의 영구 연결" 이 공존하는 점은 인지가 필요하다.
 - `application.yml` 에 이미 `app.webhook.discord.url` 이 있고, profile 은 `local / dev / prod`. 운영 알람은 `local` 외 모든 환경에서 발송되는 컨벤션이 자리잡혀 있다.
 
+### 배경 기술 — WebFlux · Reactor · RestClient (이 결정의 기술적 전제)
+
+본 ADR 의 결정점 ②(라이브러리 선택), `Decision §2`, `Alternatives §3` 에서 "Reactor 기반 라이브러리는 친화도가 낮다", "WebFlux 미사용", "Spring MVC + RestClient 기반이라 Reactor 가 외부에서만 들어오는 형태" 같은 표현이 반복된다. 이 판단의 근거가 되는 세 기술과 그 사이의 마찰을 명시적으로 정리한다.
+
+#### Project Reactor — `Mono<T>` / `Flux<T>` 비동기 파이프라인
+
+[Reactor 공식](https://projectreactor.io/) 의 reactive streams 구현체. 두 핵심 타입:
+
+- `Mono<T>` — 0~1 개의 비동기 결과 (HTTP 응답 1건, DB 단건 조회 결과 등).
+- `Flux<T>` — 0~N 개의 비동기 스트림 (Kafka 컨슘, 큰 결과셋 streaming 등).
+
+일반 Java 메서드가 `T` 를 즉시 반환한다면, Reactor 메서드는 `Mono<T>` 를 반환해 "결과가 언제 어떤 스레드에서 도착할지 모르는 약속" 을 표현한다. `map` / `flatMap` / `filter` / `zip` 같은 연산자로 파이프라인을 구성하고, 마지막 `subscribe()` 시점에야 실제 실행이 트리거된다 (lazy / pull-style).
+
+핵심 특성:
+
+- **non-blocking** — I/O 대기 시점에 스레드를 점유하지 않고 이벤트 루프로 반환. 적은 스레드로 높은 동시성.
+- **backpressure** — 소비자가 버틸 수 있는 만큼만 요청해 OOM 을 방지하는 흐름 제어.
+- **viral type** — `Mono` / `Flux` 가 한 번 메서드 시그니처에 들어오면 호출 체인 위쪽으로 계속 전파된다. 중간에 `.block()` 으로 동기 변환이 가능하지만, **non-blocking 스레드(Netty event loop) 에서 호출하면 `BlockHangDetected` 예외 즉발**.
+
+#### Spring WebFlux — Spring MVC 의 reactive 대체재
+
+Spring 5 에서 도입된 reactive web 프레임워크. Spring MVC 와는 **둘 중 하나만 활성**되는 양자택일 관계다 (한 컨텍스트에 둘 다 띄울 수는 있으나 권장되지 않음).
+
+|             | Spring MVC (현 본 프로젝트)                       | Spring WebFlux                                  |
+|-------------|---------------------------------------------|-------------------------------------------------|
+| 스레딩 모델      | thread-per-request (Tomcat, 기본 200 threads) | event loop (Netty, CPU 수 정도의 적은 스레드)            |
+| 컨트롤러 반환 타입  | `T`, `ResponseEntity<T>`                    | `Mono<T>`, `Flux<T>`, `ResponseEntity<Mono<T>>` |
+| HTTP client | `RestClient` / `RestTemplate`               | `WebClient`                                     |
+| 트랜잭션 전파     | `@Transactional` (ThreadLocal 기반)           | `TransactionalOperator` (Reactor Context 기반)    |
+| 로깅 MDC      | ThreadLocal 그대로 사용 가능                       | Reactor Context 또는 `MDCContextLifter` 로 별도 전파   |
+| 진입 starter  | `spring-boot-starter-web`                   | `spring-boot-starter-webflux`                   |
+| 검증된 패턴      | 본 프로젝트의 모든 도메인                              | (본 프로젝트 미경험)                                    |
+
+WebFlux 의 강점은 I/O bound 워크로드에서 적은 스레드로 높은 동시성을 처리한다는 점. 단점은 디버깅 / 학습 곡선 / 트랜잭션 · MDC · `@Transactional` 같은 ThreadLocal 자산을 그대로 못 쓴다는 점이다.
+
+#### RestClient — Spring 6.1 의 동기 HTTP client
+
+`RestTemplate` 의 fluent API 후속. Spring 6.1 / Spring Boot 3.2 부터 표준 권장.
+
+```java
+String body = restClient.get()
+    .uri("/api/...")
+    .retrieve()
+    .body(String.class);            // ← 호출 스레드 block, 응답이 올 때까지 대기
+```
+
+호출 결과를 즉시 `T` 로 받는다. 본 프로젝트는 [LlmProperties](../../src/main/java/com/umc/product/llm/adapter/out/external/LlmProperties.java) 의 LLM 호출, [DiscordWebhookAdapter](../../src/main/java/com/umc/product/notification/adapter/out/external/webhook/DiscordWebhookAdapter.java) 의 알람 발송, [FigmaCommentClient](../../src/main/java/com/umc/product/figma/adapter/out/external/FigmaCommentClient.java) 의 Figma REST 호출까지 모든 외부 통신 어댑터가 `RestClient` 기반이고, 컨트롤러 → UseCase → 어댑터 호출 체인이 전부 동기다.
+
+#### 왜 RestClient (동기) 와 Reactor 가 병행이 까다로운가
+
+기술적으로 컴파일은 통과한다 — 한 프로젝트에 `RestClient` + Reactor `Mono` / `Flux` 가 공존해도 빌드는 깨지지 않는다. 문제는 다음 운영 / 일관성 / 트랜잭션 측면의 마찰이 영구적으로 누적된다는 점이다.
+
+1. **타입 viral 전파** — Discord4J 의 거의 모든 API 가 `Mono` / `Flux` 를 반환한다. 슬래시 커맨드 핸들러에서 본 프로젝트의 동기 `XxxUseCase.run(...)` 을 호출하려면 매 경계마다 `Mono.fromCallable(() -> useCase.run(...))` 변환이 필요하다. 한두 군데면 괜찮지만, 슬래시 커맨드가 늘어날수록 boundary 변환이 누적되고 "이 메서드는 동기인가 비동기인가" 의 기억 부담이 커진다.
+
+2. **스레드 풀 분리 + `.block()` 금지** — Discord4J 는 내부적으로 Netty event loop 를 띄운다. 이 스레드에서 `.block()` 을 호출하면 즉시 예외. 따라서 동기 UseCase 를 호출할 때 반드시 `Schedulers.boundedElastic()` 또는 별도 `Executor` 로 옮긴 뒤 호출해야 한다 — 코드가 한 단계 두꺼워지고, "어느 스레드에서 도는지" 가 핸들러마다 달라져 디버깅 / 스택 트레이스 해석 비용이 늘어난다.
+
+3. **`@Transactional` / MDC 미전파** — Spring 의 `@Transactional` 은 `TransactionSynchronizationManager` 의 ThreadLocal 에 트랜잭션을 묶는다. Reactor 가 스레드를 자유롭게 옮기는 순간 이 ThreadLocal 이 끊긴다. MDC (로깅 컨텍스트) 도 같은 메커니즘이라 같이 사라진다. WebFlux 환경이라면 `TransactionalOperator` + Reactor Context 로 대응 가능하지만, 본 프로젝트는 동기 UseCase 가 `@Transactional` 을 전제로 한다. Discord4J 핸들러에서 동기 UseCase 호출 시 트랜잭션 / MDC 경계를 별도 설계로 보장해야 한다.
+
+4. **HTTP client 이중화** — WebFlux 권장 HTTP client 는 reactive `WebClient`. 본 프로젝트는 `RestClient` 일색이다. Discord4J 가 끌고 들어오는 `reactor-netty-http` 가 본 프로젝트의 `RestClient` (JDK HttpClient 기반) 와 공존하며, 메트릭 / 인증 인터셉터 / retry 정책을 두 클라이언트에 각각 설정해야 한다. 같은 외부 시스템에 호출 인터셉터를 다르게 적용하는 일이 발생한다.
+
+5. **Spring Boot 자동구성 모호성** — `spring-boot-starter-web` 과 `spring-boot-starter-webflux` 를 동시에 의존하면 Spring Boot 는 MVC 를 우선 활성화하지만, 일부 자동구성 (codec / WebClient builder 등) 이 양쪽 경로에서 동시에 등록된다. Discord4J 자체는 `starter-webflux` 를 강제하지 않지만, reactor-netty 를 transitive 로 끌어와 비슷한 충돌 영역을 만든다. 일부 메트릭 / 헬스체크가 두 번 등록되거나, 한쪽이 silently 무시되는 케이스가 생긴다.
+
+6. **JDA 의 동기 콜백 모델 비교** — JDA 의 Gateway 콜백은 `void onSlashCommandInteraction(SlashCommandInteractionEvent event)` 형태의 동기 메서드이고, 응답은 `event.reply("...").queue()` 같이 fire-and-forget 패턴이다. 반환값이 동기라 본 프로젝트의 동기 UseCase 를 직접 호출할 수 있고, 3초 이상 걸리면 `event.deferReply()` 후 `applicationTaskExecutor` 에 `submit` 하는 친숙한 동기 패턴이 그대로 적용된다.
+
+#### 정리
+
+본 프로젝트가 WebFlux 기반이었다면 Discord4J + Reactor 가 가장 자연스러운 선택이었을 것이다. 하지만 Spring MVC + `RestClient` 일색인 현 코드베이스에서는 Reactor 를 도입하는 순간 (a) 핸들러마다 boundary 변환, (b) 트랜잭션 / MDC 별도 처리, (c) HTTP client 이중화 같은 영구적 비용이 누적된다. 그래서 `Decision §2` 에서 JDA 를 선택했고, `Alternatives §3` 에서 Discord4J 를 reject 한 이유 — "프로젝트 스타일과 일관성이 떨어진다" — 가 본 절에서 풀어쓴 그 일관성 비용이다.
+
 ## Decision
 
 우리는 다음과 같이 결정한다.
@@ -133,7 +201,7 @@ Discord 가 슬래시 커맨드 호출을 **외부 endpoint 에 HTTP POST** 로 
 - Reactor 학습 / 디버깅 비용을 새로 쌓아야 한다.
 
 선택하지 않은 이유:
-프로젝트 스타일과 일관성이 떨어진다. Reactor 가 도메인 차원에서 필요해지는 시점에 통째로 마이그레이션하는 것이 더 일관적이다.
+프로젝트 스타일과 일관성이 떨어진다. Reactor 가 도메인 차원에서 필요해지는 시점에 통째로 마이그레이션하는 것이 더 일관적이다. (구체적인 boundary 변환 / 트랜잭션 / HTTP client 이중화 비용은 `Context §배경 기술` 절 1~5 항목 참조)
 
 ### 4. Javacord 사용
 
@@ -377,10 +445,20 @@ public class DiscordEventListener extends ListenerAdapter {
 UseCase 호출이 3초 이상 걸리는 핸들러는 다음 패턴.
 
 ```java
-event.deferReply().queue();
-applicationTaskExecutor.submit(() -> {
-    String result = handleSlashCommandUseCase.run(...);
-    event.getHook().sendMessage(result).queue();
+event.deferReply().
+
+queue();
+applicationTaskExecutor.
+
+submit(() ->{
+String result = handleSlashCommandUseCase.run(...);
+    event.
+
+getHook().
+
+sendMessage(result).
+
+queue();
 });
 ```
 
