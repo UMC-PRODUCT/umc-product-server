@@ -10,4 +10,6 @@ public interface FigmaPartRouteJpaRepository extends JpaRepository<FigmaPartRout
     List<FigmaPartRoute> findAllByFileKey(String fileKey);
 
     Optional<FigmaPartRoute> findFirstByFileKeyAndFallbackTrue(String fileKey);
+
+    boolean existsByFileKeyAndPageName(String fileKey, String pageName);
 }
