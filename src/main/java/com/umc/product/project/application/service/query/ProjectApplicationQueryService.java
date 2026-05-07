@@ -114,7 +114,7 @@ public class ProjectApplicationQueryService
         if (!Objects.equals(project.getId(), query.projectId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
         }
-        if (application.isPending()
+        if (application.isDraft()
             && !Objects.equals(application.getApplicantMemberId(), query.requesterMemberId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
         }

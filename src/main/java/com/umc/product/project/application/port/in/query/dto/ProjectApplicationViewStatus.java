@@ -26,7 +26,7 @@ public enum ProjectApplicationViewStatus {
 
     public static ProjectApplicationViewStatus from(ProjectApplicationStatus status) {
         return switch (status) {
-            case PENDING -> PENDING;
+            case DRAFT -> PENDING;
             case SUBMITTED -> SUBMITTED;
             case APPROVED -> APPROVED;
             case REJECTED -> REJECTED;

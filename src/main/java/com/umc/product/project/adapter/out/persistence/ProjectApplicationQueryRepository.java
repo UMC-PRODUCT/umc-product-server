@@ -171,7 +171,7 @@ public class ProjectApplicationQueryRepository {
      */
     private BooleanExpression statusCond(ProjectApplicationStatus status) {
         return status == null
-            ? projectApplication.status.ne(ProjectApplicationStatus.PENDING)
+            ? projectApplication.status.ne(ProjectApplicationStatus.DRAFT)
             : projectApplication.status.eq(status);
     }
 }

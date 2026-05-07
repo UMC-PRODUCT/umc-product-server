@@ -31,7 +31,7 @@ public enum ManagedProjectApplicationCardStatus {
             case SUBMITTED -> SUBMITTED;
             case APPROVED -> APPROVED;
             case REJECTED -> REJECTED;
-            case PENDING -> throw new ProjectDomainException(
+            case DRAFT -> throw new ProjectDomainException(
                 ProjectErrorCode.APPLICATION_PENDING_NOT_EXPOSABLE);
         };
     }

@@ -64,7 +64,7 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
                 projectId,
                 memberId,
                 ProjectApplicationStatus.DRAFT
-            ).orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND));
+            ).orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_DRAFT_APPLICATION_NOT_FOUND));
     }
 
     @Override
@@ -87,7 +87,7 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
 
     @Override
     public Optional<ProjectApplication> findByIdWithDetails(Long applicationId) {
-        return queryRepository.findByIdWithDetails(applicationId);
+        return projectApplicationQueryRepository.findByIdWithDetails(applicationId);
     }
 
     @Override
@@ -106,6 +106,6 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
         Long matchingRoundId,
         ProjectApplicationStatus status
     ) {
-        return queryRepository.searchProjectApplications(projectId, matchingRoundId, status);
+        return projectApplicationQueryRepository.searchProjectApplications(projectId, matchingRoundId, status);
     }
 }

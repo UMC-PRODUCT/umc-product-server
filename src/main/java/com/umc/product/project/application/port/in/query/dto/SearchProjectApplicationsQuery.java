@@ -27,7 +27,7 @@ public record SearchProjectApplicationsQuery(
 ) {
     public SearchProjectApplicationsQuery {
         Objects.requireNonNull(projectId, "projectId must not be null");
-        if (status == ProjectApplicationStatus.PENDING) {
+        if (status == ProjectApplicationStatus.DRAFT) {
             throw new ProjectDomainException(
                 ProjectErrorCode.APPLICATION_PENDING_FILTER_NOT_ALLOWED);
         }

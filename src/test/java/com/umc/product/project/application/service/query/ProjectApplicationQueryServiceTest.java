@@ -281,9 +281,9 @@ class ProjectApplicationQueryServiceTest {
         ProjectMatchingRound round = createMatchingRound(
             8L, MatchingType.PLAN_DEVELOPER, MatchingPhase.SECOND);
         ProjectApplication application = createApplication(
-            56L, project, round, ProjectApplicationStatus.PENDING);
+            56L, project, round, ProjectApplicationStatus.DRAFT);
 
-        GetMyProjectApplicationsQuery query = queryOf(ProjectApplicationStatus.PENDING);
+        GetMyProjectApplicationsQuery query = queryOf(ProjectApplicationStatus.DRAFT);
         given(getChallengerUseCase.findByMemberIdAndGisuId(REQUESTER_ID, GISU_ID))
             .willReturn(Optional.of(challengerOf(ChallengerPart.WEB)));
         given(loadProjectApplicationPort.searchMyApplications(
@@ -594,7 +594,7 @@ class ProjectApplicationQueryServiceTest {
         // given & when & then -- Query record compact constructor 에서 차단된다
         assertThatThrownBy(() -> SearchProjectApplicationsQuery.builder()
             .projectId(1L)
-            .status(ProjectApplicationStatus.PENDING)
+            .status(ProjectApplicationStatus.DRAFT)
             .build())
             .isInstanceOf(ProjectDomainException.class);
     }
@@ -898,7 +898,7 @@ class ProjectApplicationQueryServiceTest {
         ProjectMatchingRound round = createMatchingRound(
             7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
         ProjectApplication application = createApplicationWithFormResponse(
-            55L, project, round, 200L, ProjectApplicationStatus.PENDING, 123L);
+            55L, project, round, 200L, ProjectApplicationStatus.DRAFT, 123L);
 
         GetProjectApplicationDetailQuery query = detailQuery(1L, 55L, 300L);
         given(loadProjectApplicationPort.findByIdWithDetails(55L))
@@ -919,7 +919,7 @@ class ProjectApplicationQueryServiceTest {
         ProjectMatchingRound round = createMatchingRound(
             7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
         ProjectApplication application = createApplicationWithFormResponse(
-            55L, project, round, 200L, ProjectApplicationStatus.PENDING, 123L);
+            55L, project, round, 200L, ProjectApplicationStatus.DRAFT, 123L);
 
         GetProjectApplicationDetailQuery query = detailQuery(1L, 55L, 200L);
         given(loadProjectApplicationPort.findByIdWithDetails(55L))
