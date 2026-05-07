@@ -1,10 +1,13 @@
 package com.umc.product.figma.adapter.in.web;
 
+import com.umc.product.figma.application.port.in.PreviewFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.SyncFigmaCommentsUseCase;
+import com.umc.product.figma.application.port.in.dto.FigmaCommentPreviewInfo;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,16 +15,17 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 운영진이 스케줄러 주기를 기다리지 않고 Figma 댓글 동기화를 즉시 트리거할 수 있는 admin API.
- * 내부적으로 스케줄러와 동일한 {@link SyncFigmaCommentsUseCase} 를 호출한다.
+ * 운영진이 스케줄러 주기를 기다리지 않고 Figma 댓글 동기화를 즉시 트리거하거나,
+ * Discord 발송 없이 신규 댓글 / 매칭될 라우트만 미리 확인할 수 있는 admin API.
  */
 @RestController
 @RequestMapping("/api/v1/admin/figma/sync")
 @RequiredArgsConstructor
-@Tag(name = "Figma Sync | 수동 트리거", description = "Figma 댓글 동기화를 on-demand 로 실행")
+@Tag(name = "Figma Sync | 수동 트리거", description = "Figma 댓글 동기화 on-demand 실행 / preview")
 public class FigmaSyncController {
 
     private final SyncFigmaCommentsUseCase syncFigmaCommentsUseCase;
+    private final PreviewFigmaCommentsUseCase previewFigmaCommentsUseCase;
 
     @Operation(summary = "[FIGMA-006] 활성 파일 전체 즉시 동기화")
     @PostMapping
@@ -35,5 +39,11 @@ public class FigmaSyncController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void syncOne(@PathVariable Long watchedFileId) {
         syncFigmaCommentsUseCase.syncOne(watchedFileId);
+    }
+
+    @Operation(summary = "[FIGMA-010] 특정 파일의 신규 댓글 미리보기 (Discord 발송 X, sync 상태 갱신 X)")
+    @GetMapping("/watched-files/{watchedFileId}/preview")
+    public FigmaCommentPreviewInfo preview(@PathVariable Long watchedFileId) {
+        return previewFigmaCommentsUseCase.preview(watchedFileId);
     }
 }

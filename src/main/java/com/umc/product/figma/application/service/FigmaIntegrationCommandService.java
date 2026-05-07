@@ -13,6 +13,7 @@ import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -74,7 +75,9 @@ public class FigmaIntegrationCommandService implements RegisterFigmaIntegrationU
 
     /**
      * 활성 통합의 access token (평문) 을 반환한다. 만료가 임박하면 refresh 한다.
+     * read-only 트랜잭션(예: preview) 에서 호출되더라도 token refresh 가 가능하도록 REQUIRES_NEW 로 분리한다.
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public String resolveActiveAccessToken() {
         FigmaIntegration integration = loadFigmaIntegrationPort.findActive()
             .orElseThrow(() -> new FigmaDomainException(FigmaErrorCode.INTEGRATION_NOT_FOUND));
