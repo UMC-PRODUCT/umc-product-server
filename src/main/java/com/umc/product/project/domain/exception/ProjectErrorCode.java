@@ -65,6 +65,7 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_APPLICATION_DUPLICATE_SUBMISSION(HttpStatus.CONFLICT, "PROJECT-0207", "동일한 매칭 차수에 이미 제출된 지원서가 있습니다."),
     PROJECT_APPLICATION_ROUND_NOT_OPEN(HttpStatus.BAD_REQUEST, "PROJECT-0208", "해당 매칭 차수의 지원 기간이 아닙니다."),
     PROJECT_APPLICATION_ROUND_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "PROJECT-0209", "선택한 매칭 차수가 본인 파트에 해당하지 않습니다."),
+    PROJECT_APPLICATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "PROJECT-0210", "이미 작성 중인 지원서가 있습니다."),
 
     ;
 

@@ -88,15 +88,17 @@ public class ProjectApplicationCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_ROUND_TYPE_MISMATCH);
         }
 
-        // 5. 멱등 처리 - 현재 오픈된 차수 기준으로 기존 DRAFT 조회
-        return loadProjectApplicationPort
-            .findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(
-                command.projectId(),
-                command.applicantMemberId(),
-                round.getId(),
-                ProjectApplicationStatus.DRAFT
-            ).map(existing -> ProjectApplicationInfo.of(existing.getId(), existing.getStatus()))
-            .orElseGet(() -> createNew(form, command.applicantMemberId(), round));
+        // 5. 동일 차수 기준 DRAFT 중복 체크 — 이미 있으면 409
+        if (loadProjectApplicationPort.findByProjectIdAndApplicantMemberIdAndRoundIdAndStatus(
+            command.projectId(),
+            command.applicantMemberId(),
+            round.getId(),
+            ProjectApplicationStatus.DRAFT
+        ).isPresent()) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_ALREADY_EXISTS);
+        }
+
+        return createNew(form, command.applicantMemberId(), round);
     }
 
     private ProjectApplicationInfo createNew(
