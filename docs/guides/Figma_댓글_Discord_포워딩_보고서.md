@@ -14,7 +14,7 @@
 | **어디서(Where)** | `com.umc.product.figma` 도메인. 외부 의존성: Figma REST API (댓글 / 파일 메타데이터 / OAuth), Discord Webhook                                                                                                                                        |
 | **무엇을(What)**  | Figma 파일 댓글을 폴링해 LLM 으로 담당 도메인을 분류하고, 도메인별 담당자 mention 과 함께 Discord embed 메시지를 발송. preview / 수동 트리거 / 라우팅/멘션 관리 admin API 포함                                                                                                |
 | **왜(Why)**     | (1) Figma 기본 알림이 watcher/멘션된 사람에게만 도달해 파트장 누락, (2) 디자인 피드백이 Discord 와 분리되어 두 채널 병행 확인 필요, (3) 댓글이 어느 도메인 책임인지 매번 사람이 판단해야 하는 인지 부담                                                                                          |
-| **어떻게(How)**   | (1) OAuth Authorization Code Flow 로 운영진 위임 토큰 확보, (2) `@Scheduled` 폴링으로 신규 댓글만 필터, (3) `ChatCompleteUseCase` 로 댓글 → 등록된 `domain_key` 분류, (4) 매칭된 `figma_routing_domain` 의 webhook + N개 mention 으로 Discord embed 송신 (실패 시 fallback), (5) `last_synced_comment_id` 갱신 |
+| **어떻게(How)**   | (1) OAuth Authorization Code Flow 로 운영진 위임 토큰 확보, (2) `@Scheduled` 폴링으로 사이클 안의 모든 활성 파일 신규 댓글 수집, (3) `ChatCompleteUseCase` 로 댓글 1건씩 `domain_key` 분류, (4) cross-file 로 도메인 단위 group by 후 도메인당 1개 메시지(필요 시 페이지 분할) 의 묶음 embed 로 Discord 송신, (5) sync 모드에서만 파일별 `last_synced_comment_id` 갱신. 운영진의 임의 시간창 catch-up 은 `POST /admin/figma/digest?from&to` 로 별도 호출 (sync state 비변경) |
 
 ## 3. 핵심 용어
 
@@ -177,34 +177,42 @@ UNIQUE 제약:
 - `figma_routing_domain.domain_key`
 - `figma_routing_domain_mention(domain_id, mention_type, mention_id)` — 같은 도메인에 같은 mention 이 중복 등록되지 않도록 보장
 
-### 6.2 매칭 알고리즘
+### 6.2 사이클 흐름 — 모아서 분류하고 도메인별로 묶어 발송
+
+발송 단위는 **댓글 1건이 아니라 "사이클 + 도메인" 묶음 1건** 이다 (2026-05-07 2차 Amendment).
+같은 사이클의 같은 라우팅 도메인 댓글들은 cross-file 로 한 메시지의 embed 안에 모인다.
 
 ```
-입력: comment {commentId, message, authorName, nodeId, createdAt}, watchedFile {fileKey, ...}
+입력: 활성 watched files, accessToken
+모드: SYNC (정기 폴링)  |  DIGEST (운영진 [from, to] catch-up)
 
-1. domains = SELECT * FROM figma_routing_domain          // 도메인이 0건이면 sync skip + 에러 기록
+1. domains = SELECT * FROM figma_routing_domain          // 0건이면 SYNC skip + 에러 기록
    candidates = domains.map(d -> d.domain_key)
 
-2. (best-effort, 라우팅에는 영향 없음)
-   nodeId 가 있으면 Figma REST 로 페이지명 해석 → embed 의 Page 필드용
+2. 파일별로 댓글 fetch → 시간창 적용
+   - SYNC   : last_synced_comment_id 이후의 댓글
+   - DIGEST : createdAt 이 [from, to] 인 댓글
+   nodeId 가 있는 댓글에 한해 페이지명 best-effort 해석 (embed 부가 정보용)
 
-3. classified = FigmaCommentDomainClassifier.classify(comment, candidates)
-   = ChatCompleteUseCase.complete(systemPrompt, userPrompt(comment), candidates)
-   → 응답이 candidates 에 포함되지 않거나 호출 실패면 null
+3. 댓글 1건씩 ChatCompleteUseCase 호출 → domain_key 분류
+   응답이 candidates 외 / 호출 실패면 null → fallback 도메인으로 라우팅
+   fallback 도 없으면 unmatched (발송 skip + WARN)
 
-4. matched = classified != null ? domains[classified] : null
+4. 모든 (file, comment, applied_domain) 튜플을 도메인 단위로 group by
+   → 같은 도메인의 댓글 K건은 cross-file 로 한 묶음
 
-5. applied = matched != null ? matched
-            : (domains 중 fallback=true 인 첫 도메인)
-            : (없으면) unmatched → 발송 skip + WARN 로그
+5. 도메인별로:
+   - mentions = SELECT * FROM figma_routing_domain_mention WHERE domain_id = applied
+   - DiscordDomainBatchMessage 빌드 (domainKey + mentionRenders + window + comments[])
+   - SendDiscordMentionPort.send(...)
+     · 어댑터가 fields 25/embed, embeds 10/message 단위로 자동 분할
+     · mention 은 첫 페이지 메시지의 외부 content 에만 포함
 
-6. mentions = SELECT * FROM figma_routing_domain_mention WHERE domain_id = applied.id
-   mentionRenders = mentions.map(m -> m.render())   // ["<@&123>", "<@456>"]
-
-7. Discord embed payload 빌드 (commit 6 의 포맷) → webhook 전송
-
-8. last_synced_comment_id 갱신 (unmatched/매칭 무관)
+6. (SYNC 만) 파일별 last_synced_comment_id 를 묶음 내 최신 commentId 로 advance
+   (DIGEST 는 비변경 — 동일 시간창 반복 호출 가능)
 ```
+
+호출수 효과: 댓글 K건, 활성 도메인 N개일 때 webhook 호출 K → 도메인 묶음 단위로 ⌈K_d / 25⌉ 메시지 (K_d = 도메인 d 의 댓글 수). 전형적 5분 사이클 (K < 25) 이면 도메인당 1 메시지로 끝나 `Discord rate limit (per-URL ≈ 30/분)` 여유가 크다.
 
 핵심 포인트:
 - **페이지명은 라우팅 키가 아니다** — embed 의 부가 정보일 뿐. 페이지가 변경되어도 라우팅에 영향 없음.
@@ -387,9 +395,10 @@ preview 는 `@Transactional(readOnly=true)` 인데, 그 안에서 `resolveActive
 | DELETE| `/api/v1/admin/figma/routing-domains/{id}`                               | 인증 필요     | 라우팅 도메인 삭제 (mention cascade)                    |
 | POST  | `/api/v1/admin/figma/routing-domains/{id}/mentions`                      | 인증 필요     | 도메인에 담당자 mention (ROLE/USER) 추가                 |
 | DELETE| `/api/v1/admin/figma/routing-domains/mentions/{id}`                      | 인증 필요     | 담당자 mention 삭제                                  |
-| POST  | `/api/v1/admin/figma/sync`                                               | 인증 필요     | 활성 파일 전체 즉시 동기화                                 |
-| POST  | `/api/v1/admin/figma/sync/watched-files/{id}`                            | 인증 필요     | 특정 파일 즉시 동기화 (enabled 무관)                       |
-| GET   | `/api/v1/admin/figma/sync/watched-files/{id}/preview`                    | 인증 필요     | 신규 댓글 + LLM 분류/매칭 결과 미리보기 (발송/저장 X)             |
+| POST  | `/api/v1/admin/figma/sync`                                               | 인증 필요     | 활성 파일 전체 즉시 동기화 (도메인 단위 묶음 발송)                  |
+| POST  | `/api/v1/admin/figma/sync/watched-files/{id}`                            | 인증 필요     | 특정 파일 즉시 동기화 (enabled 무관, 묶음 발송)                |
+| GET   | `/api/v1/admin/figma/sync/watched-files/{id}/preview`                    | 인증 필요     | 신규 댓글 + LLM 분류/매칭 결과 도메인 묶음 미리보기 (발송/저장 X)        |
+| POST  | `/api/v1/admin/figma/digest?from={Instant}&to={Instant}`                 | 인증 필요     | 임의 시간창 catch-up — 도메인 묶음 발송 후 JSON 요약 반환 (sync 상태 비변경) |
 
 ## 10. 환경 변수
 
@@ -431,7 +440,9 @@ app:
 | LLM provider             | mock 만 활성. 분류 정확도는 흐름 검증 수준          | OpenAI / Gemini / Spring AI 어댑터를 동일 인터페이스로 추가, prompt cache 도입 검토            |
 | LLM 비용/지연                | 신규 댓글마다 + preview 호출마다 LLM 1회 호출      | provider 도입 시 호출 batch / 분류 결과 단기 캐시 검토                                      |
 | Discord 멘션 권한            | webhook 자체에 mention 권한 부여 가정         | 권한 미부여 시 멘션 사일런스 — webhook 생성 시 채널 설정 확인 필요                                  |
-| Discord embed 길이 제한      | 어댑터에서 description ≤ 4096 자, field value ≤ 1024 자 truncate | Discord 제약 (embed 1건 ≤ 6000 자) 안에서 동작. 댓글이 매우 긴 경우 본문이 잘릴 수 있음 |
+| Discord embed 길이 제한      | field name ≤ 256, field value ≤ 1024, fields 25/embed, embeds 10/message | 한 도메인 묶음이 위 한도를 초과하면 메시지 다중 분할 발송 (어댑터 자동), 그 안에서 본문이 매우 긴 댓글은 truncate |
+| 발송 단위 실패 격리              | 도메인 묶음 단위 (한 도메인 발송 실패 → 그 묶음 전체 영향)  | 묶음 단위 vs 댓글 단위 trade-off. 댓글 단위 격리는 ADR-003 2차 amendment 에서 의도적으로 포기 (rate limit / 가독성 우위) |
+| digest API 비용             | from~to 기간이 길면 LLM 호출 폭증              | 운영진이 의도적으로 호출하는 도구. 하루 단위 catch-up 정도가 적정. 너무 긴 창은 prompt cache / batch 도입 시 완화 가능 |
 
 ## 12. 디버깅 체크리스트
 
@@ -440,8 +451,10 @@ app:
 | Discord 채널에 아무것도 안 옴           | `app.figma.sync.enabled=true`, `watched_file.enabled=true`, 라우팅 도메인 1건 이상 등록 (없으면 ROUTING_DOMAIN_NOT_REGISTERED 로 sync skip) |
 | 모든 댓글이 fallback 으로 감           | LLM 응답이 항상 후보 외 → provider=mock 인지, system prompt 가 모델에 잘 전달됐는지, 후보 도메인 키가 사람이 봐도 의미가 명확한지 점검         |
 | 일부 댓글만 fallback 으로 감           | LLM 분류 모호. preview 로 댓글별 결과 확인, `description` 보강 / domain_key 명명 재검토                                  |
-| 멘션이 안 되고 embed 만 보임           | `allowed_mentions.parse=["roles","users"]` 적용 확인, mention 이 embed 본문이 아니라 외부 `content` 영역에 들어가는지 확인 |
-| Discord embed 색상/필드 누락         | 어댑터의 embed 빌드 로그 확인 (`Discord embed 멘션 전송 완료`)                                                       |
+| 멘션이 안 되고 embed 만 보임           | `allowed_mentions.parse=["roles","users"]` 적용 확인, mention 이 embed 본문이 아니라 외부 `content` 영역에 들어가는지 확인. 도메인 묶음 분할 발송 시 멘션은 첫 페이지 메시지에만 포함됨 |
+| Discord embed 색상/필드 누락         | 어댑터의 embed 빌드 로그 확인 (`Discord domain batch 전송 완료`)                                                  |
+| 한 도메인 묶음이 통째로 안 옴           | 도메인 webhook URL 만료/오타, mention ID 변경, 또는 묶음이 6000자/메시지 한도를 초과해 분할 발송 중 일부 페이지 실패. webhook 응답 status 로그 확인 |
+| digest 호출 시 동일 댓글이 여러 번 옴      | 의도된 동작 — digest 는 sync state 비변경. 동일 [from, to] 반복 호출 시 매번 발송됨                                       |
 | OAuth callback 에서 NPE/Unauthorized | `/start` 와 `/callback` 사이 10분 초과 / 이미 사용된 state / 서버 재시작 → state 무효 → `/start` 부터 재시도              |
 | `last_error` 에 401 누적          | refresh token 만료 또는 회수 → 운영진 재인증                                                                   |
 | `last_error` 에 429 누적          | Figma rate limit — 폴링 주기 늘리거나 max-files-per-run 줄임                                                |
