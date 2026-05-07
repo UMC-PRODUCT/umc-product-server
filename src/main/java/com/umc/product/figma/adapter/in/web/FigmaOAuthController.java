@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/figma/oauth")
 @RequiredArgsConstructor
-@Tag(name = "Figma OAuth | 운영진 위임 인증", description = "운영진이 Figma 댓글 폴링 권한을 위임하기 위한 OAuth 흐름")
+@Tag(name = "Figma | OAuth", description = "운영진이 Figma 댓글 폴링 권한을 위임하기 위한 OAuth 흐름")
 public class FigmaOAuthController {
 
     private final RegisterFigmaIntegrationUseCase registerFigmaIntegrationUseCase;

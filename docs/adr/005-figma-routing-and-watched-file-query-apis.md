@@ -281,15 +281,15 @@ public class FigmaRoutingDomainController {
     private final ManageFigmaRoutingDomainUseCase manageFigmaRoutingDomainUseCase;
     private final GetFigmaRoutingDomainUseCase getFigmaRoutingDomainUseCase;
 
-    @Operation(summary = "[FIGMA-015] 라우팅 도메인 목록 조회")
+    @Operation(summary = "[FIGMA-016] 라우팅 도메인 목록 조회")  // 본 ADR 채택 시점에는 015 로 계획되었으나, ADR-003 amendment 로 015 슬롯이 digest 에 할당되면서 016 으로 밀렸다.
     @GetMapping
     public List<FigmaRoutingDomainResponse> listDomains() { ... }
 
-    @Operation(summary = "[FIGMA-016] 라우팅 도메인 단건 조회 (mention 포함)")
+    @Operation(summary = "[FIGMA-017] 라우팅 도메인 단건 조회 (mention 포함)")
     @GetMapping("/{domainId}")
     public FigmaRoutingDomainResponse getDomain(@PathVariable Long domainId) { ... }
 
-    @Operation(summary = "[FIGMA-017] 라우팅 도메인의 멘션 목록 조회")
+    @Operation(summary = "[FIGMA-018] 라우팅 도메인의 멘션 목록 조회")
     @GetMapping("/{domainId}/mentions")
     public List<FigmaRoutingDomainMentionResponse> listMentions(@PathVariable Long domainId) { ... }
 

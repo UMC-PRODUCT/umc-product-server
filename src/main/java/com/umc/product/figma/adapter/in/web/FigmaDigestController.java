@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/figma/digest")
 @RequiredArgsConstructor
-@Tag(name = "Figma Digest | 시간창 catch-up", description = "[from, to] 안의 댓글을 도메인별로 묶어 Discord 로 발송")
+@Tag(name = "Figma | 댓글 업데이트", description = "[from, to] 안의 댓글을 도메인별로 묶어 Discord 로 발송")
 public class FigmaDigestController {
 
     private final DigestFigmaCommentsUseCase digestFigmaCommentsUseCase;
