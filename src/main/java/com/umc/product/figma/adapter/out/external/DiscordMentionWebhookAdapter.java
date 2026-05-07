@@ -19,7 +19,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 /**
  * 도메인 단위로 묶인 댓글 batch 를 Discord 로 발송하는 webhook 어댑터.
- *
+ * <p>
  * Discord embed 제약:
  * <ul>
  *   <li>embed 1건당 fields 최대 25</li>
@@ -28,7 +28,7 @@ import org.springframework.web.client.RestClientResponseException;
  *   <li>field name ≤ 256, field value ≤ 1024</li>
  *   <li>embed description ≤ 4096</li>
  * </ul>
- *
+ * <p>
  * 본 어댑터는 댓글 1건 = field 1개 로 매핑하고, 25개씩 chunk 해 embed 를 만든다.
  * embed 가 10개를 넘으면 메시지를 분할 발송한다 (Discord rate limit 까지 자동 분할).
  * 멘션은 첫 메시지의 외부 content 에만 포함되어 알림이 한 번만 울리도록 한다.

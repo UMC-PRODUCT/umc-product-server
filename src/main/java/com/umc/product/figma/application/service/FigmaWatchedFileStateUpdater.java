@@ -10,9 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 파일별 sync 상태(last_synced_comment_id, last_error) 를 별도 트랜잭션으로 갱신한다.
- *
- * 별도 빈으로 분리한 이유는 Spring AOP self-invocation 한계를 피하기 위함이며,
- * batch 처리 중 한 파일의 갱신 실패가 다른 파일의 갱신에 영향을 주지 않게 하기 위함이다.
+ * <p>
+ * 별도 빈으로 분리한 이유는 Spring AOP self-invocation 한계를 피하기 위함이며, batch 처리 중 한 파일의 갱신 실패가 다른 파일의 갱신에 영향을 주지 않게 하기 위함이다.
  */
 @Component
 @RequiredArgsConstructor

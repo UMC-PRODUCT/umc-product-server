@@ -13,9 +13,8 @@ import javax.crypto.spec.SecretKeySpec;
 import org.springframework.stereotype.Component;
 
 /**
- * Figma refresh/access token을 평문으로 DB에 보관하지 않기 위한 대칭키 암호화 유틸.
- * application property 기반의 키를 SHA-256으로 정규화 후 AES-GCM 으로 암복호화한다.
- * 운영 정책 결정 후 KMS / Jasypt 로 보강할 수 있도록 인터페이스를 단순하게 유지한다.
+ * Figma refresh/access token을 평문으로 DB에 보관하지 않기 위한 대칭키 암호화 유틸. application property 기반의 키를 SHA-256으로 정규화 후 AES-GCM 으로
+ * 암복호화한다. 운영 정책 결정 후 KMS / Jasypt 로 보강할 수 있도록 인터페이스를 단순하게 유지한다.
  */
 @Component
 public class FigmaTokenCipher {

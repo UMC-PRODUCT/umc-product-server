@@ -27,7 +27,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * 사이클 단위로 활성 파일들의 신규 댓글을 모아 분류 후 도메인별로 묶어 Discord 로 발송한다.
- *
+ * <p>
  * 두 가지 진입점:
  * <ul>
  *   <li>{@link #processSyncCycle(List, String)} — 정기 sync. 파일별 last_synced_comment_id 이후 댓글을
@@ -35,7 +35,7 @@ import org.springframework.stereotype.Component;
  *   <li>{@link #processDigestWindow(List, String, Instant, Instant)} — 운영진의 catch-up. 시간창 [from, to]
  *       에 속한 댓글을 대상으로 하고, sync 상태는 변경하지 않는다.</li>
  * </ul>
- *
+ * <p>
  * 발송 실패는 도메인 묶음 단위로 격리된다. 한 도메인의 발송이 실패해도 다른 도메인 발송과
  * sync state 갱신은 계속 진행된다 (중복 발송 방지 우선).
  */
@@ -261,7 +261,7 @@ public class FigmaCommentBatchProcessor {
         );
     }
 
-    private enum Mode { SYNC, DIGEST }
+    private enum Mode {SYNC, DIGEST}
 
     private record EnrichedComment(FigmaWatchedFile file, FigmaCommentInfo comment, String pageName) {
     }

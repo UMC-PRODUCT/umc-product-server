@@ -26,8 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Discord 발송 / sync 상태 갱신 없이 신규 댓글을 분류해 도메인별로 묶은 결과를 반환한다.
- * 발송 경로(sync / digest) 와 동일한 grouping 형태로 응답해 운영진이 일관된 모양으로 검증할 수 있다.
+ * Discord 발송 / sync 상태 갱신 없이 신규 댓글을 분류해 도메인별로 묶은 결과를 반환한다. 발송 경로(sync / digest) 와 동일한 grouping 형태로 응답해 운영진이 일관된 모양으로
+ * 검증할 수 있다.
  */
 @Slf4j
 @Service

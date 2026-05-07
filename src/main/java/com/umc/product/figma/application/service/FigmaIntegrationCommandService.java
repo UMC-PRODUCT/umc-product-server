@@ -17,10 +17,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Figma OAuth 위임 통합의 Command 서비스.
- * - authorization code → token 교환 후 영속화
- * - access token 만료 시 refresh
- * - state 발급/검증은 {@link FigmaOAuthStateStore} 에 위임 (memberId 바인딩 + single-use)
+ * Figma OAuth 위임 통합의 Command 서비스. - authorization code → token 교환 후 영속화 - access token 만료 시 refresh - state 발급/검증은
+ * {@link FigmaOAuthStateStore} 에 위임 (memberId 바인딩 + single-use)
  */
 @Slf4j
 @Service
@@ -74,8 +72,8 @@ public class FigmaIntegrationCommandService implements RegisterFigmaIntegrationU
     }
 
     /**
-     * 활성 통합의 access token (평문) 을 반환한다. 만료가 임박하면 refresh 한다.
-     * read-only 트랜잭션(예: preview) 에서 호출되더라도 token refresh 가 가능하도록 REQUIRES_NEW 로 분리한다.
+     * 활성 통합의 access token (평문) 을 반환한다. 만료가 임박하면 refresh 한다. read-only 트랜잭션(예: preview) 에서 호출되더라도 token refresh 가 가능하도록
+     * REQUIRES_NEW 로 분리한다.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public String resolveActiveAccessToken() {

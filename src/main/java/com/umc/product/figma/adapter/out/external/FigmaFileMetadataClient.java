@@ -74,9 +74,8 @@ public class FigmaFileMetadataClient implements FetchFigmaFileMetadataPort {
     }
 
     /**
-     * /v1/files/:file_key/nodes 응답은 요청된 노드 별로 document subtree를 반환한다.
-     * 응답이 페이지 노드를 직접 주지는 않으므로, ancestors 필드가 제공되면 그 중 CANVAS 타입을,
-     * 그렇지 않으면 entry.document.name(노드 자신의 이름)을 fallback으로 사용한다.
+     * /v1/files/:file_key/nodes 응답은 요청된 노드 별로 document subtree를 반환한다. 응답이 페이지 노드를 직접 주지는 않으므로, ancestors 필드가 제공되면 그 중
+     * CANVAS 타입을, 그렇지 않으면 entry.document.name(노드 자신의 이름)을 fallback으로 사용한다.
      */
     @SuppressWarnings("unchecked")
     private String findEnclosingPageName(Map<String, Object> entry) {

@@ -15,8 +15,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 운영진이 스케줄러 주기를 기다리지 않고 Figma 댓글 동기화를 즉시 트리거하거나,
- * Discord 발송 없이 신규 댓글 / 매칭될 라우트만 미리 확인할 수 있는 admin API.
+ * 운영진이 스케줄러 주기를 기다리지 않고 Figma 댓글 동기화를 즉시 트리거하거나, Discord 발송 없이 신규 댓글 / 매칭될 라우트만 미리 확인할 수 있는 admin API.
  */
 @RestController
 @RequestMapping("/api/v1/admin/figma/sync")

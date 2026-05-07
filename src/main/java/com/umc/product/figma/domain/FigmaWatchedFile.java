@@ -15,8 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 폴링 대상 Figma 파일과 sync 상태.
- * 마지막으로 처리한 comment 식별자를 보관해 다음 폴링에서 신규 댓글만 필터링한다.
+ * 폴링 대상 Figma 파일과 sync 상태. 마지막으로 처리한 comment 식별자를 보관해 다음 폴링에서 신규 댓글만 필터링한다.
  */
 @Entity
 @Getter

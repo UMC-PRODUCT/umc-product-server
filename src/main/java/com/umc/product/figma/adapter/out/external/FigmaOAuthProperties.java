@@ -3,8 +3,7 @@ package com.umc.product.figma.adapter.out.external;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Figma OAuth Authorization Code Flow 설정.
- * authorize-uri / token-uri / refresh-uri 는 figma 공식 문서에 따른 기본값을 가진다.
+ * Figma OAuth Authorization Code Flow 설정. authorize-uri / token-uri / refresh-uri 는 figma 공식 문서에 따른 기본값을 가진다.
  */
 @ConfigurationProperties(prefix = "app.figma.oauth")
 public record FigmaOAuthProperties(

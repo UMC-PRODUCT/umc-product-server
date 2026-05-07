@@ -11,9 +11,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
- * Figma 댓글 본문을 LLM 으로 분석해 등록된 라우팅 도메인 키 중 하나로 분류한다.
- * 후보 도메인 리스트는 운영진이 figma_routing_domain 에 등록한 도메인 키들에서 가져오며,
- * LLM 응답이 후보 외 값이거나 호출이 실패하면 null 을 반환해 호출자가 fallback 처리하도록 한다.
+ * Figma 댓글 본문을 LLM 으로 분석해 등록된 라우팅 도메인 키 중 하나로 분류한다. 후보 도메인 리스트는 운영진이 figma_routing_domain 에 등록한 도메인 키들에서 가져오며, LLM 응답이
+ * 후보 외 값이거나 호출이 실패하면 null 을 반환해 호출자가 fallback 처리하도록 한다.
  */
 @Slf4j
 @Component
@@ -56,15 +55,15 @@ public class FigmaCommentDomainClassifier {
 
     private String buildUserPrompt(FigmaCommentInfo comment, List<String> candidates) {
         return String.format("""
-            [후보 도메인 키]
-            %s
+                [후보 도메인 키]
+                %s
 
-            [댓글 작성자]
-            %s
+                [댓글 작성자]
+                %s
 
-            [댓글 본문]
-            %s
-            """,
+                [댓글 본문]
+                %s
+                """,
             String.join(", ", candidates),
             comment.authorName(),
             comment.message() == null ? "" : comment.message()

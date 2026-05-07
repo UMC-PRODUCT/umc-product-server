@@ -19,8 +19,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * LLM 분류 결과(domain_key) 단위 라우팅 도메인 + 담당자 mention 관리.
- * 운영진이 화면에서 도메인을 등록하고, 도메인별로 담당자 (Discord role/user) 를 추가/제거한다.
+ * LLM 분류 결과(domain_key) 단위 라우팅 도메인 + 담당자 mention 관리. 운영진이 화면에서 도메인을 등록하고, 도메인별로 담당자 (Discord role/user) 를 추가/제거한다.
  */
 @RestController
 @RequestMapping("/api/v1/admin/figma/routing-domains")

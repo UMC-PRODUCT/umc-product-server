@@ -15,9 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * Figma OAuth 위임 통합 상태.
- * 운영진 1인이 위임한 refresh token / access token을 저장하고,
- * 서버가 access token을 자동 갱신하는 데 사용한다.
+ * Figma OAuth 위임 통합 상태. 운영진 1인이 위임한 refresh token / access token을 저장하고, 서버가 access token을 자동 갱신하는 데 사용한다.
  */
 @Entity
 @Getter
@@ -67,7 +65,8 @@ public class FigmaIntegration extends BaseEntity {
     /**
      * 같은 위임자가 재인증 했을 때 토큰을 모두 교체한다.
      */
-    public void rotateTokens(String refreshTokenEnc, String accessTokenEnc, Instant accessTokenExpiresAt, String scope) {
+    public void rotateTokens(String refreshTokenEnc, String accessTokenEnc, Instant accessTokenExpiresAt,
+                             String scope) {
         this.refreshTokenEnc = refreshTokenEnc;
         this.accessTokenEnc = accessTokenEnc;
         this.accessTokenExpiresAt = accessTokenExpiresAt;

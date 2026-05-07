@@ -14,9 +14,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * LLM 분류 결과(domain_key) 가 매칭될 라우팅 도메인.
- * 어떤 Discord 채널 (webhook URL) 로 보낼지 와 fallback 여부를 결정한다.
- * 멘션 대상은 {@link FigmaRoutingDomainMention} 으로 1:N 으로 분리된다.
+ * LLM 분류 결과(domain_key) 가 매칭될 라우팅 도메인. 어떤 Discord 채널 (webhook URL) 로 보낼지 와 fallback 여부를 결정한다. 멘션 대상은
+ * {@link FigmaRoutingDomainMention} 으로 1:N 으로 분리된다.
  */
 @Entity
 @Getter

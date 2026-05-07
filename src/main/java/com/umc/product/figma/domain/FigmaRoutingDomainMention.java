@@ -17,8 +17,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 라우팅 도메인의 mention 대상 한 건.
- * Cross-domain reference 규칙에 따라 figma_routing_domain 은 ID 로만 참조한다.
+ * 라우팅 도메인의 mention 대상 한 건. Cross-domain reference 규칙에 따라 figma_routing_domain 은 ID 로만 참조한다.
  */
 @Entity
 @Getter

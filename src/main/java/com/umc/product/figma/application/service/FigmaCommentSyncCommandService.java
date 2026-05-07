@@ -13,10 +13,9 @@ import org.springframework.stereotype.Service;
 
 /**
  * Figma 폴링 → Discord 포워딩 메인 유즈케이스의 오케스트레이션 계층.
- *
- * 한 사이클의 모든 활성 파일 신규 댓글을 모아 LLM 분류기로 분류한 뒤 도메인별로 묶어
- * Discord 메시지 1건(필요 시 페이지 분할) 으로 발송한다. 시간창은 파일별 last_synced_comment_id
- * 이후의 모든 신규 댓글로 정의되며, 발송 후 last_synced_comment_id 가 갱신된다.
+ * <p>
+ * 한 사이클의 모든 활성 파일 신규 댓글을 모아 LLM 분류기로 분류한 뒤 도메인별로 묶어 Discord 메시지 1건(필요 시 페이지 분할) 으로 발송한다. 시간창은 파일별
+ * last_synced_comment_id 이후의 모든 신규 댓글로 정의되며, 발송 후 last_synced_comment_id 가 갱신된다.
  */
 @Slf4j
 @Service

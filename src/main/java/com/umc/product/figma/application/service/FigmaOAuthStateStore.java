@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Figma OAuth Authorization Code Flow 의 state 보관소.
- *
+ * <p>
  * 보안 책임:
  * <ul>
  *   <li>state = 256-bit {@link SecureRandom} URL-safe 문자열 (추측 불가)</li>
@@ -21,7 +21,7 @@ import org.springframework.stereotype.Component;
  *   <li>{@link #consume(String)} 가 원자적으로 lookup + 제거 → replay 차단</li>
  *   <li>10분 TTL — 만료 entry 는 거부, 신규 발급 시 lazy cleanup</li>
  * </ul>
- *
+ * <p>
  * 한계:
  * <ul>
  *   <li>in-memory: 다중 인스턴스 환경에서는 sticky session / Redis 로 교체 필요.
@@ -54,8 +54,8 @@ public class FigmaOAuthStateStore {
     }
 
     /**
-     * state 를 검증하면서 동시에 제거하고 묶여 있던 memberId 를 반환한다.
-     * 발급된 적 없거나 만료된 경우 {@link FigmaErrorCode#OAUTH_STATE_MISMATCH} 를 던진다.
+     * state 를 검증하면서 동시에 제거하고 묶여 있던 memberId 를 반환한다. 발급된 적 없거나 만료된 경우 {@link FigmaErrorCode#OAUTH_STATE_MISMATCH} 를
+     * 던진다.
      */
     public Long consume(String state) {
         if (state == null) {
