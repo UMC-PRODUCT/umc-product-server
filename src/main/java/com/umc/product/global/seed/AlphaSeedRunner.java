@@ -1,5 +1,6 @@
 package com.umc.product.global.seed;
 
+import com.umc.product.member.application.port.in.command.RegisterIdPwMemberUseCase;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,8 @@ public class AlphaSeedRunner implements ApplicationRunner {
 
     private final AlphaSeedProperties properties;
     private final LoadMemberPort loadMemberPort;
+    private final RegisterIdPwMemberUseCase registerIdPwMemberUseCase;
+    private final AlphaDummyMemberFactory dummyMemberFactory;
 
     @Override
     public void run(ApplicationArguments args) {
@@ -48,9 +51,27 @@ public class AlphaSeedRunner implements ApplicationRunner {
             properties.idPwMemberCount(), properties.oauthMemberCount(), currentMemberCount
         );
 
-        // ID/PW 시딩과 OAuth 시딩은 후속 커밋에서 추가된다.
+        int idPwCreated = seedIdPwMembers();
 
         long elapsedMs = System.currentTimeMillis() - startedAt;
-        log.info("alpha seed completed in {}ms", elapsedMs);
+        log.info("alpha seed completed in {}ms (idPw={})", elapsedMs, idPwCreated);
+    }
+
+    /**
+     * ID/PW 회원을 properties.idPwMemberCount() 만큼 등록한다.
+     * 각 register 호출은 자체 트랜잭션이며, 한 회원 실패가 다른 회원 등록을 막지 않는다.
+     */
+    private int seedIdPwMembers() {
+        int created = 0;
+        int target = properties.idPwMemberCount();
+        for (int seq = 1; seq <= target; seq++) {
+            try {
+                registerIdPwMemberUseCase.register(dummyMemberFactory.nextIdPwCommand(seq));
+                created++;
+            } catch (Exception e) {
+                log.error("alpha seed failed at idPw seq {}: {}", seq, e.toString());
+            }
+        }
+        return created;
     }
 }
