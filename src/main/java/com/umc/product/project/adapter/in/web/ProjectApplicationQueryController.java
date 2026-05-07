@@ -6,7 +6,9 @@ import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.project.adapter.in.web.assembler.ProjectApplicationResponseAssembler;
 import com.umc.product.project.adapter.in.web.dto.response.MyProjectApplicationResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicantResponse;
+import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicationDetailResponse;
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
+import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import io.swagger.v3.oas.annotations.Operation;
@@ -91,5 +93,36 @@ public class ProjectApplicationQueryController {
             .build();
 
         return assembler.applicantsFor(query);
+    }
+
+    @GetMapping("/{projectId}/applications/{applicationId}")
+    @Operation(
+        summary = "[APPLY-102] 지원서 단건 상세 조회",
+        description = """
+            지원서 단건의 메타(지원자/매칭 차수/상태/시각) + 폼 구조(지원자 파트 기준 마스킹) + 제출된 답변 본문 + 첨부 파일 메타까지 한 번에 반환한다.
+            <p>
+            노출 규칙:
+            <ul>
+              <li>SUBMITTED/APPROVED/REJECTED -- 4종 호출자(PO/Sub-PO/지부장/CC/지원자 본인) 모두 동일 응답</li>
+              <li>PENDING(임시저장) -- 지원자 본인만 조회 가능. 그 외 호출자에게는 404(PROJECT-0021) 로 위장하여 임시저장본의 존재 자체를 은닉</li>
+            </ul>
+            <p>
+            정합성: path 의 projectId 와 application 의 form.project.id 가 다르면 404(PROJECT-0021) 로 위장하여 다른 프로젝트의 지원서 존재 여부를 은닉한다.
+            <p>
+            TODO: 4종 호출자(@CheckAccess) 자격 검증은 추후에 추가된다 -- 현재 이 엔드포인트는 인증된 사용자라면 누구나 호출 가능.
+            """
+    )
+    public ProjectApplicationDetailResponse getApplicationDetail(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @PathVariable Long applicationId
+    ) {
+        GetProjectApplicationDetailQuery query = GetProjectApplicationDetailQuery.builder()
+            .projectId(projectId)
+            .applicationId(applicationId)
+            .requesterMemberId(memberPrincipal.getMemberId())
+            .build();
+
+        return assembler.detailFor(query);
     }
 }
