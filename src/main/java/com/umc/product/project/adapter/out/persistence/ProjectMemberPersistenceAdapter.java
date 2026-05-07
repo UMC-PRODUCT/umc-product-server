@@ -4,6 +4,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -73,5 +74,13 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
         return repository.existsByProjectIdAndMemberIdAndPartAndStatus(
             projectId, memberId, ChallengerPart.PLAN, ProjectMemberStatus.ACTIVE
         );
+    }
+
+    @Override
+    public Optional<ProjectMember> findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+        Long memberId, Long gisuId, MatchingType matchingType
+    ) {
+        return queryRepository.findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+            memberId, gisuId, matchingType);
     }
 }

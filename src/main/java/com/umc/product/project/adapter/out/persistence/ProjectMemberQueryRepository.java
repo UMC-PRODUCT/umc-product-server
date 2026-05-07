@@ -5,12 +5,17 @@ import static com.umc.product.project.domain.QProjectMember.projectMember;
 import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
 import java.util.Collection;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -22,6 +27,48 @@ import org.springframework.stereotype.Repository;
 public class ProjectMemberQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+
+    /**
+     * 매칭 종류로부터 노출 가능 파트 집합을 결정한다. 동일 멤버의 다른 파트(예: 같은 사람이 다른 기수에 PLAN 으로 합류한 잔여 row 가 잘못 매칭되는 경우) 를 차단하는 안전망 역할.
+     */
+    private static Set<ChallengerPart> partsOf(MatchingType matchingType) {
+        return switch (matchingType) {
+            case PLAN_DESIGN -> EnumSet.of(ChallengerPart.DESIGN);
+            case PLAN_DEVELOPER -> EnumSet.of(
+                ChallengerPart.WEB,
+                ChallengerPart.ANDROID,
+                ChallengerPart.IOS,
+                ChallengerPart.NODEJS,
+                ChallengerPart.SPRINGBOOT
+            );
+        };
+    }
+
+    /**
+     * 본인이 application=null + ACTIVE 인 ProjectMember 단건을 매칭 종류 기준 part 필터로 조회한다. APPLY-004 의 랜덤 매칭 카드 합성에 사용된다.
+     * <p>
+     * project 는 fetch join 으로 함께 로드된다. 도메인 정책상 결과는 0 또는 1 건이며, 2건 이상이면 QueryDSL {@code fetchOne()} 이
+     * {@code NonUniqueResultException} 을 던져 데이터 정합성 위반이 표면화된다.
+     */
+    public Optional<ProjectMember> findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+        Long memberId, Long gisuId, MatchingType matchingType
+    ) {
+        Set<ChallengerPart> partFilter = partsOf(matchingType);
+
+        ProjectMember result = queryFactory
+            .selectFrom(projectMember)
+            .join(projectMember.project).fetchJoin()
+            .where(
+                projectMember.memberId.eq(memberId),
+                projectMember.project.gisuId.eq(gisuId),
+                projectMember.application.isNull(),
+                projectMember.status.eq(ProjectMemberStatus.ACTIVE),
+                projectMember.part.in(partFilter)
+            )
+            .fetchOne();
+
+        return Optional.ofNullable(result);
+    }
 
     /**
      * 여러 프로젝트의 (projectId, part) 별 ACTIVE 멤버 수를 한 번에 집계한다.

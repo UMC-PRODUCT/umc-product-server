@@ -2,6 +2,7 @@ package com.umc.product.project.application.port.out;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingType;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -50,4 +51,28 @@ public interface LoadProjectMemberPort {
      * 특정 프로젝트의 ACTIVE PLAN 파트 멤버인지 확인합니다. 보조 PM(Sub-PM) 검사에 사용됩니다.
      */
     boolean isActivePlanMember(Long projectId, Long memberId);
+
+    /**
+     * 본인이 ACTIVE 멤버이면서 application 이 null 인 (즉, 지원서 경로가 아닌 랜덤 매칭/운영진 강제 배정으로 합류한) 멤버를 단건 조회한다. APPLY-004(본인 지원 내역 목록
+     * 조회) 의 랜덤 매칭 카드 합성에 사용된다.
+     * <p>
+     * 도메인 정책: 한 챌린저는 한 기수에 한 프로젝트에만 합류 가능하므로 결과는 최대 1건이다. 2건 이상 발견되면 호출자(Service)가 invariant 위반 처리한다.
+     * <p>
+     * 필터:
+     * <ul>
+     *   <li>{@code memberId} -- 본인 멤버 ID</li>
+     *   <li>{@code gisuId} -- {@code project.gisuId} 일치 (해당 기수)</li>
+     *   <li>{@code matchingType} -- 본인 챌린저 파트로부터 추론된 매칭 종류로 part 집합 필터.
+     *       PLAN_DEVELOPER -> WEB/ANDROID/IOS/NODEJS/SPRINGBOOT, PLAN_DESIGN -> DESIGN.
+     *       동일 멤버의 다른 파트 노이즈를 차단하는 안전망이다.</li>
+     *   <li>{@code application = null}</li>
+     *   <li>{@code status = ACTIVE} (DISMISSED 제외)</li>
+     * </ul>
+     * project 는 fetch join 으로 함께 로드된다 -- 호출자가 lazy 프록시 traversal 없이 {@code member.getProject()} 를 사용할 수 있게 한다.
+     */
+    Optional<ProjectMember> findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+        Long memberId,
+        Long gisuId,
+        MatchingType matchingType
+    );
 }
