@@ -22,6 +22,7 @@ import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectApplicationFormPolicy;
+import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.ProjectPartQuota;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.exception.ProjectDomainException;
@@ -75,31 +76,17 @@ public class ProjectApplicationQueryService
     }
 
     /**
-     * 본인 지원 내역 목록 조회 서비스.
-     * <p>
-     * 사용자의 파트로부터 {@link MatchingType} 을 자동 결정하여 필터링하고, 매칭 라운드 시작일 ASC → 지원서 갱신일 DESC 순으로 정렬된 카드 목록을 반환한다.
-     * <p>
-     * 사용자가 해당 기수의 챌린저가 아니거나 매칭 대상 파트가 아닌 경우(PLAN/ADMIN) 빈 리스트를 반환한다. 운영진 권한은 별도 {@code ChallengerRole} 로 표현되므로 본 결정에
-     * 영향을 주지 않는다 — 운영진이면서 개발 파트 챌린저인 사용자도 본인 파트({@code WEB} 등) 기준으로 정상 조회된다.
+     * application 카드와 랜덤 매칭 카드의 projectId 를 통합한 집합을 만든다 (N+1 방지용 batch 키).
      */
-    @Override
-    public List<MyProjectApplicationCardInfo> getMyApplications(GetMyProjectApplicationsQuery query) {
-        Optional<MatchingType> matchingType = resolveMatchingType(query);
-        if (matchingType.isEmpty()) {
-            return List.of();
+    private static Set<Long> collectProjectIds(
+        List<ProjectApplication> applications, Optional<ProjectMember> randomMatchingMember
+    ) {
+        Set<Long> projectIds = new HashSet<>();
+        for (ProjectApplication application : applications) {
+            projectIds.add(application.getApplicationForm().getProject().getId());
         }
-
-        List<ProjectApplication> applications = loadProjectApplicationPort.searchMyApplications(
-            query.requesterMemberId(),
-            query.gisuId(),
-            matchingType.get(),
-            query.status()
-        );
-        if (applications.isEmpty()) {
-            return List.of();
-        }
-
-        return assembleCards(applications);
+        randomMatchingMember.ifPresent(member -> projectIds.add(member.getProject().getId()));
+        return projectIds;
     }
 
     /**
@@ -217,13 +204,65 @@ public class ProjectApplicationQueryService
             .flatMap(ProjectApplicationQueryService::matchingTypeOf);
     }
 
+    private static String thumbnailUrlOf(Project project, Map<String, String> thumbnailLinks) {
+        return project.getThumbnailFileId() == null ? null : thumbnailLinks.get(project.getThumbnailFileId());
+    }
+
     /**
-     * 지원서 목록을 카드 Info 로 조립한다. partQuota / 파트별 멤버 수 / 썸네일 URL 은 배치로 일괄 조회한다.
+     * 본인 지원 내역 목록 조회 서비스.
+     * <p>
+     * 사용자의 파트로부터 {@link MatchingType} 을 자동 결정하여 필터링하고, 매칭 라운드 시작일 ASC -> 지원서 갱신일 DESC 순으로 정렬된 application 카드와 끝에 append
+     * 된 랜덤 매칭 카드를 반환한다.
+     * <p>
+     * 데이터 원천:
+     * <ul>
+     *   <li>application 카드 -- 본인이 제출한 {@code ProjectApplication} (PENDING/SUBMITTED/APPROVED/REJECTED)</li>
+     *   <li>랜덤 매칭 카드 -- 본인이 ACTIVE 멤버이면서 {@code application=null} 인 케이스 (자동 랜덤 매칭 / 운영진 강제 배정).
+     *       도메인 정책상 한 챌린저는 한 기수에 한 프로젝트에만 합류 가능하므로 0 또는 1 건이며, status 는 ProjectMember 의 ACTIVE 가 곧 합격 의미이므로 APPROVED 로
+     *       표시한다. 정상 합격(application APPROVED + ProjectMember 양쪽 존재) 케이스의 중복 노출은 application=null 필터로 자연스럽게 차단된다.</li>
+     * </ul>
+     * <p>
+     * 사용자가 해당 기수의 챌린저가 아니거나 매칭 대상 파트가 아닌 경우(PLAN/ADMIN) 빈 리스트를 반환한다. 운영진 권한은 별도 {@code ChallengerRole} 로 표현되므로 본 결정에
+     * 영향을 주지 않는다 -- 운영진이면서 개발 파트 챌린저인 사용자도 본인 파트({@code WEB} 등) 기준으로 정상 조회된다.
+     * <p>
+     * 랜덤 매칭 카드는 status 필터({@code query.status})와 무관하게 노출 여부가 결정된다 -- application 도메인 외부의 데이터원이라 application status 필터의
+     * 시맨틱이 적용되지 않으며, 클라이언트가 SUBMITTED/REJECTED/PENDING 등 좁은 필터로 호출했을 때 RANDOM_MATCHING 카드까지 끼는 것을 막기 위해
+     * {@code status} 가 명시된 호출에서는 랜덤 매칭 카드를 합성하지 않는다.
      */
-    private List<MyProjectApplicationCardInfo> assembleCards(List<ProjectApplication> applications) {
-        Set<Long> projectIds = applications.stream()
-            .map(a -> a.getApplicationForm().getProject().getId())
-            .collect(Collectors.toSet());
+    @Override
+    public List<MyProjectApplicationCardInfo> getMyApplications(GetMyProjectApplicationsQuery query) {
+        Optional<MatchingType> matchingType = resolveMatchingType(query);
+        if (matchingType.isEmpty()) {
+            return List.of();
+        }
+
+        List<ProjectApplication> applications = loadProjectApplicationPort.searchMyApplications(
+            query.requesterMemberId(),
+            query.gisuId(),
+            matchingType.get(),
+            query.status()
+        );
+
+        Optional<ProjectMember> randomMatchingMember = resolveRandomMatchingMember(query, matchingType.get());
+
+        if (applications.isEmpty() && randomMatchingMember.isEmpty()) {
+            return List.of();
+        }
+
+        return assembleCards(applications, randomMatchingMember, matchingType.get());
+    }
+
+    /**
+     * application 카드 + 랜덤 매칭 카드를 조립한다. partQuota / 파트별 멤버 수 / 썸네일 URL 은 두 데이터원의 projectId 통합 집합으로 1회 batch 조회한다.
+     * <p>
+     * 정렬: application 카드는 port 가 반환한 순서를 그대로 유지(매칭 라운드 시작일 ASC -> 갱신일 DESC), 랜덤 매칭 카드는 끝에 1건 append.
+     */
+    private List<MyProjectApplicationCardInfo> assembleCards(
+        List<ProjectApplication> applications,
+        Optional<ProjectMember> randomMatchingMember,
+        MatchingType matchingType
+    ) {
+        Set<Long> projectIds = collectProjectIds(applications, randomMatchingMember);
 
         Map<Long, List<ProjectPartQuota>> quotasByProject =
             loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(projectIds);
@@ -231,22 +270,50 @@ public class ProjectApplicationQueryService
         Map<Long, Map<ChallengerPart, Long>> countsByProject =
             loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(projectIds);
 
-        Map<String, String> thumbnailLinks = resolveThumbnailLinks(applications);
+        Map<String, String> thumbnailLinks = resolveThumbnailLinks(applications, randomMatchingMember);
 
-        List<MyProjectApplicationCardInfo> cards = new ArrayList<>(applications.size());
+        List<MyProjectApplicationCardInfo> cards = new ArrayList<>(applications.size() + 1);
         for (ProjectApplication application : applications) {
             Project project = application.getApplicationForm().getProject();
-            List<ProjectPartQuotaInfo> partQuotaInfos = buildPartQuotaInfos(
-                quotasByProject.getOrDefault(project.getId(), List.of()),
-                countsByProject.getOrDefault(project.getId(), Map.of())
-            );
-            String thumbnailUrl = project.getThumbnailFileId() == null
-                ? null
-                : thumbnailLinks.get(project.getThumbnailFileId());
-
-            cards.add(MyProjectApplicationCardInfo.of(application, partQuotaInfos, thumbnailUrl));
+            cards.add(MyProjectApplicationCardInfo.of(
+                application,
+                buildPartQuotaInfos(
+                    quotasByProject.getOrDefault(project.getId(), List.of()),
+                    countsByProject.getOrDefault(project.getId(), Map.of())
+                ),
+                thumbnailUrlOf(project, thumbnailLinks)
+            ));
         }
+        randomMatchingMember.ifPresent(member -> {
+            Project project = member.getProject();
+            cards.add(MyProjectApplicationCardInfo.ofRandomMatching(
+                member,
+                buildPartQuotaInfos(
+                    quotasByProject.getOrDefault(project.getId(), List.of()),
+                    countsByProject.getOrDefault(project.getId(), Map.of())
+                ),
+                thumbnailUrlOf(project, thumbnailLinks),
+                matchingType
+            ));
+        });
         return cards;
+    }
+
+    /**
+     * 본인 ACTIVE + application=null 케이스를 단건 조회한다. APPLY-004 의 랜덤 매칭/운영진 강제 배정 카드 합성에 사용된다.
+     * <p>
+     * status 필터가 명시된 호출에서는 application status 시맨틱이 적용되지 않는 데이터원이라 합성을 생략한다 -- 자세한 설명은 {@link #getMyApplications} 의
+     * javadoc 참조.
+     */
+    private Optional<ProjectMember> resolveRandomMatchingMember(
+        GetMyProjectApplicationsQuery query, MatchingType matchingType
+    ) {
+        if (query.status() != null) {
+            return Optional.empty();
+        }
+        return loadProjectMemberPort.findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+            query.requesterMemberId(), query.gisuId(), matchingType
+        );
     }
 
     private List<ProjectPartQuotaInfo> buildPartQuotaInfos(
@@ -297,7 +364,12 @@ public class ProjectApplicationQueryService
         return getFileUseCase.findAllByIds(new ArrayList<>(fileIds));
     }
 
-    private Map<String, String> resolveThumbnailLinks(List<ProjectApplication> applications) {
+    /**
+     * application 카드와 랜덤 매칭 카드의 thumbnailFileId 를 통합 집합으로 모아 storage 도메인에 IN 쿼리 1회 batch 조회한다.
+     */
+    private Map<String, String> resolveThumbnailLinks(
+        List<ProjectApplication> applications, Optional<ProjectMember> randomMatchingMember
+    ) {
         Set<String> fileIds = new HashSet<>();
         for (ProjectApplication application : applications) {
             String fileId = application.getApplicationForm().getProject().getThumbnailFileId();
@@ -305,6 +377,12 @@ public class ProjectApplicationQueryService
                 fileIds.add(fileId);
             }
         }
+        randomMatchingMember.ifPresent(member -> {
+            String fileId = member.getProject().getThumbnailFileId();
+            if (fileId != null) {
+                fileIds.add(fileId);
+            }
+        });
         if (fileIds.isEmpty()) {
             return Map.of();
         }
