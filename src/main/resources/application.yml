@@ -285,6 +285,21 @@ app:
       allowed-redirect-uris: ${KAKAO_ALLOWED_REDIRECT_URIS:}
     frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT_URL}
 
+  figma:
+    oauth:
+      client-id: ${FIGMA_OAUTH_CLIENT_ID:}
+      client-secret: ${FIGMA_OAUTH_CLIENT_SECRET:}
+      redirect-uri: ${FIGMA_OAUTH_REDIRECT_URI:http://localhost:8080/api/v1/admin/figma/oauth/callback}
+      scope: ${FIGMA_OAUTH_SCOPE:file_read,file_comments:read}
+      authorize-uri: https://www.figma.com/oauth
+      token-uri: https://api.figma.com/v1/oauth/token
+      refresh-uri: https://api.figma.com/v1/oauth/refresh
+      token-encryption-key: ${FIGMA_TOKEN_ENCRYPTION_KEY:umc-product-figma-default-key}
+    sync:
+      enabled: ${FIGMA_SYNC_ENABLED:false}
+      poll-interval: ${FIGMA_SYNC_POLL_INTERVAL:PT5M}
+      max-files-per-run: ${FIGMA_SYNC_MAX_FILES_PER_RUN:50}
+
 storage:
   provider: ${STORAGE_PROVIDER:s3}
 
