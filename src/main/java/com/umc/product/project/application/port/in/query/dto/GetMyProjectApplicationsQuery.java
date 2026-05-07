@@ -8,8 +8,9 @@ import lombok.Builder;
  *
  * @param requesterMemberId 요청자 Member ID
  * @param gisuId            대상 기수 ID. 사용자의 파트 결정 및 프로젝트 기수 필터에 사용된다.
- * @param status            상태 필터. {@code null} 이면 PENDING(임시저장)을 제외한 전체 (SUBMITTED/APPROVED/REJECTED). 명시 시 해당 상태만
- *                          조회된다.
+ * @param status            application 카드의 상태 필터. {@code null} 이면 PENDING(임시저장)을 제외한 전체(SUBMITTED/APPROVED/REJECTED) +
+ *                          RANDOM_MATCHING 카드 합성. 명시 시 해당 상태의 application 카드만 조회되며, RANDOM_MATCHING 카드는 application status
+ *                          시맨틱 외부 데이터원이라 미합성된다.
  */
 @Builder
 public record GetMyProjectApplicationsQuery(

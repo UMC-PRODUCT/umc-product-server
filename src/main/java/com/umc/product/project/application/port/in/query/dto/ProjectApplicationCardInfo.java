@@ -15,7 +15,9 @@ import lombok.Builder;
  * Service 가 ProjectApplication + 지원 파트(applicantPart) 까지 조립한 형태. Web Assembler 가 지원자(applicant) 의 닉네임/실명/학교명을 member
  * 도메인에서 보강해 최종 Response 로 변환한다.
  * <p>
- * 매칭 라운드는 본인 조회와 동일하게 표시용 라벨 대신 {@link MatchingType} / {@link MatchingPhase} enum 조합으로 노출한다 -- 라벨 합성은 Web 레이어 책임.
+ * 매칭 라운드는 표시용 라벨 대신 {@link MatchingType} / {@link MatchingPhase} 도메인 enum 조합으로 노출한다 -- 라벨 합성은 Web 레이어 책임. 본 응답은 항상 실제
+ * 라운드 엔티티가 존재하는 application 만 다루므로 표시용 enum({@link MatchingRoundPhaseView}) 으로 분리할 필요가 없으며, 본인 조회({@code
+ * MyProjectApplicationCardInfo}) 와는 데이터원/시맨틱이 달라 phase 표현이 의도적으로 다르다.
  */
 @Builder
 public record ProjectApplicationCardInfo(
