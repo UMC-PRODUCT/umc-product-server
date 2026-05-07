@@ -121,6 +121,17 @@ spring:
 
   # Spring AI provider 설정 - 실제 활성 provider 는 app.llm.provider 가 결정한다.
   ai:
+    # 운영 활성화 시 LLM_AI_MODEL_CHAT=openai 또는 vertexai-gemini 를 주입한다.
+    # 기본값 none 은 ChatModel 자동구성을 모두 비활성화하여 mock 어댑터만 활성화되도록 한다.
+    # 본 시스템은 chat 만 사용하므로 다른 모델 카테고리는 항상 비활성화한다.
+    model:
+      chat: ${LLM_AI_MODEL_CHAT:none}
+      embedding: none
+      image: none
+      moderation: none
+      audio:
+        speech: none
+        transcription: none
     openai:
       api-key: ${LLM_OPENAI_API_KEY:}
     vertex:

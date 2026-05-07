@@ -10,6 +10,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
@@ -30,6 +31,7 @@ public class ChatCompletionService implements ChatCompleteUseCase {
     private final LlmMetrics metrics;
     private final Clock clock;
 
+    @Autowired
     public ChatCompletionService(
         ChatCompletionPort chatCompletionPort,
         LlmCallGuard callGuard,
