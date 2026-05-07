@@ -15,11 +15,14 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
+import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
 import com.umc.product.project.application.port.in.query.dto.ManagedProjectApplicationCardStatus;
 import com.umc.product.project.application.port.in.query.dto.MyProjectApplicationCardInfo;
-import com.umc.product.project.application.port.in.query.dto.MyProjectApplicationCardStatus;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationCardInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectApplicationDetailInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectApplicationViewStatus;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
+import com.umc.product.project.application.port.out.LoadProjectApplicationFormPolicyPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
@@ -34,7 +37,17 @@ import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
+import com.umc.product.storage.application.port.in.query.dto.FileInfo;
+import com.umc.product.storage.domain.enums.FileCategory;
+import com.umc.product.survey.application.port.in.query.GetFormResponseUseCase;
+import com.umc.product.survey.application.port.in.query.GetFormUseCase;
+import com.umc.product.survey.application.port.in.query.dto.AnswerInfo;
+import com.umc.product.survey.application.port.in.query.dto.FormResponseWithAnswersInfo;
+import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo;
+import com.umc.product.survey.domain.enums.FormResponseStatus;
+import com.umc.product.survey.domain.enums.QuestionType;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -61,9 +74,15 @@ class ProjectApplicationQueryServiceTest {
     @Mock
     LoadProjectPort loadProjectPort;
     @Mock
+    LoadProjectApplicationFormPolicyPort loadProjectApplicationFormPolicyPort;
+    @Mock
     GetChallengerUseCase getChallengerUseCase;
     @Mock
     GetFileUseCase getFileUseCase;
+    @Mock
+    GetFormUseCase getFormUseCase;
+    @Mock
+    GetFormResponseUseCase getFormResponseUseCase;
     @InjectMocks
     ProjectApplicationQueryService sut;
 
@@ -243,7 +262,7 @@ class ProjectApplicationQueryServiceTest {
         assertThat(card.matchingRoundId()).isEqualTo(7L);
         assertThat(card.matchingRoundType()).isEqualTo(MatchingType.PLAN_DEVELOPER);
         assertThat(card.matchingRoundPhase()).isEqualTo(MatchingPhase.FIRST);
-        assertThat(card.status()).isEqualTo(MyProjectApplicationCardStatus.SUBMITTED);
+        assertThat(card.status()).isEqualTo(ProjectApplicationViewStatus.SUBMITTED);
         assertThat(card.partQuotas())
             .extracting("part", "quota", "currentCount")
             .containsExactly(tuple(ChallengerPart.WEB, 3L, 1L));
@@ -278,7 +297,7 @@ class ProjectApplicationQueryServiceTest {
         // then
         assertThat(result).hasSize(1);
         assertThat(result.get(0).projectThumbnailImageUrl()).isNull();
-        assertThat(result.get(0).status()).isEqualTo(MyProjectApplicationCardStatus.PENDING);
+        assertThat(result.get(0).status()).isEqualTo(ProjectApplicationViewStatus.PENDING);
         verify(getFileUseCase, never()).getFileLinks(anyList());
     }
 
@@ -498,6 +517,268 @@ class ProjectApplicationQueryServiceTest {
             ReflectionTestUtils.setField(application, "statusChangedAt",
                 java.time.Instant.parse("2026-04-22T03:33:00Z"));
         }
+        return application;
+    }
+
+    // ============================================================
+    //                getDetail (지원서 단건 상세 조회) 테스트
+    // ============================================================
+
+    @Test
+    @DisplayName("getDetail_application_미존재시_PROJECT_APPLICATION_NOT_FOUND")
+    void getDetail_미존재() {
+        // given
+        GetProjectApplicationDetailQuery query = detailQuery(1L, 999L);
+        given(loadProjectApplicationPort.findByIdWithDetails(999L))
+            .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> sut.getDetail(query))
+            .isInstanceOf(ProjectDomainException.class)
+            .hasFieldOrPropertyWithValue("baseCode", ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("getDetail_application_은_존재하나_path_projectId_와_form_project_id_가_다르면_NOT_FOUND_위장")
+    void getDetail_정합성_위반() {
+        // given - application 의 form.project.id 는 1L 인데 path 는 2L
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        ProjectApplication application = createSubmittedApplication(
+            55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED);
+
+        GetProjectApplicationDetailQuery query = detailQuery(2L, 55L);
+        given(loadProjectApplicationPort.findByIdWithDetails(55L))
+            .willReturn(Optional.of(application));
+
+        // when & then
+        assertThatThrownBy(() -> sut.getDetail(query))
+            .isInstanceOf(ProjectDomainException.class)
+            .hasFieldOrPropertyWithValue("baseCode", ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+        verify(getChallengerUseCase, never()).findByMemberIdAndGisuId(any(), any());
+    }
+
+    @Test
+    @DisplayName("getDetail_지원자가_해당_기수_챌린저가_아니면_NOT_FOUND_위장")
+    void getDetail_챌린저_누락() {
+        // given
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        ProjectApplication application = createSubmittedApplication(
+            55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED);
+
+        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L);
+        given(loadProjectApplicationPort.findByIdWithDetails(55L))
+            .willReturn(Optional.of(application));
+        given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
+            .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> sut.getDetail(query))
+            .isInstanceOf(ProjectDomainException.class)
+            .hasFieldOrPropertyWithValue("baseCode", ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+        verify(getFormUseCase, never()).getFormWithStructure(any());
+    }
+
+    @Test
+    @DisplayName("getDetail_정상_조립_applicantPart_status_매핑_및_answers_files_매핑_확인")
+    void getDetail_정상_조립() {
+        // given
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        ProjectApplication application = createApplicationWithFormResponse(
+            55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED, 123L);
+
+        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L);
+        given(loadProjectApplicationPort.findByIdWithDetails(55L))
+            .willReturn(Optional.of(application));
+        given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
+            .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
+
+        FormWithStructureInfo formStructure = FormWithStructureInfo.builder()
+            .formId(7L)
+            .title("지원폼")
+            .description(null)
+            .sections(List.of())
+            .build();
+        given(getFormUseCase.getFormWithStructure(7L)).willReturn(formStructure);
+        given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
+            .willReturn(List.of());
+
+        AnswerInfo textAnswer = AnswerInfo.builder()
+            .id(501L)
+            .formResponseId(123L)
+            .questionId(11L)
+            .answeredAsType(QuestionType.SHORT_TEXT)
+            .textValue("이방토/이예원")
+            .selectedOptions(List.of())
+            .fileIds(null)
+            .times(null)
+            .build();
+        AnswerInfo fileAnswer = AnswerInfo.builder()
+            .id(504L)
+            .formResponseId(123L)
+            .questionId(16L)
+            .answeredAsType(QuestionType.PORTFOLIO)
+            .textValue(null)
+            .selectedOptions(List.of())
+            .fileIds(java.util.Set.of("f-abc"))
+            .times(null)
+            .build();
+        FormResponseWithAnswersInfo formResponseWithAnswers = FormResponseWithAnswersInfo.builder()
+            .id(123L)
+            .formId(7L)
+            .respondentMemberId(200L)
+            .status(FormResponseStatus.SUBMITTED)
+            .submittedAt(java.time.Instant.parse("2026-04-22T01:30:00Z"))
+            .submittedIp("127.0.0.1")
+            .lastSavedAt(java.time.Instant.parse("2026-04-22T01:30:00Z"))
+            .createdAt(java.time.Instant.parse("2026-04-22T01:00:00Z"))
+            .updatedAt(java.time.Instant.parse("2026-04-22T01:30:00Z"))
+            .answers(List.of(textAnswer, fileAnswer))
+            .build();
+        given(getFormResponseUseCase.findResponseWithAnswers(123L))
+            .willReturn(Optional.of(formResponseWithAnswers));
+
+        FileInfo fileInfo = new FileInfo(
+            "f-abc", "포트폴리오.pdf", FileCategory.PORTFOLIO,
+            "application/pdf", 1024L, "https://cdn/f-abc",
+            true, 200L, java.time.Instant.parse("2026-04-22T01:00:00Z"));
+        given(getFileUseCase.findAllByIds(anyList()))
+            .willReturn(Map.of("f-abc", fileInfo));
+
+        // when
+        ProjectApplicationDetailInfo result = sut.getDetail(query);
+
+        // then
+        assertThat(result.applicationId()).isEqualTo(55L);
+        assertThat(result.applicantMemberId()).isEqualTo(200L);
+        assertThat(result.applicantPart()).isEqualTo(ChallengerPart.DESIGN);
+        assertThat(result.matchingRoundId()).isEqualTo(7L);
+        assertThat(result.matchingRoundType()).isEqualTo(MatchingType.PLAN_DESIGN);
+        assertThat(result.matchingRoundPhase()).isEqualTo(MatchingPhase.FIRST);
+        assertThat(result.status()).isEqualTo(ProjectApplicationViewStatus.SUBMITTED);
+        assertThat(result.formResponse().id()).isEqualTo(123L);
+        assertThat(result.answersByQuestionId()).containsOnlyKeys(11L, 16L);
+        assertThat(result.filesByFileId()).containsKeys("f-abc");
+        assertThat(result.filesByFileId().get("f-abc").originalFileName()).isEqualTo("포트폴리오.pdf");
+    }
+
+    @Test
+    @DisplayName("getDetail_PENDING_상태인데_지원자_본인이_아니면_NOT_FOUND_위장")
+    void getDetail_PENDING_타인_차단() {
+        // given - 지원자 본인은 200L, 호출자는 300L (다른 챌린저/운영진)
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        ProjectApplication application = createApplicationWithFormResponse(
+            55L, project, round, 200L, ProjectApplicationStatus.PENDING, 123L);
+
+        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L, 300L);
+        given(loadProjectApplicationPort.findByIdWithDetails(55L))
+            .willReturn(Optional.of(application));
+
+        // when & then
+        assertThatThrownBy(() -> sut.getDetail(query))
+            .isInstanceOf(ProjectDomainException.class)
+            .hasFieldOrPropertyWithValue("baseCode", ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+        verify(getChallengerUseCase, never()).findByMemberIdAndGisuId(any(), any());
+    }
+
+    @Test
+    @DisplayName("getDetail_PENDING_상태이지만_지원자_본인_호출이면_정상_조회")
+    void getDetail_PENDING_본인_허용() {
+        // given - applicantMemberId 와 requesterMemberId 가 동일
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        ProjectApplication application = createApplicationWithFormResponse(
+            55L, project, round, 200L, ProjectApplicationStatus.PENDING, 123L);
+
+        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L, 200L);
+        given(loadProjectApplicationPort.findByIdWithDetails(55L))
+            .willReturn(Optional.of(application));
+        given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
+            .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
+        given(getFormUseCase.getFormWithStructure(7L)).willReturn(
+            FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
+        given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
+            .willReturn(List.of());
+        given(getFormResponseUseCase.findResponseWithAnswers(123L))
+            .willReturn(Optional.of(FormResponseWithAnswersInfo.builder()
+                .id(123L).formId(7L).respondentMemberId(200L)
+                .status(FormResponseStatus.DRAFT)
+                .answers(List.of())
+                .build()));
+
+        // when
+        ProjectApplicationDetailInfo result = sut.getDetail(query);
+
+        // then
+        assertThat(result.applicationId()).isEqualTo(55L);
+        assertThat(result.status()).isEqualTo(ProjectApplicationViewStatus.PENDING);
+    }
+
+    @Test
+    @DisplayName("getDetail_formResponseId_가_dangling_이면_NOT_FOUND_위장")
+    void getDetail_dangling_formResponse() {
+        // given
+        Project project = createProject(1L, "프로젝트A", null, 99L);
+        ProjectMatchingRound round = createMatchingRound(
+            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
+        ProjectApplication application = createApplicationWithFormResponse(
+            55L, project, round, 200L, ProjectApplicationStatus.SUBMITTED, 999L);
+
+        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L);
+        given(loadProjectApplicationPort.findByIdWithDetails(55L))
+            .willReturn(Optional.of(application));
+        given(getChallengerUseCase.findByMemberIdAndGisuId(200L, GISU_ID))
+            .willReturn(Optional.of(challengerInfoOf(200L, ChallengerPart.DESIGN)));
+        given(getFormUseCase.getFormWithStructure(7L)).willReturn(
+            FormWithStructureInfo.builder().formId(7L).sections(List.of()).build());
+        given(loadProjectApplicationFormPolicyPort.listByApplicationFormId(any()))
+            .willReturn(List.of());
+        given(getFormResponseUseCase.findResponseWithAnswers(999L))
+            .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> sut.getDetail(query))
+            .isInstanceOf(ProjectDomainException.class)
+            .hasFieldOrPropertyWithValue("baseCode", ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+    }
+
+    private GetProjectApplicationDetailQuery detailQuery(Long projectId, Long applicationId) {
+        return detailQuery(projectId, applicationId, REQUESTER_ID);
+    }
+
+    private GetProjectApplicationDetailQuery detailQuery(Long projectId, Long applicationId, Long requesterMemberId) {
+        return GetProjectApplicationDetailQuery.builder()
+            .projectId(projectId)
+            .applicationId(applicationId)
+            .requesterMemberId(requesterMemberId)
+            .build();
+    }
+
+    private ProjectApplication createApplicationWithFormResponse(
+        Long id, Project project, ProjectMatchingRound round,
+        Long applicantMemberId, ProjectApplicationStatus status, Long formResponseId
+    ) {
+        ProjectApplicationForm form = newInstance(ProjectApplicationForm.class);
+        ReflectionTestUtils.setField(form, "id", 33L);
+        ReflectionTestUtils.setField(form, "project", project);
+        ReflectionTestUtils.setField(form, "formId", 7L);
+
+        ProjectApplication application = newInstance(ProjectApplication.class);
+        ReflectionTestUtils.setField(application, "id", id);
+        ReflectionTestUtils.setField(application, "applicationForm", form);
+        ReflectionTestUtils.setField(application, "appliedMatchingRound", round);
+        ReflectionTestUtils.setField(application, "applicantMemberId", applicantMemberId);
+        ReflectionTestUtils.setField(application, "status", status);
+        ReflectionTestUtils.setField(application, "formResponseId", formResponseId);
+        ReflectionTestUtils.setField(application, "submittedAt", java.time.Instant.parse("2026-04-22T01:30:00Z"));
         return application;
     }
 }

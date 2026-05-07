@@ -13,18 +13,25 @@ import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.project.adapter.in.web.dto.response.MyProjectApplicationResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicantResponse;
+import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicationDetailResponse;
 import com.umc.product.project.application.port.in.query.GetMyProjectApplicationsUseCase;
+import com.umc.product.project.application.port.in.query.GetProjectApplicationDetailUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectApplicationsUseCase;
+import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo;
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
+import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
 import com.umc.product.project.application.port.in.query.dto.ManagedProjectApplicationCardStatus;
 import com.umc.product.project.application.port.in.query.dto.MyProjectApplicationCardInfo;
-import com.umc.product.project.application.port.in.query.dto.MyProjectApplicationCardStatus;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationCardInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectApplicationDetailInfo;
+import com.umc.product.project.application.port.in.query.dto.ProjectApplicationViewStatus;
 import com.umc.product.project.application.port.in.query.dto.ProjectPartQuotaInfo;
 import com.umc.product.project.application.port.in.query.dto.SearchProjectApplicationsQuery;
 import com.umc.product.project.domain.enums.MatchingPhase;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.PartQuotaStatus;
+import com.umc.product.survey.application.port.in.query.dto.FormResponseInfo;
+import com.umc.product.survey.domain.enums.FormResponseStatus;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +49,8 @@ class ProjectApplicationResponseAssemblerTest {
     GetMyProjectApplicationsUseCase getMyProjectApplicationsUseCase;
     @Mock
     SearchProjectApplicationsUseCase searchProjectApplicationsUseCase;
+    @Mock
+    GetProjectApplicationDetailUseCase getProjectApplicationDetailUseCase;
     @Mock
     GetMemberUseCase getMemberUseCase;
 
@@ -74,7 +83,7 @@ class ProjectApplicationResponseAssemblerTest {
         assertThat(response.matchingRound().id()).isEqualTo(7L);
         assertThat(response.matchingRound().type()).isEqualTo(MatchingType.PLAN_DEVELOPER);
         assertThat(response.matchingRound().phase()).isEqualTo(MatchingPhase.FIRST);
-        assertThat(response.status()).isEqualTo(MyProjectApplicationCardStatus.SUBMITTED);
+        assertThat(response.status()).isEqualTo(ProjectApplicationViewStatus.SUBMITTED);
         assertThat(response.project().partQuotas())
             .extracting("part", "quota", "currentCount", "status")
             .containsExactly(
@@ -139,7 +148,7 @@ class ProjectApplicationResponseAssemblerTest {
             .matchingRoundId(7L)
             .matchingRoundType(MatchingType.PLAN_DEVELOPER)
             .matchingRoundPhase(MatchingPhase.FIRST)
-            .status(MyProjectApplicationCardStatus.SUBMITTED)
+            .status(ProjectApplicationViewStatus.SUBMITTED)
             .build();
     }
 
@@ -244,6 +253,103 @@ class ProjectApplicationResponseAssemblerTest {
             .status(ManagedProjectApplicationCardStatus.SUBMITTED)
             .submittedAt(Instant.parse("2026-04-22T01:30:00Z"))
             .statusChangedAt(null)
+            .build();
+    }
+
+    // ============================================================
+    //                   detailFor (단건 상세) 테스트
+    // ============================================================
+
+    @Test
+    @DisplayName("detailFor_지원자_member_정보가_닉네임_실명_학교명을_포함해_응답에_조립된다")
+    void detailFor_정상_조립() {
+        // given
+        GetProjectApplicationDetailQuery query = detailQueryOf(1L, 55L);
+        ProjectApplicationDetailInfo info = detailInfoOf(55L, 200L, ChallengerPart.DESIGN);
+
+        given(getProjectApplicationDetailUseCase.getDetail(query)).willReturn(info);
+        given(getMemberUseCase.findAllByIds(any()))
+            .willReturn(Map.of(200L, memberOf(200L, "이방토", "이예원", "한양대 ERICA")));
+
+        // when
+        ProjectApplicationDetailResponse response = sut.detailFor(query);
+
+        // then
+        assertThat(response.applicationId()).isEqualTo(55L);
+        assertThat(response.applicant().memberId()).isEqualTo(200L);
+        assertThat(response.applicant().nickname()).isEqualTo("이방토");
+        assertThat(response.applicant().name()).isEqualTo("이예원");
+        assertThat(response.applicant().schoolName()).isEqualTo("한양대 ERICA");
+        assertThat(response.applicant().part()).isEqualTo(ChallengerPart.DESIGN);
+        assertThat(response.matchingRound().id()).isEqualTo(7L);
+        assertThat(response.status()).isEqualTo(ProjectApplicationViewStatus.SUBMITTED);
+        assertThat(response.formResponse().formResponseId()).isEqualTo(123L);
+        assertThat(response.formResponse().sections()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("detailFor_member_조회_누락_시_applicant_의_닉네임_실명_학교명은_null")
+    void detailFor_member_누락_시_null() {
+        // given
+        GetProjectApplicationDetailQuery query = detailQueryOf(1L, 55L);
+        ProjectApplicationDetailInfo info = detailInfoOf(55L, 200L, ChallengerPart.DESIGN);
+
+        given(getProjectApplicationDetailUseCase.getDetail(query)).willReturn(info);
+        given(getMemberUseCase.findAllByIds(any())).willReturn(Map.of());
+
+        // when
+        ProjectApplicationDetailResponse response = sut.detailFor(query);
+
+        // then
+        assertThat(response.applicant().memberId()).isEqualTo(200L);
+        assertThat(response.applicant().nickname()).isNull();
+        assertThat(response.applicant().name()).isNull();
+        assertThat(response.applicant().schoolName()).isNull();
+        // part 는 challenger 도메인 -- Service 단에서 채워서 옴 (member 누락과 무관)
+        assertThat(response.applicant().part()).isEqualTo(ChallengerPart.DESIGN);
+    }
+
+    private GetProjectApplicationDetailQuery detailQueryOf(Long projectId, Long applicationId) {
+        return GetProjectApplicationDetailQuery.builder()
+            .projectId(projectId)
+            .applicationId(applicationId)
+            .requesterMemberId(100L)
+            .build();
+    }
+
+    private ProjectApplicationDetailInfo detailInfoOf(
+        Long applicationId, Long applicantMemberId, ChallengerPart part
+    ) {
+        ApplicationFormInfo emptyForm = ApplicationFormInfo.builder()
+            .projectId(1L)
+            .applicationFormId(33L)
+            .title("지원폼")
+            .description(null)
+            .sections(List.of())
+            .build();
+        FormResponseInfo formResponse = FormResponseInfo.builder()
+            .id(123L)
+            .formId(7L)
+            .respondentMemberId(applicantMemberId)
+            .status(FormResponseStatus.SUBMITTED)
+            .submittedAt(Instant.parse("2026-04-22T01:30:00Z"))
+            .lastSavedAt(Instant.parse("2026-04-22T01:30:00Z"))
+            .build();
+
+        return ProjectApplicationDetailInfo.builder()
+            .applicationId(applicationId)
+            .applicantMemberId(applicantMemberId)
+            .applicantPart(part)
+            .matchingRoundId(7L)
+            .matchingRoundType(MatchingType.PLAN_DESIGN)
+            .matchingRoundPhase(MatchingPhase.FIRST)
+            .status(ProjectApplicationViewStatus.SUBMITTED)
+            .submittedAt(Instant.parse("2026-04-22T01:30:00Z"))
+            .statusChangedAt(null)
+            .formStructure(emptyForm)
+            .formResponse(formResponse)
+            .answersByQuestionId(Map.of())
+            .filesByFileId(Map.of())
             .build();
     }
 }
