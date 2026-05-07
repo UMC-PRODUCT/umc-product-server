@@ -11,7 +11,6 @@ import com.umc.product.llm.application.port.in.ChatCompleteUseCase;
 import com.umc.product.llm.application.port.in.dto.ChatCompleteCommand;
 import com.umc.product.llm.application.port.in.dto.ChatCompletionResult;
 import com.umc.product.llm.domain.exception.LlmDomainException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -60,8 +59,6 @@ public class FigmaCommentDomainClassifier {
         """;
 
     private static final String MOCK_PROVIDER = "mock";
-    private static final Duration CACHE_TTL = Duration.ofMinutes(5);
-    private static final long CACHE_MAX_SIZE = 10_000L;
     /** batch 응답 한 항목의 보수적 토큰 추정값 (JSON 키/값 + 구분자 포함). */
     private static final int BATCH_TOKENS_PER_ITEM = 40;
     /** batch 응답 JSON 외곽 (배열 괄호, 공백 등) 토큰 여유분. */
@@ -77,15 +74,17 @@ public class FigmaCommentDomainClassifier {
         ChatCompleteUseCase chatCompleteUseCase,
         ObjectMapper objectMapper,
         LoadFigmaCommentClassificationPort loadClassificationPort,
-        SaveFigmaCommentClassificationPort saveClassificationPort
+        SaveFigmaCommentClassificationPort saveClassificationPort,
+        FigmaClassifierProperties properties
     ) {
         this.chatCompleteUseCase = chatCompleteUseCase;
         this.objectMapper = objectMapper;
         this.loadClassificationPort = loadClassificationPort;
         this.saveClassificationPort = saveClassificationPort;
+        FigmaClassifierProperties.Cache cacheProps = properties.cache();
         this.cache = Caffeine.newBuilder()
-            .maximumSize(CACHE_MAX_SIZE)
-            .expireAfterWrite(CACHE_TTL)
+            .maximumSize(cacheProps.maxSize())
+            .expireAfterWrite(cacheProps.ttl())
             .recordStats()
             .build();
     }

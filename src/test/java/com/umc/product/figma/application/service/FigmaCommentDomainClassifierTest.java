@@ -49,9 +49,11 @@ class FigmaCommentDomainClassifierTest {
 
     @BeforeEach
     void setUp() {
+        FigmaClassifierProperties properties = new FigmaClassifierProperties(FigmaClassifierProperties.Cache.defaults());
         classifier = new FigmaCommentDomainClassifier(
             chatCompleteUseCase, new ObjectMapper(),
-            loadClassificationPort, saveClassificationPort
+            loadClassificationPort, saveClassificationPort,
+            properties
         );
         // 기본은 DB 미스 (영구 캐시 비어 있음)
         lenient().when(loadClassificationPort.findClassifications(anyCollection())).thenReturn(Map.of());
