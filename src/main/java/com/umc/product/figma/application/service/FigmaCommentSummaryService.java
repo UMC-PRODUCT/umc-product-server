@@ -39,7 +39,7 @@ import org.springframework.stereotype.Service;
  * 시간창 기반 figma 댓글 동기화의 단일 본체 (ADR-004 §Decision 1·2).
  * <p>
  * sync / digest / preview 세 진입점이 본 service 의 같은 메서드를 호출하며, 차이는 {@link SummarizeFigmaCommentsCommand} 의 dryRun / force /
- * advanceCursor 플래그로 표현된다. {@code FigmaCommentBatchProcessor} 의 Mode 이중 분기를 단일 경로로 축소한 형태다.
+ * advanceCursor 플래그로 표현된다. ADR-003 amendment 시점의 FigmaCommentBatchProcessor 의 Mode 이중 분기를 단일 경로로 축소한 형태다.
  */
 @Slf4j
 @Service
@@ -69,8 +69,7 @@ public class FigmaCommentSummaryService implements SummarizeFigmaCommentsUseCase
             throw new FigmaDomainException(FigmaErrorCode.DIGEST_RANGE_INVALID, "from 이 to 보다 이후일 수 없습니다.");
         }
 
-        List<FigmaWatchedFile> files =
-            loadFigmaWatchedFilePort.listEnabled(figmaSyncProperties.maxFilesPerRun());
+        List<FigmaWatchedFile> files = resolveTargetFiles(command);
         if (files.isEmpty()) {
             return FigmaSummaryResult.empty(command.from(), command.to());
         }
@@ -193,6 +192,15 @@ public class FigmaCommentSummaryService implements SummarizeFigmaCommentsUseCase
             skippedAlreadyDispatched,
             domainGroups
         );
+    }
+
+    private List<FigmaWatchedFile> resolveTargetFiles(SummarizeFigmaCommentsCommand command) {
+        if (command.singleFileId() != null) {
+            return loadFigmaWatchedFilePort.findById(command.singleFileId())
+                .map(List::of)
+                .orElseThrow(() -> new FigmaDomainException(FigmaErrorCode.WATCHED_FILE_NOT_FOUND));
+        }
+        return loadFigmaWatchedFilePort.listEnabled(figmaSyncProperties.maxFilesPerRun());
     }
 
     private List<FigmaCommentInfo> filterByWindow(

@@ -1,157 +1,80 @@
 package com.umc.product.figma.application.service;
 
+import com.umc.product.figma.adapter.out.external.FigmaSyncProperties;
 import com.umc.product.figma.application.port.in.PreviewFigmaCommentsUseCase;
+import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.dto.FigmaCommentPreviewInfo;
-import com.umc.product.figma.application.port.out.FetchFigmaCommentPort;
-import com.umc.product.figma.application.port.out.FetchFigmaFileMetadataPort;
-import com.umc.product.figma.application.port.out.LoadFigmaRoutingDomainPort;
+import com.umc.product.figma.application.port.in.dto.FigmaSummaryResult;
+import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
 import com.umc.product.figma.application.port.out.LoadFigmaWatchedFilePort;
-import com.umc.product.figma.application.port.out.dto.FigmaCommentInfo;
-import com.umc.product.figma.domain.FigmaRoutingDomain;
-import com.umc.product.figma.domain.FigmaRoutingDomainMention;
 import com.umc.product.figma.domain.FigmaWatchedFile;
 import com.umc.product.figma.domain.exception.FigmaDomainException;
 import com.umc.product.figma.domain.exception.FigmaErrorCode;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Discord 발송 / sync 상태 갱신 없이 신규 댓글을 분류해 도메인별로 묶은 결과를 반환한다. 발송 경로(sync / digest) 와 동일한 grouping 형태로 응답해 운영진이 일관된 모양으로
- * 검증할 수 있다.
+ * 단일 watched file 의 preview 진입점의 thin shim (ADR-004 §Decision 2).
+ * <p>
+ * 시간창 단일 본체 ({@link SummarizeFigmaCommentsUseCase}) 로 위임하며, dryRun=true 로 발송 / dispatch / cursor 를 모두 비변경 처리한다. 시간창 기본값은 (now -
+ * pollInterval × 2, now] 이다 — 정기 sync 가 한 번 누락되어 직전 cursor 가 약간 오래된 상황에서도 같은 댓글이 보이도록 의도한 것이다.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class FigmaCommentPreviewQueryService implements PreviewFigmaCommentsUseCase {
 
+    private static final long PREVIEW_INTERVAL_MULTIPLIER = 2L;
+
+    private final SummarizeFigmaCommentsUseCase summarizeFigmaCommentsUseCase;
     private final LoadFigmaWatchedFilePort loadFigmaWatchedFilePort;
-    private final LoadFigmaRoutingDomainPort loadFigmaRoutingDomainPort;
-    private final FetchFigmaCommentPort fetchFigmaCommentPort;
-    private final FetchFigmaFileMetadataPort fetchFigmaFileMetadataPort;
-    private final FigmaIntegrationCommandService figmaIntegrationCommandService;
-    private final FigmaCommentDomainClassifier figmaCommentDomainClassifier;
+    private final FigmaSyncProperties figmaSyncProperties;
 
     @Override
     public FigmaCommentPreviewInfo preview(Long watchedFileId) {
         FigmaWatchedFile watchedFile = loadFigmaWatchedFilePort.findById(watchedFileId)
             .orElseThrow(() -> new FigmaDomainException(FigmaErrorCode.WATCHED_FILE_NOT_FOUND));
 
-        String accessToken = figmaIntegrationCommandService.resolveActiveAccessToken();
+        Instant now = Instant.now();
+        Duration interval = figmaSyncProperties.pollInterval();
+        Instant from = now.minus(interval.multipliedBy(PREVIEW_INTERVAL_MULTIPLIER));
 
-        List<FigmaCommentInfo> comments = fetchFigmaCommentPort.listComments(watchedFile.getFileKey(), accessToken);
-        List<FigmaCommentInfo> newComments = filterNewComments(comments, watchedFile.getLastSyncedCommentId());
+        FigmaSummaryResult result = summarizeFigmaCommentsUseCase.summarize(
+            SummarizeFigmaCommentsCommand.previewSingleFile(watchedFileId, from, now)
+        );
 
-        Map<String, String> nodeIdToPageName = resolvePageNames(watchedFile.getFileKey(), accessToken, newComments);
-        List<FigmaRoutingDomain> domains = loadFigmaRoutingDomainPort.listAllDomains();
-        Map<String, FigmaRoutingDomain> domainByKey = domains.stream()
-            .collect(Collectors.toMap(FigmaRoutingDomain::getDomainKey, d -> d, (a, b) -> a));
-        Optional<FigmaRoutingDomain> fallback = domains.stream()
-            .filter(FigmaRoutingDomain::isFallback)
-            .findFirst()
-            .or(loadFigmaRoutingDomainPort::findFallbackDomain);
-        List<String> candidateKeys = domains.stream().map(FigmaRoutingDomain::getDomainKey).toList();
-
-        Map<Long, List<FigmaCommentPreviewInfo.Comment>> grouped = new LinkedHashMap<>();
-        Map<Long, FigmaRoutingDomain> appliedById = new LinkedHashMap<>();
-        int unmatched = 0;
-
-        Map<String, String> classifications = candidateKeys.isEmpty()
-            ? Map.of()
-            : figmaCommentDomainClassifier.classifyBatch(newComments, candidateKeys);
-
-        for (FigmaCommentInfo c : newComments) {
-            String pageName = c.nodeId() != null ? nodeIdToPageName.get(c.nodeId()) : null;
-            String classified = classifications.get(c.commentId());
-            FigmaRoutingDomain matched = classified != null ? domainByKey.get(classified) : null;
-            FigmaRoutingDomain applied = matched != null ? matched : fallback.orElse(null);
-
-            if (applied == null) {
-                unmatched++;
-                continue;
-            }
-            grouped
-                .computeIfAbsent(applied.getId(), k -> new ArrayList<>())
-                .add(new FigmaCommentPreviewInfo.Comment(
-                    c.commentId(),
-                    c.message(),
-                    c.authorName(),
-                    c.nodeId(),
-                    pageName,
-                    classified,
-                    c.createdAt()
-                ));
-            appliedById.putIfAbsent(applied.getId(), applied);
-        }
-
-        List<FigmaCommentPreviewInfo.DomainGroup> domainGroups = new ArrayList<>(grouped.size());
-        for (Map.Entry<Long, List<FigmaCommentPreviewInfo.Comment>> entry : grouped.entrySet()) {
-            FigmaRoutingDomain applied = appliedById.get(entry.getKey());
-            List<String> mentionRenders = loadFigmaRoutingDomainPort.listMentionsByDomainId(applied.getId()).stream()
-                .map(FigmaRoutingDomainMention::render)
-                .toList();
-            domainGroups.add(new FigmaCommentPreviewInfo.DomainGroup(
-                applied.getDomainKey(),
-                applied.getDiscordWebhookUrl(),
-                applied.isFallback(),
-                mentionRenders,
-                entry.getValue()
-            ));
-        }
+        List<FigmaCommentPreviewInfo.DomainGroup> domainGroups = result.domains().stream()
+            .map(d -> new FigmaCommentPreviewInfo.DomainGroup(
+                d.domainKey(),
+                d.webhookUrl(),
+                d.fallback(),
+                d.mentionRenders(),
+                d.comments().stream()
+                    .map(c -> new FigmaCommentPreviewInfo.Comment(
+                        c.commentId(),
+                        c.message(),
+                        c.authorName(),
+                        c.nodeId(),
+                        c.pageName(),
+                        c.classifiedDomainKey(),
+                        c.createdAt()
+                    ))
+                    .toList()
+            ))
+            .toList();
 
         return new FigmaCommentPreviewInfo(
             watchedFile.getFileKey(),
             watchedFile.getDisplayName(),
             watchedFile.getLastSyncedCommentId(),
             watchedFile.getLastSyncedAt(),
-            newComments.size(),
-            unmatched,
+            result.totalComments(),
+            result.unmatchedCount(),
             domainGroups
         );
-    }
-
-    private List<FigmaCommentInfo> filterNewComments(List<FigmaCommentInfo> comments, String lastSyncedCommentId) {
-        if (lastSyncedCommentId == null) {
-            return comments;
-        }
-        int boundary = -1;
-        for (int i = 0; i < comments.size(); i++) {
-            if (lastSyncedCommentId.equals(comments.get(i).commentId())) {
-                boundary = i;
-                break;
-            }
-        }
-        if (boundary < 0) {
-            return comments;
-        }
-        return comments.subList(boundary + 1, comments.size());
-    }
-
-    private Map<String, String> resolvePageNames(String fileKey, String accessToken, List<FigmaCommentInfo> comments) {
-        Set<String> nodeIds = new HashSet<>();
-        for (FigmaCommentInfo c : comments) {
-            if (c.nodeId() != null) {
-                nodeIds.add(c.nodeId());
-            }
-        }
-        if (nodeIds.isEmpty()) {
-            return Map.of();
-        }
-        try {
-            return fetchFigmaFileMetadataPort.resolvePageNames(fileKey, accessToken, nodeIds);
-        } catch (FigmaDomainException e) {
-            log.warn("페이지명 해석 실패. preview 의 pageName 필드는 비워집니다. fileKey={}", fileKey);
-            return Map.of();
-        }
     }
 }

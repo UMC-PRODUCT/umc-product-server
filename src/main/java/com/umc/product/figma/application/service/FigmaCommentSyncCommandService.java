@@ -1,65 +1,47 @@
 package com.umc.product.figma.application.service;
 
 import com.umc.product.figma.adapter.out.external.FigmaSyncProperties;
+import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.SyncFigmaCommentsUseCase;
-import com.umc.product.figma.application.port.out.LoadFigmaWatchedFilePort;
-import com.umc.product.figma.domain.FigmaWatchedFile;
-import com.umc.product.figma.domain.exception.FigmaDomainException;
-import com.umc.product.figma.domain.exception.FigmaErrorCode;
-import java.util.List;
+import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
+import java.time.Duration;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * Figma 폴링 → Discord 포워딩 메인 유즈케이스의 오케스트레이션 계층.
+ * 정기 sync / on-demand sync 진입점의 thin shim. 시간창 단일 본체
+ * ({@link SummarizeFigmaCommentsUseCase}) 로 위임한다 (ADR-004 §Decision 1·2).
  * <p>
- * 한 사이클의 모든 활성 파일 신규 댓글을 모아 LLM 분류기로 분류한 뒤 도메인별로 묶어 Discord 메시지 1건(필요 시 페이지 분할) 으로 발송한다. 시간창은 파일별
- * last_synced_comment_id 이후의 모든 신규 댓글로 정의되며, 발송 후 last_synced_comment_id 가 갱신된다.
+ * 본 커밋 시점에는 cursor 가 아직 스케줄러에서 통합되지 않았으므로 syncAll 의 시간창은 안전 fallback 인 (now - pollInterval × 2, now] 로 정한다. 다음 커밋 (ADR §5) 에서
+ * 스케줄러가 cursor 를 직접 읽어 호출 시점에 시간창을 결정하면, 본 service 는 admin 트리거 전용 경로로 남는다.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FigmaCommentSyncCommandService implements SyncFigmaCommentsUseCase {
 
-    private final LoadFigmaWatchedFilePort loadFigmaWatchedFilePort;
-    private final FigmaIntegrationCommandService figmaIntegrationCommandService;
-    private final FigmaCommentBatchProcessor figmaCommentBatchProcessor;
+    private static final long BOOTSTRAP_INTERVAL_MULTIPLIER = 2L;
+
+    private final SummarizeFigmaCommentsUseCase summarizeFigmaCommentsUseCase;
     private final FigmaSyncProperties figmaSyncProperties;
 
     @Override
     public void syncAll() {
-        List<FigmaWatchedFile> files = loadFigmaWatchedFilePort.listEnabled(figmaSyncProperties.maxFilesPerRun());
-        runSync(files, "syncAll");
+        Instant now = Instant.now();
+        Duration interval = figmaSyncProperties.pollInterval();
+        Instant from = now.minus(interval.multipliedBy(BOOTSTRAP_INTERVAL_MULTIPLIER));
+        summarizeFigmaCommentsUseCase.summarize(SummarizeFigmaCommentsCommand.scheduledSync(from, now));
     }
 
     @Override
     public void syncOne(Long watchedFileId) {
-        FigmaWatchedFile file = loadFigmaWatchedFilePort.findById(watchedFileId)
-            .orElseThrow(() -> new FigmaDomainException(FigmaErrorCode.WATCHED_FILE_NOT_FOUND));
-        runSync(List.of(file), "syncOne(" + watchedFileId + ")");
-    }
-
-    private void runSync(List<FigmaWatchedFile> files, String invocation) {
-        if (files.isEmpty()) {
-            return;
-        }
-
-        String accessToken;
-        try {
-            accessToken = figmaIntegrationCommandService.resolveActiveAccessToken();
-        } catch (FigmaDomainException e) {
-            log.warn("Figma access token 확보 실패. {} 동기화를 건너뜁니다: {}", invocation, e.getMessage());
-            return;
-        }
-
-        try {
-            FigmaCommentBatchProcessor.BatchSummary summary =
-                figmaCommentBatchProcessor.processSyncCycle(files, accessToken);
-            log.debug("Figma {} 완료: total={}, unmatched={}, sentDomains={}",
-                invocation, summary.totalComments(), summary.unmatchedCount(), summary.sendResults().size());
-        } catch (FigmaDomainException e) {
-            log.warn("Figma {} 실패: {}", invocation, e.getMessage());
-        }
+        Instant now = Instant.now();
+        Duration interval = figmaSyncProperties.pollInterval();
+        Instant from = now.minus(interval.multipliedBy(BOOTSTRAP_INTERVAL_MULTIPLIER));
+        summarizeFigmaCommentsUseCase.summarize(
+            SummarizeFigmaCommentsCommand.singleFileSync(watchedFileId, from, now)
+        );
     }
 }
