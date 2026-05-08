@@ -62,4 +62,8 @@ public class FigmaRoutingDomain extends BaseEntity {
     public void changeWebhookUrl(String discordWebhookUrl) {
         this.discordWebhookUrl = discordWebhookUrl;
     }
+
+    public void changeFallback(boolean fallback) {
+        this.fallback = fallback;
+    }
 }

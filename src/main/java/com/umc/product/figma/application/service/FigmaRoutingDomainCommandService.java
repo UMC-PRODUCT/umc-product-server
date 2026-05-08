@@ -3,6 +3,8 @@ package com.umc.product.figma.application.service;
 import com.umc.product.figma.application.port.in.ManageFigmaRoutingDomainUseCase;
 import com.umc.product.figma.application.port.in.dto.AddFigmaRoutingMentionCommand;
 import com.umc.product.figma.application.port.in.dto.RegisterFigmaRoutingDomainCommand;
+import com.umc.product.figma.application.port.in.dto.UpdateFigmaRoutingDomainCommand;
+import com.umc.product.figma.application.port.in.dto.UpdateFigmaRoutingMentionCommand;
 import com.umc.product.figma.application.port.out.LoadFigmaRoutingDomainPort;
 import com.umc.product.figma.application.port.out.SaveFigmaRoutingDomainPort;
 import com.umc.product.figma.domain.FigmaRoutingDomain;
@@ -36,6 +38,16 @@ public class FigmaRoutingDomainCommandService implements ManageFigmaRoutingDomai
     }
 
     @Override
+    public void updateDomain(UpdateFigmaRoutingDomainCommand command) {
+        FigmaRoutingDomain domain = loadFigmaRoutingDomainPort.findDomainById(command.domainId())
+            .orElseThrow(() -> new FigmaDomainException(FigmaErrorCode.ROUTING_DOMAIN_NOT_FOUND));
+        domain.rename(command.description());
+        domain.changeWebhookUrl(command.discordWebhookUrl());
+        domain.changeFallback(command.fallback());
+        saveFigmaRoutingDomainPort.saveDomain(domain);
+    }
+
+    @Override
     public void deleteDomain(Long domainId) {
         FigmaRoutingDomain domain = loadFigmaRoutingDomainPort.findDomainById(domainId)
             .orElseThrow(() -> new FigmaDomainException(FigmaErrorCode.ROUTING_DOMAIN_NOT_FOUND));
@@ -54,6 +66,14 @@ public class FigmaRoutingDomainCommandService implements ManageFigmaRoutingDomai
             command.displayLabel()
         );
         return saveFigmaRoutingDomainPort.saveMention(mention).getId();
+    }
+
+    @Override
+    public void updateMention(UpdateFigmaRoutingMentionCommand command) {
+        FigmaRoutingDomainMention mention = loadFigmaRoutingDomainPort.findMentionById(command.id())
+            .orElseThrow(() -> new FigmaDomainException(FigmaErrorCode.ROUTING_DOMAIN_MENTION_NOT_FOUND));
+        mention.update(command.mentionId(), command.displayLabel());
+        saveFigmaRoutingDomainPort.saveMention(mention);
     }
 
     @Override

@@ -5,6 +5,8 @@ import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.figma.adapter.in.web.dto.request.AddFigmaRoutingMentionRequest;
 import com.umc.product.figma.adapter.in.web.dto.request.RegisterFigmaRoutingDomainRequest;
+import com.umc.product.figma.adapter.in.web.dto.request.UpdateFigmaRoutingDomainRequest;
+import com.umc.product.figma.adapter.in.web.dto.request.UpdateFigmaRoutingMentionRequest;
 import com.umc.product.figma.adapter.in.web.dto.response.AddFigmaRoutingMentionResponse;
 import com.umc.product.figma.adapter.in.web.dto.response.FigmaRoutingDomainMentionResponse;
 import com.umc.product.figma.adapter.in.web.dto.response.FigmaRoutingDomainResponse;
@@ -19,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,6 +53,17 @@ public class FigmaRoutingDomainController {
         return new RegisterFigmaRoutingDomainResponse(id);
     }
 
+    @Operation(summary = "[FIGMA-019] 라우팅 도메인 수정 (설명 · webhook URL · fallback)")
+    @PatchMapping("/{domainId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
+    public void updateDomain(
+        @PathVariable Long domainId,
+        @RequestBody @Valid UpdateFigmaRoutingDomainRequest request
+    ) {
+        manageFigmaRoutingDomainUseCase.updateDomain(request.toCommand(domainId));
+    }
+
     @Operation(summary = "[FIGMA-012] 라우팅 도메인 삭제 (mention 도 cascade)")
     @DeleteMapping("/{domainId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -67,6 +81,17 @@ public class FigmaRoutingDomainController {
     ) {
         Long id = manageFigmaRoutingDomainUseCase.addMention(request.toCommand(domainId));
         return new AddFigmaRoutingMentionResponse(id);
+    }
+
+    @Operation(summary = "[FIGMA-020] 담당자 mention 수정 (Discord ID · 라벨)")
+    @PatchMapping("/mentions/{mentionId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @CheckAccess(resourceType = ResourceType.FIGMA, permission = PermissionType.MANAGE)
+    public void updateMention(
+        @PathVariable Long mentionId,
+        @RequestBody @Valid UpdateFigmaRoutingMentionRequest request
+    ) {
+        manageFigmaRoutingDomainUseCase.updateMention(request.toCommand(mentionId));
     }
 
     @Operation(summary = "[FIGMA-014] 담당자 mention 삭제")

@@ -58,6 +58,11 @@ public class FigmaRoutingDomainMention extends BaseEntity {
             .build();
     }
 
+    public void update(String mentionId, String displayLabel) {
+        this.mentionId = mentionId;
+        this.displayLabel = displayLabel;
+    }
+
     public String render() {
         return mentionType.render(mentionId);
     }
