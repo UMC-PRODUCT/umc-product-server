@@ -7,14 +7,12 @@ import com.umc.product.survey.application.port.in.command.dto.ForkQuestionComman
 import com.umc.product.survey.application.port.in.command.dto.ReorderQuestionsCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateQuestionCommand;
 import com.umc.product.survey.application.port.out.LoadFormSectionPort;
-import com.umc.product.survey.application.port.out.LoadQuestionOptionPort;
 import com.umc.product.survey.application.port.out.LoadQuestionPort;
 import com.umc.product.survey.application.port.out.SaveAnswerPort;
 import com.umc.product.survey.application.port.out.SaveQuestionOptionPort;
 import com.umc.product.survey.application.port.out.SaveQuestionPort;
 import com.umc.product.survey.domain.FormSection;
 import com.umc.product.survey.domain.Question;
-import com.umc.product.survey.domain.QuestionOption;
 import com.umc.product.survey.domain.enums.QuestionType;
 import com.umc.product.survey.domain.exception.SurveyDomainException;
 import com.umc.product.survey.domain.exception.SurveyErrorCode;
@@ -36,7 +34,6 @@ public class QuestionCommandService implements ManageQuestionUseCase {
 
     private final LoadFormSectionPort loadFormSectionPort;
     private final LoadQuestionPort loadQuestionPort;
-    private final LoadQuestionOptionPort loadQuestionOptionPort;
     private final SaveQuestionPort saveQuestionPort;
     private final SaveQuestionOptionPort saveQuestionOptionPort;
     private final SaveAnswerPort saveAnswerPort;
@@ -125,13 +122,6 @@ public class QuestionCommandService implements ManageQuestionUseCase {
 
         origin.deactivate();
         saveQuestionPort.save(origin);
-
-        List<QuestionOption> originOptions = loadQuestionOptionPort.listByQuestionId(origin.getId());
-        for (QuestionOption originOption : originOptions) {
-            QuestionOption copied = QuestionOption.copyFrom(originOption);
-            copied.assignTo(forked);
-            saveQuestionOptionPort.save(copied);
-        }
 
         return forked.getId();
     }

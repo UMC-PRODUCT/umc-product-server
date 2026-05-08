@@ -8,6 +8,7 @@ import com.umc.product.project.application.port.in.command.dto.UpsertApplication
 import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPolicyPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
+import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationFormPolicyPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationFormPort;
@@ -15,6 +16,7 @@ import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectApplicationFormPolicy;
 import com.umc.product.project.domain.enums.FormSectionType;
+import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import com.umc.product.survey.application.port.in.command.ManageFormSectionUseCase;
@@ -25,6 +27,7 @@ import com.umc.product.survey.application.port.in.command.dto.CreateDraftFormCom
 import com.umc.product.survey.application.port.in.command.dto.CreateFormSectionCommand;
 import com.umc.product.survey.application.port.in.command.dto.CreateQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.CreateQuestionOptionCommand;
+import com.umc.product.survey.application.port.in.command.dto.ForkQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteFormSectionCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteQuestionOptionCommand;
@@ -41,6 +44,7 @@ import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInf
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo.QuestionWithOptions;
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo.SectionWithQuestions;
 import com.umc.product.survey.domain.enums.QuestionType;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -70,6 +74,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
         Set.of(QuestionType.RADIO, QuestionType.CHECKBOX, QuestionType.DROPDOWN);
 
     private final LoadProjectPort loadProjectPort;
+    private final LoadProjectMatchingRoundPort loadMatchingRoundPort;
     private final LoadProjectApplicationFormPort loadApplicationFormPort;
     private final SaveProjectApplicationFormPort saveApplicationFormPort;
     private final LoadProjectApplicationFormPolicyPort loadPolicyPort;
@@ -87,7 +92,10 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
         validateOptionTypeRules(command.sections());
 
         Project project = loadProjectPort.getById(command.projectId());
-        project.validateApplicationFormEditable();
+        boolean hasActiveRound = !loadMatchingRoundPort.listOpenAt(project.getChapterId(), Instant.now()).isEmpty();
+        project.validateApplicationFormEditable(hasActiveRound);
+
+        boolean shouldFork = project.getStatus() == ProjectStatus.IN_PROGRESS;
 
         ProjectApplicationForm applicationForm;
         FormWithStructureInfo existingStructure;
@@ -104,7 +112,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
             existingStructure = emptyStructureFor(applicationForm.getFormId());
         }
 
-        applyDiff(applicationForm, existingStructure, command);
+        applyDiff(applicationForm, existingStructure, command, shouldFork);
 
         return assembleResponse(applicationForm);
     }
@@ -173,7 +181,8 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
     private void applyDiff(
         ProjectApplicationForm applicationForm,
         FormWithStructureInfo existing,
-        UpsertApplicationFormCommand command
+        UpsertApplicationFormCommand command,
+        boolean shouldFork
     ) {
         Map<Long, SectionWithQuestions> existingSectionById = existing.sections().stream()
             .collect(Collectors.toMap(SectionWithQuestions::sectionId, Function.identity()));
@@ -185,7 +194,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
         validateQuestionAndOptionIds(command.sections(), existingSectionById);
 
         List<Long> orderedSectionIds = applySectionDiff(
-            applicationForm, command, existingSectionById, policyByFormSectionId
+            applicationForm, command, existingSectionById, policyByFormSectionId, shouldFork
         );
 
         deleteRemovedSections(command.sections(), existing.sections(), command.requesterMemberId());
@@ -205,7 +214,8 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
         ProjectApplicationForm applicationForm,
         UpsertApplicationFormCommand command,
         Map<Long, SectionWithQuestions> existingSectionById,
-        Map<Long, ProjectApplicationFormPolicy> policyByFormSectionId
+        Map<Long, ProjectApplicationFormPolicy> policyByFormSectionId,
+        boolean shouldFork
     ) {
         List<Long> orderedSectionIds = new ArrayList<>();
         for (ApplicationFormSectionEntry entry : command.sections()) {
@@ -215,7 +225,8 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
                     entry,
                     existingSectionById.get(entry.sectionId()),
                     policyByFormSectionId.get(entry.sectionId()),
-                    command.requesterMemberId()
+                    command.requesterMemberId(),
+                    shouldFork
                 );
             orderedSectionIds.add(sectionId);
         }
@@ -260,7 +271,8 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
         ApplicationFormSectionEntry entry,
         SectionWithQuestions existingSection,
         ProjectApplicationFormPolicy existingPolicy,
-        Long requesterMemberId
+        Long requesterMemberId,
+        boolean shouldFork
     ) {
         if (sectionMetaChanged(existingSection, entry)) {
             manageFormSectionUseCase.updateSection(
@@ -278,7 +290,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
             savePolicyPort.save(existingPolicy);
         }
 
-        applyQuestionDiff(entry, existingSection, requesterMemberId);
+        applyQuestionDiff(entry, existingSection, requesterMemberId, shouldFork);
         return entry.sectionId();
     }
 
@@ -309,7 +321,8 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
     private void applyQuestionDiff(
         ApplicationFormSectionEntry sectionEntry,
         SectionWithQuestions existingSection,
-        Long requesterMemberId
+        Long requesterMemberId,
+        boolean shouldFork
     ) {
         Map<Long, QuestionWithOptions> existingQuestionById = existingSection.questions().stream()
             .collect(Collectors.toMap(QuestionWithOptions::questionId, Function.identity()));
@@ -321,7 +334,8 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
                 : updateExistingQuestion(
                     questionEntry,
                     existingQuestionById.get(questionEntry.questionId()),
-                    requesterMemberId
+                    requesterMemberId,
+                    shouldFork
                 );
             orderedQuestionIds.add(questionId);
         }
@@ -372,9 +386,32 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
     private Long updateExistingQuestion(
         ApplicationQuestionEntry entry,
         QuestionWithOptions existingQuestion,
-        Long requesterMemberId
+        Long requesterMemberId,
+        boolean shouldFork
     ) {
         if (questionMetaChanged(existingQuestion, entry)) {
+            if (shouldFork) {
+                Long newQuestionId = manageQuestionUseCase.forkQuestion(
+                    ForkQuestionCommand.builder()
+                        .originQuestionId(entry.questionId())
+                        .requesterMemberId(requesterMemberId)
+                        .build()
+                );
+                List<Long> newOptionIds = new ArrayList<>();
+                for (ApplicationQuestionOptionEntry optionEntry : entry.options()) {
+                    newOptionIds.add(createNewOption(newQuestionId, optionEntry, requesterMemberId));
+                }
+                if (!newOptionIds.isEmpty()) {
+                    manageQuestionOptionUseCase.reorderOptions(
+                        ReorderQuestionOptionsCommand.builder()
+                            .questionId(newQuestionId)
+                            .requesterMemberId(requesterMemberId)
+                            .orderedOptionIds(newOptionIds)
+                            .build()
+                    );
+                }
+                return newQuestionId;
+            }
             manageQuestionUseCase.updateQuestion(
                 UpdateQuestionCommand.builder()
                     .questionId(entry.questionId())
