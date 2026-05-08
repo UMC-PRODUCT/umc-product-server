@@ -11,7 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.umc.product.figma.adapter.out.external.FigmaSyncProperties;
+import com.umc.product.figma.config.FigmaSyncProperties;
 import com.umc.product.figma.application.port.in.dto.FigmaSummaryResult;
 import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
 import com.umc.product.figma.application.port.out.FetchFigmaCommentPort;

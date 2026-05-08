@@ -71,13 +71,19 @@ public class FigmaIntegrationCommandService implements RegisterFigmaIntegrationU
         return figmaOAuthStateStore.consume(state);
     }
 
+    @Override
+    public String buildAuthorizeUrl(String state) {
+        return figmaOAuthPort.buildAuthorizeUrl(state);
+    }
+
     /**
      * 활성 통합의 access token (평문) 을 반환한다. 만료가 임박하면 refresh 한다. read-only 트랜잭션(예: preview) 에서 호출되더라도 token refresh 가 가능하도록
      * REQUIRES_NEW 로 분리한다.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public String resolveActiveAccessToken() {
-        FigmaIntegration integration = loadFigmaIntegrationPort.findActive()
+        // PESSIMISTIC_WRITE: 동시에 두 인스턴스가 만료 토큰을 감지해 refresh 를 중복 호출하는 레이스 컨디션 방지.
+        FigmaIntegration integration = loadFigmaIntegrationPort.findActiveForUpdate()
             .orElseThrow(() -> new FigmaDomainException(FigmaErrorCode.INTEGRATION_NOT_FOUND));
 
         if (integration.isAccessTokenExpired(Instant.now())) {

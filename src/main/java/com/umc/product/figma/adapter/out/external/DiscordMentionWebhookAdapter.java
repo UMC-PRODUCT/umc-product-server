@@ -11,9 +11,11 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -156,18 +158,30 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
     }
 
     @Override
-    public void send(DiscordDomainBatchMessage message) {
+    public Set<String> send(DiscordDomainBatchMessage message) {
         if (message.comments() == null || message.comments().isEmpty()) {
-            return;
+            return Set.of();
         }
 
-        List<Map<String, Object>> embeds = buildEmbeds(message);
-        List<List<Map<String, Object>>> pages = paginateEmbeds(embeds);
-        ensureWithinDiscordLimit(message.domainKey(), pages);
-        sendPages(message, renderMentionLine(message.mentionRenders()), pages);
+        EmbedBuildResult buildResult = buildEmbeds(message);
+        PageResult pageResult = paginateWithCommentIds(buildResult.embeds(), buildResult.commentIdsByEmbed());
+        ensureWithinDiscordLimit(message.domainKey(), pageResult.pages());
+        return sendPages(message, renderMentionLine(message.mentionRenders()), pageResult);
     }
 
-    private List<Map<String, Object>> buildEmbeds(DiscordDomainBatchMessage message) {
+    /** embed 목록과 embed별 commentId 목록을 함께 반환하는 빌드 결과. */
+    private record EmbedBuildResult(
+        List<Map<String, Object>> embeds,
+        List<List<String>> commentIdsByEmbed
+    ) {}
+
+    /** 페이지 목록과 페이지별 commentId 목록을 함께 반환하는 페이지네이션 결과. */
+    private record PageResult(
+        List<List<Map<String, Object>>> pages,
+        List<List<String>> commentIdsByPage
+    ) {}
+
+    private EmbedBuildResult buildEmbeds(DiscordDomainBatchMessage message) {
         List<CommentEntry> comments = message.comments();
         List<Map<String, Object>> fields = buildFields(comments);
 
@@ -176,6 +190,7 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
 
         int total = chunks.size();
         List<Map<String, Object>> embeds = new ArrayList<>(total);
+        List<List<String>> commentIdsByEmbed = new ArrayList<>(total);
         for (int i = 0; i < total; i++) {
             int from = chunks.get(i)[0];
             int to = chunks.get(i)[1];
@@ -186,8 +201,13 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
                 i + 1,
                 total
             ));
+            commentIdsByEmbed.add(
+                comments.subList(from, to).stream()
+                    .map(CommentEntry::commentId)
+                    .toList()
+            );
         }
-        return embeds;
+        return new EmbedBuildResult(embeds, commentIdsByEmbed);
     }
 
     /* ===================================================================== */
@@ -393,27 +413,37 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
      * 두 번째 한도가 본 어댑터의 핵심이다. Discord 6000 한도는 embed 단위가 아니라
      * "한 메시지의 모든 embed 합산" 단위이므로, 단일 embed 검증만으로는 보호되지 않는다.
      */
-    private List<List<Map<String, Object>>> paginateEmbeds(List<Map<String, Object>> embeds) {
+    private PageResult paginateWithCommentIds(
+        List<Map<String, Object>> embeds,
+        List<List<String>> commentIdsByEmbed
+    ) {
         List<List<Map<String, Object>>> pages = new ArrayList<>();
+        List<List<String>> commentIdsByPage = new ArrayList<>();
         List<Map<String, Object>> currentPage = new ArrayList<>();
+        List<String> currentPageIds = new ArrayList<>();
         int currentPageSize = 0;
 
-        for (Map<String, Object> embed : embeds) {
+        for (int e = 0; e < embeds.size(); e++) {
+            Map<String, Object> embed = embeds.get(e);
             int embedSize = byteSizeOfEmbed(embed);
             boolean reachedEmbedLimit = currentPage.size() >= EMBEDS_PER_MESSAGE;
             boolean wouldExceedSizeLimit = currentPageSize + embedSize > EMBED_USABLE_SIZE;
             if (!currentPage.isEmpty() && (reachedEmbedLimit || wouldExceedSizeLimit)) {
                 pages.add(currentPage);
+                commentIdsByPage.add(new ArrayList<>(currentPageIds));
                 currentPage = new ArrayList<>();
+                currentPageIds = new ArrayList<>();
                 currentPageSize = 0;
             }
             currentPage.add(embed);
+            currentPageIds.addAll(commentIdsByEmbed.get(e));
             currentPageSize += embedSize;
         }
         if (!currentPage.isEmpty()) {
             pages.add(currentPage);
+            commentIdsByPage.add(currentPageIds);
         }
-        return pages;
+        return new PageResult(pages, commentIdsByPage);
     }
 
     /**
@@ -446,11 +476,15 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
         }
     }
 
-    private void sendPages(
+    private Set<String> sendPages(
         DiscordDomainBatchMessage message,
         String mentionLine,
-        List<List<Map<String, Object>>> pages
+        PageResult pageResult
     ) {
+        List<List<Map<String, Object>>> pages = pageResult.pages();
+        List<List<String>> commentIdsByPage = pageResult.commentIdsByPage();
+        Set<String> sent = new LinkedHashSet<>();
+
         for (int i = 0; i < pages.size(); i++) {
             boolean firstMessage = (i == 0);
             Map<String, Object> payload = new LinkedHashMap<>();
@@ -465,15 +499,23 @@ public class DiscordMentionWebhookAdapter implements SendDiscordMentionPort {
                     .body(payload)
                     .retrieve()
                     .toBodilessEntity();
+                sent.addAll(commentIdsByPage.get(i));
                 log.debug("Discord domain batch 전송 완료: domainKey={}, page={}/{}, comments={}",
                     message.domainKey(), i + 1, pages.size(), message.comments().size());
             } catch (RestClientResponseException e) {
                 log.error("Discord domain batch 전송 실패: domainKey={}, page={}/{}, status={}, body={}",
                     message.domainKey(), i + 1, pages.size(),
                     e.getStatusCode(), e.getResponseBodyAsString());
-                throw new FigmaDomainException(FigmaErrorCode.DISCORD_MENTION_SEND_FAILED);
+                if (sent.isEmpty()) {
+                    throw new FigmaDomainException(FigmaErrorCode.DISCORD_MENTION_SEND_FAILED);
+                }
+                // 부분 실패: 이미 발송된 페이지의 commentId 는 반환해 dispatch 기록이 남도록 한다.
+                log.warn("Discord domain batch 부분 실패: domainKey={}, sent={}/{} pages",
+                    message.domainKey(), i, pages.size());
+                return Set.copyOf(sent);
             }
         }
+        return Set.copyOf(sent);
     }
 
     private String renderMentionLine(List<String> mentionRenders) {

@@ -1,6 +1,6 @@
 package com.umc.product.figma.application.service;
 
-import com.umc.product.figma.adapter.out.external.FigmaSyncProperties;
+import com.umc.product.figma.config.FigmaSyncProperties;
 import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.dto.FigmaSummaryResult;
 import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
@@ -34,6 +34,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 시간창 기반 figma 댓글 동기화의 단일 본체 (ADR-004 §Decision 1·2).
@@ -61,6 +62,7 @@ public class FigmaCommentSummaryService implements SummarizeFigmaCommentsUseCase
     private final FigmaSyncProperties figmaSyncProperties;
 
     @Override
+    @Transactional
     public FigmaSummaryResult summarize(SummarizeFigmaCommentsCommand command) {
         if (command == null) {
             throw new FigmaDomainException(FigmaErrorCode.DIGEST_RANGE_INVALID, "command 가 null 입니다.");
@@ -143,6 +145,10 @@ public class FigmaCommentSummaryService implements SummarizeFigmaCommentsUseCase
             ? Set.of()
             : loadFigmaCommentDispatchPort.findDispatchedCommentIds(allCommentIds(commentsByDomainId));
 
+        // N+1 방지: 도메인 루프 전에 모든 도메인의 mentions 를 한 번에 일괄 조회
+        Map<Long, List<FigmaRoutingDomainMention>> mentionsByDomainId =
+            loadFigmaRoutingDomainPort.listMentionsByDomainIds(commentsByDomainId.keySet());
+
         int skippedAlreadyDispatched = 0;
         List<FigmaSummaryResult.DomainGroup> domainGroups = new ArrayList<>();
         for (Map.Entry<Long, List<EnrichedComment>> entry : commentsByDomainId.entrySet()) {
@@ -150,6 +156,8 @@ public class FigmaCommentSummaryService implements SummarizeFigmaCommentsUseCase
             if (domain == null) {
                 continue;
             }
+            List<FigmaRoutingDomainMention> mentions =
+                mentionsByDomainId.getOrDefault(domain.getId(), List.of());
             List<EnrichedComment> bucket = entry.getValue();
             List<EnrichedComment> sendable = new ArrayList<>(bucket.size());
             for (EnrichedComment ec : bucket) {
@@ -162,18 +170,18 @@ public class FigmaCommentSummaryService implements SummarizeFigmaCommentsUseCase
                 }
             }
 
-            boolean sent = false;
+            List<String> dispatchedIds = List.of();
             if (!command.dryRun() && !sendable.isEmpty()) {
-                sent = sendDomainBatch(domain, sendable, command.from(), command.to());
-                if (sent) {
+                dispatchedIds = sendDomainBatch(domain, mentions, sendable, command.from(), command.to());
+                if (!dispatchedIds.isEmpty()) {
                     saveFigmaCommentDispatchPort.recordDispatched(
-                        sendable.stream().map(ec -> ec.comment.commentId()).toList(),
+                        dispatchedIds,
                         domain.getId(),
                         Instant.now()
                     );
                 }
             }
-            domainGroups.add(buildDomainGroup(domain, bucket, alreadyDispatched, sent));
+            domainGroups.add(buildDomainGroup(domain, bucket, alreadyDispatched, mentions, !dispatchedIds.isEmpty()));
         }
 
         if (!command.dryRun()) {
@@ -219,16 +227,17 @@ public class FigmaCommentSummaryService implements SummarizeFigmaCommentsUseCase
             .toList();
     }
 
-    private boolean sendDomainBatch(
+    private List<String> sendDomainBatch(
         FigmaRoutingDomain domain,
+        List<FigmaRoutingDomainMention> mentions,
         List<EnrichedComment> sendable,
         Instant windowFrom,
         Instant windowTo
     ) {
-        List<FigmaRoutingDomainMention> mentions = loadFigmaRoutingDomainPort.listMentionsByDomainId(domain.getId());
         List<String> mentionRenders = mentions.stream().map(FigmaRoutingDomainMention::render).toList();
         List<CommentEntry> entries = sendable.stream()
             .map(ec -> new CommentEntry(
+                ec.comment.commentId(),
                 ec.file.getDisplayName(),
                 ec.pageName,
                 ec.comment.authorName(),
@@ -239,7 +248,7 @@ public class FigmaCommentSummaryService implements SummarizeFigmaCommentsUseCase
             .toList();
 
         try {
-            sendDiscordMentionPort.send(new DiscordDomainBatchMessage(
+            Set<String> sent = sendDiscordMentionPort.send(new DiscordDomainBatchMessage(
                 domain.getDiscordWebhookUrl(),
                 domain.getDomainKey(),
                 mentionRenders,
@@ -247,11 +256,11 @@ public class FigmaCommentSummaryService implements SummarizeFigmaCommentsUseCase
                 windowTo,
                 entries
             ));
-            return true;
+            return new ArrayList<>(sent);
         } catch (FigmaDomainException e) {
             log.warn("Discord 도메인 batch 전송 실패. domainKey={}, count={}, error={}",
                 domain.getDomainKey(), sendable.size(), e.getMessage());
-            return false;
+            return List.of();
         }
     }
 
@@ -259,9 +268,10 @@ public class FigmaCommentSummaryService implements SummarizeFigmaCommentsUseCase
         FigmaRoutingDomain domain,
         List<EnrichedComment> bucket,
         Set<String> alreadyDispatched,
+        List<FigmaRoutingDomainMention> mentions,
         boolean sent
     ) {
-        List<String> mentionRenders = loadFigmaRoutingDomainPort.listMentionsByDomainId(domain.getId()).stream()
+        List<String> mentionRenders = mentions.stream()
             .map(FigmaRoutingDomainMention::render)
             .toList();
         List<FigmaSummaryResult.Comment> comments = bucket.stream()

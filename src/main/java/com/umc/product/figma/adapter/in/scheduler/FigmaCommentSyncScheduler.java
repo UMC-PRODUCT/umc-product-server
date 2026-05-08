@@ -1,6 +1,6 @@
 package com.umc.product.figma.adapter.in.scheduler;
 
-import com.umc.product.figma.adapter.out.external.FigmaSyncProperties;
+import com.umc.product.figma.config.FigmaSyncProperties;
 import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
 import com.umc.product.figma.application.port.out.LoadFigmaSummaryCursorPort;

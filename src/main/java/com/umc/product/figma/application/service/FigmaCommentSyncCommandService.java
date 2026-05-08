@@ -1,6 +1,6 @@
 package com.umc.product.figma.application.service;
 
-import com.umc.product.figma.adapter.out.external.FigmaSyncProperties;
+import com.umc.product.figma.config.FigmaSyncProperties;
 import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.SyncFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;

@@ -23,23 +23,47 @@ import org.springframework.web.client.RestClientResponseException;
 public class FigmaCommentClient implements FetchFigmaCommentPort {
 
     private static final String COMMENTS_URI_TEMPLATE = "https://api.figma.com/v1/files/%s/comments";
+    private static final String COMMENTS_CURSOR_URI_TEMPLATE = "https://api.figma.com/v1/files/%s/comments?cursor=%s";
+    private static final int MAX_PAGES = 100;
 
     private final RestClient restClient;
 
     @Override
     public List<FigmaCommentInfo> listComments(String fileKey, String accessToken) {
+        List<FigmaCommentInfo> all = new ArrayList<>();
+        String cursor = null;
+        int pages = 0;
+
+        do {
+            Map<String, Object> body = fetchPage(fileKey, accessToken, cursor);
+            all.addAll(parseComments(body));
+            cursor = extractNextCursor(body);
+            pages++;
+        } while (cursor != null && pages < MAX_PAGES);
+
+        if (cursor != null) {
+            log.warn("Figma 댓글 페이지 상한({}) 도달. 이후 댓글은 생략됩니다. fileKey={}", MAX_PAGES, fileKey);
+        }
+
+        all.sort(Comparator.comparing(FigmaCommentInfo::createdAt));
+        return all;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> fetchPage(String fileKey, String accessToken, String cursor) {
+        String uri = cursor == null
+            ? String.format(COMMENTS_URI_TEMPLATE, fileKey)
+            : String.format(COMMENTS_CURSOR_URI_TEMPLATE, fileKey, cursor);
         try {
-            @SuppressWarnings("unchecked")
             Map<String, Object> body = restClient.get()
-                .uri(String.format(COMMENTS_URI_TEMPLATE, fileKey))
+                .uri(uri)
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                 .retrieve()
                 .body(Map.class);
-
-            return parseComments(body);
+            return body != null ? body : Map.of();
         } catch (RestClientResponseException e) {
-            log.warn("Figma 댓글 조회 실패: fileKey={}, status={}, body={}",
-                fileKey, e.getStatusCode(), e.getResponseBodyAsString());
+            log.warn("Figma 댓글 조회 실패: fileKey={}, cursor={}, status={}, body={}",
+                fileKey, cursor, e.getStatusCode(), e.getResponseBodyAsString());
             throw new FigmaDomainException(FigmaErrorCode.COMMENT_FETCH_FAILED);
         }
     }
@@ -69,8 +93,21 @@ public class FigmaCommentClient implements FetchFigmaCommentPort {
             result.add(new FigmaCommentInfo(id, message, author, nodeId, createdAt));
         }
 
-        result.sort(Comparator.comparing(FigmaCommentInfo::createdAt));
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String extractNextCursor(Map<String, Object> body) {
+        Object pagination = body.get("pagination");
+        if (!(pagination instanceof Map<?, ?> paginationMap)) {
+            return null;
+        }
+        Object cursorObj = ((Map<String, Object>) paginationMap).get("cursor");
+        if (!(cursorObj instanceof Map<?, ?> cursorMap)) {
+            return null;
+        }
+        Object after = ((Map<String, Object>) cursorMap).get("after");
+        return after instanceof String s ? s : null;
     }
 
     @SuppressWarnings("unchecked")

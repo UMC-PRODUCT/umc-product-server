@@ -21,4 +21,10 @@ public interface RegisterFigmaIntegrationUseCase {
      * state 를 검증함과 동시에 원자적으로 제거하고, 발급 시 묶여 있던 ownerMemberId 를 반환한다. 검증 실패(미발급/만료/이미 사용됨)면 예외를 던진다.
      */
     Long consumeState(String state);
+
+    /**
+     * state 에 대응하는 Figma OAuth authorize URL 을 반환한다.
+     * Controller 가 FigmaOAuthPort(port/out) 에 직접 의존하지 않도록 UseCase 단에서 위임한다.
+     */
+    String buildAuthorizeUrl(String state);
 }

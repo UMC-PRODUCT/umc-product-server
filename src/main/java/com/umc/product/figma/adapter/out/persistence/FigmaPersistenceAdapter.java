@@ -10,8 +10,11 @@ import com.umc.product.figma.domain.FigmaIntegration;
 import com.umc.product.figma.domain.FigmaRoutingDomain;
 import com.umc.product.figma.domain.FigmaRoutingDomainMention;
 import com.umc.product.figma.domain.FigmaWatchedFile;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
@@ -34,6 +37,11 @@ public class FigmaPersistenceAdapter implements
     @Override
     public Optional<FigmaIntegration> findActive() {
         return figmaIntegrationJpaRepository.findFirstByOrderByUpdatedAtDesc();
+    }
+
+    @Override
+    public Optional<FigmaIntegration> findActiveForUpdate() {
+        return figmaIntegrationJpaRepository.findFirstForUpdate();
     }
 
     @Override
@@ -102,6 +110,16 @@ public class FigmaPersistenceAdapter implements
     @Override
     public List<FigmaRoutingDomainMention> listMentionsByDomainId(Long domainId) {
         return figmaRoutingDomainMentionJpaRepository.findAllByDomainId(domainId);
+    }
+
+    @Override
+    public Map<Long, List<FigmaRoutingDomainMention>> listMentionsByDomainIds(Collection<Long> domainIds) {
+        if (domainIds == null || domainIds.isEmpty()) {
+            return Map.of();
+        }
+        return figmaRoutingDomainMentionJpaRepository.findAllByDomainIdIn(domainIds)
+            .stream()
+            .collect(Collectors.groupingBy(FigmaRoutingDomainMention::getDomainId));
     }
 
     @Override

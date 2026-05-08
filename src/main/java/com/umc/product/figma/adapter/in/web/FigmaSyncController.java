@@ -3,7 +3,7 @@ package com.umc.product.figma.adapter.in.web;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
-import com.umc.product.figma.adapter.out.external.FigmaSyncProperties;
+import com.umc.product.figma.config.FigmaSyncProperties;
 import com.umc.product.figma.application.port.in.DigestFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.SummarizeFigmaCommentsUseCase;
 import com.umc.product.figma.application.port.in.SyncFigmaCommentsUseCase;

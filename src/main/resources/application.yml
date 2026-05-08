@@ -381,7 +381,7 @@ app:
       authorize-uri: https://www.figma.com/oauth
       token-uri: https://api.figma.com/v1/oauth/token
       refresh-uri: https://api.figma.com/v1/oauth/refresh
-      token-encryption-key: ${FIGMA_TOKEN_ENCRYPTION_KEY:umc-product-figma-default-key}
+      token-encryption-key: ${FIGMA_TOKEN_ENCRYPTION_KEY}  # 필수 — 기본값 없음. 미설정 시 애플리케이션 기동 실패.
     sync:
       enabled: ${FIGMA_SYNC_ENABLED:false}
       poll-interval: ${FIGMA_SYNC_POLL_INTERVAL:PT5M}

@@ -1,20 +1,10 @@
 package com.umc.product.figma.adapter.out.external;
 
-import java.time.Duration;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
-@ConfigurationProperties(prefix = "app.figma.sync")
-public record FigmaSyncProperties(
-    boolean enabled,
-    Duration pollInterval,
-    int maxFilesPerRun
-) {
-    public FigmaSyncProperties {
-        if (pollInterval == null) {
-            pollInterval = Duration.ofMinutes(5);
-        }
-        if (maxFilesPerRun <= 0) {
-            maxFilesPerRun = 50;
-        }
-    }
+/**
+ * @deprecated {@link com.umc.product.figma.config.FigmaSyncProperties} 로 이동됨.
+ * 참조 코드가 없으므로 삭제해도 무방하다.
+ */
+@Deprecated
+public final class FigmaSyncProperties {
+    private FigmaSyncProperties() {}
 }

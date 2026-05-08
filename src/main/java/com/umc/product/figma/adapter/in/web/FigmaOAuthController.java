@@ -7,7 +7,6 @@ import com.umc.product.figma.adapter.in.web.dto.response.FigmaOAuthAuthorizeResp
 import com.umc.product.figma.adapter.in.web.dto.response.FigmaOAuthCallbackResponse;
 import com.umc.product.figma.application.port.in.RegisterFigmaIntegrationUseCase;
 import com.umc.product.figma.application.port.in.dto.RegisterFigmaIntegrationCommand;
-import com.umc.product.figma.application.port.out.FigmaOAuthPort;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
@@ -26,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class FigmaOAuthController {
 
     private final RegisterFigmaIntegrationUseCase registerFigmaIntegrationUseCase;
-    private final FigmaOAuthPort figmaOAuthPort;
 
     /**
      * 동의 화면으로 이동할 authorize URL 발급. 인증된 운영진만 호출할 수 있고, 발급된 state 에 호출자의 memberId 가 묶인다. 응답을 받은 클라이언트가 직접 redirect 한다.
@@ -38,7 +36,7 @@ public class FigmaOAuthController {
         @CurrentMember MemberPrincipal memberPrincipal
     ) {
         String state = registerFigmaIntegrationUseCase.issueState(memberPrincipal.getMemberId());
-        String authorizeUrl = figmaOAuthPort.buildAuthorizeUrl(state);
+        String authorizeUrl = registerFigmaIntegrationUseCase.buildAuthorizeUrl(state);
         return new FigmaOAuthAuthorizeResponse(authorizeUrl, state);
     }
 

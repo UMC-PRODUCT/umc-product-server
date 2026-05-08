@@ -17,6 +17,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -66,6 +68,10 @@ public class FigmaCommentDomainClassifier {
      * batch 응답 JSON 외곽 (배열 괄호, 공백 등) 토큰 여유분.
      */
     private static final int BATCH_TOKENS_OVERHEAD = 32;
+    /**
+     * 단일 LLM 호출에 묶을 최대 댓글 수. provider 컨텍스트 한도 초과를 방지한다.
+     */
+    private static final int MAX_BATCH_SIZE = 30;
 
     private final ChatCompleteUseCase chatCompleteUseCase;
     private final ObjectMapper objectMapper;
@@ -177,18 +183,20 @@ public class FigmaCommentDomainClassifier {
                 }
             }
             if (!uncached.isEmpty()) {
-                BulkClassifyOutcome bulk = doBulkClassify(uncached, candidateDomainKeys);
-                // bulk.provider() == null 은 doBulkClassify 의 catch 분기 (LLM 호출 자체 실패) 를 의미한다.
-                // 호출 실패 시 negative 캐시를 박지 않아 다음 사이클에서 즉시 재시도되도록 한다 (P1 fix).
-                boolean callSucceeded = bulk.provider() != null;
-                for (FigmaCommentInfo c : uncached) {
-                    String domain = bulk.results().get(c.commentId());
-                    if (callSucceeded) {
-                        cache.put(c.commentId(), Optional.ofNullable(domain));
-                    }
-                    if (domain != null) {
-                        results.put(c.commentId(), domain);
-                        persistIfEligible(c.commentId(), domain, bulk.provider());
+                for (List<FigmaCommentInfo> chunk : partition(uncached, MAX_BATCH_SIZE)) {
+                    BulkClassifyOutcome bulk = doBulkClassify(chunk, candidateDomainKeys);
+                    // bulk.provider() == null 은 doBulkClassify 의 catch 분기 (LLM 호출 자체 실패) 를 의미한다.
+                    // 호출 실패 시 negative 캐시를 박지 않아 다음 사이클에서 즉시 재시도되도록 한다.
+                    boolean callSucceeded = bulk.provider() != null;
+                    for (FigmaCommentInfo c : chunk) {
+                        String domain = bulk.results().get(c.commentId());
+                        if (callSucceeded) {
+                            cache.put(c.commentId(), Optional.ofNullable(domain));
+                        }
+                        if (domain != null) {
+                            results.put(c.commentId(), domain);
+                            persistIfEligible(c.commentId(), domain, bulk.provider());
+                        }
                     }
                 }
             }
@@ -226,11 +234,14 @@ public class FigmaCommentDomainClassifier {
     private BulkClassifyOutcome doBulkClassify(List<FigmaCommentInfo> comments, List<String> candidates) {
         String userPrompt = buildBatchUserPrompt(comments, candidates);
         int maxTokens = BATCH_TOKENS_PER_ITEM * comments.size() + BATCH_TOKENS_OVERHEAD;
+        Set<String> inputIds = comments.stream()
+            .map(FigmaCommentInfo::commentId)
+            .collect(Collectors.toSet());
         try {
             ChatCompletionResult result = chatCompleteUseCase.complete(
                 ChatCompleteCommand.freeFormWithMaxTokens(BATCH_SYSTEM_PROMPT, userPrompt, maxTokens)
             );
-            Map<String, String> parsed = parseBatchResponse(result.text(), candidates);
+            Map<String, String> parsed = parseBatchResponse(result.text(), candidates, inputIds);
             return new BulkClassifyOutcome(parsed, result.provider());
         } catch (LlmDomainException e) {
             log.warn("LLM batch 분류 호출 실패: count={}, error={}", comments.size(), e.getMessage());
@@ -279,7 +290,11 @@ public class FigmaCommentDomainClassifier {
         return sb.toString();
     }
 
-    private Map<String, String> parseBatchResponse(String raw, List<String> candidates) {
+    private Map<String, String> parseBatchResponse(
+        String raw,
+        List<String> candidates,
+        Set<String> inputCommentIds
+    ) {
         if (raw == null || raw.isBlank()) {
             log.warn("LLM batch 분류 응답이 비어 있습니다.");
             return Map.of();
@@ -293,6 +308,10 @@ public class FigmaCommentDomainClassifier {
                 String commentId = item.get("commentId");
                 String domainKey = item.get("domainKey");
                 if (commentId == null || domainKey == null) {
+                    continue;
+                }
+                if (!inputCommentIds.contains(commentId)) {
+                    log.warn("LLM 응답에 입력에 없는 commentId 포함 (할루시네이션 의심): {}", commentId);
                     continue;
                 }
                 if (!candidates.contains(domainKey)) {
@@ -309,6 +328,14 @@ public class FigmaCommentDomainClassifier {
     }
 
     private record BulkClassifyOutcome(Map<String, String> results, String provider) {
+    }
+
+    private static <T> List<List<T>> partition(List<T> list, int size) {
+        List<List<T>> partitions = new ArrayList<>();
+        for (int i = 0; i < list.size(); i += size) {
+            partitions.add(list.subList(i, Math.min(i + size, list.size())));
+        }
+        return partitions;
     }
 
     /**

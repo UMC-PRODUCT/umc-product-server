@@ -10,5 +10,11 @@ public interface LoadFigmaIntegrationPort {
      */
     Optional<FigmaIntegration> findActive();
 
+    /**
+     * 토큰 갱신 직전 비관적 쓰기 잠금을 획득하며 통합 1건을 반환한다.
+     * 동시에 두 스레드가 만료 토큰을 감지해 refresh 엔드포인트를 중복 호출하는 레이스 컨디션을 방지한다.
+     */
+    Optional<FigmaIntegration> findActiveForUpdate();
+
     Optional<FigmaIntegration> findByOwnerMemberId(Long ownerMemberId);
 }

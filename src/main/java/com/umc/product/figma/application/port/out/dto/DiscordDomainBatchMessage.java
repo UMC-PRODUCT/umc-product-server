@@ -25,6 +25,7 @@ public record DiscordDomainBatchMessage(
     List<CommentEntry> comments
 ) {
     public record CommentEntry(
+        String commentId,
         String fileDisplayName,
         String pageName,
         String authorName,

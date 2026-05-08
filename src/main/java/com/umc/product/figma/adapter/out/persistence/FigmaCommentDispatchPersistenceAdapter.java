@@ -6,6 +6,7 @@ import com.umc.product.figma.domain.FigmaCommentDispatch;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,17 +46,21 @@ public class FigmaCommentDispatchPersistenceAdapter
         if (commentIds == null || commentIds.isEmpty() || domainId == null || dispatchedAt == null) {
             return;
         }
-        for (String commentId : commentIds) {
-            if (commentId == null || repository.existsByCommentId(commentId)) {
-                continue;
-            }
-            try {
-                repository.save(FigmaCommentDispatch.of(commentId, domainId, dispatchedAt));
-            } catch (DataIntegrityViolationException e) {
-                // 동시성 race: 다른 인스턴스/호출이 먼저 저장한 케이스.
-                // unique 제약이 보장되어 있으므로 발송 기록 자체는 정상 보존된다.
-                log.debug("FigmaCommentDispatch 동시 저장 race, 무시: commentId={}", commentId);
-            }
+        // 이미 기록된 commentId 를 한 번의 SELECT IN 으로 제외 (O(2n) → O(2) 쿼리)
+        Set<String> existing = findDispatchedCommentIds(commentIds);
+        List<FigmaCommentDispatch> toSave = commentIds.stream()
+            .filter(id -> id != null && !existing.contains(id))
+            .map(id -> FigmaCommentDispatch.of(id, domainId, dispatchedAt))
+            .toList();
+        if (toSave.isEmpty()) {
+            return;
+        }
+        try {
+            repository.saveAll(toSave);
+        } catch (DataIntegrityViolationException e) {
+            // 동시성 race: 다른 인스턴스가 bulk insert 사이에 먼저 저장한 케이스.
+            // unique 제약이 보장되어 있으므로 발송 기록 자체는 정상 보존된다.
+            log.debug("FigmaCommentDispatch 동시 saveAll race, 무시: count={}", toSave.size());
         }
     }
 

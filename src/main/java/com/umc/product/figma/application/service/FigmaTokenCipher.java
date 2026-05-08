@@ -30,7 +30,8 @@ public class FigmaTokenCipher {
         try {
             String rawKey = properties.tokenEncryptionKey();
             if (rawKey == null || rawKey.isBlank()) {
-                rawKey = "umc-product-figma-default-key";
+                throw new FigmaDomainException(FigmaErrorCode.TOKEN_ENCRYPTION_FAILED,
+                    "FIGMA_TOKEN_ENCRYPTION_KEY 환경변수가 설정되지 않았습니다. 애플리케이션을 시작할 수 없습니다.");
             }
             byte[] hashed = MessageDigest.getInstance("SHA-256")
                 .digest(rawKey.getBytes(StandardCharsets.UTF_8));

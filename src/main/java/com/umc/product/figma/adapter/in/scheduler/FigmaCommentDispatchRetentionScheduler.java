@@ -1,7 +1,7 @@
 package com.umc.product.figma.adapter.in.scheduler;
 
 import com.umc.product.figma.adapter.out.external.FigmaSummaryProperties;
-import com.umc.product.figma.adapter.out.external.FigmaSyncProperties;
+import com.umc.product.figma.config.FigmaSyncProperties;
 import com.umc.product.figma.application.port.out.SaveFigmaCommentDispatchPort;
 import java.time.Instant;
 import lombok.RequiredArgsConstructor;
