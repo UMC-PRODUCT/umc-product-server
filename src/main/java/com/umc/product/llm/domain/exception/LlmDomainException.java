@@ -11,4 +11,12 @@ public class LlmDomainException extends BusinessException {
     public LlmDomainException(LlmErrorCode errorCode, String message) {
         super(Domain.LLM, errorCode, message);
     }
+
+    public LlmDomainException(LlmErrorCode errorCode, String message, Throwable cause) {
+        super(Domain.LLM, errorCode, message, cause);
+    }
+
+    public LlmDomainException(LlmErrorCode errorCode, Throwable cause) {
+        super(Domain.LLM, errorCode, cause);
+    }
 }

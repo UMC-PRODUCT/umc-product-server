@@ -67,8 +67,8 @@ public class SpringAiOpenAiChatCompletionAdapter implements ChatCompletionPort {
                 properties.model(), normalized.length(), promptTokens, completionTokens);
             return ChatCompletionResult.of(normalized, PROVIDER_NAME, promptTokens, completionTokens);
         } catch (Exception e) {
-            log.warn("OpenAI 호출 실패: model={}, error={}", properties.model(), e.toString());
-            throw new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED, e.getMessage());
+            log.warn("OpenAI 호출 실패: model={}, error={}", properties.model(), e.toString(), e);
+            throw new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED, e.getMessage(), e);
         }
     }
 

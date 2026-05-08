@@ -116,15 +116,15 @@ public class ChatCompletionService implements ChatCompleteUseCase {
             metrics.recordCall(provider, LlmMetrics.STATUS_FAILED, latency);
             callGuard.recordFailure();
             log.warn("LLM 호출 실패: provider={}, latencyMs={}, baseCode={}, message={}",
-                provider, latency.toMillis(), e.getBaseCode(), e.getMessage());
+                provider, latency.toMillis(), e.getBaseCode(), e.getMessage(), e);
             throw e;
         } catch (RuntimeException e) {
             Duration latency = Duration.between(start, clock.instant());
             metrics.recordCall(provider, LlmMetrics.STATUS_FAILED, latency);
             callGuard.recordFailure();
             log.warn("LLM 호출 중 예기치 못한 예외: provider={}, latencyMs={}, error={}",
-                provider, latency.toMillis(), e.toString());
-            throw new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED, e.getMessage());
+                provider, latency.toMillis(), e.toString(), e);
+            throw new LlmDomainException(LlmErrorCode.CHAT_COMPLETION_FAILED, e.getMessage(), e);
         }
     }
 }
