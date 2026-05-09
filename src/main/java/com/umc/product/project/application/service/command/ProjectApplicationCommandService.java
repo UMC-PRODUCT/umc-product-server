@@ -4,8 +4,10 @@ import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectApplicationUseCase;
+import com.umc.product.project.application.port.in.command.DecideApplicationUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectApplicationDraftUseCase;
+import com.umc.product.project.application.port.in.command.dto.ApplicationDecisionStatus;
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectApplicationCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectApplicationCommand;
 import com.umc.product.project.application.port.in.command.dto.UpdateProjectApplicationDraftCommand;
@@ -41,7 +43,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProjectApplicationCommandService implements
     CreateDraftProjectApplicationUseCase,
     UpdateProjectApplicationDraftUseCase,
-    SubmitProjectApplicationUseCase {
+    SubmitProjectApplicationUseCase,
+    DecideApplicationUseCase {
 
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final SaveProjectApplicationPort saveProjectApplicationPort;
@@ -173,6 +176,26 @@ public class ProjectApplicationCommandService implements
         application.submit();
         saveProjectApplicationPort.save(application);
 
+        return ProjectApplicationInfo.of(application.getId(), application.getStatus());
+    }
+
+    @Override
+    public ProjectApplicationInfo decide(
+        Long applicationId,
+        ApplicationDecisionStatus targetStatus,
+        String reason,
+        Long decidedByMemberId
+    ) {
+        ProjectApplication application = loadProjectApplicationPort.findById(applicationId)
+            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND));
+
+        switch (targetStatus) {
+            case APPROVED -> application.approve(decidedByMemberId, reason);
+            case REJECTED -> application.reject(decidedByMemberId, reason);
+            case PENDING -> application.revertToPending(decidedByMemberId);
+        }
+
+        saveProjectApplicationPort.save(application);
         return ProjectApplicationInfo.of(application.getId(), application.getStatus());
     }
 
