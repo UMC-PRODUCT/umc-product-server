@@ -38,14 +38,6 @@ public class QuestionOption extends BaseEntity {
             .build();
     }
 
-    public static QuestionOption copyFrom(QuestionOption origin) {
-        return QuestionOption.builder()
-            .content(origin.content)
-            .orderNo(origin.orderNo)
-            .isOther(origin.isOther)
-            .build();
-    }
-
     /**
      * 선택지 속성 부분 업데이트.
      * null 인 필드는 기존 값 유지.
