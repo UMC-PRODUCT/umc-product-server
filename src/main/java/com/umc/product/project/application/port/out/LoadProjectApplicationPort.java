@@ -2,6 +2,7 @@ package com.umc.product.project.application.port.out;
 
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -45,4 +46,9 @@ public interface LoadProjectApplicationPort {
     boolean existsByRoundAndApplicantAndStatus(
         Long roundId, Long applicantMemberId, ProjectApplicationStatus status
     );
+
+    /**
+     * 매칭 차수에 속한 모든 지원서를 조회합니다. 자동 선발 알고리즘 입력으로 사용됩니다.
+     */
+    List<ProjectApplication> listByMatchingRoundId(Long matchingRoundId);
 }

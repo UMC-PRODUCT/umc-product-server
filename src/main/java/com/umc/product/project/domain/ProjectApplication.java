@@ -134,6 +134,28 @@ public class ProjectApplication extends BaseEntity {
     }
 
     /**
+     * 차수 종료 시점의 자동 선발 결과를 반영합니다.
+     * <p>
+     * PM 의 단건 토글({@link #approve}/{@link #reject})과 달리 차수 잠금 검증을 거치지 않으며,
+     * 정책에 따라 도출된 최종 status (APPROVED 또는 REJECTED) 를 그대로 적용합니다.
+     * <p>
+     * 호출자: 자동 선발 서비스 (스케줄러 / 운영진 수동 트리거 공용).
+     *
+     * @param targetStatus      APPROVED 또는 REJECTED 만 허용
+     * @param executedByMemberId 자동 선발을 실행한 운영진 ID. 스케줄러 호출 시 {@code null}
+     */
+    public void applyAutoDecision(ProjectApplicationStatus targetStatus, Long executedByMemberId) {
+        validateCanBeDecided();
+        if (targetStatus != ProjectApplicationStatus.APPROVED
+            && targetStatus != ProjectApplicationStatus.REJECTED) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
+        }
+        this.status = targetStatus;
+        this.statusChangedMemberId = executedByMemberId;
+        this.statusChangeReason = "auto-decide";
+    }
+
+    /**
      * APPROVED / REJECTED 결정을 SUBMITTED ("대기") 로 되돌립니다.
      * <p>
      * UI 상의 "대기" 옵션이며, 차수 진행 중에만 호출 가능합니다.

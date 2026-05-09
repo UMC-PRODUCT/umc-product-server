@@ -133,6 +133,74 @@ class ProjectApplicationTest {
     }
 
     @Nested
+    class applyAutoDecision {
+
+        @Test
+        void SUBMITTED를_APPROVED로_확정한다() {
+            application.applyAutoDecision(ProjectApplicationStatus.APPROVED, DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
+            assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID);
+            assertThat(application.getStatusChangeReason()).isEqualTo("auto-decide");
+        }
+
+        @Test
+        void SUBMITTED를_REJECTED로_확정한다() {
+            application.applyAutoDecision(ProjectApplicationStatus.REJECTED, DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
+        }
+
+        @Test
+        void executedByMemberId가_null이어도_정상_처리된다_스케줄러_호출_케이스() {
+            application.applyAutoDecision(ProjectApplicationStatus.APPROVED, null);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
+            assertThat(application.getStatusChangedMemberId()).isNull();
+        }
+
+        @Test
+        void REJECTED를_APPROVED로_override한다_PM_결정_무시() {
+            setStatus(application, ProjectApplicationStatus.REJECTED);
+
+            application.applyAutoDecision(ProjectApplicationStatus.APPROVED, DECIDER_MEMBER_ID);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
+        }
+
+        @Test
+        void 차수_종료_후에도_차수_검증_없이_정상_적용된다() {
+            setRoundDeadline(round, NOW.minusSeconds(60));
+
+            assertThatCode(() -> application.applyAutoDecision(
+                ProjectApplicationStatus.APPROVED, DECIDER_MEMBER_ID
+            )).doesNotThrowAnyException();
+        }
+
+        @Test
+        void DRAFT_상태에서는_PROJECT_APPLICATION_DECISION_INVALID_TRANSITION() {
+            setStatus(application, ProjectApplicationStatus.DRAFT);
+
+            assertThatThrownBy(() -> application.applyAutoDecision(
+                ProjectApplicationStatus.APPROVED, DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
+        }
+
+        @Test
+        void targetStatus가_SUBMITTED면_PROJECT_APPLICATION_DECISION_INVALID_TRANSITION() {
+            assertThatThrownBy(() -> application.applyAutoDecision(
+                ProjectApplicationStatus.SUBMITTED, DECIDER_MEMBER_ID
+            ))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
+        }
+    }
+
+    @Nested
     class revertToPending {
 
         @Test

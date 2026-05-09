@@ -59,6 +59,10 @@ public enum ProjectErrorCode implements BaseCode {
         "time 기준 조회는 chapterId와 함께 요청해야 합니다."),
     PROJECT_MATCHING_ROUND_LOCKED(HttpStatus.BAD_REQUEST, "PROJECT-0306",
         "매칭 차수가 종료되어 더 이상 결정을 변경할 수 없습니다."),
+    PROJECT_MATCHING_ROUND_NOT_FINALIZABLE(HttpStatus.BAD_REQUEST, "PROJECT-0307",
+        "결정 마감 시각이 지나기 전에는 자동 선발을 실행할 수 없습니다."),
+    PROJECT_MATCHING_ROUND_POLICY_NOT_FOUND(HttpStatus.INTERNAL_SERVER_ERROR, "PROJECT-0308",
+        "해당 매칭 종류에 대한 자동 선발 정책이 정의되지 않았습니다."),
 
     // ProjectApplication (APPLY-001/002/003)
     PROJECT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없습니다."),
