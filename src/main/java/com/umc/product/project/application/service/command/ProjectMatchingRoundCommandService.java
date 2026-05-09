@@ -17,6 +17,7 @@ import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
+import com.umc.product.project.application.port.out.ScheduleMatchingRoundDeadlinePort;
 import com.umc.product.project.application.service.policy.AutoDecisionResult;
 import com.umc.product.project.application.service.policy.MatchingDecisionPolicy;
 import com.umc.product.project.domain.Project;
@@ -55,6 +56,7 @@ public class ProjectMatchingRoundCommandService implements
     private final SaveProjectApplicationPort saveProjectApplicationPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
     private final SaveProjectMemberPort saveProjectMemberPort;
+    private final ScheduleMatchingRoundDeadlinePort scheduleMatchingRoundDeadlinePort;
     private final List<MatchingDecisionPolicy> matchingDecisionPolicies;
     private final Random matchingRandom;
 
@@ -80,7 +82,9 @@ public class ProjectMatchingRoundCommandService implements
             command.decisionDeadline()
         );
 
-        return saveProjectMatchingRoundPort.save(matchingRound).getId();
+        ProjectMatchingRound saved = saveProjectMatchingRoundPort.save(matchingRound);
+        scheduleMatchingRoundDeadlinePort.schedule(saved);
+        return saved.getId();
     }
 
     @Override
@@ -115,6 +119,7 @@ public class ProjectMatchingRoundCommandService implements
             endsAt,
             decisionDeadline
         );
+        scheduleMatchingRoundDeadlinePort.schedule(matchingRound);
     }
 
     @Override
@@ -127,6 +132,7 @@ public class ProjectMatchingRoundCommandService implements
         }
 
         saveProjectMatchingRoundPort.delete(matchingRound);
+        scheduleMatchingRoundDeadlinePort.cancel(matchingRoundId);
     }
 
     @Override

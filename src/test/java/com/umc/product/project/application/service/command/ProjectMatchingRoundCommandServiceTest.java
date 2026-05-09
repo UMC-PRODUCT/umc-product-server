@@ -16,12 +16,15 @@ import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
+import com.umc.product.project.application.port.in.command.dto.CreateProjectMatchingRoundCommand;
+import com.umc.product.project.application.port.in.command.dto.UpdateProjectMatchingRoundCommand;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
+import com.umc.product.project.application.port.out.ScheduleMatchingRoundDeadlinePort;
 import com.umc.product.project.application.service.policy.DesignerMatchingPolicy;
 import com.umc.product.project.application.service.policy.DeveloperMatchingPolicy;
 import com.umc.product.project.application.service.policy.MatchingDecisionPolicy;
@@ -75,6 +78,8 @@ class ProjectMatchingRoundCommandServiceTest {
     @Mock
     SaveProjectMemberPort saveProjectMemberPort;
     @Mock
+    ScheduleMatchingRoundDeadlinePort scheduleMatchingRoundDeadlinePort;
+    @Mock
     GetChallengerRoleUseCase getChallengerRoleUseCase;
     @Mock
     GetChallengerUseCase getChallengerUseCase;
@@ -90,6 +95,7 @@ class ProjectMatchingRoundCommandServiceTest {
             saveProjectApplicationPort,
             loadProjectPartQuotaPort,
             saveProjectMemberPort,
+            scheduleMatchingRoundDeadlinePort,
             List.<MatchingDecisionPolicy>of(new DesignerMatchingPolicy(), new DeveloperMatchingPolicy()),
             new Random(42L),
             getChallengerRoleUseCase,
@@ -305,6 +311,7 @@ class ProjectMatchingRoundCommandServiceTest {
                 saveProjectApplicationPort,
                 loadProjectPartQuotaPort,
                 saveProjectMemberPort,
+                scheduleMatchingRoundDeadlinePort,
                 List.<MatchingDecisionPolicy>of(),
                 new Random(42L),
                 getChallengerRoleUseCase,
@@ -396,6 +403,113 @@ class ProjectMatchingRoundCommandServiceTest {
 
             assertThat(round.getAutoDecisionExecutedAt()).isNotNull();
         }
+    }
+
+    @Nested
+    class lifecycleHooks {
+
+        @Test
+        void create는_저장_후_scheduleMatchingRoundDeadlinePort에_schedule_호출한다() {
+            CreateProjectMatchingRoundCommand command = createCommand(1L);
+            ProjectMatchingRound saved = futureRound(MatchingType.PLAN_DESIGN);
+            given(getChallengerRoleUseCase.findAllByMemberId(EXECUTOR_MEMBER_ID))
+                .willReturn(List.of(centralCoreRole()));
+            given(loadProjectMatchingRoundPort.listOverlapping(any(), any(), any()))
+                .willReturn(List.of());
+            given(saveProjectMatchingRoundPort.save(any())).willReturn(saved);
+
+            sut.create(command);
+
+            then(scheduleMatchingRoundDeadlinePort).should().schedule(saved);
+        }
+
+        @Test
+        void update는_도메인_갱신_후_scheduleMatchingRoundDeadlinePort에_schedule_호출한다() {
+            ProjectMatchingRound existing = futureRound(MatchingType.PLAN_DESIGN);
+            UpdateProjectMatchingRoundCommand command = updateCommand(ROUND_ID);
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(existing);
+            given(getChallengerRoleUseCase.findAllByMemberId(EXECUTOR_MEMBER_ID))
+                .willReturn(List.of(centralCoreRole()));
+            given(loadProjectMatchingRoundPort.listOverlappingExceptId(any(), any(), any(), any()))
+                .willReturn(List.of());
+
+            sut.update(command);
+
+            then(scheduleMatchingRoundDeadlinePort).should().schedule(existing);
+        }
+
+        @Test
+        void delete는_도메인_삭제_후_scheduleMatchingRoundDeadlinePort에_cancel_호출한다() {
+            ProjectMatchingRound existing = futureRound(MatchingType.PLAN_DESIGN);
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(existing);
+            given(getChallengerRoleUseCase.findAllByMemberId(EXECUTOR_MEMBER_ID))
+                .willReturn(List.of(centralCoreRole()));
+            given(loadProjectApplicationPort.existsByAppliedMatchingRoundId(ROUND_ID))
+                .willReturn(false);
+
+            sut.delete(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            then(scheduleMatchingRoundDeadlinePort).should().cancel(ROUND_ID);
+        }
+
+        @Test
+        void delete는_연관_지원서가_있으면_예외_발생하고_cancel_호출되지_않는다() {
+            ProjectMatchingRound existing = futureRound(MatchingType.PLAN_DESIGN);
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(existing);
+            given(getChallengerRoleUseCase.findAllByMemberId(EXECUTOR_MEMBER_ID))
+                .willReturn(List.of(centralCoreRole()));
+            given(loadProjectApplicationPort.existsByAppliedMatchingRoundId(ROUND_ID))
+                .willReturn(true);
+
+            assertThatThrownBy(() -> sut.delete(ROUND_ID, EXECUTOR_MEMBER_ID))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_DELETE_CONFLICT);
+            then(scheduleMatchingRoundDeadlinePort).should(never()).cancel(any());
+        }
+    }
+
+    private CreateProjectMatchingRoundCommand createCommand(Long chapterId) {
+        Instant startsAt = Instant.now().plusSeconds(86_400);
+        Instant endsAt = startsAt.plusSeconds(86_400);
+        Instant decisionDeadline = endsAt.plusSeconds(86_400);
+        return CreateProjectMatchingRoundCommand.builder()
+            .name("기획-디자인 1차")
+            .description(null)
+            .type(MatchingType.PLAN_DESIGN)
+            .phase(MatchingPhase.FIRST)
+            .chapterId(chapterId)
+            .startsAt(startsAt)
+            .endsAt(endsAt)
+            .decisionDeadline(decisionDeadline)
+            .requesterMemberId(EXECUTOR_MEMBER_ID)
+            .build();
+    }
+
+    private UpdateProjectMatchingRoundCommand updateCommand(Long roundId) {
+        return UpdateProjectMatchingRoundCommand.builder()
+            .matchingRoundId(roundId)
+            .name("이름 수정")
+            .description(null)
+            .type(null)
+            .phase(null)
+            .startsAt(null)
+            .endsAt(null)
+            .decisionDeadline(null)
+            .requesterMemberId(EXECUTOR_MEMBER_ID)
+            .build();
+    }
+
+    private ProjectMatchingRound futureRound(MatchingType type) {
+        ProjectMatchingRound round = ProjectMatchingRound.create(
+            "테스트 매칭", null,
+            type, MatchingPhase.FIRST, 1L,
+            Instant.now().plusSeconds(86_400),
+            Instant.now().plusSeconds(172_800),
+            Instant.now().plusSeconds(259_200)
+        );
+        ReflectionTestUtils.setField(round, "id", ROUND_ID);
+        return round;
     }
 
     private ProjectMatchingRound expiredRound(MatchingType type) {
