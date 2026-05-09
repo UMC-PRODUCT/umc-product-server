@@ -11,7 +11,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.umc.product.figma.config.FigmaSyncProperties;
 import com.umc.product.figma.application.port.in.dto.FigmaSummaryResult;
 import com.umc.product.figma.application.port.in.dto.SummarizeFigmaCommentsCommand;
 import com.umc.product.figma.application.port.out.FetchFigmaCommentPort;
@@ -24,6 +23,7 @@ import com.umc.product.figma.application.port.out.SaveFigmaCommentDispatchPort;
 import com.umc.product.figma.application.port.out.SaveFigmaSummaryCursorPort;
 import com.umc.product.figma.application.port.out.SendDiscordMentionPort;
 import com.umc.product.figma.application.port.out.dto.FigmaCommentInfo;
+import com.umc.product.figma.config.FigmaSyncProperties;
 import com.umc.product.figma.domain.FigmaRoutingDomain;
 import com.umc.product.figma.domain.FigmaWatchedFile;
 import java.time.Duration;
@@ -47,20 +47,43 @@ class FigmaCommentSummaryServiceTest {
     private static final String DOMAIN_KEY = "auth";
     private static final String COMMENT_ID = "C1";
 
-    @Mock private LoadFigmaWatchedFilePort loadFigmaWatchedFilePort;
-    @Mock private LoadFigmaRoutingDomainPort loadFigmaRoutingDomainPort;
-    @Mock private FetchFigmaCommentPort fetchFigmaCommentPort;
-    @Mock private FetchFigmaFileMetadataPort fetchFigmaFileMetadataPort;
-    @Mock private SendDiscordMentionPort sendDiscordMentionPort;
-    @Mock private LoadFigmaCommentDispatchPort loadFigmaCommentDispatchPort;
-    @Mock private SaveFigmaCommentDispatchPort saveFigmaCommentDispatchPort;
-    @Mock private LoadFigmaSummaryCursorPort loadFigmaSummaryCursorPort;
-    @Mock private SaveFigmaSummaryCursorPort saveFigmaSummaryCursorPort;
-    @Mock private FigmaIntegrationCommandService figmaIntegrationCommandService;
-    @Mock private FigmaCommentDomainClassifier figmaCommentDomainClassifier;
-    @Mock private FigmaWatchedFileStateUpdater figmaWatchedFileStateUpdater;
+    @Mock
+    private LoadFigmaWatchedFilePort loadFigmaWatchedFilePort;
+    @Mock
+    private LoadFigmaRoutingDomainPort loadFigmaRoutingDomainPort;
+    @Mock
+    private FetchFigmaCommentPort fetchFigmaCommentPort;
+    @Mock
+    private FetchFigmaFileMetadataPort fetchFigmaFileMetadataPort;
+    @Mock
+    private SendDiscordMentionPort sendDiscordMentionPort;
+    @Mock
+    private LoadFigmaCommentDispatchPort loadFigmaCommentDispatchPort;
+    @Mock
+    private SaveFigmaCommentDispatchPort saveFigmaCommentDispatchPort;
+    @Mock
+    private LoadFigmaSummaryCursorPort loadFigmaSummaryCursorPort;
+    @Mock
+    private SaveFigmaSummaryCursorPort saveFigmaSummaryCursorPort;
+    @Mock
+    private FigmaIntegrationCommandService figmaIntegrationCommandService;
+    @Mock
+    private FigmaCommentDomainClassifier figmaCommentDomainClassifier;
+    @Mock
+    private FigmaWatchedFileStateUpdater figmaWatchedFileStateUpdater;
 
     private FigmaCommentSummaryService service;
+
+    private static int anyInt() {
+        return org.mockito.ArgumentMatchers.anyInt();
+    }
+
+    /**
+     * {@code anyString()} 과 동작은 같지만, eq() 와 혼동되지 않게 따로 명명한 매처.
+     */
+    private static String eq_(String s) {
+        return org.mockito.ArgumentMatchers.eq(s);
+    }
 
     @BeforeEach
     void setUp() {
@@ -88,7 +111,8 @@ class FigmaCommentSummaryServiceTest {
         lenient().when(figmaIntegrationCommandService.resolveActiveAccessToken()).thenReturn("AT");
         lenient().when(loadFigmaRoutingDomainPort.listAllDomains()).thenReturn(List.of(domain));
         lenient().when(loadFigmaRoutingDomainPort.listMentionsByDomainId(anyLong())).thenReturn(List.of());
-        lenient().when(fetchFigmaFileMetadataPort.resolvePageNames(anyString(), anyString(), any())).thenReturn(Map.of());
+        lenient().when(fetchFigmaFileMetadataPort.resolvePageNames(anyString(), anyString(), any()))
+            .thenReturn(Map.of());
     }
 
     @Test
@@ -98,6 +122,7 @@ class FigmaCommentSummaryServiceTest {
         when(fetchFigmaCommentPort.listComments(eq_(FILE_KEY), anyString())).thenReturn(List.of(c));
         when(figmaCommentDomainClassifier.classifyBatch(any(), any())).thenReturn(Map.of(COMMENT_ID, DOMAIN_KEY));
         when(loadFigmaCommentDispatchPort.findDispatchedCommentIds(anyCollection())).thenReturn(Set.of());
+        when(sendDiscordMentionPort.send(any())).thenReturn(Set.of(COMMENT_ID));
 
         FigmaSummaryResult result = service.summarize(SummarizeFigmaCommentsCommand.scheduledSync(
             Instant.parse("2026-05-07T09:55:00Z"),
@@ -142,6 +167,7 @@ class FigmaCommentSummaryServiceTest {
         when(fetchFigmaCommentPort.listComments(eq_(FILE_KEY), anyString())).thenReturn(List.of(c));
         when(figmaCommentDomainClassifier.classifyBatch(any(), any())).thenReturn(Map.of(COMMENT_ID, DOMAIN_KEY));
         when(loadFigmaCommentDispatchPort.findDispatchedCommentIds(anyCollection())).thenReturn(Set.of(COMMENT_ID));
+        when(sendDiscordMentionPort.send(any())).thenReturn(Set.of(COMMENT_ID));
 
         FigmaSummaryResult result = service.summarize(SummarizeFigmaCommentsCommand.digest(
             Instant.parse("2026-05-07T09:55:00Z"),
@@ -178,15 +204,6 @@ class FigmaCommentSummaryServiceTest {
         verify(saveFigmaCommentDispatchPort, never()).recordDispatched(anyCollection(), anyLong(), any());
         verify(saveFigmaSummaryCursorPort, never()).save(any());
         verify(figmaWatchedFileStateUpdater, never()).markIdle(anyLong());
-    }
-
-    private static int anyInt() {
-        return org.mockito.ArgumentMatchers.anyInt();
-    }
-
-    /** {@code anyString()} 과 동작은 같지만, eq() 와 혼동되지 않게 따로 명명한 매처. */
-    private static String eq_(String s) {
-        return org.mockito.ArgumentMatchers.eq(s);
     }
 
     private FigmaCommentInfo comment(Instant createdAt) {
