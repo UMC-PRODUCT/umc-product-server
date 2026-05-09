@@ -24,4 +24,8 @@ public interface ProjectMemberJpaRepository extends JpaRepository<ProjectMember,
     List<Object[]> countByProjectIdGroupByPartRaw(@Param("projectId") Long projectId, @Param("status") ProjectMemberStatus status);
 
     boolean existsByProject_GisuIdAndMemberIdAndStatus(Long gisuId, Long memberId, ProjectMemberStatus status);
+
+    boolean existsByProjectIdAndMemberIdAndPartAndStatus(
+        Long projectId, Long memberId, ChallengerPart part, ProjectMemberStatus status
+    );
 }

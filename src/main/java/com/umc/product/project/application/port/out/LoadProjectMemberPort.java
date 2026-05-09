@@ -41,4 +41,9 @@ public interface LoadProjectMemberPort {
      * 해당 기수에서 이미 ACTIVE 팀원인지 확인합니다. (중복 지원 방지용)
      */
     boolean existsByGisuAndMember(Long gisuId, Long memberId);
+
+    /**
+     * 특정 프로젝트의 ACTIVE PLAN 파트 멤버인지 확인합니다. 보조 PM(Sub-PM) 검사에 사용됩니다.
+     */
+    boolean isActivePlanMember(Long projectId, Long memberId);
 }

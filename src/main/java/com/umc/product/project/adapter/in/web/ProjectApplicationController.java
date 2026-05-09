@@ -40,9 +40,9 @@ public class ProjectApplicationController {
         description = "챌린저가 특정 프로젝트의 지원서를 DRAFT 상태로 생성합니다. 이미 DRAFT 지원서가 있으면 기존 application 정보 반환."
     )
     @CheckAccess(
-        resourceType = ResourceType.PROJECT,
+        resourceType = ResourceType.PROJECT_APPLICATION,
         resourceId = "#projectId",
-        permission = PermissionType.APPLY,
+        permission = PermissionType.WRITE,
         message = "지원서 생성 권한이 없습니다."
     )
     public ProjectApplicationStatusResponse createDraft(
@@ -63,9 +63,9 @@ public class ProjectApplicationController {
         description = "본문이 곧 답변의 새 전체 상태가 된다. 본인의 DRAFT 지원서에서만 호출 가능."
     )
     @CheckAccess(
-        resourceType = ResourceType.PROJECT,
+        resourceType = ResourceType.PROJECT_APPLICATION,
         resourceId = "#projectId",
-        permission = PermissionType.APPLY,
+        permission = PermissionType.WRITE,
         message = "지원서 임시저장 권한이 없습니다."
     )
     public ProjectApplicationStatusResponse updateDraft(
@@ -86,9 +86,9 @@ public class ProjectApplicationController {
         description = "DRAFT -> SUBMITTED 전이. 필수 답변 누락 시 400. 본인의 DRAFT 지원서에서만 호출 가능."
     )
     @CheckAccess(
-        resourceType = ResourceType.PROJECT,
+        resourceType = ResourceType.PROJECT_APPLICATION,
         resourceId = "#projectId",
-        permission = PermissionType.APPLY,
+        permission = PermissionType.WRITE,
         message = "지원서 제출 권한이 없습니다."
     )
     public ProjectApplicationStatusResponse submit(

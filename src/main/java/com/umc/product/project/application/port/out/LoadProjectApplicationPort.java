@@ -10,6 +10,11 @@ import java.util.Optional;
  */
 public interface LoadProjectApplicationPort {
 
+    /**
+     * 단건 조회. 권한 판정/단건 액션에서 사용합니다.
+     */
+    Optional<ProjectApplication> findById(Long id);
+
     boolean existsByAppliedMatchingRoundId(Long matchingRoundId);
 
     /**

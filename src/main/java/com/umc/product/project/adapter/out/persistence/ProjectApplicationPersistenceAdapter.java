@@ -18,6 +18,11 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     private final ProjectApplicationQueryRepository projectApplicationQueryRepository;
 
     @Override
+    public Optional<ProjectApplication> findById(Long id) {
+        return projectApplicationJpaRepository.findById(id);
+    }
+
+    @Override
     public boolean existsByAppliedMatchingRoundId(Long matchingRoundId) {
         return projectApplicationJpaRepository.existsByAppliedMatchingRound_Id(matchingRoundId);
     }
