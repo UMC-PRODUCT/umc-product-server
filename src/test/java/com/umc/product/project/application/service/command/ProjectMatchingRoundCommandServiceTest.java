@@ -10,9 +10,12 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
+import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
+import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
@@ -44,9 +47,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class ProjectMatchingRoundCommandServiceTest {
 
     private static final Long ROUND_ID = 1L;
@@ -89,6 +95,9 @@ class ProjectMatchingRoundCommandServiceTest {
             getChallengerRoleUseCase,
             getChallengerUseCase
         );
+        // 운영진 권한 통과 mock — 권한 거부 테스트는 자체적으로 다시 stubbing
+        given(getChallengerRoleUseCase.findAllByMemberId(EXECUTOR_MEMBER_ID))
+            .willReturn(List.of(centralCoreRole()));
     }
 
     @Nested
@@ -333,6 +342,60 @@ class ProjectMatchingRoundCommandServiceTest {
             assertThat(round.getAutoDecisionExecutedAt()).isNotNull();
             assertThat(round.getAutoDecisionExecutedMemberId()).isNull();
         }
+
+        @Test
+        void 스케줄러_호출은_권한_검증을_우회한다_executedByMemberId_null() {
+            ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DESIGN);
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
+            given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID)).willReturn(List.of());
+
+            sut.autoDecide(ROUND_ID, null);
+
+            then(getChallengerRoleUseCase).should(never()).findAllByMemberId(any());
+        }
+
+        @Test
+        void 운영진이_아닌_사용자가_호출하면_PROJECT_MATCHING_ROUND_ACCESS_DENIED() {
+            Long unauthorizedMemberId = 555L;
+            ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DESIGN);
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
+            given(getChallengerRoleUseCase.findAllByMemberId(unauthorizedMemberId)).willReturn(List.of());
+
+            assertThatThrownBy(() -> sut.autoDecide(ROUND_ID, unauthorizedMemberId))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_ACCESS_DENIED);
+        }
+
+        @Test
+        void 다른_지부_지부장이_호출하면_PROJECT_MATCHING_ROUND_ACCESS_DENIED() {
+            Long otherChapterPresidentId = 777L;
+            ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DESIGN);
+            ReflectionTestUtils.setField(round, "chapterId", 1L);
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
+            given(getChallengerRoleUseCase.findAllByMemberId(otherChapterPresidentId))
+                .willReturn(List.of(chapterPresidentRole(99L)));
+
+            assertThatThrownBy(() -> sut.autoDecide(ROUND_ID, otherChapterPresidentId))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_MATCHING_ROUND_ACCESS_DENIED);
+        }
+
+        @Test
+        void 본인_지부_지부장은_권한_통과한다() {
+            Long chapterPresidentId = 888L;
+            ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DESIGN);
+            ReflectionTestUtils.setField(round, "chapterId", 1L);
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
+            given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID)).willReturn(List.of());
+            given(getChallengerRoleUseCase.findAllByMemberId(chapterPresidentId))
+                .willReturn(List.of(chapterPresidentRole(1L)));
+
+            sut.autoDecide(ROUND_ID, chapterPresidentId);
+
+            assertThat(round.getAutoDecisionExecutedAt()).isNotNull();
+        }
     }
 
     private ProjectMatchingRound expiredRound(MatchingType type) {
@@ -389,5 +452,23 @@ class ProjectMatchingRoundCommandServiceTest {
 
     private ProjectPartQuota partQuota(Project project, ChallengerPart part, Long quota) {
         return ProjectPartQuota.create(project, part, quota, 999L);
+    }
+
+    private ChallengerRoleInfo centralCoreRole() {
+        return ChallengerRoleInfo.builder()
+            .roleType(ChallengerRoleType.CENTRAL_PRESIDENT)
+            .organizationType(OrganizationType.CENTRAL)
+            .organizationId(null)
+            .gisuId(GISU_ID)
+            .build();
+    }
+
+    private ChallengerRoleInfo chapterPresidentRole(Long chapterId) {
+        return ChallengerRoleInfo.builder()
+            .roleType(ChallengerRoleType.CHAPTER_PRESIDENT)
+            .organizationType(OrganizationType.CHAPTER)
+            .organizationId(chapterId)
+            .gisuId(GISU_ID)
+            .build();
     }
 }

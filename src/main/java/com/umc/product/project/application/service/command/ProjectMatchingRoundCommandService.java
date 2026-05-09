@@ -133,6 +133,11 @@ public class ProjectMatchingRoundCommandService implements
     public void autoDecide(Long matchingRoundId, Long executedByMemberId) {
         ProjectMatchingRound round = loadProjectMatchingRoundPort.getById(matchingRoundId);
 
+        // executedByMemberId == null 은 스케줄러 호출. 권한 검증은 운영진 수동 호출에만 적용.
+        if (executedByMemberId != null) {
+            validateManageAccess(executedByMemberId, round.getChapterId());
+        }
+
         if (round.getAutoDecisionExecutedAt() != null) {
             return;
         }
