@@ -57,6 +57,8 @@ public enum ProjectErrorCode implements BaseCode {
         "연관된 지원서가 있는 매칭 차수는 삭제할 수 없습니다."),
     PROJECT_MATCHING_ROUND_TIME_REQUIRES_CHAPTER(HttpStatus.BAD_REQUEST, "PROJECT-0305",
         "time 기준 조회는 chapterId와 함께 요청해야 합니다."),
+    PROJECT_MATCHING_ROUND_LOCKED(HttpStatus.BAD_REQUEST, "PROJECT-0306",
+        "매칭 차수가 종료되어 더 이상 결정을 변경할 수 없습니다."),
 
     // ProjectApplication (APPLY-001/002/003)
     PROJECT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없습니다."),
@@ -67,6 +69,8 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_APPLICATION_ROUND_TYPE_MISMATCH(HttpStatus.BAD_REQUEST, "PROJECT-0209", "선택한 매칭 차수가 본인 파트에 해당하지 않습니다."),
     PROJECT_APPLICATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "PROJECT-0210", "이미 작성 중인 지원서가 있습니다."),
     PROJECT_APPLICATION_SELF_APPLY_NOT_ALLOWED(HttpStatus.FORBIDDEN, "PROJECT-0211", "본인이 운영하는 프로젝트에는 지원할 수 없습니다."),
+    PROJECT_APPLICATION_DECISION_INVALID_TRANSITION(HttpStatus.BAD_REQUEST, "PROJECT-0212",
+        "현재 상태에서는 합/불 결정을 변경할 수 없습니다."),
 
     ;
 
