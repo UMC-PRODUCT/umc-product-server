@@ -2,6 +2,14 @@
 
 ## Status
 
+Superseded by [ADR-015](015-figma-comment-discord-forwarder-consolidated.md) (2026-05-09): ADR-003 / ADR-004 / ADR-005 / ADR-009 의 결정을 정합화한 통합 ADR 로 대체되었다. 본 ADR 의 `ResourceType.FIGMA` 신설, `READ` / `MANAGE` 권한 분리, SUPER_ADMIN 단일 기준 evaluator, `FigmaOAuthController#callback` `@Public` 비대칭 결정은 ADR-015 §Decision 9 에 그대로 흡수되었다. 본 문서는 변경 이력 보존용으로만 유지한다.
+
+> 참고: 본 파일 헤더의 "ADR-007" 표기는 작성 시점의 오기이며, 실제 파일명 / 운영 번호는 ADR-009 다.
+
+---
+
+이전 Status 이력:
+
 Accepted (2026-05-07): 4 개 커밋(ResourceType.FIGMA · evaluator · 컨트롤러 어노테이션 일괄 적용 · 단위 테스트) 으로 본 ADR 의 결정을 그대로 구현 완료.
 
 ## Context

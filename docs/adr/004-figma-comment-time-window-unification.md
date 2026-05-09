@@ -2,6 +2,12 @@
 
 ## Status
 
+Superseded by [ADR-015](015-figma-comment-discord-forwarder-consolidated.md) (2026-05-09): ADR-003 / ADR-004 / ADR-005 / ADR-009 의 결정을 정합화한 통합 ADR 로 대체되었다. 본 ADR 의 시간창 단일 유즈케이스, `figma_summary_cursor`, `figma_comment_dispatch` 가드, 마이그레이션 4 종 단일 파일 병합 결정은 ADR-015 §Decision 3·4·10 에 그대로 흡수되었다. 본 문서는 변경 이력 보존용으로만 유지한다.
+
+---
+
+이전 Status 이력:
+
 Proposed (2026-05-07)
 
 ## Context

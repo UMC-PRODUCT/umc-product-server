@@ -2,6 +2,12 @@
 
 ## Status
 
+Superseded by [ADR-015](015-figma-comment-discord-forwarder-consolidated.md) (2026-05-09): ADR-003 / ADR-004 / ADR-005 / ADR-009 의 결정을 정합화한 통합 ADR 로 대체되었다. 본 ADR 의 Query UseCase / Service 분리, 응답 DTO 2단계 매핑, `discord_webhook_url` 마스킹, mention 본문 노출 정책, 페이지네이션 미도입 결정은 ADR-015 §Decision 7·8 에 그대로 흡수되었다. 본 문서는 변경 이력 보존용으로만 유지한다.
+
+---
+
+이전 Status 이력:
+
 Accepted (2026-05-07): 6 개 커밋(query usecase/service · API 노출 · 테스트) 으로 본 ADR 의 결정을 그대로 구현 완료.
 
 ## Context

@@ -2,6 +2,12 @@
 
 ## Status
 
+Superseded by [ADR-015](015-figma-comment-discord-forwarder-consolidated.md) (2026-05-09): ADR-003 / ADR-004 / ADR-005 / ADR-009 의 결정을 정합화한 통합 ADR 로 대체되었다. 본 ADR 의 모든 결정 (OAuth, 폴링, LLM 분류, 도메인 라우팅, embed 포맷, LLM 도메인 분리, digest API) 은 ADR-015 §Decision 1·2·3·5·6 에 그대로 흡수되었으며, `comment.id` 기반 중복 방지 결정 (3번) 은 ADR-015 §Decision 3·4 의 시간창 + `figma_summary_cursor` + `figma_comment_dispatch` 가드로 대체되었다. 본 문서는 변경 이력 보존용으로만 유지한다.
+
+---
+
+이전 Status 이력:
+
 Amended (2026-05-07, 1차): 4·5·7번 결정을 LLM 분류 + 도메인 라우팅 + Discord embed 포맷 + LLM 도메인 분리로 변경. 자세한 사유는 본문 및 `Alternatives Considered §3` 의 "결정 번복 사유" 참조.
 
 Amended (2026-05-07, 2차): 5번 결정의 발송 단위를 "댓글 1건 = Discord 호출 1회" 에서 **"도메인 1건 = 묶음 embed 메시지 1건"** 으로 변경. Discord rate limit 부담 완화 + 가독성 개선 목적. 같은 사이클 + 같은 라우팅 도메인의 댓글이 cross-file 로 한 메시지에 담긴다. 운영진의 임의 시간창 catch-up 을 위한 `POST /admin/figma/digest?from&to` API 도 함께 도입. 자세한 사유는 본문 `Decision §5` 의 "2차 amendment" 와 `Alternatives Considered §6` 참조.
