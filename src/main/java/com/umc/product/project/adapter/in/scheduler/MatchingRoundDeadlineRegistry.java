@@ -11,6 +11,7 @@ import java.util.concurrent.ScheduledFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Component;
 
@@ -42,7 +43,7 @@ public class MatchingRoundDeadlineRegistry implements ScheduleMatchingRoundDeadl
 
     public MatchingRoundDeadlineRegistry(
         @Qualifier("matchingDeadlineTaskScheduler") TaskScheduler taskScheduler,
-        AutoDecideProjectMatchingRoundUseCase autoDecideUseCase,
+        @Lazy AutoDecideProjectMatchingRoundUseCase autoDecideUseCase,
         LoadProjectMatchingRoundPort loadProjectMatchingRoundPort
     ) {
         this.taskScheduler = taskScheduler;
