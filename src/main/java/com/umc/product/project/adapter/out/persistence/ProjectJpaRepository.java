@@ -1,12 +1,17 @@
 package com.umc.product.project.adapter.out.persistence;
 
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.enums.ProjectStatus;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ProjectJpaRepository extends JpaRepository<Project, Long> {
 
-    Optional<Project> findByProductOwnerMemberIdAndGisuId(Long productOwnerMemberId, Long gisuId);
-
     boolean existsByProductOwnerMemberIdAndGisuId(Long productOwnerMemberId, Long gisuId);
+
+    Optional<Project> findByCreatedByMemberIdAndGisuIdAndStatus(
+        Long createdByMemberId, Long gisuId, ProjectStatus status);
+
+    boolean existsByCreatedByMemberIdAndGisuIdAndStatus(
+        Long createdByMemberId, Long gisuId, ProjectStatus status);
 }

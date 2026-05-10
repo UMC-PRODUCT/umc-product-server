@@ -158,10 +158,10 @@ public class ProjectResponseAssembler {
     }
 
     /**
-     * PROJECT-103 PM의 내 Draft 조회. Draft가 없으면 {@code null} 반환.
+     * PROJECT-103 내가 작성 중인 Draft 조회 (creator 기준). Draft 가 없으면 {@code null} 반환.
      */
     public DraftProjectResponse draftFor(Long memberId, Long gisuId) {
-        Optional<ProjectInfo> maybe = getProjectUseCase.findDraftByOwnerAndGisu(memberId, gisuId);
+        Optional<ProjectInfo> maybe = getProjectUseCase.findDraftByCreatorAndGisu(memberId, gisuId);
         if (maybe.isEmpty()) {
             return null;
         }

@@ -4,6 +4,7 @@ import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectPort;
 import com.umc.product.project.domain.Project;
+import com.umc.product.project.domain.enums.ProjectStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.util.List;
@@ -31,13 +32,20 @@ public class ProjectPersistenceAdapter implements LoadProjectPort, SaveProjectPo
     }
 
     @Override
-    public Optional<Project> findByOwnerAndGisu(Long productOwnerMemberId, Long gisuId) {
-        return jpaRepository.findByProductOwnerMemberIdAndGisuId(productOwnerMemberId, gisuId);
+    public boolean existsByOwnerAndGisu(Long productOwnerMemberId, Long gisuId) {
+        return jpaRepository.existsByProductOwnerMemberIdAndGisuId(productOwnerMemberId, gisuId);
     }
 
     @Override
-    public boolean existsByOwnerAndGisu(Long productOwnerMemberId, Long gisuId) {
-        return jpaRepository.existsByProductOwnerMemberIdAndGisuId(productOwnerMemberId, gisuId);
+    public Optional<Project> findDraftByCreatorAndGisu(Long creatorMemberId, Long gisuId) {
+        return jpaRepository.findByCreatedByMemberIdAndGisuIdAndStatus(
+            creatorMemberId, gisuId, ProjectStatus.DRAFT);
+    }
+
+    @Override
+    public boolean existsDraftByCreatorAndGisu(Long creatorMemberId, Long gisuId) {
+        return jpaRepository.existsByCreatedByMemberIdAndGisuIdAndStatus(
+            creatorMemberId, gisuId, ProjectStatus.DRAFT);
     }
 
     @Override
