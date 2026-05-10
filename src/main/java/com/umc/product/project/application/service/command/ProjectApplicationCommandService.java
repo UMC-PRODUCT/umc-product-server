@@ -189,6 +189,11 @@ public class ProjectApplicationCommandService implements
         ProjectApplication application = loadProjectApplicationPort.findById(applicationId)
             .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND));
 
+        if (targetStatus == ApplicationDecisionStatus.APPROVED
+            && application.getStatus() != ProjectApplicationStatus.APPROVED) {
+            validateRemainingQuota(application);
+        }
+
         switch (targetStatus) {
             case APPROVED -> application.approve(decidedByMemberId, reason);
             case REJECTED -> application.reject(decidedByMemberId, reason);
@@ -197,6 +202,58 @@ public class ProjectApplicationCommandService implements
 
         saveProjectApplicationPort.save(application);
         return ProjectApplicationInfo.of(application.getId(), application.getStatus());
+    }
+
+    /**
+     * APPROVED 토글 시 잔여 자리 검증.
+     * <p>
+     * 잔여 자리 = 전체 TO − (이전 차수까지 ACTIVE 멤버) − (현재 차수에서 같은 (project, part) 의 APPROVED 카운트).
+     * 이 값이 0 이하면 자리가 없으므로 예외를 던진다.
+     */
+    private void validateRemainingQuota(ProjectApplication application) {
+        Project project = application.getApplicationForm().getProject();
+        Long projectId = project.getId();
+        Long gisuId = project.getGisuId();
+        Long roundId = application.getAppliedMatchingRound().getId();
+
+        ChallengerPart part = getChallengerUseCase
+            .getByMemberIdAndGisuId(application.getApplicantMemberId(), gisuId)
+            .part();
+
+        int totalQuota = loadProjectPartQuotaPort.listByProjectId(projectId).stream()
+            .filter(q -> q.getPart() == part)
+            .findFirst()
+            .map(q -> q.getQuota().intValue())
+            .orElse(0);
+
+        int activeMemberCount = loadProjectMemberPort
+            .countByProjectIdGroupByPart(projectId)
+            .getOrDefault(part, 0L)
+            .intValue();
+
+        int currentRoundApproved = countApprovedInSameRoundProjectPart(
+            roundId, projectId, part, gisuId, application.getId()
+        );
+
+        if (activeMemberCount + currentRoundApproved + 1 > totalQuota) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_QUOTA_EXCEEDED);
+        }
+    }
+
+    /**
+     * 본 차수의 같은 (project, part) 안에서 APPROVED 인 application 수를 카운트한다 (현재 application 제외).
+     */
+    private int countApprovedInSameRoundProjectPart(
+        Long roundId, Long projectId, ChallengerPart part, Long gisuId, Long excludingApplicationId
+    ) {
+        return (int) loadProjectApplicationPort.listByMatchingRoundId(roundId).stream()
+            .filter(a -> !a.getId().equals(excludingApplicationId))
+            .filter(a -> a.getStatus() == ProjectApplicationStatus.APPROVED)
+            .filter(a -> a.getApplicationForm().getProject().getId().equals(projectId))
+            .filter(a -> getChallengerUseCase
+                .getByMemberIdAndGisuId(a.getApplicantMemberId(), gisuId)
+                .part() == part)
+            .count();
     }
 
     private List<AnswerCommand> toAnswerCommands(List<UpdateProjectApplicationDraftCommand.AnswerEntry> entries) {

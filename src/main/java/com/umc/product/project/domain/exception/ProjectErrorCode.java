@@ -75,6 +75,8 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_APPLICATION_SELF_APPLY_NOT_ALLOWED(HttpStatus.FORBIDDEN, "PROJECT-0211", "본인이 운영하는 프로젝트에는 지원할 수 없습니다."),
     PROJECT_APPLICATION_DECISION_INVALID_TRANSITION(HttpStatus.BAD_REQUEST, "PROJECT-0212",
         "현재 상태에서는 합/불 결정을 변경할 수 없습니다."),
+    PROJECT_APPLICATION_QUOTA_EXCEEDED(HttpStatus.CONFLICT, "PROJECT-0213",
+        "해당 파트의 남은 자리를 초과하여 합격 처리할 수 없습니다."),
 
     ;
 
