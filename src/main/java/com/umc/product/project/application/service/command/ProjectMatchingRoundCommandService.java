@@ -23,6 +23,8 @@ import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * 매칭 차수의 CRUD lifecycle 만 담당한다.
@@ -66,7 +68,7 @@ public class ProjectMatchingRoundCommandService implements
         );
 
         ProjectMatchingRound saved = saveProjectMatchingRoundPort.save(matchingRound);
-        scheduleMatchingRoundDeadlinePort.schedule(saved);
+        scheduleAfterCommit(saved);
         return saved.getId();
     }
 
@@ -102,7 +104,7 @@ public class ProjectMatchingRoundCommandService implements
             endsAt,
             decisionDeadline
         );
-        scheduleMatchingRoundDeadlinePort.schedule(matchingRound);
+        scheduleAfterCommit(matchingRound);
     }
 
     @Override
@@ -115,7 +117,7 @@ public class ProjectMatchingRoundCommandService implements
         }
 
         saveProjectMatchingRoundPort.delete(matchingRound);
-        scheduleMatchingRoundDeadlinePort.cancel(matchingRoundId);
+        cancelAfterCommit(matchingRoundId);
     }
 
     private void validateNoOverlap(
@@ -135,6 +137,39 @@ public class ProjectMatchingRoundCommandService implements
             id, chapterId, startsAt, decisionDeadline).isEmpty()) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_PERIOD_OVERLAPPED);
         }
+    }
+
+    /**
+     * 트랜잭션 커밋 이후에 스케줄을 등록한다. 롤백 시 in-memory task 만 남는 사고를 방지한다.
+     */
+    private void scheduleAfterCommit(ProjectMatchingRound round) {
+        runAfterCommit(() -> scheduleMatchingRoundDeadlinePort.schedule(round));
+    }
+
+    /**
+     * 트랜잭션 커밋 이후에 스케줄을 취소한다. 롤백 시 잘못된 task 가 남거나 의도치 않게 취소되는 사고를 방지한다.
+     */
+    private void cancelAfterCommit(Long roundId) {
+        runAfterCommit(() -> scheduleMatchingRoundDeadlinePort.cancel(roundId));
+    }
+
+    /**
+     * 트랜잭션 동기화가 활성화돼 있으면 commit 이후로 미루고, 그렇지 않으면 즉시 실행한다.
+     * <p>
+     * 단위 테스트처럼 트랜잭션 컨텍스트 없이 호출되는 경우에도 동작하도록 fallback 을 둔다.
+     */
+    private static void runAfterCommit(Runnable action) {
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        action.run();
+                    }
+                });
+            return;
+        }
+        action.run();
     }
 
     private void validateManageAccess(Long memberId, Long chapterId) {
