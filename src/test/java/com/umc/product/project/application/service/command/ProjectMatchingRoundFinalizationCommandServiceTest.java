@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
@@ -113,7 +112,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
 
             then(loadProjectApplicationPort).should(never()).listByMatchingRoundId(any());
             then(saveProjectApplicationPort).should(never()).saveAll(any());
-            then(saveProjectMemberPort).should(never()).save(any());
+            then(saveProjectMemberPort).should(never()).saveAll(any());
         }
 
         @Test
@@ -138,7 +137,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             assertThat(round.getAutoDecisionExecutedAt()).isNotNull();
             assertThat(round.getAutoDecisionExecutedMemberId()).isEqualTo(EXECUTOR_MEMBER_ID);
             then(saveProjectApplicationPort).should(never()).saveAll(any());
-            then(saveProjectMemberPort).should(never()).save(any());
+            then(saveProjectMemberPort).should(never()).saveAll(any());
         }
 
         @Test
@@ -151,12 +150,13 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
             given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID))
                 .willReturn(List.of(app1, app2));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(11L), anyLong()))
-                .willReturn(challenger(11L, ChallengerPart.DESIGN));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(12L), anyLong()))
-                .willReturn(challenger(12L, ChallengerPart.DESIGN));
-            given(loadProjectPartQuotaPort.listByProjectId(PROJECT_ID))
-                .willReturn(List.of(partQuota(project, ChallengerPart.DESIGN, 1L)));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong()))
+                .willReturn(Map.of(
+                    11L, challenger(11L, ChallengerPart.DESIGN),
+                    12L, challenger(12L, ChallengerPart.DESIGN)
+                ));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+                .willReturn(Map.of(PROJECT_ID, List.of(partQuota(project, ChallengerPart.DESIGN, 1L))));
 
             sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
 
@@ -166,7 +166,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
                 .filter(a -> a.getStatus() == ProjectApplicationStatus.REJECTED).count();
             assertThat(approvedCount).isEqualTo(1);
             assertThat(rejectedCount).isEqualTo(1);
-            then(saveProjectMemberPort).should().save(any(ProjectMember.class));
+            then(saveProjectMemberPort).should().saveAll(any());
             assertThat(round.getAutoDecisionExecutedAt()).isNotNull();
         }
 
@@ -180,20 +180,22 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
             given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID))
                 .willReturn(List.of(approved, submitted));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(11L), anyLong()))
-                .willReturn(challenger(11L, ChallengerPart.DESIGN));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(12L), anyLong()))
-                .willReturn(challenger(12L, ChallengerPart.DESIGN));
-            given(loadProjectPartQuotaPort.listByProjectId(PROJECT_ID))
-                .willReturn(List.of(partQuota(project, ChallengerPart.DESIGN, 1L)));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong()))
+                .willReturn(Map.of(
+                    11L, challenger(11L, ChallengerPart.DESIGN),
+                    12L, challenger(12L, ChallengerPart.DESIGN)
+                ));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+                .willReturn(Map.of(PROJECT_ID, List.of(partQuota(project, ChallengerPart.DESIGN, 1L))));
 
             sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
 
             assertThat(approved.getStatus()).isEqualTo(ProjectApplicationStatus.APPROVED);
             assertThat(submitted.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
-            ArgumentCaptor<ProjectMember> captor = ArgumentCaptor.forClass(ProjectMember.class);
-            then(saveProjectMemberPort).should().save(captor.capture());
-            assertThat(captor.getValue().getMemberId()).isEqualTo(11L);
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<java.util.Collection<ProjectMember>> captor = ArgumentCaptor.forClass(java.util.Collection.class);
+            then(saveProjectMemberPort).should().saveAll(captor.capture());
+            assertThat(captor.getValue()).extracting(ProjectMember::getMemberId).containsExactly(11L);
         }
 
         @Test
@@ -206,19 +208,20 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
             given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID))
                 .willReturn(List.of(rejected1, rejected2));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(11L), anyLong()))
-                .willReturn(challenger(11L, ChallengerPart.DESIGN));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(12L), anyLong()))
-                .willReturn(challenger(12L, ChallengerPart.DESIGN));
-            given(loadProjectPartQuotaPort.listByProjectId(PROJECT_ID))
-                .willReturn(List.of(partQuota(project, ChallengerPart.DESIGN, 1L)));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong()))
+                .willReturn(Map.of(
+                    11L, challenger(11L, ChallengerPart.DESIGN),
+                    12L, challenger(12L, ChallengerPart.DESIGN)
+                ));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+                .willReturn(Map.of(PROJECT_ID, List.of(partQuota(project, ChallengerPart.DESIGN, 1L))));
 
             sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
 
             long approvedCount = List.of(rejected1, rejected2).stream()
                 .filter(a -> a.getStatus() == ProjectApplicationStatus.APPROVED).count();
             assertThat(approvedCount).isEqualTo(1);
-            then(saveProjectMemberPort).should().save(any(ProjectMember.class));
+            then(saveProjectMemberPort).should().saveAll(any());
         }
 
         @Test
@@ -229,15 +232,15 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
 
             given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
             given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID)).willReturn(List.of(app));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(11L), anyLong()))
-                .willReturn(challenger(11L, ChallengerPart.DESIGN));
-            given(loadProjectPartQuotaPort.listByProjectId(PROJECT_ID))
-                .willReturn(List.of(partQuota(project, ChallengerPart.DESIGN, 1L)));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong()))
+                .willReturn(Map.of(11L, challenger(11L, ChallengerPart.DESIGN)));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+                .willReturn(Map.of(PROJECT_ID, List.of(partQuota(project, ChallengerPart.DESIGN, 1L))));
 
             sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
 
             assertThat(app.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
-            then(saveProjectMemberPort).should(never()).save(any());
+            then(saveProjectMemberPort).should(never()).saveAll(any());
         }
 
         @Test
@@ -251,17 +254,17 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
             given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID))
                 .willReturn(List.of(web1, web2, ios1));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(21L), anyLong()))
-                .willReturn(challenger(21L, ChallengerPart.WEB));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(22L), anyLong()))
-                .willReturn(challenger(22L, ChallengerPart.WEB));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(23L), anyLong()))
-                .willReturn(challenger(23L, ChallengerPart.IOS));
-            given(loadProjectPartQuotaPort.listByProjectId(PROJECT_ID))
-                .willReturn(List.of(
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong()))
+                .willReturn(Map.of(
+                    21L, challenger(21L, ChallengerPart.WEB),
+                    22L, challenger(22L, ChallengerPart.WEB),
+                    23L, challenger(23L, ChallengerPart.IOS)
+                ));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+                .willReturn(Map.of(PROJECT_ID, List.of(
                     partQuota(project, ChallengerPart.WEB, 2L),
                     partQuota(project, ChallengerPart.IOS, 4L)
-                ));
+                )));
 
             sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
 
@@ -284,10 +287,10 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
             given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID))
                 .willReturn(List.of(submitted, draft));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(11L), anyLong()))
-                .willReturn(challenger(11L, ChallengerPart.DESIGN));
-            given(loadProjectPartQuotaPort.listByProjectId(PROJECT_ID))
-                .willReturn(List.of(partQuota(project, ChallengerPart.DESIGN, 1L)));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong()))
+                .willReturn(Map.of(11L, challenger(11L, ChallengerPart.DESIGN)));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+                .willReturn(Map.of(PROJECT_ID, List.of(partQuota(project, ChallengerPart.DESIGN, 1L))));
 
             sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
 
@@ -411,18 +414,17 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
             given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID))
                 .willReturn(List.of(app1, app2, app3, app4));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(21L), anyLong()))
-                .willReturn(challenger(21L, ChallengerPart.WEB));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(22L), anyLong()))
-                .willReturn(challenger(22L, ChallengerPart.WEB));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(23L), anyLong()))
-                .willReturn(challenger(23L, ChallengerPart.WEB));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(24L), anyLong()))
-                .willReturn(challenger(24L, ChallengerPart.WEB));
-            given(loadProjectPartQuotaPort.listByProjectId(PROJECT_ID))
-                .willReturn(List.of(partQuota(project, ChallengerPart.WEB, 6L)));
-            given(loadProjectMemberPort.countByProjectIdGroupByPart(PROJECT_ID))
-                .willReturn(Map.of(ChallengerPart.WEB, 4L));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong()))
+                .willReturn(Map.of(
+                    21L, challenger(21L, ChallengerPart.WEB),
+                    22L, challenger(22L, ChallengerPart.WEB),
+                    23L, challenger(23L, ChallengerPart.WEB),
+                    24L, challenger(24L, ChallengerPart.WEB)
+                ));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+                .willReturn(Map.of(PROJECT_ID, List.of(partQuota(project, ChallengerPart.WEB, 6L))));
+            given(loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(any()))
+                .willReturn(Map.of(PROJECT_ID, Map.of(ChallengerPart.WEB, 4L)));
 
             sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
 
@@ -443,20 +445,21 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
             given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID))
                 .willReturn(List.of(app1, app2));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(21L), anyLong()))
-                .willReturn(challenger(21L, ChallengerPart.WEB));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(22L), anyLong()))
-                .willReturn(challenger(22L, ChallengerPart.WEB));
-            given(loadProjectPartQuotaPort.listByProjectId(PROJECT_ID))
-                .willReturn(List.of(partQuota(project, ChallengerPart.WEB, 6L)));
-            given(loadProjectMemberPort.countByProjectIdGroupByPart(PROJECT_ID))
-                .willReturn(Map.of(ChallengerPart.WEB, 6L));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong()))
+                .willReturn(Map.of(
+                    21L, challenger(21L, ChallengerPart.WEB),
+                    22L, challenger(22L, ChallengerPart.WEB)
+                ));
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+                .willReturn(Map.of(PROJECT_ID, List.of(partQuota(project, ChallengerPart.WEB, 6L))));
+            given(loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(any()))
+                .willReturn(Map.of(PROJECT_ID, Map.of(ChallengerPart.WEB, 6L)));
 
             sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
 
             assertThat(app1.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
             assertThat(app2.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
-            then(saveProjectMemberPort).should(never()).save(any());
+            then(saveProjectMemberPort).should(never()).saveAll(any());
         }
 
         @Test
@@ -465,18 +468,20 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DEVELOPER);
             Project project = projectWithId(PROJECT_ID);
             List<ProjectApplication> apps = new ArrayList<>();
+            Map<Long, ChallengerInfo> challengerByMember = new java.util.HashMap<>();
             for (long i = 1; i <= 6; i++) {
                 ProjectApplication app = application(200L + i, 20L + i, ProjectApplicationStatus.SUBMITTED, project, round);
                 apps.add(app);
-                given(getChallengerUseCase.getByMemberIdAndGisuId(eq(20L + i), anyLong()))
-                    .willReturn(challenger(20L + i, ChallengerPart.WEB));
+                challengerByMember.put(20L + i, challenger(20L + i, ChallengerPart.WEB));
             }
 
             given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
             given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID)).willReturn(apps);
-            given(loadProjectPartQuotaPort.listByProjectId(PROJECT_ID))
-                .willReturn(List.of(partQuota(project, ChallengerPart.WEB, 6L)));
-            given(loadProjectMemberPort.countByProjectIdGroupByPart(PROJECT_ID))
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), anyLong()))
+                .willReturn(challengerByMember);
+            given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(any()))
+                .willReturn(Map.of(PROJECT_ID, List.of(partQuota(project, ChallengerPart.WEB, 6L))));
+            given(loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(any()))
                 .willReturn(Map.of());
 
             sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);

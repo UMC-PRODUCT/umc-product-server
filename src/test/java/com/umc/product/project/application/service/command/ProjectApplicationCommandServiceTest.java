@@ -223,6 +223,11 @@ class ProjectApplicationCommandServiceTest {
                     otherApprovedApplication(701L, 71L, application.getApplicationForm()),
                     otherApprovedApplication(702L, 72L, application.getApplicationForm())
                 ));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), any()))
+                .willReturn(Map.of(
+                    71L, challengerWith(71L, ChallengerPart.WEB),
+                    72L, challengerWith(72L, ChallengerPart.WEB)
+                ));
 
             assertThatThrownBy(() -> sut.decide(
                 APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID
@@ -281,8 +286,8 @@ class ProjectApplicationCommandServiceTest {
                 .willReturn(List.of(iosApp));
             given(getChallengerUseCase.getByMemberIdAndGisuId(eq(APPLICANT_MEMBER_ID), any()))
                 .willReturn(challengerWith(APPLICANT_MEMBER_ID, ChallengerPart.WEB));
-            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(71L), any()))
-                .willReturn(challengerWith(71L, ChallengerPart.IOS));
+            given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), any()))
+                .willReturn(Map.of(71L, challengerWith(71L, ChallengerPart.IOS)));
 
             sut.decide(APPLICATION_ID, ApplicationDecisionStatus.APPROVED, null, DECIDER_MEMBER_ID);
 

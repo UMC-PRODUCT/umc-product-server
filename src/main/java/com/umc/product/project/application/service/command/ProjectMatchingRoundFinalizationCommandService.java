@@ -14,7 +14,6 @@ import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.application.service.policy.AutoDecisionResult;
 import com.umc.product.project.application.service.policy.MatchingDecisionPolicy;
-import com.umc.product.project.domain.Project;
 import com.umc.product.project.domain.ProjectApplication;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.ProjectMember;
@@ -22,6 +21,7 @@ import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
@@ -91,10 +91,12 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         Map<Long, ChallengerPart> applicantPart = resolveApplicantParts(applicants);
         Map<ProjectPartKey, List<ProjectApplication>> grouped = groupByProjectAndPart(applicants, applicantPart);
 
+        Map<ProjectPartKey, Integer> remainingQuotaByKey = buildRemainingQuotaMap(grouped.keySet());
+
         Set<Long> approvedIds = new HashSet<>();
         Set<Long> rejectedIds = new HashSet<>();
         for (Map.Entry<ProjectPartKey, List<ProjectApplication>> entry : grouped.entrySet()) {
-            int quota = findRemainingQuota(entry.getKey().projectId(), entry.getKey().part());
+            int quota = remainingQuotaByKey.getOrDefault(entry.getKey(), 0);
             AutoDecisionResult result = policy.decideAutomatically(entry.getValue(), quota, matchingRandom);
             approvedIds.addAll(result.approvedIds());
             rejectedIds.addAll(result.rejectedIds());
@@ -121,13 +123,23 @@ public class ProjectMatchingRoundFinalizationCommandService implements
             || status == ProjectApplicationStatus.REJECTED;
     }
 
+    /**
+     * 지원자 전원의 챌린저 파트를 한 번의 batch 조회로 해석한다.
+     * <p>
+     * 한 차수 안의 모든 application 은 동일한 gisu 에 속한다는 도메인 invariant 를 활용해
+     * memberId 집합으로 일괄 조회한 뒤 in-memory 매핑한다.
+     */
     private Map<Long, ChallengerPart> resolveApplicantParts(List<ProjectApplication> applicants) {
+        Long gisuId = applicants.get(0).getApplicationForm().getProject().getGisuId();
+        Set<Long> memberIds = applicants.stream()
+            .map(ProjectApplication::getApplicantMemberId)
+            .collect(Collectors.toSet());
+        Map<Long, ChallengerInfo> challengerByMember = getChallengerUseCase
+            .batchGetByMemberIdsAndGisuId(memberIds, gisuId);
+
         return applicants.stream().collect(Collectors.toMap(
             ProjectApplication::getId,
-            a -> getChallengerUseCase.getByMemberIdAndGisuId(
-                a.getApplicantMemberId(),
-                a.getApplicationForm().getProject().getGisuId()
-            ).part()
+            a -> challengerByMember.get(a.getApplicantMemberId()).part()
         ));
     }
 
@@ -143,22 +155,44 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     }
 
     /**
-     * 본 차수에서 정책 적용 시 입력으로 사용할 남은 자리 수.
-     * 전체 TO 가 아니라 이전 차수까지 채워진 ACTIVE 멤버 수를 차감한 값을 반환한다.
+     * 본 차수에서 정책 적용 시 입력으로 사용할 (project, part) 별 남은 자리 수 맵을 한 번에 구한다.
+     * <p>
+     * 그룹 수만큼 DB 를 두 번씩 치던 기존 단건 호출 대신, projectId 집합 단위로 partQuota 와 active 멤버 수를
+     * 일괄 조회한 뒤 in-memory 로 차감한다.
      */
-    private int findRemainingQuota(Long projectId, ChallengerPart part) {
-        int totalQuota = loadProjectPartQuotaPort.listByProjectId(projectId).stream()
-            .filter(q -> q.getPart() == part)
-            .findFirst()
-            .map(q -> q.getQuota().intValue())
-            .orElse(0);
+    private Map<ProjectPartKey, Integer> buildRemainingQuotaMap(Set<ProjectPartKey> keys) {
+        if (keys.isEmpty()) {
+            return Map.of();
+        }
+        Set<Long> projectIds = keys.stream()
+            .map(ProjectPartKey::projectId)
+            .collect(Collectors.toSet());
 
-        int activeCount = loadProjectMemberPort
-            .countByProjectIdGroupByPart(projectId)
-            .getOrDefault(part, 0L)
-            .intValue();
+        Map<Long, Map<ChallengerPart, Integer>> totalQuotaByProject = loadProjectPartQuotaPort
+            .listByProjectIdsGroupedByProjectId(projectIds).entrySet().stream()
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                e -> e.getValue().stream().collect(Collectors.toMap(
+                    com.umc.product.project.domain.ProjectPartQuota::getPart,
+                    q -> q.getQuota().intValue()
+                ))
+            ));
 
-        return Math.max(0, totalQuota - activeCount);
+        Map<Long, Map<ChallengerPart, Long>> activeByProject = loadProjectMemberPort
+            .countByProjectIdsGroupByProjectIdAndPart(projectIds);
+
+        Map<ProjectPartKey, Integer> result = new java.util.HashMap<>();
+        for (ProjectPartKey key : keys) {
+            int total = totalQuotaByProject
+                .getOrDefault(key.projectId(), Map.of())
+                .getOrDefault(key.part(), 0);
+            int active = activeByProject
+                .getOrDefault(key.projectId(), Map.of())
+                .getOrDefault(key.part(), 0L)
+                .intValue();
+            result.put(key, Math.max(0, total - active));
+        }
+        return result;
     }
 
     private void applyDecisions(
@@ -183,16 +217,18 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         Map<Long, ChallengerPart> applicantPart,
         Long executedByMemberId
     ) {
-        for (ProjectApplication app : applicants) {
-            if (!approvedIds.contains(app.getId())) {
-                continue;
-            }
-            Project project = app.getApplicationForm().getProject();
-            ChallengerPart part = applicantPart.get(app.getId());
-            ProjectMember member = ProjectMember.create(
-                project, app.getApplicantMemberId(), part, executedByMemberId
-            );
-            saveProjectMemberPort.save(member);
+        List<ProjectMember> membersToSave = applicants.stream()
+            .filter(app -> approvedIds.contains(app.getId()))
+            .map(app -> ProjectMember.create(
+                app.getApplicationForm().getProject(),
+                app.getApplicantMemberId(),
+                applicantPart.get(app.getId()),
+                executedByMemberId
+            ))
+            .toList();
+
+        if (!membersToSave.isEmpty()) {
+            saveProjectMemberPort.saveAll(membersToSave);
         }
     }
 

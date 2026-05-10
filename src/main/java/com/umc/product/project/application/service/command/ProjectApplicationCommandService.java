@@ -242,17 +242,30 @@ public class ProjectApplicationCommandService implements
 
     /**
      * 본 차수의 같은 (project, part) 안에서 APPROVED 인 application 수를 카운트한다 (현재 application 제외).
+     * <p>
+     * project / status 필터를 먼저 in-memory 로 좁혀 candidate 만 추린 뒤, candidate 들의 challenger 정보를
+     * batch 한 번에 조회해 part 비교한다 (N+1 제거).
      */
     private int countApprovedInSameRoundProjectPart(
         Long roundId, Long projectId, ChallengerPart part, Long gisuId, Long excludingApplicationId
     ) {
-        return (int) loadProjectApplicationPort.listByMatchingRoundId(roundId).stream()
+        List<ProjectApplication> candidates = loadProjectApplicationPort.listByMatchingRoundId(roundId).stream()
             .filter(a -> !a.getId().equals(excludingApplicationId))
             .filter(a -> a.getStatus() == ProjectApplicationStatus.APPROVED)
             .filter(a -> a.getApplicationForm().getProject().getId().equals(projectId))
-            .filter(a -> getChallengerUseCase
-                .getByMemberIdAndGisuId(a.getApplicantMemberId(), gisuId)
-                .part() == part)
+            .toList();
+        if (candidates.isEmpty()) {
+            return 0;
+        }
+
+        java.util.Set<Long> memberIds = candidates.stream()
+            .map(ProjectApplication::getApplicantMemberId)
+            .collect(java.util.stream.Collectors.toSet());
+        java.util.Map<Long, com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo> challengerByMember =
+            getChallengerUseCase.batchGetByMemberIdsAndGisuId(memberIds, gisuId);
+
+        return (int) candidates.stream()
+            .filter(a -> challengerByMember.get(a.getApplicantMemberId()).part() == part)
             .count();
     }
 
