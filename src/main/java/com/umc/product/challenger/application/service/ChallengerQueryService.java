@@ -111,6 +111,27 @@ public class ChallengerQueryService implements GetChallengerUseCase {
     }
 
     @Override
+    public Map<Long, ChallengerInfo> batchGetByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId) {
+        if (memberIds == null || memberIds.isEmpty()) {
+            return Map.of();
+        }
+        // Adapter 가 size 검증 후 던지므로 Service 에서 추가 검증 없이 변환만 수행한다.
+        // 챌린저별 포인트는 IN 쿼리 1번으로 일괄 조회한다 -> N+1 회피.
+        List<Challenger> challengers = loadChallengerPort.batchGetByMemberIdsAndGisuId(memberIds, gisuId);
+        Set<Long> challengerIds = challengers.stream()
+            .map(Challenger::getId)
+            .collect(Collectors.toSet());
+        Map<Long, List<ChallengerPointInfo>> pointsMap =
+            getChallengerPointUseCase.getMapByChallengerIds(challengerIds);
+
+        return challengers.stream()
+            .collect(Collectors.toMap(
+                Challenger::getMemberId,
+                c -> ChallengerInfo.from(c, pointsMap.getOrDefault(c.getId(), List.of()))
+            ));
+    }
+
+    @Override
     public List<ChallengerInfo> getAllByGisuId(Long gisuId) {
         return toChallengerInfoListBatch(loadChallengerPort.getAllByGisuId(gisuId));
     }

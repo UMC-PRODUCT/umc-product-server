@@ -17,6 +17,11 @@ public enum ProjectErrorCode implements BaseCode {
     // ProjectApplication
     APPLICATION_NOT_SUBMITTED(HttpStatus.BAD_REQUEST, "PROJECT-0004", "요청하신 조작은 지원서가 제출된 상태에서만 가능합니다."),
     APPLICATION_SUBMIT_NOT_AVAILABLE(HttpStatus.BAD_REQUEST, "PROJECT-0005", "이미 지원서가 제출되었거나 평가가 완료된 상태입니다."),
+    APPLICATION_DRAFT_NOT_EXPOSABLE(HttpStatus.INTERNAL_SERVER_ERROR, "PROJECT-0019",
+        "임시저장 상태의 지원서는 PM/운영진 응답에 매핑할 수 없습니다."),
+    APPLICATION_DRAFT_FILTER_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT-0020",
+        "임시저장(DRAFT)은 PM/운영진 지원자 목록 조회 필터로 사용할 수 없습니다."),
+    PROJECT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0021", "지원서를 찾을 수 없습니다."),
 
     // ProjectApplicationForm
     APPLICATION_FORM_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0006", "프로젝트에서 해당 지원용 폼을 찾을 수 없습니다."),
@@ -65,7 +70,7 @@ public enum ProjectErrorCode implements BaseCode {
         "해당 매칭 종류에 대한 자동 선발 정책이 정의되지 않았습니다."),
 
     // ProjectApplication (APPLY-001/002/003)
-    PROJECT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없습니다."),
+    PROJECT_DRAFT_APPLICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT-0204", "작성 중인 지원서를 찾을 수 없습니다."),
     PROJECT_APPLICATION_PART_NOT_ALLOWED(HttpStatus.FORBIDDEN, "PROJECT-0205", "해당 프로젝트에 지원 가능한 파트가 아닙니다."),
     PROJECT_APPLICATION_MEMBER_ALREADY_IN_TEAM(HttpStatus.CONFLICT, "PROJECT-0206", "이미 해당 기수에 소속된 팀이 있어 지원할 수 없습니다."),
     PROJECT_APPLICATION_DUPLICATE_SUBMISSION(HttpStatus.CONFLICT, "PROJECT-0207", "동일한 매칭 차수에 이미 제출된 지원서가 있습니다."),

@@ -3,6 +3,7 @@ package com.umc.product.project.adapter.out.persistence;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.domain.ProjectApplication;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
@@ -64,7 +65,7 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
                 projectId,
                 memberId,
                 ProjectApplicationStatus.DRAFT
-            ).orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND));
+            ).orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_DRAFT_APPLICATION_NOT_FOUND));
     }
 
     @Override
@@ -93,5 +94,29 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     @Override
     public List<ProjectApplication> listByMatchingRoundId(Long matchingRoundId) {
         return projectApplicationJpaRepository.findAllByAppliedMatchingRound_Id(matchingRoundId);
+    }
+
+    @Override
+    public Optional<ProjectApplication> findByIdWithDetails(Long applicationId) {
+        return projectApplicationQueryRepository.findByIdWithDetails(applicationId);
+    }
+
+    @Override
+    public List<ProjectApplication> searchMyApplications(
+        Long applicantMemberId,
+        Long gisuId,
+        MatchingType matchingType,
+        ProjectApplicationStatus status
+    ) {
+        return projectApplicationQueryRepository.searchMyApplications(applicantMemberId, gisuId, matchingType, status);
+    }
+
+    @Override
+    public List<ProjectApplication> searchProjectApplications(
+        Long projectId,
+        Long matchingRoundId,
+        ProjectApplicationStatus status
+    ) {
+        return projectApplicationQueryRepository.searchProjectApplications(projectId, matchingRoundId, status);
     }
 }
