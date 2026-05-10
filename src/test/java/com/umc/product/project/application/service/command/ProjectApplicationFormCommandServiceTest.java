@@ -18,6 +18,7 @@ import com.umc.product.project.application.port.in.command.dto.UpsertApplication
 import com.umc.product.project.application.port.in.query.dto.ApplicationFormInfo;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPolicyPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
+import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationFormPolicyPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationFormPort;
@@ -36,6 +37,7 @@ import com.umc.product.survey.application.port.in.command.dto.CreateDraftFormCom
 import com.umc.product.survey.application.port.in.command.dto.CreateFormSectionCommand;
 import com.umc.product.survey.application.port.in.command.dto.CreateQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.CreateQuestionOptionCommand;
+import com.umc.product.survey.application.port.in.command.dto.ForkQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteFormSectionCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteQuestionOptionCommand;
@@ -50,9 +52,12 @@ import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInf
 import com.umc.product.survey.application.port.in.query.dto.FormWithStructureInfo.SectionWithQuestions;
 import com.umc.product.survey.domain.enums.FormStatus;
 import com.umc.product.survey.domain.enums.QuestionType;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,11 +67,16 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+
 @ExtendWith(MockitoExtension.class)
 class ProjectApplicationFormCommandServiceTest {
 
     @Mock
     LoadProjectPort loadProjectPort;
+    @Mock
+    LoadProjectMatchingRoundPort loadMatchingRoundPort;
     @Mock
     LoadProjectApplicationFormPort loadApplicationFormPort;
     @Mock
@@ -88,6 +98,11 @@ class ProjectApplicationFormCommandServiceTest {
 
     @InjectMocks
     ProjectApplicationFormCommandService sut;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(loadMatchingRoundPort.listOpenAt(any(), any(Instant.class))).thenReturn(List.of());
+    }
 
     /* =====================================================
      * 폼 라이프사이클 (C6 회귀 보장)
@@ -185,14 +200,61 @@ class ProjectApplicationFormCommandServiceTest {
         }
 
         @Test
-        void Project가_IN_PROGRESS면_PROJECT_INVALID_STATE() {
+        void Project가_IN_PROGRESS이고_활성_차수_있으면_PROJECT_INVALID_STATE() {
             Project project = createProject(42L, ProjectStatus.IN_PROGRESS, "Triple");
             given(loadProjectPort.getById(42L)).willReturn(project);
+            given(loadMatchingRoundPort.listOpenAt(any(), any(Instant.class)))
+                .willReturn(List.of(mock(com.umc.product.project.domain.ProjectMatchingRound.class)));
 
             assertThatThrownBy(() -> sut.upsert(emptyCommand(42L)))
-                .isInstanceOf(ProjectDomainException.class);
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
 
             then(manageFormUseCase).should(never()).createDraft(any());
+        }
+    }
+
+    /* =====================================================
+     * fork 시나리오 (차수 사이 질문 수정)
+     * ===================================================== */
+
+    @Nested
+    class forkScenario {
+
+        @Test
+        @DisplayName("IN_PROGRESS 차수 사이에 질문 title 변경 시 forkQuestion 호출")
+        void IN_PROGRESS_차수_사이_질문_title_변경시_forkQuestion_호출() {
+            Project project = createProject(42L, ProjectStatus.IN_PROGRESS, "Triple");
+            ProjectApplicationForm form = createApplicationForm(project, 100L, 500L);
+
+            given(loadProjectPort.getById(42L)).willReturn(project);
+            given(loadApplicationFormPort.findByProjectId(42L)).willReturn(Optional.of(form));
+            given(getFormUseCase.getFormWithStructure(500L))
+                .willReturn(structure(List.of(
+                    existingSection(1000L, "공통", null, 1L, List.of(
+                        existingQuestion(2000L, QuestionType.SHORT_TEXT, "기존 질문", null, true, 1L, List.of())
+                    ))
+                )))
+                .willReturn(structure(List.of(
+                    existingSection(1000L, "공통", null, 1L, List.of(
+                        existingQuestion(9999L, QuestionType.SHORT_TEXT, "변경된 질문", null, true, 1L, List.of())
+                    ))
+                )));
+            given(loadPolicyPort.listByApplicationFormId(100L))
+                .willReturn(List.of(ProjectApplicationFormPolicy.createCommon(form, 1000L)));
+            given(manageQuestionUseCase.forkQuestion(any())).willReturn(9999L);
+
+            sut.upsert(commandWithSections(42L, List.of(
+                section(1000L, FormSectionType.COMMON, Set.of(), "공통", 1, List.of(
+                    shortTextQuestion(2000L, "변경된 질문", true)
+                ))
+            )));
+
+            ArgumentCaptor<ForkQuestionCommand> captor = ArgumentCaptor.forClass(ForkQuestionCommand.class);
+            then(manageQuestionUseCase).should().forkQuestion(captor.capture());
+            assertThat(captor.getValue().originQuestionId()).isEqualTo(2000L);
+            then(manageQuestionUseCase).should(never()).updateQuestion(any());
         }
     }
 
