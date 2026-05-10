@@ -42,6 +42,12 @@ public interface ManageQuestionUseCase {
     void reorderQuestions(ReorderQuestionsCommand command);
 
     /**
+     * 질문을 비활성화한다 (isActive = false).
+     * 차수 사이 폼 수정 시 질문을 폼에서 제거할 때 사용하며, 기존 응답자의 Answer를 보존하기 위해 물리 삭제 대신 비활성화만 수행한다.
+     */
+    void deactivateQuestion(Long questionId);
+
+    /**
      * 기존 질문을 기반으로 새 버전을 생성한다 (Copy-on-Write).
      * 원본 질문의 모든 속성과 선택지를 복사하고, 원본은 비활성화(isActive=false)된다.
      * 차수 사이 폼 수정 시 기존 응답자의 질문 내용을 보존하기 위해 사용한다.

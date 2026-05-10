@@ -340,7 +340,7 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
             orderedQuestionIds.add(questionId);
         }
 
-        deleteRemovedQuestions(sectionEntry.questions(), existingSection.questions(), requesterMemberId);
+        deleteRemovedQuestions(sectionEntry.questions(), existingSection.questions(), requesterMemberId, shouldFork);
 
         if (!orderedQuestionIds.isEmpty()) {
             manageQuestionUseCase.reorderQuestions(
@@ -431,7 +431,8 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
     private void deleteRemovedQuestions(
         List<ApplicationQuestionEntry> requestQuestions,
         List<QuestionWithOptions> existingQuestions,
-        Long requesterMemberId
+        Long requesterMemberId,
+        boolean shouldFork
     ) {
         Set<Long> requestedExistingIds = requestQuestions.stream()
             .map(ApplicationQuestionEntry::questionId)
@@ -442,12 +443,17 @@ public class ProjectApplicationFormCommandService implements UpsertProjectApplic
             if (requestedExistingIds.contains(existing.questionId())) {
                 continue;
             }
-            manageQuestionUseCase.deleteQuestion(
-                DeleteQuestionCommand.builder()
-                    .questionId(existing.questionId())
-                    .requesterMemberId(requesterMemberId)
-                    .build()
-            );
+            if (shouldFork) {
+                // 차수 사이 수정: 기존 응답자의 Answer 보존을 위해 물리 삭제 대신 비활성화
+                manageQuestionUseCase.deactivateQuestion(existing.questionId());
+            } else {
+                manageQuestionUseCase.deleteQuestion(
+                    DeleteQuestionCommand.builder()
+                        .questionId(existing.questionId())
+                        .requesterMemberId(requesterMemberId)
+                        .build()
+                );
+            }
         }
     }
 

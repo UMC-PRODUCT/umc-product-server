@@ -112,6 +112,14 @@ public class QuestionCommandService implements ManageQuestionUseCase {
     }
 
     @Override
+    public void deactivateQuestion(Long questionId) {
+        Question question = loadQuestionPort.findById(questionId)
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND));
+        question.deactivate();
+        saveQuestionPort.save(question);
+    }
+
+    @Override
     public Long forkQuestion(ForkQuestionCommand command) {
         Question origin = loadQuestionPort.findById(command.originQuestionId())
             .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND));
