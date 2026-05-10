@@ -54,7 +54,7 @@ class MatchingRoundDeadlineSchedulerTest {
     class schedule {
 
         @Test
-        void deadline_시점에_task가_등록된다() {
+        void deadline_buffer_적용된_시점에_task가_등록된다() {
             ProjectMatchingRound round = roundWithId(1L);
             given(taskScheduler.schedule(any(Runnable.class), any(Instant.class)))
                 .willAnswer(invocation -> scheduledFuture);
@@ -62,7 +62,8 @@ class MatchingRoundDeadlineSchedulerTest {
             sut.schedule(round);
 
             assertThat(sut.isScheduled(1L)).isTrue();
-            then(taskScheduler).should().schedule(any(Runnable.class), eq(round.getDecisionDeadline()));
+            Instant expectedRunAt = round.getDecisionDeadline().plus(MatchingRoundDeadlineScheduler.DEADLINE_BUFFER);
+            then(taskScheduler).should().schedule(any(Runnable.class), eq(expectedRunAt));
         }
 
         @Test
