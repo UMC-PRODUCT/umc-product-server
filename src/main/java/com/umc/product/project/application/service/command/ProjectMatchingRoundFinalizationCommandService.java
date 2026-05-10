@@ -122,10 +122,12 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     }
 
     private Map<Long, ChallengerPart> resolveApplicantParts(List<ProjectApplication> applicants) {
-        Long gisuId = applicants.get(0).getApplicationForm().getProject().getGisuId();
         return applicants.stream().collect(Collectors.toMap(
             ProjectApplication::getId,
-            a -> getChallengerUseCase.getByMemberIdAndGisuId(a.getApplicantMemberId(), gisuId).part()
+            a -> getChallengerUseCase.getByMemberIdAndGisuId(
+                a.getApplicantMemberId(),
+                a.getApplicationForm().getProject().getGisuId()
+            ).part()
         ));
     }
 
