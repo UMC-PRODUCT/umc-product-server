@@ -49,7 +49,8 @@ public interface ManageQuestionUseCase {
 
     /**
      * 기존 질문을 기반으로 새 버전을 생성한다 (Copy-on-Write).
-     * 원본 질문의 모든 속성과 선택지를 복사하고, 원본은 비활성화(isActive=false)된다.
+     * 원본 질문의 속성을 복사하고 원본은 비활성화(isActive=false)한다.
+     * 선택지는 호출 측(ProjectApplicationFormCommandService)에서 요청 데이터를 기반으로 별도 생성한다.
      * 차수 사이 폼 수정 시 기존 응답자의 질문 내용을 보존하기 위해 사용한다.
      *
      * @return 새로 생성된 Question ID
