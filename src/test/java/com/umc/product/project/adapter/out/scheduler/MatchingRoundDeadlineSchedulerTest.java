@@ -1,14 +1,15 @@
-package com.umc.product.project.adapter.in.scheduler;
+package com.umc.product.project.adapter.out.scheduler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 
-import com.umc.product.project.application.port.in.command.AutoDecideProjectMatchingRoundUseCase;
+import com.umc.product.project.adapter.in.scheduler.MatchingRoundDeadlineHandler;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
 import com.umc.product.project.domain.ProjectMatchingRound;
 import com.umc.product.project.domain.enums.MatchingPhase;
@@ -27,12 +28,12 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
-class MatchingRoundDeadlineRegistryTest {
+class MatchingRoundDeadlineSchedulerTest {
 
     @Mock
     TaskScheduler taskScheduler;
     @Mock
-    AutoDecideProjectMatchingRoundUseCase autoDecideUseCase;
+    MatchingRoundDeadlineHandler handler;
     @Mock
     LoadProjectMatchingRoundPort loadProjectMatchingRoundPort;
     @Mock
@@ -40,12 +41,12 @@ class MatchingRoundDeadlineRegistryTest {
     @Mock
     ScheduledFuture<?> scheduledFuture2;
 
-    MatchingRoundDeadlineRegistry sut;
+    MatchingRoundDeadlineScheduler sut;
 
     @BeforeEach
     void setUp() {
-        sut = new MatchingRoundDeadlineRegistry(
-            taskScheduler, autoDecideUseCase, loadProjectMatchingRoundPort
+        sut = new MatchingRoundDeadlineScheduler(
+            taskScheduler, handler, loadProjectMatchingRoundPort
         );
     }
 
@@ -79,7 +80,7 @@ class MatchingRoundDeadlineRegistryTest {
         }
 
         @Test
-        void 등록된_task가_실행되면_autoDecide가_null_executor로_호출된다() {
+        void 등록된_task가_실행되면_handler에_위임한다() {
             ProjectMatchingRound round = roundWithId(1L);
             ArgumentCaptor<Runnable> taskCaptor = ArgumentCaptor.forClass(Runnable.class);
             given(taskScheduler.schedule(taskCaptor.capture(), any(Instant.class)))
@@ -88,20 +89,24 @@ class MatchingRoundDeadlineRegistryTest {
             sut.schedule(round);
             taskCaptor.getValue().run();
 
-            then(autoDecideUseCase).should().autoDecide(1L, null);
+            then(handler).should().handle(1L);
+            assertThat(sut.isScheduled(1L)).isFalse();
         }
 
         @Test
-        void task_실행_중_예외가_발생해도_swallow되고_등록은_제거된다() {
+        void handler_예외가_상위로_전파되어도_등록은_제거된다() {
             ProjectMatchingRound round = roundWithId(1L);
             ArgumentCaptor<Runnable> taskCaptor = ArgumentCaptor.forClass(Runnable.class);
             given(taskScheduler.schedule(taskCaptor.capture(), any(Instant.class)))
                 .willAnswer(invocation -> scheduledFuture);
-            org.mockito.Mockito.doThrow(new RuntimeException("boom"))
-                .when(autoDecideUseCase).autoDecide(any(), any());
+            willThrow(new RuntimeException("boom")).given(handler).handle(1L);
 
             sut.schedule(round);
-            taskCaptor.getValue().run();
+            try {
+                taskCaptor.getValue().run();
+            } catch (RuntimeException ignored) {
+                // 등록 제거 보장이 본 케이스의 검증 대상
+            }
 
             assertThat(sut.isScheduled(1L)).isFalse();
         }
