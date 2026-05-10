@@ -55,6 +55,23 @@ public class FileQueryService implements GetFileUseCase {
     }
 
     @Override
+    public Map<String, FileInfo> findAllByIds(List<String> fileIds) {
+        List<FileMetadata> metadataList = loadFileMetadataPort.findByFileIds(fileIds);
+
+        return metadataList.stream()
+            .collect(Collectors.toMap(
+                FileMetadata::getId,
+                metadata -> FileInfo.of(
+                    metadata,
+                    storagePort.generateAccessUrl(
+                        metadata.getStorageKey(),
+                        ACCESS_URL_DURATION_MINUTES
+                    )
+                )
+            ));
+    }
+
+    @Override
     public boolean existsById(String fileId) {
         return loadFileMetadataPort.existsByFileId(fileId);
     }

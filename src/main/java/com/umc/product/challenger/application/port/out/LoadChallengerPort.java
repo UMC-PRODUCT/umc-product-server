@@ -51,6 +51,13 @@ public interface LoadChallengerPort {
     List<Challenger> getAllByIds(Set<Long> ids);
 
     /**
+     * 특정 기수 내 여러 memberId 에 해당하는 챌린저를 batch 조회한다.
+     * <p>
+     * 입력된 모든 memberId 가 해당 기수의 챌린저로 존재해야 한다 -- 누락 시 도메인 invariant 위반으로 간주하고 예외를 던진다 ({@code batchGet} 시맨틱).
+     */
+    List<Challenger> batchGetByMemberIdsAndGisuId(Set<Long> memberIds, Long gisuId);
+
+    /**
      * 각 멤버별 가장 최근 기수(gisuId 최대값)의 챌린저 목록 조회
      */
     List<Challenger> findLatestPerMember();

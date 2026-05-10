@@ -31,4 +31,9 @@ public interface ChallengerJpaRepository extends JpaRepository<Challenger, Long>
     Optional<Challenger> findTopByMemberIdOrderByCreatedAtDesc(Long memberId);
 
     List<Challenger> findByIdIn(Set<Long> ids);
+
+    /**
+     * 특정 기수 내에서 여러 멤버 ID 에 해당하는 챌린저들을 일괄 조회한다.
+     */
+    List<Challenger> findByMemberIdInAndGisuId(Set<Long> memberIds, Long gisuId);
 }
