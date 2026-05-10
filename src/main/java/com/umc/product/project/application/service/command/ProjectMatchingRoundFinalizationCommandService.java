@@ -8,6 +8,7 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.project.application.port.in.command.AutoDecideProjectMatchingRoundUseCase;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
@@ -52,6 +53,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final SaveProjectApplicationPort saveProjectApplicationPort;
     private final LoadProjectPartQuotaPort loadProjectPartQuotaPort;
+    private final LoadProjectMemberPort loadProjectMemberPort;
     private final SaveProjectMemberPort saveProjectMemberPort;
     private final List<MatchingDecisionPolicy> matchingDecisionPolicies;
     private final Random matchingRandom;
@@ -92,7 +94,7 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         Set<Long> approvedIds = new HashSet<>();
         Set<Long> rejectedIds = new HashSet<>();
         for (Map.Entry<ProjectPartKey, List<ProjectApplication>> entry : grouped.entrySet()) {
-            int quota = findQuota(entry.getKey().projectId(), entry.getKey().part());
+            int quota = findRemainingQuota(entry.getKey().projectId(), entry.getKey().part());
             AutoDecisionResult result = policy.decideAutomatically(entry.getValue(), quota, matchingRandom);
             approvedIds.addAll(result.approvedIds());
             rejectedIds.addAll(result.rejectedIds());
@@ -138,12 +140,23 @@ public class ProjectMatchingRoundFinalizationCommandService implements
         ));
     }
 
-    private int findQuota(Long projectId, ChallengerPart part) {
-        return loadProjectPartQuotaPort.listByProjectId(projectId).stream()
+    /**
+     * 본 차수에서 정책 적용 시 입력으로 사용할 남은 자리 수.
+     * 전체 TO 가 아니라 이전 차수까지 채워진 ACTIVE 멤버 수를 차감한 값을 반환한다.
+     */
+    private int findRemainingQuota(Long projectId, ChallengerPart part) {
+        int totalQuota = loadProjectPartQuotaPort.listByProjectId(projectId).stream()
             .filter(q -> q.getPart() == part)
             .findFirst()
             .map(q -> q.getQuota().intValue())
             .orElse(0);
+
+        int activeCount = loadProjectMemberPort
+            .countByProjectIdGroupByPart(projectId)
+            .getOrDefault(part, 0L)
+            .intValue();
+
+        return Math.max(0, totalQuota - activeCount);
     }
 
     private void applyDecisions(

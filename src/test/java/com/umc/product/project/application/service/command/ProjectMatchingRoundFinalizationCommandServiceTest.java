@@ -18,6 +18,7 @@ import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.OrganizationType;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
 import com.umc.product.project.application.port.out.LoadProjectMatchingRoundPort;
+import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.LoadProjectPartQuotaPort;
 import com.umc.product.project.application.port.out.SaveProjectApplicationPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
@@ -38,6 +39,7 @@ import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -70,6 +72,8 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
     @Mock
     LoadProjectPartQuotaPort loadProjectPartQuotaPort;
     @Mock
+    LoadProjectMemberPort loadProjectMemberPort;
+    @Mock
     SaveProjectMemberPort saveProjectMemberPort;
     @Mock
     GetChallengerRoleUseCase getChallengerRoleUseCase;
@@ -85,6 +89,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             loadProjectApplicationPort,
             saveProjectApplicationPort,
             loadProjectPartQuotaPort,
+            loadProjectMemberPort,
             saveProjectMemberPort,
             List.<MatchingDecisionPolicy>of(new DesignerMatchingPolicy(), new DeveloperMatchingPolicy()),
             new Random(42L),
@@ -298,6 +303,7 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
                     loadProjectApplicationPort,
                     saveProjectApplicationPort,
                     loadProjectPartQuotaPort,
+                    loadProjectMemberPort,
                     saveProjectMemberPort,
                     List.<MatchingDecisionPolicy>of(),
                     new Random(42L),
@@ -389,6 +395,95 @@ class ProjectMatchingRoundFinalizationCommandServiceTest {
             sut.autoDecide(ROUND_ID, chapterPresidentId);
 
             assertThat(round.getAutoDecisionExecutedAt()).isNotNull();
+        }
+
+        @Test
+        void 이전_차수_active_멤버가_있으면_남은_TO_기준으로_정책이_적용된다() {
+            // 개발자 매칭, 전체 TO 6, 이전 차수까지 ACTIVE WEB 4명 → 남은 TO 2
+            // 본 차수 지원자 4명 → 4 vs 남은 TO 2 → 100% 이상 → 의무 ceil(2 * 0.5) = 1명
+            ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DEVELOPER);
+            Project project = projectWithId(PROJECT_ID);
+            ProjectApplication app1 = application(201L, 21L, ProjectApplicationStatus.SUBMITTED, project, round);
+            ProjectApplication app2 = application(202L, 22L, ProjectApplicationStatus.SUBMITTED, project, round);
+            ProjectApplication app3 = application(203L, 23L, ProjectApplicationStatus.SUBMITTED, project, round);
+            ProjectApplication app4 = application(204L, 24L, ProjectApplicationStatus.SUBMITTED, project, round);
+
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
+            given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID))
+                .willReturn(List.of(app1, app2, app3, app4));
+            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(21L), anyLong()))
+                .willReturn(challenger(21L, ChallengerPart.WEB));
+            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(22L), anyLong()))
+                .willReturn(challenger(22L, ChallengerPart.WEB));
+            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(23L), anyLong()))
+                .willReturn(challenger(23L, ChallengerPart.WEB));
+            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(24L), anyLong()))
+                .willReturn(challenger(24L, ChallengerPart.WEB));
+            given(loadProjectPartQuotaPort.listByProjectId(PROJECT_ID))
+                .willReturn(List.of(partQuota(project, ChallengerPart.WEB, 6L)));
+            given(loadProjectMemberPort.countByProjectIdGroupByPart(PROJECT_ID))
+                .willReturn(Map.of(ChallengerPart.WEB, 4L));
+
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            long approvedCount = List.of(app1, app2, app3, app4).stream()
+                .filter(a -> a.getStatus() == ProjectApplicationStatus.APPROVED).count();
+            assertThat(approvedCount).isEqualTo(1);
+        }
+
+        @Test
+        void 남은_TO가_0이면_의무_없음으로_처리되어_SUBMITTED는_모두_REJECTED() {
+            // 전체 TO 6, 이전 차수까지 ACTIVE WEB 6명 → 남은 TO 0
+            // applicantsCount=2, quota=0 → applicantsCount(2) >= quota(0) → ceil(0 * 0.5) = 0 의무
+            ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DEVELOPER);
+            Project project = projectWithId(PROJECT_ID);
+            ProjectApplication app1 = application(201L, 21L, ProjectApplicationStatus.SUBMITTED, project, round);
+            ProjectApplication app2 = application(202L, 22L, ProjectApplicationStatus.SUBMITTED, project, round);
+
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
+            given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID))
+                .willReturn(List.of(app1, app2));
+            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(21L), anyLong()))
+                .willReturn(challenger(21L, ChallengerPart.WEB));
+            given(getChallengerUseCase.getByMemberIdAndGisuId(eq(22L), anyLong()))
+                .willReturn(challenger(22L, ChallengerPart.WEB));
+            given(loadProjectPartQuotaPort.listByProjectId(PROJECT_ID))
+                .willReturn(List.of(partQuota(project, ChallengerPart.WEB, 6L)));
+            given(loadProjectMemberPort.countByProjectIdGroupByPart(PROJECT_ID))
+                .willReturn(Map.of(ChallengerPart.WEB, 6L));
+
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            assertThat(app1.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
+            assertThat(app2.getStatus()).isEqualTo(ProjectApplicationStatus.REJECTED);
+            then(saveProjectMemberPort).should(never()).save(any());
+        }
+
+        @Test
+        void active_멤버가_없으면_전체_TO_기준으로_정책이_적용된다() {
+            // 1차 매칭이라 active 0. 전체 TO 6, 지원자 6 → 100% 이상 → 의무 ceil(6 * 0.5) = 3명
+            ProjectMatchingRound round = expiredRound(MatchingType.PLAN_DEVELOPER);
+            Project project = projectWithId(PROJECT_ID);
+            List<ProjectApplication> apps = new ArrayList<>();
+            for (long i = 1; i <= 6; i++) {
+                ProjectApplication app = application(200L + i, 20L + i, ProjectApplicationStatus.SUBMITTED, project, round);
+                apps.add(app);
+                given(getChallengerUseCase.getByMemberIdAndGisuId(eq(20L + i), anyLong()))
+                    .willReturn(challenger(20L + i, ChallengerPart.WEB));
+            }
+
+            given(loadProjectMatchingRoundPort.getById(ROUND_ID)).willReturn(round);
+            given(loadProjectApplicationPort.listByMatchingRoundId(ROUND_ID)).willReturn(apps);
+            given(loadProjectPartQuotaPort.listByProjectId(PROJECT_ID))
+                .willReturn(List.of(partQuota(project, ChallengerPart.WEB, 6L)));
+            given(loadProjectMemberPort.countByProjectIdGroupByPart(PROJECT_ID))
+                .willReturn(Map.of());
+
+            sut.autoDecide(ROUND_ID, EXECUTOR_MEMBER_ID);
+
+            long approvedCount = apps.stream()
+                .filter(a -> a.getStatus() == ProjectApplicationStatus.APPROVED).count();
+            assertThat(approvedCount).isEqualTo(3);
         }
     }
 
