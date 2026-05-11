@@ -2,6 +2,7 @@ package com.umc.product.authentication.application.port.in.command;
 
 import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
+import com.umc.product.authentication.application.port.in.command.dto.AuthorizationCodeLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
@@ -21,6 +22,14 @@ public interface OAuthAuthenticationUseCase {
     OAuthTokenLoginResult loginWithOAuth2Attributes(OAuth2Attributes oAuth2Attributes);
 
     OAuthTokenLoginResult accessTokenLogin(AccessTokenLoginCommand command);
+
+    /**
+     * Authorization Code 기반 OAuth 로그인 처리.
+     * <p>
+     * 표준 OAuth2 authorization code grant 흐름을 사용하는 웹/하이브리드 클라이언트가 진입점입니다.
+     * 내부적으로 token endpoint 호출 후 access token 흐름과 동일한 공통 로직을 재사용합니다.
+     */
+    OAuthTokenLoginResult authorizationCodeLogin(AuthorizationCodeLoginCommand command);
 
     /**
      * member에 새로운 OAuth 계정을 연동합니다.
