@@ -4,6 +4,8 @@ import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.application.port.out.RevokeOAuthTokenPort;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
+import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
+import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +37,22 @@ public class OAuthTokenVerificationAdapter implements VerifyOAuthTokenPort, Revo
             // Apple은 일반 verify가 아닌 verifyAppleAuthorizationCode 사용을 권장하지만,
             // ID Token 직접 검증이 필요한 경우를 위해 web Services ID 기준으로 audience를 검증한다.
             case APPLE -> appleTokenVerifier.verifyIdToken(token, appleOAuthProperties.webClientId());
+        };
+    }
+
+    @Override
+    public OAuth2Attributes verifyAuthorizationCode(OAuthProvider provider, String authorizationCode,
+                                                    String redirectUri) {
+        log.info("OAuth Authorization Code 교환 시작: provider={}", provider);
+
+        return switch (provider) {
+            case KAKAO -> kakaoTokenVerifier.verifyAuthorizationCode(authorizationCode, redirectUri);
+            // Apple은 client_id 분기와 refresh token 반환이 필요하므로 verifyAppleAuthorizationCode를 사용해야 한다.
+            // Google은 현재 access token 흐름만 지원한다.
+            case APPLE, GOOGLE -> {
+                log.warn("Authorization code 흐름을 지원하지 않는 provider: {}", provider);
+                throw new AuthenticationDomainException(AuthenticationErrorCode.UNSUPPORTED_OAUTH_FLOW);
+            }
         };
     }
 
