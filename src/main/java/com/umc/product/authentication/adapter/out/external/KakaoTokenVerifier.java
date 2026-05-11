@@ -26,13 +26,84 @@ import org.springframework.web.client.RestClient;
 @RequiredArgsConstructor
 public class KakaoTokenVerifier {
 
+    private static final String KAKAO_TOKEN_URL = "https://kauth.kakao.com/oauth/token";
     private static final String KAKAO_USER_INFO_URL = "https://kapi.kakao.com/v2/user/me";
     private static final String KAKAO_UNLINK_URL = "https://kapi.kakao.com/v1/user/unlink";
 
     private final RestClient restClient;
+    private final KakaoOAuthProperties kakaoOAuthProperties;
 
     @Value("${app.oauth2.kakao.admin-key:}")
     private String kakaoAdminKey;
+
+    /**
+     * Kakao Authorization Code를 교환하고 OAuth2Attributes로 변환합니다.
+     * <p>
+     * 동작:
+     * <ol>
+     *     <li>전달받은 redirect URI가 화이트리스트에 포함되는지 검증한다.</li>
+     *     <li>Kakao token endpoint에 grant_type=authorization_code로 POST하여 access token을 교환한다.</li>
+     *     <li>받은 access token으로 기존 verifyAccessToken 흐름을 재사용해 사용자 정보를 조회한다.</li>
+     * </ol>
+     *
+     * @param authorizationCode Kakao에서 발급받은 authorization code
+     * @param redirectUri       클라이언트가 Kakao 인가 요청에 사용한 redirect URI (화이트리스트와 일치해야 함)
+     * @return OAuth2Attributes
+     * @throws AuthenticationDomainException redirect URI 불일치, 토큰 교환 실패, 또는 사용자 정보 조회 실패 시
+     */
+    public OAuth2Attributes verifyAuthorizationCode(String authorizationCode, String redirectUri) {
+        log.debug("Kakao Authorization Code 교환 시작");
+
+        if (!kakaoOAuthProperties.isAllowedRedirectUri(redirectUri)) {
+            log.warn("허용되지 않은 Kakao redirect URI: {}", redirectUri);
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_REDIRECT_URI);
+        }
+
+        String accessToken = exchangeAuthorizationCode(authorizationCode, redirectUri);
+        return verifyAccessToken(accessToken);
+    }
+
+    /**
+     * Kakao token endpoint를 호출하여 authorization code를 access token으로 교환합니다.
+     * <p>
+     * client_secret은 Kakao 앱이 보안 모드일 때만 필요하며, 비어 있으면 form data에서 제외합니다.
+     */
+    private String exchangeAuthorizationCode(String authorizationCode, String redirectUri) {
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("grant_type", "authorization_code");
+        formData.add("client_id", kakaoOAuthProperties.clientId());
+        formData.add("redirect_uri", redirectUri);
+        formData.add("code", authorizationCode);
+        if (kakaoOAuthProperties.clientSecret() != null && !kakaoOAuthProperties.clientSecret().isBlank()) {
+            formData.add("client_secret", kakaoOAuthProperties.clientSecret());
+        }
+
+        try {
+            KakaoTokenResponse response = restClient.post()
+                .uri(KAKAO_TOKEN_URL)
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(formData)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    log.error("Kakao 토큰 교환 실패: status={}", res.getStatusCode());
+                    throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_OAUTH_TOKEN);
+                })
+                .body(KakaoTokenResponse.class);
+
+            if (response == null || response.accessToken() == null) {
+                throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+            }
+
+            log.info("Kakao 토큰 교환 성공");
+            return response.accessToken();
+
+        } catch (AuthenticationDomainException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Kakao 토큰 교환 중 오류 발생", e);
+            throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+        }
+    }
 
     /**
      * Kakao Access Token을 검증하고 OAuth2Attributes로 변환합니다.
@@ -178,6 +249,19 @@ public class KakaoTokenVerifier {
     }
 
     // ===== Response DTOs =====
+
+    private record KakaoTokenResponse(
+        @JsonProperty("access_token")
+        String accessToken,
+        @JsonProperty("token_type")
+        String tokenType,
+        @JsonProperty("refresh_token")
+        String refreshToken,
+        @JsonProperty("expires_in")
+        Integer expiresIn,
+        String scope
+    ) {
+    }
 
     private record KakaoUserResponse(
         Long id,
