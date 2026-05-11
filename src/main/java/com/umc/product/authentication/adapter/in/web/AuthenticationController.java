@@ -2,17 +2,20 @@ package com.umc.product.authentication.adapter.in.web;
 
 import com.umc.product.authentication.adapter.in.web.dto.request.AppleLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.GoogleLoginRequest;
+import com.umc.product.authentication.adapter.in.web.dto.request.KakaoCodeLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.KakaoLoginRequest;
 import com.umc.product.authentication.adapter.in.web.dto.response.OAuthLoginResponse;
 import com.umc.product.authentication.adapter.in.web.swagger.AuthenticationControllerInterface;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
+import com.umc.product.authentication.application.port.in.command.dto.AuthorizationCodeLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
 import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.annotation.Public;
+import jakarta.validation.Valid;
 import java.util.Collections;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -45,6 +48,23 @@ public class AuthenticationController implements AuthenticationControllerInterfa
         @RequestBody KakaoLoginRequest request
     ) {
         return processAccessTokenLogin(OAuthProvider.KAKAO, request.accessToken());
+    }
+
+    @Override
+    @PostMapping("login/kakao/code")
+    @Public
+    public OAuthLoginResponse kakaoOAuthCodeLogin(
+        @Valid @RequestBody KakaoCodeLoginRequest request
+    ) {
+        OAuthTokenLoginResult result = oAuthAuthenticationUseCase.authorizationCodeLogin(
+            new AuthorizationCodeLoginCommand(
+                OAuthProvider.KAKAO,
+                request.authorizationCode(),
+                request.redirectUri()
+            )
+        );
+
+        return buildLoginResponse(OAuthProvider.KAKAO, result);
     }
 
     @Override
