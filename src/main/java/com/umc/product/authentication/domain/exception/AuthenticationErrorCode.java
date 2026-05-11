@@ -60,6 +60,12 @@ public enum AuthenticationErrorCode implements BaseCode {
     // ID 존재 여부 / 비밀번호 오류 / 자격증명 미등록 등을 외부에 구분 노출하지 않기 위한 단일 에러
     INVALID_LOGIN_CREDENTIAL(HttpStatus.UNAUTHORIZED, "AUTHENTICATION-0022",
         "로그인 ID 또는 비밀번호가 올바르지 않습니다."),
+
+    // OAuth Authorization Code Flow 관련 에러
+    UNSUPPORTED_OAUTH_FLOW(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0023",
+        "해당 OAuth Provider는 요청한 인증 흐름을 지원하지 않습니다."),
+    INVALID_OAUTH_REDIRECT_URI(HttpStatus.BAD_REQUEST, "AUTHENTICATION-0024",
+        "허용되지 않은 OAuth redirect URI입니다."),
     ;
 
     private final HttpStatus httpStatus;
