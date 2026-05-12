@@ -61,6 +61,12 @@ public enum FileCategory {
     PROJECT_LOGO("public/project-logo", 10 * 1024 * 1024, new String[]{"jpg", "jpeg", "png", "svg"}),
 
     /**
+     * 문의사항 첨부파일
+     */
+    INQUIRY_ATTACHMENT("public/inquiry", 20 * 1024 * 1024,
+        new String[]{"jpg", "jpeg", "png", "gif", "pdf", "doc", "docx"}),
+
+    /**
      * 기타
      */
     ETC("public/etc", 10 * 1024 * 1024, new String[]{});

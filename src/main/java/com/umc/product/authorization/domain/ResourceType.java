@@ -101,6 +101,12 @@ public enum ResourceType {
     FIGMA("figma", "Figma 통합",
         Set.of(PermissionType.READ,
             PermissionType.DELETE, PermissionType.MANAGE)),
+
+    // 문의사항 관련
+    INQUIRY("inquiry", "문의사항",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+    INQUIRY_MESSAGE("inquiry_message", "문의사항 메시지",
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.DELETE)),
     ;
 
     private final String code;

@@ -139,7 +139,9 @@ public class SecurityConfig {
                 auth.requestMatchers(
                     // Health Check & Error
                     "/actuator/**",
-                    "/error"
+                    "/error",
+                    // WebSocket
+                    "/ws/**"
                 ).permitAll();
 
                 // Swagger
