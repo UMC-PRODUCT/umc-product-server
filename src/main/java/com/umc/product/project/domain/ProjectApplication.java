@@ -125,18 +125,35 @@ public class ProjectApplication extends BaseEntity {
     }
 
     /**
-     * 지원 취소 (철회)
+     * 지원자가 자신의 지원서를 철회합니다 (soft delete: {@link ProjectApplicationStatus#CANCELLED} 로 상태 전이).
+     * <p>
+     * 정책:
+     * <ul>
+     *   <li>가능 상태: {@link ProjectApplicationStatus#DRAFT}, {@link ProjectApplicationStatus#SUBMITTED}</li>
+     *   <li>불가 상태: {@link ProjectApplicationStatus#APPROVED} / {@link ProjectApplicationStatus#REJECTED}
+     *       (이미 종결), {@link ProjectApplicationStatus#CANCELLED} (이중 취소)</li>
+     * </ul>
+     * 시간 제약(매칭 차수 OPEN 여부)과 행위자 권한 검증은 도메인 외부
+     * ({@code ProjectApplicationCommandService} / {@code ProjectApplicationPermissionEvaluator})가 책임집니다.
+     * 본 메서드는 상태 머신 전이만 보장합니다.
      *
-     * @param decidedByMemberId 실행자 ID (지원자 본인 또는 운영진)
-     * @param reason            취소 사유 (필수 아님)
+     * @param decidedByMemberId 철회 수행자 ID (지원자 본인 또는 운영진) TODO: 운영진 철회는 아직 미구현
+     * @param reason            철회 사유 (필수 아님)
      */
     public void cancel(Long decidedByMemberId, String reason) {
-//        validateIsSubmitted("지원서가 제출된 상태에서만 철회할 수 있습니다.");
+        switch (this.status) {
+            case DRAFT, SUBMITTED -> {
+                this.status = ProjectApplicationStatus.CANCELLED;
+                this.statusChangedMemberId = decidedByMemberId;
+                this.statusChangeReason = reason;
+            }
+            case APPROVED, REJECTED, CANCELLED ->
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_CANCEL_NOT_ALLOWED);
+        }
 
         // HARD DELETE 로직
         // Draft일 떄, 즉 임시저장본 일 때 삭제하는 로직 또한 필요할 것 같음
-
-        // TODO: 악악악...
+        // -> 해당 로직이 cancel(철회) 메소드에 들어가는게 맞는지? - 삭제 메소드 별도 필요하지 않을지
     }
 
     /**
@@ -156,6 +173,10 @@ public class ProjectApplication extends BaseEntity {
 
     public boolean isSubmitted() {
         return this.status == ProjectApplicationStatus.SUBMITTED;
+    }
+
+    public boolean isCancelled() {
+        return this.status == ProjectApplicationStatus.CANCELLED;
     }
 
     public void validateIsSubmitted(String message) {

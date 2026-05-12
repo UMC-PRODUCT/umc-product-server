@@ -106,7 +106,7 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
             && application.getStatus() == ProjectApplicationStatus.DRAFT;
     }
 
-    /** 본인이 DRAFT/SUBMITTED 단계에서 철회 가능. 종결 상태(APPROVED/REJECTED)는 차단. */
+    /** 본인이 DRAFT/SUBMITTED 단계에서 철회 가능. 종결 상태(APPROVED/REJECTED)와 이미 철회된 CANCELLED 는 차단. */
     private boolean canDelete(SubjectAttributes subject, ResourcePermission permission) {
         ProjectApplication application = loadApplication(permission);
         if (!isApplicant(subject, application)) {
@@ -114,7 +114,7 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
         }
         return switch (application.getStatus()) {
             case DRAFT, SUBMITTED -> true;
-            case APPROVED, REJECTED -> false;
+            case APPROVED, REJECTED, CANCELLED -> false;
         };
     }
 
