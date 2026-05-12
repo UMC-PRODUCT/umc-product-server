@@ -8,6 +8,10 @@
     <property name="LOG_DIR" value="./logs"/>
     <property name="LOG_NAME" value="umc-product"/>
 
+    <!-- ========== 구조화 로그용 메타 (ADR-016) ========== -->
+    <springProperty name="APP_NAME" source="spring.application.name" defaultValue="umc-product-api"/>
+    <springProperty name="ENV" source="spring.profiles.active" defaultValue="local"/>
+
     <!-- ========== 콘솔 로깅 패턴 정의 ========== -->
     <property name="LOCAL_CONSOLE_LOG_PATTERN"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} %customHighlight(%-5level) [%-4.-4X{traceId}] [%thread] %logger{40} : %msg%n"/>
@@ -29,6 +33,47 @@
 
         <encoder>
             <pattern>${FULL_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+
+    <!--
+        ========== JSON 구조화 로그 어펜더 (ADR-016) ==========
+        dev / staging / prod 환경의 stdout 을 JSON 한 줄로 출력.
+        본 커밋(#2)에서는 정의만 하고 어떤 root 에도 연결하지 않는다 (dead-code).
+        root 연결은 Commit #3 에서 수행한다.
+    -->
+    <appender class="ch.qos.logback.core.ConsoleAppender" name="CONSOLE_JSON">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+                <timestamp>
+                    <fieldName>timestamp</fieldName>
+                    <timeZone>Asia/Seoul</timeZone>
+                </timestamp>
+                <logLevel>
+                    <fieldName>level</fieldName>
+                </logLevel>
+                <loggerName>
+                    <fieldName>logger</fieldName>
+                </loggerName>
+                <threadName>
+                    <fieldName>thread</fieldName>
+                </threadName>
+                <message>
+                    <fieldName>message</fieldName>
+                </message>
+                <mdc/>
+                <arguments/>
+                <stackTrace>
+                    <fieldName>stackTrace</fieldName>
+                </stackTrace>
+                <globalCustomFields>
+                    {"service":"${APP_NAME}","environment":"${ENV}"}
+                </globalCustomFields>
+            </providers>
         </encoder>
     </appender>
 
