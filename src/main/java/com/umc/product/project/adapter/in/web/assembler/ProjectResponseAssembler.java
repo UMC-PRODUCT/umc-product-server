@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -165,17 +164,13 @@ public class ProjectResponseAssembler {
             return Map.of();
         }
 
-        // Step 2: 파트 멤버 목록 조회 (실패 시 skip)
-        Map<Long, List<ProjectMember>> projectMembersMap = new HashMap<>();
-        for (Long projectId : validProjects.keySet()) {
-            try {
-                projectMembersMap.put(projectId, loadProjectMemberPort.listByProjectId(projectId));
-            } catch (Exception e) {
-                log.warn("프로젝트 팀원 일괄 조회 - 멤버 목록 조회 실패: projectId={}, reason={}", projectId, e.getMessage());
-            }
-        }
+        // Step 2: 유효한 전체 프로젝트의 파트 멤버를 IN 쿼리 한 번으로 조회 후 메모리 grouping
+        Map<Long, List<ProjectMember>> projectMembersMap =
+            loadProjectMemberPort.listByProjectIds(validProjects.keySet());
 
         // Step 3: 유효한 전체 프로젝트의 멤버 ID를 모아 한 번에 조회
+        // TODO: getProjectUseCase.getById() N+1 — validProjects 수만큼 호출됨.
+        //       GetProjectUseCase.listByIds() 배치 메서드 추가 후 개선 필요.
         Set<Long> allMemberIds = new HashSet<>();
         validProjects.forEach((projectId, info) -> {
             allMemberIds.add(info.productOwnerMemberId());
@@ -186,15 +181,11 @@ public class ProjectResponseAssembler {
             ? Map.of()
             : getMemberUseCase.findAllByIds(allMemberIds);
 
-        // Step 4: 응답 조립 (멤버 목록 조회까지 성공한 프로젝트만 포함)
+        // Step 4: 응답 조립
         Map<Long, ProjectMembersResponse> result = new LinkedHashMap<>();
-        validProjects.forEach((projectId, info) -> {
-            if (!projectMembersMap.containsKey(projectId)) {
-                return;
-            }
+        validProjects.forEach((projectId, info) ->
             result.put(projectId, buildMembersResponse(
-                projectId, info, projectMembersMap.get(projectId), memberMap));
-        });
+                projectId, info, projectMembersMap.getOrDefault(projectId, List.of()), memberMap)));
 
         return result;
     }

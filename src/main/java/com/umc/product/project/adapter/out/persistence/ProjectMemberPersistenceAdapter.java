@@ -11,6 +11,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -39,6 +40,13 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     @Override
     public List<ProjectMember> listByProjectId(Long projectId) {
         return repository.findByProjectIdAndStatus(projectId, ProjectMemberStatus.ACTIVE);
+    }
+
+    @Override
+    public Map<Long, List<ProjectMember>> listByProjectIds(Collection<Long> projectIds) {
+        return repository.findByProjectIdInAndStatus(projectIds, ProjectMemberStatus.ACTIVE)
+            .stream()
+            .collect(Collectors.groupingBy(pm -> pm.getProject().getId()));
     }
 
     @Override
