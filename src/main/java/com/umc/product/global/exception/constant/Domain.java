@@ -27,5 +27,6 @@ public enum Domain {
     PROJECT,
     FIGMA,
     LLM,
-    ANALYTICS
+    ANALYTICS,
+    INQUIRY
 }
