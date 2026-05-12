@@ -18,6 +18,8 @@ import com.umc.product.project.application.port.in.query.dto.SearchProjectQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
@@ -90,6 +92,23 @@ public class ProjectQueryController {
         @PathVariable Long projectId
     ) {
         return assembler.membersFor(projectId);
+    }
+
+    @GetMapping("/members")
+    @Operation(
+        summary = "[PROJECT-004] 프로젝트 팀원 구성 일괄 조회",
+        description = "복수의 projectId에 대한 팀원 구성을 조회합니다. 권한이 없거나 조회에 실패한 프로젝트는 결과에서 제외됩니다."
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT,
+        permission = PermissionType.READ,
+        message = "프로젝트 조회 권한이 없습니다."
+    )
+    public Map<Long, ProjectMembersResponse> getBatchMembers(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @RequestParam List<Long> projectIds
+    ) {
+        return assembler.membersForBatch(projectIds, memberPrincipal.getMemberId());
     }
 
     @GetMapping("/me/managed")

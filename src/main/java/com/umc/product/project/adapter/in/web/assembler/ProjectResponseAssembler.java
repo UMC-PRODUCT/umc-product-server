@@ -1,5 +1,9 @@
 package com.umc.product.project.adapter.in.web.assembler;
 
+import com.umc.product.authorization.application.port.in.CheckPermissionUseCase;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourcePermission;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.response.PageResponse;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
@@ -21,9 +25,13 @@ import com.umc.product.project.application.port.out.LoadProjectApplicationFormPo
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.domain.ProjectApplicationForm;
 import com.umc.product.project.domain.ProjectMember;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,6 +39,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
 
@@ -39,6 +48,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ProjectResponseAssembler {
 
     private final GetProjectUseCase getProjectUseCase;
@@ -47,6 +57,7 @@ public class ProjectResponseAssembler {
     private final GetMemberUseCase getMemberUseCase;
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
+    private final CheckPermissionUseCase checkPermissionUseCase;
 
     /**
      * PROJECT-001 프로젝트 목록 조회.
@@ -125,36 +136,67 @@ public class ProjectResponseAssembler {
             ? Map.of()
             : getMemberUseCase.findAllByIds(memberIds);
 
-        MemberBrief productOwner = toBrief(memberMap.get(info.productOwnerMemberId()));
+        return buildMembersResponse(projectId, info, members, memberMap);
+    }
 
-        Map<ChallengerPart, List<MemberBrief>> partToMembers = new EnumMap<>(ChallengerPart.class);
-        for (ProjectMember m : members) {
-            MemberBrief brief = toBrief(memberMap.get(m.getMemberId()));
-            if (brief == null) continue;
-            partToMembers.computeIfAbsent(m.getPart(), p -> new java.util.ArrayList<>()).add(brief);
+    /**
+     * PROJECT-004 프로젝트 팀원 구성 일괄 조회.
+     * <p>
+     * 각 projectId에 대해 per-project 권한 체크 및 데이터 조회를 수행하며, 실패한 프로젝트는 결과에서 제외 멤버 정보는 유효한 프로젝트 전체를 모아 한 번에 조회한다.
+     */
+    public Map<Long, ProjectMembersResponse> membersForBatch(List<Long> projectIds, Long memberId) {
+        // Step 1: 권한 체크 + 프로젝트 정보 조회 (실패 시 skip)
+        Map<Long, ProjectInfo> validProjects = new LinkedHashMap<>();
+        for (Long projectId : projectIds) {
+            boolean hasAccess = checkPermissionUseCase.check(
+                memberId, ResourcePermission.of(ResourceType.PROJECT, projectId, PermissionType.READ));
+            if (!hasAccess) {
+                log.warn("프로젝트 팀원 일괄 조회 - 접근 권한 없음: memberId={}, projectId={}", memberId, projectId);
+                continue;
+            }
+            try {
+                validProjects.put(projectId, getProjectUseCase.getById(projectId));
+            } catch (Exception e) {
+                log.warn("프로젝트 팀원 일괄 조회 - 프로젝트 조회 실패: projectId={}, reason={}", projectId, e.getMessage());
+            }
         }
 
-        Comparator<MemberBrief> byNickname = Comparator.comparing(
-            MemberBrief::nickname, Comparator.nullsLast(Comparator.naturalOrder()));
+        if (validProjects.isEmpty()) {
+            return Map.of();
+        }
 
-        List<MemberBrief> coProductOwners = partToMembers.getOrDefault(ChallengerPart.PLAN, List.of()).stream()
-            .filter(b -> !Objects.equals(b.memberId(), info.productOwnerMemberId()))
-            .sorted(byNickname)
-            .toList();
+        // Step 2: 파트 멤버 목록 조회 (실패 시 skip)
+        Map<Long, List<ProjectMember>> projectMembersMap = new HashMap<>();
+        for (Long projectId : validProjects.keySet()) {
+            try {
+                projectMembersMap.put(projectId, loadProjectMemberPort.listByProjectId(projectId));
+            } catch (Exception e) {
+                log.warn("프로젝트 팀원 일괄 조회 - 멤버 목록 조회 실패: projectId={}, reason={}", projectId, e.getMessage());
+            }
+        }
 
-        List<PartGroup> partGroups = java.util.Arrays.stream(ChallengerPart.values())
-            .filter(p -> p != ChallengerPart.PLAN)
-            .map(p -> new PartGroup(p,
-                partToMembers.getOrDefault(p, List.of()).stream().sorted(byNickname).toList()))
-            .filter(g -> !g.members().isEmpty())
-            .toList();
+        // Step 3: 유효한 전체 프로젝트의 멤버 ID를 모아 한 번에 조회
+        Set<Long> allMemberIds = new HashSet<>();
+        validProjects.forEach((projectId, info) -> {
+            allMemberIds.add(info.productOwnerMemberId());
+            projectMembersMap.getOrDefault(projectId, List.of())
+                .forEach(m -> allMemberIds.add(m.getMemberId()));
+        });
+        Map<Long, MemberInfo> memberMap = allMemberIds.isEmpty()
+            ? Map.of()
+            : getMemberUseCase.findAllByIds(allMemberIds);
 
-        return ProjectMembersResponse.builder()
-            .projectId(projectId)
-            .productOwner(productOwner)
-            .coProductOwners(coProductOwners)
-            .partGroups(partGroups)
-            .build();
+        // Step 4: 응답 조립 (멤버 목록 조회까지 성공한 프로젝트만 포함)
+        Map<Long, ProjectMembersResponse> result = new LinkedHashMap<>();
+        validProjects.forEach((projectId, info) -> {
+            if (!projectMembersMap.containsKey(projectId)) {
+                return;
+            }
+            result.put(projectId, buildMembersResponse(
+                projectId, info, projectMembersMap.get(projectId), memberMap));
+        });
+
+        return result;
     }
 
     /**
@@ -175,6 +217,43 @@ public class ProjectResponseAssembler {
             .toList();
 
         return DraftProjectResponse.from(info, owner, coOwners, resolveApplicationFormId(info.id()));
+    }
+
+    private ProjectMembersResponse buildMembersResponse(
+        Long projectId, ProjectInfo info, List<ProjectMember> members, Map<Long, MemberInfo> memberMap
+    ) {
+        MemberBrief productOwner = toBrief(memberMap.get(info.productOwnerMemberId()));
+
+        Map<ChallengerPart, List<MemberBrief>> partToMembers = new EnumMap<>(ChallengerPart.class);
+        for (ProjectMember m : members) {
+            MemberBrief brief = toBrief(memberMap.get(m.getMemberId()));
+            if (brief == null) {
+                continue;
+            }
+            partToMembers.computeIfAbsent(m.getPart(), p -> new ArrayList<>()).add(brief);
+        }
+
+        Comparator<MemberBrief> byNickname = Comparator.comparing(
+            MemberBrief::nickname, Comparator.nullsLast(Comparator.naturalOrder()));
+
+        List<MemberBrief> coProductOwners = partToMembers.getOrDefault(ChallengerPart.PLAN, List.of()).stream()
+            .filter(b -> !Objects.equals(b.memberId(), info.productOwnerMemberId()))
+            .sorted(byNickname)
+            .toList();
+
+        List<PartGroup> partGroups = Arrays.stream(ChallengerPart.values())
+            .filter(p -> p != ChallengerPart.PLAN)
+            .map(p -> new PartGroup(p,
+                partToMembers.getOrDefault(p, List.of()).stream().sorted(byNickname).toList()))
+            .filter(g -> !g.members().isEmpty())
+            .toList();
+
+        return ProjectMembersResponse.builder()
+            .projectId(projectId)
+            .productOwner(productOwner)
+            .coProductOwners(coProductOwners)
+            .partGroups(partGroups)
+            .build();
     }
 
     private Long resolveApplicationFormId(Long projectId) {
