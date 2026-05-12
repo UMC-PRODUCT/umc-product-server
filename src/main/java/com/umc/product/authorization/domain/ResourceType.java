@@ -65,6 +65,8 @@ public enum ResourceType {
     // 회원 관련
     MEMBER("member", "회원",
         Set.of(PermissionType.READ, PermissionType.DELETE)),
+    ANALYTICS("analytics", "운영진 대시보드",
+        Set.of(PermissionType.READ)),
     TERM("term", "약관",
         Set.of(PermissionType.WRITE)),
 
