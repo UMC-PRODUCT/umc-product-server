@@ -68,6 +68,7 @@ public enum ProjectErrorCode implements BaseCode {
     PROJECT_APPLICATION_ALREADY_EXISTS(HttpStatus.CONFLICT, "PROJECT-0210", "이미 작성 중인 지원서가 있습니다."),
     PROJECT_APPLICATION_SELF_APPLY_NOT_ALLOWED(HttpStatus.FORBIDDEN, "PROJECT-0211", "본인이 운영하는 프로젝트에는 지원할 수 없습니다."),
     PROJECT_APPLICATION_CANCEL_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT-0212", "이미 종결된 지원서는 철회할 수 없습니다."),
+    PROJECT_APPLICATION_CANCEL_ROUND_CLOSED(HttpStatus.BAD_REQUEST, "PROJECT-0213", "매칭 차수가 종료되어 지원서를 철회할 수 없습니다."),
 
     ;
 
