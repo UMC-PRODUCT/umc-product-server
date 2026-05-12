@@ -8,7 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -34,16 +34,16 @@ public class InquiryRead extends BaseEntity {
     private Long challengerId;
 
     @Column(name = "read_at", nullable = false)
-    private LocalDateTime readAt;
+    private Instant readAt;
 
     @Builder
-    private InquiryRead(Long inquiryId, Long challengerId, LocalDateTime readAt) {
+    private InquiryRead(Long inquiryId, Long challengerId, Instant readAt) {
         this.inquiryId = inquiryId;
         this.challengerId = challengerId;
         this.readAt = readAt;
     }
 
-    public static InquiryRead of(Long inquiryId, Long challengerId, LocalDateTime readAt) {
+    public static InquiryRead of(Long inquiryId, Long challengerId, Instant readAt) {
         return InquiryRead.builder()
             .inquiryId(inquiryId)
             .challengerId(challengerId)
