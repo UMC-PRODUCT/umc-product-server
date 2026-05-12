@@ -47,6 +47,25 @@ services:
     networks: [monitoring]
     restart: unless-stopped
 
+  # --- OTLP 게이트웨이 ---
+  # 앱은 PROM_URL / TEMPO_URL 등 환경변수만 본 collector 의 endpoint 로 바꾸면 된다.
+  # collector 가 prometheus / tempo / loki 로 신호를 분배한다.
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.114.0
+    container_name: umc-product-otel-collector
+    command: [ "--config=/etc/otel-collector/config.yaml" ]
+    volumes:
+      - ./config/otel-collector/config.yaml:/etc/otel-collector/config.yaml:ro
+    ports:
+      - "${OTEL_OTLP_GRPC_PORT:-4317}:4317"
+      - "${OTEL_OTLP_HTTP_PORT:-4318}:4318"
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+    networks: [monitoring]
+    restart: unless-stopped
+
   # --- Log backend ---
   # 두 수신 경로를 모두 지원한다.
   #   1) Loki push API: http://loki:3100/loki/api/v1/push   ← 기존 loki4j 어펜더
