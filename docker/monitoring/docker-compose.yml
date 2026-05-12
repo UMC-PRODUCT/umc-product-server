@@ -106,11 +106,47 @@ services:
     networks: [monitoring]
     restart: unless-stopped
 
+  # --- Alerting ---
+  # prometheus / loki 의 alerting rule 발화를 Discord webhook 으로 전송.
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: umc-product-alertmanager
+    command:
+      - --config.file=/etc/alertmanager/config.yml
+      - --storage.path=/alertmanager
+    environment:
+      - DISCORD_ALERT_WEBHOOK=${DISCORD_ALERT_WEBHOOK:-}
+    volumes:
+      - ./config/alertmanager/config.yml:/etc/alertmanager/config.yml:ro
+      - alertmanager-data:/alertmanager
+    ports:
+      - "${ALERTMANAGER_PORT:-9093}:9093"
+    networks: [monitoring]
+    restart: unless-stopped
+
+  # --- Host metrics ---
+  # 호스트 (홈서버) 자체의 CPU / disk / network / filesystem 메트릭을 prometheus 가 scrape.
+  # 디스크 임계 알람 (Loki / Tempo chunk 누적) 의 데이터 소스.
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    container_name: umc-product-node-exporter
+    command:
+      - --path.rootfs=/host
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    pid: host
+    volumes:
+      - /:/host:ro,rslave
+    ports:
+      - "${NODE_EXPORTER_PORT:-9100}:9100"
+    networks: [monitoring]
+    restart: unless-stopped
+
 volumes:
   prometheus-data:
   tempo-data:
   loki-data:
   grafana-data:
+  alertmanager-data:
 
 networks:
   monitoring:

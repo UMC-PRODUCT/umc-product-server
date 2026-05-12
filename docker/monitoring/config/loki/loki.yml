@@ -43,6 +43,5 @@ limits_config:
   # OTLP logs 가 들고 들어오는 resource attribute 를 structured metadata 로 받기 위해 필수.
   allow_structured_metadata: true
 
-# alertmanager 는 Commit 5 에서 추가된다. 그 전까지는 ruler 가 비활성 상태로 동작.
-# ruler:
-#   alertmanager_url: http://alertmanager:9093
+ruler:
+  alertmanager_url: http://alertmanager:9093

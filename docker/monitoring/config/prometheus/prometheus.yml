@@ -24,4 +24,11 @@ scrape_configs:
     static_configs:
       - targets: [ 'node-exporter:9100' ]
 
-# alerting / rule_files 는 alertmanager 도입 (Commit 5) 시점에 함께 채운다.
+# alerting / rule_files (Commit 5).
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: [ 'alertmanager:9093' ]
+
+# 실제 alerting rule 파일은 운영 정책이 정해지면 ./config/prometheus/rules/ 하위에 두고
+# 본 파일에서 reference 한다 (예: rule_files: [ rules/*.yml ]). Phase 1 범위 밖.
