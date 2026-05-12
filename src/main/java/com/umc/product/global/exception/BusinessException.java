@@ -15,16 +15,21 @@ public abstract class BusinessException extends RuntimeException {
     private final String message;
 
     public BusinessException(Domain domain, BaseCode baseCode, String message) {
-        super(message != null ? message : baseCode.getMessage());
+        this(domain, baseCode, message, null);
+    }
+
+    public BusinessException(Domain domain, BaseCode baseCode) {
+        this(domain, baseCode, null, null);
+    }
+
+    public BusinessException(Domain domain, BaseCode baseCode, String message, Throwable cause) {
+        super(message != null ? message : baseCode.getMessage(), cause);
         this.domain = domain;
         this.baseCode = baseCode;
         this.message = message;
     }
 
-    public BusinessException(Domain domain, BaseCode baseCode) {
-        super(baseCode.getMessage());
-        this.domain = domain;
-        this.baseCode = baseCode;
-        this.message = null;
+    public BusinessException(Domain domain, BaseCode baseCode, Throwable cause) {
+        this(domain, baseCode, null, cause);
     }
 }
