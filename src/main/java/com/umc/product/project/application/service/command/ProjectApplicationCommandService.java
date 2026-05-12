@@ -33,6 +33,9 @@ import com.umc.product.survey.application.port.in.command.dto.SubmitDraftFormRes
 import com.umc.product.survey.application.port.in.command.dto.UpdateDraftFormResponseCommand;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -258,10 +261,10 @@ public class ProjectApplicationCommandService implements
             return 0;
         }
 
-        java.util.Set<Long> memberIds = candidates.stream()
+        Set<Long> memberIds = candidates.stream()
             .map(ProjectApplication::getApplicantMemberId)
-            .collect(java.util.stream.Collectors.toSet());
-        java.util.Map<Long, com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo> challengerByMember =
+            .collect(Collectors.toSet());
+        Map<Long, ChallengerInfo> challengerByMember =
             getChallengerUseCase.batchGetByMemberIdsAndGisuId(memberIds, gisuId);
 
         return (int) candidates.stream()
