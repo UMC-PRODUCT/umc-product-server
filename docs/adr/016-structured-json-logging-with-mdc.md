@@ -85,11 +85,13 @@ Accepted (2026-05-12)
 
 > **보강 (2026-05-12, Accepted 승격 시):** 본 ADR 의 최초 작성 시점에는 `staging` 프로필 분기가 누락되어 있었다. 현재 [logback-spring.xml](../../src/main/resources/logback-spring.xml) 은 `local` / `dev` / `prod` 만 분기하므로, 본 ADR 의 Commit #3 에서 `staging` 프로필 분기를 **함께 신규 추가** 한다. `staging` 의 어펜더 구성은 `dev` 와 동일 (CONSOLE_JSON + LOKI, Sentry 없음) 로 한다.
 
-1. **요청 문맥 (`requestId`, `userId`, `method`, `path`, `uriTemplate`) 은 MDC 에 넣는다.** 모든 요청은 `LoggingInterceptor` 의 `preHandle` 에서 MDC 에 push, `afterCompletion` 의 finally 에서 `MDC.clear()` 로 비운다.
+1. **요청 문맥 (`memberId`, `method`, `path`, `uriTemplate`) 은 MDC 에 넣는다.** 모든 요청은 `LoggingInterceptor` 의 `preHandle` 에서 MDC 에 push, `afterCompletion` 의 finally 에서 `MDC.clear()` 로 비운다. 사용자 식별자는 일반 OAuth 컨벤션의 `userId` 가 아니라 우리 서비스 도메인 명명인 `memberId` 그대로 사용한다.
 2. **요청 완료 1줄 (`api_request_completed`) 의 event 키를 표준화**한다. 기존 `[REQ]` / `[RES]` 두 줄 로그는 `event=api_request_started` / `event=api_request_completed` 의 구조화된 이벤트로 대체한다.
 3. **민감 필드는 로그에 절대 남기지 않는다.** Authorization, accessToken, refreshToken, OAuth authorization code, identity token, 이메일 인증번호, request body 전문, response body 전문, 첨부파일 내용. 필요한 경우 길이 / 개수 같은 요약값만 남긴다.
 4. **Loki4j 의 운영을 ADR-014 의 결정에 위임한다.** 본 ADR 은 어펜더 자체의 송신 경로를 손대지 않는다. `loki-logback-appender` 의 `<format><message>` 패턴만 JSON encoder 의 출력 (한 줄 JSON) 으로 교체한다.
-5. **`requestId` 와 Micrometer `traceId` 는 공존시키되 역할을 분리한다.** `traceId` 는 분산 추적용 (Tempo), `requestId` 는 단일 서버 내부 추적용 (Loki 검색용 fallback). 두 값 모두 MDC 에 둔다.
+5. **단일 요청 식별자는 Micrometer Tracing 의 `traceId` 를 그대로 사용한다.** 별도의 UUID 기반 `requestId` 는 발급하지 않는다.
+
+> **보강 (2026-05-12, Accepted 승격 후 정정):** ADR 초안 시점에는 `traceId` (Tempo 분산 추적용) 와 `requestId` (Loki 검색용 fallback) 를 공존시킨다고 결정했으나, 이후 FE 가 이미 `X-Trace-Id` 응답 헤더와 `traceId` 키로 운영 중인 흐름을 깨지 않기 위해 단일 식별자 (`traceId`) 만 사용하기로 정정한다. Loki 의 단일 요청 검색은 `| json | traceId="..."` 한 줄로 동일한 효용을 얻는다. 응답 헤더는 기존대로 `X-Trace-Id` 만 노출하며, `X-Request-Id` 는 도입하지 않는다.
 
 ### 본 ADR 의 범위 밖
 
@@ -417,11 +419,11 @@ public void afterCompletion(HttpServletRequest request, HttpServletResponse resp
 검증:
 
 - 단위 테스트 추가: MDC 가 `preHandle` 에서 set, `afterCompletion` finally 에서 clear 되는지.
-- 실제 dev 환경 배포 후 stdout JSON 에 `requestId`, `method`, `path`, `uriTemplate`, `statusCode`, `durationMs` 가 들어가는지 grep.
+- 실제 dev 환경 배포 후 stdout JSON 에 `traceId`, `method`, `path`, `uriTemplate`, `statusCode`, `durationMs` 가 들어가는지 grep.
 
 #### Commit #5 — `feat: put memberId into MDC after JWT authentication`
 
-목적: 인증된 사용자의 `memberId` 를 MDC `userId` 로 등록한다. `JwtAuthenticationFilter` 가 인증을 끝낸 직후가 가장 빠른 시점이지만, Filter 는 Interceptor 보다 앞에서 동작하므로 두 가지 선택이 있다.
+목적: 인증된 사용자의 `memberId` 를 MDC `memberId` 키로 등록한다. 서비스 도메인 명명을 그대로 사용 (`userId` 아님). `JwtAuthenticationFilter` 가 인증을 끝낸 직후가 가장 빠른 시점이지만, Filter 는 Interceptor 보다 앞에서 동작하므로 두 가지 선택이 있다.
 
 선택 A — Filter 에서 등록 (권장):
 
@@ -456,11 +458,11 @@ private void putUserIdToMdcIfAuthenticated() {
 주의:
 
 - `MemberPrincipal.getMemberId()` 는 Long. MDC 값은 String 이므로 `String.valueOf(...)`.
-- 익명 사용자 (`principal == "anonymousUser"`) 의 경우 MDC `userId` 를 넣지 않는다 (검색 시 `userId is null` 로 익명 트래픽 식별).
+- 익명 사용자 (`principal == "anonymousUser"`) 의 경우 MDC `memberId` 를 넣지 않는다 (검색 시 `memberId is null` 로 익명 트래픽 식별).
 
 #### Commit #6 — `chore: drop access-log noise from JwtAuthenticationFilter`
 
-목적: JSON 로그가 들어왔으니, 기존 텍스트 시대의 진단용 한 줄 로그 (`log.info("JWT TOKEN Authenticated: memberId={}", memberId)`) 를 제거하거나 DEBUG 로 낮춘다. `api_request_completed` JSON 에 `userId` 가 자동으로 들어가므로 중복이다.
+목적: JSON 로그가 들어왔으니, 기존 텍스트 시대의 진단용 한 줄 로그 (`log.info("JWT TOKEN Authenticated: memberId={}", memberId)`) 를 제거하거나 DEBUG 로 낮춘다. `api_request_completed` JSON 에 `memberId` 가 자동으로 들어가므로 중복이다.
 
 변경 파일:
 
@@ -580,8 +582,8 @@ sum by (uriTemplate) (
   )
 )
 
-# 특정 requestId 의 모든 로그
-{application=~".*umc-product-api"} |= "9f1a2c7b"
+# 특정 traceId 의 모든 로그 (응답 헤더 X-Trace-Id 와 동일 값)
+{application=~".*umc-product-api"} | json | traceId="9f1a2c7b..."
 ```
 
 본 커밋은 ADR-014 의 자체 호스팅 이관과 시점이 겹친다. 현재 Grafana Cloud 에 직접 panel 을 만드는 작업 + ADR-014 의 self-hosted Grafana provisioning 디렉터리 모두 같은 LogQL 을 공유한다.
@@ -592,10 +594,9 @@ sum by (uriTemplate) (
 
 | 키 | 출처 | 수명 | 용도 |
 |---|---|---|---|
-| `traceId` | Micrometer Tracing | 요청 1개 | Tempo 분산 추적 |
+| `traceId` | Micrometer Tracing | 요청 1개 | Tempo 분산 추적 + Loki 단일 요청 식별 (응답 헤더 `X-Trace-Id` 로 노출) |
 | `spanId` | Micrometer Tracing | span 1개 | Tempo 내부 |
-| `requestId` | LoggingInterceptor | 요청 1개 | Loki 단일 요청 식별 |
-| `userId` | LoggingInterceptor | 요청 1개 | 인증된 `memberId` |
+| `memberId` | LoggingInterceptor | 요청 1개 | 인증된 사용자 식별자. 서비스 도메인 명명 (`memberId`) 그대로 사용. 익명 사용자는 비워둔다 |
 | `method` | LoggingInterceptor | 요청 1개 | HTTP 메서드 |
 | `path` | LoggingInterceptor | 요청 1개 | 실제 URI (예: `/forms/123`) |
 | `uriTemplate` | LoggingInterceptor | 응답 시점 | 매칭된 패턴 (예: `/forms/{formId}`) |
@@ -635,7 +636,7 @@ SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun | jq .
 
 - [ ] Loki 에서 `| json` 파싱이 100% 의 라인에 성공하는가? (`json_parse_error` 가 0 인지)
 - [ ] `api_request_completed` 의 `durationMs` 가 P50 / P95 / P99 dashboard 에 표시되는가?
-- [ ] MDC 누수 점검: 같은 스레드의 연속된 요청에서 `userId` 가 잘못 섞이는 사례가 없는가? (특정 사용자의 요청에서 다른 `userId` 가 1% 이상 검출되면 누수 의심)
+- [ ] MDC 누수 점검: 같은 스레드의 연속된 요청에서 `memberId` 가 잘못 섞이는 사례가 없는가? (특정 사용자의 요청에서 다른 `memberId` 가 1% 이상 검출되면 누수 의심)
 - [ ] Sentry 의 issue 그루핑이 깨지지 않았는가? (Sentry 는 logger message 를 사용하므로 `api_request_completed` 가 너무 잦으면 group 하나에 몰릴 수 있음 — minimum level 을 다시 조정)
 - [ ] 민감 필드 검색: `| json |~ "(?i)(bearer |access[_-]?token|authorization=)"` 가 0 line 인지 정기 점검.
 

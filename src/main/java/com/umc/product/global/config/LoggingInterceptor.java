@@ -5,7 +5,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.security.core.Authentication;
@@ -17,9 +16,13 @@ import org.springframework.web.servlet.HandlerMapping;
 /**
  * HTTP 요청/응답 로깅 인터셉터 (ADR-016 구조화 로그 기반)
  *
- * <p>요청 진입 시점에 {@code requestId} / {@code method} / {@code path} 를 MDC 에 push 하고,
- * 응답 완료 시점에 {@code uriTemplate} / {@code statusCode} / {@code durationMs} / {@code queryCount} /
+ * <p>요청 진입 시점에 {@code method} / {@code path} 를 MDC 에 push 하고, 응답 완료 시점에
+ * {@code uriTemplate} / {@code statusCode} / {@code durationMs} / {@code queryCount} /
  * {@code queryTimeMs} / {@code clientIp} 를 MDC 에 채워 {@code api_request_completed} 이벤트 한 줄을 남긴다.
+ *
+ * <p>단일 요청 식별자는 Micrometer Tracing 이 자동으로 MDC 에 넣는 {@code traceId} 를 그대로 재사용한다.
+ * 별도의 UUID 기반 requestId 는 발급하지 않는다 — FE 등 외부 시스템이 이미 {@code X-Trace-Id} 응답 헤더로
+ * 알고 있는 식별자를 변경하지 않기 위해서다.
  *
  * <p>MDC 누수를 막기 위해 {@link #afterCompletion} 의 finally 블록에서 반드시 {@link MDC#clear()} 를 호출한다.
  */
@@ -30,12 +33,10 @@ public class LoggingInterceptor implements HandlerInterceptor {
     private static final String START_TIME_ATTR = "startTime";
     private static final String CLIENT_IP_ATTR = "clientIp";
 
-    private static final String REQUEST_ID_HEADER = "X-Request-Id";
     private static final String TRACE_ID_HEADER = "X-Trace-Id";
 
     // ===== MDC keys (ADR-016 §MDC 키 표준) =====
-    private static final String MDC_REQUEST_ID = "requestId";
-    private static final String MDC_USER_ID = "userId";
+    private static final String MDC_MEMBER_ID = "memberId";
     private static final String MDC_METHOD = "method";
     private static final String MDC_PATH = "path";
     private static final String MDC_URI_TEMPLATE = "uriTemplate";
@@ -59,30 +60,28 @@ public class LoggingInterceptor implements HandlerInterceptor {
 
         QueryStatsHolder.init();
 
-        // requestId 발급 + MDC 등록 (단일 요청 식별자)
-        String requestId = UUID.randomUUID().toString();
-        MDC.put(MDC_REQUEST_ID, requestId);
         MDC.put(MDC_METHOD, request.getMethod());
         MDC.put(MDC_PATH, request.getRequestURI());
 
-        // 응답 헤더로 외부에 노출 (디버깅 / 운영자 grep 용)
-        response.setHeader(REQUEST_ID_HEADER, requestId);
-
+        // Micrometer Tracing 이 채워 둔 traceId 를 FE 디버깅용으로 응답 헤더에 노출.
+        // 별도 requestId UUID 는 발급하지 않는다 (FE 호환성 — X-Trace-Id 가 이미 사용 중).
         String traceId = MDC.get(MDC_TRACE_ID);
         if (traceId != null) {
             response.setHeader(TRACE_ID_HEADER, traceId);
         }
 
-        // 인증된 사용자라면 memberId 를 MDC userId 로 등록.
-        // 익명 사용자는 userId 를 비워둠 — Loki 에서 `userId is null` 로 익명 트래픽 식별.
-        putUserIdToMdcIfAuthenticated();
+        // 인증된 사용자라면 memberId 를 MDC 에 등록.
+        // 익명 사용자는 비워둔다 — Loki 에서 `memberId is null` 로 익명 트래픽을 식별한다.
+        putMemberIdToMdcIfAuthenticated();
 
         log.info(EVENT_REQUEST_STARTED);
         return true;
     }
 
     /**
-     * SecurityContextHolder 에서 인증된 {@link MemberPrincipal} 을 조회해 MDC {@code userId} 를 채운다.
+     * SecurityContextHolder 에서 인증된 {@link MemberPrincipal} 을 조회해 MDC {@code memberId} 를 채운다.
+     *
+     * <p>서비스 도메인 명명을 그대로 사용 (`userId` 가 아니라 `memberId`).
      *
      * <p>Filter 가 아니라 Interceptor 에서 채우는 이유:
      * <ul>
@@ -90,13 +89,13 @@ public class LoggingInterceptor implements HandlerInterceptor {
      *     <li>인증 책임은 Filter, 로그 컨텍스트 책임은 Interceptor 로 분리된다.</li>
      * </ul>
      */
-    private void putUserIdToMdcIfAuthenticated() {
+    private void putMemberIdToMdcIfAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             return;
         }
         if (authentication.getPrincipal() instanceof MemberPrincipal memberPrincipal) {
-            MDC.put(MDC_USER_ID, String.valueOf(memberPrincipal.getMemberId()));
+            MDC.put(MDC_MEMBER_ID, String.valueOf(memberPrincipal.getMemberId()));
         }
     }
 

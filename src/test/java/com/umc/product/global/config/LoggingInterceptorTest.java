@@ -56,9 +56,10 @@ class LoggingInterceptorTest {
     }
 
     @Test
-    @DisplayName("preHandle 시 requestId / method / path 가 MDC 에 들어가고 X-Request-Id 헤더가 채워진다")
+    @DisplayName("preHandle 시 method / path 가 MDC 에 들어가고 traceId 가 있으면 X-Trace-Id 헤더가 채워진다")
     void preHandle_MDC_등록_성공() {
-        // given
+        // given — Micrometer Tracing 이 채웠을 traceId 를 시뮬레이션
+        MDC.put("traceId", "test-trace-abc123");
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/forms/123/answers");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -67,10 +68,26 @@ class LoggingInterceptorTest {
 
         // then
         assertThat(result).isTrue();
-        assertThat(MDC.get("requestId")).isNotBlank();
         assertThat(MDC.get("method")).isEqualTo("GET");
         assertThat(MDC.get("path")).isEqualTo("/forms/123/answers");
-        assertThat(response.getHeader("X-Request-Id")).isEqualTo(MDC.get("requestId"));
+        assertThat(response.getHeader("X-Trace-Id")).isEqualTo("test-trace-abc123");
+        // 별도 requestId UUID 는 발급하지 않는다 (FE 호환성)
+        assertThat(MDC.get("requestId")).isNull();
+        assertThat(response.getHeader("X-Request-Id")).isNull();
+    }
+
+    @Test
+    @DisplayName("traceId 가 없으면 X-Trace-Id 헤더도 비어 있어야 한다")
+    void preHandle_traceId_없을_때_헤더_미설정() {
+        // given — traceId 미주입 상태 (테스트 환경에는 Micrometer Tracing 가 없을 수 있다)
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/forms");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        // when
+        interceptor.preHandle(request, response, new Object());
+
+        // then
+        assertThat(response.getHeader("X-Trace-Id")).isNull();
     }
 
     @Test
@@ -81,8 +98,8 @@ class LoggingInterceptorTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         interceptor.preHandle(request, response, new Object());
 
-        // pre-condition: MDC 에 값이 들어있다
-        assertThat(MDC.get("requestId")).isNotBlank();
+        // pre-condition: MDC 에 method 등 값이 들어있다
+        assertThat(MDC.get("method")).isEqualTo("GET");
 
         // when
         interceptor.afterCompletion(request, response, new Object(), null);
@@ -130,8 +147,8 @@ class LoggingInterceptorTest {
     }
 
     @Test
-    @DisplayName("인증된 MemberPrincipal 이 있으면 memberId 가 MDC userId 로 채워진다")
-    void preHandle_인증된_사용자_userId_MDC_등록() {
+    @DisplayName("인증된 MemberPrincipal 이 있으면 memberId 가 MDC 에 채워진다")
+    void preHandle_인증된_사용자_memberId_MDC_등록() {
         // given
         MemberPrincipal principal = new MemberPrincipal(42L);
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
@@ -146,12 +163,14 @@ class LoggingInterceptorTest {
         interceptor.preHandle(request, response, new Object());
 
         // then
-        assertThat(MDC.get("userId")).isEqualTo("42");
+        assertThat(MDC.get("memberId")).isEqualTo("42");
+        // 서비스 도메인 명명을 사용하므로 userId 는 사용하지 않는다
+        assertThat(MDC.get("userId")).isNull();
     }
 
     @Test
-    @DisplayName("익명 사용자는 MDC userId 가 채워지지 않는다")
-    void preHandle_익명_사용자_userId_MDC_미등록() {
+    @DisplayName("익명 사용자는 MDC memberId 가 채워지지 않는다")
+    void preHandle_익명_사용자_memberId_MDC_미등록() {
         // given — SecurityContext 가 비어있는 상태
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/forms/123");
         MockHttpServletResponse response = new MockHttpServletResponse();
@@ -160,7 +179,7 @@ class LoggingInterceptorTest {
         interceptor.preHandle(request, response, new Object());
 
         // then
-        assertThat(MDC.get("userId")).isNull();
+        assertThat(MDC.get("memberId")).isNull();
     }
 
     @Test
