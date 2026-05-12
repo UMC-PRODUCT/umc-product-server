@@ -73,8 +73,8 @@ public class ProjectCommandService implements
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_OWNER_NOT_PLAN_CHALLENGER);
         }
 
-        if (loadProjectPort.existsByOwnerAndGisu(command.productOwnerMemberId(), command.gisuId())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DUPLICATE_IN_GISU);
+        if (loadProjectPort.existsDraftByCreatorAndGisu(command.requesterMemberId(), command.gisuId())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DRAFT_ALREADY_IN_PROGRESS);
         }
 
         MemberInfo member = getMemberUseCase.getById(command.productOwnerMemberId());
@@ -177,10 +177,6 @@ public class ProjectCommandService implements
         );
         if (newOwner.part() != ChallengerPart.PLAN) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_OWNER_NOT_PLAN_CHALLENGER);
-        }
-
-        if (loadProjectPort.existsByOwnerAndGisu(command.newOwnerMemberId(), project.getGisuId())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_DUPLICATE_IN_GISU);
         }
 
         // 도메인 가드 fail-fast — COMPLETED/ABORTED 시 cross-domain 호출 회피

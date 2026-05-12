@@ -113,10 +113,10 @@ class ProjectQueryServiceTest {
     }
 
     @Test
-    void findDraftByOwnerAndGisu_DRAFT_프로젝트_반환() {
+    void findDraftByCreatorAndGisu_DRAFT_프로젝트_반환() {
         // given
         Project project = createProject(1L, ProjectStatus.DRAFT);
-        given(loadProjectPort.findByOwnerAndGisu(10L, 1L))
+        given(loadProjectPort.findDraftByCreatorAndGisu(10L, 1L))
             .willReturn(Optional.of(project));
         given(loadProjectMemberPort.listByProjectIdAndPart(1L, ChallengerPart.PLAN))
             .willReturn(List.of());
@@ -125,7 +125,7 @@ class ProjectQueryServiceTest {
             .willReturn(Map.of("thumb-1", "https://cdn.example.com/thumb-1"));
 
         // when
-        Optional<ProjectInfo> result = sut.findDraftByOwnerAndGisu(10L, 1L);
+        Optional<ProjectInfo> result = sut.findDraftByCreatorAndGisu(10L, 1L);
 
         // then
         assertThat(result).isPresent();
@@ -133,27 +133,13 @@ class ProjectQueryServiceTest {
     }
 
     @Test
-    void findDraftByOwnerAndGisu_DRAFT가_아니면_empty() {
+    void findDraftByCreatorAndGisu_프로젝트_없으면_empty() {
         // given
-        Project project = createProject(1L, ProjectStatus.IN_PROGRESS);
-        given(loadProjectPort.findByOwnerAndGisu(10L, 1L))
-            .willReturn(Optional.of(project));
-
-        // when
-        Optional<ProjectInfo> result = sut.findDraftByOwnerAndGisu(10L, 1L);
-
-        // then
-        assertThat(result).isEmpty();
-    }
-
-    @Test
-    void findDraftByOwnerAndGisu_프로젝트_없으면_empty() {
-        // given
-        given(loadProjectPort.findByOwnerAndGisu(10L, 1L))
+        given(loadProjectPort.findDraftByCreatorAndGisu(10L, 1L))
             .willReturn(Optional.empty());
 
         // when
-        Optional<ProjectInfo> result = sut.findDraftByOwnerAndGisu(10L, 1L);
+        Optional<ProjectInfo> result = sut.findDraftByCreatorAndGisu(10L, 1L);
 
         // then
         assertThat(result).isEmpty();

@@ -85,7 +85,7 @@ class ProjectResponseAssemblerTest {
     @Test
     void draftFor_Draft가_있으면_applicationFormId_hydrate() {
         ProjectInfo info = projectInfo(42L);
-        given(getProjectUseCase.findDraftByOwnerAndGisu(99L, 1L)).willReturn(Optional.of(info));
+        given(getProjectUseCase.findDraftByCreatorAndGisu(99L, 1L)).willReturn(Optional.of(info));
         given(getMemberUseCase.findAllByIds(java.util.Set.of(99L)))
             .willReturn(Map.of(99L, memberInfo(99L)));
 
@@ -100,7 +100,7 @@ class ProjectResponseAssemblerTest {
 
     @Test
     void draftFor_Draft가_없으면_null_반환() {
-        given(getProjectUseCase.findDraftByOwnerAndGisu(99L, 1L)).willReturn(Optional.empty());
+        given(getProjectUseCase.findDraftByCreatorAndGisu(99L, 1L)).willReturn(Optional.empty());
 
         DraftProjectResponse response = sut.draftFor(99L, 1L);
 

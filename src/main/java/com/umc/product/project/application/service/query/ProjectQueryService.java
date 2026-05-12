@@ -59,9 +59,8 @@ public class ProjectQueryService implements
     }
 
     @Override
-    public Optional<ProjectInfo> findDraftByOwnerAndGisu(Long productOwnerMemberId, Long gisuId) {
-        return loadProjectPort.findByOwnerAndGisu(productOwnerMemberId, gisuId)
-            .filter(project -> project.getStatus() == ProjectStatus.DRAFT)
+    public Optional<ProjectInfo> findDraftByCreatorAndGisu(Long creatorMemberId, Long gisuId) {
+        return loadProjectPort.findDraftByCreatorAndGisu(creatorMemberId, gisuId)
             .map(this::toProjectInfo);
     }
 

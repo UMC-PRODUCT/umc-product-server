@@ -34,7 +34,7 @@ public enum ProjectErrorCode implements BaseCode {
     APPLICATION_FORM_OPTIONS_REQUIRED(HttpStatus.BAD_REQUEST, "PROJECT-0018", "선택지 타입 질문에는 1개 이상의 옵션이 필요합니다."),
 
     // Project Draft flow (PROJECT-101, 102, 107)
-    PROJECT_DUPLICATE_IN_GISU(HttpStatus.CONFLICT, "PROJECT-0008", "이미 해당 기수에 등록한 프로젝트가 있습니다."),
+    PROJECT_DRAFT_ALREADY_IN_PROGRESS(HttpStatus.CONFLICT, "PROJECT-0008", "작성 중인 DRAFT 프로젝트가 있어 새로 시작할 수 없습니다."),
     PROJECT_INVALID_STATE(HttpStatus.BAD_REQUEST, "PROJECT-0009", "현재 상태에서 수행할 수 없는 작업입니다."),
     PROJECT_OWNER_NOT_PLAN_CHALLENGER(HttpStatus.BAD_REQUEST, "PROJECT-0010", "프로젝트 PO는 PLAN 파트 챌린저여야 합니다."),
     PROJECT_SUBMIT_VALIDATION_FAILED(HttpStatus.BAD_REQUEST, "PROJECT-0011", "제출에 필요한 필수 정보가 누락되었습니다."),
