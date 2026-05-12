@@ -2,20 +2,23 @@ package com.umc.product.global.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.HandlerMapping;
 
 /**
- * HTTP 요청/응답 로깅 인터셉터
+ * HTTP 요청/응답 로깅 인터셉터 (ADR-016 구조화 로그 기반)
  *
- * <p>모든 HTTP 요청의 메서드, URI, 응답 상태 코드, 처리 시간, 쿼리 통계, 클라이언트 IP를 로깅합니다.
+ * <p>요청 진입 시점에 {@code requestId} / {@code method} / {@code path} 를 MDC 에 push 하고,
+ * 응답 완료 시점에 {@code uriTemplate} / {@code statusCode} / {@code durationMs} / {@code queryCount} /
+ * {@code queryTimeMs} / {@code clientIp} 를 MDC 에 채워 {@code api_request_completed} 이벤트 한 줄을 남긴다.
+ *
+ * <p>MDC 누수를 막기 위해 {@link #afterCompletion} 의 finally 블록에서 반드시 {@link MDC#clear()} 를 호출한다.
  */
 @Slf4j
 @Component
@@ -23,8 +26,26 @@ public class LoggingInterceptor implements HandlerInterceptor {
 
     private static final String START_TIME_ATTR = "startTime";
     private static final String CLIENT_IP_ATTR = "clientIp";
+
+    private static final String REQUEST_ID_HEADER = "X-Request-Id";
     private static final String TRACE_ID_HEADER = "X-Trace-Id";
-    private static final String TRACE_ID = "traceId";
+
+    // ===== MDC keys (ADR-016 §MDC 키 표준) =====
+    private static final String MDC_REQUEST_ID = "requestId";
+    private static final String MDC_METHOD = "method";
+    private static final String MDC_PATH = "path";
+    private static final String MDC_URI_TEMPLATE = "uriTemplate";
+    private static final String MDC_STATUS_CODE = "statusCode";
+    private static final String MDC_DURATION_MS = "durationMs";
+    private static final String MDC_QUERY_COUNT = "queryCount";
+    private static final String MDC_QUERY_TIME_MS = "queryTimeMs";
+    private static final String MDC_CLIENT_IP = "clientIp";
+    private static final String MDC_EVENT = "event";
+    private static final String MDC_EXCEPTION = "exception";
+    private static final String MDC_TRACE_ID = "traceId";
+
+    private static final String EVENT_REQUEST_STARTED = "api_request_started";
+    private static final String EVENT_REQUEST_COMPLETED = "api_request_completed";
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
@@ -34,35 +55,22 @@ public class LoggingInterceptor implements HandlerInterceptor {
 
         QueryStatsHolder.init();
 
-        // URI와 Query String 조합
-        String requestUri = request.getRequestURI();
+        // requestId 발급 + MDC 등록 (단일 요청 식별자)
+        String requestId = UUID.randomUUID().toString();
+        MDC.put(MDC_REQUEST_ID, requestId);
+        MDC.put(MDC_METHOD, request.getMethod());
+        MDC.put(MDC_PATH, request.getRequestURI());
 
-        String queryString = request.getQueryString();
-        if (queryString != null) {
-            // 인코딩된 문자열을 사람이 읽을 수 있게 디코딩
-            queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
-        }
+        // 응답 헤더로 외부에 노출 (디버깅 / 운영자 grep 용)
+        response.setHeader(REQUEST_ID_HEADER, requestId);
 
-        String fullPath = (queryString != null) ? requestUri + "?" + queryString : requestUri;
-
-        log.info("[REQ] 💗 {} {}", request.getMethod(), fullPath);
-
-        log.debug("[MDC] {}", MDC.getCopyOfContextMap());
-
-        String traceId = MDC.get(TRACE_ID);
+        String traceId = MDC.get(MDC_TRACE_ID);
         if (traceId != null) {
             response.setHeader(TRACE_ID_HEADER, traceId);
         }
 
+        log.info(EVENT_REQUEST_STARTED);
         return true;
-    }
-
-    @Override
-    public void postHandle(
-        HttpServletRequest request, HttpServletResponse response,
-        Object handler, ModelAndView modelAndView
-    ) {
-        // Controller 실행 후, View 렌더링 전
     }
 
     @Override
@@ -70,32 +78,44 @@ public class LoggingInterceptor implements HandlerInterceptor {
         HttpServletRequest request, HttpServletResponse response,
         Object handler, Exception ex
     ) {
-        Instant startTime = (Instant) request.getAttribute(START_TIME_ATTR);
-        if (startTime == null) {
-            return;
-        }
+        try {
+            Instant startTime = (Instant) request.getAttribute(START_TIME_ATTR);
+            if (startTime == null) {
+                return;
+            }
 
-        long durationMs = Duration.between(startTime, Instant.now()).toMillis();
-        long queryCount = QueryStatsHolder.getQueryCount();
-        long queryTimeMs = QueryStatsHolder.getTotalTimeMs();
-        String clientIp = (String) request.getAttribute(CLIENT_IP_ATTR);
+            long durationMs = Duration.between(startTime, Instant.now()).toMillis();
+            long queryCount = QueryStatsHolder.getQueryCount();
+            long queryTimeMs = QueryStatsHolder.getTotalTimeMs();
+            QueryStatsHolder.clear();
 
-        QueryStatsHolder.clear();
+            // uriTemplate: Spring 이 매칭한 패턴 (예: /forms/{formId}/answers).
+            // path 가 가변이라 dashboard 의 P95/P99 집계가 불가능했던 문제를 해결한다.
+            Object bestMatchingPattern = request.getAttribute(
+                HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE
+            );
+            String uriTemplate = bestMatchingPattern instanceof String s ? s : "UNKNOWN";
 
-        String status = getStatusEmoji(response.getStatus());
+            String clientIp = (String) request.getAttribute(CLIENT_IP_ATTR);
 
-        log.info("[RES] {} {} {} {}ms | Query Count: {}, Time: {}ms | IP: {}",
-            status,
-            response.getStatus(),
-            request.getRequestURI(),
-            durationMs,
-            queryCount,
-            queryTimeMs,
-            clientIp
-        );
+            MDC.put(MDC_EVENT, EVENT_REQUEST_COMPLETED);
+            MDC.put(MDC_URI_TEMPLATE, uriTemplate);
+            MDC.put(MDC_STATUS_CODE, String.valueOf(response.getStatus()));
+            MDC.put(MDC_DURATION_MS, String.valueOf(durationMs));
+            MDC.put(MDC_QUERY_COUNT, String.valueOf(queryCount));
+            MDC.put(MDC_QUERY_TIME_MS, String.valueOf(queryTimeMs));
+            if (clientIp != null) {
+                MDC.put(MDC_CLIENT_IP, clientIp);
+            }
 
-        if (ex != null) {
-            log.error("  └─ Exception: {}", ex.getMessage());
+            if (ex != null) {
+                MDC.put(MDC_EXCEPTION, ex.getClass().getSimpleName());
+                log.error(EVENT_REQUEST_COMPLETED, ex);
+            } else {
+                log.info(EVENT_REQUEST_COMPLETED);
+            }
+        } finally {
+            MDC.clear();
         }
     }
 
@@ -108,18 +128,5 @@ public class LoggingInterceptor implements HandlerInterceptor {
         }
 
         return request.getRemoteAddr();
-    }
-
-    private String getStatusEmoji(int status) {
-        if (status >= 200 && status < 300) {
-            return "✅";
-        }
-        if (status >= 300 && status < 400) {
-            return "🔄";
-        }
-        if (status >= 400 && status < 500) {
-            return "⚠️";
-        }
-        return "❌";
     }
 }
