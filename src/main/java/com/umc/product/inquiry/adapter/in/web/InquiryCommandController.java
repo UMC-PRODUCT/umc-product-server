@@ -10,6 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/inquiries")
 @RequiredArgsConstructor
-@Tag(name = "Inquiry | 문의사항 Command", description = "문의 등록, 종료, 재오픈")
+@Tag(name = "Inquiry | 문의사항 Command", description = "문의 등록, 종료")
 public class InquiryCommandController {
 }

@@ -31,6 +31,9 @@ public class InquiryMessage extends BaseEntity {
     @Column(name = "inquiry_id", nullable = false)
     private Long inquiryId;
 
+    // 발신자 유형 (INQUIRER / RESPONDER). 두 가지 목적으로 사용된다.
+    // (1) 채팅 UI에서 말풍선 렌더링 방향 결정 (좌/우)
+    // (2) RESPONDER 첫 메시지 감지 → Inquiry.startProgress() 자동 트리거
     @Column(name = "sender_type", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private InquiryMessageSenderType senderType;
@@ -41,6 +44,9 @@ public class InquiryMessage extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    /**
+     * 문의 메시지를 생성한다.
+     */
     public static InquiryMessage create(
         Long inquiryId,
         InquiryMessageSenderType senderType,

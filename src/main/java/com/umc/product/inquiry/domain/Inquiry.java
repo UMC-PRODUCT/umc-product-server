@@ -46,10 +46,12 @@ public class Inquiry extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private InquiryTarget target;
 
+    // 상태 전환은 반드시 도메인 메서드(startProgress / close / reopen)를 통해서만 가능.
     @Column(name = "status", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
     private InquiryStatus status;
 
+    // 수정/삭제는 정책상 전면 불가
     @Column(name = "author_challenger_id", nullable = false)
     private Long authorChallengerId;
 
@@ -88,7 +90,7 @@ public class Inquiry extends BaseEntity {
     }
 
     /**
-     * RECEIVED → IN_PROGRESS 전환. RECEIVED 상태에서만 호출 가능하다.
+     * RECEIVED → IN_PROGRESS 전환. RESPONDER의 첫 메시지 전송 시 자동 호출된다.
      */
     public void startProgress() {
         if (this.status != InquiryStatus.RECEIVED) {
@@ -98,7 +100,7 @@ public class Inquiry extends BaseEntity {
     }
 
     /**
-     * RECEIVED 또는 IN_PROGRESS → CLOSED 전환. 이미 CLOSED이면 예외를 던진다.
+     * RECEIVED 또는 IN_PROGRESS → CLOSED 전환. 운영진이 명시적으로 호출한다..
      */
     public void close() {
         if (this.status == InquiryStatus.CLOSED) {
@@ -108,7 +110,9 @@ public class Inquiry extends BaseEntity {
     }
 
     /**
-     * CLOSED → IN_PROGRESS 전환. 문의자 또는 운영진이 메시지를 전송할 때 자동으로 호출된다.
+     * CLOSED → IN_PROGRESS 전환.
+     * <p>
+     * 카카오톡 채널 방식을 따름: 문의자/운영진 구분 없이 메시지 전송 시 자동 호출. 수동 재오픈 API는 제공하지 않으며, SendInquiryMessageUseCase에서 처리한다.
      */
     public void reopen() {
         if (this.status != InquiryStatus.CLOSED) {

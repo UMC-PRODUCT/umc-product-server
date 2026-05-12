@@ -34,6 +34,9 @@ public class InquiryMessageAttachment extends BaseEntity {
         this.fileMetadataId = fileMetadataId;
     }
 
+    /**
+     * 메시지 첨부파일 레코드를 생성한다.
+     */
     public static InquiryMessageAttachment of(Long inquiryMessageId, String fileMetadataId) {
         return InquiryMessageAttachment.builder()
             .inquiryMessageId(inquiryMessageId)

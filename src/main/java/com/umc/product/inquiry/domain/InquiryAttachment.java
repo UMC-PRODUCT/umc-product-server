@@ -34,6 +34,9 @@ public class InquiryAttachment extends BaseEntity {
         this.fileMetadataId = fileMetadataId;
     }
 
+    /**
+     * 문의 첨부파일 레코드를 생성한다.
+     */
     public static InquiryAttachment of(Long inquiryId, String fileMetadataId) {
         return InquiryAttachment.builder()
             .inquiryId(inquiryId)
