@@ -279,7 +279,10 @@ app:
       key-id: ${APPLE_KEY_ID}
       private-key: ${APPLE_PRIVATE_KEY}
     kakao:
+      client-id: ${KAKAO_CLIENT_ID:}
+      client-secret: ${KAKAO_CLIENT_SECRET:}
       admin-key: ${KAKAO_ADMIN_KEY:}
+      allowed-redirect-uris: ${KAKAO_ALLOWED_REDIRECT_URIS:}
     frontend-redirect-url: ${OAUTH2_FRONTEND_REDIRECT_URL}
 
 storage:

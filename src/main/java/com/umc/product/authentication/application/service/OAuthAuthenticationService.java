@@ -3,6 +3,7 @@ package com.umc.product.authentication.application.service;
 import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
+import com.umc.product.authentication.application.port.in.command.dto.AuthorizationCodeLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthCommand;
 import com.umc.product.authentication.application.port.in.command.dto.OAuthTokenLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.UnlinkOAuthCommand;
@@ -81,6 +82,27 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         );
 
         log.info("OAuth 토큰 검증 성공: provider={}, providerId={}, email={}",
+            oauthAttrs.getProvider(),
+            oauthAttrs.getProviderId(),
+            oauthAttrs.getEmail()
+        );
+
+        // 2. 공통 비즈니스 로직 재사용
+        return loginWithOAuth2Attributes(oauthAttrs);
+    }
+
+    @Override
+    public OAuthTokenLoginResult authorizationCodeLogin(AuthorizationCodeLoginCommand command) {
+        log.info("Authorization Code 기반 OAuth 로그인 시도: provider={}", command.provider());
+
+        // 1. Authorization Code 교환 및 사용자 정보 추출 (Port Out 호출)
+        OAuth2Attributes oauthAttrs = verifyIdTokenPort.verifyAuthorizationCode(
+            command.provider(),
+            command.authorizationCode(),
+            command.redirectUri()
+        );
+
+        log.info("OAuth Authorization Code 교환 성공: provider={}, providerId={}, email={}",
             oauthAttrs.getProvider(),
             oauthAttrs.getProviderId(),
             oauthAttrs.getEmail()
