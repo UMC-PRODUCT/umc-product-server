@@ -6,6 +6,8 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.umc.product.global.security.MemberPrincipal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
@@ -16,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.servlet.HandlerMapping;
 
 /**
@@ -46,8 +50,9 @@ class LoggingInterceptorTest {
     @AfterEach
     void tearDown() {
         interceptorLogger.detachAppender(listAppender);
-        // 테스트 간 MDC 누수 방지
+        // 테스트 간 MDC / SecurityContext 누수 방지
         MDC.clear();
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -122,6 +127,40 @@ class LoggingInterceptorTest {
         // when / then — 예외 없이 통과
         interceptor.afterCompletion(request, response, new Object(), null);
         assertThat(MDC.getCopyOfContextMap()).isNullOrEmpty();
+    }
+
+    @Test
+    @DisplayName("인증된 MemberPrincipal 이 있으면 memberId 가 MDC userId 로 채워진다")
+    void preHandle_인증된_사용자_userId_MDC_등록() {
+        // given
+        MemberPrincipal principal = new MemberPrincipal(42L);
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+            principal, null, Collections.emptyList()
+        );
+        SecurityContextHolder.getContext().setAuthentication(auth);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/forms/123");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        // when
+        interceptor.preHandle(request, response, new Object());
+
+        // then
+        assertThat(MDC.get("userId")).isEqualTo("42");
+    }
+
+    @Test
+    @DisplayName("익명 사용자는 MDC userId 가 채워지지 않는다")
+    void preHandle_익명_사용자_userId_MDC_미등록() {
+        // given — SecurityContext 가 비어있는 상태
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/forms/123");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        // when
+        interceptor.preHandle(request, response, new Object());
+
+        // then
+        assertThat(MDC.get("userId")).isNull();
     }
 
     @Test

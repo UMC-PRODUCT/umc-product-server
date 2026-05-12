@@ -1,5 +1,6 @@
 package com.umc.product.global.config;
 
+import com.umc.product.global.security.MemberPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
@@ -7,6 +8,8 @@ import java.time.Instant;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.HandlerMapping;
@@ -32,6 +35,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
 
     // ===== MDC keys (ADR-016 §MDC 키 표준) =====
     private static final String MDC_REQUEST_ID = "requestId";
+    private static final String MDC_USER_ID = "userId";
     private static final String MDC_METHOD = "method";
     private static final String MDC_PATH = "path";
     private static final String MDC_URI_TEMPLATE = "uriTemplate";
@@ -69,8 +73,31 @@ public class LoggingInterceptor implements HandlerInterceptor {
             response.setHeader(TRACE_ID_HEADER, traceId);
         }
 
+        // 인증된 사용자라면 memberId 를 MDC userId 로 등록.
+        // 익명 사용자는 userId 를 비워둠 — Loki 에서 `userId is null` 로 익명 트래픽 식별.
+        putUserIdToMdcIfAuthenticated();
+
         log.info(EVENT_REQUEST_STARTED);
         return true;
+    }
+
+    /**
+     * SecurityContextHolder 에서 인증된 {@link MemberPrincipal} 을 조회해 MDC {@code userId} 를 채운다.
+     *
+     * <p>Filter 가 아니라 Interceptor 에서 채우는 이유:
+     * <ul>
+     *     <li>MDC 의 lifecycle (put / clear) 이 Interceptor 한 곳에 모여 누수 위험이 줄어든다.</li>
+     *     <li>인증 책임은 Filter, 로그 컨텍스트 책임은 Interceptor 로 분리된다.</li>
+     * </ul>
+     */
+    private void putUserIdToMdcIfAuthenticated() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return;
+        }
+        if (authentication.getPrincipal() instanceof MemberPrincipal memberPrincipal) {
+            MDC.put(MDC_USER_ID, String.valueOf(memberPrincipal.getMemberId()));
+        }
     }
 
     @Override
