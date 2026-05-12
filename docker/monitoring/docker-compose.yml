@@ -82,10 +82,35 @@ services:
     networks: [monitoring]
     restart: unless-stopped
 
+  # --- Visualization ---
+  # provisioning/ 디렉터리가 컨테이너 안의 /etc/grafana/provisioning 으로 마운트되어
+  # datasource (datasources.yaml) 와 dashboard provider (dashboards/dashboards.yaml) 가
+  # 컨테이너 부팅 시 자동 등록된다. 실제 dashboard JSON 들은 dashboards/ 로 마운트.
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: umc-product-grafana
+    volumes:
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SERVER_ROOT_URL=${GRAFANA_ROOT_URL:-http://localhost:3000}
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+    networks: [monitoring]
+    restart: unless-stopped
+
 volumes:
   prometheus-data:
   tempo-data:
   loki-data:
+  grafana-data:
 
 networks:
   monitoring:
