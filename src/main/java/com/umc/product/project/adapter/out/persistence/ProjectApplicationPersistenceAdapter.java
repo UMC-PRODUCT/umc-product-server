@@ -7,6 +7,7 @@ import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -83,6 +84,16 @@ public class ProjectApplicationPersistenceAdapter implements LoadProjectApplicat
     @Override
     public ProjectApplication save(ProjectApplication application) {
         return projectApplicationJpaRepository.save(application);
+    }
+
+    @Override
+    public List<ProjectApplication> saveAll(Collection<ProjectApplication> applications) {
+        return projectApplicationJpaRepository.saveAll(applications);
+    }
+
+    @Override
+    public List<ProjectApplication> listByMatchingRoundId(Long matchingRoundId) {
+        return projectApplicationJpaRepository.findAllByAppliedMatchingRound_Id(matchingRoundId);
     }
 
     @Override

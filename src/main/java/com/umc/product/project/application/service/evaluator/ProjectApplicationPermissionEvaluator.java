@@ -118,14 +118,24 @@ public class ProjectApplicationPermissionEvaluator implements ResourcePermission
         };
     }
 
-    /** 합불 결정. 부모 프로젝트의 PO + SUBMITTED 상태에서만. (자동 매칭 스케줄러는 권한 모델 외) */
+    /**
+     * 합불 결정. 부모 프로젝트의 PO 가 SUBMITTED / APPROVED / REJECTED 상태에서 자유롭게 토글한다.
+     * 차수 진행 중 잠금 해제는 도메인 메서드({@code ProjectMatchingRound.validateIsMutableAt}) 가 책임진다.
+     * (자동 매칭 스케줄러는 권한 모델 외)
+     */
     private boolean canApprove(SubjectAttributes subject, ResourcePermission permission) {
         ProjectApplication application = loadApplication(permission);
-        if (application.getStatus() != ProjectApplicationStatus.SUBMITTED) {
+        if (!isDecidableStatus(application.getStatus())) {
             return false;
         }
         Project project = application.getApplicationForm().getProject();
         return isOwner(subject, project);
+    }
+
+    private boolean isDecidableStatus(ProjectApplicationStatus status) {
+        return status == ProjectApplicationStatus.SUBMITTED
+            || status == ProjectApplicationStatus.APPROVED
+            || status == ProjectApplicationStatus.REJECTED;
     }
 
     private boolean isApplicant(SubjectAttributes subject, ProjectApplication application) {

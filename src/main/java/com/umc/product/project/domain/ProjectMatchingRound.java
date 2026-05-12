@@ -240,4 +240,18 @@ public class ProjectMatchingRound extends BaseEntity {
     public boolean isDecisionDeadlinePassed(Instant now) {
         return decisionDeadline.isBefore(now);
     }
+
+    /**
+     * PM 의 합/불 토글이 허용되는 시점인지 검증합니다.
+     * <p>
+     * {@code startsAt <= now <= decisionDeadline} 범위에서만 mutable.
+     * 차수 시작 전이거나 결정 마감을 넘긴 경우 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_LOCKED} 도메인 예외를 던집니다.
+     *
+     * @param now 기준 시각
+     */
+    public void validateIsMutableAt(Instant now) {
+        if (now.isBefore(startsAt) || now.isAfter(decisionDeadline)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED);
+        }
+    }
 }

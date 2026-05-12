@@ -5,6 +5,7 @@ import com.umc.product.project.domain.enums.ProjectApplicationStatus;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import com.umc.product.survey.domain.FormResponse;
+import java.time.Instant;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -105,13 +106,17 @@ public class ProjectApplication extends BaseEntity {
     }
 
     /**
-     * 지원서를 합격시킬 때 사용합니다.
+     * 지원서를 합격 처리합니다.
+     * <p>
+     * 매칭 차수가 진행 중인 동안 PM 이 자유롭게 토글할 수 있으며, REJECTED 또는 APPROVED 상태에서도 재호출 가능합니다.
+     * 차수 종료 후엔 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_LOCKED} 가 발생합니다.
      *
      * @param decidedByMemberId 결정한 PO 또는 운영진 ID
      * @param reason            결정 사유 (필수 아님)
      */
     public void approve(Long decidedByMemberId, String reason) {
-        validateIsSubmitted("지원서가 제출된 상태에서만 합격 처리할 수 있습니다.");
+        validateCanBeDecided();
+        appliedMatchingRound.validateIsMutableAt(Instant.now());
 
         this.status = ProjectApplicationStatus.APPROVED;
         this.statusChangedMemberId = decidedByMemberId;
@@ -120,18 +125,75 @@ public class ProjectApplication extends BaseEntity {
     }
 
     /**
-     * 지원서를 불합격시킬 때 사용합니다.
+     * 지원서를 불합격 처리합니다.
+     * <p>
+     * 매칭 차수가 진행 중인 동안 PM 이 자유롭게 토글할 수 있으며, APPROVED 또는 REJECTED 상태에서도 재호출 가능합니다.
+     * 차수 종료 후엔 {@link ProjectErrorCode#PROJECT_MATCHING_ROUND_LOCKED} 가 발생합니다.
      *
      * @param decidedByMemberId 결정한 PO 또는 운영진 ID
      * @param reason            결정 사유 (필수 아님)
      */
     public void reject(Long decidedByMemberId, String reason) {
-        validateIsSubmitted("지원서가 제출된 상태에서만 불합격 처리할 수 있습니다.");
+        validateCanBeDecided();
+        appliedMatchingRound.validateIsMutableAt(Instant.now());
 
         this.status = ProjectApplicationStatus.REJECTED;
         this.statusChangedMemberId = decidedByMemberId;
         this.statusChangeReason = reason;
         this.statusChangedAt = Instant.now();
+    }
+
+    /**
+     * 차수 종료 시점의 자동 선발 결과를 반영합니다.
+     * <p>
+     * PM 의 단건 토글({@link #approve}/{@link #reject})과 달리 차수 잠금 검증을 거치지 않으며,
+     * 정책에 따라 도출된 최종 status (APPROVED 또는 REJECTED) 를 그대로 적용합니다.
+     * <p>
+     * 호출자: 자동 선발 서비스 (스케줄러 / 운영진 수동 트리거 공용).
+     *
+     * @param targetStatus      APPROVED 또는 REJECTED 만 허용
+     * @param executedByMemberId 자동 선발을 실행한 운영진 ID. 스케줄러 호출 시 {@code null}
+     */
+    public void applyAutoDecision(ProjectApplicationStatus targetStatus, Long executedByMemberId) {
+        validateCanBeDecided();
+        if (targetStatus != ProjectApplicationStatus.APPROVED
+            && targetStatus != ProjectApplicationStatus.REJECTED) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
+        }
+        this.status = targetStatus;
+        this.statusChangedMemberId = executedByMemberId;
+        this.statusChangeReason = "auto-decide";
+        this.statusChangedAt = Instant.now();
+    }
+
+    /**
+     * APPROVED / REJECTED 결정을 SUBMITTED ("대기") 로 되돌립니다.
+     * <p>
+     * UI 상의 "대기" 옵션이며, 차수 진행 중에만 호출 가능합니다.
+     *
+     * @param revertedByMemberId 되돌린 PO 또는 운영진 ID
+     */
+    public void revertToPending(Long revertedByMemberId) {
+        if (status != ProjectApplicationStatus.APPROVED && status != ProjectApplicationStatus.REJECTED) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
+        }
+        appliedMatchingRound.validateIsMutableAt(Instant.now());
+
+        this.status = ProjectApplicationStatus.SUBMITTED;
+        this.statusChangedMemberId = revertedByMemberId;
+        this.statusChangeReason = null;
+        this.statusChangedAt = Instant.now();
+    }
+
+    /**
+     * 합/불 결정 대상이 되는 status 인지 검증합니다. SUBMITTED / APPROVED / REJECTED 만 통과합니다.
+     */
+    private void validateCanBeDecided() {
+        if (status != ProjectApplicationStatus.SUBMITTED
+            && status != ProjectApplicationStatus.APPROVED
+            && status != ProjectApplicationStatus.REJECTED) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION);
+        }
     }
 
     /**

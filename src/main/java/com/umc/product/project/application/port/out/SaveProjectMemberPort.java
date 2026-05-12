@@ -1,6 +1,8 @@
 package com.umc.product.project.application.port.out;
 
 import com.umc.product.project.domain.ProjectMember;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * ProjectMember 영속화 Port (Driven / Port Out).
@@ -11,6 +13,11 @@ import com.umc.product.project.domain.ProjectMember;
 public interface SaveProjectMemberPort {
 
     ProjectMember save(ProjectMember member);
+
+    /**
+     * 여러 멤버를 한 번에 저장합니다. 자동 선발 등 batch 컨텍스트에서 N개 INSERT 를 줄이기 위해 사용합니다.
+     */
+    List<ProjectMember> saveAll(Collection<ProjectMember> members);
 
     /**
      * 프로젝트 멤버 row 를 DB 에서 완전 삭제합니다.

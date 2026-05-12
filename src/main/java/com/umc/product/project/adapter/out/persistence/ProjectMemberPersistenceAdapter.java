@@ -27,6 +27,11 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     }
 
     @Override
+    public List<ProjectMember> saveAll(Collection<ProjectMember> members) {
+        return repository.saveAll(members);
+    }
+
+    @Override
     public void hardDelete(Long projectMemberId) {
         repository.deleteById(projectMemberId);
     }

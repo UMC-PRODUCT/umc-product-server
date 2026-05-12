@@ -49,6 +49,11 @@ public interface LoadProjectApplicationPort {
     );
 
     /**
+     * 매칭 차수에 속한 모든 지원서를 조회합니다. 자동 선발 알고리즘 입력으로 사용됩니다.
+     */
+    List<ProjectApplication> listByMatchingRoundId(Long matchingRoundId);
+
+    /**
      * 지원서 단건을 fetch join 으로 조회한다.
      * <p>
      * applicationForm -> project, appliedMatchingRound 를 한 번에 로드하여 호출자가 lazy 프록시 traversal 없이
