@@ -4,6 +4,8 @@ import com.umc.product.common.BaseEntity;
 import com.umc.product.inquiry.domain.enums.InquiryCategory;
 import com.umc.product.inquiry.domain.enums.InquiryStatus;
 import com.umc.product.inquiry.domain.enums.InquiryTarget;
+import com.umc.product.inquiry.domain.exception.InquiryDomainException;
+import com.umc.product.inquiry.domain.exception.InquiryErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -69,14 +71,23 @@ public class Inquiry extends BaseEntity {
     }
 
     public void startProgress() {
+        if (this.status != InquiryStatus.RECEIVED) {
+            throw new InquiryDomainException(InquiryErrorCode.INQUIRY_INVALID_STATUS_FOR_PROGRESS);
+        }
         this.status = InquiryStatus.IN_PROGRESS;
     }
 
     public void close() {
+        if (this.status == InquiryStatus.CLOSED) {
+            throw new InquiryDomainException(InquiryErrorCode.INQUIRY_ALREADY_CLOSED);
+        }
         this.status = InquiryStatus.CLOSED;
     }
 
     public void reopen() {
-        this.status = InquiryStatus.RECEIVED;
+        if (this.status != InquiryStatus.CLOSED) {
+            throw new InquiryDomainException(InquiryErrorCode.INQUIRY_INVALID_STATUS_FOR_REOPEN);
+        }
+        this.status = InquiryStatus.IN_PROGRESS;
     }
 }
