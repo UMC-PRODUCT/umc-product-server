@@ -163,6 +163,7 @@ public class ProjectApplication extends BaseEntity {
         this.status = targetStatus;
         this.statusChangedMemberId = executedByMemberId;
         this.statusChangeReason = "auto-decide";
+        this.statusChangedAt = Instant.now();
     }
 
     /**
@@ -181,6 +182,7 @@ public class ProjectApplication extends BaseEntity {
         this.status = ProjectApplicationStatus.SUBMITTED;
         this.statusChangedMemberId = revertedByMemberId;
         this.statusChangeReason = null;
+        this.statusChangedAt = Instant.now();
     }
 
     /**
