@@ -1,0 +1,74 @@
+# 자체 호스팅 모니터링 스택 (ADR-014 Phase 1)
+#
+# 본 compose 파일은 자체 호스팅 백엔드 (prometheus / tempo / loki) 만 정의한다.
+# OTLP 게이트웨이 (otel-collector), Grafana, alertmanager, node-exporter 는
+# 후속 커밋에서 추가된다.
+#
+# 동작 검증:
+#   cp env.example .env && docker compose up -d prometheus tempo loki
+name: umc-product-monitoring
+
+services:
+
+  # --- Metric backend ---
+  # OTLP write receiver 가 활성화되어 있어, 앱 / otel-collector 가
+  # http://prometheus:9090/api/v1/otlp/v1/metrics 로 OTLP push 를 보낼 수 있다.
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    container_name: umc-product-prometheus
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=14d
+      - --enable-feature=otlp-write-receiver
+      - --web.enable-lifecycle
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    networks: [monitoring]
+    restart: unless-stopped
+
+  # --- Trace backend ---
+  # 4317 (gRPC) / 4318 (HTTP) 로 OTLP 직접 수신 가능. 단, 운영 앱은 본 ADR-014 의
+  # 권장대로 otel-collector 를 거치게 하고, tempo 의 OTLP 포트는 호스트로 노출만 해둔다.
+  tempo:
+    image: grafana/tempo:2.6.0
+    container_name: umc-product-tempo
+    command: [ "-config.file=/etc/tempo.yml" ]
+    volumes:
+      - ./config/tempo/tempo.yml:/etc/tempo.yml:ro
+      - tempo-data:/var/tempo
+    ports:
+      - "${TEMPO_HTTP_PORT:-3200}:3200"
+      - "${TEMPO_OTLP_GRPC_PORT:-14317}:4317"
+      - "${TEMPO_OTLP_HTTP_PORT:-14318}:4318"
+    networks: [monitoring]
+    restart: unless-stopped
+
+  # --- Log backend ---
+  # 두 수신 경로를 모두 지원한다.
+  #   1) Loki push API: http://loki:3100/loki/api/v1/push   ← 기존 loki4j 어펜더
+  #   2) OTLP logs:     http://loki:3100/otlp/v1/logs        ← otel-collector 경유
+  loki:
+    image: grafana/loki:3.2.0
+    container_name: umc-product-loki
+    command: [ "-config.file=/etc/loki/local-config.yaml" ]
+    volumes:
+      - ./config/loki/loki.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    ports:
+      - "${LOKI_PORT:-3100}:3100"
+    networks: [monitoring]
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  tempo-data:
+  loki-data:
+
+networks:
+  monitoring:
+    name: umc-product-monitoring
+    driver: bridge

@@ -1,0 +1,27 @@
+# Prometheus config — 자체 호스팅 메트릭 백엔드 (ADR-014 Phase 1)
+#
+# 본 스택에서 prometheus 는 두 가지 수신 경로를 가진다.
+#   1) OTLP write receiver: /api/v1/otlp/v1/metrics
+#      앱 / otel-collector 가 OTLP push 로 메트릭을 보낼 수 있다.
+#      활성화는 docker-compose 의 --enable-feature=otlp-write-receiver 가 담당.
+#   2) Scrape (pull): 본 파일의 scrape_configs.
+#      prometheus 자신과 node-exporter 만 scrape 한다. 앱 메트릭은 OTLP push 로 받는다.
+
+global:
+  scrape_interval: 30s
+  evaluation_interval: 30s
+  external_labels:
+    cluster: umc-product-self-hosted
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: [ 'localhost:9090' ]
+
+  # node-exporter 는 후속 커밋에서 추가된다 (Commit 5). 그 전까지는 endpoint 가 없어
+  # "context deadline exceeded" 류 오류가 발생할 수 있지만 prometheus 자체 동작에는 영향 없다.
+  - job_name: node-exporter
+    static_configs:
+      - targets: [ 'node-exporter:9100' ]
+
+# alerting / rule_files 는 alertmanager 도입 (Commit 5) 시점에 함께 채운다.
