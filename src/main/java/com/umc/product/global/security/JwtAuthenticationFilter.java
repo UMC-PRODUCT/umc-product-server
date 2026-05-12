@@ -39,7 +39,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     Long memberId = jwtTokenProvider.parseAccessToken(token);
                     List<String> roles = jwtTokenProvider.getRolesFromAccessToken(token);
 
-                    log.info("JWT TOKEN Authenticated: memberId={}", memberId);
+                    // ADR-016: 모든 요청은 LoggingInterceptor 가 api_request_completed JSON 라인에
+                    // userId(=memberId) 를 MDC 로 포함하므로 인증 한 줄 텍스트 로그는 중복이다.
+                    // 토큰 검증 흐름 디버깅이 필요한 경우에만 보이도록 DEBUG 로 강등.
+                    log.debug("JWT authenticated: memberId={}", memberId);
 
                     MemberPrincipal memberPrincipal = new MemberPrincipal(memberId);
 
