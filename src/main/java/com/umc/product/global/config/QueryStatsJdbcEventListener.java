@@ -18,10 +18,10 @@ public class QueryStatsJdbcEventListener extends JdbcEventListener {
     public void onAfterExecuteQuery(
         PreparedStatementInformation info, long timeElapsedNanos, SQLException e
     ) {
-        log.debug(
-            "[executeQuery] sql={}, elapsed={} ms",
-            info.getSqlWithValues(), timeElapsedNanos / 1_000_000.0
-        );
+//        log.trace(
+//            "[executeQuery] sql={}, elapsed={} ms",
+//            info.getSqlWithValues(), timeElapsedNanos / 1_000_000.0
+//        );
 
         record(timeElapsedNanos, e);
     }

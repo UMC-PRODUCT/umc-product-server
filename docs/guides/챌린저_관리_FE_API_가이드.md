@@ -1,11 +1,12 @@
 # 챌린저 관리 FE API 가이드
 
-> 작성일: 2026-05-06
+> 작성일: 2026-05-06 / 최종 수정: 2026-05-08
 >
-> 본 문서는 두 가지 플로우에 사용되는 백엔드 API의 request/response 스펙을 FE 관점에서 정리한 것입니다.
+> 본 문서는 세 가지 플로우에 사용되는 백엔드 API의 request/response 스펙을 FE 관점에서 정리한 것입니다.
 >
 > - **플로우 A — 운영진 흐름**: 회원 검색 → 회원의 챌린저 기록 조회 → 특정 챌린저 기록 상세 → 상벌점 부여
 > - **플로우 B — 챌린저 기록 부여 및 정보 조회**: 6자리 코드 발급/사용/조회 + 신규 챌린저 등록
+> - **플로우 C — 챌린저 기록 수정/삭제 및 운영진 기록 관리**: 챌린저 파트 변경, 비활성화, 삭제 + 운영진 역할 기록 관리
 
 ---
 
@@ -28,10 +29,12 @@
 
 ```json
 {
-  "success": true,
-  "code": "COMMON-200",
-  "message": "성공입니다.",
-  "result": <컨트롤러가 리턴한 값>
+    "success": true,
+    "code": "COMMON-200",
+    "message": "성공입니다.",
+    "result": <컨트롤러가
+    리턴한
+    값>
 }
 ```
 
@@ -39,10 +42,10 @@
 
 ```json
 {
-  "success": false,
-  "code": "CHALLENGER-0001",
-  "message": "챌린저를 찾을 수 없습니다.",
-  "result": null
+    "success": false,
+    "code": "CHALLENGER-0001",
+    "message": "챌린저를 찾을 수 없습니다.",
+    "result": null
 }
 ```
 
@@ -56,13 +59,15 @@
 
 ```json
 {
-  "content": [ /* T[] */ ],
-  "page": 0,
-  "size": 20,
-  "totalElements": 153,
-  "totalPages": 8,
-  "hasNext": true,
-  "hasPrevious": false
+    "content": [
+        /* T[] */
+    ],
+    "page": 0,
+    "size": 20,
+    "totalElements": 153,
+    "totalPages": 8,
+    "hasNext": true,
+    "hasPrevious": false
 }
 ```
 
@@ -74,9 +79,11 @@
 
 ```json
 {
-  "content": [ /* T[] */ ],
-  "nextCursor": 12345,
-  "hasNext": true
+    "content": [
+        /* T[] */
+    ],
+    "nextCursor": 12345,
+    "hasNext": true
 }
 ```
 
@@ -167,31 +174,33 @@ GET /api/v1/member/search
 
 ```json
 {
-  "totalCount": 153,
-  "page": {
-    "content": [
-      {
-        "memberId": 12,
-        "name": "홍길동",
-        "nickname": "gildong",
-        "email": null,
-        "schoolId": 1,
-        "schoolName": "가천대학교",
-        "profileImageLink": "https://.../profile.png",
-        "challengerId": 401,
-        "gisuId": 9,
-        "gisu": 9,
-        "part": "WEB",
-        "roleTypes": ["SCHOOL_PART_LEADER"]
-      }
-    ],
-    "page": 0,
-    "size": 20,
-    "totalElements": 153,
-    "totalPages": 8,
-    "hasNext": true,
-    "hasPrevious": false
-  }
+    "totalCount": 153,
+    "page": {
+        "content": [
+            {
+                "memberId": 12,
+                "name": "홍길동",
+                "nickname": "gildong",
+                "email": null,
+                "schoolId": 1,
+                "schoolName": "가천대학교",
+                "profileImageLink": "https://.../profile.png",
+                "challengerId": 401,
+                "gisuId": 9,
+                "gisu": 9,
+                "part": "WEB",
+                "roleTypes": [
+                    "SCHOOL_PART_LEADER"
+                ]
+            }
+        ],
+        "page": 0,
+        "size": 20,
+        "totalElements": 153,
+        "totalPages": 8,
+        "hasNext": true,
+        "hasPrevious": false
+    }
 }
 ```
 
@@ -225,50 +234,50 @@ GET /api/v1/member/profile/{memberId}
 
 ```json
 {
-  "id": 12,
-  "name": "홍길동",
-  "nickname": "gildong",
-  "email": null,
-  "schoolId": 1,
-  "schoolName": "가천대학교",
-  "profileImageLink": "https://.../profile.png",
-  "status": null,
-  "roles": [
-    {
-      "id": 88,
-      "challengerId": 401,
-      "roleType": "SCHOOL_PART_LEADER",
-      "organizationType": "SCHOOL",
-      "organizationId": 1,
-      "responsiblePart": "WEB",
-      "gisuId": 9
-    }
-  ],
-  "challengerRecords": [
-    {
-      "challengerId": 401,
-      "memberId": 12,
-      "gisuId": 9,
-      "gisu": 9,
-      "chapterId": 3,
-      "chapterName": "수도권",
-      "part": "WEB",
-      "challengerStatus": "ACTIVE",
-      "points": [],
-      "challengerPoints": [],
-      "totalPoints": 0.0,
-      "roles": [],
-      "name": "홍길동",
-      "nickname": "gildong",
-      "email": null,
-      "schoolId": 1,
-      "schoolName": "가천대학교",
-      "profileImageLink": "https://.../profile.png",
-      "memberStatus": null,
-      "status": null
-    }
-  ],
-  "profile": null
+    "id": 12,
+    "name": "홍길동",
+    "nickname": "gildong",
+    "email": null,
+    "schoolId": 1,
+    "schoolName": "가천대학교",
+    "profileImageLink": "https://.../profile.png",
+    "status": null,
+    "roles": [
+        {
+            "id": 88,
+            "challengerId": 401,
+            "roleType": "SCHOOL_PART_LEADER",
+            "organizationType": "SCHOOL",
+            "organizationId": 1,
+            "responsiblePart": "WEB",
+            "gisuId": 9
+        }
+    ],
+    "challengerRecords": [
+        {
+            "challengerId": 401,
+            "memberId": 12,
+            "gisuId": 9,
+            "gisu": 9,
+            "chapterId": 3,
+            "chapterName": "수도권",
+            "part": "WEB",
+            "challengerStatus": "ACTIVE",
+            "points": [],
+            "challengerPoints": [],
+            "totalPoints": 0.0,
+            "roles": [],
+            "name": "홍길동",
+            "nickname": "gildong",
+            "email": null,
+            "schoolId": 1,
+            "schoolName": "가천대학교",
+            "profileImageLink": "https://.../profile.png",
+            "memberStatus": null,
+            "status": null
+        }
+    ],
+    "profile": null
 }
 ```
 
@@ -304,46 +313,48 @@ GET /api/v1/challenger/{challengerId}
 
 ```json
 {
-  "challengerId": 401,
-  "memberId": 12,
-  "gisuId": 9,
-  "gisu": 9,
-  "chapterId": 3,
-  "chapterName": "수도권",
-  "part": "WEB",
-  "challengerStatus": "ACTIVE",
-  "points": [
-    {
-      "id": 9001,
-      "challengerId": 401,
-      "pointType": "STUDY_LATE",
-      "point": -2.0,
-      "description": "5/2 스터디 15분 지각",
-      "createdAt": "2026-05-02T13:05:00Z"
-    }
-  ],
-  "challengerPoints": [ /* 위와 동일, deprecated */ ],
-  "totalPoints": -2.0,
-  "roles": [
-    {
-      "challengerRoleId": 88,
-      "challengerId": 401,
-      "roleType": "SCHOOL_PART_LEADER",
-      "organizationType": "SCHOOL",
-      "organizationId": 1,
-      "responsiblePart": "WEB",
-      "gisuId": 9,
-      "gisu": 9
-    }
-  ],
-  "name": "홍길동",
-  "nickname": "gildong",
-  "email": null,
-  "schoolId": 1,
-  "schoolName": "가천대학교",
-  "profileImageLink": "https://.../profile.png",
-  "memberStatus": "ACTIVE",
-  "status": "ACTIVE"
+    "challengerId": 401,
+    "memberId": 12,
+    "gisuId": 9,
+    "gisu": 9,
+    "chapterId": 3,
+    "chapterName": "수도권",
+    "part": "WEB",
+    "challengerStatus": "ACTIVE",
+    "points": [
+        {
+            "id": 9001,
+            "challengerId": 401,
+            "pointType": "STUDY_LATE",
+            "point": -2.0,
+            "description": "5/2 스터디 15분 지각",
+            "createdAt": "2026-05-02T13:05:00Z"
+        }
+    ],
+    "challengerPoints": [
+        /* 위와 동일, deprecated */
+    ],
+    "totalPoints": -2.0,
+    "roles": [
+        {
+            "challengerRoleId": 88,
+            "challengerId": 401,
+            "roleType": "SCHOOL_PART_LEADER",
+            "organizationType": "SCHOOL",
+            "organizationId": 1,
+            "responsiblePart": "WEB",
+            "gisuId": 9,
+            "gisu": 9
+        }
+    ],
+    "name": "홍길동",
+    "nickname": "gildong",
+    "email": null,
+    "schoolId": 1,
+    "schoolName": "가천대학교",
+    "profileImageLink": "https://.../profile.png",
+    "memberStatus": "ACTIVE",
+    "status": "ACTIVE"
 }
 ```
 
@@ -386,9 +397,9 @@ Content-Type: application/json
 
 ```json
 {
-  "pointType": "STUDY_LATE",
-  "pointValue": null,
-  "description": "5/2 스터디 15분 지각"
+    "pointType": "STUDY_LATE",
+    "pointValue": null,
+    "description": "5/2 스터디 15분 지각"
 }
 ```
 
@@ -396,9 +407,9 @@ Content-Type: application/json
 
 ```json
 {
-  "pointType": "CUSTOM",
-  "pointValue": -3,
-  "description": "가천대 자체 규정 위반"
+    "pointType": "CUSTOM",
+    "pointValue": -3,
+    "description": "가천대 자체 규정 위반"
 }
 ```
 
@@ -440,7 +451,9 @@ Content-Type: application/json
 | `newDescription` | string | ✅  | 변경할 사유 |
 
 ```json
-{ "newDescription": "5/2 스터디 12분 지각으로 정정" }
+{
+    "newDescription": "5/2 스터디 12분 지각으로 정정"
+}
 ```
 
 ### 응답
@@ -448,7 +461,12 @@ Content-Type: application/json
 `204 No Content` — `result: null`
 
 ```json
-{ "success": true, "code": "COMMON-200", "message": "성공입니다.", "result": null }
+{
+    "success": true,
+    "code": "COMMON-200",
+    "message": "성공입니다.",
+    "result": null
+}
 ```
 
 **주요 에러:**
@@ -509,35 +527,58 @@ GET /api/v1/challenger/search/cursor
 
 ```json
 {
-  "cursor": {
-    "content": [
-      {
-        "challengerId": 401,
-        "memberId": 12,
-        "gisuId": 9,
-        "generation": 9,
-        "gisu": 9,
-        "part": "WEB",
-        "name": "홍길동",
-        "nickname": "gildong",
-        "schoolName": "가천대학교",
-        "pointSum": -2.0,
-        "profileImageLink": "https://.../profile.png",
-        "roleTypes": ["SCHOOL_PART_LEADER"]
-      }
-    ],
-    "nextCursor": 401,
-    "hasNext": true
-  },
-  "partCounts": [
-    { "part": "PLAN", "count": 12 },
-    { "part": "DESIGN", "count": 8 },
-    { "part": "WEB", "count": 30 },
-    { "part": "ANDROID", "count": 5 },
-    { "part": "IOS", "count": 4 },
-    { "part": "NODEJS", "count": 7 },
-    { "part": "SPRINGBOOT", "count": 11 }
-  ]
+    "cursor": {
+        "content": [
+            {
+                "challengerId": 401,
+                "memberId": 12,
+                "gisuId": 9,
+                "generation": 9,
+                "gisu": 9,
+                "part": "WEB",
+                "name": "홍길동",
+                "nickname": "gildong",
+                "schoolName": "가천대학교",
+                "pointSum": -2.0,
+                "profileImageLink": "https://.../profile.png",
+                "roleTypes": [
+                    "SCHOOL_PART_LEADER"
+                ]
+            }
+        ],
+        "nextCursor": 401,
+        "hasNext": true
+    },
+    "partCounts": [
+        {
+            "part": "PLAN",
+            "count": 12
+        },
+        {
+            "part": "DESIGN",
+            "count": 8
+        },
+        {
+            "part": "WEB",
+            "count": 30
+        },
+        {
+            "part": "ANDROID",
+            "count": 5
+        },
+        {
+            "part": "IOS",
+            "count": 4
+        },
+        {
+            "part": "NODEJS",
+            "count": 7
+        },
+        {
+            "part": "SPRINGBOOT",
+            "count": 11
+        }
+    ]
 }
 ```
 
@@ -559,16 +600,20 @@ GET /api/v1/challenger/search/offset?page=0&size=20&sort=id,desc
 
 ```json
 {
-  "page": {
-    "content": [ /* SearchChallengerItemResponse[] (cursor 응답과 동일) */ ],
-    "page": 0,
-    "size": 20,
-    "totalElements": 77,
-    "totalPages": 4,
-    "hasNext": true,
-    "hasPrevious": false
-  },
-  "partCounts": [ /* 동일 */ ]
+    "page": {
+        "content": [
+            /* SearchChallengerItemResponse[] (cursor 응답과 동일) */
+        ],
+        "page": 0,
+        "size": 20,
+        "totalElements": 77,
+        "totalPages": 4,
+        "hasNext": true,
+        "hasPrevious": false
+    },
+    "partCounts": [
+        /* 동일 */
+    ]
 }
 ```
 
@@ -617,7 +662,11 @@ Content-Type: application/json
 | `gisuId`   | long             | ✅  | 기수 ID    |
 
 ```json
-{ "memberId": 12, "part": "WEB", "gisuId": 10 }
+{
+    "memberId": 12,
+    "part": "WEB",
+    "gisuId": 10
+}
 ```
 
 ### 응답 (`result`)
@@ -643,8 +692,16 @@ Content-Type: application/json
 
 ```json
 [
-  { "memberId": 12, "part": "WEB", "gisuId": 10 },
-  { "memberId": 13, "part": "DESIGN", "gisuId": 10 }
+    {
+        "memberId": 12,
+        "part": "WEB",
+        "gisuId": 10
+    },
+    {
+        "memberId": 13,
+        "part": "DESIGN",
+        "gisuId": 10
+    }
 ]
 ```
 
@@ -682,12 +739,12 @@ Content-Type: application/json
 
 ```json
 {
-  "gisuId": 8,
-  "chapterId": 3,
-  "schoolId": 1,
-  "part": "WEB",
-  "memberName": "김챌린저",
-  "challengerRoleType": "SCHOOL_PRESIDENT"
+    "gisuId": 8,
+    "chapterId": 3,
+    "schoolId": 1,
+    "part": "WEB",
+    "memberName": "김챌린저",
+    "challengerRoleType": "SCHOOL_PRESIDENT"
 }
 ```
 
@@ -697,17 +754,17 @@ Content-Type: application/json
 
 ```json
 {
-  "code": "AB12CD",
-  "part": "WEB",
-  "gisuId": 8,
-  "gisu": 8,
-  "schoolId": 1,
-  "schoolName": "가천대학교",
-  "chapterId": 3,
-  "chapterName": "수도권",
-  "memberName": "김챌린저",
-  "challengerRoleType": "SCHOOL_PRESIDENT",
-  "organizationId": 1
+    "code": "AB12CD",
+    "part": "WEB",
+    "gisuId": 8,
+    "gisu": 8,
+    "schoolId": 1,
+    "schoolName": "가천대학교",
+    "chapterId": 3,
+    "chapterName": "수도권",
+    "memberName": "김챌린저",
+    "challengerRoleType": "SCHOOL_PRESIDENT",
+    "organizationId": 1
 }
 ```
 
@@ -735,7 +792,11 @@ Content-Type: application/json
 성능 이슈로 ID 만 반환 — 실제 코드 / 정보는 [B-7](#b-7-id-로-챌린저-기록-조회--challenger-record-102) 로 개별 조회.
 
 ```json
-[1001, 1002, 1003]
+[
+    1001,
+    1002,
+    1003
+]
 ```
 
 ---
@@ -761,7 +822,9 @@ Authorization: Bearer {accessToken}
 | `code` | string | ✅  | 6자리 코드 |
 
 ```json
-{ "code": "AB12CD" }
+{
+    "code": "AB12CD"
+}
 ```
 
 ### 응답
@@ -834,9 +897,9 @@ POST /api/v1/challenger/{challengerId}/deactivate
 
 ```json
 {
-  "deactivationType": "EXPEL",
-  "modifiedBy": 1,
-  "reason": "출석 4회 누락"
+    "deactivationType": "EXPEL",
+    "modifiedBy": 1,
+    "reason": "출석 4회 누락"
 }
 ```
 
@@ -855,7 +918,9 @@ PATCH /api/v1/challenger/{challengerId}/part
 **Body** — [EditChallengerPartRequest.java](src/main/java/com/umc/product/challenger/adapter/in/web/dto/request/EditChallengerPartRequest.java)
 
 ```json
-{ "newPart": "DESIGN" }
+{
+    "newPart": "DESIGN"
+}
 ```
 
 응답: 변경 후 [ChallengerInfoResponse](#a-3-챌린저-기록-상세-조회--challenger-101).
@@ -901,3 +966,416 @@ DELETE /api/v1/challenger/{challengerId}
 | B-부록-1 | CHALLENGER-003        | POST   | `/api/v1/challenger/{challengerId}/deactivate` | `CHALLENGER:DELETE`       |
 | B-부록-2 | CHALLENGER-004        | PATCH  | `/api/v1/challenger/{challengerId}/part`       | `CHALLENGER:EDIT`         |
 | B-부록-3 | CHALLENGER-005        | DELETE | `/api/v1/challenger/{challengerId}`            | `CHALLENGER:DELETE`       |
+
+---
+
+# 플로우 C — 챌린저 기록 수정/삭제 및 운영진 기록 관리
+
+이미 등록된 챌린저 기록을 수정하거나 상태를 변경하는 흐름. 운영진(회장단 이상)이 백오피스에서 수행한다.
+
+```
+[C-1] 챌린저 파트 변경
+[C-2] 챌린저 비활성화 (탈부 / 제명)
+[C-3] 챌린저 하드 삭제 (복구 불가)
+[C-4] 상벌점 부여   → A-4 와 동일
+[C-5] 상벌점 사유 수정 → A-5 와 동일
+[C-6] 상벌점 삭제   → A-6 와 동일
+```
+
+> `ChallengerRecord`(6자리 코드 방식의 과거 기수 기록)는 별도 수정/삭제 API가 **현재 존재하지 않는다**.
+> 코드를 잘못 발급했을 경우 BE 팀과 협의하여 직접 처리해야 한다.
+
+---
+
+## C-1. 챌린저 파트 변경 — `[CHALLENGER-004]`
+
+[ChallengerCommandController.java:84-93](src/main/java/com/umc/product/challenger/adapter/in/web/ChallengerCommandController.java#L84-L93)
+
+권한: `@CheckAccess(CHALLENGER, EDIT)` — 중앙운영사무국 또는 해당 챌린저 학교 회장단.
+
+### 요청
+
+```
+PATCH /api/v1/challenger/{challengerId}/part
+Content-Type: application/json
+```
+
+**Path Parameters**
+
+| 이름             | 타입   | 설명              |
+|----------------|------|-----------------|
+| `challengerId` | long | 변경 대상 챌린저 기록 ID |
+
+**Request Body** — [EditChallengerPartRequest.java](src/main/java/com/umc/product/challenger/adapter/in/web/dto/request/EditChallengerPartRequest.java)
+
+| 필드        | 타입               | 필수 | 설명      |
+|-----------|------------------|----|---------|
+| `newPart` | `ChallengerPart` | ✅  | 변경할 파트명 |
+
+```json
+{
+    "newPart": "DESIGN"
+}
+```
+
+### 응답 (`result`)
+
+변경 후의 [ChallengerInfoResponse](#a-3-챌린저-기록-상세-조회--challenger-101).
+
+---
+
+## C-2. 챌린저 비활성화 — `[CHALLENGER-003]`
+
+[ChallengerCommandController.java:70-77](src/main/java/com/umc/product/challenger/adapter/in/web/ChallengerCommandController.java#L70-L77)
+
+권한: `@CheckAccess(CHALLENGER, DELETE)` — 중앙운영사무국 총괄단 또는 학교 회장단.
+
+탈부(`WITHDRAWN`) 또는 제명(`EXPELLED`) 처리한다. Hard Delete 가 아니므로 기록은 남는다.
+
+### 요청
+
+```
+POST /api/v1/challenger/{challengerId}/deactivate
+Content-Type: application/json
+```
+
+**Request Body** — [DeactivateChallengerRequest.java](src/main/java/com/umc/product/challenger/adapter/in/web/dto/request/DeactivateChallengerRequest.java)
+
+| 필드                 | 타입                           | 필수 | 설명                            |
+|--------------------|------------------------------|----|-------------------------------|
+| `deactivationType` | `ChallengerDeactivationType` | ✅  | `WITHDRAW`(탈부) 또는 `EXPEL`(제명) |
+| `modifiedBy`       | long                         | ✅  | 처리한 운영진의 회원 ID                |
+| `reason`           | string                       | ✅  | 처리 사유                         |
+
+```json
+{
+    "deactivationType": "EXPEL",
+    "modifiedBy": 1,
+    "reason": "출석 4회 누락으로 3OUT 적용"
+}
+```
+
+### 응답
+
+`204 No Content` — `result: null`
+
+**주요 에러:**
+
+- `CHALLENGER-0001` (404) — 챌린저 기록 없음
+- `CHALLENGER-0004` (400) — 이미 비활성 상태
+
+---
+
+## C-3. 챌린저 하드 삭제 — `[CHALLENGER-005]`
+
+[ChallengerCommandController.java:99-104](src/main/java/com/umc/product/challenger/adapter/in/web/ChallengerCommandController.java#L99-L104)
+
+권한: `@CheckAccess(CHALLENGER, DELETE)` — **총괄단 전용. 복구 불가.**
+
+잘못 생성된 챌린저 기록 자체를 영구 삭제한다. 상벌점 포함 모든 연결 데이터가 함께 삭제된다.
+
+### 요청
+
+```
+DELETE /api/v1/challenger/{challengerId}
+```
+
+### 응답
+
+`204 No Content` — `result: null`
+
+> ⚠️ FE 에서는 반드시 **이중 확인 다이얼로그** 를 표시해야 한다. "이 챌린저 기록과 상벌점 전체가 영구 삭제됩니다. 복구할 수 없습니다."
+
+---
+
+# 백오피스 UI 구성 가이드
+
+아래는 각 플로우에 맞는 백오피스 화면 구성 제안이다. FE 팀은 이를 참고하여 실제 컴포넌트와 라우팅을 설계할 것.
+
+---
+
+## 화면 1. 챌린저 목록 / 검색
+
+> 경로 예시: `/backoffice/challengers`
+
+운영진이 챌린저를 검색하고 목록을 확인하는 메인 화면.
+
+### 레이아웃 구성
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  [기수 셀렉트▼]  [지부 셀렉트▼]  [학교 셀렉트▼]  [파트 셀렉트▼]   │
+│  [검색어 입력창──────────────────────────] [검색 버튼]       │
+├─────────────────────────────────────────────────────────┤
+│  파트별 현황:  기획 12  디자인 8  웹 30  안드로이드 5  …         │
+├─────────────────────────────────────────────────────────┤
+│  이름   닉네임   학교   파트   상태   총 상벌점   역할   [상세보기] │
+│  홍길동  gildong  가천대  웹     ACTIVE   -2.0   파트장   [→]  │
+│  …                                                       │
+├─────────────────────────────────────────────────────────┤
+│  [이전] 페이지 1 / 8  [다음]                               │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 사용 API
+
+| 동작        | API                                             |
+|-----------|-------------------------------------------------|
+| 챌린저 검색    | `GET /api/v1/challenger/search/offset` (A-보조-2) |
+| 파트별 카운트   | 위 응답의 `partCounts` 활용                           |
+| 회원 검색(대안) | `GET /api/v1/member/search` (A-1)               |
+
+### 구현 포인트
+
+- `gisuId` 미선택 시 현재 기수를 기본으로 선택해 요청한다.
+- `partCounts` 를 상단 필터 탭 (기획 12 / 디자인 8 / …) 으로 활용한다.
+- 상태(`challengerStatus`) 컬럼에 색상 배지 사용: `ACTIVE` → 초록, `EXPELLED` → 빨강, `WITHDRAWN` → 회색.
+- 총 상벌점은 양수면 파란색, 음수면 빨간색으로 표시한다.
+
+---
+
+## 화면 2. 챌린저 상세 — 기록 관리
+
+> 경로 예시: `/backoffice/challengers/{challengerId}`
+
+특정 챌린저의 기수별 활동 기록과 상벌점을 관리하는 화면.
+
+### 레이아웃 구성
+
+```
+┌───────────────────────────────────────────────────────────┐
+│  ← 목록  │  홍길동  (닉네임: gildong)  │  가천대학교            │
+│  9기 / 수도권 / 웹 파트  │  상태: ACTIVE  │  총 상벌점: -2.0점   │
+├───────────────────────────────────────────────────────────┤
+│  [파트 변경 버튼]  [비활성화 버튼]  [삭제 버튼 (위험)]             │
+├───────────────────────────────────────────────────────────┤
+│  ▼ 상벌점 목록                       [+ 상벌점 부여]           │
+│  ┌──────────┬────────┬───────┬────────────────────────────┐│
+│  │ 유형       │ 점수   │ 사유   │ 일시          │ 수정  삭제   ││
+│  │ STUDY_LATE│ -2.0  │ 5/2지각│ 2026-05-02   │ [✏] [🗑]  ││
+│  └──────────┴────────┴───────┴────────────────────────────┘│
+└───────────────────────────────────────────────────────────┘
+```
+
+### 사용 API
+
+| 동작        | API                                                          | 비고       |
+|-----------|--------------------------------------------------------------|----------|
+| 챌린저 상세 조회 | `GET /api/v1/challenger/{challengerId}` (A-3)                |          |
+| 파트 변경     | `PATCH /api/v1/challenger/{challengerId}/part` (C-1)         |          |
+| 비활성화      | `POST /api/v1/challenger/{challengerId}/deactivate` (C-2)    | 모달 확인 필요 |
+| 하드 삭제     | `DELETE /api/v1/challenger/{challengerId}` (C-3)             | 이중 확인 필요 |
+| 상벌점 부여    | `POST /api/v1/challenger/{challengerId}/points` (A-4)        |          |
+| 상벌점 사유 수정 | `PATCH /api/v1/challenger/points/{challengerPointId}` (A-5)  |          |
+| 상벌점 삭제    | `DELETE /api/v1/challenger/points/{challengerPointId}` (A-6) | 총괄단 전용   |
+
+### 파트 변경 모달
+
+```
+[ 파트 변경 ]
+현재 파트: 웹 (WEB)
+변경할 파트: [셀렉트▼ 기획 / 디자인 / 웹 / 안드로이드 / iOS / 노드 / 스프링부트 / 운영진]
+                                              [취소]  [변경 확인]
+```
+
+- `PATCH /api/v1/challenger/{challengerId}/part` → `{ "newPart": "DESIGN" }`
+- 성공 시 챌린저 상세 정보를 re-fetch 하여 화면 갱신.
+
+### 비활성화 모달
+
+```
+[ 챌린저 비활성화 ]
+유형:  ○ 탈부 (WITHDRAW)   ● 제명 (EXPEL)
+사유: [텍스트 입력────────────────────────]
+처리자 ID: (현재 로그인한 운영진 ID 자동 입력)
+                                    [취소]  [처리 확인]
+```
+
+- `POST /api/v1/challenger/{challengerId}/deactivate`
+- 성공 후 챌린저 상태 배지를 `EXPELLED` / `WITHDRAWN` 으로 갱신.
+
+### 상벌점 부여 모달
+
+```
+[ 상벌점 부여 ]
+유형 [셀렉트▼]: 스터디 무단 지각 (-2.0) / 스터디 무단 불참 (-4.0) / …
+점수 덮어쓰기: [  ] (CUSTOM 또는 학교 자체 제도 사용 시 체크)
+  → 체크 시 활성화되는 숫자 입력 필드
+사유: [텍스트 입력────────────────────────────]
+                                    [취소]  [부여]
+```
+
+- `pointValue` 는 "점수 덮어쓰기" 체크 시에만 전송. 미전송이면 enum 기본 점수 사용.
+- 부여 후 `points` 목록을 re-fetch.
+
+### 상벌점 사유 수정 인라인 편집
+
+- 목록의 사유 셀을 클릭하면 인라인 `<input>` 으로 전환.
+- 포커스 아웃 또는 [저장] 클릭 시 `PATCH` 호출.
+- `PATCH /api/v1/challenger/points/{challengerPointId}` → `{ "newDescription": "수정된 사유" }`
+
+### 상벌점 삭제
+
+- [🗑] 클릭 → 확인 팝업("이 상벌점 기록을 삭제하시겠습니까?") → `DELETE /api/v1/challenger/points/{challengerPointId}`
+- 총괄단(`CENTRAL_PRESIDENT`, `CENTRAL_VICE_PRESIDENT`)만 버튼이 활성화됨. 아닌 경우 버튼을 disabled 처리하거나 숨김.
+
+---
+
+## 화면 3. 챌린저 신규 등록 (운영진 직접 생성)
+
+> 경로 예시: `/backoffice/challengers/new`
+
+현재 기수 신규 챌린저를 직접 등록하는 화면. 회원 검색 → 기수/파트 선택 → 등록.
+
+### 레이아웃 구성 (단건)
+
+```
+[ 챌린저 등록 ]
+회원 검색:  [검색어 입력] [검색]  → 결과 목록에서 선택
+선택된 회원: 홍길동 (ID: 12) 가천대학교
+기수: [셀렉트▼]
+파트: [셀렉트▼]
+                                    [취소]  [등록]
+```
+
+- `POST /api/v1/challenger` → `{ "memberId": 12, "part": "WEB", "gisuId": 10 }`
+- 성공 시 생성된 `challengerId` 로 상세 화면 이동.
+
+### 배치(Batch) 등록 — CSV 업로드
+
+```
+[ 챌린저 배치 등록 ]
+CSV 업로드: [파일 선택]  또는  직접 입력 (회원 ID | 파트 | 기수)
+미리보기:
+  ┌────────┬─────────┬─────┐
+  │ 회원 ID │  파트   │ 기수 │
+  │   12   │  WEB   │  10 │
+  │   13   │ DESIGN │  10 │
+  └────────┴─────────┴─────┘
+                            [취소]  [일괄 등록]
+```
+
+- `POST /api/v1/challenger/batch`
+- 응답 배열 길이 ≠ 입력 길이인 경우 실패 항목을 사용자에게 알린다.
+
+---
+
+## 화면 4. 챌린저 기록 코드 관리 (운영진 — 과거 기수)
+
+> 경로 예시: `/backoffice/challenger-records`
+
+9기 이전 과거 기수 활동 이력을 6자리 코드로 발급하고 현황을 관리하는 화면.
+
+### 레이아웃 구성
+
+```
+┌────────────────────────────────────────────────────────────┐
+│  [+ 코드 단건 발급]  [+ 코드 일괄 발급 (CSV)]                    │
+├──────┬────────┬──────┬─────────┬────────────────┬──────────┤
+│ 코드  │ 기수   │ 학교  │ 파트    │ 사용 여부       │ 사용 회원  │
+│AB12CD│  8기   │가천대 │ 웹      │ ✅ 2026-05-01  │ 홍길동    │
+│XY34ZW│  8기   │가천대 │디자인   │ ❌ 미사용       │ —       │
+└──────┴────────┴──────┴─────────┴────────────────┴──────────┘
+```
+
+### 코드 단건 발급 모달
+
+```
+[ 챌린저 기록 코드 발급 ]
+기수:     [셀렉트▼]
+지부:     [셀렉트▼]
+학교:     [셀렉트▼]
+파트:     [셀렉트▼]
+본명:     [텍스트 입력 ─ 코드 사용 시 일치 검증에 사용됨]
+역할:     [셀렉트▼ 회장 / 부회장 / 파트장 / …]
+                                    [취소]  [발급]
+```
+
+- `POST /api/v1/challenger-record` — 성공 응답의 `code` 를 화면에 표시하고 클립보드 복사 버튼 제공.
+
+### 코드 일괄 발급 — CSV 업로드
+
+- `POST /api/v1/challenger-record/bulk` 호출.
+- 응답으로 받은 ID 배열(`[1001, 1002, …]`) 을 `GET /api/v1/challenger-record/id/{id}` 로 순차 조회하여 발급 결과 테이블 표시.
+
+### 구현 포인트
+
+- **발급된 코드는 삭제 API가 없다**. 잘못 발급된 경우 현재 BE 에서 직접 처리 필요 — 화면에 "코드 삭제 불가" 안내 문구 표시.
+- 코드가 미사용 상태인 경우, 관리자 화면에서 코드 문자열 전체를 보여주고 복사 버튼 제공.
+- 이미 사용된 코드는 `usedAt` 타임스탬프와 사용 회원 이름을 함께 표시.
+
+---
+
+## 화면 5. 회원 챌린저 기록 추가 (일반 회원 앱 화면)
+
+> 경로 예시: `/my/challenger-record/add` (백오피스가 아닌 회원 앱)
+
+운영진이 발급한 6자리 코드를 입력하여 본인 계정에 과거 챌린저 기록을 추가하는 화면.
+
+### 레이아웃 구성
+
+```
+┌────────────────────────────────────┐
+│  이전 기수 챌린저 기록 추가             │
+│                                    │
+│  운영진으로부터 받은 6자리 코드를          │
+│  입력해 주세요.                        │
+│                                    │
+│  [  A  B  1  2  C  D  ]           │
+│                                    │
+│  [코드 확인 및 추가]                   │
+└────────────────────────────────────┘
+```
+
+### 플로우
+
+```
+1. 6자리 코드 입력
+2. POST /api/v1/challenger-record/member  { "code": "AB12CD" }
+3. 성공 → "챌린저 기록이 추가되었습니다!" 토스트 메시지
+4. 실패 케이스별 안내:
+   - 코드 없음 / 이미 사용: "유효하지 않은 코드입니다."
+   - 이름 불일치: "코드의 이름과 계정 이름이 일치하지 않습니다."
+   - 학교 불일치: "코드의 학교와 계정 학교가 일치하지 않습니다."
+```
+
+### 사용 API
+
+| 동작        | API                                           |
+|-----------|-----------------------------------------------|
+| 코드로 기록 추가 | `POST /api/v1/challenger-record/member` (B-5) |
+
+---
+
+## 화면 설계 시 공통 주의사항
+
+### 권한별 UI 분기
+
+| 역할                                                   | 허용 기능                            |
+|------------------------------------------------------|----------------------------------|
+| 학교 회장단 (`SCHOOL_PRESIDENT`, `SCHOOL_VICE_PRESIDENT`) | 자기 학교 챌린저 상벌점 부여/수정, 파트 변경, 비활성화 |
+| 중앙운영사무국 운영/교육국원                                      | 전체 챌린저 상벌점 부여/수정                 |
+| 중앙운영사무국 총괄단                                          | 위 모두 + 상벌점 삭제 + 하드 삭제 + 코드 발급    |
+| 슈퍼 관리자 (`SUPER_ADMIN`)                               | 모든 기능                            |
+
+- 403 응답 시: 권한 없음 안내 토스트 표시.
+- 버튼 disabled vs 숨김: 버튼을 숨기는 것보다 disabled + 툴팁 표시 방식이 UX 상 권장됨 (권한이 있어야 한다는 것을 인지시킴).
+
+### 비가역적 동작에 대한 UX 가이드
+
+| 동작        | 권장 처리                               |
+|-----------|-------------------------------------|
+| 챌린저 비활성화  | 확인 모달 1회 ("탈부/제명 처리됩니다. 계속하시겠습니까?") |
+| 챌린저 하드 삭제 | 확인 모달 + 챌린저 이름 직접 입력 (오타 방지)        |
+| 상벌점 삭제    | 확인 팝업 1회                            |
+
+### 에러 코드 요약
+
+| 코드                | 상황                        |
+|-------------------|---------------------------|
+| `CHALLENGER-0001` | 챌린저 기록 없음 (404)           |
+| `CHALLENGER-0004` | 이미 비활성화된 챌린저에 부여 시도 (400) |
+| `CHALLENGER-0007` | 상벌점 기록 없음 (404)           |
+| `CHALLENGER-0012` | 코드 없음 또는 이미 사용 (400)      |
+| `CHALLENGER-0013` | 코드의 이름과 불일치 (400)         |
+| `CHALLENGER-0014` | 코드의 학교와 불일치 (400)         |

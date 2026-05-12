@@ -331,11 +331,19 @@ class ProjectApplicationPermissionEvaluatorTest {
     }
 
     @Test
-    void APPROVE는_부모_PO_APPROVED_거부_재승인_차단() {
+    void APPROVE는_부모_PO_APPROVED_허용_재토글_가능() {
         givenApplication(ProjectApplicationStatus.APPROVED);
         SubjectAttributes subject = subjectWith(PO_MEMBER_ID, List.of(), List.of());
 
-        assertThat(sut.evaluate(subject, approvePermission())).isFalse();
+        assertThat(sut.evaluate(subject, approvePermission())).isTrue();
+    }
+
+    @Test
+    void APPROVE는_부모_PO_REJECTED_허용_재토글_가능() {
+        givenApplication(ProjectApplicationStatus.REJECTED);
+        SubjectAttributes subject = subjectWith(PO_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, approvePermission())).isTrue();
     }
 
     @Test

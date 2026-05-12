@@ -55,4 +55,6 @@ public interface ProjectMatchingRoundJpaRepository extends JpaRepository<Project
         @Param("startsAt") Instant startsAt,
         @Param("decisionDeadline") Instant decisionDeadline
     );
+
+    List<ProjectMatchingRound> findAllByAutoDecisionExecutedAtIsNullOrderByDecisionDeadlineAsc();
 }

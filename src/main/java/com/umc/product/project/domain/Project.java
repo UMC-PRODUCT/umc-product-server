@@ -201,14 +201,16 @@ public class Project extends BaseEntity {
     /**
      * 지원 폼을 편집 가능한 상태인지 검증한다.
      * <p>
-     * Form 은 Project 가 IN_PROGRESS 로 전이되는 시점(PROJECT-108)에 PUBLISHED 로 같이 전이되므로,
-     * 편집은 {@code DRAFT} / {@code PENDING_REVIEW} 단계에서만 허용된다.
-     * Survey 단의 {@code SURVEY_ALREADY_PUBLISHED} 가드와 2단 방어 관계.
+     * - {@code DRAFT} / {@code PENDING_REVIEW}: 항상 허용.
+     * - {@code IN_PROGRESS}: 활성 매칭 차수가 없을 때(차수 사이)만 허용. 차수 진행 중에는 금지.
+     * - 그 외 상태: 금지.
+     *
+     * @param hasActiveRound 현재 시점에 활성화된 매칭 차수 존재 여부
      */
-    public void validateApplicationFormEditable() {
-        if (this.status != ProjectStatus.DRAFT && this.status != ProjectStatus.PENDING_REVIEW) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
-        }
+    public void validateApplicationFormEditable(boolean hasActiveRound) {
+        if (this.status == ProjectStatus.DRAFT || this.status == ProjectStatus.PENDING_REVIEW) return;
+        if (this.status == ProjectStatus.IN_PROGRESS && !hasActiveRound) return;
+        throw new ProjectDomainException(ProjectErrorCode.PROJECT_INVALID_STATE);
     }
 
     /**

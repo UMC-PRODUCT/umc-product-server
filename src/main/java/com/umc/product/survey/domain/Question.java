@@ -37,6 +37,13 @@ public class Question extends BaseEntity {
     @Column(name = "order_no", nullable = false)
     private Long orderNo;
 
+    @Column(name = "parent_question_id")
+    private Long parentQuestionId;
+
+    @Builder.Default
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
+
     public static Question create(
         String title,
         QuestionType type,
@@ -48,11 +55,32 @@ public class Question extends BaseEntity {
             .type(type)
             .isRequired(isRequired)
             .orderNo(orderNo)
+            .isActive(true)
+            .build();
+    }
+
+    /**
+     * 기존 질문을 원본으로 새 질문을 생성한다 (Copy-on-Write).
+     * 원본 질문에 이미 응답이 존재할 때 호출하며, 호출 측에서 origin.deactivate() 를 함께 수행해야 한다.
+     */
+    public static Question fork(Question origin) {
+        return Question.builder()
+            .title(origin.title)
+            .description(origin.description)
+            .type(origin.type)
+            .isRequired(origin.isRequired)
+            .orderNo(origin.orderNo)
+            .parentQuestionId(origin.id)
+            .isActive(true)
             .build();
     }
 
     public void assignTo(FormSection section) {
         this.formSection = section;
+    }
+
+    public void deactivate() {
+        this.isActive = false;
     }
 
     /**

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
 
 import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.authorization.application.port.in.query.dto.ChallengerRoleInfo;
@@ -120,7 +121,7 @@ class ProjectCommandServiceTest {
             given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
             given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
                 .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
-            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(false);
+            given(loadProjectPort.existsDraftByCreatorAndGisu(any(), any())).willReturn(false);
             given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
             given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
             given(saveProjectPort.save(any())).willAnswer(inv -> {
@@ -154,7 +155,7 @@ class ProjectCommandServiceTest {
         }
 
         @Test
-        void 중복_프로젝트면_예외() {
+        void creator가_같은_기수에_DRAFT_보유시_예외() {
             var command = CreateDraftProjectCommand.builder()
                 .gisuId(1L)
                 .productOwnerMemberId(100L)
@@ -164,12 +165,61 @@ class ProjectCommandServiceTest {
             given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
             given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
                 .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
-            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(true);
+            given(loadProjectPort.existsDraftByCreatorAndGisu(100L, 1L)).willReturn(true);
 
             assertThatThrownBy(() -> sut.create(command))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_DUPLICATE_IN_GISU);
+                .isEqualTo(ProjectErrorCode.PROJECT_DRAFT_ALREADY_IN_PROGRESS);
+        }
+
+        @Test
+        void admin이_creator일_때_admin_기준으로_DRAFT_보유_검증() {
+            // 운영진(requester=200)이 다른 PM(productOwner=100)을 임명해 생성 시,
+            // creator-DRAFT 검증은 productOwnerMemberId 가 아닌 requesterMemberId 로 수행되어야 한다.
+            var command = CreateDraftProjectCommand.builder()
+                .gisuId(1L)
+                .productOwnerMemberId(100L)
+                .requesterMemberId(200L)
+                .build();
+
+            given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
+            given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
+                .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
+            given(loadProjectPort.existsDraftByCreatorAndGisu(200L, 1L)).willReturn(true);
+
+            assertThatThrownBy(() -> sut.create(command))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_DRAFT_ALREADY_IN_PROGRESS);
+        }
+
+        @Test
+        void creator_DRAFT_미보유면_PO_기수_중복은_검증하지_않고_생성_성공() {
+            // PO 룰 제거 검증: 기존엔 existsByOwnerAndGisu 로 PO 중복을 검사했지만
+            // 이제는 호출 자체가 사라졌다. PM 이 같은 기수에 PENDING_REVIEW 등 다른 프로젝트를
+            // 보유한 채 새 DRAFT 를 시작해도 차단되지 않는다.
+            var command = CreateDraftProjectCommand.builder()
+                .gisuId(1L)
+                .productOwnerMemberId(100L)
+                .requesterMemberId(100L)
+                .build();
+
+            given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
+            given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
+                .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
+            given(loadProjectPort.existsDraftByCreatorAndGisu(any(), any())).willReturn(false);
+            given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
+            given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
+            given(saveProjectPort.save(any())).willAnswer(inv -> {
+                Project p = inv.getArgument(0);
+                ReflectionTestUtils.setField(p, "id", 99L);
+                return p;
+            });
+
+            sut.create(command);
+
+            then(loadProjectPort).should(never()).existsByOwnerAndGisu(any(), any());
         }
 
         @Test
@@ -183,7 +233,7 @@ class ProjectCommandServiceTest {
             given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
             given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
                 .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
-            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(false);
+            given(loadProjectPort.existsDraftByCreatorAndGisu(any(), any())).willReturn(false);
             given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
             given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
             given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of(
@@ -211,7 +261,7 @@ class ProjectCommandServiceTest {
             given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
             given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
                 .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
-            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(false);
+            given(loadProjectPort.existsDraftByCreatorAndGisu(any(), any())).willReturn(false);
             given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
             given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
             given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of(
@@ -239,7 +289,7 @@ class ProjectCommandServiceTest {
             given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
             given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
                 .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
-            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(false);
+            given(loadProjectPort.existsDraftByCreatorAndGisu(any(), any())).willReturn(false);
             given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
             given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
             given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of(
@@ -263,7 +313,7 @@ class ProjectCommandServiceTest {
             given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
             given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
                 .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
-            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(false);
+            given(loadProjectPort.existsDraftByCreatorAndGisu(any(), any())).willReturn(false);
             given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
             given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
             given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of(
@@ -291,7 +341,7 @@ class ProjectCommandServiceTest {
             given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
             given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
                 .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
-            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(false);
+            given(loadProjectPort.existsDraftByCreatorAndGisu(any(), any())).willReturn(false);
             given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
             given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
             given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of(
@@ -315,7 +365,7 @@ class ProjectCommandServiceTest {
             given(getGisuUseCase.getById(1L)).willReturn(gisuInfo());
             given(getChallengerUseCase.getByMemberIdAndGisuId(100L, 1L))
                 .willReturn(challengerInfo(100L, ChallengerPart.PLAN));
-            given(loadProjectPort.existsByOwnerAndGisu(100L, 1L)).willReturn(false);
+            given(loadProjectPort.existsDraftByCreatorAndGisu(any(), any())).willReturn(false);
             given(getMemberUseCase.getById(100L)).willReturn(memberInfo(10L));
             given(getChapterUseCase.byGisuAndSchool(1L, 10L)).willReturn(new ChapterInfo(5L, "서울"));
             given(getChallengerRoleUseCase.findAllByMemberId(200L)).willReturn(java.util.List.of());
@@ -449,7 +499,6 @@ class ProjectCommandServiceTest {
             given(loadProjectPort.getById(1L)).willReturn(project);
             given(getChallengerUseCase.getByMemberIdAndGisuId(200L, 1L))
                 .willReturn(challengerInfo(200L, ChallengerPart.PLAN));
-            given(loadProjectPort.existsByOwnerAndGisu(200L, 1L)).willReturn(false);
             given(getMemberUseCase.getById(200L)).willReturn(memberInfo(8L));
             given(getChapterUseCase.byGisuAndSchool(1L, 8L)).willReturn(new ChapterInfo(3L, "인천"));
 
@@ -485,31 +534,33 @@ class ProjectCommandServiceTest {
         }
 
         @Test
-        void 새_PM이_같은_기수에_이미_프로젝트_있으면_예외() {
-            Project project = createProject(ProjectStatus.DRAFT);
-            given(loadProjectPort.getById(1L)).willReturn(project);
-            given(getChallengerUseCase.getByMemberIdAndGisuId(200L, 1L))
-                .willReturn(challengerInfo(200L, ChallengerPart.PLAN));
-            given(loadProjectPort.existsByOwnerAndGisu(200L, 1L)).willReturn(true);
-
-            assertThatThrownBy(() -> sut.transfer(transferCommand(100L, 200L)))
-                .isInstanceOf(ProjectDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ProjectErrorCode.PROJECT_DUPLICATE_IN_GISU);
-        }
-
-        @Test
         void COMPLETED_상태는_양도_불가() {
             Project project = createProject(ProjectStatus.COMPLETED);
             given(loadProjectPort.getById(1L)).willReturn(project);
             given(getChallengerUseCase.getByMemberIdAndGisuId(200L, 1L))
                 .willReturn(challengerInfo(200L, ChallengerPart.PLAN));
-            given(loadProjectPort.existsByOwnerAndGisu(200L, 1L)).willReturn(false);
 
             assertThatThrownBy(() -> sut.transfer(transferCommand(100L, 200L)))
                 .isInstanceOf(ProjectDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ProjectErrorCode.PROJECT_INVALID_STATE);
+        }
+
+        @Test
+        void 양도_시_새_PM의_PO_기수_중복은_검증하지_않고_성공() {
+            // PO 룰 제거 검증: 기존엔 새 PM 이 같은 기수에 다른 프로젝트의 PO 면 차단했지만,
+            // 이제는 호출 자체가 사라져 새 PM 이 PO 인 프로젝트가 있어도 양도가 허용된다.
+            Project project = createProject(ProjectStatus.DRAFT);
+            given(loadProjectPort.getById(1L)).willReturn(project);
+            given(getChallengerUseCase.getByMemberIdAndGisuId(200L, 1L))
+                .willReturn(challengerInfo(200L, ChallengerPart.PLAN));
+            given(getMemberUseCase.getById(200L)).willReturn(memberInfo(8L));
+            given(getChapterUseCase.byGisuAndSchool(1L, 8L)).willReturn(new ChapterInfo(3L, "인천"));
+
+            sut.transfer(transferCommand(100L, 200L));
+
+            assertThat(project.getProductOwnerMemberId()).isEqualTo(200L);
+            then(loadProjectPort).should(never()).existsByOwnerAndGisu(any(), any());
         }
 
         private TransferProjectOwnershipCommand transferCommand(Long requester, Long newOwner) {

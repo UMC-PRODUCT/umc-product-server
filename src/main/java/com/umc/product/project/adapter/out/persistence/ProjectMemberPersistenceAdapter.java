@@ -4,7 +4,9 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
 import com.umc.product.project.application.port.out.SaveProjectMemberPort;
 import com.umc.product.project.domain.ProjectMember;
+import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -17,10 +19,16 @@ import org.springframework.stereotype.Component;
 public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, SaveProjectMemberPort {
 
     private final ProjectMemberJpaRepository repository;
+    private final ProjectMemberQueryRepository queryRepository;
 
     @Override
     public ProjectMember save(ProjectMember member) {
         return repository.save(member);
+    }
+
+    @Override
+    public List<ProjectMember> saveAll(Collection<ProjectMember> members) {
+        return repository.saveAll(members);
     }
 
     @Override
@@ -50,6 +58,13 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     }
 
     @Override
+    public Map<Long, Map<ChallengerPart, Long>> countByProjectIdsGroupByProjectIdAndPart(
+        Collection<Long> projectIds
+    ) {
+        return queryRepository.countByProjectIdsGroupByProjectIdAndPart(projectIds);
+    }
+
+    @Override
     public Optional<ProjectMember> findByProjectIdAndMemberId(Long projectId, Long memberId) {
         return repository.findByProjectIdAndMemberId(projectId, memberId);
     }
@@ -64,5 +79,13 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
         return repository.existsByProjectIdAndMemberIdAndPartAndStatus(
             projectId, memberId, ChallengerPart.PLAN, ProjectMemberStatus.ACTIVE
         );
+    }
+
+    @Override
+    public Optional<ProjectMember> findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+        Long memberId, Long gisuId, MatchingType matchingType
+    ) {
+        return queryRepository.findActiveWithoutApplicationByMemberIdAndGisuIdAndMatchingType(
+            memberId, gisuId, matchingType);
     }
 }

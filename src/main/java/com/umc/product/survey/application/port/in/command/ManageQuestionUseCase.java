@@ -2,6 +2,7 @@ package com.umc.product.survey.application.port.in.command;
 
 import com.umc.product.survey.application.port.in.command.dto.CreateQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteQuestionCommand;
+import com.umc.product.survey.application.port.in.command.dto.ForkQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.ReorderQuestionsCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateQuestionCommand;
 
@@ -39,4 +40,20 @@ public interface ManageQuestionUseCase {
      * 섹션에 속한 모든 질문 ID가 포함되어야 한다.
      */
     void reorderQuestions(ReorderQuestionsCommand command);
+
+    /**
+     * 질문을 비활성화한다 (isActive = false).
+     * 차수 사이 폼 수정 시 질문을 폼에서 제거할 때 사용하며, 기존 응답자의 Answer를 보존하기 위해 물리 삭제 대신 비활성화만 수행한다.
+     */
+    void deactivateQuestion(Long questionId);
+
+    /**
+     * 기존 질문을 기반으로 새 버전을 생성한다 (Copy-on-Write).
+     * 원본 질문의 속성을 복사하고 원본은 비활성화(isActive=false)한다.
+     * 선택지는 호출 측(ProjectApplicationFormCommandService)에서 요청 데이터를 기반으로 별도 생성한다.
+     * 차수 사이 폼 수정 시 기존 응답자의 질문 내용을 보존하기 위해 사용한다.
+     *
+     * @return 새로 생성된 Question ID
+     */
+    Long forkQuestion(ForkQuestionCommand command);
 }

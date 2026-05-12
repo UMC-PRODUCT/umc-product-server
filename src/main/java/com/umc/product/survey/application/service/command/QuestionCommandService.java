@@ -3,6 +3,7 @@ package com.umc.product.survey.application.service.command;
 import com.umc.product.survey.application.port.in.command.ManageQuestionUseCase;
 import com.umc.product.survey.application.port.in.command.dto.CreateQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.DeleteQuestionCommand;
+import com.umc.product.survey.application.port.in.command.dto.ForkQuestionCommand;
 import com.umc.product.survey.application.port.in.command.dto.ReorderQuestionsCommand;
 import com.umc.product.survey.application.port.in.command.dto.UpdateQuestionCommand;
 import com.umc.product.survey.application.port.out.LoadFormSectionPort;
@@ -108,6 +109,29 @@ public class QuestionCommandService implements ManageQuestionUseCase {
         }
 
         saveQuestionPort.saveAll(questions);
+    }
+
+    @Override
+    public void deactivateQuestion(Long questionId) {
+        Question question = loadQuestionPort.findById(questionId)
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND));
+        question.deactivate();
+        saveQuestionPort.save(question);
+    }
+
+    @Override
+    public Long forkQuestion(ForkQuestionCommand command) {
+        Question origin = loadQuestionPort.findById(command.originQuestionId())
+            .orElseThrow(() -> new SurveyDomainException(SurveyErrorCode.QUESTION_NOT_FOUND));
+
+        Question forked = Question.fork(origin);
+        forked.assignTo(origin.getFormSection());
+        saveQuestionPort.save(forked);
+
+        origin.deactivate();
+        saveQuestionPort.save(origin);
+
+        return forked.getId();
     }
 
     /**

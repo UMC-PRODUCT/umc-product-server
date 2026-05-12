@@ -1,0 +1,213 @@
+package com.umc.product.project.adapter.in.web;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.never;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.product.global.config.JacksonConfig;
+import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.global.security.MemberPrincipal;
+import com.umc.product.project.adapter.in.web.dto.request.UpdateApplicationDecisionRequest;
+import com.umc.product.project.application.port.in.command.CancelProjectApplicationUseCase;
+import com.umc.product.project.application.port.in.command.CreateDraftProjectApplicationUseCase;
+import com.umc.product.project.application.port.in.command.DecideApplicationUseCase;
+import com.umc.product.project.application.port.in.command.SubmitProjectApplicationUseCase;
+import com.umc.product.project.application.port.in.command.UpdateProjectApplicationDraftUseCase;
+import com.umc.product.project.application.port.in.command.dto.ApplicationDecisionStatus;
+import com.umc.product.project.application.port.in.query.dto.ProjectApplicationInfo;
+import com.umc.product.project.domain.enums.ProjectApplicationStatus;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+@WebMvcTest(controllers = ProjectApplicationController.class)
+@Import(JacksonConfig.class)
+@AutoConfigureMockMvc(addFilters = false)
+class ProjectApplicationControllerTest {
+
+    private static final Long TEST_MEMBER_ID = 99L;
+    private static final Long PROJECT_ID = 42L;
+    private static final Long APPLICATION_ID = 500L;
+
+    @Autowired
+    MockMvc mockMvc;
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    @MockitoBean
+    JwtTokenProvider jwtTokenProvider;
+
+    @MockitoBean
+    CreateDraftProjectApplicationUseCase createDraftProjectApplicationUseCase;
+
+    @MockitoBean
+    UpdateProjectApplicationDraftUseCase updateProjectApplicationDraftUseCase;
+
+    @MockitoBean
+    SubmitProjectApplicationUseCase submitProjectApplicationUseCase;
+
+    @MockitoBean
+    DecideApplicationUseCase decideApplicationUseCase;
+
+    @MockitoBean
+    CancelProjectApplicationUseCase cancelProjectApplicationUseCase;
+
+    @BeforeEach
+    void setUpSecurityContext() {
+        MemberPrincipal principal = MemberPrincipal.builder()
+            .memberId(TEST_MEMBER_ID)
+            .build();
+        SecurityContextHolder.getContext().setAuthentication(
+            new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities())
+        );
+    }
+
+    @Nested
+    class PATCH_decision {
+
+        @Test
+        void APPROVED_요청시_200_및_status_반환() throws Exception {
+            UpdateApplicationDecisionRequest request = new UpdateApplicationDecisionRequest(
+                ApplicationDecisionStatus.APPROVED, "역량 우수"
+            );
+            given(decideApplicationUseCase.decide(
+                eq(APPLICATION_ID), eq(ApplicationDecisionStatus.APPROVED), eq("역량 우수"), eq(TEST_MEMBER_ID)
+            )).willReturn(ProjectApplicationInfo.of(APPLICATION_ID, ProjectApplicationStatus.APPROVED));
+
+            mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
+                    PROJECT_ID, APPLICATION_ID)
+                    .content(objectMapper.writeValueAsString(request))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.applicationId").value(APPLICATION_ID))
+                .andExpect(jsonPath("$.result.status").value("APPROVED"));
+        }
+
+        @Test
+        void REJECTED_요청시_200_및_status_반환() throws Exception {
+            UpdateApplicationDecisionRequest request = new UpdateApplicationDecisionRequest(
+                ApplicationDecisionStatus.REJECTED, null
+            );
+            given(decideApplicationUseCase.decide(
+                eq(APPLICATION_ID), eq(ApplicationDecisionStatus.REJECTED), eq(null), eq(TEST_MEMBER_ID)
+            )).willReturn(ProjectApplicationInfo.of(APPLICATION_ID, ProjectApplicationStatus.REJECTED));
+
+            mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
+                    PROJECT_ID, APPLICATION_ID)
+                    .content(objectMapper.writeValueAsString(request))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.status").value("REJECTED"));
+        }
+
+        @Test
+        void PENDING_요청시_도메인의_SUBMITTED로_매핑된_응답을_반환한다() throws Exception {
+            UpdateApplicationDecisionRequest request = new UpdateApplicationDecisionRequest(
+                ApplicationDecisionStatus.PENDING, null
+            );
+            given(decideApplicationUseCase.decide(
+                eq(APPLICATION_ID), eq(ApplicationDecisionStatus.PENDING), eq(null), eq(TEST_MEMBER_ID)
+            )).willReturn(ProjectApplicationInfo.of(APPLICATION_ID, ProjectApplicationStatus.SUBMITTED));
+
+            mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
+                    PROJECT_ID, APPLICATION_ID)
+                    .content(objectMapper.writeValueAsString(request))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.status").value("SUBMITTED"));
+        }
+
+        @Test
+        void status_누락시_400() throws Exception {
+            String body = """
+                { "reason": "사유" }
+                """;
+
+            mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
+                    PROJECT_ID, APPLICATION_ID)
+                    .content(body).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+            then(decideApplicationUseCase).should(never()).decide(any(), any(), any(), any());
+        }
+
+        @Test
+        void status가_허용된_enum이_아니면_400() throws Exception {
+            String body = """
+                { "status": "UNKNOWN" }
+                """;
+
+            mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
+                    PROJECT_ID, APPLICATION_ID)
+                    .content(body).contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+            then(decideApplicationUseCase).should(never()).decide(any(), any(), any(), any());
+        }
+
+        @Test
+        void reason이_500자를_초과하면_400() throws Exception {
+            UpdateApplicationDecisionRequest request = new UpdateApplicationDecisionRequest(
+                ApplicationDecisionStatus.APPROVED, "a".repeat(501)
+            );
+
+            mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
+                    PROJECT_ID, APPLICATION_ID)
+                    .content(objectMapper.writeValueAsString(request))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+
+            then(decideApplicationUseCase).should(never()).decide(any(), any(), any(), any());
+        }
+
+        @Test
+        void 차수_종료_후_도메인_예외시_400_PROJECT_MATCHING_ROUND_LOCKED() throws Exception {
+            UpdateApplicationDecisionRequest request = new UpdateApplicationDecisionRequest(
+                ApplicationDecisionStatus.APPROVED, null
+            );
+            given(decideApplicationUseCase.decide(any(), any(), any(), any()))
+                .willThrow(new ProjectDomainException(ProjectErrorCode.PROJECT_MATCHING_ROUND_LOCKED));
+
+            mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
+                    PROJECT_ID, APPLICATION_ID)
+                    .content(objectMapper.writeValueAsString(request))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PROJECT-0306"));
+        }
+
+        @Test
+        void DRAFT_상태_도메인_예외시_400_PROJECT_APPLICATION_DECISION_INVALID_TRANSITION() throws Exception {
+            UpdateApplicationDecisionRequest request = new UpdateApplicationDecisionRequest(
+                ApplicationDecisionStatus.APPROVED, null
+            );
+            given(decideApplicationUseCase.decide(any(), any(), any(), any()))
+                .willThrow(new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_DECISION_INVALID_TRANSITION));
+
+            mockMvc.perform(patch("/api/v1/projects/{projectId}/applications/{applicationId}/decision",
+                    PROJECT_ID, APPLICATION_ID)
+                    .content(objectMapper.writeValueAsString(request))
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PROJECT-0212"));
+        }
+    }
+}

@@ -5,10 +5,13 @@ import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
+import com.umc.product.project.adapter.in.web.dto.request.CreateProjectApplicationRequest;
 import com.umc.product.project.adapter.in.web.dto.request.UpdateApplicationAnswersRequest;
+import com.umc.product.project.adapter.in.web.dto.request.UpdateApplicationDecisionRequest;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicationStatusResponse;
 import com.umc.product.project.application.port.in.command.CancelProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectApplicationUseCase;
+import com.umc.product.project.application.port.in.command.DecideApplicationUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectApplicationDraftUseCase;
 import com.umc.product.project.adapter.in.web.dto.request.CreateProjectApplicationRequest;
@@ -18,8 +21,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -37,6 +40,7 @@ public class ProjectApplicationController {
     private final CreateDraftProjectApplicationUseCase createDraftProjectApplicationUseCase;
     private final UpdateProjectApplicationDraftUseCase updateProjectApplicationDraftUseCase;
     private final SubmitProjectApplicationUseCase submitProjectApplicationUseCase;
+    private final DecideApplicationUseCase decideApplicationUseCase;
     private final CancelProjectApplicationUseCase cancelProjectApplicationUseCase;
 
     @PostMapping("/{projectId}/applications")
@@ -110,6 +114,35 @@ public class ProjectApplicationController {
         );
     }
 
+    @PatchMapping("/{projectId}/applications/{applicationId}/decision")
+    @Operation(
+        summary = "[APPLY-103] 지원서 합/불 결정 (단일 PATCH)",
+        description = """
+            PM 이 지원서의 status 를 토글합니다.
+            - 매칭 차수 진행 중에만 가능 (decisionDeadline 까지)
+            - SUBMITTED ↔ APPROVED ↔ REJECTED 자유 토글 (재토글 허용)
+            - PENDING 입력은 도메인의 SUBMITTED 로 매핑되어 결정을 "대기" 로 되돌림
+            """
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT_APPLICATION,
+        resourceId = "#applicationId",
+        permission = PermissionType.APPROVE,
+        message = "지원서 합/불 결정 권한이 없습니다."
+    )
+    public ProjectApplicationStatusResponse decide(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long projectId,
+        @PathVariable Long applicationId,
+        @Valid @RequestBody UpdateApplicationDecisionRequest request
+    ) {
+        return ProjectApplicationStatusResponse.from(
+            decideApplicationUseCase.decide(
+                applicationId, request.status(), request.reason(), memberPrincipal.getMemberId()
+            )
+        );
+    }
+
     @DeleteMapping("/{projectId}/applications/{applicationId}")
     @Operation(
         summary = "[APPLY-005] 챌린저 지원서 철회",
@@ -134,7 +167,6 @@ public class ProjectApplicationController {
     )
     public ProjectApplicationStatusResponse cancel(
         @CurrentMember MemberPrincipal memberPrincipal,
-        @PathVariable Long projectId,
         @PathVariable Long applicationId,
         @RequestParam(required = false) String reason
     ) {
