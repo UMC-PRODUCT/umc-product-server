@@ -137,9 +137,13 @@ public class AppleTokenVerifier {
                 .body(formData)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    // ADR-016 §민감 필드 정책: 성공 응답 body 에는 access_token / id_token / refresh_token
+                    // 이 포함되어 있어 통째로 로깅하면 토큰이 stdout / Loki 에 남는다. 에러 응답이라도
+                    // 잘못된 분기로 성공 body 가 흘러올 수 있으므로 status / errorCode 만 남긴다.
                     String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
-                    log.error("Apple token endpoint 호출 실패: status={}, headers={}, body={}",
-                        res.getStatusCode(), res.getHeaders(), body);
+                    String errorCode = extractAppleErrorCode(body);
+                    log.error("Apple token endpoint 호출 실패: status={}, errorCode={}, bodyLength={}",
+                        res.getStatusCode(), errorCode, body.length());
                     throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
                 })
                 .body(AppleTokenResponse.class);
@@ -186,8 +190,11 @@ public class AppleTokenVerifier {
                 .body(formData)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    // ADR-016 §민감 필드 정책: revoke 응답 본문 통째로 로깅하지 않는다.
                     String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
-                    log.error("Apple token revoke 실패: status={}, body={}", res.getStatusCode(), body);
+                    String errorCode = extractAppleErrorCode(body);
+                    log.error("Apple token revoke 실패: status={}, errorCode={}, bodyLength={}",
+                        res.getStatusCode(), errorCode, body.length());
                     throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
                 })
                 .toBodilessEntity();
@@ -233,6 +240,36 @@ public class AppleTokenVerifier {
             log.error("Failed to generate Apple client secret", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
         }
+    }
+
+    /**
+     * Apple token endpoint 의 에러 응답 JSON 에서 {@code error} 코드만 안전하게 꺼낸다.
+     *
+     * <p>응답 본문 전체를 로그에 남기면 잘못 분기되어 성공 응답이 흘러왔을 때 access_token /
+     * id_token / refresh_token 이 stdout 으로 새어나갈 수 있다. 따라서 본문에서
+     * {@code "error": "..."} 값만 추출하고, 추출에 실패하면 {@code "unknown"} 으로 대체한다.
+     */
+    private String extractAppleErrorCode(String body) {
+        if (body == null || body.isEmpty()) {
+            return "unknown";
+        }
+        int idx = body.indexOf("\"error\"");
+        if (idx == -1) {
+            return "unknown";
+        }
+        int colon = body.indexOf(":", idx);
+        if (colon == -1) {
+            return "unknown";
+        }
+        int start = body.indexOf("\"", colon + 1);
+        if (start == -1) {
+            return "unknown";
+        }
+        int end = body.indexOf("\"", start + 1);
+        if (end == -1) {
+            return "unknown";
+        }
+        return body.substring(start + 1, end);
     }
 
     /**
