@@ -100,7 +100,6 @@
     <springProfile name="local">
         <root level="INFO">
             <appender-ref ref="LOCAL_CONSOLE"/>
-            <appender-ref ref="LOKI"/>
         </root>
     </springProfile>
 
@@ -134,7 +133,7 @@
         </root>
     </springProfile>
 
-    <!-- ========== prod: stdout JSON + LOKI + SENTRY (CloudWatch) ========== -->
+    <!-- ========== 프로덕션: stdout JSON + LOKI + SENTRY (CloudWatch) ========== -->
     <springProfile name="prod">
         <!-- Sentry Appender -->
         <appender name="SENTRY" class="io.sentry.logback.SentryAppender">
@@ -145,7 +144,7 @@
             <minimumBreadcrumbLevel>INFO</minimumBreadcrumbLevel>
         </appender>
 
-        <!-- 우리 앱 패키지만 DEBUG -->
+        <!-- 우리 앱에 대한 로그 기록 수준은 환경변수에 따름 -->
         <logger name="com.umc.product" level="${LOGGING_APP_LEVEL:-INFO}"/>
 
         <root level="INFO">
