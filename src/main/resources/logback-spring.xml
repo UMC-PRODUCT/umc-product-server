@@ -95,7 +95,13 @@
         </http>
         <format>
             <label>
-                <pattern>application=${SPRING_APPLICATION_NAME},level=%level</pattern>
+                <!--
+                    application 라벨은 위에서 선언한 springProperty APP_NAME (source=spring.application.name,
+                    defaultValue=umc-product-api) 을 그대로 사용한다. SPRING_APPLICATION_NAME 환경변수를
+                    직접 참조하면 미설정 환경에서 라벨이 빈 문자열이 되어 LogQL `{application=~".*umc-product-api"}`
+                    매칭이 실패한다.
+                -->
+                <pattern>application=${APP_NAME},level=%level</pattern>
             </label>
             <message class="net.logstash.logback.layout.LoggingEventCompositeJsonLayout">
                 <providers>
