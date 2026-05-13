@@ -54,11 +54,7 @@ public class SchedulePermissionEvaluator implements ResourcePermissionEvaluator 
                 .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
 
             // 해당 일정의 기수에서 최고 운영 관리자 권한이 있다면 즉시 통과
-            Long targetGisuId = getGisuUseCase.getGisuByDate(schedule.getStartsAt()).gisuId();
-            boolean isAdmin = subjectAttributes.roleAttributes().stream()
-                .filter(role -> role.gisuId().equals(targetGisuId))
-                .anyMatch(role -> role.roleType().isSuperAdmin());
-            if (isAdmin) {
+            if (isSuperAdminOfScheduleGisu(subjectAttributes, schedule)) {
                 return true;
             }
 
@@ -66,6 +62,27 @@ public class SchedulePermissionEvaluator implements ResourcePermissionEvaluator 
             return schedule.getAuthorMemberId().equals(memberId);
         }
 
+        // FORCE_DELETE (일정 강제 삭제)
+        // '해당 일정 기수의 최고 운영 관리자'만 가능 (생성자 본인은 불가)
+        if (permission == PermissionType.FORCE_DELETE) {
+
+            if (resourcePermission.resourceId() == null) {
+                return false;
+            }
+
+            Schedule schedule = loadSchedulePort.findById(resourcePermission.getResourceIdAsLong())
+                .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+
+            return isSuperAdminOfScheduleGisu(subjectAttributes, schedule);
+        }
+
         return false;
+    }
+
+    private boolean isSuperAdminOfScheduleGisu(SubjectAttributes subjectAttributes, Schedule schedule) {
+        Long targetGisuId = getGisuUseCase.getGisuByDate(schedule.getStartsAt()).gisuId();
+        return subjectAttributes.roleAttributes().stream()
+            .filter(role -> role.gisuId().equals(targetGisuId))
+            .anyMatch(role -> role.roleType().isSuperAdmin());
     }
 }
