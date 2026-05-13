@@ -127,4 +127,19 @@ public class ScheduleParticipantQueryRepository {
                 .fetch()
         );
     }
+
+    /**
+     * 일정에 속한 참여자 중 attendance.status가 not null인 기록이 하나라도 존재하는지 확인
+     */
+    public boolean existsAttendanceStatusByScheduleId(Long scheduleId) {
+        Integer fetchOne = queryFactory
+            .selectOne()
+            .from(scheduleParticipant)
+            .where(
+                scheduleParticipant.schedule.id.eq(scheduleId),
+                scheduleParticipant.attendance.status.isNotNull()
+            )
+            .fetchFirst();
+        return fetchOne != null;
+    }
 }

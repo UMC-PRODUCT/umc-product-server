@@ -76,4 +76,9 @@ public class ScheduleParticipantPersistenceAdapter implements
     public Set<Long> findScheduleIdsByMemberId(Long memberId) {
         return scheduleParticipantQueryRepository.findScheduleIdsByMemberId(memberId);
     }
+
+    @Override
+    public boolean existsAttendanceStatusByScheduleId(Long scheduleId) {
+        return scheduleParticipantQueryRepository.existsAttendanceStatusByScheduleId(scheduleId);
+    }
 }
