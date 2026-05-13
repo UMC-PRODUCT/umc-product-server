@@ -55,7 +55,10 @@ class AdminDashboardAnalyticsQueryRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        Gisu gisu = em.persist(Gisu.create(7L, Instant.now().minusSeconds(3600), Instant.now().plusSeconds(86400 * 30), true));
+        // 시드 마이그레이션(V2026.02.28.06.00)이 이미 is_active=true 인 10기를 넣어둔다.
+        // 부분 unique index uq_gisu_active 와 충돌하지 않도록 테스트 fixture 는 비활성 기수로 만든다.
+        // 분석 쿼리는 scope.gisuId() 로 기수를 스코프하므로 is_active 값과는 무관하다.
+        Gisu gisu = em.persist(Gisu.create(7L, Instant.now().minusSeconds(3600), Instant.now().plusSeconds(86400 * 30), false));
         Chapter chapter = em.persist(Chapter.create(gisu, "중앙"));
         School schoolA = em.persist(School.create("A대학교", null));
         School schoolB = em.persist(School.create("B대학교", null));
