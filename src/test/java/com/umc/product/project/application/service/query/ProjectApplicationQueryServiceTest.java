@@ -923,26 +923,9 @@ class ProjectApplicationQueryServiceTest {
         assertThat(result.filesByFileId().get("f-abc").originalFileName()).isEqualTo("포트폴리오.pdf");
     }
 
-    @Test
-    @DisplayName("getDetail_DRAFT_상태인데_지원자_본인이_아니면_NOT_FOUND_위장")
-    void getDetail_DRAFT_타인_차단() {
-        // given - 지원자 본인은 200L, 호출자는 300L (다른 챌린저/운영진)
-        Project project = createProject(1L, "프로젝트A", null, 99L);
-        ProjectMatchingRound round = createMatchingRound(
-            7L, MatchingType.PLAN_DESIGN, MatchingPhase.FIRST);
-        ProjectApplication application = createApplicationWithFormResponse(
-            55L, project, round, 200L, ProjectApplicationStatus.DRAFT, 123L);
-
-        GetProjectApplicationDetailQuery query = detailQuery(1L, 55L, 300L);
-        given(loadProjectApplicationPort.findByIdWithDetails(55L))
-            .willReturn(Optional.of(application));
-
-        // when & then
-        assertThatThrownBy(() -> sut.getDetail(query))
-            .isInstanceOf(ProjectDomainException.class)
-            .hasFieldOrPropertyWithValue("baseCode", ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
-        verify(getChallengerUseCase, never()).findByMemberIdAndGisuId(any(), any());
-    }
+    // DRAFT 본인 한정 위반(타인 차단) 케이스는 컨트롤러의 @CheckAccess (L2 evaluator.canRead) 가
+    // 처리하므로 service 단위 테스트에서는 다루지 않는다. 해당 분기 검증은
+    // ProjectApplicationPermissionEvaluatorTest 의 READ는_DRAFT_지원서를_PO여도_거부 등에서 보장.
 
     @Test
     @DisplayName("getDetail_DRAFT_상태이지만_지원자_본인_호출이면_정상_조회")
