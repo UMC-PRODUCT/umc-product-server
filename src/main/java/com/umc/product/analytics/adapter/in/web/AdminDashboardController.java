@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/dashboard")
 @RequiredArgsConstructor
-@Tag(name = "Admin Dashboard | 운영진 대시보드", description = "운영진 메인 대시보드 집계 API")
+@Tag(name = "Analytics | 운영진 종합 대시보드", description = "운영진 메인 대시보드 집계 API")
 public class AdminDashboardController {
 
     private final GetAdminDashboardSummaryUseCase getAdminDashboardSummaryUseCase;
@@ -41,7 +41,7 @@ public class AdminDashboardController {
     private final GetAdminRiskChallengerUseCase getAdminRiskChallengerUseCase;
     private final GetAdminOperationsOverviewUseCase getAdminOperationsOverviewUseCase;
 
-    @Operation(summary = "[ADMIN-DASHBOARD-001] 운영진 대시보드 요약 조회")
+    @Operation(summary = "[DASHBOARD-001] 운영진 대시보드 요약 조회")
     @GetMapping("summary")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public AdminDashboardSummaryResponse getSummary(
@@ -53,7 +53,7 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[ADMIN-DASHBOARD-002] 운영진 대시보드 액션 큐 조회")
+    @Operation(summary = "[DASHBOARD-002] 운영진 대시보드 액션 큐 조회")
     @GetMapping("action-queue")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public AdminDashboardActionQueueResponse getActionQueue(
@@ -65,7 +65,7 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[ADMIN-DASHBOARD-004] 운영진 대시보드 권한 컨텍스트 조회")
+    @Operation(summary = "[DASHBOARD-004] 운영진 대시보드 권한 컨텍스트 조회")
     @GetMapping("context")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public AdminDashboardContextResponse getContext(
@@ -76,7 +76,7 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[ADMIN-DASHBOARD-005] 운영 현황 집계 조회")
+    @Operation(summary = "[DASHBOARD-005] 운영 현황 집계 조회")
     @GetMapping("operations")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public AdminOperationsOverviewResponse getOperationsOverview(
@@ -88,7 +88,7 @@ public class AdminDashboardController {
         );
     }
 
-    @Operation(summary = "[ADMIN-DASHBOARD-003] 운영진 대시보드 위험군 챌린저 조회")
+    @Operation(summary = "[DASHBOARD-003] 운영진 대시보드 위험군 챌린저 조회")
     @GetMapping("risk-challengers")
     @CheckAccess(resourceType = ResourceType.ANALYTICS, permission = PermissionType.READ)
     public PageResponse<AdminRiskChallengerResponse> getRiskChallengers(
