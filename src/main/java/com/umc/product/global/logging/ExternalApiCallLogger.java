@@ -59,7 +59,9 @@ public final class ExternalApiCallLogger {
      * @return {@code call} 의 반환값
      */
     public static <T> T measure(String provider, String operation, Supplier<T> call) {
-        long start = System.currentTimeMillis();
+        // 경과 시간 측정은 monotonic clock 인 nanoTime 을 사용한다.
+        // currentTimeMillis 는 NTP 동기화 등 wall-clock 보정 시 뒤로 점프할 수 있어 durationMs 가 왜곡된다.
+        long startNanos = System.nanoTime();
         try {
             T result = call.get();
             log.info(
@@ -67,7 +69,7 @@ public final class ExternalApiCallLogger {
                 kv("provider", provider),
                 kv("operation", operation),
                 kv("result", "SUCCESS"),
-                kv("durationMs", System.currentTimeMillis() - start)
+                kv("durationMs", (System.nanoTime() - startNanos) / 1_000_000L)
             );
             return result;
         } catch (RuntimeException e) {
@@ -76,7 +78,7 @@ public final class ExternalApiCallLogger {
                 kv("provider", provider),
                 kv("operation", operation),
                 kv("result", "FAILURE"),
-                kv("durationMs", System.currentTimeMillis() - start),
+                kv("durationMs", (System.nanoTime() - startNanos) / 1_000_000L),
                 kv("errorClass", e.getClass().getSimpleName())
             );
             throw e;
