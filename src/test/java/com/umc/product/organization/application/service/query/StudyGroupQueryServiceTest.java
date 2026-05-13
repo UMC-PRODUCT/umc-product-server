@@ -26,7 +26,6 @@ import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.organization.domain.StudyGroupMember;
 import com.umc.product.organization.domain.StudyGroupMentor;
 import java.util.ArrayList;
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,18 +66,13 @@ class StudyGroupQueryServiceTest {
         given(getMemberUseCase.findAllIdsBySchoolId(schoolId)).willReturn(schoolMemberIds);
         given(getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER))
             .willReturn(false);
-
-        StudyGroupInfo group1 = studyGroupInfo(1L, gisuId);
-        StudyGroupInfo group2 = studyGroupInfo(2L, gisuId);
-        given(loadStudyGroupPort.findMyStudyGroups(any(), eq(gisuId), eq(null), anyInt()))
-            .willReturn(List.of(group1, group2));
+        given(loadStudyGroupPort.findStudyGroupHeaders(any(), eq(gisuId), eq(null), anyInt()))
+            .willReturn(List.of());   // headers 빈 결과 — scope 검증에 집중
 
         // when
-        List<StudyGroupInfo> result = sut.getMyStudyGroups(memberId, null, 20);
+        sut.getMyStudyGroups(memberId, null, 20);
 
         // then
-        assertThat(result).extracting(StudyGroupInfo::groupId).containsExactly(1L, 2L);
-
         List<StudyGroupViewScope> capturedScopes = captureScopes();
         assertThat(capturedScopes).hasSize(1);
         assertThat(capturedScopes.get(0)).isInstanceOfSatisfying(AsSchoolCore.class,
@@ -98,8 +92,8 @@ class StudyGroupQueryServiceTest {
         given(getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER))
             .willReturn(true);
 
-        given(loadStudyGroupPort.findMyStudyGroups(any(), eq(gisuId), eq(null), anyInt()))
-            .willReturn(List.of(studyGroupInfo(1L, gisuId)));
+        given(loadStudyGroupPort.findStudyGroupHeaders(any(), eq(gisuId), eq(null), anyInt()))
+            .willReturn(List.of());
 
         // when
         sut.getMyStudyGroups(memberId, null, 20);
@@ -126,8 +120,8 @@ class StudyGroupQueryServiceTest {
         given(getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER))
             .willReturn(true);
 
-        given(loadStudyGroupPort.findMyStudyGroups(any(), eq(gisuId), eq(null), anyInt()))
-            .willReturn(List.of(studyGroupInfo(1L, gisuId)));
+        given(loadStudyGroupPort.findStudyGroupHeaders(any(), eq(gisuId), eq(null), anyInt()))
+            .willReturn(List.of());
 
         // when
         sut.getMyStudyGroups(memberId, null, 20);
@@ -157,7 +151,7 @@ class StudyGroupQueryServiceTest {
 
         // then
         assertThat(result).isEmpty();
-        verify(loadStudyGroupPort, never()).findMyStudyGroups(any(), any(), any(), anyInt());
+        verify(loadStudyGroupPort, never()).findStudyGroupHeaders(any(), any(), any(), anyInt());
     }
 
     @Test
@@ -174,8 +168,8 @@ class StudyGroupQueryServiceTest {
         given(getMemberUseCase.findAllIdsBySchoolId(schoolId)).willReturn(Set.of());
         given(getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER))
             .willReturn(true);
-        given(loadStudyGroupPort.findMyStudyGroups(any(), eq(gisuId), eq(null), anyInt()))
-            .willReturn(List.of(studyGroupInfo(1L, gisuId)));
+        given(loadStudyGroupPort.findStudyGroupHeaders(any(), eq(gisuId), eq(null), anyInt()))
+            .willReturn(List.of());
 
         // when
         sut.getMyStudyGroups(memberId, null, 20);
@@ -199,14 +193,14 @@ class StudyGroupQueryServiceTest {
         given(getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, gisuId, schoolId)).willReturn(false);
         given(getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER))
             .willReturn(true);
-        given(loadStudyGroupPort.findMyStudyGroups(any(), any(), any(), anyInt()))
+        given(loadStudyGroupPort.findStudyGroupHeaders(any(), any(), any(), anyInt()))
             .willReturn(List.of());
 
         // when
         sut.getMyStudyGroups(memberId, null, requestedSize);
 
         // then
-        verify(loadStudyGroupPort).findMyStudyGroups(any(), eq(gisuId), eq(null), eq(requestedSize + 1));
+        verify(loadStudyGroupPort).findStudyGroupHeaders(any(), eq(gisuId), eq(null), eq(requestedSize + 1));
     }
 
     @Test
@@ -375,7 +369,7 @@ class StudyGroupQueryServiceTest {
     @SuppressWarnings("unchecked")
     private List<StudyGroupViewScope> captureScopes() {
         ArgumentCaptor<List<StudyGroupViewScope>> captor = ArgumentCaptor.forClass(List.class);
-        verify(loadStudyGroupPort).findMyStudyGroups(captor.capture(), any(), any(), anyInt());
+        verify(loadStudyGroupPort).findStudyGroupHeaders(captor.capture(), any(), any(), anyInt());
         return captor.getValue();
     }
 
@@ -392,18 +386,6 @@ class StudyGroupQueryServiceTest {
             .status(MemberStatus.ACTIVE)
             .roles(List.of())
             .build();
-    }
-
-    private StudyGroupInfo studyGroupInfo(Long groupId, Long gisuId) {
-        return StudyGroupInfo.create(
-            groupId,
-            "그룹" + groupId,
-            gisuId,
-            ChallengerPart.SPRINGBOOT,
-            Instant.parse("2026-05-01T00:00:00Z"),
-            List.of(),
-            List.of()
-        );
     }
 
     private StudyGroup studyGroup(

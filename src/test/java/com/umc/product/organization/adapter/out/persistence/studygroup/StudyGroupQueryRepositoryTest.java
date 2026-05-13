@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.config.JpaConfig;
 import com.umc.product.global.config.QueryDslConfig;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupHeaderInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope.AsPartLeader;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope.AsSchoolCore;
@@ -14,6 +14,7 @@ import com.umc.product.organization.domain.StudyGroupMember;
 import com.umc.product.organization.domain.StudyGroupMentor;
 import com.umc.product.support.TestContainersConfig;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -41,7 +42,7 @@ class StudyGroupQueryRepositoryTest {
     StudyGroupQueryRepository sut;
 
     @Test
-    void findMyStudyGroups_AsSchoolCore_scope_학교_멤버가_멤버로_등록된_그룹만_반환() {
+    void findStudyGroupHeaders_AsSchoolCore_scope_학교_멤버가_멤버로_등록된_그룹만_반환() {
         // given
         Long gisuId = 1L;
         Long schoolMemberA = 100L;
@@ -60,16 +61,16 @@ class StudyGroupQueryRepositoryTest {
         List<StudyGroupViewScope> scopes = List.of(new AsSchoolCore(Set.of(schoolMemberA, schoolMemberB)));
 
         // when
-        List<StudyGroupInfo> result = sut.findMyStudyGroups(scopes, gisuId, null, 20);
+        List<StudyGroupHeaderInfo> result = sut.findStudyGroupHeaders(scopes, gisuId, null, 20);
 
         // then
-        assertThat(result).extracting(StudyGroupInfo::groupId)
+        assertThat(result).extracting(StudyGroupHeaderInfo::groupId)
             .containsExactlyInAnyOrder(hit1.getId(), hit2.getId())
             .doesNotContain(miss.getId());
     }
 
     @Test
-    void findMyStudyGroups_AsPartLeader_scope_memberId가_멘토로_등록된_그룹만_반환() {
+    void findStudyGroupHeaders_AsPartLeader_scope_memberId가_멘토로_등록된_그룹만_반환() {
         // given
         Long gisuId = 1L;
         Long me = 100L;
@@ -86,16 +87,16 @@ class StudyGroupQueryRepositoryTest {
         List<StudyGroupViewScope> scopes = List.of(new AsPartLeader(me));
 
         // when
-        List<StudyGroupInfo> result = sut.findMyStudyGroups(scopes, gisuId, null, 20);
+        List<StudyGroupHeaderInfo> result = sut.findStudyGroupHeaders(scopes, gisuId, null, 20);
 
         // then
-        assertThat(result).extracting(StudyGroupInfo::groupId)
+        assertThat(result).extracting(StudyGroupHeaderInfo::groupId)
             .containsExactly(hit.getId())
             .doesNotContain(miss.getId());
     }
 
     @Test
-    void findMyStudyGroups_두_scope_OR_결합_중복은_한_번만_반환() {
+    void findStudyGroupHeaders_두_scope_OR_결합_중복은_한_번만_반환() {
         // given — schoolOnly: 회장 scope만 / mentorOnly: 파트장 scope만 / both: 둘 다 잡힘
         Long gisuId = 1L;
         Long me = 100L;
@@ -118,15 +119,15 @@ class StudyGroupQueryRepositoryTest {
         );
 
         // when
-        List<StudyGroupInfo> result = sut.findMyStudyGroups(scopes, gisuId, null, 20);
+        List<StudyGroupHeaderInfo> result = sut.findStudyGroupHeaders(scopes, gisuId, null, 20);
 
         // then
-        assertThat(result).extracting(StudyGroupInfo::groupId)
+        assertThat(result).extracting(StudyGroupHeaderInfo::groupId)
             .containsExactlyInAnyOrder(schoolOnly.getId(), mentorOnly.getId(), both.getId());
     }
 
     @Test
-    void findMyStudyGroups_다른_기수_그룹은_제외() {
+    void findStudyGroupHeaders_다른_기수_그룹은_제외() {
         // given
         Long activeGisu = 1L;
         Long otherGisu = 2L;
@@ -143,16 +144,16 @@ class StudyGroupQueryRepositoryTest {
         List<StudyGroupViewScope> scopes = List.of(new AsPartLeader(me));
 
         // when
-        List<StudyGroupInfo> result = sut.findMyStudyGroups(scopes, activeGisu, null, 20);
+        List<StudyGroupHeaderInfo> result = sut.findStudyGroupHeaders(scopes, activeGisu, null, 20);
 
         // then
-        assertThat(result).extracting(StudyGroupInfo::groupId)
+        assertThat(result).extracting(StudyGroupHeaderInfo::groupId)
             .containsExactly(activeGroup.getId())
             .doesNotContain(otherGroup.getId());
     }
 
     @Test
-    void findMyStudyGroups_커서_페이지네이션_id_DESC로_lt_cursor만_반환() {
+    void findStudyGroupHeaders_커서_페이지네이션_id_DESC로_lt_cursor만_반환() {
         // given — id가 더 작은(=오래된) 그룹만 다음 페이지에 잡혀야 함
         Long gisuId = 1L;
         Long me = 100L;
@@ -170,16 +171,16 @@ class StudyGroupQueryRepositoryTest {
         List<StudyGroupViewScope> scopes = List.of(new AsPartLeader(me));
 
         // when — newest 다음 페이지
-        List<StudyGroupInfo> result = sut.findMyStudyGroups(scopes, gisuId, newest.getId(), 20);
+        List<StudyGroupHeaderInfo> result = sut.findStudyGroupHeaders(scopes, gisuId, newest.getId(), 20);
 
         // then
-        assertThat(result).extracting(StudyGroupInfo::groupId)
+        assertThat(result).extracting(StudyGroupHeaderInfo::groupId)
             .containsExactly(middle.getId(), oldest.getId())
             .doesNotContain(newest.getId());
     }
 
     @Test
-    void findMyStudyGroups_모든_scope의_predicate가_null이면_빈_결과() {
+    void findStudyGroupHeaders_모든_scope의_predicate가_null이면_빈_결과() {
         // given — buildScopePredicate 가 null 반환하는 경로 (AsSchoolCore 의 schoolMemberIds 가 비어있음).
         //         이런 입력이 들어와도 풀스캔 없이 빈 리스트가 되어야 한다.
         Long gisuId = 1L;
@@ -190,10 +191,58 @@ class StudyGroupQueryRepositoryTest {
         List<StudyGroupViewScope> scopes = List.of(new AsSchoolCore(Set.of()));
 
         // when
-        List<StudyGroupInfo> result = sut.findMyStudyGroups(scopes, gisuId, null, 20);
+        List<StudyGroupHeaderInfo> result = sut.findStudyGroupHeaders(scopes, gisuId, null, 20);
 
         // then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void findMemberIdsByStudyGroupIds_그룹별_memberIds_매핑() {
+        // given
+        Long gisuId = 1L;
+        StudyGroup g1 = persistGroup("g1", gisuId, ChallengerPart.SPRINGBOOT,
+            Set.of(), Set.of(100L, 101L));
+        StudyGroup g2 = persistGroup("g2", gisuId, ChallengerPart.SPRINGBOOT,
+            Set.of(), Set.of(200L));
+        StudyGroup g3 = persistGroup("g3", gisuId, ChallengerPart.SPRINGBOOT,
+            Set.of(), Set.of(300L));   // 호출에 포함 안 시킬 그룹
+        em.flush();
+        em.clear();
+
+        // when — g1, g2 만 조회
+        Map<Long, List<Long>> result = sut.findMemberIdsByStudyGroupIds(List.of(g1.getId(), g2.getId()));
+
+        // then
+        assertThat(result).containsOnlyKeys(g1.getId(), g2.getId());
+        assertThat(result.get(g1.getId())).containsExactlyInAnyOrder(100L, 101L);
+        assertThat(result.get(g2.getId())).containsExactly(200L);
+        assertThat(result).doesNotContainKey(g3.getId());
+    }
+
+    @Test
+    void findMentorIdsByStudyGroupIds_그룹별_mentorIds_매핑() {
+        // given
+        Long gisuId = 1L;
+        StudyGroup g1 = persistGroup("g1", gisuId, ChallengerPart.SPRINGBOOT,
+            Set.of(10L, 11L), Set.of(100L));
+        StudyGroup g2 = persistGroup("g2", gisuId, ChallengerPart.SPRINGBOOT,
+            Set.of(20L), Set.of(100L));
+        em.flush();
+        em.clear();
+
+        // when
+        Map<Long, List<Long>> result = sut.findMentorIdsByStudyGroupIds(List.of(g1.getId(), g2.getId()));
+
+        // then
+        assertThat(result.get(g1.getId())).containsExactlyInAnyOrder(10L, 11L);
+        assertThat(result.get(g2.getId())).containsExactly(20L);
+    }
+
+    @Test
+    void findMemberIdsByStudyGroupIds_빈_입력은_빈_맵() {
+        assertThat(sut.findMemberIdsByStudyGroupIds(List.of())).isEmpty();
+        assertThat(sut.findMentorIdsByStudyGroupIds(List.of())).isEmpty();
     }
 
     @Test
