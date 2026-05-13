@@ -24,7 +24,8 @@ import org.springframework.web.servlet.HandlerMapping;
  * 별도의 UUID 기반 requestId 는 발급하지 않는다 — FE 등 외부 시스템이 이미 {@code X-Trace-Id} 응답 헤더로
  * 알고 있는 식별자를 변경하지 않기 위해서다.
  *
- * <p>MDC 누수를 막기 위해 {@link #afterCompletion} 의 finally 블록에서 반드시 {@link MDC#clear()} 를 호출한다.
+ * <p>ThreadLocal 누수를 막기 위해 {@link #afterCompletion} 의 finally 블록에서 반드시
+ * {@link QueryStatsHolder#clear()} 와 {@link MDC#clear()} 를 호출한다 — 조기 반환 / 예외 경로 모두 포함.
  */
 @Slf4j
 @Component
@@ -113,7 +114,6 @@ public class LoggingInterceptor implements HandlerInterceptor {
             long durationMs = Duration.between(startTime, Instant.now()).toMillis();
             long queryCount = QueryStatsHolder.getQueryCount();
             long queryTimeMs = QueryStatsHolder.getTotalTimeMs();
-            QueryStatsHolder.clear();
 
             // uriTemplate: Spring 이 매칭한 패턴 (예: /forms/{formId}/answers).
             // path 가 가변이라 dashboard 의 P95/P99 집계가 불가능했던 문제를 해결한다.
@@ -141,6 +141,9 @@ public class LoggingInterceptor implements HandlerInterceptor {
                 log.info(EVENT_REQUEST_COMPLETED);
             }
         } finally {
+            // ThreadLocal 누수 방지: 조기 반환 / try 블록 내 예외 경로 모두에서
+            // QueryStatsHolder 와 MDC 를 반드시 비운다 (톰캣 스레드 재사용 대응).
+            QueryStatsHolder.clear();
             MDC.clear();
         }
     }
