@@ -26,5 +26,6 @@ public enum Domain {
     AUDIT_LOG,
     PROJECT,
     FIGMA,
-    LLM
+    LLM,
+    ANALYTICS
 }
