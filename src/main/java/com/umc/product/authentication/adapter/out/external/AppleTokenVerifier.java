@@ -1,6 +1,9 @@
 package com.umc.product.authentication.adapter.out.external;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
@@ -55,6 +58,7 @@ public class AppleTokenVerifier {
 
     private final AppleOAuthProperties appleProperties;
     private final RestClient restClient;
+    private final ObjectMapper objectMapper;
     private PrivateKey cachedPrivateKey;
 
     /**
@@ -246,30 +250,20 @@ public class AppleTokenVerifier {
      * Apple token endpoint 의 에러 응답 JSON 에서 {@code error} 코드만 안전하게 꺼낸다.
      *
      * <p>응답 본문 전체를 로그에 남기면 잘못 분기되어 성공 응답이 흘러왔을 때 access_token /
-     * id_token / refresh_token 이 stdout 으로 새어나갈 수 있다. 따라서 본문에서
-     * {@code "error": "..."} 값만 추출하고, 추출에 실패하면 {@code "unknown"} 으로 대체한다.
+     * id_token / refresh_token 이 stdout 으로 새어나갈 수 있다. 따라서 Jackson 으로 트리를
+     * 파싱한 뒤 {@code error} 필드 값만 추출하고, 파싱 실패 또는 필드 부재 시 {@code "unknown"}
+     * 으로 대체한다 (수동 indexOf 파싱은 공백·필드 순서·유사 키 변화에 취약하므로 사용하지 않는다).
      */
     private String extractAppleErrorCode(String body) {
         if (body == null || body.isEmpty()) {
             return "unknown";
         }
-        int idx = body.indexOf("\"error\"");
-        if (idx == -1) {
+        try {
+            JsonNode error = objectMapper.readTree(body).path("error");
+            return error.isTextual() ? error.asText() : "unknown";
+        } catch (JsonProcessingException e) {
             return "unknown";
         }
-        int colon = body.indexOf(":", idx);
-        if (colon == -1) {
-            return "unknown";
-        }
-        int start = body.indexOf("\"", colon + 1);
-        if (start == -1) {
-            return "unknown";
-        }
-        int end = body.indexOf("\"", start + 1);
-        if (end == -1) {
-            return "unknown";
-        }
-        return body.substring(start + 1, end);
     }
 
     /**
