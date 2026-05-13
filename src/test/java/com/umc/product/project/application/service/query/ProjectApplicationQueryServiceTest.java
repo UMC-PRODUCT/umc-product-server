@@ -14,6 +14,8 @@ import static org.mockito.Mockito.verify;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.application.access.ProjectApplicationAccessScope;
+import com.umc.product.project.application.access.ProjectApplicationAccessScopeResolver;
 import com.umc.product.project.application.port.in.query.dto.GetMyProjectApplicationsQuery;
 import com.umc.product.project.application.port.in.query.dto.GetProjectApplicationDetailQuery;
 import com.umc.product.project.application.port.in.query.dto.ManagedProjectApplicationCardStatus;
@@ -86,6 +88,8 @@ class ProjectApplicationQueryServiceTest {
     GetFormUseCase getFormUseCase;
     @Mock
     GetFormResponseUseCase getFormResponseUseCase;
+    @Mock
+    ProjectApplicationAccessScopeResolver accessScopeResolver;
     @InjectMocks
     ProjectApplicationQueryService sut;
 
@@ -593,10 +597,29 @@ class ProjectApplicationQueryServiceTest {
     void searchByProject_DRAFT_필터_금지() {
         // given & when & then -- Query record compact constructor 에서 차단된다
         assertThatThrownBy(() -> SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(REQUESTER_ID)
             .projectId(1L)
             .status(ProjectApplicationStatus.DRAFT)
             .build())
             .isInstanceOf(ProjectDomainException.class);
+    }
+
+    @Test
+    @DisplayName("searchByProject_권한_scope_가_None_이면_빈_리스트_위장")
+    void searchByProject_권한_없음_빈_리스트() {
+        // given
+        SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(REQUESTER_ID).projectId(1L).build();
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, 1L))
+            .willReturn(new ProjectApplicationAccessScope.None());
+
+        // when
+        List<ProjectApplicationCardInfo> result = sut.searchByProject(query);
+
+        // then
+        assertThat(result).isEmpty();
+        verify(loadProjectApplicationPort, never())
+            .searchProjectApplications(any(), any(), any());
     }
 
     @Test
@@ -605,8 +628,10 @@ class ProjectApplicationQueryServiceTest {
         // given
         Project project = createProject(1L, "프로젝트A", null, 99L);
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
-            .projectId(1L).build();
+            .requesterMemberId(REQUESTER_ID).projectId(1L).build();
 
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, 1L))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectPort.getById(1L)).willReturn(project);
         given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
             .willReturn(List.of());
@@ -631,8 +656,10 @@ class ProjectApplicationQueryServiceTest {
             55L, project, round, 200L, ProjectApplicationStatus.APPROVED);
 
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
-            .projectId(1L).build();
+            .requesterMemberId(REQUESTER_ID).projectId(1L).build();
 
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, 1L))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectPort.getById(1L)).willReturn(project);
         given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
             .willReturn(List.of(application));
@@ -667,10 +694,13 @@ class ProjectApplicationQueryServiceTest {
             56L, project, round, 201L, ProjectApplicationStatus.SUBMITTED);
 
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(REQUESTER_ID)
             .projectId(1L)
             .part(ChallengerPart.WEB)
             .build();
 
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, 1L))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectPort.getById(1L)).willReturn(project);
         given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
             .willReturn(List.of(webApp, androidApp));
@@ -695,11 +725,14 @@ class ProjectApplicationQueryServiceTest {
         // given
         Project project = createProject(1L, "프로젝트A", null, 99L);
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(REQUESTER_ID)
             .projectId(1L)
             .matchingRoundId(7L)
             .status(ProjectApplicationStatus.APPROVED)
             .build();
 
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, 1L))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectPort.getById(1L)).willReturn(project);
         given(loadProjectApplicationPort.searchProjectApplications(
             1L, 7L, ProjectApplicationStatus.APPROVED))
