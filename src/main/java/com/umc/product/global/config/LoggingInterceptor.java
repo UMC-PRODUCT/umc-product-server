@@ -75,7 +75,16 @@ public class LoggingInterceptor implements HandlerInterceptor {
         // 익명 사용자는 비워둔다 — Loki 에서 `memberId is null` 로 익명 트래픽을 식별한다.
         putMemberIdToMdcIfAuthenticated();
 
-        log.info(EVENT_REQUEST_STARTED);
+        // ADR-016 §MDC 키 표준: api_request_completed 와 동일하게 event 필드를 채워
+        // LogQL `| json | event="api_request_started"` 필터링이 가능하도록 한다.
+        // 단, event 는 해당 로그 라인에만 묶여야 하므로 (이후 컨트롤러/서비스 로그 오염 방지)
+        // 로깅 직후 즉시 제거한다.
+        MDC.put(MDC_EVENT, EVENT_REQUEST_STARTED);
+        try {
+            log.info(EVENT_REQUEST_STARTED);
+        } finally {
+            MDC.remove(MDC_EVENT);
+        }
         return true;
     }
 
