@@ -29,8 +29,8 @@ repositories {
 }
 
 // 의존성 버전
-val springDocVersion = "2.8.14"
-val queryDslVersion = "5.0.0"
+val springDocVersion = "2.8.17"
+val queryDslVersion = "5.1.0"
 val jwtVersion = "0.12.5"
 val awsVersion = "2.40.12"
 val springAiVersion = "1.1.5"
@@ -128,6 +128,10 @@ dependencies {
     implementation("io.micrometer:micrometer-registry-prometheus")
     implementation("com.github.loki4j:loki-logback-appender:1.5.2")
     implementation("io.micrometer:micrometer-registry-otlp")
+
+    // --- Structured Logging (ADR-016) ---
+    // dev/staging/prod 환경의 JSON 단일 라인 로그 encoder. local 은 텍스트 유지.
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
     // --- Sentry ---
     implementation(platform("io.sentry:sentry-bom:8.31.0"))

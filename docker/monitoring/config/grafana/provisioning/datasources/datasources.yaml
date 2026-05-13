@@ -1,0 +1,45 @@
+# Grafana datasource provisioning (ADR-014 Phase 1)
+#
+# 3종 datasource 의 UID 는 ADR-016 의 dashboard JSON (api-performance.json) 이
+# 참조하는 값과 동일하게 유지한다 ("loki", "prometheus", "tempo").
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+    jsonData:
+      timeInterval: 30s
+
+  - name: Loki
+    type: loki
+    uid: loki
+    access: proxy
+    url: http://loki:3100
+    jsonData:
+      # 로그 한 줄의 traceId 필드를 자동으로 Tempo 링크로 변환.
+      # ADR-016 의 JSON 로그가 \"traceId\":\"...\" 형식으로 들어온다는 가정.
+      derivedFields:
+        - datasourceUid: tempo
+          matcherRegex: '"traceId":"(\w+)"'
+          name: traceId
+          url: '$${__value.raw}'
+
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    access: proxy
+    url: http://tempo:3200
+    jsonData:
+      tracesToLogsV2:
+        datasourceUid: loki
+        filterByTraceID: true
+      tracesToMetrics:
+        datasourceUid: prometheus
+      serviceMap:
+        datasourceUid: prometheus
+      nodeGraph:
+        enabled: true

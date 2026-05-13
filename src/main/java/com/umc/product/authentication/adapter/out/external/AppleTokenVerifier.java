@@ -1,6 +1,9 @@
 package com.umc.product.authentication.adapter.out.external;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.product.authentication.adapter.in.oauth.OAuth2Attributes;
 import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
@@ -55,6 +58,7 @@ public class AppleTokenVerifier {
 
     private final AppleOAuthProperties appleProperties;
     private final RestClient restClient;
+    private final ObjectMapper objectMapper;
     private PrivateKey cachedPrivateKey;
 
     /**
@@ -137,9 +141,13 @@ public class AppleTokenVerifier {
                 .body(formData)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    // ADR-016 §민감 필드 정책: 성공 응답 body 에는 access_token / id_token / refresh_token
+                    // 이 포함되어 있어 통째로 로깅하면 토큰이 stdout / Loki 에 남는다. 에러 응답이라도
+                    // 잘못된 분기로 성공 body 가 흘러올 수 있으므로 status / errorCode 만 남긴다.
                     String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
-                    log.error("Apple token endpoint 호출 실패: status={}, headers={}, body={}",
-                        res.getStatusCode(), res.getHeaders(), body);
+                    String errorCode = extractAppleErrorCode(body);
+                    log.error("Apple token endpoint 호출 실패: status={}, errorCode={}, bodyLength={}",
+                        res.getStatusCode(), errorCode, body.length());
                     throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_INVALID_ACCESS_TOKEN);
                 })
                 .body(AppleTokenResponse.class);
@@ -186,8 +194,11 @@ public class AppleTokenVerifier {
                 .body(formData)
                 .retrieve()
                 .onStatus(HttpStatusCode::isError, (req, res) -> {
+                    // ADR-016 §민감 필드 정책: revoke 응답 본문 통째로 로깅하지 않는다.
                     String body = StreamUtils.copyToString(res.getBody(), StandardCharsets.UTF_8);
-                    log.error("Apple token revoke 실패: status={}, body={}", res.getStatusCode(), body);
+                    String errorCode = extractAppleErrorCode(body);
+                    log.error("Apple token revoke 실패: status={}, errorCode={}, bodyLength={}",
+                        res.getStatusCode(), errorCode, body.length());
                     throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
                 })
                 .toBodilessEntity();
@@ -232,6 +243,26 @@ public class AppleTokenVerifier {
         } catch (Exception e) {
             log.error("Failed to generate Apple client secret", e);
             throw new AuthenticationDomainException(AuthenticationErrorCode.OAUTH_TOKEN_VERIFICATION_FAILED);
+        }
+    }
+
+    /**
+     * Apple token endpoint 의 에러 응답 JSON 에서 {@code error} 코드만 안전하게 꺼낸다.
+     *
+     * <p>응답 본문 전체를 로그에 남기면 잘못 분기되어 성공 응답이 흘러왔을 때 access_token /
+     * id_token / refresh_token 이 stdout 으로 새어나갈 수 있다. 따라서 Jackson 으로 트리를
+     * 파싱한 뒤 {@code error} 필드 값만 추출하고, 파싱 실패 또는 필드 부재 시 {@code "unknown"}
+     * 으로 대체한다 (수동 indexOf 파싱은 공백·필드 순서·유사 키 변화에 취약하므로 사용하지 않는다).
+     */
+    private String extractAppleErrorCode(String body) {
+        if (body == null || body.isEmpty()) {
+            return "unknown";
+        }
+        try {
+            JsonNode error = objectMapper.readTree(body).path("error");
+            return error.isTextual() ? error.asText() : "unknown";
+        } catch (JsonProcessingException e) {
+            return "unknown";
         }
     }
 

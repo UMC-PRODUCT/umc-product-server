@@ -63,9 +63,8 @@ public class UmcProductOAuth2UserService extends DefaultOAuth2UserService {
             reg.getProviderDetails().getIssuerUri()
         );
 
-        log.debug("Access Token: {}\nID Token: {}",
-            userRequest.getAccessToken().getTokenValue(),
-            userRequest.getAdditionalParameters().get("id_token"));
+        // ADR-016 §민감 필드 정책: access token / id token 의 원문은 어떤 레벨에서도 로깅하지 않는다.
+        // 토큰 검증 흐름 디버깅이 필요하면 길이 / type / 만료 시각 같은 비민감 요약값만 남긴다.
 
         // Attributes를 파싱하는 역할은 OAuth2Attributes가 담당
         OAuth2Attributes oAuth2Attributes = OAuth2Attributes.of(
