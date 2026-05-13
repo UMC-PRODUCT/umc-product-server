@@ -144,6 +144,14 @@ public class LoggingInterceptor implements HandlerInterceptor {
                 MDC.put(MDC_CLIENT_IP, clientIp);
             }
 
+            // 로컬 콘솔 패턴은 MDC 키를 렌더링하지 않으므로 (traceId 만 노출),
+            // 메시지 본문에 핵심 메트릭을 함께 실어 로컬에서도 한 줄로 가시화한다.
+            // JSON 어펜더(CONSOLE_JSON / LOKI)는 <mdc/> 프로바이더로 동일 값을 별도 필드로 직렬화한다.
+            String summary = String.format(
+                "%s status=%d durationMs=%d queryCount=%d queryTimeMs=%d",
+                EVENT_REQUEST_COMPLETED, response.getStatus(), durationMs, queryCount, queryTimeMs
+            );
+
             if (ex != null) {
                 // ADR-016 §민감 필드 정책: throwable 을 log.error 에 넘기면 JSON layout 의
                 // <stackTrace> 프로바이더가 전체 스택을 직렬화하고, 예외 메시지에 토큰 / 사용자
@@ -151,9 +159,9 @@ public class LoggingInterceptor implements HandlerInterceptor {
                 // 메타 (exception 클래스명) 만 MDC 로 남기고, 스택 자체는 전역 예외 핸들러 /
                 // 컨트롤러 등 책임 지점의 로그에 맡긴다.
                 MDC.put(MDC_EXCEPTION, ex.getClass().getSimpleName());
-                log.error(EVENT_REQUEST_COMPLETED);
+                log.error(summary);
             } else {
-                log.info(EVENT_REQUEST_COMPLETED);
+                log.info(summary);
             }
         } finally {
             // ThreadLocal 누수 방지: 조기 반환 / try 블록 내 예외 경로 모두에서

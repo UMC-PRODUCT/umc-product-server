@@ -201,9 +201,12 @@ class LoggingInterceptorTest {
     }
 
     private Map<String, String> findEventMdc(String message) {
+        // api_request_completed 메시지는 로컬 콘솔 가시화를 위해 본문 뒤에
+        // " status=... durationMs=... queryCount=... queryTimeMs=..." 가 따라붙으므로
+        // startsWith 로 매칭한다. (event MDC 키는 별도로 검증한다)
         List<ILoggingEvent> events = listAppender.list;
         for (ILoggingEvent event : events) {
-            if (message.equals(event.getMessage())) {
+            if (event.getMessage() != null && event.getMessage().startsWith(message)) {
                 return event.getMDCPropertyMap();
             }
         }
