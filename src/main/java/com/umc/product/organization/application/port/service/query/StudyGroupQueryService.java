@@ -4,6 +4,7 @@ import com.umc.product.authorization.application.port.in.query.GetChallengerRole
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
+import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.GetSchoolUseCase;
 import com.umc.product.organization.application.port.in.query.GetStudyGroupUseCase;
@@ -13,11 +14,15 @@ import com.umc.product.organization.application.port.in.query.dto.studygroup.Stu
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.StudyGroup;
+import com.umc.product.organization.domain.StudyGroupMember;
+import com.umc.product.organization.domain.StudyGroupMentor;
 import com.umc.product.storage.application.port.in.query.GetFileUseCase;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -127,15 +132,49 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     public StudyGroupInfo getById(Long studyGroupId) {
         StudyGroup group = loadStudyGroupPort.getById(studyGroupId);
 
+        List<Long> mentorIds = group.getMentors().stream()
+            .map(StudyGroupMentor::getMemberId)
+            .toList();
+        List<Long> memberIds = group.getMembers().stream()
+            .map(StudyGroupMember::getMemberId)
+            .toList();
+
+        Map<Long, MemberInfo> memberMap = batchGetMembers(mentorIds, memberIds);
+
         return StudyGroupInfo.create(
             group.getId(),
             group.getName(),
             group.getGisuId(),
             group.getPart(),
             group.getCreatedAt(),
-            loadStudyGroupPort.findStudyGroupMentors(studyGroupId),
-            loadStudyGroupPort.findStudyGroupMembers(studyGroupId)
+            assembleStudyGroupMembers(studyGroupId, mentorIds, memberMap),
+            assembleStudyGroupMembers(studyGroupId, memberIds, memberMap)
         );
+    }
+
+    private Map<Long, MemberInfo> batchGetMembers(List<Long> mentorIds, List<Long> memberIds) {
+        Set<Long> all = new HashSet<>(mentorIds.size() + memberIds.size());
+        all.addAll(mentorIds);
+        all.addAll(memberIds);
+        if (all.isEmpty()) {
+            return Map.of();
+        }
+        return getMemberUseCase.findAllByIds(all);
+    }
+
+    private List<StudyGroupMemberInfo> assembleStudyGroupMembers(
+        Long studyGroupId, List<Long> memberIds, Map<Long, MemberInfo> memberMap
+    ) {
+        return memberIds.stream()
+            .map(memberMap::get)
+            .filter(Objects::nonNull)
+            .map(m -> new StudyGroupMemberInfo(
+                studyGroupId,
+                m.id(), m.name(),
+                m.schoolId(), m.schoolName(),
+                m.profileImageId()
+            ))
+            .toList();
     }
 
     @Override

@@ -19,10 +19,16 @@ import com.umc.product.organization.application.port.in.query.dto.studygroup.Stu
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope.AsPartLeader;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope.AsSchoolCore;
+import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.application.port.service.query.StudyGroupQueryService;
+import com.umc.product.organization.domain.StudyGroup;
+import com.umc.product.organization.domain.StudyGroupMember;
+import com.umc.product.organization.domain.StudyGroupMentor;
+import java.util.ArrayList;
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +36,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class StudyGroupQueryServiceTest {
@@ -202,6 +209,92 @@ class StudyGroupQueryServiceTest {
         verify(loadStudyGroupPort).findMyStudyGroups(any(), eq(gisuId), eq(null), eq(requestedSize + 1));
     }
 
+    @Test
+    void getById_헤더와_멘토_멤버를_조립한다() {
+        // given — Aggregate 가 자식 mentor/member 를 캡슐화. Service 는 group.getMentors/getMembers 로 접근.
+        Long groupId = 42L;
+        Long mentor1 = 10L;
+        Long mentor2 = 20L;
+        Long member1 = 30L;
+        Long member2 = 40L;
+
+        StudyGroup group = studyGroup(
+            groupId, "스프링 스터디", 1L, ChallengerPart.SPRINGBOOT,
+            List.of(mentor1, mentor2), List.of(member1, member2)
+        );
+        given(loadStudyGroupPort.getById(groupId)).willReturn(group);
+        given(getMemberUseCase.findAllByIds(Set.of(mentor1, mentor2, member1, member2)))
+            .willReturn(Map.of(
+                mentor1, memberInfo(mentor1, 100L),
+                mentor2, memberInfo(mentor2, 100L),
+                member1, memberInfo(member1, 200L),
+                member2, memberInfo(member2, 200L)
+            ));
+
+        // when
+        StudyGroupInfo result = sut.getById(groupId);
+
+        // then
+        assertThat(result.groupId()).isEqualTo(groupId);
+        assertThat(result.name()).isEqualTo("스프링 스터디");
+        assertThat(result.mentors())
+            .extracting(StudyGroupMemberInfo::memberId)
+            .containsExactly(mentor1, mentor2);
+        assertThat(result.members())
+            .extracting(StudyGroupMemberInfo::memberId)
+            .containsExactly(member1, member2);
+        assertThat(result.members())
+            .allSatisfy(m -> {
+                assertThat(m.studyGroupId()).isEqualTo(groupId);
+                assertThat(m.memberName()).isEqualTo("테스트");
+                assertThat(m.schoolName()).isEqualTo("테스트학교");
+            });
+    }
+
+    @Test
+    void getById_Member_조회_누락분은_결과에서_제외된다() {
+        // given — INNER JOIN 의 silent drop 과 동일 동작: memberMap 에 없는 ID 는 결과 리스트에서 빠진다.
+        Long groupId = 42L;
+        Long existing = 10L;
+        Long withdrawn = 99L;
+
+        StudyGroup group = studyGroup(
+            groupId, "g", 1L, ChallengerPart.SPRINGBOOT,
+            List.of(), List.of(existing, withdrawn)
+        );
+        given(loadStudyGroupPort.getById(groupId)).willReturn(group);
+        given(getMemberUseCase.findAllByIds(Set.of(existing, withdrawn)))
+            .willReturn(Map.of(existing, memberInfo(existing, 100L)));   // withdrawn 누락
+
+        // when
+        StudyGroupInfo result = sut.getById(groupId);
+
+        // then
+        assertThat(result.members())
+            .extracting(StudyGroupMemberInfo::memberId)
+            .containsExactly(existing)
+            .doesNotContain(withdrawn);
+    }
+
+    @Test
+    void getById_mentor와_member_둘다_없으면_findAllByIds_호출없이_빈_리스트() {
+        // given
+        Long groupId = 42L;
+        StudyGroup group = studyGroup(
+            groupId, "g", 1L, ChallengerPart.SPRINGBOOT,
+            List.of(), List.of()
+        );
+        given(loadStudyGroupPort.getById(groupId)).willReturn(group);
+
+        // when
+        StudyGroupInfo result = sut.getById(groupId);
+
+        // then
+        assertThat(result.mentors()).isEmpty();
+        assertThat(result.members()).isEmpty();
+        verify(getMemberUseCase, never()).findAllByIds(any());
+    }
+
     // ========== Helper Methods ==========
 
     @SuppressWarnings("unchecked")
@@ -236,5 +329,67 @@ class StudyGroupQueryServiceTest {
             List.of(),
             List.of()
         );
+    }
+
+    private StudyGroup studyGroup(
+        Long id, String name, Long gisuId, ChallengerPart part,
+        List<Long> mentorIds, List<Long> memberIds
+    ) {
+        StudyGroup group = newStudyGroup(id, name, gisuId, part);
+
+        List<StudyGroupMentor> mentors = new ArrayList<>();
+        mentorIds.forEach(mid -> mentors.add(newStudyGroupMentor(group, mid)));
+        ReflectionTestUtils.setField(group, "mentors", mentors);
+
+        List<StudyGroupMember> members = new ArrayList<>();
+        memberIds.forEach(mid -> members.add(newStudyGroupMember(group, mid)));
+        ReflectionTestUtils.setField(group, "members", members);
+
+        return group;
+    }
+
+    private StudyGroup newStudyGroup(Long id, String name, Long gisuId, ChallengerPart part) {
+        StudyGroup group;
+        try {
+            var constructor = StudyGroup.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            group = constructor.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        ReflectionTestUtils.setField(group, "id", id);
+        ReflectionTestUtils.setField(group, "name", name);
+        ReflectionTestUtils.setField(group, "gisuId", gisuId);
+        ReflectionTestUtils.setField(group, "part", part);
+        return group;
+    }
+
+    private StudyGroupMember newStudyGroupMember(StudyGroup group, Long memberId) {
+        StudyGroupMember entity;
+        try {
+            var constructor = StudyGroupMember.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            entity = constructor.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        ReflectionTestUtils.setField(entity, "studyGroup", group);
+        ReflectionTestUtils.setField(entity, "memberId", memberId);
+        ReflectionTestUtils.setField(entity, "isLeader", false);
+        return entity;
+    }
+
+    private StudyGroupMentor newStudyGroupMentor(StudyGroup group, Long memberId) {
+        StudyGroupMentor entity;
+        try {
+            var constructor = StudyGroupMentor.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            entity = constructor.newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        ReflectionTestUtils.setField(entity, "studyGroup", group);
+        ReflectionTestUtils.setField(entity, "memberId", memberId);
+        return entity;
     }
 }

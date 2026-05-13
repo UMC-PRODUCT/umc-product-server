@@ -25,7 +25,7 @@ public class StudyGroupPersistenceAdapter implements SaveStudyGroupPort, LoadStu
 
     @Override
     public StudyGroup getById(Long id) {
-        return studyGroupJpaRepository.findById(id).orElseThrow(
+        return studyGroupQueryRepository.findById(id).orElseThrow(
             () -> new OrganizationDomainException(OrganizationErrorCode.STUDY_GROUP_NOT_FOUND));
     }
 

@@ -14,6 +14,7 @@ import com.umc.product.organization.domain.StudyGroupMember;
 import com.umc.product.organization.domain.StudyGroupMentor;
 import com.umc.product.support.TestContainersConfig;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -190,6 +191,41 @@ class StudyGroupQueryRepositoryTest {
 
         // when
         List<StudyGroupInfo> result = sut.findMyStudyGroups(scopes, gisuId, null, 20);
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void findById_mentors와_members_컬렉션을_초기화한_상태로_반환() {
+        // given
+        Long gisuId = 1L;
+        StudyGroup target = persistGroup("target", gisuId, ChallengerPart.SPRINGBOOT,
+            Set.of(10L, 11L), Set.of(100L, 101L));
+        em.flush();
+        em.clear();
+
+        // when
+        Optional<StudyGroup> result = sut.findById(target.getId());
+        em.clear();   // 영속성 컨텍스트 비움 — fetch join 안 됐다면 이후 컬렉션 접근에서 LazyInitException
+
+        // then
+        assertThat(result).isPresent();
+        StudyGroup loaded = result.get();
+
+        // detached 상태에서 컬렉션 접근 가능 → fetch join 동작 검증
+        assertThat(loaded.getMembers())
+            .extracting(StudyGroupMember::getMemberId)
+            .containsExactlyInAnyOrder(100L, 101L);
+        assertThat(loaded.getMentors())
+            .extracting(StudyGroupMentor::getMemberId)
+            .containsExactlyInAnyOrder(10L, 11L);
+    }
+
+    @Test
+    void findById_존재하지_않으면_Optional_empty() {
+        // when
+        Optional<StudyGroup> result = sut.findById(99999L);
 
         // then
         assertThat(result).isEmpty();

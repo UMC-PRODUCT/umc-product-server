@@ -20,10 +20,13 @@ import com.umc.product.organization.application.port.in.query.dto.studygroup.Stu
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
 import com.umc.product.organization.domain.QStudyGroupMember;
 import com.umc.product.organization.domain.QStudyGroupMentor;
+
+import com.umc.product.organization.domain.StudyGroup;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +37,26 @@ import org.springframework.stereotype.Repository;
 public class StudyGroupQueryRepository {
 
     private final JPAQueryFactory queryFactory;
+
+    public Optional<StudyGroup> findById(Long id) {
+        StudyGroup group = queryFactory
+            .selectFrom(studyGroup)
+            .leftJoin(studyGroup.members).fetchJoin()
+            .where(studyGroup.id.eq(id))
+            .fetchOne();
+        if (group == null) {
+            return Optional.empty();
+        }
+
+        // 1차 캐시의 동일 인스턴스(group)의 mentors 컬렉션을 채우는 부수효과만 노린 쿼리.
+        queryFactory
+            .selectFrom(studyGroup)
+            .leftJoin(studyGroup.mentors).fetchJoin()
+            .where(studyGroup.id.eq(id))
+            .fetchOne();
+
+        return Optional.of(group);
+    }
 
     /**
      * 역할 Scope 기반 스터디 그룹 이름 목록 조회.
