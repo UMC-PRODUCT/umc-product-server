@@ -73,13 +73,14 @@ public class ProjectApplicationQueryService
     /**
      * 지원서 단건 상세 조회.
      * <p>
+     * 권한 검사(4종 staff + 본인 / DRAFT 본인 한정)는 컨트롤러의 {@code @CheckAccess(PROJECT_APPLICATION, READ)} 가
+     * 처리하므로 본 메서드 진입 시점에는 L2 권한이 검증된 상태이다.
+     * <p>
      * 흐름:
      * <ol>
      *   <li>application fetch join 단건 로드 (form/project/matchingRound 한 번에)</li>
      *   <li>정합성 검증: application 의 form.project.id 가 path 의 projectId 와 일치해야 함.
      *       위반/미존재 모두 PROJECT_APPLICATION_NOT_FOUND 로 통일하여 다른 프로젝트의 지원서 존재 여부를 은닉</li>
-     *   <li>도메인 비즈니스 규칙: DRAFT(임시저장)은 지원자 본인만 조회 가능. PO/Sub-PO/지부장/CC 등 다른 호출자에게는
-     *       not-found 로 위장하여 임시저장본의 존재 자체를 은닉</li>
      *   <li>지원자 파트 단건 조회 (해당 기수 챌린저 invariant -- 누락 시 not-found 로 통일)</li>
      *   <li>폼 구조/정책/응답 본문/첨부 파일 raw 데이터 cross-domain 조회 (storage 만 IN 쿼리 batch)</li>
      *   <li>{@link ProjectApplicationDetailInfo#of} 가 마스킹/메타 분리/answers Map 합성까지 한 번에 처리</li>
@@ -93,10 +94,6 @@ public class ProjectApplicationQueryService
         ProjectApplicationForm applicationForm = application.getApplicationForm();
         Project project = applicationForm.getProject();
         if (!Objects.equals(project.getId(), query.projectId())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
-        }
-        if (application.isDraft()
-            && !Objects.equals(application.getApplicantMemberId(), query.requesterMemberId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
         }
 

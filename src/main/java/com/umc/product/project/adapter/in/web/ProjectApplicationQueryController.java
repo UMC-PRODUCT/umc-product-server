@@ -1,5 +1,8 @@
 package com.umc.product.project.adapter.in.web;
 
+import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
+import com.umc.product.authorization.domain.PermissionType;
+import com.umc.product.authorization.domain.ResourceType;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -114,21 +117,34 @@ public class ProjectApplicationQueryController {
         return assembler.applicantsFor(query);
     }
 
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT_APPLICATION,
+        resourceId = "#applicationId",
+        permission = PermissionType.READ,
+        message = "지원서 상세 조회는 지원자 본인 / PO·Sub-PO / 해당 기수 Central Core / 해당 기수·지부 지부장 만 가능합니다."
+    )
     @GetMapping("/{projectId}/applications/{applicationId}")
     @Operation(
         summary = "[APPLY-102] 지원서 단건 상세 조회",
         description = """
             지원서 단건의 메타(지원자/매칭 차수/상태/시각) + 폼 구조(지원자 파트 기준 마스킹) + 제출된 답변 본문 + 첨부 파일 메타까지 한 번에 반환한다.
             <p>
-            노출 규칙:
+            권한 (L2 @CheckAccess READ):
             <ul>
-              <li>SUBMITTED/APPROVED/REJECTED -- 4종 호출자(PO/Sub-PO/지부장/CC/지원자 본인) 모두 동일 응답</li>
-              <li>DRAFT(임시저장) -- 지원자 본인만 조회 가능. 그 외 호출자에게는 404(PROJECT-0021) 로 위장하여 임시저장본의 존재 자체를 은닉</li>
+              <li>SUBMITTED/APPROVED/REJECTED -- 다음 호출자만 통과:
+                <ul>
+                  <li>지원자 본인</li>
+                  <li>해당 프로젝트의 PO</li>
+                  <li>해당 프로젝트의 Sub-PO (ACTIVE PLAN 멤버)</li>
+                  <li>해당 프로젝트 기수의 Central Core (총괄/부총괄/SUPER_ADMIN)</li>
+                  <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
+                </ul>
+              </li>
+              <li>DRAFT(임시저장) -- 지원자 본인만 통과</li>
             </ul>
+            권한 부재 시 403(AUTHORIZATION-0002) 반환.
             <p>
             정합성: path 의 projectId 와 application 의 form.project.id 가 다르면 404(PROJECT-0021) 로 위장하여 다른 프로젝트의 지원서 존재 여부를 은닉한다.
-            <p>
-            TODO: 4종 호출자(@CheckAccess) 자격 검증은 추후에 추가된다 -- 현재 이 엔드포인트는 인증된 사용자라면 누구나 호출 가능.
             """
     )
     public ProjectApplicationDetailResponse getApplicationDetail(
