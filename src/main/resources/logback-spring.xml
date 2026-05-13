@@ -77,7 +77,14 @@
         </encoder>
     </appender>
 
-    <!-- Loki -->
+    <!--
+        ========== LOKI APPENDER (ADR-016) ==========
+        Grafana dashboard 의 LogQL 은 `| json | event="..." | unwrap durationMs` 형태로
+        구조화 필드를 직접 참조한다. 따라서 LOKI 송신도 CONSOLE_JSON 과 동일한 한 줄 JSON
+        스키마로 맞춘다 (MDC + arguments 포함). loki4j 의 <message class="..."> 슬롯에
+        logstash-logback-encoder 의 JsonLayout 을 끼워 KVP (StructuredArguments.kv) 까지
+        함께 직렬화한다.
+    -->
     <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
         <http>
             <url>${LOKI_URL:-http://localhost:3100/loki/api/v1/push}</url>
@@ -90,8 +97,33 @@
             <label>
                 <pattern>application=${SPRING_APPLICATION_NAME},level=%level</pattern>
             </label>
-            <message>
-                <pattern>${FULL_LOG_PATTERN}</pattern>
+            <message class="net.logstash.logback.layout.LoggingEventCompositeJsonLayout">
+                <providers>
+                    <timestamp>
+                        <fieldName>timestamp</fieldName>
+                        <timeZone>Asia/Seoul</timeZone>
+                    </timestamp>
+                    <logLevel>
+                        <fieldName>level</fieldName>
+                    </logLevel>
+                    <loggerName>
+                        <fieldName>logger</fieldName>
+                    </loggerName>
+                    <threadName>
+                        <fieldName>thread</fieldName>
+                    </threadName>
+                    <message>
+                        <fieldName>message</fieldName>
+                    </message>
+                    <mdc/>
+                    <arguments/>
+                    <stackTrace>
+                        <fieldName>stackTrace</fieldName>
+                    </stackTrace>
+                    <globalCustomFields>
+                        {"service":"${APP_NAME}","environment":"${ENV}"}
+                    </globalCustomFields>
+                </providers>
             </message>
         </format>
     </appender>
@@ -106,8 +138,9 @@
 
     <!--
         ========== dev: stdout JSON + LOKI (ADR-016) ==========
-        본 시점부터 dev stdout 은 한 줄 JSON. Loki 송신은 여전히 텍스트 (loki4j 의 message pattern).
-        Loki 송신의 JSON 화는 ADR-014 의 OTel Collector 이관과 함께 다룬다.
+        dev stdout 과 Loki 모두 동일한 한 줄 JSON 스키마 (MDC + arguments 포함) 로 송신한다.
+        ADR-014 의 OTel Collector 이관은 후속 작업이지만, 그때까지는 loki4j 가 JsonLayout 으로
+        직접 Loki 에 push 한다.
     -->
     <springProfile name="dev">
         <!-- 우리 앱 패키지만 DEBUG -->
