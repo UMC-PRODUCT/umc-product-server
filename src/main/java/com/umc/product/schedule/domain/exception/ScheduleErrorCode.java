@@ -63,6 +63,9 @@ public enum ScheduleErrorCode implements BaseCode {
 
     INVALID_MEMBER_INVITE(HttpStatus.BAD_REQUEST, "SCHEDULE-0032", "초대하려는 참여자에 유효하지 않은 사용자가 포함되어 있습니다."),
 
+    SCHEDULE_HAS_ATTENDANCE_RECORD(HttpStatus.BAD_REQUEST, "SCHEDULE-0033",
+        "출석 기록이 존재하는 일정은 삭제할 수 없습니다."),
+
     ;
 
     private final HttpStatus httpStatus;
