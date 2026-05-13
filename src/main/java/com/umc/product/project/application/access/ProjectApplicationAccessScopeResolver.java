@@ -10,10 +10,7 @@ import com.umc.product.project.application.access.ProjectApplicationAccessScope.
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.OwnerOnly;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.ProjectScoped;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
-import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
-import com.umc.product.project.domain.exception.ProjectDomainException;
-import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +24,6 @@ import org.springframework.stereotype.Component;
 public class ProjectApplicationAccessScopeResolver {
 
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
-    private final LoadProjectPort loadProjectPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
 
     /**
@@ -48,10 +44,11 @@ public class ProjectApplicationAccessScopeResolver {
      *   <li>해당 프로젝트 학교의 회장 (SCHOOL_PRESIDENT, 같은 기수)</li>
      * </ul>
      * 그 외엔 {@link None} 반환 — 호출 측이 빈 목록 처리하여 권한 부재를 '지원자 0건' 으로 위장한다.
+     * <p>
+     * {@code project} 는 호출자(서비스 단)가 사전 로드한 인스턴스를 그대로 전달받는다. 동일 트랜잭션 내 중복 조회를 피하기 위함.
      */
-    public ProjectApplicationAccessScope resolveForProjectApplicantList(Long memberId, Long projectId) {
-        Project project = loadProjectPort.findById(projectId)
-            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_NOT_FOUND));
+    public ProjectApplicationAccessScope resolveForProjectApplicantList(Long memberId, Project project) {
+        Long projectId = project.getId();
 
         if (Objects.equals(project.getProductOwnerMemberId(), memberId)
             || loadProjectMemberPort.isActivePlanMember(projectId, memberId)) {

@@ -213,13 +213,13 @@ public class ProjectApplicationQueryService
      */
     @Override
     public List<ProjectApplicationCardInfo> searchByProject(SearchProjectApplicationsQuery query) {
+        Project project = loadProjectPort.getById(query.projectId());
+
         ProjectApplicationAccessScope scope = accessScopeResolver.resolveForProjectApplicantList(
-            query.requesterMemberId(), query.projectId());
+            query.requesterMemberId(), project);
         if (scope instanceof ProjectApplicationAccessScope.None) {
             return List.of();
         }
-
-        Project project = loadProjectPort.getById(query.projectId());
 
         List<ProjectApplication> applications = loadProjectApplicationPort.searchProjectApplications(
             query.projectId(),

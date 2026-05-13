@@ -608,9 +608,12 @@ class ProjectApplicationQueryServiceTest {
     @DisplayName("searchByProject_권한_scope_가_None_이면_빈_리스트_위장")
     void searchByProject_권한_없음_빈_리스트() {
         // given
+        Project project = createProject(1L, "프로젝트A", null, 99L);
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
             .requesterMemberId(REQUESTER_ID).projectId(1L).build();
-        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, 1L))
+
+        given(loadProjectPort.getById(1L)).willReturn(project);
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
             .willReturn(new ProjectApplicationAccessScope.None());
 
         // when
@@ -630,9 +633,9 @@ class ProjectApplicationQueryServiceTest {
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
             .requesterMemberId(REQUESTER_ID).projectId(1L).build();
 
-        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, 1L))
-            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectPort.getById(1L)).willReturn(project);
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
             .willReturn(List.of());
 
@@ -658,9 +661,9 @@ class ProjectApplicationQueryServiceTest {
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
             .requesterMemberId(REQUESTER_ID).projectId(1L).build();
 
-        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, 1L))
-            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectPort.getById(1L)).willReturn(project);
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
             .willReturn(List.of(application));
         given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(eq(Set.of(200L)), eq(GISU_ID)))
@@ -699,9 +702,9 @@ class ProjectApplicationQueryServiceTest {
             .part(ChallengerPart.WEB)
             .build();
 
-        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, 1L))
-            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectPort.getById(1L)).willReturn(project);
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectApplicationPort.searchProjectApplications(1L, null, null))
             .willReturn(List.of(webApp, androidApp));
         given(getChallengerUseCase.batchGetByMemberIdsAndGisuId(any(), eq(GISU_ID)))
@@ -731,9 +734,9 @@ class ProjectApplicationQueryServiceTest {
             .status(ProjectApplicationStatus.APPROVED)
             .build();
 
-        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, 1L))
-            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectPort.getById(1L)).willReturn(project);
+        given(accessScopeResolver.resolveForProjectApplicantList(REQUESTER_ID, project))
+            .willReturn(new ProjectApplicationAccessScope.ProjectScoped(1L));
         given(loadProjectApplicationPort.searchProjectApplications(
             1L, 7L, ProjectApplicationStatus.APPROVED))
             .willReturn(List.of());
