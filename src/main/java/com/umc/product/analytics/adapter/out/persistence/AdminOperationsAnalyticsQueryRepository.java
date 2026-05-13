@@ -1,8 +1,10 @@
 package com.umc.product.analytics.adapter.out.persistence;
 
+import static com.umc.product.analytics.adapter.out.persistence.AdminAnalyticsQueryExpressions.chapterMatchedOrNoMapping;
+import static com.umc.product.analytics.adapter.out.persistence.AdminAnalyticsQueryExpressions.pointScore;
+
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
-import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.DateTimePath;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQuery;
@@ -12,7 +14,6 @@ import com.umc.product.analytics.application.port.in.query.dto.AdminOperationsOv
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
 import com.umc.product.challenger.domain.QChallenger;
 import com.umc.product.challenger.domain.QChallengerPoint;
-import com.umc.product.challenger.domain.enums.PointType;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.member.domain.QMember;
 import com.umc.product.organization.domain.QChapter;
@@ -143,6 +144,8 @@ public class AdminOperationsAnalyticsQueryRepository {
         NumberExpression<Long> grantCount = point.id.count();
         NumberExpression<Double> pointSum = pointScore(point).sum().coalesce(0.0);
 
+        // chapter 별 그루핑이라 chapter 매핑이 없는 orphan 챌린저의 포인트는 제외한다.
+        // 동시에 chapter.id.isNotNull() 가 chapter_school 의 다중-기수 중복 행을 자연스럽게 dedup 한다.
         List<Tuple> rows = queryFactory
             .select(chapter.id, chapter.name, challenger.part, grantCount, pointSum)
             .from(point)
@@ -151,8 +154,9 @@ public class AdminOperationsAnalyticsQueryRepository {
             .leftJoin(chapterSchool).on(chapterSchool.school.id.eq(member.schoolId))
             .leftJoin(chapter).on(chapter.id.eq(chapterSchool.chapter.id)
                 .and(chapter.gisu.id.eq(challenger.gisuId)))
-            .where(challengerScopeCondition(scope, challenger, member, chapter)
-                .and(periodCondition(point.createdAt, query)))
+            .where(challengerScopeCondition(scope, challenger, member, chapterSchool, chapter)
+                .and(periodCondition(point.createdAt, query))
+                .and(chapter.id.isNotNull()))
             .groupBy(chapter.id, chapter.name, challenger.part)
             .orderBy(chapter.name.asc(), challenger.part.asc())
             .fetch();
@@ -300,7 +304,7 @@ public class AdminOperationsAnalyticsQueryRepository {
             .leftJoin(chapterSchool).on(chapterSchool.school.id.eq(member.schoolId))
             .leftJoin(chapter).on(chapter.id.eq(chapterSchool.chapter.id)
                 .and(chapter.gisu.id.eq(challenger.gisuId)))
-            .where(challengerScopeCondition(scope, challenger, member, chapter)
+            .where(challengerScopeCondition(scope, challenger, member, chapterSchool, chapter)
                 .and(periodCondition(member.createdAt, query)))
             .groupBy(member.id, member.createdAt)
             .fetch();
@@ -339,10 +343,13 @@ public class AdminOperationsAnalyticsQueryRepository {
         AdminAnalyticsScope scope,
         QChallenger challenger,
         QMember member,
+        QChapterSchool chapterSchool,
         QChapter chapter
     ) {
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(challenger.gisuId.eq(scope.gisuId()));
+        // chapter_school 의 다중-기수 중복 행을 dedup. orphan 학교(매핑 없음)는 보존한다.
+        builder.and(chapterMatchedOrNoMapping(chapterSchool, chapter));
         if (scope.chapterId() != null) {
             builder.and(chapter.id.eq(scope.chapterId()));
         }
@@ -420,28 +427,6 @@ public class AdminOperationsAnalyticsQueryRepository {
         return new BooleanBuilder()
             .and(path.goe(query.from()))
             .and(path.lt(query.to()));
-    }
-
-    private NumberExpression<Double> pointScore(QChallengerPoint targetPoint) {
-        return new CaseBuilder()
-            .when(targetPoint.pointValue.isNotNull()).then(targetPoint.pointValue.doubleValue())
-            .otherwise(pointTypeScore(targetPoint));
-    }
-
-    private NumberExpression<Double> pointTypeScore(QChallengerPoint targetPoint) {
-        CaseBuilder.Cases<Double, NumberExpression<Double>> caseBuilder = null;
-        for (PointType pointType : PointType.values()) {
-            if (caseBuilder == null) {
-                caseBuilder = new CaseBuilder()
-                    .when(targetPoint.type.eq(pointType)).then(pointType.getValue());
-            } else {
-                caseBuilder = caseBuilder
-                    .when(targetPoint.type.eq(pointType)).then(pointType.getValue());
-            }
-        }
-
-        assert caseBuilder != null;
-        return caseBuilder.otherwise(0.0);
     }
 
     private Map<ChallengerPart, Long> emptyPartCounts() {

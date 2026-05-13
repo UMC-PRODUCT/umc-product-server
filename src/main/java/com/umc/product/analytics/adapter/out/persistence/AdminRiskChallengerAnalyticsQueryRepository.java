@@ -1,5 +1,7 @@
 package com.umc.product.analytics.adapter.out.persistence;
 
+import static com.umc.product.analytics.adapter.out.persistence.AdminAnalyticsQueryExpressions.chapterMatchedOrNoMapping;
+import static com.umc.product.analytics.adapter.out.persistence.AdminAnalyticsQueryExpressions.pointScore;
 import static com.umc.product.challenger.domain.QChallenger.challenger;
 import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.organization.domain.QChapter.chapter;
@@ -8,7 +10,6 @@ import static com.umc.product.organization.domain.QSchool.school;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
-import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.analytics.adapter.out.persistence.row.AdminRiskChallengerRow;
@@ -16,7 +17,6 @@ import com.umc.product.analytics.application.port.in.query.dto.AdminRiskChalleng
 import com.umc.product.analytics.application.port.in.query.dto.AdminRiskChallengerQuery;
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
 import com.umc.product.challenger.domain.QChallengerPoint;
-import com.umc.product.challenger.domain.enums.PointType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import java.util.HashMap;
 import java.util.List;
@@ -97,6 +97,9 @@ public class AdminRiskChallengerAnalyticsQueryRepository {
     private long countRows(AdminAnalyticsScope scope, AdminRiskChallengerQuery query) {
         NumberExpression<Double> pointSum = pointScore(point).sum().coalesce(0.0);
 
+        // HAVING + GROUP BY 결과의 행 수를 COUNT 로 받으려면 서브쿼리가 필요한데,
+        // QueryDSL JPA 백엔드는 FROM 절에 서브쿼리를 허용하지 않는다.
+        // 대신 ID 만 select 한 후 자바에서 size 를 계산한다 — 위험군은 통상 수십-수백 건이라 메모리 영향이 작다.
         return queryFactory
             .select(challenger.id)
             .from(challenger)
@@ -150,6 +153,8 @@ public class AdminRiskChallengerAnalyticsQueryRepository {
     private BooleanBuilder scopeCondition(AdminAnalyticsScope scope) {
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(challenger.gisuId.eq(scope.gisuId()));
+        // chapter_school 의 다중-기수 중복 행을 dedup → pointSum 부풀림 방지.
+        builder.and(chapterMatchedOrNoMapping(chapterSchool, chapter));
         if (scope.chapterId() != null) {
             builder.and(chapter.id.eq(scope.chapterId()));
         }
@@ -160,28 +165,6 @@ public class AdminRiskChallengerAnalyticsQueryRepository {
             builder.and(challenger.part.eq(scope.responsiblePart()));
         }
         return builder;
-    }
-
-    private NumberExpression<Double> pointScore(QChallengerPoint targetPoint) {
-        return new CaseBuilder()
-            .when(targetPoint.pointValue.isNotNull()).then(targetPoint.pointValue.doubleValue())
-            .otherwise(pointTypeScore(targetPoint));
-    }
-
-    private NumberExpression<Double> pointTypeScore(QChallengerPoint targetPoint) {
-        CaseBuilder.Cases<Double, NumberExpression<Double>> caseBuilder = null;
-        for (PointType pointType : PointType.values()) {
-            if (caseBuilder == null) {
-                caseBuilder = new CaseBuilder()
-                    .when(targetPoint.type.eq(pointType)).then(pointType.getValue());
-            } else {
-                caseBuilder = caseBuilder
-                    .when(targetPoint.type.eq(pointType)).then(pointType.getValue());
-            }
-        }
-
-        assert caseBuilder != null;
-        return caseBuilder.otherwise(0.0);
     }
 
     private double defaultDouble(Double value) {
