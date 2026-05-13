@@ -64,17 +64,11 @@ public class ProjectApplicationAccessScopeResolver {
             .filter(r -> Objects.equals(r.gisuId(), project.getGisuId()))
             .toList();
 
-        if (rolesInGisu.stream().anyMatch(r -> r.roleType().isAtLeastCentralCore())) {
-            return new ProjectScoped(projectId);
-        }
-        if (rolesInGisu.stream().anyMatch(r ->
-            r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
-                && Objects.equals(r.organizationId(), project.getChapterId()))) {
-            return new ProjectScoped(projectId);
-        }
-        if (rolesInGisu.stream().anyMatch(r ->
-            r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
-                && Objects.equals(r.organizationId(), project.getProductOwnerSchoolId()))) {
+        if (rolesInGisu.stream().anyMatch(
+            r -> r.roleType().isAtLeastCentralCore() || (r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
+                && Objects.equals(r.organizationId(), project.getChapterId())) || (
+                r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT && Objects.equals(r.organizationId(),
+                    project.getProductOwnerSchoolId())))) {
             return new ProjectScoped(projectId);
         }
 
