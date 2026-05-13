@@ -145,8 +145,13 @@ public class LoggingInterceptor implements HandlerInterceptor {
             }
 
             if (ex != null) {
+                // ADR-016 §민감 필드 정책: throwable 을 log.error 에 넘기면 JSON layout 의
+                // <stackTrace> 프로바이더가 전체 스택을 직렬화하고, 예외 메시지에 토큰 / 사용자
+                // 입력이 섞여 stdout / Loki 로 노출될 수 있다. 본 이벤트는 dashboard 집계용
+                // 메타 (exception 클래스명) 만 MDC 로 남기고, 스택 자체는 전역 예외 핸들러 /
+                // 컨트롤러 등 책임 지점의 로그에 맡긴다.
                 MDC.put(MDC_EXCEPTION, ex.getClass().getSimpleName());
-                log.error(EVENT_REQUEST_COMPLETED, ex);
+                log.error(EVENT_REQUEST_COMPLETED);
             } else {
                 log.info(EVENT_REQUEST_COMPLETED);
             }
