@@ -48,7 +48,9 @@ class AdminRiskChallengerAnalyticsQueryRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        Gisu gisu = em.persist(Gisu.create(7L, Instant.now().minusSeconds(3600), Instant.now().plusSeconds(86400), true));
+        // 시드 마이그레이션이 이미 is_active=true 인 10기를 넣어두므로 부분 unique index uq_gisu_active 와
+        // 충돌하지 않도록 비활성 기수로 만든다. 분석 쿼리는 scope.gisuId() 로 직접 스코프한다.
+        Gisu gisu = em.persist(Gisu.create(7L, Instant.now().minusSeconds(3600), Instant.now().plusSeconds(86400), false));
         Chapter chapter = em.persist(Chapter.create(gisu, "중앙"));
         School school = em.persist(School.create("가천대학교", null));
         em.persist(ChapterSchool.create(chapter, school));

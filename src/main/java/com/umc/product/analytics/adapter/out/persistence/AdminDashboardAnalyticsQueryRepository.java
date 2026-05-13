@@ -1,5 +1,7 @@
 package com.umc.product.analytics.adapter.out.persistence;
 
+import static com.umc.product.analytics.adapter.out.persistence.AdminAnalyticsQueryExpressions.chapterMatchedOrNoMapping;
+import static com.umc.product.analytics.adapter.out.persistence.AdminAnalyticsQueryExpressions.pointScore;
 import static com.umc.product.challenger.domain.QChallenger.challenger;
 import static com.umc.product.member.domain.QMember.member;
 import static com.umc.product.organization.domain.QChapter.chapter;
@@ -20,7 +22,6 @@ import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardAct
 import com.umc.product.analytics.application.port.in.query.dto.AdminDashboardSummaryInfo;
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
 import com.umc.product.challenger.domain.QChallengerPoint;
-import com.umc.product.challenger.domain.enums.PointType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
 import com.umc.product.schedule.domain.enums.AttendanceStatus;
 import java.time.Clock;
@@ -117,8 +118,18 @@ public class AdminDashboardAnalyticsQueryRepository {
     }
 
     private AdminDashboardSummaryInfo.PointSumInfo monthlyPointSum(AdminAnalyticsScope scope, Instant monthStart) {
-        List<Double> scores = queryFactory
-            .select(pointScore(point))
+        NumberExpression<Double> score = pointScore(point);
+        NumberExpression<Double> positiveSum = new CaseBuilder()
+            .when(score.gt(0.0)).then(score)
+            .otherwise(0.0)
+            .sum();
+        NumberExpression<Double> negativeSum = new CaseBuilder()
+            .when(score.lt(0.0)).then(score)
+            .otherwise(0.0)
+            .sum();
+
+        Tuple totals = queryFactory
+            .select(positiveSum, negativeSum)
             .from(point)
             .join(point.challenger, challenger)
             .join(member).on(member.id.eq(challenger.memberId))
@@ -127,19 +138,11 @@ public class AdminDashboardAnalyticsQueryRepository {
                 .and(chapter.gisu.id.eq(challenger.gisuId)))
             .where(challengerScopeCondition(scope)
                 .and(point.createdAt.goe(monthStart)))
-            .fetch();
+            .fetchOne();
 
-        long positive = 0L;
-        long negative = 0L;
-        for (Double score : scores) {
-            double value = score != null ? score : 0.0;
-            if (value > 0) {
-                positive += Math.round(value);
-            } else if (value < 0) {
-                negative += Math.round(value);
-            }
-        }
-        return AdminDashboardSummaryInfo.PointSumInfo.of(positive, negative);
+        double positive = totals != null ? defaultDouble(totals.get(positiveSum)) : 0.0;
+        double negative = totals != null ? defaultDouble(totals.get(negativeSum)) : 0.0;
+        return AdminDashboardSummaryInfo.PointSumInfo.of(Math.round(positive), Math.round(negative));
     }
 
     private Map<ChallengerStatus, Long> challengerStatusDistribution(AdminAnalyticsScope scope) {
@@ -235,6 +238,7 @@ public class AdminDashboardAnalyticsQueryRepository {
     private BooleanBuilder challengerScopeCondition(AdminAnalyticsScope scope) {
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(challenger.gisuId.eq(scope.gisuId()));
+        builder.and(chapterMatchedOrNoMapping(chapterSchool, chapter));
         if (scope.chapterId() != null) {
             builder.and(chapter.id.eq(scope.chapterId()));
         }
@@ -254,25 +258,7 @@ public class AdminDashboardAnalyticsQueryRepository {
         return ((double) (current - previous) / previous) * 100.0;
     }
 
-    private NumberExpression<Double> pointScore(QChallengerPoint targetPoint) {
-        return new CaseBuilder()
-            .when(targetPoint.pointValue.isNotNull()).then(targetPoint.pointValue.doubleValue())
-            .otherwise(pointTypeScore(targetPoint));
-    }
-
-    private NumberExpression<Double> pointTypeScore(QChallengerPoint targetPoint) {
-        CaseBuilder.Cases<Double, NumberExpression<Double>> caseBuilder = null;
-        for (PointType pointType : PointType.values()) {
-            if (caseBuilder == null) {
-                caseBuilder = new CaseBuilder()
-                    .when(targetPoint.type.eq(pointType)).then(pointType.getValue());
-            } else {
-                caseBuilder = caseBuilder
-                    .when(targetPoint.type.eq(pointType)).then(pointType.getValue());
-            }
-        }
-
-        assert caseBuilder != null;
-        return caseBuilder.otherwise(0.0);
+    private double defaultDouble(Double value) {
+        return value != null ? value : 0.0;
     }
 }

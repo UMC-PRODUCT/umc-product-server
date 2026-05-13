@@ -1,5 +1,7 @@
 package com.umc.product.analytics.adapter.out.persistence;
 
+import static com.umc.product.analytics.adapter.out.persistence.AdminAnalyticsQueryExpressions.chapterMatchedOrNoMapping;
+import static com.umc.product.analytics.adapter.out.persistence.AdminAnalyticsQueryExpressions.pointScore;
 import static com.umc.product.authorization.domain.QChallengerRole.challengerRole;
 import static com.umc.product.challenger.domain.QChallenger.challenger;
 import static com.umc.product.member.domain.QMember.member;
@@ -10,7 +12,6 @@ import static com.umc.product.organization.domain.QSchool.school;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.dsl.BooleanExpression;
-import com.querydsl.core.types.dsl.CaseBuilder;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.analytics.adapter.out.persistence.row.AdminSchoolSummaryRow;
@@ -19,7 +20,6 @@ import com.umc.product.analytics.application.port.in.query.dto.AdminSchoolSummar
 import com.umc.product.analytics.domain.AdminAnalyticsScope;
 import com.umc.product.analytics.domain.AdminAnalyticsSort;
 import com.umc.product.challenger.domain.QChallengerPoint;
-import com.umc.product.challenger.domain.enums.PointType;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.common.domain.enums.ChallengerStatus;
@@ -279,6 +279,8 @@ public class AdminSchoolAnalyticsQueryRepository {
     private BooleanBuilder scopeCondition(AdminAnalyticsScope scope) {
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(challenger.gisuId.eq(scope.gisuId()));
+        // chapter_school 의 다중-기수 중복 행을 dedup → pointSum 평균/risk 카운트 부풀림 방지.
+        builder.and(chapterMatchedOrNoMapping(chapterSchool, chapter));
         if (scope.chapterId() != null) {
             builder.and(chapter.id.eq(scope.chapterId()));
         }
@@ -320,28 +322,6 @@ public class AdminSchoolAnalyticsQueryRepository {
                 .reversed()
                 .thenComparing(AdminSchoolSummaryRow::schoolName);
         };
-    }
-
-    private NumberExpression<Double> pointScore(QChallengerPoint targetPoint) {
-        return new CaseBuilder()
-            .when(targetPoint.pointValue.isNotNull()).then(targetPoint.pointValue.doubleValue())
-            .otherwise(pointTypeScore(targetPoint));
-    }
-
-    private NumberExpression<Double> pointTypeScore(QChallengerPoint targetPoint) {
-        CaseBuilder.Cases<Double, NumberExpression<Double>> caseBuilder = null;
-        for (PointType pointType : PointType.values()) {
-            if (caseBuilder == null) {
-                caseBuilder = new CaseBuilder()
-                    .when(targetPoint.type.eq(pointType)).then(pointType.getValue());
-            } else {
-                caseBuilder = caseBuilder
-                    .when(targetPoint.type.eq(pointType)).then(pointType.getValue());
-            }
-        }
-
-        assert caseBuilder != null;
-        return caseBuilder.otherwise(0.0);
     }
 
     private double defaultDouble(Double value) {
