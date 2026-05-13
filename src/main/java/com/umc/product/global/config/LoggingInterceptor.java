@@ -3,8 +3,6 @@ package com.umc.product.global.config;
 import com.umc.product.global.security.MemberPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.time.Duration;
-import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.security.core.Authentication;
@@ -56,7 +54,10 @@ public class LoggingInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
 
-        request.setAttribute(START_TIME_ATTR, Instant.now());
+        // 경과 시간 측정은 monotonic clock 인 nanoTime 을 사용한다.
+        // Instant.now / currentTimeMillis 는 NTP 동기화 등 wall-clock 보정 시
+        // 뒤로 점프할 수 있어 durationMs 가 음수/왜곡으로 찍힌다.
+        request.setAttribute(START_TIME_ATTR, System.nanoTime());
         request.setAttribute(CLIENT_IP_ATTR, extractClientIp(request));
 
         QueryStatsHolder.init();
@@ -115,12 +116,12 @@ public class LoggingInterceptor implements HandlerInterceptor {
         Object handler, Exception ex
     ) {
         try {
-            Instant startTime = (Instant) request.getAttribute(START_TIME_ATTR);
-            if (startTime == null) {
+            Long startNanos = (Long) request.getAttribute(START_TIME_ATTR);
+            if (startNanos == null) {
                 return;
             }
 
-            long durationMs = Duration.between(startTime, Instant.now()).toMillis();
+            long durationMs = (System.nanoTime() - startNanos) / 1_000_000L;
             long queryCount = QueryStatsHolder.getQueryCount();
             long queryTimeMs = QueryStatsHolder.getTotalTimeMs();
 
