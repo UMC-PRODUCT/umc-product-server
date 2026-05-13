@@ -44,19 +44,6 @@ public interface LoadStudyGroupPort {
     List<StudyGroupNameInfo> findStudyGroupNames(List<StudyGroupViewScope> scopes, Long gisuId);
 
     /**
-     * 스터디 그룹 ID 로 해당 그룹의 스터디원(멤버) 목록을 조회한다.
-     * <p>
-     * study_group_member 테이블 기준으로 소속된 멤버를 가져오며, Member/School 도메인과 JOIN 하여 (memberId, 학교명, 프로필 이미지 ID) 를 함께 싣는다. 프로필
-     * 이미지 ID → URL 치환은 Service 에서 수행한다.
-     *
-     * @param studyGroupId 스터디 그룹 ID
-     * @return 그룹에 소속된 스터디원 목록 (소속 없으면 빈 리스트)
-     */
-    List<StudyGroupMemberInfo> findStudyGroupMembers(Long studyGroupId);
-
-    List<StudyGroupMemberInfo> findStudyGroupMentors(Long studyGroupId);
-
-    /**
      * 특정 기수에서 해당 파트들의 스터디 그룹 ID 목록 조회 (파트장용)
      */
     List<Long> findIdsByGisuIdAndPartIn(Long gisuId, Set<ChallengerPart> parts);

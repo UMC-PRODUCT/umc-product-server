@@ -358,34 +358,6 @@ public class StudyGroupQueryRepository {
         return cursor != null ? studyGroup.id.gt(cursor) : null;
     }
 
-    /**
-     * 스터디 그룹 ID 로 소속 스터디원(study_group_member) 목록을 한 번의 쿼리로 조회한다.
-     * <p>
-     * Member/School 도메인과 JOIN 하여 한 행에 (memberId, 학교명, 프로필 이미지 ID) 를 실어 반환한다.
-     *
-     * @param studyGroupId 스터디 그룹 ID
-     * @return 스터디원 Projection 목록. 소속이 없으면 빈 리스트.
-     */
-    public List<StudyGroupMemberInfo> findStudyGroupMembers(Long studyGroupId) {
-        return queryFactory
-            .select(studyGroupMemberInfoProjection(studyGroupMember.studyGroup.id))
-            .from(studyGroupMember)
-            .join(member).on(member.id.eq(studyGroupMember.memberId))
-            .join(school).on(school.id.eq(member.schoolId))
-            .where(studyGroupMember.studyGroup.id.eq(studyGroupId))
-            .fetch();
-    }
-
-    public List<StudyGroupMemberInfo> findStudyGroupMentors(Long studyGroupId) {
-        return queryFactory
-            .select(studyGroupMemberInfoProjection(studyGroupMentor.studyGroup.id))
-            .from(studyGroupMentor)
-            .join(member).on(member.id.eq(studyGroupMentor.memberId))
-            .join(school).on(school.id.eq(member.schoolId))
-            .where(studyGroupMentor.studyGroup.id.eq(studyGroupId))
-            .fetch();
-    }
-
     public Set<Long> findConflictedMemberIds(
         Long gisuId, ChallengerPart part, Set<Long> memberIds, Long excludedStudyGroupId
     ) {

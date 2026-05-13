@@ -295,6 +295,81 @@ class StudyGroupQueryServiceTest {
         verify(getMemberUseCase, never()).findAllByIds(any());
     }
 
+    @Test
+    void getStudyGroupMembers_그룹_멤버를_MemberInfo로_조립한다() {
+        // given
+        Long groupId = 42L;
+        Long member1 = 30L;
+        Long member2 = 40L;
+
+        StudyGroup group = studyGroup(
+            groupId, "g", 1L, ChallengerPart.SPRINGBOOT,
+            List.of(), List.of(member1, member2)
+        );
+        given(loadStudyGroupPort.getById(groupId)).willReturn(group);
+        given(getMemberUseCase.findAllByIds(Set.of(member1, member2)))
+            .willReturn(Map.of(
+                member1, memberInfo(member1, 200L),
+                member2, memberInfo(member2, 200L)
+            ));
+
+        // when
+        List<StudyGroupMemberInfo> result = sut.getStudyGroupMembers(groupId);
+
+        // then
+        assertThat(result)
+            .extracting(StudyGroupMemberInfo::memberId)
+            .containsExactly(member1, member2);
+        assertThat(result).allSatisfy(m -> {
+            assertThat(m.studyGroupId()).isEqualTo(groupId);
+            assertThat(m.memberName()).isEqualTo("테스트");
+            assertThat(m.schoolName()).isEqualTo("테스트학교");
+        });
+    }
+
+    @Test
+    void getStudyGroupMembers_멤버가_없으면_findAllByIds_호출없이_빈_리스트() {
+        // given
+        Long groupId = 42L;
+        StudyGroup group = studyGroup(
+            groupId, "g", 1L, ChallengerPart.SPRINGBOOT,
+            List.of(), List.of()
+        );
+        given(loadStudyGroupPort.getById(groupId)).willReturn(group);
+
+        // when
+        List<StudyGroupMemberInfo> result = sut.getStudyGroupMembers(groupId);
+
+        // then
+        assertThat(result).isEmpty();
+        verify(getMemberUseCase, never()).findAllByIds(any());
+    }
+
+    @Test
+    void getStudyGroupMembers_Member_조회_누락분은_결과에서_제외된다() {
+        // given — getById 와 동일하게 INNER JOIN 의 silent drop 동작 유지
+        Long groupId = 42L;
+        Long existing = 30L;
+        Long withdrawn = 99L;
+
+        StudyGroup group = studyGroup(
+            groupId, "g", 1L, ChallengerPart.SPRINGBOOT,
+            List.of(), List.of(existing, withdrawn)
+        );
+        given(loadStudyGroupPort.getById(groupId)).willReturn(group);
+        given(getMemberUseCase.findAllByIds(Set.of(existing, withdrawn)))
+            .willReturn(Map.of(existing, memberInfo(existing, 200L)));
+
+        // when
+        List<StudyGroupMemberInfo> result = sut.getStudyGroupMembers(groupId);
+
+        // then
+        assertThat(result)
+            .extracting(StudyGroupMemberInfo::memberId)
+            .containsExactly(existing)
+            .doesNotContain(withdrawn);
+    }
+
     // ========== Helper Methods ==========
 
     @SuppressWarnings("unchecked")

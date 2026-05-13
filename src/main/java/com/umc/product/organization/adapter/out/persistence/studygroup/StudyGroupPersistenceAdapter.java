@@ -61,16 +61,6 @@ public class StudyGroupPersistenceAdapter implements SaveStudyGroupPort, LoadStu
 
 
     @Override
-    public List<StudyGroupMemberInfo> findStudyGroupMembers(Long studyGroupId) {
-        return studyGroupQueryRepository.findStudyGroupMembers(studyGroupId);
-    }
-
-    @Override
-    public List<StudyGroupMemberInfo> findStudyGroupMentors(Long studyGroupId) {
-        return studyGroupQueryRepository.findStudyGroupMentors(studyGroupId);
-    }
-
-    @Override
     public List<Long> findIdsByGisuIdAndPartIn(Long gisuId, Set<ChallengerPart> parts) {
         if (parts == null || parts.isEmpty()) {
             return List.of();

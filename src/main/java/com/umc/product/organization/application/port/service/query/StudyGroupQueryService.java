@@ -183,22 +183,29 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     }
 
     /**
-     * 스터디 그룹 ID 로 소속 스터디원 목록 조회.
-     * <p>
-     * Repository 에서 Member/School 도메인까지 JOIN 하여 (memberId, 학교명, 프로필 이미지 ID) 를 가져온 뒤, 프로필 이미지 ID 를 일괄 URL 로 치환해 반환한다. 조회
-     * 결과가 비어있으면 storage 호출 자체를 생략한다.
+     * 스터디 그룹 ID 로 소속 스터디원 목록 조회
      */
     @Override
     public List<StudyGroupMemberInfo> getStudyGroupMembers(Long groupId) {
-        List<StudyGroupMemberInfo> members = loadStudyGroupPort.findStudyGroupMembers(groupId);
-        if (members.isEmpty()) {
-            return members;
+        StudyGroup group = loadStudyGroupPort.getById(groupId);
+        List<Long> memberIds = group.getMembers().stream()
+            .map(StudyGroupMember::getMemberId)
+            .toList();
+        if (memberIds.isEmpty()) {
+            return List.of();
         }
 
-        return resolveMemberProfileUrls(members);
+        Map<Long, MemberInfo> memberMap = getMemberUseCase.findAllByIds(new HashSet<>(memberIds));
 
-        // Map의 Key는 fileId, Value는 URL. 치환 실패 시 원래 fileId 반환
-        // 지금은 fileId와 치환 성공한 URL이 모두 같은 profileImageUrl 필드에 담겨 있다. 구별 처리 예정
+        return memberIds.stream()
+            .map(memberMap::get)
+            .filter(Objects::nonNull)
+            .map(m -> StudyGroupMemberInfo.create(
+                groupId, m.id(), m.name(),
+                m.schoolId(), m.schoolName(),
+                m.profileImageId(), m.profileImageLink()
+            ))
+            .toList();
     }
 
     private List<StudyGroupMemberInfo> resolveMemberProfileUrls(List<StudyGroupMemberInfo> members) {
