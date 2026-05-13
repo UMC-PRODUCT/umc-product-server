@@ -38,11 +38,18 @@ public class ProjectApplicationAccessScopeResolver {
     }
 
     /**
-     * PO/Sub-PM 의 "내 프로젝트 지원자 목록" 화면.
-     * 호출자가 부모 프로젝트의 PO 또는 보조 PM (ACTIVE PLAN 멤버) 이어야 통과.
-     * 그 외엔 {@link None} 반환 — 호출 측이 빈 목록 처리.
+     * 단일 프로젝트 지원자 목록(APPLY-101) 화면. 호출자가 다음 중 하나라도 만족하면 {@link ProjectScoped} 통과:
+     * <ul>
+     *   <li>해당 프로젝트의 PO</li>
+     *   <li>해당 프로젝트의 보조 PM (ACTIVE PLAN 멤버)</li>
+     *   <li>SUPER_ADMIN</li>
+     *   <li>해당 프로젝트 기수의 Central Core (총괄/부총괄)</li>
+     *   <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
+     *   <li>해당 프로젝트 학교의 회장 (SCHOOL_PRESIDENT, 같은 기수)</li>
+     * </ul>
+     * 그 외엔 {@link None} 반환 — 호출 측이 빈 목록 처리하여 권한 부재를 '지원자 0건' 으로 위장한다.
      */
-    public ProjectApplicationAccessScope resolveForProjectReview(Long memberId, Long projectId) {
+    public ProjectApplicationAccessScope resolveForProjectApplicantList(Long memberId, Long projectId) {
         Project project = loadProjectPort.findById(projectId)
             .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_NOT_FOUND));
 
@@ -50,6 +57,30 @@ public class ProjectApplicationAccessScopeResolver {
             || loadProjectMemberPort.isActivePlanMember(projectId, memberId)) {
             return new ProjectScoped(projectId);
         }
+
+        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
+        if (roles.stream().anyMatch(r -> r.roleType().isSuperAdmin())) {
+            return new ProjectScoped(projectId);
+        }
+
+        List<ChallengerRoleInfo> rolesInGisu = roles.stream()
+            .filter(r -> Objects.equals(r.gisuId(), project.getGisuId()))
+            .toList();
+
+        if (rolesInGisu.stream().anyMatch(r -> r.roleType().isAtLeastCentralCore())) {
+            return new ProjectScoped(projectId);
+        }
+        if (rolesInGisu.stream().anyMatch(r ->
+            r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
+                && Objects.equals(r.organizationId(), project.getChapterId()))) {
+            return new ProjectScoped(projectId);
+        }
+        if (rolesInGisu.stream().anyMatch(r ->
+            r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT
+                && Objects.equals(r.organizationId(), project.getProductOwnerSchoolId()))) {
+            return new ProjectScoped(projectId);
+        }
+
         return new None();
     }
 

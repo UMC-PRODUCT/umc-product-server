@@ -84,7 +84,15 @@ public class ProjectApplicationQueryController {
               <li>status -- 지원 상태 (SUBMITTED / APPROVED / REJECTED). 미지정 시 전체. DRAFT 입력 시 도메인 예외(APPLICATION_DRAFT_FILTER_NOT_ALLOWED) 발생.</li>
             </ul>
             <p>
-            TODO: 권한 검사 (@CheckAccess) 미적용. 운영 배포 전 PM/Sub-PO/지부장/학교장/Central Core 분기 추가 필요.
+            권한: 다음 호출자만 통과한다. 그 외에는 권한 부재를 '지원자 0건' 으로 위장하여 빈 리스트를 반환한다.
+            <ul>
+              <li>해당 프로젝트의 PO</li>
+              <li>해당 프로젝트의 보조 PM (ACTIVE PLAN 멤버)</li>
+              <li>SUPER_ADMIN</li>
+              <li>해당 프로젝트 기수의 Central Core (총괄/부총괄)</li>
+              <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
+              <li>해당 프로젝트 학교의 회장 (SCHOOL_PRESIDENT, 같은 기수)</li>
+            </ul>
             """
     )
     public List<ProjectApplicantResponse> getProjectApplicants(
@@ -96,6 +104,7 @@ public class ProjectApplicationQueryController {
         @RequestParam(required = false) ProjectApplicationStatus status
     ) {
         SearchProjectApplicationsQuery query = SearchProjectApplicationsQuery.builder()
+            .requesterMemberId(memberPrincipal.getMemberId())
             .projectId(projectId)
             .matchingRoundId(matchingRoundId)
             .part(part)
