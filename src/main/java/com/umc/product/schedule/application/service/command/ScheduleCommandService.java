@@ -10,11 +10,13 @@ import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import com.umc.product.schedule.application.port.in.command.CreateScheduleUseCase;
+import com.umc.product.schedule.application.port.in.command.DeleteScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.UpdateScheduleUseCase;
 import com.umc.product.schedule.application.port.in.command.dto.CreateScheduleCommand;
 import com.umc.product.schedule.application.port.in.command.dto.EditScheduleCommand;
 import com.umc.product.schedule.application.port.in.query.dto.ScheduleCapabilitiesInfo;
 import com.umc.product.schedule.application.port.out.DeleteScheduleParticipantPort;
+import com.umc.product.schedule.application.port.out.DeleteSchedulePort;
 import com.umc.product.schedule.application.port.out.LoadScheduleParticipantPort;
 import com.umc.product.schedule.application.port.out.LoadSchedulePort;
 import com.umc.product.schedule.application.port.out.SaveScheduleParticipantPort;
@@ -40,10 +42,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class ScheduleCommandService implements CreateScheduleUseCase, UpdateScheduleUseCase {
+public class ScheduleCommandService implements CreateScheduleUseCase, UpdateScheduleUseCase, DeleteScheduleUseCase {
 
     private final SaveSchedulePort saveSchedulePort;
     private final LoadSchedulePort loadSchedulePort;
+    private final DeleteSchedulePort deleteSchedulePort;
 
     private final SaveScheduleParticipantPort saveScheduleParticipantPort;
     private final DeleteScheduleParticipantPort deleteScheduleParticipantPort;
@@ -208,7 +211,55 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
         return schedule.getId();
     }
 
+    // 일정 삭제
+    // 출석 기록이 존재하면 삭제 불가
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.DELETE,
+        targetType = "Schedule",
+        targetId = "#scheduleId",
+        description = "'일정이 삭제되었습니다.'"
+    )
+    @Override
+    public void delete(Long scheduleId) {
+        Schedule schedule = loadSchedulePort.findById(scheduleId)
+            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+
+        if (loadScheduleParticipantPort.existsAttendanceStatusByScheduleId(scheduleId)) {
+            throw new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_HAS_ATTENDANCE_RECORD);
+        }
+
+        deleteScheduleWithParticipants(schedule);
+    }
+
+    // 일정 강제 삭제
+    // 출석 기록이 존재해도 삭제 가능
+    @Audited(
+        domain = Domain.SCHEDULE,
+        action = AuditAction.DELETE,
+        targetType = "Schedule",
+        targetId = "#scheduleId",
+        description = "'일정이 강제 삭제되었습니다.'"
+    )
+    @Override
+    public void forceDelete(Long scheduleId) {
+        Schedule schedule = loadSchedulePort.findById(scheduleId)
+            .orElseThrow(() -> new ScheduleDomainException(ScheduleErrorCode.SCHEDULE_NOT_FOUND));
+
+        deleteScheduleWithParticipants(schedule);
+    }
+
     // ============================== Helper Methods ==============================
+
+    // 일정에 연결된 모든 ScheduleParticipant 및 Schedule을 삭제
+    private void deleteScheduleWithParticipants(Schedule schedule) {
+        List<ScheduleParticipant> participants = loadScheduleParticipantPort.findAllByScheduleId(schedule.getId());
+        if (!participants.isEmpty()) {
+            deleteScheduleParticipantPort.deleteAll(participants);
+        }
+        deleteSchedulePort.delete(schedule.getId());
+    }
+
 
     // command로부터 policy 생성
     private AttendancePolicy createPolicyFromCommand(EditScheduleCommand command, Schedule schedule) {
