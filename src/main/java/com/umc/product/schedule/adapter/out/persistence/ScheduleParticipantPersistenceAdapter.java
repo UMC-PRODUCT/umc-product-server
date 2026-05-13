@@ -39,6 +39,11 @@ public class ScheduleParticipantPersistenceAdapter implements
         scheduleParticipantJpaRepository.deleteAll(participants);
     }
 
+    @Override
+    public void deleteByScheduleId(Long scheduleId) {
+        scheduleParticipantQueryRepository.deleteByScheduleId(scheduleId);
+    }
+
     // ======== LoadScheduleParticipantPort =======
     @Override
     public List<ScheduleParticipant> findAllByScheduleId(Long scheduleId) {

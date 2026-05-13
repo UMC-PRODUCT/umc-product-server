@@ -142,4 +142,16 @@ public class ScheduleParticipantQueryRepository {
             .fetchFirst();
         return fetchOne != null;
     }
+
+    /**
+     * 특정 일정에 속한 모든 ScheduleParticipant를 단일 DELETE 쿼리로 벌크 삭제
+     *
+     * @return 삭제된 행의 개수
+     */
+    public long deleteByScheduleId(Long scheduleId) {
+        return queryFactory
+            .delete(scheduleParticipant)
+            .where(scheduleParticipant.schedule.id.eq(scheduleId))
+            .execute();
+    }
 }

@@ -2,7 +2,6 @@ package com.umc.product.schedule.application.service.command;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -19,10 +18,8 @@ import com.umc.product.schedule.application.port.out.SaveScheduleParticipantPort
 import com.umc.product.schedule.application.port.out.SaveSchedulePort;
 import com.umc.product.schedule.application.service.query.ScheduleCapabilitiesService;
 import com.umc.product.schedule.domain.Schedule;
-import com.umc.product.schedule.domain.ScheduleParticipant;
 import com.umc.product.schedule.domain.exception.ScheduleDomainException;
 import com.umc.product.schedule.domain.exception.ScheduleErrorCode;
-import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -69,58 +66,25 @@ class ScheduleCommandServiceDeleteTest {
         return schedule;
     }
 
-    private ScheduleParticipant participantStub(Long memberId) {
-        ScheduleParticipant participant = new ScheduleParticipant() {
-        };
-        ReflectionTestUtils.setField(participant, "memberId", memberId);
-        return participant;
-    }
-
     @Nested
     @DisplayName("delete - 일반 삭제")
     class delete {
 
         @Test
-        @DisplayName("일정과 모든 참여자를 함께 삭제한다")
-        void 일정과_모든_참여자를_함께_삭제한다() {
-            // given
-            Schedule schedule = scheduleStub();
-            List<ScheduleParticipant> participants = List.of(
-                participantStub(1L),
-                participantStub(2L)
-            );
-
-            given(loadSchedulePort.findById(SCHEDULE_ID)).willReturn(Optional.of(schedule));
-            given(loadScheduleParticipantPort.existsAttendanceStatusByScheduleId(SCHEDULE_ID))
-                .willReturn(false);
-            given(loadScheduleParticipantPort.findAllByScheduleId(SCHEDULE_ID))
-                .willReturn(participants);
-
-            // when
-            sut.delete(SCHEDULE_ID);
-
-            // then
-            then(deleteScheduleParticipantPort).should().deleteAll(participants);
-            then(deleteSchedulePort).should().delete(SCHEDULE_ID);
-        }
-
-        @Test
-        @DisplayName("참여자가 없는 일정도 정상 삭제된다")
-        void 참여자가_없는_일정도_정상_삭제된다() {
+        @DisplayName("일정과 모든 참여자를 단일 벌크 쿼리로 함께 삭제한다")
+        void 일정과_모든_참여자를_벌크_쿼리로_함께_삭제한다() {
             // given
             Schedule schedule = scheduleStub();
 
             given(loadSchedulePort.findById(SCHEDULE_ID)).willReturn(Optional.of(schedule));
             given(loadScheduleParticipantPort.existsAttendanceStatusByScheduleId(SCHEDULE_ID))
                 .willReturn(false);
-            given(loadScheduleParticipantPort.findAllByScheduleId(SCHEDULE_ID))
-                .willReturn(List.of());
 
             // when
             sut.delete(SCHEDULE_ID);
 
             // then
-            then(deleteScheduleParticipantPort).should(never()).deleteAll(anyList());
+            then(deleteScheduleParticipantPort).should().deleteByScheduleId(SCHEDULE_ID);
             then(deleteSchedulePort).should().delete(SCHEDULE_ID);
         }
 
@@ -141,7 +105,7 @@ class ScheduleCommandServiceDeleteTest {
                 .isEqualTo(ScheduleErrorCode.SCHEDULE_HAS_ATTENDANCE_RECORD);
 
             then(deleteSchedulePort).should(never()).delete(anyLong());
-            then(deleteScheduleParticipantPort).should(never()).deleteAll(anyList());
+            then(deleteScheduleParticipantPort).should(never()).deleteByScheduleId(anyLong());
         }
 
         @Test
@@ -157,6 +121,7 @@ class ScheduleCommandServiceDeleteTest {
                 .isEqualTo(ScheduleErrorCode.SCHEDULE_NOT_FOUND);
 
             then(deleteSchedulePort).should(never()).delete(anyLong());
+            then(deleteScheduleParticipantPort).should(never()).deleteByScheduleId(anyLong());
         }
     }
 
@@ -165,18 +130,12 @@ class ScheduleCommandServiceDeleteTest {
     class forceDelete {
 
         @Test
-        @DisplayName("출석 기록 존재 여부와 무관하게 일정과 참여자를 함께 삭제한다")
-        void 출석_기록_존재_여부와_무관하게_삭제된다() {
+        @DisplayName("출석 기록 존재 여부와 무관하게 일정과 참여자를 단일 벌크 쿼리로 함께 삭제한다")
+        void 출석_기록_존재_여부와_무관하게_벌크_삭제된다() {
             // given
             Schedule schedule = scheduleStub();
-            List<ScheduleParticipant> participants = List.of(
-                participantStub(1L),
-                participantStub(2L)
-            );
 
             given(loadSchedulePort.findById(SCHEDULE_ID)).willReturn(Optional.of(schedule));
-            given(loadScheduleParticipantPort.findAllByScheduleId(SCHEDULE_ID))
-                .willReturn(participants);
 
             // when
             sut.forceDelete(SCHEDULE_ID);
@@ -184,25 +143,7 @@ class ScheduleCommandServiceDeleteTest {
             // then
             then(loadScheduleParticipantPort).should(never())
                 .existsAttendanceStatusByScheduleId(any());
-            then(deleteScheduleParticipantPort).should().deleteAll(participants);
-            then(deleteSchedulePort).should().delete(SCHEDULE_ID);
-        }
-
-        @Test
-        @DisplayName("참여자가 없으면 일정만 삭제된다")
-        void 참여자가_없으면_일정만_삭제된다() {
-            // given
-            Schedule schedule = scheduleStub();
-
-            given(loadSchedulePort.findById(SCHEDULE_ID)).willReturn(Optional.of(schedule));
-            given(loadScheduleParticipantPort.findAllByScheduleId(SCHEDULE_ID))
-                .willReturn(List.of());
-
-            // when
-            sut.forceDelete(SCHEDULE_ID);
-
-            // then
-            then(deleteScheduleParticipantPort).should(never()).deleteAll(anyList());
+            then(deleteScheduleParticipantPort).should().deleteByScheduleId(SCHEDULE_ID);
             then(deleteSchedulePort).should().delete(SCHEDULE_ID);
         }
 
@@ -219,6 +160,7 @@ class ScheduleCommandServiceDeleteTest {
                 .isEqualTo(ScheduleErrorCode.SCHEDULE_NOT_FOUND);
 
             then(deleteSchedulePort).should(never()).delete(anyLong());
+            then(deleteScheduleParticipantPort).should(never()).deleteByScheduleId(anyLong());
         }
     }
 }

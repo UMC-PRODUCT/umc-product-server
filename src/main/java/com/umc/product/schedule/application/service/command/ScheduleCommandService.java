@@ -252,11 +252,9 @@ public class ScheduleCommandService implements CreateScheduleUseCase, UpdateSche
     // ============================== Helper Methods ==============================
 
     // 일정에 연결된 모든 ScheduleParticipant 및 Schedule을 삭제
+    // 참여자는 단일 벌크 DELETE 쿼리로 삭제하여, 대규모 일정에서도 메모리/네트워크 부하를 최소화
     private void deleteScheduleWithParticipants(Schedule schedule) {
-        List<ScheduleParticipant> participants = loadScheduleParticipantPort.findAllByScheduleId(schedule.getId());
-        if (!participants.isEmpty()) {
-            deleteScheduleParticipantPort.deleteAll(participants);
-        }
+        deleteScheduleParticipantPort.deleteByScheduleId(schedule.getId());
         deleteSchedulePort.delete(schedule.getId());
     }
 
