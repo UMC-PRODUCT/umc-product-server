@@ -82,6 +82,8 @@ public enum ProjectErrorCode implements BaseCode {
         "현재 상태에서는 합/불 결정을 변경할 수 없습니다."),
     PROJECT_APPLICATION_QUOTA_EXCEEDED(HttpStatus.CONFLICT, "PROJECT-0213",
         "해당 파트의 남은 자리를 초과하여 합격 처리할 수 없습니다."),
+    PROJECT_APPLICATION_CANCEL_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "PROJECT-0214", "이미 종결된 지원서는 철회할 수 없습니다."),
+    PROJECT_APPLICATION_CANCEL_ROUND_CLOSED(HttpStatus.BAD_REQUEST, "PROJECT-0215", "매칭 차수가 종료되어 지원서를 철회할 수 없습니다."),
 
     ;
 

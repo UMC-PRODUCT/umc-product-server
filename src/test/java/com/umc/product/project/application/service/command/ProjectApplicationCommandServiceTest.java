@@ -8,11 +8,13 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.port.in.command.dto.ApplicationDecisionStatus;
+import com.umc.product.project.application.port.in.command.dto.CancelProjectApplicationCommand;
 import com.umc.product.project.application.port.in.query.dto.ProjectApplicationInfo;
 import com.umc.product.project.application.port.out.LoadProjectApplicationFormPort;
 import com.umc.product.project.application.port.out.LoadProjectApplicationPort;
@@ -295,6 +297,77 @@ class ProjectApplicationCommandServiceTest {
         }
     }
 
+    @Nested
+    class cancel {
+
+        @Test
+        void DRAFT를_CANCELLED로_전이하고_저장한다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.DRAFT);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(saveProjectApplicationPort.save(any(ProjectApplication.class)))
+                .willAnswer(inv -> inv.getArgument(0));
+
+            ProjectApplicationInfo result = sut.cancel(cancelCommand("마음 바뀜"));
+
+            assertThat(result.status()).isEqualTo(ProjectApplicationStatus.CANCELLED);
+            assertThat(application.getStatusChangedMemberId()).isEqualTo(APPLICANT_MEMBER_ID);
+            assertThat(application.getStatusChangeReason()).isEqualTo("마음 바뀜");
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void SUBMITTED를_CANCELLED로_전이하고_저장한다() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+            given(saveProjectApplicationPort.save(any(ProjectApplication.class)))
+                .willAnswer(inv -> inv.getArgument(0));
+
+            ProjectApplicationInfo result = sut.cancel(cancelCommand(null));
+
+            assertThat(result.status()).isEqualTo(ProjectApplicationStatus.CANCELLED);
+            then(saveProjectApplicationPort).should(times(1)).save(application);
+        }
+
+        @Test
+        void 차수가_종료되었으면_CANCEL_ROUND_CLOSED() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.SUBMITTED);
+            ReflectionTestUtils.setField(application.getAppliedMatchingRound(), "endsAt", NOW.minusSeconds(60));
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> sut.cancel(cancelCommand("늦었지만")))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_CANCEL_ROUND_CLOSED);
+
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void 지원서가_없으면_PROJECT_APPLICATION_NOT_FOUND() {
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> sut.cancel(cancelCommand(null)))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
+
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+
+        @Test
+        void 이미_CANCELLED라면_도메인이_CANCEL_NOT_ALLOWED() {
+            ProjectApplication application = applicationWithStatus(ProjectApplicationStatus.CANCELLED);
+            given(loadProjectApplicationPort.findById(APPLICATION_ID)).willReturn(Optional.of(application));
+
+            assertThatThrownBy(() -> sut.cancel(cancelCommand(null)))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_CANCEL_NOT_ALLOWED);
+
+            then(saveProjectApplicationPort).should(never()).save(any());
+        }
+    }
+
     private ProjectApplication applicationWithStatus(ProjectApplicationStatus status) {
         ProjectApplication application = ProjectApplication.create(
             applicationForm(), 999L, APPLICANT_MEMBER_ID, openRound()
@@ -341,6 +414,14 @@ class ProjectApplicationCommandServiceTest {
         return ChallengerInfo.builder()
             .challengerId(memberId * 10).memberId(memberId).gisuId(1L)
             .part(part).challengerPoints(new ArrayList<>()).totalPoints(0.0)
+            .build();
+    }
+
+    private CancelProjectApplicationCommand cancelCommand(String reason) {
+        return CancelProjectApplicationCommand.builder()
+            .applicationId(APPLICATION_ID)
+            .requesterMemberId(APPLICANT_MEMBER_ID)
+            .reason(reason)
             .build();
     }
 }

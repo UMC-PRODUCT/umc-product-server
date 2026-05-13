@@ -3,10 +3,12 @@ package com.umc.product.project.application.service.command;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.application.port.in.command.CancelProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.DecideApplicationUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectApplicationDraftUseCase;
+import com.umc.product.project.application.port.in.command.dto.CancelProjectApplicationCommand;
 import com.umc.product.project.application.port.in.command.dto.ApplicationDecisionStatus;
 import com.umc.product.project.application.port.in.command.dto.CreateDraftProjectApplicationCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectApplicationCommand;
@@ -47,7 +49,8 @@ public class ProjectApplicationCommandService implements
     CreateDraftProjectApplicationUseCase,
     UpdateProjectApplicationDraftUseCase,
     SubmitProjectApplicationUseCase,
-    DecideApplicationUseCase {
+    DecideApplicationUseCase,
+    CancelProjectApplicationUseCase {
 
     private final LoadProjectApplicationPort loadProjectApplicationPort;
     private final SaveProjectApplicationPort saveProjectApplicationPort;
@@ -177,6 +180,23 @@ public class ProjectApplicationCommandService implements
         );
 
         application.submit();
+        saveProjectApplicationPort.save(application);
+
+        return ProjectApplicationInfo.of(application.getId(), application.getStatus());
+    }
+
+    @Override
+    public ProjectApplicationInfo cancel(CancelProjectApplicationCommand command) {
+        ProjectApplication application = loadProjectApplicationPort.findById(command.applicationId())
+            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND));
+
+        // 매칭 차수 OPEN 검증 — 차수 종료 후에는 철회 불가
+        if (!application.getAppliedMatchingRound().isOpenAt(Instant.now())) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_CANCEL_ROUND_CLOSED);
+        }
+
+        // 상태 머신 가드는 도메인 책임 - DRAFT/SUBMITTED -> CANCELLED, 종결 상태는 도메인이 예외
+        application.cancel(command.requesterMemberId(), command.reason());
         saveProjectApplicationPort.save(application);
 
         return ProjectApplicationInfo.of(application.getId(), application.getStatus());

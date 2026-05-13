@@ -288,6 +288,30 @@ class ProjectApplicationPermissionEvaluatorTest {
         assertThat(sut.evaluate(subject, deletePermission())).isFalse();
     }
 
+    @Test
+    void DELETE는_본인이라도_CANCELLED는_거부_이중취소_차단() {
+        givenApplication(ProjectApplicationStatus.CANCELLED);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, deletePermission())).isFalse();
+    }
+
+    @Test
+    void EDIT는_본인이라도_CANCELLED는_거부() {
+        givenApplication(ProjectApplicationStatus.CANCELLED);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, editPermission())).isFalse();
+    }
+
+    @Test
+    void READ는_CANCELLED_지원서를_본인_허용() {
+        givenApplication(ProjectApplicationStatus.CANCELLED);
+        SubjectAttributes subject = subjectWith(APPLICANT_MEMBER_ID, List.of(), List.of());
+
+        assertThat(sut.evaluate(subject, readPermission())).isTrue();
+    }
+
     // --- APPROVE ---
 
     @Test

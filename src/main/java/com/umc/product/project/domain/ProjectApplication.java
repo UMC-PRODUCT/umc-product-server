@@ -18,7 +18,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -30,19 +29,10 @@ import lombok.NoArgsConstructor;
  * 어떤 매칭 라운드에 지원한 폼인지와 지원 결과를 담고 있습니다.
  */
 @Entity
-@Table(
-    name = "project_application",
-    uniqueConstraints = {
-        // 각 지원자는 매칭 차수 당 한 개의 지원서만 제출할 수 있습니다.
-        @UniqueConstraint(
-            name = "uk_project_application_form_member_matching_round",
-            columnNames = {"project_application_form_id", "applied_matching_round_id", "applicant_member_id"}
-        )
-    }
-)
-// 각 지원자는 매칭 차수 당 한 개의 지원서만 제출할 수 있습니다.
-// UK로 관리하려 했으나, CANCELLED를 이용해서 Soft Delete 시키도록 설계를 변경하여 Service 단에서 검증을 진행해야 합니다.
-// TODO: 이거 반드시 해야함!!!!
+@Table(name = "project_application")
+// 각 지원자는 매칭 차수 당 한 개의 활성(DRAFT/SUBMITTED) 지원서만 존재할 수 있습니다.
+// JPA @UniqueConstraint는 WHERE 절을 지원하지 않아 Flyway의 partial unique index (uk_project_application_active_form_round_applicant, status IN ('DRAFT','SUBMITTED'))로 관리됩니다.
+// CANCELLED 행은 인덱스 범위 밖이라 동일 (form, round, applicant) 키로 재지원이 가능합니다. (#849)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ProjectApplication extends BaseEntity {
@@ -197,18 +187,35 @@ public class ProjectApplication extends BaseEntity {
     }
 
     /**
-     * 지원 취소 (철회)
+     * 지원자가 자신의 지원서를 철회합니다 (soft delete: {@link ProjectApplicationStatus#CANCELLED} 로 상태 전이).
+     * <p>
+     * 정책:
+     * <ul>
+     *   <li>가능 상태: {@link ProjectApplicationStatus#DRAFT}, {@link ProjectApplicationStatus#SUBMITTED}</li>
+     *   <li>불가 상태: {@link ProjectApplicationStatus#APPROVED} / {@link ProjectApplicationStatus#REJECTED}
+     *       (이미 종결), {@link ProjectApplicationStatus#CANCELLED} (이중 취소)</li>
+     * </ul>
+     * 시간 제약(매칭 차수 OPEN 여부)과 행위자 권한 검증은 도메인 외부
+     * ({@code ProjectApplicationCommandService} / {@code ProjectApplicationPermissionEvaluator})가 책임집니다.
+     * 본 메서드는 상태 머신 전이만 보장합니다.
      *
-     * @param decidedByMemberId 실행자 ID (지원자 본인 또는 운영진)
-     * @param reason            취소 사유 (필수 아님)
+     * @param decidedByMemberId 철회 수행자 ID (지원자 본인 또는 운영진) TODO: 운영진 철회는 아직 미구현
+     * @param reason            철회 사유 (필수 아님)
      */
     public void cancel(Long decidedByMemberId, String reason) {
-//        validateIsSubmitted("지원서가 제출된 상태에서만 철회할 수 있습니다.");
+        switch (this.status) {
+            case DRAFT, SUBMITTED -> {
+                this.status = ProjectApplicationStatus.CANCELLED;
+                this.statusChangedMemberId = decidedByMemberId;
+                this.statusChangeReason = reason;
+            }
+            case APPROVED, REJECTED, CANCELLED ->
+                throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_CANCEL_NOT_ALLOWED);
+        }
 
         // HARD DELETE 로직
         // Draft일 떄, 즉 임시저장본 일 때 삭제하는 로직 또한 필요할 것 같음
-
-        // TODO: 악악악...
+        // -> 해당 로직이 cancel(철회) 메소드에 들어가는게 맞는지? - 삭제 메소드 별도 필요하지 않을지
     }
 
     /**
@@ -229,6 +236,10 @@ public class ProjectApplication extends BaseEntity {
 
     public boolean isSubmitted() {
         return this.status == ProjectApplicationStatus.SUBMITTED;
+    }
+
+    public boolean isCancelled() {
+        return this.status == ProjectApplicationStatus.CANCELLED;
     }
 
     public void validateIsSubmitted(String message) {
