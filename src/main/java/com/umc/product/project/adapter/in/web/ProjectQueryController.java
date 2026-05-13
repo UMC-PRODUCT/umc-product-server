@@ -108,7 +108,7 @@ public class ProjectQueryController {
         @CurrentMember MemberPrincipal memberPrincipal,
         @RequestParam List<Long> projectIds
     ) {
-        return assembler.membersForBatch(projectIds, memberPrincipal.getMemberId());
+        return assembler.listProjectMembers(projectIds, memberPrincipal.getMemberId());
     }
 
     @GetMapping("/me/managed")

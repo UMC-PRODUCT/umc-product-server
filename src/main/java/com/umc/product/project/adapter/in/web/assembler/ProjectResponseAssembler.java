@@ -143,7 +143,7 @@ public class ProjectResponseAssembler {
      * <p>
      * 각 projectId에 대해 per-project 권한 체크 및 데이터 조회를 수행하며, 실패한 프로젝트는 결과에서 제외 멤버 정보는 유효한 프로젝트 전체를 모아 한 번에 조회한다.
      */
-    public Map<Long, ProjectMembersResponse> membersForBatch(List<Long> projectIds, Long memberId) {
+    public Map<Long, ProjectMembersResponse> listProjectMembers(List<Long> projectIds, Long memberId) {
         // Step 1: 권한 체크 + 프로젝트 정보 조회 (실패 시 skip)
         Map<Long, ProjectInfo> validProjects = new LinkedHashMap<>();
         for (Long projectId : projectIds) {
