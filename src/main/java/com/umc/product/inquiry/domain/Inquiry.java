@@ -52,8 +52,8 @@ public class Inquiry extends BaseEntity {
     private InquiryStatus status;
 
     // 수정/삭제는 정책상 전면 불가
-    @Column(name = "author_challenger_id", nullable = false)
-    private Long authorChallengerId;
+    @Column(name = "author_member_id", nullable = false)
+    private Long authorMemberId;
 
     // 운영진 중 누군가 한 명이라도 열람했는지 여부. 채팅방 단위로 읽음 상태 관리
     @Column(name = "is_read", nullable = false)
@@ -67,7 +67,7 @@ public class Inquiry extends BaseEntity {
         String content,
         InquiryCategory category,
         InquiryTarget target,
-        Long authorChallengerId
+        Long authorMemberId
     ) {
         return Inquiry.builder()
             .title(title)
@@ -75,7 +75,7 @@ public class Inquiry extends BaseEntity {
             .category(category)
             .target(target)
             .status(InquiryStatus.RECEIVED)
-            .authorChallengerId(authorChallengerId)
+            .authorMemberId(authorMemberId)
             .isRead(false)
             .build();
     }
