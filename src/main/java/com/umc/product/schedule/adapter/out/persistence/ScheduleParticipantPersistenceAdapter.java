@@ -39,6 +39,11 @@ public class ScheduleParticipantPersistenceAdapter implements
         scheduleParticipantJpaRepository.deleteAll(participants);
     }
 
+    @Override
+    public void deleteByScheduleId(Long scheduleId) {
+        scheduleParticipantQueryRepository.deleteByScheduleId(scheduleId);
+    }
+
     // ======== LoadScheduleParticipantPort =======
     @Override
     public List<ScheduleParticipant> findAllByScheduleId(Long scheduleId) {
@@ -75,5 +80,10 @@ public class ScheduleParticipantPersistenceAdapter implements
     @Override
     public Set<Long> findScheduleIdsByMemberId(Long memberId) {
         return scheduleParticipantQueryRepository.findScheduleIdsByMemberId(memberId);
+    }
+
+    @Override
+    public boolean existsAttendanceStatusByScheduleId(Long scheduleId) {
+        return scheduleParticipantQueryRepository.existsAttendanceStatusByScheduleId(scheduleId);
     }
 }

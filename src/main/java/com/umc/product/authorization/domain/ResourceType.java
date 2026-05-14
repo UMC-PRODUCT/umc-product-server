@@ -16,7 +16,8 @@ public enum ResourceType {
 
     // Schedule 도메인
     SCHEDULE("schedule", "일정",
-        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT, PermissionType.DELETE)),
+        Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.EDIT,
+            PermissionType.DELETE, PermissionType.FORCE_DELETE)),
     ATTENDANCE("attendance", "출석",
         Set.of(PermissionType.READ, PermissionType.WRITE, PermissionType.APPROVE)),
 

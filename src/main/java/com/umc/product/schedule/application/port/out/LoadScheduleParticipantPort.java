@@ -32,4 +32,9 @@ public interface LoadScheduleParticipantPort {
      * @return 일정 ID 목록
      */
     Set<Long> findScheduleIdsByMemberId(Long memberId);
+
+    /**
+     * 일정에 속한 참여자 중 attendance.status가 존재(not null)하는 기록이 하나라도 있는지 확인합니다.
+     */
+    boolean existsAttendanceStatusByScheduleId(Long scheduleId);
 }
