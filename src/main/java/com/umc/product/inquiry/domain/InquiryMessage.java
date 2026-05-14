@@ -38,8 +38,8 @@ public class InquiryMessage extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private InquiryMessageSenderType senderType;
 
-    @Column(name = "sender_challenger_id", nullable = false)
-    private Long senderChallengerId;
+    @Column(name = "sender_member_id", nullable = false)
+    private Long senderMemberId;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
@@ -50,13 +50,13 @@ public class InquiryMessage extends BaseEntity {
     public static InquiryMessage create(
         Long inquiryId,
         InquiryMessageSenderType senderType,
-        Long senderChallengerId,
+        Long senderMemberId,
         String content
     ) {
         return InquiryMessage.builder()
             .inquiryId(inquiryId)
             .senderType(senderType)
-            .senderChallengerId(senderChallengerId)
+            .senderMemberId(senderMemberId)
             .content(content)
             .build();
     }
