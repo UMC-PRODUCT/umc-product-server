@@ -15,6 +15,10 @@ import com.umc.product.project.adapter.in.web.dto.response.ProjectDetailResponse
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectMembersResponse.PartGroup;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectSummaryResponse;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.ApplicationStatisticsResponse;
+import com.umc.product.project.adapter.in.web.dto.response.statistics.MatchingStatisticsResponse;
+import com.umc.product.project.application.port.in.query.GetApplicationStatisticsUseCase;
+import com.umc.product.project.application.port.in.query.GetMatchingStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchManagedProjectUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectUseCase;
@@ -57,6 +61,8 @@ public class ProjectResponseAssembler {
     private final LoadProjectApplicationFormPort loadProjectApplicationFormPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final CheckPermissionUseCase checkPermissionUseCase;
+    private final GetApplicationStatisticsUseCase getApplicationStatisticsUseCase;
+    private final GetMatchingStatisticsUseCase getMatchingStatisticsUseCase;
 
     /**
      * PROJECT-001 프로젝트 목록 조회.
@@ -245,6 +251,22 @@ public class ProjectResponseAssembler {
             .coProductOwners(coProductOwners)
             .partGroups(partGroups)
             .build();
+    }
+
+    /**
+     * PROJECT-STAT-001/002 지원통계. 호출자 역할에 따라 내부에서 scope를 분기한다.
+     */
+    public ApplicationStatisticsResponse applicationStatsFor(Long gisuId, Long chapterId, Long callerMemberId) {
+        return ApplicationStatisticsResponse.from(
+            getApplicationStatisticsUseCase.getStats(gisuId, chapterId, callerMemberId));
+    }
+
+    /**
+     * PROJECT-STAT-003/004 매칭통계. 호출자 역할에 따라 내부에서 scope를 분기한다.
+     */
+    public MatchingStatisticsResponse matchingStatsFor(Long gisuId, Long chapterId, Long callerMemberId) {
+        return MatchingStatisticsResponse.from(
+            getMatchingStatisticsUseCase.getStats(gisuId, chapterId, callerMemberId));
     }
 
     private Long resolveApplicationFormId(Long projectId) {

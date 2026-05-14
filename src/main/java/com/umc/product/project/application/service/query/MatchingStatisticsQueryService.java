@@ -1,8 +1,10 @@
 package com.umc.product.project.application.service.query;
 
+import com.umc.product.authorization.application.port.in.query.GetChallengerRoleUseCase;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
-import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerPartInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.common.domain.enums.ChallengerRoleType;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.project.application.port.in.query.GetMatchingStatisticsUseCase;
 import com.umc.product.project.application.port.in.query.dto.RoundMemberInfo;
@@ -11,6 +13,9 @@ import com.umc.product.project.application.port.in.query.dto.statistics.ProjectR
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundStat;
 import com.umc.product.project.application.port.in.query.dto.statistics.SchoolStat;
 import com.umc.product.project.application.port.out.LoadMatchingStatisticsPort;
+import com.umc.product.project.application.port.out.LoadProjectPort;
+import com.umc.product.project.domain.exception.ProjectDomainException;
+import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,18 +35,37 @@ import org.springframework.transaction.annotation.Transactional;
 public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseCase {
 
     private final LoadMatchingStatisticsPort loadMatchingStatisticsPort;
+    private final LoadProjectPort loadProjectPort;
     private final GetChallengerUseCase getChallengerUseCase;
+    private final GetChallengerRoleUseCase getChallengerRoleUseCase;
     private final GetMemberUseCase getMemberUseCase;
 
     /**
-     * 호출 횟수: DB 1회(listMembersByRound) + Challenger 1회 + Member 1회 = 3회.
+     * 호출자 역할에 따라 운영진 또는 PM챌린저 경로로 분기한다. ChallengerRole 보유 여부로 운영진을 판단한다. ADMIN 파트 외에 프로젝트에 참여하는 운영진도 있으므로
+     * ChallengerRole 기준을 사용한다.
      */
     @Override
-    public MatchingStatisticsInfo getManagerStats(Long gisuId, Long chapterId) {
-        List<RoundMemberInfo> entries =
-            loadMatchingStatisticsPort.listMembersByRound(gisuId, chapterId);
+    public MatchingStatisticsInfo getStats(Long gisuId, Long chapterId, Long callerMemberId) {
+        boolean isManager = getChallengerRoleUseCase
+            .hasAnyRoleTypeInGisu(callerMemberId, gisuId, ChallengerRoleType.values());
 
         Set<Long> eligibleMemberIds = resolveEligibleMemberIds(gisuId);
+
+        if (isManager) {
+            return buildManagerStats(gisuId, chapterId, eligibleMemberIds);
+        }
+        return buildPmStats(callerMemberId, gisuId, chapterId, eligibleMemberIds);
+    }
+
+    /**
+     * 운영진 경로: gisuId + chapterId 범위 전체 프로젝트 기준으로 집계. SchoolStat.total(분모)은 eligibleMemberIds 기반으로 계산한다.
+     */
+    private MatchingStatisticsInfo buildManagerStats(
+        Long gisuId, Long chapterId, Set<Long> eligibleMemberIds
+    ) {
+        List<RoundMemberInfo> entries =
+            loadMatchingStatisticsPort.getMembersByRound(gisuId, chapterId);
+
         Map<Long, Long> memberSchoolMap = fetchSchoolMap(eligibleMemberIds, entries);
         Map<Long, Long> schoolTotals = computeSchoolTotals(eligibleMemberIds, memberSchoolMap);
         long totalQuota = schoolTotals.values().stream().mapToLong(Long::longValue).sum();
@@ -53,19 +77,53 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
         );
     }
 
+    /**
+     * PM챌린저 경로: 호출자 소유 프로젝트만 scope. SchoolStat.total은 null로 반환한다. chapterId 검증에 실패하면 403 예외를 발생시킨다.
+     */
+    private MatchingStatisticsInfo buildPmStats(
+        Long callerMemberId, Long gisuId, Long chapterId, Set<Long> eligibleMemberIds
+    ) {
+        if (!loadProjectPort.existsByOwnerAndGisuAndChapter(callerMemberId, gisuId, chapterId)) {
+            throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
+        }
+
+        List<RoundMemberInfo> entries =
+            loadMatchingStatisticsPort.getMembersByRoundForOwner(callerMemberId, gisuId, chapterId);
+
+        Map<Long, Long> memberSchoolMap = fetchSchoolMap(eligibleMemberIds, entries);
+        Map<Long, Long> schoolTotals = computeSchoolTotals(eligibleMemberIds, memberSchoolMap);
+        long totalQuota = schoolTotals.values().stream().mapToLong(Long::longValue).sum();
+
+        return new MatchingStatisticsInfo(
+            buildRoundStats(entries, totalQuota),
+            buildSchoolStatsWithoutTotal(entries, memberSchoolMap),
+            buildProjectRoundStats(entries)
+        );
+    }
+
+    /**
+     * gisuId 기준 ADMIN 파트 제외 챌린저의 memberId 집합을 반환한다. ADMIN 파트 운영진은 프로젝트 팀원으로 참여하지 않으므로 분모 계산에서 제외한다.
+     */
     private Set<Long> resolveEligibleMemberIds(Long gisuId) {
-        return getChallengerUseCase.getAllByGisuId(gisuId).stream()
+        return getChallengerUseCase.getPartsByGisuId(gisuId).stream()
             .filter(c -> c.part() != ChallengerPart.ADMIN)
-            .map(ChallengerInfo::memberId)
+            .map(ChallengerPartInfo::memberId)
             .collect(Collectors.toSet());
     }
 
+    /**
+     * 챌린저 memberIds + 매칭 멤버 memberIds를 합산해 단일 getMemberUseCase 호출로 memberId → schoolId 맵을 반환한다. 두 집합을 합쳐 한 번만 호출함으로써
+     * 크로스 도메인 호출을 최소화한다.
+     */
     private Map<Long, Long> fetchSchoolMap(Set<Long> eligibleMemberIds, List<RoundMemberInfo> entries) {
         Set<Long> allMemberIds = new HashSet<>(eligibleMemberIds);
         entries.stream().map(RoundMemberInfo::memberId).forEach(allMemberIds::add);
         return allMemberIds.isEmpty() ? Map.of() : getMemberUseCase.findAllSchoolIdsByIds(allMemberIds);
     }
 
+    /**
+     * eligibleMemberIds 기준으로 schoolId → 총원(분모)을 계산한다. 학교에 소속되지 않은 멤버(schoolId = null)는 집계에서 제외한다.
+     */
     private Map<Long, Long> computeSchoolTotals(Set<Long> eligibleMemberIds, Map<Long, Long> memberSchoolMap) {
         return eligibleMemberIds.stream()
             .map(memberSchoolMap::get)
@@ -73,6 +131,9 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
             .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
     }
 
+    /**
+     * roundId별 매칭 인원 수를 집계해 RoundStat 목록을 반환한다. ProjectMember는 프로젝트당 1인이므로 Set 중복 제거 없이 단순 count로 집계한다.
+     */
     private List<RoundStat> buildRoundStats(List<RoundMemberInfo> entries, long totalQuota) {
         Map<Long, Long> roundCounts = new HashMap<>();
         for (RoundMemberInfo e : entries) {
@@ -83,6 +144,9 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
             .toList();
     }
 
+    /**
+     * schoolId × roundId별 매칭 인원 수를 집계해 SchoolStat 목록을 반환한다. total은 해당 학교의 전체 챌린저 수(분모)로, 차수와 무관하게 동일한 값이 반복된다.
+     */
     private List<SchoolStat> buildSchoolStats(
         List<RoundMemberInfo> entries,
         Map<Long, Long> memberSchoolMap,
@@ -91,7 +155,9 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
         Map<Long, Map<Long, Long>> schoolRoundCounts = new HashMap<>();
         for (RoundMemberInfo e : entries) {
             Long schoolId = memberSchoolMap.get(e.memberId());
-            if (schoolId == null) continue;
+            if (schoolId == null) {
+                continue;
+            }
             schoolRoundCounts
                 .computeIfAbsent(schoolId, k -> new HashMap<>())
                 .merge(e.roundId(), 1L, Long::sum);
@@ -100,7 +166,7 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
         List<SchoolStat> result = new ArrayList<>();
         for (Map.Entry<Long, Map<Long, Long>> schoolEntry : schoolRoundCounts.entrySet()) {
             Long schoolId = schoolEntry.getKey();
-            long total = schoolTotals.getOrDefault(schoolId, 0L);
+            Long total = schoolTotals.getOrDefault(schoolId, 0L);
             for (Map.Entry<Long, Long> roundEntry : schoolEntry.getValue().entrySet()) {
                 result.add(new SchoolStat(schoolId, roundEntry.getKey(), roundEntry.getValue(), total));
             }
@@ -108,6 +174,38 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
         return result;
     }
 
+    /**
+     * PM챌린저 경로 전용. buildSchoolStats와 동일하지만 total을 null로 반환한다. PM챌린저 뷰에서는 학교별 분모가 필요 없다.
+     */
+    private List<SchoolStat> buildSchoolStatsWithoutTotal(
+        List<RoundMemberInfo> entries,
+        Map<Long, Long> memberSchoolMap
+    ) {
+        Map<Long, Map<Long, Long>> schoolRoundCounts = new HashMap<>();
+        for (RoundMemberInfo e : entries) {
+            Long schoolId = memberSchoolMap.get(e.memberId());
+            if (schoolId == null) {
+                continue;
+            }
+            schoolRoundCounts
+                .computeIfAbsent(schoolId, k -> new HashMap<>())
+                .merge(e.roundId(), 1L, Long::sum);
+        }
+
+        List<SchoolStat> result = new ArrayList<>();
+        for (Map.Entry<Long, Map<Long, Long>> schoolEntry : schoolRoundCounts.entrySet()) {
+            Long schoolId = schoolEntry.getKey();
+            for (Map.Entry<Long, Long> roundEntry : schoolEntry.getValue().entrySet()) {
+                result.add(new SchoolStat(schoolId, roundEntry.getKey(), roundEntry.getValue(), null));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * (projectId, roundId)별 매칭 인원 수를 집계해 ProjectRoundStat 목록을 반환한다. 한 멤버는 프로젝트당 하나의 ProjectMember만 존재하므로 단순 count로
+     * 집계한다.
+     */
     private List<ProjectRoundStat> buildProjectRoundStats(List<RoundMemberInfo> entries) {
         Map<Long, Map<Long, Long>> projectRoundCounts = new HashMap<>();
         for (RoundMemberInfo e : entries) {

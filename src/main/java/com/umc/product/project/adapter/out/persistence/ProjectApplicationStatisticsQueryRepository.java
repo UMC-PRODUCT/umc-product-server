@@ -48,19 +48,25 @@ public class ProjectApplicationStatisticsQueryRepository {
             .fetch();
     }
 
-    /** 단일 프로젝트의 (projectId, roundId, applicantMemberId) 목록. */
-    public List<RoundMemberInfo> listApplicantsByRoundForProject(Long projectId) {
+    /**
+     * PM챌린저: ownerMemberId 소유 프로젝트(gisuId + chapterId 범위)의 (projectId, roundId, applicantMemberId) 목록.
+     * project.productOwnerMemberId 기준으로 필터링하므로 chapterId 검증도 겸한다.
+     */
+    public List<RoundMemberInfo> listApplicantsByRoundForOwner(Long ownerMemberId, Long gisuId, Long chapterId) {
         return queryFactory
             .select(Projections.constructor(
                 RoundMemberInfo.class,
-                projectApplicationForm.project.id,
+                project.id,
                 projectApplication.appliedMatchingRound.id,
                 projectApplication.applicantMemberId
             ))
             .from(projectApplication)
             .join(projectApplication.applicationForm, projectApplicationForm)
+            .join(projectApplicationForm.project, project)
             .where(
-                projectApplicationForm.project.id.eq(projectId),
+                project.productOwnerMemberId.eq(ownerMemberId),
+                project.gisuId.eq(gisuId),
+                project.chapterId.eq(chapterId),
                 projectApplication.status.in(COUNTED_STATUSES)
             )
             .fetch();

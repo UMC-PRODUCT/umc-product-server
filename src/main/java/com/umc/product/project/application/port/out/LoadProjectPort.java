@@ -32,6 +32,12 @@ public interface LoadProjectPort {
     boolean existsByOwnerAndGisu(Long productOwnerMemberId, Long gisuId);
 
     /**
+     * 특정 멤버가 해당 기수·지부 내에 PO인 프로젝트가 존재하는지 확인합니다.
+     * PM챌린저가 본인 지부의 통계를 요청하는지 검증하는 데 사용합니다.
+     */
+    boolean existsByOwnerAndGisuAndChapter(Long ownerMemberId, Long gisuId, Long chapterId);
+
+    /**
      * 특정 creator 가 특정 기수에 작성 중인 DRAFT 프로젝트를 조회합니다.
      * (creator, gisu) 당 DRAFT 1 개 UNIQUE 제약이라 단건이 보장됩니다.
      */
