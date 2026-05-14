@@ -2,6 +2,7 @@ package com.umc.product.challenger.application.port.in.query;
 
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfoWithStatus;
+import com.umc.product.challenger.application.port.in.query.dto.ChallengerPartInfo;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -73,6 +74,14 @@ public interface GetChallengerUseCase {
      * @return 해당 기수의 챌린저 정보 목록
      */
     List<ChallengerInfo> getAllByGisuId(Long gisuId);
+
+    /**
+     * 기수 ID로 해당 기수의 (memberId, part)만 조회합니다.
+     *
+     * @param gisuId 기수 ID
+     * @return 해당 기수의 경량 챌린저 정보 목록
+     */
+    List<ChallengerPartInfo> getPartsByGisuId(Long gisuId);
 
     /**
      * memberId로 해당 사용자가 가지고 있는 가장 최근 챌린저 정보 조회

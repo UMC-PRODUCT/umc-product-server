@@ -18,7 +18,7 @@ public class ProjectApplicationStatisticsPersistenceAdapter implements LoadAppli
     }
 
     @Override
-    public List<RoundMemberInfo> listApplicantsByRoundForProject(Long projectId) {
-        return queryRepository.listApplicantsByRoundForProject(projectId);
+    public List<RoundMemberInfo> listApplicantsByRoundForOwner(Long ownerMemberId, Long gisuId, Long chapterId) {
+        return queryRepository.listApplicantsByRoundForOwner(ownerMemberId, gisuId, chapterId);
     }
 }

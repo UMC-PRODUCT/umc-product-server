@@ -13,7 +13,12 @@ public class ProjectMemberStatisticsPersistenceAdapter implements LoadMatchingSt
     private final ProjectMemberStatisticsQueryRepository queryRepository;
 
     @Override
-    public List<RoundMemberInfo> listMembersByRound(Long gisuId, Long chapterId) {
-        return queryRepository.listMembersByRound(gisuId, chapterId);
+    public List<RoundMemberInfo> getMembersByRound(Long gisuId, Long chapterId) {
+        return queryRepository.getMembersByRound(gisuId, chapterId);
+    }
+
+    @Override
+    public List<RoundMemberInfo> getMembersByRoundForOwner(Long ownerMemberId, Long gisuId, Long chapterId) {
+        return queryRepository.getMembersByRoundForOwner(ownerMemberId, gisuId, chapterId);
     }
 }

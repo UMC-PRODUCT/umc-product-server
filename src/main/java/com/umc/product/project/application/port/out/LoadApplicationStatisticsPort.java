@@ -13,7 +13,7 @@ public interface LoadApplicationStatisticsPort {
     List<RoundMemberInfo> listApplicantsByRound(Long gisuId, Long chapterId);
 
     /**
-     * PM챌린저: 단일 프로젝트의 (projectId, roundId, applicantMemberId) 목록.
+     * PM챌린저: ownerMemberId가 소유한 프로젝트(gisuId + chapterId 범위)의 (projectId, roundId, applicantMemberId) 목록.
      */
-    List<RoundMemberInfo> listApplicantsByRoundForProject(Long projectId);
+    List<RoundMemberInfo> listApplicantsByRoundForOwner(Long ownerMemberId, Long gisuId, Long chapterId);
 }
