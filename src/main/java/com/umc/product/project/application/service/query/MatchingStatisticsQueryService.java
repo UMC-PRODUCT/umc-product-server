@@ -17,6 +17,7 @@ import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -68,10 +69,10 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
 
         Map<Long, Long> memberSchoolMap = fetchSchoolMap(eligibleMemberIds, entries);
         Map<Long, Long> schoolTotals = computeSchoolTotals(eligibleMemberIds, memberSchoolMap);
-        long totalQuota = schoolTotals.values().stream().mapToLong(Long::longValue).sum();
+        long totalEligible = schoolTotals.values().stream().mapToLong(Long::longValue).sum();
 
         return new MatchingStatisticsInfo(
-            buildRoundStats(entries, totalQuota),
+            buildRoundStats(entries, totalEligible),
             buildSchoolStats(entries, memberSchoolMap, schoolTotals),
             buildProjectRoundStats(entries)
         );
@@ -92,21 +93,22 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
 
         Map<Long, Long> memberSchoolMap = fetchSchoolMap(eligibleMemberIds, entries);
         Map<Long, Long> schoolTotals = computeSchoolTotals(eligibleMemberIds, memberSchoolMap);
-        long totalQuota = schoolTotals.values().stream().mapToLong(Long::longValue).sum();
+        long totalEligible = schoolTotals.values().stream().mapToLong(Long::longValue).sum();
 
         return new MatchingStatisticsInfo(
-            buildRoundStats(entries, totalQuota),
+            buildRoundStats(entries, totalEligible),
             buildSchoolStatsWithoutTotal(entries, memberSchoolMap),
-            buildProjectRoundStats(entries)
+            null
         );
     }
 
     /**
-     * gisuId 기준 ADMIN 파트 제외 챌린저의 memberId 집합을 반환한다. ADMIN 파트 운영진은 프로젝트 팀원으로 참여하지 않으므로 분모 계산에서 제외한다.
+     * gisuId 기준 ADMIN·PLAN 파트 제외 챌린저의 memberId 집합을 반환한다. ADMIN 운영진은 팀원으로 참여하지 않고,
+     * PLAN(PM)은 프로젝트 오너로서 매칭 대상이 아니므로 분모 계산에서 제외한다.
      */
     private Set<Long> resolveEligibleMemberIds(Long gisuId) {
         return getChallengerUseCase.getPartsByGisuId(gisuId).stream()
-            .filter(c -> c.part() != ChallengerPart.ADMIN)
+            .filter(c -> c.part() != ChallengerPart.ADMIN && c.part() != ChallengerPart.PLAN)
             .map(ChallengerPartInfo::memberId)
             .collect(Collectors.toSet());
     }
@@ -132,16 +134,24 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
     }
 
     /**
-     * roundId별 매칭 인원 수를 집계해 RoundStat 목록을 반환한다. ProjectMember는 프로젝트당 1인이므로 Set 중복 제거 없이 단순 count로 집계한다.
+     * roundId별 매칭 인원 수를 집계해 RoundStat 목록을 반환한다.
+     * quota는 차수별 슬라이딩 분모: 총 인원 - (이전 차수까지 누적 매칭 인원).
+     * 매칭된 멤버는 pool에서 영구 이탈하므로 이전 차수 매칭 인원을 누적 차감한다.
      */
-    private List<RoundStat> buildRoundStats(List<RoundMemberInfo> entries, long totalQuota) {
-        Map<Long, Long> roundCounts = new HashMap<>();
+    private List<RoundStat> buildRoundStats(List<RoundMemberInfo> entries, long totalEligible) {
+        Map<Long, Set<Long>> roundMatched = new HashMap<>();
         for (RoundMemberInfo e : entries) {
-            roundCounts.merge(e.roundId(), 1L, Long::sum);
+            roundMatched.computeIfAbsent(e.roundId(), k -> new HashSet<>()).add(e.memberId());
         }
-        return roundCounts.entrySet().stream()
-            .map(e -> new RoundStat(e.getKey(), e.getValue(), totalQuota))
-            .toList();
+
+        List<RoundStat> result = new ArrayList<>();
+        long remaining = totalEligible;
+        for (Long roundId : roundMatched.keySet().stream().sorted().toList()) {
+            Set<Long> matched = roundMatched.get(roundId);
+            result.add(new RoundStat(roundId, matched.size(), remaining));
+            remaining -= matched.size();
+        }
+        return result;
     }
 
     /**
@@ -171,6 +181,7 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
                 result.add(new SchoolStat(schoolId, roundEntry.getKey(), roundEntry.getValue(), total));
             }
         }
+        result.sort(Comparator.comparing(SchoolStat::schoolId).thenComparing(SchoolStat::roundId));
         return result;
     }
 
@@ -199,6 +210,7 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
                 result.add(new SchoolStat(schoolId, roundEntry.getKey(), roundEntry.getValue(), null));
             }
         }
+        result.sort(Comparator.comparing(SchoolStat::schoolId).thenComparing(SchoolStat::roundId));
         return result;
     }
 
@@ -216,6 +228,7 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
         return projectRoundCounts.entrySet().stream()
             .flatMap(e -> e.getValue().entrySet().stream()
                 .map(re -> new ProjectRoundStat(e.getKey(), re.getKey(), re.getValue())))
+            .sorted(Comparator.comparing(ProjectRoundStat::projectId).thenComparing(ProjectRoundStat::roundId))
             .toList();
     }
 }

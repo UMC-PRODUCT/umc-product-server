@@ -13,10 +13,12 @@ import com.umc.product.project.application.port.in.query.dto.statistics.ProjectR
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundStat;
 import com.umc.product.project.application.port.in.query.dto.statistics.SchoolStat;
 import com.umc.product.project.application.port.out.LoadApplicationStatisticsPort;
+import com.umc.product.project.application.port.out.LoadMatchingStatisticsPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ApplicationStatisticsQueryService implements GetApplicationStatisticsUseCase {
 
     private final LoadApplicationStatisticsPort loadApplicationStatisticsPort;
+    private final LoadMatchingStatisticsPort loadMatchingStatisticsPort;
     private final LoadProjectPort loadProjectPort;
     private final GetChallengerUseCase getChallengerUseCase;
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
@@ -64,17 +67,19 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
     private ApplicationStatisticsInfo buildManagerStats(
         Long gisuId, Long chapterId, Set<Long> eligibleMemberIds
     ) {
-        List<RoundMemberInfo> entries =
+        List<RoundMemberInfo> appEntries =
             loadApplicationStatisticsPort.listApplicantsByRound(gisuId, chapterId);
+        List<RoundMemberInfo> matchEntries =
+            loadMatchingStatisticsPort.getMembersByRound(gisuId, chapterId);
 
-        Map<Long, Long> memberSchoolMap = fetchSchoolMap(eligibleMemberIds, entries);
+        Map<Long, Long> memberSchoolMap = fetchSchoolMap(eligibleMemberIds, appEntries);
         Map<Long, Long> schoolTotals = computeSchoolTotals(eligibleMemberIds, memberSchoolMap);
-        long totalQuota = schoolTotals.values().stream().mapToLong(Long::longValue).sum();
+        long totalEligible = schoolTotals.values().stream().mapToLong(Long::longValue).sum();
 
         return new ApplicationStatisticsInfo(
-            buildRoundStats(entries, totalQuota),
-            buildSchoolStats(entries, memberSchoolMap, schoolTotals),
-            buildProjectRoundStats(entries)
+            buildRoundStats(appEntries, matchEntries, totalEligible),
+            buildSchoolStats(appEntries, memberSchoolMap, schoolTotals),
+            buildProjectRoundStats(appEntries)
         );
     }
 
@@ -88,26 +93,29 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
         }
 
-        List<RoundMemberInfo> entries =
+        List<RoundMemberInfo> appEntries =
             loadApplicationStatisticsPort.listApplicantsByRoundForOwner(callerMemberId, gisuId, chapterId);
+        List<RoundMemberInfo> matchEntries =
+            loadMatchingStatisticsPort.getMembersByRoundForOwner(callerMemberId, gisuId, chapterId);
 
-        Map<Long, Long> memberSchoolMap = fetchSchoolMap(eligibleMemberIds, entries);
+        Map<Long, Long> memberSchoolMap = fetchSchoolMap(eligibleMemberIds, appEntries);
         Map<Long, Long> schoolTotals = computeSchoolTotals(eligibleMemberIds, memberSchoolMap);
-        long totalQuota = schoolTotals.values().stream().mapToLong(Long::longValue).sum();
+        long totalEligible = schoolTotals.values().stream().mapToLong(Long::longValue).sum();
 
         return new ApplicationStatisticsInfo(
-            buildRoundStats(entries, totalQuota),
-            buildSchoolStatsWithoutTotal(entries, memberSchoolMap),
-            buildProjectRoundStats(entries)
+            buildRoundStats(appEntries, matchEntries, totalEligible),
+            buildSchoolStatsWithoutTotal(appEntries, memberSchoolMap),
+            null
         );
     }
 
     /**
-     * gisuId 기준 ADMIN 파트 제외 챌린저의 memberId 집합을 반환한다. ADMIN 파트 운영진은 프로젝트 팀원으로 참여하지 않으므로 분모 계산에서 제외한다.
+     * gisuId 기준 ADMIN·PLAN 파트 제외 챌린저의 memberId 집합을 반환한다. ADMIN 운영진은 팀원으로 참여하지 않고,
+     * PLAN(PM)은 프로젝트 오너로서 매칭 대상이 아니므로 분모 계산에서 제외한다.
      */
     private Set<Long> resolveEligibleMemberIds(Long gisuId) {
         return getChallengerUseCase.getPartsByGisuId(gisuId).stream()
-            .filter(c -> c.part() != ChallengerPart.ADMIN)
+            .filter(c -> c.part() != ChallengerPart.ADMIN && c.part() != ChallengerPart.PLAN)
             .map(ChallengerPartInfo::memberId)
             .collect(Collectors.toSet());
     }
@@ -133,17 +141,34 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
     }
 
     /**
-     * roundId별 고유 지원자 수를 집계해 RoundStat 목록을 반환한다. Set으로 중복 제거하는 이유: 한 지원자가 같은 차수에 여러 프로젝트에 지원한 경우 entries에 복수 row가 존재하기
-     * 때문.
+     * roundId별 고유 지원자 수를 집계해 RoundStat 목록을 반환한다.
+     * quota는 차수별 슬라이딩 분모: 총 인원 - (이전 차수까지 누적 매칭 인원).
+     * 분모는 매칭 기준이므로 matchEntries를 별도로 받아 계산한다.
+     * Set으로 중복 제거하는 이유: 한 지원자가 같은 차수에 여러 프로젝트에 지원할 수 있어 entries에 복수 row가 존재하기 때문.
      */
-    private List<RoundStat> buildRoundStats(List<RoundMemberInfo> entries, long totalQuota) {
+    private List<RoundStat> buildRoundStats(
+        List<RoundMemberInfo> appEntries,
+        List<RoundMemberInfo> matchEntries,
+        long totalEligible
+    ) {
         Map<Long, Set<Long>> roundApplicants = new HashMap<>();
-        for (RoundMemberInfo e : entries) {
+        for (RoundMemberInfo e : appEntries) {
             roundApplicants.computeIfAbsent(e.roundId(), k -> new HashSet<>()).add(e.memberId());
         }
-        return roundApplicants.entrySet().stream()
-            .map(e -> new RoundStat(e.getKey(), e.getValue().size(), totalQuota))
-            .toList();
+
+        Map<Long, Set<Long>> roundMatched = new HashMap<>();
+        for (RoundMemberInfo e : matchEntries) {
+            roundMatched.computeIfAbsent(e.roundId(), k -> new HashSet<>()).add(e.memberId());
+        }
+
+        List<RoundStat> result = new ArrayList<>();
+        Set<Long> cumulativeMatched = new HashSet<>();
+        for (Long roundId : roundApplicants.keySet().stream().sorted().toList()) {
+            long quota = totalEligible - cumulativeMatched.size();
+            result.add(new RoundStat(roundId, roundApplicants.get(roundId).size(), quota));
+            cumulativeMatched.addAll(roundMatched.getOrDefault(roundId, Set.of()));
+        }
+        return result;
     }
 
     /**
@@ -175,6 +200,7 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
                 result.add(new SchoolStat(schoolId, roundEntry.getKey(), roundEntry.getValue().size(), total));
             }
         }
+        result.sort(Comparator.comparing(SchoolStat::schoolId).thenComparing(SchoolStat::roundId));
         return result;
     }
 
@@ -204,6 +230,7 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
                 result.add(new SchoolStat(schoolId, roundEntry.getKey(), roundEntry.getValue().size(), null));
             }
         }
+        result.sort(Comparator.comparing(SchoolStat::schoolId).thenComparing(SchoolStat::roundId));
         return result;
     }
 
@@ -220,6 +247,7 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
         return projectRoundCounts.entrySet().stream()
             .flatMap(e -> e.getValue().entrySet().stream()
                 .map(re -> new ProjectRoundStat(e.getKey(), re.getKey(), re.getValue())))
+            .sorted(Comparator.comparing(ProjectRoundStat::projectId).thenComparing(ProjectRoundStat::roundId))
             .toList();
     }
 }
