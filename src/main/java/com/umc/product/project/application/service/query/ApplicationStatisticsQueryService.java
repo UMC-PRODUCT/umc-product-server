@@ -10,6 +10,7 @@ import com.umc.product.project.application.port.in.query.GetApplicationStatistic
 import com.umc.product.project.application.port.in.query.dto.RoundMemberInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ApplicationStatisticsInfo;
 import com.umc.product.project.application.port.in.query.dto.statistics.ProjectRoundStat;
+import com.umc.product.project.application.port.in.query.dto.statistics.RoundCount;
 import com.umc.product.project.application.port.in.query.dto.statistics.RoundStat;
 import com.umc.product.project.application.port.in.query.dto.statistics.SchoolStat;
 import com.umc.product.project.application.port.out.LoadApplicationStatisticsPort;
@@ -17,7 +18,6 @@ import com.umc.product.project.application.port.out.LoadMatchingStatisticsPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -172,8 +172,8 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
     }
 
     /**
-     * schoolId × roundId별 고유 지원자 수를 집계해 SchoolStat 목록을 반환한다. total은 해당 학교의 전체 챌린저 수(분모)로, 차수와 무관하게 동일한 값이 반복된다. Set으로
-     * 중복 제거하는 이유: 한 지원자가 같은 차수에 여러 프로젝트에 지원한 경우 중복 방지.
+     * 학교별로 그룹핑한 뒤 차수별 고유 지원자 수를 중첩 구조로 반환한다.
+     * Set으로 중복 제거하는 이유: 한 지원자가 같은 차수에 여러 프로젝트에 지원한 경우 중복 방지.
      */
     private List<SchoolStat> buildSchoolStats(
         List<RoundMemberInfo> entries,
@@ -192,20 +192,21 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
                 .add(e.memberId());
         }
 
-        List<SchoolStat> result = new ArrayList<>();
-        for (Map.Entry<Long, Map<Long, Set<Long>>> schoolEntry : schoolRoundApplicants.entrySet()) {
-            Long schoolId = schoolEntry.getKey();
-            Long total = schoolTotals.getOrDefault(schoolId, 0L);
-            for (Map.Entry<Long, Set<Long>> roundEntry : schoolEntry.getValue().entrySet()) {
-                result.add(new SchoolStat(schoolId, roundEntry.getKey(), roundEntry.getValue().size(), total));
-            }
-        }
-        result.sort(Comparator.comparing(SchoolStat::schoolId).thenComparing(SchoolStat::roundId));
-        return result;
+        return schoolRoundApplicants.entrySet().stream()
+            .map(schoolEntry -> {
+                Long schoolId = schoolEntry.getKey();
+                List<RoundCount> rounds = schoolEntry.getValue().entrySet().stream()
+                    .map(re -> new RoundCount(re.getKey(), re.getValue().size()))
+                    .sorted(Comparator.comparing(RoundCount::roundId))
+                    .toList();
+                return new SchoolStat(schoolId, schoolTotals.getOrDefault(schoolId, 0L), rounds);
+            })
+            .sorted(Comparator.comparing(SchoolStat::schoolId))
+            .toList();
     }
 
     /**
-     * PM챌린저 경로 전용. buildSchoolStats와 동일하지만 total을 null로 반환한다. PM챌린저 뷰에서는 학교별 분모가 필요 없다.
+     * PM챌린저 경로 전용. buildSchoolStats와 동일하지만 total을 null로 반환한다.
      */
     private List<SchoolStat> buildSchoolStatsWithoutTotal(
         List<RoundMemberInfo> entries,
@@ -223,19 +224,21 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
                 .add(e.memberId());
         }
 
-        List<SchoolStat> result = new ArrayList<>();
-        for (Map.Entry<Long, Map<Long, Set<Long>>> schoolEntry : schoolRoundApplicants.entrySet()) {
-            Long schoolId = schoolEntry.getKey();
-            for (Map.Entry<Long, Set<Long>> roundEntry : schoolEntry.getValue().entrySet()) {
-                result.add(new SchoolStat(schoolId, roundEntry.getKey(), roundEntry.getValue().size(), null));
-            }
-        }
-        result.sort(Comparator.comparing(SchoolStat::schoolId).thenComparing(SchoolStat::roundId));
-        return result;
+        return schoolRoundApplicants.entrySet().stream()
+            .map(schoolEntry -> {
+                List<RoundCount> rounds = schoolEntry.getValue().entrySet().stream()
+                    .map(re -> new RoundCount(re.getKey(), re.getValue().size()))
+                    .sorted(Comparator.comparing(RoundCount::roundId))
+                    .toList();
+                return new SchoolStat(schoolEntry.getKey(), null, rounds);
+            })
+            .sorted(Comparator.comparing(SchoolStat::schoolId))
+            .toList();
     }
 
     /**
-     * (projectId, roundId)별 지원자 수를 집계해 ProjectRoundStat 목록을 반환한다. 프로젝트별로는 지원자가 중복 지원할 수 없으므로 단순 count로 집계한다.
+     * 프로젝트별로 그룹핑한 뒤 차수별 지원자 수를 중첩 구조로 반환한다.
+     * 프로젝트별로는 지원자가 중복 지원할 수 없으므로 단순 count로 집계한다.
      */
     private List<ProjectRoundStat> buildProjectRoundStats(List<RoundMemberInfo> entries) {
         Map<Long, Map<Long, Long>> projectRoundCounts = new HashMap<>();
@@ -245,9 +248,14 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
                 .merge(e.roundId(), 1L, Long::sum);
         }
         return projectRoundCounts.entrySet().stream()
-            .flatMap(e -> e.getValue().entrySet().stream()
-                .map(re -> new ProjectRoundStat(e.getKey(), re.getKey(), re.getValue())))
-            .sorted(Comparator.comparing(ProjectRoundStat::projectId).thenComparing(ProjectRoundStat::roundId))
+            .map(e -> {
+                List<RoundCount> rounds = e.getValue().entrySet().stream()
+                    .map(re -> new RoundCount(re.getKey(), re.getValue()))
+                    .sorted(Comparator.comparing(RoundCount::roundId))
+                    .toList();
+                return new ProjectRoundStat(e.getKey(), rounds);
+            })
+            .sorted(Comparator.comparing(ProjectRoundStat::projectId))
             .toList();
     }
 }
