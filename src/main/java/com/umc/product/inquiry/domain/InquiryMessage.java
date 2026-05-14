@@ -10,11 +10,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Getter
@@ -44,6 +48,10 @@ public class InquiryMessage extends BaseEntity {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "file_metadata_ids", columnDefinition = "text[]", nullable = false)
+    private List<String> fileMetadataIds;
+
     /**
      * 문의 메시지를 생성한다.
      */
@@ -58,6 +66,7 @@ public class InquiryMessage extends BaseEntity {
             .senderType(senderType)
             .senderMemberId(senderMemberId)
             .content(content)
+            .fileMetadataIds(new ArrayList<>())
             .build();
     }
 }
