@@ -14,11 +14,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Getter
@@ -55,6 +59,11 @@ public class Inquiry extends BaseEntity {
     @Column(name = "author_member_id", nullable = false)
     private Long authorMemberId;
 
+    // 담당 운영진 목록. 다수 지정 가능
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "assigned_member_ids", columnDefinition = "bigint[]", nullable = false)
+    private List<Long> assignedMemberIds;
+
     // 운영진 중 누군가 한 명이라도 열람했는지 여부. 채팅방 단위로 읽음 상태 관리
     @Column(name = "is_read", nullable = false)
     private boolean isRead;
@@ -76,8 +85,25 @@ public class Inquiry extends BaseEntity {
             .target(target)
             .status(InquiryStatus.RECEIVED)
             .authorMemberId(authorMemberId)
+            .assignedMemberIds(new ArrayList<>())
             .isRead(false)
             .build();
+    }
+
+    /**
+     * 담당 운영진을 지정한다. 이미 지정된 운영진이면 무시한다.
+     */
+    public void assignManager(Long memberId) {
+        if (!this.assignedMemberIds.contains(memberId)) {
+            this.assignedMemberIds.add(memberId);
+        }
+    }
+
+    /**
+     * 담당 운영진 지정을 해제한다.
+     */
+    public void unassignManager(Long memberId) {
+        this.assignedMemberIds.remove(memberId);
     }
 
     /**
