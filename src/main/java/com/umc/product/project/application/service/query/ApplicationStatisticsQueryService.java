@@ -18,6 +18,7 @@ import com.umc.product.project.application.port.out.LoadMatchingStatisticsPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -68,9 +69,11 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
         Long gisuId, Long chapterId, Set<Long> eligibleMemberIds
     ) {
         List<RoundMemberInfo> appEntries =
-            loadApplicationStatisticsPort.listApplicantsByRound(gisuId, chapterId);
+            loadApplicationStatisticsPort.listApplicantsByRound(gisuId, chapterId).stream()
+                .filter(e -> eligibleMemberIds.contains(e.memberId())).toList();
         List<RoundMemberInfo> matchEntries =
-            loadMatchingStatisticsPort.getMembersByRound(gisuId, chapterId);
+            loadMatchingStatisticsPort.getMembersByRound(gisuId, chapterId).stream()
+                .filter(e -> eligibleMemberIds.contains(e.memberId())).toList();
 
         Map<Long, Long> memberSchoolMap = fetchSchoolMap(eligibleMemberIds, appEntries);
         Map<Long, Long> schoolTotals = computeSchoolTotals(eligibleMemberIds, memberSchoolMap);
@@ -94,9 +97,11 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
         }
 
         List<RoundMemberInfo> appEntries =
-            loadApplicationStatisticsPort.listApplicantsByRoundForOwner(callerMemberId, gisuId, chapterId);
+            loadApplicationStatisticsPort.listApplicantsByRoundForOwner(callerMemberId, gisuId, chapterId).stream()
+                .filter(e -> eligibleMemberIds.contains(e.memberId())).toList();
         List<RoundMemberInfo> matchEntries =
-            loadMatchingStatisticsPort.getMembersByRoundForOwner(callerMemberId, gisuId, chapterId);
+            loadMatchingStatisticsPort.getMembersByRoundForOwner(callerMemberId, gisuId, chapterId).stream()
+                .filter(e -> eligibleMemberIds.contains(e.memberId())).toList();
 
         Map<Long, Long> memberSchoolMap = fetchSchoolMap(eligibleMemberIds, appEntries);
         Map<Long, Long> schoolTotals = computeSchoolTotals(eligibleMemberIds, memberSchoolMap);
@@ -110,8 +115,8 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
     }
 
     /**
-     * gisuId 기준 ADMIN·PLAN 파트 제외 챌린저의 memberId 집합을 반환한다. ADMIN 운영진은 팀원으로 참여하지 않고,
-     * PLAN(PM)은 프로젝트 오너로서 매칭 대상이 아니므로 분모 계산에서 제외한다.
+     * gisuId 기준 ADMIN·PLAN 파트 제외 챌린저의 memberId 집합을 반환한다. ADMIN 운영진은 팀원으로 참여하지 않고, PLAN(PM)은 프로젝트 오너로서 매칭 대상이 아니므로 분모
+     * 계산에서 제외한다.
      */
     private Set<Long> resolveEligibleMemberIds(Long gisuId) {
         return getChallengerUseCase.getPartsByGisuId(gisuId).stream()
@@ -141,10 +146,8 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
     }
 
     /**
-     * roundId별 고유 지원자 수를 집계해 RoundStat 목록을 반환한다.
-     * quota는 차수별 슬라이딩 분모: 총 인원 - (이전 차수까지 누적 매칭 인원).
-     * 분모는 매칭 기준이므로 matchEntries를 별도로 받아 계산한다.
-     * Set으로 중복 제거하는 이유: 한 지원자가 같은 차수에 여러 프로젝트에 지원할 수 있어 entries에 복수 row가 존재하기 때문.
+     * roundId별 고유 지원자 수를 집계해 RoundStat 목록을 반환한다. quota는 차수별 슬라이딩 분모: 총 인원 - (이전 차수까지 누적 매칭 인원). 분모는 매칭 기준이므로
+     * matchEntries를 별도로 받아 계산한다. Set으로 중복 제거하는 이유: 한 지원자가 같은 차수에 여러 프로젝트에 지원할 수 있어 entries에 복수 row가 존재하기 때문.
      */
     private List<RoundStat> buildRoundStats(
         List<RoundMemberInfo> appEntries,
@@ -172,8 +175,7 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
     }
 
     /**
-     * 학교별로 그룹핑한 뒤 차수별 고유 지원자 수를 중첩 구조로 반환한다.
-     * Set으로 중복 제거하는 이유: 한 지원자가 같은 차수에 여러 프로젝트에 지원한 경우 중복 방지.
+     * 학교별로 그룹핑한 뒤 차수별 고유 지원자 수를 중첩 구조로 반환한다. Set으로 중복 제거하는 이유: 한 지원자가 같은 차수에 여러 프로젝트에 지원한 경우 중복 방지.
      */
     private List<SchoolStat> buildSchoolStats(
         List<RoundMemberInfo> entries,
@@ -237,8 +239,7 @@ public class ApplicationStatisticsQueryService implements GetApplicationStatisti
     }
 
     /**
-     * 프로젝트별로 그룹핑한 뒤 차수별 지원자 수를 중첩 구조로 반환한다.
-     * 프로젝트별로는 지원자가 중복 지원할 수 없으므로 단순 count로 집계한다.
+     * 프로젝트별로 그룹핑한 뒤 차수별 지원자 수를 중첩 구조로 반환한다. 프로젝트별로는 지원자가 중복 지원할 수 없으므로 단순 count로 집계한다.
      */
     private List<ProjectRoundStat> buildProjectRoundStats(List<RoundMemberInfo> entries) {
         Map<Long, Map<Long, Long>> projectRoundCounts = new HashMap<>();
