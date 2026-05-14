@@ -8,8 +8,9 @@ CREATE TABLE inquiry
     category         VARCHAR(30)                             NOT NULL,
     target           VARCHAR(20)                             NOT NULL,
     status           VARCHAR(20)                             NOT NULL DEFAULT 'RECEIVED',
-    author_member_id BIGINT                                  NOT NULL,
-    is_read          BOOLEAN                                 NOT NULL DEFAULT FALSE,
+    author_member_id    BIGINT  NOT NULL,
+    assigned_member_ids BIGINT[]                                NOT NULL DEFAULT '{}',
+    is_read             BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT pk_inquiry PRIMARY KEY (id)
 );
 
