@@ -64,6 +64,10 @@ public class Inquiry extends BaseEntity {
     @Column(name = "assigned_member_ids", columnDefinition = "bigint[]", nullable = false)
     private List<Long> assignedMemberIds;
 
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "file_metadata_ids", columnDefinition = "text[]", nullable = false)
+    private List<String> fileMetadataIds;
+
     // 운영진 중 누군가 한 명이라도 열람했는지 여부. 채팅방 단위로 읽음 상태 관리
     @Column(name = "is_read", nullable = false)
     private boolean isRead;
@@ -86,6 +90,7 @@ public class Inquiry extends BaseEntity {
             .status(InquiryStatus.RECEIVED)
             .authorMemberId(authorMemberId)
             .assignedMemberIds(new ArrayList<>())
+            .fileMetadataIds(new ArrayList<>())
             .isRead(false)
             .build();
     }
