@@ -150,5 +150,6 @@ public class Inquiry extends BaseEntity {
             throw new InquiryDomainException(InquiryErrorCode.INQUIRY_INVALID_STATUS_FOR_REOPEN);
         }
         this.status = InquiryStatus.IN_PROGRESS;
+        this.isRead = false;
     }
 }
