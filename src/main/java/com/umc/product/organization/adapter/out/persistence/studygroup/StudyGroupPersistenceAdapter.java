@@ -4,7 +4,7 @@ package com.umc.product.organization.adapter.out.persistence.studygroup;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupHeaderInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
 import com.umc.product.organization.application.port.out.command.SaveStudyGroupPort;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.StudyGroup;
@@ -41,7 +41,7 @@ public class StudyGroupPersistenceAdapter implements SaveStudyGroupPort, LoadStu
      */
     @Override
     public List<StudyGroupHeaderInfo> findStudyGroupHeaders(
-        List<StudyGroupViewScope> scopes, Long gisuId,
+        List<OrganizationRoleScope> scopes, Long gisuId,
         Long cursor, int size
     ) {
         if (scopes == null || scopes.isEmpty()) {
@@ -51,11 +51,19 @@ public class StudyGroupPersistenceAdapter implements SaveStudyGroupPort, LoadStu
     }
 
     @Override
-    public List<StudyGroupNameInfo> findStudyGroupNames(List<StudyGroupViewScope> scopes, Long gisuId) {
+    public List<StudyGroupNameInfo> findStudyGroupNames(List<OrganizationRoleScope> scopes, Long gisuId) {
         if (scopes == null || scopes.isEmpty()) {
             return List.of();
         }
         return studyGroupQueryRepository.findStudyGroupNames(scopes, gisuId);
+    }
+
+    @Override
+    public Set<Long> findStudyGroupIds(List<OrganizationRoleScope> scopes, Long gisuId) {
+        if (scopes == null || scopes.isEmpty()) {
+            return Set.of();
+        }
+        return studyGroupQueryRepository.findStudyGroupIds(scopes, gisuId);
     }
 
     @Override

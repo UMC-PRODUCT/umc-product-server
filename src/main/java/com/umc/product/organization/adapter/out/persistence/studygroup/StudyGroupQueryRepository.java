@@ -11,7 +11,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupHeaderInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
 import com.umc.product.organization.domain.QStudyGroupMember;
 import com.umc.product.organization.domain.QStudyGroupMentor;
 import com.umc.product.organization.domain.StudyGroup;
@@ -88,7 +88,7 @@ public class StudyGroupQueryRepository {
      * @return scope 가 모두 비어 predicate 가 null 이면 빈 리스트 (풀스캔 방지)
      */
     public List<StudyGroupHeaderInfo> findStudyGroupHeaders(
-        List<StudyGroupViewScope> scopes, Long gisuId,
+        List<OrganizationRoleScope> scopes, Long gisuId,
         Long cursor, int size
     ) {
         BooleanExpression scopePredicate = buildScopePredicate(scopes);
@@ -170,7 +170,7 @@ public class StudyGroupQueryRepository {
      * 역할 Scope 기반 (groupId, name) 목록. 페이지네이션 없이 전체 반환.
      * Scope 가 모두 비어 합성 predicate 가 null 이면 빈 리스트.
      */
-    public List<StudyGroupNameInfo> findStudyGroupNames(List<StudyGroupViewScope> scopes, Long gisuId) {
+    public List<StudyGroupNameInfo> findStudyGroupNames(List<OrganizationRoleScope> scopes, Long gisuId) {
         BooleanExpression scopePredicate = buildScopePredicate(scopes);
         if (scopePredicate == null) {
             return List.of();
@@ -191,6 +191,27 @@ public class StudyGroupQueryRepository {
             .fetch();
     }
 
+    /**
+     * Scope 기반 조회 대상 스터디 그룹 ID 집합. 다른 aggregate (Schedule 등) 가 "사용자에게 보이는 그룹" 만 필요할 때 사용.
+     * 합성 predicate 가 null 이면 빈 set (풀스캔 방지).
+     */
+    public Set<Long> findStudyGroupIds(List<OrganizationRoleScope> scopes, Long gisuId) {
+        BooleanExpression scopePredicate = buildScopePredicate(scopes);
+        if (scopePredicate == null) {
+            return Set.of();
+        }
+
+        return new HashSet<>(queryFactory
+            .select(studyGroup.id)
+            .from(studyGroup)
+            .where(
+                studyGroup.gisuId.eq(gisuId),
+                scopePredicate
+            )
+            .fetch()
+        );
+    }
+
     // ============================================================================
     // Scope predicate 합성
     // ============================================================================
@@ -199,7 +220,7 @@ public class StudyGroupQueryRepository {
      * Scope 리스트를 OR 결합한 WHERE 조건으로 변환. 각 Scope 가 null predicate (예: 빈 schoolMemberIds) 를 내면 OR 결합에서 제외.
      * 최종 결과가 null 이면 "조회 가능한 Scope 가 하나도 없음" → 호출 측에서 빈 리스트 반환 (풀스캔 방지).
      */
-    private BooleanExpression buildScopePredicate(List<StudyGroupViewScope> scopes) {
+    private BooleanExpression buildScopePredicate(List<OrganizationRoleScope> scopes) {
         return scopes.stream()
             .map(this::toScopePredicate)
             .filter(Objects::nonNull)
@@ -210,24 +231,43 @@ public class StudyGroupQueryRepository {
     /**
      * sealed interface 의 switch 가 exhaustive → 새 Scope 추가 시 컴파일 에러로 누락 방지.
      */
-    private BooleanExpression toScopePredicate(StudyGroupViewScope scope) {
+    private BooleanExpression toScopePredicate(OrganizationRoleScope scope) {
         return switch (scope) {
-            case StudyGroupViewScope.AsSchoolCore s -> schoolCoreExists(s.schoolMemberIds());
-            case StudyGroupViewScope.AsPartLeader s -> partLeaderExists(s.memberId());
+            case OrganizationRoleScope.AsSchoolCore s -> schoolCoreExists(s.schoolMemberIds());
+            case OrganizationRoleScope.AsPartLeader s -> partLeaderExists(s.memberId());
         };
     }
 
-    /** 학교 회장단 Scope: "해당 학교 멤버가 하나라도 포함된 스터디 그룹" EXISTS 서브쿼리. 빈 ID 셋 → null (OR 에서 제외). */
+    /**
+     * 학교 회장단 Scope: "학교 멤버가 *멤버 혹은 멘토* 로 등록된 스터디 그룹" EXISTS 서브쿼리.
+     * <p>
+     * 두 case 를 OR 결합하여, 다음 둘 중 하나라도 충족하면 visible:
+     * <ul>
+     *   <li>study_group_member 에 학교 멤버 존재</li>
+     *   <li>study_group_mentor 에 학교 멤버 존재</li>
+     * </ul>
+     * 빈 ID 셋 → null 반환 (OR 결합에서 제외).
+     */
     private BooleanExpression schoolCoreExists(Set<Long> schoolMemberIds) {
         if (schoolMemberIds == null || schoolMemberIds.isEmpty()) {
             return null;
         }
         QStudyGroupMember m = new QStudyGroupMember("m_core");
-        return JPAExpressions
+        QStudyGroupMentor o = new QStudyGroupMentor("o_core");
+
+        BooleanExpression memberMatch = JPAExpressions
             .selectOne()
             .from(m)
             .where(m.studyGroup.eq(studyGroup).and(m.memberId.in(schoolMemberIds)))
             .exists();
+
+        BooleanExpression mentorMatch = JPAExpressions
+            .selectOne()
+            .from(o)
+            .where(o.studyGroup.eq(studyGroup).and(o.memberId.in(schoolMemberIds)))
+            .exists();
+
+        return memberMatch.or(mentorMatch);
     }
 
     /** 파트장 Scope: "해당 memberId 가 mentor 로 등록된 스터디 그룹" EXISTS 서브쿼리. */

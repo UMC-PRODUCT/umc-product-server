@@ -16,9 +16,9 @@ import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberInfo;
 import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope.AsPartLeader;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope.AsSchoolCore;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsPartLeader;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsSchoolCore;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.application.port.service.query.StudyGroupQueryService;
@@ -73,7 +73,7 @@ class StudyGroupQueryServiceTest {
         sut.getMyStudyGroups(memberId, null, 20);
 
         // then
-        List<StudyGroupViewScope> capturedScopes = captureScopes();
+        List<OrganizationRoleScope> capturedScopes = captureScopes();
         assertThat(capturedScopes).hasSize(1);
         assertThat(capturedScopes.get(0)).isInstanceOfSatisfying(AsSchoolCore.class,
             scope -> assertThat(scope.schoolMemberIds()).isEqualTo(schoolMemberIds));
@@ -99,7 +99,7 @@ class StudyGroupQueryServiceTest {
         sut.getMyStudyGroups(memberId, null, 20);
 
         // then
-        List<StudyGroupViewScope> capturedScopes = captureScopes();
+        List<OrganizationRoleScope> capturedScopes = captureScopes();
         assertThat(capturedScopes).hasSize(1);
         assertThat(capturedScopes.get(0)).isInstanceOfSatisfying(AsPartLeader.class,
             scope -> assertThat(scope.memberId()).isEqualTo(memberId));
@@ -127,7 +127,7 @@ class StudyGroupQueryServiceTest {
         sut.getMyStudyGroups(memberId, null, 20);
 
         // then
-        List<StudyGroupViewScope> capturedScopes = captureScopes();
+        List<OrganizationRoleScope> capturedScopes = captureScopes();
         assertThat(capturedScopes).hasSize(2);
         assertThat(capturedScopes).hasAtLeastOneElementOfType(AsSchoolCore.class);
         assertThat(capturedScopes).hasAtLeastOneElementOfType(AsPartLeader.class);
@@ -175,7 +175,7 @@ class StudyGroupQueryServiceTest {
         sut.getMyStudyGroups(memberId, null, 20);
 
         // then
-        List<StudyGroupViewScope> capturedScopes = captureScopes();
+        List<OrganizationRoleScope> capturedScopes = captureScopes();
         assertThat(capturedScopes).hasSize(1);
         assertThat(capturedScopes.get(0)).isInstanceOf(AsPartLeader.class);
     }
@@ -364,11 +364,79 @@ class StudyGroupQueryServiceTest {
             .doesNotContain(withdrawn);
     }
 
+    @Test
+    void resolveOrganizationRoleScopes_회장과_파트장_겸직시_두_scope_반환() {
+        // given
+        Long memberId = 1L;
+        Long schoolId = 100L;
+        Long gisuId = 10L;
+        Set<Long> schoolMemberIds = Set.of(101L, 102L);
+
+        given(getMemberUseCase.getById(memberId)).willReturn(memberInfo(memberId, schoolId));
+        given(getGisuUseCase.getActiveGisuId()).willReturn(gisuId);
+        given(getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, gisuId, schoolId)).willReturn(true);
+        given(getMemberUseCase.findAllIdsBySchoolId(schoolId)).willReturn(schoolMemberIds);
+        given(getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER))
+            .willReturn(true);
+
+        // when
+        List<OrganizationRoleScope> scopes = sut.resolveOrganizationRoleScopes(memberId);
+
+        // then
+        assertThat(scopes).hasSize(2);
+        assertThat(scopes).hasAtLeastOneElementOfType(AsSchoolCore.class);
+        assertThat(scopes).hasAtLeastOneElementOfType(AsPartLeader.class);
+    }
+
+    @Test
+    void resolveOrganizationRoleScopes_권한이_없으면_빈_리스트() {
+        // given
+        Long memberId = 1L;
+        Long schoolId = 100L;
+        Long gisuId = 10L;
+
+        given(getMemberUseCase.getById(memberId)).willReturn(memberInfo(memberId, schoolId));
+        given(getGisuUseCase.getActiveGisuId()).willReturn(gisuId);
+        given(getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, gisuId, schoolId)).willReturn(false);
+        given(getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER))
+            .willReturn(false);
+
+        // when
+        List<OrganizationRoleScope> scopes = sut.resolveOrganizationRoleScopes(memberId);
+
+        // then
+        assertThat(scopes).isEmpty();
+    }
+
+    @Test
+    void findStudyGroupIds_scope_비어있으면_port_호출없이_빈_Set() {
+        // when
+        Set<Long> result = sut.findStudyGroupIds(List.of(), 10L);
+
+        // then
+        assertThat(result).isEmpty();
+        verify(loadStudyGroupPort, never()).findStudyGroupIds(any(), any());
+    }
+
+    @Test
+    void findStudyGroupIds_scope_가_있으면_port_위임() {
+        // given
+        Long gisuId = 10L;
+        List<OrganizationRoleScope> scopes = List.of(new AsPartLeader(1L));
+        given(loadStudyGroupPort.findStudyGroupIds(scopes, gisuId)).willReturn(Set.of(100L, 200L));
+
+        // when
+        Set<Long> result = sut.findStudyGroupIds(scopes, gisuId);
+
+        // then
+        assertThat(result).containsExactlyInAnyOrder(100L, 200L);
+    }
+
     // ========== Helper Methods ==========
 
     @SuppressWarnings("unchecked")
-    private List<StudyGroupViewScope> captureScopes() {
-        ArgumentCaptor<List<StudyGroupViewScope>> captor = ArgumentCaptor.forClass(List.class);
+    private List<OrganizationRoleScope> captureScopes() {
+        ArgumentCaptor<List<OrganizationRoleScope>> captor = ArgumentCaptor.forClass(List.class);
         verify(loadStudyGroupPort).findStudyGroupHeaders(captor.capture(), any(), any(), anyInt());
         return captor.getValue();
     }

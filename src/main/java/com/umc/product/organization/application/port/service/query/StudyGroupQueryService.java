@@ -11,7 +11,7 @@ import com.umc.product.organization.application.port.in.query.dto.studygroup.Stu
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupMemberInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
 import com.umc.product.organization.application.port.out.query.LoadStudyGroupPort;
 import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.organization.domain.StudyGroupMember;
@@ -63,7 +63,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
         Long schoolId = getMemberUseCase.getById(memberId).schoolId();
         Long activeGisuId = getGisuUseCase.getActiveGisuId();
 
-        List<StudyGroupViewScope> scopes = resolveScopes(memberId, activeGisuId, schoolId);
+        List<OrganizationRoleScope> scopes = resolveScopes(memberId, activeGisuId, schoolId);
         if (scopes.isEmpty()) {
             return List.of();
         }
@@ -94,22 +94,45 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
     }
 
     /**
-     * 활성 기수 내 역할을 검사해 조회 Scope 리스트 구성.
+     * 사용자의 활성 기수 내 역할을 검사해 {@link OrganizationRoleScope} 리스트를 반환한다 (UseCase 표면).
+     * <p>
+     * Schedule 등 다른 aggregate 가 "사용자에게 보이는 데이터" 를 필터링할 때 이 scope 들을 받아 자기 데이터에 적용한다.
+     */
+    @Override
+    public List<OrganizationRoleScope> resolveOrganizationRoleScopes(Long memberId) {
+        Long schoolId = getMemberUseCase.getById(memberId).schoolId();
+        Long activeGisuId = getGisuUseCase.getActiveGisuId();
+        return resolveScopes(memberId, activeGisuId, schoolId);
+    }
+
+    /**
+     * Scope + gisuId 로 조회 가능한 스터디 그룹 ID 집합 반환 (UseCase 표면). cross-aggregate 호출자가 사용.
+     */
+    @Override
+    public Set<Long> findStudyGroupIds(List<OrganizationRoleScope> scopes, Long gisuId) {
+        if (scopes == null || scopes.isEmpty()) {
+            return Set.of();
+        }
+        return loadStudyGroupPort.findStudyGroupIds(scopes, gisuId);
+    }
+
+    /**
+     * 활성 기수 내 역할을 검사해 조회 Scope 리스트 구성 (내부 helper).
      * <p>
      * 새 역할 추가 시 이 메서드에만 분기 추가. 학교 회장단 Scope 의 학교 멤버 집합이 비어있으면 EXISTS subquery 가 항상 false 이므로 Scope 자체를 생략 (쿼리 비용 절감).
      */
-    private List<StudyGroupViewScope> resolveScopes(Long memberId, Long gisuId, Long schoolId) {
-        List<StudyGroupViewScope> scopes = new ArrayList<>();
+    private List<OrganizationRoleScope> resolveScopes(Long memberId, Long gisuId, Long schoolId) {
+        List<OrganizationRoleScope> scopes = new ArrayList<>();
 
         if (getChallengerRoleUseCase.isSchoolCoreInGisu(memberId, gisuId, schoolId)) {
             Set<Long> schoolMemberIds = getMemberUseCase.findAllIdsBySchoolId(schoolId);
             if (!schoolMemberIds.isEmpty()) {
-                scopes.add(new StudyGroupViewScope.AsSchoolCore(schoolMemberIds));
+                scopes.add(new OrganizationRoleScope.AsSchoolCore(schoolMemberIds));
             }
         }
 
         if (getChallengerRoleUseCase.hasRoleTypeInGisu(memberId, gisuId, ChallengerRoleType.SCHOOL_PART_LEADER)) {
-            scopes.add(new StudyGroupViewScope.AsPartLeader(memberId));
+            scopes.add(new OrganizationRoleScope.AsPartLeader(memberId));
         }
 
         return scopes;
@@ -123,7 +146,7 @@ public class StudyGroupQueryService implements GetStudyGroupUseCase {
         Long schoolId = getMemberUseCase.getById(memberId).schoolId();
         Long activeGisuId = getGisuUseCase.getActiveGisuId();
 
-        List<StudyGroupViewScope> scopes = resolveScopes(memberId, activeGisuId, schoolId);
+        List<OrganizationRoleScope> scopes = resolveScopes(memberId, activeGisuId, schoolId);
         if (scopes.isEmpty()) {
             return List.of();
         }

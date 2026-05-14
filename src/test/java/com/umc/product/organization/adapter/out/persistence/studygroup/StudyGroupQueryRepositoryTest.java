@@ -6,9 +6,9 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.global.config.JpaConfig;
 import com.umc.product.global.config.QueryDslConfig;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupHeaderInfo;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope.AsPartLeader;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope.AsSchoolCore;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsPartLeader;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope.AsSchoolCore;
 import com.umc.product.organization.domain.StudyGroup;
 import com.umc.product.organization.domain.StudyGroupMember;
 import com.umc.product.organization.domain.StudyGroupMentor;
@@ -58,7 +58,7 @@ class StudyGroupQueryRepositoryTest {
         em.flush();
         em.clear();
 
-        List<StudyGroupViewScope> scopes = List.of(new AsSchoolCore(Set.of(schoolMemberA, schoolMemberB)));
+        List<OrganizationRoleScope> scopes = List.of(new AsSchoolCore(Set.of(schoolMemberA, schoolMemberB)));
 
         // when
         List<StudyGroupHeaderInfo> result = sut.findStudyGroupHeaders(scopes, gisuId, null, 20);
@@ -84,7 +84,7 @@ class StudyGroupQueryRepositoryTest {
         em.flush();
         em.clear();
 
-        List<StudyGroupViewScope> scopes = List.of(new AsPartLeader(me));
+        List<OrganizationRoleScope> scopes = List.of(new AsPartLeader(me));
 
         // when
         List<StudyGroupHeaderInfo> result = sut.findStudyGroupHeaders(scopes, gisuId, null, 20);
@@ -113,7 +113,7 @@ class StudyGroupQueryRepositoryTest {
         em.flush();
         em.clear();
 
-        List<StudyGroupViewScope> scopes = List.of(
+        List<OrganizationRoleScope> scopes = List.of(
             new AsSchoolCore(Set.of(schoolMember)),
             new AsPartLeader(me)
         );
@@ -141,7 +141,7 @@ class StudyGroupQueryRepositoryTest {
         em.flush();
         em.clear();
 
-        List<StudyGroupViewScope> scopes = List.of(new AsPartLeader(me));
+        List<OrganizationRoleScope> scopes = List.of(new AsPartLeader(me));
 
         // when
         List<StudyGroupHeaderInfo> result = sut.findStudyGroupHeaders(scopes, activeGisu, null, 20);
@@ -168,7 +168,7 @@ class StudyGroupQueryRepositoryTest {
         em.flush();
         em.clear();
 
-        List<StudyGroupViewScope> scopes = List.of(new AsPartLeader(me));
+        List<OrganizationRoleScope> scopes = List.of(new AsPartLeader(me));
 
         // when — newest 다음 페이지
         List<StudyGroupHeaderInfo> result = sut.findStudyGroupHeaders(scopes, gisuId, newest.getId(), 20);
@@ -188,7 +188,7 @@ class StudyGroupQueryRepositoryTest {
         em.flush();
         em.clear();
 
-        List<StudyGroupViewScope> scopes = List.of(new AsSchoolCore(Set.of()));
+        List<OrganizationRoleScope> scopes = List.of(new AsSchoolCore(Set.of()));
 
         // when
         List<StudyGroupHeaderInfo> result = sut.findStudyGroupHeaders(scopes, gisuId, null, 20);
@@ -278,6 +278,96 @@ class StudyGroupQueryRepositoryTest {
 
         // then
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void findStudyGroupHeaders_AsSchoolCore_학교_멤버가_멘토로_등록된_그룹도_포함() {
+        // given — V1 회장단 spec 확장: 멤버 OR 멘토에 학교 인원이 있으면 visible.
+        Long gisuId = 1L;
+        Long schoolMember = 100L;
+        Long outsider = 999L;
+
+        StudyGroup groupByMember = persistGroup("byMember", gisuId, ChallengerPart.SPRINGBOOT,
+            Set.of(outsider), Set.of(schoolMember));      // 멤버에 학교 인원
+        StudyGroup groupByMentor = persistGroup("byMentor", gisuId, ChallengerPart.SPRINGBOOT,
+            Set.of(schoolMember), Set.of(outsider));      // 멘토에 학교 인원
+        StudyGroup miss = persistGroup("miss", gisuId, ChallengerPart.SPRINGBOOT,
+            Set.of(outsider), Set.of(outsider));          // 둘 다 학교 인원 아님
+        em.flush();
+        em.clear();
+
+        List<OrganizationRoleScope> scopes = List.of(new AsSchoolCore(Set.of(schoolMember)));
+
+        // when
+        List<StudyGroupHeaderInfo> result = sut.findStudyGroupHeaders(scopes, gisuId, null, 20);
+
+        // then
+        assertThat(result).extracting(StudyGroupHeaderInfo::groupId)
+            .containsExactlyInAnyOrder(groupByMember.getId(), groupByMentor.getId())
+            .doesNotContain(miss.getId());
+    }
+
+    @Test
+    void findStudyGroupIds_scope_적용된_studyGroupIds_Set_반환() {
+        // given
+        Long gisuId = 1L;
+        Long me = 100L;
+        Long otherMentor = 200L;
+
+        StudyGroup hit1 = persistGroup("hit1", gisuId, ChallengerPart.SPRINGBOOT,
+            Set.of(me), Set.of(300L));
+        StudyGroup hit2 = persistGroup("hit2", gisuId, ChallengerPart.SPRINGBOOT,
+            Set.of(me), Set.of(301L));
+        StudyGroup miss = persistGroup("miss", gisuId, ChallengerPart.SPRINGBOOT,
+            Set.of(otherMentor), Set.of(302L));
+        em.flush();
+        em.clear();
+
+        List<OrganizationRoleScope> scopes = List.of(new AsPartLeader(me));
+
+        // when
+        Set<Long> result = sut.findStudyGroupIds(scopes, gisuId);
+
+        // then
+        assertThat(result)
+            .containsExactlyInAnyOrder(hit1.getId(), hit2.getId())
+            .doesNotContain(miss.getId());
+    }
+
+    @Test
+    void findStudyGroupIds_scope_predicate_null이면_빈_Set() {
+        // given
+        Long gisuId = 1L;
+        persistGroup("g1", gisuId, ChallengerPart.SPRINGBOOT, Set.of(), Set.of(100L));
+        em.flush();
+        em.clear();
+
+        // when — 빈 schoolMemberIds → predicate null → 풀스캔 방지
+        Set<Long> result = sut.findStudyGroupIds(List.of(new AsSchoolCore(Set.of())), gisuId);
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void findStudyGroupIds_다른_기수_그룹은_제외() {
+        // given
+        Long activeGisu = 1L;
+        Long otherGisu = 2L;
+        Long me = 100L;
+
+        StudyGroup activeGroup = persistGroup("active", activeGisu, ChallengerPart.SPRINGBOOT,
+            Set.of(me), Set.of(200L));
+        StudyGroup otherGroup = persistGroup("other", otherGisu, ChallengerPart.SPRINGBOOT,
+            Set.of(me), Set.of(200L));
+        em.flush();
+        em.clear();
+
+        // when
+        Set<Long> result = sut.findStudyGroupIds(List.of(new AsPartLeader(me)), activeGisu);
+
+        // then
+        assertThat(result).containsExactly(activeGroup.getId()).doesNotContain(otherGroup.getId());
     }
 
     // ========== Helper Methods ==========

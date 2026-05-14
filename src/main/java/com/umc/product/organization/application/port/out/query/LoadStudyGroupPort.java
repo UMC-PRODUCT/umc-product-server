@@ -3,7 +3,7 @@ package com.umc.product.organization.application.port.out.query;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupHeaderInfo;
 import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupNameInfo;
-import com.umc.product.organization.application.port.in.query.dto.studygroup.StudyGroupViewScope;
+import com.umc.product.organization.application.port.in.query.dto.OrganizationRoleScope;
 import com.umc.product.organization.domain.StudyGroup;
 import java.util.Collection;
 import java.util.List;
@@ -30,7 +30,7 @@ public interface LoadStudyGroupPort {
      * @param size   조회 사이즈 (hasNext 판단용 +1 포함)
      */
     List<StudyGroupHeaderInfo> findStudyGroupHeaders(
-        List<StudyGroupViewScope> scopes, Long gisuId, Long cursor, int size);
+        List<OrganizationRoleScope> scopes, Long gisuId, Long cursor, int size);
 
     /**
      * 운영진(회장단/파트장) 권한에 따라 활성 기수의 스터디 그룹 이름 목록을 조회한다.
@@ -38,7 +38,15 @@ public interface LoadStudyGroupPort {
      * {@link #findStudyGroupHeaders} 와 동일한 Scope OR 합성 규칙을 사용하지만, 페이지네이션 없이 (groupId, name) 만 반환 (토글/드롭다운 용도).
      * scopes 가 null/빈 리스트이면 구현체는 즉시 빈 리스트를 반환해야 한다.
      */
-    List<StudyGroupNameInfo> findStudyGroupNames(List<StudyGroupViewScope> scopes, Long gisuId);
+    List<StudyGroupNameInfo> findStudyGroupNames(List<OrganizationRoleScope> scopes, Long gisuId);
+
+    /**
+     * 역할 Scope 기반 조회 대상이 되는 스터디 그룹의 ID 집합을 반환한다.
+     * <p>
+     * {@link #findStudyGroupHeaders} 와 동일한 scope 필터링 규칙. Schedule 같은 다른 aggregate 가 "사용자에게 보이는 그룹들" 만 알면 될 때 사용.
+     * scope 가 모두 비어 합성 predicate 가 null 이면 빈 집합 반환 (풀스캔 방지).
+     */
+    Set<Long> findStudyGroupIds(List<OrganizationRoleScope> scopes, Long gisuId);
 
     /**
      * 여러 스터디 그룹의 멤버 ID 목록을 한 번에 batch 조회. cross-domain JOIN 없이 study_group_member 테이블만 본다.
