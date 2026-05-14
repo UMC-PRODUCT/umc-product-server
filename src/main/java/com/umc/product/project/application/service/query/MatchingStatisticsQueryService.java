@@ -17,6 +17,7 @@ import com.umc.product.project.application.port.out.LoadMatchingStatisticsPort;
 import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.exception.ProjectDomainException;
 import com.umc.product.project.domain.exception.ProjectErrorCode;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -65,7 +66,8 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
         Long gisuId, Long chapterId, Set<Long> eligibleMemberIds
     ) {
         List<RoundMemberInfo> entries =
-            loadMatchingStatisticsPort.getMembersByRound(gisuId, chapterId);
+            loadMatchingStatisticsPort.getMembersByRound(gisuId, chapterId).stream()
+                .filter(e -> eligibleMemberIds.contains(e.memberId())).toList();
 
         Map<Long, Long> memberSchoolMap = fetchSchoolMap(eligibleMemberIds, entries);
         Map<Long, Long> schoolTotals = computeSchoolTotals(eligibleMemberIds, memberSchoolMap);
@@ -89,7 +91,8 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
         }
 
         List<RoundMemberInfo> entries =
-            loadMatchingStatisticsPort.getMembersByRoundForOwner(callerMemberId, gisuId, chapterId);
+            loadMatchingStatisticsPort.getMembersByRoundForOwner(callerMemberId, gisuId, chapterId).stream()
+                .filter(e -> eligibleMemberIds.contains(e.memberId())).toList();
 
         Map<Long, Long> memberSchoolMap = fetchSchoolMap(eligibleMemberIds, entries);
         Map<Long, Long> schoolTotals = computeSchoolTotals(eligibleMemberIds, memberSchoolMap);
@@ -103,8 +106,8 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
     }
 
     /**
-     * gisuId 기준 ADMIN·PLAN 파트 제외 챌린저의 memberId 집합을 반환한다. ADMIN 운영진은 팀원으로 참여하지 않고,
-     * PLAN(PM)은 프로젝트 오너로서 매칭 대상이 아니므로 분모 계산에서 제외한다.
+     * gisuId 기준 ADMIN·PLAN 파트 제외 챌린저의 memberId 집합을 반환한다. ADMIN 운영진은 팀원으로 참여하지 않고, PLAN(PM)은 프로젝트 오너로서 매칭 대상이 아니므로 분모
+     * 계산에서 제외한다.
      */
     private Set<Long> resolveEligibleMemberIds(Long gisuId) {
         return getChallengerUseCase.getPartsByGisuId(gisuId).stream()
@@ -134,9 +137,8 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
     }
 
     /**
-     * roundId별 매칭 인원 수를 집계해 RoundStat 목록을 반환한다.
-     * quota는 차수별 슬라이딩 분모: 총 인원 - (이전 차수까지 누적 매칭 인원).
-     * 매칭된 멤버는 pool에서 영구 이탈하므로 이전 차수 매칭 인원을 누적 차감한다.
+     * roundId별 매칭 인원 수를 집계해 RoundStat 목록을 반환한다. quota는 차수별 슬라이딩 분모: 총 인원 - (이전 차수까지 누적 매칭 인원). 매칭된 멤버는 pool에서 영구 이탈하므로
+     * 이전 차수 매칭 인원을 누적 차감한다.
      */
     private List<RoundStat> buildRoundStats(List<RoundMemberInfo> entries, long totalEligible) {
         Map<Long, Set<Long>> roundMatched = new HashMap<>();
@@ -217,8 +219,7 @@ public class MatchingStatisticsQueryService implements GetMatchingStatisticsUseC
     }
 
     /**
-     * 프로젝트별로 그룹핑한 뒤 차수별 매칭 인원 수를 중첩 구조로 반환한다.
-     * 한 멤버는 프로젝트당 하나의 ProjectMember만 존재하므로 단순 count로 집계한다.
+     * 프로젝트별로 그룹핑한 뒤 차수별 매칭 인원 수를 중첩 구조로 반환한다. 한 멤버는 프로젝트당 하나의 ProjectMember만 존재하므로 단순 count로 집계한다.
      */
     private List<ProjectRoundStat> buildProjectRoundStats(List<RoundMemberInfo> entries) {
         Map<Long, Map<Long, Long>> projectRoundCounts = new HashMap<>();
