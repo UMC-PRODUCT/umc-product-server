@@ -1,4 +1,4 @@
-package com.umc.product.global.seed;
+package com.umc.product.test.application.service;
 
 import com.umc.product.common.domain.enums.OAuthProvider;
 import com.umc.product.member.application.port.in.command.dto.IdPwRegisterMemberCommand;
@@ -12,23 +12,27 @@ import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import net.datafaker.Faker;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * datafaker 를 사용해 alpha 환경용 더미 회원 Command 를 생성한다. ADR-007 참조.
+ * datafaker 를 사용해 test 도메인 시딩용 더미 회원 Command 를 생성한다. ADR-017 참조.
  * <p>
- * V2026.02.28.06.00 마이그레이션이 school 1~38 을 시딩하므로 schoolId 는 그 범위에서 무작위로 고른다.
+ * V2026.02.28.06.00 마이그레이션이 school 1~38 을 시딩하므로 schoolId 무작위 추출은 그 범위에서 고른다.
  * loginId 는 sequence 번호로 고정해 멱등성과 유일성을 동시에 만족시킨다.
  */
 @Component
+@Profile("!prod")
+@ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
-public class AlphaDummyMemberFactory {
+public class DummyMemberFactory {
 
     private static final long MIN_SCHOOL_ID = 1L;
     private static final long MAX_SCHOOL_ID = 38L;
     private static final int MAX_NICKNAME_LENGTH = 20;
 
-    private final AlphaSeedProperties properties;
+    private final SeedProperties properties;
     private final GetTermUseCase getTermUseCase;
 
     private final Faker faker = new Faker(Locale.KOREAN);
