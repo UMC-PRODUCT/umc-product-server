@@ -24,6 +24,14 @@ public interface LoadProjectMemberPort {
     List<ProjectMember> listByProjectIdAndPart(Long projectId, ChallengerPart part);
 
     /**
+     * 여러 프로젝트의 특정 파트 ACTIVE 멤버를 한 번에 조회해 projectId 기준 Map 으로 반환합니다 (N+1 방지).
+     *
+     * @return projectId -> 멤버 목록 맵. 해당 파트 멤버가 없는 프로젝트는 엔트리 없음.
+     */
+    Map<Long, List<ProjectMember>> listByProjectIdsAndPartGroupedByProjectId(
+        Collection<Long> projectIds, ChallengerPart part);
+
+    /**
      * 특정 프로젝트의 파트별 활성 멤버 수를 집계합니다. {@code PartQuotaInfo.currentCount} 계산에 사용됩니다.
      *
      * @return 파트 → 인원수 맵. 활성 멤버가 없는 파트는 0 또는 엔트리 없음

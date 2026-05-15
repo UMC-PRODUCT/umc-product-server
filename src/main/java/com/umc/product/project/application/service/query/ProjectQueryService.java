@@ -28,8 +28,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -86,20 +89,15 @@ public class ProjectQueryService implements
             .statuses(new ArrayList<>(requested))
             .pageable(query.pageable())
             .build();
-        return applyScope(scope, base).map(this::toProjectInfo);
+        return toProjectInfoPage(applyScope(scope, base));
     }
 
     @Override
     public Page<ProjectInfo> search(SearchProjectQuery query, Long memberId) {
-        // TODO: N+1 — 페이지당 (3 × size + 1) 쿼리. batch 메서드 추가 필요:
-        //  LoadProjectMemberPort.listByProjectIdsAndPart(Set<Long>, ChallengerPart)
-        //  LoadProjectMemberPort.countByProjectIdsGroupByPart(Set<Long>)
-        //  LoadProjectPartQuotaPort.listByProjectIds(Set<Long>)
         Set<ProjectStatus> requestedStatuses = new HashSet<>(query.statuses());
         ProjectAccessScope scope = scopeResolver.resolveForPublicSearch(
             memberId, query.gisuId(), requestedStatuses);
-        return applyScope(scope, query)
-            .map(this::toProjectInfo);
+        return toProjectInfoPage(applyScope(scope, query));
     }
 
     /**
@@ -121,6 +119,87 @@ public class ProjectQueryService implements
             case None() ->
                 new PageImpl<>(List.of(), query.pageable(), 0L);
         };
+    }
+
+    /**
+     * Project 페이지를 ProjectInfo 페이지로 배치 조립합니다.
+     * <p>
+     * coPM/파트별 TO/파일 URL 을 페이지 단위 IN 쿼리로 한 번에 조회해 N+1 을 방지합니다.
+     */
+    private Page<ProjectInfo> toProjectInfoPage(Page<Project> page) {
+        List<Project> projects = page.getContent();
+        if (projects.isEmpty()) {
+            return new PageImpl<>(List.of(), page.getPageable(), page.getTotalElements());
+        }
+
+        Set<Long> projectIds = projects.stream()
+            .map(Project::getId)
+            .collect(Collectors.toSet());
+
+        Map<Long, List<ProjectMember>> planMembersByProject =
+            loadProjectMemberPort.listByProjectIdsAndPartGroupedByProjectId(projectIds, ChallengerPart.PLAN);
+        Map<Long, List<ProjectPartQuota>> quotasByProject =
+            loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(projectIds);
+        Map<Long, Map<ChallengerPart, Long>> memberCountsByProject =
+            loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(projectIds);
+        Map<String, String> fileLinks = resolveFileLinks(projects);
+
+        return page.map(project -> assembleProjectInfo(
+            project,
+            planMembersByProject.getOrDefault(project.getId(), List.of()),
+            quotasByProject.getOrDefault(project.getId(), List.of()),
+            memberCountsByProject.getOrDefault(project.getId(), Map.of()),
+            fileLinks
+        ));
+    }
+
+    /**
+     * 미리 배치 조회한 결과로 단일 Project 의 ProjectInfo 를 조립합니다.
+     */
+    private ProjectInfo assembleProjectInfo(
+        Project project,
+        List<ProjectMember> planMembers,
+        List<ProjectPartQuota> quotas,
+        Map<ChallengerPart, Long> currentCounts,
+        Map<String, String> fileLinks
+    ) {
+        List<Long> coPmMemberIds = planMembers.stream()
+            .map(ProjectMember::getMemberId)
+            .filter(memberId -> !memberId.equals(project.getProductOwnerMemberId()))
+            .toList();
+
+        List<ProjectPartQuotaInfo> partQuotas = quotas.stream()
+            .map(q -> ProjectPartQuotaInfo.of(
+                q.getPart(),
+                q.getQuota(),
+                currentCounts.getOrDefault(q.getPart(), 0L)
+            ))
+            .toList();
+
+        return ProjectInfo.from(
+            project,
+            coPmMemberIds,
+            partQuotas,
+            resolveLink(fileLinks, project.getThumbnailFileId()),
+            resolveLink(fileLinks, project.getLogoFileId())
+        );
+    }
+
+    /**
+     * 여러 프로젝트의 썸네일/로고 파일 ID → CDN URL을 일괄 조회합니다.
+     */
+    private Map<String, String> resolveFileLinks(List<Project> projects) {
+        List<String> fileIds = projects.stream()
+            .flatMap(p -> Stream.of(p.getThumbnailFileId(), p.getLogoFileId()))
+            .filter(Objects::nonNull)
+            .distinct()
+            .toList();
+
+        if (fileIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return getFileUseCase.getFileLinks(fileIds);
     }
 
     /**
