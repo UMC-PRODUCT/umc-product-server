@@ -155,6 +155,11 @@ public class MemberQueryService implements GetMemberUseCase, GetMemberProfileUse
         return loadMemberPort.countMembersByIds(ids);
     }
 
+    @Override
+    public long countAll() {
+        return loadMemberPort.countAllMembers();
+    }
+
     // === Private Methods ===
 
     private Member getOrThrowMember(Long memberId) {

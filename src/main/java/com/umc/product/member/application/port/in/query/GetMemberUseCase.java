@@ -45,4 +45,9 @@ public interface GetMemberUseCase {
      * @return ids 중에 실제로 존재하는 member의 개수
      */
     long countMembersByIds(Set<Long> ids);
+
+    /**
+     * 전체 멤버 수를 반환합니다. 시딩 시퀀스 오프셋 산정 등 운영 외 용도에 사용합니다.
+     */
+    long countAll();
 }
