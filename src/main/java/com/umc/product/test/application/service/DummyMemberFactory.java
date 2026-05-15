@@ -46,8 +46,17 @@ public class DummyMemberFactory {
 
     /**
      * ID/PW 회원가입용 Command 를 만든다. loginId 는 alpha_user_0001 형식(CredentialPolicy 정규식 만족).
+     * schoolId 는 1~38 범위 무작위.
      */
     public IdPwRegisterMemberCommand nextIdPwCommand(int sequence) {
+        return nextIdPwCommandWithSchool(sequence, randomSchoolId());
+    }
+
+    /**
+     * 지정한 schoolId 로 ID/PW 회원가입 Command 를 만든다. 챌린저/프로젝트 분포 시딩처럼 학교 정합성이
+     * 필요한 케이스에서 사용한다.
+     */
+    public IdPwRegisterMemberCommand nextIdPwCommandWithSchool(int sequence, Long schoolId) {
         String loginId = "alpha_user_%04d".formatted(sequence);
         String email = "%s@%s".formatted(loginId, properties.emailDomain());
         return IdPwRegisterMemberCommand.builder()
@@ -56,7 +65,7 @@ public class DummyMemberFactory {
             .name(faker.name().fullName())
             .nickname(safeNickname(faker.name().firstName(), sequence))
             .email(email)
-            .schoolId(randomSchoolId())
+            .schoolId(schoolId)
             .termConsents(allMandatoryConsents())
             .build();
     }

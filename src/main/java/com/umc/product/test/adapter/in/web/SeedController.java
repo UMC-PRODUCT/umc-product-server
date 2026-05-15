@@ -1,8 +1,11 @@
 package com.umc.product.test.adapter.in.web;
 
 import com.umc.product.global.security.annotation.Public;
+import com.umc.product.test.adapter.in.web.dto.SeedChallengersRequest;
+import com.umc.product.test.adapter.in.web.dto.SeedChallengersResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedMembersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedMembersResponse;
+import com.umc.product.test.application.port.in.command.SeedChallengersUseCase;
 import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class SeedController {
 
     private final SeedMembersUseCase seedMembersUseCase;
+    private final SeedChallengersUseCase seedChallengersUseCase;
 
     @Operation(
         summary = "[SEED-001] 더미 멤버 시딩",
@@ -45,5 +49,19 @@ public class SeedController {
     @PostMapping("/members")
     public SeedMembersResponse seedMembers(@RequestBody @Valid SeedMembersRequest request) {
         return SeedMembersResponse.from(seedMembersUseCase.seed(request.toCommand()));
+    }
+
+    @Operation(
+        summary = "[SEED-002] 챌린저 분포 시딩",
+        description = """
+            특정 기수에 대해 (Chapter, School, Part) 셀마다 countPerPartPerSchool 명의 더미 회원 +
+            챌린저를 함께 생성합니다.
+            gisuId 가 null 이면 활성 기수, parts 가 null/empty 면 ADMIN 제외 전 파트,
+            chapterIds 가 null/empty 면 해당 기수의 모든 Chapter 가 대상입니다.
+            """
+    )
+    @PostMapping("/challengers")
+    public SeedChallengersResponse seedChallengers(@RequestBody @Valid SeedChallengersRequest request) {
+        return SeedChallengersResponse.from(seedChallengersUseCase.seed(request.toCommand()));
     }
 }
