@@ -14,9 +14,9 @@ import java.util.regex.Pattern;
 public final class CredentialPolicy {
 
     /**
-     * 영문 대소문자, 숫자, 점/밑줄/하이픈 5~20자. DB CHECK 제약과 일치해야 한다.
+     * 영문 소문자, 숫자, 점/밑줄/하이픈 5~20자. DB CHECK 제약과 일치해야 한다.
      */
-    public static final Pattern LOGIN_ID_PATTERN = Pattern.compile("^[A-Za-z0-9._-]{5,20}$");
+    public static final Pattern LOGIN_ID_PATTERN = Pattern.compile("^[a-z0-9._-]{5,20}$");
 
     public static final int PASSWORD_MIN_LENGTH = 8;
     public static final int PASSWORD_MAX_LENGTH = 64;
