@@ -5,8 +5,11 @@ import com.umc.product.test.adapter.in.web.dto.SeedChallengersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedMembersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedMembersResponse;
+import com.umc.product.test.adapter.in.web.dto.SeedProjectsRequest;
+import com.umc.product.test.adapter.in.web.dto.SeedProjectsResponse;
 import com.umc.product.test.application.port.in.command.SeedChallengersUseCase;
 import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
+import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -37,6 +40,7 @@ public class SeedController {
 
     private final SeedMembersUseCase seedMembersUseCase;
     private final SeedChallengersUseCase seedChallengersUseCase;
+    private final SeedProjectsUseCase seedProjectsUseCase;
 
     @Operation(
         summary = "[SEED-001] 더미 멤버 시딩",
@@ -63,5 +67,20 @@ public class SeedController {
     @PostMapping("/challengers")
     public SeedChallengersResponse seedChallengers(@RequestBody @Valid SeedChallengersRequest request) {
         return SeedChallengersResponse.from(seedChallengersUseCase.seed(request.toCommand()));
+    }
+
+    @Operation(
+        summary = "[SEED-003] 프로젝트 시딩",
+        description = """
+            활성 기수(또는 지정 기수)의 같은 school 멤버 풀에서 PLAN 1 + 프론트엔드 5~6 +
+            백엔드 5~6 의 멤버 슬롯을 추출해 프로젝트를 N 개 생성합니다.
+            School 단위 round-robin 으로 채우며, 풀이 부족한 셀은 skip 합니다.
+            PO 후보가 PLAN 챌린저로 등록되지 않은 경우 시딩 측에서 PLAN 챌린저로 등록한 뒤
+            createDraft 를 호출합니다.
+            """
+    )
+    @PostMapping("/projects")
+    public SeedProjectsResponse seedProjects(@RequestBody @Valid SeedProjectsRequest request) {
+        return SeedProjectsResponse.from(seedProjectsUseCase.seed(request.toCommand()));
     }
 }
