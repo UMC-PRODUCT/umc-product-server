@@ -3,6 +3,7 @@ package com.umc.product.project.adapter.out.persistence;
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,8 @@ public interface ProjectMemberJpaRepository extends JpaRepository<ProjectMember,
     List<ProjectMember> findByProjectIdAndPartAndStatus(Long projectId, ChallengerPart part, ProjectMemberStatus status);
 
     List<ProjectMember> findByProjectIdAndStatus(Long projectId, ProjectMemberStatus status);
+
+    List<ProjectMember> findByProjectIdInAndStatus(Collection<Long> projectIds, ProjectMemberStatus status);
 
     Optional<ProjectMember> findByProjectIdAndMemberId(Long projectId, Long memberId);
 
