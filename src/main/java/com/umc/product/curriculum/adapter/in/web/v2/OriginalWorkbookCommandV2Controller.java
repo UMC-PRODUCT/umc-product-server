@@ -14,15 +14,10 @@ import com.umc.product.global.security.annotation.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v2/curriculums/original-workbooks")
@@ -41,7 +36,11 @@ public class OriginalWorkbookCommandV2Controller {
             임시저장이 필요한 경우 `/draft` 엔드포인트를 사용하세요.
             """
     )
-    @CheckAccess(resourceType = ResourceType.ORIGINAL_WORKBOOK, permission = PermissionType.MANAGE)
+    @CheckAccess(
+        resourceType = ResourceType.ORIGINAL_WORKBOOK,
+        permission = PermissionType.MANAGE,
+        message = "원본 워크북 생성은 중앙파트장이상 권한이 필요합니다."
+    )
     @PostMapping
     public Long createOriginalWorkbook(
         @Valid @RequestBody CreateOriginalWorkbookRequest request
@@ -60,7 +59,11 @@ public class OriginalWorkbookCommandV2Controller {
             상태 전환 흐름: `DRAFT` → `READY` → `RELEASED`
             """
     )
-    @CheckAccess(resourceType = ResourceType.ORIGINAL_WORKBOOK, permission = PermissionType.MANAGE)
+    @CheckAccess(
+        resourceType = ResourceType.ORIGINAL_WORKBOOK,
+        permission = PermissionType.MANAGE,
+        message = "중앙파트장이상 권한만 원본 워크북 임시저장이 가능합니다."
+    )
     @PostMapping("/draft")
     public Long createOriginalWorkbookAsDraft(
         @Valid @RequestBody CreateOriginalWorkbookRequest request
@@ -78,7 +81,8 @@ public class OriginalWorkbookCommandV2Controller {
     @CheckAccess(
         resourceType = ResourceType.ORIGINAL_WORKBOOK,
         resourceId = "#originalWorkbookId",
-        permission = PermissionType.MANAGE
+        permission = PermissionType.MANAGE,
+        message = "중앙파트장 이상 권한만 원본 워크북 수정이 가능합니다."
     )
     @PatchMapping("/{originalWorkbookId}")
     public void editOriginalWorkbook(
@@ -97,7 +101,8 @@ public class OriginalWorkbookCommandV2Controller {
     @CheckAccess(
         resourceType = ResourceType.ORIGINAL_WORKBOOK,
         resourceId = "#originalWorkbookId",
-        permission = PermissionType.MANAGE
+        permission = PermissionType.MANAGE,
+        message = "중앙파트장 이상만 원본 워크북 삭제가 가능합니다."
     )
     @DeleteMapping("/{originalWorkbookId}")
     public void deleteOriginalWorkbook(
@@ -122,7 +127,11 @@ public class OriginalWorkbookCommandV2Controller {
             | DRAFT | RELEASED | ❌ (READY 경유 필수) |
             """
     )
-    @CheckAccess(resourceType = ResourceType.ORIGINAL_WORKBOOK, permission = PermissionType.RELEASE)
+    @CheckAccess(
+        resourceType = ResourceType.ORIGINAL_WORKBOOK,
+        permission = PermissionType.RELEASE,
+        message = "중앙파트장 이상 권한만 원본 워크북 상태 수정이 가능합니다."
+    )
     @PatchMapping("/status")
     public void changeOriginalWorkbookStatus(
         @Valid @RequestBody List<ChangeOriginalWorkbookStatusRequest> requests,
