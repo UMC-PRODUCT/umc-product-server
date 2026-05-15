@@ -256,3 +256,8 @@ http-client.private.env.json
 
 # K6
 k6/*.js
+
+# Harness engineering (local only)
+docs/harness/
+phases/
+scripts/

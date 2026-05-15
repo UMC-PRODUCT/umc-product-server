@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface MissionSubmissionJpaRepository extends JpaRepository<MissionSubmission, Long> {
 
     List<MissionSubmission> findByChallengerWorkbook_Id(Long challengerWorkbookId);
+
+    List<MissionSubmission> findByChallengerWorkbook_IdIn(List<Long> challengerWorkbookIds);
 }

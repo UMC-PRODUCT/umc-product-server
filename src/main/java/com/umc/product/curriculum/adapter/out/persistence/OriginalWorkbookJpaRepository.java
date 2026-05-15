@@ -10,6 +10,9 @@ public interface OriginalWorkbookJpaRepository extends JpaRepository<OriginalWor
     List<OriginalWorkbook> findByWeeklyCurriculumIdAndOriginalWorkbookStatus(
         Long weeklyCurriculumId, OriginalWorkbookStatus originalWorkbookStatus);
 
+    List<OriginalWorkbook> findByWeeklyCurriculumIdInAndOriginalWorkbookStatus(
+        List<Long> weeklyCurriculumIds, OriginalWorkbookStatus originalWorkbookStatus);
+
 //    List<OriginalWorkbook> findByCurriculumId(Long curriculumId);
 //
 //    List<OriginalWorkbook> findByCurriculumIdOrderByWeekNoAsc(Long curriculumId);
