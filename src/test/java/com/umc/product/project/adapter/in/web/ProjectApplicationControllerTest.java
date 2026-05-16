@@ -14,6 +14,7 @@ import com.umc.product.global.config.JacksonConfig;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.project.adapter.in.web.dto.request.UpdateApplicationDecisionRequest;
+import com.umc.product.project.application.port.in.command.CancelProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.DecideApplicationUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectApplicationUseCase;
@@ -65,6 +66,9 @@ class ProjectApplicationControllerTest {
 
     @MockitoBean
     DecideApplicationUseCase decideApplicationUseCase;
+
+    @MockitoBean
+    CancelProjectApplicationUseCase cancelProjectApplicationUseCase;
 
     @BeforeEach
     void setUpSecurityContext() {

@@ -254,6 +254,70 @@ class ProjectApplicationTest {
         }
     }
 
+    @Nested
+    class cancel {
+
+        @Test
+        void DRAFT를_CANCELLED로_전이한다() {
+            setStatus(application, ProjectApplicationStatus.DRAFT);
+
+            application.cancel(DECIDER_MEMBER_ID, "임시저장본 더 안 쓸래요");
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.CANCELLED);
+            assertThat(application.isCancelled()).isTrue();
+            assertThat(application.getStatusChangedMemberId()).isEqualTo(DECIDER_MEMBER_ID);
+            assertThat(application.getStatusChangeReason()).isEqualTo("임시저장본 더 안 쓸래요");
+        }
+
+        @Test
+        void SUBMITTED를_CANCELLED로_전이한다() {
+            application.cancel(DECIDER_MEMBER_ID, "다른 프로젝트로 갈래요");
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.CANCELLED);
+            assertThat(application.getStatusChangeReason()).isEqualTo("다른 프로젝트로 갈래요");
+        }
+
+        @Test
+        void reason은_null이어도_허용된다() {
+            setStatus(application, ProjectApplicationStatus.DRAFT);
+
+            application.cancel(DECIDER_MEMBER_ID, null);
+
+            assertThat(application.getStatus()).isEqualTo(ProjectApplicationStatus.CANCELLED);
+            assertThat(application.getStatusChangeReason()).isNull();
+        }
+
+        @Test
+        void APPROVED_상태에서는_CANCEL_NOT_ALLOWED() {
+            setStatus(application, ProjectApplicationStatus.APPROVED);
+
+            assertThatThrownBy(() -> application.cancel(DECIDER_MEMBER_ID, "사유"))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_CANCEL_NOT_ALLOWED);
+        }
+
+        @Test
+        void REJECTED_상태에서는_CANCEL_NOT_ALLOWED() {
+            setStatus(application, ProjectApplicationStatus.REJECTED);
+
+            assertThatThrownBy(() -> application.cancel(DECIDER_MEMBER_ID, "사유"))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_CANCEL_NOT_ALLOWED);
+        }
+
+        @Test
+        void 이미_CANCELLED_상태에서는_CANCEL_NOT_ALLOWED() {
+            setStatus(application, ProjectApplicationStatus.CANCELLED);
+
+            assertThatThrownBy(() -> application.cancel(DECIDER_MEMBER_ID, "사유"))
+                .isInstanceOf(ProjectDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(ProjectErrorCode.PROJECT_APPLICATION_CANCEL_NOT_ALLOWED);
+        }
+    }
+
     private void setStatus(ProjectApplication application, ProjectApplicationStatus status) {
         ReflectionTestUtils.setField(application, "status", status);
     }

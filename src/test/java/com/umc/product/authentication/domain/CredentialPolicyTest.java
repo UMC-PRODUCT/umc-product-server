@@ -24,12 +24,12 @@ class CredentialPolicyTest {
 
         @ParameterizedTest
         @ValueSource(strings = {
-            "alice",            // 5자 영문
-            "alice01",          // 영문 + 숫자
+            "alice",            // 5자 영문 소문자
+            "alice01",          // 영문 소문자 + 숫자
             "user.name",        // 점 허용
             "user_name",        // 밑줄 허용
             "user-name",        // 하이픈 허용
-            "ABCDE12345abcde12345" // 정확히 20자 경계값
+            "abcde12345abcde12345" // 정확히 20자 경계값
         })
         @DisplayName("정상 형식의 로그인 ID 는 통과한다")
         void 정상_형식_통과(String loginId) {
@@ -44,7 +44,10 @@ class CredentialPolicyTest {
             "abcdefghij1234567890_", // 21자 초과
             "user@name",           // 허용되지 않는 특수문자
             "user name",           // 공백 포함
-            "한글닉네임"            // 비ASCII
+            "한글닉네임",          // 비ASCII
+            "Alice",               // 영문 대문자 포함 (선두)
+            "userNAME",            // 영문 대문자 포함 (중간)
+            "ABCDE"                // 영문 대문자만
         })
         @DisplayName("형식이 어긋나면 INVALID_LOGIN_ID_FORMAT 예외를 던진다")
         void 잘못된_형식이면_예외(String loginId) {

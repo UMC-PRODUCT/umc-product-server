@@ -9,33 +9,39 @@ import com.umc.product.project.adapter.in.web.dto.request.CreateProjectApplicati
 import com.umc.product.project.adapter.in.web.dto.request.UpdateApplicationAnswersRequest;
 import com.umc.product.project.adapter.in.web.dto.request.UpdateApplicationDecisionRequest;
 import com.umc.product.project.adapter.in.web.dto.response.ProjectApplicationStatusResponse;
+import com.umc.product.project.application.port.in.command.CancelProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.CreateDraftProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.DecideApplicationUseCase;
 import com.umc.product.project.application.port.in.command.SubmitProjectApplicationUseCase;
 import com.umc.product.project.application.port.in.command.UpdateProjectApplicationDraftUseCase;
+import com.umc.product.project.adapter.in.web.dto.request.CreateProjectApplicationRequest;
+import com.umc.product.project.application.port.in.command.dto.CancelProjectApplicationCommand;
 import com.umc.product.project.application.port.in.command.dto.SubmitProjectApplicationCommand;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/projects")
 @RequiredArgsConstructor
-@Tag(name = "Project | 챌린저 지원서", description = "챌린저의 프로젝트 지원서 Draft 생성 / 임시저장 / 제출 / 조회 (APPLY-001~004)")
+@Tag(name = "Project | 챌린저 지원서", description = "챌린저의 프로젝트 지원서 Draft 생성 / 임시저장 / 제출 / 철회 / 조회 (APPLY-001~005)")
 public class ProjectApplicationController {
 
     private final CreateDraftProjectApplicationUseCase createDraftProjectApplicationUseCase;
     private final UpdateProjectApplicationDraftUseCase updateProjectApplicationDraftUseCase;
     private final SubmitProjectApplicationUseCase submitProjectApplicationUseCase;
     private final DecideApplicationUseCase decideApplicationUseCase;
+    private final CancelProjectApplicationUseCase cancelProjectApplicationUseCase;
 
     @PostMapping("/{projectId}/applications")
     @Operation(
@@ -133,6 +139,44 @@ public class ProjectApplicationController {
         return ProjectApplicationStatusResponse.from(
             decideApplicationUseCase.decide(
                 applicationId, request.status(), request.reason(), memberPrincipal.getMemberId()
+            )
+        );
+    }
+
+    @DeleteMapping("/{projectId}/applications/{applicationId}")
+    @Operation(
+        summary = "[APPLY-005] 챌린저 지원서 철회",
+        description = """
+            지원서를 CANCELLED 로 soft delete 합니다.
+
+            정책:
+            - 가능 상태: DRAFT, SUBMITTED
+            - 불가 상태: APPROVED, REJECTED (이미 종결), CANCELLED (이중 취소)
+            - 시간 제약: 지원한 매칭 차수가 OPEN 인 동안만 (startsAt <= now <= endsAt). PM 선발이 시작된 차수 종료 후에는 철회 불가
+            - 행위자: 지원자 본인만 (운영진 강제 철회는 별도 API, 추후 작업)
+
+            철회 후 동일 매칭 차수에 재지원 가능 (DB partial unique index 가 활성 지원서 1개 보장).
+            Survey 응답 본문은 보존됨.
+            """
+    )
+    @CheckAccess(
+        resourceType = ResourceType.PROJECT_APPLICATION,
+        resourceId = "#applicationId",
+        permission = PermissionType.DELETE,
+        message = "지원서 철회 권한이 없습니다."
+    )
+    public ProjectApplicationStatusResponse cancel(
+        @CurrentMember MemberPrincipal memberPrincipal,
+        @PathVariable Long applicationId,
+        @RequestParam(required = false) String reason
+    ) {
+        return ProjectApplicationStatusResponse.from(
+            cancelProjectApplicationUseCase.cancel(
+                CancelProjectApplicationCommand.builder()
+                    .applicationId(applicationId)
+                    .requesterMemberId(memberPrincipal.getMemberId())
+                    .reason(reason)
+                    .build()
             )
         );
     }

@@ -19,6 +19,13 @@ public interface LoadProjectMemberPort {
     List<ProjectMember> listByProjectId(Long projectId);
 
     /**
+     * 여러 프로젝트의 활성(ACTIVE) 멤버를 한 번에 조회합니다 (N+1 방지용 IN 쿼리). PROJECT-004(팀원 일괄 조회)에서 사용.
+     *
+     * @return projectId → 활성 멤버 목록 맵. 활성 멤버가 없는 프로젝트는 엔트리 없음.
+     */
+    Map<Long, List<ProjectMember>> listByProjectIds(Collection<Long> projectIds);
+
+    /**
      * 특정 프로젝트의 특정 파트에 속한 ACTIVE 멤버 목록을 조회합니다. PLAN 파트 조회 시 보조 PM(coPM) 추출에 사용됩니다.
      */
     List<ProjectMember> listByProjectIdAndPart(Long projectId, ChallengerPart part);
