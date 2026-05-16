@@ -153,10 +153,6 @@ public class ProjectCommandService implements
     public void submit(SubmitProjectCommand command) {
         Project project = loadProjectPort.getById(command.projectId());
 
-        if (!project.getProductOwnerMemberId().equals(command.requesterMemberId())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
-        }
-
         if (!loadProjectApplicationFormPort.existsByProjectId(project.getId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_SUBMIT_VALIDATION_FAILED);
         }
@@ -167,10 +163,6 @@ public class ProjectCommandService implements
     @Override
     public ProjectStatus transfer(TransferProjectOwnershipCommand command) {
         Project project = loadProjectPort.getById(command.projectId());
-
-        if (!project.getProductOwnerMemberId().equals(command.requesterMemberId())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_ACCESS_DENIED);
-        }
 
         ChallengerInfo newOwner = getChallengerUseCase.getByMemberIdAndGisuId(
             command.newOwnerMemberId(), project.getGisuId()

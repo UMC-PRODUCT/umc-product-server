@@ -250,7 +250,7 @@ class ProjectQueryServiceTest {
         ReflectionTestUtils.setField(project, "description", "테스트 설명");
         ReflectionTestUtils.setField(project, "thumbnailFileId", "thumb-1");
         ReflectionTestUtils.setField(project, "productOwnerMemberId", 10L);
-        ReflectionTestUtils.setField(project, "createdByMemberId", 10L);
+        ReflectionTestUtils.setField(project, "creatorMemberId", 10L);
         return project;
     }
 
