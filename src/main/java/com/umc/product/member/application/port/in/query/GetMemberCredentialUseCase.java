@@ -12,12 +12,19 @@ import java.util.Optional;
 public interface GetMemberCredentialUseCase {
 
     /**
-     * loginId 로 자격증명을 조회한다. 존재하지 않으면 {@link Optional#empty()}.
+     * @deprecated ADR-017 에 따라 로그인 식별자가 email 로 전환됨.
+     * {@link #findCredentialByEmail(String)} 사용.
+     */
+    @Deprecated
+    Optional<MemberCredentialInfo> findCredentialByLoginId(String loginId);
+
+    /**
+     * email 로 자격증명을 조회한다. 존재하지 않거나 비밀번호가 등록되지 않은 회원은 {@link Optional#empty()}.
      * <p>
      * "사용자 없음" 과 "비밀번호 불일치" 를 외부에 구분 노출하지 않기 위해
      * 여기서는 예외를 던지지 않고 빈 Optional 을 반환한다.
      */
-    Optional<MemberCredentialInfo> findCredentialByLoginId(String loginId);
+    Optional<MemberCredentialInfo> findCredentialByEmail(String email);
 
     /**
      * memberId 로 자격증명을 조회한다. 자격증명이 등록되지 않은 회원은 {@link Optional#empty()}.
@@ -27,7 +34,14 @@ public interface GetMemberCredentialUseCase {
     Optional<MemberCredentialInfo> findCredentialByMemberId(Long memberId);
 
     /**
-     * loginId 가 이미 사용 중인지 확인한다. (회원가입 / 자격증명 등록 시 중복 방지)
+     * @deprecated ADR-017 에 따라 로그인 식별자가 email 로 전환됨.
+     * {@link #existsByEmail(String)} 사용.
      */
+    @Deprecated
     boolean existsByLoginId(String loginId);
+
+    /**
+     * email 이 이미 사용 중인지 확인한다. (회원가입 / 자격증명 등록 시 중복 방지)
+     */
+    boolean existsByEmail(String email);
 }
