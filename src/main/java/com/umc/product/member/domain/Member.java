@@ -121,15 +121,9 @@ public class Member extends BaseEntity {
     }
 
     /**
-     * ID/PW 자격증명을 최초 등록한다.
-     * <p>
-     * 이미 자격증명이 등록되어 있는 경우 변경 흐름({@link #changePassword})을 사용해야 하며, 여기서는 중복 등록을 막는다. {@code encodedPassword} 는 반드시
-     * DelegatingPasswordEncoder 로 인코딩된 "{id}encoded" 형식이어야 한다.
-     * <p>
-     * 이미 CredentialPolicy에서 형식 관련 검증은 하고 들어오고 있으므로 최소한의 검증인 NULL CHECK만 실시하도록 한다.
-     * <p>
-     * 비밀번호와 관련된 정책은 Member가 아닌 Authentication 도메인이 알고 있는 것이 맞다.
+     * @deprecated ADR-017 에 따라 로그인 식별자가 email 로 전환됨. {@link #registerCredential(String)} 사용.
      */
+    @Deprecated
     public void registerCredential(String loginId, String encodedPassword) {
         validateActive();
         validateLoginId(loginId);
@@ -139,6 +133,25 @@ public class Member extends BaseEntity {
             throw new MemberDomainException(MemberErrorCode.CREDENTIAL_ALREADY_REGISTERED);
         }
         this.loginId = loginId;
+        this.passwordHash = encodedPassword;
+    }
+
+    /**
+     * 이메일 기반 자격증명을 최초 등록한다.
+     * <p>
+     * email 은 이미 회원 생성 시점에 검증되어 저장되어 있으므로, 본 메서드는 비밀번호 등록만 수행한다.
+     * 이미 비밀번호가 등록되어 있는 경우 변경 흐름({@link #changePassword})을 사용해야 하며, 여기서는 중복 등록을 막는다.
+     * {@code encodedPassword} 는 반드시 DelegatingPasswordEncoder 로 인코딩된 "{id}encoded" 형식이어야 한다.
+     * <p>
+     * 비밀번호 형식 관련 검증은 CredentialPolicy 에서 사전에 수행되며, 본 메서드는 NULL CHECK 만 수행한다.
+     */
+    public void registerCredential(String encodedPassword) {
+        validateActive();
+        validatePassword(encodedPassword);
+
+        if (this.passwordHash != null) {
+            throw new MemberDomainException(MemberErrorCode.CREDENTIAL_ALREADY_REGISTERED);
+        }
         this.passwordHash = encodedPassword;
     }
 
