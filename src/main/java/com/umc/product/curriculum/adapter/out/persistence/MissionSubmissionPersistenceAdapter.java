@@ -35,4 +35,9 @@ public class MissionSubmissionPersistenceAdapter implements LoadMissionSubmissio
         }
         return missionFeedbackJpaRepository.findByMissionSubmission_IdIn(submissionIds);
     }
+
+    @Override
+    public boolean existsByOriginalWorkbookMissionId(Long originalWorkbookMissionId) {
+        return missionSubmissionJpaRepository.existsByOriginalWorkbookMission_Id(originalWorkbookMissionId);
+    }
 }
