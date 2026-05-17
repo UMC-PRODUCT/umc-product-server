@@ -27,6 +27,11 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthenticationService implements ManageAuthenticationUseCase {
 
+    /**
+     * 6자리 인증 코드 생성에 사용하는 보안 난수 생성기. JVM 단위 단일 인스턴스로 재사용한다.
+     */
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     private final LoadEmailVerificationPort loadEmailVerificationPort;
     private final SaveEmailVerificationPort saveEmailVerificationPort;
     private final JwtTokenProvider jwtTokenProvider;
@@ -136,9 +141,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
             throw new AuthenticationDomainException(AuthenticationErrorCode.NO_EMAIL_VERIFICATION_METHOD_GIVEN);
         }
 
-        EmailVerification emailVerification = loadEmailVerificationPort.getById(
-            Long.valueOf(command.sessionId())
-        );
+        EmailVerification emailVerification = loadEmailVerificationPort.getById(command.sessionId());
 
         // verifyCode 가 실패해도 attempt_count 증가/세션 무효화는 영속되어야 하므로
         // AuthenticationDomainException 에 대해서는 트랜잭션을 롤백하지 않는다.
@@ -159,8 +162,6 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
     }
 
     private String generateRandomCode() {
-        SecureRandom random = new SecureRandom();
-
-        return String.valueOf(random.nextInt(900000) + 100000);
+        return String.valueOf(RANDOM.nextInt(900000) + 100000);
     }
 }

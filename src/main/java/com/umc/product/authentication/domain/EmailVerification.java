@@ -24,6 +24,11 @@ import lombok.NoArgsConstructor;
 public class EmailVerification extends BaseEntity {
 
     /**
+     * 인증 세션의 유효 기간 (초). 발급 / 재발급 시 expires_at = now + 이 값.
+     */
+    public static final long SESSION_VALIDITY_SECONDS = 10 * 60;
+
+    /**
      * 인증 코드 brute-force 방어를 위한 최대 시도 횟수. 초과 시 세션을 즉시 무효화한다.
      */
     public static final int MAX_ATTEMPT_COUNT = 5;
@@ -93,7 +98,7 @@ public class EmailVerification extends BaseEntity {
         this.token = token;
         this.code = code;
         this.purpose = purpose;
-        this.expiresAt = Instant.now().plusSeconds(10 * 60); // 10분 후 만료
+        this.expiresAt = Instant.now().plusSeconds(SESSION_VALIDITY_SECONDS); // 10분 후 만료
         this.isVerified = false;
         this.attemptCount = 0;
     }
@@ -167,7 +172,7 @@ public class EmailVerification extends BaseEntity {
 
         this.code = newCode;
         this.token = newToken;
-        this.expiresAt = Instant.now().plusSeconds(10 * 60);
+        this.expiresAt = Instant.now().plusSeconds(SESSION_VALIDITY_SECONDS);
         this.attemptCount = 0;
     }
 

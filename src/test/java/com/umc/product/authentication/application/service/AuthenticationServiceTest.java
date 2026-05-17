@@ -183,7 +183,7 @@ class AuthenticationServiceTest {
 
             ValidateEmailVerificationSessionCommand command =
                 ValidateEmailVerificationSessionCommand.builder()
-                    .sessionId(SESSION_ID.toString())
+                    .sessionId(SESSION_ID)
                     .code(CODE)
                     .build();
 
@@ -206,7 +206,7 @@ class AuthenticationServiceTest {
 
             ValidateEmailVerificationSessionCommand command =
                 ValidateEmailVerificationSessionCommand.builder()
-                    .sessionId(SESSION_ID.toString())
+                    .sessionId(SESSION_ID)
                     .code("000000")
                     .build();
 
