@@ -111,6 +111,24 @@ class EmailVerificationTest {
         }
 
         @Test
+        @DisplayName("이미 검증된 세션에 재호출하면 verifiedAt 을 덮어쓰지 않고 INVALID_EMAIL_VERIFICATION 으로 거부한다")
+        void 이미_검증된_세션_재호출_거부() {
+            // given
+            EmailVerification session = newSession(EmailVerificationPurpose.REGISTER);
+            session.verifyCode(CODE);
+            java.time.Instant firstVerifiedAt = session.getVerifiedAt();
+            int countBefore = session.getAttemptCount();
+
+            // when / then
+            assertThatThrownBy(() -> session.verifyCode(CODE))
+                .isInstanceOf(AuthenticationDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
+            assertThat(session.getVerifiedAt()).isEqualTo(firstVerifiedAt);
+            assertThat(session.getAttemptCount()).isEqualTo(countBefore);
+        }
+
+        @Test
         @DisplayName("임계치 도달 후에는 정답을 입력해도 검증되지 않으며 attemptCount 가 더 이상 증가하지 않는다")
         void 임계치_도달_후_정답도_거부() {
             // given

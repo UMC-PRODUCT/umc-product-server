@@ -120,8 +120,27 @@ public class EmailVerification extends BaseEntity {
         this.lastSentAt = Instant.now();
     }
 
+    /**
+     * 인증 코드 검증.
+     * <p>
+     * 사용자 열거 / 코드 탐색 방어를 위해 다음 실패 케이스는 외부에 모두 동일한
+     * INVALID_EMAIL_VERIFICATION 응답으로 수렴시킨다:
+     * <ul>
+     *   <li>이미 검증 완료된 세션의 재시도 (verifiedAt / verifiedBy 덮어쓰기 방지 가드)</li>
+     *   <li>임계치 초과로 무효화된 세션의 추가 시도 (attempt_count 더 이상 증가시키지 않음)</li>
+     *   <li>만료된 세션</li>
+     *   <li>코드 불일치</li>
+     * </ul>
+     * 운영 디버깅에서 상태 구분이 필요하면 attemptCount / isVerified / expiresAt /
+     * lastSentAt 으로 사후 분석한다.
+     */
     public void verifyCode(String code) {
-        // 임계치 초과로 이미 무효화된 세션은 즉시 거부 (시도 횟수도 더 이상 증가시키지 않음)
+        // 1. 이미 검증 완료된 세션: 부수효과 없이 즉시 거부 (verifiedAt 덮어쓰기 방지)
+        if (this.isVerified) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
+        }
+
+        // 2. 임계치 초과로 무효화된 세션: 시도 횟수도 더 이상 증가시키지 않고 즉시 거부
         if (this.attemptCount >= MAX_ATTEMPT_COUNT) {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
         }
