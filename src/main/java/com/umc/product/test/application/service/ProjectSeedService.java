@@ -16,6 +16,7 @@ import com.umc.product.project.application.port.in.command.dto.CreateDraftProjec
 import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectsCommand;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectsResult;
+import com.umc.product.test.application.port.in.command.dto.SeedProjectsResult.PartialProject;
 import com.umc.product.test.application.port.in.command.dto.SeedProjectsResult.SkippedCell;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +37,9 @@ import org.springframework.stereotype.Service;
  * 슬롯 총원을 무작위 추출해 한 프로젝트를 구성한다. PO 후보가 PLAN 챌린저로 등록되지 않은 경우
  * 시딩 측에서 PLAN 챌린저로 등록한 뒤 createDraft 를 호출한다. 같은 호출 안에서 사용된 Member 는
  * 다른 프로젝트에 재배정되지 않는다(uk_project_member_project_member 위반 방지).
+ * <p>
+ * <b>부분 성공 처리</b>: createDraft 성공 후 일부 addProjectMember 가 실패하더라도 프로젝트는
+ * 잔존하므로(create 와 add 가 별도 트랜잭션), 이 경우는 {@code partialProjects} 로 응답에 명시한다.
  */
 @Slf4j
 @Service
@@ -64,6 +68,7 @@ public class ProjectSeedService implements SeedProjectsUseCase {
         List<SchoolCell> cells = flattenSchoolCells(gisuId);
 
         List<Long> createdProjectIds = new ArrayList<>();
+        List<PartialProject> partialProjects = new ArrayList<>();
         List<SkippedCell> skipped = new ArrayList<>();
         Set<Long> usedMemberIds = new HashSet<>();
         int failedCount = 0;
@@ -71,8 +76,9 @@ public class ProjectSeedService implements SeedProjectsUseCase {
         int index = 0;
         int totalCells = cells.size();
         int consecutiveSkipsOnFullRound = 0;
+        int finalizedCount = 0;
 
-        while (createdProjectIds.size() < projectCount && totalCells > 0 && consecutiveSkipsOnFullRound < totalCells) {
+        while (finalizedCount < projectCount && totalCells > 0 && consecutiveSkipsOnFullRound < totalCells) {
             SchoolCell cell = cells.get(index % totalCells);
             index++;
 
@@ -80,6 +86,19 @@ public class ProjectSeedService implements SeedProjectsUseCase {
             switch (attempt.outcome()) {
                 case CREATED -> {
                     createdProjectIds.add(attempt.projectId());
+                    finalizedCount++;
+                    consecutiveSkipsOnFullRound = 0;
+                }
+                case PARTIAL -> {
+                    partialProjects.add(new PartialProject(
+                        attempt.projectId(),
+                        cell.chapterId(),
+                        cell.schoolId(),
+                        attempt.addedMemberCount(),
+                        attempt.expectedMemberCount(),
+                        attempt.reason()
+                    ));
+                    finalizedCount++;
                     consecutiveSkipsOnFullRound = 0;
                 }
                 case SKIPPED -> {
@@ -95,11 +114,11 @@ public class ProjectSeedService implements SeedProjectsUseCase {
 
         long elapsedMs = System.currentTimeMillis() - startedAt;
         log.info(
-            "project seed completed in {}ms: created={}, skipped={}, failed={}",
-            elapsedMs, createdProjectIds.size(), skipped.size(), failedCount
+            "project seed completed in {}ms: created={}, partial={}, skipped={}, failed={}",
+            elapsedMs, createdProjectIds.size(), partialProjects.size(), skipped.size(), failedCount
         );
 
-        return new SeedProjectsResult(createdProjectIds, skipped, failedCount);
+        return new SeedProjectsResult(createdProjectIds, partialProjects, skipped, failedCount);
     }
 
     private List<SchoolCell> flattenSchoolCells(Long gisuId) {
@@ -117,10 +136,11 @@ public class ProjectSeedService implements SeedProjectsUseCase {
         Set<Long> rawPool = getMemberUseCase.findAllIdsBySchoolId(cell.schoolId());
         List<Long> availablePool = rawPool.stream().filter(id -> !usedMemberIds.contains(id)).toList();
 
-        List<ChallengerPart> slots = partAssignmentPolicy.nextProjectSlots();
-        if (availablePool.size() < slots.size()) {
-            return SeedAttemptResult.skipped("INSUFFICIENT_POOL (need=%d, available=%d)"
-                .formatted(slots.size(), availablePool.size()));
+        List<ChallengerPart> slots = partAssignmentPolicy.nextProjectSlots(availablePool.size());
+        if (slots.isEmpty()) {
+            return SeedAttemptResult.skipped(
+                "INSUFFICIENT_POOL (need>=%d, available=%d)".formatted(PartAssignmentPolicy.MIN_TOTAL, availablePool.size())
+            );
         }
 
         List<Long> shuffled = new ArrayList<>(availablePool);
@@ -134,34 +154,51 @@ public class ProjectSeedService implements SeedProjectsUseCase {
         }
         Long poMemberId = poCandidate.get();
 
+        Long projectId;
         try {
             ensurePlanChallenger(poMemberId, gisuId);
-            Long projectId = createDraftProjectUseCase.create(CreateDraftProjectCommand.builder()
+            projectId = createDraftProjectUseCase.create(CreateDraftProjectCommand.builder()
                 .gisuId(gisuId)
                 .productOwnerMemberId(poMemberId)
                 .requesterMemberId(poMemberId)
                 .build());
+        } catch (Exception e) {
+            log.error(
+                "project seed failed at create (chapterId={}, schoolId={}, poMemberId={}): {}",
+                cell.chapterId(), cell.schoolId(), poMemberId, e.toString()
+            );
+            return SeedAttemptResult.failed(e.toString());
+        }
 
-            for (int i = 0; i < slots.size(); i++) {
-                Long memberId = picked.get(i);
-                ChallengerPart part = slots.get(i);
+        int addedCount = 0;
+        String firstAddFailureReason = null;
+        for (int i = 0; i < slots.size(); i++) {
+            Long memberId = picked.get(i);
+            ChallengerPart part = slots.get(i);
+            try {
                 addProjectMemberUseCase.add(AddProjectMemberCommand.builder()
                     .projectId(projectId)
                     .memberId(memberId)
                     .part(part)
                     .requesterMemberId(poMemberId)
                     .build());
+                usedMemberIds.add(memberId);
+                addedCount++;
+            } catch (Exception e) {
+                if (firstAddFailureReason == null) {
+                    firstAddFailureReason = "memberId=%d, part=%s, error=%s".formatted(memberId, part, e);
+                }
+                log.error(
+                    "project seed addMember failed (projectId={}, memberId={}, part={}): {}",
+                    projectId, memberId, part, e.toString()
+                );
             }
-
-            usedMemberIds.addAll(picked);
-            return SeedAttemptResult.created(projectId);
-        } catch (Exception e) {
-            log.error(
-                "project seed failed (chapterId={}, schoolId={}, poMemberId={}): {}",
-                cell.chapterId(), cell.schoolId(), poMemberId, e.toString()
-            );
-            return SeedAttemptResult.failed(e.toString());
         }
+
+        if (addedCount == slots.size()) {
+            return SeedAttemptResult.created(projectId);
+        }
+        return SeedAttemptResult.partial(projectId, addedCount, slots.size(), firstAddFailureReason);
     }
 
     /**
@@ -196,20 +233,30 @@ public class ProjectSeedService implements SeedProjectsUseCase {
     private record SchoolCell(Long chapterId, Long schoolId) {
     }
 
-    private record SeedAttemptResult(Outcome outcome, Long projectId, String reason) {
+    private record SeedAttemptResult(
+        Outcome outcome,
+        Long projectId,
+        int addedMemberCount,
+        int expectedMemberCount,
+        String reason
+    ) {
 
-        enum Outcome { CREATED, SKIPPED, FAILED }
+        enum Outcome { CREATED, PARTIAL, SKIPPED, FAILED }
 
         static SeedAttemptResult created(Long projectId) {
-            return new SeedAttemptResult(Outcome.CREATED, projectId, null);
+            return new SeedAttemptResult(Outcome.CREATED, projectId, 0, 0, null);
+        }
+
+        static SeedAttemptResult partial(Long projectId, int added, int expected, String reason) {
+            return new SeedAttemptResult(Outcome.PARTIAL, projectId, added, expected, reason);
         }
 
         static SeedAttemptResult skipped(String reason) {
-            return new SeedAttemptResult(Outcome.SKIPPED, null, reason);
+            return new SeedAttemptResult(Outcome.SKIPPED, null, 0, 0, reason);
         }
 
         static SeedAttemptResult failed(String reason) {
-            return new SeedAttemptResult(Outcome.FAILED, null, reason);
+            return new SeedAttemptResult(Outcome.FAILED, null, 0, 0, reason);
         }
     }
 }

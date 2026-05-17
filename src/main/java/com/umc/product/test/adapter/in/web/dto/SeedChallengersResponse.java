@@ -16,7 +16,8 @@ public record SeedChallengersResponse(
         Long schoolId,
         ChallengerPart part,
         int created,
-        int failed
+        int memberFailed,
+        int challengerFailed
     ) {
 
         public static PerCellSummary from(SeedChallengersResult.PerCellSummary summary) {
@@ -25,7 +26,8 @@ public record SeedChallengersResponse(
                 summary.schoolId(),
                 summary.part(),
                 summary.created(),
-                summary.failed()
+                summary.memberFailed(),
+                summary.challengerFailed()
             );
         }
     }

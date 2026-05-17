@@ -70,9 +70,9 @@ class ProjectSeedServiceTest {
     }
 
     @Test
-    @DisplayName("풀이 슬롯 최대보다 작은 school 은 시딩을 스킵한다")
+    @DisplayName("풀이 MIN_TOTAL(11) 미만인 school 은 시딩을 스킵한다")
     void 풀_부족_시_스킵() {
-        // Given - 모든 school 풀이 슬롯 최대(13)보다 작음
+        // Given - 풀 3명 (< 11)
         ChapterWithSchoolsInfo chapter = new ChapterWithSchoolsInfo(
             1L, "서울", List.of(new ChapterWithSchoolsInfo.SchoolInfo(101L, "건국대"))
         );
@@ -84,6 +84,7 @@ class ProjectSeedServiceTest {
 
         // Then
         assertThat(result.createdProjectIds()).isEmpty();
+        assertThat(result.partialProjects()).isEmpty();
         assertThat(result.skippedChapters()).isNotEmpty();
         assertThat(result.skippedChapters().get(0).reason()).contains("INSUFFICIENT_POOL");
         verify(createDraftProjectUseCase, never()).create(any());
@@ -109,6 +110,7 @@ class ProjectSeedServiceTest {
 
         // Then
         assertThat(result.createdProjectIds()).hasSize(1);
+        assertThat(result.partialProjects()).isEmpty();
         verify(manageChallengerUseCase, times(1)).createChallenger(any());
         verify(createDraftProjectUseCase, times(1)).create(any());
         verify(addProjectMemberUseCase, atLeast(11)).add(any());
@@ -117,7 +119,7 @@ class ProjectSeedServiceTest {
     @Test
     @DisplayName("같은 호출 안에서 한 멤버가 두 프로젝트에 중복 배정되지 않는다")
     void 멤버_중복_배정_차단() {
-        // Given - 한 school 에 30명 풀, 2개 프로젝트 시딩
+        // Given
         Long gisuId = 9L;
         ChapterWithSchoolsInfo chapter = new ChapterWithSchoolsInfo(
             1L, "서울", List.of(new ChapterWithSchoolsInfo.SchoolInfo(101L, "건국대"))
@@ -143,6 +145,61 @@ class ProjectSeedServiceTest {
                 .as("memberId %d already used in another project", cmd.memberId())
                 .isTrue();
         }
+    }
+
+    @Test
+    @DisplayName("addProjectMember 가 중간에 실패하면 partialProjects 로 보고한다")
+    void 부분_실패_시_partial_보고() {
+        // Given - 프로젝트 1개 생성하되 첫 add 이후 나머지 모두 실패
+        Long gisuId = 9L;
+        ChapterWithSchoolsInfo chapter = new ChapterWithSchoolsInfo(
+            1L, "서울", List.of(new ChapterWithSchoolsInfo.SchoolInfo(101L, "건국대"))
+        );
+        given(getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId)).willReturn(List.of(chapter));
+        given(getMemberUseCase.findAllIdsBySchoolId(101L)).willReturn(bigPool(13));
+        given(getChallengerUseCase.findByMemberIdAndGisuId(anyLong(), eq(gisuId)))
+            .willReturn(Optional.empty());
+        given(createDraftProjectUseCase.create(any())).willReturn(2000L);
+        given(addProjectMemberUseCase.add(any()))
+            .willReturn(1L)
+            .willThrow(new RuntimeException("add boom"));
+
+        // When
+        SeedProjectsResult result = sut.seed(new SeedProjectsCommand(1, gisuId));
+
+        // Then
+        assertThat(result.createdProjectIds()).isEmpty();
+        assertThat(result.partialProjects()).hasSize(1);
+        SeedProjectsResult.PartialProject partial = result.partialProjects().get(0);
+        assertThat(partial.projectId()).isEqualTo(2000L);
+        assertThat(partial.addedMemberCount()).isEqualTo(1);
+        assertThat(partial.expectedMemberCount()).isBetween(11, 13);
+        assertThat(partial.reason()).contains("add boom");
+    }
+
+    @Test
+    @DisplayName("createDraft 자체 실패는 failedCount 로 분류된다")
+    void 프로젝트_생성_실패_failed_분류() {
+        // Given
+        Long gisuId = 9L;
+        ChapterWithSchoolsInfo chapter = new ChapterWithSchoolsInfo(
+            1L, "서울", List.of(new ChapterWithSchoolsInfo.SchoolInfo(101L, "건국대"))
+        );
+        given(getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId)).willReturn(List.of(chapter));
+        given(getMemberUseCase.findAllIdsBySchoolId(101L)).willReturn(bigPool(13));
+        given(getChallengerUseCase.findByMemberIdAndGisuId(anyLong(), eq(gisuId)))
+            .willReturn(Optional.empty());
+        given(createDraftProjectUseCase.create(any()))
+            .willThrow(new RuntimeException("create boom"));
+
+        // When
+        SeedProjectsResult result = sut.seed(new SeedProjectsCommand(1, gisuId));
+
+        // Then
+        assertThat(result.createdProjectIds()).isEmpty();
+        assertThat(result.partialProjects()).isEmpty();
+        assertThat(result.failedCount()).isGreaterThanOrEqualTo(1);
+        verify(addProjectMemberUseCase, never()).add(any());
     }
 
     @Test

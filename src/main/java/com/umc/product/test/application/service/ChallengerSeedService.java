@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +61,7 @@ public class ChallengerSeedService implements SeedChallengersUseCase {
             gisuId, chapters.size(), parts.size(), command.countPerPartPerSchool()
         );
 
-        AtomicInteger sequence = new AtomicInteger(Math.toIntExact(getMemberUseCase.countAll()) + 1);
+        AtomicLong sequence = new AtomicLong(getMemberUseCase.countAll() + 1);
         List<PerCellSummary> summaries = new ArrayList<>();
         int totalCreated = 0;
         int totalFailed = 0;
@@ -79,7 +79,7 @@ public class ChallengerSeedService implements SeedChallengersUseCase {
                     );
                     summaries.add(summary);
                     totalCreated += summary.created();
-                    totalFailed += summary.failed();
+                    totalFailed += summary.totalFailed();
                 }
             }
         }
@@ -119,6 +119,7 @@ public class ChallengerSeedService implements SeedChallengersUseCase {
     /**
      * 한 (Chapter, School, Part) 셀을 시딩한다. 셀 단위 try-catch 로 한 셀의 실패가 다른 셀로
      * 전파되지 않게 한다. 멤버 생성은 per-call 트랜잭션, 챌린저 생성은 bulk 단일 트랜잭션이다.
+     * 실패 단계(멤버 / 챌린저)를 분리해서 보고하므로 호출자는 응답만 보고도 실패 지점을 추적할 수 있다.
      */
     private PerCellSummary seedCell(
         Long chapterId,
@@ -126,49 +127,49 @@ public class ChallengerSeedService implements SeedChallengersUseCase {
         ChallengerPart part,
         Long gisuId,
         int countPerCell,
-        AtomicInteger sequence
+        AtomicLong sequence
     ) {
         if (countPerCell <= 0) {
-            return new PerCellSummary(chapterId, schoolId, part, 0, 0);
+            return new PerCellSummary(chapterId, schoolId, part, 0, 0, 0);
         }
+        List<Long> createdMemberIds = new ArrayList<>(countPerCell);
+        int memberFailed = 0;
+        for (int i = 0; i < countPerCell; i++) {
+            long seq = sequence.getAndIncrement();
+            try {
+                Long memberId = registerIdPwMemberUseCase.register(
+                    dummyMemberFactory.nextIdPwCommandWithSchool(seq, schoolId)
+                );
+                createdMemberIds.add(memberId);
+            } catch (Exception e) {
+                memberFailed++;
+                log.error(
+                    "challenger seed member create failed at seq {} (chapterId={}, schoolId={}, part={}): {}",
+                    seq, chapterId, schoolId, part, e.toString()
+                );
+            }
+        }
+
+        if (createdMemberIds.isEmpty()) {
+            return new PerCellSummary(chapterId, schoolId, part, 0, memberFailed, 0);
+        }
+
+        List<CreateChallengerCommand> commands = createdMemberIds.stream()
+            .map(memberId -> CreateChallengerCommand.builder()
+                .memberId(memberId)
+                .part(part)
+                .gisuId(gisuId)
+                .build())
+            .toList();
         try {
-            List<Long> createdMemberIds = new ArrayList<>(countPerCell);
-            int failedMembers = 0;
-            for (int i = 0; i < countPerCell; i++) {
-                int seq = sequence.getAndIncrement();
-                try {
-                    Long memberId = registerIdPwMemberUseCase.register(
-                        dummyMemberFactory.nextIdPwCommandWithSchool(seq, schoolId)
-                    );
-                    createdMemberIds.add(memberId);
-                } catch (Exception e) {
-                    failedMembers++;
-                    log.error(
-                        "challenger seed member create failed at seq {} (chapterId={}, schoolId={}, part={}): {}",
-                        seq, chapterId, schoolId, part, e.toString()
-                    );
-                }
-            }
-
-            if (createdMemberIds.isEmpty()) {
-                return new PerCellSummary(chapterId, schoolId, part, 0, failedMembers);
-            }
-
-            List<CreateChallengerCommand> commands = createdMemberIds.stream()
-                .map(memberId -> CreateChallengerCommand.builder()
-                    .memberId(memberId)
-                    .part(part)
-                    .gisuId(gisuId)
-                    .build())
-                .toList();
             List<Long> challengerIds = manageChallengerUseCase.createChallengerBulk(commands);
-            return new PerCellSummary(chapterId, schoolId, part, challengerIds.size(), failedMembers);
+            return new PerCellSummary(chapterId, schoolId, part, challengerIds.size(), memberFailed, 0);
         } catch (Exception e) {
             log.error(
-                "challenger seed cell failed (chapterId={}, schoolId={}, part={}): {}",
-                chapterId, schoolId, part, e.toString()
+                "challenger seed challenger bulk failed (chapterId={}, schoolId={}, part={}, members={}): {}",
+                chapterId, schoolId, part, createdMemberIds.size(), e.toString()
             );
-            return new PerCellSummary(chapterId, schoolId, part, 0, countPerCell);
+            return new PerCellSummary(chapterId, schoolId, part, 0, memberFailed, createdMemberIds.size());
         }
     }
 }

@@ -2,7 +2,6 @@ package com.umc.product.test.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
@@ -21,7 +20,7 @@ import com.umc.product.organization.application.port.in.query.dto.chapter.Chapte
 import com.umc.product.test.application.port.in.command.dto.SeedChallengersCommand;
 import com.umc.product.test.application.port.in.command.dto.SeedChallengersResult;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -52,11 +51,11 @@ class ChallengerSeedServiceTest {
     @BeforeEach
     void setUp() {
         lenient().when(getMemberUseCase.countAll()).thenReturn(0L);
-        lenient().when(dummyMemberFactory.nextIdPwCommandWithSchool(anyInt(), anyLong()))
+        lenient().when(dummyMemberFactory.nextIdPwCommandWithSchool(anyLong(), anyLong()))
             .thenReturn(mock(IdPwRegisterMemberCommand.class));
-        AtomicInteger memberIdCounter = new AtomicInteger(1);
+        AtomicLong memberIdCounter = new AtomicLong(1L);
         lenient().when(registerIdPwMemberUseCase.register(any()))
-            .thenAnswer(inv -> (long) memberIdCounter.getAndIncrement());
+            .thenAnswer(inv -> memberIdCounter.getAndIncrement());
     }
 
     @Test
@@ -135,6 +134,35 @@ class ChallengerSeedServiceTest {
         assertThat(result.perCellSummary()).hasSize(2);
         assertThat(result.totalCreated()).isEqualTo(1);
         verify(manageChallengerUseCase, times(2)).createChallengerBulk(any());
+    }
+
+    @Test
+    @DisplayName("멤버 생성 실패는 memberFailed, 챌린저 bulk 실패는 challengerFailed 로 분리 보고된다")
+    void 실패_단계_분리_보고() {
+        // Given - 1셀, count=2, 멤버 1명 실패 + 1명 성공 → 챌린저 bulk 실패
+        Long gisuId = 9L;
+        ChapterWithSchoolsInfo chapter = new ChapterWithSchoolsInfo(
+            1L, "서울", List.of(new ChapterWithSchoolsInfo.SchoolInfo(101L, "건국대"))
+        );
+        given(getChapterUseCase.getChaptersWithSchoolsByGisuId(gisuId)).willReturn(List.of(chapter));
+        given(registerIdPwMemberUseCase.register(any()))
+            .willThrow(new RuntimeException("member boom"))
+            .willReturn(500L);
+        given(manageChallengerUseCase.createChallengerBulk(any()))
+            .willThrow(new RuntimeException("challenger boom"));
+
+        // When
+        SeedChallengersResult result = sut.seed(new SeedChallengersCommand(
+            gisuId, 2, List.of(ChallengerPart.WEB), null
+        ));
+
+        // Then
+        assertThat(result.perCellSummary()).hasSize(1);
+        SeedChallengersResult.PerCellSummary cell = result.perCellSummary().get(0);
+        assertThat(cell.created()).isZero();
+        assertThat(cell.memberFailed()).isEqualTo(1);
+        assertThat(cell.challengerFailed()).isEqualTo(1);
+        assertThat(cell.totalFailed()).isEqualTo(2);
     }
 
     @Test
