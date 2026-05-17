@@ -12,16 +12,19 @@ import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.notification.application.port.in.SendEmailUseCase;
 import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
 import java.security.SecureRandom;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService implements ManageAuthenticationUseCase {
@@ -30,6 +33,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
     private final LoadEmailVerificationPort loadEmailVerificationPort;
     private final SaveEmailVerificationPort saveEmailVerificationPort;
     private final JwtTokenProvider jwtTokenProvider;
+    private final GetMemberCredentialUseCase getMemberCredentialUseCase;
     @Value("${app.base-url}")
     private String serverUrl;
 
@@ -59,6 +63,28 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
         // DTO 단계 검증을 통과해도, Service 진입 시 도메인 SSOT 인 CredentialPolicy 로 한번 더 검증한다.
         CredentialPolicy.validateEmail(email);
 
+        // purpose 별 가입 여부 분기 검증.
+        // - REGISTER: 이미 가입된 이메일이면 인증 진행 자체를 차단 (가입 마지막 단계의 UNIQUE 충돌로 인한
+        //   "인증 다 했는데 실패" UX 방지). 회원가입 흐름에서는 이미 가입 여부 노출이 자연스러움.
+        // - PASSWORD_RESET: 미가입 / 자격증명 미등록 이메일에 대해서는 user enumeration 방어를 위해
+        //   응답은 동일하게 내려보내되 실제 메일 발송만 건너뛴다. 후속 reset 흐름에서도 INVALID_LOGIN_CREDENTIAL
+        //   단일 메시지로 응답하므로 끝까지 가입 여부가 노출되지 않는다.
+        boolean shouldSendEmail = switch (purpose) {
+            case REGISTER -> {
+                if (getMemberCredentialUseCase.existsByEmail(email)) {
+                    throw new AuthenticationDomainException(AuthenticationErrorCode.EMAIL_ALREADY_EXISTS);
+                }
+                yield true;
+            }
+            case PASSWORD_RESET -> {
+                boolean hasCredential = getMemberCredentialUseCase.findCredentialByEmail(email).isPresent();
+                if (!hasCredential) {
+                    log.info("PASSWORD_RESET 발송 요청이지만 가입/자격증명 미존재 — 발송 건너뜀 (enumeration 방어)");
+                }
+                yield hasCredential;
+            }
+        };
+
         String code = generateRandomCode();
         String token = UUID.randomUUID().toString();
 
@@ -71,7 +97,9 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
 
         Long sessionId = saveEmailVerificationPort.save(emailVerification).getId();
 
-        sendVerificationEmail(email, code, token);
+        if (shouldSendEmail) {
+            sendVerificationEmail(email, code, token);
+        }
 
         return sessionId;
     }

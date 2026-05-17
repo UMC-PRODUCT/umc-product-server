@@ -16,8 +16,11 @@ import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.security.JwtTokenProvider;
+import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
+import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
 import com.umc.product.notification.application.port.in.SendEmailUseCase;
 import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -56,6 +59,9 @@ class AuthenticationServiceTest {
     @Mock
     JwtTokenProvider jwtTokenProvider;
 
+    @Mock
+    GetMemberCredentialUseCase getMemberCredentialUseCase;
+
     @InjectMocks
     AuthenticationService service;
 
@@ -90,10 +96,11 @@ class AuthenticationServiceTest {
         }
 
         @Test
-        @DisplayName("정상 이메일이면 세션을 저장하고 인증 메일을 발송한다")
-        void 정상_세션_생성() {
+        @DisplayName("REGISTER + 미가입 이메일이면 세션을 저장하고 인증 메일을 발송한다")
+        void REGISTER_정상_세션_생성() {
             // given
             ReflectionTestUtils.setField(service, "serverUrl", "https://example.com");
+            given(getMemberCredentialUseCase.existsByEmail(EMAIL)).willReturn(false);
             EmailVerification persisted = newSession(EmailVerificationPurpose.REGISTER);
             ReflectionTestUtils.setField(persisted, "id", SESSION_ID);
             given(saveEmailVerificationPort.save(any(EmailVerification.class))).willReturn(persisted);
@@ -105,6 +112,61 @@ class AuthenticationServiceTest {
             assertThat(sessionId).isEqualTo(SESSION_ID);
             then(sendEmailUseCase).should()
                 .sendVerificationEmail(any(SendVerificationEmailCommand.class));
+        }
+
+        @Test
+        @DisplayName("REGISTER + 이미 가입된 이메일이면 EMAIL_ALREADY_EXISTS 예외를 던지고 저장/발송하지 않는다")
+        void REGISTER_중복_이메일_거부() {
+            // given
+            given(getMemberCredentialUseCase.existsByEmail(EMAIL)).willReturn(true);
+
+            // when / then
+            assertThatThrownBy(() ->
+                service.createEmailVerificationSession(EMAIL, EmailVerificationPurpose.REGISTER))
+                .isInstanceOf(AuthenticationDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(AuthenticationErrorCode.EMAIL_ALREADY_EXISTS);
+
+            then(saveEmailVerificationPort).should(never()).save(any());
+            then(sendEmailUseCase).should(never()).sendVerificationEmail(any());
+        }
+
+        @Test
+        @DisplayName("PASSWORD_RESET + 자격증명 존재하면 세션을 저장하고 인증 메일을 발송한다")
+        void PASSWORD_RESET_정상_세션_생성() {
+            // given
+            ReflectionTestUtils.setField(service, "serverUrl", "https://example.com");
+            given(getMemberCredentialUseCase.findCredentialByEmail(EMAIL))
+                .willReturn(Optional.of(new MemberCredentialInfo(1L, "encoded-password")));
+            EmailVerification persisted = newSession(EmailVerificationPurpose.PASSWORD_RESET);
+            ReflectionTestUtils.setField(persisted, "id", SESSION_ID);
+            given(saveEmailVerificationPort.save(any(EmailVerification.class))).willReturn(persisted);
+
+            // when
+            Long sessionId = service.createEmailVerificationSession(EMAIL, EmailVerificationPurpose.PASSWORD_RESET);
+
+            // then
+            assertThat(sessionId).isEqualTo(SESSION_ID);
+            then(sendEmailUseCase).should()
+                .sendVerificationEmail(any(SendVerificationEmailCommand.class));
+        }
+
+        @Test
+        @DisplayName("PASSWORD_RESET + 자격증명 미존재면 세션은 저장하되 메일은 발송하지 않는다 (enumeration 방어)")
+        void PASSWORD_RESET_미가입_silent() {
+            // given
+            ReflectionTestUtils.setField(service, "serverUrl", "https://example.com");
+            given(getMemberCredentialUseCase.findCredentialByEmail(EMAIL)).willReturn(Optional.empty());
+            EmailVerification persisted = newSession(EmailVerificationPurpose.PASSWORD_RESET);
+            ReflectionTestUtils.setField(persisted, "id", SESSION_ID);
+            given(saveEmailVerificationPort.save(any(EmailVerification.class))).willReturn(persisted);
+
+            // when
+            Long sessionId = service.createEmailVerificationSession(EMAIL, EmailVerificationPurpose.PASSWORD_RESET);
+
+            // then: 응답은 정상이지만 메일은 발송되지 않음 (이메일 열거 방어)
+            assertThat(sessionId).isEqualTo(SESSION_ID);
+            then(sendEmailUseCase).should(never()).sendVerificationEmail(any());
         }
     }
 
