@@ -6,7 +6,9 @@ import com.umc.product.test.application.service.ChallengerSeedService;
 import com.umc.product.test.application.service.CurriculumSeedService;
 import com.umc.product.test.application.service.DummyCurriculumFactory;
 import com.umc.product.test.application.service.DummyMemberFactory;
+import com.umc.product.test.application.service.DummyNoticeFactory;
 import com.umc.product.test.application.service.MemberSeedService;
+import com.umc.product.test.application.service.NoticeSeedService;
 import com.umc.product.test.application.service.PartAssignmentPolicy;
 import com.umc.product.test.application.service.ProjectSeedService;
 import com.umc.product.test.application.service.SeedProperties;
@@ -32,8 +34,10 @@ class SeedControllerBeanRegistrationTest {
         ChallengerSeedService.class,
         ProjectSeedService.class,
         CurriculumSeedService.class,
+        NoticeSeedService.class,
         DummyMemberFactory.class,
         DummyCurriculumFactory.class,
+        DummyNoticeFactory.class,
         PartAssignmentPolicy.class,
         SeedProperties.class
     })

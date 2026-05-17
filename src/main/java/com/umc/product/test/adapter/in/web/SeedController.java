@@ -7,11 +7,14 @@ import com.umc.product.test.adapter.in.web.dto.SeedCurriculumRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedCurriculumResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedMembersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedMembersResponse;
+import com.umc.product.test.adapter.in.web.dto.SeedNoticeRequest;
+import com.umc.product.test.adapter.in.web.dto.SeedNoticeResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsResponse;
 import com.umc.product.test.application.port.in.command.SeedChallengersUseCase;
 import com.umc.product.test.application.port.in.command.SeedCurriculumUseCase;
 import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
+import com.umc.product.test.application.port.in.command.SeedNoticeUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,6 +48,7 @@ public class SeedController {
     private final SeedChallengersUseCase seedChallengersUseCase;
     private final SeedProjectsUseCase seedProjectsUseCase;
     private final SeedCurriculumUseCase seedCurriculumUseCase;
+    private final SeedNoticeUseCase seedNoticeUseCase;
 
     @Operation(
         summary = "[SEED-001] 더미 멤버 시딩",
@@ -102,5 +106,23 @@ public class SeedController {
     @PostMapping("/curriculum")
     public SeedCurriculumResponse seedCurriculum(@RequestBody @Valid SeedCurriculumRequest request) {
         return SeedCurriculumResponse.from(seedCurriculumUseCase.seed(request.toCommand()));
+    }
+
+    @Operation(
+        summary = "[SEED-005] Notice 시딩 (지부 · 학교 · 파트 분포)",
+        description = """
+            활성 기수(또는 지정 기수)에 대해 다음 4 가지 scope 로 공지를 분포 시딩합니다.
+              GLOBAL  : 기수 전체 대상 (작성자에게 중앙 총괄단 권한 필요)
+              CHAPTER : 각 지부별        (작성자에게 해당 지부 회장 권한 필요)
+              SCHOOL  : 각 학교별        (작성자에게 해당 학교 회장단 권한 필요)
+              PART    : 각 파트별        (작성자에게 중앙 운영진 권한 필요)
+            각 공지의 제목과 내용에는 대상 범위 정보 ([전체]/[지부]/[학교]/[파트] + 식별자) 가
+            포함되어 운영 화면에서 시딩 데이터 식별이 쉬워집니다.
+            authorMemberId 의 권한이 부족한 scope 는 scopeBreakdown 의 failed 카운트에 잡힙니다.
+            """
+    )
+    @PostMapping("/notice")
+    public SeedNoticeResponse seedNotice(@RequestBody @Valid SeedNoticeRequest request) {
+        return SeedNoticeResponse.from(seedNoticeUseCase.seed(request.toCommand()));
     }
 }

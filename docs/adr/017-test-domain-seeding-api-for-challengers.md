@@ -453,7 +453,7 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 
 ### 호출 순서 (필수)
 
-네 API 는 의존성이 있어 다음 순서로 호출한다.
+다섯 API 는 의존성이 있어 다음 순서로 호출한다.
 
 1. **`POST /test/seed/members`** — Member 풀을 채운다. Challenger·Project 시딩이
    사용할 Member 가 없으면 후속 시딩이 모두 skip 된다.
@@ -469,6 +469,11 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
    `releaseRequesterMemberId` 를 함께 보내면 워크북을 READY → RELEASED 로 전환해
    Phase 2 (챌린저 워크북 배포·미션 제출) 작업의 입구를 열어둔다. Phase 2 시딩은
    본 PR 의 범위가 아니다 — 시간 제약·권한·상태 의존성 때문에 별도 ADR 로 다룰 예정이다.
+5. **`POST /test/seed/notice`** — 활성 기수에 대해 GLOBAL / CHAPTER / SCHOOL / PART
+   4 가지 scope 로 공지를 분포 시딩한다. 제목·내용에는 항상 대상 범위 정보
+   ([전체]/[지부]/[학교]/[파트] + 식별자) 가 포함되어 운영 화면에서 시딩 데이터 식별이
+   쉬워진다. 작성자 권한은 `authorMemberId` 에 지정한 멤버에 종속되므로, 중앙 총괄단
+   권한이 있는 멤버 ID 를 권장한다 (그렇지 않은 scope 는 권한 부족으로 실패 격리됨).
 
 ### 권장 호출 예시 (alpha 환경 초기화)
 
@@ -488,6 +493,10 @@ curl -X POST $BASE/test/seed/projects -H 'Content-Type: application/json' \
 # 4. 커리큘럼: 8 주차, 워크북당 미션 2개, releaseRequesterMemberId 지정 시 RELEASED 까지 전환
 curl -X POST $BASE/test/seed/curriculum -H 'Content-Type: application/json' \
   -d '{"weeksPerCurriculum": 8, "missionsPerWorkbook": 2, "releaseRequesterMemberId": 1}'
+
+# 5. 공지: 전체 5개 + 지부당 3개 + 학교당 2개 + 파트당 1개, 작성자는 중앙 총괄단 권한 멤버 ID 1
+curl -X POST $BASE/test/seed/notice -H 'Content-Type: application/json' \
+  -d '{"authorMemberId": 1, "globalCount": 5, "perChapterCount": 3, "perSchoolCount": 2, "perPartCount": 1}'
 ```
 
 ### 응답 해석
@@ -512,6 +521,13 @@ curl -X POST $BASE/test/seed/curriculum -H 'Content-Type: application/json' \
 - `SeedCurriculumResponse.released=true / releaseFailed=0` — 모든 워크북이 RELEASED 로
   전환되어 챌린저가 즉시 배포받을 수 있는 상태. `releaseRequesterMemberId` 미지정 시는
   `released=false` (READY 상태 유지).
+- `SeedNoticeResponse.scopeBreakdown[i].failed > 0` — 해당 scope 의 공지 생성이
+  실패. 대부분 `authorMemberId` 의 권한 부족(`NO_WRITE_PERMISSION`)이 원인이다.
+  예: PART scope 는 `isCentralMemberInGisu` 필요, SCHOOL scope 는 `isSchoolCoreInGisu`
+  필요 — 두 권한을 모두 가진 멤버(중앙 총괄단)를 지정하지 않으면 일부 scope 가 실패한다.
+- `SeedNoticeResponse.totalCreated > 0` — 시딩된 공지의 제목·내용에 항상
+  `[전체]/[지부]/[학교]/[파트]` 태그와 식별자(지부명/학교명/파트명) 가 포함되므로
+  운영 화면에서 카테고리 분포를 시각적으로 확인할 수 있다.
 
 ### 자주 발생하는 운영 이슈
 
