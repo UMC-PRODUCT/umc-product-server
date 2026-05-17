@@ -90,7 +90,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = AuthenticationDomainException.class)
     public String validateEmailVerificationSession(ValidateEmailVerificationSessionCommand command) {
         // code가 주어지면 토큰이 우선 순위
         if (command.code() != null) {
@@ -98,6 +98,8 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
                 Long.valueOf(command.sessionId())
             );
 
+            // verifyCode 가 실패해도 attempt_count 증가/세션 무효화는 영속되어야 하므로
+            // AuthenticationDomainException 에 대해서는 트랜잭션을 롤백하지 않는다.
             emailVerification.verifyCode(command.code());
 
             return jwtTokenProvider.createEmailVerificationToken(
