@@ -24,6 +24,10 @@ public class SpringDomainEventPublisher implements DomainEventPublisher {
         delegate.publishEvent(event);
     }
 
+    /**
+     * 컬렉션의 순회 순서대로 위임한다. 도중 이벤트 발행이 예외를 던지면 이후 이벤트는
+     * 발행되지 않고 예외가 호출자에게 전파된다 (fail-fast). 원자성은 보장하지 않는다.
+     */
     @Override
     public void publishAll(Collection<? extends DomainEvent> events) {
         events.forEach(delegate::publishEvent);
