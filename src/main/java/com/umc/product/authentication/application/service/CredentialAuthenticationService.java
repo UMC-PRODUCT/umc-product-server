@@ -5,12 +5,14 @@ import com.umc.product.authentication.application.port.in.command.dto.ChangePass
 import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByIdPwCommand;
+import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialCommand;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.command.ManageMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
+import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialByEmailCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialCommand;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
@@ -41,6 +43,7 @@ public class CredentialAuthenticationService implements CredentialAuthentication
     private final CredentialRehashService rehashService;
 
     @Override
+    @Deprecated
     public void registerCredential(RegisterCredentialCommand command) {
         // 형식 검증은 커맨드 record 에서 이미 끝났다. 여기서는 중복만 본다.
         if (getMemberCredentialUseCase.existsByLoginId(command.loginId())) {
@@ -51,6 +54,18 @@ public class CredentialAuthenticationService implements CredentialAuthentication
 
         manageMemberCredentialUseCase.registerCredential(
             RegisterMemberCredentialCommand.of(command.memberId(), command.loginId(), encodedPassword)
+        );
+    }
+
+    @Override
+    public void registerCredentialByEmail(RegisterCredentialByEmailCommand command) {
+        // email 중복은 회원가입 시 Member.email UNIQUE 제약으로 이미 보장된다.
+        // 본 메서드는 Member 가 이미 생성된 직후 자격증명을 부착하는 흐름에서 호출되므로
+        // 별도 중복 체크를 하지 않는다.
+        String encodedPassword = passwordEncoder.encode(command.rawPassword());
+
+        manageMemberCredentialUseCase.registerCredentialByEmail(
+            RegisterMemberCredentialByEmailCommand.of(command.memberId(), encodedPassword)
         );
     }
 

@@ -4,6 +4,7 @@ import com.umc.product.authentication.application.port.in.command.dto.ChangePass
 import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByIdPwCommand;
+import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialCommand;
 
 /**
@@ -14,8 +15,20 @@ import com.umc.product.authentication.application.port.in.command.dto.RegisterCr
  */
 public interface CredentialAuthenticationUseCase {
 
-    /** 회원에게 ID/PW 자격증명을 최초 등록한다. */
+    /**
+     * @deprecated ADR-017 에 따라 loginId 가 제거된 흐름인
+     * {@link #registerCredentialByEmail(RegisterCredentialByEmailCommand)} 사용.
+     */
+    @Deprecated
     void registerCredential(RegisterCredentialCommand command);
+
+    /**
+     * 회원에게 이메일 기반 자격증명(비밀번호)을 최초 등록한다.
+     * <p>
+     * email 은 이미 회원 생성 단계에서 emailVerificationToken 으로 검증되어
+     * Member.email 에 저장되어 있다.
+     */
+    void registerCredentialByEmail(RegisterCredentialByEmailCommand command);
 
     /** 현재 비밀번호 검증 후 신규 비밀번호로 교체한다. */
     void changePassword(ChangePasswordCommand command);

@@ -1,6 +1,7 @@
 package com.umc.product.member.application.port.in.command;
 
 import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
+import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialByEmailCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialCommand;
 
 /**
@@ -12,9 +13,18 @@ import com.umc.product.member.application.port.in.command.dto.RegisterMemberCred
 public interface ManageMemberCredentialUseCase {
 
     /**
-     * 회원에 자격증명을 최초로 등록한다. 이미 등록되어 있으면 도메인 예외를 던진다.
+     * @deprecated ADR-017 에 따라 loginId 가 제거된 흐름인
+     * {@link #registerCredentialByEmail(RegisterMemberCredentialByEmailCommand)} 사용.
      */
+    @Deprecated
     void registerCredential(RegisterMemberCredentialCommand command);
+
+    /**
+     * 회원에 이메일 기반 자격증명을 최초로 등록한다. 이미 등록되어 있으면 도메인 예외를 던진다.
+     * <p>
+     * email 은 회원 생성 시점에 이미 검증되어 Member.email 에 저장되어 있다.
+     */
+    void registerCredentialByEmail(RegisterMemberCredentialByEmailCommand command);
 
     /**
      * 회원의 비밀번호 해시를 갱신한다. 자격증명이 없는 회원이면 도메인 예외를 던진다.

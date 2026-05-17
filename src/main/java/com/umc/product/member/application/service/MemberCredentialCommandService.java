@@ -2,6 +2,7 @@ package com.umc.product.member.application.service;
 
 import com.umc.product.member.application.port.in.command.ManageMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
+import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialByEmailCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialCommand;
 import com.umc.product.member.application.port.out.LoadMemberPort;
 import com.umc.product.member.domain.Member;
@@ -19,6 +20,7 @@ public class MemberCredentialCommandService implements ManageMemberCredentialUse
     private final LoadMemberPort loadMemberPort;
 
     @Override
+    @Deprecated
     public void registerCredential(RegisterMemberCredentialCommand command) {
         Member member = loadMemberPort.findById(command.memberId())
             .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
@@ -26,6 +28,14 @@ public class MemberCredentialCommandService implements ManageMemberCredentialUse
         // 도메인 메서드가 활성 상태/중복 등록을 모두 검증한다.
         // JPA 영속성 컨텍스트가 변경 감지(dirty checking) 로 저장한다.
         member.registerCredential(command.loginId(), command.encodedPassword());
+    }
+
+    @Override
+    public void registerCredentialByEmail(RegisterMemberCredentialByEmailCommand command) {
+        Member member = loadMemberPort.findById(command.memberId())
+            .orElseThrow(() -> new MemberDomainException(MemberErrorCode.MEMBER_NOT_FOUND));
+
+        member.registerCredential(command.encodedPassword());
     }
 
     @Override
