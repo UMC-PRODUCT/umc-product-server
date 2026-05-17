@@ -302,7 +302,7 @@ class ProjectApplicationFormQueryServiceTest {
         ReflectionTestUtils.setField(project, "status", ProjectStatus.IN_PROGRESS);
         ReflectionTestUtils.setField(project, "name", "Triple");
         ReflectionTestUtils.setField(project, "productOwnerMemberId", PM_MEMBER_ID);
-        ReflectionTestUtils.setField(project, "createdByMemberId", PM_MEMBER_ID);
+        ReflectionTestUtils.setField(project, "creatorMemberId", PM_MEMBER_ID);
         return project;
     }
 

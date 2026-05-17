@@ -95,7 +95,7 @@ public class ProjectCommandController {
     @PostMapping("/{projectId}/submit")
     @Operation(
         summary = "[PROJECT-107] 프로젝트 제출",
-        description = "DRAFT 상태의 프로젝트를 제출하여 PENDING_REVIEW로 전이합니다. 작성자 PM만 호출 가능."
+        description = "DRAFT 상태의 프로젝트를 제출하여 PENDING_REVIEW로 전이합니다. 작성자(creator)만 호출 가능."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
@@ -104,12 +104,10 @@ public class ProjectCommandController {
         message = "프로젝트 제출 권한이 없습니다."
     )
     public ProjectStatusResponse submit(
-        @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId
     ) {
         submitProjectUseCase.submit(SubmitProjectCommand.builder()
             .projectId(projectId)
-            .requesterMemberId(memberPrincipal.getMemberId())
             .build());
         return ProjectStatusResponse.of(projectId, ProjectStatus.PENDING_REVIEW);
     }
@@ -117,7 +115,7 @@ public class ProjectCommandController {
     @PostMapping("/{projectId}/transfer-ownership")
     @Operation(
         summary = "[PROJECT-104] 프로젝트 소유권 양도",
-        description = "메인 PM을 다른 PLAN 파트 챌린저에게 양도합니다. 현재 PM만 호출 가능. 종료 상태에서는 호출 불가."
+        description = "메인 PM을 다른 PLAN 파트 챌린저에게 양도합니다. 현재 PM 또는 운영진이 호출 가능. 종료 상태에서는 호출 불가."
     )
     @CheckAccess(
         resourceType = ResourceType.PROJECT,
@@ -126,12 +124,11 @@ public class ProjectCommandController {
         message = "프로젝트 소유권 양도 권한이 없습니다."
     )
     public ProjectStatusResponse transferOwnership(
-        @CurrentMember MemberPrincipal memberPrincipal,
         @PathVariable Long projectId,
         @Valid @RequestBody TransferProjectOwnershipRequest request
     ) {
         ProjectStatus status = transferProjectOwnershipUseCase.transfer(
-            request.toCommand(projectId, memberPrincipal.getMemberId()));
+            request.toCommand(projectId));
         return ProjectStatusResponse.of(projectId, status);
     }
 

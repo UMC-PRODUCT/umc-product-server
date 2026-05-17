@@ -14,10 +14,9 @@ public record TransferProjectOwnershipRequest(
     @Size(max = 200, message = "사유는 200자 이하여야 합니다")
     String reason
 ) {
-    public TransferProjectOwnershipCommand toCommand(Long projectId, Long requesterMemberId) {
+    public TransferProjectOwnershipCommand toCommand(Long projectId) {
         return TransferProjectOwnershipCommand.builder()
             .projectId(projectId)
-            .requesterMemberId(requesterMemberId)
             .newOwnerMemberId(newOwnerMemberId)
             .reason(reason)
             .build();
