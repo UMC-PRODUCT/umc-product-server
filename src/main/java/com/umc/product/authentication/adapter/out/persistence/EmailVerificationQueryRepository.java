@@ -4,6 +4,7 @@ import static com.umc.product.authentication.domain.QEmailVerification.emailVeri
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.umc.product.authentication.domain.EmailVerification;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
@@ -12,17 +13,21 @@ import org.springframework.stereotype.Repository;
 public class EmailVerificationQueryRepository {
     private final JPAQueryFactory jpaQueryFactory;
 
-    EmailVerification findById(Long id) {
-        return jpaQueryFactory
-            .selectFrom(emailVerification)
-            .where(emailVerification.id.eq(id))
-            .fetchOne();
+    public Optional<EmailVerification> findById(Long id) {
+        return Optional.ofNullable(
+            jpaQueryFactory
+                .selectFrom(emailVerification)
+                .where(emailVerification.id.eq(id))
+                .fetchOne()
+        );
     }
 
-    EmailVerification findByToken(String token) {
-        return jpaQueryFactory
-            .selectFrom(emailVerification)
-            .where(emailVerification.token.eq(token))
-            .fetchOne();
+    public Optional<EmailVerification> findByToken(String token) {
+        return Optional.ofNullable(
+            jpaQueryFactory
+                .selectFrom(emailVerification)
+                .where(emailVerification.token.eq(token))
+                .fetchOne()
+        );
     }
 }
