@@ -3,6 +3,7 @@ package com.umc.product.authentication.application.service;
 import com.umc.product.authentication.application.port.in.command.CredentialAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.ChangePasswordCommand;
 import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
+import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByIdPwCommand;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialCommand;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
@@ -72,12 +73,30 @@ public class CredentialAuthenticationService implements CredentialAuthentication
     }
 
     @Override
+    @Deprecated
     @Transactional(readOnly = true)
     public IdPwLoginResult loginByIdPw(LoginByIdPwCommand command) {
         // 1) 자격증명 조회: 부재 / 실패 모두 동일 메시지로 처리하여 사용자 열거 공격을 방지한다.
         Optional<MemberCredentialInfo> credentialOpt =
             getMemberCredentialUseCase.findCredentialByLoginId(command.loginId());
 
+        return verifyAndIssueTokens(credentialOpt, command.rawPassword());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public IdPwLoginResult loginByEmail(LoginByEmailCommand command) {
+        // 1) 자격증명 조회: 부재 / 실패 모두 동일 메시지로 처리하여 사용자 열거 공격을 방지한다.
+        Optional<MemberCredentialInfo> credentialOpt =
+            getMemberCredentialUseCase.findCredentialByEmail(command.email());
+
+        return verifyAndIssueTokens(credentialOpt, command.rawPassword());
+    }
+
+    private IdPwLoginResult verifyAndIssueTokens(
+        Optional<MemberCredentialInfo> credentialOpt,
+        String rawPassword
+    ) {
         if (credentialOpt.isEmpty()) {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL);
         }
@@ -85,13 +104,13 @@ public class CredentialAuthenticationService implements CredentialAuthentication
         MemberCredentialInfo credential = credentialOpt.get();
 
         // 2) 비밀번호 검증
-        if (!passwordEncoder.matches(command.rawPassword(), credential.passwordHash())) {
+        if (!passwordEncoder.matches(rawPassword, credential.passwordHash())) {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL);
         }
 
         // 3) 점진적 rehash: 해시 정책이 갱신되었으면 최신 정책으로 재저장한다.
         // 별도 트랜잭션(REQUIRES_NEW)에서 수행하여 실패가 로그인에 영향을 주지 않도록 한다.
-        rehashService.rehashIfNeeded(credential, command.rawPassword());
+        rehashService.rehashIfNeeded(credential, rawPassword);
 
         // 4) 토큰 발급
         Long memberId = credential.memberId();

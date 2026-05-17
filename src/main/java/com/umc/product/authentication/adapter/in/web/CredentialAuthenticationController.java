@@ -1,8 +1,10 @@
 package com.umc.product.authentication.adapter.in.web;
 
 import com.umc.product.authentication.adapter.in.web.dto.request.ChangePasswordRequest;
+import com.umc.product.authentication.adapter.in.web.dto.request.LoginByEmailRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.LoginByIdPwRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.RegisterCredentialRequest;
+import com.umc.product.authentication.adapter.in.web.dto.response.EmailAvailabilityResponse;
 import com.umc.product.authentication.adapter.in.web.dto.response.IdPwLoginResponse;
 import com.umc.product.authentication.adapter.in.web.dto.response.LoginIdAvailabilityResponse;
 import com.umc.product.authentication.application.port.in.command.CredentialAuthenticationUseCase;
@@ -75,12 +77,36 @@ public class CredentialAuthenticationController {
 
     @Public
     @PostMapping("/login/id-pw")
-    @Operation(summary = "[LOGIN-004] ID/PW 로그인",
-        description = "loginId/password 로 인증하여 AccessToken/RefreshToken 을 발급받습니다.")
+    @Operation(summary = "[LOGIN-004] ID/PW 로그인 (Deprecated)",
+        description = "⚠️ ADR-017 에 따라 곧 제거됩니다. 새 클라이언트는 `/auth/login/email` 을 사용해주세요. "
+            + "loginId/password 로 인증하여 AccessToken/RefreshToken 을 발급받습니다.")
+    @Deprecated
     public IdPwLoginResponse loginByIdPw(
         @Valid @RequestBody LoginByIdPwRequest request
     ) {
         IdPwLoginResult result = credentialAuthenticationUseCase.loginByIdPw(request.toCommand());
+        return IdPwLoginResponse.from(result);
+    }
+
+    @Public
+    @GetMapping("/email/availability")
+    @Operation(summary = "[CREDENTIAL-005] 이메일 사용 가능 여부 조회",
+        description = "email 형식이 유효하고 아직 사용되지 않았는지 확인합니다. 형식이 잘못되면 400 응답입니다.")
+    public EmailAvailabilityResponse checkEmailAvailability(
+        @RequestParam String email
+    ) {
+        boolean available = checkCredentialAvailabilityUseCase.isEmailAvailable(email);
+        return EmailAvailabilityResponse.of(email, available);
+    }
+
+    @Public
+    @PostMapping("/login/email")
+    @Operation(summary = "[LOGIN-006] 이메일/PW 로그인",
+        description = "email/password 로 인증하여 AccessToken/RefreshToken 을 발급받습니다.")
+    public IdPwLoginResponse loginByEmail(
+        @Valid @RequestBody LoginByEmailRequest request
+    ) {
+        IdPwLoginResult result = credentialAuthenticationUseCase.loginByEmail(request.toCommand());
         return IdPwLoginResponse.from(result);
     }
 }

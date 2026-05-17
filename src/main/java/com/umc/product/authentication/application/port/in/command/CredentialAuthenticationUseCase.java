@@ -2,6 +2,7 @@ package com.umc.product.authentication.application.port.in.command;
 
 import com.umc.product.authentication.application.port.in.command.dto.ChangePasswordCommand;
 import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
+import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByIdPwCommand;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialCommand;
 
@@ -20,8 +21,14 @@ public interface CredentialAuthenticationUseCase {
     void changePassword(ChangePasswordCommand command);
 
     /**
-     * ID/PW 로그인. 성공 시 JWT 토큰 쌍을 발급하며,
+     * @deprecated ADR-017 에 따라 로그인 식별자가 email 로 전환됨. {@link #loginByEmail(LoginByEmailCommand)} 사용.
+     */
+    @Deprecated
+    IdPwLoginResult loginByIdPw(LoginByIdPwCommand command);
+
+    /**
+     * 이메일/PW 로그인. 성공 시 JWT 토큰 쌍을 발급하며,
      * 해시 파라미터가 갱신 대상이면 transparent rehash 를 수행한다.
      */
-    IdPwLoginResult loginByIdPw(LoginByIdPwCommand command);
+    IdPwLoginResult loginByEmail(LoginByEmailCommand command);
 }
