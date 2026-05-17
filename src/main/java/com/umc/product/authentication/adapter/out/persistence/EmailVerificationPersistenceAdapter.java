@@ -24,13 +24,6 @@ public class EmailVerificationPersistenceAdapter implements LoadEmailVerificatio
     }
 
     @Override
-    public EmailVerification getByToken(String token) {
-        return emailVerificationQueryRepository.findByToken(token)
-            .orElseThrow(() -> new AuthenticationDomainException(
-                AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION));
-    }
-
-    @Override
     public Optional<EmailVerification> findLatestSentByEmail(String email) {
         return emailVerificationQueryRepository.findLatestSentByEmail(email);
     }

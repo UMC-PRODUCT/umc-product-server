@@ -18,11 +18,9 @@ import java.security.SecureRandom;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.util.UriComponentsBuilder;
 
 @Slf4j
 @Service
@@ -34,8 +32,6 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
     private final JwtTokenProvider jwtTokenProvider;
     private final GetMemberCredentialUseCase getMemberCredentialUseCase;
     private final ApplicationEventPublisher eventPublisher;
-    @Value("${app.base-url}")
-    private String serverUrl;
 
     // TODO: EmailSendUseCase와 구분할 필요가 있습니다.
     @Override
@@ -109,7 +105,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
 
         if (shouldSendEmail) {
             emailVerification.markSent();
-            publishSendEmailEvent(email, code, token);
+            publishSendEmailEvent(email, code);
         }
 
         return sessionId;
@@ -130,49 +126,36 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
         emailVerification.regenerate(newCode, newToken);
         emailVerification.markSent();
 
-        publishSendEmailEvent(emailVerification.getEmail(), newCode, newToken);
+        publishSendEmailEvent(emailVerification.getEmail(), newCode);
     }
 
     @Override
     @Transactional(noRollbackFor = AuthenticationDomainException.class)
     public String validateEmailVerificationSession(ValidateEmailVerificationSessionCommand command) {
-        // code가 주어지면 토큰이 우선 순위
-        if (command.code() != null) {
-            EmailVerification emailVerification = loadEmailVerificationPort.getById(
-                Long.valueOf(command.sessionId())
-            );
-
-            // verifyCode 가 실패해도 attempt_count 증가/세션 무효화는 영속되어야 하므로
-            // AuthenticationDomainException 에 대해서는 트랜잭션을 롤백하지 않는다.
-            emailVerification.verifyCode(command.code());
-
-            return jwtTokenProvider.createEmailVerificationToken(
-                emailVerification.getEmail(),
-                emailVerification.getPurpose()
-            );
+        if (command.code() == null) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.NO_EMAIL_VERIFICATION_METHOD_GIVEN);
         }
 
-        if (command.token() != null) {
-            throw new AuthenticationDomainException(AuthenticationErrorCode.UNSUPPORTED_EMAIL_VERIFICATION_METHOD);
-        }
+        EmailVerification emailVerification = loadEmailVerificationPort.getById(
+            Long.valueOf(command.sessionId())
+        );
 
-        throw new AuthenticationDomainException(AuthenticationErrorCode.NO_EMAIL_VERIFICATION_METHOD_GIVEN);
+        // verifyCode 가 실패해도 attempt_count 증가/세션 무효화는 영속되어야 하므로
+        // AuthenticationDomainException 에 대해서는 트랜잭션을 롤백하지 않는다.
+        emailVerification.verifyCode(command.code());
+
+        return jwtTokenProvider.createEmailVerificationToken(
+            emailVerification.getEmail(),
+            emailVerification.getPurpose()
+        );
     }
 
     /**
      * 실제 SMTP 호출을 트랜잭션 commit 이후로 미루기 위해 이벤트를 발행한다.
      * AFTER_COMMIT 단계에서 SendVerificationEmailEventListener 가 메일을 발송한다.
      */
-    private void publishSendEmailEvent(String email, String code, String token) {
-        String emailVerificationPath = "/api/v1/auth/email-verification/token";
-
-        String verificationLink = UriComponentsBuilder
-            .fromUriString(serverUrl)
-            .path(emailVerificationPath)
-            .queryParam("token", token)
-            .toUriString();
-
-        eventPublisher.publishEvent(new SendVerificationEmailEvent(email, code, verificationLink));
+    private void publishSendEmailEvent(String email, String code) {
+        eventPublisher.publishEvent(new SendVerificationEmailEvent(email, code));
     }
 
     private String generateRandomCode() {

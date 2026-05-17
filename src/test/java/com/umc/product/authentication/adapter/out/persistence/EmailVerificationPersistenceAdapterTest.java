@@ -78,36 +78,4 @@ class EmailVerificationPersistenceAdapterTest {
                 .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
         }
     }
-
-    @Nested
-    @DisplayName("getByToken")
-    class GetByToken {
-
-        @Test
-        @DisplayName("존재하면 엔티티를 반환한다")
-        void 존재_시_엔티티_반환() {
-            // given
-            EmailVerification session = newSession();
-            given(queryRepository.findByToken(TOKEN)).willReturn(Optional.of(session));
-
-            // when
-            EmailVerification result = adapter.getByToken(TOKEN);
-
-            // then
-            assertThat(result).isSameAs(session);
-        }
-
-        @Test
-        @DisplayName("미존재 시 INVALID_EMAIL_VERIFICATION 예외를 던진다")
-        void 미존재_시_예외() {
-            // given
-            given(queryRepository.findByToken(TOKEN)).willReturn(Optional.empty());
-
-            // when / then
-            assertThatThrownBy(() -> adapter.getByToken(TOKEN))
-                .isInstanceOf(AuthenticationDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
-        }
-    }
 }

@@ -10,7 +10,6 @@ package com.umc.product.authentication.application.event;
  */
 public record SendVerificationEmailEvent(
     String email,
-    String verificationCode,
-    String verificationLink
+    String verificationCode
 ) {
 }

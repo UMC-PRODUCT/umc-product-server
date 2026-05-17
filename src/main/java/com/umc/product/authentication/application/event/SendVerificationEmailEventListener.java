@@ -26,7 +26,6 @@ public class SendVerificationEmailEventListener {
             SendVerificationEmailCommand.builder()
                 .to(event.email())
                 .verificationCode(event.verificationCode())
-                .verificationLink(event.verificationLink())
                 .build()
         );
     }

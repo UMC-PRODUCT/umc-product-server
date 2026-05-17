@@ -22,15 +22,6 @@ public class EmailVerificationQueryRepository {
         );
     }
 
-    public Optional<EmailVerification> findByToken(String token) {
-        return Optional.ofNullable(
-            jpaQueryFactory
-                .selectFrom(emailVerification)
-                .where(emailVerification.token.eq(token))
-                .fetchOne()
-        );
-    }
-
     public Optional<EmailVerification> findLatestSentByEmail(String email) {
         return Optional.ofNullable(
             jpaQueryFactory
