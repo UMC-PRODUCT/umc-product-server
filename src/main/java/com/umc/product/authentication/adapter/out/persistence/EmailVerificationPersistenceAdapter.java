@@ -5,6 +5,7 @@ import com.umc.product.authentication.application.port.out.SaveEmailVerification
 import com.umc.product.authentication.domain.EmailVerification;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +28,11 @@ public class EmailVerificationPersistenceAdapter implements LoadEmailVerificatio
         return emailVerificationQueryRepository.findByToken(token)
             .orElseThrow(() -> new AuthenticationDomainException(
                 AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION));
+    }
+
+    @Override
+    public Optional<EmailVerification> findLatestSentByEmail(String email) {
+        return emailVerificationQueryRepository.findLatestSentByEmail(email);
     }
 
     @Override

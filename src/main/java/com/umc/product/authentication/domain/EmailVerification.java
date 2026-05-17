@@ -28,6 +28,11 @@ public class EmailVerification extends BaseEntity {
      */
     public static final int MAX_ATTEMPT_COUNT = 5;
 
+    /**
+     * 같은 이메일 / 같은 세션에 대한 연속 발송 간 최소 간격(초). 메일 폭주 방어.
+     */
+    public static final long MIN_SEND_INTERVAL_SECONDS = 60;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -74,6 +79,13 @@ public class EmailVerification extends BaseEntity {
     @Column(name = "attempt_count", nullable = false)
     private int attemptCount;
 
+    /**
+     * 마지막으로 메일을 실제로 발송한 시각. throttle 검사에 사용한다.
+     * silent skip (예: PASSWORD_RESET 미가입) 인 경우에는 갱신하지 않는다.
+     */
+    @Column(name = "last_sent_at")
+    private Instant lastSentAt;
+
 
     @Builder
     public EmailVerification(String email, String token, String code, EmailVerificationPurpose purpose) {
@@ -88,6 +100,24 @@ public class EmailVerification extends BaseEntity {
 
     public boolean isExpired() {
         return Instant.now().isAfter(this.expiresAt);
+    }
+
+    /**
+     * 마지막 실제 발송 시각으로부터 MIN_SEND_INTERVAL_SECONDS 가 지나지 않았다면 throttle 위반.
+     * lastSentAt 이 null 이면 (아직 실제로 발송된 적이 없음) 즉시 발송 가능하다.
+     */
+    public boolean isSendThrottled() {
+        if (this.lastSentAt == null) {
+            return false;
+        }
+        return Instant.now().isBefore(this.lastSentAt.plusSeconds(MIN_SEND_INTERVAL_SECONDS));
+    }
+
+    /**
+     * 실제 메일 발송이 트리거된 시점을 기록한다. AFTER_COMMIT 이벤트 발행 직전에 호출된다.
+     */
+    public void markSent() {
+        this.lastSentAt = Instant.now();
     }
 
     public void verifyCode(String code) {

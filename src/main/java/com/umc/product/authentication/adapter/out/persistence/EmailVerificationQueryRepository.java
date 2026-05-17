@@ -30,4 +30,18 @@ public class EmailVerificationQueryRepository {
                 .fetchOne()
         );
     }
+
+    public Optional<EmailVerification> findLatestSentByEmail(String email) {
+        return Optional.ofNullable(
+            jpaQueryFactory
+                .selectFrom(emailVerification)
+                .where(
+                    emailVerification.email.eq(email),
+                    emailVerification.lastSentAt.isNotNull()
+                )
+                .orderBy(emailVerification.lastSentAt.desc())
+                .limit(1)
+                .fetchOne()
+        );
+    }
 }
