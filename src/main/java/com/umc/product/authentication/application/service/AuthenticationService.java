@@ -1,5 +1,6 @@
 package com.umc.product.authentication.application.service;
 
+import com.umc.product.authentication.application.event.SendVerificationEmailEvent;
 import com.umc.product.authentication.application.port.in.command.ManageAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.NewTokens;
 import com.umc.product.authentication.application.port.in.command.dto.RenewAccessTokenCommand;
@@ -13,13 +14,12 @@ import com.umc.product.authentication.domain.exception.AuthenticationDomainExcep
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
-import com.umc.product.notification.application.port.in.SendEmailUseCase;
-import com.umc.product.notification.application.port.in.dto.SendVerificationEmailCommand;
 import java.security.SecureRandom;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -29,11 +29,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 @RequiredArgsConstructor
 public class AuthenticationService implements ManageAuthenticationUseCase {
 
-    private final SendEmailUseCase sendEmailUseCase;
     private final LoadEmailVerificationPort loadEmailVerificationPort;
     private final SaveEmailVerificationPort saveEmailVerificationPort;
     private final JwtTokenProvider jwtTokenProvider;
     private final GetMemberCredentialUseCase getMemberCredentialUseCase;
+    private final ApplicationEventPublisher eventPublisher;
     @Value("${app.base-url}")
     private String serverUrl;
 
@@ -98,7 +98,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
         Long sessionId = saveEmailVerificationPort.save(emailVerification).getId();
 
         if (shouldSendEmail) {
-            sendVerificationEmail(email, code, token);
+            publishSendEmailEvent(email, code, token);
         }
 
         return sessionId;
@@ -114,7 +114,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
 
         emailVerification.regenerate(newCode, newToken);
 
-        sendVerificationEmail(emailVerification.getEmail(), newCode, newToken);
+        publishSendEmailEvent(emailVerification.getEmail(), newCode, newToken);
     }
 
     @Override
@@ -143,7 +143,11 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
         throw new AuthenticationDomainException(AuthenticationErrorCode.NO_EMAIL_VERIFICATION_METHOD_GIVEN);
     }
 
-    private void sendVerificationEmail(String email, String code, String token) {
+    /**
+     * 실제 SMTP 호출을 트랜잭션 commit 이후로 미루기 위해 이벤트를 발행한다.
+     * AFTER_COMMIT 단계에서 SendVerificationEmailEventListener 가 메일을 발송한다.
+     */
+    private void publishSendEmailEvent(String email, String code, String token) {
         String emailVerificationPath = "/api/v1/auth/email-verification/token";
 
         String verificationLink = UriComponentsBuilder
@@ -152,13 +156,7 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
             .queryParam("token", token)
             .toUriString();
 
-        sendEmailUseCase.sendVerificationEmail(
-            SendVerificationEmailCommand.builder()
-                .to(email)
-                .verificationCode(code)
-                .verificationLink(verificationLink)
-                .build()
-        );
+        eventPublisher.publishEvent(new SendVerificationEmailEvent(email, code, verificationLink));
     }
 
     private String generateRandomCode() {
