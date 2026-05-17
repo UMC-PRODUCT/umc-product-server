@@ -28,6 +28,9 @@ public enum CurriculumErrorCode implements BaseCode {
     WEEKLY_CURRICULUM_DATE_LOCKED(HttpStatus.CONFLICT, "CURRICULUM-0017", "배포된 워크북이 존재하여 주차 기간을 수정할 수 없습니다."),
     WEEKLY_CURRICULUM_ALREADY_EXISTS(HttpStatus.CONFLICT, "CURRICULUM-0018", "이미 동일한 주차와 부록 여부를 가진 주차별 커리큘럼이 존재합니다."),
     WEEKLY_CURRICULUM_PERIOD_ALREADY_ENDED(HttpStatus.BAD_REQUEST, "CURRICULUM-0019", "이미 종료된 기간으로 주차별 커리큘럼을 생성하거나 수정할 수 없습니다."),
+    MISSION_HAS_SUBMISSIONS(HttpStatus.CONFLICT, "CURRICULUM-0020", "이미 제출된 미션이 있어 삭제할 수 없습니다."),
+    RELEASED_WORKBOOK_NECESSARY_MISSION_FORBIDDEN(HttpStatus.BAD_REQUEST, "CURRICULUM-0021", "배포된 워크북에는 필수 미션을 추가할 수 없습니다."),
+    RELEASED_WORKBOOK_MISSION_UPGRADE_FORBIDDEN(HttpStatus.BAD_REQUEST, "CURRICULUM-0022", "배포된 워크북의 미션은 필수→선택 방향으로만 변경 가능합니다."),
     ;
 
     private final HttpStatus httpStatus;
