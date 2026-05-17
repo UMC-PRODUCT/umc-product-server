@@ -453,7 +453,7 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 
 ### 호출 순서 (필수)
 
-네 API 는 의존성이 있어 다음 순서로 호출한다.
+다섯 API 는 의존성이 있어 다음 순서로 호출한다.
 
 1. **`POST /test/seed/members`** — Member 풀을 채운다. Challenger·Project 시딩이
    사용할 Member 가 없으면 후속 시딩이 모두 skip 된다.
@@ -467,6 +467,11 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 4. **`POST /test/seed/community`** — 활성 기수의 챌린저 풀에서 작성자를 뽑아 게시글 ·
    댓글 · 트로피를 시딩한다. 챌린저 풀이 비어있으면 `skipped=true` 로 반환되므로 2번을
    먼저 호출해야 한다.
+5. **`POST /test/seed/curriculum`** — 활성 기수에 ADMIN 제외 파트별로 Curriculum →
+   WeeklyCurriculum → OriginalWorkbook(MAIN, READY) → Mission 골격을 생성한다.
+   `releaseRequesterMemberId` 를 함께 보내면 워크북을 READY → RELEASED 로 전환해
+   Phase 2 (챌린저 워크북 배포·미션 제출) 작업의 입구를 열어둔다. Phase 2 시딩은
+   본 PR 의 범위가 아니다 — 시간 제약·권한·상태 의존성 때문에 별도 ADR 로 다룰 예정이다.
 
 ### 권장 호출 예시 (alpha 환경 초기화)
 
@@ -486,6 +491,10 @@ curl -X POST $BASE/test/seed/projects -H 'Content-Type: application/json' \
 # 4. 커뮤니티: 게시글 30, 게시글당 댓글 3, 트로피 10
 curl -X POST $BASE/test/seed/community -H 'Content-Type: application/json' \
   -d '{"postCount": 30, "commentsPerPost": 3, "trophyCount": 10}'
+
+# 5. 커리큘럼: 8 주차, 워크북당 미션 2개, releaseRequesterMemberId 지정 시 RELEASED 까지 전환
+curl -X POST $BASE/test/seed/curriculum -H 'Content-Type: application/json' \
+  -d '{"weeksPerCurriculum": 8, "missionsPerWorkbook": 2, "releaseRequesterMemberId": 1}'
 ```
 
 ### 응답 해석
@@ -505,6 +514,15 @@ curl -X POST $BASE/test/seed/community -H 'Content-Type: application/json' \
   를 먼저 호출.
 - `SeedCommunityResponse.postFailed/commentFailed/trophyFailed > 0` — 각 도메인의
   Create UseCase 가 검증·정책 변경 등으로 실패한 케이스. 로그로 원인 추적.
+- `SeedCurriculumResponse.curriculumFailed > 0` — 동일 (gisuId, part) 의 커리큘럼이
+  이미 존재하는 경우. 파트별 1개 unique 제약 위반.
+- `SeedCurriculumResponse.weeklyCurriculumFailed > 0` — 동일 커리큘럼 내 (week, isExtra)
+  조합이 unique. 동일 주차 재호출 시 발생.
+- `SeedCurriculumResponse.originalWorkbookFailed > 0` — WeeklyCurriculum 의 시작 일시가
+  과거이고 진행 중이 아닌 경우. 시딩 시점이 마이그레이션과 어긋났을 가능성.
+- `SeedCurriculumResponse.released=true / releaseFailed=0` — 모든 워크북이 RELEASED 로
+  전환되어 챌린저가 즉시 배포받을 수 있는 상태. `releaseRequesterMemberId` 미지정 시는
+  `released=false` (READY 상태 유지).
 
 ### 자주 발생하는 운영 이슈
 

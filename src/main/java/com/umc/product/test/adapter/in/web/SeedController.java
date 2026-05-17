@@ -5,12 +5,15 @@ import com.umc.product.test.adapter.in.web.dto.SeedChallengersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedCommunityRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedCommunityResponse;
+import com.umc.product.test.adapter.in.web.dto.SeedCurriculumRequest;
+import com.umc.product.test.adapter.in.web.dto.SeedCurriculumResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedMembersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedMembersResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsResponse;
 import com.umc.product.test.application.port.in.command.SeedChallengersUseCase;
 import com.umc.product.test.application.port.in.command.SeedCommunityUseCase;
+import com.umc.product.test.application.port.in.command.SeedCurriculumUseCase;
 import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -45,6 +48,7 @@ public class SeedController {
     private final SeedChallengersUseCase seedChallengersUseCase;
     private final SeedProjectsUseCase seedProjectsUseCase;
     private final SeedCommunityUseCase seedCommunityUseCase;
+    private final SeedCurriculumUseCase seedCurriculumUseCase;
 
     @Operation(
         summary = "[SEED-001] 더미 멤버 시딩",
@@ -103,5 +107,19 @@ public class SeedController {
     @PostMapping("/community")
     public SeedCommunityResponse seedCommunity(@RequestBody @Valid SeedCommunityRequest request) {
         return SeedCommunityResponse.from(seedCommunityUseCase.seed(request.toCommand()));
+    }
+
+    @Operation(
+        summary = "[SEED-005] Curriculum 시딩 (Curriculum · WeeklyCurriculum · OriginalWorkbook · Mission)",
+        description = """
+            활성 기수(또는 지정 기수)에 대해 ADMIN 제외 파트별로 다음 골격을 시딩합니다.
+            Curriculum (1/파트) → WeeklyCurriculum (1~N 주차) → OriginalWorkbook (MAIN, READY) → Mission (M개).
+            releaseRequesterMemberId 가 지정되면 모든 워크북을 READY → RELEASED 로 전환합니다.
+            각 단계별로 실패 격리되며, 단계별 실패 카운트가 응답에 포함됩니다.
+            """
+    )
+    @PostMapping("/curriculum")
+    public SeedCurriculumResponse seedCurriculum(@RequestBody @Valid SeedCurriculumRequest request) {
+        return SeedCurriculumResponse.from(seedCurriculumUseCase.seed(request.toCommand()));
     }
 }
