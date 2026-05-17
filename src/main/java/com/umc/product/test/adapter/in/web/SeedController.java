@@ -3,11 +3,14 @@ package com.umc.product.test.adapter.in.web;
 import com.umc.product.global.security.annotation.Public;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedChallengersResponse;
+import com.umc.product.test.adapter.in.web.dto.SeedCommunityRequest;
+import com.umc.product.test.adapter.in.web.dto.SeedCommunityResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedMembersRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedMembersResponse;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsRequest;
 import com.umc.product.test.adapter.in.web.dto.SeedProjectsResponse;
 import com.umc.product.test.application.port.in.command.SeedChallengersUseCase;
+import com.umc.product.test.application.port.in.command.SeedCommunityUseCase;
 import com.umc.product.test.application.port.in.command.SeedMembersUseCase;
 import com.umc.product.test.application.port.in.command.SeedProjectsUseCase;
 import io.swagger.v3.oas.annotations.Operation;
@@ -41,6 +44,7 @@ public class SeedController {
     private final SeedMembersUseCase seedMembersUseCase;
     private final SeedChallengersUseCase seedChallengersUseCase;
     private final SeedProjectsUseCase seedProjectsUseCase;
+    private final SeedCommunityUseCase seedCommunityUseCase;
 
     @Operation(
         summary = "[SEED-001] 더미 멤버 시딩",
@@ -84,5 +88,20 @@ public class SeedController {
     @PostMapping("/projects")
     public SeedProjectsResponse seedProjects(@RequestBody @Valid SeedProjectsRequest request) {
         return SeedProjectsResponse.from(seedProjectsUseCase.seed(request.toCommand()));
+    }
+
+    @Operation(
+        summary = "[SEED-004] Community 시딩 (Post · Comment · Trophy)",
+        description = """
+            활성 기수(또는 지정 기수)의 챌린저 풀에서 무작위 작성자를 선택해 게시글, 댓글, 트로피를
+            생성합니다. 챌린저가 한 명도 없으면 skipped=true 로 반환되므로, 먼저
+            /test/seed/challengers 를 호출해 풀을 채워두어야 합니다.
+            각 create 호출은 자체 트랜잭션으로 격리되어 한 건 실패가 다른 건 시딩을 막지 않습니다.
+            postCount, commentsPerPost, trophyCount 중 하나라도 0 이면 해당 단계를 스킵합니다.
+            """
+    )
+    @PostMapping("/community")
+    public SeedCommunityResponse seedCommunity(@RequestBody @Valid SeedCommunityRequest request) {
+        return SeedCommunityResponse.from(seedCommunityUseCase.seed(request.toCommand()));
     }
 }

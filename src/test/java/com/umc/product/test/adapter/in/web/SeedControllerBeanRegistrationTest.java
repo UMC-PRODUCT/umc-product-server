@@ -3,6 +3,8 @@ package com.umc.product.test.adapter.in.web;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.umc.product.test.application.service.ChallengerSeedService;
+import com.umc.product.test.application.service.CommunitySeedService;
+import com.umc.product.test.application.service.DummyCommunityFactory;
 import com.umc.product.test.application.service.DummyMemberFactory;
 import com.umc.product.test.application.service.MemberSeedService;
 import com.umc.product.test.application.service.PartAssignmentPolicy;
@@ -29,7 +31,9 @@ class SeedControllerBeanRegistrationTest {
         MemberSeedService.class,
         ChallengerSeedService.class,
         ProjectSeedService.class,
+        CommunitySeedService.class,
         DummyMemberFactory.class,
+        DummyCommunityFactory.class,
         PartAssignmentPolicy.class,
         SeedProperties.class
     })

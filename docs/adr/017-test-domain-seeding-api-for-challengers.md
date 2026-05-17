@@ -453,7 +453,7 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 
 ### 호출 순서 (필수)
 
-세 API 는 의존성이 있어 다음 순서로 호출한다.
+네 API 는 의존성이 있어 다음 순서로 호출한다.
 
 1. **`POST /test/seed/members`** — Member 풀을 채운다. Challenger·Project 시딩이
    사용할 Member 가 없으면 후속 시딩이 모두 skip 된다.
@@ -464,6 +464,9 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
    FE 5~6 + BE 5~6 = 11~13)을 뽑아 프로젝트를 N 개 만든다. 한 school 에 최소 11명이
    있어야 하므로 1번에서 충분히 시딩하지 않으면 `partialProjects` / `skippedChapters`
    에 잡힌다.
+4. **`POST /test/seed/community`** — 활성 기수의 챌린저 풀에서 작성자를 뽑아 게시글 ·
+   댓글 · 트로피를 시딩한다. 챌린저 풀이 비어있으면 `skipped=true` 로 반환되므로 2번을
+   먼저 호출해야 한다.
 
 ### 권장 호출 예시 (alpha 환경 초기화)
 
@@ -479,6 +482,10 @@ curl -X POST $BASE/test/seed/challengers -H 'Content-Type: application/json' \
 # 3. 프로젝트: 10건
 curl -X POST $BASE/test/seed/projects -H 'Content-Type: application/json' \
   -d '{"projectCount": 10}'
+
+# 4. 커뮤니티: 게시글 30, 게시글당 댓글 3, 트로피 10
+curl -X POST $BASE/test/seed/community -H 'Content-Type: application/json' \
+  -d '{"postCount": 30, "commentsPerPost": 3, "trophyCount": 10}'
 ```
 
 ### 응답 해석
@@ -494,12 +501,16 @@ curl -X POST $BASE/test/seed/projects -H 'Content-Type: application/json' \
   해당 school 의 풀이 11명 미만. 1번 시딩을 늘려야 한다.
 - `SeedProjectsResponse.partialProjects[i]` — 프로젝트는 만들어졌지만 일부 멤버
   add 가 실패. orphan project 가 잔존하므로 운영자 판단 후 정리 필요.
+- `SeedCommunityResponse.skipped=true` — 챌린저 풀이 비어있음. 2번(/test/seed/challengers)
+  를 먼저 호출.
+- `SeedCommunityResponse.postFailed/commentFailed/trophyFailed > 0` — 각 도메인의
+  Create UseCase 가 검증·정책 변경 등으로 실패한 케이스. 로그로 원인 추적.
 
 ### 자주 발생하는 운영 이슈
 
 | 증상 | 원인 | 대응 |
 |---|---|---|
-| `skipped=true` 가 떨어진다 | 임계값 초과 (`skipIfMemberCountGreaterThan`) | `force=true` 로 재호출 또는 임계값 조정 |
+| `skipped=true` 가 떨어진다 | 임계값 초과 (`skipIfMemberCountGreaterThan`) 또는 챌린저 풀 비어있음 | `force=true` 재호출 / 임계값 조정 / 챌린저 시딩 선행 |
 | 모든 셀 skip | 활성 기수 미설정 또는 ChapterSchool 매핑 비어있음 | `/api/v1/admin/gisu` / chapter-school seed 마이그레이션 확인 |
 | `INSUFFICIENT_POOL` 빈발 | school 당 멤버 < 11 | members 호출을 더 큰 수로 다시 |
 
