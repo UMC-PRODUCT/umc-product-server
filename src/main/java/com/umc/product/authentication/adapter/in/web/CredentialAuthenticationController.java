@@ -9,6 +9,7 @@ import com.umc.product.authentication.adapter.in.web.dto.response.IdPwLoginRespo
 import com.umc.product.authentication.application.port.in.command.CredentialAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
 import com.umc.product.authentication.application.port.in.query.CheckCredentialAvailabilityUseCase;
+import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
@@ -74,7 +75,10 @@ public class CredentialAuthenticationController {
     public void resetPasswordByEmail(
         @Valid @RequestBody ResetPasswordByEmailRequest request
     ) {
-        String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
+        String email = jwtTokenProvider.parseEmailVerificationToken(
+            request.emailVerificationToken(),
+            EmailVerificationPurpose.PASSWORD_RESET
+        );
         credentialAuthenticationUseCase.resetPasswordByEmail(request.toCommand(email));
     }
 

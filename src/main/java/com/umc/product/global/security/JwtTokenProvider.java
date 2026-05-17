@@ -1,5 +1,6 @@
 package com.umc.product.global.security;
 
+import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.domain.enums.OAuthProvider;
@@ -74,14 +75,18 @@ public class JwtTokenProvider {
 
     /**
      * emailVerificationToken 발급
+     * <p>
+     * purpose claim 으로 회원가입(REGISTER) 과 비밀번호 초기화(PASSWORD_RESET) 흐름을 구분한다.
+     * 한 흐름에서 발급된 토큰이 다른 흐름에 재사용되지 않도록, 파싱 시 expectedPurpose 와 비교한다.
      */
-    public String createEmailVerificationToken(String email) {
+    public String createEmailVerificationToken(String email, EmailVerificationPurpose purpose) {
         Date now = new Date();
         Date validityDate = new Date(now.getTime() + verificationTokenValidityInMilliseconds); // 10분 유효
 
         return Jwts.builder()
             .subject("EMAIL_VERIFICATION")
             .claim("email", email)
+            .claim("purpose", purpose.name())
             .issuedAt(now)
             .expiration(validityDate)
             .signWith(emailVerificationTokenSecret)
@@ -215,11 +220,20 @@ public class JwtTokenProvider {
 
     /**
      * emailVerificationToken 파싱 및 검증
+     * <p>
+     * 토큰의 purpose claim 이 expectedPurpose 와 일치하지 않으면 INVALID_EMAIL_VERIFICATION 예외를 던진다.
+     * 예) 회원가입(REGISTER) 흐름에서 발급된 토큰을 비밀번호 초기화에 사용하려는 cross-purpose 공격 방어.
      */
-    public String parseEmailVerificationToken(String token) {
+    public String parseEmailVerificationToken(String token, EmailVerificationPurpose expectedPurpose) {
         validateToken(token, emailVerificationTokenSecret);
 
         Claims claims = parseClaims(token, emailVerificationTokenSecret);
+
+        String purposeClaim = claims.get("purpose", String.class);
+        if (purposeClaim == null || !purposeClaim.equals(expectedPurpose.name())) {
+            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_EMAIL_VERIFICATION);
+        }
+
         return claims.get("email", String.class);
     }
 }

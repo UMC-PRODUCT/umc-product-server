@@ -1,5 +1,6 @@
 package com.umc.product.member.adapter.in.web;
 
+import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authorization.adapter.in.aspect.CheckAccess;
 import com.umc.product.authorization.domain.PermissionType;
 import com.umc.product.authorization.domain.ResourceType;
@@ -70,7 +71,10 @@ public class MemberCommandController {
     )
     RegisterResponse registerMemberByOAuth(@RequestBody OAuthRegisterMemberRequest request) {
         OAuthVerificationClaims claims = jwtTokenProvider.parseOAuthVerificationToken(request.oAuthVerificationToken());
-        String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
+        String email = jwtTokenProvider.parseEmailVerificationToken(
+            request.emailVerificationToken(),
+            EmailVerificationPurpose.REGISTER
+        );
 
         OAuthRegisterMemberCommand command = OAuthRegisterMemberCommand
             .builder()
@@ -108,7 +112,10 @@ public class MemberCommandController {
         content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
     )
     RegisterResponse registerMemberByEmail(@Valid @RequestBody EmailRegisterMemberRequest request) {
-        String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
+        String email = jwtTokenProvider.parseEmailVerificationToken(
+            request.emailVerificationToken(),
+            EmailVerificationPurpose.REGISTER
+        );
 
         Long createdMemberId = registerEmailMemberUseCase.register(request.toCommand(email));
 

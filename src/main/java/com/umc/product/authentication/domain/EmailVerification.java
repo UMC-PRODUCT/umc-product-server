@@ -5,6 +5,8 @@ import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.common.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -52,12 +54,20 @@ public class EmailVerification extends BaseEntity {
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
+    /**
+     * 인증 세션의 용도 (REGISTER / PASSWORD_RESET). cross-purpose 공격 방어를 위해 세션 단위로 고정한다.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "purpose", nullable = false, length = 20)
+    private EmailVerificationPurpose purpose;
+
 
     @Builder
-    public EmailVerification(String email, String token, String code) {
+    public EmailVerification(String email, String token, String code, EmailVerificationPurpose purpose) {
         this.email = email;
         this.token = token;
         this.code = code;
+        this.purpose = purpose;
         this.expiresAt = Instant.now().plusSeconds(10 * 60); // 10분 후 만료
         this.isVerified = false;
     }
