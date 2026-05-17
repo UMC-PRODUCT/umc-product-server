@@ -20,6 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class CredentialAvailabilityQueryServiceTest {
 
+    private static final String EMAIL = "alice@example.com";
+
     @Mock
     GetMemberCredentialUseCase getMemberCredentialUseCase;
 
@@ -27,40 +29,40 @@ class CredentialAvailabilityQueryServiceTest {
     CredentialAvailabilityQueryService service;
 
     @Test
-    @DisplayName("정상 형식의 미사용 ID 는 사용 가능으로 판정한다")
-    void 미사용_ID_는_사용가능() {
+    @DisplayName("정상 형식의 미사용 이메일은 사용 가능으로 판정한다")
+    void 미사용_이메일은_사용가능() {
         // given
-        given(getMemberCredentialUseCase.existsByLoginId("alice01")).willReturn(false);
+        given(getMemberCredentialUseCase.existsByEmail(EMAIL)).willReturn(false);
 
         // when
-        boolean available = service.isLoginIdAvailable("alice01");
+        boolean available = service.isEmailAvailable(EMAIL);
 
         // then
         assertThat(available).isTrue();
     }
 
     @Test
-    @DisplayName("정상 형식이지만 이미 사용 중인 ID 는 사용 불가로 판정한다")
-    void 이미_사용중인_ID_는_사용불가() {
+    @DisplayName("정상 형식이지만 이미 사용 중인 이메일은 사용 불가로 판정한다")
+    void 이미_사용중인_이메일은_사용불가() {
         // given
-        given(getMemberCredentialUseCase.existsByLoginId("alice01")).willReturn(true);
+        given(getMemberCredentialUseCase.existsByEmail(EMAIL)).willReturn(true);
 
         // when
-        boolean available = service.isLoginIdAvailable("alice01");
+        boolean available = service.isEmailAvailable(EMAIL);
 
         // then
         assertThat(available).isFalse();
     }
 
     @Test
-    @DisplayName("형식이 잘못된 ID 는 사용 가능 여부를 묻지 않고 INVALID_LOGIN_ID_FORMAT 예외를 던진다")
+    @DisplayName("형식이 잘못된 이메일은 사용 가능 여부를 묻지 않고 INVALID_EMAIL_FORMAT 예외를 던진다")
     void 잘못된_형식이면_예외() {
         // when & then
-        assertThatThrownBy(() -> service.isLoginIdAvailable("ab"))
+        assertThatThrownBy(() -> service.isEmailAvailable("not-an-email"))
             .isInstanceOf(AuthenticationDomainException.class)
             .extracting("baseCode")
-            .isEqualTo(AuthenticationErrorCode.INVALID_LOGIN_ID_FORMAT);
+            .isEqualTo(AuthenticationErrorCode.INVALID_EMAIL_FORMAT);
 
-        then(getMemberCredentialUseCase).should(never()).existsByLoginId(ArgumentMatchers.anyString());
+        then(getMemberCredentialUseCase).should(never()).existsByEmail(ArgumentMatchers.anyString());
     }
 }

@@ -1,6 +1,6 @@
 package com.umc.product.member.adapter.in.web.dto.request;
 
-import com.umc.product.member.application.port.in.command.dto.IdPwRegisterMemberCommand;
+import com.umc.product.member.application.port.in.command.dto.EmailRegisterMemberCommand;
 import com.umc.product.member.application.port.in.command.dto.TermConsents;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -10,13 +10,12 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 
-public record IdPwRegisterMemberRequest(
-    // id/pw에 대한 검증은 usecase 내부에서 CredentiaLPolicy를 통하기 때문에
-    // Request 단에서는 추후 충돌을 방지하기 위해 최소한의 검증 (NotBlank)만 진행
-
-    @NotBlank(message = "본 회원가입 방법에서는 ID를 필수로 제공하여야 합니다.")
-    String loginId,
-
+/**
+ * 이메일 기반 회원가입 요청 DTO. ADR-017 에 따라 loginId 를 받지 않는다.
+ * <p>
+ * 비밀번호 형식은 CredentialPolicy 에서 사후 검증하므로 본 DTO 에서는 NotBlank 만 강제한다.
+ */
+public record EmailRegisterMemberRequest(
     @NotBlank(message = "본 회원가입 방법에서는 비밀번호를 필수로 제공하여야 합니다.")
     String rawPassword,
 
@@ -45,16 +44,14 @@ public record IdPwRegisterMemberRequest(
     @Valid
     List<TermConsentStatus> termsAgreements
 ) {
-    public IdPwRegisterMemberCommand toCommand(String email, List<TermConsentStatus> termsAgreements) {
-        return IdPwRegisterMemberCommand.builder()
-            .loginId(loginId)
+    public EmailRegisterMemberCommand toCommand(String email) {
+        return EmailRegisterMemberCommand.builder()
             .rawPassword(rawPassword)
             .name(name)
             .nickname(nickname)
-            .email(email) // 이메일은 OAuth 회원가입 때만 받도록 변경
+            .email(email)
             .schoolId(schoolId)
             .termConsents(termsAgreements.stream().map(TermConsents::fromRequest).toList())
             .build();
     }
-
 }

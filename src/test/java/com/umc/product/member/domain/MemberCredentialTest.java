@@ -13,11 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
- * Member 도메인의 ID/PW 자격증명 관련 메서드 단위 테스트.
+ * Member 도메인의 이메일/PW 자격증명 관련 메서드 단위 테스트. ADR-017 흐름.
  */
 class MemberCredentialTest {
 
-    private static final String LOGIN_ID = "alice01";
     private static final String ENCODED_PASSWORD = "{argon2}$argon2id$v=19$m=16384,t=2,p=1$abc$def";
 
     Member member;
@@ -32,17 +31,16 @@ class MemberCredentialTest {
     }
 
     @Nested
-    @DisplayName("회원 자격 증명 등록 (ID/PW)")
+    @DisplayName("회원 자격 증명 등록 (이메일 기반)")
     class RegisterCredential {
 
         @Test
         @DisplayName("자격증명이 없는 회원은 최초 등록에 성공한다")
         void 자격증명_최초_등록_성공() {
             // when
-            member.registerCredential(LOGIN_ID, ENCODED_PASSWORD);
+            member.registerCredential(ENCODED_PASSWORD);
 
             // then
-            assertThat(member.getLoginId()).isEqualTo(LOGIN_ID);
             assertThat(member.getPasswordHash()).isEqualTo(ENCODED_PASSWORD);
             assertThat(member.hasCredential()).isTrue();
         }
@@ -51,10 +49,10 @@ class MemberCredentialTest {
         @DisplayName("이미 자격증명이 등록된 회원은 재등록을 거부한다")
         void 이미_등록된_경우_예외() {
             // given
-            member.registerCredential(LOGIN_ID, ENCODED_PASSWORD);
+            member.registerCredential(ENCODED_PASSWORD);
 
             // when & then
-            assertThatThrownBy(() -> member.registerCredential("bob02", ENCODED_PASSWORD))
+            assertThatThrownBy(() -> member.registerCredential(ENCODED_PASSWORD))
                 .isInstanceOf(MemberDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(MemberErrorCode.CREDENTIAL_ALREADY_REGISTERED);
@@ -67,35 +65,21 @@ class MemberCredentialTest {
             ReflectionTestUtils.setField(member, "status", MemberStatus.INACTIVE);
 
             // when & then
-            assertThatThrownBy(() -> member.registerCredential(LOGIN_ID, ENCODED_PASSWORD))
+            assertThatThrownBy(() -> member.registerCredential(ENCODED_PASSWORD))
                 .isInstanceOf(MemberDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(MemberErrorCode.MEMBER_NOT_ACTIVE);
         }
 
         @Test
-        @DisplayName("loginId 가 null 이나 blank 이면 등록을 거부한다")
-        void loginId_유효성_검증() {
-            assertThatThrownBy(() -> member.registerCredential(null, ENCODED_PASSWORD))
-                .isInstanceOf(MemberDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(MemberErrorCode.INVALID_LOGIN_ID);
-
-            assertThatThrownBy(() -> member.registerCredential(" ", ENCODED_PASSWORD))
-                .isInstanceOf(MemberDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(MemberErrorCode.INVALID_LOGIN_ID);
-        }
-
-        @Test
         @DisplayName("encodedPassword 가 null 이나 blank 이면 등록을 거부한다")
         void password_유효성_검증() {
-            assertThatThrownBy(() -> member.registerCredential(LOGIN_ID, null))
+            assertThatThrownBy(() -> member.registerCredential(null))
                 .isInstanceOf(MemberDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(MemberErrorCode.INVALID_PASSWORD);
 
-            assertThatThrownBy(() -> member.registerCredential(LOGIN_ID, ""))
+            assertThatThrownBy(() -> member.registerCredential(""))
                 .isInstanceOf(MemberDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(MemberErrorCode.INVALID_PASSWORD);
@@ -110,7 +94,7 @@ class MemberCredentialTest {
         @DisplayName("자격증명이 등록된 회원은 비밀번호를 변경할 수 있다")
         void 비밀번호_변경_성공() {
             // given
-            member.registerCredential(LOGIN_ID, ENCODED_PASSWORD);
+            member.registerCredential(ENCODED_PASSWORD);
             String newEncoded = "{argon2}$argon2id$v=19$m=16384,t=2,p=1$xxx$yyy";
 
             // when
@@ -118,8 +102,6 @@ class MemberCredentialTest {
 
             // then
             assertThat(member.getPasswordHash()).isEqualTo(newEncoded);
-            // loginId 는 유지된다
-            assertThat(member.getLoginId()).isEqualTo(LOGIN_ID);
         }
 
         @Test
@@ -136,7 +118,7 @@ class MemberCredentialTest {
         @DisplayName("비활성화 회원은 비밀번호 변경을 거부한다")
         void 비활성_회원이면_예외() {
             // given
-            member.registerCredential(LOGIN_ID, ENCODED_PASSWORD);
+            member.registerCredential(ENCODED_PASSWORD);
             ReflectionTestUtils.setField(member, "status", MemberStatus.INACTIVE);
 
             // when & then
@@ -150,7 +132,7 @@ class MemberCredentialTest {
         @DisplayName("변경할 비밀번호가 null 이나 blank 이면 거부한다")
         void password_유효성_검증() {
             // given
-            member.registerCredential(LOGIN_ID, ENCODED_PASSWORD);
+            member.registerCredential(ENCODED_PASSWORD);
 
             // when & then
             assertThatThrownBy(() -> member.changePassword(null))
@@ -170,9 +152,9 @@ class MemberCredentialTest {
     class HasCredential {
 
         @Test
-        @DisplayName("loginId 와 passwordHash 가 모두 있으면 true 를 반환한다")
-        void 둘_다_있으면_true() {
-            member.registerCredential(LOGIN_ID, ENCODED_PASSWORD);
+        @DisplayName("passwordHash 가 있으면 true 를 반환한다")
+        void password가_있으면_true() {
+            member.registerCredential(ENCODED_PASSWORD);
 
             assertThat(member.hasCredential()).isTrue();
         }
