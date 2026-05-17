@@ -2,20 +2,18 @@ package com.umc.product.test.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.umc.product.member.application.port.in.command.RegisterIdPwMemberUseCase;
-import com.umc.product.member.application.port.in.command.RegisterOAuthMemberUseCase;
 import com.umc.product.member.application.port.in.command.dto.IdPwRegisterMemberCommand;
-import com.umc.product.member.application.port.in.command.dto.OAuthRegisterMemberCommand;
 import com.umc.product.member.application.port.in.query.GetMemberUseCase;
 import com.umc.product.test.application.port.in.command.dto.SeedMembersCommand;
 import com.umc.product.test.application.port.in.command.dto.SeedMembersResult;
-import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,8 +29,6 @@ class MemberSeedServiceTest {
     @Mock
     RegisterIdPwMemberUseCase registerIdPwMemberUseCase;
     @Mock
-    RegisterOAuthMemberUseCase registerOAuthMemberUseCase;
-    @Mock
     DummyMemberFactory dummyMemberFactory;
 
     MemberSeedService sut;
@@ -43,8 +39,6 @@ class MemberSeedServiceTest {
         properties = new SeedProperties(
             true,
             0L,
-            5,
-            6,
             "alpha.umc.test",
             "Alpha!Pass2026"
         );
@@ -52,8 +46,7 @@ class MemberSeedServiceTest {
             properties,
             dummyMemberFactory,
             getMemberUseCase,
-            registerIdPwMemberUseCase,
-            registerOAuthMemberUseCase
+            registerIdPwMemberUseCase
         );
     }
 
@@ -64,13 +57,12 @@ class MemberSeedServiceTest {
         given(getMemberUseCase.countAll()).willReturn(10L);
 
         // When
-        SeedMembersResult result = sut.seed(new SeedMembersCommand(5, 5, false));
+        SeedMembersResult result = sut.seed(new SeedMembersCommand(5, false));
 
         // Then
         assertThat(result.skipped()).isTrue();
         assertThat(result.reason()).contains("threshold");
         verify(registerIdPwMemberUseCase, never()).register(any());
-        verify(registerOAuthMemberUseCase, never()).batchRegister(any());
     }
 
     @Test
@@ -78,41 +70,28 @@ class MemberSeedServiceTest {
     void force_true_면_임계값_무시() {
         // Given
         given(getMemberUseCase.countAll()).willReturn(100L);
-        given(dummyMemberFactory.nextIdPwCommand(anyInt())).willReturn(mock(IdPwRegisterMemberCommand.class));
-        given(dummyMemberFactory.nextOAuthCommands(anyInt())).willReturn(List.of(mock(OAuthRegisterMemberCommand.class)));
-        given(registerOAuthMemberUseCase.batchRegister(any())).willReturn(List.of(1L));
+        given(dummyMemberFactory.nextIdPwCommand(anyLong())).willReturn(mock(IdPwRegisterMemberCommand.class));
 
         // When
-        SeedMembersResult result = sut.seed(new SeedMembersCommand(2, 1, true));
+        SeedMembersResult result = sut.seed(new SeedMembersCommand(2, true));
 
         // Then
         assertThat(result.skipped()).isFalse();
-        assertThat(result.registeredIdPw()).isEqualTo(2);
-        assertThat(result.registeredOAuth()).isEqualTo(1);
+        assertThat(result.registered()).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("정상 시딩 시 ID/PW 는 단건 호출 N회, OAuth 는 batch 1회 호출")
+    @DisplayName("정상 시딩 시 ID/PW register 가 count 번 호출된다")
     void 정상_시딩_호출_횟수() {
         // Given
         given(getMemberUseCase.countAll()).willReturn(0L);
-        given(dummyMemberFactory.nextIdPwCommand(anyInt())).willReturn(mock(IdPwRegisterMemberCommand.class));
-        given(dummyMemberFactory.nextOAuthCommands(6)).willReturn(List.of(
-            mock(OAuthRegisterMemberCommand.class),
-            mock(OAuthRegisterMemberCommand.class),
-            mock(OAuthRegisterMemberCommand.class),
-            mock(OAuthRegisterMemberCommand.class),
-            mock(OAuthRegisterMemberCommand.class),
-            mock(OAuthRegisterMemberCommand.class)
-        ));
-        given(registerOAuthMemberUseCase.batchRegister(any())).willReturn(List.of(1L, 2L, 3L, 4L, 5L, 6L));
+        given(dummyMemberFactory.nextIdPwCommand(anyLong())).willReturn(mock(IdPwRegisterMemberCommand.class));
 
         // When
-        sut.seed(new SeedMembersCommand(5, 6, false));
+        sut.seed(new SeedMembersCommand(5, false));
 
         // Then
         verify(registerIdPwMemberUseCase, times(5)).register(any());
-        verify(registerOAuthMemberUseCase, times(1)).batchRegister(any());
     }
 
     @Test
@@ -120,38 +99,47 @@ class MemberSeedServiceTest {
     void idpw_실패_격리() {
         // Given
         given(getMemberUseCase.countAll()).willReturn(0L);
-        given(dummyMemberFactory.nextIdPwCommand(anyInt())).willReturn(mock(IdPwRegisterMemberCommand.class));
+        given(dummyMemberFactory.nextIdPwCommand(anyLong())).willReturn(mock(IdPwRegisterMemberCommand.class));
         given(registerIdPwMemberUseCase.register(any()))
             .willReturn(1L)
             .willThrow(new RuntimeException("boom"))
             .willReturn(3L);
 
         // When
-        SeedMembersResult result = sut.seed(new SeedMembersCommand(3, 0, false));
+        SeedMembersResult result = sut.seed(new SeedMembersCommand(3, false));
 
         // Then
         verify(registerIdPwMemberUseCase, times(3)).register(any());
-        assertThat(result.registeredIdPw()).isEqualTo(2);
+        assertThat(result.registered()).isEqualTo(2);
     }
 
     @Test
-    @DisplayName("idPwCount=0, oauthCount=0 이면 어떤 UseCase 도 호출하지 않는다")
+    @DisplayName("count=0 이면 register 가 호출되지 않는다")
     void count_0_미호출() {
         // Given
         given(getMemberUseCase.countAll()).willReturn(0L);
 
         // When
-        SeedMembersResult result = sut.seed(new SeedMembersCommand(0, 0, false));
+        SeedMembersResult result = sut.seed(new SeedMembersCommand(0, false));
 
         // Then
         assertThat(result.skipped()).isFalse();
-        assertThat(result.registeredIdPw()).isZero();
-        assertThat(result.registeredOAuth()).isZero();
+        assertThat(result.registered()).isZero();
         verify(registerIdPwMemberUseCase, never()).register(any());
-        verify(registerOAuthMemberUseCase, never()).batchRegister(any());
     }
 
-    private static <T> T mock(Class<T> type) {
-        return org.mockito.Mockito.mock(type);
+    @Test
+    @DisplayName("loginId 시퀀스는 현재 회원 수 + 1 부터 시작한다")
+    void 시퀀스_오프셋_확인() {
+        // Given
+        given(getMemberUseCase.countAll()).willReturn(42L);
+        given(dummyMemberFactory.nextIdPwCommand(anyLong())).willReturn(mock(IdPwRegisterMemberCommand.class));
+
+        // When
+        sut.seed(new SeedMembersCommand(2, true));
+
+        // Then
+        verify(dummyMemberFactory).nextIdPwCommand(43L);
+        verify(dummyMemberFactory).nextIdPwCommand(44L);
     }
 }

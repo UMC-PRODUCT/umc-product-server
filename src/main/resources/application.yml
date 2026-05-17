@@ -343,8 +343,6 @@ app:
   seed:
     enabled: ${APP_SEED_ENABLED:false}
     skip-if-member-count-greater-than: ${APP_SEED_SKIP_THRESHOLD:0}
-    id-pw-member-count: ${APP_SEED_IDPW_COUNT:20}
-    oauth-member-count: ${APP_SEED_OAUTH_COUNT:30}
     email-domain: ${APP_SEED_EMAIL_DOMAIN:alpha.umc.test}
     default-password: ${APP_SEED_DEFAULT_PASSWORD:Alpha!Pass2026}
 

@@ -5,13 +5,11 @@ import jakarta.validation.constraints.PositiveOrZero;
 
 public record SeedMembersRequest(
     @PositiveOrZero
-    int idPwCount,
-    @PositiveOrZero
-    int oauthCount,
+    int count,
     boolean force
 ) {
 
     public SeedMembersCommand toCommand() {
-        return new SeedMembersCommand(idPwCount, oauthCount, force);
+        return new SeedMembersCommand(count, force);
     }
 }

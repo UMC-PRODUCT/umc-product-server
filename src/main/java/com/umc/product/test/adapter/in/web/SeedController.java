@@ -45,9 +45,11 @@ public class SeedController {
     @Operation(
         summary = "[SEED-001] 더미 멤버 시딩",
         description = """
-            ID/PW 멤버와 OAuth 멤버를 N 명씩 즉시 생성합니다.
+            ID/PW 더미 멤버를 N 명 즉시 생성합니다. 모든 더미 회원은 동일한 비밀번호
+            (app.seed.default-password)를 사용합니다.
             force=false (기본) 이면 현재 회원 수가 임계값을 초과한 경우 시딩을 스킵합니다.
             force=true 이면 임계값 체크를 무시하고 무조건 시딩합니다.
+            챌린저/프로젝트 시딩 전 호출이 필요합니다.
             """
     )
     @PostMapping("/members")
