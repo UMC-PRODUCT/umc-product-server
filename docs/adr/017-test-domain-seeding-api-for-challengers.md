@@ -453,7 +453,7 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 
 ### 호출 순서 (필수)
 
-다섯 API 는 의존성이 있어 다음 순서로 호출한다.
+네 API 는 의존성이 있어 다음 순서로 호출한다.
 
 1. **`POST /test/seed/members`** — Member 풀을 채운다. Challenger·Project 시딩이
    사용할 Member 가 없으면 후속 시딩이 모두 skip 된다.
@@ -464,10 +464,7 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
    FE 5~6 + BE 5~6 = 11~13)을 뽑아 프로젝트를 N 개 만든다. 한 school 에 최소 11명이
    있어야 하므로 1번에서 충분히 시딩하지 않으면 `partialProjects` / `skippedChapters`
    에 잡힌다.
-4. **`POST /test/seed/community`** — 활성 기수의 챌린저 풀에서 작성자를 뽑아 게시글 ·
-   댓글 · 트로피를 시딩한다. 챌린저 풀이 비어있으면 `skipped=true` 로 반환되므로 2번을
-   먼저 호출해야 한다.
-5. **`POST /test/seed/curriculum`** — 활성 기수에 ADMIN 제외 파트별로 Curriculum →
+4. **`POST /test/seed/curriculum`** — 활성 기수에 ADMIN 제외 파트별로 Curriculum →
    WeeklyCurriculum → OriginalWorkbook(MAIN, READY) → Mission 골격을 생성한다.
    `releaseRequesterMemberId` 를 함께 보내면 워크북을 READY → RELEASED 로 전환해
    Phase 2 (챌린저 워크북 배포·미션 제출) 작업의 입구를 열어둔다. Phase 2 시딩은
@@ -488,11 +485,7 @@ curl -X POST $BASE/test/seed/challengers -H 'Content-Type: application/json' \
 curl -X POST $BASE/test/seed/projects -H 'Content-Type: application/json' \
   -d '{"projectCount": 10}'
 
-# 4. 커뮤니티: 게시글 30, 게시글당 댓글 3, 트로피 10
-curl -X POST $BASE/test/seed/community -H 'Content-Type: application/json' \
-  -d '{"postCount": 30, "commentsPerPost": 3, "trophyCount": 10}'
-
-# 5. 커리큘럼: 8 주차, 워크북당 미션 2개, releaseRequesterMemberId 지정 시 RELEASED 까지 전환
+# 4. 커리큘럼: 8 주차, 워크북당 미션 2개, releaseRequesterMemberId 지정 시 RELEASED 까지 전환
 curl -X POST $BASE/test/seed/curriculum -H 'Content-Type: application/json' \
   -d '{"weeksPerCurriculum": 8, "missionsPerWorkbook": 2, "releaseRequesterMemberId": 1}'
 ```
@@ -510,10 +503,6 @@ curl -X POST $BASE/test/seed/curriculum -H 'Content-Type: application/json' \
   해당 school 의 풀이 11명 미만. 1번 시딩을 늘려야 한다.
 - `SeedProjectsResponse.partialProjects[i]` — 프로젝트는 만들어졌지만 일부 멤버
   add 가 실패. orphan project 가 잔존하므로 운영자 판단 후 정리 필요.
-- `SeedCommunityResponse.skipped=true` — 챌린저 풀이 비어있음. 2번(/test/seed/challengers)
-  를 먼저 호출.
-- `SeedCommunityResponse.postFailed/commentFailed/trophyFailed > 0` — 각 도메인의
-  Create UseCase 가 검증·정책 변경 등으로 실패한 케이스. 로그로 원인 추적.
 - `SeedCurriculumResponse.curriculumFailed > 0` — 동일 (gisuId, part) 의 커리큘럼이
   이미 존재하는 경우. 파트별 1개 unique 제약 위반.
 - `SeedCurriculumResponse.weeklyCurriculumFailed > 0` — 동일 커리큘럼 내 (week, isExtra)
