@@ -27,6 +27,7 @@ import com.umc.product.member.application.port.in.command.dto.UpdateMemberComman
 import com.umc.product.notification.application.port.in.annotation.WebhookAlarm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -106,7 +107,7 @@ public class MemberCommandController {
         title = "'새로운 회원이 가입했어요!'",
         content = "'회원 ID: ' + #result.memberId + '\n닉네임/이름: ' + #request.nickname + '/' + #request.name + '\n학교: ' + #request.schoolId"
     )
-    RegisterResponse registerMemberByEmail(@RequestBody EmailRegisterMemberRequest request) {
+    RegisterResponse registerMemberByEmail(@Valid @RequestBody EmailRegisterMemberRequest request) {
         String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
 
         Long createdMemberId = registerEmailMemberUseCase.register(request.toCommand(email));

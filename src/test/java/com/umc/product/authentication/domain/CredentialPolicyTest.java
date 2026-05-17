@@ -67,9 +67,12 @@ class CredentialPolicyTest {
         }
 
         @Test
-        @DisplayName("100 자를 초과하는 이메일은 예외를 던진다")
+        @DisplayName("EMAIL_MAX_LENGTH 를 초과하는 이메일은 예외를 던진다")
         void 길이_초과면_예외() {
-            String tooLong = "a".repeat(95) + "@a.io"; // 100자 초과
+            // "@a.io" 가 5자이므로 (EMAIL_MAX_LENGTH - 4) 의 'a' 를 붙이면 EMAIL_MAX_LENGTH + 1 자가 된다.
+            String tooLong = "a".repeat(CredentialPolicy.EMAIL_MAX_LENGTH - 4) + "@a.io";
+            assertThat(tooLong.length()).isEqualTo(CredentialPolicy.EMAIL_MAX_LENGTH + 1);
+
             assertThatThrownBy(() -> CredentialPolicy.validateEmail(tooLong))
                 .isInstanceOf(AuthenticationDomainException.class)
                 .extracting("baseCode")
