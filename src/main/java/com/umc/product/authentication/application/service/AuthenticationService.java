@@ -6,6 +6,7 @@ import com.umc.product.authentication.application.port.in.command.dto.RenewAcces
 import com.umc.product.authentication.application.port.in.command.dto.ValidateEmailVerificationSessionCommand;
 import com.umc.product.authentication.application.port.out.LoadEmailVerificationPort;
 import com.umc.product.authentication.application.port.out.SaveEmailVerificationPort;
+import com.umc.product.authentication.domain.CredentialPolicy;
 import com.umc.product.authentication.domain.EmailVerification;
 import com.umc.product.authentication.domain.EmailVerificationPurpose;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
@@ -55,6 +56,9 @@ public class AuthenticationService implements ManageAuthenticationUseCase {
     @Override
     @Transactional
     public Long createEmailVerificationSession(String email, EmailVerificationPurpose purpose) {
+        // DTO 단계 검증을 통과해도, Service 진입 시 도메인 SSOT 인 CredentialPolicy 로 한번 더 검증한다.
+        CredentialPolicy.validateEmail(email);
+
         String code = generateRandomCode();
         String token = UUID.randomUUID().toString();
 
