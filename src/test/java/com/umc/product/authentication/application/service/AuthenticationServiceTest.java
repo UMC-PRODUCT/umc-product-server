@@ -81,9 +81,7 @@ class AuthenticationServiceTest {
         @Test
         @DisplayName("잘못된 이메일 형식이면 INVALID_EMAIL_FORMAT 예외를 던지고 저장/이벤트 발행하지 않는다")
         void 잘못된_이메일_거부() {
-            // given: ReflectionTestUtils 로 @Value 주입 우회 (test 컨텍스트 없이도 동작하도록)
-            ReflectionTestUtils.setField(service, "serverUrl", "https://example.com");
-
+            // given
             // when / then
             assertThatThrownBy(() -> service.createEmailVerificationSession("not-an-email",
                 EmailVerificationPurpose.REGISTER))
@@ -99,7 +97,6 @@ class AuthenticationServiceTest {
         @DisplayName("REGISTER + 미가입 이메일이면 세션을 저장하고 메일 발송 이벤트를 발행한다")
         void REGISTER_정상_세션_생성() {
             // given
-            ReflectionTestUtils.setField(service, "serverUrl", "https://example.com");
             given(getMemberCredentialUseCase.existsByEmail(EMAIL)).willReturn(false);
             EmailVerification persisted = newSession(EmailVerificationPurpose.REGISTER);
             ReflectionTestUtils.setField(persisted, "id", SESSION_ID);
@@ -134,7 +131,6 @@ class AuthenticationServiceTest {
         @DisplayName("PASSWORD_RESET + 자격증명 존재하면 세션을 저장하고 메일 발송 이벤트를 발행한다")
         void PASSWORD_RESET_정상_세션_생성() {
             // given
-            ReflectionTestUtils.setField(service, "serverUrl", "https://example.com");
             given(getMemberCredentialUseCase.findCredentialByEmail(EMAIL))
                 .willReturn(Optional.of(new MemberCredentialInfo(1L, "encoded-password")));
             EmailVerification persisted = newSession(EmailVerificationPurpose.PASSWORD_RESET);
@@ -150,10 +146,30 @@ class AuthenticationServiceTest {
         }
 
         @Test
+        @DisplayName("직전 발송으로부터 60초 이내면 EMAIL_VERIFICATION_THROTTLED 예외로 거부한다")
+        void throttle_위반_거부() {
+            // given
+            given(getMemberCredentialUseCase.existsByEmail(EMAIL)).willReturn(false);
+            EmailVerification recent = newSession(EmailVerificationPurpose.REGISTER);
+            recent.markSent(); // 직전 발송
+            given(loadEmailVerificationPort.findLatestSentByEmail(EMAIL))
+                .willReturn(java.util.Optional.of(recent));
+
+            // when / then
+            assertThatThrownBy(() ->
+                service.createEmailVerificationSession(EMAIL, EmailVerificationPurpose.REGISTER))
+                .isInstanceOf(AuthenticationDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(AuthenticationErrorCode.EMAIL_VERIFICATION_THROTTLED);
+
+            then(saveEmailVerificationPort).should(never()).save(any());
+            then(eventPublisher).should(never()).publishEvent(any(SendVerificationEmailEvent.class));
+        }
+
+        @Test
         @DisplayName("PASSWORD_RESET + 자격증명 미존재면 세션은 저장하되 이벤트는 발행하지 않는다 (enumeration 방어)")
         void PASSWORD_RESET_미가입_silent() {
             // given
-            ReflectionTestUtils.setField(service, "serverUrl", "https://example.com");
             given(getMemberCredentialUseCase.findCredentialByEmail(EMAIL)).willReturn(Optional.empty());
             EmailVerification persisted = newSession(EmailVerificationPurpose.PASSWORD_RESET);
             ReflectionTestUtils.setField(persisted, "id", SESSION_ID);
