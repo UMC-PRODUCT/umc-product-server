@@ -12,60 +12,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * CredentialPolicy 단위 테스트.
+ * CredentialPolicy 단위 테스트. ADR-017 흐름.
  * <p>
  * 형식/길이/카테고리/공백 정책에 대한 SSOT 의 동작을 검증한다.
  */
 class CredentialPolicyTest {
-
-    @Nested
-    @DisplayName("validateLoginId")
-    class ValidateLoginId {
-
-        @ParameterizedTest
-        @ValueSource(strings = {
-            "alice",            // 5자 영문 소문자
-            "alice01",          // 영문 소문자 + 숫자
-            "user.name",        // 점 허용
-            "user_name",        // 밑줄 허용
-            "user-name",        // 하이픈 허용
-            "abcde12345abcde12345" // 정확히 20자 경계값
-        })
-        @DisplayName("정상 형식의 로그인 ID 는 통과한다")
-        void 정상_형식_통과(String loginId) {
-            assertThatCode(() -> CredentialPolicy.validateLoginId(loginId))
-                .doesNotThrowAnyException();
-        }
-
-        @ParameterizedTest
-        @ValueSource(strings = {
-            "ab",                  // 너무 짧음 (2자)
-            "abcd",                // 너무 짧음 (4자)
-            "abcdefghij1234567890_", // 21자 초과
-            "user@name",           // 허용되지 않는 특수문자
-            "user name",           // 공백 포함
-            "한글닉네임",          // 비ASCII
-            "Alice",               // 영문 대문자 포함 (선두)
-            "userNAME",            // 영문 대문자 포함 (중간)
-            "ABCDE"                // 영문 대문자만
-        })
-        @DisplayName("형식이 어긋나면 INVALID_LOGIN_ID_FORMAT 예외를 던진다")
-        void 잘못된_형식이면_예외(String loginId) {
-            assertThatThrownBy(() -> CredentialPolicy.validateLoginId(loginId))
-                .isInstanceOf(AuthenticationDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(AuthenticationErrorCode.INVALID_LOGIN_ID_FORMAT);
-        }
-
-        @Test
-        @DisplayName("null 로그인 ID 는 예외를 던진다")
-        void null이면_예외() {
-            assertThatThrownBy(() -> CredentialPolicy.validateLoginId(null))
-                .isInstanceOf(AuthenticationDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(AuthenticationErrorCode.INVALID_LOGIN_ID_FORMAT);
-        }
-    }
 
     @Nested
     @DisplayName("validateEmail")

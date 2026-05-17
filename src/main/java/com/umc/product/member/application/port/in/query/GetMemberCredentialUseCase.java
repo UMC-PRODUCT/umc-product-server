@@ -4,19 +4,12 @@ import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo
 import java.util.Optional;
 
 /**
- * Member 도메인의 ID/PW 자격증명 조회 UseCase.
+ * Member 도메인의 이메일 기반 자격증명 조회 UseCase. ADR-017 흐름.
  * <p>
  * Authentication 도메인이 cross-domain 으로 호출하는 진입점이다.
  * Auth 도메인은 Member 의 Port out / Repository 를 직접 사용하지 않는다.
  */
 public interface GetMemberCredentialUseCase {
-
-    /**
-     * @deprecated ADR-017 에 따라 로그인 식별자가 email 로 전환됨.
-     * {@link #findCredentialByEmail(String)} 사용.
-     */
-    @Deprecated
-    Optional<MemberCredentialInfo> findCredentialByLoginId(String loginId);
 
     /**
      * email 로 자격증명을 조회한다. 존재하지 않거나 비밀번호가 등록되지 않은 회원은 {@link Optional#empty()}.
@@ -32,13 +25,6 @@ public interface GetMemberCredentialUseCase {
      * 비밀번호 변경 등 인증된 사용자 흐름에서 사용한다.
      */
     Optional<MemberCredentialInfo> findCredentialByMemberId(Long memberId);
-
-    /**
-     * @deprecated ADR-017 에 따라 로그인 식별자가 email 로 전환됨.
-     * {@link #existsByEmail(String)} 사용.
-     */
-    @Deprecated
-    boolean existsByLoginId(String loginId);
 
     /**
      * email 이 이미 사용 중인지 확인한다. (회원가입 / 자격증명 등록 시 중복 방지)

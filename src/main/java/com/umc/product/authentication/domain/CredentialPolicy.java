@@ -5,21 +5,14 @@ import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import java.util.regex.Pattern;
 
 /**
- * ID/PW 자격증명의 형식/정책에 대한 단일 진실 원천(SSOT).
+ * 이메일/PW 자격증명의 형식/정책에 대한 단일 진실 원천(SSOT). ADR-017 흐름.
  * <p>
- * 로그인 ID 와 비밀번호의 형식/복잡도 정책을 한 곳에 모아 두고 Command DTO 의 검증 / 회원가입 / 비밀번호 변경 등에서 모두 동일한 규칙을 적용한다.
+ * 이메일 식별자와 비밀번호의 형식/복잡도 정책을 한 곳에 모아 두고 Command DTO 의 검증 /
+ * 회원가입 / 비밀번호 변경 등에서 모두 동일한 규칙을 적용한다.
  * <p>
- * 정책 변경 시 본 파일만 수정하면 된다. (+ DB Check 또한 변경해야 한다)
+ * 정책 변경 시 본 파일만 수정하면 된다.
  */
 public final class CredentialPolicy {
-
-    /**
-     * 영문 소문자, 숫자, 점/밑줄/하이픈 5~20자. DB CHECK 제약과 일치해야 한다.
-     *
-     * @deprecated ADR-017 에 따라 로그인 식별자를 이메일로 전환한 뒤 제거 예정.
-     */
-    @Deprecated
-    public static final Pattern LOGIN_ID_PATTERN = Pattern.compile("^[a-z0-9._-]{5,20}$");
 
     /**
      * 이메일 형식 패턴. RFC 5322 의 실용적 부분 집합으로, 일반적인 이메일 입력을 허용한다.
@@ -36,16 +29,6 @@ public final class CredentialPolicy {
     public static final int PASSWORD_MAX_LENGTH = 64;
 
     private CredentialPolicy() {
-    }
-
-    /**
-     * @deprecated ADR-017 에 따라 로그인 식별자가 이메일로 전환된 뒤 제거 예정.
-     */
-    @Deprecated
-    public static void validateLoginId(String loginId) {
-        if (loginId == null || !LOGIN_ID_PATTERN.matcher(loginId).matches()) {
-            throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_LOGIN_ID_FORMAT);
-        }
     }
 
     /**

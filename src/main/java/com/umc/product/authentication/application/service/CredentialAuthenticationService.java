@@ -4,16 +4,13 @@ import com.umc.product.authentication.application.port.in.command.CredentialAuth
 import com.umc.product.authentication.application.port.in.command.dto.ChangePasswordCommand;
 import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
-import com.umc.product.authentication.application.port.in.command.dto.LoginByIdPwCommand;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
-import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialCommand;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.member.application.port.in.command.ManageMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialByEmailCommand;
-import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialCommand;
 import com.umc.product.member.application.port.in.query.GetMemberCredentialUseCase;
 import com.umc.product.member.application.port.in.query.dto.MemberCredentialInfo;
 import java.util.Collections;
@@ -25,7 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * ID/PW 자격증명 등록/변경/로그인을 담당하는 Service.
+ * 이메일/PW 자격증명 등록/변경/로그인을 담당하는 Service. ADR-017 흐름.
  * <p>
  * 평문 비밀번호 검증과 {@link PasswordEncoder} 인코딩은 본 Service 의 책임이며,
  * Member 도메인에는 이미 인코딩된 "{id}encoded" 해시만 전달한다.
@@ -43,24 +40,9 @@ public class CredentialAuthenticationService implements CredentialAuthentication
     private final CredentialRehashService rehashService;
 
     @Override
-    @Deprecated
-    public void registerCredential(RegisterCredentialCommand command) {
-        // 형식 검증은 커맨드 record 에서 이미 끝났다. 여기서는 중복만 본다.
-        if (getMemberCredentialUseCase.existsByLoginId(command.loginId())) {
-            throw new AuthenticationDomainException(AuthenticationErrorCode.LOGIN_ID_ALREADY_EXISTS);
-        }
-
-        String encodedPassword = passwordEncoder.encode(command.rawPassword());
-
-        manageMemberCredentialUseCase.registerCredential(
-            RegisterMemberCredentialCommand.of(command.memberId(), command.loginId(), encodedPassword)
-        );
-    }
-
-    @Override
     public void registerCredentialByEmail(RegisterCredentialByEmailCommand command) {
-        // email 중복은 회원가입 시 Member.email UNIQUE 제약으로 이미 보장된다.
-        // 본 메서드는 Member 가 이미 생성된 직후 자격증명을 부착하는 흐름에서 호출되므로
+        // email 중복은 Member.email 의 UNIQUE 제약으로 이미 보장된다.
+        // 본 메서드는 Member 가 이미 생성된 직후 또는 기존 회원에 비밀번호를 부착하는 흐름에서 호출되므로
         // 별도 중복 체크를 하지 않는다.
         String encodedPassword = passwordEncoder.encode(command.rawPassword());
 
@@ -88,30 +70,12 @@ public class CredentialAuthenticationService implements CredentialAuthentication
     }
 
     @Override
-    @Deprecated
-    @Transactional(readOnly = true)
-    public IdPwLoginResult loginByIdPw(LoginByIdPwCommand command) {
-        // 1) 자격증명 조회: 부재 / 실패 모두 동일 메시지로 처리하여 사용자 열거 공격을 방지한다.
-        Optional<MemberCredentialInfo> credentialOpt =
-            getMemberCredentialUseCase.findCredentialByLoginId(command.loginId());
-
-        return verifyAndIssueTokens(credentialOpt, command.rawPassword());
-    }
-
-    @Override
     @Transactional(readOnly = true)
     public IdPwLoginResult loginByEmail(LoginByEmailCommand command) {
         // 1) 자격증명 조회: 부재 / 실패 모두 동일 메시지로 처리하여 사용자 열거 공격을 방지한다.
         Optional<MemberCredentialInfo> credentialOpt =
             getMemberCredentialUseCase.findCredentialByEmail(command.email());
 
-        return verifyAndIssueTokens(credentialOpt, command.rawPassword());
-    }
-
-    private IdPwLoginResult verifyAndIssueTokens(
-        Optional<MemberCredentialInfo> credentialOpt,
-        String rawPassword
-    ) {
         if (credentialOpt.isEmpty()) {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL);
         }
@@ -119,13 +83,13 @@ public class CredentialAuthenticationService implements CredentialAuthentication
         MemberCredentialInfo credential = credentialOpt.get();
 
         // 2) 비밀번호 검증
-        if (!passwordEncoder.matches(rawPassword, credential.passwordHash())) {
+        if (!passwordEncoder.matches(command.rawPassword(), credential.passwordHash())) {
             throw new AuthenticationDomainException(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL);
         }
 
         // 3) 점진적 rehash: 해시 정책이 갱신되었으면 최신 정책으로 재저장한다.
         // 별도 트랜잭션(REQUIRES_NEW)에서 수행하여 실패가 로그인에 영향을 주지 않도록 한다.
-        rehashService.rehashIfNeeded(credential, rawPassword);
+        rehashService.rehashIfNeeded(credential, command.rawPassword());
 
         // 4) 토큰 발급
         Long memberId = credential.memberId();

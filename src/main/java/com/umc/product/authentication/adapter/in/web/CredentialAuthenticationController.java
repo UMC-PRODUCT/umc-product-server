@@ -38,14 +38,14 @@ public class CredentialAuthenticationController {
     private final CheckCredentialAvailabilityUseCase checkCredentialAvailabilityUseCase;
 
     @PostMapping("/credentials")
-    @Operation(summary = "[CREDENTIAL-002] ID/PW 최초 등록",
-        description = "OAuth 로 가입한 회원이 ID/PW로 로그인할 수 있도록 새롭게 추가할 수 있습니다. "
-            + "기본적으로 ID는 한 번 등록하면 변경할 수 없으며, 향후 서비스 내에서 친구 추가 등 범용적으로 사용되므로 신중하게 결정하여야 합니다.")
+    @Operation(summary = "[CREDENTIAL-002] 비밀번호 자격증명 최초 등록",
+        description = "OAuth 로 가입한 회원이 이메일/비밀번호로 로그인할 수 있도록 비밀번호를 추가 등록합니다. "
+            + "이메일은 회원의 기존 Member.email 을 그대로 사용합니다.")
     public void registerCredential(
         @CurrentMember MemberPrincipal memberPrincipal,
         @Valid @RequestBody RegisterCredentialRequest request
     ) {
-        credentialAuthenticationUseCase.registerCredential(
+        credentialAuthenticationUseCase.registerCredentialByEmail(
             request.toCommand(memberPrincipal.getMemberId())
         );
     }

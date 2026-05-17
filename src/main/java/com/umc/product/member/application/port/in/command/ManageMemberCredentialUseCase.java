@@ -2,22 +2,14 @@ package com.umc.product.member.application.port.in.command;
 
 import com.umc.product.member.application.port.in.command.dto.ChangeMemberPasswordCommand;
 import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialByEmailCommand;
-import com.umc.product.member.application.port.in.command.dto.RegisterMemberCredentialCommand;
 
 /**
- * Member 도메인의 ID/PW 자격증명 변경 UseCase.
+ * Member 도메인의 이메일 기반 자격증명 변경 UseCase. ADR-017 흐름.
  * <p>
  * Authentication 도메인이 평문 비밀번호 검증/인코딩을 마친 뒤
  * "이미 인코딩된" 해시를 들고 호출한다. Member 는 평문을 보지 않는다.
  */
 public interface ManageMemberCredentialUseCase {
-
-    /**
-     * @deprecated ADR-017 에 따라 loginId 가 제거된 흐름인
-     * {@link #registerCredentialByEmail(RegisterMemberCredentialByEmailCommand)} 사용.
-     */
-    @Deprecated
-    void registerCredential(RegisterMemberCredentialCommand command);
 
     /**
      * 회원에 이메일 기반 자격증명을 최초로 등록한다. 이미 등록되어 있으면 도메인 예외를 던진다.

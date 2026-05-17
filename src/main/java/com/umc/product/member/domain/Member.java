@@ -36,12 +36,8 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 20) // 한글 1~5자
     private String nickname;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 100, unique = true)
     private String email;
-
-    // ID/PW 로그인용 식별자. OAuth 전용 회원은 null 가능
-    @Column(name = "login_id", length = 20, unique = true)
-    private String loginId;
 
     // DelegatingPasswordEncoder 의 "{id}encoded" prefix 를 포함한 단일 해시 컬럼
     @Column(name = "password_hash", length = 255)
@@ -121,23 +117,7 @@ public class Member extends BaseEntity {
     }
 
     /**
-     * @deprecated ADR-017 에 따라 로그인 식별자가 email 로 전환됨. {@link #registerCredential(String)} 사용.
-     */
-    @Deprecated
-    public void registerCredential(String loginId, String encodedPassword) {
-        validateActive();
-        validateLoginId(loginId);
-        validatePassword(encodedPassword);
-
-        if (hasCredential()) {
-            throw new MemberDomainException(MemberErrorCode.CREDENTIAL_ALREADY_REGISTERED);
-        }
-        this.loginId = loginId;
-        this.passwordHash = encodedPassword;
-    }
-
-    /**
-     * 이메일 기반 자격증명을 최초 등록한다.
+     * 이메일 기반 자격증명을 최초 등록한다. ADR-017 흐름.
      * <p>
      * email 은 이미 회원 생성 시점에 검증되어 저장되어 있으므로, 본 메서드는 비밀번호 등록만 수행한다.
      * 이미 비밀번호가 등록되어 있는 경우 변경 흐름({@link #changePassword})을 사용해야 하며, 여기서는 중복 등록을 막는다.
@@ -170,12 +150,6 @@ public class Member extends BaseEntity {
         this.passwordHash = encodedPassword;
     }
 
-    private void validateLoginId(String loginId) {
-        if (loginId == null || loginId.isBlank()) {
-            throw new MemberDomainException(MemberErrorCode.INVALID_LOGIN_ID);
-        }
-    }
-
     private void validatePassword(String encodedPassword) {
         if (encodedPassword == null || encodedPassword.isBlank()) {
             throw new MemberDomainException(MemberErrorCode.INVALID_PASSWORD);
@@ -183,7 +157,7 @@ public class Member extends BaseEntity {
     }
 
     public boolean hasCredential() {
-        return this.loginId != null && this.passwordHash != null;
+        return this.passwordHash != null;
     }
 
     // TODO: 탈퇴 및 휴면 처리에 대한 도메인 로직은 추후 추가

@@ -15,15 +15,6 @@ public class CredentialAvailabilityQueryService implements CheckCredentialAvaila
     private final GetMemberCredentialUseCase getMemberCredentialUseCase;
 
     @Override
-    @Deprecated
-    public boolean isLoginIdAvailable(String loginId) {
-        // 형식이 잘못되면 사용 가능 여부 자체를 따지지 않고 INVALID_LOGIN_ID_FORMAT 예외를 던진다.
-        CredentialPolicy.validateLoginId(loginId);
-
-        return !getMemberCredentialUseCase.existsByLoginId(loginId);
-    }
-
-    @Override
     public boolean isEmailAvailable(String email) {
         // 형식이 잘못되면 사용 가능 여부 자체를 따지지 않고 INVALID_EMAIL_FORMAT 예외를 던진다.
         CredentialPolicy.validateEmail(email);
