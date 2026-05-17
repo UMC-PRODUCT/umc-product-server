@@ -4,6 +4,7 @@ import com.umc.product.authentication.application.port.in.command.dto.ChangePass
 import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
+import com.umc.product.authentication.application.port.in.command.dto.ResetPasswordByEmailCommand;
 
 /**
  * 이메일/PW 자격증명 등록/변경/로그인 UseCase. ADR-017 흐름.
@@ -23,6 +24,15 @@ public interface CredentialAuthenticationUseCase {
 
     /** 현재 비밀번호 검증 후 신규 비밀번호로 교체한다. */
     void changePassword(ChangePasswordCommand command);
+
+    /**
+     * 이메일 인증을 통한 비밀번호 초기화. 현재 비밀번호 없이 새 비밀번호로 교체한다.
+     * <p>
+     * email 은 emailVerificationToken 으로 사전 검증된 값이며, 해당 이메일로 가입된 회원이
+     * 자격증명을 보유한 경우에만 동작한다. 그렇지 않으면 사용자 열거 방지를 위해
+     * {@code INVALID_LOGIN_CREDENTIAL} 단일 메시지로 응답한다.
+     */
+    void resetPasswordByEmail(ResetPasswordByEmailCommand command);
 
     /**
      * 이메일/PW 로그인. 성공 시 JWT 토큰 쌍을 발급하며,

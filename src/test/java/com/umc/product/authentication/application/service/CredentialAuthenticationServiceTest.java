@@ -15,6 +15,7 @@ import com.umc.product.authentication.application.port.in.command.dto.ChangePass
 import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
+import com.umc.product.authentication.application.port.in.command.dto.ResetPasswordByEmailCommand;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -149,6 +150,57 @@ class CredentialAuthenticationServiceTest {
                 .extracting("baseCode")
                 .isEqualTo(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL);
 
+            then(manageMemberCredentialUseCase).should(never()).changePassword(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("이메일 인증 기반 비밀번호 초기화")
+    class ResetPasswordByEmail {
+
+        private static final String NEW_RAW_PASSWORD = "New-Strong-Pw-2026";
+        private static final String NEW_ENCODED_PASSWORD = "{argon2}$argon2id$v=19$m=16384,t=2,p=1$new$hash";
+
+        @Test
+        @DisplayName("이메일로 자격증명을 가진 회원이 있으면 새 비밀번호로 교체한다")
+        void 정상_초기화() {
+            // given
+            MemberCredentialInfo credential = new MemberCredentialInfo(MEMBER_ID, ENCODED_PASSWORD);
+            given(getMemberCredentialUseCase.findCredentialByEmail(EMAIL))
+                .willReturn(Optional.of(credential));
+            given(passwordEncoder.encode(NEW_RAW_PASSWORD)).willReturn(NEW_ENCODED_PASSWORD);
+
+            ResetPasswordByEmailCommand command =
+                ResetPasswordByEmailCommand.of(EMAIL, NEW_RAW_PASSWORD);
+
+            // when
+            service.resetPasswordByEmail(command);
+
+            // then
+            ArgumentCaptor<ChangeMemberPasswordCommand> captor =
+                ArgumentCaptor.forClass(ChangeMemberPasswordCommand.class);
+            then(manageMemberCredentialUseCase).should().changePassword(captor.capture());
+            assertThat(captor.getValue().memberId()).isEqualTo(MEMBER_ID);
+            assertThat(captor.getValue().encodedPassword()).isEqualTo(NEW_ENCODED_PASSWORD);
+        }
+
+        @Test
+        @DisplayName("자격증명이 없는 회원(또는 미가입 이메일)은 INVALID_LOGIN_CREDENTIAL 단일 메시지로 응답한다")
+        void 자격증명_없으면_단일_메시지() {
+            // given
+            given(getMemberCredentialUseCase.findCredentialByEmail(EMAIL))
+                .willReturn(Optional.empty());
+
+            ResetPasswordByEmailCommand command =
+                ResetPasswordByEmailCommand.of(EMAIL, NEW_RAW_PASSWORD);
+
+            // when & then
+            assertThatThrownBy(() -> service.resetPasswordByEmail(command))
+                .isInstanceOf(AuthenticationDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL);
+
+            then(passwordEncoder).should(never()).encode(anyString());
             then(manageMemberCredentialUseCase).should(never()).changePassword(any());
         }
     }

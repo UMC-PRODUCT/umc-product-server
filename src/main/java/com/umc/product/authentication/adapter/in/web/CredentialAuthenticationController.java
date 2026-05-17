@@ -3,11 +3,13 @@ package com.umc.product.authentication.adapter.in.web;
 import com.umc.product.authentication.adapter.in.web.dto.request.ChangePasswordRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.LoginByEmailRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.RegisterCredentialRequest;
+import com.umc.product.authentication.adapter.in.web.dto.request.ResetPasswordByEmailRequest;
 import com.umc.product.authentication.adapter.in.web.dto.response.EmailAvailabilityResponse;
 import com.umc.product.authentication.adapter.in.web.dto.response.IdPwLoginResponse;
 import com.umc.product.authentication.application.port.in.command.CredentialAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
 import com.umc.product.authentication.application.port.in.query.CheckCredentialAvailabilityUseCase;
+import com.umc.product.global.security.JwtTokenProvider;
 import com.umc.product.global.security.MemberPrincipal;
 import com.umc.product.global.security.annotation.CurrentMember;
 import com.umc.product.global.security.annotation.Public;
@@ -36,6 +38,7 @@ public class CredentialAuthenticationController {
 
     private final CredentialAuthenticationUseCase credentialAuthenticationUseCase;
     private final CheckCredentialAvailabilityUseCase checkCredentialAvailabilityUseCase;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/credentials")
     @Operation(summary = "[CREDENTIAL-002] 비밀번호 자격증명 최초 등록",
@@ -60,6 +63,19 @@ public class CredentialAuthenticationController {
         credentialAuthenticationUseCase.changePassword(
             request.toCommand(memberPrincipal.getMemberId())
         );
+    }
+
+    @Public
+    @PatchMapping("/password/reset")
+    @Operation(summary = "[CREDENTIAL-007] 비밀번호 초기화",
+        description = "비밀번호를 잊은 회원이 이메일 인증으로 발급받은 emailVerificationToken 을 사용해 "
+            + "현재 비밀번호 없이 새 비밀번호로 교체합니다. 사용자 열거 방지를 위해 회원 없음/자격증명 미등록 등의 "
+            + "사유는 모두 동일한 메시지로 응답합니다.")
+    public void resetPasswordByEmail(
+        @Valid @RequestBody ResetPasswordByEmailRequest request
+    ) {
+        String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
+        credentialAuthenticationUseCase.resetPasswordByEmail(request.toCommand(email));
     }
 
     @Public

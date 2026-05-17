@@ -5,6 +5,7 @@ import com.umc.product.authentication.application.port.in.command.dto.ChangePass
 import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
 import com.umc.product.authentication.application.port.in.command.dto.LoginByEmailCommand;
 import com.umc.product.authentication.application.port.in.command.dto.RegisterCredentialByEmailCommand;
+import com.umc.product.authentication.application.port.in.command.dto.ResetPasswordByEmailCommand;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import com.umc.product.global.security.JwtTokenProvider;
@@ -66,6 +67,22 @@ public class CredentialAuthenticationService implements CredentialAuthentication
 
         manageMemberCredentialUseCase.changePassword(
             ChangeMemberPasswordCommand.of(command.memberId(), newEncodedPassword)
+        );
+    }
+
+    @Override
+    public void resetPasswordByEmail(ResetPasswordByEmailCommand command) {
+        // 이메일은 emailVerificationToken 으로 사전 검증되어 들어오므로 해당 이메일 소유자가 호출했다고 간주한다.
+        // 다만 시스템에 가입되지 않은 이메일이거나 자격증명이 등록되지 않은 회원(OAuth 전용 등) 인 경우는
+        // 사용자 열거 방지를 위해 단일 메시지로 응답한다.
+        MemberCredentialInfo credential = getMemberCredentialUseCase
+            .findCredentialByEmail(command.email())
+            .orElseThrow(() -> new AuthenticationDomainException(AuthenticationErrorCode.INVALID_LOGIN_CREDENTIAL));
+
+        String newEncodedPassword = passwordEncoder.encode(command.newRawPassword());
+
+        manageMemberCredentialUseCase.changePassword(
+            ChangeMemberPasswordCommand.of(credential.memberId(), newEncodedPassword)
         );
     }
 
