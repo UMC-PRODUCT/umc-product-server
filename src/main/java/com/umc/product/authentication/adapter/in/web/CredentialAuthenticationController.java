@@ -2,11 +2,9 @@ package com.umc.product.authentication.adapter.in.web;
 
 import com.umc.product.authentication.adapter.in.web.dto.request.ChangePasswordRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.LoginByEmailRequest;
-import com.umc.product.authentication.adapter.in.web.dto.request.LoginByIdPwRequest;
 import com.umc.product.authentication.adapter.in.web.dto.request.RegisterCredentialRequest;
 import com.umc.product.authentication.adapter.in.web.dto.response.EmailAvailabilityResponse;
 import com.umc.product.authentication.adapter.in.web.dto.response.IdPwLoginResponse;
-import com.umc.product.authentication.adapter.in.web.dto.response.LoginIdAvailabilityResponse;
 import com.umc.product.authentication.application.port.in.command.CredentialAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.IdPwLoginResult;
 import com.umc.product.authentication.application.port.in.query.CheckCredentialAvailabilityUseCase;
@@ -39,17 +37,6 @@ public class CredentialAuthenticationController {
     private final CredentialAuthenticationUseCase credentialAuthenticationUseCase;
     private final CheckCredentialAvailabilityUseCase checkCredentialAvailabilityUseCase;
 
-    @Public
-    @GetMapping("/login-id/availability")
-    @Operation(summary = "[CREDENTIAL-001] 로그인 ID 사용 가능 여부 조회",
-        description = "loginId 가 형식에 맞고 아직 사용되지 않았는지 확인합니다. 형식이 잘못되면 400 응답입니다.")
-    public LoginIdAvailabilityResponse checkLoginIdAvailability(
-        @RequestParam String loginId
-    ) {
-        boolean available = checkCredentialAvailabilityUseCase.isLoginIdAvailable(loginId);
-        return LoginIdAvailabilityResponse.of(loginId, available);
-    }
-
     @PostMapping("/credentials")
     @Operation(summary = "[CREDENTIAL-002] ID/PW 최초 등록",
         description = "OAuth 로 가입한 회원이 ID/PW로 로그인할 수 있도록 새롭게 추가할 수 있습니다. "
@@ -73,19 +60,6 @@ public class CredentialAuthenticationController {
         credentialAuthenticationUseCase.changePassword(
             request.toCommand(memberPrincipal.getMemberId())
         );
-    }
-
-    @Public
-    @PostMapping("/login/id-pw")
-    @Operation(summary = "[LOGIN-004] ID/PW 로그인 (Deprecated)",
-        description = "⚠️ ADR-017 에 따라 곧 제거됩니다. 새 클라이언트는 `/auth/login/email` 을 사용해주세요. "
-            + "loginId/password 로 인증하여 AccessToken/RefreshToken 을 발급받습니다.")
-    @Deprecated
-    public IdPwLoginResponse loginByIdPw(
-        @Valid @RequestBody LoginByIdPwRequest request
-    ) {
-        IdPwLoginResult result = credentialAuthenticationUseCase.loginByIdPw(request.toCommand());
-        return IdPwLoginResponse.from(result);
     }
 
     @Public

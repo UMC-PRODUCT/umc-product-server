@@ -13,7 +13,6 @@ import com.umc.product.member.adapter.in.web.dto.request.DeleteMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberInfoRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EditMemberProfileRequest;
 import com.umc.product.member.adapter.in.web.dto.request.EmailRegisterMemberRequest;
-import com.umc.product.member.adapter.in.web.dto.request.IdPwRegisterMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.request.OAuthRegisterMemberRequest;
 import com.umc.product.member.adapter.in.web.dto.response.MemberInfoResponse;
 import com.umc.product.member.adapter.in.web.dto.response.RegisterResponse;
@@ -52,7 +51,6 @@ public class MemberCommandController {
     private final ManageMemberProfileUseCase manageMemberProfileUseCase;
 
     private final RegisterOAuthMemberUseCase registerOAuthMemberUseCase;
-    private final RegisterIdPwMemberUseCase registerIdPwMemberUseCase;
     private final RegisterEmailMemberUseCase registerEmailMemberUseCase;
 
 
@@ -89,31 +87,6 @@ public class MemberCommandController {
             .build();
 
         Long createdMemberId = registerOAuthMemberUseCase.register(command);
-
-        String accessToken = jwtTokenProvider.createAccessToken(createdMemberId, null);
-        String refreshToken = jwtTokenProvider.createRefreshToken(createdMemberId);
-
-        return RegisterResponse.of(createdMemberId, accessToken, refreshToken);
-    }
-
-    @Operation(summary = "[REGISTER-002] ID/PW 이용 회원가입 (Deprecated)",
-        description = """
-            ⚠️ ADR-017 에 따라 곧 제거됩니다. 새 클라이언트는 `/register/email` 을 사용해주세요.
-
-            OAuth가 아닌, ID/PW를 이용해서 하는 회원가입 입니다.
-
-            OAuth Provider 및 Provider ID를 받지 않는 부분을 제외하면 동일하게 동작합니다.
-            회원가입 전 ID 중복 검사를 진행할 수 있도록 해주세요.
-            """)
-    @PostMapping("/register/id-pw")
-    @Public
-    @Deprecated
-    RegisterResponse registerMemberByIdPw(@RequestBody IdPwRegisterMemberRequest request) {
-        String email = jwtTokenProvider.parseEmailVerificationToken(request.emailVerificationToken());
-
-        Long createdMemberId = registerIdPwMemberUseCase.register(
-            request.toCommand(email, request.termsAgreements())
-        );
 
         String accessToken = jwtTokenProvider.createAccessToken(createdMemberId, null);
         String refreshToken = jwtTokenProvider.createRefreshToken(createdMemberId);
