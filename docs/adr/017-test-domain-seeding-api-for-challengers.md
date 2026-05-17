@@ -175,25 +175,36 @@ Port 직접 의존을 0으로 만든다.
 ```json
 Request:
 {
-  "idPwCount": 100,
-  "oauthCount": 100,
+  "count": 200,
   "force": false
 }
 Response:
 {
-  "registeredIdPw": 100,
-  "registeredOAuth": 100,
+  "registered": 200,
   "skipped": false,
   "reason": null
 }
 ```
 
+- **ID/PW 회원만 시딩한다**. OAuth 회원 시딩은 제거되었다(아래 "OAuth 제거" 참조).
+- 모든 더미 회원은 동일한 비밀번호 (`app.seed.default-password`)를 사용해 테스트 편의를
+  최적화한다. loginId 만 시퀀스로 구분된다.
 - `force=false`(기본) — 기존 회원 수가 `properties.skipIfMemberCountGreaterThan`
   초과면 `skipped=true` 로 반환(기존 멱등성 유지).
 - `force=true` — 멱등성 체크 무시.
-- ID/PW 시딩은 per-call 트랜잭션(실패 격리), OAuth 시딩은 단일 트랜잭션 batch(기존
-  패턴 유지).
+- 각 register 호출은 자체 트랜잭션이며, 외부 트랜잭션이 묶이지 않도록 서비스 메서드는
+  `@Transactional(propagation = NOT_SUPPORTED)` 로 의도를 명시한다(실패 격리).
 - loginId 시퀀스 오프셋은 `GetMemberUseCase.countAll()` 기반.
+
+#### OAuth 제거
+
+초기 ADR 안은 ID/PW · OAuth 양쪽 시딩을 모두 포함했으나, 실 운영 외 사용 시나리오에서
+- 더미 OAuth provider 응답을 가짜로 만드는 비용이 크고,
+- QA/시연용으로는 ID/PW 단일 경로로도 충분하며,
+- OAuth 시딩의 sequence 가 호출마다 1부터 다시 시작해 UNIQUE 제약 충돌이 발생하는 한계가
+  있었기 때문에 OAuth 경로 자체를 제거한다.
+
+OAuth 검증이 필요한 시나리오는 운영진이 실 provider 흐름으로 별도 처리한다.
 
 ### 챌린저 시딩 (Challenger 분포 시딩)
 
@@ -428,6 +439,70 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
   먼저 늘려야 한다.
 - 약관 동의는 `GetTermUseCase.getRequiredTermIds()` 동적 조회를 그대로 재사용한다.
 
+## Operator Guide
+
+### 활성화 조건
+
+| 항목 | 값 |
+|---|---|
+| Spring Profile | `prod` 가 아닌 모든 프로파일 (`local`, `test`, `dev`, `alpha`, …) |
+| Property | `app.seed.enabled=true` |
+
+`alpha` 프로파일은 `application.yml` 의 multi-document 오버라이드로 기본값이 `true` 로
+설정되어 있다. 다른 환경은 `APP_SEED_ENABLED=true` 환경변수로 명시 활성화해야 한다.
+
+### 호출 순서 (필수)
+
+세 API 는 의존성이 있어 다음 순서로 호출한다.
+
+1. **`POST /test/seed/members`** — Member 풀을 채운다. Challenger·Project 시딩이
+   사용할 Member 가 없으면 후속 시딩이 모두 skip 된다.
+2. **`POST /test/seed/challengers`** — 활성 기수의 (Chapter, School, Part) 셀별로
+   더미 Member + Challenger 를 함께 만든다. 멤버 시딩과 사실상 동일 효과지만 챌린저까지
+   함께 생성되므로 챌린저 화면 검증에 유리하다.
+3. **`POST /test/seed/projects`** — 같은 school 의 Member 풀에서 슬롯(PLAN ×1 +
+   FE 5~6 + BE 5~6 = 11~13)을 뽑아 프로젝트를 N 개 만든다. 한 school 에 최소 11명이
+   있어야 하므로 1번에서 충분히 시딩하지 않으면 `partialProjects` / `skippedChapters`
+   에 잡힌다.
+
+### 권장 호출 예시 (alpha 환경 초기화)
+
+```bash
+# 1. 풀 채우기: 200명 (chapter당 약 5명, school 마다 5~6명)
+curl -X POST $BASE/test/seed/members -H 'Content-Type: application/json' \
+  -d '{"count": 200, "force": false}'
+
+# 2. 챌린저 분포: 활성 기수, 셀당 2명
+curl -X POST $BASE/test/seed/challengers -H 'Content-Type: application/json' \
+  -d '{"countPerPartPerSchool": 2}'
+
+# 3. 프로젝트: 10건
+curl -X POST $BASE/test/seed/projects -H 'Content-Type: application/json' \
+  -d '{"projectCount": 10}'
+```
+
+### 응답 해석
+
+- `SeedMembersResponse.skipped=true` — 이미 임계값 이상 회원이 존재. `force=true` 로
+  재호출하면 시딩한다(이전 회원 위에 시퀀스가 오프셋되어 충돌하지 않음).
+- `SeedChallengersResponse.perCellSummary[i].memberFailed > 0` — 해당 셀의 멤버
+  생성에서 실패가 발생. 보통 `MemberRegistrationValidator` 의 dynamic 검증 실패가
+  원인이다(필수 약관 변경 등).
+- `SeedChallengersResponse.perCellSummary[i].challengerFailed > 0` — 멤버는 만들었지만
+  챌린저 bulk 생성이 트랜잭션 단위로 실패. 셀 전체 챌린저가 롤백됨.
+- `SeedProjectsResponse.skippedChapters[i].reason = "INSUFFICIENT_POOL ..."` —
+  해당 school 의 풀이 11명 미만. 1번 시딩을 늘려야 한다.
+- `SeedProjectsResponse.partialProjects[i]` — 프로젝트는 만들어졌지만 일부 멤버
+  add 가 실패. orphan project 가 잔존하므로 운영자 판단 후 정리 필요.
+
+### 자주 발생하는 운영 이슈
+
+| 증상 | 원인 | 대응 |
+|---|---|---|
+| `skipped=true` 가 떨어진다 | 임계값 초과 (`skipIfMemberCountGreaterThan`) | `force=true` 로 재호출 또는 임계값 조정 |
+| 모든 셀 skip | 활성 기수 미설정 또는 ChapterSchool 매핑 비어있음 | `/api/v1/admin/gisu` / chapter-school seed 마이그레이션 확인 |
+| `INSUFFICIENT_POOL` 빈발 | school 당 멤버 < 11 | members 호출을 더 큰 수로 다시 |
+
 ## References
 
 - 기존 시딩 인프라(이전 대상)
@@ -437,7 +512,6 @@ UseCase 메서드 추가로 Port 직접 의존을 0으로 만들 수 있다.
 - 활용 UseCase
     - `src/main/java/com/umc/product/member/application/port/in/query/GetMemberUseCase.java`
     - `src/main/java/com/umc/product/member/application/port/in/command/RegisterIdPwMemberUseCase.java`
-    - `src/main/java/com/umc/product/member/application/port/in/command/RegisterOAuthMemberUseCase.java`
     - `src/main/java/com/umc/product/challenger/application/port/in/command/ManageChallengerUseCase.java`
     - `src/main/java/com/umc/product/project/application/port/in/command/CreateDraftProjectUseCase.java`
     - `src/main/java/com/umc/product/project/application/port/in/command/AddProjectMemberUseCase.java`
