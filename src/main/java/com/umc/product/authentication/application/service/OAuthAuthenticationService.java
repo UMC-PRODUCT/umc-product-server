@@ -1,6 +1,6 @@
 package com.umc.product.authentication.application.service;
 
-import com.umc.product.authentication.adapter.out.external.OAuthAttributes;
+import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.authentication.application.port.in.command.OAuthAuthenticationUseCase;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.AuthorizationCodeLoginCommand;
@@ -41,32 +41,32 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
     @Transactional(readOnly = true)
     public OAuthTokenLoginResult loginWithOAuthAttributes(OAuthAttributes oAuthAttributes) {
         log.info("OAuthAttributes 기반 로그인 시도: provider={}, providerId={}",
-            oAuthAttributes.getProvider(), oAuthAttributes.getProviderId());
+            oAuthAttributes.provider(), oAuthAttributes.providerId());
 
         return loadMemberOAuthPort
             // OAuth 정보로 기존 회원이 존재하는지 확인
             .findByProviderAndProviderId(
-                oAuthAttributes.getProvider(),
-                oAuthAttributes.getProviderId()
+                oAuthAttributes.provider(),
+                oAuthAttributes.providerId()
             )
             // 기존 회원이 존재하는지 확인
             .map(memberOAuth -> {
                 log.info("기존 회원 로그인 성공: memberId={}", memberOAuth.getMemberId());
                 return OAuthTokenLoginResult.existingMember(
                     memberOAuth.getMemberId(),
-                    oAuthAttributes.getProvider(),
-                    oAuthAttributes.getProviderId(),
-                    oAuthAttributes.getEmail()
+                    oAuthAttributes.provider(),
+                    oAuthAttributes.providerId(),
+                    oAuthAttributes.email()
                 );
             })
             // 존재하지 않는 회원인 경우에 대한 처리
             .orElseGet(() -> {
                 log.info("신규 회원 - 회원가입 필요: provider={}, providerId={}",
-                    oAuthAttributes.getProvider(), oAuthAttributes.getProviderId());
+                    oAuthAttributes.provider(), oAuthAttributes.providerId());
                 return OAuthTokenLoginResult.newMember(
-                    oAuthAttributes.getProvider(),
-                    oAuthAttributes.getProviderId(),
-                    oAuthAttributes.getEmail()
+                    oAuthAttributes.provider(),
+                    oAuthAttributes.providerId(),
+                    oAuthAttributes.email()
                 );
             });
     }
@@ -82,9 +82,9 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         );
 
         log.info("OAuth 토큰 검증 성공: provider={}, providerId={}, email={}",
-            oauthAttrs.getProvider(),
-            oauthAttrs.getProviderId(),
-            oauthAttrs.getEmail()
+            oauthAttrs.provider(),
+            oauthAttrs.providerId(),
+            oauthAttrs.email()
         );
 
         // 2. 공통 비즈니스 로직 재사용
@@ -103,9 +103,9 @@ public class OAuthAuthenticationService implements OAuthAuthenticationUseCase {
         );
 
         log.info("OAuth Authorization Code 교환 성공: provider={}, providerId={}, email={}",
-            oauthAttrs.getProvider(),
-            oauthAttrs.getProviderId(),
-            oauthAttrs.getEmail()
+            oauthAttrs.provider(),
+            oauthAttrs.providerId(),
+            oauthAttrs.email()
         );
 
         // 2. 공통 비즈니스 로직 재사용

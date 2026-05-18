@@ -1,6 +1,6 @@
 package com.umc.product.authentication.adapter.out.external;
 
-import com.umc.product.authentication.adapter.out.external.OAuthAttributes;
+import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.authentication.application.port.out.AppleAuthorizationCodeResult;
 import com.umc.product.authentication.application.port.out.RevokeOAuthTokenPort;
 import com.umc.product.authentication.application.port.out.VerifyOAuthTokenPort;

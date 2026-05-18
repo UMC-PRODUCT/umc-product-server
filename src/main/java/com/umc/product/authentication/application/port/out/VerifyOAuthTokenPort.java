@@ -1,6 +1,6 @@
 package com.umc.product.authentication.application.port.out;
 
-import com.umc.product.authentication.adapter.out.external.OAuthAttributes;
+import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.common.domain.enums.ClientType;
 import com.umc.product.common.domain.enums.OAuthProvider;
 

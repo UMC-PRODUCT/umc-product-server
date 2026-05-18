@@ -1,6 +1,6 @@
 package com.umc.product.authentication.application.port.in.command;
 
-import com.umc.product.authentication.adapter.out.external.OAuthAttributes;
+import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.authentication.application.port.in.command.dto.AccessTokenLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.AuthorizationCodeLoginCommand;
 import com.umc.product.authentication.application.port.in.command.dto.LinkOAuthCommand;

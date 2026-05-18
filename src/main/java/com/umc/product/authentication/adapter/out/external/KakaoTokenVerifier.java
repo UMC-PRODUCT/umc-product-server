@@ -1,7 +1,7 @@
 package com.umc.product.authentication.adapter.out.external;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.umc.product.authentication.adapter.out.external.OAuthAttributes;
+import com.umc.product.authentication.domain.OAuthAttributes;
 import com.umc.product.authentication.domain.exception.AuthenticationDomainException;
 import com.umc.product.authentication.domain.exception.AuthenticationErrorCode;
 import java.util.HashMap;
