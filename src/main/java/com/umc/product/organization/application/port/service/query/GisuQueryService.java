@@ -8,6 +8,7 @@ import com.umc.product.organization.exception.OrganizationDomainException;
 import com.umc.product.organization.exception.OrganizationErrorCode;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -62,6 +63,11 @@ public class GisuQueryService implements GetGisuUseCase {
     @Override
     public GisuInfo getActiveGisu() {
         return GisuInfo.from(loadGisuPort.findActiveGisu());
+    }
+
+    @Override
+    public Optional<GisuInfo> findActiveGisu() {
+        return loadGisuPort.findActiveGisuOptional().map(GisuInfo::from);
     }
 
     @Override

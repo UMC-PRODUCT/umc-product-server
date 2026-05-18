@@ -28,6 +28,11 @@ public class GisuPersistenceAdapter implements SaveGisuPort, LoadGisuPort {
     }
 
     @Override
+    public Optional<Gisu> findActiveGisuOptional() {
+        return gisuJpaRepository.findByIsActiveTrue();
+    }
+
+    @Override
     public Optional<Gisu> findActiveGisuWithLock() {
         return gisuJpaRepository.findActiveWithLock();
     }

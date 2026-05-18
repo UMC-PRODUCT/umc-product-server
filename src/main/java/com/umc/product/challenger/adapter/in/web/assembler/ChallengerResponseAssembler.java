@@ -10,6 +10,10 @@ import com.umc.product.organization.application.port.in.query.GetGisuUseCase;
 import com.umc.product.organization.application.port.in.query.dto.chapter.ChapterInfo;
 import com.umc.product.organization.application.port.in.query.dto.gisu.GisuInfo;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -38,14 +42,28 @@ public class ChallengerResponseAssembler {
         List<ChallengerInfo> challengerInfos = getChallengerUseCase.getAllByMemberId(memberId);
         MemberInfo memberInfo = getMemberUseCase.getById(memberId);
 
-        return challengerInfos.stream()
-            .map(challengerInfo -> {
-                GisuInfo gisuInfo = getGisuUseCase.getById(challengerInfo.gisuId());
-                ChapterInfo chapterInfo = getChapterUseCase.byGisuAndSchool(challengerInfo.gisuId(),
-                    memberInfo.schoolId());
+        // 챌린저별로 gisu/chapter를 반복 조회하면 N+1이 발생하므로, batch 메서드로 한 번에 조회합니다.
+        Set<Long> gisuIds = challengerInfos.stream()
+            .map(ChallengerInfo::gisuId)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toSet());
 
-                return ChallengerInfoResponse.from(challengerInfo, memberInfo, gisuInfo, chapterInfo);
-            })
+        Map<Long, GisuInfo> gisuByGisuId = gisuIds.isEmpty()
+            ? Map.of()
+            : getGisuUseCase.getByIds(gisuIds).stream()
+                .collect(Collectors.toMap(GisuInfo::gisuId, g -> g));
+
+        Map<Long, Map<Long, ChapterInfo>> chapterByGisuAndSchool = (gisuIds.isEmpty() || memberInfo.schoolId() == null)
+            ? Map.of()
+            : getChapterUseCase.getChapterMapByGisuIdsAndSchoolIds(gisuIds, Set.of(memberInfo.schoolId()));
+
+        return challengerInfos.stream()
+            .map(challengerInfo -> ChallengerInfoResponse.from(
+                challengerInfo,
+                memberInfo,
+                gisuByGisuId.get(challengerInfo.gisuId()),
+                chapterByGisuAndSchool.getOrDefault(challengerInfo.gisuId(), Map.of()).get(memberInfo.schoolId())
+            ))
             .toList();
     }
 }
