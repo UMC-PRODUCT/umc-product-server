@@ -26,10 +26,6 @@ public class OAuthAttributes {
         String registrationId,
         Map<String, Object> attributes
     ) {
-
-        log.info("OAuthAttributes - RegistrationID: {}", registrationId);
-        log.info("OAuthAttributes - attributes: {}", attributes);
-
         return switch (registrationId.toLowerCase()) {
             case "google" -> ofGoogle(attributes);
             case "kakao" -> ofKakao(attributes);
