@@ -150,7 +150,9 @@ public class SecurityConfig {
                     "/error",
                     // OAuth2
                     "/api/v1/auth/oauth2/authorization/**",
-                    "/api/v1/auth/oauth2/callback/**"
+                    "/api/v1/auth/oauth2/callback/**",
+                    // WebSocket
+                    "/ws/**"
                 ).permitAll();
 
                 // Swagger
