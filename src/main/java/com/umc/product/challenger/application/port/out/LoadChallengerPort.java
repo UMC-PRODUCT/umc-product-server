@@ -28,6 +28,13 @@ public interface LoadChallengerPort {
     List<Challenger> getAllByMemberId(Long memberId);
 
     /**
+     * 여러 memberId로 챌린저 목록 조회 (IN 쿼리 1회).
+     * <p>
+     * 회원이 챌린저 이력이 없을 수도 있으므로 누락된 memberId가 있어도 예외를 던지지 않습니다.
+     */
+    List<Challenger> listAllByMemberIds(Set<Long> memberIds);
+
+    /**
      * gisuId로 챌린저 목록 조회
      */
     List<Challenger> getAllByGisuId(Long gisuId);
