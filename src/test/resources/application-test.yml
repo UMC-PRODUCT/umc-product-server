@@ -18,14 +18,6 @@ spring:
     enabled: true
     out-of-order: true
 
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: google_client_id
-            client-secret: google_client_secret
-
 jwt:
   access-token-secret: access_token_secret
   refresh-token-secret: refresh_token_secret
@@ -73,6 +65,5 @@ app:
 
 
   oauth2:
-    frontend-redirect-url: about:blank
     google:
       client-id-list: apps.googleusercontent.com

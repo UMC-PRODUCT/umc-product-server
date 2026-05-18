@@ -1,9 +1,6 @@
 package com.umc.product.global.config;
 
 
-import com.umc.product.authentication.adapter.in.oauth.OAuth2AuthenticationFailureHandler;
-import com.umc.product.authentication.adapter.in.oauth.OAuth2AuthenticationSuccessHandler;
-import com.umc.product.authentication.application.service.UmcProductOAuth2UserService;
 import com.umc.product.global.security.ApiAccessDeniedHandler;
 import com.umc.product.global.security.ApiAuthenticationEntryPoint;
 import com.umc.product.global.security.JwtAuthenticationFilter;
@@ -60,9 +57,6 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final ApiAuthenticationEntryPoint authenticationEntryPoint;
     private final ApiAccessDeniedHandler accessDeniedHandler;
-    private final UmcProductOAuth2UserService umcProductOAuth2UserService;
-    private final OAuth2AuthenticationSuccessHandler oAuth2SuccessHandler;
-    private final OAuth2AuthenticationFailureHandler oAuth2FailureHandler;
     private final RequestMappingHandlerMapping requestMappingHandlerMapping;
 
     // application.yml에서 cors.allowed-origin-patterns 값을 List 형태로 주입받음
@@ -125,32 +119,12 @@ public class SecurityConfig {
             .httpBasic(AbstractHttpConfigurer::disable)   // HTTP Basic 비활성
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            // OAuth2 로그인 설정
-            .oauth2Login(oauth2 -> oauth2
-                .authorizationEndpoint(authorization -> authorization
-                    .baseUri("/api/v1/auth/oauth2/authorization") // 기본: /oauth2/authorization
-                )
-                .redirectionEndpoint(redirection -> redirection
-                    .baseUri("/api/v1/auth/oauth2/callback/*")  // 기본: /login/oauth2/code/*
-                )
-                // 우리 DB랑 비교해서 사용자 정보를 저장함
-                // 여기서 실패한 요청도 failure로 들어감
-                .userInfoEndpoint(userInfo ->
-                    userInfo.userService(umcProductOAuth2UserService))
-                // OAuth 로그인이 성공했을 때 핸들링하는 곳
-                .successHandler(oAuth2SuccessHandler)
-                // OAuth 로그인이 실패했을 때 핸들링하는 곳 (그냥 실패한거)
-                .failureHandler(oAuth2FailureHandler)
-            )
             .authorizeHttpRequests(auth -> {
                 // 공개 엔드포인트
                 auth.requestMatchers(
                     // Health Check & Error
                     "/actuator/**",
-                    "/error",
-                    // OAuth2
-                    "/api/v1/auth/oauth2/authorization/**",
-                    "/api/v1/auth/oauth2/callback/**"
+                    "/error"
                 ).permitAll();
 
                 // Swagger
