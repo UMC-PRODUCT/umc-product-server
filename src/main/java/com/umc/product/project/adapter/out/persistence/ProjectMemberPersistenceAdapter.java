@@ -55,6 +55,13 @@ public class ProjectMemberPersistenceAdapter implements LoadProjectMemberPort, S
     }
 
     @Override
+    public Map<Long, List<ProjectMember>> listByProjectIdsAndPartGroupedByProjectId(
+        Collection<Long> projectIds, ChallengerPart part
+    ) {
+        return queryRepository.listByProjectIdsAndPartGroupedByProjectId(projectIds, part);
+    }
+
+    @Override
     public Map<ChallengerPart, Long> countByProjectIdGroupByPart(Long projectId) {
         List<Object[]> rows = repository.countByProjectIdGroupByPartRaw(projectId, ProjectMemberStatus.ACTIVE);
 

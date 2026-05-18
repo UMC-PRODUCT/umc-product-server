@@ -8,6 +8,7 @@ import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.domain.ProjectMember;
 import com.umc.product.project.domain.enums.MatchingType;
 import com.umc.product.project.domain.enums.ProjectMemberStatus;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -68,6 +69,40 @@ public class ProjectMemberQueryRepository {
             .fetchOne();
 
         return Optional.ofNullable(result);
+    }
+
+    /**
+     * 여러 프로젝트의 특정 파트 ACTIVE 멤버를 한 번에 조회해 projectId 기준으로 그룹핑한다.
+     * <p>
+     * {@code projectMember.project.id} projection 으로 FK 만 추출하여, 호출자가 {@code member.getProject().getId()} 로 lazy
+     * 프록시에 접근하지 않도록 한다.
+     *
+     * @return projectId -> 멤버 목록 맵. 해당 파트 멤버가 없는 프로젝트는 엔트리 없음.
+     */
+    public Map<Long, List<ProjectMember>> listByProjectIdsAndPartGroupedByProjectId(
+        Collection<Long> projectIds, ChallengerPart part
+    ) {
+        if (projectIds == null || projectIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Tuple> rows = queryFactory
+            .select(projectMember.project.id, projectMember)
+            .from(projectMember)
+            .where(
+                projectMember.project.id.in(projectIds),
+                projectMember.part.eq(part),
+                projectMember.status.eq(ProjectMemberStatus.ACTIVE)
+            )
+            .fetch();
+
+        Map<Long, List<ProjectMember>> result = new HashMap<>();
+        for (Tuple row : rows) {
+            Long projectId = row.get(projectMember.project.id);
+            ProjectMember member = row.get(projectMember);
+            result.computeIfAbsent(projectId, k -> new ArrayList<>()).add(member);
+        }
+        return result;
     }
 
     /**

@@ -3,7 +3,10 @@ package com.umc.product.project.application.service.query;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 import com.umc.product.common.domain.enums.ChallengerPart;
 import com.umc.product.project.application.access.ProjectAccessScope;
@@ -157,9 +160,12 @@ class ProjectQueryServiceTest {
             .willReturn(new ProjectAccessScope.PublicOnly());
         given(loadProjectPort.search(any(SearchProjectQuery.class)))
             .willReturn(new PageImpl<>(List.of(project), pageable, 1));
-        given(loadProjectMemberPort.listByProjectIdAndPart(1L, ChallengerPart.PLAN))
-            .willReturn(List.of());
-        given(loadProjectPartQuotaPort.listByProjectId(1L)).willReturn(List.of());
+        given(loadProjectMemberPort.listByProjectIdsAndPartGroupedByProjectId(anySet(), eq(ChallengerPart.PLAN)))
+            .willReturn(Map.of());
+        given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(anySet()))
+            .willReturn(Map.of());
+        given(loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(anySet()))
+            .willReturn(Map.of());
         given(getFileUseCase.getFileLinks(List.of("thumb-1")))
             .willReturn(Map.of("thumb-1", "https://cdn.example.com/thumb-1"));
 
@@ -170,6 +176,47 @@ class ProjectQueryServiceTest {
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getTotalElements()).isEqualTo(1);
         assertThat(result.getContent().get(0).id()).isEqualTo(1L);
+    }
+
+    @Test
+    void search_여러_프로젝트_배치_조립() {
+        // given
+        Project p1 = createProject(1L, ProjectStatus.IN_PROGRESS);
+        Project p2 = createProject(2L, ProjectStatus.IN_PROGRESS);
+        PageRequest pageable = PageRequest.of(0, 20);
+        SearchProjectQuery query = SearchProjectQuery.forChallenger(
+            1L, null, null, null, null, null, pageable);
+
+        given(scopeResolver.resolveForPublicSearch(any(), any(), anySet()))
+            .willReturn(new ProjectAccessScope.PublicOnly());
+        given(loadProjectPort.search(any(SearchProjectQuery.class)))
+            .willReturn(new PageImpl<>(List.of(p1, p2), pageable, 2));
+        given(loadProjectMemberPort.listByProjectIdsAndPartGroupedByProjectId(anySet(), eq(ChallengerPart.PLAN)))
+            .willReturn(Map.of(1L, List.of(createProjectMember(20L))));
+        given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(anySet()))
+            .willReturn(Map.of(2L, List.of(createPartQuota(2L, ChallengerPart.WEB, 3))));
+        given(loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(anySet()))
+            .willReturn(Map.of(2L, Map.of(ChallengerPart.WEB, 2L)));
+        given(getFileUseCase.getFileLinks(List.of("thumb-1")))
+            .willReturn(Map.of("thumb-1", "https://cdn.example.com/thumb-1"));
+
+        // when
+        Page<ProjectInfo> result = sut.search(query, 99L);
+
+        // then
+        assertThat(result.getContent()).hasSize(2);
+
+        ProjectInfo first = result.getContent().get(0);
+        assertThat(first.id()).isEqualTo(1L);
+        assertThat(first.coProductOwnerMemberIds()).containsExactly(20L);
+        assertThat(first.partQuotas()).isEmpty();
+
+        ProjectInfo second = result.getContent().get(1);
+        assertThat(second.id()).isEqualTo(2L);
+        assertThat(second.coProductOwnerMemberIds()).isEmpty();
+        assertThat(second.partQuotas()).hasSize(1);
+        assertThat(second.partQuotas().get(0).part()).isEqualTo(ChallengerPart.WEB);
+        assertThat(second.partQuotas().get(0).currentCount()).isEqualTo(2);
     }
 
     @Test
@@ -190,6 +237,7 @@ class ProjectQueryServiceTest {
         // then
         assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isZero();
+        verify(loadProjectMemberPort, never()).listByProjectIdsAndPartGroupedByProjectId(anySet(), any());
     }
 
     @Test
@@ -205,9 +253,12 @@ class ProjectQueryServiceTest {
                     ProjectStatus.COMPLETED, ProjectStatus.ABORTED)));
         given(loadProjectPort.search(any(SearchProjectQuery.class)))
             .willReturn(new PageImpl<>(List.of(project), pageable, 1));
-        given(loadProjectMemberPort.listByProjectIdAndPart(1L, ChallengerPart.PLAN))
-            .willReturn(List.of());
-        given(loadProjectPartQuotaPort.listByProjectId(1L)).willReturn(List.of());
+        given(loadProjectMemberPort.listByProjectIdsAndPartGroupedByProjectId(anySet(), eq(ChallengerPart.PLAN)))
+            .willReturn(Map.of());
+        given(loadProjectPartQuotaPort.listByProjectIdsGroupedByProjectId(anySet()))
+            .willReturn(Map.of());
+        given(loadProjectMemberPort.countByProjectIdsGroupByProjectIdAndPart(anySet()))
+            .willReturn(Map.of());
         given(getFileUseCase.getFileLinks(List.of("thumb-1")))
             .willReturn(Map.of("thumb-1", "https://cdn.example.com/thumb-1"));
 
@@ -229,6 +280,7 @@ class ProjectQueryServiceTest {
 
         assertThat(result.getContent()).isEmpty();
         assertThat(result.getTotalElements()).isZero();
+        verify(loadProjectMemberPort, never()).listByProjectIdsAndPartGroupedByProjectId(anySet(), any());
     }
 
     // ========== Helper Methods ==========
