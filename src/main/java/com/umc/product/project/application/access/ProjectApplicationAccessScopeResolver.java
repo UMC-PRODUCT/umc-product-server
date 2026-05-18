@@ -10,10 +10,7 @@ import com.umc.product.project.application.access.ProjectApplicationAccessScope.
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.OwnerOnly;
 import com.umc.product.project.application.access.ProjectApplicationAccessScope.ProjectScoped;
 import com.umc.product.project.application.port.out.LoadProjectMemberPort;
-import com.umc.product.project.application.port.out.LoadProjectPort;
 import com.umc.product.project.domain.Project;
-import com.umc.product.project.domain.exception.ProjectDomainException;
-import com.umc.product.project.domain.exception.ProjectErrorCode;
 import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +24,6 @@ import org.springframework.stereotype.Component;
 public class ProjectApplicationAccessScopeResolver {
 
     private final GetChallengerRoleUseCase getChallengerRoleUseCase;
-    private final LoadProjectPort loadProjectPort;
     private final LoadProjectMemberPort loadProjectMemberPort;
 
     /**
@@ -38,18 +34,44 @@ public class ProjectApplicationAccessScopeResolver {
     }
 
     /**
-     * PO/Sub-PM 의 "내 프로젝트 지원자 목록" 화면.
-     * 호출자가 부모 프로젝트의 PO 또는 보조 PM (ACTIVE PLAN 멤버) 이어야 통과.
-     * 그 외엔 {@link None} 반환 — 호출 측이 빈 목록 처리.
+     * 단일 프로젝트 지원자 목록(APPLY-101) 화면. 호출자가 다음 중 하나라도 만족하면 {@link ProjectScoped} 통과:
+     * <ul>
+     *   <li>해당 프로젝트의 PO</li>
+     *   <li>해당 프로젝트의 보조 PM (ACTIVE PLAN 멤버)</li>
+     *   <li>SUPER_ADMIN</li>
+     *   <li>해당 프로젝트 기수의 Central Core (총괄/부총괄)</li>
+     *   <li>해당 프로젝트 지부의 지부장 (같은 기수)</li>
+     *   <li>해당 프로젝트 학교의 회장 (SCHOOL_PRESIDENT, 같은 기수)</li>
+     * </ul>
+     * 그 외엔 {@link None} 반환 — 호출 측이 빈 목록 처리하여 권한 부재를 '지원자 0건' 으로 위장한다.
+     * <p>
+     * {@code project} 는 호출자(서비스 단)가 사전 로드한 인스턴스를 그대로 전달받는다. 동일 트랜잭션 내 중복 조회를 피하기 위함.
      */
-    public ProjectApplicationAccessScope resolveForProjectReview(Long memberId, Long projectId) {
-        Project project = loadProjectPort.findById(projectId)
-            .orElseThrow(() -> new ProjectDomainException(ProjectErrorCode.PROJECT_NOT_FOUND));
+    public ProjectApplicationAccessScope resolveForProjectApplicantList(Long memberId, Project project) {
+        Long projectId = project.getId();
 
         if (Objects.equals(project.getProductOwnerMemberId(), memberId)
             || loadProjectMemberPort.isActivePlanMember(projectId, memberId)) {
             return new ProjectScoped(projectId);
         }
+
+        List<ChallengerRoleInfo> roles = getChallengerRoleUseCase.findAllByMemberId(memberId);
+        if (roles.stream().anyMatch(r -> r.roleType().isSuperAdmin())) {
+            return new ProjectScoped(projectId);
+        }
+
+        List<ChallengerRoleInfo> rolesInGisu = roles.stream()
+            .filter(r -> Objects.equals(r.gisuId(), project.getGisuId()))
+            .toList();
+
+        if (rolesInGisu.stream().anyMatch(
+            r -> r.roleType().isAtLeastCentralCore() || (r.roleType() == ChallengerRoleType.CHAPTER_PRESIDENT
+                && Objects.equals(r.organizationId(), project.getChapterId())) || (
+                r.roleType() == ChallengerRoleType.SCHOOL_PRESIDENT && Objects.equals(r.organizationId(),
+                    project.getProductOwnerSchoolId())))) {
+            return new ProjectScoped(projectId);
+        }
+
         return new None();
     }
 

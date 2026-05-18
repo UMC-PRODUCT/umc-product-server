@@ -3,6 +3,8 @@ package com.umc.product.project.application.service.query;
 import com.umc.product.challenger.application.port.in.query.GetChallengerUseCase;
 import com.umc.product.challenger.application.port.in.query.dto.ChallengerInfo;
 import com.umc.product.common.domain.enums.ChallengerPart;
+import com.umc.product.project.application.access.ProjectApplicationAccessScope;
+import com.umc.product.project.application.access.ProjectApplicationAccessScopeResolver;
 import com.umc.product.project.application.port.in.query.GetMyProjectApplicationsUseCase;
 import com.umc.product.project.application.port.in.query.GetProjectApplicationDetailUseCase;
 import com.umc.product.project.application.port.in.query.SearchProjectApplicationsUseCase;
@@ -60,6 +62,7 @@ public class ProjectApplicationQueryService
     private final LoadProjectMemberPort loadProjectMemberPort;
     private final LoadProjectPort loadProjectPort;
     private final LoadProjectApplicationFormPolicyPort loadProjectApplicationFormPolicyPort;
+    private final ProjectApplicationAccessScopeResolver accessScopeResolver;
 
     // Cross-domain
     private final GetChallengerUseCase getChallengerUseCase;
@@ -67,38 +70,17 @@ public class ProjectApplicationQueryService
     private final GetFormUseCase getFormUseCase;
     private final GetFormResponseUseCase getFormResponseUseCase;
 
-    private static Optional<MatchingType> matchingTypeOf(ChallengerPart part) {
-        return switch (part) {
-            case DESIGN -> Optional.of(MatchingType.PLAN_DESIGN);
-            case WEB, ANDROID, IOS, NODEJS, SPRINGBOOT -> Optional.of(MatchingType.PLAN_DEVELOPER);
-            case PLAN, ADMIN -> Optional.empty();
-        };
-    }
-
-    /**
-     * application 카드와 랜덤 매칭 카드의 projectId 를 통합한 집합을 만든다 (N+1 방지용 batch 키).
-     */
-    private static Set<Long> collectProjectIds(
-        List<ProjectApplication> applications, Optional<ProjectMember> randomMatchingMember
-    ) {
-        Set<Long> projectIds = new HashSet<>();
-        for (ProjectApplication application : applications) {
-            projectIds.add(application.getApplicationForm().getProject().getId());
-        }
-        randomMatchingMember.ifPresent(member -> projectIds.add(member.getProject().getId()));
-        return projectIds;
-    }
-
     /**
      * 지원서 단건 상세 조회.
+     * <p>
+     * 권한 검사(4종 staff + 본인 / DRAFT 본인 한정)는 컨트롤러의 {@code @CheckAccess(PROJECT_APPLICATION, READ)} 가
+     * 처리하므로 본 메서드 진입 시점에는 L2 권한이 검증된 상태이다.
      * <p>
      * 흐름:
      * <ol>
      *   <li>application fetch join 단건 로드 (form/project/matchingRound 한 번에)</li>
      *   <li>정합성 검증: application 의 form.project.id 가 path 의 projectId 와 일치해야 함.
      *       위반/미존재 모두 PROJECT_APPLICATION_NOT_FOUND 로 통일하여 다른 프로젝트의 지원서 존재 여부를 은닉</li>
-     *   <li>도메인 비즈니스 규칙: DRAFT(임시저장)은 지원자 본인만 조회 가능. PO/Sub-PO/지부장/CC 등 다른 호출자에게는
-     *       not-found 로 위장하여 임시저장본의 존재 자체를 은닉</li>
      *   <li>지원자 파트 단건 조회 (해당 기수 챌린저 invariant -- 누락 시 not-found 로 통일)</li>
      *   <li>폼 구조/정책/응답 본문/첨부 파일 raw 데이터 cross-domain 조회 (storage 만 IN 쿼리 batch)</li>
      *   <li>{@link ProjectApplicationDetailInfo#of} 가 마스킹/메타 분리/answers Map 합성까지 한 번에 처리</li>
@@ -112,10 +94,6 @@ public class ProjectApplicationQueryService
         ProjectApplicationForm applicationForm = application.getApplicationForm();
         Project project = applicationForm.getProject();
         if (!Objects.equals(project.getId(), query.projectId())) {
-            throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
-        }
-        if (application.isDraft()
-            && !Objects.equals(application.getApplicantMemberId(), query.requesterMemberId())) {
             throw new ProjectDomainException(ProjectErrorCode.PROJECT_APPLICATION_NOT_FOUND);
         }
 
@@ -143,69 +121,12 @@ public class ProjectApplicationQueryService
         );
     }
 
-    // ==============================================================
-    //                      Helper Method
-    // ==============================================================
-
-    /**
-     * PM/운영진용 단일 프로젝트 지원자 목록 조회.
-     * <p>
-     * 흐름:
-     * <ol>
-     *   <li>프로젝트 단건 조회 (없으면 PROJECT_NOT_FOUND)</li>
-     *   <li>지원서 동적 검색 (matchingRoundId / status 필터, DRAFT 제외)</li>
-     *   <li>지원자들의 challenger.part batch 조회 (해당 기수 invariant)</li>
-     *   <li>part 필터를 in-memory 로 적용 -- challenger.part 는 ProjectApplication 컬럼이 아니므로
-     *       repository 단에서 다루지 않는다 (도메인 분리)</li>
-     *   <li>ProjectApplicationCardInfo 로 조립</li>
-     * </ol>
-     * <p>
-     * 정렬은 repository 가 phase ASC -> submittedAt ASC 로 처리하므로 이 메서드는 추가 정렬을 하지 않는다.
-     */
-    @Override
-    public List<ProjectApplicationCardInfo> searchByProject(SearchProjectApplicationsQuery query) {
-        Project project = loadProjectPort.getById(query.projectId());
-
-        List<ProjectApplication> applications = loadProjectApplicationPort.searchProjectApplications(
-            query.projectId(),
-            query.matchingRoundId(),
-            query.status()
-        );
-        if (applications.isEmpty()) {
-            return List.of();
-        }
-
-        Map<Long, ChallengerPart> partsByMember = resolveApplicantParts(applications, project.getGisuId());
-
-        List<ProjectApplicationCardInfo> cards = new ArrayList<>(applications.size());
-        for (ProjectApplication application : applications) {
-            ChallengerPart applicantPart = partsByMember.get(application.getApplicantMemberId());
-            if (query.part() != null && query.part() != applicantPart) {
-                continue;
-            }
-            cards.add(ProjectApplicationCardInfo.of(application, applicantPart));
-        }
-        return cards;
-    }
-
-    /**
-     * 요청자의 챌린저 파트로부터 매칭 종류를 결정한다.
-     * <ul>
-     *   <li>해당 기수에 챌린저 레코드 없음 -> empty</li>
-     *   <li>{@code PLAN} / {@code ADMIN} -> empty (지원 대상 아님)</li>
-     *   <li>{@code DESIGN} -> {@code PLAN_DESIGN}</li>
-     *   <li>{@code WEB} / {@code ANDROID} / {@code IOS} / {@code NODEJS} / {@code SPRINGBOOT} -> {@code PLAN_DEVELOPER}</li>
-     * </ul>
-     */
-    private Optional<MatchingType> resolveMatchingType(GetMyProjectApplicationsQuery query) {
-        return getChallengerUseCase
-            .findByMemberIdAndGisuId(query.requesterMemberId(), query.gisuId())
-            .map(ChallengerInfo::part)
-            .flatMap(ProjectApplicationQueryService::matchingTypeOf);
-    }
-
-    private static String thumbnailUrlOf(Project project, Map<String, String> thumbnailLinks) {
-        return project.getThumbnailFileId() == null ? null : thumbnailLinks.get(project.getThumbnailFileId());
+    private static Optional<MatchingType> matchingTypeOf(ChallengerPart part) {
+        return switch (part) {
+            case DESIGN -> Optional.of(MatchingType.PLAN_DESIGN);
+            case WEB, ANDROID, IOS, NODEJS, SPRINGBOOT -> Optional.of(MatchingType.PLAN_DEVELOPER);
+            case PLAN, ADMIN -> Optional.empty();
+        };
     }
 
     /**
@@ -250,6 +171,92 @@ public class ProjectApplicationQueryService
         }
 
         return assembleCards(applications, randomMatchingMember, matchingType.get());
+    }
+
+    // ==============================================================
+    //                      Helper Method
+    // ==============================================================
+
+    /**
+     * application 카드와 랜덤 매칭 카드의 projectId 를 통합한 집합을 만든다 (N+1 방지용 batch 키).
+     */
+    private static Set<Long> collectProjectIds(
+        List<ProjectApplication> applications, Optional<ProjectMember> randomMatchingMember
+    ) {
+        Set<Long> projectIds = new HashSet<>();
+        for (ProjectApplication application : applications) {
+            projectIds.add(application.getApplicationForm().getProject().getId());
+        }
+        randomMatchingMember.ifPresent(member -> projectIds.add(member.getProject().getId()));
+        return projectIds;
+    }
+
+    private static String thumbnailUrlOf(Project project, Map<String, String> thumbnailLinks) {
+        return project.getThumbnailFileId() == null ? null : thumbnailLinks.get(project.getThumbnailFileId());
+    }
+
+    /**
+     * PM/운영진용 단일 프로젝트 지원자 목록 조회.
+     * <p>
+     * 흐름:
+     * <ol>
+     *   <li>권한 scope 결정 (PO/Sub-PM/SUPER_ADMIN/CC/지부장/학교장만 통과, 그 외 빈 리스트로 위장)</li>
+     *   <li>프로젝트 단건 조회 (없으면 PROJECT_NOT_FOUND)</li>
+     *   <li>지원서 동적 검색 (matchingRoundId / status 필터, DRAFT 제외)</li>
+     *   <li>지원자들의 challenger.part batch 조회 (해당 기수 invariant)</li>
+     *   <li>part 필터를 in-memory 로 적용 -- challenger.part 는 ProjectApplication 컬럼이 아니므로
+     *       repository 단에서 다루지 않는다 (도메인 분리)</li>
+     *   <li>ProjectApplicationCardInfo 로 조립</li>
+     * </ol>
+     * <p>
+     * 정렬은 repository 가 phase ASC -> submittedAt ASC 로 처리하므로 이 메서드는 추가 정렬을 하지 않는다.
+     */
+    @Override
+    public List<ProjectApplicationCardInfo> searchByProject(SearchProjectApplicationsQuery query) {
+        Project project = loadProjectPort.getById(query.projectId());
+
+        ProjectApplicationAccessScope scope = accessScopeResolver.resolveForProjectApplicantList(
+            query.requesterMemberId(), project);
+        if (scope instanceof ProjectApplicationAccessScope.None) {
+            return List.of();
+        }
+
+        List<ProjectApplication> applications = loadProjectApplicationPort.searchProjectApplications(
+            query.projectId(),
+            query.matchingRoundId(),
+            query.status()
+        );
+        if (applications.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, ChallengerPart> partsByMember = resolveApplicantParts(applications, project.getGisuId());
+
+        List<ProjectApplicationCardInfo> cards = new ArrayList<>(applications.size());
+        for (ProjectApplication application : applications) {
+            ChallengerPart applicantPart = partsByMember.get(application.getApplicantMemberId());
+            if (query.part() != null && query.part() != applicantPart) {
+                continue;
+            }
+            cards.add(ProjectApplicationCardInfo.of(application, applicantPart));
+        }
+        return cards;
+    }
+
+    /**
+     * 요청자의 챌린저 파트로부터 매칭 종류를 결정한다.
+     * <ul>
+     *   <li>해당 기수에 챌린저 레코드 없음 -> empty</li>
+     *   <li>{@code PLAN} / {@code ADMIN} -> empty (지원 대상 아님)</li>
+     *   <li>{@code DESIGN} -> {@code PLAN_DESIGN}</li>
+     *   <li>{@code WEB} / {@code ANDROID} / {@code IOS} / {@code NODEJS} / {@code SPRINGBOOT} -> {@code PLAN_DEVELOPER}</li>
+     * </ul>
+     */
+    private Optional<MatchingType> resolveMatchingType(GetMyProjectApplicationsQuery query) {
+        return getChallengerUseCase
+            .findByMemberIdAndGisuId(query.requesterMemberId(), query.gisuId())
+            .map(ChallengerInfo::part)
+            .flatMap(ProjectApplicationQueryService::matchingTypeOf);
     }
 
     /**
